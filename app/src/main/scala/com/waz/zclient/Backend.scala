@@ -23,7 +23,7 @@ import com.waz.utils.SafeBase64
 object Backend {
 
   lazy val byName: Map[String, BackendConfig] =
-    Seq(StagingBackend, ProdBackend).map(b => b.environment -> b).toMap
+    Seq(StagingBackend,QaBackend,ProdBackend).map(b => b.environment -> b).toMap
 
   private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
   val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
@@ -51,14 +51,26 @@ object Backend {
     StagingFirebaseOptions,
     certPin)
 
+  //These are only here so that we can compile tests, the UI sets the backendConfig
+  val QaBackend = BackendConfig(
+    environment = "qa-demo",
+    baseUrl = "https://nginz-https.qa-demo.wire.link",
+    websocketUrl = "https://nginz-ssl.qa-demo.wire.link",
+    blacklistHost = "https://assets.qa-demo.wire.link/public/blacklist/android.json",
+    teamsUrl = "https://teams.qa-demo.wire.link",
+    accountsUrl = "https://account.qa-demo.wire.link",
+    websiteUrl = "https://webapp.qa-demo.wire.link",
+    StagingFirebaseOptions,
+    certPin)
+
   val ProdBackend = BackendConfig(
     environment = "prod",
     BuildConfig.BACKEND_URL,
     BuildConfig.WEBSOCKET_URL,
     BuildConfig.BLACKLIST_HOST,
-    teamsUrl = "https://teams.wire.com",
-    accountsUrl = "https://account.wire.com",
-    websiteUrl = "https://wire.com",
+    teamsUrl = BuildConfig.TEAMS_URL,
+    accountsUrl = BuildConfig.ACCOUNTS_URL,
+    websiteUrl = BuildConfig.WEBSITE_URL,
     ProdFirebaseOptions,
     certPin)
 }

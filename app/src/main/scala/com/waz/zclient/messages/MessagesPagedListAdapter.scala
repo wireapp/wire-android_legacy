@@ -17,9 +17,9 @@
  */
 package com.waz.zclient.messages
 
-import android.arch.paging.{PagedList, PagedListAdapter}
-import android.support.v7.util.DiffUtil
 import android.view.ViewGroup
+import androidx.paging.PagedListAdapter
+import androidx.recyclerview.widget.DiffUtil
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
@@ -79,10 +79,6 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
     pos <- if(convInfo.lastRead.isEpoch) None else ds.asInstanceOf[MessageDataSource].positionForMessage(convInfo.lastRead)
   } yield pos).getOrElse(-1)
 
-  override def onCurrentListChanged(currentList: PagedList[MessageAndLikes]): Unit = {
-    super.onCurrentListChanged(currentList)
-  }
-
   def positionForMessage(mId: MessageId): Option[Int] = for {
     list <- Option(getCurrentList)
     ds <- Option(list.getDataSource)
@@ -107,7 +103,9 @@ object MessagesPagedListAdapter {
     updated.contentString == prev.contentString &&
       updated.expired == prev.expired &&
       updated.imageDimensions == prev.imageDimensions &&
-      updated.content.find(_.openGraph.nonEmpty) == prev.content.find(_.openGraph.nonEmpty)
+      updated.content.find(_.openGraph.nonEmpty) == prev.content.find(_.openGraph.nonEmpty) &&
+      updated.content.find(_.richMedia.nonEmpty) == prev.content.find(_.richMedia.nonEmpty) &&
+      updated.assetId == prev.assetId
   }
 
   def areMessageAndLikesTheSame(prev: MessageAndLikes, updated: MessageAndLikes): Boolean = {

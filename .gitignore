@@ -32,6 +32,7 @@ app/api-keys.properties
 app/*.keystore
 app/signing.gradle
 *user.gradle
+*local.gradle.kts
 testing-gallery/*.keystore
 testing-gallery/signing.gradle
 
@@ -75,3 +76,7 @@ testui
 
 # custom config file
 custom
+local_variables.sh
+/local.properties*
+failedTests.list
+failedTests.list.previous

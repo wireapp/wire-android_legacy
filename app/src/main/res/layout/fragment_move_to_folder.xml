@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?wireBackgroundCollection">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/fragment_move_to_folder_toolbar"
+        style="?wireBackground"
+        android:layout_width="match_parent"
+        android:layout_height="?android:actionBarSize"
+        android:layout_alignParentTop="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="?actionModeCloseDrawable">
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/fragment_move_to_folder_textview_navigation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity='center'
+            android:text="@string/folders_move_to"
+            android:textColor="?wirePrimaryTextColor"
+            android:textSize="@dimen/wire__text_size__small"
+            app:w_font="@string/wire__typeface__medium" />
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:id="@+id/fragment_move_to_folder_textview_create"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity='end'
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingTop="@dimen/wire__padding__regular"
+            android:paddingBottom="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__regular"
+            android:text="@string/glyph__plus"
+            android:textColor="?wirePrimaryTextColor"
+            android:textSize="@dimen/wire__text_size__small"
+            app:w_font="@string/wire__typeface__bold" />
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <FrameLayout
+        android:id="@+id/fragment_move_to_folder_framelayout_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fragment_move_to_folder_toolbar" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

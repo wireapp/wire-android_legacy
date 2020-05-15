@@ -23,14 +23,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.widget.ViewAnimator;
-import com.waz.api.AudioAssetForUpload;
+
 import com.waz.api.AudioEffect;
 import com.waz.api.AudioOverview;
 import com.waz.api.RecordingControls;
+import com.waz.service.assets.GlobalRecordAndPlayService;
 import com.waz.zclient.R;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.utils.ViewUtils;
+
 import org.threeten.bp.Instant;
 
 
@@ -123,7 +125,7 @@ public class VoiceFilterToolbar extends ViewAnimator implements
     }
 
     @Override
-    public void onRecordingFinished(AudioAssetForUpload recording,
+    public void onRecordingFinished(GlobalRecordAndPlayService.Audio recording,
                                     boolean fileSizeLimitReached,
                                     AudioOverview overview) {
     }
@@ -139,7 +141,7 @@ public class VoiceFilterToolbar extends ViewAnimator implements
     }
 
     @Override
-    public void sendRecording(AudioAssetForUpload audioAssetForUpload, AudioEffect appliedAudioEffect) {
+    public void sendRecording(GlobalRecordAndPlayService.Audio audio, AudioEffect appliedAudioEffect) {
 
     }
 }

@@ -145,8 +145,6 @@
     <string translatable="false" name="pref_dev_register_new_client_title">Register Another Client</string>
     <string translatable="false" name="pref_dev_register_new_client_summary">Useful for testing too many devices. This button will grey itself out when you reach the limit</string>
 
-    <string translatable="false" name="pref_dev_provide_password">Provide account password</string>
-
     <!--Notifications preferences-->
     <string translatable="false" name="pref_dev_category_notifications_key">PREF_NOTIFICATIONS_CATEGORY</string>
     <string translatable="false" name="pref_dev_category_notifications_title">Notifications</string>
@@ -160,8 +158,6 @@
     <string translatable="false" name="pref_dev_websocket_ping_interval_title">WebSocket Ping Frequency (ms)</string>
     <string translatable="false" name="pref_dev_random_last_notification_id_title">Generate a random new value for LastStableNotification</string>
     <string translatable="false" name="pref_dev_random_last_notification_id_summary">Generate a new, random value for the LastStableNotification preference. Use it to test history loss.</string>
-    <string translatable="false" name="pref_dev_random_full_sync_title">Perform full sync</string>
-    <string translatable="false" name="pref_dev_random_full_sync_summary">This performs a full sync without triggering history loss. Useful for internal versions with inconsistent state.</string>
     <string translatable="false" name="pref_dev_full_conv_key">>PREF_FULL_CONV</string>
     <string translatable="false" name="pref_dev_full_conv_summary">Instead of an empty conversation, create one populated with all contacts in the list (up to 256)</string>
     <string translatable="false" name="pref_dev_full_conv_title">Create full conversation</string>
@@ -169,6 +165,9 @@
 
     <string translatable="false" name="pref_dev_check_push_token_title">Check Registered Push Token</string>
     <string translatable="false" name="pref_dev_check_push_token_summary">Trigger a job to compare the push token registered for the current user on the backend with the token we have stored locally</string>
+
+    <string translatable="false" name="pref_dev_check_check_rooted_device_title">Check If The Device Is Rooted</string>
+    <string translatable="false" name="pref_dev_check_check_rooted_device_summary">Calls a method performing a list of checks in order to figure out if the current device is rooted</string>
 
     <!--Account preferences-->
     <string translatable="false" name="pref_dev_category_sign_in_account_key">PREF_ACCOUNTS_SIGN_IN</string>
@@ -205,6 +204,5 @@
     <string translatable="false" name="url_contact_support">https://support.wire.com/hc/requests/new</string>
     <string translatable="false" name="url_invalid_email_help">https://support.wire.com/hc/en-us/articles/115004082129-My-email-address-is-already-in-use-and-I-cannot-create-an-account-What-can-I-do-</string>
     <string translatable="false" name="url_teams_set_email_about">https://support.wire.com/hc/en-us/articles/115004082129</string>
-
 </resources>
 

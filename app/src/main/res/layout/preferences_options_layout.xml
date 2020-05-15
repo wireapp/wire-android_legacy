@@ -35,14 +35,6 @@
             android:orientation="vertical"
             >
 
-            <com.waz.zclient.preferences.views.SwitchPreference
-                android:id="@+id/preferences_contacts"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:title="@string/pref_options_contacts_title"
-                app:subtitle="@string/pref_options_contacts_summary"
-                />
-
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
@@ -135,6 +127,38 @@
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_options_cursor_send_button_title"
                 app:subtitle="@string/pref_options_cursor_send_button_summary"
+                />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_app_lock"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="@string/pref_options_app_lock_title"
+                app:subtitle="@string/pref_options_app_lock_summary"
+                />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_incognito_keyboard"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="@string/pref_options_incognito_keyboard"
+                app:subtitle="@string/pref_options_incognito_keyboard_summary"
+                />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_hide_screen"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="@string/pref_options_hide_screen_title"
+                app:subtitle="@string/pref_options_hide_screen_summary"
+                />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_message_previews"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="@string/pref_options_message_previews"
+                app:subtitle="@string/pref_options_message_previews_summary"
                 />
 
             <com.waz.zclient.ui.text.TypefaceTextView

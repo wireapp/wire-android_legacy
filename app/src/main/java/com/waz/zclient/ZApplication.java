@@ -19,14 +19,16 @@ package com.waz.zclient;
 
 import android.app.Activity;
 import android.graphics.Typeface;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.Nullable;
+
 import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.waz.model.AccentColor;
 import com.waz.zclient.controllers.IControllerFactory;
+import com.waz.zclient.core.di.Injector;
+import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.ui.text.TypefaceFactory;
 import com.waz.zclient.ui.text.TypefaceLoader;
-import com.waz.zclient.utils.WireLoggerTree;
-import timber.log.Timber;
 
 import java.io.File;
 import java.util.HashMap;
@@ -66,14 +68,14 @@ public class ZApplication extends WireApplication implements ServiceContainer {
                 } else if (name.equals(getString(R.string.wire__typeface__bold))) {
                     typeface = Typeface.create("sans-serif", Typeface.BOLD);
                 } else {
-                    Timber.e("Couldn't load typeface: %s", name);
+                    Logger.error("ZApplication", "Couldn't load typeface:" + name);
                     return Typeface.DEFAULT;
                 }
 
                 typefaceMap.put(name, typeface);
                 return typeface;
             } catch (Throwable t) {
-                Timber.e(t, "Couldn't load typeface: %s", name);
+                Logger.error("ZApplication", "Couldn't load typeface:" + name, t);
                 return null;
             }
         }
@@ -93,21 +95,13 @@ public class ZApplication extends WireApplication implements ServiceContainer {
     public void onCreate() {
         super.onCreate();
 
-        setLogLevels();
+        Injector.start(this);
+
         AndroidThreeTen.init(this);
         TypefaceFactory.getInstance().init(typefaceloader);
 
         // refresh
         AccentColor.setColors(AccentColor.loadArray(getApplicationContext(), R.array.original_accents_color));
-    }
-
-    public static void setLogLevels() {
-        Timber.uprootAll();
-        if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
-            Timber.plant(new Timber.DebugTree());
-        } else {
-            Timber.plant(new WireLoggerTree());
-        }
     }
 
     @Override

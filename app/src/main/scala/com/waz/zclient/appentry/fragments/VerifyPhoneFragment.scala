@@ -17,8 +17,8 @@
  */
 package com.waz.zclient.appentry.fragments
 
-import android.os.{Build, Bundle, Handler}
-import android.support.v4.content.ContextCompat
+import android.os.{Bundle, Handler}
+import androidx.core.content.ContextCompat
 import android.text.{Editable, TextWatcher}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
@@ -32,8 +32,6 @@ import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.DialogErrorMessage.PhoneError
 import com.waz.zclient.appentry.fragments.SignInFragment.{Login, Phone, Register, SignInMethod}
 import com.waz.zclient.appentry.fragments.VerifyPhoneFragment._
-import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
-import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.ui.text.TypefaceEditText
@@ -98,9 +96,7 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
     findById[View](view, R.id.gtv__not_now__close).setVisibility(View.GONE)
     resendCodeButton.foreach(_.setVisibility(View.GONE))
     resendCodeCallButton.foreach(_.setVisibility(View.GONE))
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      editTextCode.foreach(_.setLetterSpacing(1))
-    }
+    editTextCode.foreach(_.setLetterSpacing(1))
     getStringArg(PhoneArg).foreach(phone => onPhoneNumberLoaded(phone))
   }
 
@@ -116,7 +112,6 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
     phoneConfirmationButton.foreach(_.setAccentColor(color))
     resendCodeButton.foreach(_.setTextColor(color))
     textViewInfo.foreach(_.setTextColor(color))
-    inject[IGlobalLayoutController].setSoftInputModeForPage(Page.PHONE_VERIFY_CODE)
     KeyboardUtils.showKeyboard(getActivity)
     startResendCodeTimer()
   }
@@ -194,8 +189,12 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
         case Right(userId) =>
           activity.enableProgress(false)
           for {
-            am <- accountService.createAccountManager(userId, None, isLogin = Some(true))
-            _ <- accountService.setAccount(Some(userId))
+            am       <- accountService.createAccountManager(userId, None, isLogin = Some(true))
+            _        =  am.foreach { accManager =>
+                          accManager.initZMessaging()
+                          accManager.addUnsplashPicture()
+                        }
+            _        <- accountService.setAccount(Some(userId))
             regState <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient())
           } yield activity.onEnterApplication(openSettings = false, regState.fold(_ => None, Some(_)))
       }

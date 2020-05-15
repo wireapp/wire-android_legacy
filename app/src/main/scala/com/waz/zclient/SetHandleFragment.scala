@@ -23,8 +23,8 @@ import java.util.Locale
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
-import android.support.annotation.Nullable
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.annotation.Nullable
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -72,7 +72,7 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
   private lazy val accentColor = inject[AccentColorController].accentColor
 
   private lazy val nameTextView = returning(view[TypefaceTextView](R.id.ttv__name)) { vh =>
-    self.map(_.getDisplayName).onUi(name => vh.foreach(_.setText(name)))
+    self.map(_.name).onUi(name => vh.foreach(_.setText(name)))
   }
   private lazy val usernameTextView = view[TypefaceTextView](R.id.ttv__username)
   private lazy val keepButton = returning(view[ZetaButton](R.id.zb__username_first_assign__keep)){ vh =>

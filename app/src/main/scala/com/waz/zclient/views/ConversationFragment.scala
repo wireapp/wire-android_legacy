@@ -17,27 +17,30 @@
  */
 package com.waz.zclient.views
 
-import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE}
+import java.io.File
+
+import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
-import android.support.annotation.Nullable
-import android.support.v7.widget.{ActionMenuView, LinearLayoutManager, RecyclerView, Toolbar}
 import android.text.TextUtils
 import android.view._
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
-import com.waz.api.{AudioAssetForUpload, AudioEffect, ErrorType}
-import com.waz.content.GlobalPreferences
+import androidx.annotation.Nullable
+import androidx.appcompat.widget.{ActionMenuView, Toolbar}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
+import com.waz.api.ErrorType
+import com.waz.content.{GlobalPreferences, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
-import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets.{Content, ContentForUpload}
 import com.waz.service.call.CallingService
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}
-import com.waz.utils.wrappers.URI
+import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{returning, returningF}
 import com.waz.zclient.Intents.ShowDevicesIntent
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
@@ -52,17 +55,17 @@ import com.waz.zclient.controllers.globallayout.{IGlobalLayoutController, Keyboa
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page, PagerControllerObserver}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.conversation.{ConversationController, ReplyContent, ReplyController, ReplyView}
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
+import com.waz.zclient.conversation.{ConversationController, ReplyContent, ReplyController, ReplyView}
 import com.waz.zclient.cursor._
 import com.waz.zclient.drawing.DrawingFragment.Sketch
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.messages.{MessagesController, MessagesListView}
+import com.waz.zclient.messages.{MessagesController, MessagesListView, UsersController}
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout
-import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout
+import com.waz.zclient.pages.extendedcursor.voicefilter2.AudioMessageRecordingScreenListener
 import com.waz.zclient.pages.main.conversation.{AssetIntentsManager, MessageStreamAnimation}
 import com.waz.zclient.pages.main.conversationlist.ConversationListAnimation
 import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneController, SlidingPaneObserver}
@@ -89,6 +92,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val zms = inject[Signal[ZMessaging]]
 
   private lazy val convController         = inject[ConversationController]
+  private lazy val usersController        = inject[UsersController]
   private lazy val messagesController     = inject[MessagesController]
   private lazy val screenController       = inject[ScreenController]
   private lazy val collectionController   = inject[CollectionController]
@@ -101,6 +105,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val accountsController     = inject[UserAccountsController]
   private lazy val globalPrefs            = inject[GlobalPreferences]
   private lazy val replyController        = inject[ReplyController]
+  private lazy val accentColor            = inject[Signal[AccentColor]]
 
   //TODO remove use of old java controllers
   private lazy val globalLayoutController     = inject[IGlobalLayoutController]
@@ -110,6 +115,8 @@ class ConversationFragment extends FragmentHelper {
   private lazy val userPreferencesController  = inject[IUserPreferencesController]
   private lazy val cameraController           = inject[ICameraController]
   private lazy val confirmationController     = inject[IConfirmationController]
+
+  private lazy val usersStorage               = inject[Signal[UsersStorage]]
 
   private var subs = Set.empty[com.waz.utils.events.Subscription]
 
@@ -122,14 +129,13 @@ class ConversationFragment extends FragmentHelper {
   private var assetIntentsManager: Option[AssetIntentsManager] = None
 
   private lazy val loadingIndicatorView = returning(view[LoadingIndicatorView](R.id.lbv__conversation__loading_indicator)) { vh =>
-    inject[Signal[AccentColor]].map(_.color)(c => vh.foreach(_.setColor(c)))
+    accentColor.map(_.color)(c => vh.foreach(_.setColor(c)))
   }
-
 
   private var containerPreview: ViewGroup = _
   private lazy val cursorView = returning(view[CursorView](R.id.cv__cursor)) { vh =>
     mentionCandidatesAdapter.onUserClicked.onUi { info =>
-      vh.foreach(v => v.accentColor.head.foreach { ac =>
+      vh.foreach(v => accentColor.head.foreach { ac =>
         v.createMention(info.id, info.name, v.cursorEditText, v.cursorEditText.getSelectionStart, ac.color)
       })
     }
@@ -139,7 +145,7 @@ class ConversationFragment extends FragmentHelper {
 
   private var audioMessageRecordingView: AudioMessageRecordingView = _
   private lazy val extendedCursorContainer = returning(view[ExtendedCursorContainer](R.id.ecc__conversation)) { vh =>
-    inject[Signal[AccentColor]].map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
+    accentColor.map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
   }
   private var toolbarTitle: TextView = _
   private lazy val listView = view[MessagesListView](R.id.messages_list_view)
@@ -192,7 +198,7 @@ class ConversationFragment extends FragmentHelper {
 
   override def onCreate(@Nullable savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    assetIntentsManager = Option(new AssetIntentsManager(getActivity, assetIntentsManagerCallback, savedInstanceState))
+    assetIntentsManager = Option(new AssetIntentsManager(getActivity, assetIntentsManagerCallback))
 
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
@@ -206,10 +212,10 @@ class ConversationFragment extends FragmentHelper {
     (for {
       (convId, isConvActive) <- convController.currentConv.map(c => (c.id, c.isActive))
       isGroup                <- convController.groupConversation(convId)
-      participantsNumber     <- Signal.future(convController.participantsIds(convId).map(_.size))
-      acc                    <- zms.map(_.selfUserId)
+      participantsNumber     <- convController.convMembers(convId).map(_.size)
+      selfUserId             <- zms.map(_.selfUserId)
       call                   <- callController.currentCallOpt
-      isCallActive           = call.exists(_.convId == convId) && call.exists(_.account == acc)
+      isCallActive           = call.exists(_.convId == convId) && call.exists(_.selfParticipant.userId == selfUserId)
       isTeam                 <- accountsController.isTeam
     } yield {
       if (isCallActive || !isConvActive || participantsNumber <= 1)
@@ -258,6 +264,9 @@ class ConversationFragment extends FragmentHelper {
 
       case _ =>
     }
+
+    guestsBanner
+    guestsBannerText
 
     accountsController.isTeam.flatMap {
       case true  => participantsController.guestBotGroup
@@ -439,7 +448,6 @@ class ConversationFragment extends FragmentHelper {
 
   override def onSaveInstanceState(outState: Bundle): Unit = {
     super.onSaveInstanceState(outState)
-    assetIntentsManager.foreach { _.onSaveInstanceState(outState) }
     previewShown.head.foreach { isShown => outState.putBoolean(SAVED_STATE_PREVIEW, isShown) }
   }
 
@@ -502,24 +510,26 @@ class ConversationFragment extends FragmentHelper {
         })
     }
 
-    override def onSketchOnPreviewPicture(input: RawAssetInput, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit = {
-      screenController.showSketch ! Sketch.cameraPreview(input, method)
-      extendedCursorContainer.foreach(_.close(true))
+    override def onSketchOnPreviewPicture(input: Content, method: IDrawingController.DrawingMethod): Unit =
+      convController.rotateImageIfNeeded(input).foreach { preparedInput =>
+        screenController.showSketch ! Sketch.cameraPreview(preparedInput, method)
+        extendedCursorContainer.foreach(_.close(true))
     }
 
-    override def onSendPictureFromPreview(input: RawAssetInput, source: ImagePreviewLayout.Source): Unit = {
-      convController.sendMessage(input)
-      extendedCursorContainer.foreach(_.close(true))
-      onCancelPreview()
+    override def onSendPictureFromPreview(image: Content): Unit =
+      convController.rotateImageIfNeeded(image).foreach { preparedImage =>
+        convController.sendAssetMessage(ContentForUpload(s"camera_preview_${AESKey().str}", preparedImage))
+        extendedCursorContainer.foreach(_.close(true))
+        onCancelPreview()
+      }
     }
-  }
 
   private val assetIntentsManagerCallback = new AssetIntentsManager.Callback {
-    override def onDataReceived(intentType: AssetIntentsManager.IntentType, uri: URI): Unit = intentType match {
+    override def onDataReceived(intentType: AssetIntentsManager.IntentType, uri: URIWrapper): Unit = intentType match {
       case AssetIntentsManager.IntentType.FILE_SHARING =>
         permissions.requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>
-            convController.sendMessage(uri, getActivity)
+            convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
           case _ =>
             ViewUtils.showAlertDialog(
               getActivity,
@@ -531,9 +541,9 @@ class ConversationFragment extends FragmentHelper {
             )
         }
       case AssetIntentsManager.IntentType.GALLERY =>
-        showImagePreview { _.setImage(uri, ImagePreviewLayout.Source.DeviceGallery) }
+        showImagePreview { _.setImage(uri) }
       case _ =>
-        convController.sendMessage(uri, getActivity)
+        convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
         navigationController.setRightPage(Page.MESSAGE_STREAM, TAG)
         extendedCursorContainer.foreach(_.close(true))
     }
@@ -596,15 +606,18 @@ class ConversationFragment extends FragmentHelper {
           }, exp.map(_.duration)))
         }
       case ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING =>
-        extendedCursorContainer.foreach(_.openVoiceFilter(new VoiceFilterLayout.Callback {
+        extendedCursorContainer.foreach(_.openVoiceFilter(new AudioMessageRecordingScreenListener {
           override def onAudioMessageRecordingStarted(): Unit = {
             globalLayoutController.keepScreenAwake()
           }
 
-          override def onCancel(): Unit = extendedCursorContainer.foreach(_.close(false))
+          override def onCancel(): Unit = {
+            extendedCursorContainer.foreach(_.close(false))
+          }
 
-          override def sendRecording(audioAssetForUpload: AudioAssetForUpload, appliedAudioEffect: AudioEffect): Unit = {
-            convController.sendMessage(audioAssetForUpload, getActivity)
+          override def sendRecording(mime: String, audioFile: File): Unit = {
+            val content = ContentForUpload(s"audio_record_${System.currentTimeMillis()}.m4a", Content.File(Mime.Audio.M4A, audioFile))
+            convController.sendAssetMessage(content, getActivity, None)
             extendedCursorContainer.foreach(_.close(true))
           }
         }))
@@ -614,21 +627,15 @@ class ConversationFragment extends FragmentHelper {
 
           override def openVideo(): Unit = captureVideoAskPermissions()
 
-          override def onGalleryPictureSelected(uri: URI): Unit = {
+          override def onGalleryPictureSelected(uri: URIWrapper): Unit = {
             previewShown ! true
-            showImagePreview {
-              _.setImage(uri, ImagePreviewLayout.Source.InAppGallery)
-            }
+            showImagePreview { _.setImage(uri) }
           }
 
-          override def openGallery(): Unit = assetIntentsManager.foreach {
-            _.openGallery()
-          }
+          override def openGallery(): Unit = assetIntentsManager.foreach { _.openGallery() }
 
           override def onPictureTaken(imageData: Array[Byte], isMirrored: Boolean): Unit =
-            showImagePreview {
-              _.setImage(imageData, isMirrored)
-            }
+            showImagePreview { _.setImage(imageData, isMirrored) }
         }))
       case _ =>
         verbose(l"openExtendedCursor(unknown)")
@@ -638,10 +645,16 @@ class ConversationFragment extends FragmentHelper {
   private def captureVideoAskPermissions() = for {
     _ <- inject[GlobalCameraController].releaseCamera() //release camera so the camera app can use it
     _ <- permissions.requestAllPermissions(ListSet(CAMERA, WRITE_EXTERNAL_STORAGE)).map {
-      case true => assetIntentsManager.foreach(_.captureVideo(getContext.getApplicationContext))
-      case false => //
+      case true  => assetIntentsManager.foreach(_.captureVideo())
+      case false =>
     }(Threading.Ui)
   } yield {}
+
+  private val requiredAudioPermissions =
+    CursorController.keyboardPermissions(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING) ++
+      ListSet(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)
+
+  private lazy val audioPermissionsGranted = permissions.allPermissions(requiredAudioPermissions)
 
   private val cursorCallback = new CursorCallback {
     override def onMotionEventFromCursorButton(cursorMenuItem: CursorMenuItem, motionEvent: MotionEvent): Unit =
@@ -669,17 +682,25 @@ class ConversationFragment extends FragmentHelper {
 
     override def openFileSharing(): Unit = assetIntentsManager.foreach { _.openFileSharing() }
 
-    override def onCursorButtonLongPressed(cursorMenuItem: CursorMenuItem): Unit =
-      cursorMenuItem match {
-        case CursorMenuItem.AUDIO_MESSAGE =>
-          callController.isCallActive.head.foreach {
-            case true  => showErrorDialog(R.string.calling_ongoing_call_title, R.string.calling_ongoing_call_audio_message)
-            case false =>
-              extendedCursorContainer.foreach(_.close(true))
-              audioMessageRecordingView.show()
-          }
-        case _ => //
-      }
+    override def onCursorButtonLongPressed(cursorMenuItem: CursorMenuItem): Unit = cursorMenuItem match {
+      case CursorMenuItem.AUDIO_MESSAGE =>
+        callController.isCallActive.head.foreach {
+          case true  =>
+            showErrorDialog(R.string.calling_ongoing_call_title, R.string.calling_ongoing_call_audio_message)
+          case false =>
+            audioPermissionsGranted.head.foreach {
+              case true  =>
+                extendedCursorContainer.foreach(_.close(true))
+                audioMessageRecordingView.show()
+              case false =>
+                permissions.requestAllPermissions(requiredAudioPermissions).foreach {
+                  case true  =>
+                  case false => showToast(R.string.audio_message_error__missing_audio_permissions)
+                }
+            }
+        }
+      case _ =>
+    }
   }
 
   private val navigationControllerObserver = new NavigationControllerObserver {
@@ -688,7 +709,14 @@ class ConversationFragment extends FragmentHelper {
         case true  => participantsController.guestBotGroup.head
         case false => Future.successful((false, false, false))
       }.foreach {
-        case (hasGuest, hasBot, isGroup) => updateGuestsBanner(hasGuest, hasBot, isGroup)
+        case (hasGuest, hasBot, isGroup) =>
+          val backStackSize = getFragmentManager.getBackStackEntryCount
+          if (backStackSize > 0) {
+            // update the guests' banner only if the conversation's fragment is on top
+            if (getFragmentManager.getBackStackEntryAt(backStackSize - 1).getName == ConversationFragment.TAG)
+              updateGuestsBanner(hasGuest, hasBot, isGroup)
+          } else
+            updateGuestsBanner(hasGuest, hasBot, isGroup)
       }
       inflateCollectionIcon()
       cursorView.foreach(_.enableMessageWriting())
@@ -760,8 +788,8 @@ class ConversationFragment extends FragmentHelper {
 
       (for {
         self <- inject[UserAccountsController].currentUser.head
-        members <- convController.loadMembers(convId)
-        unverifiedUsers = members.filter { !_.isVerified }
+        members <- convController.convMembers(convId).head
+        unverifiedUsers <- usersController.users(members.keys).map(_.filter(!_.isVerified)).head
         unverifiedDevices <-
           if (unverifiedUsers.size == 1) Future.sequence(unverifiedUsers.map(u => convController.loadClients(u.id).map(_.filter(!_.isVerified)))).map(_.flatten.size)
           else Future.successful(0) // in other cases we don't need this number
@@ -769,7 +797,7 @@ class ConversationFragment extends FragmentHelper {
 
         val unverifiedNames = unverifiedUsers.map { u =>
           if (self.map(_.id).contains(u.id)) getString(R.string.conversation_degraded_confirmation__header__you)
-          else u.getDisplayName.str
+          else u.name.str
         }
 
         val header =

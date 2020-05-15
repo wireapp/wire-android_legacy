@@ -138,4 +138,9 @@
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__send_timed">\uE735</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__keyboard_timed">\uE736</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__emoji_timed">\uE737</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__add_to_favorites">\uE738</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__remove_from_favorites">\uE739</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__move_to_folder">\uE739</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__remove_from_folder">\uE740</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__clear">\uE741</string>
 </resources>

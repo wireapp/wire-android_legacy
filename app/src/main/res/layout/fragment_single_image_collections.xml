@@ -26,7 +26,7 @@
               android:clickable="true"
               android:focusable="true" >
 
-    <android.support.v4.view.ViewPager
+    <androidx.viewpager.widget.ViewPager
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/image_view_pager"
         android:layout_width="match_parent"

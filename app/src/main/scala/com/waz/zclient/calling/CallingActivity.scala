@@ -21,6 +21,7 @@ import android.content.{Context, Intent}
 import android.os.{Build, Bundle}
 import android.view.WindowManager
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.services.calling.CallingNotificationsService
 import com.waz.threading.Threading
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
@@ -71,6 +72,7 @@ class CallingActivity extends BaseActivity {
 
   override def onResume() = {
     super.onResume()
+    stopService(new Intent(this, classOf[CallingNotificationsService]))
     controller.setVideoPause(pause = false)
   }
 

@@ -1,0 +1,18 @@
+# please use trailing slashes for directories, and please check the `copyToOpenSource` task in build.sbt before doing complicated stuff
+captures/
+target/
+out/
+bin/
+gen/
+*.iml
+*.bc
+.idea/
+atlassian-ide-plugin.xml
+artifacts/
+s3libs/
+BUILDCONTROL.local
+user.sbt
+proguard-sbt.txt
+credentials.sbt
+tags
+.externalNativeBuild/

@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2020 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,8 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<resources
-    xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <item name="conversation_pager" type="id"/>
 
     <item name="cursor_menu_item_video" type="id" />
@@ -58,12 +57,16 @@
 
     <item name="collection_image_view" type="id"/>
 
-    <item name="participants_section" type="id" />
+    <item name="admins_section" type="id" />
+    <item name="members_section" type="id" />
+    <item name="options_section" type="id" />
     <item name="services_section" type="id" />
     <item name="guest_options" type="id" />
     <item name="timed_messages_options" type="id" />
     <item name="notifications_options" type="id" />
-    <item name="read_receipts_options" type="id" />
+    <item name="no_results_info" type="id" />
+    <item name="show_all_button" type="id" />
+    <item name="read_receipts_button" type="id" />
 
     <item name="create_group_button" type="id"/>
     <item name="create_guest_room_button" type="id"/>

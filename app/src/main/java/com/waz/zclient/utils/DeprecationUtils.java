@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.utils;
 
-
-import android.app.Notification;
 import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -32,8 +30,8 @@ import android.hardware.Camera.ShutterCallback;
 import android.os.Build;
 import android.os.PowerManager;
 import android.os.Vibrator;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.view.ViewCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.view.ViewCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.Html;
 import android.text.Spanned;
@@ -47,15 +45,12 @@ import static android.hardware.Camera.getNumberOfCameras;
 @SuppressWarnings("Deprecation")
 /*
  This class exists to facilitate fine-grained warning deprecation, not possible in Scala
- TODO(AN-5975): rewrite this class in Scala once we can include the silencer plugin
  */
 public class DeprecationUtils {
 
     public static int FLAG_TURN_SCREEN_ON = WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
 
     public static int FLAG_SHOW_WHEN_LOCKED = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
-
-    public static int PRIORITY_MAX = Notification.PRIORITY_MAX;
 
     public static int WAKE_LOCK_OPTIONS = PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
                                           PowerManager.FULL_WAKE_LOCK          |

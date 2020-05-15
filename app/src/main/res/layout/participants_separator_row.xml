@@ -18,13 +18,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:layout_width="match_parent"
-              android:layout_height="@dimen/participants__verified_row__height"
-              android:layout_marginStart="@dimen/participants__left_margin"
-              android:layout_marginEnd="@dimen/participants__left_margin"
-    >
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/participants__left_margin"
+    android:layout_marginEnd="@dimen/participants__left_margin"
+    android:layout_marginTop="@dimen/wire__padding__small"
+    android:orientation="vertical">
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/separator_title"
@@ -32,11 +34,25 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start|bottom"
-        android:layout_marginBottom="@dimen/wire__padding__small"
+        android:layout_marginTop="@dimen/wire__padding__tiny"
+        android:layout_marginBottom="@dimen/wire__padding__tiny"
         android:textColor="@color/light_graphite"
         android:textSize="@dimen/wire__text_size__small"
         android:textAllCaps="true"
         app:w_font="@string/wire__typeface__medium"
         />
 
-</FrameLayout>
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/empty_section_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/wire__padding__12"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__small"
+        app:w_font="@string/wire__typeface__regular"
+        android:layout_marginTop="@dimen/wire__padding__tiny"
+        android:layout_marginBottom="@dimen/wire__padding__tiny"
+        android:visibility="gone"
+        />
+
+</LinearLayout>

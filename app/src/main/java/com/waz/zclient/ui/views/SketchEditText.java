@@ -22,7 +22,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.TypedValue;
-import android.widget.EditText;
+
+import androidx.appcompat.widget.AppCompatEditText;
 
 import com.waz.zclient.R;
 import com.waz.zclient.ui.utils.TypefaceUtils;
@@ -31,7 +32,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-public class SketchEditText extends EditText {
+public class SketchEditText extends AppCompatEditText {
 
     public Set<SketchEditTextListener> weakListenerSet;
     private String customHint;

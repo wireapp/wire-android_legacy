@@ -27,7 +27,6 @@
 
     <com.waz.zclient.common.views.ChatHeadView
         android:id="@+id/avatar_single"
-        app:show_border="false"
         app:is_round="true"
         app:show_waiting="false"
         app:default_background="@color/black_8"
@@ -38,7 +37,7 @@
         android:visibility="gone"
         />
 
-    <android.support.v7.widget.CardView
+    <androidx.cardview.widget.CardView
         android:id="@+id/avatar_group"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -51,7 +50,6 @@
 
         <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_start_top"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__small_size"
@@ -62,7 +60,6 @@
 
         <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_end_top"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__small_size"
@@ -73,7 +70,6 @@
 
         <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_start_bottom"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__small_size"
@@ -84,7 +80,6 @@
 
         <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_end_bottom"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__small_size"
@@ -95,7 +90,6 @@
 
         <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/conversation_avatar_single_group"
-            app:show_border="false"
             app:is_round="false"
             app:show_waiting="false"
             android:layout_width="@dimen/conversation_list__avatar__big_size"
@@ -104,6 +98,6 @@
             app:default_background="@color/transparent"
             />
 
-    </android.support.v7.widget.CardView>
+    </androidx.cardview.widget.CardView>
 
 </merge>

@@ -18,9 +18,9 @@
 package com.waz.zclient.fragments
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
+import androidx.fragment.app.Fragment
 import com.waz.api.NetworkMode
 import com.waz.service.ZMessaging
 import com.waz.threading.CancellableFuture
@@ -40,7 +40,6 @@ class ConnectivityFragment extends Fragment with FragmentHelper with Connectivit
   import ConnectivityFragment._
 
   lazy val network        = Option(ZMessaging.currentGlobal).map(_.network.networkMode).getOrElse(Signal.const(NetworkMode.UNKNOWN))
-//  lazy val websocketError = inject[Signal[ZMessaging]].flatMap(_.websocket.connectionError)
   lazy val accentColor    = inject[AccentColorController].accentColor
   lazy val longProcess    = inject[Signal[ZMessaging]].flatMap(_.push.processing).flatMap {
     case true => Signal.future(CancellableFuture.delay(LongProcessingDelay)).map(_ => true).orElse(Signal.const(false))
@@ -77,7 +76,6 @@ class ConnectivityFragment extends Fragment with FragmentHelper with Connectivit
     (for {
       mode       <- network
       processing <- longProcess
-//      err        <- websocketError
     } yield (mode, processing)).onUi {
       case (NetworkMode.OFFLINE | NetworkMode.UNKNOWN, _) =>
         loadingIndicatorView.hide()

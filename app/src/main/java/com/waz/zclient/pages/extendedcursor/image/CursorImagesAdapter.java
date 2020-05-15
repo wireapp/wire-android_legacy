@@ -21,10 +21,11 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.database.MergeCursor;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -103,10 +104,17 @@ class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
         @Override
         protected Cursor doInBackground(Void... params) {
-            Cursor c = adapter.resolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null, null);
-            if (c != null) {
-                c.moveToLast(); // force cursor loading and move to last, as we are displaying images in reverse order
-            }
+            Cursor[] cursors = new Cursor[2];
+            String selection = MediaStore.Images.Media.DATA + " NOT LIKE ? "; // Exclude images from /system/ which would be included in INTERNAL_CONTENT_URI
+            String excludeFolder = "/system";
+            String[] selectionArgs = new String[]{excludeFolder + "%"};
+            final String orderBy = MediaStore.Images.Media.DATE_TAKEN + " ASC";
+
+            cursors[0] = adapter.resolver.query(MediaStore.Images.Media.INTERNAL_CONTENT_URI, null, selection, selectionArgs, orderBy);
+            cursors[1] = adapter.resolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null, orderBy);
+
+            Cursor c = new MergeCursor(cursors);
+            c.moveToLast();  // force cursor loading
             return c;
         }
 

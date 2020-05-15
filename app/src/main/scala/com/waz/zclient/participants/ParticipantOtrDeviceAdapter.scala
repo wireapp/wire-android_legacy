@@ -21,10 +21,10 @@ package com.waz.zclient.participants
 import java.util.Locale
 
 import android.content.Context
-import android.support.annotation.StringRes
-import android.support.v7.widget.RecyclerView
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, TextView}
+import androidx.annotation.StringRes
+import androidx.recyclerview.widget.RecyclerView
 import com.waz.api.{OtrClientType, Verification}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
@@ -60,7 +60,7 @@ class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector,
     Some(userId)  <- participantsController.otherParticipantId
     Some(manager) <- ZMessaging.currentAccounts.activeAccountManager
     clients       <- manager.storage.otrClientsStorage.optSignal(userId)
-  } yield clients.fold(List.empty[Client])(_.clients.values.toList.sortBy(_.regTime).reverse)
+  } yield clients.fold(List.empty[Client])(_.clients.values.toList.reverse)
 
   private lazy val syncClientsRequest = for {
     z             <- zms.head
@@ -178,8 +178,13 @@ object ParticipantOtrDeviceAdapter {
       textView.setText(TextViewUtils.getBoldText(textView.getContext, clientText))
 
       ViewUtils.getView[ImageView](itemView, R.id.iv__row_otr_icon).setImageResource(
-        if (client.verified == Verification.VERIFIED) R.drawable.shield_full
-        else R.drawable.shield_half
+        if (client.verified == Verification.VERIFIED) {
+          textView.setContentDescription("Device " + itemView.context.getString(R.string.pref_devices_device_verified))
+          R.drawable.shield_full
+        } else {
+          textView.setContentDescription("Device " + itemView.context.getString(R.string.pref_devices_device_not_verified))
+          R.drawable.shield_half
+        }
       )
 
       ViewUtils.getView[View](itemView, R.id.v__row_otr__divider).setVisibility(if (lastItem) View.GONE else View.VISIBLE)

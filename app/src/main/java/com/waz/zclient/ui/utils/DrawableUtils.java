@@ -17,26 +17,18 @@
  */
 package com.waz.zclient.ui.utils;
 
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.DrawableContainer;
-import timber.log.Timber;
 
-import java.lang.reflect.Field;
+import com.waz.zclient.core.logging.Logger;
+
 import java.lang.reflect.Method;
-
 
 // From support design Lib
 public class DrawableUtils {
 
     private static Method setConstantStateMethod;
     private static boolean setConstantStateMethodFetched;
-
-    private static Field drawableContainerStateField;
-    private static boolean drawableContainerStateFieldFetched;
 
     private DrawableUtils() {}
 
@@ -53,7 +45,7 @@ public class DrawableUtils {
                     "setConstantState", DrawableContainer.DrawableContainerState.class);
                 setConstantStateMethod.setAccessible(true);
             } catch (NoSuchMethodException e) {
-                Timber.e(e, "Could not fetch setConstantState(). Oh well.");
+                Logger.error("DrawableUtils", "Could not fetch setConstantState(). Oh well.", e);
             }
             setConstantStateMethodFetched = true;
         }
@@ -62,18 +54,9 @@ public class DrawableUtils {
                 setConstantStateMethod.invoke(drawable, constantState);
                 return true;
             } catch (Exception e) {
-                Timber.e(e, "Could not invoke setConstantState(). Oh well.");
+                Logger.error("DrawableUtils" , "Could not invoke setConstantState(). Oh well.", e);
             }
         }
         return false;
-    }
-
-    // Nasty hack - for some reason the normal drawable was not showing up in the preferences
-    public static Drawable drawableToBitmapDrawable(Resources resources, Drawable drawable, int size) {
-        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
-        drawable.draw(canvas);
-        return new BitmapDrawable(resources, bitmap);
     }
 }

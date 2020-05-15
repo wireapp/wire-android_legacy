@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2020 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/athens_gray_light">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/welcomeLogoGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.082" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/welcomeTitleGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.304" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/welcomeCreateAccountGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.450" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/welcomeLoginGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.552" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/welcomeEnterpriseLoginGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.889" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/welcomeLogoImageView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:src="@drawable/wire"
+        android:tint="@color/teams_headline_text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.084"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/welcomeLogoGuideline"
+        app:layout_constraintWidth_percent="0.225" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/welcomeTitleTextView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fontFamily="sans-serif-light"
+        android:gravity="center_horizontal"
+        android:lineSpacingExtra="@dimen/welcome_title_line_spacing_extra"
+        android:text="@string/welcome_to_wire"
+        android:textColor="@color/outer_space"
+        android:textSize="@dimen/welcome_title_text_size"
+        android:textStyle="normal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.070"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/welcomeTitleGuideline"
+        app:layout_constraintWidth_percent="0.661" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/welcomeCreateAccountButton"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/selector_welcome_create_account_button"
+        android:fontFamily="sans-serif"
+        android:text="@string/new_reg__phone_signup__create_account"
+        android:textColor="@color/white"
+        android:textSize="@dimen/rounded_button_text_size"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.084"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/welcomeCreateAccountGuideline"
+        app:layout_constraintWidth_percent="0.908" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/welcomeLoginButton"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/selector_welcome_login_button"
+        android:text="@string/app_entry_login"
+        android:textColor="@color/curious_blue"
+        android:textSize="@dimen/rounded_button_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.084"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/welcomeLoginGuideline"
+        app:layout_constraintWidth_percent="0.908" />
+
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/welcomeEnterpriseLoginButton"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/selector_welcome_sso_login_button"
+        android:text="@string/welcome_enterprise_log_in"
+        android:textColor="@color/outer_space"
+        android:textSize="@dimen/rounded_button_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.084"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/welcomeEnterpriseLoginGuideline"
+        app:layout_constraintWidth_percent="0.908" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

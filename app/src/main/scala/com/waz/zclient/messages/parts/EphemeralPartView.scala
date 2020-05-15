@@ -41,6 +41,14 @@ trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
 
   val expired = message map { m => m.isEphemeral && m.expired }
 
+  val ephemeralColorDrawable: Signal[Option[Drawable]] =
+    for {
+      hide <- expired
+      acc <- accentController.accentColor
+    } yield
+      if (hide) Some(new ColorDrawable(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(getContext), acc.color)))
+      else None
+
   def registerEphemeral(textView: TextView) = {
     val originalTypeface = textView.getTypeface
     val originalColor = textView.getTextColors

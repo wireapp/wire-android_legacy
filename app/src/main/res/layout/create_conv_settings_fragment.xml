@@ -43,8 +43,7 @@
         android:layout_marginTop="@dimen/wire__padding__regular"
         android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_marginEnd="@dimen/wire__padding__regular"
-        android:layout_marginBottom="@dimen/wire__padding__24"
-        android:text="@string/call_info_text"/>
+        android:layout_marginBottom="@dimen/wire__padding__24"/>
 
     <RelativeLayout
         android:id="@+id/create_conv_options"
@@ -126,7 +125,7 @@
             android:textSize="@dimen/wire__text_size__regular"
             android:textColor="?wirePrimaryTextColor"/>
 
-        <android.support.v7.widget.SwitchCompat
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/guest_toggle"
             android:gravity="end"
             android:layout_weight="1"
@@ -178,7 +177,7 @@
             android:textSize="@dimen/wire__text_size__regular"
             android:textColor="?wirePrimaryTextColor"/>
 
-        <android.support.v7.widget.SwitchCompat
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/read_receipts_toggle"
             android:gravity="end"
             android:layout_weight="1"

@@ -20,6 +20,7 @@ package com.waz.zclient.deeplinks
 import android.content.Intent
 import com.waz.content.MembersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.UserId
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service.{AccountManager, AccountsService, UserService}
 import com.waz.threading.Threading
@@ -71,79 +72,63 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
     }
   }
 
-  private def checkDeepLink(deepLink: DeepLink, token: DeepLink.Token): Future[CheckingResult] = {
+  private def checkDeepLink(deepLink: DeepLink, token: DeepLink.Token): Future[CheckingResult] =
     async {
       val accounts = await { accountsService.accountsWithManagers.head }
-      val acc      = await { account.head }
-      val client   = acc match {
+      val client   = await { account.head } match {
         case None             => None
         case Some(accManager) => await { accManager.getOrRegisterClient().map(_.right.toOption) }
       }
-      (accounts, client)
-    }.flatMap { case (accounts, client) =>
-      token match {
-        case DeepLink.SSOLoginToken(_) =>
-          val res: CheckingResult = if (accounts.size >= BuildConfig.MAX_ACCOUNTS)
-            DoNotOpenDeepLink(deepLink, SSOLoginTooManyAccounts)
+      (accounts, client, token)
+    }.flatMap {
+      case (accounts, _, DeepLink.SSOLoginToken(_)) if accounts.size >= BuildConfig.MAX_ACCOUNTS =>
+        Future.successful(DoNotOpenDeepLink(deepLink, SSOLoginTooManyAccounts))
+      case (_, None, DeepLink.SSOLoginToken(_)) =>
+        Future.successful(OpenDeepLink(token))
+      case (_, Some(Registered(_)), DeepLink.SSOLoginToken(_)) =>
+        Future.successful(OpenDeepLink(token))
+      case (_, _, DeepLink.SSOLoginToken(_)) =>
+        Future.successful(DoNotOpenDeepLink(deepLink, Unknown))
+      case (_, Some(Registered(_)), DeepLink.ConversationToken(convId)) =>
+        convController.getConversation(convId).map {
+          case Some(_) => OpenDeepLink(token)
+          case _       => DoNotOpenDeepLink(Conversation, NotFound)
+        }
+      case (_, _, DeepLink.ConversationToken(_)) =>
+        Future.successful(DoNotOpenDeepLink(deepLink, Unknown))
+      case (_, Some(Registered(_)), DeepLink.UserToken(userId)) =>
+        checkUserDeepLink(deepLink, token, userId)
+      case (_, _, DeepLink.UserToken(_)) =>
+        Future.successful(DoNotOpenDeepLink(deepLink, Unknown))
+      case (accounts, _, DeepLink.CustomBackendToken(_)) if accounts.nonEmpty =>
+        Future.successful(DoNotOpenDeepLink(deepLink, UserLoggedIn))
+      case (_, _, DeepLink.CustomBackendToken(_)) =>
+        Future.successful(OpenDeepLink(token))
+      case _ =>
+        Future.successful(OpenDeepLink(token))
+    }
+
+  private def checkUserDeepLink(deepLink: DeepLink, token: DeepLink.Token, userId: UserId) =
+    async {
+      val service = await { userService.head }
+      await { service.syncIfNeeded(Set(userId)) }
+      await { service.getSelfUser.zip(service.findUser(userId)) } match {
+        case (Some(self), Some(other)) if self.id == other.id =>
+          OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = true, self = true))
+        case (Some(self), Some(other)) if self.isExternal(self.teamId) || other.isExternal(self.teamId) =>
+          val hasConv = await { membersStorage.getActiveConvs(other.id).map(_.nonEmpty) }
+          if (hasConv || self.createdBy.contains(self.id) || other.createdBy.contains(self.id))
+            OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
           else
-            client match {
-              case None => OpenDeepLink(token)
-              case Some(Registered(_)) => OpenDeepLink(token)
-              case _ => DoNotOpenDeepLink(deepLink, Unknown)
-            }
-
-          Future.successful(res)
-
-        case DeepLink.ConversationToken(convId) =>
-          client match {
-            case Some(Registered(_)) =>
-              convController.getConversation(convId).map {
-                case Some(_) => OpenDeepLink(token)
-                case _       => DoNotOpenDeepLink(Conversation, NotFound)
-              }
-            case _ => Future.successful(DoNotOpenDeepLink(deepLink, Unknown))
-          }
-
-        case DeepLink.UserToken(userId) =>
-          client match {
-            case Some(Registered(_)) =>
-              async {
-                val service = await { userService.head }
-                await { service.syncIfNeeded(Set(userId)) }
-                await { service.getSelfUser.zip(service.findUser(userId)) } match {
-                  case (Some(self), Some(other)) if self.id == other.id =>
-                    OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = true, self = true))
-                  case (Some(self), Some(other)) if self.isPartner(self.teamId) || other.isPartner(self.teamId) =>
-                    val hasConv = await { membersStorage.getActiveConvs(other.id).map(_.nonEmpty) }
-                    if (hasConv || self.createdBy.contains(self.id) || other.createdBy.contains(self.id))
-                      OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
-                    else
-                      DoNotOpenDeepLink(deepLink, NotAllowed)
-
-                  case (Some(self), Some(other)) =>
-                    OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
-                  case (Some(_), _) =>
-                    OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = false))
-                  case _ =>
-                    DoNotOpenDeepLink(deepLink, Unknown)
-                }
-              }
-            case _ => Future.successful(DoNotOpenDeepLink(deepLink, Unknown))
-          }
-
-        case DeepLink.CustomBackendToken(url) =>
-          val res: CheckingResult = if (accounts.nonEmpty)
-            DoNotOpenDeepLink(deepLink, UserLoggedIn)
-          else
-            OpenDeepLink(token)
-
-          Future.successful(res)
-
+            DoNotOpenDeepLink(deepLink, NotAllowed)
+        case (Some(self), Some(other)) =>
+          OpenDeepLink(token, UserTokenInfo(other.isConnected, self.isInTeam(other.teamId)))
+        case (Some(_), _) =>
+          OpenDeepLink(token, UserTokenInfo(connected = false, currentTeamMember = false))
         case _ =>
-          Future.successful(OpenDeepLink(token))
+          DoNotOpenDeepLink(deepLink, Unknown)
       }
     }
-  }
 }
 
 object DeepLinkService {

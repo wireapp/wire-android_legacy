@@ -17,11 +17,14 @@
  */
 package com.waz.zclient.pages.main.conversationpager;
 
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+
 import android.view.ViewGroup;
 
+import com.waz.zclient.conversationlist.ConversationListManagerFragment;
 import com.waz.zclient.conversationpager.SecondPageFragment;
 
 import java.util.HashMap;
@@ -41,7 +44,7 @@ public class ConversationPagerAdapter extends FragmentPagerAdapter {
     @Override
     public Fragment getItem(int position) {
         switch (position) {
-            case  0: return FirstPageFragment.newInstance();
+            case  0: return ConversationListManagerFragment.newInstance();
             case  1: return SecondPageFragment.newInstance();
         }
 
@@ -55,6 +58,7 @@ public class ConversationPagerAdapter extends FragmentPagerAdapter {
      * @param position
      * @return
      */
+    @NonNull
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
         Object obj = super.instantiateItem(container, position);
@@ -67,7 +71,7 @@ public class ConversationPagerAdapter extends FragmentPagerAdapter {
     }
 
     @Override
-    public int getItemPosition(Object object) {
+    public int getItemPosition(@NonNull Object object) {
         return POSITION_NONE;
     }
 

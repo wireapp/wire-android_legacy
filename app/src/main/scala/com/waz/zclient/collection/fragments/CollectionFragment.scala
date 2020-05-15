@@ -19,15 +19,16 @@ package com.waz.zclient.collection.fragments
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.FragmentManager
-import android.support.v7.widget.RecyclerView.State
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
+import androidx.fragment.app.FragmentManager
+import androidx.recyclerview.widget.RecyclerView.State
 import android.text.{Editable, TextWatcher}
 import android.view.View.{OnClickListener, OnFocusChangeListener, OnLayoutChangeListener}
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{EditText, TextView}
+import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -113,14 +114,14 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         KeyboardUtils.closeKeyboardIfShown(getActivity)
         controller.closeCollection
         controller.focusedItem.mutate {
-          case Some(m) if m.msgType == Message.Type.ASSET => None
+          case Some(m) if m.msgType == Message.Type.IMAGE_ASSET => None
           case m => m
         }
       case _ =>
     }
 
     controller.focusedItem.on(Threading.Ui) {
-      case Some(md) if md.msgType == Message.Type.ASSET => showSingleImage()
+      case Some(md) if md.msgType == Message.Type.IMAGE_ASSET => showSingleImage()
       case _ => closeSingleImage()
     }
 
@@ -214,7 +215,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     controller.conversationName.onUi(name.setText(_))
 
     Signal(collectionAdapter.adapterState, controller.focusedItem, controller.contentSearchQuery).on(Threading.Ui) {
-      case (AdapterState(_, _, _), Some(messageData), _) if messageData.msgType == Message.Type.ASSET =>
+      case (AdapterState(_, _, _), Some(messageData), _) if messageData.msgType == Message.Type.IMAGE_ASSET =>
         setNavigationIconVisibility(true)
         timestamp.setVisibility(View.VISIBLE)
         timestamp.setText(LocalDateTime.ofInstant(messageData.time.instant, ZoneId.systemDefault()).toLocalDate.toString)

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2020 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/athens_gray_light">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/topGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.194" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/createPersonalAccountPinCodeTitleTextView"
+        style="@style/TextView.RobotoLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="@string/email_verification_title"
+        android:textColor="@color/outer_space"
+        android:textSize="@dimen/email_verification_title_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/topGuideline" />
+
+    <!-- TODO feature specific color namings -->
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/createPersonalAccountPinCodeDescriptionTextView"
+        style="@style/TextView.RobotoRegular"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/email_verification_description_text_margin_start"
+        android:layout_marginTop="@dimen/email_verification_description_text_margin_top"
+        android:layout_marginEnd="@dimen/email_verification_description_text_margin_end"
+        android:gravity="center_horizontal"
+        android:text="@string/email_verification_description"
+        android:textColor="@color/teams_description_text"
+        android:textSize="@dimen/email_verification_description_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPinCodeTitleTextView" />
+
+    <com.poovam.pinedittextfield.SquarePinField
+        android:id="@+id/createPersonalAccountPinCodePinEditText"
+        style="@style/EditText.Pin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/email_verification_digit_edit_text_margin_top"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPinCodeDescriptionTextView">
+
+        <requestFocus />
+    </com.poovam.pinedittextfield.SquarePinField>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/createPersonalAccountPinCodeResendCodeTextView"
+        style="@style/TextView.RobotoBold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="@string/email_verification_resend_code"
+        android:textColor="@color/graphite"
+        android:textSize="@dimen/email_verification_resend_code_text_size"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.23"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPinCodePinEditText"
+        app:layout_constraintVertical_bias="0.151" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/createPersonalAccountPinCodeChangeMailTextView"
+        style="@style/TextView.RobotoBold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="@string/email_verification_change_email"
+        android:textColor="@color/graphite"
+        android:textSize="@dimen/email_verification_change_email_text_size"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.77"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPinCodePinEditText"
+        app:layout_constraintVertical_bias="0.151" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

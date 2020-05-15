@@ -22,48 +22,40 @@ import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.api.IConversation.Type
 import com.waz.model.UserId
-import com.waz.threading.Threading
-import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.connect.{ConnectRequestFragment, PendingConnectRequestManagerFragment}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page, PagerControllerObserver}
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.participants.UserRequester
+import com.waz.zclient.participants.fragments.{ConnectRequestFragment, PendingConnectRequestFragment}
 import com.waz.zclient.ui.utils.MathUtils
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 
 class SecondPageFragment extends FragmentHelper
   with OnBackPressedListener
-  with PagerControllerObserver
-  with PendingConnectRequestManagerFragment.Container
-  with ConnectRequestFragment.Container {
-
-  import SecondPageFragment._
-  import Threading.Implicits.Ui
+  with PagerControllerObserver {
 
   private lazy val navigationController   = inject[INavigationController]
-  private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val conversationController = inject[ConversationController]
 
-  override def setUserVisibleHint(isVisibleToUser: Boolean): Unit = {
+  // TODO: The method is deprecated.  https://wearezeta.atlassian.net/browse/AN-6484
+/*  override def setUserVisibleHint(isVisibleToUser: Boolean): Unit = {
     super.setUserVisibleHint(isVisibleToUser)
     if (isAdded) {
       val fragment = getChildFragmentManager.findFragmentById(R.id.fl__second_page_container)
       if (fragment != null) fragment.setUserVisibleHint(isVisibleToUser)
     }
-  }
+  }*/
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     inflater.inflate(R.layout.fragment_pager_second, container, false)
   }
 
-  private val connectionRequestTags = Set(ConnectRequestFragment.Tag, PendingConnectRequestManagerFragment.Tag)
+  private val connectionRequestTags = Set(ConnectRequestFragment.Tag, PendingConnectRequestFragment.Tag)
 
   private lazy val pageDetails = conversationController.currentConv.map(c => (c.id, c.convType)).map {
     case (id, Type.INCOMING_CONNECTION) => (ConnectRequestFragment.Tag, Some(UserId(id.str)))
-    case (id, Type.WAIT_FOR_CONNECTION) => (PendingConnectRequestManagerFragment.Tag, Some(UserId(id.str)))
+    case (id, Type.WAIT_FOR_CONNECTION) => (PendingConnectRequestFragment.Tag, Some(UserId(id.str)))
     case _                              => (ConversationManagerFragment.Tag, None)
   }
 
@@ -71,9 +63,9 @@ class SecondPageFragment extends FragmentHelper
     info(l"open (${showString(tag)}, $other)")
     val (fragment, page) = (tag, other) match {
       case (ConnectRequestFragment.Tag, Some(userId)) =>
-        (ConnectRequestFragment.newInstance(userId), Page.CONNECT_REQUEST_INBOX)
-      case (PendingConnectRequestManagerFragment.Tag, Some(userId)) =>
-        (PendingConnectRequestManagerFragment.newInstance(userId, UserRequester.CONVERSATION), Page.CONNECT_REQUEST_PENDING)
+        (ConnectRequestFragment.newInstance(userId, UserRequester.CONVERSATION), Page.CONNECT_REQUEST_INBOX)
+      case (PendingConnectRequestFragment.Tag, Some(userId)) =>
+        (PendingConnectRequestFragment.newInstance(userId, UserRequester.CONVERSATION), Page.CONNECT_REQUEST_PENDING)
       case _ =>
         (ConversationManagerFragment.newInstance, Page.MESSAGE_STREAM)
     }
@@ -130,29 +122,11 @@ class SecondPageFragment extends FragmentHelper
     else getView.setAlpha(Math.pow(positionOffset, 4).toFloat)
   }
 
-  override def onAcceptedConnectRequest(userId: UserId): Unit = {
-    info(l"onAcceptedConnectRequest $userId")
-    userAccountsController.getConversationId(userId).flatMap { convId =>
-      conversationController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST)
-    }
-  }
-
-  override def dismissInboxFragment(): Unit = {
-    info(l"dismissInboxFragment")
-    navigationController.setVisiblePage(Page.CONVERSATION_LIST, Tag)
-  }
-
   override def onPageSelected(position: Int): Unit = {}
 
   override def onPageScrollStateChanged(state: Int): Unit = {}
 
   override def onPagerEnabledStateHasChanged(enabled: Boolean): Unit = {}
-
-  override def dismissUserProfile(): Unit = {}
-
-  override def dismissSingleUserProfile(): Unit = {}
-
-  override def showRemoveConfirmation(userId: UserId): Unit = {}
 }
 
 object SecondPageFragment {

@@ -18,16 +18,13 @@
 package com.waz.zclient.common.views
 
 import android.content.Context
-import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.widget.ImageView
-import com.waz.model.Dim2
+import com.waz.model.Picture
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
-import com.waz.zclient.utils.ContextUtils.{getColor, getNavigationBarHeight}
-import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.ViewHelper
+import com.waz.zclient.glide._
 
 class BackgroundImageView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends ImageView(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -35,12 +32,12 @@ class BackgroundImageView(val context: Context, val attrs: AttributeSet, val def
 
   private val zms = inject[Signal[ZMessaging]]
 
-  val pictureId: Signal[ImageSource] = for {
+  val pictureId: Signal[Picture] = for {
     z <- zms
     Some(picture) <- z.users.selfUser.map(_.picture)
-  } yield WireImage(picture)
+  } yield picture
 
-  private val configuration = context.getResources.getConfiguration
-  setBackground(new BackgroundDrawable(pictureId, getContext, Dim2(ViewUtils.toPx(context, configuration.screenWidthDp), ViewUtils.toPx(context, configuration.screenHeightDp + getNavigationBarHeight))))
-  setImageDrawable(new ColorDrawable(getColor(R.color.black_58)))
+  setScaleType(ImageView.ScaleType.CENTER_CROP)
+
+  pictureId.onUi(id => BackgroundRequest(id).into(this))
 }

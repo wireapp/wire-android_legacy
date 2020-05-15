@@ -19,8 +19,8 @@
 package com.waz.zclient
 
 import android.app.AlertDialog
-import android.content.{DialogInterface, Intent}
-import android.support.v7.app.AppCompatActivity
+import android.content.{Context, DialogInterface, Intent}
+import androidx.appcompat.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountsService, BackendConfig}
@@ -31,11 +31,16 @@ import com.waz.zclient.utils.BackendController
 
 class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
 
+  private implicit val context: Context = this
+
   private lazy val backendController = inject[BackendController]
 
   override def onStart() = {
     super.onStart()
+    loadBackend()
+  }
 
+  private def loadBackend(): Unit = {
     val callback: BackendConfig => Unit = { be =>
       getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
       inject[AccountsService].activeAccountId.head(LogTag("BackendSelector")).map {
@@ -71,7 +76,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
     })
 
     builder.setCancelable(false)
-    builder.create().show()
+    if (!isFinishing())  builder.create().show()
 
     // QA needs to be able to switch backends via intents. Any changes to the backend
     // preference while the dialog is open will be treated as a user selection.
@@ -91,7 +96,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
   }
 
   private def startSignUp() = {
-    startActivity(new Intent(this, classOf[AppEntryActivity]))
+    startActivity(AppEntryActivity.newIntent(this))
     finish()
   }
 }
@@ -99,5 +104,3 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
 object LaunchActivity {
   val Tag = classOf[LaunchActivity].getName
 }
-
-

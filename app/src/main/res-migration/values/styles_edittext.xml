@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="EditText" parent="@android:style/Widget.EditText" />
+
+    <style name="EditText.RobotoThin">
+        <item name="android:fontFamily">sans-serif-thin</item>
+    </style>
+
+    <style name="EditText.RobotoLight">
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+
+    <style name="EditText.RobotoRegular">
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="EditText.RobotoMedium">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="EditText.RobotoBold">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="EditText.Authentication" parent="@style/EditText.RobotoRegular">
+        <item name="android:padding">@dimen/authentication_edit_text_padding</item>
+        <item name="android:textColorHint">@color/heather</item>
+        <item name="android:textSize">@dimen/authentication_edit_text_text_size</item>
+        <item name="android:background">@color/white</item>
+        <item name="errorTextAppearance">@style/TextView.Authentication.Error</item>
+    </style>
+
+    <style name="EditText.Pin" parent="@style/EditText.RobotoRegular">
+        <item name="android:inputType">number</item>
+        <item name="android:padding">@dimen/pin_code_digit_padding</item>
+        <item name="android:textSize">@dimen/pin_code_digit_text_size</item>
+        <item name="android:background">@color/white</item>
+        <item name="fieldColor">@color/white</item>
+        <item name="fieldBgColor">@color/white</item>
+        <item name="highlightColor">@color/white</item>
+        <item name="noOfFields">6</item>
+        <item name="lineThickness">0dp</item>
+        <item name="cornerRadius">@dimen/pin_code_digit_corner_radius</item>
+    </style>
+
+</resources>

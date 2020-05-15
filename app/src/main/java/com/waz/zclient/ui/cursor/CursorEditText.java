@@ -25,8 +25,8 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.widget.TextView;
 import com.waz.zclient.R;
+import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.ui.text.TypefaceEditText;
-import timber.log.Timber;
 
 import java.lang.reflect.Field;
 
@@ -64,7 +64,7 @@ public class CursorEditText extends TypefaceEditText {
             cursorDrawableRes.setAccessible(true);
             cursorDrawableRes.set(this, matchZColorToCursorResourceID(accentColor));
         } catch (Exception e) {
-            Timber.e(e, "Failed setting custom cursor color");
+            Logger.error("CursorEditText", "Failed setting custom cursor color", e);
         }
     }
 

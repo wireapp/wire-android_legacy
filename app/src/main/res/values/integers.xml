@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2020 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources >
     <integer name="circle_icon_button__alpha_fill">255</integer>
     <integer name="circle_icon_button__alpha_stroke">100</integer>
     <integer name="animation_delay_short">150</integer>
@@ -35,11 +35,10 @@
     <integer name="calling_animation_duration_long">550</integer>
 
     <!-- Cursor-->
+    <integer name="cursor_starting_lines">2</integer>
     <integer name="cursor__max_lines">6</integer>
 
     <!-- Wire Values-->
-    <integer name="wire__animation__duration__short">150</integer>
-    <integer name="wire__animation__duration__regular">350</integer>
     <integer name="wire__animation__duration__medium">550</integer>
     <integer name="wire__animation__delay__very_short">50</integer>
     <integer name="wire__animation__delay__short">100</integer>
@@ -55,7 +54,6 @@
     <integer name="framework_animation_duration_medium">350</integer>
     <integer name="framework_animation_duration_long">550</integer>
     <integer name="framework_animation_delay_short">100</integer>
-    <integer name="framework_animation_delay_medium">150</integer>
     <integer name="framework_animation__confirmation_menu__show_message_delay">100</integer>
     <integer name="framework_animation__confirmation_menu__hide_background_delay">300</integer>
 
@@ -68,8 +66,6 @@
 
     <integer name="profile__guidance__animation__duration">400</integer>
     <integer name="camera__preview__ainmation__duration">600</integer>
-
-    <integer name="framework__delay_long">300</integer>
 
     <integer name="loading_bar__animation_duration">2100</integer>
     <integer name="loading_spinner__animation_duration">2000</integer>
@@ -89,10 +85,6 @@
 
     <integer name="open_new_conversation__thread_list_out__animation_duration">150</integer>
     <integer name="open_new_conversation__top_conversation__animation_duration">300</integer>
-    <integer name="open_profile__animation_duration">350</integer>
-    <integer name="open_profile__delay">300</integer>
-    <integer name="close_profile__animation_duration">350</integer>
-    <integer name="close_profile__delay">300</integer>
     <integer name="reopen_profile_source__animation_duration">350</integer>
     <integer name="reopen_profile_source__delay">300</integer>
 
@@ -104,4 +96,9 @@
 
     <integer name="team_tabs__animation_duration">100</integer>
     <integer name="slide_transition_fade_duration">250</integer>
+
+    <integer name="max_folder_name_length">64</integer>
+    <integer name="country_code_input_limit">4</integer>
+    <integer name="phone_number_input_limit">16</integer>
+    <integer name="username_limit">21</integer>
 </resources>

@@ -19,32 +19,26 @@ package com.waz.zclient.conversation
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v7.widget.Toolbar
-import android.view.View.{OnClickListener, OnLayoutChangeListener}
+import androidx.fragment.app.Fragment
+import androidx.appcompat.widget.Toolbar
+import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{FrameLayout, ImageView}
 import com.waz.content.{MessagesStorage, ReactionsStorage}
-import com.waz.model.{Liking, MessageId, UserId}
-import com.waz.service.assets.AssetService.RawAssetInput.WireAssetInput
+import com.waz.model.{AssetId, Liking, MessageId, UserId}
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.ScreenController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.conversation.toolbar._
 import com.waz.zclient.drawing.DrawingFragment.Sketch
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
-import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.cursor.CursorMenuItem
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{Offset, ViewUtils}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.{LocalDateTime, ZoneId}
 
@@ -62,6 +56,7 @@ class ImageFragment extends FragmentHelper {
 
   implicit def context: Context = getContext
 
+  private lazy val zms              = inject[Signal[ZMessaging]]
   private lazy val selfUserId       = inject[Signal[UserId]]
   private lazy val reactionsStorage = inject[Signal[ReactionsStorage]]
   private lazy val messagesStorage  = inject[Signal[MessagesStorage]]
@@ -114,7 +109,7 @@ class ImageFragment extends FragmentHelper {
   }
 
   lazy val imageInput = collectionController.focusedItem.collect {
-    case Some(messageData) => WireAssetInput(messageData.assetId)
+    case Some(messageData) => messageData.assetId
   } disableAutowiring()
 
   var animationStarted = false
@@ -148,8 +143,8 @@ class ImageFragment extends FragmentHelper {
 
         method.foreach { m =>
           getFragmentManager.popBackStack()
-          imageInput.head.foreach { asset =>
-            screenController.showSketch ! Sketch.singleImage(asset, m)
+          imageInput.head.collect { case Some(id: AssetId) => id }.foreach {
+            screenController.showSketch ! Sketch.asset(_, m)
           }
         }
       case item: MessageActionToolbarItem =>
@@ -173,21 +168,19 @@ class ImageFragment extends FragmentHelper {
       .collect { case Some(msg) => LocalDateTime.ofInstant(msg.time.instant, ZoneId.systemDefault()).toLocalDate.toString }
       .onUi(headerTimestamp.setText)
 
-    val layoutChangeListener = new OnLayoutChangeListener {
-      override def onLayoutChange(v: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) = {
-        if(v.getWidth > 0 && !animationStarted){
-          animationStarted = true
-          Option(getArguments.getString(ArgMessageId)).foreach { messageId =>
-            messagesStorage.head.flatMap(_.get(MessageId(messageId))).map { _.foreach(msg => collectionController.focusedItem ! Some(msg)) }
-            val imageSignal: Signal[ImageSource] = messagesStorage.flatMap(_.signal(MessageId(messageId))).map(msg => WireImage(msg.assetId))
-            animateOpeningTransition(new ImageAssetDrawable(imageSignal))
-          }
-        }
+    Option(getArguments.getString(ArgMessageId)).foreach { messageId =>
+      zms.head.flatMap(_.messagesStorage.get(MessageId(messageId))).map {
+        _.foreach(msg => collectionController.focusedItem ! Some(msg))
       }
     }
-
-    view.addOnLayoutChangeListener(layoutChangeListener)
     view
+  }
+
+
+  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
+    super.onViewCreated(view, savedInstanceState)
+    val imageViewPager = findById[ImageViewPager](R.id.image_view_pager)
+    imageViewPager.setVisibility(View.VISIBLE)
   }
 
   private def closeSingleImageView(id: MessageId): Unit =
@@ -196,7 +189,7 @@ class ImageFragment extends FragmentHelper {
       singleImageController.hideSingleImage()
     }
 
-  override def onDestroyView() = {
+  override def onDestroyView(): Unit = {
     collectionController.focusedItem ! None
     super.onDestroyView()
   }
@@ -208,74 +201,76 @@ class ImageFragment extends FragmentHelper {
     super.onDetach()
   }
 
-  private def animateOpeningTransition(drawable: ImageAssetDrawable): Unit =  {
-    val img = singleImageController.getImageContainer
+  //TODO: Salvage this animation?
+//  private def animateOpeningTransition(drawable: ImageAssetDrawable): Unit =  {
+//    val img = singleImageController.getImageContainer
+//
+//    val imageViewPager = findById[ImageViewPager](R.id.image_view_pager)
+//    val background     = findById[View]          (R.id.background)
+//
+//    if (img == null || img.getBackground == null || !img.getBackground.isInstanceOf[ImageAssetDrawable]) {
+//      imageViewPager.setVisibility(View.VISIBLE)
+//      background.setAlpha(1f)
+//    } else {
+//      val imagePadding       = img.getBackground.asInstanceOf[ImageAssetDrawable].padding.currentValue.getOrElse(Offset.Empty)
+//      val clickedImageHeight = img.getHeight - imagePadding.t - imagePadding.b
+//      val clickedImageWidth  = img.getWidth - imagePadding.l - imagePadding.r
+//
+//      if (clickedImageHeight == 0 || clickedImageWidth == 0) {
+//        imageViewPager.setVisibility(View.VISIBLE)
+//        background.setAlpha(1f)
+//      } else {
+//        val clickedImageLocation = ViewUtils.getLocationOnScreen(img)
+//        clickedImageLocation.offset(imagePadding.l, imagePadding.t - findById[View](R.id.header_toolbar).getHeight - getStatusBarHeight(getActivity))
+//
+//        val fullContainerWidth: Int = background.getWidth
+//        val fullContainerHeight: Int = background.getHeight
+//        val scale: Float = Math.min(fullContainerWidth / clickedImageWidth.toFloat, fullContainerHeight / clickedImageHeight.toFloat)
+//        val fullImageWidth = clickedImageWidth.toFloat * scale
+//        val fullImageHeight = clickedImageHeight.toFloat * scale
+//
+//        val targetX = ((fullContainerWidth - fullImageWidth) / 2).toInt + (fullImageWidth - clickedImageWidth) / 2
+//        val targetY = ((fullContainerHeight - fullImageHeight) / 2).toInt + (fullImageHeight - clickedImageHeight) / 2
+//
+//        returning(findById[ImageView](R.id.animating_image)) { animView =>
+//          animView.setImageDrawable(drawable)
+//          val parent = animView.getParent.asInstanceOf[ViewGroup]
+//          parent.removeView(animView)
+//          animView.setLayoutParams(new FrameLayout.LayoutParams(clickedImageWidth, clickedImageHeight))
+//          animView.setX(clickedImageLocation.x)
+//          animView.setY(clickedImageLocation.y)
+//          animView.setScaleX(1f)
+//          animView.setScaleY(1f)
+//          parent.addView(animView)
+//
+//          animView.animate
+//            .y(targetY)
+//            .x(targetX)
+//            .scaleX(scale)
+//            .scaleY(scale)
+//            .setInterpolator(new Expo.EaseOut)
+//            .setDuration(getInt(R.integer.single_image_message__open_animation__duration))
+//            .withStartAction(new Runnable() {
+//              def run() = singleImageController.getImageContainer.setVisibility(View.INVISIBLE)
+//            })
+//            .withEndAction(new Runnable() {
+//              def run() = {
+//                val messageView = singleImageController.getImageContainer
+//                Option(messageView).foreach(_.setVisibility(View.VISIBLE))
+//                animView.setVisibility(View.GONE)
+//                imageViewPager.setVisibility(View.VISIBLE)
+//              }
+//            })
+//            .start()
+//        }
+//
+//        background.animate
+//          .alpha(1f)
+//          .setDuration(getInt(R.integer.framework_animation_duration_short))
+//          .setInterpolator(new Quart.EaseOut)
+//          .start()
+//      }
+//    }
+//  }
 
-    val imageViewPager = findById[ImageViewPager](R.id.image_view_pager)
-    val background     = findById[View]          (R.id.background)
-
-    if (img == null || img.getBackground == null || !img.getBackground.isInstanceOf[ImageAssetDrawable]) {
-      imageViewPager.setVisibility(View.VISIBLE)
-      background.setAlpha(1f)
-    } else {
-      val imagePadding       = img.getBackground.asInstanceOf[ImageAssetDrawable].padding.currentValue.getOrElse(Offset.Empty)
-      val clickedImageHeight = img.getHeight - imagePadding.t - imagePadding.b
-      val clickedImageWidth  = img.getWidth - imagePadding.l - imagePadding.r
-
-      if (clickedImageHeight == 0 || clickedImageWidth == 0) {
-        imageViewPager.setVisibility(View.VISIBLE)
-        background.setAlpha(1f)
-      } else {
-        val clickedImageLocation = ViewUtils.getLocationOnScreen(img)
-        clickedImageLocation.offset(imagePadding.l, imagePadding.t - findById[View](R.id.header_toolbar).getHeight - getStatusBarHeight(getActivity))
-
-        val fullContainerWidth: Int = background.getWidth
-        val fullContainerHeight: Int = background.getHeight
-        val scale: Float = Math.min(fullContainerWidth / clickedImageWidth.toFloat, fullContainerHeight / clickedImageHeight.toFloat)
-        val fullImageWidth = clickedImageWidth.toFloat * scale
-        val fullImageHeight = clickedImageHeight.toFloat * scale
-
-        val targetX = ((fullContainerWidth - fullImageWidth) / 2).toInt + (fullImageWidth - clickedImageWidth) / 2
-        val targetY = ((fullContainerHeight - fullImageHeight) / 2).toInt + (fullImageHeight - clickedImageHeight) / 2
-
-        returning(findById[ImageView](R.id.animating_image)) { animView =>
-          animView.setImageDrawable(drawable)
-          val parent = animView.getParent.asInstanceOf[ViewGroup]
-          parent.removeView(animView)
-          animView.setLayoutParams(new FrameLayout.LayoutParams(clickedImageWidth, clickedImageHeight))
-          animView.setX(clickedImageLocation.x)
-          animView.setY(clickedImageLocation.y)
-          animView.setScaleX(1f)
-          animView.setScaleY(1f)
-          parent.addView(animView)
-
-          animView.animate
-            .y(targetY)
-            .x(targetX)
-            .scaleX(scale)
-            .scaleY(scale)
-            .setInterpolator(new Expo.EaseOut)
-            .setDuration(getInt(R.integer.single_image_message__open_animation__duration))
-            .withStartAction(new Runnable() {
-              def run() = singleImageController.getImageContainer.setVisibility(View.INVISIBLE)
-            })
-            .withEndAction(new Runnable() {
-              def run() = {
-                val messageView = singleImageController.getImageContainer
-                Option(messageView).foreach(_.setVisibility(View.VISIBLE))
-                animView.setVisibility(View.GONE)
-                imageViewPager.setVisibility(View.VISIBLE)
-              }
-            })
-            .start()
-        }
-
-        background.animate
-          .alpha(1f)
-          .setDuration(getInt(R.integer.framework_animation_duration_short))
-          .setInterpolator(new Quart.EaseOut)
-          .start()
-      }
-    }
-  }
 }

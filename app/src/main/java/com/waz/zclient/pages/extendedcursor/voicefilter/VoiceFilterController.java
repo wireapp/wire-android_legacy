@@ -18,14 +18,16 @@
 package com.waz.zclient.pages.extendedcursor.voicefilter;
 
 import android.os.Handler;
+
 import com.waz.api.Asset;
 import com.waz.api.AssetFactory;
-import com.waz.api.AudioAssetForUpload;
 import com.waz.api.AudioEffect;
 import com.waz.api.AudioOverview;
 import com.waz.api.PlaybackControls;
 import com.waz.api.RecordingCallback;
 import com.waz.api.RecordingControls;
+import com.waz.service.assets.GlobalRecordAndPlayService;
+
 import org.threeten.bp.Instant;
 
 import java.util.ArrayList;
@@ -34,19 +36,19 @@ import java.util.List;
 
 public class VoiceFilterController implements
                                    RecordingCallback,
-                                   Asset.LoadCallback<AudioAssetForUpload> {
+                                   Asset.LoadCallback<GlobalRecordAndPlayService.Audio> {
     private static final long UPDATE_PLAY_TIME = 40;
 
     public List<RecordingObserver> recordingObservers = new ArrayList<>();
     public List<PlaybackObserver> playbackObservers = new ArrayList<>();
 
     private RecordingControls recordingControl;
-    private AudioAssetForUpload audioAssetForUpload;
+    private GlobalRecordAndPlayService.Audio audioAssetForUpload;
     private PlaybackControls currentPlayBackControl;
     private AudioOverview overview;
 
     private Handler handler = new Handler();
-    private AudioAssetForUpload originalRecording;
+    private GlobalRecordAndPlayService.Audio originalRecording;
     private AudioEffect appliedAudioEffect;
 
     public void addObserver(RecordingObserver recordingObserver) {
@@ -67,11 +69,11 @@ public class VoiceFilterController implements
         stopRecording();
         stopPlayback();
         if (audioAssetForUpload != null) {
-            audioAssetForUpload.delete();
+            audioAssetForUpload.file().delete();
         }
 
         if (originalRecording != null) {
-            originalRecording.delete();
+            originalRecording.file().delete();
         }
 
         handler.removeCallbacks(player);
@@ -106,13 +108,13 @@ public class VoiceFilterController implements
     }
 
     @Override
-    public void onComplete(AudioAssetForUpload recording, boolean fileSizeLimitReached, AudioOverview overview) {
+    public void onComplete(GlobalRecordAndPlayService.Audio audio, boolean fileSizeLimitReached, AudioOverview overview) {
         recordingControl = null;
         appliedAudioEffect = null;
-        originalRecording = recording;
+        originalRecording = audio;
         this.overview = overview;
         for (RecordingObserver recordingObserver : recordingObservers) {
-            recordingObserver.onRecordingFinished(recording, fileSizeLimitReached, overview);
+            recordingObserver.onRecordingFinished(audio, fileSizeLimitReached, overview);
         }
     }
 
@@ -129,11 +131,11 @@ public class VoiceFilterController implements
 
     public void approveAudio() {
         if (audioAssetForUpload == null) {
-            originalRecording.applyEffect(AudioEffect.NONE, new Asset.LoadCallback<AudioAssetForUpload>() {
+            originalRecording.applyEffect(AudioEffect.NONE, new Asset.LoadCallback<GlobalRecordAndPlayService.Audio>() {
 
                 @Override
-                public void onLoaded(AudioAssetForUpload audioAssetForUpload) {
-                    VoiceFilterController.this.audioAssetForUpload = audioAssetForUpload;
+                public void onLoaded(GlobalRecordAndPlayService.Audio audio) {
+                    VoiceFilterController.this.audioAssetForUpload = audio;
                     approveAudio();
                 }
 
@@ -147,7 +149,7 @@ public class VoiceFilterController implements
             return;
         }
 
-        AudioAssetForUpload sendAudio = audioAssetForUpload;
+        GlobalRecordAndPlayService.Audio sendAudio = audioAssetForUpload;
         /*
             Null it to make it is not deleted during tearDown()...
          */
@@ -196,7 +198,7 @@ public class VoiceFilterController implements
     }
 
     @Override
-    public void onLoaded(AudioAssetForUpload audioAssetForUpload) {
+    public void onLoaded(GlobalRecordAndPlayService.Audio audio) {
         handler.removeCallbacks(player);
 
         if (currentPlayBackControl != null && currentPlayBackControl.isPlaying()) {
@@ -204,12 +206,12 @@ public class VoiceFilterController implements
         }
 
         if (this.audioAssetForUpload != null) {
-            this.audioAssetForUpload.delete();
+            this.audioAssetForUpload.file().delete();
         }
 
-        this.audioAssetForUpload = audioAssetForUpload;
+        this.audioAssetForUpload = audio;
 
-        currentPlayBackControl = audioAssetForUpload.getPlaybackControls();
+        currentPlayBackControl = audio.getPlaybackControls();
         currentPlayBackControl.play();
         for (PlaybackObserver observer : playbackObservers) {
             observer.onPlaybackStarted(overview);
@@ -227,13 +229,13 @@ public class VoiceFilterController implements
     public interface RecordingObserver {
         void onRecordingStarted(RecordingControls recording, Instant timestamp);
 
-        void onRecordingFinished(AudioAssetForUpload recording, boolean fileSizeLimitReached, AudioOverview overview);
+        void onRecordingFinished(GlobalRecordAndPlayService.Audio recording, boolean fileSizeLimitReached, AudioOverview overview);
 
         void onRecordingCanceled();
 
         void onReRecord();
 
-        void sendRecording(AudioAssetForUpload audioAssetForUpload, AudioEffect appliedAudioEffect);
+        void sendRecording(GlobalRecordAndPlayService.Audio audio, AudioEffect appliedAudioEffect);
     }
 
     public interface PlaybackObserver {

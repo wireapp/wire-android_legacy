@@ -21,7 +21,7 @@ import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.{Injectable, Injector}
 
-class NavigationController(implicit injector: Injector) extends  Injectable {
+class NavigationController(implicit injector: Injector) extends Injectable {
 
   val visiblePage = Signal[Page]()
 

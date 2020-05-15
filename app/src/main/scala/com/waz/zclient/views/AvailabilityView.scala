@@ -20,7 +20,7 @@ package com.waz.zclient.views
 import android.content.Context
 import android.graphics.drawable.{BitmapDrawable, Drawable}
 import android.os.Bundle
-import android.support.design.widget.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
@@ -33,6 +33,7 @@ import android.graphics.{Bitmap, Canvas, Color}
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.utils.ContextUtils
+import com.waz.zclient.utils._
 
 abstract class AvailabilityView(context: Context, attrs: AttributeSet, style: Int, allowUpdate: Boolean) extends LinearLayout(context, attrs, style) with ViewHelper {
   import com.waz.zclient.views.AvailabilityView._
@@ -59,7 +60,7 @@ abstract class AvailabilityView(context: Context, attrs: AttributeSet, style: In
   private lazy val transformer = TextTransform.get(context.getResources.getString(R.string.availability_view__font_transform))
 
   def set(availability: Availability): Unit = {
-    AvailabilityView.displayLeftOfText(textView, availability, textView.getCurrentTextColor)
+    AvailabilityView.displayStartOfText(textView, availability, textView.getCurrentTextColor)
 
     availability match {
       case Availability.None if !allowUpdate =>
@@ -144,20 +145,12 @@ object AvailabilityView {
 
   private val PUSH_DOWN_PX = 5
 
-  def displayLeftOfText(view: TextView, av: Availability, color: Int, pushDown: Boolean = false)(implicit ctx: Context): Unit = {
-    val name = ContextUtils.getString(AvailabilityView.viewData(av).nameId)
-    val pd = if (pushDown) PUSH_DOWN_PX else 0
-    val drawable = AvailabilityView.drawable(av, color)
-    drawable.foreach(d => d.setBounds(0, pd, d.getIntrinsicWidth, d.getIntrinsicHeight + pd))
-    view.setContentDescription(name)
-    val oldDrawables = view.getCompoundDrawables
-    view.setCompoundDrawablesRelative(drawable.orNull, oldDrawables(1), oldDrawables(2), oldDrawables(3))
+  def displayStartOfText(view: TextView, av: Availability, color: Int, pushDown: Boolean = false)(implicit ctx: Context): Unit = {
+    view.setContentDescription(ContextUtils.getString(AvailabilityView.viewData(av).nameId))
+    view.displayStartOfText(AvailabilityView.drawable(av, color), if (pushDown) PUSH_DOWN_PX else 0)
   }
 
-  def hideAvailabilityIcon(view: TextView): Unit = {
-    val oldDrawables = view.getCompoundDrawables
-    view.setCompoundDrawablesRelative(null, oldDrawables(1), oldDrawables(2), oldDrawables(3))
-  }
+  def hideAvailabilityIcon(view: TextView): Unit = view.displayStartOfText()
 
   def showAvailabilityMenu(method: AvailabilityChanged.Method)(implicit ctx: Context): Unit = new AvailabilityMenu(ctx, method).show()
 

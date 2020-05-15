@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/conversation_list__row__height"
+    android:layout_marginStart="@dimen/wire__padding__big"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/wire__padding__20"
+    android:paddingBottom="@dimen/wire__padding__20"
+    tools:background="@color/white_32"
+    tools:parentTag="android.widget.LinearLayout">
+
+    <ImageView
+        android:id="@+id/conv_list_section_imageview_expand"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_gravity="center_vertical|start"
+        android:src="@drawable/icon_arrow_down_white"
+        android:tint="@color/text__primary_dark" />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/conv_list_section_textview_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|start"
+        android:layout_marginStart="@dimen/wire__padding__8"
+        android:layout_weight="1"
+        android:gravity="start"
+        android:textAllCaps="true"
+        android:textColor="@color/text__primary_dark"
+        android:textSize="@dimen/wire__text_size__small"
+        app:w_font="@string/wire__typeface__light"
+        tools:text="Title" />
+
+    <com.waz.zclient.conversationlist.views.ConversationBadge
+        android:id="@+id/folder_badge_text"
+        style="@style/ConversationBadge"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="@dimen/wire__padding__8"
+        android:visibility="gone"
+        tools:background="@drawable/conversation_badge"
+        tools:visibility="visible" />
+
+</merge>

@@ -21,18 +21,18 @@ import android.content.Context
 import android.graphics.Typeface
 import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
-import android.widget.{LinearLayout, TextView}
+import android.widget.{ImageView, LinearLayout, TextView}
+import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetData, MessageContent, MessageData, Name}
+import com.waz.model._
+import com.waz.service.assets.Asset
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.zclient.common.controllers.AssetsController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MsgPart._
@@ -51,7 +51,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
     with ViewHelper
     with EphemeralPartView
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -83,10 +83,11 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
   container.setBackground(new ReplyBackgroundDrawable(getStyledColor(R.attr.replyBorderColor), getStyledColor(R.attr.wireBackgroundCollection)))
 
   protected val quotedMessage: SourceSignal[MessageData] with NoAutowiring = Signal[MessageData]()
-  protected val quotedAsset: Signal[Option[AssetData]] =
-    quotedMessage.map(_.assetId).flatMap(assetsController.assetSignal).collect {
-      case (asset, _) => Option(asset)
-    }.orElse(Signal.const(Option.empty[AssetData]))
+  protected val quotedAsset: Signal[Option[Asset]] =
+    quotedMessage.map(_.assetId).flatMap(assetsController.assetSignal).map {
+      case Some(x: Asset) => Some(x)
+      case _ => None
+    }
 
   def setQuote(quotedMessage: MessageData): Unit = {
     verbose(l"setQuote: $quotedMessage")
@@ -100,7 +101,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
 
   quoteComposer
     .map { _
-      .map(u => if (u.isWireBot) u.name else u.getDisplayName)
+      .map(u => if (u.isWireBot) u.name else u.name)
       .getOrElse(Name.Empty)
     }
     .onUi(name.setText(_))
@@ -110,8 +111,8 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
     .map(getTimeStamp)
     .onUi(timestamp.setText)
 
-  quotedMessage.map(!_.editTime.isEpoch).onUi { edited =>
-    name.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
+  quotedMessage.map(_.isEdited).onUi { edited =>
+    name.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None)
   }
 
   container.onClick(onQuoteClick ! {()})
@@ -183,11 +184,12 @@ class ImageReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   override def tpe: MsgPart = Reply(Image)
 
-  private val imageContainer = findById[View](R.id.image_container)
+  private val imageView = findById[ImageView](R.id.image)
 
-  private val imageSignal: Signal[ImageSource] = quotedMessage.map(m => WireImage(m.assetId))
-
-  imageContainer.setBackground(new ImageAssetDrawable(imageSignal, ScaleType.StartInside, RequestBuilder.Regular))
+  quotedMessage.map(_.assetId).onUi {
+    case Some(aid: AssetId) => WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
+    case _ => WireGlide(context).clear(imageView)
+  }
 }
 
 class LocationReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -199,7 +201,7 @@ class LocationReplyPartView(context: Context, attrs: AttributeSet, style: Int) e
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
   quotedMessage.map(_.location.map(_.getName).getOrElse("")).onUi(textView.setText)
-  textView.setStartCompoundDrawable(Some(WireStyleKit.drawLocation), getStyledColor(R.attr.wirePrimaryTextColor))
+  textView.setStartCompoundDrawable(Some(WireStyleKit.drawLocation))
 }
 
 class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -210,8 +212,8 @@ class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
-  quotedAsset.map(_.flatMap(_.name).getOrElse("")).onUi(textView.setText)
-  textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile), getStyledColor(R.attr.wirePrimaryTextColor))
+  quotedAsset.map(_.map(_.name).getOrElse("")).onUi(textView.setText)
+  textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
 }
 
 class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -220,14 +222,14 @@ class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
 
   override def tpe: MsgPart = Reply(VideoAsset)
 
-  private val imageContainer = findById[View](R.id.image_container)
+  private val imageView = findById[ImageView](R.id.image)
   private val imageIcon = findById[GlyphTextView](R.id.image_icon)
 
-  private val imageSignal: Signal[ImageSource] = quotedAsset.map(_.flatMap(_.previewId)).collect {
-    case Some(aId) => WireImage(aId)
+  quotedAsset.map(_.flatMap(_.preview)).onUi {
+    case Some(aid: AssetId) => WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
+    case _ => WireGlide(context).clear(imageView)
   }
 
-  imageContainer.setBackground(new ImageAssetDrawable(imageSignal, ScaleType.StartInside, RequestBuilder.Regular))
   imageIcon.setVisibility(View.VISIBLE)
 }
 
@@ -240,7 +242,7 @@ class AudioReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
   textView.setText(R.string.reply_message_type_audio)
-  textView.setStartCompoundDrawable(Some(WireStyleKit.drawVoiceMemo), getStyledColor(R.attr.wirePrimaryTextColor))
+  textView.setStartCompoundDrawable(Some(WireStyleKit.drawVoiceMemo))
 }
 
 class UnknownReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {

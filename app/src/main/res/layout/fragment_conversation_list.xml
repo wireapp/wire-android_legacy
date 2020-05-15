@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2019 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,119 +19,126 @@
 
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             xmlns:app="http://schemas.android.com/apk/res-auto"
-    >
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <com.waz.zclient.conversationlist.views.NormalTopToolbar
         android:id="@+id/conversation_list_top_toolbar"
-        android:layout_gravity="top"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        />
+        android:layout_gravity="top" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:layout_marginLeft="@dimen/wire__padding__huge"
         android:layout_marginRight="@dimen/wire__padding__huge"
-        android:layout_gravity="center"
         android:orientation="vertical">
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/conversation_list_empty_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
             android:text="@string/no_conversation_in_list__header"
             android:textAllCaps="true"
             android:textColor="@color/text__primary_dark"
             android:textSize="@dimen/wire__text_size__small"
-            android:gravity="center"
-            android:layout_gravity="center_horizontal"
-            app:w_font="@string/wire__typeface__medium"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            app:w_font="@string/wire__typeface__medium" />
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/conversation_list_empty_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:layout_marginTop="@dimen/wire__padding__small"
+            android:gravity="center"
             android:text="@string/no_conversation_in_list__message"
             android:textAllCaps="true"
-            android:gravity="center"
-            android:layout_gravity="center_horizontal"
             android:textColor="@color/text__primary_dark"
             android:textSize="@dimen/wire__text_size__small"
-            app:w_font="@string/wire__typeface__light"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            app:w_font="@string/wire__typeface__light" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/conversation_list_loading_indicator"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:layout_marginBottom="@dimen/conversation_list__action_view__height"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize"
         android:orientation="vertical"
-        android:visibility="gone"
-        >
+        android:visibility="gone">
 
-        <include  layout="@layout/conv_list_item_loading_small" />
-        <include  layout="@layout/conv_list_item_loading_regular" />
-        <include  layout="@layout/conv_list_item_loading_large" />
-        <include  layout="@layout/conv_list_item_loading_small" />
-        <include  layout="@layout/conv_list_item_loading_large" />
-        <include  layout="@layout/conv_list_item_loading_regular" />
-        <include  layout="@layout/conv_list_item_loading_small" />
-        <include  layout="@layout/conv_list_item_loading_large" />
-        <include  layout="@layout/conv_list_item_loading_small" />
-        <include  layout="@layout/conv_list_item_loading_regular" />
+        <include layout="@layout/conv_list_item_loading_small" />
+        <include layout="@layout/conv_list_item_loading_regular" />
+        <include layout="@layout/conv_list_item_loading_large" />
+        <include layout="@layout/conv_list_item_loading_small" />
+        <include layout="@layout/conv_list_item_loading_large" />
+        <include layout="@layout/conv_list_item_loading_regular" />
+        <include layout="@layout/conv_list_item_loading_small" />
+        <include layout="@layout/conv_list_item_loading_large" />
+        <include layout="@layout/conv_list_item_loading_small" />
+        <include layout="@layout/conv_list_item_loading_regular" />
 
     </LinearLayout>
-
-    <com.waz.zclient.pages.main.conversationlist.views.ListActionsView
-        android:id="@+id/lav__conversation_list_actions"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/conversation_list__action_view__height"
-        android:layout_gravity="bottom"
-        />
 
     <com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
         android:id="@+id/conversation_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="@dimen/conversation_list__action_view__height"
-        android:layout_marginTop="?attr/actionBarSize"
-        />
+        android:layout_marginTop="?attr/actionBarSize" />
 
     <LinearLayout
         android:id="@+id/empty_list_message"
-        android:layout_width="@dimen/empty_list_onboarding_width"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
         android:orientation="vertical"
-        android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="@dimen/conversation_list__action_view__height"
         android:visibility="gone"
-        >
+        tools:visibility="visible">
 
         <com.waz.zclient.ui.text.TypefaceTextView
-            android:layout_width="wrap_content"
+            android:layout_width="@dimen/empty_list_onboarding_width"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textSize="@dimen/wire__text_size__medium"
+            android:gravity="start"
             android:text="@string/no_conversation_in_list__message"
             android:textColor="@color/white"
-            app:w_font="@string/wire__typeface__light"
-            />
+            android:layout_marginStart="12dp"
+            android:textSize="@dimen/wire__text_size__medium"
+            app:w_font="@string/wire__typeface__light" />
 
-        <ImageView
-            android:id="@+id/empty_list_arrow"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/empty_list_onboarding_arrow_height"
+            android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/wire__padding__big"
             android:layout_marginBottom="@dimen/wire__padding__big"
-            android:layout_gravity="center_horizontal"/>
+            android:orientation="horizontal">
+
+<!--            TODO: ugly hack to align arrow drawable bec. bottom navigation items don't stretch-->
+<!--            change when support lib updated to 28.x-->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/empty_list_arrow"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/empty_list_onboarding_arrow_height"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="2" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="5" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

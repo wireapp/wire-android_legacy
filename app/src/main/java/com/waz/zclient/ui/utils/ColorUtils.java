@@ -23,8 +23,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
+
 import com.waz.zclient.utils.ViewUtils;
 
 public class ColorUtils {
@@ -34,11 +33,11 @@ public class ColorUtils {
     }
 
     public static int injectAlpha(int alpha, int color) {
-        return android.support.v4.graphics.ColorUtils.setAlphaComponent(color, alpha);
+        return androidx.core.graphics.ColorUtils.setAlphaComponent(color, alpha);
     }
 
     public static int injectAlpha(float alpha, int color) {
-        return android.support.v4.graphics.ColorUtils.setAlphaComponent(color, (int) (255 * alpha));
+        return androidx.core.graphics.ColorUtils.setAlphaComponent(color, (int) (255 * alpha));
     }
 
 
@@ -49,13 +48,6 @@ public class ColorUtils {
 
     public static int adjustBrightness(int color, float percentage) {
         return Color.argb(Color.alpha(color), (int) (Color.red(color) * percentage), (int) (Color.green(color) * percentage), (int) (Color.blue(color) * percentage));
-    }
-
-
-    public static Drawable getTintedDrawable(Context context, int resId, int color) {
-        Drawable drawable = DrawableCompat.wrap(ContextCompat.getDrawable(context, resId));
-        DrawableCompat.setTint(drawable.mutate(), color);
-        return drawable;
     }
 
     public static Drawable getRoundedTextBoxBackground(Context context, int color, int targetHeight) {

@@ -18,12 +18,12 @@
 package com.waz.zclient.conversation.creation
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v7.widget.SwitchCompat
+import androidx.fragment.app.Fragment
 import android.text.InputFilter.LengthFilter
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, TextView}
 import android.widget.CompoundButton.OnCheckedChangeListener
+import androidx.appcompat.widget.SwitchCompat
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -31,6 +31,7 @@ import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.GroupNameValidator
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor, ViewWithColor}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.getStyledColor
@@ -44,7 +45,9 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
   private lazy val guestsToggle = view[SwitchCompat](R.id.guest_toggle)
   private lazy val convOptions = view[View](R.id.create_conv_options)
   private lazy val convOptionsArrow = view[ImageView](R.id.create_conv_options_icon)
-  private lazy val callInfo = view[TextView](R.id.call_info)
+  private lazy val callInfo = returning(view[TextView](R.id.call_info)) { vh =>
+    vh.foreach(_.setText(getString(R.string.call_info_text, ConversationController.MaxParticipants.toString)))
+  }
 
   private lazy val readReceiptsToggle  = returning(view[SwitchCompat](R.id.read_receipts_toggle)) { vh =>
     findById[ImageView](R.id.read_receipts_icon).setImageDrawable(ViewWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))

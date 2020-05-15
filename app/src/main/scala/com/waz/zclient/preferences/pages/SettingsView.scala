@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2020 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,9 +27,11 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
+import com.waz.zclient.common.views.FlatWireButton
+import com.waz.zclient.feature.settings.about.SettingsAboutActivity
+import com.waz.zclient.feature.settings.support.SettingsSupportActivity
 import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
-import com.waz.zclient.common.views.FlatWireButton
 
 trait SettingsView {
 
@@ -62,8 +64,20 @@ class SettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
   devicesButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevicesBackStackKey())}
   optionsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(OptionsBackStackKey()) }
   advancedButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AdvancedBackStackKey()) }
-  supportButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(SupportBackStackKey()) }
-  aboutButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AboutBackStackKey()) }
+  supportButton.onClickEvent.on(Threading.Ui) { _ =>
+    if (BuildConfig.KOTLIN_SETTINGS) {
+      context.startActivity(SettingsSupportActivity.newIntent(context))
+    } else {
+      navigator.goTo(SupportBackStackKey())
+    }
+  }
+  aboutButton.onClickEvent.on(Threading.Ui) { _ =>
+    if (BuildConfig.KOTLIN_SETTINGS) {
+      context.startActivity(SettingsAboutActivity.newIntent(context))
+    } else {
+      navigator.goTo(AboutBackStackKey())
+    }
+  }
   devButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevSettingsBackStackKey()) }
   avsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AvsBackStackKey()) }
 
@@ -114,7 +128,7 @@ class SettingsViewController(view: SettingsView)(implicit inj: Injector, ec: Eve
   val selfInfo = for {
     z <- zms
     self <- UserSignal(z.selfUserId)
-  } yield (self.getDisplayName, self.handle.fold("")(_.string))
+  } yield (self.name, self.handle.fold("")(_.string))
 
   val team = zms.flatMap(_.teams.selfTeam)
 

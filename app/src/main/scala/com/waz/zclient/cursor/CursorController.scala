@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.cursor
 
-import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO}
+import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.app.Activity
 import android.content.Context
 import android.text.TextUtils
@@ -25,6 +25,7 @@ import android.view.{MotionEvent, View}
 import android.widget.Toast
 import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
 import com.waz.api.NetworkMode
+import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
@@ -34,6 +35,7 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers._
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.location.ILocationController
 import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversationlist.ConversationListController
@@ -43,9 +45,11 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor.{CursorMenuItem => JCursorMenuItem}
 import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DraftMap
 import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.BuildConfig
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
@@ -57,11 +61,12 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   import CursorController._
   import Threading.Implicits.Ui
 
-  val zms                     = inject[Signal[ZMessaging]]
-  val conversationController  = inject[ConversationController]
-  lazy val convListController = inject[ConversationListController]
-  lazy val callController     = inject[CallController]
-  private lazy val replyController = inject[ReplyController]
+  private lazy val zms                     = inject[Signal[ZMessaging]]
+  private lazy val conversationController  = inject[ConversationController]
+  private lazy val convListController      = inject[ConversationListController]
+  private lazy val callController          = inject[CallController]
+  private lazy val replyController         = inject[ReplyController]
+  private lazy val userPrefs               = inject[Signal[UserPreferences]]
 
   val conv = conversationController.currentConv
 
@@ -104,9 +109,18 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   val onEphemeralExpirationSelected = EventStream[Option[FiniteDuration]]()
 
   val sendButtonEnabled: Signal[Boolean] = for {
-    sendPref <- zms.map(_.userPrefs).flatMap(_.preference(UserPreferences.SendButtonEnabled).signal)
-    emoji <- emojiKeyboardVisible
+    prefs    <- userPrefs
+    sendPref <- prefs(UserPreferences.SendButtonEnabled).signal
+    emoji    <- emojiKeyboardVisible
   } yield emoji || sendPref
+
+  val keyboardPrivateMode =
+    if(BuildConfig.FORCE_PRIVATE_KEYBOARD) Signal.const(true) else {
+      for {
+        prefs <- userPrefs
+        mode  <- prefs(IncognitoKeyboardEnabled).signal
+      } yield mode
+    }
 
   val enteredTextEmpty = enteredText.map(_._1.isEmpty).orElse(Signal const true)
   val sendButtonVisible = Signal(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage) map {
@@ -237,8 +251,8 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   def onApproveEditMessage(): Unit =
     for {
       cId <- conversationController.currentConvId.head
-      cs <- zms.head.map(_.convsUi)
-      m <- editingMsg.head if m.isDefined
+      cs  <- zms.head.map(_.convsUi)
+      m   <- editingMsg.head if m.isDefined
       msg = m.get
       (CursorText(text, mentions), _) <- enteredText.head
     } {
@@ -277,6 +291,8 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   private lazy val permissions        = inject[PermissionsService]
   private lazy val activity           = inject[Activity]
   private lazy val screenController   = inject[ScreenController]
+  private lazy val accentColorController  = inject[AccentColorController]
+
 
   import CursorMenuItem._
 
@@ -301,18 +317,50 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
     case VideoMessage =>
       checkIfCalling(isVideoMessage = true)(cursorCallback.foreach(_.captureVideo()))
     case Location =>
-      val googleAPI = GoogleApiAvailability.getInstance
-      if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
-        KeyboardUtils.hideKeyboard(activity)
-        locationController.showShareLocation()
-      }
-      else showToast(R.string.location_sharing__missing_play_services)
+      showLocationIfAllowed()
     case Gif =>
-      enteredText.head.foreach { case (CursorText(text, _), _) => screenController.showGiphy ! Some(text) }
+      enteredText.head.foreach { _ => screenController.showGiphy ! Some(s"") }
     case Send =>
       enteredText.head.foreach { case (CursorText(text, mentions), _) => submit(text, mentions) }
     case _ =>
       // ignore
+  }
+
+  /**
+    * Display location dialog, if Google Play Services are available, and the user confirmed
+    * the permission to access location
+    */
+  private def showLocationIfAllowed(): Unit = {
+    for {
+      color <- accentColorController.accentColor.head
+
+      // Check if the user was asked before
+      preferences <- userPrefs.head
+      askedForLocationPermissionPreference = preferences.preference(UserPreferences.AskedForLocationPermission)
+      askedForLocation <- askedForLocationPermissionPreference.apply()
+
+      // Show dialog only if the user didn't accept it before
+      response <- if (!askedForLocation) ContextUtils.showConfirmationDialog(
+        getString(R.string.location_sharing__permission__title),
+        getString(R.string.location_sharing__permission__message),
+        R.string.location_sharing__permission__continue,
+        R.string.location_sharing__permission__cancel,
+        color
+      ) else { Future.successful(true) } // skip dialog
+    } yield {
+      if(response) { // user canceled
+        // store that we asked and the user clicked "OK", so that we don't ask anymore
+        // this is not a synchronous operation, but we are not interested in waiting
+        askedForLocationPermissionPreference.update(true)
+
+        val googleAPI = GoogleApiAvailability.getInstance
+        if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
+          KeyboardUtils.hideKeyboard(activity)
+          locationController.showShareLocation()
+        }
+        else showToast(R.string.location_sharing__missing_play_services)
+      }
+    }
   }
 
   private def checkIfCalling(isVideoMessage: Boolean)(f: => Unit) =
@@ -338,7 +386,7 @@ object CursorController {
 
   val KeyboardPermissions = Map(
     ExtendedCursorContainer.Type.IMAGES -> ListSet(CAMERA, READ_EXTERNAL_STORAGE),
-    ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING -> ListSet(RECORD_AUDIO)
+    ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING -> ListSet(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)
   )
 
   def keyboardPermissions(tpe: ExtendedCursorContainer.Type): ListSet[PermissionsService.PermissionKey] = KeyboardPermissions.getOrElse(tpe, ListSet.empty)

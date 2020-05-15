@@ -20,10 +20,11 @@ package com.waz.zclient.integrations
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
-import android.support.annotation.Nullable
-import android.support.v4.app.FragmentManager
+import androidx.annotation.Nullable
+import androidx.fragment.app.FragmentManager
 import android.view._
 import android.widget.ImageView
+import com.bumptech.glide.request.RequestOptions
 import com.waz.api.impl.ErrorResponse
 import com.waz.model
 import com.waz.model._
@@ -32,12 +33,11 @@ import com.waz.service.tracking.{IntegrationAdded, TrackingService}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.{NoImage, WireImage}
-import com.waz.zclient.common.views.IntegrationAssetDrawable
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.glide.WireGlide
+import com.waz.zclient.glide.transformations.IntegrationBackgroundCrop
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.ServicePlaceholderDrawable
 import com.waz.zclient.participants.ParticipantsController
@@ -67,22 +67,13 @@ class IntegrationDetailsFragment extends FragmentHelper {
   private lazy val name        = getStringArg(Name)
   private lazy val description = getStringArg(Description)
   private lazy val summary     = getStringArg(Summary)
-  private lazy val assetId     = getStringArg(Asset).map(AssetId)
+  private lazy val assetId     = getStringArg(Asset).map(AssetId.apply)
 
   //will only be defined if removing from a conversation
   private lazy val fromConv    = getStringArg(RemoveFromConv).map(ConvId)
   private lazy val serviceUser = getStringArg(ServiceUser).map(UserId)
 
   private lazy val isBackgroundTransparent = getBooleanArg(IsTransparent)
-
-  private lazy val drawable = new IntegrationAssetDrawable(
-    src          = Signal.const(assetId.map(WireImage).getOrElse(NoImage())),
-    scaleType    = ScaleType.CenterInside,
-    request      = RequestBuilder.Regular,
-    background   = Some(ServicePlaceholderDrawable(getDimenPx(R.dimen.wire__padding__regular))),
-    animate      = true
-  )
-
   private lazy val addRemoveButton = view[View](R.id.add_remove_service_button)
   private lazy val addRemoveButtonText = view[TypefaceTextView](R.id.button_text)
 
@@ -107,11 +98,28 @@ class IntegrationDetailsFragment extends FragmentHelper {
 
     returning(findById[TypefaceTextView](R.id.integration_title))(v => name.foreach(v.setText(_)))
     returning(findById[TypefaceTextView](R.id.integration_name))(v => name.foreach(v.setText(_)))
-    returning(findById[ImageView](R.id.integration_picture))(_.setImageDrawable(drawable))
+    returning(findById[ImageView](R.id.integration_picture)) { iv =>
+      val placeholder = ServicePlaceholderDrawable(getDimenPx(R.dimen.wire__padding__regular))
+      assetId match {
+        case Some(id) =>
+          WireGlide(ctx)
+            .load(id)
+            .apply(new RequestOptions().placeholder(placeholder).transform(new IntegrationBackgroundCrop()))
+            .into(iv)
+        case _ =>
+          iv.setImageDrawable(placeholder)
+      }
+    }
     returning(findById[TypefaceTextView](R.id.integration_summary))(v => summary.foreach(v.setText(_)))
     returning(findById[TypefaceTextView](R.id.integration_description))(v => description.foreach(v.setText(_)))
 
-    fromConv.fold(userAccountsController.hasPermissionToAddService)(userAccountsController.hasPermissionToRemoveService).foreach {
+    // FIXME: we use the same button for adding and removing services...
+    val showAddRemoveButton = fromConv match {
+      case Some(id) => convController.selfRoleInConv(id).map(_.canRemoveGroupMember).head
+      case _        => userAccountsController.hasPermissionToAddService
+    }
+
+    showAddRemoveButton.foreach {
       case true =>
         addRemoveButtonText.foreach { v =>
           v.setText(if (isRemovingFromConv) R.string.remove_service_button_text else R.string.open_service_conversation_button_text)

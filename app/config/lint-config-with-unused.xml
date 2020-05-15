@@ -37,7 +37,6 @@
     <issue id="OldTargetApi" severity="ignore" />
     <issue id="AllowBackup" severity="ignore" />
     <issue id="IconColors" severity="ignore" />
-    <issue id="LogNotTimber" severity="ignore" />
 
     <issue id="NestedWeights" severity="ignore"/>
     <issue id="Overdraw" severity="ignore"/>

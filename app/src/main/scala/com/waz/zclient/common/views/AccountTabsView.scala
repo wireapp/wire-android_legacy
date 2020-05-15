@@ -18,10 +18,10 @@
 package com.waz.zclient.common.views
 
 import android.content.Context
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
 import android.view.View.OnTouchListener
 import android.view.{MotionEvent, View, ViewGroup}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.utils.events.{EventContext, EventStream}

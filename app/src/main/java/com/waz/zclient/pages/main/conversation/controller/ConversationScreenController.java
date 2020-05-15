@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.pages.main.conversation.controller;
 
+import androidx.annotation.NonNull;
+
 import com.waz.model.ConvId;
 import com.waz.model.UserId;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
@@ -97,6 +99,13 @@ public class ConversationScreenController implements IConversationScreenControll
     @Override
     public DialogLaunchMode getPopoverLaunchMode() {
         return launchMode;
+    }
+
+    @Override
+    public void showMoveToFolder(@NonNull ConvId convId) {
+        for (ConversationScreenControllerObserver observer : conversationScreenControllerObservers) {
+            observer.onMoveToFolder(convId);
+        }
     }
 
     @Override

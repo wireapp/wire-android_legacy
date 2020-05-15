@@ -56,7 +56,7 @@ class PingPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     case Other(name) => getString(R.string.content__xxx_pinged, name.toUpperCase(locale))
   }
 
-  message.map(_.userId) { chatheadView.setUserId }
+  message.map(_.userId) { chatheadView.loadUser }
 
   (for {
     t <- text

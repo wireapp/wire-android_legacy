@@ -18,7 +18,7 @@
 package com.waz.zclient.participants.fragments
 
 import android.os.Bundle
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
@@ -31,7 +31,7 @@ class AllGroupParticipantsFragment extends FragmentHelper {
 
   private lazy val participantsController = inject[ParticipantsController]
 
-  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.otherParticipants.map(_.toSeq), showPeopleOnly = true)) {
+  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.participants, showPeopleOnly = true)) {
     _.onClick(participantsController.onShowUser ! Some(_))
   }
 

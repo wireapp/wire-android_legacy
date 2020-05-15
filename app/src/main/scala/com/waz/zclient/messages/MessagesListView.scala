@@ -18,15 +18,16 @@
 package com.waz.zclient.messages
 
 import android.app.Activity
-import android.arch.paging.PagedList
+import androidx.paging.PagedList
 import android.content.Context
-import android.support.v7.widget.RecyclerView.{OnScrollListener, ViewHolder}
-import android.support.v7.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
+import androidx.recyclerview.widget.RecyclerView.{OnScrollListener, ViewHolder}
 import android.util.AttributeSet
 import android.view.WindowManager
-import com.waz.api.{AssetStatus, Message}
+import androidx.recyclerview.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
+import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, Dim2, MessageData}
+import com.waz.service.assets.AssetStatus
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -42,7 +43,7 @@ import com.waz.zclient.{Injectable, Injector, ViewHelper}
 
 class MessagesListView(context: Context, attrs: AttributeSet, style: Int)
   extends RecyclerView(context, attrs, style) with ViewHelper with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -195,26 +196,25 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapte
     }
   }
 
-  // mark message as read if message is bound while list is visible
-  msgsController.fullyVisibleMessagesList.flatMap {
-    case Some(convId) =>
-      message.filter(_.convId == convId) flatMap {
-        case msg if msg.isAssetMessage && msg.state == Message.Status.SENT =>
-          // received asset message is considered read when its asset is available,
-          // this is especially needed for ephemeral messages, only start the counter when message is downloaded
-          assets.assetSignal(msg.assetId) flatMap {
-            case (_, AssetStatus.DOWNLOAD_DONE) if msg.msgType == Message.Type.ASSET =>
-              // image assets are considered read only once fully downloaded
-              Signal const msg
-            case (_, AssetStatus.UPLOAD_DONE | AssetStatus.UPLOAD_CANCELLED | AssetStatus.UPLOAD_FAILED) if msg.msgType != Message.Type.ASSET =>
-              // for other assets it's enough when upload is done, download is user triggered here
-              Signal const msg
-            case _ => Signal.empty[MessageData]
-          }
-        case msg => Signal const msg
-      }
-    case None => Signal.empty[MessageData]
-  }(msgsController.onMessageRead)
+  private val messageRead = for {
+    Some(convId) <- msgsController.fullyVisibleMessagesList
+    msg          <- message.filter(_.convId == convId)
+    isSentAsset  =  msg.isAssetMessage && msg.state == Message.Status.SENT
+    status       <- if (isSentAsset)
+                      msg.assetId
+                         .fold(Signal.const(Option.empty[AssetStatus]))(aId => assets.assetStatusSignal(aId).map { case (status, _) => Some(status) })
+                    else
+                      Signal.const(Option.empty[AssetStatus])
+  } yield (isSentAsset, status) match {
+    case (false, _)                     => Some(msg)
+    case (true, Some(AssetStatus.Done)) => Some(msg)
+    case _                              => None
+  }
+
+  messageRead.onUi {
+    case Some(msg) => msgsController.onMessageRead(msg)
+    case None      =>
+  }
 
   def bind(msg: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
     view.set(msg,prev, next, opts, adapter)

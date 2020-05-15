@@ -1,20 +1,20 @@
 /**
- * Wire
- * Copyright (C) 2019 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2019 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 
 package com.waz.zclient
 
@@ -23,10 +23,10 @@ import java.io.File
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.content.{ContentUris, Context, Intent}
 import android.net.Uri
-import android.os.{Build, Bundle, Environment}
+import android.os.{Bundle, Environment}
 import android.provider.DocumentsContract._
 import android.provider.MediaStore
-import android.support.v4.app.ShareCompat
+import androidx.core.app.ShareCompat
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
@@ -34,13 +34,13 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.utils.wrappers.AndroidURI
 import com.waz.utils.wrappers.AndroidURIUtil.fromFile
+import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.SharingController
-import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent}
+import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, NewContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
-import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.sharing.ShareToMultipleFragment
+import com.waz.zclient.sharing.ConversationSelectorFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
 
 import scala.collection.immutable.ListSet
@@ -68,12 +68,12 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.main_share)
 
-    if (savedInstanceState == null)
+    if (savedInstanceState == null) {
       getSupportFragmentManager
         .beginTransaction
-        .add(R.id.fl_main_content, ShareToMultipleFragment.newInstance(), ShareToMultipleFragment.TAG)
+        .add(R.id.fl_main_content, ConversationSelectorFragment.newInstance(getIntent.getType != MessageIntentType), ConversationSelectorFragment.TAG)
         .commit
-
+    }
     confirmationMenu
   }
 
@@ -89,37 +89,41 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     handleIncomingIntent()
   }
 
-  private def handleIncomingIntent() =
-    inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
-      case true =>
-        val intent = getIntent
-        verbose(l"${RichIntent(intent)}")
-        val ir = ShareCompat.IntentReader.from(this)
-        if (!ir.isShareIntent) finish()
-        else {
-          if (ir.getStreamCount == 0 && ir.getType == "text/plain") sharing.publishTextContent(ir.getText.toString)
-          else {
+  private def handleIncomingIntent() = {
+    val incomingIntent = ShareCompat.IntentReader.from(this)
+    if (!incomingIntent.isShareIntent) finish()
+    else {
+      if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == TextIntentType) sharing.publishTextContent(incomingIntent.getText.toString)
+      else if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == MessageIntentType) sharing.sharableContent ! Some(NewContent)
+      else {
+        inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
+          case true =>
+            verbose(l"${RichIntent(getIntent)}")
             val uris =
-              (if (ir.isMultipleShare) (0 until ir.getStreamCount).flatMap(i => Option(ir.getStream(i))) else Option(ir.getStream).toSeq)
+              (if (incomingIntent.isMultipleShare) (0 until incomingIntent.getStreamCount).flatMap(i => Option(incomingIntent.getStream(i))) else Option(incomingIntent.getStream).toSeq)
                 .flatMap(uri => getPath(getApplicationContext, uri))
-
             if (uris.nonEmpty)
-              sharing.sharableContent ! Some(if (ir.getType.startsWith("image/") && uris.size == 1) ImageContent(uris) else FileContent(uris))
+              sharing.sharableContent ! Some(if (incomingIntent.getType.startsWith(ImageIntentType) && uris.size == 1) ImageContent(uris) else FileContent(uris))
             else finish()
-          }
-        }
-      case _ => finish()
-    }(Threading.Ui)
+          case _    => finish()
+        }(Threading.Ui)
+      }
+    }
+  }
 
   override def onBackPressed() =
-    withFragmentOpt(ShareToMultipleFragment.TAG) {
-      case Some(f: ShareToMultipleFragment) if f.onBackPressed() => //
+    withFragmentOpt(ConversationSelectorFragment.TAG) {
+      case Some(f: ConversationSelectorFragment) if f.onBackPressed() => //
       case _ => super.onBackPressed()
     }
 
 }
 
 object ShareActivity extends DerivedLogTag {
+
+  val MessageIntentType = "message/plain"
+  val TextIntentType = "text/plain"
+  val ImageIntentType = "image/"
 
   /*
    * This part (the methods getPath and getDataColumn) of the Wire software are based heavily off of code posted in this
@@ -142,7 +146,7 @@ object ShareActivity extends DerivedLogTag {
     */
   def getPath(context: Context, uri: Uri): Option[AndroidURI] = {
     val default = Some(new AndroidURI(uri)) // to be returned in most cases if we fail to resolve the path
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && isDocumentUri(context, uri)) {
+    if (isDocumentUri(context, uri)) {
       (uri.getAuthority match {
         case "com.android.externalstorage.documents" =>
           val split = getDocumentId(uri).split(":")

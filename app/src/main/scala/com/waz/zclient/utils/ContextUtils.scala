@@ -23,14 +23,15 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.support.annotation.StyleableRes
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AlertDialog
+import androidx.core.content.ContextCompat
+import androidx.appcompat.app.AlertDialog
 import android.text.format.Formatter
 import android.util.{AttributeSet, DisplayMetrics, TypedValue}
 import android.view.WindowManager
 import android.widget.Toast
+import androidx.annotation.StyleableRes
 import com.waz.model.{AccentColor, Availability}
+import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason}
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage
@@ -71,10 +72,7 @@ object ContextUtils {
   def getDimen(resId: Int)(implicit context: Context) = context.getResources.getDimension(resId)
 
   def getDrawable(resId: Int, theme: Option[Resources#Theme] = None)(implicit context: Context): Drawable = {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-      DeprecationUtils.getDrawable(context, resId)
-    } else
-      context.getResources.getDrawable(resId, theme.orNull)
+    context.getResources.getDrawable(resId, theme.orNull)
   }
 
   def getIntArray(resId: Int)(implicit context: Context) = context.getResources.getIntArray(resId)
@@ -173,11 +171,15 @@ object ContextUtils {
 
   //INFORMATION ABOUT DIALOGS: https://developer.android.com/guide/topics/ui/dialogs
   def showErrorDialog(headerRes: Int, msgRes: Int)(implicit context: Context): Future[Unit] = {
+    showErrorDialog(getString(headerRes), getString(msgRes))
+  }
+
+  def showErrorDialog(headerText: String, msg: String)(implicit context: Context): Future[Unit] = {
     val p = Promise[Unit]()
     val dialog = new AlertDialog.Builder(context)
       .setCancelable(false)
-      .setTitle(headerRes)
-      .setMessage(msgRes)
+      .setTitle(headerText)
+      .setMessage(msg)
       .setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int): Unit = {
           dialog.dismiss()
@@ -314,5 +316,13 @@ object ContextUtils {
       negativeRes = R.string.availability_notification_ok,
       color       = color
     )
+  }
+
+  def showLogoutWarningIfNeeded(reason: LogoutReason)(implicit context: Context): Future[Unit] = {
+    if (reason == InvalidCookie || reason == ClientDeleted) {
+      showErrorDialog(R.string.invalid_cookie_dialog_title, R.string.invalid_cookie_dialog_message)
+    } else {
+      Future.successful(())
+    }
   }
 }

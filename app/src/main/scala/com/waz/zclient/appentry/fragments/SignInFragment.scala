@@ -19,10 +19,8 @@ package com.waz.zclient.appentry.fragments
 
 import android.content.Context
 import android.graphics.Color
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.KITKAT
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.transition._
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout}
@@ -35,7 +33,7 @@ import com.waz.utils.{returning, PasswordValidator => StrongValidator}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.{EmailError, PhoneError}
 import com.waz.zclient.appentry.fragments.SignInFragment._
-import com.waz.zclient.appentry.{AppEntryActivity, SSOFragment}
+import com.waz.zclient.appentry.{AppEntryActivity}
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.TabPages
@@ -53,10 +51,7 @@ import com.waz.zclient.utils._
 
 import scala.concurrent.Future
 
-class SignInFragment
-  extends SSOFragment
-  with View.OnClickListener
-  with CountryController.Observer {
+class SignInFragment extends FragmentHelper with View.OnClickListener with CountryController.Observer {
 
   implicit def context: Context = getActivity
 
@@ -87,7 +82,7 @@ class SignInFragment
   private val name     = Signal("")
   private val phone    = Signal("")
 
-  private lazy val countryController = activity.getCountryController //TODO rewrite && inject
+  private lazy val countryController = appEntryActivity().getCountryController //TODO rewrite && inject
   private lazy val phoneCountry = Signal[Country]()
 
   private lazy val nameValidator = new NameValidator()
@@ -149,15 +144,12 @@ class SignInFragment
   def termsOfService = Option(findById[TypefaceTextView](R.id.terms_of_service_text))
 
   def forgotPasswordButton = Option(findById[View](getView, R.id.ttv_signin_forgot_password))
-  def companyLoginButton = Option(findById[View](getView, R.id.ttv_signin_sso))
 
   def setupViews(onlyLogin: Boolean): Unit = {
 
     tabSelector.foreach(_.setVisible(!onlyLogin))
     emailButton.foreach(_.setVisible(!onlyLogin))
     phoneButton.foreach(_.setVisible(!onlyLogin))
-
-    companyLoginButton.foreach(_.setVisible(BuildConfig.ALLOW_SSO))
 
     emailField.foreach { field =>
       field.setValidator(emailValidator)
@@ -207,7 +199,6 @@ class SignInFragment
     confirmationButton.foreach(_.setAccentColor(Color.WHITE))
     setConfirmationButtonActive(isValid.currentValue.getOrElse(false))
     forgotPasswordButton.foreach(_.setOnClickListener(this))
-    companyLoginButton.foreach(_.setOnClickListener(this))
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -253,7 +244,7 @@ class SignInFragment
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
-    val transition = if (SDK_INT >= KITKAT) Option(new AutoTransition2()) else None
+    val transition = Option(new AutoTransition2())
 
     def switchScene(sceneIndex: Int): Unit = transition.fold[Unit]({
       container.foreach(_.removeAllViews())
@@ -332,11 +323,10 @@ class SignInFragment
     countryController.removeObserver(this)
   }
 
+  def appEntryActivity() = getActivity.asInstanceOf[AppEntryActivity]
+
   override def onClick(v: View) = {
     v.getId match {
-      case R.id.ttv_signin_sso =>
-        extractTokenAndShowSSODialog(showIfNoToken = true)
-
       case R.id.ttv__new_reg__sign_in__go_to__email =>
         uiSignInState.mutate {
           case SignInMethod(x, Phone, _) => SignInMethod(x, Email)
@@ -350,14 +340,14 @@ class SignInFragment
         }
 
       case R.id.ll__signup__country_code__button | R.id.tv__country_code =>
-        activity.openCountryBox()
+        appEntryActivity().openCountryBox()
 
       case R.id.pcb__signin__email => //TODO rename!
         implicit val ec = Threading.Ui
 
         def onResponse[A](req: Either[ErrorResponse, A], method: SignInMethod) = {
           tracking.onEnteredCredentials(req, method)
-          activity.enableProgress(false)
+          appEntryActivity().enableProgress(false)
           req match {
             case Left(error) =>
               showErrorDialog(if (method.inputType == Email) EmailError(error) else PhoneError(error))
@@ -368,27 +358,29 @@ class SignInFragment
 
         uiSignInState.head.flatMap {
           case m@SignInMethod(Login, Email, _) =>
-            activity.enableProgress(true)
+            appEntryActivity().enableProgress(true)
 
             for {
-              email     <- email.head
-              password  <- password.head
-              req       <- accountsService.loginEmail(email, password)
+              email    <- email.head
+              password <- password.head
+              req      <- accountsService.loginEmail(email, password)
             } yield onResponse(req, m).right.foreach { id =>
               KeyboardUtils.closeKeyboardIfShown(getActivity)
-              activity.showFragment(FirstLaunchAfterLoginFragment(id), FirstLaunchAfterLoginFragment.Tag)
+              appEntryActivity().showFragment(FirstLaunchAfterLoginFragment(id), FirstLaunchAfterLoginFragment.Tag)
             }
           case m@SignInMethod(Register, Email, false) =>
             for {
-              email     <- email.head
-              password  <- password.head
-              name      <- name.head
-              req       <- accountsService.requestEmailCode(EmailAddress(email))
+              email    <- email.head
+              password <- password.head
+              name     <- name.head
             } yield {
               if (strongPasswordValidator.isValidPassword(password)) {
-                onResponse(req, m).right.foreach { _ =>
-                  KeyboardUtils.closeKeyboardIfShown(getActivity)
-                  activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+                accountsService.requestEmailCode(EmailAddress(email)).foreach { req =>
+                  onResponse(req, m).right.foreach { _ =>
+                    KeyboardUtils.closeKeyboardIfShown(getActivity)
+                    appEntryActivity().showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment
+                      .Tag)
+                  }
                 }
               } else { // Invalid password
                 passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
@@ -397,7 +389,7 @@ class SignInFragment
 
           case m@SignInMethod(method, Phone, false) =>
             val isLogin = method == Login
-            activity.enableProgress(true)
+            appEntryActivity().enableProgress(true)
             for {
               country <- phoneCountry.head
               phoneStr <- phone.head
@@ -405,7 +397,7 @@ class SignInFragment
               req <- accountsService.requestPhoneCode(phone, login = isLogin)
             } yield onResponse(req, m).right.foreach { _ =>
               KeyboardUtils.closeKeyboardIfShown(getActivity)
-              activity.showFragment(VerifyPhoneFragment(phone.str, login = isLogin), VerifyPhoneFragment.Tag)
+              appEntryActivity().showFragment(VerifyPhoneFragment(phone.str, login = isLogin), VerifyPhoneFragment.Tag)
             }
           case SignInMethod(_, _, true) =>
             error(l"Invalid sign in state")
@@ -416,7 +408,7 @@ class SignInFragment
       case R.id.ttv_signin_forgot_password =>
         browserController.openForgotPassword()
       case R.id.close_button =>
-        activity.abortAddAccount()
+        appEntryActivity().abortAddAccount()
       case _ =>
     }
   }
@@ -438,7 +430,6 @@ class SignInFragment
       false
     }
 
-  override protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
 }
 
 object SignInFragment {
@@ -446,8 +437,6 @@ object SignInFragment {
   val SignTypeArg = "SIGN_IN_TYPE"
   val InputTypeArg = "INPUT_TYPE"
   val OnlyLoginArg = "ONLY_LOGIN"
-
-  def apply() = new SignInFragment
 
   def apply(signInMethod: SignInMethod): SignInFragment =
     returning(new SignInFragment()) {

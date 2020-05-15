@@ -20,9 +20,9 @@ package com.waz.zclient.appentry
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.view.View.OnLayoutChangeListener
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.fragment.app.Fragment
 import com.waz.service.AccountsService
 import com.waz.utils.returning
 import com.waz.zclient.appentry.CreateTeamFragment._
@@ -34,8 +34,8 @@ import com.waz.zclient.{FragmentHelper, R}
 
 trait CreateTeamFragment extends FragmentHelper {
 
-  protected def activity = getActivity.asInstanceOf[AppEntryActivity]
-  implicit def context: Context = activity
+  protected def appEntryActivity() = getActivity.asInstanceOf[AppEntryActivity]
+  implicit def context: Context = appEntryActivity()
 
   protected lazy val createTeamController = inject[CreateTeamController]
   protected lazy val accountsService    = inject[AccountsService]
@@ -75,7 +75,7 @@ trait CreateTeamFragment extends FragmentHelper {
     })
   }
 
-  protected def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = activity.showFragment(f, tag, animated)
+  protected def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = appEntryActivity().showFragment(f, tag, animated)
 
   override def onBackPressed(): Boolean =
     if (getFragmentManager.getBackStackEntryCount > 1) {

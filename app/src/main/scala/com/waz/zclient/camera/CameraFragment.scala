@@ -26,7 +26,7 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
-import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets.Content
 import com.waz.utils.returning
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.camera.views.CameraPreviewTextureView
@@ -118,7 +118,7 @@ class CameraFragment extends FragmentHelper
       override def onFailed(t: AssetIntentsManager.IntentType): Unit = showCameraFeed()
       override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Unit =
         startActivityForResult(intent, intentType.requestCode)
-    }, savedInstanceState)
+    })
   }
 
   override def onCreateView(inflater: LayoutInflater, c: ViewGroup, savedInstanceState: Bundle): View = {
@@ -135,11 +135,6 @@ class CameraFragment extends FragmentHelper
     previewProgressBar
 
     view.setBackgroundResource(R.color.black)
-  }
-
-  override def onSaveInstanceState(outState: Bundle): Unit = {
-    intentsManager.onSaveInstanceState(outState)
-    super.onSaveInstanceState(outState)
   }
 
   override def onDestroyView(): Unit = {
@@ -240,12 +235,11 @@ class CameraFragment extends FragmentHelper
     showCameraFeed()
   }
 
-  override def onSketchOnPreviewPicture(input: RawAssetInput, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit =
-    screenController.showSketch ! Sketch.cameraPreview(input)
+  override def onSketchOnPreviewPicture(image: Content, method: IDrawingController.DrawingMethod): Unit =
+    screenController.showSketch ! Sketch.cameraPreview(image)
 
-  override def onSendPictureFromPreview(input: RawAssetInput, source: ImagePreviewLayout.Source): Unit = {
-    cameraController.onBitmapSelected(input, cameraContext)
-  }
+  override def onSendPictureFromPreview(image: Content): Unit =
+    cameraController.onBitmapSelected(image, cameraContext)
 
   private def showPreview(setImage: (ImagePreviewLayout) => Unit) = {
     hideCameraFeed()
@@ -290,7 +284,7 @@ class CameraFragment extends FragmentHelper
   private def processGalleryImage(uri: URI): Unit = {
     hideCameraFeed()
     if (cameraContext != CameraContext.SIGN_UP) previewProgressBar.foreach(_.setVisible(true))
-    showPreview { _.setImage(uri, ImagePreviewLayout.Source.Camera) }
+    showPreview { _.setImage(uri) }
   }
 }
 
@@ -304,5 +298,4 @@ object CameraFragment {
       bundle.putInt(CAMERA_CONTEXT, cameraContext.ordinal)
     })
   }
-
 }

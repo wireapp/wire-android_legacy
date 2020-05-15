@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.controllers.userpreferences;
 
-import android.support.annotation.IntDef;
+import androidx.annotation.IntDef;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,14 +36,6 @@ public interface IUserPreferencesController {
     void tearDown();
 
     void reset();
-
-    void setLastAccentColor(final int accentColor);
-
-    int getLastAccentColor();
-
-    boolean showContactsDialog();
-
-    String getDeviceId();
 
     void setVerificationCode(String code);
 

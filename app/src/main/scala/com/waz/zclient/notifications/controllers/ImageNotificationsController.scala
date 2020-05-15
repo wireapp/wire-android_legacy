@@ -19,15 +19,13 @@ package com.waz.zclient.notifications.controllers
 
 import android.app.NotificationManager
 import android.graphics.Bitmap
-import android.support.v4.app.NotificationCompat
+import androidx.core.app.NotificationCompat
 import com.waz.bitmap.BitmapUtils
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetData, AssetId}
+import com.waz.model.AssetId
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult
-import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
-import com.waz.ui.MemoryImageCache.BitmapRequest.Single
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.log.LogUI._
@@ -48,7 +46,7 @@ class ImageNotificationsController(implicit cxt: WireContext, eventContext: Even
   val savedImageId = Signal[Option[AssetId]](None)
   val savedImageUri = Signal[URI]()
 
-  def showImageSavedNotification(imageId: AssetId, uri: URI) = Option(imageId).zip(Option(uri)).foreach {
+  def showImageSavedNotification(imageId: AssetId, uri: URI): Unit = Option(imageId).zip(Option(uri)).foreach {
     case (id, ur) =>
       savedImageId ! Some(id)
       savedImageUri ! uri
@@ -63,13 +61,13 @@ class ImageNotificationsController(implicit cxt: WireContext, eventContext: Even
   zms.zip(savedImageId).flatMap {
     case (zms, Some(imageId)) =>
       zms.assetsStorage.signal(imageId).flatMap {
-        case data@AssetData.IsImage() => BitmapSignal(zms, data, Single(getDimenPx(R.dimen.notification__image_saving__image_width)))
-        case _ => Signal.empty[BitmapResult]
+        case _ => Signal.empty[BitmapResult] //TODO: Use new asset engine
       }
     case _ => Signal.empty[BitmapResult]
-  }.zip(savedImageUri).on(Threading.Ui) {
-    case (BitmapResult.BitmapLoaded(bitmap, _), uri) => showBitmap(bitmap, uri)
-    case (_, uri) => showBitmap(null, uri)
+  }.zip(savedImageUri).on(Threading.IO) {
+    //case (BitmapResult.BitmapLoaded(bitmap, _), uri) => showBitmap(bitmap, uri)
+    //case (_, uri) => showBitmap(null, uri)
+    _ =>
   }
 
   private def showBitmap(bitmap: Bitmap, uri: URI): Unit = {

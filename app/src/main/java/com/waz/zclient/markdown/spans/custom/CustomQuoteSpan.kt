@@ -29,15 +29,15 @@ import android.text.style.QuoteSpan
  */
 class CustomQuoteSpan(
     color: Int,
-    val stripeWidth: Int,
-    val gapWidth: Int,
+    val stripeWidthSize: Int,
+    val gapWidthSize: Int,
     private val density: Float = 1f,
     val beforeSpacing: Int = 0,
     val afterSpacing: Int = 0
 ) : QuoteSpan(color) {
 
     override fun getLeadingMargin(first: Boolean): Int {
-        return ((stripeWidth + gapWidth) * density).toInt()
+        return ((stripeWidthSize + gapWidthSize) * density).toInt()
     }
 
     override fun drawLeadingMargin(
@@ -66,7 +66,7 @@ class CustomQuoteSpan(
 
         p.style = Paint.Style.FILL
         p.color = this.color
-        c.drawRect(x.toFloat(), top.toFloat() + topOffset, (x + dir * stripeWidth * density), bottom.toFloat() + bottomOffset, p)
+        c.drawRect(x.toFloat(), top.toFloat() + topOffset, (x + dir * stripeWidthSize * density), bottom.toFloat() + bottomOffset, p)
 
         // reset paint
         p.style = style

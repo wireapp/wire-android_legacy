@@ -22,7 +22,6 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.{Build, Bundle}
 import android.provider.Settings
-import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
@@ -38,10 +37,12 @@ import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.SoundLevelDialog
 import com.waz.zclient.utils.{BackStackKey, RichView, RingtoneUtils}
 import OptionsView._
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.model.UserId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
 import com.waz.zclient.utils.ContextUtils.getString
+import com.waz.content.GlobalPreferences.{AppLockEnabled, IncognitoKeyboardEnabled}
 
 trait OptionsView {
   def setSounds(level: IntensityLevel): Unit
@@ -49,7 +50,6 @@ trait OptionsView {
   def setTextTone(string: String): Unit
   def setPingTone(string: String): Unit
   def setDownloadPictures(wifiOnly: Boolean): Unit
-  def setShareEnabled(enabled: Boolean): Unit
   def setAccountId(userId: UserId): Unit
 }
 
@@ -68,13 +68,16 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   inflate(R.layout.preferences_options_layout)
 
-  val contactsSwitch       = findById[SwitchPreference](R.id.preferences_contacts)
-  val vbrSwitch            = findById[SwitchPreference](R.id.preferences_vbr)
-  val vibrationSwitch      = findById[SwitchPreference](R.id.preferences_vibration)
-  val darkThemeSwitch      = findById[SwitchPreference](R.id.preferences_dark_theme)
-  val sendButtonSwitch     = findById[SwitchPreference](R.id.preferences_send_button)
-  val soundsButton         = findById[TextButton](R.id.preferences_sounds)
-  val downloadImagesSwitch = findById[SwitchPreference](R.id.preferences_options_image_download)
+  val vbrSwitch               = findById[SwitchPreference](R.id.preferences_vbr)
+  val vibrationSwitch         = findById[SwitchPreference](R.id.preferences_vibration)
+  val darkThemeSwitch         = findById[SwitchPreference](R.id.preferences_dark_theme)
+  val sendButtonSwitch        = findById[SwitchPreference](R.id.preferences_send_button)
+  val appLockSwitch           = findById[SwitchPreference](R.id.preferences_app_lock)
+  val soundsButton            = findById[TextButton](R.id.preferences_sounds)
+  val downloadImagesSwitch    = findById[SwitchPreference](R.id.preferences_options_image_download)
+  val hideScreenContentSwitch = findById[SwitchPreference](R.id.preferences_hide_screen)
+  val messagePreviewSwitch = findById[SwitchPreference](R.id.preferences_message_previews)
+  val incognitoKeyboardSwitch = findById[SwitchPreference](R.id.preferences_incognito_keyboard)
 
   val ringToneButton         = findById[TextButton](R.id.preference_sounds_ringtone)
   val textToneButton         = findById[TextButton](R.id.preference_sounds_text)
@@ -90,17 +93,35 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   private var soundLevel = IntensityLevel.NONE
   private var accountId = UserId()
 
-  contactsSwitch.setPreference(ShareContacts)
   darkThemeSwitch.setPreference(DarkTheme)
   downloadImagesSwitch.setPreference(DownloadImagesAlways)
+  hideScreenContentSwitch.setPreference(HideScreenContent)
   vbrSwitch.setPreference(VBREnabled)
-
+  messagePreviewSwitch.setPreference(MessagePreview)
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)
+
+  if (BuildConfig.FORCE_APP_LOCK) {
+    appLockSwitch.setVisible(false)
+  } else {
+    appLockSwitch.setPreference(AppLockEnabled, global = true)
+    appLockSwitch.setSubtitle(getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString))
+    appLockSwitch.setVisible(true)
+  }
+
+  incognitoKeyboardSwitch.setPreference(IncognitoKeyboardEnabled, global = true)
+  if (BuildConfig.FORCE_PRIVATE_KEYBOARD) {
+    incognitoKeyboardSwitch.setVisibility(View.GONE)
+  }
 
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
     soundsButton.setVisible(false)
     vibrationSwitch.setTitle(getString(R.string.pref_options_vibration_title_o))
+  }
+
+  if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
+    hideScreenContentSwitch.setVisible(false)
+    hideScreenContentSwitch.pref.foreach(_ := true)
   }
 
   private def openNotificationSettings(channelId: String) = {
@@ -167,9 +188,6 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     val names = getResources.getStringArray(R.array.pref_options_image_download_entries).toSeq
     downloadImagesSwitch.setSubtitle(if (wifiOnly) names.head else names.last)
   }
-
-
-  override def setShareEnabled(enabled: Boolean) = contactsSwitch.setVisible(enabled)
 
   private def showPrefDialog(f: Fragment, tag: String) = {
     context.asInstanceOf[BaseActivity]
@@ -250,7 +268,6 @@ class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: Event
     case (uri, _) => uri
   }.onUi(view.setPingTone)
 
-  team.onUi{ team => view.setShareEnabled(team.isEmpty) }
 
   zms.onUi(z => view.setAccountId(z.selfUserId))
 }

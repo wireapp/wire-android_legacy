@@ -20,20 +20,19 @@ package com.waz.zclient.pages.main.conversationlist.views.listview;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.support.annotation.Nullable;
-import android.support.v4.view.MotionEventCompat;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.Nullable;
+import androidx.core.view.MotionEventCompat;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import com.waz.zclient.R;
+import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.ui.pullforaction.OverScrollListener;
 import com.waz.zclient.ui.pullforaction.OverScrollMode;
 import com.waz.zclient.ui.pullforaction.PullForActionView;
-import timber.log.Timber;
-
 
 /**
  * ListView subclass that provides the swipe functionality
@@ -56,9 +55,6 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
     // Cached ViewConfiguration and system-wide constant values
     private int minFlingVelocity;
     private int maxFlingVelocity;
-
-    // drawer goes to....
-    private float rightOffset = 0;
 
     // the listener that wants to be informed by the overscroll event
     OverScrollListener overScrollListener;
@@ -146,13 +142,6 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
         minFlingVelocity = vc.getScaledMinimumFlingVelocity();
         maxFlingVelocity = vc.getScaledMaximumFlingVelocity();
         listRowMenuIndicatorMaxSwipeOffset = getContext().getResources().getDimensionPixelSize(R.dimen.list__menu_indicator__max_swipe_offset);
-    }
-
-    /**
-     * Set offset on right after onMeasurement is called in PullToRefreshContainer.
-     */
-    public void setOffsetRight(float offsetRight) {
-        rightOffset = offsetRight;
     }
 
     /**
@@ -319,31 +308,6 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
         }
     }
 
-    private MotionDirection getMotionDirection(float x, float y) {
-        MotionDirection direction = null;
-
-        final int distX = (int) (x - lastMotionX);
-        final int distY = (int) (y - lastMotionY);
-        boolean xMoved = Math.abs(distX) > this.touchSlop;
-        boolean yMoved = Math.abs(distY) > this.touchSlop && Math.abs(distY) > Math.abs(distX);
-
-        if (yMoved) {
-            if (distY < 0) {
-                direction = MotionDirection.UP;
-            } else {
-                direction = MotionDirection.DOWN;
-            }
-        } else if (xMoved) {
-            if (distX < 0) {
-                direction = MotionDirection.LEFT;
-            } else {
-                direction = MotionDirection.RIGHT;
-            }
-        }
-
-        return direction;
-    }
-
     /**
      * Retrieves the child of the list view that is hit by the touch event. If it
      * is the first item or a disabled one, targetView is set to null.
@@ -372,7 +336,7 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
                         targetView = (SwipeListRow) child;
                         targetView.setMaxOffset(allowSwipeAway ? viewWidth / 2 : listRowMenuIndicatorMaxSwipeOffset);
                     } catch (ClassCastException e) {
-                        Timber.e(e, "ClassCastException when swiping");
+                        Logger.error("SwipeListView","ClassCastException when swiping", e);
                     }
                     downX = motionEvent.getRawX();
                 } else {

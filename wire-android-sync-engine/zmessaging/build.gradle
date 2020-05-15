@@ -1,0 +1,139 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-android'
+apply plugin: 'jp.leafytree.android-scala'
+apply from: 'deflake.gradle'
+
+// Android
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+
+        ndk {
+            abiFilters "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
+        }
+
+        buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
+        buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path file('src/main/jni/Android.mk')
+        }
+    }
+
+    testOptions {
+
+        unitTests.all {
+
+            jvmArgs "-Xmx4096M", "-XX:+CMSClassUnloadingEnabled",
+                "-Djava.net.preferIPv4Stack=true", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n"
+            testLogging {
+                events "passed", "skipped", "failed", "standardOut", "standardError"
+                outputs.upToDateWhen { false }
+                showStandardStreams = true
+                exceptionFormat = 'full'
+            }
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    google()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/releases"
+    }
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+    maven { url "https://dl.bintray.com/wire-android/releases/" }
+    maven { url "https://dl.bintray.com/wire-android/snapshots/" }
+    maven { url "https://dl.bintray.com/wire-android/third-party/" }
+}
+
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ["-source", "1.7", "-target", "1.7", "-encoding", "UTF-8"]
+}
+
+tasks.withType(ScalaCompile) {
+    scalaCompileOptions.additionalParameters = ["-feature", "-target:jvm-1.7", "-Xfuture", //"-Xfatal-warnings",
+                                                "-deprecation", "-encoding", "UTF-8", "-Xmax-classfile-name", "128"]
+}
+
+def versions = [
+        okHttp : "3.10.0",
+        circe : "0.9.3",
+]
+
+dependencies {
+
+    api project(':wire-android-sync-engine:macrosupport')
+
+    implementation project(ModuleDependencies.storage)
+
+    implementation BuildDependencies.kotlin.standardLibrary
+    implementation BuildDependencies.androidX.coreKtx
+
+    api "org.scala-lang.modules:scala-async_${LegacyDependencies.SCALA_MAJOR_VERSION}:0.9.7"
+    implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
+    // should match okhttp3's mockserver version (see test dependencies)
+    implementation BuildDependencies.libPhoneNumber
+    implementation "com.wire:cryptobox-android:1.1.2"
+    api "com.wire:generic-message-proto:1.24.2"
+    implementation "com.wire:backend-api-proto:2.3"
+    implementation "io.circe:circe-core_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
+    implementation "io.circe:circe-generic_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
+    implementation "io.circe:circe-parser_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
+    implementation "com.wire:icu4j-shrunk:57.1"
+    implementation "com.googlecode.mp4parser:isoparser:1.1.7"
+    implementation "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2"
+
+    //Provided dependencies
+    compileOnly "com.softwaremill.macwire:macros_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
+    compileOnly "com.softwaremill.macwire:macrosakka_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
+    compileOnly "com.softwaremill.macwire:util_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
+    compileOnly "com.softwaremill.macwire:proxy_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
+    compileOnly "com.wire:avs:3.4.100"
+    compileOnly "androidx.legacy:legacy-support-v4:1.0.0"
+    compileOnly BuildDependencies.threetenbpJava
+    compileOnly "net.java.dev.jna:jna:4.4.0@aar"
+    compileOnly TestDependencies.robolectric
+    compileOnly BuildDependencies.androidX.roomRuntime
+
+    //Test dependencies
+    testImplementation(LegacyDependencies.scalaTest) {
+        exclude module: 'scala-library'
+    }
+    testImplementation "org.scalamock:scalamock_${LegacyDependencies.SCALA_MAJOR_VERSION}:4.1.0"
+    testImplementation "org.scalacheck:scalacheck_${LegacyDependencies.SCALA_MAJOR_VERSION}:1.14.0"
+    testImplementation("com.wire:robotest_${LegacyDependencies.SCALA_MAJOR_VERSION}:0.7") {
+        exclude(group: "org.scalatest", module: "scalatest")
+    }
+    testImplementation TestDependencies.robolectric
+    testImplementation BuildDependencies.androidX.roomRuntime
+    testImplementation TestDependencies.jUnit   //to override version included in robolectric
+    testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
+    //should match okhttp version.
+    testImplementation "org.apache.httpcomponents:httpclient:4.5.3"
+    testImplementation "com.typesafe.akka:akka-http_${LegacyDependencies.SCALA_MAJOR_VERSION}:10.1.8"
+    testImplementation "com.typesafe.akka:akka-actor_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.5.22"
+    testImplementation "com.typesafe.akka:akka-stream_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.5.22"
+    testImplementation "com.wire:avs:3.4.100"
+    testImplementation "androidx.legacy:legacy-support-v4:1.0.0"
+    testImplementation BuildDependencies.threetenbpJava
+    testImplementation "net.java.dev.jna:jna:4.4.0@aar"
+    testImplementation TestDependencies.kotlin.coroutinesTest
+
+    implementation "androidx.sqlite:sqlite:2.0.1"
+    implementation "androidx.sqlite:sqlite-framework:2.0.1"
+
+}
+

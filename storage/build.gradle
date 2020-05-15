@@ -1,0 +1,76 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'consumer-rules.pro'
+
+        buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
+
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation":
+                                 "$projectDir/schemas".toString()]
+            }
+        }
+
+        packagingOptions {
+            exclude 'META-INF/proguard/coroutines.pro'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
+        androidTest.java.srcDirs += 'src/androidTest/kotlin'
+        androidTest.assets.srcDirs +=
+            files("$projectDir/schemas".toString())
+    }
+}
+
+dependencies {
+    //Core Dependencies
+    implementation BuildDependencies.kotlin.standardLibrary
+
+    // Room Data Storage
+    implementation BuildDependencies.androidX.coreKtx
+    implementation BuildDependencies.androidX.roomRuntime
+    implementation BuildDependencies.androidX.roomKtx
+    kapt BuildDependencies.androidX.roomCompiler
+
+    // DI - Koin
+    implementation BuildDependencies.koin.androidCore
+    implementation BuildDependencies.koin.androidScope
+    implementation BuildDependencies.koin.androidViewModel
+
+    testImplementation TestDependencies.jUnit
+    testImplementation TestDependencies.mockito.core
+    testImplementation TestDependencies.mockito.inline
+    testImplementation TestDependencies.kluent
+    //noinspection GradleDynamicVersion
+    testImplementation "org.json:json:+"
+
+    androidTestImplementation TestDependencies.kotlin.coroutinesTest
+    androidTestImplementation TestDependencies.androidX.testRoom
+    androidTestImplementation TestDependencies.androidX.testRules
+}

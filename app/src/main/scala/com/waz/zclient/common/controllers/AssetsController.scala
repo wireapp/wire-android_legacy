@@ -17,38 +17,47 @@
  */
 package com.waz.zclient.common.controllers
 
+import java.io.File
+
 import android.app.DownloadManager
 import android.content.pm.PackageManager
 import android.content.{Context, Intent}
-import android.support.v7.app.AppCompatDialog
+import android.net.Uri
+import android.os.Environment
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.{Gravity, View}
 import android.widget.{TextView, Toast}
-import com.waz.api.Message
+import androidx.appcompat.app.AppCompatDialog
+import com.waz.content.MessagesStorage
 import com.waz.content.UserPreferences.DownloadImagesAlways
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetData, AssetId, MessageData, Mime}
+import com.waz.model._
+import com.waz.permissions.PermissionsService
+import com.waz.service
 import com.waz.service.ZMessaging
-import com.waz.service.assets.AssetService.RawAssetInput.WireAssetInput
-import com.waz.service.assets.GlobalRecordAndPlayService
-import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, UnauthenticatedContent}
+import com.waz.service.assets.{Asset, AssetService, DownloadAsset, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
+import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
+import com.waz.service.assets.Asset.{Audio, Video}
+import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.utils.returning
-import com.waz.utils.wrappers.{AndroidURIUtil, URI}
-import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
+import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.wrappers.{URI => URIWrapper}
+import com.waz.utils.{IoUtils, returning, sha2}
 import com.waz.zclient.controllers.singleimage.ISingleImageController
-import com.waz.zclient.drawing.DrawingFragment.Sketch
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
+import com.waz.zclient.notifications.controllers.ImageNotificationsController
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.ExternalFileSharing
 import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.znet2.http.HttpClient.Progress
 import org.threeten.bp.Duration
 
-import scala.PartialFunction._
+import scala.collection.immutable.ListSet
+import scala.concurrent.Future
 import scala.util.Success
 
 class AssetsController(implicit context: Context, inj: Injector, ec: EventContext)
@@ -57,86 +66,145 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   import AssetsController._
   import Threading.Implicits.Ui
 
-  val zms = inject[Signal[ZMessaging]]
-  val assets = zms.map(_.assets)
+  val zms: Signal[ZMessaging] = inject[Signal[ZMessaging]]
+  val assets: Signal[AssetService] = zms.map(_.assetService)
+  val permissions: Signal[PermissionsService] = zms.map(_.permissions)
+  val messages: Signal[MessagesService] = zms.map(_.messages)
+  val messagesStorage: Signal[MessagesStorage] = zms.map(_.messagesStorage)
+  val openVideoProgress = Signal(false)
 
-  val messages = zms.map(_.messages)
-
-  lazy val messageActionsController = inject[MessageActionsController]
-  lazy val singleImage              = inject[ISingleImageController]
-  lazy val screenController         = inject[ScreenController]
+  lazy val messageActionsController: MessageActionsController = inject[MessageActionsController]
+  lazy val singleImage: ISingleImageController = inject[ISingleImageController]
+  lazy val screenController: ScreenController = inject[ScreenController]
+  lazy val imageNotifications: ImageNotificationsController = inject[ImageNotificationsController]
+  private lazy val externalFileSharing = inject[ExternalFileSharing]
 
   //TODO make a preference controller for handling UI preferences in conjunction with SE preferences
   val downloadsAlwaysEnabled =
     zms.flatMap(_.userPrefs.preference(DownloadImagesAlways).signal).disableAutowiring()
 
-  val onFileOpened = EventStream[AssetData]()
-  val onFileSaved = EventStream[AssetData]()
-  val onVideoPlayed = EventStream[AssetData]()
-  val onAudioPlayed = EventStream[AssetData]()
+  messageActionsController.onMessageAction
+    .collect { case (MessageAction.OpenFile, msg) => msg.assetId } {
+      case Some(id) => openFile(id)
+      case _ =>
+    }
 
-  messageActionsController.onMessageAction {
-    case (MessageAction.OpenFile, msg) =>
-      zms.head.flatMap(_.assetsStorage.get(msg.assetId)) foreach {
-        case Some(asset) => openFile(asset)
-        case None => // TODO: show error
+  def assetSignal(assetId: GeneralAssetId): Signal[GeneralAsset] =
+    for {
+      a <- assets
+      status <- a.assetSignal(assetId)
+    } yield status
+
+  def assetSignal(assetId: Option[GeneralAssetId]): Signal[Option[GeneralAsset]] =
+    assetId.fold(Signal.const(Option.empty[GeneralAsset]))(aid => assetSignal(aid).map(Option(_)))
+
+  def assetSignal(assetId: Signal[GeneralAssetId]): Signal[GeneralAsset] =
+    for {
+      a <- assets
+      id <- assetId
+      status <- a.assetSignal(id)
+    } yield status
+
+  def assetStatusSignal(assetId: Signal[GeneralAssetId]): Signal[(service.assets.AssetStatus, Option[Progress])] =
+    for {
+      a <- assets
+      id <- assetId
+      status <- a.assetStatusSignal(id)
+    } yield status
+
+  def assetStatusSignal(assetId: GeneralAssetId): Signal[(service.assets.AssetStatus, Option[Progress])] =
+    assetStatusSignal(Signal.const(assetId))
+
+  def assetPreviewId(assetId: Signal[GeneralAssetId]): Signal[Option[GeneralAssetId]] =
+    assetSignal(assetId).map {
+      case u: UploadAsset   => u.preview match {
+        case PreviewUploaded(aId)    => Option(aId)
+        case PreviewNotUploaded(aId) => Option(aId)
+        case _                       => Option.empty[GeneralAssetId]
       }
-    case _ => // ignore
+      case d: DownloadAsset => d.preview
+      case a: Asset         => a.preview
+      case _                => Option.empty[GeneralAssetId]
+    }
+
+  def downloadProgress(idGeneral: GeneralAssetId): Signal[Progress] = idGeneral match {
+    case id: DownloadAssetId => assets.flatMap(_.downloadProgress(id))
+    case _ => Signal.empty
   }
 
-  def assetSignal(mes: Signal[MessageData]) = mes.flatMap(m => assets.flatMap(_.assetSignal(m.assetId)))
+  def uploadProgress(idGeneral: GeneralAssetId): Signal[Progress] = idGeneral match {
+    case id: UploadAssetId => assets.flatMap(_.uploadProgress(id))
+    case _ => Signal.empty
+  }
 
-  def assetSignal(assetId: AssetId) = assets.flatMap(_.assetSignal(assetId))
+  def cancelUpload(idGeneral: GeneralAssetId, message: MessageData): Unit = idGeneral match {
+    case id: UploadAssetId =>
+      assets.currentValue.foreach(_.cancelUpload(id, message))
+    case _ => ()
+  }
 
-  def downloadProgress(id: AssetId) = assets.flatMap(_.downloadProgress(id))
+  def cancelDownload(idGeneral: GeneralAssetId): Unit = idGeneral match {
+    case id: DownloadAssetId => assets.currentValue.foreach(_.cancelDownload(id))
+    case _ => ()
+  }
 
-  def uploadProgress(id: AssetId) = assets.flatMap(_.uploadProgress(id))
+  def retry(m: MessageData): Unit =
+    if (m.isFailed) messages.currentValue.foreach(_.retryMessageSending(m.convId, m.id))
 
-  def cancelUpload(m: MessageData) = assets.currentValue.foreach(_.cancelUpload(m.assetId, m.id))
-
-  def cancelDownload(m: MessageData) = assets.currentValue.foreach(_.cancelDownload(m.assetId))
-
-  def retry(m: MessageData) = if (m.state == Message.Status.FAILED || m.state == Message.Status.FAILED_READ) messages.currentValue.foreach(_.retryMessageSending(m.convId, m.id))
-
-  def getPlaybackControls(asset: Signal[AssetData]): Signal[PlaybackControls] = asset.flatMap { a =>
-    if (cond(a.mime.orDefault) { case Mime.Audio() => true }) Signal.const(new PlaybackControls(a.id, controller))
-    else Signal.empty[PlaybackControls]
+    def getPlaybackControls(asset: Signal[GeneralAsset]): Signal[PlaybackControls] = asset.flatMap { a =>
+    (a.details, a) match {
+      case (_: Audio, audioAsset: Asset) =>
+        val file = new File(context.getCacheDir, s"${audioAsset.id.str}.m4a")
+        Signal.future((if (!file.exists()) {
+          file.createNewFile()
+          assets.head.flatMap(_.loadContent(audioAsset).future).flatMap(ai => Future.fromTry(ai.toInputStream)).map { is =>
+            IoUtils.copy(is, file)
+            is.close()
+          }
+        } else {
+          Future.successful(())
+        }).map { _ =>
+          new PlaybackControls(audioAsset.id, URIWrapper.fromFile(file),
+            zms.map(_.global.recordingAndPlayback))
+        })
+      case _ => Signal.empty[PlaybackControls]
+    }
   }
 
   // display full screen image for given message
-  def showSingleImage(msg: MessageData, container: View) =
+  def showSingleImage(msg: MessageData, container: View): Unit =
     if (!(msg.isEphemeral && msg.expired)) {
       verbose(l"message loaded, opening single image for ${msg.id}")
       singleImage.setViewReferences(container)
       singleImage.showSingleImage(msg.id.str)
     }
 
-  //FIXME: don't use java api
-  def openDrawingFragment(msg: MessageData, drawingMethod: DrawingMethod) =
-    screenController.showSketch ! Sketch.singleImage(WireAssetInput(msg.assetId), drawingMethod)
+  def openFile(idGeneral: GeneralAssetId): Unit = idGeneral match {
+    case id: AssetId =>
+      assetForSharing(id).foreach {
+        case AssetForShare(asset, file) =>
+          asset.details match {
+            case _: Video =>
+              context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
+              openVideoProgress ! false
+            case _ =>
+              showOpenFileDialog(externalFileSharing.getUriForFile(file), asset)
+          }
+        case _ =>
+          error(l"Asset $id is not for share")
+      }
+    case _ =>
+      error(l"GeneralAssetId is not AssetId: $idGeneral")
+  }
 
-  def openFile(asset: AssetData) =
-    assets.head.flatMap(_.getContentUri(asset.id)) foreach {
-      case Some(uri) =>
-        asset match {
-         case AssetData.IsVideo() =>
-           onVideoPlayed ! asset
-           context.startActivity(getOpenFileIntent(uri, asset.mime.orDefault.str))
-         case _ =>
-           showOpenFileDialog(uri, asset)
-        }
-      case None =>
-      // TODO: display error
-    }
-
-  def showOpenFileDialog(uri: URI, asset: AssetData) = {
+  def showOpenFileDialog(uri: Uri, asset: Asset): Unit = {
     val intent = getOpenFileIntent(uri, asset.mime.orDefault.str)
     val fileCanBeOpened = fileTypeCanBeOpened(context.getPackageManager, intent)
 
     //TODO tidy up
     //TODO there is also a weird flash or double-dialog issue when you click outside of the dialog
     val dialog = new AppCompatDialog(context)
-    asset.name.foreach(dialog.setTitle)
+    dialog.setTitle(asset.name)
     dialog.setContentView(R.layout.file_action_sheet_dialog)
 
     val title = dialog.findViewById(R.id.title).asInstanceOf[TextView]
@@ -154,7 +222,6 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       openButton.setAlpha(1f)
       openButton.setOnClickListener(new View.OnClickListener() {
         def onClick(v: View) = {
-          onFileOpened ! asset
           context.startActivity(intent)
           dialog.dismiss()
         }
@@ -168,7 +235,6 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
     saveButton.setOnClickListener(new View.OnClickListener() {
       def onClick(v: View) = {
-        onFileSaved ! asset
         dialog.dismiss()
         saveToDownloads(asset)
       }
@@ -177,48 +243,116 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     dialog.show()
   }
 
-  def saveToDownloads(asset: AssetData) =
-    assets.head.flatMap(_.saveAssetToDownloads(asset)).onComplete {
-      case Success(Some(file)) =>
-        val uri = URI.fromFile(file)
+  private def saveAssetContentToFile(asset: Asset, targetDir: File): Future[File] =
+    for {
+      permissions <- permissions.head
+      _           <- permissions.ensurePermissions(ListSet(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE))
+      assets      <- assets.head
+      assetInput  <- assets.loadContent(asset).future
+      bytes       <- Future.fromTry(assetInput.toByteArray)
+      // even if the asset input is a file it has to be copied to the "target file", visible from the outside
+      targetFile  =  getTargetFile(asset, targetDir)
+      _           =  IoUtils.writeBytesToFile(targetFile, bytes)
+    } yield targetFile
+
+  def saveImageToGallery(asset: Asset): Unit =
+    saveAssetContentToFile(asset, createWireImageDirectory()).onComplete {
+      case Success(file) =>
+        val uri = URIWrapper.fromFile(file)
+        imageNotifications.showImageSavedNotification(asset.id, uri)
+        Toast.makeText(context, R.string.message_bottom_menu_action_save_ok, Toast.LENGTH_SHORT).show()
+        context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(Uri.fromFile(file))))
+      case _             =>
+        Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
+    }
+
+  private def createWireImageDirectory() =
+    returning(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/Wire Images/")) {
+      IoUtils.createDirectory
+    }
+
+  def saveToDownloads(asset: Asset): Unit =
+    saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
+      case Success(file) =>
+        val uri = URIWrapper.fromFile(file)
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
-        downloadManager.addCompletedDownload(asset.name.get, asset.name.get, false, asset.mime.orDefault.str, uri.getPath, asset.sizeInBytes, true)
+        downloadManager.addCompletedDownload(
+          asset.name,
+          asset.name,
+          false,
+          asset.mime.orDefault.str,
+          uri.getPath,
+          asset.size,
+          true)
         Toast.makeText(context, R.string.content__file__action__save_completed, Toast.LENGTH_SHORT).show()
-        context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(URI.unwrap(uri))))
+        context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(URIWrapper.unwrap(uri))))
       case _ =>
-    }(Threading.Ui)
+        Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
+    }
+
+  def assetForSharing(id: AssetId): Future[AssetForShare] = {
+
+    def getSharedFilename(asset: Asset): String =
+      if (asset.name.isEmpty) s"${sha2(asset.id.str.take(6))}.${asset.mime.extension}"
+      else if (!asset.name.endsWith(asset.mime.extension)) s"${asset.name}.${asset.mime.extension}"
+      else asset.name
+
+    for {
+      assets     <- zms.head.map(_.assetService)
+      asset      <- assets.getAsset(id)
+      assetInput <- assets.loadContent(asset).future
+      is         <- Future.fromTry(assetInput.toInputStream)
+      // even if the asset input is a file it has to be copied to the "target file", visible from the outside
+      file       =  new File(context.getExternalCacheDir, getSharedFilename(asset))
+      _          =  IoUtils.copy(is, file)
+      _          =  is.close()
+    } yield AssetForShare(asset, file)
+  }
 }
 
 object AssetsController {
 
-  class PlaybackControls(assetId: AssetId, controller: AssetsController) extends DerivedLogTag {
-    val rAndP = controller.zms.map(_.global.recordingAndPlayback)
+  case class AssetForShare(asset: Asset, file: File)
+
+  def getTargetFile(asset: Asset, directory: File): File = {
+    def file(prefix: String = "") = {
+      val prefixPart = if (prefix.isEmpty) "" else prefix + "_"
+      val name = asset.name.replaceAll("/","_")
+      val namePart = if (name.contains('.')) name else s"$name.${asset.mime.extension}"
+      new File(directory, prefixPart + namePart)
+    }
+
+    val baseFile = file()
+    if (!baseFile.exists()) baseFile
+    else {
+      (1 to 20).map(i => file(i.toString)).find(!_.exists())
+        .getOrElse(file(AESKey.random.str))
+    }
+  }
+
+  class PlaybackControls(assetId: AssetId, fileUri: URIWrapper, rAndP: Signal[GlobalRecordAndPlayService]) extends DerivedLogTag {
 
     val isPlaying = rAndP.flatMap(rP => rP.isPlaying(AssetMediaKey(assetId)))
     val playHead = rAndP.flatMap(rP => rP.playhead(AssetMediaKey(assetId)))
 
-    private def rPAction(f: (GlobalRecordAndPlayService, AssetMediaKey, Content, Boolean) => Unit): Unit = {
+    private def rPAction(f: (GlobalRecordAndPlayService, MediaKey, Content, Boolean) => Unit): Unit = {
       for {
-        as <- controller.assets.currentValue
         rP <- rAndP.currentValue
         isPlaying <- isPlaying.currentValue
       } {
-        as.getContentUri(assetId).foreach {
-          case Some(uri) => f(rP, AssetMediaKey(assetId), UnauthenticatedContent(uri), isPlaying)
-          case None =>
-        }(Threading.Background)
+        f(rP, AssetMediaKey(assetId), UnauthenticatedContent(fileUri), isPlaying)
       }
     }
 
     def playOrPause() = rPAction { case (rP, key, content, playing) => if (playing) rP.pause(key) else rP.play(key, content) }
 
-    def setPlayHead(duration: Duration) = rPAction { case (rP, key, content, playing) => rP.setPlayhead(key, content, duration) }
+    def setPlayHead(duration: Duration) = rPAction { case (rP, key, content, _) => rP.setPlayhead(key, content, duration) }
   }
 
-  def getOpenFileIntent(uri: URI, mimeType: String): Intent = {
+  def getOpenFileIntent(uri: Uri, mimeType: String): Intent = {
     returning(new Intent) { i =>
       i.setAction(Intent.ACTION_VIEW)
-      i.setDataAndType(AndroidURIUtil.unwrap(uri), mimeType)
+      i.setDataAndType(uri, mimeType)
       i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
   }

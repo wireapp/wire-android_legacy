@@ -15,97 +15,93 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.drawables
+package com.waz.zclient.common.drawables
 
 import android.content.Context
 import android.graphics._
 import android.graphics.drawable.Drawable
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetData, AssetId}
-import com.waz.service.ZMessaging
-import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
-import com.waz.service.images.BitmapSignal
+import com.waz.model.Picture
 import com.waz.threading.Threading
-import com.waz.ui.MemoryImageCache.BitmapRequest.Single
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
-import com.waz.zclient.drawables.TeamIconDrawable._
+import com.waz.zclient.common.drawables.TeamIconDrawable._
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.{Injectable, Injector, R}
 
+import scala.concurrent.Future
+
 object TeamIconDrawable {
-  val TeamCorners = 6
-  val UserCorners = 0
+  
+  sealed trait Shape
+  object UserShape extends Shape
+  object TeamShape extends Shape
 }
 
 class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: Context)
   extends Drawable
     with Injectable
     with DerivedLogTag {
-  
-  var text = ""
-  var corners = UserCorners
-  var selected = false
 
-  private val selectedDiameter = ctx.getResources.getDimensionPixelSize(R.dimen.team_tab_drawable_diameter)
+  private val imageAsset = Signal(Option.empty[Picture])
+  private var text = ""
+  private var iconShape: Shape = UserShape
+  private var isSelected = false
+
   private val borderGapWidth = ctx.getResources.getDimensionPixelSize(R.dimen.team_tab_drawable_gap)
   private val borderWidth = ctx.getResources.getDimensionPixelSize(R.dimen.team_tab_drawable_border)
-  private lazy val unselectedDiameter = selectedDiameter + 2 * (borderGapWidth + borderWidth)
 
-  val borderPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { paint =>
+  private val borderPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { paint =>
     paint.setColor(Color.TRANSPARENT)
     paint.setStyle(Paint.Style.STROKE)
     paint.setStrokeJoin(Paint.Join.ROUND)
     paint.setStrokeCap(Paint.Cap.ROUND)
     paint.setDither(true)
-    paint.setPathEffect(new CornerPathEffect(10f))
   }
 
-  val innerPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { paint =>
+  private val innerPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { paint =>
     paint.setColor(Color.TRANSPARENT)
     paint.setStyle(Paint.Style.FILL)
     paint.setStrokeJoin(Paint.Join.ROUND)
     paint.setStrokeCap(Paint.Cap.ROUND)
     paint.setDither(true)
-    paint.setPathEffect(new CornerPathEffect(6f))
   }
 
-  val textPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)){ paint =>
+  private val textPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)){ paint =>
     paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR))
     paint.setTextAlign(Paint.Align.CENTER)
     paint.setColor(Color.TRANSPARENT)
     paint.setAntiAlias(true)
   }
 
-  val bitmapPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)){ paint =>
+  private val bitmapPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)){ paint =>
     paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN))
   }
 
-  val innerPath = new Path()
-  val borderPath = new Path()
-  val matrix = new Matrix()
+  private val bounds = Signal[Rect]()
+  private val innerPath = new Path()
+  private val borderPath = new Path()
+  private val matrix = new Matrix()
 
-  val assetId = Signal(Option.empty[AssetId])
-  val bounds = Signal[Rect]()
-  val zms = inject[Signal[ZMessaging]]
+  private var currentBitmap = Option.empty[Bitmap]
 
-  val bmp = for{
-    z <- zms
-    asset <- assetId.flatMap {
-      case Some(aId) => z.assetsStorage.signal(aId).map(Option(_))
-      case _ => Signal.const(Option.empty[AssetData])
-    }
-    b <- bounds
-    bmp <- asset.fold {
-      Signal.const(Option.empty[Bitmap])
-    } { assetData =>
-      BitmapSignal(z, assetData, Single(b.width)).collect { case BitmapLoaded(bm, _) => Option(bm) }
-    }
-  } yield bmp
+  private val bitmap = for {
+    bounds <- bounds
+    asset <- imageAsset
+    bitmap <- Signal.future(
+      asset.fold(Future.successful(Option.empty[Bitmap])) { p =>
+        Threading.ImageDispatcher {
+          Option(WireGlide(ctx)
+            .asBitmap()
+            .load(p)
+            .submit(bounds.width, bounds.height)
+            .get())
+        }.future
+      })
+  } yield bitmap
 
-  private var currentBmp = Option.empty[Bitmap]
-
-  bmp.onUi{ bitmap =>
-    currentBmp = bitmap
+  bitmap .onUi{ bitmap =>
+    currentBitmap = bitmap
     invalidateSelf()
   }
 
@@ -113,9 +109,24 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
     updateDrawable(bounds)
   }
 
-  override def draw(canvas: Canvas) = {
+  def setPicture(picture: Option[Picture]): Unit = imageAsset ! picture
+
+  def setInfo(text: String, shape: Shape, selected: Boolean): Unit = {
+    this.text = text
+    innerPaint.setColor(Color.WHITE)
+    iconShape = shape
+    this.isSelected = selected
+    bounds.currentValue.foreach(updateDrawable)
+  }
+
+  def setBorderColor(color: Int): Unit = {
+    borderPaint.setColor(color)
+    invalidateSelf()
+  }
+
+  override def draw(canvas: Canvas): Unit = {
     canvas.drawPath(innerPath, innerPaint)
-    currentBmp match {
+    currentBitmap match {
       case Some(bitmap) =>
         matrix.reset()
         computeMatrix(bitmap.getWidth, bitmap.getHeight, getBounds, matrix)
@@ -125,17 +136,18 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
         val textX = getBounds.centerX
         canvas.drawText(text, textX, textY, textPaint)
     }
-    if (selected) canvas.drawPath(borderPath, borderPaint)
+    if (isSelected) canvas.drawPath(borderPath, borderPaint)
   }
 
   def computeMatrix(bmWidth: Int, bmHeight: Int, bounds: Rect, matrix: Matrix): Unit = {
+    val borderAndGaps = (2 * (borderGapWidth + borderWidth)).toFloat
+    val availableWidth = bounds.width.toFloat - borderAndGaps
+    val availableHeight = bounds.height.toFloat - borderAndGaps
 
-    val selectedOffset = if (selected)
-      (selectedDiameter + 2 * (borderGapWidth + borderWidth)).toFloat - selectedDiameter.toFloat
-    else
-      0.0f
+    val widthRatio = availableWidth / bmWidth.toFloat
+    val heightRatio = availableHeight / bmHeight.toFloat
+    val scale = math.max(widthRatio, heightRatio)
 
-    val scale = math.max((bounds.width.toFloat - selectedOffset) / bmWidth.toFloat, (bounds.height.toFloat - selectedOffset) / bmHeight.toFloat)
     val dx = - (bmWidth * scale - bounds.width) / 2
     val dy = - (bmHeight * scale - bounds.height) / 2
 
@@ -143,78 +155,53 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
     matrix.postTranslate(dx, dy)
   }
 
-  override def setColorFilter(colorFilter: ColorFilter) = {
+  override def setColorFilter(colorFilter: ColorFilter): Unit = {
     borderPaint.setColorFilter(colorFilter)
     innerPaint.setColorFilter(colorFilter)
   }
 
-  override def setAlpha(alpha: Int) = {
+  override def setAlpha(alpha: Int): Unit = {
     borderPaint.setAlpha(alpha)
     innerPaint.setAlpha(alpha)
   }
 
-  override def getOpacity = {
+  override def getOpacity: Int = {
     borderPaint.getAlpha
     borderPaint.getAlpha
   }
 
-  private def drawPolygon(path: Path, radius: Float, corners: Int): Unit = {
-    path.reset()
-    if (corners == 0) {
-      path.addCircle(0, 0, radius, Path.Direction.CW)
-    } else {
-      val angle = 2 * Math.PI / corners
-      val phase = angle / 2
-      (0 until corners).foreach{ i =>
-        val x = radius * Math.cos(angle * i + phase)
-        val y = radius * Math.sin(angle * i + phase)
-        if (i == 0) {
-          path.moveTo(x.toFloat, y.toFloat)
-        } else {
-          path.lineTo(x.toFloat, y.toFloat)
-        }
-      }
-      path.close()
-    }
-  }
-
-  override def onBoundsChange(bounds: Rect) = {
+  override def onBoundsChange(bounds: Rect): Unit = {
     this.bounds ! bounds
   }
 
-  override def getIntrinsicHeight = super.getIntrinsicHeight
+  override def getIntrinsicHeight: Int = super.getIntrinsicHeight
 
-  override def getIntrinsicWidth = super.getIntrinsicWidth
+  override def getIntrinsicWidth: Int = super.getIntrinsicWidth
 
   private def updateDrawable(bounds: Rect): Unit = {
-    val scale = Math.min(bounds.width(), bounds.height()).toFloat / (unselectedDiameter.toFloat + borderGapWidth + borderWidth)
+    val smallestSide = math.min(bounds.width(), bounds.height()).toFloat
+    val borderDiameter = smallestSide - 2 * borderWidth
+    val imageDiameter = borderDiameter - 2 * borderGapWidth
 
-    val diam = scale * (if (selected) selectedDiameter else unselectedDiameter)
-    val textSize = diam / 2.5f
+    drawPolygon(innerPath, imageDiameter / 2, iconShape)
+    drawPolygon(borderPath, borderDiameter / 2, iconShape)
 
-    drawPolygon(innerPath, diam / 2, corners)
-    drawPolygon(borderPath, diam / 2 + borderGapWidth + borderWidth, corners)
-
+    val textSize = imageDiameter / 2.5f
     textPaint.setTextSize(textSize)
     borderPaint.setStrokeWidth(borderWidth)
 
-    val hexMatrix = new Matrix()
-    hexMatrix.setTranslate(bounds.centerX(), bounds.centerY())
-    borderPath.transform(hexMatrix)
-    innerPath.transform(hexMatrix)
+    val matrix = new Matrix()
+    matrix.setTranslate(bounds.centerX(), bounds.centerY())
+    borderPath.transform(matrix)
+    innerPath.transform(matrix)
     invalidateSelf()
   }
 
-  def setInfo(text: String, corners: Int, selected: Boolean): Unit = {
-    this.text = text
-    innerPaint.setColor(Color.WHITE)
-    this.corners = corners
-    this.selected = selected
-    bounds.currentValue.foreach(updateDrawable)
-  }
-
-  def setBorderColor(color: Int): Unit = {
-    borderPaint.setColor(color)
-    invalidateSelf()
+  private def drawPolygon(path: Path, radius: Float, shape: Shape): Unit = {
+    path.reset()
+    shape match {
+      case UserShape => path.addCircle(0, 0, radius, Path.Direction.CW)
+      case TeamShape => path.addRoundRect(-radius, -radius, radius, radius, radius / 4, radius / 4, Path.Direction.CW)
+    }
   }
 }

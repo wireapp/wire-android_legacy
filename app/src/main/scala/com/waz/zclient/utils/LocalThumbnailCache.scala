@@ -17,21 +17,19 @@
  */
 package com.waz.zclient.utils
 
-import android.graphics.{BitmapFactory, Matrix}
-import android.media.{ExifInterface, ThumbnailUtils}
+import android.graphics.BitmapFactory
+import android.media.ThumbnailUtils
 import com.waz.utils.TrimmingLruCache.CacheSize
 import com.waz.utils.wrappers.{Bitmap, Context}
-import android.graphics.{Bitmap => AndroidBitmap}
 import com.waz.utils.{Cache, TrimmingLruCache, returning}
 import com.waz.zclient.utils.LocalThumbnailCache._
 
-import scala.util.Try
-
 class LocalThumbnailCache(lru: Cache[Thumbnail, Bitmap]) {
+  import com.waz.service.assets.AssetInput._
 
   def getOrCreate(thumbnail: Thumbnail): Bitmap = Option(lru.get(thumbnail)).getOrElse {
     returning {
-      val decodedBitmap = BitmapFactory.decodeFile(thumbnail.path, opts)
+      val decodedBitmap = BitmapFactory.decodeFile(thumbnail.path, BitmapOptions)
       Bitmap.fromAndroid(
         ThumbnailUtils.extractThumbnail(
           rotateIfNeeded(decodedBitmap, thumbnail.path).getOrElse(decodedBitmap),
@@ -44,29 +42,6 @@ class LocalThumbnailCache(lru: Cache[Thumbnail, Bitmap]) {
 }
 
 object LocalThumbnailCache {
-  private val opts = returning(new BitmapFactory.Options) {
-    _.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565
-  }
-
-  //TODO Maybe this is not good place for this logic? Find a better place while assets refactoring
-  def rotateIfNeeded(bitmap: Bitmap, path: String): Try[AndroidBitmap] = Try {
-    val exif = new ExifInterface(path)
-    val currentRotation =
-      exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL) match {
-        case ExifInterface.ORIENTATION_ROTATE_90  => 90
-        case ExifInterface.ORIENTATION_ROTATE_180 => 180
-        case ExifInterface.ORIENTATION_ROTATE_270 => 270
-        case _                                    => 0
-      }
-
-    if (currentRotation == 0) bitmap
-    else {
-      val matrix = new Matrix()
-      matrix.postRotate(currentRotation)
-      AndroidBitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth, bitmap.getHeight, matrix, true)
-    }
-  }
-
   case class Thumbnail(path: String, width: Int, height: Int)
 
   def apply(context: Context) = new LocalThumbnailCache(

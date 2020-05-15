@@ -17,8 +17,8 @@
  */
 package com.waz.zclient.messages
 
-import android.arch.paging.PositionalDataSource
 import android.content.Context
+import androidx.paging.PositionalDataSource
 import com.waz.content.MessageAndLikesStorage
 import com.waz.db.{CursorIterator, Reader}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

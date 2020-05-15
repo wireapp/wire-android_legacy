@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+    >
+
+    <com.waz.zclient.common.views.BackgroundImageView
+        android:id="@+id/settings_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        >
+
+        <LinearLayout
+            android:id="@+id/call_banner"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/network_indicator__expanded_height"
+            android:orientation="horizontal"
+            android:gravity="center|bottom"
+            android:background="@color/accent_green"
+            android:visibility="gone"
+            android:paddingStart="@dimen/wire__padding__16"
+            android:paddingEnd="@dimen/wire__padding__16"
+            >
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:id="@+id/muted_glyph"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="start"
+                android:gravity="center"
+                android:text="@string/glyph__silence"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                android:visibility="invisible"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/call_banner_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                app:w_font="@string/wire__typeface__medium"
+                android:ellipsize="middle"
+                android:singleLine="true"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:id="@+id/spacer_glyph"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="end"
+                android:gravity="center"
+                android:text="@string/glyph__silence"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                android:visibility="invisible"
+                />
+        </LinearLayout>
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?actionBarSize"
+            android:background="@color/transparent"
+            android:theme="?actionBarTheme"
+            app:popupTheme="?actionBarPopupTheme"
+            app:titleMarginStart="@dimen/wire__padding__regular"
+            >
+
+            <FrameLayout
+                android:id="@+id/account_tabs_container"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                >
+                <com.waz.zclient.common.views.AccountTabsView
+                    android:id="@+id/account_tabs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:layout_gravity="center"
+                    android:paddingStart="@dimen/wire__padding__12"
+                    android:paddingEnd="@dimen/wire__padding__12"
+                    />
+            </FrameLayout>
+
+            </androidx.appcompat.widget.Toolbar>
+
+        <FrameLayout
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
+            />
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/fl__root__camera"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+    <com.waz.zclient.views.LoadingIndicatorView
+        android:id="@+id/progress_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</FrameLayout>

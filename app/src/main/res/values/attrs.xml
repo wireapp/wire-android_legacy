@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2020 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,176 +19,64 @@
 
 -->
 <resources>
-    <declare-styleable name="UserChatheadView">
-        <attr name="ucvBorderWidth" format="dimension"/>
-    </declare-styleable>
-
-    <declare-styleable name="OutgoingCallingProgressView">
-        <attr name="ocpvInnerRadius" format="dimension"/>
-    </declare-styleable>
-
-    <declare-styleable name="OngoingCallingProgressView">
-        <attr name="ocpvRadius1" format="dimension"/>
-        <attr name="ocpvRadius2" format="dimension"/>
-        <attr name="ocpvRadius3" format="dimension"/>
-        <attr name="ocpvRadius4" format="dimension"/>
-        <attr name="ocpvOneRoundDuration" format="integer"/>
-        <attr name="ocpvAutoAnim" format="boolean"/>
-        <attr name="ocpvCircleColor" format="color"/>
-    </declare-styleable>
-
-
-    <declare-styleable name="SlidingUpPanelLayout">
-        <attr name="panelHeight" format="dimension"/>
-        <attr name="shadowHeight" format="dimension"/>
-        <attr name="paralaxOffset" format="dimension"/>
-        <attr name="fadeColor" format="color"/>
-        <attr name="flingVelocity" format="integer"/>
-        <attr name="dragView" format="reference"/>
-        <attr name="overlay" format="boolean"/>
-    </declare-styleable>
-
-    <declare-styleable name="FlowLayout">
-        <attr name="horizontalSpacing" format="dimension"/>
-        <attr name="verticalSpacing" format="dimension"/>
-    </declare-styleable>
-    <declare-styleable name="FlowLayout_LayoutParams">
-        <attr name="layout_breakLine" format="boolean"/>
-        <attr name="layout_horizontalSpacing" format="dimension"/>
-    </declare-styleable>
-    <declare-styleable name="CircleFlowIndicator">
-        <attr name="activeColor" format="color"/>
-        <attr name="inactiveColor" format="color"/>
-        <attr name="radius" format="dimension"/>
-        <attr name="spacing" format="dimension"/>
-        <attr name="inactiveType">
-            <flag name="stroke" value="0"/>
-            <flag name="fill" value="1"/>
-        </attr>
-        <attr name="activeType">
-            <flag name="stroke" value="0"/>
-            <flag name="fill" value="1"/>
-        </attr>
-    </declare-styleable>
-    <declare-styleable name="InputField">
-        <attr name="titleText" format="string" localization="suggested"/>
-        <attr name="inputType" format="string"/>
-    </declare-styleable>
     <declare-styleable name="ConfirmationMenu">
-        <attr name="header" format="string"/>
-        <attr name="text" format="string"/>
-        <attr name="negative" format="string"/>
-        <attr name="positive" format="string"/>
-        <attr name="cancelVisible" format="boolean"/>
-        <attr name="checkboxLabel" format="string"/>
-        <attr name="checkboxIsSelected" format="boolean"/>
-        <attr name="headerIcon" format="reference"/>
-        <attr name="backgroundImage" format="reference"/>
+        <attr name="header" format="string" />
+        <attr name="text" format="string" />
+        <attr name="negative" format="string" />
+        <attr name="positive" format="string" />
+        <attr name="cancelVisible" format="boolean" />
+        <attr name="checkboxLabel" format="string" />
+        <attr name="checkboxIsSelected" format="boolean" />
+        <attr name="headerIcon" format="reference" />
+        <attr name="backgroundImage" format="reference" />
     </declare-styleable>
 
     <declare-styleable name="PickUserEditText">
-        <attr name="hintSmallScreen" format="string"/>
-        <attr name="hintTextSize" format="dimension"/>
-    </declare-styleable>
-
-    <declare-styleable name="OverscrollFrameLayout">
-        <attr name="childView" format="reference"/>
-    </declare-styleable>
-
-    <declare-styleable name="GuidedEditText">
-        <attr name="textEdit" format="string"/>
-        <attr name="textGuide" format="string"/>
-        <attr name="fontEdit" format="string"/>
-        <attr name="fontGuide" format="string"/>
-        <attr name="textSizeEdit" format="string"/>
-        <attr name="textSizeGuide" format="string"/>
-        <attr name="textColorEdit" format="string"/>
-        <attr name="textColorGuide" format="string"/>
-        <attr name="transformEdit" format="string"/>
-        <attr name="transformGuide" format="string"/>
-        <attr name="hintEdit" format="string"/>
+        <attr name="hintSmallScreen" format="string" />
+        <attr name="hintTextSize" format="dimension" />
     </declare-styleable>
 
     <declare-styleable name="FooterMenu">
-        <attr name="leftActionText" format="string"/>
-        <attr name="rightActionText" format="string"/>
-        <attr name="leftActionLabelText" format="string"/>
-        <attr name="rightActionLabelText" format="string"/>
+        <attr name="leftActionText" format="string" />
+        <attr name="rightActionText" format="string" />
+        <attr name="leftActionLabelText" format="string" />
+        <attr name="rightActionLabelText" format="string" />
     </declare-styleable>
 
-    <declare-styleable name="CircularSeekBar">
-        <attr name="progress" format="integer"/>
-        <attr name="max" format="integer"/>
-        <attr name="move_outside_circle" format="boolean"/>
-        <attr name="maintain_equal_circle" format="boolean"/>
-        <attr name="use_custom_radii" format="boolean"/>
-        <attr name="circle_x_radius" format="dimension" />
-        <attr name="circle_y_radius" format="dimension" />
-        <attr name="circle_stroke_width" format="dimension" />
-        <attr name="pointer_radius" format="dimension" />
-        <attr name="pointer_halo_width" format="dimension" />
-        <attr name="pointer_halo_border_width" format="dimension"/>
-        <attr name="circle_color" format="string"/>
-        <attr name="circle_progress_color" format="string"/>
-        <attr name="pointer_color" format="string"/>
-        <attr name="pointer_halo_color" format="string"/>
-        <attr name="pointer_halo_color_ontouch" format="string"/>
-        <attr name="pointer_alpha_ontouch" format="integer"/>
-        <attr name="start_angle" format="float"/>
-        <attr name="end_angle" format="float"/>
-        <attr name="circle_fill" format="string"/>
-    </declare-styleable>
 
     <declare-styleable name="ChatHeadView">
-        <attr name="glyph_size" format="dimension"/>
-        <attr name="initials_font_size" format="dimension"/>
-        <attr name="isSelectable" format="boolean"/>
-        <attr name="swap_background_and_initial_colors" format="boolean"/>
-        <attr name="allow_icon" format="boolean"/>
-        <attr name="show_border" format="boolean"/>
-        <attr name="default_background" format="color"/>
-        <attr name="is_round" format="boolean"/>
-        <attr name="show_waiting" format="boolean"/>
-        <attr name="gray_on_unconnected" format="boolean"/>
+        <attr name="glyph_size" format="dimension" />
+        <attr name="initials_font_size" format="dimension" />
+        <attr name="isSelectable" format="boolean" />
+        <attr name="swap_background_and_initial_colors" format="boolean" />
+        <attr name="allow_icon" format="boolean" />
+        <attr name="show_border" format="boolean" />
+        <attr name="default_background" format="color" />
+        <attr name="is_round" format="boolean" />
+        <attr name="show_waiting" format="boolean" />
+        <attr name="gray_on_unconnected" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="TopUserChathead">
-        <attr name="chathead_size" format="dimension"/>
-    </declare-styleable>
-
-    <attr name="circleRadius" format="dimension"/>
-
-    <declare-styleable name="UnsentMessageIndicator">
-        <attr name="textColor" format="color"/>
-        <attr name="circleColor" format="color"/>
-        <attr name="circleRadius"/>
-        <attr name="exclamationMarkSize" format="dimension"/>
+        <attr name="chathead_size" format="dimension" />
     </declare-styleable>
 
     <declare-styleable name="SendingAnimationView">
-        <attr name="backgroundColor" format="color"/>
-        <attr name="circlePadding" format="dimension"/>
-        <attr name="circleRadius"/>
-        <attr name="backgroundCircleRadius" format="dimension"/>
-        <attr name="progressColor" format="color"/>
-        <attr name="fullCircleColor" format="color"/>
-        <attr name="pendingStop" format="integer"/>
-        <attr name="pendingDuration" format="integer"/>
-    </declare-styleable>
-
-    <declare-styleable name="CursorLayout">
-        <attr name="anchor1" format="dimension" />
-        <attr name="anchor2" format="dimension" />
-        <attr name="anchor3" format="dimension" />
-        <attr name="buttonOffset" format="dimension" />
-        <attr name="positionThreshold" format="dimension" />
+        <attr name="backgroundColor" format="color" />
+        <attr name="circlePadding" format="dimension" />
+        <attr name="circleRadius" />
+        <attr name="backgroundCircleRadius" format="dimension" />
+        <attr name="progressColor" format="color" />
+        <attr name="fullCircleColor" format="color" />
+        <attr name="pendingStop" format="integer" />
+        <attr name="pendingDuration" format="integer" />
     </declare-styleable>
 
     <declare-styleable name="ThemedTextView">
-        <attr name="themedColor" format="enum" >
-            <enum name="None" value="0"/>
-            <enum name="Primary" value="1"/>
-            <enum name="Secondary" value="2"/>
+        <attr name="themedColor" format="enum">
+            <enum name="None" value="0" />
+            <enum name="Primary" value="1" />
+            <enum name="Secondary" value="2" />
         </attr>
     </declare-styleable>
 
@@ -216,26 +104,19 @@
         <attr name="minimumHeight" format="dimension" />
     </declare-styleable>
 
-    <declare-styleable name="IncomingControlsLayout">
-        <attr name="edgeToEdgeWidth" format="dimension"/>
-        <attr name="buttonDiameter" format="dimension"/>
-        <attr name="avatarDiameter" format="dimension"/>
-        <attr name="buttonExpandedDiameter" format="dimension"/>
-    </declare-styleable>
-
     <declare-styleable name="AssetActionButton">
-        <attr name="isFileType" format="boolean"/>
+        <attr name="isFileType" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="SearchEditText">
-        <attr name="hintText" format="string"/>
+        <attr name="hintText" format="string" />
     </declare-styleable>
 
     <declare-styleable name="TextButton">
-        <attr name="title" format="string"/>
-        <attr name="subtitle" format="string"/>
-        <attr name="iconStart" format="reference"/>
-        <attr name="iconEnd" format="reference"/>
+        <attr name="title" format="string" />
+        <attr name="subtitle" format="string" />
+        <attr name="iconStart" format="reference" />
+        <attr name="iconEnd" format="reference" />
     </declare-styleable>
 
     <declare-styleable name="SwitchPreference">
@@ -243,30 +124,34 @@
     </declare-styleable>
 
     <declare-styleable name="InputBox">
-        <attr name="hint" format="string"/>
-        <attr name="hasButton" format="boolean"/>
+        <attr name="hint" format="string" />
+        <attr name="hasButton" format="boolean" />
     </declare-styleable>
 
-    <attr name="wireDividerColor" format="color"/>
-    <attr name="wireDividerColorSolid" format="color"/>
+    <attr name="wireDividerColor" format="color" />
+    <attr name="wireDividerColorSolid" format="color" />
 
     <declare-styleable name="MenuRowButton">
-        <attr name="buttonText" format="string"/>
-        <attr name="buttonIcon" format="string"/>
-        <attr name="buttonTextColor" format="color"/>
-        <attr name="rowDividerVisible" format="boolean"/>
+        <attr name="buttonText" format="string" />
+        <attr name="buttonIcon" format="string" />
+        <attr name="buttonTextColor" format="color" />
+        <attr name="rowDividerVisible" format="boolean" />
         <attr name="buttonTextFont" format="string" />
     </declare-styleable>
 
     <declare-styleable name="ZetaButton">
-        <attr name="isFilled" format="boolean"/>
+        <attr name="isFilled" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="StyleKitView">
-        <attr name="drawableColor" format="color"/>
+        <attr name="drawableColor" format="color" />
     </declare-styleable>
 
     <declare-styleable name="CallParticipantsView">
-        <attr name="isScrollable" format="boolean" default="true" />
+        <attr name="isScrollable" default="true" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="ButtonWithConfirmation">
+        <attr name="state_confirmed" format="boolean"/>
     </declare-styleable>
 </resources>

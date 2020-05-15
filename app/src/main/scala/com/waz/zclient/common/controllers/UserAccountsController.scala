@@ -24,13 +24,13 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserPermissions.Permission._
 import com.waz.model.UserPermissions._
 import com.waz.model._
-import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason, UserInitiated}
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
-import com.waz.zclient.utils.{ConversationSignal, UiStorage}
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
@@ -40,24 +40,23 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   
   import Threading.Implicits.Ui
 
-  private implicit val uiStorage   = inject[UiStorage]
+  observeLogoutEvents()
+
   private lazy val zms             = inject[Signal[ZMessaging]]
   private lazy val accountsService = inject[AccountsService]
   private lazy val prefs           = inject[Signal[UserPreferences]]
   private lazy val convCtrl        = inject[ConversationController]
 
-  lazy val accounts = accountsService.accountManagers.map(_.toSeq.sortBy(acc => (acc.teamId.isDefined, acc.userId.str)))
-
-  private var numberOfLoggedInAccounts = 0
-
-  val onAllLoggedOut = Signal(false)
-
-  accounts.map(_.size).onUi { accsNumber =>
-    onAllLoggedOut ! (accsNumber == 0 && numberOfLoggedInAccounts > 0)
-    numberOfLoggedInAccounts = accsNumber
+  lazy val accounts: Signal[Seq[AccountManager]] = accountsService.accountManagers.map {
+    _.toSeq.sortBy(acc => (acc.teamId.isDefined, acc.userId.str))
   }
 
   val ssoToken = Signal(Option.empty[String])
+
+  val allAccountsLoggedOut = Signal(false)
+  lazy val mostRecentLoggedOutAccount = Signal[Option[(UserId, LogoutReason)]]
+  lazy val onAccountLoggedOut: EventStream[(UserId, LogoutReason)] = accountsService.onAccountLoggedOut
+  private var numberOfLoggedInAccounts = 0
 
   lazy val currentUser = for {
     zms     <- zms
@@ -82,12 +81,11 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
         decodeBitmask(bitmask)
       }
 
-  lazy val isAdmin: Signal[Boolean] =
-    selfPermissions.map(AdminPermissions.subsetOf)
+  lazy val isAdmin: Signal[Boolean] = selfPermissions.map(AdminPermissions.subsetOf)
 
-  lazy val isPartner: Signal[Boolean] =
+  lazy val isExternal: Signal[Boolean] =
     selfPermissions
-      .map(ps => PartnerPermissions.subsetOf(ps) && PartnerPermissions.size == ps.size)
+      .map(ps => ExternalPermissions.subsetOf(ps) && ExternalPermissions.size == ps.size)
       .orElse(Signal.const(false))
 
   lazy val hasCreateConvPermission: Signal[Boolean] = teamId.flatMap {
@@ -95,24 +93,13 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     case  _ => Signal.const(true)
   }
 
-  lazy val hasChangeGroupSettingsPermission: Signal[Boolean] =
-    isPartner.map(!_)
-
   lazy val readReceiptsEnabled: Signal[Boolean] = zms.flatMap(_.propertiesService.readReceiptsEnabled)
 
-  def hasAddConversationMemberPermission(convId: ConvId): Signal[Boolean] =
-    hasConvPermission(convId, AddConversationMember)
-
-  def hasRemoveConversationMemberPermission(convId: ConvId): Signal[Boolean] =
-    hasConvPermission(convId, RemoveConversationMember)
-
-  private def hasConvPermission(convId: ConvId, toCheck: Permission): Signal[Boolean] = {
+  def hasPermissionToAddService: Future[Boolean] = {
     for {
-      z    <- zms
-      conv <- z.convsStorage.signal(convId)
-      ps   <- selfPermissions
-    } yield
-      conv.team.isEmpty || (conv.team == z.teamId && ps(toCheck))
+      tId <- teamId.head
+      ps  <- selfPermissions.head
+    } yield tId.isDefined && ps.contains(AddConversationMember)
   }
 
   def isTeamMember(userId: UserId) =
@@ -142,20 +129,26 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   def getOrCreateAndOpenConvFor(user: UserId) =
     getConversationId(user).flatMap(convCtrl.selectConv(_, ConversationChangeRequester.START_CONVERSATION))
 
-  def hasPermissionToRemoveService(cId: ConvId): Future[Boolean] = {
-    for {
-      tId <- teamId.head
-      ps  <- selfPermissions.head
-      conv <- ConversationSignal(cId).head
-    } yield tId == conv.team && ps.contains(RemoveConversationMember)
+  private def observeLogoutEvents(): Unit = {
+    accounts.map(_.size).onUi { numberOfAccounts =>
+      allAccountsLoggedOut ! (numberOfAccounts == 0 && numberOfLoggedInAccounts > 0)
+      numberOfLoggedInAccounts = numberOfAccounts
+    }
+
+    accountsService.onAccountLoggedOut.onUi { case account @ (userId, reason) =>
+      verbose(l"User $userId logged out due to $reason")
+
+      val cookieIsInvalid = reason match {
+        case InvalidCookie | ClientDeleted | UserInitiated => true
+        case _ => false
+      }
+
+      (
+        if (cookieIsInvalid && BuildConfig.WIPE_ON_COOKIE_INVALID) accountsService.wipeDataForAllAccounts()
+        else Future.successful(())
+        ).foreach{ _ =>
+        mostRecentLoggedOutAccount ! Some(account)
+      }
+    }
   }
-
-  def hasPermissionToAddService: Future[Boolean] = {
-    for {
-      tId <- teamId.head
-      ps  <- selfPermissions.head
-    } yield tId.isDefined && ps.contains(AddConversationMember)
-  }
-
-
 }

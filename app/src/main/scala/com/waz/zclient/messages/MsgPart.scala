@@ -37,7 +37,6 @@ object MsgPart {
   case object WebLink extends MsgPart
   case object YouTube extends MsgPart
   case object Location extends MsgPart
-  case object SoundMedia extends MsgPart
   case object MemberChange extends MsgPart
   case object ConnectRequest extends MsgPart
   case object Footer extends MsgPart
@@ -49,6 +48,7 @@ object MsgPart {
   case object WifiWarning extends MsgPart
   case object MessageTimer extends MsgPart
   case object ReadReceipts extends MsgPart
+  case object Composite extends MsgPart
   case object Empty extends MsgPart
   case object Unknown extends MsgPart
 
@@ -61,7 +61,7 @@ object MsgPart {
         case TEXT
              | TEXT_EMOJI_ONLY
              | RICH_MEDIA => Text
-        case ASSET        => Image
+        case IMAGE_ASSET        => Image
         case ANY_ASSET    => FileAsset
         case VIDEO_ASSET  => VideoAsset
         case AUDIO_ASSET  => AudioAsset
@@ -75,7 +75,7 @@ object MsgPart {
     import Message.Type._
     msgType match {
       case TEXT | TEXT_EMOJI_ONLY => Text
-      case ASSET => Image
+      case IMAGE_ASSET => Image
       case ANY_ASSET => FileAsset
       case VIDEO_ASSET => VideoAsset
       case AUDIO_ASSET => AudioAsset
@@ -92,7 +92,8 @@ object MsgPart {
       case RICH_MEDIA => Empty // RICH_MEDIA will be handled separately
       case MESSAGE_TIMER => MessageTimer
       case READ_RECEIPTS_ON | READ_RECEIPTS_OFF => if (isOneToOne) Empty else ReadReceipts
-      case UNKNOWN => Unknown
+      case COMPOSITE => Composite
+      case _ => Unknown
     }
   }
 
@@ -103,10 +104,10 @@ object MsgPart {
       case ASSET => Image
       case WEB_LINK => WebLink
       case ANY_ASSET => FileAsset
-      case SOUNDCLOUD => SoundMedia
-      case SPOTIFY => SoundMedia
+      case SOUNDCLOUD => WebLink
+      case SPOTIFY => WebLink
       case YOUTUBE => YouTube
-      case GOOGLE_MAPS | TWITTER => Text
+      case GOOGLE_MAPS | TWITTER => WebLink
     }
   }
 

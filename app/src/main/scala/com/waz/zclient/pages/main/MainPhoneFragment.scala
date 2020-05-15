@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2019 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,13 +17,18 @@
  */
 package com.waz.zclient.pages.main
 
+import android.app.Activity
 import android.content.Intent
-import android.os.Bundle
-import android.support.v4.app.FragmentManager
+import android.content.pm.ShortcutManager
+import android.os.{Build, Bundle}
+import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.fragment.app.FragmentManager
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
+import com.waz.permissions.PermissionsService
+import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
@@ -37,6 +42,7 @@ import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.controllers.confirmation.{ConfirmationObserver, ConfirmationRequest, IConfirmationController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
+import com.waz.zclient.conversation.creation.{CreateConversationController, CreateConversationManagerFragment}
 import com.waz.zclient.conversation.{ConversationController, ImageFragment}
 import com.waz.zclient.deeplinks.DeepLink.{logTag => _, _}
 import com.waz.zclient.deeplinks.DeepLinkService
@@ -50,11 +56,13 @@ import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
+import com.waz.zclient.feature.shortcuts.Shortcuts
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
+import com.waz.service.tracking.TrackingService.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
 
+import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -68,6 +76,8 @@ class MainPhoneFragment extends FragmentHelper
 
   import MainPhoneFragment._
   import Threading.Implicits.Ui
+
+  import scala.collection.JavaConverters._
 
   private lazy val zms = inject[Signal[ZMessaging]]
   private lazy val am  = inject[Signal[AccountManager]]
@@ -149,7 +159,6 @@ class MainPhoneFragment extends FragmentHelper
 
     deepLinkService.deepLink.collect { case Some(result) => result } onUi {
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
-        pickUserController.hideUserProfile()
         participantsController.onLeaveParticipants ! true
 
         if (self) {
@@ -200,13 +209,87 @@ class MainPhoneFragment extends FragmentHelper
     }
   }
 
+  private def initShortcutDestinations(): Unit = {
+    //Only for internal builds for now, will be for production when approved by QA.
+    if (Build.VERSION.SDK_INT > 25 && BuildConfig.FLAVOR.equals("internal")) {
+      val shortcuts = new Shortcuts()
+      val shortcutManager = getActivity.getSystemService(classOf[ShortcutManager])
+
+      val intent = MainActivity.newIntent(getActivity)
+      val newMessageShortcutInfo = shortcuts.newMessageShortcut(getActivity, intent)
+      val sharePhotoShortcutInfo = shortcuts.sharePhotoShortcut(getActivity, intent)
+      val groupConversationShortcutInfo = shortcuts.groupConversationShortcut(getActivity, intent)
+
+      shortcutManager.setDynamicShortcuts(
+        List(newMessageShortcutInfo, sharePhotoShortcutInfo, groupConversationShortcutInfo).asJava)
+    }
+  }
+
+  private def checkShortcutActions(): Unit = {
+    getActivity.getIntent.getAction match {
+      case Shortcuts.NEW_GROUP_CONVERSATION => newGroupConversation()
+      case Shortcuts.SHARE_PHOTO            => openGalleryPicker()
+      case Shortcuts.NEW_MESSAGE            => goToConversation()
+      case _  =>
+    }
+  }
+
+  private def newGroupConversation() = {
+    inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)
+    getFragmentManager.beginTransaction
+      .setCustomAnimations(
+        R.anim.fragment_animation_second_page_slide_in_from_right,
+        R.anim.fragment_animation_second_page_slide_in_from_left,
+        R.anim.fragment_animation_second_page_slide_in_from_right,
+        R.anim.fragment_animation_second_page_slide_in_from_left)
+      .replace(R.id.fl_fragment_main_content, CreateConversationManagerFragment.newInstance, CreateConversationManagerFragment.Tag)
+      .addToBackStack(CreateConversationManagerFragment.Tag)
+      .commit()
+    resetAction()
+  }
+
+  private def goToConversation(): Unit = {
+    val intent = new Intent(getActivity, classOf[ShareActivity])
+      .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    intent.setAction(Intent.ACTION_SEND)
+    intent.setType(ShareActivity.MessageIntentType)
+    startActivity(intent)
+    resetAction()
+  }
+
+  private def openGalleryPicker() =
+    inject[PermissionsService].requestAllPermissions(ListSet(android.Manifest.permission.READ_EXTERNAL_STORAGE)).map {
+      case true =>
+        val galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(galleryIntent, Shortcuts.SHARE_PHOTO_REQUEST_CODE)
+        resetAction()
+      case _    =>
+    }(Threading.Ui)
+
+  private def goToShareImage(data: Intent) = {
+    val intent = new Intent(getActivity, classOf[ShareActivity])
+    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    intent.setAction(Intent.ACTION_SEND)
+    intent.putExtra(Intent.EXTRA_STREAM, data.getData)
+    intent.setType("image/jpeg")
+    startActivity(intent)
+  }
+
+  private def resetAction() =
+    getActivity.getIntent.setAction("")
+
   override def onStart(): Unit = {
     super.onStart()
     singleImageController.addSingleImageObserver(this)
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
-
+    initShortcutDestinations()
     consentDialog
+  }
+
+  override def onResume(): Unit = {
+    super.onResume()
+    checkShortcutActions()
   }
 
   override def onStop(): Unit = {
@@ -218,7 +301,13 @@ class MainPhoneFragment extends FragmentHelper
 
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
-    withChildFragment(R.id.fl_fragment_main_content)(_.onActivityResult(requestCode, resultCode, data))
+    if (requestCode == Shortcuts.SHARE_PHOTO_REQUEST_CODE) {
+      if (resultCode == Activity.RESULT_OK) {
+        goToShareImage(data)
+      }
+    } else {
+      withChildFragment(R.id.fl_fragment_main_content)(_.onActivityResult(requestCode, resultCode, data))
+    }
   }
 
   override def onBackPressed(): Boolean = confirmationMenu flatMap { confirmationMenu =>
@@ -325,6 +414,7 @@ class MainPhoneFragment extends FragmentHelper
            RECORDING_FAILURE |
            CANNOT_SEND_ASSET_FILE_NOT_FOUND |
            CANNOT_SEND_ASSET_TOO_LARGE => // Handled in ConversationFragment
+      case CANNOT_DELETE_GROUP_CONVERSATION => //Handled in ConversationListManagerFragment
       case _ =>
         LogUI.error(l"Unexpected error ${error.errType}")
     }
@@ -345,4 +435,3 @@ class MainPhoneFragment extends FragmentHelper
 object MainPhoneFragment {
   val Tag: String = classOf[MainPhoneFragment].getName
 }
-

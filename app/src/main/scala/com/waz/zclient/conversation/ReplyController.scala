@@ -18,13 +18,14 @@
 package com.waz.zclient.conversation
 
 import android.content.Context
-import com.waz.model.{AssetData, ConvId, MessageData, MessageId}
+import com.waz.model._
 import com.waz.utils.events.{EventContext, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.assets.GeneralAsset
 import com.waz.service.messages.MessagesService
 
 import scala.concurrent.Future
@@ -46,10 +47,10 @@ class ReplyController(implicit injector: Injector, context: Context, ec: EventCo
   val currentReplyContent: Signal[Option[ReplyContent]] = (for {
     replies     <- replyData
     Some(msgId) <- conversationController.currentConvId.map(replies.get)
-    Some(msg)   <- messagesController.getMessage(msgId)
+    msg         <- messagesController.getMessage(msgId)
     sender      <- usersController.user(msg.userId)
-    asset       <- assetsController.assetSignal(msg.assetId).map(a => Option(a._1)).orElse(Signal.const(Option.empty[AssetData]))
-  } yield Option(ReplyContent(msg, asset, sender.getDisplayName))).orElse(Signal.const(None))
+    asset       <- assetsController.assetSignal(msg.assetId)
+  } yield Option(ReplyContent(msg, asset, sender.name))).orElse(Signal.const(None))
 
   messagesService.flatMap(ms => Signal.wrap(ms.msgEdited)) { case (from, to) =>
     replyData.mutate { data =>
@@ -69,4 +70,4 @@ class ReplyController(implicit injector: Injector, context: Context, ec: EventCo
   def clearMessageInCurrentConversation(): Future[Boolean] = conversationController.currentConvId.head.map(clearMessage)
 }
 
-case class ReplyContent(message: MessageData, asset: Option[AssetData], sender: String)
+case class ReplyContent(message: MessageData, asset: Option[GeneralAsset], sender: String)

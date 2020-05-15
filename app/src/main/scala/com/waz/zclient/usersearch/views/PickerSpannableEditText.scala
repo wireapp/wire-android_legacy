@@ -20,13 +20,13 @@ package com.waz.zclient.usersearch.views
 import android.content.Context
 import android.graphics.drawable.ShapeDrawable
 import android.os.Build
-import android.support.annotation.NonNull
 import android.text._
 import android.text.style.{AbsoluteSizeSpan, ReplacementSpan}
 import android.util.AttributeSet
 import android.view.ActionMode.Callback
 import android.view._
 import android.view.inputmethod.{EditorInfo, InputConnection, InputConnectionWrapper}
+import androidx.annotation.NonNull
 import com.waz.zclient.R
 import com.waz.zclient.common.views.PickableElement
 import com.waz.zclient.pages.main.pickuser.UserTokenSpan

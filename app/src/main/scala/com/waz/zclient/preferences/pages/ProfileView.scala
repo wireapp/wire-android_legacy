@@ -19,25 +19,28 @@ package com.waz.zclient.preferences.pages
 
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
+import com.bumptech.glide.request.RequestOptions
 import com.waz.content.UserPreferences
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
-import com.waz.model.{AccentColor, Availability, UserPermissions}
+import com.waz.model.{AccentColor, Availability, Picture, UserPermissions}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.zclient.BuildConfig.ACCOUNT_CREATION_ENABLED
 import com.waz.zclient._
+import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.feature.settings.main.SettingsMainActivity
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.UsersController
+import com.waz.zclient.preferences.pages.ProfileViewController.MaxAccountsCount
 import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.tracking.OpenedManageTeam
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -45,10 +48,6 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views.AvailabilityView
-import ProfileViewController.MaxAccountsCount
-import BuildConfig.ACCOUNT_CREATION_ENABLED
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.zclient.appentry.AppEntryActivity
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
@@ -58,7 +57,7 @@ trait ProfileView {
   def setUserName(name: String): Unit
   def setAvailability(visible: Boolean, availability: Availability): Unit
   def setHandle(handle: String): Unit
-  def setProfilePictureDrawable(drawable: Drawable): Unit
+  def setProfilePicture(picture: Picture): Unit
   def setAccentColor(color: Int): Unit
   def setTeamName(name: Option[String]): Unit
   def showNewDevicesDialog(devices: Seq[Client]): Unit
@@ -99,15 +98,19 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     newTeamButton.setVisible(true)
     newTeamButton.onClickEvent.on(Threading.Ui) { _ =>
       // We want to go directly to the landing page.
-      val intent = new Intent(getContext, classOf[AppEntryActivity])
-      getContext.startActivity(intent)
+      getContext.startActivity(AppEntryActivity.newIntent(getContext))
     }
   } else {
     newTeamButton.setVisible(false)
   }
 
   settingsButton.onClickEvent.on(Threading.Ui) { _ =>
-    navigator.goTo(SettingsBackStackKey())
+    if (BuildConfig.KOTLIN_SETTINGS) {
+      getContext.startActivity(SettingsMainActivity.newIntent(getContext)
+        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
+    } else {
+        navigator.goTo(SettingsBackStackKey())
+    }
   }
 
   userPicture.setOnClickListener(new OnClickListener {
@@ -125,7 +128,11 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setHandle(handle: String): Unit = userHandleText.setText(handle)
 
-  override def setProfilePictureDrawable(drawable: Drawable): Unit = userPicture.setImageDrawable(drawable)
+  override def setProfilePicture(picture: Picture): Unit =
+    WireGlide(context)
+      .load(picture)
+      .apply(new RequestOptions().circleCrop())
+      .into(userPicture)
 
   override def setAccentColor(color: Int): Unit = {}
 
@@ -234,7 +241,7 @@ case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 
 class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
-  
+
   import ProfileViewController._
 
   implicit val uiStorage = inject[UiStorage]
@@ -255,7 +262,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   val team = zms.flatMap(_.teams.selfTeam)
 
-  val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{ case Some(pic) => WireImage(pic) }
+  self.map(_.picture).collect { case Some(pic) => pic }.onUi { view.setProfilePicture }
 
   val incomingClients = for {
     z       <- zms
@@ -263,12 +270,10 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
     clients <- client.clientId.fold(Signal.empty[Seq[Client]])(aid => z.otrClientsStorage.incomingClientsSignal(z.selfUserId, aid))
   } yield clients
 
-  view.setProfilePictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
-
   self.on(Threading.Ui) { self =>
     view.setAccentColor(AccentColor(self.accent).color)
     self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))
-    view.setUserName(self.getDisplayName)
+    view.setUserName(self.name)
   }
 
   for {

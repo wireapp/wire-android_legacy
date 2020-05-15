@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2020 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,36 +18,31 @@
 
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-    >
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            >
+            android:orientation="vertical">
 
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/settings_support_website"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_support_website_title"
-                />
+                app:title="@string/pref_support_website_title" />
 
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/settings_support_contact"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_support_contact_title"
-                />
+                app:title="@string/pref_support_contact_title" />
 
         </LinearLayout>
 

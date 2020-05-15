@@ -18,24 +18,23 @@
 package com.waz.zclient.preferences.pages
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
+import com.waz.model.Picture
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.common.views.GlyphButton
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.utils.{BackStackKey, UiStorage, UserSignal}
-import com.waz.zclient.common.views.ImageAssetDrawable.ScaleType
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
-import com.waz.zclient.common.views.{GlyphButton, ImageAssetDrawable}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
 trait ProfilePictureView {
-    def setPictureDrawable(drawable: Drawable): Unit
+    def setPicture(picture: Picture): Unit
 }
 
 class ProfilePictureViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ProfilePictureView with ViewHelper{
@@ -53,7 +52,7 @@ class ProfilePictureViewImpl(context: Context, attrs: AttributeSet, style: Int) 
     }
   })
 
-  override def setPictureDrawable(drawable: Drawable) = image.setImageDrawable(drawable)
+  override def setPicture(picture: Picture): Unit = WireGlide(context).load(picture).into(image)
 }
 
 case class ProfilePictureBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
@@ -79,9 +78,9 @@ class ProfilePictureViewController(view: ProfilePictureView)(implicit inj: Injec
   val image = for {
     zms <- zms
     self <- UserSignal(zms.selfUserId)
-    image <- self.picture.map(WireImage).fold(Signal.empty[ImageSource])(Signal(_))
+    image <- self.picture.fold(Signal.empty[Picture])(Signal(_))
   } yield image
 
-  view.setPictureDrawable(new ImageAssetDrawable(image, scaleType = ScaleType.CenterInside))
+  image.onUi { view.setPicture }
 }
 

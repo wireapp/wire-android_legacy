@@ -23,14 +23,14 @@ import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.media.RingtoneManager
 import android.net.Uri
-import android.os.{Build, Bundle}
-import android.support.annotation.Nullable
-import android.support.v4.app.Fragment
-import android.support.v7.widget.Toolbar
+import android.os.Bundle
+import androidx.annotation.Nullable
+import androidx.fragment.app.Fragment
+import androidx.appcompat.widget.Toolbar
 import android.view.{MenuItem, View, ViewGroup}
-import android.widget._
+import android.widget.{FrameLayout, Toast}
 import com.waz.content.UserPreferences
-import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets.Content
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -66,7 +66,7 @@ class PreferencesActivity extends BaseActivity
   @SuppressLint(Array("PrivateResource"))
   override def onCreate(@Nullable savedInstanceState: Bundle) = {
     super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_settings)
+    setContentView(R.layout.activity_settings_legacy)
     setSupportActionBar(toolbar)
     getSupportActionBar.setDisplayHomeAsUpEnabled(true)
     getSupportActionBar.setDisplayShowHomeEnabled(true)
@@ -93,19 +93,10 @@ class PreferencesActivity extends BaseActivity
       backStackNavigator.onRestore(findViewById(R.id.content).asInstanceOf[ViewGroup], savedInstanceState)
     }
 
-    accentColor.on(Threading.Ui) { color =>
-      getControllerFactory.getUserPreferencesController.setLastAccentColor(color.color)
-    }
-
     accountTabs.onTabClick.onUi { account =>
       val intent = new Intent()
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        intent.putExtra(SwitchAccountExtra, account.id.str)
-        setResult(Activity.RESULT_OK, intent)
-      } else {
-        ZMessaging.currentAccounts.setAccount(Some(account.id))
-        setResult(Activity.RESULT_CANCELED, intent)
-      }
+      intent.putExtra(SwitchAccountExtra, account.id.str)
+      setResult(Activity.RESULT_OK, intent)
       finish()
     }
 
@@ -177,9 +168,9 @@ class PreferencesActivity extends BaseActivity
   }
 
   //TODO do we need to check internet connectivity here?
-  override def onBitmapSelected(input: RawAssetInput, cameraContext: CameraContext): Unit =
+  override def onBitmapSelected(input: Content, cameraContext: CameraContext): Unit =
     if (cameraContext == CameraContext.SETTINGS) {
-      inject[Signal[ZMessaging]].head.map { zms =>
+      zms.head.map { zms =>
         zms.users.updateSelfPicture(input)
       } (Threading.Background)
       getSupportFragmentManager.popBackStack(CameraFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)

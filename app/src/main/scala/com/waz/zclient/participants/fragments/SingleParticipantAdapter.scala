@@ -18,123 +18,84 @@
 package com.waz.zclient.participants.fragments
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.RecyclerView.ViewHolder
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{ImageView, LinearLayout, TextView}
-import com.waz.model.{Availability, UserField, UserId}
-import com.waz.zclient.common.views.ChatHeadView
-import com.waz.zclient.paintcode.GuestIcon
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.waz.model.{ConversationRole, UserField, UserId}
+import com.waz.zclient.R
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils._
-import com.waz.zclient.views.ShowAvailabilityView
-import com.waz.zclient.{Injectable, R}
 
-class SingleParticipantAdapter(userId: UserId,
-                               isGuest: Boolean,
-                               isDarkTheme: Boolean,
-                               private var fields: Seq[UserField] = Seq.empty,
-                               private var availability: Option[Availability] = None,
-                               private var timerText: Option[String] = None,
-                               private var readReceipts: Option[String] = None
-                              )(implicit context: Context)
-  extends RecyclerView.Adapter[ViewHolder] with Injectable {
+final class SingleParticipantAdapter(userId:      UserId,
+                                     isGuest:     Boolean,
+                                     isExternal:  Boolean,
+                                     isDarkTheme: Boolean,
+                                     isGroup:     Boolean,
+                                     isWireless:  Boolean
+                                    )(implicit context: Context)
+  extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless) {
+  import BaseSingleParticipantAdapter._
   import SingleParticipantAdapter._
 
-  def set(fields: Seq[UserField], availability: Option[Availability], timerText: Option[String], readReceipts: Option[String]): Unit = {
-    this.fields = fields
-    this.availability = availability
-    this.timerText = timerText
-    this.readReceipts = readReceipts
+  private var fields:       Seq[UserField] = Seq.empty
+  private var readReceipts: Option[String] = None
+
+  override protected def hasInformation: Boolean = fields.nonEmpty
+
+  def set(fields:          Seq[UserField],
+          timerText:       Option[String],
+          readReceipts:    Option[String],
+          participantRole: ConversationRole,
+          selfRole:        ConversationRole
+         ): Unit = {
+    this.fields          = fields
+    this.timerText       = timerText
+    this.readReceipts    = readReceipts
+    this.participantRole = Some(participantRole)
+    this.selfRole        = Some(selfRole)
     notifyDataSetChanged()
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = viewType match {
-    case Header =>
-      val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_header_row, parent, false)
-      ParticipantHeaderRowViewHolder(view)
     case CustomField =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_custom_field_row, parent,false)
       CustomFieldRowViewHolder(view)
-    case Footer =>
+    case ReadReceipts =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_footer_row, parent, false)
-      ParticipantFooterRowViewHolder(view)
+      ReadReceiptsRowViewHolder(view)
+    case _ =>
+      super.onCreateViewHolder(parent, viewType)
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
-    case h: ParticipantHeaderRowViewHolder =>
-      h.bind(userId, isGuest, availability, timerText, isDarkTheme, fields.nonEmpty)
-    case h: ParticipantFooterRowViewHolder =>
+    case h: ReadReceiptsRowViewHolder =>
       h.bind(readReceipts)
     case h: CustomFieldRowViewHolder =>
-      h.bind(fields(position - 1))
+      h.bind(fields(position - (if(isGroupAdminViewVisible) 2 else 1)))
+    case _ =>
+      super.onBindViewHolder(holder, position)
   }
 
-  override def getItemCount: Int = fields.size + 2
+  override def getItemCount: Int =
+    if (isGroupAdminViewVisible) fields.size + 3 else fields.size + 2
 
-  override def getItemId(position: Int): Long =
-    if (position == 0) 0L
-    else if (position == getItemCount - 1) 1L
-    else fields(position - 1).key.hashCode.toLong
-
-  setHasStableIds(true)
+  override def getItemId(position: Int): Long = getItemViewType(position) match {
+    case Header                        => 0L
+    case GroupAdmin                    => 1L
+    case ReadReceipts                  => 2L
+    case _  if isGroupAdminViewVisible => fields(position - 2).key.hashCode.toLong
+    case _                             => fields(position - 1).key.hashCode.toLong
+  }
 
   override def getItemViewType(position: Int): Int =
     if (position == 0) Header
-    else if (position == getItemCount - 1) Footer
+    else if (position == 1 && isGroupAdminViewVisible) GroupAdmin
+    else if (position == getItemCount - 1) ReadReceipts
     else CustomField
 }
 
+
 object SingleParticipantAdapter {
-  val CustomField = 0
-  val Header = 1
-  val Footer = 2
-
-  case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
-    private lazy val imageView           = view.findViewById[ChatHeadView](R.id.chathead)
-    private lazy val guestIndication     = view.findViewById[LinearLayout](R.id.guest_indicator)
-    private lazy val userAvailability    = view.findViewById[ShowAvailabilityView](R.id.availability)
-    private lazy val guestIndicatorTimer = view.findViewById[TypefaceTextView](R.id.expiration_time)
-    private lazy val guestIndicatorIcon  = view.findViewById[ImageView](R.id.guest_indicator_icon)
-    private lazy val informationText     = view.findViewById[TypefaceTextView](R.id.information)
-
-    private var userId = Option.empty[UserId]
-
-    def bind(userId: UserId,
-             isGuest: Boolean,
-             availability: Option[Availability],
-             timerText: Option[String],
-             isDarkTheme: Boolean,
-             hasInformation: Boolean
-            )(implicit context: Context): Unit = {
-      this.userId = Some(userId)
-
-      imageView.setUserId(userId)
-      guestIndication.setVisible(isGuest)
-
-      val color = if (isDarkTheme) R.color.wire__text_color_primary_dark_selector else R.color.wire__text_color_primary_light_selector
-      guestIndicatorIcon.setImageDrawable(GuestIcon(color))
-
-      availability match {
-        case Some(av) =>
-          userAvailability.setVisible(true)
-          userAvailability.set(av)
-        case None =>
-          userAvailability.setVisible(false)
-      }
-
-      timerText match {
-        case Some(text) =>
-          guestIndicatorTimer.setVisible(true)
-          guestIndicatorTimer.setText(text)
-        case None =>
-          guestIndicatorTimer.setVisible(false)
-      }
-
-      informationText.setVisible(hasInformation)
-    }
-  }
-
   case class CustomFieldRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val name  = view.findViewById[TextView](R.id.custom_field_name)
     private lazy val value = view.findViewById[TextView](R.id.custom_field_value)
@@ -145,10 +106,12 @@ object SingleParticipantAdapter {
     }
   }
 
-  case class ParticipantFooterRowViewHolder(view: View) extends ViewHolder(view) {
+  case class ReadReceiptsRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val readReceiptsInfoTitle = view.findViewById[TypefaceTextView](R.id.read_receipts_info_title)
     private lazy val readReceiptsInfo1     = view.findViewById[TypefaceTextView](R.id.read_receipts_info_1)
     private lazy val readReceiptsInfo2     = view.findViewById[TypefaceTextView](R.id.read_receipts_info_2)
+
+    view.setContentDescription("Read Receipts")
 
     def bind(title: Option[String]): Unit = {
       readReceiptsInfoTitle.setVisible(title.isDefined)

@@ -19,14 +19,14 @@ package com.waz.zclient.conversation.creation
 
 import android.content.Context
 import android.os.Bundle
-import android.support.design.widget.TabLayout
-import android.support.design.widget.TabLayout.OnTabSelectedListener
-import android.support.v4.graphics.ColorUtils
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{ImageView, TextView}
+import androidx.core.graphics.ColorUtils
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -127,8 +127,8 @@ class AddParticipantsFragment extends FragmentHelper {
 
   private lazy val emptyServicesButton = returning(view[TypefaceTextView](R.id.empty_services_button)) { vh =>
     (for {
-      isAdmin  <- userAccounts.isAdmin
-      res      <- adapter.searchResults
+      isAdmin <- userAccounts.isAdmin
+      res     <- adapter.searchResults
     } yield res match {
       case AddUserListState.NoServices if isAdmin => View.VISIBLE
       case _ => View.GONE
@@ -144,8 +144,8 @@ class AddParticipantsFragment extends FragmentHelper {
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
 
     (for {
-      isAdmin  <- userAccounts.isAdmin
-      res      <- adapter.searchResults
+      isAdmin <- userAccounts.isAdmin
+      res     <- adapter.searchResults
     } yield res match {
       case AddUserListState.NoUsers               => R.string.new_conv_no_contacts
       case AddUserListState.NoUsersFound          => R.string.new_conv_no_results
@@ -234,6 +234,8 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
 
   private implicit val ctx = context
   private lazy val themeController = inject[ThemeController]
+  private lazy val teamId = inject[Signal[Option[TeamId]]]
+  private lazy val currentUserController = inject[UserAccountsController]
 
   private val searchController = new SearchController()
 
@@ -249,22 +251,29 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   val onSelectionChanged = EventStream[(Either[UserId, (ProviderId, IntegrationId)], Boolean)]()
 
   (for {
-    teamId        <- inject[Signal[Option[TeamId]]]
     res           <- searchResults
+    currentUser   <- currentUserController.currentUser
     usersSelected <- usersSelected
+    _teamId       <- teamId
     servsSelected <- servicesSelected
-
-  } yield (teamId, res, usersSelected, servsSelected)).onUi {
-    case (teamId, res, usersSelected, servsSelected) =>
+  } yield (_teamId, res, usersSelected, servsSelected, currentUser)).onUi {
+    case (teamId, res, usersSelected, servsSelected, currentUser) =>
       team = teamId
       val prev = this.results
 
       import AddUserListState._
-      val userResults = res match {
-        case Users(us) => us
-        case _ => Seq.empty
+
+      val (localResults, directoryResults) = res match {
+        case AddUserListState.Users(search) => (search.local, search.dir)
+        case _ => (Nil, Nil)
       }
 
+      val directoryTeamMembers = currentUser.map(_.teamId) match {
+        case Some(_)      => directoryResults.filter(_.teamId == teamId)
+        case None         => Nil
+      }
+
+      val userResults = (localResults ++ directoryTeamMembers).distinctBy(_.id)
       val integrationResults = res match {
         case Services(ss) => ss
         case _ => Seq.empty

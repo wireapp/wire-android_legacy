@@ -24,14 +24,15 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.util.AttributeSet;
 
+import androidx.appcompat.widget.AppCompatEditText;
+
+import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.ui.utils.ReflectionUtils;
 import com.waz.zclient.utils.ViewUtils;
 
 import java.lang.reflect.Field;
 
-import timber.log.Timber;
-
-public class AccentColorEditText extends android.support.v7.widget.AppCompatEditText {
+public class AccentColorEditText extends AppCompatEditText {
 
     private static final int DEFAULT_CURSOR_WIDTH_DP = 2;
     private int accentColor = Color.WHITE;
@@ -99,7 +100,7 @@ public class AccentColorEditText extends android.support.v7.widget.AppCompatEdit
             }
 
         } catch (IllegalAccessException | IllegalArgumentException ex) {
-            Timber.e(ex, "Error accessing private field");
+            Logger.error("AccentColorEditText","Error accessing private field", ex);
         }
     }
 }

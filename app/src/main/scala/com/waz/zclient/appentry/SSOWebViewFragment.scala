@@ -17,14 +17,14 @@
  */
 package com.waz.zclient.appentry
 
-import android.app.FragmentManager
 import android.content.DialogInterface
 import android.os.Bundle
-import android.support.v7.widget.Toolbar
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.webkit.WebView
 import android.widget.TextView
+import androidx.appcompat.widget.Toolbar
+import androidx.fragment.app.FragmentManager
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -48,15 +48,6 @@ class SSOWebViewFragment extends FragmentHelper {
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-
-    webView.foreach { webView =>
-      val webViewWrapper = new SSOWebViewWrapper(webView, ZMessaging.currentGlobal.backend.baseUrl.toString)
-      webViewWrapper.onUrlChanged.onUi { url =>
-        webView.findViewById[TextView](R.id.title).setText(Option(URI.parse(url).getHost).getOrElse(""))
-      }
-
-      getStringArg(SSOWebViewFragment.SSOCode).foreach(code => webViewWrapper.loginWithCode(code).foreach(ssoResponse))
-    }
 
     val toolbar = view.findViewById[Toolbar](R.id.toolbar)
     toolbar.setNavigationIcon(R.drawable.action_back_dark)
@@ -98,6 +89,36 @@ class SSOWebViewFragment extends FragmentHelper {
     getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     inject[UserAccountsController].ssoToken ! None
     true
+  }
+
+  override def onResume(): Unit = {
+    super.onResume()
+    loadWebView()
+  }
+
+  override def onPause(): Unit = {
+    super.onPause()
+    clearWebView()
+  }
+
+  private def loadWebView(): Unit = {
+    webView.foreach { webView =>
+      val webViewWrapper = new SSOWebViewWrapper(webView, ZMessaging.currentGlobal.backend.baseUrl.toString)
+      webViewWrapper.onUrlChanged.onUi { url =>
+        webView.findViewById[TextView](R.id.title).setText(Option(URI.parse(url).getHost).getOrElse(""))
+      }
+
+      getStringArg(SSOWebViewFragment.SSOCode).foreach(code => webViewWrapper.loginWithCode(code).foreach(ssoResponse))
+    }
+  }
+
+  private def clearWebView(): Unit = {
+    webView.foreach { webView =>
+      webView.clearCache(true)
+      webView.clearFormData
+      webView.clearHistory
+
+    }
   }
 
   def activity = getActivity.asInstanceOf[AppEntryActivity]

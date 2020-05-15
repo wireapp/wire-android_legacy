@@ -31,7 +31,5 @@
         android:layout_gravity="center"
         android:text="@string/glyph__call"
         android:textColor="@color/text__primary_dark"
-        android:textSize="@dimen/wire__icon_button__text_size"
-
-        />
+        android:textSize="@dimen/wire__icon_button__text_size" />
 </FrameLayout>

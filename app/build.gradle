@@ -1,73 +1,53 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: 'jp.leafytree.android-scala'
-apply plugin: 'hugo'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 
-
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
+//region avs
+//TODO: Migrate this configuration to new dependency system
 ext {
-    majorVersion = "3.33."
-
-    scalaMajorVersion = '2.11'
-    scalaVersion = scalaMajorVersion + '.12'
-
-    supportLibVersion = '27.1.1'
-    playServicesVersion = '15.0.1'
-    audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
-    stethoVersion = '1.5.0'
-    zMessagingVersion = "141.0.2277"
-    paging_version = "1.0.0"
-
-    avsVersion = '4.9.12@aar'
+    avsVersion = '5.3.191@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
     avsName = 'avs'
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '4.9.12@aar'
+    customAvsVersion = '5.5.11@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
-
-    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '-DEV')
-    zMessagingReleaseVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar')
-
 }
 
 if (project.file('user.gradle').exists()) {
     apply from: "user.gradle"
 }
+//endregion avs
 
 task copyCustomResources(type: Copy) {
-    if (!customConfig.exists() || gradle.startParameter.taskNames.contains("clean")) {
+    if (buildtimeConfiguration.customResourcesPath == null) {
         return
     }
 
-    def iconFolder = (config.iconFolder ?: 'icons')
+    def iconFolder = (buildtimeConfiguration.configuration.iconFolder ?: 'icons')
     def targetResFolder = "$rootDir/app/src/main/res"
-    def iconSubfolders = [
-            'ldpi': 'drawable-ldpi',
-            'mdpi': 'drawable-mdpi',
-            'hdpi': 'drawable-hdpi',
-            'xhdpi': 'drawable-xhdpi',
-            'xxhdpi': 'drawable-xxhdpi',
-            'xxxhdpi': 'drawable-xxxhdpi'
+    def iconSubFolders = [
+            'ldpi': 'mipmap-ldpi',
+            'mdpi': 'mipmap-mdpi',
+            'hdpi': 'mipmap-hdpi',
+            'xhdpi': 'mipmap-xhdpi',
+            'xxhdpi': 'mipmap-xxhdpi',
+            'xxxhdpi': 'mipmap-xxxhdpi'
     ]
 
     def resources = [
-            "ic_launcher_wire.png" : (config.launcherIcon ?: '')
+            "ic_launcher_wire.png" : (buildtimeConfiguration.configuration.launcherIcon ?: '')
     ]
-
+    def customDir = buildtimeConfiguration.customResourcesPath
     resources.findAll { targetFileName, sourceFileName -> !sourceFileName.empty }
             .collectEntries { targetFileName, sourceFileName ->
-                iconSubfolders.collectEntries { sourceSub, targetSub ->
+                iconSubFolders.collectEntries { sourceSub, targetSub ->
                     [(customDir + '/' + iconFolder + '/' + sourceSub + '/' + sourceFileName) : [(targetResFolder + '/' + targetSub),  targetFileName]]
                 }
             }
@@ -87,7 +67,7 @@ task copyCustomResources(type: Copy) {
         from file(customDir + '/strings/strings_no_translate.xml') into file(targetResFolder + '/values')
     }
 
-    config.languages.each { code ->
+    buildtimeConfiguration.configuration.languages.each { code ->
         def targetStringDir = "$targetResFolder/values-$code"
         copy {
             mkdir targetStringDir
@@ -104,54 +84,77 @@ android {
 
     preBuild.dependsOn(copyCustomResources)
 
-    compileSdkVersion = 27
+    compileSdkVersion = rootProject.ext.compileSdkVersion
     buildToolsVersion = '28.0.3'
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode System.getenv("BUILD_NUMBER") as Integer ?: 99999
-        versionName majorVersion + android.defaultConfig.versionCode
+        versionName = (System.getenv("CLIENT_VERSION") ?: Versions.ANDROID_CLIENT_MAJOR_VERSION) + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
-        manifestPlaceholders = [customURLScheme: config.custom_url_scheme]
 
-        buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
-        buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
-        buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
-        buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
-        buildConfigField 'boolean',  'ALLOW_SSO',                    "$config.allowSSO"
-        buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
-        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.firebasePushSenderId\""
-        buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
-        buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
-        buildConfigField 'boolean', 'ENABLE_BLACKLIST',           "$config.enableBlacklist"
-        buildConfigField 'String',  'BLACKLIST_HOST',             "\"$config.blacklistHost\""
-        buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
-        buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$config.certificatePin.certificate\""
-        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',       "$config.submitCrashReports"
-        buildConfigField 'boolean', 'ALLOW_MARKETING_COMMUNICATION', "$config.allowMarketingCommunication"
-        buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
-        buildConfigField 'String',  'CUSTOM_URL_SCHEME',          "\"$config.custom_url_scheme\""
-        buildConfigField 'Integer', 'NEW_PASSWORD_MINIMUM_LENGTH', "$config.new_password_minimum_length"
-        buildConfigField 'Integer', 'NEW_PASSWORD_MAXIMUM_LENGTH', "$config.new_password_maximum_length"
+        manifestPlaceholders = [
+            customURLScheme   : buildtimeConfiguration.configuration.custom_url_scheme,
+            applicationLabel  : "Wire Dev",
+            applicationIcon   : "@mipmap/ic_launcher_wire_dev",
+            sharedUserId      : ""
+        ]
+
+        buildConfigField 'Integer', 'MAX_ACCOUNTS',                  "$buildtimeConfiguration.configuration.maxAccounts"
+        buildConfigField 'String',  'BACKEND_URL',                   "\"$buildtimeConfiguration.configuration.backendUrl\""
+        buildConfigField 'String',  'WEBSOCKET_URL',                 "\"$buildtimeConfiguration.configuration.websocketUrl\""
+        buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',      "$buildtimeConfiguration.configuration.allow_account_creation"
+        buildConfigField 'boolean', 'ALLOW_SSO',                     "$buildtimeConfiguration.configuration.allowSSO"
+        buildConfigField 'String',  'SUPPORT_EMAIL',                 "\"$buildtimeConfiguration.configuration.supportEmail\""
+        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',       "\"$buildtimeConfiguration.configuration.firebasePushSenderId\""
+        buildConfigField 'String',  'FIREBASE_APP_ID',               "\"$buildtimeConfiguration.configuration.firebaseAppId\""
+        buildConfigField 'String',  'FIREBASE_API_KEY',              "\"$buildtimeConfiguration.configuration.firebaseApiKey\""
+        buildConfigField 'boolean', 'ENABLE_BLACKLIST',              "$buildtimeConfiguration.configuration.enableBlacklist"
+        buildConfigField 'String',  'BLACKLIST_HOST',                "\"$buildtimeConfiguration.configuration.blacklistHost\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',        "\"$buildtimeConfiguration.configuration.certificatePin.domain\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',         "\"$buildtimeConfiguration.configuration.certificatePin.certificate\""
+        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',          "$buildtimeConfiguration.configuration.submitCrashReports"
+        buildConfigField 'boolean', 'ALLOW_MARKETING_COMMUNICATION', "$buildtimeConfiguration.configuration.allowMarketingCommunication"
+        buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',         "$buildtimeConfiguration.configuration.allowChangeOfEmail"
+        buildConfigField 'String',  'CUSTOM_URL_SCHEME',             "\"$buildtimeConfiguration.configuration.custom_url_scheme\""
+        buildConfigField 'Integer', 'NEW_PASSWORD_MINIMUM_LENGTH',   "$buildtimeConfiguration.configuration.new_password_minimum_length"
+        buildConfigField 'Integer', 'NEW_PASSWORD_MAXIMUM_LENGTH',   "$buildtimeConfiguration.configuration.new_password_maximum_length"
+        buildConfigField 'String',  'TEAMS_URL',                     "\"$buildtimeConfiguration.configuration.teamsUrl\""
+        buildConfigField 'String',  'ACCOUNTS_URL',                  "\"$buildtimeConfiguration.configuration.accountsUrl\""
+        buildConfigField 'String',  'WEBSITE_URL',                   "\"$buildtimeConfiguration.configuration.websiteUrl\""
+        buildConfigField 'String',  'HTTP_PROXY_URL',                "\"$buildtimeConfiguration.configuration.http_proxy_url\""
+        buildConfigField 'String',  'HTTP_PROXY_PORT',               "\"$buildtimeConfiguration.configuration.http_proxy_port\""
+        buildConfigField 'boolean', 'BLOCK_ON_JAILBREAK_OR_ROOT',    "$buildtimeConfiguration.configuration.block_on_jailbreak_or_root"
+        buildConfigField 'boolean', 'FORCE_HIDE_SCREEN_CONTENT',     "$buildtimeConfiguration.configuration.force_hide_screen_content"
+        buildConfigField 'boolean', 'FORCE_APP_LOCK',                "$buildtimeConfiguration.configuration.force_app_lock"
+        buildConfigField 'Integer', 'APP_LOCK_TIMEOUT',              "$buildtimeConfiguration.configuration.app_lock_timeout"
+        buildConfigField 'boolean', 'BLOCK_ON_PASSWORD_POLICY',      "$buildtimeConfiguration.configuration.block_on_password_policy"
+        buildConfigField 'boolean', 'WIPE_ON_COOKIE_INVALID',        "$buildtimeConfiguration.configuration.wipe_on_cookie_invalid"
+        buildConfigField 'boolean', 'FORCE_PRIVATE_KEYBOARD',        "$buildtimeConfiguration.configuration.force_private_keyboard"
+        buildConfigField 'Integer', 'PASSWORD_MAX_ATTEMPTS',         "$buildtimeConfiguration.configuration.password_max_attempts"
+        buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    "$buildtimeConfiguration.configuration.developer_features_enabled"
+        buildConfigField 'boolean', 'LOGGING_ENABLED',               "$buildtimeConfiguration.configuration.logging_enabled"
+        buildConfigField 'boolean', 'SAFE_LOGGING',                  "$buildtimeConfiguration.configuration.safe_logging"
+
+        //Kotlin Feature Flags
+        buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
+        buildConfigField 'boolean', 'KOTLIN_REGISTRATION', "$rootProject.ext.kotlinRegistration"
+        buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
     }
 
     packagingOptions {
         // Need to exclude all armeabi/mips libs
         // as not all of our libs support these architectures
         exclude 'lib/armeabi/libgnustl_shared.so'
-        exclude 'lib/armeabi/libspotify_embedded_shared.so'
-        exclude 'lib/armeabi/libspotify_sdk.so'
         exclude 'lib/mips/librs.blur.so'
         exclude 'lib/mips/librs.decode.so'
         exclude 'lib/mips/librsjni.so'
         exclude 'lib/mips/libRSSupport.so'
-        exclude 'lib/arm64-v8a/libjnidispatch.so'
         exclude 'lib/armeabi/libjnidispatch.so'
         exclude 'lib/mips/libjnidispatch.so'
         exclude 'lib/mips64/libjnidispatch.so'
-        exclude 'lib/x86_64/libjnidispatch.so'
     }
 
     testOptions {
@@ -162,6 +165,7 @@ android {
                 events "passed", "skipped", "failed", "standardOut", "standardError"
                 outputs.upToDateWhen { false }
                 showStandardStreams = true
+                exceptionFormat = 'full'
             }
         }
     }
@@ -169,6 +173,13 @@ android {
     compileOptions {
         compileSdkVersion rootProject.ext.compileSdkVersion
         buildToolsVersion rootProject.ext.buildToolsVersion
+
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 
     if (file("signing.gradle").exists()) {
@@ -182,6 +193,7 @@ android {
 
     buildTypes {
         release {
+            testCoverageEnabled = false
             proguardFiles 'proguard-android-optimize-wire.txt', 'proguard-rules.txt'
             minifyEnabled true
             multiDexEnabled true
@@ -191,8 +203,7 @@ android {
         }
 
         debug {
-            // To get debugging properly working again - https://code.google.com/p/android/issues/detail?id=177480
-            testCoverageEnabled = System.getenv("JOB_NAME") == "full-test-coverage"
+            testCoverageEnabled = true
             versionNameSuffix = " " + getDate()
             multiDexEnabled true
             manifestPlaceholders = [applicationVmSafeMode: "true",
@@ -206,11 +217,10 @@ android {
     productFlavors {
         dev {
             applicationId "com.waz.zclient.dev"
-            versionName majorVersion + android.defaultConfig.versionCode + "-dev"
+            versionName android.defaultConfig.versionName + "-dev"
             manifestPlaceholders = [applicationLabel       : "Wire Dev",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_dev",
-                                    sharedUserId           : "",
-                                    internal_features      : "true"]
+                                    applicationIcon        : "@mipmap/ic_launcher_wire_dev",
+                                    sharedUserId           : ""]
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
             buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
@@ -218,36 +228,33 @@ android {
 
         candidate {
             applicationId "com.wire.candidate"
-            versionName majorVersion + android.defaultConfig.versionCode + "-candidate"
+            versionName android.defaultConfig.versionName + "-candidate"
             manifestPlaceholders = [applicationLabel       : "Wire Candidate",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_candidate",
-                                    sharedUserId           : "",
-                                    internal_features      : "false"]
+                                    applicationIcon        : "@mipmap/ic_launcher_wire_candidate",
+                                    sharedUserId           : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
             buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         prod {
-            applicationId config.applicationId
-            manifestPlaceholders = [applicationLabel       : config.appName,
-                                    applicationIcon        : "@drawable/ic_launcher_wire",
-                                    sharedUserId           : config.userId,
-                                    internal_features      : "false"]
+            applicationId buildtimeConfiguration.configuration.applicationId
+            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.appName,
+                                    applicationIcon        : "@mipmap/ic_launcher_wire",
+                                    sharedUserId           : buildtimeConfiguration.configuration.userId]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
             buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         internal {
             applicationId "com.wire.internal"
-            versionName majorVersion + android.defaultConfig.versionCode + "-internal"
+            versionName android.defaultConfig.versionName + "-internal"
             manifestPlaceholders = [applicationLabel : "Wire Internal",
-                                    applicationIcon  : "@drawable/ic_launcher_wire_internal",
-                                    sharedUserId     : "",
-                                    internal_features: "true"]
+                                    applicationIcon  : "@mipmap/ic_launcher_wire_internal",
+                                    sharedUserId     : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
@@ -256,11 +263,10 @@ android {
 
         experimental {
             applicationId "com.wire.x"
-            versionName majorVersion + android.defaultConfig.versionCode + "-exp"
+            versionName android.defaultConfig.versionName + "-exp"
             manifestPlaceholders = [applicationLabel       : "Wire Exp",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_playground",
-                                    sharedUserId           : "",
-                                    internal_features      : "true"]
+                                    applicationIcon        : "@mipmap/ic_launcher_wire_playground",
+                                    sharedUserId           : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
@@ -270,12 +276,17 @@ android {
 
 
     sourceSets {
+
+        main.java.srcDirs += ['src/main/java', 'src/main/kotlin']
+        main.res.srcDirs += 'src/main/res-migration'
+
         androidTest {
             java.srcDirs += ['build/generated/source/apt/androidTest/dev/debug']
             java.srcDirs += ['src/androidTest/kotlin']
         }
 
         test {
+            java.srcDirs += ['src/test/java', 'src/test/kotlin']
             scala.srcDirs += ['src/test/scala']
         }
     }
@@ -290,8 +301,8 @@ android {
         exclude 'META-INF/NOTICE'
         exclude 'APK_LICENSE.txt'
         exclude 'LICENSE.txt'
+        exclude 'META-INF/proguard/coroutines.pro'
     }
-
 }
 
 dexinfo {
@@ -299,25 +310,9 @@ dexinfo {
 }
 
 dependencies {
-    implementation project(':lintlib')
 
-    //    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.scala-lang:scala-library:$scalaVersion"
-    implementation "org.scala-lang:scala-reflect:$scalaVersion"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
-
-    //wire libraries:
-    implementation "com.wire:audio-notifications:$audioVersion"
-    //don't include wire translations for custom builds
-    if (customRepository.isEmpty() || token.isEmpty()) {
-        implementation 'com.wire:wiretranslations:1.+'
-    }
-
-    // TODO  Nasty hack to be able to build add only one wire-core flavor to the build
-
-    // TODO  (I know, it sucks, will think of a better way to do this, and we need this
-
-    // TODO   when there are different SE APIs in dev vs internal/prod)
+    //region avs
+    // TODO Migrate this configuration to new dependency system
     boolean internal = true
     for (String taskName : gradle.startParameter.taskNames) {
         if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
@@ -332,73 +327,128 @@ dependencies {
     //implementation (name:'zmessaging-android', ext:'aar')
 
     implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
-    implementation("com.wire:zmessaging-android:${internal ? zMessagingDevVersion : zMessagingReleaseVersion}") {
-        transitive = true
+    //endregion avs
+
+    implementation LegacyDependencies.scalaLibrary
+    implementation LegacyDependencies.scalaReflect
+    implementation LegacyDependencies.scalaShapeless
+
+    implementation BuildDependencies.kotlin.standardLibrary
+    implementation BuildDependencies.kotlin.coroutinesCore
+    implementation BuildDependencies.kotlin.coroutinesAndroid
+
+    // TODO uncomment when new dependency system supports avs
+//    implementation BuildDependencies.wire.avs
+    implementation BuildDependencies.wire.audioNotifications
+    //don't include wire translations for custom builds
+    if (buildtimeConfiguration.customResourcesPath == null) {
+        implementation BuildDependencies.wire.translations
     }
 
-    //support libraries
-    implementation 'com.android.support:multidex:1.0.3'
-    implementation "com.android.support:support-v4:$supportLibVersion"
-    implementation "com.android.support:support-v13:$supportLibVersion"
-    implementation "com.android.support:design:$supportLibVersion"
-    implementation "com.android.support:appcompat-v7:$supportLibVersion"
-    implementation "com.android.support:recyclerview-v7:$supportLibVersion"
-    implementation "com.android.support:preference-v7:$supportLibVersion"
-    implementation "com.android.support:cardview-v7:$supportLibVersion"
-    implementation "com.android.support:gridlayout-v7:$supportLibVersion"
-    implementation "com.android.support:support-annotations:$supportLibVersion"
-    implementation "com.android.support:cardview-v7:$supportLibVersion"
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation "android.arch.paging:runtime:$paging_version"
+    implementation BuildDependencies.libPhoneNumber
+
+    api project(ModuleDependencies.storage)
+    api(project(ModuleDependencies.syncEngine)) {
+        exclude group: 'com.wire', module: 'avs'
+    }
+
+    //Android
+    annotationProcessor BuildDependencies.androidX.annotation
+    implementation BuildDependencies.androidX.material
+    implementation BuildDependencies.androidX.multidex
+    implementation BuildDependencies.androidX.appCompat
+    implementation BuildDependencies.androidX.recyclerView
+    implementation BuildDependencies.androidX.preference
+    implementation BuildDependencies.androidX.cardView
+    implementation BuildDependencies.androidX.gridLayout
+    implementation BuildDependencies.androidX.constraintLayout
+    implementation BuildDependencies.androidX.paging
+    implementation BuildDependencies.androidX.exifInterface
+    implementation BuildDependencies.androidX.media
+    implementation BuildDependencies.androidX.lifecycleRuntime
+    implementation BuildDependencies.androidX.lifecycleLiveData
+    implementation BuildDependencies.androidX.lifecycleViewModel
+    implementation BuildDependencies.androidX.lifecycleExtensions
+    implementation BuildDependencies.androidX.roomRuntime
+    implementation BuildDependencies.androidX.roomKtx
+    implementation BuildDependencies.androidX.coreKtx
+    implementation BuildDependencies.androidX.biometric
+    implementation(BuildDependencies.androidX.workManager) {
+        exclude group: 'androidx.room', module: 'room-runtime'
+    }
 
     // Play services
-    implementation "com.google.android.gms:play-services-base:$playServicesVersion"
-    implementation "com.google.android.gms:play-services-maps:$playServicesVersion"
-    implementation "com.google.android.gms:play-services-location:$playServicesVersion"
-    implementation "com.google.android.gms:play-services-gcm:$playServicesVersion"
-    implementation ('com.google.firebase:firebase-messaging:17.3.0') {
+    implementation BuildDependencies.playServices.base
+    implementation BuildDependencies.playServices.maps
+    implementation BuildDependencies.playServices.location
+    implementation BuildDependencies.playServices.gcm
+
+    // Firebase
+    implementation (BuildDependencies.fireBaseMessaging) {
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
 
-    //WorkManager
-    def work_version = "1.0.0-alpha13"
-    implementation "android.arch.work:work-runtime:$work_version"
+    //Glide
+    implementation(BuildDependencies.glide.core){
+        exclude group: 'com.android.support'
+        transitive = true
+    }
+    annotationProcessor BuildDependencies.glide.compiler
+
+    //Retrofit
+    implementation BuildDependencies.retrofit.core
+    implementation BuildDependencies.retrofit.protoBufConverter
+    implementation BuildDependencies.retrofit.gsonConverter
+
+    //OkHttp
+    implementation BuildDependencies.okHttpLoggingInterceptor
+
+    //DI - Koin
+    implementation BuildDependencies.koin.androidCore
+    implementation BuildDependencies.koin.androidScope
+    implementation BuildDependencies.koin.androidViewModel
+
+    // RxJava
+    implementation BuildDependencies.rxJava.rxKotlin
+    implementation BuildDependencies.rxJava.rxAndroid
 
     //third party libraries
-    implementation 'com.evernote:android-job:1.2.6'
-    implementation 'com.jakewharton.timber:timber:4.7.0'
-    implementation 'com.jakewharton.threetenabp:threetenabp:1.1.0'
-    implementation 'com.facebook.rebound:rebound:0.3.8'
-    implementation 'com.atlassian.commonmark:commonmark:0.11.0'
-    implementation 'net.java.dev.jna:jna:4.4.0@aar'
-    devImplementation "com.facebook.stetho:stetho:$stethoVersion"
-    experimentalImplementation "com.facebook.stetho:stetho:$stethoVersion"
-    internalImplementation "com.facebook.stetho:stetho:$stethoVersion"
-
-    // Test dependencies
-    testImplementation 'junit:junit:4.12'
-    testImplementation("org.scalatest:scalatest_$scalaMajorVersion:2.2.6") {
-        exclude module: 'scala-library'
+    implementation BuildDependencies.androidJob
+    implementation(BuildDependencies.threetenbpAndroid) {
+        exclude group: 'org.threeten', module: 'threetenbp'
     }
-    testImplementation 'org.mockito:mockito-core:1.10.19'
-    //The dexmaker stuff is needed for Mockito to work completely
-    testImplementation 'com.crittercism.dexmaker:dexmaker:1.4'
-    testImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
-    testImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
-    testImplementation "android.arch.paging:common:$paging_version"
+    implementation BuildDependencies.threetenbpJava
+    implementation BuildDependencies.rebound
+    implementation BuildDependencies.commonMark
+    implementation BuildDependencies.jna
+    implementation BuildDependencies.pinEditText
 
-    androidTestImplementation 'junit:junit:4.12'
-    androidTestImplementation 'org.mockito:mockito-core:1.10.19'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test:rules:1.0.2'
+    // Unit Tests
+    testImplementation TestDependencies.jUnit
+    testImplementation TestDependencies.mockito.core
+    testImplementation TestDependencies.mockito.inline
+    testImplementation TestDependencies.kluent
+    testImplementation BuildDependencies.kotlin.coroutinesCore
+    testImplementation TestDependencies.kotlin.coroutinesTest
+    testImplementation TestDependencies.androidX.testCore
+    testImplementation TestDependencies.okHttpMockWebServer
+    testImplementation(LegacyDependencies.scalaTest) { exclude module: 'scala-library' }
 
-    //The dexmaker stuff is needed for Mockito to work completely
-    androidTestImplementation 'com.crittercism.dexmaker:dexmaker:1.4'
-    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
-    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
-    androidTestImplementation "android.arch.work:work-testing:$work_version"
+    // Functional Tests
+    androidTestImplementation TestDependencies.jUnit
+    androidTestImplementation TestDependencies.mockito.core
+    androidTestImplementation TestDependencies.kluent
+    androidTestImplementation TestDependencies.androidX.testJunit
+    androidTestImplementation TestDependencies.androidX.testRules
+    androidTestImplementation TestDependencies.androidX.testWorkManager
 
+    // Development - Experimental
+    devImplementation DevDependencies.stetho
+    experimentalImplementation DevDependencies.stetho
+    internalImplementation DevDependencies.stetho
+
+    // Legacy Scala
     ScalaCompileOptions.metaClass.daemonServer = true
     ScalaCompileOptions.metaClass.fork = true
     ScalaCompileOptions.metaClass.useAnt = false
@@ -422,14 +472,8 @@ static def getDate() {
     return formattedDate
 }
 
-def getApiKey(String property) {
-    if (file("$projectDir/api-keys.properties").exists()) {
-        Properties properties = new Properties()
-        properties.load(new FileInputStream("$projectDir/api-keys.properties"))
-        return properties.getProperty(property)
-    } else {
-        return UUID.randomUUID().toString().replaceAll("-", "")
-    }
+static def buildSuffixForVersion(String versionString) {
+    if (versionString.matches("\\d+\\.\\d+\\.\\d+(-[.0-9a-zA-Z]+)")) "" else "-DEV"
 }
 
 //add pretty naming to apk filename
@@ -444,8 +488,12 @@ android.applicationVariants.all { variant ->
 
     variant.outputs.each { output ->
         def newApkName
-        newApkName = "${appName}-${output.baseName}-${majorVersion}${android.defaultConfig.versionCode}.apk"
-
+        if(buildtimeConfiguration.isCustomBuild()) {
+            newApkName = "${appName}-${buildtimeConfiguration.configuration.applicationId}-${output.baseName}-${android.defaultConfig.versionName}.apk"
+        } else {
+            newApkName = "${appName}-${output.baseName}-${android.defaultConfig.versionName}.apk"
+        }
         output.outputFileName = new File("../..", newApkName)
     }
 }
+

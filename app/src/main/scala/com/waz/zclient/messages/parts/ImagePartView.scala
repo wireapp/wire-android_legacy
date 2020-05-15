@@ -20,20 +20,29 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
-import android.widget.{FrameLayout, LinearLayout}
+import android.widget.{FrameLayout, ImageView, LinearLayout}
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.RequestOptions
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageContent
-import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
+import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
+import com.waz.zclient.glide.WireGlide
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.ImageLayoutAssetPart
 import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.common.views.ImageAssetDrawable.State.Failed
 import com.waz.zclient.{R, ViewHelper}
 
-class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ImageLayoutAssetPart with HighlightViewPart {
+class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
+    with ImageLayoutAssetPart
+    with HighlightViewPart
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -43,10 +52,9 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
 
   private val imageIcon = findById[View](R.id.image_icon)
 
-  val noWifi = imageDrawable.state.map {
-    case Failed(_, Some(DownloadOnWifiOnlyException)) => true
-    case _ => false
-  }
+  private val imageView = findById[ImageView](R.id.image)
+
+  val noWifi: SourceSignal[Boolean] with NoAutowiring = Signal(false)
 
   (for {
     noW  <- noWifi
@@ -54,6 +62,20 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
   } yield !hide && noW).on(Threading.Ui)(imageIcon.setVisible)
 
   onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
+
+  message.map(_.assetId).onUi { aId =>
+    verbose(l"message asset id => $aId")
+
+    aId.foreach { a =>
+      WireGlide(getContext)
+        .load(a)
+        .apply(new RequestOptions().fitCenter())
+        .transition(DrawableTransitionOptions.withCrossFade())
+        .into(imageView)
+    }
+  }
+
+  hideContent.onUi { hide => imageView.setVisible(!hide) }
 
   override def onInflated(): Unit = {}
 }

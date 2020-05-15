@@ -66,7 +66,7 @@ class CollectionController(implicit injector: Injector)
     convId <- convController.currentConvId
     query <- contentSearchQuery
     res <- if (query.isEmpty) Signal.const(Set.empty[MessageId])
-           else Signal future z.messagesIndexStorage.matchingMessages(query, Some(convId))
+    else Signal future z.messagesIndexStorage.matchingMessages(query, Some(convId))
   } yield res
 
   def openCollection() = observers foreach { _.openCollection() }
@@ -94,32 +94,31 @@ object CollectionController {
 
   trait ContentType {
     val msgTypes: Seq[Message.Type]
-    val typeFilter: Seq[TypeFilter]
+    lazy val typeFilter: Seq[TypeFilter] = msgTypes.map(TypeFilter(_, None))
   }
 
   case object Links extends ContentType {
     override val msgTypes = Seq(Message.Type.RICH_MEDIA)
-    override val typeFilter: Seq[TypeFilter] = Seq(TypeFilter(Message.Type.RICH_MEDIA, None))
   }
 
   case object Images extends ContentType {
-    override val msgTypes = Seq(Message.Type.ASSET)
-    override val typeFilter: Seq[TypeFilter] = Seq(TypeFilter(Message.Type.ASSET, None))
+    override val msgTypes = Seq(Message.Type.IMAGE_ASSET)
   }
 
   //Now we can add more types to this sequence for the "others" category
   case object Files extends ContentType {
-    override val msgTypes = Seq(Message.Type.ANY_ASSET)
-    override val typeFilter: Seq[TypeFilter] = Seq(TypeFilter(Message.Type.ANY_ASSET, None))
+    override val msgTypes = Seq(Message.Type.ANY_ASSET, Message.Type.AUDIO_ASSET, Message.Type.VIDEO_ASSET)
   }
 
   case object AllContent extends ContentType {
     //feels a little bit messy... maybe think of a neater way to represent the types
     override val msgTypes = Images.msgTypes ++ Files.msgTypes ++ Links.msgTypes
-    override val typeFilter: Seq[TypeFilter] = Seq(
-      TypeFilter(Message.Type.ASSET, Some(8)),
+    override lazy val typeFilter: Seq[TypeFilter] = Seq(
+      TypeFilter(Message.Type.IMAGE_ASSET, Some(8)),
       TypeFilter(Message.Type.RICH_MEDIA, Some(3)),
-      TypeFilter(Message.Type.ANY_ASSET, Some(3))
+      TypeFilter(Message.Type.ANY_ASSET, Some(3)),
+      TypeFilter(Message.Type.AUDIO_ASSET, Some(3)),
+      TypeFilter(Message.Type.VIDEO_ASSET, Some(3))
     )
   }
 }

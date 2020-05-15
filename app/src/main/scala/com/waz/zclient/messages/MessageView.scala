@@ -24,7 +24,7 @@ import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
-import com.waz.utils.RichOption
+import com.waz.utils.{RichOption, RichWireInstant}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
@@ -37,7 +37,6 @@ import com.waz.zclient.utils._
 import com.waz.zclient.{BuildConfig, R, ViewHelper}
 
 import scala.concurrent.duration._
-import com.waz.utils.RichWireInstant
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int)
     extends MessageViewLayout(context, attrs, style) with ViewHelper {
@@ -81,7 +80,9 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     msgId = msg.id
 
     import opts._
-    val isOneToOne = !isGroup
+    //if we have just added a user to a conversation with a bot, we shouldn't count this as oneToOne,
+    //so we check the members size also
+    val isOneToOne = !isGroup && mAndL.message.members.size <= 2
 
     val contentParts = {
       if (msg.msgType == Message.Type.MEMBER_JOIN && msg.firstMessage) {
@@ -102,6 +103,8 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
             val contentWithOG = msg.content.filter(_.openGraph.isDefined)
             if (contentWithOG.size == 1 && msg.content.size == 1)
               msg.content.map(content => PartDesc(MsgPart(content.tpe), Some(content)))
+            else if (msg.content.headOption.nonEmpty && msg.content.head.tpe.equals(Message.Part.Type.YOUTUBE) && msg.content.size == 1)
+                Seq(PartDesc(MsgPart(msg.content.head.tpe), Some(msg.content.head)))
             else
               Seq(PartDesc(MsgPart(Message.Type.TEXT, isOneToOne))) ++ contentWithOG.map(content => PartDesc(MsgPart(content.tpe), Some(content))).filter(_.tpe == WebLink)
           }
@@ -121,7 +124,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
 
         builder ++= contentParts
 
-        if (msg.msgType == Message.Type.ASSET && !areDownloadsAlwaysEnabled)
+        if (msg.msgType == Message.Type.IMAGE_ASSET && !areDownloadsAlwaysEnabled)
           builder += PartDesc(MsgPart.WifiWarning)
 
         if (hasFooter || animateFooter)
@@ -171,7 +174,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) = {
     val userChanged = prev.forall(m => m.userId != msg.userId || systemMessage(m))
     val recalled = msg.msgType == Message.Type.RECALLED
-    val edited = !msg.editTime.isEpoch
+    val edited = msg.isEdited
     val knock = msg.msgType == Message.Type.KNOCK
 
     !knock && !systemMessage(msg) && (recalled || edited || userChanged)
@@ -181,7 +184,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     mAndL.likes.nonEmpty ||
       selection.isFocused(mAndL.message.id) ||
       opts.isLastSelf ||
-      mAndL.message.state == Message.Status.FAILED || mAndL.message.state == Message.Status.FAILED_READ
+      mAndL.message.isFailed
   }
 
   def getFooter = listParts.lastOption.collect { case footer: FooterPartView => footer }
@@ -195,7 +198,7 @@ object MessageView extends DerivedLogTag {
     TEXT,
     TEXT_EMOJI_ONLY,
     ANY_ASSET,
-    ASSET,
+    IMAGE_ASSET,
     AUDIO_ASSET,
     VIDEO_ASSET,
     LOCATION,
@@ -203,7 +206,8 @@ object MessageView extends DerivedLogTag {
   )
 
   val longClickableTypes = clickableTypes ++ Set(
-    KNOCK
+    KNOCK,
+    COMPOSITE
   )
 
   val GenericMessage = 0
@@ -241,8 +245,7 @@ object MessageView extends DerivedLogTag {
              AudioAsset |
              WebLink |
              YouTube |
-             Location |
-             SoundMedia => FileLike
+             Location => FileLike
         case Image | VideoAsset => ImageLike
         case MemberChange |
              OtrMessage |

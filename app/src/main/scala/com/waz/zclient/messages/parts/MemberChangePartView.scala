@@ -101,11 +101,11 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
 
       //Add
       case (MEMBER_JOIN, Me, Seq(`me`)) if userId == me                                    => getString(R.string.content__system__you_joined).toUpperCase
-      case (MEMBER_JOIN, Me, _) if shorten                                                 => getQuantityString(R.plurals.content__system__you_added_people_with_others, othersCount, namesListString, othersCount.toString)
-      case (MEMBER_JOIN, Me, _)                                                            => getString(R.string.content__system__you_added_people, namesListString)
+      case (MEMBER_JOIN, Me, others) if shorten && others.nonEmpty && !others.contains(me) => getQuantityString(R.plurals.content__system__you_added_people_with_others, othersCount, namesListString, othersCount.toString)
+      case (MEMBER_JOIN, Me, others) if others.nonEmpty && !others.contains(me)            => getString(R.string.content__system__you_added_people, namesListString)
       case (MEMBER_JOIN, Other(name), Seq(`me`))                                           => getString(R.string.content__system__someone_added_you, name)
       case (MEMBER_JOIN, Other(name), Seq(other)) if userId == other                       => getString(R.string.content__system__other_joined, name)
-      case (MEMBER_JOIN, Other(name), _) if shorten && msg.members.contains(me)            => getQuantityString(R.plurals.content__system__someone_added_people_and_you_with_others, othersCount, name, namesListString, othersCount.toString)
+      case (MEMBER_JOIN, Other(name), others) if shorten && others.contains(me)            => getQuantityString(R.plurals.content__system__someone_added_people_and_you_with_others, othersCount, name, namesListString, othersCount.toString)
       case (MEMBER_JOIN, Other(name), _) if shorten                                        => getQuantityString(R.plurals.content__system__someone_added_people_with_others, othersCount, name, namesListString, othersCount.toString)
       case (MEMBER_JOIN, Other(name), _)                                                   => getString(R.string.content__system__someone_added_people, name, namesListString)
 

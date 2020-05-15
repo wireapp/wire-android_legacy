@@ -18,8 +18,8 @@
 package com.waz.zclient.collection.adapters
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.RecyclerView.{AdapterDataObserver, ViewHolder}
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.{AdapterDataObserver, ViewHolder}
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -109,21 +109,21 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
       adapterState ! AdapterState(contentMode.currentValue.get, getItemCount, messages.isEmpty)
     }
 
-    override def onItemRangeInserted(positionStart: Int, itemCount: Int) = onChanged()
+    override def onItemRangeInserted(positionStart: Int, itemCount: Int): Unit = onChanged()
 
-    override def onItemRangeChanged(positionStart: Int, itemCount: Int) = onChanged()
+    override def onItemRangeChanged(positionStart: Int, itemCount: Int): Unit = onChanged()
 
-    override def onItemRangeRemoved(positionStart: Int, itemCount: Int) = onChanged()
+    override def onItemRangeRemoved(positionStart: Int, itemCount: Int): Unit = onChanged()
 
-    override def onItemRangeMoved(fromPosition: Int, toPosition: Int, itemCount: Int) = onChanged()
+    override def onItemRangeMoved(fromPosition: Int, toPosition: Int, itemCount: Int): Unit = onChanged()
   })
 
   override def getItemCount: Int = messages.fold(0)(_.count)
 
   override def getItemViewType(position: Int): Int = {
     getItem(position).fold(CollectionAdapter.VIEW_TYPE_DEFAULT)(_.msgType match {
-      case Message.Type.ANY_ASSET => CollectionAdapter.VIEW_TYPE_FILE
-      case Message.Type.ASSET => CollectionAdapter.VIEW_TYPE_IMAGE
+      case Message.Type.ANY_ASSET | Message.Type.AUDIO_ASSET | Message.Type.VIDEO_ASSET => CollectionAdapter.VIEW_TYPE_FILE
+      case Message.Type.IMAGE_ASSET => CollectionAdapter.VIEW_TYPE_IMAGE
       case Message.Type.RICH_MEDIA if hasOpenGraphData(position) => CollectionAdapter.VIEW_TYPE_LINK_PREVIEW
       case Message.Type.RICH_MEDIA => CollectionAdapter.VIEW_TYPE_SIMPLE_LINK
       case _ => CollectionAdapter.VIEW_TYPE_DEFAULT
@@ -135,11 +135,17 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = {
-    getItem(position).foreach{ md =>
+    getItem(position).foreach { md =>
+      verbose(l"Setting msg data $md")
       holder match {
-        case c: CollectionImageViewHolder => c.setMessageData(md, viewDim.currentValue.fold(0)(_.width) / CollectionController.GridColumns, ResourceUtils.getRandomAccentColor(context)); c.view.setTag(position)
-        case l: CollectionItemViewHolder if getItemViewType(position) == CollectionAdapter.VIEW_TYPE_LINK_PREVIEW => l.setMessageData(md, md.content.find(_.openGraph.nonEmpty))
-        case l: CollectionItemViewHolder => l.setMessageData(md)
+        case c: CollectionImageViewHolder =>
+          val width = viewDim.currentValue.map(_.width / CollectionController.GridColumns).getOrElse(0)
+          c.setMessageData(md, width, ResourceUtils.getRandomAccentColor(context))
+          c.view.setTag(position)
+        case l: CollectionItemViewHolder if getItemViewType(position) == CollectionAdapter.VIEW_TYPE_LINK_PREVIEW =>
+          l.setMessageData(md, md.content.find(_.openGraph.nonEmpty))
+        case l: CollectionItemViewHolder =>
+          l.setMessageData(md)
         case _ =>
       }
     }
@@ -230,8 +236,8 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
     contentMode.currentValue.get match {
       case AllContent => {
         getItem(position).fold(Message.Type.UNKNOWN)(_.msgType) match {
-          case Message.Type.ANY_ASSET => Header.mainFiles
-          case Message.Type.ASSET => Header.mainImages
+          case Message.Type.ANY_ASSET | Message.Type.AUDIO_ASSET | Message.Type.VIDEO_ASSET => Header.mainFiles
+          case Message.Type.IMAGE_ASSET => Header.mainImages
           case Message.Type.RICH_MEDIA => Header.mainLinks
           case _ => Header.invalid
         }
@@ -318,9 +324,14 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
 
   private def shouldBeClickable(headerId: HeaderId): Boolean = {
     val minCount = headerId match {
-      case HeaderId(HeaderType.Images, _, _) => AllContent.typeFilter.find(_.msgType == Message.Type.ASSET).flatMap(_.limit).getOrElse(0)
-      case HeaderId(HeaderType.Files, _, _) => AllContent.typeFilter.find(_.msgType == Message.Type.ANY_ASSET).flatMap(_.limit).getOrElse(0)
-      case HeaderId(HeaderType.Links, _, _) => AllContent.typeFilter.find(_.msgType == Message.Type.RICH_MEDIA).flatMap(_.limit).getOrElse(0)
+      case HeaderId(HeaderType.Images, _, _) =>
+        AllContent.typeFilter.find(_.msgType == Message.Type.IMAGE_ASSET).flatMap(_.limit).getOrElse(0)
+      case HeaderId(HeaderType.Files, _, _) =>
+        AllContent.typeFilter
+          .find(m => CollectionController.Files.msgTypes.contains(m.msgType))
+          .flatMap(_.limit).getOrElse(0)
+      case HeaderId(HeaderType.Links, _, _) =>
+        AllContent.typeFilter.find(_.msgType == Message.Type.RICH_MEDIA).flatMap(_.limit).getOrElse(0)
       case _ => 0
     }
     minCount > 0 && getHeaderCount(headerId) > minCount
@@ -365,7 +376,6 @@ object Header {
 }
 
 object CollectionAdapter {
-
   // TODO: Investigate why we can derive the log tag.
   private implicit val logTag: LogTag = LogTag[CollectionAdapter.type]
   

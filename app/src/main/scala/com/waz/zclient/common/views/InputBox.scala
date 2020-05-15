@@ -20,16 +20,16 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.content.res.{ColorStateList, TypedArray}
 import android.graphics.Color
-import android.os.Build
 import android.util.AttributeSet
 import android.view.{KeyEvent, ViewGroup}
-import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.EditorInfo._
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{LinearLayout, ProgressBar, TextView}
 import com.waz.model.EmailAddress
 import com.waz.threading.Threading
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.common.views.InputBox._
+import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.ui.cursor.CursorEditText
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -61,6 +61,8 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   val startText = findById[TypefaceTextView](R.id.start_text)
   val errorLayout = findById[ViewGroup](R.id.error_layout)
 
+  private val cursorController = inject[CursorController]
+
   private var validator = Option.empty[Validator]
   private var onClick = (_: String) => Future.successful(Option.empty[String])
   private var linkifyError = Option.empty[() => Unit]
@@ -81,13 +83,14 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   progressBar.setVisible(false)
   confirmationButton.setVisible(hasButtonAttr)
   errorText.setVisible(false)
-  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-    progressBar.setIndeterminateTintList(ColorStateList.valueOf(ContextUtils.getColor(R.color.teams_inactive_button)))
-  editText.setImeOptions(EditorInfo.IME_ACTION_DONE)
+  progressBar.setIndeterminateTintList(ColorStateList.valueOf(ContextUtils.getColor(R.color.teams_inactive_button)))
+  editText.setImeOptions(IME_ACTION_DONE | IME_ACTION_SEND)
+
+  cursorController.keyboardPrivateMode.onUi(editText.setPrivateMode)
 
   editText.setOnEditorActionListener(new OnEditorActionListener {
     override def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean = {
-      if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_NEXT) {
+      if (actionId == IME_ACTION_DONE || actionId == IME_ACTION_GO || actionId == IME_ACTION_NEXT) {
         if (validator.forall(_.f(editText.getText.toString)))
           confirmationButton.performClick()
       }
@@ -119,7 +122,6 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
       }
     } (Threading.Ui)
   }
-
 
   def setValidator(validator: Validator): Unit = {
     this.validator = Option(validator)
@@ -167,6 +169,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
 object InputBox {
 
   case class Validator(f: String => Boolean) {
+    def isValid(s: String) : Boolean = f(s)
     def shouldTrim: Boolean = true
   }
 

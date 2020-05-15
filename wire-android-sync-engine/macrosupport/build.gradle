@@ -1,0 +1,12 @@
+apply plugin: 'com.android.library'
+apply plugin: 'jp.leafytree.android-scala'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+}
+
+dependencies {
+    compileOnly LegacyDependencies.scalaReflect
+    compileOnly TestDependencies.robolectric
+}

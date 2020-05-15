@@ -18,9 +18,9 @@
 package com.waz.zclient.quickreply
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
@@ -117,7 +117,7 @@ object QuickReplyContentAdapter {
       zms <- inject[Signal[ZMessaging]]
       msg <- message
       user <- zms.usersStorage.signal(msg.userId)
-    } yield user.displayName
+    } yield user.name
 
     val contentStr = message.zip(userName) map {
       case (msg, name) if isGroupConv =>
@@ -142,7 +142,7 @@ object QuickReplyContentAdapter {
           context.getString(R.string.notification__message__one_to_one__wanted_to_talk)
         case KNOCK =>
           context.getString(R.string.notification__message__one_to_one__pinged)
-        case ASSET =>
+        case IMAGE_ASSET =>
           context.getString(R.string.notification__message__one_to_one__shared_picture)
         case RENAME =>
           StringUtils.capitalise(context.getString(R.string.notification__message__group__renamed_conversation, message.contentString))
@@ -152,7 +152,7 @@ object QuickReplyContentAdapter {
           StringUtils.capitalise(context.getString(R.string.notification__message__group__add))
         case CONNECT_ACCEPTED =>
           context.getString(R.string.notification__message__single__accept_request, userName)
-        case ANY_ASSET =>
+        case ANY_ASSET | AUDIO_ASSET | VIDEO_ASSET =>
           context.getString(R.string.notification__message__one_to_one__shared_file)
         case _ => ""
       }

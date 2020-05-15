@@ -35,9 +35,6 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_centerInParent="true"
-            app:isSelectable="true"
-            app:initials_font_size="@dimen/wire__text_size__regular"
-            app:show_border="false"
             />
 
     </RelativeLayout>

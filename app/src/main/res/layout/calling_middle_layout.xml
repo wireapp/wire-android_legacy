@@ -33,13 +33,10 @@
         android:paddingBottom="@dimen/wire__padding__12"
         android:layout_marginStart="@dimen/calling_profile_margin_side"
         android:layout_marginEnd="@dimen/calling_profile_margin_side"
-        app:show_border="false"
         app:allow_icon="false"
         app:is_round="true"
-        app:isSelectable="false"
         app:show_waiting="false"
         app:gray_on_unconnected="false"
-        app:initials_font_size="@dimen/participant_initials_text_size"
         android:visibility="gone"
         />
 

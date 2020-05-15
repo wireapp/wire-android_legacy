@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.pages.main.conversation.controller;
 
+import androidx.annotation.NonNull;
+
 import com.waz.model.ConvId;
 
 public interface ConversationScreenControllerObserver {
@@ -26,4 +28,6 @@ public interface ConversationScreenControllerObserver {
     void onShowConversationMenu(boolean inConvList, ConvId convId);
 
     void onHideOtrClient();
+
+    void onMoveToFolder(@NonNull ConvId convId);
 }

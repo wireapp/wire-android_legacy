@@ -18,8 +18,8 @@
 package com.waz.zclient.collection.adapters
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.RecyclerView.ViewHolder
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import android.view.ViewGroup
 import com.waz.api.{ContentSearchQuery, MessageFilter}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

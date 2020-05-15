@@ -17,27 +17,30 @@
  */
 package com.waz.zclient.messages.parts
 
+import java.net.URL
+
 import android.content.Context
-import android.support.v7.widget.CardView
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.widget.{ImageView, TextView}
+import androidx.cardview.widget.CardView
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.ImageViewTarget
 import com.waz.api.Message.Part
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.LinkPreview
-import com.waz.model._
+import com.waz.model.{AssetData, AssetId, Dim2, MessageContent}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.sync.client.OpenGraphClient.OpenGraphData
+import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils._
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType, State}
-import com.waz.zclient.common.views.ImageController.{DataImage, ImageUri}
-import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.{R, ViewHelper}
 
 class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
@@ -72,12 +75,12 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
     if (index >= 0 && msg.links.size > linkIndex) Some(msg.links(linkIndex)) else None
   }
 
-  val image = for {
+  val image: Signal[Option[Either[AssetData, URL]]] = for {
     ct <- content
     lp <- linkPreview
   } yield (ct.openGraph, lp) match {
-    case (_, Some(LinkPreview.WithAsset(asset)))            => Some(DataImage(asset))
-    case (Some(OpenGraphData(_, _, Some(uri), _, _)), None) => Some(ImageUri(uri))
+    case (_, Some(LinkPreview.WithAsset(asset)))            => Some(Left(asset))
+    case (Some(OpenGraphData(_, _, Some(OpenGraphImage(url)), _, _)), None) => Some(Right(url))
     case _                                                  => None
   }
 
@@ -96,21 +99,29 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
   val hasImage = image.map(_.isDefined)
 
   private val dotsDrawable = new ProgressDotsDrawable
-  private val imageDrawable = new ImageAssetDrawable(image.collect { case Some(im) => im }, scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single)
+
+  image.map (_.flatMap{
+    case Left(asset) => asset.remoteId.map(id => WireGlide(context).load(AssetId(id.str)))
+    case Right(uri) => Some(WireGlide(context).load(uri.toString))
+  }).onUi {
+    case Some(request) =>
+      request.apply(new RequestOptions().centerCrop().placeholder(dotsDrawable))
+        .into(new ImageViewTarget[Drawable](imageView) {
+        override def setResource(resource: Drawable): Unit =
+          registerEphemeral(imageView, resource)
+      })
+    case _ =>
+      WireGlide(context).clear(imageView)
+      imageView.setImageDrawable(dotsDrawable)
+
+  }
 
   registerEphemeral(titleTextView)
   registerEphemeral(urlTextView)
-  registerEphemeral(imageView, imageDrawable)
 
   imageView.setBackground(dotsDrawable)
 
   hasImage.on(Threading.Ui) { imageView.setVisible }
-
-  imageDrawable.state.map {
-    case State.Loading(_) => dotsDrawable
-    case _ => null
-  }.on(Threading.Ui) { imageView.setBackground }
-
   title.on(Threading.Ui) { titleTextView.setText }
 
   urlText.on(Threading.Ui) { urlTextView.setText }

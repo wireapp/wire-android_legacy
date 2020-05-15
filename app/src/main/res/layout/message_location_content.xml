@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<android.support.v7.widget.CardView
+<androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -42,6 +42,11 @@
             android:layout_height="@dimen/content__location_message__map_height"
             android:background="@color/light_graphite_24"
             >
+
+            <ImageView
+                android:id="@+id/location_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
 
             <com.waz.zclient.ui.text.GlyphTextView
                 android:id="@+id/gtv__row_conversation__map_pin_glyph"
@@ -87,4 +92,4 @@
 
     </LinearLayout>
 
-</android.support.v7.widget.CardView>
+</androidx.cardview.widget.CardView>

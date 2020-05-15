@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:background="@color/white"
+    tools:orientation="vertical"
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
+
+    <com.waz.zclient.messages.parts.composite.ButtonWithConfirmation
+        android:id="@+id/message_button_item_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/selector_alarm_confirmation_button_background"
+        android:fontFamily="sans-serif-medium"
+        android:minHeight="@dimen/composite_message_button_progressbar_size"
+        android:padding="@dimen/composite_message_button_padding"
+        android:textAllCaps="true"
+        android:textColor="@drawable/selector_alarm_confirmation_button_text_color"
+        android:textSize="@dimen/composite_message_button_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Yes, I am safe" />
+
+    <ProgressBar
+        android:id="@+id/message_button_item_progressbar"
+        android:layout_width="@dimen/composite_message_button_progressbar_size"
+        android:layout_height="0dp"
+        android:elevation="@dimen/composite_message_button_progressbar_elevation"
+        android:indeterminateTint="@color/accent_red"
+        android:padding="@dimen/composite_message_button_progressbar_padding"
+        android:visibility="gone"
+        android:layout_margin="1dp"
+        app:layout_constraintBottom_toBottomOf="@id/message_button_item_button"
+        app:layout_constraintEnd_toEndOf="@id/message_button_item_button"
+        app:layout_constraintTop_toTopOf="@id/message_button_item_button" />
+
+    <TextView
+        android:id="@+id/message_button_item_error_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:fontFamily="sans-serif-light"
+        android:text="@string/composite_message_button_action_error"
+        android:textColor="@color/accent_red"
+        android:textSize="@dimen/composite_message_button_error_text_size"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@id/message_button_item_button"
+        app:layout_constraintTop_toBottomOf="@id/message_button_item_button"
+        tools:visibility="visible" />
+
+</merge>

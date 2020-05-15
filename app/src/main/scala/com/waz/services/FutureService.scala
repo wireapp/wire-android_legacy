@@ -20,7 +20,7 @@ package com.waz.services
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.support.v4.content.WakefulBroadcastReceiver
+import androidx.legacy.content.WakefulBroadcastReceiver
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.ZMessaging

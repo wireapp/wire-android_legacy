@@ -17,27 +17,21 @@
  */
 package com.waz.zclient.conversationlist.views
 
-import java.math.BigInteger
-import java.nio.{ByteBuffer, ByteOrder}
-import java.util.UUID
-
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.FrameLayout.LayoutParams
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{ConvId, UserId}
-import com.waz.utils.events.Signal
+import com.waz.model.{ConvId, TeamId, UserData}
 import com.waz.zclient.common.views.ChatHeadView
-import com.waz.zclient.common.views.ImageController.{ImageSource, NoImage}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
 
-import scala.collection.mutable.ArrayBuffer
+class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style) with ViewHelper {
 
-class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -55,110 +49,71 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
   private val avatarGroup = ViewUtils.getView(this, R.id.avatar_group).asInstanceOf[View]
   private val avatarGroupSingle = ViewUtils.getView(this, R.id.conversation_avatar_single_group).asInstanceOf[ChatHeadView]
 
-  private val imageSources = Seq.fill(4)(Signal[ImageSource]())
-
   private val chatheads = Seq(avatarStartTop, avatarEndTop, avatarStartBottom, avatarEndBottom)
 
-  def setMembers(members: Seq[UserId], convId: ConvId, conversationType: ConversationType): Unit = {
-    conversationType match {
-      case ConversationType.Group if members.size == 1 =>
-        chatheads.foreach(_.clearUser())
-        avatarGroupSingle.setUserId(members.head)
-      case ConversationType.Group =>
-        val shuffledIds = ConversationAvatarView.shuffle(members.sortBy(_.str), convId)
-        avatarGroupSingle.clearUser()
-        chatheads.map(Some(_)).zipAll(shuffledIds.take(4).map(Some(_)), None, None).foreach{
-          case (Some(view), Some(uid)) =>
-            view.setUserId(uid)
+  def setMembers(members: Seq[UserData], convId: ConvId, isGroup: Boolean, selfTeam: Option[TeamId]): Unit = {
+    isGroup match {
+      case true if members.size == 1 =>
+        chatheads.foreach(_.clearImage())
+        avatarGroupSingle.setUserData(members.head, belongsToSelfTeam = members.head.teamId.exists(selfTeam.contains))
+        showGroupSingle()
+      case true =>
+        avatarGroupSingle.clearImage()
+        chatheads.map(Some(_)).zipAll(members.sortBy(_.id.str).take(4).map(Some(_)), None, None).foreach{
+          case (Some(view), Some(ud)) =>
+            view.setUserData(ud, belongsToSelfTeam = ud.teamId.exists(selfTeam.contains))
           case (Some(view), None) =>
-            view.clearUser()
+            view.clearImage()
           case _ =>
         }
-      case ConversationType.OneToOne | ConversationType.WaitForConnection if members.nonEmpty =>
-        members.headOption.fold(avatarSingle.clearUser())(avatarSingle.setUserId)
+        showGrid()
+      case false if members.nonEmpty =>
+        members.headOption.fold(avatarSingle.clearImage())(ud => avatarSingle.setUserData(ud, belongsToSelfTeam = ud.teamId.exists(selfTeam.contains)))
+        showSingle()
       case _ =>
-        imageSources.foreach(_ ! NoImage())
+        clearImages()
     }
+  }
+
+  private def hideAll(): Unit = {
+    avatarGroup.setVisibility(View.GONE)
+    avatarSingle.setVisibility(View.GONE)
+    avatarGroupSingle.setVisibility(View.GONE)
+    setBackground(null)
+  }
+
+  private def showGrid(): Unit = {
+    avatarGroup.setVisibility(View.VISIBLE)
+    avatarSingle.setVisibility(View.GONE)
+    avatarGroupSingle.setVisibility(View.GONE)
+    setBackground(groupBackgroundDrawable)
+  }
+
+  private def showSingle(): Unit = {
+    avatarGroup.setVisibility(View.GONE)
+    avatarSingle.setVisibility(View.VISIBLE)
+    avatarGroupSingle.setVisibility(View.GONE)
+    setBackground(null)
+  }
+
+  private def showGroupSingle(): Unit = {
+    avatarGroup.setVisibility(View.VISIBLE)
+    avatarSingle.setVisibility(View.GONE)
+    avatarGroupSingle.setVisibility(View.VISIBLE)
+    setBackground(groupBackgroundDrawable)
   }
 
   def setConversationType(conversationType: ConversationType): Unit ={
     conversationType match {
-      case ConversationType.Group =>
-        avatarGroup.setVisibility(View.VISIBLE)
-        avatarSingle.setVisibility(View.GONE)
-        setBackground(groupBackgroundDrawable)
-      case ConversationType.OneToOne | ConversationType.WaitForConnection =>
-        avatarGroup.setVisibility(View.GONE)
-        avatarSingle.setVisibility(View.VISIBLE)
-        setBackground(null)
-      case _ =>
-        avatarGroup.setVisibility(View.GONE)
-        avatarSingle.setVisibility(View.GONE)
-        setBackground(null)
+      case ConversationType.Group => showGrid()
+      case ConversationType.OneToOne | ConversationType.WaitForConnection => showSingle()
+      case _ => hideAll()
     }
   }
 
-  def clearImages(): Unit ={
-    chatheads.foreach(_.clearUser())
-    avatarSingle.clearUser()
-  }
-}
-
-object ConversationAvatarView {
-
-  def longToUnsignedLongLittleEndian(l: Long): BigInt = {
-    val value = BigInt(ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(l).array())
-    if (value.signum < 0) {
-      value + BigInteger.ONE.shiftLeft(java.lang.Long.SIZE)
-    } else {
-      value
-    }
-  }
-
-  def uuidToBytes(uuid: UUID): Array[Byte] = {
-    val byteBuffer = ByteBuffer.wrap(new Array[Byte](16))
-    byteBuffer.putLong(uuid.getMostSignificantBits)
-    byteBuffer.putLong(uuid.getLeastSignificantBits)
-    byteBuffer.array()
-  }
-
-  case class RandomGeneratorFromConvId(convId: ConvId) {
-
-    private val uuid = UUID.fromString(convId.str)
-
-    private val leastBits = longToUnsignedLongLittleEndian(uuid.getLeastSignificantBits)
-    private val mostBits = longToUnsignedLongLittleEndian(uuid.getMostSignificantBits)
-
-    private var step = 0
-
-    def rand(max: Long): Long = {
-      val maxBig = BigInt(max)
-      (rand() mod maxBig).longValue()
-    }
-
-    def rand(): BigInt = {
-      val value =
-        if (step % 2 == 0) {
-          mostBits
-        } else {
-          leastBits
-        }
-      step += 1
-      value
-    }
-  }
-
-  def shuffle[T](seq: Seq[T], convId: ConvId): Seq[T] = {
-    val generator = RandomGeneratorFromConvId(convId)
-    val input = new ArrayBuffer[T] ++= seq
-    val output = new ArrayBuffer[T]
-
-    seq.indices.foreach { _ =>
-      val idx = generator.rand(input.size).toInt
-      output += input(idx)
-      input.remove(idx)
-    }
-
-    output
+  def clearImages(): Unit = {
+    chatheads.foreach(_.clearImage())
+    avatarSingle.clearImage()
+    avatarGroupSingle.clearImage()
   }
 }

@@ -1,0 +1,71 @@
+/**
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+// Deflake
+def previouslyFailedTests = [].toSet()
+def failedTestsFile = new File("${projectDir}/failedTests.list")
+def failedTestsLogs = new File("${projectDir}/failedTests.list.previous")
+
+// Load previous failed unit tests. This needs to be loaded before Android configuration is generated
+// or tests will not be filtered out (they are filtered at configuration time)
+if (failedTestsFile.exists()) {
+    failedTestsFile.eachLine { line ->
+        println "Found previously failed test: ${line}"
+        previouslyFailedTests.add(line.trim())
+    }
+
+    // copy for further analysis
+    failedTestsLogs.withWriter { writer ->
+        writer.write(failedTestsFile.text)
+    }
+    failedTestsFile.delete()
+}
+
+
+android {
+
+    testOptions {
+        unitTests.all {
+            test {
+
+                // Filter tests if deflaking
+                if (project.hasProperty('wireDeflakeTests')) { // use `-PwireDeflakeTests=1` from command line to enable this
+
+                    previouslyFailedTests.forEach {
+                        // After much trial-and-error, this seems to be the only way
+                        // to filter tests - hack the test class name.
+                        // It would have been better to use `includeMatching`
+                        // but it's not supported by this plugin
+                        def testName = it.split("\\.").last()
+                        def testToRun = "**/*$testName*"
+                        println "Applying filter: ${testName}"
+                        include testToRun
+                    }
+                }
+            }
+
+            // Update failure state
+            afterTest { desc, result ->
+                if (result.resultType == TestResult.ResultType.FAILURE) {
+                    failedTestsFile.withWriterAppend {
+                        it.write("${desc.className}\n")
+                    }
+                }
+            }
+        }
+    }
+}

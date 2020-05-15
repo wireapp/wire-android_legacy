@@ -19,17 +19,20 @@ package com.waz.zclient.calling
 
 import android.graphics.Color
 import android.os.Bundle
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.CallParticipantsView
+import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{FragmentHelper, R}
 
 class CallParticipantsFragment extends FragmentHelper {
+  private lazy val themeController = inject[ThemeController]
+
   private lazy val toolbar = returning(view[Toolbar](R.id.toolbar)) { vh =>
-    controller.theme.map(controller.themeController.getTheme).onUi { theme =>
+    controller.theme.map(themeController.getTheme).onUi { theme =>
       vh.foreach(v => getStyledDrawable(R.attr.backNavigationIcon, theme).foreach(v.setNavigationIcon))
     }
   }

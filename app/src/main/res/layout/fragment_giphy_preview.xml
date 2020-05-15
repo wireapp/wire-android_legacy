@@ -27,7 +27,7 @@
               style="?wireBackground"
     >
 
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/t__giphy__toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -82,7 +82,7 @@
 
         </FrameLayout>
 
-    </android.support.v7.widget.Toolbar>
+    </androidx.appcompat.widget.Toolbar>
 
     <View
         android:layout_width="match_parent"
@@ -111,7 +111,7 @@
             style="?giphyError"
             />
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv__giphy_image_preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

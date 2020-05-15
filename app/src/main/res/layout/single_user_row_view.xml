@@ -33,9 +33,6 @@
         android:layout_centerVertical="true"
         android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_marginEnd="@dimen/wire__padding__regular"
-        app:glyph_size="@dimen/people_picker__chathead__glpyh"
-        app:isSelectable="true"
-        app:show_border="false"
         />
 
     <LinearLayout
@@ -67,6 +64,19 @@
             android:layout_marginStart="@dimen/wire__padding__small"
             android:layout_marginEnd="@dimen/wire__padding__small"
             android:visibility="gone"
+            android:tint="?wirePrimaryTextColor"
+            />
+
+        <ImageView
+            android:id="@+id/external_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_external_grey"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:visibility="gone"
+            android:tint="?wirePrimaryTextColor"
             />
 
         <ImageView
@@ -79,7 +89,7 @@
             android:visibility="gone"
             />
 
-        <android.support.v7.widget.AppCompatCheckBox
+        <androidx.appcompat.widget.AppCompatCheckBox
             android:id="@+id/checkbox"
             android:layout_width="@dimen/share_extension__row__checkbox_size"
             android:layout_height="@dimen/share_extension__row__checkbox_size"
@@ -111,19 +121,42 @@
         android:layout_toStartOf="@id/aux_container"
         >
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/name_text"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:gravity="start|center_vertical"
-            android:maxLines="1"
-            android:drawablePadding="@dimen/wire__padding__6"
-            app:w_font="@string/wire__typeface__light"
-            style="?startUiUserRowLabel"
-            app:themedColor="Primary"
-            />
+            android:orientation="horizontal"
+            >
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/name_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="start|center_vertical"
+                android:maxLines="1"
+                android:drawablePadding="@dimen/wire__padding__6"
+                app:w_font="@string/wire__typeface__light"
+                style="?startUiUserRowLabel"
+                app:themedColor="Primary"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/you_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawablePadding="@dimen/wire__padding__6"
+                android:layout_weight="0"
+                android:layout_marginStart="@dimen/wire__padding__small"
+                android:layout_marginEnd="@dimen/wire__padding__small"
+                app:w_font="@string/wire__typeface__light"
+                style="?startUiUserRowLabel"
+                app:themedColor="Primary"
+                android:visibility="gone"
+                />
+
+        </LinearLayout>
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/username_text"

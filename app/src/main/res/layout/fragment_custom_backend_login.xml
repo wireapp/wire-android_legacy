@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2020 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/teams_background">
+
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/customBackendSsoLoginGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.67" />
+
+    <TextView
+        android:id="@+id/customBackendTitleTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/wire__padding__26"
+        android:fontFamily="sans-serif"
+        android:gravity="center_horizontal"
+        android:letterSpacing="0.02"
+        android:textColor="@color/outer_space"
+        android:textSize="@dimen/wire__text_size__regular"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="@string/custom_backend_info_title" />
+
+
+    <TextView
+        android:id="@+id/customBackendSubtitleTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/wire__margin_huge"
+        android:layout_marginTop="@dimen/wire__padding__8"
+        android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center_horizontal"
+        android:lines="1"
+        android:textColor="@color/gray_chateau"
+        android:textSize="@dimen/wire__text_size__smaller"
+        android:textStyle="normal"
+        app:layout_constraintEnd_toStartOf="@+id/customBackendShowMoreTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/customBackendTitleTextView"
+        tools:text="S3-EU-1.INTERNAL.PINEAPPLE.COM…" />
+
+    <TextView
+        android:id="@+id/customBackendShowMoreTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/wire__padding__10"
+        android:layout_marginTop="@dimen/wire__padding__8"
+        android:layout_marginEnd="@dimen/wire__margin_huge"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center_horizontal"
+        android:text="@string/custom_backend_info_show_more"
+        android:textColor="@color/curious_blue"
+        android:textSize="@dimen/wire__text_size__smaller"
+        android:textStyle="normal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/customBackendSubtitleTextView"
+        app:layout_constraintTop_toBottomOf="@+id/customBackendTitleTextView" />
+
+    <TextView
+        android:id="@+id/customBackendWelcomeTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:gravity="center_horizontal"
+        android:lineSpacingExtra="8sp"
+        android:textColor="@color/outer_space"
+        android:textSize="@dimen/wire__text_size__huge"
+        android:textStyle="normal"
+        app:layout_constraintBottom_toTopOf="@+id/customBackendEmailLoginButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/customBackendSubtitleTextView"
+        tools:text="@string/custom_backend_welcome" />
+
+    <Button
+        android:id="@+id/customBackendEmailLoginButton"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/wire__padding__16"
+        android:layout_marginEnd="@dimen/wire__padding__16"
+        android:layout_marginBottom="@dimen/wire__padding__12"
+        android:background="@drawable/selector_welcome_create_account_button"
+        android:fontFamily="sans-serif"
+        android:paddingTop="@dimen/wire__padding__18"
+        android:paddingBottom="@dimen/wire__padding__18"
+        android:text="@string/welcome_custom_backend_log_in_email"
+        android:textColor="@color/white"
+        android:textSize="@dimen/wire__text_size__small"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/customBackendSsoLoginButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/customBackendSsoLoginButton"
+        style="?android:attr/borderlessButtonStyle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/wire__padding__16"
+        android:layout_marginEnd="@dimen/wire__padding__16"
+        android:background="@drawable/selector_welcome_login_button"
+        android:paddingTop="@dimen/wire__padding__18"
+        android:paddingBottom="@dimen/wire__padding__18"
+        android:text="@string/welcome_custom_backend_log_in_sso"
+        android:textColor="@color/accent_blue"
+        android:textSize="@dimen/wire__text_size__small"
+        app:layout_constraintBottom_toTopOf="@+id/customBackendSsoLoginGuideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

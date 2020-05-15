@@ -19,8 +19,8 @@ package com.waz.zclient.markdown
 
 import android.graphics.Color
 import android.graphics.Typeface
-import android.support.test.runner.AndroidJUnit4
 import android.text.style.*
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.waz.zclient.markdown.spans.GroupSpan
 import com.waz.zclient.markdown.spans.commonmark.*
 import com.waz.zclient.markdown.spans.commonmark.ImageSpan
@@ -116,8 +116,8 @@ class GroupSpanTest {
             when (span) {
                 is CustomQuoteSpan -> {
                     assertEquals(Color.GREEN, span.color)
-                    assertEquals(4, span.stripeWidth)
-                    assertEquals(8, span.gapWidth)
+                    assertEquals(4, span.stripeWidthSize)
+                    assertEquals(8, span.gapWidthSize)
                 }
                 is ParagraphSpacingSpan -> {
                     assertEquals(16, span.before)

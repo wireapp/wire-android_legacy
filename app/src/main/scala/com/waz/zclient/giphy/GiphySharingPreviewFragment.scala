@@ -17,13 +17,20 @@
  */
 package com.waz.zclient.giphy
 
+import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.support.v7.widget.{RecyclerView, StaggeredGridLayoutManager, Toolbar}
 import android.text.TextUtils
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{EditText, ImageView, TextView}
-import com.waz.model.AssetData
-import com.waz.service.images.BitmapSignal
+import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.{RecyclerView, StaggeredGridLayoutManager}
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
+import com.waz.model.{AssetData, Mime}
+import com.waz.service.assets.{Content, ContentForUpload}
+import com.waz.service.media.GiphyService.GifObject
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.Threading
@@ -32,11 +39,9 @@ import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.common.controllers.{ScreenController, ThemeController}
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{ScaleType, State}
-import com.waz.zclient.common.views.ImageController.{DataImage, ImageSource, NoImage}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationMenuListener}
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -44,6 +49,9 @@ import com.waz.zclient.utils.ContextUtils.getColorWithTheme
 import com.waz.zclient.utils.{RichEditText, RichView}
 import com.waz.zclient.views.LoadingIndicatorView
 
+import scala.concurrent.Future
+
+//TODO Should be splitted in two fragments
 class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragment.Container]
   with FragmentHelper
   with OnBackPressedListener {
@@ -63,24 +71,40 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
   private lazy val searchTerm = Signal[String]("")
   private lazy val isPreviewShown = Signal[Boolean](false)
-  private lazy val selectedGif = Signal[Option[AssetData]]()
-  private lazy val gifImage: Signal[ImageSource] = selectedGif.map {
-    case Some(asset) => DataImage(asset)
-    case _ => NoImage()
-  }
+  private lazy val isGifShowing = Signal[Boolean](false)
+  private lazy val selectedGif = Signal[Option[GifObject]]()
 
   private lazy val giphySearchResults = for {
     giphyService <- giphyService
     term <- searchTerm
     searchResults <- Signal.future(
       if (TextUtils.isEmpty(term)) giphyService.trending()
-      else giphyService.searchGiphyImage(term)
+      else giphyService.search(term)
     )
-  } yield searchResults.map(GifData.tupled)
+  } yield searchResults
 
   private lazy val previewImage = returning(view[ImageView](R.id.giphy_preview)) { vh =>
     networkService.isOnline.onUi(isOnline => vh.foreach(_.setClickable(isOnline)))
     isPreviewShown.onUi(isPreview => vh.foreach(_.fade(isPreview)))
+    selectedGif.onUi {
+      case Some(gif) => vh.foreach { v =>
+        WireGlide(getContext)
+          .load(gif.original.source.toString)
+          .addListener(new RequestListener[Drawable]() {
+            override def onLoadFailed(e: GlideException, model: scala.Any, target: Target[Drawable], isFirstResource: Boolean): Boolean = {
+              isGifShowing ! false
+              false
+            }
+
+            override def onResourceReady(resource: Drawable, model: scala.Any, target: Target[Drawable], dataSource: DataSource, isFirstResource: Boolean): Boolean = {
+              isGifShowing ! true
+              false
+            }
+          })
+          .into(v)
+      }
+      case _ => vh.foreach(WireGlide(getContext).clear(_))
+    }
   }
 
   private lazy val giphyTitle = returning(view[TextView](R.id.ttv__giphy_preview__title)) { vh =>
@@ -137,13 +161,12 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
   private lazy val giphyGridViewAdapter = returning(new GiphyGridViewAdapter(
     scrollGifCallback = new ScrollGifCallback {
-      override def setSelectedGifFromGridView(gifAsset: AssetData): Unit = {
+      override def setSelectedGifFromGridView(gif: GifObject): Unit = {
         isPreviewShown ! true
-        selectedGif ! Some(gifAsset)
+        selectedGif ! Some(gif)
         keyboardController.hideKeyboardIfVisible()
       }
-    },
-    assetLoader = BitmapSignal.apply(zms.currentValue.get, _, _)
+    }
   )) { adapter => giphySearchResults.onUi(adapter.setGiphyResults) }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -151,6 +174,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     closeButton
+    previewImage
 
     Option(getArguments).orElse(Option(savedInstanceState)).foreach { bundle =>
       giphySearchEditText.foreach(_.setText(bundle.getString(ArgSearchTerm)))
@@ -189,15 +213,12 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       })
     }
 
-    val gifDrawable = new ImageAssetDrawable(gifImage, scaleType = ScaleType.CenterInside)
-    previewImage.foreach(_.setImageDrawable(gifDrawable))
-
     EventStream.union(
       searchTerm.onChanged.map(_ => true),
       selectedGif.onChanged.filter(_.isDefined).map(_ => true),
       giphySearchResults.onChanged.map(_ => false),
       isPreviewShown.onChanged.filter(_ == false),
-      gifDrawable.state.onChanged.collect { case _ : State.Loaded | _ : State.Failed => false }
+      isGifShowing.onChanged.map(!_)
     ) onUi {
       case true  => spinnerController.showSpinner(LoadingIndicatorView.InfiniteLoadingBar)
       case false => spinnerController.hideSpinner()
@@ -224,7 +245,8 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       }
     }
 
-  private def sendGif() = {
+  //TODO Should be moved to 'Presenter'
+  private def sendGif(): Unit = {
     ZMessaging.currentGlobal.trackingService.contribution(new ContributionEvent.Action("text"))
     for {
       term <- searchTerm.head
@@ -232,9 +254,12 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       msg =
         if (TextUtils.isEmpty(term)) getString(R.string.giphy_preview__message_via_random_trending)
         else getString(R.string.giphy_preview__message_via_search, term)
-      _    <- conversationController.sendMessage(msg)
-      _    <- conversationController.sendMessage(gif.flatMap(_.source).get, getActivity)
-    } yield screenController.hideGiphy ! true
+      gifContent <- Future { WireGlide(getContext).as(classOf[Array[Byte]]).load(gif.get.original.source.toString).submit().get() }(Threading.Background)
+      contentForUpload = ContentForUpload(s"${gif.get.id}.${Mime.extensionsMap(Mime.Image.Gif)}", Content.Bytes(Mime.Image.Gif, gifContent))
+      _  <- conversationController.sendMessage(msg)
+      _  <- conversationController.sendAssetMessage(contentForUpload, getActivity, None)
+    } yield ()
+    screenController.hideGiphy ! true
   }
 
 }

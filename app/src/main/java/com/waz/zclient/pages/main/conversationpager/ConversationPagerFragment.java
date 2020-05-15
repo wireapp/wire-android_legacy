@@ -20,8 +20,9 @@ package com.waz.zclient.pages.main.conversationpager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.ViewPager;
+
+import androidx.fragment.app.Fragment;
+import androidx.viewpager.widget.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,8 +41,7 @@ import com.waz.zclient.utils.Callback;
 
 public class ConversationPagerFragment extends BaseFragment<ConversationPagerFragment.Container> implements OnBackPressedListener,
                                                                                                             PagerControllerObserver,
-                                                                                                            NavigationControllerObserver,
-                                                                                                            FirstPageFragment.Container {
+                                                                                                            NavigationControllerObserver {
     public static final String TAG = ConversationPagerFragment.class.getName();
     private static final int PAGER_DELAY = 150;
 
@@ -75,10 +75,6 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
         conversationPager.setPageTransformer(false, new CustomPagerTransformer(CustomPagerTransformer.SLIDE_IN));
         conversationPagerAdapter = new ConversationPagerAdapter(getChildFragmentManager());
         conversationPager.setAdapter(conversationPagerAdapter);
-
-        if (this.getControllerFactory().getUserPreferencesController().showContactsDialog()) {
-            conversationPager.setCurrentItem(NavigationController.FIRST_PAGE);
-        }
 
         return conversationPager;
     }
@@ -132,6 +128,7 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
         switch (change.requester()) {
             case ARCHIVED_RESULT:
             case FIRST_LOAD:
+            case UPDATER:
                 break;
             case START_CONVERSATION_FOR_CALL:
             case START_CONVERSATION_FOR_VIDEO_CALL:
@@ -144,8 +141,17 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
                     }
                 }, PAGER_DELAY);
                 break;
-            case INVITE:
             case DELETE_CONVERSATION:
+                conversationPagerAdapter.notifyDataSetChanged();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        conversationPager.setCurrentItem(NavigationController.FIRST_PAGE, false);
+
+                    }
+                }, PAGER_DELAY);
+                break;
+            case INVITE:
             case LEAVE_CONVERSATION:
                 new Handler().postDelayed(new Runnable() {
                     @Override
@@ -155,18 +161,13 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
                     }
                 }, PAGER_DELAY);
                 break;
-            case UPDATER:
-                break;
             case CONVERSATION_LIST_UNARCHIVED_CONVERSATION:
             case CONVERSATION_LIST:
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        conversationPager.setCurrentItem(NavigationController.SECOND_PAGE);
-                    }
-                }, PAGER_DELAY);
-                break;
             case INBOX:
+            case ONGOING_CALL:
+            case TRANSFER_CALL:
+            case INCOMING_CALL:
+            case INTENT:
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -179,17 +180,6 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
                     @Override
                     public void run() {
                         conversationPager.setCurrentItem(NavigationController.FIRST_PAGE);
-                    }
-                }, PAGER_DELAY);
-                break;
-            case ONGOING_CALL:
-            case TRANSFER_CALL:
-            case INCOMING_CALL:
-            case INTENT:
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        conversationPager.setCurrentItem(NavigationController.SECOND_PAGE);
                     }
                 }, PAGER_DELAY);
                 break;

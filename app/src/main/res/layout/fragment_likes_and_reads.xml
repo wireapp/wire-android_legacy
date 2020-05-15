@@ -61,7 +61,7 @@
         android:layout_height="wrap_content"
         android:background="?wireBackgroundColor">
 
-        <android.support.design.widget.TabLayout
+        <com.google.android.material.tabs.TabLayout
             android:id="@+id/likes_and_reads_tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -73,20 +73,20 @@
             android:layout_marginStart="@dimen/wire__padding__regular"
             android:layout_marginEnd="@dimen/wire__padding__regular"
             >
-            <android.support.design.widget.TabItem
+            <com.google.android.material.tabs.TabItem
                 android:text="@string/tab_title_read"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout="@layout/tab_with_theme_medium_layout"
                 />
 
-            <android.support.design.widget.TabItem
+            <com.google.android.material.tabs.TabItem
                 android:text="@string/tab_title_likes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout="@layout/tab_with_theme_medium_layout"
                 />
-        </android.support.design.widget.TabLayout>
+        </com.google.android.material.tabs.TabLayout>
 
     </FrameLayout>
 
@@ -96,13 +96,13 @@
         android:layout_weight="1"
         android:layout_marginTop="@dimen/wire__padding__regular"
         >
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/reads_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             />
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/likes_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

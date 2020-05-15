@@ -33,7 +33,7 @@ import scala.collection.mutable.ArrayBuffer
   * Index maintaining message indices for currently displayed messages.
   *
   * RecyclerView wants to get notification about data set changes with list position.
-  * Our storage on the other hand produces events containing actual messages,
+  * Our com.waz.zclient.storage on the other hand produces events containing actual messages,
   * we need to maintain an index to know in which position given messages are displayed.
   *
   * RecyclerView only cares about notifications for visible elements, so it's enough to

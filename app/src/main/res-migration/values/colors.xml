@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+    <!-- Color names are Inspired from here is http://chir.ag/projects/name-that-color/#566433 -->
+    <color name="outer_space">#323639</color>
+    <color name="athens_gray_light">#f7f8fa</color>
+    <color name="athens_gray_normal">#e8ecf0</color>
+    <color name="athens_gray_dark">#e8e9eb</color>
+    <color name="curious_blue">#2391d3</color>
+    <color name="gray_chateau">#a7a8a9</color>
+    <color name="chathams_blue">#134a71</color>
+    <color name="iron">#cecfd1</color>
+    <color name="heather">#bac8d1</color>
+    <color name="shark">#272a2c</color>
+    <color name="link_water">#dcedf8</color>
+</resources>

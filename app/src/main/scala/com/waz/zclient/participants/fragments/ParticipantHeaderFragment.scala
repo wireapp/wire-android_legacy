@@ -19,7 +19,7 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import android.view._
 import android.widget.TextView
 import com.waz.threading.{CancellableFuture, Threading}
@@ -36,6 +36,8 @@ import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getDrawable}
 import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
+import com.waz.zclient.utils._
+import com.waz.zclient.views.AvailabilityView
 
 import scala.concurrent.duration._
 
@@ -84,6 +86,25 @@ class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentH
       newIntegrations <- newConvController.integrations
     } yield (members ++ newUsers).size + newIntegrations.size + 1
 
+  private lazy val availability = {
+    import com.waz.zclient.messages.UsersController
+    val usersController = inject[UsersController]
+
+    val availabilityVisible = Signal(participantsController.otherParticipant.map(_.expiresAt.isDefined), usersController.availabilityVisible).map {
+      case (true, _)         => false
+      case (_, isTeamMember) => isTeamMember
+    }
+
+    val availabilityStatus = for {
+      Some(uId) <- participantsController.otherParticipantId
+      av        <- usersController.availability(uId)
+    } yield av
+
+    Signal(availabilityVisible, availabilityStatus).map {
+      case (true, status) => Some(status)
+      case (false, _)     => None
+    }
+  }
 
   private lazy val confButton = returning(view[TextView](R.id.confirmation_button)) { vh =>
 
@@ -141,22 +162,23 @@ class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentH
   private lazy val headerUsername = returning(view[TextView](R.id.participants__header__username)) { vh =>
     pageTag.onUi {
       case Some(SingleParticipantFragment.Tag) =>
-        participantsController.otherParticipant.head.foreach { user =>
-          vh.foreach { view =>
-            view.setVisible(true)
-            view.setText(user.getDisplayName)
-            val shield = if (user.isVerified) Option(getDrawable(R.drawable.shield_full)) else None
+        vh.foreach(_.setVisible(true))
 
-            shield.foreach { sh =>
-              val pushDown = getDimenPx(R.dimen.wire__padding__1)
-              sh.setBounds(0, pushDown, sh.getIntrinsicWidth, sh.getIntrinsicHeight + pushDown)
-              view.setCompoundDrawablePadding(getDimenPx(R.dimen.wire__padding__tiny))
-            }
-            val old = view.getCompoundDrawables
-            view.setCompoundDrawablesRelative(shield.orNull, old(1), old(2), old(3))
+        participantsController.otherParticipant.onUi { user =>
+          vh.foreach { view =>
+            view.setText(user.name)
+            val shield = if (user.isVerified) Option(getDrawable(R.drawable.shield_full)) else None
+            view.displayEndOfText(shield)
+            if (shield.isDefined) view.setCompoundDrawablePadding(getDimenPx(R.dimen.wire__padding__tiny))
             view.setContentDescription(if (user.isVerified) "verified" else "unverified")
           }
-        }(Threading.Ui)
+        }
+
+        availability.onUi {
+          case Some(av) =>
+            vh.foreach { view => AvailabilityView.displayStartOfText(view, av, view.getCurrentTextColor) }
+          case None => vh.foreach(AvailabilityView.hideAvailabilityIcon)
+        }
       case _ =>
         vh.foreach(_.setVisible(false))
     }
@@ -172,7 +194,7 @@ class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentH
           val remaining = ConversationController.MaxParticipants - others - 1
           ViewUtils.showAlertDialog(getContext,
             getString(R.string.max_participants_alert_title),
-            ContextUtils.getString(R.string.max_participants_add_alert_message, remaining.toString),
+            ContextUtils.getString(R.string.max_participants_add_alert_message, ConversationController.MaxParticipants.toString, remaining.toString),
             getString(android.R.string.ok), null, true)
         }
       case _ =>

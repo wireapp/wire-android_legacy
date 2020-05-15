@@ -19,7 +19,8 @@ package com.waz.zclient.controllers.navigation;
 
 import android.content.Context;
 import android.os.Bundle;
-import timber.log.Timber;
+
+import com.waz.zclient.core.logging.Logger;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -80,7 +81,7 @@ public class NavigationController implements INavigationController {
 
     @Override
     public void setVisiblePage(Page page, String sender) {
-        Timber.i("Page: %s Sender: %s", page, sender);
+        Logger.info("NavigationController", "Page:" + page + "Sender:" + sender);
         if (currentPage == page && !isInLandscape) {
             return;
         }
@@ -171,9 +172,9 @@ public class NavigationController implements INavigationController {
 
     @Override
     public void setPagerEnabled(boolean enabled) {
-        Timber.i("setPagerEnabled(%b)", enabled);
+        Logger.info("NavigationController", "setPagerEnabled" + enabled);
         if (enabled && getCurrentRightPage() == Page.PARTICIPANT) {
-            Timber.i("ignoring setPagerEnabled()");
+            Logger.info("NavigationController", "ignoring setPagerEnabled()");
             return;
         }
         isPagerEnabled = enabled;
@@ -188,9 +189,7 @@ public class NavigationController implements INavigationController {
             case CONVERSATION_LIST:
                 setPagerEnabled(false);
                 return;
-            case SELF_PROFILE_OVERLAY:
             case CAMERA:
-            case CONFIRMATION_DIALOG:
             case SINGLE_MESSAGE:
             case DRAWING:
             case SHARE_LOCATION:
@@ -198,14 +197,10 @@ public class NavigationController implements INavigationController {
             case ARCHIVE:
                 setPagerEnabled(false);
                 break;
-            case CONVERSATION_MENU_OVER_CONVERSATION_LIST:
             case PARTICIPANT:
-            case PARTICIPANT_USER_PROFILE:
             case PICK_USER:
-            case COMMON_USER_PROFILE:
             case SEND_CONNECT_REQUEST:
             case PENDING_CONNECT_REQUEST:
-            case BLOCK_USER:
             case PICK_USER_ADD_TO_CONVERSATION:
             case INTEGRATION_DETAILS:
                 setPagerEnabled(false);

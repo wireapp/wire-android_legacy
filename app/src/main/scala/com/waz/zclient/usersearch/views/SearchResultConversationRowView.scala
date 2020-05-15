@@ -18,7 +18,7 @@
 package com.waz.zclient.usersearch.views
 
 import android.content.Context
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
@@ -51,12 +51,13 @@ class SearchResultConversationRowView(val context: Context, val attrs: Attribute
     conv <- conversationSignal
     memberIds <- ConversationMembersSignal(conv.id)
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)).toSeq:_*)
-  } yield (conv.id, conv.convType, memberSeq.filter(_.id != z.selfUserId).map(_.id))
+    isGroup <- Signal.future(z.conversations.isGroupConversation(conv.id))
+  } yield (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), z.teamId)
 
   subtitleView.setVisibility(View.GONE)
   avatarInfo.on(Threading.Ui) {
-    case (convId, convType, members) =>
-      avatar.setMembers(members, convId, convType)
+    case (convId, isGroup, members, selfTeamId) =>
+      avatar.setMembers(members, convId, isGroup, selfTeamId)
   }
 
   def getConversation: ConversationData = conversation

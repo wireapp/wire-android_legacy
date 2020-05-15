@@ -32,6 +32,11 @@
         android:layout_marginLeft="@dimen/content__padding_left"
         android:layout_marginRight="@dimen/content__padding_right">
 
+        <ImageView
+            android:id="@+id/image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
         <!--Used to ensure that controls can be placed within the margins calculated for the background image.
         It's hard to avoid this extra view without ruining tablet layouts -->
         <FrameLayout
@@ -51,13 +56,15 @@
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/duration"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/content__video_message__bottom_bar__height"
-                android:layout_gravity="bottom"
-                android:gravity="center_vertical|right"
-                android:paddingRight="@dimen/wire__padding__regular"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:padding="@dimen/wire__padding__4"
+                android:gravity="center"
                 android:textSize="@dimen/wire__text_size__small"
                 app:w_font="@string/wire__typeface__light"
+                android:textColor="@color/white"
+                android:background="@drawable/rounded_graphite_rectangle"
                 />
 
         </FrameLayout>

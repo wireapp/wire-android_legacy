@@ -17,10 +17,8 @@
  */
 package com.waz.zclient.collection
 
-import android.annotation.TargetApi
-import android.os.Build
-import android.support.v7.widget.{GridLayoutManager, RecyclerView}
 import android.util.SparseArray
+import androidx.recyclerview.widget.{GridLayoutManager, RecyclerView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning
@@ -111,9 +109,8 @@ class CollectionSpanSizeLookup(val spanCount: Int, val adapter: CollectionAdapte
     spanSizeCache.clear()
   }
 
-  @TargetApi(Build.VERSION_CODES.KITKAT)
   def clearCacheFromPosition(position: Int): Unit =
-    if (position <= 0 || Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) clearCache()
+    if (position <= 0) clearCache()
     else {
       Set(spanIndexCache, spanSizeCache).foreach { cache =>
         if (position <= cache.size() - 1) cache.removeAtRange(position, cache.size() - position)

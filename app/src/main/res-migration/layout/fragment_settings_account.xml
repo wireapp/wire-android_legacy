@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2020 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/settingsAccountInfoSectionHeaderTextView"
+            style="@style/TextView.Header.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_details_category_title"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountNameContainerLinearLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/settingsAccountNameContainerLinearLayout"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountHandleContainerLinearLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountInfoSectionHeaderTextView">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/settingsAccountNameTitleTextView"
+                style="@style/TextView.Title.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/settingsAccountNameSubtitleTextView"
+                style="@style/TextView.Subtitle.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_account_name_title" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/settingsAccountHandleContainerLinearLayout"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountEmailContainerLinearLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountNameContainerLinearLayout">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/settingsAccountHandleTitleTextView"
+                style="@style/TextView.Title.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/settingsAccountHandleSubtitleTextView"
+                style="@style/TextView.Subtitle.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_account_username_title" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/settingsAccountEmailContainerLinearLayout"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountPhoneContainerLinearLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountHandleContainerLinearLayout">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/settingsAccountEmailTitleTextView"
+                style="@style/TextView.Title.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/settingsAccountEmailSubtitleTextView"
+                style="@style/TextView.Subtitle.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_account_email_title" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/settingsAccountPhoneContainerLinearLayout"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountAppearanceSectionHeaderTextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountEmailContainerLinearLayout">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/settingsAccountPhoneTitleTextView"
+                style="@style/TextView.Title.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/settingsAccountPhoneSubtitleTextView"
+                style="@style/TextView.Subtitle.Settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pref_account_phone_title" />
+        </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/settingsAccountAppearanceSectionHeaderTextView"
+            style="@style/TextView.Header.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_appearance_category_title"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountProfilePictureButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountPhoneContainerLinearLayout" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/settingsAccountProfilePictureButton"
+            style="@style/Button.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_picture_title"
+            app:iconStart="@drawable/conversation_badge_red"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountAccentColorButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountAppearanceSectionHeaderTextView" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/settingsAccountAccentColorButton"
+            style="@style/Button.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_color_title"
+            app:iconStart="@drawable/conversation_badge_red"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountPrivacySectionHeaderTextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountProfilePictureButton" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/settingsAccountPrivacySectionHeaderTextView"
+            style="@style/TextView.Header.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref__account_privacy"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountReadReceiptsTitleTextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountAccentColorButton" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/settingsAccountReadReceiptsTitleTextView"
+            style="@style/TextView.Title.Settings"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/pref__account_send_read_receipts_title"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountReadReceiptsSubtitleTextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountPrivacySectionHeaderTextView" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/settingsAccountReadReceiptsSubtitleTextView"
+            style="@style/TextView.Subtitle.Settings"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/pref__account_send_read_receipts_summary"
+            app:layout_constraintBottom_toTopOf="@+id/settingAccountPersonalInfoSectionHeaderTextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountReadReceiptsTitleTextView" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/settingAccountPersonalInfoSectionHeaderTextView"
+            style="@style/TextView.Header.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_personal_information_category_title"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountDataUsagePermissionsButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountReadReceiptsSubtitleTextView" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/settingsAccountDataUsagePermissionsButton"
+            style="@style/Button.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_data_usage_permissions"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountAccentColorButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingAccountPersonalInfoSectionHeaderTextView" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/settingsAccountHistorySectionHeaderTextView"
+            style="@style/TextView.Header.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_conversations_category_title"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountBackupButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountDataUsagePermissionsButton" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/settingsAccountBackupButton"
+            style="@style/Button.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_backup_title"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountActionsSectionHeaderTextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountHistorySectionHeaderTextView" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/settingsAccountActionsSectionHeaderTextView"
+            style="@style/TextView.Header.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_actions_category_title"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountBackupButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountBackupButton" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/settingsAccountResetPasswordButton"
+            style="@style/Button.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_password_title"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountLogoutButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountActionsSectionHeaderTextView" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/settingsAccountLogoutButton"
+            style="@style/Button.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_sign_out_title"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountDeleteAccountButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountResetPasswordButton" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/settingsAccountDeleteAccountButton"
+            style="@style/Button.Settings"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/preference_button_height"
+            android:text="@string/pref_account_delete_title"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountLogoutButton" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

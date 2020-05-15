@@ -17,19 +17,20 @@
  */
 package com.waz.zclient
 
+import android.app.Activity
 import android.content.Intent
-import android.content.Intent._
 import android.content.res.Configuration
 import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
-import android.support.v4.app.{Fragment, FragmentTransaction}
-import com.waz.content.{TeamsStorage, UserPreferences}
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences._
+import com.waz.content.{TeamsStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus.{apply => _}
 import com.waz.model._
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
+import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -90,7 +91,6 @@ class MainActivity extends BaseActivity
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
   private lazy val usersController        = inject[UsersController]
-  private lazy val userPreferences        = inject[Signal[UserPreferences]]
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
@@ -116,10 +116,6 @@ class MainActivity extends BaseActivity
       fragmentTransaction.commit
     } else getControllerFactory.getNavigationController.onActivityCreated(savedInstanceState)
 
-    accentColorController.accentColor.map(_.color).onUi(
-      getControllerFactory.getUserPreferencesController.setLastAccentColor
-    )
-
     handleIntent(getIntent)
 
     val currentlyDarkTheme = themeController.darkThemeSet.currentValue.contains(true)
@@ -133,26 +129,32 @@ class MainActivity extends BaseActivity
       case _ =>
     }
 
-    userAccountsController.onAllLoggedOut.onUi {
+    userAccountsController.mostRecentLoggedOutAccount.onUi {
+      case Some((_, reason)) =>
+        showLogoutWarningIfNeeded(reason).foreach(_ => userAccountsController.mostRecentLoggedOutAccount ! None)
+      case None =>
+    }
+
+    userAccountsController.allAccountsLoggedOut.onUi {
       case true =>
         getControllerFactory.getPickUserController.hideUserProfile()
         getControllerFactory.getNavigationController.resetPagerPositionToDefault()
-        finish()
-        startActivity(returning(new Intent(this, classOf[AppEntryActivity]))(_.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)))
+        startActivity(AppEntryActivity.newIntent(this))
+        finishAffinity()
       case false =>
     }
 
     for {
       Some(self) <- userAccountsController.currentUser.head
-      teamName   <- self.teamId.fold(
-                      Future.successful(Option.empty[Name])
-                    )(teamId =>
-                      inject[TeamsStorage].get(teamId).map(_.map(_.name))
-                    )
-      prefs      <- userPreferences.head
+      teamName <- self.teamId.fold(
+        Future.successful(Option.empty[Name])
+      )(teamId =>
+        inject[TeamsStorage].get(teamId).map(_.map(_.name))
+      )
+      prefs <- userPreferences.head
       shouldWarn <- prefs(UserPreferences.ShouldWarnStatusNotifications).apply()
-      avVisible  <- usersController.availabilityVisible.head
-      color      <- accentColorController.accentColor.head
+      avVisible <- usersController.availabilityVisible.head
+      color <- accentColorController.accentColor.head
     } yield {
       (shouldWarn && avVisible, self.availability, teamName) match {
         case (true, Availability.Away, Some(name)) =>
@@ -181,9 +183,9 @@ class MainActivity extends BaseActivity
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
 
     spinnerController.spinnerShowing.onUi {
-      case Show(animation, forcedIsDarkTheme)=>
+      case Show(animation, forcedIsDarkTheme) =>
         themeController.darkThemeSet.head.foreach(theme => loadingIndicator.show(animation, forcedIsDarkTheme.getOrElse(theme), 300))(Threading.Ui)
-      case Hide(Some(message))=> loadingIndicator.hideWithMessage(message, 750)
+      case Hide(Some(message)) => loadingIndicator.hideWithMessage(message, 750)
       case Hide(_) => loadingIndicator.hide()
     }
 
@@ -458,13 +460,11 @@ class MainActivity extends BaseActivity
         res.map(_ => true)
 
       case SharingIntent() =>
-        (for {
-          convs <- sharingController.targetConvs.head
-          exp   <- sharingController.ephemeralExpiration.head
-          _     <- sharingController.sendContent(this)
+        for {
+          convs <- sharingController.sendContent(this)
           _     <- if (convs.size == 1) conversationController.switchConversation(convs.head) else Future.successful({})
-        } yield clearIntent())
-          .map(_ => true)
+          _     =  clearIntent()
+        } yield true
 
       case OpenPageIntent(page) => page match {
         case Intents.Page.Settings =>
@@ -477,6 +477,7 @@ class MainActivity extends BaseActivity
       }
 
       case _ =>
+        verbose(l"unknown intent $intent")
         setIntent(intent)
         Future.successful(false)
     }
@@ -491,7 +492,7 @@ class MainActivity extends BaseActivity
   }
 
   override def logout(): Unit = {
-    accountsService.activeAccountId.head.flatMap(_.fold(Future.successful({}))(accountsService.logout)).map { _ =>
+    accountsService.activeAccountId.head.flatMap(_.fold(Future.successful({})){ id => accountsService.logout(id, reason = UserInitiated) }).map { _ =>
       startFirstFragment()
     } (Threading.Ui)
   }
@@ -534,6 +535,8 @@ class MainActivity extends BaseActivity
 
 object MainActivity {
   val ClientRegStateArg: String = "ClientRegStateArg"
+
+  def newIntent(activity: Activity) = new Intent(activity, classOf[MainActivity]).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
   private val slideAnimations = Set(
     (SetOrRequestPasswordFragment.Tag, VerifyEmailFragment.Tag),

@@ -19,24 +19,24 @@ package com.waz.zclient.conversation
 
 import android.content.Context
 import android.os.Bundle
-import android.support.annotation.Nullable
-import android.support.design.widget.TabLayout
-import android.support.design.widget.TabLayout.OnTabSelectedListener
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.annotation.Nullable
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.content.{MessagesStorage, ReactionsStorage, ReadReceiptsStorage}
 import com.waz.model.{MessageData, RemoteInstant, UserData, UserId}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.common.controllers.ScreenController
-import com.waz.zclient.messages.LikesController
+import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.messages.LikesController
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
-import com.waz.zclient.participants.ParticipantsAdapter
+import com.waz.zclient.participants.LikesAndReadsAdapter
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils.getColor
 import com.waz.zclient.utils.RichView
@@ -56,15 +56,15 @@ class LikesAndReadsFragment extends FragmentHelper {
 
   private val visibleTab = Signal[Tab](ReadsTab)
 
-  private lazy val likes: Signal[Seq[UserId]] =
+  private lazy val likes: Signal[Set[UserId]] =
     Signal(reactionsStorage, screenController.showMessageDetails)
       .collect { case (storage, Some(msgId)) => (storage, msgId) }
-      .flatMap { case (storage, MessageDetailsParams(msgId, _)) => storage.likes(msgId).map(_.likers.keys.toSeq) }
+      .flatMap { case (storage, MessageDetailsParams(msgId, _)) => storage.likes(msgId).map(_.likers.keySet) }
 
-  private lazy val reads: Signal[Seq[UserId]] =
+  private lazy val reads: Signal[Set[UserId]] =
     Signal(readReceiptsStorage, screenController.showMessageDetails)
       .collect { case (storage, Some(MessageDetailsParams(msgId, _))) => (storage, msgId) }
-      .flatMap { case (storage, msgId) => storage.receipts(msgId).map(_.map(_.user)) }
+      .flatMap { case (storage, msgId) => storage.receipts(msgId).map(_.map(_.user).toSet) }
 
   private lazy val message = for {
     messagesStorage <- messagesStorage
@@ -89,10 +89,6 @@ class LikesAndReadsFragment extends FragmentHelper {
     selfUserId  <- inject[Signal[UserId]]
     msg         <- message
   } yield selfUserId == msg.userId
-
-  private lazy val isEphemeral = message.map(_.isEphemeral)
-
-  private lazy val isLikeable = message.map(LikesController.isLikeable)
 
   private lazy val detailsCombination = Signal(message, isOwnMessage, convController.currentConv.map(_.team.isDefined)).map {
     case (msg, isOwn, isTeam) => LikesAndReadsFragment.detailsCombination(msg, isOwn, isTeam)
@@ -208,12 +204,12 @@ class LikesAndReadsFragment extends FragmentHelper {
 
    readsView.foreach { rv =>
       rv.setLayoutManager(new LinearLayoutManager(getContext))
-      rv.setAdapter(new ParticipantsAdapter(reads, createSubtitle = Some(createSubtitle), showPeopleOnly = true, showArrow = false))
+      rv.setAdapter(new LikesAndReadsAdapter(reads, createSubtitle = Some(createSubtitle)))
     }
 
     likesView.foreach { rv =>
       rv.setLayoutManager(new LinearLayoutManager(getContext))
-      rv.setAdapter(new ParticipantsAdapter(likes, showPeopleOnly = true, showArrow = false))
+      rv.setAdapter(new LikesAndReadsAdapter(likes))
     }
 
     detailsCombination.head.foreach {

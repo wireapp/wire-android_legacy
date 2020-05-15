@@ -19,7 +19,7 @@
 package com.waz.zclient.appentry.fragments
 
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.text.{Editable, TextWatcher}
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
@@ -122,9 +122,13 @@ class PhoneSetNameFragment extends FragmentHelper with TextWatcher with View.OnC
           editTextName.foreach(_.requestFocus)
           nameConfirmationButton.foreach(_.setState(PhoneConfirmationButton.State.INVALID))
         }
-      case _ =>
+      case Right(accountManager) =>
         activity.enableProgress(false)
         activity.onEnterApplication(false)
+        accountManager.foreach { am =>
+          am.initZMessaging()
+          am.addUnsplashPicture()
+        }
     }
   }
 

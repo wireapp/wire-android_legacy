@@ -17,8 +17,8 @@
  */
 package com.waz.zclient.collection.controllers
 
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.RecyclerView.ViewHolder
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.waz.model.ConvId
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.messages.MessagesListView.UnreadIndex

@@ -18,35 +18,37 @@
 package com.waz.zclient.preferences.pages
 
 import android.app.Activity
-import android.content.{Context, DialogInterface, Intent}
+import android.content.{Context, DialogInterface}
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
 import android.os.{Bundle, Parcel, Parcelable}
-import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import androidx.fragment.app.{Fragment, FragmentTransaction}
+import com.bumptech.glide.load.resource.bitmap.CircleCrop
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomViewTarget
+import com.bumptech.glide.request.transition.Transition
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AccentColor, EmailAddress, PhoneNumber}
+import com.waz.model.{AccentColor, EmailAddress, PhoneNumber, Picture}
+import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
-import com.waz.zclient._
+import com.waz.zclient.{BuildConfig, _}
 import com.waz.zclient.appentry.{AppEntryActivity, DialogErrorMessage}
 import com.waz.zclient.common.controllers.global.PasswordController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.preferences.dialogs._
 import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, SwitchPreference, TextButton}
-import com.waz.zclient.ui.utils.TextViewUtils._
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.ui.utils.TextViewUtils._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
-import com.waz.zclient.BuildConfig
-import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -66,7 +68,7 @@ trait AccountView {
   def setHandle(handle: String): Unit
   def setEmail(email: Option[EmailAddress]): Unit
   def setPhone(phone: Option[PhoneNumber]): Unit
-  def setPictureDrawable(drawable: Drawable): Unit
+  def setPicture(picture: Picture): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
   def setEmailEnabled(enabled: Boolean): Unit
@@ -124,7 +126,22 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setPhone(phone: Option[PhoneNumber]) = phoneButton.setTitle(phone.map(_.str).getOrElse(getString(R.string.pref_account_add_phone_title)))
 
-  override def setPictureDrawable(drawable: Drawable) = pictureButton.setDrawableStart(Some(drawable))
+  override def setPicture(picture: Picture) = {
+    WireGlide(context)
+      .load(picture)
+      .apply(new RequestOptions().transform(new CircleCrop()))
+      .into(new CustomViewTarget[View, Drawable](pictureButton) {
+      override def onResourceCleared(placeholder: Drawable): Unit =
+        pictureButton.setDrawableStart(None)
+
+      override def onLoadFailed(errorDrawable: Drawable): Unit =
+        pictureButton.setDrawableStart(None)
+
+      override def onResourceReady(resource: Drawable, transition: Transition[_ >: Drawable]): Unit = {
+        pictureButton.setDrawableStart(Some(resource))
+      }
+    })
+  }
 
   override def setAccentDrawable(drawable: Drawable) = colorButton.setDrawableStart(Some(drawable))
 
@@ -190,15 +207,15 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
 
   val isPhoneNumberEnabled = isTeam.map(!_)
 
-  val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
-
   private val accountIsLocked: Signal[Boolean] = self.map(_.isReadOnlyProfile)
 
   accountIsLocked.onUi { locked =>
     view.setAccountLocked(locked)
   }
 
-  view.setPictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
+  self.map(_.picture).collect { case Some(pic) => pic}.onUi { id =>
+    view.setPicture(id)
+  }
 
   self.onUi { self =>
     self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))
@@ -246,7 +263,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     } (Threading.Ui)
   }
 
-  view.onEmailClick.filter( _ => BuildConfig.ALLOW_CHANGE_OF_EMAIL).onUi { _ =>
+  if (BuildConfig.ALLOW_CHANGE_OF_EMAIL) view.onEmailClick.onUi { _ =>
     import Threading.Implicits.Ui
     accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().foreach {
       case Left(ex) =>
@@ -311,10 +328,10 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int) = {
           import Threading.Implicits.Ui
-          zms.map(_.selfUserId).head.flatMap(accounts.logout)
+          zms.map(_.selfUserId).head.flatMap { id => accounts.logout(id, reason = UserInitiated) }
             .flatMap(_ => accounts.accountsWithManagers.head.map(_.isEmpty)).map {
             case true =>
-              context.startActivity(new Intent(context, classOf[AppEntryActivity]))
+              context.startActivity(AppEntryActivity.newIntent(context))
               Option(context.asInstanceOf[Activity]).foreach(_.finish())
             case false =>
               navigator.back()

@@ -451,4 +451,10 @@
         <item name="android:textColorPrimary">@color/text__primary_dark</item>
     </style>
 
+    <style name="ConversationBadge">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">@dimen/conversation_list__badge__height</item>
+        <item name="android:layout_marginEnd">@dimen/wire__padding__regular</item>
+    </style>
+
 </resources>

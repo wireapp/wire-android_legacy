@@ -1,0 +1,23 @@
+subprojects {
+    apply plugin: 'io.gitlab.arturbosch.detekt'
+
+    detekt {
+        version = "${Versions.DETEKT}"
+        input = files("$projectDir/src/main/kotlin")
+        config = files("$rootProject.projectDir/detekt/config.yml")
+        filters = ".*build.*,.*/resources/.*,.*/tmp/.*"
+        reports {
+            xml.enabled = true
+            html.enabled = true
+            txt.enabled = false
+        }
+    }
+
+    dependencies {
+        detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:${Versions.DETEKT}"
+    }
+}
+
+task detektAll()
+
+subprojects { project -> detektAll.dependsOn("${project.path}:detekt") }

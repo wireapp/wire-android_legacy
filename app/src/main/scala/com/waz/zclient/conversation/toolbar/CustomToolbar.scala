@@ -18,11 +18,11 @@
 package com.waz.zclient.conversation.toolbar
 
 import android.content.Context
-import android.support.v4.content.ContextCompat
-import android.support.v4.view.GestureDetectorCompat
+import androidx.core.content.ContextCompat
 import android.util.AttributeSet
 import android.view._
 import android.widget.LinearLayout
+import androidx.core.view.GestureDetectorCompat
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal, SourceSignal}
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction

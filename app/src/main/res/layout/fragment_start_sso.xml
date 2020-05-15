@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/startSsoBackgroundDividerGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.239" />
+
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/startSsoTopGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.338" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/startSsoBottomGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.915" />
+
+    <View
+        android:id="@+id/startSsoBlackView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/black"
+        app:layout_constraintBottom_toTopOf="@+id/startSsoBackgroundDividerGuideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/startSsoGrayView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/athens_gray_light"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/startSsoBackgroundDividerGuideline" />
+
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/startSsoLogoImageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/dark_gray_circle"
+        android:paddingStart="@dimen/start_sso_logo_image_view_padding_start"
+        android:paddingTop="@dimen/start_sso_logo_image_view_padding_top"
+        android:paddingEnd="@dimen/start_sso_logo_image_view_padding_end"
+        android:paddingBottom="@dimen/start_sso_logo_image_view_padding_bottom"
+        android:src="@drawable/ic_wire_logo"
+        app:layout_constraintBottom_toBottomOf="@+id/startSsoBackgroundDividerGuideline"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/startSsoBackgroundDividerGuideline" />
+
+    <ProgressBar
+        android:id="@+id/startSsoProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="@dimen/start_sso_progress_bar_width"
+        android:layout_height="@dimen/start_sso_progress_bar_height"
+        android:progressDrawable="@drawable/start_sso_circular_progress_bar"
+        app:layout_constraintBottom_toBottomOf="@+id/startSsoBackgroundDividerGuideline"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/startSsoBackgroundDividerGuideline" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/startSsoTitleTextView"
+        style="@style/TextView.RobotoBold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:lineSpacingExtra="@dimen/start_sso_title_text_line_spacing"
+        android:text="@string/start_sso_leaving_wire"
+        android:textColor="@color/outer_space"
+        android:textSize="@dimen/start_sso_title_text_size"
+        app:layout_constraintBottom_toTopOf="@+id/startSsoDescriptionTextView"
+        app:layout_constraintEnd_toEndOf="@+id/startSsoGrayView"
+        app:layout_constraintStart_toStartOf="@+id/startSsoGrayView"
+        app:layout_constraintTop_toBottomOf="@+id/startSsoTopGuideline"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/startSsoDescriptionTextView"
+        style="@style/TextView.RobotoLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/start_sso_description_margin_top"
+        android:gravity="center_horizontal"
+        android:lineSpacingExtra="@dimen/start_sso_description_text_line_spacing"
+        android:text="@string/start_sso_redirected_to"
+        android:textColor="@color/shark"
+        android:textSize="@dimen/start_sso_description_text_size"
+        app:layout_constraintBottom_toTopOf="@+id/startSsoLinkTextView"
+        app:layout_constraintEnd_toEndOf="@+id/startSsoGrayView"
+        app:layout_constraintStart_toStartOf="@+id/startSsoGrayView"
+        app:layout_constraintTop_toBottomOf="@+id/startSsoTitleTextView" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/startSsoLinkTextView"
+        style="@style/TextView.RobotoMedium"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="@dimen/start_sso_link_margin_start"
+        android:layout_marginTop="@dimen/start_sso_link_margin_top"
+        android:layout_marginEnd="@dimen/start_sso_link_margin_end"
+        android:layout_marginBottom="@dimen/start_sso_link_margin_bottom"
+        android:gravity="center_horizontal"
+        android:lineSpacingExtra="@dimen/start_sso_link_text_line_spacing"
+        android:textColor="@color/shark"
+        android:textSize="@dimen/start_sso_link_text_size"
+        app:layout_constraintBottom_toTopOf="@+id/startSsoNoticeCardView"
+        app:layout_constraintEnd_toEndOf="@+id/startSsoGrayView"
+        app:layout_constraintStart_toStartOf="@+id/startSsoGrayView"
+        app:layout_constraintTop_toBottomOf="@+id/startSsoDescriptionTextView" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/startSsoNoticeCardView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/start_sso_notice_card_margin_start"
+        android:layout_marginEnd="@dimen/start_sso_notice_card_margin_end"
+        android:backgroundTint="@color/link_water"
+        app:cardCornerRadius="@dimen/start_sso_notice_card_corner_radius"
+        app:cardElevation="@dimen/start_sso_notice_card_elevation"
+        app:layout_constraintBottom_toTopOf="@+id/startSsoBottomGuideline"
+        app:layout_constraintEnd_toEndOf="@+id/startSsoGrayView"
+        app:layout_constraintStart_toStartOf="@+id/startSsoGrayView">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/startSsoNoticeDescriptionTextView"
+            style="@style/TextView.RobotoLight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/start_sso_notice_description_margin_start"
+            android:layout_marginTop="@dimen/start_sso_notice_description_margin_top"
+            android:layout_marginEnd="@dimen/start_sso_notice_description_margin_end"
+            android:layout_marginBottom="@dimen/start_sso_notice_description_margin_bottom"
+            android:drawableTop="@drawable/ic_info"
+            android:drawablePadding="@dimen/start_sso_notice_description_drawable_padding"
+            android:gravity="center_horizontal"
+            android:lineSpacingExtra="@dimen/start_sso_notice_description_text_line_spacing"
+            android:text="@string/start_sso_notice"
+            android:textColor="@color/curious_blue"
+            android:textSize="@dimen/start_sso_notice_description_text_size" />
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

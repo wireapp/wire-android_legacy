@@ -26,7 +26,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.os.Build;
+import androidx.core.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -166,13 +166,7 @@ public class DrawingCanvasView extends View {
             invalidate();
             return true;
         }
-        int whiteColor;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            whiteColor = getResources().getColor(R.color.draw_white);
-        } else {
-            whiteColor = getResources().getColor(R.color.draw_white, getContext().getTheme());
-        }
+        final int whiteColor = ContextCompat.getColor(getContext(), R.color.draw_white);
         if (backgroundBitmap == null &&
             canvasHistory.size() == 0 &&
             drawingPaint.getColor() == whiteColor) {

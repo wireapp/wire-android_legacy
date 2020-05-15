@@ -41,6 +41,7 @@
                 <action android:name="${applicationId}.intent.action.HIDE_GDPR_POPUPS" />
                 <action android:name="${applicationId}.intent.action.FULL_CONVERSATION_INTENT" />
                 <action android:name="${applicationId}.intent.action.SELECT_STAGING_BE" />
+                <action android:name="${applicationId}.intent.action.SELECT_QA_BE" />
                 <action android:name="${applicationId}.intent.action.SELECT_PROD_BE" />
             </intent-filter>
         </receiver>

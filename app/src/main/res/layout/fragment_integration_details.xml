@@ -34,8 +34,8 @@
 
         <com.waz.zclient.ui.text.GlyphTextView
             android:id="@+id/integration_back"
-            android:layout_width="@dimen/conversation_list__action_icon__size"
-            android:layout_height="@dimen/conversation_list__action_icon__size"
+            android:layout_width="@dimen/action_icon__size"
+            android:layout_height="@dimen/action_icon__size"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:layout_marginStart="@dimen/wire__padding__small"
@@ -57,8 +57,8 @@
 
         <com.waz.zclient.ui.text.GlyphTextView
             android:id="@+id/integration_close"
-            android:layout_width="@dimen/conversation_list__action_icon__size"
-            android:layout_height="@dimen/conversation_list__action_icon__size"
+            android:layout_width="@dimen/action_icon__size"
+            android:layout_height="@dimen/action_icon__size"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:layout_marginEnd="@dimen/wire__padding__small"

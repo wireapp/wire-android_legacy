@@ -22,8 +22,8 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
-import android.support.annotation.StringRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -36,13 +36,15 @@ import android.util.Pair;
 import android.view.View;
 import android.widget.TextView;
 import com.waz.zclient.R;
-import timber.log.Timber;
+import com.waz.zclient.core.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class TextViewUtils {
+    
+    private static final String TAG = "TextViewUtils";
 
     private TextViewUtils() { }
 
@@ -63,13 +65,13 @@ public class TextViewUtils {
         final int highlightStart = string.indexOf('_');
 
         if (highlightStart < 0) {
-            Timber.e("Failed to highlight text - could not find _ marker in string.");
+            Logger.error(TAG, "Failed to highlight text - could not find _ marker in string.");
             return string;
         }
 
         final int highlightEnd = string.lastIndexOf('_');
         if (highlightStart >= highlightEnd) {
-            Timber.e("Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
+            Logger.error(TAG, "Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
             return string;
         }
 
@@ -198,13 +200,13 @@ public class TextViewUtils {
         final int highlightStart = string.indexOf('_');
 
         if (highlightStart < 0) {
-            Timber.e("Failed to highlight text - could not find _ marker in string.");
+            Logger.error(TAG, "Failed to highlight text - could not find _ marker in string.");
             return;
         }
 
         final int highlightEnd = string.lastIndexOf('_') - 1;
         if (highlightStart >= highlightEnd) {
-            Timber.e("Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
+            Logger.error(TAG, "Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
             return;
         }
 

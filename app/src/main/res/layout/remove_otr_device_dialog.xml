@@ -36,13 +36,13 @@
         android:overScrollMode="ifContentScrolls"
         >
 
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til__remove_otr_device"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             >
 
-            <android.support.v7.widget.AppCompatEditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/acet__remove_otr__password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -50,7 +50,7 @@
                 android:inputType="textPassword"
                 />
 
-        </android.support.design.widget.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
     </ScrollView>
 

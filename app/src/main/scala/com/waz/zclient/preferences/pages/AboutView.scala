@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2020 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,13 +17,12 @@
  */
 package com.waz.zclient.preferences.pages
 
-import android.content.pm.PackageManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.api.ZmsVersion
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{MetaDataService, ZMessaging}
 import com.waz.utils.events.Signal
@@ -82,7 +81,6 @@ class AboutView(context: Context, attrs: AttributeSet, style: Int)
     val translationLibVersion = if(translationId == 0) "n/a" else getString(translationId)
     s"""
       |Version:             ${md.versionName} (${md.appVersion}
-      |Sync Engine:         ${ZmsVersion.ZMS_VERSION}
       |AVS:                 ${getString(R.string.avs_version)}
       |Audio-notifications: ${getString(R.string.audio_notifications_version)}
       |Translations:        $translationLibVersion

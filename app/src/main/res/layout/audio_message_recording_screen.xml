@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/graphite"
+    tools:ignore="UselessParent">
+
+    <LinearLayout
+        android:id="@+id/audio_recording_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/audio_recording_hint_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:layout_marginTop="@dimen/wire__padding__8"
+            >
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/ttv__voice_filter__tap_to_record_1st_line"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAllCaps="true"
+                android:textColor="@color/light_graphite"
+                android:textSize="@dimen/wire__text_size__small"
+                app:w_font="@string/wire__typeface__light"
+                />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/wire__padding__4"
+                >
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/ttv__voice_filter__tap_to_record_2nd_line_begin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAllCaps="true"
+                    android:textColor="@color/light_graphite"
+                    android:textSize="@dimen/wire__text_size__small"
+                    app:w_font="@string/wire__typeface__light"
+                    />
+
+                <com.waz.zclient.ui.text.GlyphTextViewSimple
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/glyph__filter_hare"
+                    android:layout_marginLeft="@dimen/wire__padding__4"
+                    android:layout_marginRight="@dimen/wire__padding__4"
+                    android:textSize="@dimen/wire__icon_button__text_size"
+                    android:textColor="@color/light_graphite"
+                    />
+
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/ttv__voice_filter__tap_to_record_2nd_line_end"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAllCaps="true"
+                    android:textColor="@color/light_graphite"
+                    android:textSize="@dimen/wire__text_size__small"
+                    app:w_font="@string/wire__typeface__light"
+                    />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <com.waz.zclient.pages.extendedcursor.voicefilter2.WaveGraphView
+            android:id="@+id/wave_graph_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/wire__padding__16"
+            />
+
+    </LinearLayout>
+
+    <GridLayout
+        android:id="@+id/audio_filters_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/wire__padding__16"
+        android:layout_marginLeft="@dimen/wire__padding__16"
+        android:layout_marginRight="@dimen/wire__padding__16"
+        android:layout_marginTop="@dimen/wire__padding__16"
+        android:columnCount="4"
+        android:rowCount="2"
+        android:layout_gravity="fill_horizontal"
+        android:useDefaultMargins="true"
+        >
+
+            <com.waz.zclient.ui.text.GlyphTextViewSimple
+                android:id="@+id/voice_filter_none"
+                android:text="@string/glyph__call"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__medium"
+                android:layout_gravity="center"
+                android:layout_columnWeight="1"
+                android:paddingVertical="@dimen/wire__padding__regular"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextViewSimple
+                android:id="@+id/voice_filter_balloon"
+                android:text="@string/glyph__filter_helium"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__medium"
+                android:layout_gravity="center"
+                android:layout_columnWeight="1"
+                android:paddingVertical="@dimen/wire__padding__regular"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextViewSimple
+                android:id="@+id/voice_filter_jelly_fish"
+                android:text="@string/glyph__filter_jellyfish"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__medium"
+                android:layout_gravity="center"
+                android:layout_columnWeight="1"
+                android:paddingVertical="@dimen/wire__padding__regular"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextViewSimple
+                android:id="@+id/voice_filter_rabbit"
+                android:text="@string/glyph__filter_hare"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__medium"
+                android:layout_gravity="center"
+                android:layout_columnWeight="1"
+                android:paddingVertical="@dimen/wire__padding__regular"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextViewSimple
+                android:id="@+id/voice_filter_church"
+                android:text="@string/glyph__filter_cathedral"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__medium"
+                android:layout_gravity="center"
+                android:layout_columnWeight="1"
+                android:paddingTop="@dimen/wire__padding__regular"
+                android:paddingBottom="@dimen/wire__padding__regular"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextViewSimple
+                android:id="@+id/voice_filter_alien"
+                android:text="@string/glyph__filter_alien"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__medium"
+                android:layout_gravity="center"
+                android:layout_columnWeight="1"
+                android:paddingTop="@dimen/wire__padding__regular"
+                android:paddingBottom="@dimen/wire__padding__regular"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextViewSimple
+                android:id="@+id/voice_filter_robot"
+                android:text="@string/glyph__filter_robot"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__medium"
+                android:layout_gravity="center"
+                android:layout_columnWeight="1"
+                android:paddingTop="@dimen/wire__padding__regular"
+                android:paddingBottom="@dimen/wire__padding__regular"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextViewSimple
+                android:id="@+id/voice_filter_rollercoaster"
+                android:text="@string/glyph__filter_rollercoaster"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__medium"
+                android:layout_gravity="center"
+                android:layout_columnWeight="1"
+                android:paddingTop="@dimen/wire__padding__regular"
+                android:paddingBottom="@dimen/wire__padding__regular"
+                />
+
+
+    </GridLayout>
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/voice_filter_height"
+        android:layout_gravity="bottom"
+        android:layout_marginLeft="@dimen/wire__padding__16"
+        android:layout_marginRight="@dimen/wire__padding__16"
+        >
+
+        <com.waz.zclient.pages.extendedcursor.voicefilter2.WaveBinView
+            android:id="@+id/wave_bin_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
+
+
+        <FrameLayout
+            android:id="@+id/fl__voice_filter_time_hint__container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            >
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/time_label"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__small"
+                />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/audio_filters_hint"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/hint_change_filter"
+                android:textAllCaps="true"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__text_size__small"
+                />
+
+
+        </FrameLayout>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/bottom_menu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="@dimen/wire__padding__16"
+        android:layout_marginRight="@dimen/wire__padding__16"
+        android:paddingBottom="@dimen/wire__padding__regular"
+        android:paddingTop="@dimen/wire__padding__regular"
+        tools:ignore="UselessParent"
+        >
+
+        <com.waz.zclient.ui.text.GlyphTextViewSimple
+            android:id="@+id/redo_button"
+            android:layout_width="@dimen/wire__icon_button__diameter"
+            android:layout_height="@dimen/wire__icon_button__diameter"
+            android:layout_gravity="center_vertical|start"
+            android:layout_marginStart="@dimen/wire__padding__8"
+            android:background="@drawable/selector__icon_button__background__dark"
+            android:gravity="center"
+            android:text="@string/glyph__undo"
+            android:textColor="@color/text__primary_dark"
+            />
+
+        <com.waz.zclient.ui.text.GlyphTextViewSimple
+            android:id="@+id/audio_center_button"
+            android:layout_width="@dimen/wire__icon_button__diameter__big"
+            android:layout_height="@dimen/wire__icon_button__diameter__big"
+            android:layout_gravity="center"
+            android:background="@drawable/approve_color"
+            android:gravity="center"
+            android:text="@string/glyph__check"
+            android:textColor="@color/text__primary_dark"
+            />
+
+
+        <com.waz.zclient.ui.text.GlyphTextViewSimple
+            android:id="@+id/cancel_button"
+            android:layout_width="@dimen/wire__icon_button__diameter"
+            android:layout_height="@dimen/wire__icon_button__diameter"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginEnd="@dimen/wire__padding__8"
+            android:background="@drawable/selector__icon_button__background__dark"
+            android:gravity="center"
+            android:text="@string/glyph__close"
+            android:textColor="@color/text__primary_dark"
+            />
+    </FrameLayout>
+
+</LinearLayout>

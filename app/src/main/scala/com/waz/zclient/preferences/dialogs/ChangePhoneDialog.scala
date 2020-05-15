@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.preferences.dialogs
 
-import android.Manifest.permission.READ_PHONE_STATE
 import android.annotation.TargetApi
 import android.app.Dialog
 import android.content.DialogInterface
@@ -26,27 +25,24 @@ import android.graphics.PorterDuff
 import android.graphics.drawable.{Drawable, DrawableContainer, InsetDrawable}
 import android.os.Build.VERSION_CODES._
 import android.os.{Build, Bundle}
-import android.support.annotation.NonNull
-import android.support.v4.app.DialogFragment
-import android.support.v4.view.animation.{FastOutLinearInInterpolator, LinearOutSlowInInterpolator}
-import android.support.v4.view.{ViewCompat, ViewPropertyAnimatorListenerAdapter}
-import android.support.v7.graphics.drawable.DrawableWrapper
-import android.support.v7.app.AlertDialog
-import android.support.v7.widget.AppCompatDrawableManager.getPorterDuffColorFilter
-import android.support.v7.widget.DrawableUtils.canSafelyMutateDrawable
 import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
+import androidx.annotation.NonNull
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.graphics.drawable.DrawableWrapper
+import androidx.appcompat.widget.{AppCompatDrawableManager, DrawableUtils => AxDrawableUtils}
+import androidx.core.view.{ViewCompat, ViewPropertyAnimatorListenerAdapter}
+import androidx.fragment.app.DialogFragment
+import androidx.interpolator.view.animation.{FastOutLinearInInterpolator, LinearOutSlowInInterpolator}
 import com.waz.model.PhoneNumber
-import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.PhoneError
-import com.waz.zclient.controllers.deviceuser.IDeviceUserController
 import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
 import com.waz.zclient.ui.utils.{DrawableUtils, MathUtils}
 import com.waz.zclient.utils.{DeprecationUtils, RichView, ViewUtils}
@@ -63,7 +59,6 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val users = zms.map(_.users)
-  lazy val deviceUserController = inject[IDeviceUserController]
 
   private lazy val countryController = new CountryController(getActivity)
   private lazy val currentPhone      = Option(getArguments.getString(CurrentPhoneArg))
@@ -122,7 +117,6 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
 
   override def onStart() = {
     super.onStart()
-    if (currentPhone.isDefined && inject[PermissionsService].checkPermission(READ_PHONE_STATE)) setSimPhoneNumber()
     Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { dialog =>
       dialog.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
         def onClick(v: View) = handleInput()
@@ -139,18 +133,6 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   override def onStop() = {
     countryController.removeObserver(this)
     super.onStop()
-  }
-
-  private def setSimPhoneNumber() = {
-    for {
-      iso <- Option(deviceUserController.getPhoneCountryISO)
-      cc <- Option(countryController.getCodeForAbbreviation(iso))
-      ph <- Option(deviceUserController.getPhoneNumber(cc))
-    } {
-      phoneEditText.setText(ph)
-      phoneEditText.setSelection(ph.length)
-      countryEditText.setText(String.format("+%s", cc.replace("+", "")))
-    }
   }
 
   private def clearPhoneNumber() = {
@@ -242,11 +224,11 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   private def updateEditTextBackground(editText: EditText) = {
     ensureBackgroundDrawableStateWorkaround(editText)
     Option(editText.getBackground).map { bg =>
-      if (canSafelyMutateDrawable(bg)) bg.mutate else bg
+      if (AxDrawableUtils.canSafelyMutateDrawable(bg)) bg.mutate else bg
     }.foreach { bg =>
       if (errorView.isVisible) {
         // Set a color filter of the error color
-        bg.setColorFilter(getPorterDuffColorFilter(errorView.getCurrentTextColor, PorterDuff.Mode.SRC_IN))
+        bg.setColorFilter(AppCompatDrawableManager.getPorterDuffColorFilter(errorView.getCurrentTextColor, PorterDuff.Mode.SRC_IN))
       }
       else {
         // Else reset the color filter and refresh the drawable state so that the
@@ -258,7 +240,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   }
 
   // from TextInputLayout
-  @TargetApi(KITKAT)
+  @TargetApi(Build.VERSION_CODES.KITKAT)
   private def clearColorFilter(@NonNull drawable: Drawable): Unit = {
     drawable.clearColorFilter()
     if (Build.VERSION.SDK_INT == LOLLIPOP || Build.VERSION.SDK_INT == LOLLIPOP_MR1) {
@@ -284,7 +266,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   // from TextInputLayout
   private def ensureBackgroundDrawableStateWorkaround(editText: EditText) = {
     // The workaround is only required on API 21-22
-    if (Seq(LOLLIPOP, LOLLIPOP_MR1).contains(Build.VERSION.SDK_INT)) {
+    if (Build.VERSION.SDK_INT == LOLLIPOP || Build.VERSION.SDK_INT == LOLLIPOP_MR1) {
       Option(editText.getBackground).foreach { bg =>
         // There is an issue in the platform which affects container Drawables
         // where the first drawable retrieved from resources will propogate any changes

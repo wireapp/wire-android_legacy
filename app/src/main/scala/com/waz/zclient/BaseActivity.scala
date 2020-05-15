@@ -17,31 +17,37 @@
  */
 package com.waz.zclient
 
-import android.content.Intent
+import android.app.admin.DevicePolicyManager
+import android.app.{Activity, ActivityManager}
 import android.content.pm.PackageManager
+import android.content.{ComponentName, Context, Intent}
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.InternalLog
 import com.waz.permissions.PermissionsService
 import com.waz.permissions.PermissionsService.{Permission, PermissionProvider}
 import com.waz.service.{UiLifeCycle, ZMessaging}
+import com.waz.services.SecurityPolicyService
 import com.waz.services.websocket.WebSocketService
 import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
-import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.security.ActivityLifecycleCallback
+import com.waz.zclient.tracking.GlobalTrackingController
+import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 
-import scala.collection.breakOut
+import scala.collection.JavaConverters._
 import scala.collection.immutable.ListSet
+import scala.collection.{breakOut, mutable}
 import scala.concurrent.duration._
-
 
 class BaseActivity extends AppCompatActivity
   with ServiceContainer
@@ -51,16 +57,30 @@ class BaseActivity extends AppCompatActivity
 
   import BaseActivity._
 
-  lazy val themeController          = inject[ThemeController]
-  lazy val globalTrackingController = inject[GlobalTrackingController]
-  lazy val permissions              = inject[PermissionsService]
+  protected lazy val themeController = inject[ThemeController]
+  protected lazy val userPreferences = inject[Signal[UserPreferences]]
+  private lazy val permissions       = inject[PermissionsService]
+  private lazy val activityLifecycle = inject[ActivityLifecycleCallback]
+  private lazy val uiLifeCycle       = inject[UiLifeCycle]
+  private lazy val secPolicy         = new ComponentName(this, classOf[SecurityPolicyService])
+  private lazy val dpm               = getSystemService(Context.DEVICE_POLICY_SERVICE).asInstanceOf[DevicePolicyManager]
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
+
+  private val subs = mutable.HashSet[Subscription]()
+
+  // there should be only one task but since we have access only to tasks
+  // associated with our app we can safely exclude them all
+  private def excludeFromRecents(exclude: Boolean): Unit =
+    inject[ActivityManager].getAppTasks.asScala.toList.foreach(_.setExcludeFromRecents(exclude))
 
   override protected def onCreate(savedInstanceState: Bundle): Unit = {
     verbose(l"onCreate")
     super.onCreate(savedInstanceState)
     setTheme(getBaseTheme)
+
+    if (BuildConfig.BLOCK_ON_PASSWORD_POLICY)
+      SecurityPolicyService.checkAdminEnabled(dpm, secPolicy, ContextUtils.getString(R.string.security_policy_description)(this))(this)
   }
 
   override def onStart(): Unit = {
@@ -72,13 +92,12 @@ class BaseActivity extends AppCompatActivity
   def onBaseActivityStart(): Unit = {
     getControllerFactory.setActivity(this)
     ZMessaging.currentUi.onStart()
-    inject[UiLifeCycle].acquireUi()
+    uiLifeCycle.acquireUi()
     permissions.registerProvider(this)
     Option(ViewUtils.getContentView(getWindow)).foreach(getControllerFactory.setGlobalLayout)
   }
 
   override protected def onResume(): Unit = {
-    verbose(l"onResume")
     super.onResume()
     onBaseActivityResume()
   }
@@ -88,14 +107,6 @@ class BaseActivity extends AppCompatActivity
       WebSocketService(this)
     } (Threading.Ui)
 
-  override protected def onResumeFragments(): Unit = {
-    verbose(l"onResumeFragments")
-    super.onResumeFragments()
-  }
-
-  override def onWindowFocusChanged(hasFocus: Boolean): Unit = {
-    verbose(l"onWindowFocusChanged: $hasFocus")
-  }
 
   def getBaseTheme: Int = themeController.forceLoadDarkTheme
 
@@ -103,12 +114,13 @@ class BaseActivity extends AppCompatActivity
     verbose(l"onActivityResult: requestCode: $requestCode, resultCode: $resultCode, data: ${RichIntent(data)}")
     super.onActivityResult(requestCode, resultCode, data)
     permissions.registerProvider(this)
+
+    if (requestCode == RequestPoliciesEnable && resultCode == Activity.RESULT_OK) {
+      verbose(l"enabling policies now")
+      SecurityPolicyService.checkPassword(dpm, secPolicy)(this)
+    }
   }
 
-  override protected def onPause(): Unit = {
-    verbose(l"onPause")
-    super.onPause()
-  }
 
   override protected def onSaveInstanceState(outState: Bundle): Unit = {
     verbose(l"onSaveInstanceState")
@@ -118,14 +130,16 @@ class BaseActivity extends AppCompatActivity
   override def onStop() = {
     verbose(l"onStop")
     ZMessaging.currentUi.onPause()
-    inject[UiLifeCycle].releaseUi()
+    uiLifeCycle.releaseUi()
     InternalLog.flush()
     super.onStop()
   }
 
   override def onDestroy() = {
     verbose(l"onDestroy")
-    globalTrackingController.flushEvents()
+    subs.foreach(_.unsubscribe())
+    subs.clear()
+    inject[GlobalTrackingController].flushEvents()
     permissions.unregisterProvider(this)
     super.onDestroy()
   }
@@ -155,4 +169,5 @@ class BaseActivity extends AppCompatActivity
 
 object BaseActivity {
   val PermissionsRequestId = 162
+  val RequestPoliciesEnable = 163
 }

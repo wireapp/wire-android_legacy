@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.pages.main.conversation.controller;
 
+import androidx.annotation.NonNull;
+
 import com.waz.model.ConvId;
 import com.waz.model.UserId;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
@@ -40,6 +42,8 @@ public interface IConversationScreenController {
     void showConversationMenu(boolean inConvList, ConvId convId);
 
     DialogLaunchMode getPopoverLaunchMode();
+
+    void showMoveToFolder(@NonNull ConvId convId);
 
     void hideOtrClient();
 }

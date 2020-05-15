@@ -254,8 +254,6 @@ class MentionsInputTest extends JUnitSuite {
     val handle = "@456"
     val mention = Mention(Some(UserId()), input.indexOf(handle), handle.length)
     val (replaceString, holders) = TextPartView.replaceMentions(input, Seq(mention))
-    println(s"input: $input")
-    println(s"replaceString: $replaceString")
 
     assert(holders.size == 1)
 

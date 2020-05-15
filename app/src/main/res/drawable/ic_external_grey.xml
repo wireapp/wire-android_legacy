@@ -1,0 +1,26 @@
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<vector android:autoMirrored="true" android:height="16dp"
+    android:viewportHeight="16" android:viewportWidth="16"
+    android:width="16dp" xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:fillAlpha="0.4" android:fillColor="#33373A"
+        android:fillType="nonZero"
+        android:pathData="M6.002,10a2,2 0,0 1,2 2v1.27a5.851,5.851 0,0 1,-1.21 0.983,5.43 5.43,0 0,1 -3.072,0.736C2.281,14.897 0.956,14.22 0,13.123L0.002,12a2,2 0,0 1,1.85 -1.995l0.15,-0.005h4zM4.002,5a2,2 0,1 1,0 4,2 2,0 0,1 0,-4zM14.002,6a2,2 0,0 1,2 2v1.27a5.851,5.851 0,0 1,-1.21 0.983,5.43 5.43,0 0,1 -3.072,0.736c-1.439,-0.092 -2.764,-0.77 -3.72,-1.866L8.002,8a2,2 0,0 1,1.85 -1.995l0.15,-0.005h4zM12.002,1a2,2 0,1 1,0 4,2 2,0 0,1 0,-4z" android:strokeAlpha="0.4"/>
+</vector>

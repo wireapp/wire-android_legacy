@@ -33,7 +33,7 @@ import com.waz.utils.NameParts
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.drawables.TeamIconDrawable
+import com.waz.zclient.common.drawables.TeamIconDrawable
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.CircleView
 import com.waz.zclient.utils.{RichView, UiStorage, UserSignal}
@@ -108,14 +108,13 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
     tOu <- teamOrUser
   } yield (tOu, s)).onUi {
     case (Right(user), s) =>
-      drawable.setInfo(NameParts.maybeInitial(user.displayName).getOrElse(""), TeamIconDrawable.UserCorners, s)
-      name.setText(user.getDisplayName)
-      drawable.assetId ! user.picture
+      drawable.setInfo(NameParts.maybeInitial(user.name).getOrElse(""), TeamIconDrawable.UserShape, s)
+      name.setText(user.name)
+      drawable.setPicture(user.picture)
     case (Left(team), s) =>
-      drawable.setInfo(NameParts.maybeInitial(team.name).getOrElse(""), TeamIconDrawable.TeamCorners, s)
+      drawable.setInfo(NameParts.maybeInitial(team.name).getOrElse(""), TeamIconDrawable.TeamShape, s)
       name.setText(team.name)
-      // TODO use team icon when ready
-      drawable.assetId ! None
+      drawable.setPicture(team.picture)
   }
 
   Signal(unreadCount, selected).onUi {

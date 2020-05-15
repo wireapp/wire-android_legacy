@@ -1,4 +1,4 @@
-/**
+  /**
  * Wire
  * Copyright (C) 2018 Wire Swiss GmbH
  *
@@ -18,32 +18,31 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
-import android.graphics.drawable.ColorDrawable
-import android.graphics.{Color, PorterDuff}
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
-import android.widget.{LinearLayout, RelativeLayout, TextView}
+import android.widget.{ImageView, LinearLayout, RelativeLayout, TextView}
+import com.bumptech.glide.request.RequestOptions
 import com.waz.api.{Message, NetworkMode}
-import com.waz.model.MessageContent
+import com.waz.model.{GeneralAssetId, MessageContent}
 import com.waz.model.messages.media.MediaAssetData
 import com.waz.service.NetworkModeService
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.core.images.transformations.DarkenTransformation
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
-import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.State
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.{R, ViewHelper}
 
-class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) with ClickableViewPart with ViewHelper {
+class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
+  extends RelativeLayout(context, attrs, style)
+    with ClickableViewPart with ViewHelper {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -51,25 +50,29 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
 
   inflate(R.layout.message_youtube_content)
 
-  val network = inject[NetworkModeService]
-  val browser = inject[BrowserController]
+  private lazy val network = inject[NetworkModeService]
+  private lazy val browser = inject[BrowserController]
 
-  val tvTitle: TextView         = findById(R.id.ttv__youtube_message__title)
-  val error: View               = findById(R.id.ttv__youtube_message__error)
-  val glyphView: GlyphTextView  = findById(R.id.gtv__youtube_message__play)
+  private lazy val tvTitle: TextView         = findById(R.id.ttv__youtube_message__title)
+  private lazy val error: View               = findById(R.id.ttv__youtube_message__error)
+  private lazy val glyphView: GlyphTextView  = findById(R.id.gtv__youtube_message__play)
+  private lazy val previewImage: ImageView   = findById(R.id.gtv__youtube_message__preview)
 
-  val alphaOverlay = getResourceFloat(R.dimen.content__youtube__alpha_overlay)
+  private val alphaOverlay = getResourceFloat(R.dimen.content__youtube__alpha_overlay)
 
   private val content = Signal[MessageContent]()
   private val width = Signal[Int]()
 
-  val media = content map { _.richMedia.getOrElse(MediaAssetData.empty(Message.Part.Type.YOUTUBE)) }
-  val image = media.flatMap { _.artwork.fold2(Signal.empty[ImageSource], id => Signal.const[ImageSource](WireImage(id))) }
-  val imageDrawable = new ImageAssetDrawable(image, background = Some(new ColorDrawable(getColor(R.color.content__youtube__background))))
+  private lazy val media: Signal[MediaAssetData] = content.map(_.richMedia.getOrElse(MediaAssetData.empty(Message.Part.Type.YOUTUBE)))
+  private lazy val image: Signal[GeneralAssetId] = media.map(_.artwork).collect{case Some(id) => id}
 
-  val loadingFailed = imageDrawable.state.map {
-    case State.Failed(_, _) => true
-    case _ => false
+  val loadingFailed = Signal(false)
+
+  image.onUi { id =>
+    WireGlide(context)
+      .load(id)
+      .apply(new RequestOptions().transform(new DarkenTransformation((alphaOverlay * 255).toInt, 1)))
+      .into(previewImage)
   }
 
   val showError = loadingFailed.zip(network.networkMode).map { case (failed, mode) => failed && mode != NetworkMode.OFFLINE }
@@ -80,9 +83,6 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
   } yield if (failed) "" else m.title
 
   val height = width map { _ * 9 / 16 }
-
-  imageDrawable.setColorFilter(ColorUtils.injectAlpha(alphaOverlay, Color.BLACK), PorterDuff.Mode.DARKEN)
-  setBackground(imageDrawable)
 
   title { tvTitle.setText }
 

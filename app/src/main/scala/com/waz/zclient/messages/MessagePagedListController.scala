@@ -19,8 +19,8 @@ package com.waz.zclient.messages
 
 import java.util.concurrent.Executor
 
-import android.arch.paging.PagedList
 import android.content.Context
+import androidx.paging.PagedList
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model._
@@ -38,6 +38,7 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt: Context)
   extends Injectable with DerivedLogTag {
@@ -53,19 +54,19 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
 
   @volatile private var _pagedList = Option.empty[PagedList[MessageAndLikes]]
   private def getPagedList(cursor: Option[DBCursor]): PagedList[MessageAndLikes] = {
+    def createPagedList(config: PagedListConfig) =
+      new PagedList.Builder[Integer, MessageAndLikes](new MessageDataSource(cursor), config.config)
+        .setFetchExecutor(ExecutorWrapper(Threading.Background))
+        .setNotifyExecutor(ExecutorWrapper(Threading.Ui))
+        .build()
+
     _pagedList.foreach(_.getDataSource.invalidate())
 
-    val config = new PagedList.Config.Builder()
-      .setPageSize(PageSize)
-      .setInitialLoadSizeHint(InitialLoadSizeHint)
-      .setEnablePlaceholders(true)
-      .setPrefetchDistance(PrefetchDistance)
-      .build()
-
-    returning(new PagedList.Builder[Integer, MessageAndLikes](new MessageDataSource(cursor), config)
-      .setFetchExecutor(ExecutorWrapper(Threading.Background))
-      .setNotifyExecutor(ExecutorWrapper(Threading.Ui))
-      .build()) { pl => _pagedList = Option(pl) }
+    returning(
+      Try(createPagedList(NormalPagedListConfig)).getOrElse(createPagedList(MinPagedListConfig))
+    ) { pl =>
+      _pagedList = Option(pl)
+    }
   }
 
   private def cursorRefreshEvent(zms: ZMessaging, convId: ConvId): EventStream[_] = {
@@ -92,20 +93,24 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
     lastRead                <- convController.currentConv.map(_.lastRead)
     messageToReveal         <- messageActionsController.messageToReveal.map(_.map(_.id))
   } yield (MessageAdapterData(cId, lastRead, isGroup, canHaveLink, z.selfUserId, z.teamId), list, messageToReveal)
-
-  val messageToCurrentConvAdded: EventStream[Seq[MessageData]] = (for {
-    z <- zms
-    conv <- convController.currentConvId
-    added <- Signal.wrap(z.messagesStorage.onAdded.map(_.filter(_.convId == conv)).filter(_.nonEmpty))
-  } yield added).onChanged
-
-  Threading.Ui
 }
 
 object MessagePagedListController {
-  val PageSize: Int = 50
-  val InitialLoadSizeHint: Int = 50
-  val PrefetchDistance: Int = 100
+  case class PagedListConfig(pageSize: Int, initialLoadSizeHint: Int, prefetchDistance: Int) {
+    /**
+     * The reason why placeholders are disabled is taken from this Stackoverflow answer to a bug:
+     * https://stackoverflow.com/a/56873666/2975925
+     */
+    lazy val config = new PagedList.Config.Builder()
+      .setPageSize(pageSize)
+      .setInitialLoadSizeHint(initialLoadSizeHint)
+      .setEnablePlaceholders(false)
+      .setPrefetchDistance(prefetchDistance)
+      .build()
+  }
+
+  val NormalPagedListConfig = PagedListConfig(10, 20, 30)
+  val MinPagedListConfig    = PagedListConfig( 5, 10, 10)
 }
 
 case class PagedListWrapper[T](pagedList: PagedList[T]) {

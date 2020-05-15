@@ -23,18 +23,19 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, TextView, Toast}
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.GlobalPreferences.WsForegroundKey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogsService
-import com.waz.service.{FCMNotificationStatsService, ZMessaging}
+import com.waz.service.{FCMNotificationStatsService, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.utils.wrappers.GoogleApi
+import com.waz.zclient.preferences.dialogs.FullSyncDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{BackStackKey, DebugUtils}
-import com.waz.zclient.{BuildConfig, R, ViewHelper}
+import com.waz.zclient.{BaseActivity, BuildConfig, R, ViewHelper}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -93,13 +94,30 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int)
   statsDisplay.setVisible(BuildConfig.DEVELOPER_FEATURES_ENABLED)
 
   val webSocketForegroundServiceSwitch = returning(findById[SwitchPreference](R.id.preferences_websocket_service)) { v =>
-    inject[GoogleApi].isGooglePlayServicesAvailable.map(if (_) View.GONE else View.VISIBLE).onUi(v.setVisibility)
+    v.setVisible(true)
+    inject[GlobalModule].prefs(WsForegroundKey).signal.onUi(v.setChecked(_))
     v.setPreference(WsForegroundKey, global = true)
   }
 
   def setButtonEnabled(button: TextButton, enabled: Boolean): Unit = {
     button.setEnabled(enabled)
     button.setAlpha(if (enabled) 1f else .5f)
+  }
+
+  val slowSyncButton = returning(findById[TextButton](R.id.preferences_slow_sync)) { toggle =>
+    toggle.onClickEvent { _ =>
+      showPrefDialog(FullSyncDialog.newInstance, FullSyncDialog.Tag)
+    }
+  }
+
+  private def showPrefDialog(f: Fragment, tag: String) = {
+    context.asInstanceOf[BaseActivity]
+      .getSupportFragmentManager
+      .beginTransaction
+      .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+      .add(f, tag)
+      .addToBackStack(tag)
+      .commit
   }
 }
 

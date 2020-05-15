@@ -19,7 +19,6 @@ package com.waz.zclient.views
 
 import android.content.Context
 import android.graphics.Color
-import android.os.Build
 import android.util.AttributeSet
 import android.widget.{FrameLayout, ProgressBar}
 import com.waz.threading.CancellableFuture
@@ -134,15 +133,13 @@ class LoadingIndicatorView(context: Context, attrs: AttributeSet, defStyle: Int)
 
   def applyLightTheme(): Unit = {
     indeterminateGlyph.setTextColor(getColor(R.color.text__primary_light))
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-      indeterminateSpinner.setIndeterminateTintList(getColorStateList(R.color.text__primary_light))
+    indeterminateSpinner.setIndeterminateTintList(getColorStateList(R.color.text__primary_light))
     backgroundColor = getColorWithTheme(R.color.text__primary_disabled_dark)
   }
 
   def applyDarkTheme(): Unit = {
     indeterminateGlyph.setTextColor(getColor(R.color.text__primary_dark))
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-      indeterminateSpinner.setIndeterminateTintList(getColorStateList(R.color.text__primary_dark))
+    indeterminateSpinner.setIndeterminateTintList(getColorStateList(R.color.text__primary_dark))
     backgroundColor = getColorWithTheme(R.color.black_80)
   }
 

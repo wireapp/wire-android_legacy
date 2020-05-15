@@ -19,23 +19,28 @@ package com.waz.zclient.participants
 
 import android.content.Context
 import android.graphics.Color
-import android.support.v7.widget.{RecyclerView, SwitchCompat}
-import android.support.v7.widget.RecyclerView.ViewHolder
 import android.text.Selection
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.CompoundButton.OnCheckedChangeListener
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{CompoundButton, ImageView, TextView}
+import androidx.appcompat.widget.SwitchCompat
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.waz.api.Verification
+import com.waz.content.UsersStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
+import com.waz.service.SearchQuery
 import com.waz.utils.events._
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
+import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.views.SingleUserRowView
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.getEphemeralDisplayString
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode._
 import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
@@ -44,35 +49,32 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
-import com.waz.content.UsersStorage
 
-//TODO Maybe it will be better to split this adapter in two? One for participants and another for options?
-class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
+class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]],
                           maxParticipants: Option[Int] = None,
-                          showPeopleOnly: Boolean = false,
-                          showArrow: Boolean = true,
-                          createSubtitle: Option[(UserData) => String] = None
+                          showPeopleOnly:  Boolean = false,
+                          showArrow:       Boolean = true,
+                          createSubtitle:  Option[UserData => String] = None
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
-  extends RecyclerView.Adapter[ViewHolder] with Injectable {
+  extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import ParticipantsAdapter._
 
-  private lazy val usersStorage = inject[Signal[UsersStorage]]
-  private lazy val team         = inject[Signal[Option[TeamId]]]
-
-  private lazy val participantsController = inject[ParticipantsController]
-  private lazy val convController         = inject[ConversationController]
-  private lazy val themeController        = inject[ThemeController]
-  private lazy val accountsController     = inject[UserAccountsController]
+  protected lazy val usersStorage           = inject[Signal[UsersStorage]]
+  protected lazy val team                   = inject[Signal[Option[TeamId]]]
+  protected lazy val participantsController = inject[ParticipantsController]
+  protected lazy val convController         = inject[ConversationController]
+  protected lazy val themeController        = inject[ThemeController]
+  protected lazy val selfId                 = inject[Signal[UserId]]
 
   private var items               = List.empty[Either[ParticipantData, Int]]
   private var teamId              = Option.empty[TeamId]
   private var convName            = Option.empty[String]
   private var readReceiptsEnabled = false
   private var convVerified        = false
-  private var peopleCount         = 0
+  private var adminsCount         = 0
+  private var membersCount        = 0
   private var botCount            = 0
-
-  private var convNameViewHolder = Option.empty[ConversationNameViewHolder]
+  private var convNameViewHolder  = Option.empty[ConversationNameViewHolder]
 
   val onClick                    = EventStream[UserId]()
   val onGuestOptionsClick        = EventStream[Unit]()
@@ -80,62 +82,61 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
   val onShowAllParticipantsClick = EventStream[Unit]()
   val onNotificationsClick       = EventStream[Unit]()
   val onReadReceiptsClick        = EventStream[Unit]()
+
   val filter = Signal("")
 
-  lazy val users = for {
-    usersStorage  <- usersStorage
-    tId           <- team
-    userIds       <- userIds
-    users         <- usersStorage.listSignal(userIds)
-    f             <- filter
-    filteredUsers = users.filter(_.matchesFilter(f))
-  } yield filteredUsers.map(u => ParticipantData(u, u.isGuest(tId) && !u.isWireBot)).sortBy(_.userData.getDisplayName.str)
+  protected lazy val users = for {
+    selfId       <- selfId
+    usersStorage <- usersStorage
+    tId          <- team
+    convId       <- convController.currentConvId
+    participants <- participants
+    users        <- usersStorage.listSignal(participants.keys.toList)
+    f            <- filter
+  } yield
+    users
+      .filter(_.matchesQuery(SearchQuery(f)))
+      .map(user => ParticipantData(
+        user,
+        user.isGuest(tId) && !user.isWireBot,
+        isAdmin = participants.get(user.id).contains(ConversationRole.AdminRole),
+        isSelf = user.id == selfId
+      ))
+      .sortBy(_.userData.name.str)
 
-  private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)
-
-  private lazy val positions = for {
-    tId         <- team
-    users       <- users
-    isTeam      <- participantsController.currentUserBelongsToConversationTeam
-    convActive  <- convController.currentConv.map(_.isActive)
-    guestButton <- shouldShowGuestButton
-    areWeAGuest <- participantsController.isCurrentUserGuest
-    canChangeSettings <- accountsController.hasChangeGroupSettingsPermission
+  protected lazy val positions = for {
+    tId               <- team
+    users             <- users
+    currentConv       <- convController.currentConv
+    convActive        =  currentConv.isActive
+    isTeamConv        =  currentConv.team.nonEmpty
+    selfRole          <- participantsController.selfRole
   } yield {
-    val (bots, people) = users.toList.partition(_.userData.isWireBot)
+    val (bots, people)    = users.toList.partition(_.userData.isWireBot)
+    val (admins, members) = people.partition(_.isAdmin)
 
-    peopleCount = people.size
-    botCount = bots.size
+    adminsCount  = admins.size
+    membersCount = members.size
+    botCount     = bots.size
 
-    val filteredPeople = maxParticipants.filter(_ < peopleCount).fold {
-      people
-    } { mp =>
-      people.take(mp - 2)
-    }
+    val filteredAdmins  = maxParticipants.fold(admins)(n => if (n >= adminsCount) admins else admins.take(n - 2))
+    val filteredMembers = maxParticipants.fold(members)(n => if (n >= people.size) members else members.take(n - adminsCount - 2))
+    verbose(l"filter: ${filter.currentValue}, max: $maxParticipants, admins: $adminsCount, filtered admins: ${filteredAdmins.size}, members: $membersCount, filtered members: ${filteredMembers.size}")
 
-    (if (!showPeopleOnly) List(Right(if (canChangeSettings) ConversationName else ConversationNameReadOnly)) else Nil) :::
-    (if (convActive && tId.isDefined && !showPeopleOnly) List(Right(Notifications))
-    else Nil
-      ) :::
-    (if (convActive && !areWeAGuest && !showPeopleOnly && canChangeSettings) List(Right(EphemeralOptions))
-      else Nil
-        ) :::
-    (if (convActive && isTeam && guestButton && !showPeopleOnly && canChangeSettings) List(Right(GuestOptions))
-    else Nil
-      ) :::
-    (if (convActive && isTeam && !showPeopleOnly && canChangeSettings) List(Right(ReadReceipts))
-    else Nil
-      ) :::
-    (if (people.nonEmpty && !showPeopleOnly) List(Right(PeopleSeparator))
-      else Nil
-      ) :::
-    filteredPeople.map(data => Left(data)) :::
-    (if (maxParticipants.exists(peopleCount > _)) List(Right(AllParticipants))
-      else Nil) :::
-    (if (bots.nonEmpty && !showPeopleOnly) List(Right(ServicesSeparator))
-      else Nil
-        ) :::
-     (if (showPeopleOnly) Nil else bots.map(data => Left(data)))
+    val optionsAvailable = convActive && !showPeopleOnly && (tId.isDefined || selfRole.canModifyMessageTimer || (isTeamConv && (selfRole.canModifyAccess || selfRole.canModifyReceiptMode)))
+
+    (if (!showPeopleOnly) List(Right(if (selfRole.canModifyGroupName) ConversationName else ConversationNameReadOnly)) else Nil) :::
+    (if (showPeopleOnly && people.isEmpty) List(Right(NoResultsInfo)) else Nil) :::
+    (if (!showPeopleOnly || filteredAdmins.nonEmpty) List(Right(AdminsSeparator)) ::: filteredAdmins.map(data => Left(data)) else Nil) :::
+    (if (filteredMembers.nonEmpty) List(Right(MembersSeparator)) ::: filteredMembers.map(data => Left(data)) else Nil) :::
+    (if (maxParticipants.exists(_ < people.size)) List(Right(AllParticipants)) else Nil) :::
+    (if (optionsAvailable) List(Right(OptionsSeparator)) else Nil) :::
+    (if (convActive && !showPeopleOnly && tId.isDefined) List(Right(Notifications)) else Nil) :::
+    (if (convActive && !showPeopleOnly && selfRole.canModifyMessageTimer) List(Right(EphemeralOptions)) else Nil) :::
+    (if (convActive && !showPeopleOnly && isTeamConv && selfRole.canModifyAccess) List(Right(GuestOptions)) else Nil) :::
+    (if (convActive && !showPeopleOnly && isTeamConv && selfRole.canModifyReceiptMode) List(Right(ReadReceipts)) else Nil) :::
+    (if (bots.nonEmpty && !showPeopleOnly) List(Right(ServicesSeparator)) else Nil) :::
+    (if (showPeopleOnly) Nil else bots.map(data => Left(data)))
   }
 
   positions.onUi { list =>
@@ -143,12 +144,11 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
     notifyDataSetChanged()
   }
 
-  private val conv = convController.currentConv
-
   (for {
-    name  <- conv.map(_.displayName)
-    ver   <- conv.map(_.verified == Verification.VERIFIED)
-    read  <- conv.map(_.readReceiptsAllowed)
+    conv  <- convController.currentConv
+    name  =  conv.displayName
+    ver   =  conv.verified == Verification.VERIFIED
+    read  =  conv.readReceiptsAllowed
     clock <- ClockSignal(5.seconds)
   } yield (name, ver, read, clock)).onUi {
     case (name, ver, read, _) =>
@@ -172,11 +172,11 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
       GuestOptionsButtonViewHolder(view, convController)
     case UserRow =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.single_user_row, parent, false).asInstanceOf[SingleUserRowView]
-      view.showArrow(showArrow)
       view.setTheme(if (themeController.isDarkTheme) Theme.Dark else Theme.Light, background = true)
       ParticipantRowViewHolder(view, onClick)
     case ReadReceipts =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.read_receipts_row, parent, false)
+      view.onClick(onReadReceiptsClick ! {})
       ReadReceiptsViewHolder(view, convController)
     case ConversationName =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.conversation_name_row, parent, false)
@@ -202,24 +202,53 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button, parent, false)
       view.onClick(onShowAllParticipantsClick ! {})
       ShowAllParticipantsViewHolder(view)
-    case _ => SeparatorViewHolder(getSeparatorView(parent))
+    case NoResultsInfo =>
+      NoResultsInfoViewHolder(LayoutInflater.from(parent.getContext).inflate(R.layout.participants_no_result_info, parent, false))
+    case _ =>
+      SeparatorViewHolder(LayoutInflater.from(parent.getContext).inflate(R.layout.participants_separator_row, parent, false))
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = (items(position), holder) match {
     case (Right(AllParticipants), h: ShowAllParticipantsViewHolder) =>
-      h.bind(peopleCount)
+      h.bind(membersCount + adminsCount)
+    case (Left(userData), h: ParticipantRowViewHolder) if userData.isAdmin =>
+      val lastRow = maxParticipants.forall(n => if (userData.isAdmin) adminsCount <= n else membersCount <= n) && items.lift(position + 1).forall(_.isRight)
+      h.bind(userData, teamId, lastRow, createSubtitle, showArrow)
     case (Left(userData), h: ParticipantRowViewHolder) =>
-      h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight), createSubtitle)
+      val lastRow = maxParticipants.forall(membersCount <= _) && items.lift(position + 1).forall(_.isRight)
+      h.bind(userData, teamId, lastRow, createSubtitle, showArrow)
     case (Right(ReadReceipts), h: ReadReceiptsViewHolder) =>
       h.bind(readReceiptsEnabled)
     case (Right(ConversationName), h: ConversationNameViewHolder) =>
       convName.foreach(name => h.bind(name, convVerified, teamId.isDefined))
     case (Right(ConversationNameReadOnly), h: ConversationNameViewHolder) =>
       convName.foreach(name => h.bind(name, convVerified, teamId.isDefined))
-    case (Right(sepType), h: SeparatorViewHolder) if Set(PeopleSeparator, ServicesSeparator).contains(sepType) =>
-      val count = if (sepType == PeopleSeparator) peopleCount else botCount
-      h.setTitle(getString(if (sepType == PeopleSeparator) R.string.participants_divider_people else R.string.participants_divider_services, count.toString))
-      h.setId(if (sepType == PeopleSeparator) R.id.participants_section else R.id.services_section)
+    case (Right(MembersSeparator), h: SeparatorViewHolder) =>
+      h.setId(R.id.members_section)
+      h.setEmptySection()
+      h.setTitle(
+        if (showPeopleOnly) getString(R.string.participants_divider_people_no_number)
+        else getString(R.string.participants_divider_people, membersCount.toString)
+      )
+      if (showPeopleOnly) h.setContentDescription(s"Members") else h.setContentDescription(s"Members: $membersCount")
+    case (Right(OptionsSeparator), h: SeparatorViewHolder) =>
+      h.setId(R.id.options_section)
+      h.setTitle(getString(R.string.participants_divider_options))
+      h.setEmptySection()
+      h.setContentDescription("Options")
+    case (Right(ServicesSeparator), h: SeparatorViewHolder) =>
+      h.setId(R.id.services_section)
+      h.setTitle(getQuantityString(R.plurals.participants_divider_services, botCount, botCount.toString))
+      h.setEmptySection()
+      h.setContentDescription(s"Services")
+    case (Right(AdminsSeparator), h: SeparatorViewHolder) =>
+      h.setId(R.id.admins_section)
+      h.setEmptySection(if (adminsCount == 0) getString(R.string.participants_no_admins) else "")
+      h.setTitle(
+        if (showPeopleOnly) getString(R.string.participants_divider_admins_no_number)
+        else getString(R.string.participants_divider_admins, adminsCount.toString)
+      )
+      if (showPeopleOnly) h.setContentDescription(s"Admins") else h.setContentDescription(s"Admins: $adminsCount")
     case _ =>
   }
 
@@ -236,25 +265,26 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
     case Right(sepType) => sepType
     case _              => UserRow
   }
-
-  private def getSeparatorView(parent: ViewGroup): View =
-    LayoutInflater.from(parent.getContext).inflate(R.layout.participants_separator_row, parent, false)
-
 }
 
 object ParticipantsAdapter {
-  val UserRow           = 0
-  val PeopleSeparator   = 1
-  val ServicesSeparator = 2
-  val GuestOptions      = 3
-  val ConversationName  = 4
-  val EphemeralOptions  = 5
-  val AllParticipants   = 6
-  val Notifications     = 7
-  val ReadReceipts      = 8
+  val UserRow                  = 0
+  val MembersSeparator         = 1
+  val ServicesSeparator        = 2
+  val GuestOptions             = 3
+  val ConversationName         = 4
+  val EphemeralOptions         = 5
+  val AllParticipants          = 6
+  val Notifications            = 7
+  val ReadReceipts             = 8
   val ConversationNameReadOnly = 9
+  val OptionsSeparator         = 10
+  val AdminsSeparator          = 11
+  val NoResultsInfo            = 12
 
-  case class ParticipantData(userData: UserData, isGuest: Boolean)
+  val separators = Set(AdminsSeparator, MembersSeparator, ServicesSeparator, OptionsSeparator)
+
+  case class ParticipantData(userData: UserData, isGuest: Boolean, isAdmin: Boolean, isSelf: Boolean)
 
   case class GuestOptionsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
     private implicit val ctx = view.getContext
@@ -267,6 +297,7 @@ object ParticipantsAdapter {
       case false => getString(R.string.guests_option_on)
     }.onUi(view.findViewById[TextView](R.id.value_text).setText)
     view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
+    view.setContentDescription("Guest Options")
   }
 
   case class EphemeralOptionsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
@@ -280,6 +311,7 @@ object ParticipantsAdapter {
       case _ => None
     }).map(getEphemeralDisplayString)
       .onUi(view.findViewById[TextView](R.id.value_text).setText)
+    view.setContentDescription("Ephemeral Options")
   }
 
   case class NotificationsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
@@ -291,13 +323,31 @@ object ParticipantsAdapter {
     convController.currentConv
       .map(c => ConversationController.muteSetDisplayStringId(c.muted))
       .onUi(textId => view.findViewById[TextView](R.id.value_text).setText(textId))
+    view.setContentDescription("Notifications")
   }
 
   case class SeparatorViewHolder(separator: View) extends ViewHolder(separator) {
     private val textView = ViewUtils.getView[TextView](separator, R.id.separator_title)
+    private val emptySectionView = ViewUtils.getView[TextView](separator, R.id.empty_section_info)
 
-    def setTitle(title: String) = textView.setText(title)
-    def setId(id: Int) = textView.setId(id)
+    def setId(id: Int): Unit = textView.setId(id)
+
+    def setTitle(title: String = ""): Unit = {
+      textView.setText(title)
+      textView.setVisible(title.nonEmpty)
+    }
+
+    def setEmptySection(text: String = ""): Unit = {
+      emptySectionView.setText(text)
+      emptySectionView.setVisible(text.nonEmpty)
+    }
+
+    def setContentDescription(text: String): Unit = textView.setContentDescription(text)
+  }
+
+  case class NoResultsInfoViewHolder(view: View) extends ViewHolder(view) {
+    view.setId(R.id.no_results_info)
+    view.setContentDescription(s"No Results")
   }
 
   case class ParticipantRowViewHolder(view: SingleUserRowView, onClick: SourceStream[UserId]) extends ViewHolder(view) {
@@ -305,14 +355,26 @@ object ParticipantsAdapter {
     private var userId = Option.empty[UserId]
 
     view.onClick(userId.foreach(onClick ! _))
-
-    def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean, createSubtitle: Option[(UserData) => String]): Unit = {
-      userId = Some(participant.userData.id)
+    
+    def bind(participant:    ParticipantData,
+             teamId:         Option[TeamId],
+             lastRow:        Boolean,
+             createSubtitle: Option[UserData => String],
+             showArrow:      Boolean): Unit = {
+      if (participant.isSelf) {
+        view.showArrow(false)
+        userId = None
+      }
+      else {
+        view.showArrow(showArrow)
+        userId = Some(participant.userData.id)
+      }
       createSubtitle match {
-        case Some(f) => view.setUserData(participant.userData, teamId, f)
+        case Some(f) => view.setUserData(participant.userData, teamId, createSubtitle = f)
         case None    => view.setUserData(participant.userData, teamId)
       }
       view.setSeparatorVisible(!lastRow)
+      view.setContentDescription(s"${if (participant.isAdmin) "Admin" else "Member"}: ${participant.userData.name}")
     }
   }
 
@@ -323,6 +385,7 @@ object ParticipantsAdapter {
     private var readReceipts = Option.empty[Boolean]
 
     view.findViewById[ImageView](R.id.participants_read_receipts_icon).setImageDrawable(ViewWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
+    view.setId(R.id.read_receipts_button)
 
     switch.setOnCheckedChangeListener(new OnCheckedChangeListener {
       override def onCheckedChanged(buttonView: CompoundButton, readReceiptsEnabled: Boolean): Unit =
@@ -377,7 +440,7 @@ object ParticipantsAdapter {
       }
     })
 
-    def bind(displayName: String, verified: Boolean, isTeam: Boolean): Unit = {
+    def bind(displayName: String, verified: Boolean, isTeam: Boolean)(implicit context: Context): Unit = {
       if (verifiedShield.isVisible != verified) verifiedShield.setVisible(verified)
       if (!convName.contains(displayName)) {
         convName = Some(displayName)
@@ -385,9 +448,11 @@ object ParticipantsAdapter {
         Selection.removeSelection(editText.getText)
       }
 
-      callInfo.setText(if (isTeam) R.string.call_info_text else R.string.empty_string)
+      callInfo.setText(if (isTeam) getString(R.string.call_info_text, ConversationController.MaxParticipants.toString) else getString(R.string.empty_string))
       callInfo.setMarginTop(getDimenPx(if (isTeam) R.dimen.wire__padding__16 else R.dimen.wire__padding__8)(view.getContext))
       callInfo.setMarginBottom(getDimenPx(if (isTeam) R.dimen.wire__padding__16 else R.dimen.wire__padding__8)(view.getContext))
+
+      callInfo.setContentDescription("Call Info")
     }
 
     def onBackPressed(): Boolean =
@@ -400,15 +465,44 @@ object ParticipantsAdapter {
 
   case class ShowAllParticipantsViewHolder(view: View) extends ViewHolder(view) {
     private implicit val ctx: Context = view.getContext
+
     view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
     view.setClickable(true)
     view.setFocusable(true)
     view.setMarginTop(0)
+    view.setId(R.id.show_all_button)
+
     private lazy val nameView = view.findViewById[TypefaceTextView](R.id.name_text)
 
     def bind(numOfParticipants: Int): Unit = {
       nameView.setText(getString(R.string.show_all_participants, numOfParticipants.toString))
+      nameView.setContentDescription(s"Show All: $numOfParticipants")
     }
   }
 
+}
+
+class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle:  Option[UserData => String] = None)
+                          (implicit context: Context, injector: Injector, eventContext: EventContext)
+  extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle) {
+  import ParticipantsAdapter._
+
+  override protected lazy val users = for {
+    selfId       <- selfId
+    usersStorage <- usersStorage
+    tId          <- team
+    userIds      <- userIds
+    users        <- usersStorage.listSignal(userIds.toList)
+  } yield
+    users.map(user => ParticipantData(
+      user,
+      isGuest = user.isGuest(tId) && !user.isWireBot,
+      isAdmin = false, // unused
+      isSelf  = user.id == selfId
+    )).sortBy(_.userData.name.str)
+
+  override protected lazy val positions = users.map { us =>
+    val people = us.toList.filterNot(_.userData.isWireBot)
+    if (people.isEmpty) List(Right(NoResultsInfo)) else people.map(data => Left(data))
+  }
 }

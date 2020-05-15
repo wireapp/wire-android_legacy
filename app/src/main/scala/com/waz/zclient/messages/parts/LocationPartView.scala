@@ -18,105 +18,96 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
-import android.widget.{FrameLayout, TextView}
-import com.waz.api.NetworkMode
-import com.waz.model.{AssetId, Dim2}
-import com.waz.service.NetworkModeService
-import com.waz.service.media.GoogleMapsMediaService
+import android.widget.{FrameLayout, ImageView, TextView}
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.ImageViewTarget
+import com.waz.api.MessageContent.Location
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
-import com.waz.utils._
-import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.common.views.ProgressDotsDrawable
+import com.waz.zclient.glide.WireGlide
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.{ClickableViewPart, HighlightViewPart, MsgPart}
-import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils._
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.State
-import com.waz.zclient.common.views.ImageController.{DataImage, ImageSource, WireImage}
 import com.waz.zclient.{R, ViewHelper}
+
 
 class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
-    with ClickableViewPart with ViewHelper with EphemeralPartView with EphemeralIndicatorPartView
-    with HighlightViewPart {
+    with HighlightViewPart
+    with ClickableViewPart
+    with ViewHelper
+    with EphemeralPartView
+    with EphemeralIndicatorPartView
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   import Threading.Implicits.Ui
 
-  override val tpe = MsgPart.Location
-
   inflate(R.layout.message_location_content)
 
-  val network = inject[NetworkModeService]
-  val browser = inject[BrowserController]
+  override val tpe = MsgPart.Location
 
-  val imageView: View   = findById(R.id.fl__row_conversation__map_image_container)
-  val tvName: TextView  = findById(R.id.ttv__row_conversation_map_name)
-  val pinView: TextView = findById(R.id.gtv__row_conversation__map_pin_glyph)
-  val placeholder: View = findById(R.id.ttv__row_conversation_map_image_placeholder_text)
+  private val name = message.map(_.location.fold("")(_.getName))
+  private val location = message.map(_.location)
 
-  private val imageSize = Signal[Dim2]()
+  private val imageView: ImageView = findById(R.id.location_image)
+  private val textView: TextView  = findById(R.id.ttv__row_conversation_map_name)
+  private val pinView: TextView = findById(R.id.gtv__row_conversation__map_pin_glyph)
+  private val dotsDrawable = new ProgressDotsDrawable()
 
-  val name = message.map(_.location.fold("")(_.getName))
-  val image = for {
-    msg <- message
-    dim <- imageSize if dim.width > 0
-  } yield
-    msg.location.fold2[ImageSource](WireImage(msg.assetId), { loc =>
-      DataImage(GoogleMapsMediaService.mapImageAsset(AssetId(s"${msg.assetId.str}_${dim.width}_${dim.height}"), loc, dim)) // use dimensions in id, to avoid caching images with different sizes
-    })
+  private val browser = inject[BrowserController]
 
-  val imageDrawable = new ImageAssetDrawable(image, background = Some(new ColorDrawable(getColor(R.color.light_graphite_24))))
+  setupTextView()
+  setupPinView()
+  setupImageView()
+  setupOnClickHandler()
 
-  val loadingFailed = imageDrawable.state.map {
-    case State.Failed(_, _) => true
-    case _ => false
-  } .orElse(Signal const false)
-
-  val imageLoaded = imageDrawable.state.map {
-    case State.Loaded(_, _, _) => true
-    case _ => false
-  } .orElse(Signal const false)
-
-  val showPlaceholder = expired flatMap {
-    case true => Signal const false
-    case false =>
-      loadingFailed.zip(network.networkMode) map { case (failed, mode) => failed && mode == NetworkMode.OFFLINE }
+  private def setupTextView(): Unit = {
+    registerEphemeral(textView)
+    name { textView.setText }
   }
 
-  val showPin = expired flatMap {
-    case true => Signal const false
-    case false => imageLoaded
+  private def setupPinView(): Unit = {
+    accentController.accentColor.map(_.color) (pinView.setTextColor)
+    pinView.setVisibility(View.VISIBLE)
   }
 
-  registerEphemeral(tvName)
-  registerEphemeral(imageView, imageDrawable)
-
-  name { tvName.setText }
-  showPin.on(Threading.Ui) { pinView.setVisible }
-  showPlaceholder.on(Threading.Ui) { placeholder.setVisible }
-
-  accentController.accentColor.map(_.color) (pinView.setTextColor)
-
-  onClicked { _ =>
-    expired.head foreach {
-      case true => // ignore click on expired msg
-      case false => message.currentValue.flatMap(_.location) foreach { browser.openLocation }
+  private def setupImageView(): Unit = {
+    location {
+      case Some(loc) => loadMapPreview(loc)
+      case None => warn(l"No location data.")
     }
   }
 
-  override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
-    super.onLayout(changed, left, top, right, bottom)
+  private def loadMapPreview(location: Location): Unit = {
+    val options = new RequestOptions()
+      .centerCrop()
+      .placeholder(dotsDrawable)
 
-    imageSize ! Dim2(imageView.getWidth, imageView.getHeight)
+    val target = new ImageViewTarget[Drawable](imageView) {
+      override def setResource(resource: Drawable): Unit = {
+        registerEphemeral(imageView, resource)
+      }
+    }
+
+    WireGlide(context)
+      .load(location)
+      .apply(options)
+      .into(target)
   }
 
-  override def onDraw(canvas: Canvas): Unit = {
-    super.onDraw(canvas)
+  private def setupOnClickHandler(): Unit = {
+    onClicked { _ =>
+      expired.head foreach {
+        case true => // ignore click on expired msg
+        case false => message.currentValue.flatMap(_.location) foreach { browser.openLocation }
+      }
+    }
   }
 }

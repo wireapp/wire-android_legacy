@@ -25,25 +25,17 @@ import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.graphics.Point;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.IdRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.StringRes;
-import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 
+import androidx.annotation.IdRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AlertDialog;
+
 public class ViewUtils {
-
-    public static boolean isInPortrait(@NonNull Context context) { // still used in wire-ui
-        return isInPortrait(context.getResources().getConfiguration());
-    }
-
-    private static boolean isInPortrait(@NonNull Configuration configuration) {
-        return configuration.orientation == Configuration.ORIENTATION_PORTRAIT;
-    }
 
     public static void unlockOrientation(Activity activity) {
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
@@ -80,7 +72,7 @@ public class ViewUtils {
      */
     public static int getOrientationIndependentDisplayWidth(Context context) { // still used in wire-ui
         int pixels;
-        if (isInPortrait(context)) {
+        if (context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             pixels = context.getResources().getDisplayMetrics().widthPixels;
         } else {
             pixels = context.getResources().getDisplayMetrics().heightPixels;
@@ -108,17 +100,6 @@ public class ViewUtils {
 
     public static void setPaddingBottom(View view, int bottomPadding) {
         view.setPadding(view.getPaddingLeft(), view.getPaddingTop(), view.getPaddingRight(), bottomPadding);
-    }
-
-    public static Point getLocationOnScreen(View view) {
-        int[] location = new int[2];
-        view.getLocationOnScreen(location);
-        return new Point(location[0], location[1]);
-    }
-
-    public static void setMarginTop(View v, int topMargin) {
-        ((ViewGroup.MarginLayoutParams) v.getLayoutParams()).topMargin = topMargin;
-        v.invalidate();
     }
 
     public static void setMarginLeft(View v, int leftMargin) {

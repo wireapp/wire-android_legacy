@@ -20,11 +20,11 @@ package com.waz.zclient.conversationlist
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.View.{GONE, VISIBLE}
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.content.UserPreferences
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model._
@@ -34,6 +34,8 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversationlist.ConversationListController._
+import com.waz.zclient.conversationlist.adapters.{ArchiveConversationListAdapter, ConversationFolderListAdapter, ConversationListAdapter, NormalConversationListAdapter}
 import com.waz.zclient.conversationlist.views.{ArchiveTopToolbar, ConversationListTopToolbar, NormalTopToolbar}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
@@ -41,8 +43,6 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationlist.ConversationListAnimation
-import com.waz.zclient.pages.main.conversationlist.views.ListActionsView
-import com.waz.zclient.pages.main.conversationlist.views.ListActionsView.Callback
 import com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.DownArrowDrawable
@@ -69,41 +69,14 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   lazy val convListController     = inject[ConversationListController]
 
   protected var subs = Set.empty[Subscription]
-  protected val adapterMode: ConversationListAdapter.ListMode
+  protected val adapterMode: ListMode
 
   protected lazy val topToolbar: ViewHolder[_ <: ConversationListTopToolbar] = view[ConversationListTopToolbar](R.id.conversation_list_top_toolbar)
-  lazy val adapter = returning(new ConversationListAdapter) { a =>
-    a.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
 
-    userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
-
-    adapterMode match {
-      case ConversationListAdapter.Normal =>
-        (for {
-          regular  <- convListController.regularConversationListData
-          incoming <- convListController.incomingConversationListData
-        } yield (regular, incoming)).onUi { case (regular, incoming) =>
-          a.setData(regular, incoming)
-        }
-      case ConversationListAdapter.Archive =>
-        convListController.archiveConversationListData.onUi { archive =>
-          a.setData(archive, (Seq.empty, Seq.empty))
-        }
-    }
-
-    a.onConversationClick { conv =>
-      verbose(l"handleItemClick, switching conv to $conv")
-      conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
-    }
-
-    a.onConversationLongClick { conv =>
-      if (Set(Group, OneToOne, WaitForConnection).contains(conv.convType))
-        screenController.showConversationMenu(true, conv.id)
-    }
-  }
+  lazy val adapter: ConversationListAdapter = returning(createAdapter())(configureAdapter)
 
   lazy val conversationListView = returning(view[SwipeListView](R.id.conversation_list_view)) { vh =>
-    userAccountsController.currentUser.onChanged.onUi(_ => vh.foreach(_.scrollToPosition(0)))
+    subs += userAccountsController.currentUser.onChanged.onUi(_ => vh.foreach(_.scrollToPosition(0)))
   }
 
   lazy val conversationsListScrollListener = new RecyclerView.OnScrollListener {
@@ -128,8 +101,13 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
   override def onDestroyView() = {
     conversationListView.foreach(_.removeOnScrollListener(conversationsListScrollListener))
-    subs.foreach(_.destroy())
     super.onDestroyView()
+  }
+
+  override def onDestroy(): Unit = {
+    subs.foreach(_.destroy())
+    subs = Set.empty
+    super.onDestroy()
   }
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = {
@@ -143,17 +121,43 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     else new ConversationListAnimation(0, getDimenPx(R.dimen.open_new_conversation__thread_list__max_top_distance), enter,
       getInt(R.integer.framework_animation_duration_medium), 0, false, 1f)
   }
+
+  protected def createAdapter(): ConversationListAdapter
+
+  private def configureAdapter(adapter: ConversationListAdapter): Unit = {
+    adapter.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
+    
+    subs += userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
+
+    subs += adapter.onConversationClick { conv =>
+      verbose(l"handleItemClick, switching conv to $conv")
+      conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
+    }
+
+    subs += adapter.onConversationLongClick { conv =>
+      if (Set(Group, OneToOne, WaitForConnection).contains(conv.convType))
+        screenController.showConversationMenu(true, conv.id)
+    }
+  }
 }
 
-object ArchiveListFragment{
-  val TAG = ArchiveListFragment.getClass.getSimpleName
+object ConversationListFragment {
+  trait Container {
+    def onConversationsLoadingStarted(): Unit
+    def onConversationsLoadingFinished(): Unit
+    def closeArchive(): Unit
+  }
+
+  def newNormalInstance(): ConversationListFragment = new NormalConversationFragment()
+  def newArchiveInstance(): ConversationListFragment = new ArchiveListFragment()
+  def newFoldersInstance(): ConversationListFragment = new ConversationFolderListFragment()
 }
 
 class ArchiveListFragment extends ConversationListFragment with OnBackPressedListener {
 
   override val layoutId = R.layout.fragment_archive_list
   override lazy val topToolbar = view[ArchiveTopToolbar](R.id.conversation_list_top_toolbar)
-  override protected val adapterMode = ConversationListAdapter.Archive
+  override protected val adapterMode = Archive
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
@@ -164,20 +168,26 @@ class ArchiveListFragment extends ConversationListFragment with OnBackPressedLis
     Option(getContainer).foreach(_.closeArchive())
     true
   }
+
+  override protected def createAdapter(): ConversationListAdapter =
+    returning(new ArchiveConversationListAdapter) { a =>
+      subs += convListController.archiveConversationListData.onUi { archive =>
+        a.setData(archive)
+      }
+  }
 }
 
-object NormalConversationListFragment {
-  val TAG = NormalConversationListFragment.getClass.getSimpleName
+object ArchiveListFragment {
+  val TAG = ArchiveListFragment.getClass.getSimpleName
 }
 
 class NormalConversationFragment extends ConversationListFragment {
-
-  override val layoutId = R.layout.fragment_conversation_list
-  override protected val adapterMode = ConversationListAdapter.Normal
+  override val layoutId: Int = R.layout.fragment_conversation_list
+  override protected val adapterMode: ListMode = Normal
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val accentColor = inject[AccentColorController].accentColor
-  lazy val incomingClients = for{
+  lazy val incomingClients = for {
     z       <- zms
     clients <- z.otrClientsStorage.incomingClientsSignal(z.selfUserId, z.clientId)
   } yield clients
@@ -189,16 +199,6 @@ class NormalConversationFragment extends ConversationListFragment {
     count  <- userAccountsController.unreadCount.map(_.filterNot(_._1 == accountId).values.sum)
   } yield count).orElse(Signal.const(0))
 
-  lazy val hasConversationsAndArchive = for {
-    z <- zms
-    convs <- z.convsStorage.contents
-  } yield {
-    (convs.values.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)),
-    convs.values.exists(c => c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)))
-  }
-
-  lazy val archiveEnabled = hasConversationsAndArchive.map(_._2)
-
   private val waitingAccount = Signal[Option[UserId]](None)
 
   private lazy val loading = for {
@@ -208,63 +208,34 @@ class NormalConversationFragment extends ConversationListFragment {
   } yield processing || waitingAcc != z.selfUserId
 
   override lazy val topToolbar = returning(view[NormalTopToolbar](R.id.conversation_list_top_toolbar)) { vh =>
-    accentColor.map(_.color).onUi(color => vh.foreach(_.setIndicatorColor(color)))
-    Signal(unreadCount, incomingClients, readReceiptsChanged).onUi {
+    subs += accentColor.map(_.color).onUi(color => vh.foreach(_.setIndicatorColor(color)))
+    subs += Signal(unreadCount, incomingClients, readReceiptsChanged).onUi {
       case (count, clients, rrChanged) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0 || rrChanged))
     }
   }
 
   lazy val loadingListView = view[View](R.id.conversation_list_loading_indicator)
-  lazy val listActionsView = returning(view[ListActionsView](R.id.lav__conversation_list_actions)){ vh =>
-    archiveEnabled.onUi(enabled => vh.foreach(_.setArchiveEnabled(enabled)))
-    hasConversationsAndArchive.map {
-      case (false, false) => true
-      case _ => false
-    }.onUi(centered => vh.foreach(_.setContactsCentered(centered)))
-  }
 
   lazy val noConvsTitle = returning(view[TypefaceTextView](R.id.conversation_list_empty_title)) { vh =>
-    hasConversationsAndArchive.map {
+    subs += convListController.hasConversationsAndArchive.map {
       case (false, true) => Some(R.string.all_archived__header)
       case _ => None
     }.onUi(_.foreach(text => vh.foreach(_.setText(text))))
-    hasConversationsAndArchive.map {
+    subs += convListController.hasConversationsAndArchive.map {
       case (false, true) => VISIBLE
       case _ => GONE
     }.onUi(visibility => vh.foreach(_.setVisibility(visibility)))
   }
 
   private lazy val noConvsMessage = returning(view[LinearLayout](R.id.empty_list_message)) { vh =>
-    hasConversationsAndArchive.map {
+    subs += convListController.hasConversationsAndArchive.map {
       case (false, false) => VISIBLE
       case _ => GONE
     }.onUi(visibility => vh.foreach(_.setVisibility(visibility)))
   }
 
-  lazy val listActionsScrollListener = new RecyclerView.OnScrollListener {
-    override def onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) =
-      listActionsView.foreach(_.setScrolledToBottom(!recyclerView.canScrollVertically(1)))
-  }
-
-  lazy val listActionsCallback = new Callback {
-    override def onAvatarPress() =
-      getControllerFactory.getPickUserController.showPickUser()
-
-    override def onArchivePress() =
-      Option(getContainer).foreach(_.showArchive())
-  }
-
   override def onViewCreated(v: View, savedInstanceState: Bundle) = {
     super.onViewCreated(v, savedInstanceState)
-
-    for {
-      convList    <- conversationListView
-      actionsList <- listActionsView
-    } yield {
-      convList.addOnScrollListener(listActionsScrollListener)
-      actionsList.setCallback(listActionsCallback)
-      actionsList.setScrolledToBottom(!convList.canScrollVertically(1))
-    }
 
     subs += loading.onUi {
       case true => showLoading()
@@ -274,11 +245,10 @@ class NormalConversationFragment extends ConversationListFragment {
     }
 
     topToolbar.foreach { toolbar =>
-      subs += toolbar.onRightButtonClick(_ =>
+      subs += toolbar.onRightButtonClick { _ =>
         getActivity.startActivityForResult(PreferencesActivity.getDefaultIntent(getContext), PreferencesActivity.SwitchAccountCode)
-      )
+      }
     }
-
 
     val pickUserController = inject[IPickUserController]
     noConvsMessage.foreach(_.onClick(pickUserController.showPickUser()))
@@ -295,23 +265,17 @@ class NormalConversationFragment extends ConversationListFragment {
     }
   }
 
-  override def onDestroyView() = {
-    conversationListView.foreach(_.removeOnScrollListener(listActionsScrollListener))
-    listActionsView.foreach(_.setCallback(null))
-    super.onDestroyView()
-  }
-
   private def showLoading(): Unit = {
     loadingListView.foreach { lv =>
       lv.setAlpha(1f)
       lv.setVisibility(VISIBLE)
     }
-    listActionsView.foreach(_.setAlpha(0.5f))
+    Option(getContainer).foreach(_.onConversationsLoadingStarted())
     topToolbar.foreach(_.setLoading(true))
   }
 
   private def hideLoading(): Unit = {
-    listActionsView.foreach(_.animate().alpha(1f).setDuration(500))
+    Option(getContainer).foreach(_.onConversationsLoadingFinished())
     loadingListView.foreach(v => v.animate().alpha(0f).setDuration(500).withEndAction(new Runnable {
       override def run() = {
         if (NormalConversationFragment.this != null)
@@ -322,6 +286,19 @@ class NormalConversationFragment extends ConversationListFragment {
     topToolbar.foreach(_.setLoading(false))
   }
 
+
+  override protected def createAdapter(): ConversationListAdapter =
+    returning(new NormalConversationListAdapter) { a =>
+      val dataSource = for {
+        regular  <- convListController.regularConversationListData
+        incoming <- convListController.incomingConversationListData
+      } yield (regular, incoming)
+
+      subs += dataSource.onUi { case (regular, incoming) =>
+        a.setData(regular, incoming)
+      }
+    }
+
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
     if (requestCode == PreferencesActivity.SwitchAccountCode && data != null) {
       showLoading()
@@ -330,18 +307,38 @@ class NormalConversationFragment extends ConversationListFragment {
   }
 }
 
+object NormalConversationFragment {
+  val TAG = "NormalConversationFragment"
+}
 
-object ConversationListFragment {
-  trait Container {
-    def showArchive(): Unit
-    def closeArchive(): Unit
-  }
+class ConversationFolderListFragment extends NormalConversationFragment {
 
-  def newNormalInstance(): ConversationListFragment = {
-    new NormalConversationFragment()
-  }
+  override protected val adapterMode: ListMode = Folders
 
-  def newArchiveInstance(): ConversationListFragment = {
-    new ArchiveListFragment()
+  override protected def createAdapter(): ConversationListAdapter = {
+    returning(new ConversationFolderListAdapter) { a =>
+      val dataSource = for {
+        incoming  <- convListController.incomingConversationListData
+        favorites <- convListController.favoriteConversations
+        groups    <- convListController.groupConvsWithoutFolder
+        oneToOnes <- convListController.oneToOneConvsWithoutFolder
+        custom    <- convListController.customFolderConversations
+        states    <- convListController.folderStateController.folderUiStates
+      } yield (incoming, favorites, groups, oneToOnes, custom, states)
+
+      subs += dataSource.onUi { case (incoming, favorites, groups, oneToOnes, custom, states) =>
+        a.setData(incoming, favorites, groups, oneToOnes, custom, states)
+      }
+
+      subs += a.onFoldersChanged.onUi(convListController.folderStateController.prune)
+
+      subs += a.onFolderStateChanged.onUi { case (id, isExpanded) =>
+        convListController.folderStateController.update(id, isExpanded)
+      }
+    }
   }
+}
+
+object ConversationFolderListFragment {
+  val TAG = "ConversationFolderListFragment"
 }

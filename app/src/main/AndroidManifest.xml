@@ -19,16 +19,17 @@
 
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          package="com.waz.zclient"
-          android:sharedUserId="${sharedUserId}"
-          tools:ignore="MissingRegistered"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.waz.zclient"
+    android:sharedUserId="${sharedUserId}"
+    tools:ignore="MissingRegistered"
     >
 
     <!-- See if device is connected to a network -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Cache user data -->
     <!-- File Sharing -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- Communicate with backend servers -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -41,8 +42,6 @@
     <!-- Needed for taking photos when setting profile image or sending images -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
-    <!-- get phone number for contact matching -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <!-- needed to switch between speaker/earpiece -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -50,10 +49,15 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- GCM from Localytics TODO still needed? -->
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -74,10 +78,61 @@
         android:hardwareAccelerated="true"
         android:icon="${applicationIcon}"
         android:label="${applicationLabel}"
-        android:theme="@style/Theme.Light"
+        android:theme="@style/Theme.Splash"
         android:vmSafeMode="${applicationVmSafeMode}"
         tools:replace="android:allowBackup"
+        android:networkSecurityConfig="@xml/network_security_config"
         >
+
+        <!--    TODO: not required when using play-services-maps:16.1.0 and above
+                   https://developer.android.com/about/versions/pie/android-9.0-changes-28#apache-p
+                   https://developers.google.com/maps/documentation/android-sdk/config#specify_requirement_for_apache_http_legacy_library
+        -->
+        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
+
+        <activity
+            android:name="com.waz.zclient.feature.settings.main.SettingsMainActivity"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.Dark.Preferences"
+            android:launchMode="singleTask"
+            android:label="@string/empty_string"/>
+
+        <activity
+            android:name=".LaunchActivity"
+            android:label="@string/app_name"
+            android:noHistory="true"
+            android:theme="@style/Theme.Splash"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <data android:host="email-verified"
+                    android:scheme="${customURLScheme}" />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.VIEW" />
+            </intent-filter>
+
+            <intent-filter>
+                <data
+                    android:host="connect"
+                    android:scheme="${customURLScheme}"
+                    />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.VIEW" />
+            </intent-filter>
+        </activity>
+
 
         <!-- main activity -->
         <activity
@@ -96,6 +151,11 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.VIEW" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="com.wire.ACTION_CURRENT_USER_CHANGED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
 
         </activity>
@@ -137,7 +197,7 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Share"
             android:windowSoftInputMode="adjustPan"
-        >
+            >
             <intent-filter android:label="@string/app_name">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -150,48 +210,19 @@
             </intent-filter>
         </activity>
         <activity android:name=".controllers.notifications.ShareSavedImageActivity" />
-        <activity
-            android:name=".LaunchActivity"
-            android:label="@string/app_name"
-            android:noHistory="true"
-            android:theme="@style/Theme.Light"
-            android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
 
-            <intent-filter>
-                <data android:host="email-verified"
-                      android:scheme="${customURLScheme}" />
-
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.VIEW" />
-            </intent-filter>
-
-            <intent-filter>
-                <data
-                    android:host="connect"
-                    android:scheme="${customURLScheme}"
-                    />
-
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.VIEW" />
-            </intent-filter>
-        </activity>
 
         <activity
             android:name=".appentry.AppEntryActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Dark"
-            android:windowSoftInputMode="stateHidden|adjustResize">
+            android:windowSoftInputMode="stateHidden|adjustResize"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.wire.ACTION_NO_USER_LEFT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
 
         <activity
@@ -201,13 +232,49 @@
             android:launchMode="singleTask">
         </activity>
 
+        <activity
+            android:name=".conversation.folders.moveto.MoveToFolderActivity"
+            android:screenOrientation="portrait" />
+        <activity android:name="com.waz.zclient.feature.settings.devices.detail.SettingsDeviceDetailActivity" />
+        <activity
+            android:name="com.waz.zclient.feature.settings.account.editphonenumber.EditPhoneNumberActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Dark.Preferences" />
+        <activity
+            android:name=".feature.settings.about.SettingsAboutActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Dark.Preferences" />
+        <activity
+            android:name=".feature.settings.support.SettingsSupportActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Dark.Preferences" />
+        <activity
+            android:name="com.waz.zclient.feature.auth.registration.CreateAccountActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Light"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateVisible"
+            />
+
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"
+            android:permission="android.permission.INSTALL_PACKAGES"
             tools:ignore="ExportedReceiver"
             >
             <intent-filter>
                 <action android:name="com.android.vending.INSTALL_REFERRER" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="com.waz.services.SecurityPolicyService"
+            android:label="@string/security_policy_title"
+            android:description="@string/security_policy_description"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
 
@@ -218,7 +285,7 @@
             android:grantUriPermissions="true"/>
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
@@ -227,13 +294,20 @@
                 android:resource="@xml/provider_paths"/>
         </provider>
 
+        <!--
+        We initialize Firebase dynamically.
+        https://firebase.googleblog.com/2017/03/take-control-of-your-firebase-init-on.html
+        -->
+        <provider
+            android:name="com.google.firebase.provider.FirebaseInitProvider"
+            android:authorities="${applicationId}.firebaseinitprovider"
+            tools:node="remove"/>
+
         <!--Disable tracking in the FCM core-->
         <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
         <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
 
         <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
-        <!-- Internal features from SE -->
-        <meta-data android:name="INTERNAL" android:value="${internal_features}"/>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -304,9 +378,18 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="com.waz.services.calling.CallingNotificationsService" />
-        <service android:name="com.waz.services.calling.CallWakeService" android:exported="true" />
-        <service android:name="com.waz.services.notifications.NotificationsHandlerService" />
+        <service
+            android:name="com.waz.services.calling.CallingNotificationsService"
+            android:exported="false"
+            />
+        <service
+            android:name="com.waz.services.calling.CallWakeService"
+            android:exported="true"
+            />
+        <service
+            android:name="com.waz.services.notifications.NotificationsHandlerService"
+            android:exported="false"
+            />
 
     </application>
 

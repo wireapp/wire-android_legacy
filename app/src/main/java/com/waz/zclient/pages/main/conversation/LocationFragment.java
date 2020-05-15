@@ -33,8 +33,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -70,13 +70,13 @@ import com.waz.zclient.common.controllers.global.AccentColorCallback;
 import com.waz.zclient.common.controllers.global.AccentColorController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.conversation.ConversationController;
+import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.ui.views.TouchRegisteringFrameLayout;
 import com.waz.zclient.utils.Callback;
 import com.waz.zclient.utils.StringUtils;
 import com.waz.zclient.utils.ViewUtils;
-import timber.log.Timber;
 
 import java.util.List;
 import java.util.Locale;
@@ -94,13 +94,12 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                                                                                           OnBackPressedListener,
                                                                                           View.OnClickListener {
 
-    public static final String TAG = LocationFragment.class.getName();
-
     private static final int LOCATION_PERMISSION_REQUEST_ID = 532;
     private static final float DEFAULT_MAP_ZOOM_LEVEL = 15F;
     private static final float DEFAULT_MIMIMUM_CAMERA_MOVEMENT = 2F;
     private static final int LOCATION_REQUEST_TIMEOUT_MS = 1500;
     private static final String MAP_VIEW_SAVE_STATE = "mapViewSaveState";
+    public static final String TAG = "LocationFragment";
 
     private Toolbar toolbar;
     private MapView mapView;
@@ -179,7 +178,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                 currentLocationCountryName = "";
                 currentLocationLocality = "";
                 currentLocationSubLocality = "";
-                Timber.i(e, "Unable to retrieve location name");
+                Logger.info(TAG, "Unable to retrieve location name" + e.toString());
             }
             mainHandler.removeCallbacksAndMessages(null);
             mainHandler.post(updateCurrentLocationBubbleRunnable);
@@ -386,14 +385,14 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     @SuppressWarnings("ResourceType")
     @SuppressLint("MissingPermission")
     private void startLocationManagerListeningForCurrentLocation() {
-        Timber.i("startLocationManagerListeningForCurrentLocation");
+        Logger.info(TAG,"startLocationManagerListeningForCurrentLocation");
         if (locationManager != null && hasLocationPermission()) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
         }
     }
 
     private void startPlayServicesListeningForCurrentLocation() {
-        Timber.i("startPlayServicesListeningForCurrentLocation");
+        Logger.info(TAG,"startPlayServicesListeningForCurrentLocation");
         if (locationRequest != null) {
             return;
         }
@@ -407,14 +406,14 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     @SuppressWarnings("ResourceType")
     @SuppressLint("MissingPermission")
     private void stopLocationManagerListeningForCurrentLocation() {
-        Timber.i("stopLocationManagerListeningForCurrentLocation");
+        Logger.info(TAG,"stopLocationManagerListeningForCurrentLocation");
         if (locationManager != null && hasLocationPermission()) {
             locationManager.removeUpdates(this);
         }
     }
 
     private void stopPlayServicesListeningForCurrentLocation() {
-        Timber.i("stopPlayServicesListeningForCurrentLocation");
+        Logger.info(TAG,"stopPlayServicesListeningForCurrentLocation");
         if (locationRequest == null) {
             return;
         }
@@ -543,7 +542,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onCameraChange(CameraPosition cameraPosition) {
-        Timber.i("onCameraChange");
+        Logger.info(TAG,"onCameraChange");
         animating = false;
         currentLatLng = cameraPosition.target;
         currentLocationName = "";
@@ -560,7 +559,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Timber.i("onMapReady");
+        Logger.info(TAG,"onMapReady");
         map = googleMap;
         map.getUiSettings().setMyLocationButtonEnabled(false);
         try {
@@ -578,7 +577,8 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onLocationChanged(Location location) {
-        Timber.i("onLocationChanged, lat=%f, lon=%f, accuracy=%f, distanceToCurrent=%f", location.getLatitude(), location.getLongitude(), location.getAccuracy(), (currentLocation == null) ? 0 : location.distanceTo(currentLocation));
+        Float distanceToCurrent = (currentLocation == null) ? 0 : location.distanceTo(currentLocation);
+        Logger.info(TAG,"onLocationChanged, lat" + location.getLatitude() + ", lon=" + location.getLongitude() + ", accuracy=" + location.getAccuracy() + ", distanceToCurrent=" + distanceToCurrent);
 
         float distanceFromCenterOfScreen = Float.MAX_VALUE;
         if (currentLatLng != null) {
@@ -589,7 +589,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                                      location.getLongitude(),
                                      distance);
             distanceFromCenterOfScreen = distance[0];
-            Timber.i("current location distance from map center %f", distance[0]);
+            Logger.info(TAG,"current location distance from map center" + distance[0]);
         }
 
         currentLocation = location;
@@ -667,7 +667,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onConnected(Bundle bundle) {
-        Timber.i("onConnected");
+        Logger.info(TAG,"onConnected");
 
         if (hasLocationPermission()) {
             animateTocurrentLocation = true;
@@ -679,14 +679,14 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onConnectionSuspended(int i) {
-        Timber.i("onConnectionSuspended");
+        Logger.info(TAG,"onConnectionSuspended");
         // goodbye
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         // fallback to LocationManager
-        Timber.e("Google API Client connection failed");
+        Logger.error(TAG,"Google API Client connection failed");
         googleApiClient.unregisterConnectionFailedListener(this);
         googleApiClient.unregisterConnectionCallbacks(this);
         googleApiClient = null;

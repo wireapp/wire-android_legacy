@@ -19,7 +19,6 @@ package com.waz.zclient.markdown;
 
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.os.Build;
 import android.text.SpannableString;
 import android.util.AttributeSet;
 
@@ -98,12 +97,7 @@ public class MarkdownTextView extends TypefaceTextView implements ViewHelper {
         mStyleSheet.setQuoteStripeColor(ContextUtils.getStyledColor(R.attr.quoteStripeColor, context()));
         mStyleSheet.setListPrefixColor(ContextUtils.getStyledColor(R.attr.listPrefixColor, context()));
 
-        BaseActivity activity;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            activity = getActivity();
-        } else {
-            activity = (BaseActivity) getContext();
-        }
+        BaseActivity activity = (BaseActivity) getContext();
 
         if (activity != null) {
             // update the link color whenever the accent color changes

@@ -120,8 +120,8 @@ import scala.concurrent.Future
       zms.head.foreach(_.messages.markMessageRead(msg.convId, msg.id))
   }
 
-  def getMessage(messageId: MessageId): Signal[Option[MessageData]] = {
-    zms.flatMap(z => Signal.future(z.messagesStorage.get(messageId)))
+  def getMessage(messageId: MessageId): Signal[MessageData] = {
+    zms.flatMap(_.messagesStorage.signal(messageId))
   }
 
   def retryMessageSending(ids: Seq[MessageId]): Future[Seq[SyncId]] =
@@ -131,4 +131,9 @@ import scala.concurrent.Future
       res <- Future.traverse(messages)(msg => zms.messages.retryMessageSending(msg.convId, msg.id))
     } yield res.flatten
 
+  def getButtons(messageId: MessageId): Signal[Seq[ButtonData]] =
+    zms.flatMap(_.messages.buttonsForMessage(messageId))
+
+  def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
+    zms.head.flatMap(_.messages.clickButton(messageId, buttonId))
 }

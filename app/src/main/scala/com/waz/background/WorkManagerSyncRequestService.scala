@@ -20,8 +20,8 @@ package com.waz.background
 import java.util.UUID
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
-import android.arch.lifecycle.{LiveData, Observer}
 import android.content.Context
+import androidx.lifecycle.{LiveData, Observer}
 import androidx.work._
 import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse
@@ -37,7 +37,7 @@ import com.waz.sync.{SyncHandler, SyncRequestService, SyncResult}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.{RichInstant, returning}
-import com.waz.zclient.{Injectable, Injector, WireContext}
+import com.waz.zclient.{Injectable, Injector, WireApplication, WireContext}
 import com.waz.zclient.log.LogUI._
 import org.json.JSONObject
 import org.threeten.bp.{Clock, Instant}
@@ -200,18 +200,13 @@ object WorkManagerSyncRequestService {
     override def doWork(): ListenableWorker.Result = {
 
       import ListenableWorker._
-      val input         = getInputData
-      val account       = UserId(input.getString(AccountId))
-      val cmd           = input.getString(SyncRequestCmd)
-      val scheduledTime = input.getLong(ScheduledTime, 0)
-      val request       = SyncRequest.Decoder(new JSONObject(input.getString(Json)))
+      val input = getInputData
+      val account = UserId(input.getString(AccountId))
+      val cmd = input.getString(SyncRequestCmd)
 
       implicit val logTag: LogTag = jobLogTag(account)
       val commandTag = commandId(cmd, getId)
       verbose(l"${showString(commandTag)} doWork")
-
-      val syncHandler = inject[SyncHandler]
-      val requestInfo = RequestInfo(getRunAttemptCount, Instant.ofEpochMilli(scheduledTime), network.currentValue)
 
       def onFailure(err: ErrorResponse) = {
         //we need to return the SUCCESS code so as not to block appended unique work
@@ -223,38 +218,46 @@ object WorkManagerSyncRequestService {
           .build())
       }
 
-      try {
-        Await.result(syncHandler(account, request)(requestInfo), SyncJobTimeout) match {
-          case SyncResult.Success =>
-            verbose(l"${showString(commandTag)} completed successfully")
-            Result.success()
+      if (!WireApplication.ensureInitialized())
+        onFailure(internalError("The app is not initialized yet"))
+      else {
+        val scheduledTime = input.getLong(ScheduledTime, 0)
+        val request = SyncRequest.Decoder(new JSONObject(input.getString(Json)))
+        val syncHandler = inject[SyncHandler]
+        val requestInfo = RequestInfo(getRunAttemptCount, Instant.ofEpochMilli(scheduledTime), network.currentValue)
+        try {
+          Await.result(syncHandler(account, request)(requestInfo), SyncJobTimeout) match {
+            case SyncResult.Success =>
+              verbose(l"${showString(commandTag)} completed successfully")
+              Result.success()
 
-          case SyncResult.Failure(error) =>
-            warn(l"${showString(commandTag)} failed permanently with error: $error")
-            if (error.shouldReportError) {
-              tracking.exception(new RuntimeException(s"$commandTag failed permanently with error: $error") with NoStackTrace, s"Got fatal error, dropping request: ${request.cmd}\n error: $error")
-            }
-            onFailure(error)
+            case SyncResult.Failure(error) =>
+              warn(l"${showString(commandTag)} failed permanently with error: $error")
+              if (error.shouldReportError) {
+                tracking.exception(new RuntimeException(s"$commandTag failed permanently with error: $error") with NoStackTrace, s"Got fatal error, dropping request: ${request.cmd}\n error: $error")
+              }
+              onFailure(error)
 
-          case SyncResult.Retry(error) if getRunAttemptCount > MaxSyncAttempts =>
-            warn(l"${showString(commandTag)} failed more than the maximum $MaxSyncAttempts times, final time was with error: $error")
-            tracking.exception(new RuntimeException(s"$commandTag failed more than the maximum $MaxSyncAttempts times, final time was with error: $error") with NoStackTrace, s"$MaxSyncAttempts attempts exceeded, dropping request: ${request.cmd}\n error: $error")
-            onFailure(error)
+            case SyncResult.Retry(error) if getRunAttemptCount > MaxSyncAttempts =>
+              warn(l"${showString(commandTag)} failed more than the maximum $MaxSyncAttempts times, final time was with error: $error")
+              tracking.exception(new RuntimeException(s"$commandTag failed more than the maximum $MaxSyncAttempts times, final time was with error: $error") with NoStackTrace, s"$MaxSyncAttempts attempts exceeded, dropping request: ${request.cmd}\n error: $error")
+              onFailure(error)
 
-          case SyncResult.Retry(error) =>
-            warn(l"${showString(commandTag)} failed non-fatally with $error, retrying...")
-            Result.retry()
+            case SyncResult.Retry(error) =>
+              warn(l"${showString(commandTag)} failed non-fatally with $error, retrying...")
+              Result.retry()
+          }
+        } catch {
+          case e: TimeoutException =>
+            error(l"${showString(commandTag)} doWork timed out after $SyncJobTimeout, the job seems to be blocked", e)
+            tracking.exception(e, s"$commandTag timed out after $SyncJobTimeout")
+            onFailure(ErrorResponse.timeout(s"$logTag $commandTag timed out after $SyncJobTimeout, aborting"))
+
+          case NonFatal(e) =>
+            error(l"${showString(commandTag)} failed unexpectedly", e)
+            tracking.exception(e, s"$commandTag failed unexpectedly")
+            onFailure(internalError(e.getMessage))
         }
-      } catch {
-        case e: TimeoutException =>
-          error(l"${showString(commandTag)} doWork timed out after $SyncJobTimeout, the job seems to be blocked", e)
-          tracking.exception(e, s"$commandTag timed out after $SyncJobTimeout")
-          onFailure(ErrorResponse.timeout(s"$logTag $commandTag timed out after $SyncJobTimeout, aborting"))
-
-        case NonFatal(e) =>
-          error(l"${showString(commandTag)} failed unexpectedly", e)
-          tracking.exception(e, s"$commandTag failed unexpectedly")
-          onFailure(internalError(e.getMessage))
       }
     }
   }

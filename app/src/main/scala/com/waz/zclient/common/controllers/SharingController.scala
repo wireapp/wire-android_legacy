@@ -19,24 +19,21 @@ package com.waz.zclient.common.controllers
 
 import android.app.Activity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AccentColor, ConvId}
-import com.waz.service.assets.AssetService.RawAssetInput.UriInput
-import com.waz.service.conversation.ConversationsUiService
+import com.waz.model.ConvId
 import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.utils.wrappers.URI
+import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.Intents._
-import com.waz.zclient.common.controllers.SharingController._
-import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.utils.ContextUtils.showWifiWarningDialog
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
 class SharingController(implicit injector: Injector, wContext: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {
+
+  import SharingController._
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "SharingController")
 
@@ -44,38 +41,29 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   val targetConvs         = Signal(Seq.empty[ConvId])
   val ephemeralExpiration = Signal(Option.empty[FiniteDuration])
 
-  val sendEvent = EventStream[(SharableContent, Seq[ConvId], Option[FiniteDuration])]()
-
   def onContentShared(activity: Activity, convs: Seq[ConvId]): Unit = {
     targetConvs ! convs
     Option(activity).foreach(_.startActivity(SharingIntent(wContext)))
   }
 
   def sendContent(activity: Activity): Future[Seq[ConvId]] = {
-    def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration], color: AccentColor) = {
-      sendEvent ! (content, convs, expiration)
-      inject[Signal[ConversationsUiService]].head.flatMap { convsUi =>
-        content match {
-          case TextContent(t) =>
-            convsUi.sendTextMessages(convs, t, Nil, expiration)
-          case uriContent =>
-            convsUi.sendAssetMessages(
-              convs,
-              uriContent.uris.map(UriInput),
-              (s: Long) => showWifiWarningDialog(s, color)(dispatcher, activity),
-              expiration
-            )
-        }
+    def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) =
+      content match {
+        case NewContent     =>
+          inject[ConversationController].switchConversation(convs.head)
+        case TextContent(t) =>
+          inject[ConversationController].sendTextMessage(convs, t, Nil, None, Some(expiration))
+        case uriContent     =>
+          val uris = uriContent.uris.map(URIWrapper.toJava)
+          inject[ConversationController].sendAssetMessages(uris, activity, Some(expiration), convs)
       }
-    }
 
     for {
       Some(content) <- sharableContent.head
       convs         <- targetConvs.head
       expiration    <- ephemeralExpiration.head
-      color         <- inject[AccentColorController].accentColor.head
-      _             <- send(content, convs, expiration, color)
-      _             = resetContent()
+      _             <- send(content, convs, expiration)
+      _             =  resetContent()
     } yield convs
   }
 
@@ -92,22 +80,19 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
 
   def publishTextContent(text: String): Unit =
     this.sharableContent ! Some(TextContent(text))
-
-  def publishImageContent(uris: java.util.List[URI]): Unit =
-    this.sharableContent ! Some(ImageContent(uris.asScala))
-
-  def publishFileContent(uris: java.util.List[URI]): Unit =
-    this.sharableContent ! Some(FileContent(uris.asScala))
 }
 
 object SharingController {
+
   sealed trait SharableContent {
-    val uris: Seq[URI]
+    val uris: Seq[URIWrapper]
   }
+
+  case object NewContent extends SharableContent { override val uris = Seq.empty }
 
   case class TextContent(text: String) extends SharableContent { override val uris = Seq.empty }
 
-  case class FileContent(uris: Seq[URI]) extends SharableContent
+  case class FileContent(uris: Seq[URIWrapper]) extends SharableContent
 
-  case class ImageContent(uris: Seq[URI]) extends SharableContent
+  case class ImageContent(uris: Seq[URIWrapper]) extends SharableContent
 }

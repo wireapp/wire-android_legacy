@@ -19,11 +19,12 @@ package com.waz.zclient.conversationlist.views
 
 import android.animation.ObjectAnimator
 import android.content.Context
-import android.support.constraint.ConstraintLayout
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
-import android.widget.FrameLayout
 import android.widget.LinearLayout.LayoutParams
+import android.widget.{FrameLayout, ImageView, LinearLayout}
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.RecyclerView
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
@@ -56,7 +57,7 @@ import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.Set
 
-trait ConversationListRow extends FrameLayout
+trait ConversationListRow extends View
 
 class NormalConversationListRow(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
@@ -65,7 +66,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     with SwipeListView.SwipeListRow
     with MoveToAnimateable
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -95,6 +96,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val menuIndicatorView = ViewUtils.getView(this, R.id.conversation_menu_indicator).asInstanceOf[MenuIndicatorView]
 
   var conversationData = Option.empty[ConversationData]
+
   val conversation = for {
     Some(convId) <- conversationId
     conv <- ConversationSignal(convId)
@@ -102,14 +104,17 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   val members = conversationId.collect { case Some(convId) => convId } flatMap controller.members
 
-  val conversationName = conversation map { conv =>
+  conversation.map { conv =>
     if (conv.displayName.isEmpty) {
       // This hack was in the UiModule Conversation implementation
       // XXX: this is a hack for some random errors, sometimes conv has empty name which is never updated
-      zms.head.foreach {_.conversations.forceNameUpdate(conv.id) }
-      Name(getString(R.string.default_deleted_username))
+      val defaultName = getString(R.string.default_deleted_username)
+      zms.head.foreach {_.conversations.forceNameUpdate(conv.id, defaultName) }
+      Name(defaultName)
     } else
       conv.displayName
+  }.onUi { name =>
+    title.setText(name)
   }
 
   val userTyping = for {
@@ -127,8 +132,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     call           <- z.calling.currentCall
     callDuration   <- call.filter(_.convId == conv.id).fold(Signal.const(""))(_.durationFormatted)
     isGroupConv    <- z.conversations.groupConversation(conv.id)
-    lastMessage    <- controller.lastMessage(conv.id)
-    selfId         <- selfId
   } yield (conv.id, badgeStatusForConversation(conv, conv.unreadCount, typing, availableCalls, callDuration, isGroupConv))
 
   val subtitleText = for {
@@ -143,7 +146,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     otherUser <- userData(ms.headOption)
     isGroupConv <- z.conversations.groupConversation(conv.id)
     missedCallerId <- controller.lastMessage(conv.id).map(_.lastMissedCall.map(_.userId))
-    userName <- missedCallerId.fold2(Signal.const(Option.empty[Name]), u => z.usersStorage.signal(u).map(d => Some(d.getDisplayName)))
+    userName <- missedCallerId.fold2(Signal.const(Option.empty[Name]), u => z.usersStorage.signal(u).map(d => Some(d.name)))
   } yield (conv.id, subtitleStringForLastMessages(conv, otherUser, ms.toSet, lastMessage, lastUnreadMessage, lastUnreadMessageUser, lastUnreadMessageMembers, typingUser, z.selfUserId, isGroupConv, userName))
 
   private def userData(id: Option[UserId]) = id.fold2(Signal.const(Option.empty[UserData]), uid => UserSignal(uid).map(Option(_)))
@@ -151,16 +154,16 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val avatarInfo = for {
     z <- zms
     conv <- conversation
-    isGroup <- z.conversations.groupConversation(conv.id)
     memberIds <- members
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)):_*)
+    isGroup <- Signal.future(z.conversations.isGroupConversation(conv.id))
   } yield {
     val opacity =
       if ((memberIds.isEmpty && isGroup) || conv.convType == ConversationType.WaitForConnection || !conv.isActive)
         getResourceFloat(R.dimen.conversation_avatar_alpha_inactive)
       else
         getResourceFloat(R.dimen.conversation_avatar_alpha_active)
-    (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), opacity)
+    (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), opacity, z.teamId)
   }
 
   def setSubtitle(text: String): Unit = {
@@ -174,14 +177,15 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     }
   }
 
+  // User availability (for 1:1)
   (for {
-    name <- conversationName
-    Some(convId) <- conversationId
-    av <- controller.availability(convId)
-  } yield (name, av)).onUi { case (name, av) =>
-    title.setText(name)
-    AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
+    Some(id) <- conversationId
+    availability       <- controller.availability(id)
+  } yield availability).onUi {
+    case Availability.None => AvailabilityView.hideAvailabilityIcon(title)
+    case availability      => AvailabilityView.displayStartOfText(title, availability, title.getCurrentTextColor, pushDown = true)
   }
+
 
   subtitleText.onUi {
     case (convId, text) if conversationData.forall(_.id == convId) =>
@@ -197,15 +201,14 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       verbose(l"Outdated badge status")
   }
 
-  avatarInfo.on(Threading.Background){
-    case (convId, isGroup, members, alpha) if conversationData.forall(_.id == convId) =>
-      val cType = if (isGroup) ConversationType.Group else ConversationType.OneToOne
-      avatar.setMembers(members.map(_.id), convId, cType)
+  avatarInfo.onUi {
+    case (convId, isGroup, members, _, selfTeam) if conversationData.forall(_.id == convId) =>
+      avatar.setMembers(members, convId, isGroup, selfTeam)
     case _ =>
       verbose(l"Outdated avatar info")
   }
-  avatarInfo.onUi{
-    case (convId, isGroup, _, alpha) if conversationData.forall(_.id == convId) =>
+  avatarInfo.onUi {
+    case (convId, isGroup, _, alpha, _) if conversationData.forall(_.id == convId) =>
       if (!isGroup) {
         avatar.setConversationType(ConversationType.OneToOne)
       }
@@ -217,7 +220,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   badge.onClickEvent {
     case ConversationBadge.IncomingCall =>
       (zms.map(_.selfUserId).currentValue, conversationData.map(_.id)) match {
-        case (Some(acc), Some(cId)) => callStartController.startCall(acc, cId, withVideo = false, forceOption = true)
+        case (Some(acc), Some(cId)) => callStartController.startCall(acc, cId, forceOption = true)
         case _ => //
       }
     case OngoingCall(_) =>
@@ -225,28 +228,27 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     case _=>
   }
 
-  private var conversationCallback: ConversationCallback = null
+  private var conversationCallback: ConversationCallback = _
   private var maxAlpha: Float = .0f
   private var openState: Boolean = false
   private val menuOpenOffset: Int = getDimenPx(R.dimen.list__menu_indicator__max_swipe_offset)
   private var moveTo: Float = .0f
   private var maxOffset: Float = .0f
-  private var swipeable: Boolean = true
-  private var moveToAnimator: ObjectAnimator = null
-  private var shouldRedraw = false
+  private var moveToAnimator: ObjectAnimator = _
 
-  def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
-    this.conversationData = Some(conversationData)
-    title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
+  def setConversation(conversationData: ConversationData): Unit =
+    if (this.conversationData.forall(_.id != conversationData.id)) {
+      this.conversationData = Some(conversationData)
+      title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 
-    badge.setStatus(ConversationBadge.Empty)
-    subtitle.setText("")
-    avatar.setConversationType(conversationData.convType)
-    avatar.clearImages()
-    avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
-    conversationId.publish(Some(conversationData.id), Threading.Ui)
-    closeImmediate()
-  }
+      badge.setStatus(ConversationBadge.Empty)
+      subtitle.setText("")
+      avatar.clearImages()
+      avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
+      conversationId.publish(Some(conversationData.id), Threading.Ui)
+      closeImmediate()
+    }
+
 
   menuIndicatorView.setClickable(false)
   menuIndicatorView.setMaxOffset(menuOpenOffset)
@@ -395,8 +397,8 @@ object ConversationListRow {
                                   )
                                   (implicit context: Context): String = {
 
-    lazy val senderName = user.map(_.getDisplayName).getOrElse(Name(getString(R.string.conversation_list__someone)))
-    lazy val memberName = members.headOption.map(_.getDisplayName).getOrElse(Name(getString(R.string.conversation_list__someone)))
+    lazy val senderName = user.map(_.name).getOrElse(Name(getString(R.string.conversation_list__someone)))
+    lazy val memberName = members.headOption.map(_.name).getOrElse(Name(getString(R.string.conversation_list__someone)))
 
     if (messageData.isEphemeral) {
       if (messageData.hasMentionOf(selfId)) {
@@ -409,9 +411,9 @@ object ConversationListRow {
         formatSubtitle(getString(R.string.conversation_list__ephemeral), senderName, isGroup, isEphemeral = true)
     } else {
       messageData.msgType match {
-        case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA =>
+        case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA | Message.Type.COMPOSITE =>
           formatSubtitle(messageData.contentString, senderName, isGroup, quotePrefix = isQuote)
-        case Message.Type.ASSET =>
+        case Message.Type.IMAGE_ASSET =>
           formatSubtitle(getString(R.string.conversation_list__shared__image), senderName, isGroup, quotePrefix = isQuote)
         case Message.Type.ANY_ASSET =>
           formatSubtitle(getString(R.string.conversation_list__shared__file), senderName, isGroup, quotePrefix = isQuote)
@@ -429,7 +431,7 @@ object ConversationListRow {
           members.headOption.flatMap(_.handle).map(_.string).fold("")(StringUtils.formatHandle)
         case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
           getString(R.string.conversation_list__added_you, senderName)
-        case Message.Type.MEMBER_JOIN if members.length > 1=>
+        case Message.Type.MEMBER_JOIN if members.length > 1 =>
           getString(R.string.conversation_list__added, memberName)
         case Message.Type.MEMBER_JOIN =>
           getString(R.string.conversation_list__added, memberName)
@@ -524,7 +526,7 @@ object ConversationListRow {
           subtitleStringForLastMessage(msg, lastUnreadMessageUser, lastUnreadMessageMembers, isGroupConv, selfId, conv.unreadCount.quotes > 0)
         }
       } { usr =>
-        formatSubtitle(getString(R.string.conversation_list__typing), usr.getDisplayName, isGroupConv)
+        formatSubtitle(getString(R.string.conversation_list__typing), usr.name, isGroupConv)
       }
     }
   }
@@ -539,16 +541,76 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
   setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
   inflate(R.layout.conv_list_item)
 
+  var firstIncomingConversation = Option.empty[ConvId]
+
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
   val badge = ViewUtils.getView(this, R.id.conversation_badge).asInstanceOf[ConversationBadge]
+  val separator = ViewUtils.getView(this, R.id.conversation_separator).asInstanceOf[View]
 
-  def setIncomingUsers(users: Seq[UserId]): Unit = {
+  def setIncoming(first: ConvId, numberOfRequests: Int): Unit = {
+    firstIncomingConversation = Some(first)
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_inactive))
-    avatar.setMembers(users, ConvId(), ConversationType.Group)
-    title.setText(getInboxName(users.size))
+    title.setText(getInboxName(numberOfRequests))
     badge.setStatus(ConversationBadge.WaitingConnection)
   }
 
+  def setSeparatorVisibility(isVisible: Boolean): Unit = {
+    separator.setVisibility(if (isVisible) View.VISIBLE else View.GONE)
+  }
+
   private def getInboxName(convSize: Int): String = getResources.getQuantityString(R.plurals.connect_inbox__link__name, convSize, convSize.toString)
+}
+
+class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+  with ConversationListRow
+  with ViewHelper
+  with DerivedLogTag {
+
+  import ConversationFolderListRow._
+  import com.waz.zclient.log.LogUI._
+  import com.waz.zclient.utils._
+
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
+
+  inflate(R.layout.conv_list_section_header)
+  setLayoutParameters()
+
+  private val expandIcon = findById[ImageView](R.id.conv_list_section_imageview_expand)
+  private val title = findById[TypefaceTextView](R.id.conv_list_section_textview_title)
+  private val badge = findById[ConversationBadge](R.id.folder_badge_text)
+
+  def setTitle(title: String): Unit = this.title.setText(title)
+
+  def setUnreadCount(unreadCount: Int): Unit = {
+    verbose(l"badge count: $unreadCount")
+    badge.setVisible(unreadCount > 0)
+    if (unreadCount > MaxBadgeCount) badge.setText(OverMaxBadge)
+    else if (unreadCount > 0) badge.setText(unreadCount.toString)
+  }
+
+  def setIsFirstHeader(isFirstHeader: Boolean): Unit = {
+    val params = getLayoutParams.asInstanceOf[RecyclerView.LayoutParams]
+    params.topMargin = if (isFirstHeader) 0 else getDimenPx(R.dimen.wire__padding__10)
+    setLayoutParams(params)
+  }
+
+  def setIsExpanded(isExpanded: Boolean): Unit = {
+    val resId = if (isExpanded) R.drawable.icon_arrow_down_white else R.drawable.icon_arrow_right_white
+    expandIcon.setImageDrawable(getDrawable(resId))
+  }
+
+  private def setLayoutParameters(): Unit = {
+    val params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__folder_row__height))
+    setLayoutParams(params)
+    setOrientation(LinearLayout.HORIZONTAL)
+    setPadding(getDimenPx(R.dimen.wire__padding__24), getDimenPx(R.dimen.wire__padding__10), 0, getDimenPx(R.dimen.wire__padding__10))
+  }
+}
+
+object ConversationFolderListRow {
+  val MaxBadgeCount = 99
+  val OverMaxBadge = "99+"
 }
