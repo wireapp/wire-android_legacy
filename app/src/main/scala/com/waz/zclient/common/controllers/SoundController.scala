@@ -1,22 +1,23 @@
 /**
- * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2018 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.zclient.common.controllers
 
+import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioManager
 import android.net.Uri
@@ -33,13 +34,12 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{DeprecationUtils, RingtoneUtils}
 import com.waz.zclient.utils.RingtoneUtils.{getUriForRawId, isDefaultValue}
+import com.waz.zclient.utils.{DeprecationUtils, RingtoneUtils}
 import com.waz.zclient.{R, _}
 
 import scala.concurrent.Await
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.duration._
+import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.Try
 
 
@@ -76,12 +76,13 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   private implicit val ev = EventContext.Implicits.global
   private implicit val ec = Threading.Background
 
-  private val zms = inject[Signal[ZMessaging]]
-  private val audioManager = Option(inject[AudioManager])
-  private val vibrator = Option(inject[Vibrator])
-  private val accountsService = inject[AccountsService]
+  private val zms                 = inject[Signal[ZMessaging]]
+  private val audioManager        = Option(inject[AudioManager])
+  private val vibrator            = Option(inject[Vibrator])
+  private val accountsService     = inject[AccountsService]
+  private val notificationManager = inject[NotificationManager]
 
-  private val mediaManager = zms.flatMap(z => Signal.future(z.mediamanager.mediaManager))
+  private val mediaManager   = zms.flatMap(z => Signal.future(z.mediamanager.mediaManager))
   private val soundIntensity = zms.flatMap(_.mediamanager.soundIntensity)
 
   private var _mediaManager = Option.empty[MediaManager]
@@ -94,6 +95,22 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   }
 
   def currentTonePrefs: (String, String, String) = tonePrefs.currentValue.getOrElse((null, null, null))
+
+  private def shouldPlayCallTone = notificationManager.getCurrentInterruptionFilter match {
+    case NotificationManager.INTERRUPTION_FILTER_ALL      =>
+      true
+    case NotificationManager.INTERRUPTION_FILTER_PRIORITY =>
+      val policy = notificationManager.getNotificationPolicy
+      (policy.priorityCallSenders == NotificationManager.Policy.PRIORITY_SENDERS_ANY
+        || policy.priorityCategories == NotificationManager.Policy.PRIORITY_CATEGORY_CALLS
+        || policy.priorityCategories == NotificationManager.Policy.PRIORITY_CATEGORY_REPEAT_CALLERS)
+    case NotificationManager.INTERRUPTION_FILTER_UNKNOWN  =>
+      true
+    case NotificationManager.INTERRUPTION_FILTER_ALARMS   =>
+      false
+    case NotificationManager.INTERRUPTION_FILTER_NONE     =>
+      true
+  }
 
   private val tonePrefs = (for {
     zms <- zms
@@ -121,11 +138,12 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
 
   override def soundIntensityNone: Boolean =
     soundIntensity.currentValue.contains(IntensityLevel.NONE)
+
   override def soundIntensityFull: Boolean =
     soundIntensity.currentValue.isEmpty || soundIntensity.currentValue.contains(IntensityLevel.FULL)
 
   override def setIncomingRingTonePlaying(userId: UserId, play: Boolean): Unit = {
-    if (!soundIntensityNone) setMediaPlaying(R.raw.ringing_from_them, play)
+    if (!soundIntensityNone && shouldPlayCallTone) setMediaPlaying(R.raw.ringing_from_them, play)
     setVibrating(R.array.ringing_from_them, play, loop = true, Some(userId))
   }
 
@@ -135,7 +153,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   //that both files stops is a fix for the symptom, but not the root cause - which could be affecting other things...
   override def setOutgoingRingTonePlaying(play: Boolean, isVideo: Boolean = false): Unit =
     if (play) {
-      if (soundIntensityFull) setMediaPlaying(if (isVideo) R.raw.ringing_from_me_video else R.raw.ringing_from_me, play = true)
+      if (soundIntensityFull) setMediaPlaying(if (isVideo) R.raw.ringing_from_me_video else R.raw.ringing_from_me)
     } else {
       setMediaPlaying(R.raw.ringing_from_me_video, play = false)
       setMediaPlaying(R.raw.ringing_from_me, play = false)
@@ -185,8 +203,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   }
 
   def playRingFromThemInCall(play: Boolean): Unit =
-    setMediaPlaying(R.raw.ringing_from_them_incall, play)
-
+    if (shouldPlayCallTone) setMediaPlaying(R.raw.ringing_from_them_incall, play)
   /**
     * @param play For looping patterns, this parameter will tell to stop vibrating if they have previously been started
     */
