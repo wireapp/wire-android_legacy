@@ -35,6 +35,7 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.lenient
+import org.mockito.Mockito.verifyNoInteractions
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
@@ -152,6 +153,8 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observeOnce {
                 it shouldBe Unit
             }
+
+            verifyNoInteractions(createPersonalAccountWithEmailViewModel.sendActivationCodeSuccessLiveData)
         }
 
     @Test
@@ -197,6 +200,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observeOnce {
                 it shouldBe Unit
             }
+            verifyNoInteractions(createPersonalAccountWithEmailViewModel.activateEmailSuccessLiveData)
         }
 
     @Test
@@ -265,6 +269,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observeOnce {
                 it shouldBe Unit
             }
+            verifyNoInteractions(createPersonalAccountWithEmailViewModel.registerSuccessLiveData)
         }
 
     @Test
