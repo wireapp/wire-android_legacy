@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.auth.registration.personal.email
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -10,7 +11,6 @@ import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
-import com.waz.zclient.core.ui.dialog.WireDialog
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_pin_code.*
 
@@ -68,10 +68,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
                 showEnterNameScreen()
             }
             activateEmailErrorLiveData.observe(viewLifecycleOwner) {
-                WireDialog.Builder(requireContext())
-                    .type(WireDialog.GENERIC_ERROR)
-                    .message(it.message)
-                    .show()
+                showGenericErrorDialog(it.message)
                 clearPinCode()
                 showKeyboard()
             }
@@ -84,10 +81,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
                 //TODO show correctly send activation code success messages
             }
             sendActivationCodeErrorLiveData.observe(viewLifecycleOwner) {
-                WireDialog.Builder(requireContext())
-                    .type(WireDialog.GENERIC_ERROR)
-                    .message(it.message)
-                    .show()
+                showGenericErrorDialog(it.message)
             }
         }
     }
@@ -109,11 +103,23 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
 
     private fun observeNetworkConnectionError() {
         createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
-            WireDialog.Builder(requireContext())
-                .type(WireDialog.NETWORK_CONNECTION_ERROR)
-                .show()
+            showNetworkConnectionErrorDialog()
         }
     }
+
+    private fun showNetworkConnectionErrorDialog() = AlertDialog.Builder(context)
+        .setTitle(R.string.no_internet_connection_title)
+        .setMessage(R.string.no_internet_connection_message)
+        .setPositiveButton(android.R.string.ok) { _, _ -> }
+        .create()
+        .show()
+
+
+    private fun showGenericErrorDialog(messageResId: Int) = AlertDialog.Builder(context)
+        .setMessage(messageResId)
+        .setPositiveButton(android.R.string.ok) { _, _ -> }
+        .create()
+        .show()
 
     companion object {
         fun newInstance() = CreatePersonalAccountPinCodeFragment()
