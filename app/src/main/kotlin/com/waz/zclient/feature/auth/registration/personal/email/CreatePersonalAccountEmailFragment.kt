@@ -10,15 +10,14 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.viewModel
-
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
+import com.waz.zclient.feature.auth.registration.personal.pincode.CreatePersonalAccountPinCodeFragment
 import kotlinx.android.synthetic.main.fragment_create_personal_account_email.*
 
 class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_personal_account_email) {
 
     //TODO Add loading status
-    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
-        by viewModel(REGISTRATION_SCOPE_ID)
+    private val createPersonalAccountEmailViewModel: CreatePersonalAccountEmailViewModel by viewModel(REGISTRATION_SCOPE_ID)
 
     private val emailCredentialsViewModel: EmailCredentialsViewModel by sharedViewModel(REGISTRATION_SCOPE_ID)
 
@@ -32,7 +31,7 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
     }
 
     private fun observeEmailValidationData() {
-        createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observe(viewLifecycleOwner) {
+        createPersonalAccountEmailViewModel.isValidEmailLiveData.observe(viewLifecycleOwner) {
             updateConfirmationButtonStatus(it)
         }
     }
@@ -43,21 +42,21 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
 
     private fun initEmailChangedListener() {
         createPersonalAccountEmailEditText.doAfterTextChanged {
-            createPersonalAccountWithEmailViewModel.validateEmail(it.toString())
+            createPersonalAccountEmailViewModel.validateEmail(it.toString())
         }
     }
 
     private fun initConfirmationButton() {
         updateConfirmationButtonStatus(false)
         createPersonalAccountEmailConfirmationButton.setOnClickListener {
-            createPersonalAccountWithEmailViewModel.sendActivationCode(
+            createPersonalAccountEmailViewModel.sendActivationCode(
                 createPersonalAccountEmailEditText.text.toString()
             )
         }
     }
 
     private fun observeActivationCodeData() {
-        with(createPersonalAccountWithEmailViewModel) {
+        with(createPersonalAccountEmailViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
                 emailCredentialsViewModel.saveEmail(
                     createPersonalAccountEmailEditText.text.toString()
@@ -78,7 +77,7 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
     }
 
     private fun observeNetworkConnectionError() {
-        createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
+        createPersonalAccountEmailViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
             showNetworkConnectionErrorDialog()
         }
     }

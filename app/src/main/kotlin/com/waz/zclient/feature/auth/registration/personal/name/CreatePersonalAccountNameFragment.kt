@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.auth.registration.personal.email
+package com.waz.zclient.feature.auth.registration.personal.name
 
 import android.os.Bundle
 import android.view.View
@@ -11,11 +11,13 @@ import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
+import com.waz.zclient.feature.auth.registration.personal.email.EmailCredentialsViewModel
+import com.waz.zclient.feature.auth.registration.personal.password.CreatePersonalAccountPasswordFragment
 import kotlinx.android.synthetic.main.fragment_create_personal_account_name.*
 
 class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_personal_account_name) {
 
-    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
+    private val createPersonalAccountNameViewModel: CreatePersonalAccountNameViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
     private val emailCredentialsViewModel: EmailCredentialsViewModel
@@ -30,7 +32,7 @@ class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_pers
     }
 
     private fun observeNameValidationData() {
-        createPersonalAccountWithEmailViewModel.isValidNameLiveData.observe(viewLifecycleOwner) {
+        createPersonalAccountNameViewModel.isValidNameLiveData.observe(viewLifecycleOwner) {
             updateConfirmationButtonStatus(it)
         }
     }
@@ -41,7 +43,7 @@ class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_pers
 
     private fun initNameChangedListener() {
         createPersonalAccountNameEditText.doAfterTextChanged {
-            createPersonalAccountWithEmailViewModel.validateName(it.toString())
+            createPersonalAccountNameViewModel.validateName(it.toString())
         }
     }
 
