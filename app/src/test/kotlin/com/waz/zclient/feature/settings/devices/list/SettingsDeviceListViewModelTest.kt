@@ -4,11 +4,15 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.clients.Client
 import com.waz.zclient.shared.clients.ClientLocation
 import com.waz.zclient.shared.clients.usecase.GetAllClientsUseCase
+import junit.framework.Assert.assertTrue
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -17,7 +21,11 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.MockitoAnnotations
 
+@ExperimentalCoroutinesApi
 class SettingsDeviceListViewModelTest {
+
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var viewModel: SettingsDeviceListViewModel
 
@@ -39,21 +47,21 @@ class SettingsDeviceListViewModelTest {
         val location = mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(time = TEST_TIME, label = TEST_LABEL, type = TEST_TYPE, id = TEST_ID, clazz = TEST_CLASS, model = TEST_MODEL, location = location)
 
+        viewModel.loading.observeOnce { isLoading ->
+            assertTrue(isLoading)
+        }
+
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client))) }
 
         viewModel.loadData()
 
-        viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
-        }
-
         viewModel.otherDevices.observeOnce {
             val clientItem = it[0].client
-            assert(viewModel.loading.value == false)
-            assert(clientItem.label == TEST_LABEL)
-            assert(clientItem.time == TEST_TIME)
-            assert(clientItem.id == TEST_ID)
-            assert(it.size == 1)
+            assertEquals(viewModel.loading.value, false)
+            assertEquals(clientItem.label, TEST_LABEL)
+            assertEquals(clientItem.time, TEST_TIME)
+            assertEquals(clientItem.id, TEST_ID)
+            assertEquals(it.size, 1)
         }
 
     }
@@ -62,14 +70,14 @@ class SettingsDeviceListViewModelTest {
     fun `given data source returns NetworkError, then update error live data`() {
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(NetworkConnection)) }
 
-        viewModel.loadData()
-
         viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
+            assertTrue(isLoading)
         }
 
+        viewModel.loadData()
+
         viewModel.error.observeOnce {
-            assert(viewModel.loading.value == false)
+            assertTrue(viewModel.loading.value == false)
             //TODO update loading live data scenario when it has been confirmed
         }
     }
@@ -78,13 +86,14 @@ class SettingsDeviceListViewModelTest {
     fun `given data source returns ServerError, then update error live data`() {
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(ServerError)) }
 
-
         viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
+            assertTrue(isLoading)
         }
 
+        viewModel.loadData()
+
         viewModel.error.observeOnce {
-            assert(viewModel.loading.value == false)
+            assertTrue(viewModel.loading.value == false)
             //TODO update loading live data scenario when it has been confirmed
         }
     }
@@ -93,14 +102,14 @@ class SettingsDeviceListViewModelTest {
     fun `given data source returns CancellationError, then update error live data`() {
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(NetworkConnection)) }
 
-        viewModel.loadData()
-
         viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
+            assertTrue(isLoading)
         }
 
+        viewModel.loadData()
+
         viewModel.error.observeOnce {
-            assert(viewModel.loading.value == false)
+            assertTrue(viewModel.loading.value == false)
             //TODO update loading live data scenario when it has been confirmed
         }
     }
@@ -109,7 +118,7 @@ class SettingsDeviceListViewModelTest {
         private const val TEST_TIME = "2019-11-14T11:00:42.482Z"
         private const val TEST_LABEL = "Tester's phone"
         private const val TEST_CLASS = "phone"
-        private const val TEST_TYPE = "permanant"
+        private const val TEST_TYPE = "permanent"
         private const val TEST_ID = "4555f7b2"
         private const val TEST_MODEL = "Samsung"
     }

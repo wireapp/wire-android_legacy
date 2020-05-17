@@ -5,23 +5,28 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.config.AppDetailsConfig
 import com.waz.zclient.core.config.HostUrlConfig
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
+import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.Mockito.lenient
+import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 class SettingsAboutViewModelTest : UnitTest() {
+
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var settingsAboutViewModel: SettingsAboutViewModel
 
@@ -42,34 +47,34 @@ class SettingsAboutViewModelTest : UnitTest() {
     @Before
     fun setup() {
         settingsAboutViewModel = SettingsAboutViewModel(versionDetailsConfig, hostUrl, profileUseCase)
-        Mockito.`when`(hostUrl.url).thenReturn(CONFIG_URL)
-        userFlow = flow { user }
+        `when`(hostUrl.url).thenReturn(CONFIG_URL)
+        userFlow = flowOf(user)
     }
 
     @Test
     fun `given terms button is clicked, when team id exists, then provide team terms and conditions url`() = runBlockingTest {
-        lenient().`when`(user.teamId).thenReturn(TEST_TEAM_ID)
-        lenient().`when`(profileUseCase.run(Unit)).thenReturn(userFlow)
+        `when`(user.teamId).thenReturn(TEST_TEAM_ID)
+        `when`(profileUseCase.run(Unit)).thenReturn(userFlow)
 
         settingsAboutViewModel.onTermsButtonClicked()
 
         userFlow.collect {
             settingsAboutViewModel.urlLiveData.observeOnce {
-                it.url shouldBe TEAM_TERMS_AND_CONDITIONS_TEST_URL
+                assertEquals(TEAM_TERMS_AND_CONDITIONS_TEST_URL, it.url)
             }
         }
     }
 
     @Test
     fun `given terms button is clicked, when team id is empty, then open personal terms and conditions url`() = runBlockingTest {
-        lenient().`when`(user.teamId).thenReturn(String.empty())
-        lenient().`when`(profileUseCase.run(Unit)).thenReturn(userFlow)
+        `when`(user.teamId).thenReturn(String.empty())
+        `when`(profileUseCase.run(Unit)).thenReturn(userFlow)
 
         settingsAboutViewModel.onTermsButtonClicked()
 
         userFlow.collect {
             settingsAboutViewModel.urlLiveData.observeOnce {
-                it.url shouldBe PERSONAL_TERMS_AND_CONDITIONS_TEST_URL
+                assertEquals(PERSONAL_TERMS_AND_CONDITIONS_TEST_URL, it.url)
             }
         }
     }
@@ -103,7 +108,7 @@ class SettingsAboutViewModelTest : UnitTest() {
 
     @Test
     fun `given version button is clicked over 10 times, then show version details`() {
-        Mockito.`when`(versionDetailsConfig.versionDetails).thenReturn(TEST_VERSION)
+        `when`(versionDetailsConfig.versionDetails).thenReturn(TEST_VERSION)
 
         for (i in 1..11) {
             settingsAboutViewModel.onVersionButtonClicked()

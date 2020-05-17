@@ -4,10 +4,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.shared.user.phonenumber.Country
 import kotlinx.coroutines.Dispatchers
 
-class CountryCodePickerViewModel(private val getCountryCodesUseCase: GetCountryCodesUseCase) : ViewModel() {
+class CountryCodePickerViewModel(
+    private val getCountryCodesUseCase: GetCountryCodesUseCase
+) : ViewModel(),
+    UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _countriesLiveData = MutableLiveData<List<Country>>()
     private val _countryLiveData = MutableLiveData<Country>()

@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.auth.registration.personal
 
+import com.waz.zclient.R
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.config.PasswordLengthConfig
@@ -8,7 +9,9 @@ import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAc
 import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
 import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedEmail
+import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.shared.activation.usecase.ActivateEmailParams
 import com.waz.zclient.shared.activation.usecase.ActivateEmailUseCase
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
 import com.waz.zclient.shared.activation.usecase.EmailInUse
@@ -22,15 +25,21 @@ import com.waz.zclient.shared.user.password.ValidatePasswordUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import org.amshove.kluent.shouldBe
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.lenient
+import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
+
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
 
@@ -71,96 +80,97 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     @Test
     fun `given validateEmail is called, when the validation succeeds then ok button should be enabled`() =
         runBlockingTest {
-            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
+            `when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
             createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observeOnce {
-                it shouldBe true
+                assertTrue(it)
             }
         }
 
     @Test
     fun `given validateEmail is called, when the validation fails with EmailTooShortError then ok button should be disabled`() =
         runBlockingTest {
-            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailTooShort))
+            `when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailTooShort))
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
             createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observeOnce {
-                it shouldBe false
+                assertFalse(it)
             }
         }
 
     @Test
     fun `given validateEmail is called, when the validation fails with EmailInvalidError then ok button should be disabled`() =
         runBlockingTest {
-            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailInvalid))
+            `when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailInvalid))
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
             createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observeOnce {
-                it shouldBe false
+                assertFalse(it)
             }
         }
 
     @Test
     fun `given sendActivationCode is called, when the email is blacklisted then the activation code is not sent`() =
         runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlacklisted))
+            `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlacklisted))
 
             createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
 
             createPersonalAccountWithEmailViewModel.sendActivationCodeErrorLiveData.observeOnce {
-                it shouldBe EmailBlacklisted
+                assertEquals(it.errorMessage, R.string.create_personal_account_with_email_email_blacklisted_error)
             }
         }
 
     @Test
     fun `given sendActivationCode is called, when the email is in use then the activation code is not sent`() =
         runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
+            `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
             createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
 
             createPersonalAccountWithEmailViewModel.sendActivationCodeErrorLiveData.observeOnce {
-                it shouldBe EmailInUse
+                assertEquals(it.errorMessage, R.string.create_personal_account_with_email_email_in_use_error)
             }
         }
 
     @Test
     fun `given sendActivationCode is called, when there is no error then the activation code is sent`() =
         runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
+            `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
 
             createPersonalAccountWithEmailViewModel.sendActivationCodeSuccessLiveData.observeOnce {
-                it shouldBe Unit
+                assertEquals(it, Unit)
             }
         }
 
     @Test
     fun `given activateEmail is called, when the code is invalid then the activation is not done`() =
         runBlockingTest {
-            lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Left(InvalidCode))
+            val params = ActivateEmailParams(TEST_EMAIL, TEST_CODE)
+            `when`(activateEmailUseCase.run(params)).thenReturn(Either.Left(InvalidCode))
 
             createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.activateEmailErrorLiveData.observeOnce {
-                it shouldBe InvalidCode
+                assertEquals(it.errorMessage, R.string.email_verification_invalid_code_error)
             }
         }
 
     @Test
     fun `given activateEmail is called, when the code is valid then the activation is done`() =
         runBlockingTest {
-            lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
+            `when`(activateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.activateEmailSuccessLiveData.observeOnce {
-                it shouldBe Unit
+                assertEquals(it, Unit)
             }
         }
 
@@ -169,48 +179,48 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     @Test
     fun `given register is called, when the email is unauthorized then the registration is not done`() =
         runBlockingTest {
-            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(UnauthorizedEmail))
+            `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(UnauthorizedEmail))
 
             createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.registerErrorLiveData.observeOnce {
-                it shouldBe UnauthorizedEmail
+                assertEquals(it.errorMessage, R.string.create_personal_account_unauthorized_email_error)
             }
         }
 
     @Test
     fun `given register is called, when the activation code is invalid then the registration is not done`() =
         runBlockingTest {
-            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(InvalidActivationCode))
+            `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(InvalidActivationCode))
 
             createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.registerErrorLiveData.observeOnce {
-                it shouldBe InvalidActivationCode
+                assertEquals(it.errorMessage, R.string.create_personal_account_invalid_activation_code_error)
             }
         }
 
     @Test
     fun `given register is called, when the email is in use then the registration is not done`() =
         runBlockingTest {
-            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
+            `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
             createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.registerErrorLiveData.observeOnce {
-                it shouldBe EmailInUse
+                assertEquals(it.errorMessage, R.string.create_personal_account_email_in_use_error)
             }
         }
 
     @Test
     fun `given register is called, when there is no error then the registration is done`() =
         runBlockingTest {
-            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
+            `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.registerSuccessLiveData.observeOnce {
-                it shouldBe Unit
+                assertEquals(it, Unit)
             }
         }
 
