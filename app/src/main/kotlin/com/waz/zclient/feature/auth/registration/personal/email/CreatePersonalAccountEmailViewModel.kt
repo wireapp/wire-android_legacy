@@ -77,5 +77,4 @@ class CreatePersonalAccountEmailViewModel(
     }
 }
 
-
 data class ErrorMessage(@StringRes val message: Int)

@@ -33,7 +33,6 @@ class CreatePersonalAccountPinCodeViewModel(
     val activateEmailErrorLiveData: LiveData<ErrorMessage> = _activateEmailErrorLiveData
     val networkConnectionErrorLiveData: LiveData<Unit> = _networkConnectionErrorLiveData
 
-
     fun sendActivationCode(email: String) {
         sendEmailActivationCodeUseCase(viewModelScope, SendEmailActivationCodeParams(email)) {
             it.fold(::sendActivationCodeFailure) { sendActivationCodeSuccess() }
