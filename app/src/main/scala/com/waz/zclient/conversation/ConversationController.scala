@@ -345,7 +345,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def setCurrentConversationToNext(requester: ConversationChangeRequester): Future[Unit] = {
     def nextConversation(convId: ConvId): Future[Option[ConvId]] =
       convListController.regularConversationListData.head.map { regular =>
-        val r = regular.map(_._1)
+        val r = regular.map(_.conv)
         r.lift(r.indexWhere(_.id == convId) + 1).map(_.id)
       } (Threading.Background)
 

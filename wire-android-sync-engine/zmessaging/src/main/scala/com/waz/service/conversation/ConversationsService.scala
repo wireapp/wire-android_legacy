@@ -425,7 +425,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
-  // NOTE: This could be simpler if we didn't cae about backward compatibility
+  // NOTE: This could be simpler if we didn't care about backward compatibility
   override def conversationName(convId: ConvId): Signal[Name] =
     convsStorage.optSignal(convId).flatMap {
       case None =>
@@ -445,7 +445,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
           else if (userNames.size == 1) userNames.head
           // This is for backward compatibility: all new real group conversations should have their names set.
           // For those who don't, we create the name from first four members' names.
-          else Name(userNames.map(_.str).mkString(", "))
+          else Name(userNames.map(_.str).toSeq.sorted.mkString(", "))
     }
 
   private def deleteConversation(convData: ConversationData): Future[Unit] = (for {

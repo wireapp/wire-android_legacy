@@ -105,7 +105,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     selfRole             <- convController.selfRoleInConv(convId)
     isCurrentUserCreator <- Signal.future(convController.isCurrentUserCreator(convId))
     selectedParticipant  <- participantsController.selectedParticipant
-    favoriteConvIds      <- convListController.favoriteConversations.map(_.map(_._1.id).toSet)
+    favoriteConvIds      <- convListController.favoriteConversations.map(_.map(_.conv.id).toSet)
     customFolderId       <- Signal.future(convListController.getCustomFolderId(convId))
     customFolderData     <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
   } yield {

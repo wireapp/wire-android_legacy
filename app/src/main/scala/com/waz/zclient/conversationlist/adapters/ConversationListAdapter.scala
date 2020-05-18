@@ -24,6 +24,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, FolderId, Name}
 import com.waz.utils.events.{EventContext, EventStream, SourceStream}
 import com.waz.utils.returning
+import com.waz.zclient.conversationlist.ConversationListController.NamedConversation
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}
 import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, ConversationListRow, IncomingConversationListRow, NormalConversationListRow}
 import com.waz.zclient.log.LogUI._
@@ -98,13 +99,13 @@ abstract class ConversationListAdapter (implicit context: Context, eventContext:
 
   override def onClick(position: Int): Unit = items(position) match {
     case Item.IncomingRequests(first, _) => onConversationClick ! first
-    case Item.Conversation(data, _, _)   => onConversationClick ! data.id
+    case Item.Conversation(conv, _, _)   => onConversationClick ! conv.id
     case _                               =>
   }
 
   override def onLongClick(position: Int): Boolean = items(position) match {
-    case Item.Conversation(data, _, _) =>
-      onConversationLongClick ! data
+    case Item.Conversation(conv, _, _) =>
+      onConversationLongClick ! conv
       true
     case _ =>
       false
@@ -133,11 +134,19 @@ object ConversationListAdapter {
       }
     }
 
-    case class Conversation(data: ConversationData, displayName: Name, sectionTitle: Option[String] = None) extends Item {
+    case class Conversation(conv: ConversationData, name: Name, sectionTitle: Option[String]) extends Item {
       override val contentDescription: String = {
         val prefix = sectionTitle.map { t => s"$t: "}.getOrElse("")
-        prefix + displayName.str
+        prefix + name.str
       }
+    }
+
+    object Conversation {
+      def apply(namedConversation: NamedConversation): Conversation =
+        Conversation(namedConversation.conv, namedConversation.name, None)
+
+      def apply(namedConversation: NamedConversation, title: String): Conversation =
+        Conversation(namedConversation.conv, namedConversation.name, Some(title))
     }
 
     case class IncomingRequests(first: ConvId, numberOfRequests: Int) extends Item {
@@ -161,7 +170,7 @@ object ConversationListAdapter {
     extends ConversationRowViewHolder(row, listener) {
 
     def bind(item: Item.Conversation): Unit = {
-      row.setConversation(item.data, item.displayName)
+      row.setConversation(item.conv, item.name)
       row.setContentDescription(item.contentDescription)
     }
   }
@@ -233,7 +242,7 @@ object ConversationListAdapter {
         case (lhs: Header, rhs: Header) =>
           lhs.id == rhs.id
         case (lhs: Conversation, rhs: Conversation) =>
-          lhs.data.id == rhs.data.id && lhs.sectionTitle == rhs.sectionTitle
+          lhs.conv.id == rhs.conv.id && lhs.sectionTitle == rhs.sectionTitle
         case (_: IncomingRequests, _: IncomingRequests) =>
           true
         case _ =>
@@ -245,8 +254,8 @@ object ConversationListAdapter {
       (oldList(oldItemPosition), newList(newItemPosition)) match {
         case (Header(_, title, isExpanded, oldCount), Header(_, newTitle, newIsExpanded, newCount)) =>
           title == newTitle && isExpanded && newIsExpanded && oldCount == newCount
-        case (Conversation(data, _, _), Conversation(newData, _, _)) =>
-          data == newData
+        case (Conversation(conv, _, _), Conversation(newConv, _, _)) =>
+          conv == newConv
         case (IncomingRequests(_, requests), IncomingRequests(_, newRequests)) =>
           requests == newRequests
         case _ =>
