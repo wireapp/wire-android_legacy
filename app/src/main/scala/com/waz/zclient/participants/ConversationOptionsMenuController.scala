@@ -65,7 +65,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   override val selectedItems: Signal[Set[MenuItem]] = Signal.const(Set())
   override val title: Signal[Option[String]] =
     if (mode.inConversationList)
-      Signal.future(convController.getConversation(convId).map(_.map(_.displayName)))
+      convController.conversationName(convId).map {
+        case name if name.isEmpty => None
+        case name                 => Some(name.str)
+      }
     else
       Signal.const(None)
 
@@ -102,7 +105,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     selfRole             <- convController.selfRoleInConv(convId)
     isCurrentUserCreator <- Signal.future(convController.isCurrentUserCreator(convId))
     selectedParticipant  <- participantsController.selectedParticipant
-    favoriteConvIds      <- convListController.favoriteConversations.map(convs => convs.map(_.id))
+    favoriteConvIds      <- convListController.favoriteConversations.map(_.map(_.conv.id).toSet)
     customFolderId       <- Signal.future(convListController.getCustomFolderId(convId))
     customFolderData     <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
   } yield {

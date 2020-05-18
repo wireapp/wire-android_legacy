@@ -189,12 +189,10 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     } yield (cs, c)
 
 
-  val conversation        = callingZms.zip(callConvId) flatMap { case (z, cId) => z.convsStorage.signal(cId) }
-  val conversationName    = conversation.map(_.displayName)
-  val conversationMembers = for {
-    cId     <- callConvId
-    members <- convController.convMembers(cId)
-  } yield members
+  private val zmsConvId = callingZms.zip(callConvId)
+  val conversation: Signal[ConversationData] = zmsConvId.flatMap { case (z, cId) => z.convsStorage.signal(cId) }
+  val conversationName: Signal[Name] = zmsConvId.flatMap { case (z, cId) => z.conversations.conversationName(cId) }
+  val conversationMembers: Signal[Map[UserId, ConversationRole]] = zmsConvId.flatMap { case (z, cId) => z.conversations.convMembers(cId) }
 
   private lazy val otherUser = Signal(isGroupCall, userStorage, otherParticipants.map(_.keys.toSeq.headOption)).flatMap {
     case (false, usersStorage, Some(participant)) =>

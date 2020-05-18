@@ -25,7 +25,9 @@ import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.zclient.participants.OptionsMenuController.BaseMenuItem
 import com.waz.zclient.utils.ContextUtils.getString
 
-class NotificationsOptionsMenuController(convId: ConvId, fromConversationList: Boolean)(implicit injector: Injector, context: Context, ec: EventContext) extends OptionsMenuController with Injectable {
+class NotificationsOptionsMenuController(convId: ConvId, fromConversationList: Boolean)
+                                        (implicit injector: Injector, context: Context, ec: EventContext)
+  extends OptionsMenuController with Injectable {
   import NotificationsOptionsMenuController._
 
   private val convController = inject[ConversationController]
@@ -33,7 +35,10 @@ class NotificationsOptionsMenuController(convId: ConvId, fromConversationList: B
 
   override val title: Signal[Option[String]] =
     if (fromConversationList)
-      conversation.map(_.map(_.displayName))
+      convController.conversationName(convId).map {
+        case name if name.isEmpty => None
+        case name                 => Some(name.str)
+      }
     else
       Signal.const(Some(getString(R.string.conversation__action__notifications_title)))
   override val optionItems: Signal[Seq[OptionsMenuController.MenuItem]] = Signal.const(Seq(Everything, OnlyMentions, Nothing))

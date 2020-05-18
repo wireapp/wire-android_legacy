@@ -29,7 +29,6 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils.{getString, showConfirmationDialog, showErrorDialog, showPermissionsErrorDialog}
 import com.waz.zclient.utils.PhoneUtils
@@ -117,7 +116,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
               )
             case _                                => Future.successful(true)
           }
-        members           <- inject[ConversationController].convMembers(newCallConv.id).head
+        members           <- newCallZms.conversations.convMembers(newCallConv.id).head
         true              <-
           if (members.size > 5 && !acceptingCall && !isJoiningCall) //!acceptingCall is superfluous, but here for clarity
             showConfirmationDialog(

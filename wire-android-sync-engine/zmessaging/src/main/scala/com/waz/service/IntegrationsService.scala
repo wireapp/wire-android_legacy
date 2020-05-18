@@ -91,7 +91,7 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
   override def getOrCreateConvWithService(pId: ProviderId, serviceId: IntegrationId) = {
     def createConv =
       for {
-        (conv, syncId) <- convsUi.createGroupConversation()
+        (conv, syncId) <- convsUi.createGroupConversation(Name.Empty)
         res <- syncRequests.await(syncId).flatMap {
           case Success =>
             for {

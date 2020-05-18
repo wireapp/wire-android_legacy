@@ -48,8 +48,8 @@ trait UserService {
   def userDeleteEventsStage: Stage.Atomic
 
   def selfUser: Signal[UserData]
-
   def currentConvMembers: Signal[Set[UserId]]
+  def userNames: Signal[Map[UserId, Name]]
 
   def getSelfUser: Future[Option[UserData]]
   def findUser(id: UserId): Future[Option[UserData]]
@@ -119,6 +119,9 @@ class UserServiceImpl(selfUserId:        UserId,
   } yield membersIds
 
   currentConvMembers(syncIfNeeded(_))
+
+  override lazy val userNames: Signal[Map[UserId, Name]] =
+    usersStorage.contents.map(_.mapValues(_.name))
 
   //Update user data for other accounts
   accounts.accountsWithManagers.map(_ - selfUserId)(userIds => syncIfNeeded(userIds))
@@ -195,17 +198,6 @@ class UserServiceImpl(selfUserId:        UserId,
   def syncSelfNow: Future[Option[UserData]] = Serialized.future("syncSelfNow", selfUserId) {
     usersClient.loadSelf().future.flatMap {
       case Right(info) =>
-        //TODO: Do we still need this?
-//        val v2profilePic = info.mediumPicture.filter(_.convId.isDefined)
-//
-//        v2profilePic.fold(Future.successful(())){ pic =>
-//          verbose(l"User has v2 picture - re-uploading as v3")
-//          for {
-//            _ <- sync.postSelfPicture(v2profilePic.map(_.id))
-//            _ <- assetsStorage.update(pic.id, _.copy(convId = None)) //mark assets as v3
-//            _ <- usersClient.updateSelf(info).future
-//          } yield (())
-//        }.flatMap (_ => )
         updateSyncedUsers(Seq(info)) map { _.headOption }
       case Left(err) =>
         error(l"loadSelf() failed: $err")

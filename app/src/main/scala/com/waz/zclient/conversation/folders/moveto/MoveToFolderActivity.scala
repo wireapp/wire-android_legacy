@@ -53,18 +53,20 @@ class MoveToFolderActivity extends BaseActivity
     cancelOperation()
   }
 
-  override def onPrepareNewFolderClicked(): Unit = {
-    conversationController.getConversation(convId).foreach {
-      case Some(conv) => openCreteNewFolderScreen(conv.displayName.toString)
+  override def onPrepareNewFolderClicked(): Unit =
+    conversationController.getConversation(convId).map {
+      case Some(_) =>
+        conversationController.conversationName(convId).head.foreach { convName =>
+          openCreateNewFolderScreen(convName.str)
+        }
       case None => cancelOperation()
     }
-  }
 
   override def onConvFolderChanged(): Unit = {
     finishOperation()
   }
 
-  private def openCreteNewFolderScreen(convName: String): Unit = {
+  private def openCreateNewFolderScreen(convName: String): Unit = {
     getSupportFragmentManager
       .beginTransaction()
       .replace(R.id.activity_blank_framelayout_container,

@@ -59,7 +59,7 @@ trait ConversationsContentUpdater {
                                     creator:     UserId,
                                     members:     Set[UserId],
                                     defaultRole: ConversationRole,
-                                    name:        Option[Name] = None,
+                                    name:        Option[Name],
                                     hidden:      Boolean = false,
                                     access:      Set[Access] = Set(Access.PRIVATE),
                                     accessRole:  AccessRole = AccessRole.PRIVATE,
@@ -182,31 +182,28 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                              creator:     UserId,
                                              members:     Set[UserId],
                                              defaultRole: ConversationRole,
-                                             name:        Option[Name] = None,
+                                             name:        Option[Name],
                                              hidden:      Boolean = false,
                                              access:      Set[Access] = Set(Access.PRIVATE),
                                              accessRole:  AccessRole = AccessRole.PRIVATE,
                                              receiptMode: Int = 0
-                                            ): Future[ConversationData] = {
+                                            ): Future[ConversationData] =
     for {
-      users <- usersStorage.listAll(members)
-      conv  <- storage.insert(
+      conv <- storage.insert(
         ConversationData(
           convId,
           remoteId,
           name          = name,
           creator       = creator,
           convType      = convType,
-          generatedName = NameUpdater.generatedName(convType)(users),
           hidden        = hidden,
           team          = teamId,
           access        = access,
           accessRole    = Some(accessRole),
           receiptMode   = Some(receiptMode)
         ))
-      _    <- membersStorage.updateOrCreateAll(convId, Map(creator -> ConversationRole.AdminRole) ++ members.map(_ -> defaultRole))
+      _  <- membersStorage.updateOrCreateAll(convId, Map(creator -> ConversationRole.AdminRole) ++ members.map(_ -> defaultRole))
     } yield conv
-  }
 
   override def hideIncomingConversation(user: UserId) = storage.update(ConvId(user.str), { conv =>
     if (conv.convType == ConversationType.Incoming) conv.copy(hidden = true) else conv

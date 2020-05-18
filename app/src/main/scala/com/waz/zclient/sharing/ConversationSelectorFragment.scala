@@ -41,22 +41,21 @@ import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.{RichWireInstant, returning}
 import com.waz.zclient._
+import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, NewContent, TextContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.controllers.{AssetsController, SharingController}
 import com.waz.zclient.common.views._
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.cursor.{EphemeralLayout, EphemeralTimerButton}
 import com.waz.zclient.glide.WireGlide
-import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, KeyboardUtils}
 import com.waz.zclient.ui.views.CursorIconButton
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
-import com.waz.zclient.utils.ContextUtils.{getDimenPx, getString, showToast}
+import com.waz.zclient.utils.ContextUtils.{getDimenPx, showToast}
 import com.waz.zclient.utils.{RichView, ViewUtils}
 
 import scala.util.Success
-
 
 class ConversationSelectorFragment extends FragmentHelper with OnBackPressedListener {
 
@@ -64,21 +63,18 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
 
   import ConversationSelectorFragment._
 
-  lazy val zms = inject[Signal[ZMessaging]]
-  lazy val accounts = inject[AccountsService]
-  lazy val assetsController = inject[AssetsController]
-  lazy val messagesController = inject[MessagesController]
-  lazy val sharingController = inject[SharingController]
-  lazy val usersController = inject[UsersController]
-  lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
+  private lazy val accounts          = inject[AccountsService]
+  private lazy val convController    = inject[ConversationController]
+  private lazy val sharingController = inject[SharingController]
+  private lazy val accentColor       = inject[AccentColorController].accentColor.map(_.color)
 
-  lazy val filterText = Signal[String]("")
+  private lazy val filterText = Signal[String]("")
 
-  lazy val onClickEvent = EventStream[Unit]()
+  private lazy val onClickEvent = EventStream[Unit]()
 
-  lazy val multiPicker = getBooleanArg(MultiPickerArgumentKey)
+  private lazy val multiPicker = getBooleanArg(MultiPickerArgumentKey)
 
-  lazy val adapter = returning(new ConversationSelectorAdapter(getContext, filterText, multiPicker)) { a =>
+  private lazy val adapter = returning(new ConversationSelectorAdapter(getContext, filterText, multiPicker)) { a =>
     onClickEvent { _ =>
       a.selectedConversations.head.map { convs =>
         sharingController.onContentShared(getActivity, convs)
@@ -88,19 +84,19 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
     }
   }
 
-  lazy val convList = view[RecyclerView](R.id.lv__conversation_list)
-  lazy val accountTabs = view[AccountTabsView](R.id.account_tabs)
-  lazy val bottomContainer = view[AnimatedBottomContainer](R.id.ephemeral_container)
-  lazy val ephemeralIcon = view[EphemeralTimerButton](R.id.ephemeral_toggle)
+  private lazy val convList = view[RecyclerView](R.id.lv__conversation_list)
+  private lazy val accountTabs = view[AccountTabsView](R.id.account_tabs)
+  private lazy val bottomContainer = view[AnimatedBottomContainer](R.id.ephemeral_container)
+  private lazy val ephemeralIcon = view[EphemeralTimerButton](R.id.ephemeral_toggle)
 
-  lazy val sendButton = returning(view[CursorIconButton](R.id.cib__send_button)) { vh =>
+  private lazy val sendButton = returning(view[CursorIconButton](R.id.cib__send_button)) { vh =>
     (for {
       convs <- adapter.selectedConversations
       color <- accentColor
     } yield if (convs.nonEmpty) color else ColorUtils.injectAlpha(0.4f, color)).onUi(c => vh.foreach(_.setSolidBackgroundColor(c)))
   }
 
-  lazy val searchBox = returning(view[SearchEditText](R.id.multi_share_search_box)) { vh =>
+  private lazy val searchBox = returning(view[SearchEditText](R.id.multi_share_search_box)) { vh =>
     accentColor.onUi(c => vh.foreach(_.setCursorColor(c)))
 
     if (!multiPicker) vh.foreach(_.findById[TypefaceTextView](R.id.hint).setText(getString(R.string.single_selector_search_hint)))
@@ -108,14 +104,11 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
     ZMessaging.currentAccounts.activeAccount.onChanged.onUi(_ => vh.foreach(v => v.getElements.foreach(v.removeElement)))
 
     (for {
-      z        <- zms
-      convs    <- z.convsStorage.contents
       selected <- Signal.wrap(adapter.conversationSelectEvent)
-    } yield (convs.get(selected._1).map(PickableConversation), selected._2)).onUi {
-      case (Some(convData), true)  =>
-        if (multiPicker) vh.foreach(_.addElement(convData))
-      case (Some(convData), false) =>
-        if (multiPicker) vh.foreach(_.removeElement(convData))
+      name     <- convController.conversationName(selected._1)
+    } yield (PickableConversation(selected._1.str, name.str), selected._2)).onUi {
+      case (convData, true) if multiPicker  => vh.foreach(_.addElement(convData))
+      case (convData, false) if multiPicker => vh.foreach(_.removeElement(convData))
       case _ =>
     }
   }
@@ -270,10 +263,7 @@ object ConversationSelectorFragment {
   }
 }
 
-case class PickableConversation(conversationData: ConversationData) extends PickableElement{
-  override def id = conversationData.id.str
-  override def name = conversationData.displayName
-}
+case class PickableConversation(override val id: String, override val name: String) extends PickableElement
 
 class ConversationSelectorAdapter(context: Context, filter: Signal[String], multiPicker: Boolean)(implicit injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[RecyclerView.ViewHolder]
@@ -281,19 +271,20 @@ class ConversationSelectorAdapter(context: Context, filter: Signal[String], mult
     with DerivedLogTag {
 
   setHasStableIds(true)
-  lazy val zms = inject[Signal[ZMessaging]]
-  lazy val conversations = for{
-    z <- zms
-    conversations <- Signal.future(z.convsContent.storage.list)
-    f <- filter
-  } yield
-    conversations
-      .filter(c => (c.convType == ConversationType.Group || c.convType == ConversationType.OneToOne) && !c.hidden && c.displayName.toLowerCase.contains(f.toLowerCase))
-      .sortWith((a, b) => a.lastEventTime.isAfter(b.lastEventTime))
 
-  conversations.on(Threading.Ui) {
-    _ => notifyDataSetChanged()
-  }
+  private lazy val conversations = for {
+    z             <-  inject[Signal[ZMessaging]]
+    convs         <- z.convsStorage.contents
+    visible       =  convs.filter { case (_, c) => (c.convType == ConversationType.Group || c.convType == ConversationType.OneToOne) && !c.hidden }
+    names         <- Signal.sequence(visible.keys.map(id => z.conversations.conversationName(id).map(name => id -> name.toLowerCase)).toArray: _*)
+    f             <- filter
+    filterName    =  f.toLowerCase
+    filteredIds   =  names.filter { case (_, name) => name.contains(filterName) }.map(_._1).toSet
+    conversations =  visible.filterKeys(filteredIds.contains).values.toSeq
+  } yield
+    conversations.sortWith((a, b) => a.lastEventTime.isAfter(b.lastEventTime))
+
+  conversations.onUi(_ => notifyDataSetChanged())
 
   val selectedConversations: SourceSignal[Seq[ConvId]] = Signal(Seq.empty)
 
@@ -341,26 +332,14 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
     with Injectable
     with DerivedLogTag {
 
-  lazy val zms = inject[Signal[ZMessaging]]
+  private val conversationId = Signal[ConvId]()
+  private lazy val convController = inject[ConversationController]
 
-  val conversationId = Signal[ConvId]()
-
-  val convSignal = for {
-    z <- zms
-    cid <- conversationId
-    conversations <- z.convsStorage.contents
-    conversation <- Signal(conversations.get(cid))
-  } yield conversation
-
-  convSignal.on(Threading.Ui){
-    case Some(conversationData) =>
-      val name = conversationData.displayName
-      if (name.isEmpty) {
-        import Threading.Implicits.Background
-        zms.head.flatMap(_.conversations.forceNameUpdate(conversationData.id, getString(R.string.default_deleted_username)(view.getContext)))
-      }
-      view.nameView.setText(conversationData.displayName)
-    case _ => view.nameView.setText("")
+  (for {
+    cid      <- conversationId
+    convName <- convController.conversationName(cid)
+  } yield convName).onUi { convName =>
+    view.nameView.setText(convName.str)
   }
 
   def setConversation(convId: ConvId, checked: Boolean): Unit = {

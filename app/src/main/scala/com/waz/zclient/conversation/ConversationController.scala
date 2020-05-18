@@ -24,14 +24,14 @@ import android.content.Context
 import android.graphics.{Bitmap, BitmapFactory}
 import com.waz.api
 import com.waz.api.{IConversation, Verification}
-import com.waz.content.{ConversationStorage, OtrClientsStorage, UsersStorage}
+import com.waz.content.{ConversationStorage, OtrClientsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
-import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.service.AccountManager
 import com.waz.service.assets.{AssetInput, Content, ContentForUpload, UriHelper}
+import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
@@ -42,8 +42,8 @@ import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.F
 import com.waz.zclient.conversationlist.{ConversationListController, FolderStateController}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Callback
+import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.Instant
 
@@ -60,7 +60,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val convsUi               = inject[Signal[ConversationsUiService]]
   private lazy val conversations         = inject[Signal[ConversationsService]]
   private lazy val convsStorage          = inject[Signal[ConversationStorage]]
-  private lazy val usersStorage          = inject[Signal[UsersStorage]]
   private lazy val otrClientsStorage     = inject[Signal[OtrClientsStorage]]
   private lazy val account               = inject[Signal[Option[AccountManager]]]
   private lazy val callStart             = inject[CallStartController]
@@ -68,6 +67,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val uriHelper             = inject[UriHelper]
   private lazy val accentColorController = inject[AccentColorController]
   private lazy val selfId                = inject[Signal[UserId]]
+
+  val DefaultDeletedName: Name = Name(getString(R.string.default_deleted_username))
 
   private var lastConvId = Option.empty[ConvId]
 
@@ -93,14 +94,20 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     convs   <- conversations.head
     selfId  <- selfId.head
     conv    <- getConversation(convId)
-    isGroup <- convs.groupConversation(convId).head
+    isGroup <- convs.isGroupConversation(convId)
   } yield isGroup && conv.exists(_.creator == selfId)
 
+  def conversationName(convId: ConvId): Signal[Name] =
+    for {
+      conversations <- conversations
+      name          <- conversations.conversationName(convId)
+    } yield
+      if (name.isEmpty) DefaultDeletedName
+      else name
+
   val currentConvType: Signal[ConversationType] = currentConv.map(_.convType).disableAutowiring()
-  val currentConvName: Signal[String] = currentConv.map(_.displayName).map {
-    case Name.Empty => getString(R.string.default_deleted_username)
-    case name => name
-  } // the name of the current conversation can be edited (without switching)
+  val currentConvName: Signal[Name] = currentConvId.flatMap(conversationName).disableAutowiring()
+    // the name of the current conversation can be edited (without switching)
 
   val currentConvIsVerified: Signal[Boolean] = currentConv.map(_.verified == Verification.VERIFIED)
   val currentConvIsGroup: Signal[Boolean] =
@@ -125,9 +132,9 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     } yield members
 
   def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]] = for {
-    convs          <- conversations
-    members        <- convs.activeMembersData(convId)
-  } yield members.map(m => m.userId -> ConversationRole.getRole(m.role)).toMap
+    convs   <- conversations
+    members <- convs.convMembers(convId)
+  } yield members
 
   lazy val selfRole: Signal[ConversationRole] =
     for {
@@ -149,7 +156,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   currentConvIdOpt {
     case Some(convId) =>
-      conversations.head.foreach(_.forceNameUpdate(convId, getString(R.string.default_deleted_username)))
       if (!lastConvId.contains(convId)) { // to only catch changes coming from SE (we assume it's an account switch)
         verbose(l"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
         convChanged ! ConversationChange(from = lastConvId, to = Option(convId), requester = ConversationChangeRequester.ACCOUNT_CHANGE)
@@ -307,10 +313,10 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     for {
       service     <- convsUi.head
       id          <- currentConvId.head
-      currentName <- currentConv.map(_.displayName).head
+      currentName <- currentConvName.head
     } yield {
       val newName = Name(name)
-      if (newName != currentName) service.setConversationName(id, newName)
+      if (!currentName.contains(newName)) service.setConversationName(id, newName)
     }
 
   def setCurrentConvReadReceipts(readReceiptsEnabled: Boolean): Future[Unit] =
@@ -338,8 +344,9 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def setCurrentConversationToNext(requester: ConversationChangeRequester): Future[Unit] = {
     def nextConversation(convId: ConvId): Future[Option[ConvId]] =
-      convListController.regularConversationListData.head.map {
-        regular => regular.lift(regular.indexWhere(_.id == convId) + 1).map(_.id)
+      convListController.regularConversationListData.head.map { regular =>
+        val r = regular.map(_.conv)
+        r.lift(r.indexWhere(_.id == convId) + 1).map(_.id)
       } (Threading.Background)
 
     for {
@@ -366,9 +373,9 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   }
 
   def createGuestRoom(): Future[ConversationData] =
-    createGroupConversation(Some(context.getString(R.string.guest_room_name)), Set.empty, false, false)
+    createGroupConversation(context.getString(R.string.guest_room_name), Set.empty, false, false)
 
-  def createGroupConversation(name:         Option[Name],
+  def createGroupConversation(name:         Name,
                               userIds:      Set[UserId],
                               teamOnly:     Boolean,
                               readReceipts: Boolean,
@@ -379,7 +386,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     (conv, _) <- convsUi.createGroupConversation(name, userIds, teamOnly, if (readReceipts) 1 else 0, defaultRole)
   } yield conv
 
-  def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.foreach(callback.callback)(Threading.Ui)
+  def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.map(_.str).foreach(callback.callback)(Threading.Ui)
 
   def getCurrentConvId: ConvId = currentConvId.currentValue.orNull
   def withConvLoaded(convId: ConvId, callback: Callback[ConversationData]): Unit = getConversation(convId).foreach {

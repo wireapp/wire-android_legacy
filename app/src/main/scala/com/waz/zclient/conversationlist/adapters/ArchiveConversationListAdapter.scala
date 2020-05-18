@@ -18,15 +18,14 @@
 package com.waz.zclient.conversationlist.adapters
 
 import android.content.Context
-import com.waz.model.ConversationData
 import com.waz.utils.events.EventContext
 import com.waz.zclient.Injector
+import com.waz.zclient.conversationlist.ConversationListController.NamedConversation
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 
-class ArchiveConversationListAdapter(implicit context: Context, eventContext: EventContext, injector: Injector) extends ConversationListAdapter {
+class ArchiveConversationListAdapter(implicit context: Context, eventContext: EventContext, injector: Injector)
+  extends ConversationListAdapter {
 
-  def setData(convs: Seq[ConversationData]): Unit = {
-    val newItems = convs.map(data => Item.Conversation(data)).toList
-    updateList(newItems)
-  }
+  def setData(convs: Seq[NamedConversation]): Unit =
+    updateList(convs.map(Item.Conversation(_)).toList)
 }
