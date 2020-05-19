@@ -170,6 +170,12 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     case availability      => AvailabilityView.displayStartOfText(title, availability, title.getCurrentTextColor, pushDown = true)
   }
 
+  // conversation name
+  (for {
+    conv <- conversation
+    name <- controller.conversationName(conv.id)
+  } yield name).onUi(name => title.setText(name.str))
+
   avatarInfo.onUi {
     case (convId, isGroup, members, _, selfTeam) if conversationData.forall(_.id == convId) =>
       avatar.setMembers(members, convId, isGroup, selfTeam)

@@ -54,6 +54,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   private lazy val foldersService = inject[Signal[FoldersService]]
   private lazy val convService = inject[Signal[ConversationsService]]
+  private lazy val convController = inject[ConversationController]
 
   def members(conv: ConvId) = membersCache.flatMap(_.apply(conv))
 
@@ -73,14 +74,14 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     otherUser.fold[Availability](Availability.None)(_.availability)
   }
 
+  def conversationName(conv: ConvId): Signal[Name] = convController.conversationName(conv)
+
   private def userData(id: Option[UserId]) = id.fold2(Signal.const(Option.empty[UserData]), uid => UserSignal(uid).map(Option(_)))
 
   lazy val establishedConversations = for {
     z          <- zms
     convs      <- z.convsStorage.contents.throttle(ConvListUpdateThrottling)
   } yield convs.values.filter(EstablishedListFilter)
-
-  private lazy val convController = inject[ConversationController]
 
   lazy val regularConversationListData: Signal[Seq[NamedConversation]] = conversationData(Normal)
   lazy val archiveConversationListData: Signal[Seq[NamedConversation]] = conversationData(Archive)
