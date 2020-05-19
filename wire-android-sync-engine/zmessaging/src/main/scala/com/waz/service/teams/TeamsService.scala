@@ -222,9 +222,10 @@ class TeamsServiceImpl(selfUser:           UserId,
       warn(l"Self user removed from team")
       Future.successful {}
     } else {
+      // TODO: merge with UserService.deleteUsers
       for {
         members <- convMemberStorage.getByUsers(userIds)
-        _       <- convMemberStorage.removeAll(members.map(_.id))
+        _       <- convMemberStorage.removeAll(members.map(_.id).toSet)
         _       <- userStorage.updateAll2(userIds, _.copy(deleted = true))
       } yield {}
     }
