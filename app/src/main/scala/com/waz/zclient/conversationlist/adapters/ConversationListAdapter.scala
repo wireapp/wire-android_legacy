@@ -254,8 +254,8 @@ object ConversationListAdapter {
       (oldList(oldItemPosition), newList(newItemPosition)) match {
         case (Header(_, title, isExpanded, oldCount), Header(_, newTitle, newIsExpanded, newCount)) =>
           title == newTitle && isExpanded && newIsExpanded && oldCount == newCount
-        case (Conversation(conv, _, _), Conversation(newConv, _, _)) =>
-          conv == newConv
+        case (Conversation(conv, name, _), Conversation(newConv, newName, _)) =>
+          conv == newConv && name == newName
         case (IncomingRequests(_, requests), IncomingRequests(_, newRequests)) =>
           requests == newRequests
         case _ =>
