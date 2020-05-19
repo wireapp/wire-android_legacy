@@ -385,6 +385,7 @@ object TeamEvent extends DerivedLogTag {
   sealed trait MemberEvent extends TeamEvent {
     val userId: UserId
   }
+  case class MemberJoin(teamId: TeamId, userId: UserId) extends MemberEvent
   case class MemberLeave(teamId: TeamId, userId: UserId) extends MemberEvent
   case class MemberUpdate(teamId: TeamId, userId: UserId) extends MemberEvent
 
@@ -399,6 +400,7 @@ object TeamEvent extends DerivedLogTag {
     override def apply(implicit js: JSONObject): TeamEvent =
       decodeString('type) match {
         case "team.update"              => Update('team, decodeOptName('name)('data), AssetId(decodeString('icon)('data)))
+        case "team.member-join"         => MemberJoin('team, UserId(decodeString('user)('data)))
         case "team.member-leave"        => MemberLeave('team, UserId(decodeString('user)('data)))
         case "team.member-update"       => MemberUpdate('team, UserId(decodeString('user)('data)))
         case _ =>

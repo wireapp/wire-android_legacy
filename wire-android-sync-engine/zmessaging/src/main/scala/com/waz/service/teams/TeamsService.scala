@@ -92,12 +92,16 @@ class TeamsServiceImpl(selfUser:           UserId,
     verbose(l"Handling events: $events")
     import TeamEvent._
 
+    val membersJoined  = events.collect { case MemberJoin(_, u)    => u }.toSet
     val membersLeft    = events.collect { case MemberLeave(_, u)   => u }.toSet
     val membersUpdated = events.collect { case MemberUpdate(_, u)  => u }.toSet
 
     for {
-      _ <- RichFuture.traverseSequential(events.collect { case e:Update => e}) { case Update(id, name, icon) => onTeamUpdated(id, name, icon) }
-      _ <- onMembersLeft(membersLeft)
+      _ <- RichFuture.traverseSequential(events.collect { case e: Update => e }) {
+             case Update(id, name, icon) => onTeamUpdated(id, name, icon)
+           }
+      _ <- onMembersJoined(membersJoined -- membersLeft)
+      _ <- onMembersLeft(membersLeft -- membersJoined)
       _ <- onMembersUpdated(membersUpdated)
     } yield {}
   }
@@ -201,6 +205,15 @@ class TeamsServiceImpl(selfUser:           UserId,
     ).map(_ =>
       lastTeamUpdate := Instant.now()
     )
+  }
+
+  private def onMembersJoined(members: Set[UserId]) = {
+    verbose(l"onMembersJoined: members: $members")
+    for {
+      _ <- sync.syncUsers(members).flatMap(syncRequestService.await)
+      _ <- sync.syncTeam().flatMap(syncRequestService.await)
+      _ <- userStorage.updateAll2(members, _.copy(teamId = teamId, deleted = false))
+    } yield {}
   }
 
   private def onMembersLeft(userIds: Set[UserId]) = {
