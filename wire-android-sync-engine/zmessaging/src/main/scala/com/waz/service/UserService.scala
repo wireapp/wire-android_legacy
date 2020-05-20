@@ -47,6 +47,8 @@ trait UserService {
   def userUpdateEventsStage: Stage.Atomic
   def userDeleteEventsStage: Stage.Atomic
 
+  def deleteUsers(ids: Set[UserId]): Future[Unit]
+
   def selfUser: Signal[UserData]
   def currentConvMembers: Signal[Set[UserId]]
   def userNames: Signal[Map[UserId, Name]]
@@ -152,13 +154,12 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   override val userDeleteEventsStage: Stage.Atomic = EventScheduler.Stage[UserDeleteEvent] { (c, e) =>
-    //TODO handle deleting db and stuff?
     Future.sequence(e.map(event => accounts.logout(event.user, reason = UserDeleted))).flatMap { _ =>
       deleteUsers(e.map(_.user).toSet)
     }
   }
 
-  private def deleteUsers(ids: Set[UserId]) =
+  override def deleteUsers(ids: Set[UserId]): Future[Unit] =
     for {
       members <- membersStorage.getByUsers(ids)
       _       <- membersStorage.removeAll(members.map(_.id).toSet)
