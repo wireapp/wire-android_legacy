@@ -24,7 +24,7 @@ import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
-import com.waz.service.{ConversationRolesService, ErrorsService, SearchKey, SearchQuery}
+import com.waz.service.{ConversationRolesService, ErrorsService, SearchKey, SearchQuery, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.TeamsClient
 import com.waz.sync.client.TeamsClient.TeamMember
@@ -45,6 +45,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val teamId        = Some(TeamId())
   val teamStorage   = mock[TeamsStorage]
   val accStorage    = mock[AccountsStorageOld]
+  val userService   = mock[UserService]
   val userStorage   = mock[UsersStorage]
   val convsStorage  = mock[ConversationStorage]
   val convMembers   = mock[MembersStorage]
@@ -284,9 +285,10 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
   }
 
-  def createService = {
-    new TeamsServiceImpl(selfUser, teamId, teamStorage, userStorage, convsStorage, convMembers, convsContent, convsService,
-      sync, syncRequests, userPrefs, errorsService, rolesService)
-  }
+  def createService: TeamsService =
+    new TeamsServiceImpl(
+      selfUser, teamId, teamStorage, userService, userStorage, convsStorage, convMembers,
+      convsContent, convsService, sync, syncRequests, userPrefs, errorsService, rolesService
+    )
 
 }

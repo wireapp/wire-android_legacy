@@ -30,6 +30,7 @@ import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder
 import com.waz.zclient.log.LogUI._
@@ -53,6 +54,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   private lazy val foldersService = inject[Signal[FoldersService]]
   private lazy val convService = inject[Signal[ConversationsService]]
+  private lazy val convController = inject[ConversationController]
 
   def members(conv: ConvId) = membersCache.flatMap(_.apply(conv))
 
@@ -72,6 +74,8 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     otherUser.fold[Availability](Availability.None)(_.availability)
   }
 
+  def conversationName(conv: ConvId): Signal[Name] = convController.conversationName(conv)
+
   private def userData(id: Option[UserId]) = id.fold2(Signal.const(Option.empty[UserData]), uid => UserSignal(uid).map(Option(_)))
 
   lazy val establishedConversations = for {
@@ -79,20 +83,22 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     convs      <- z.convsStorage.contents.throttle(ConvListUpdateThrottling)
   } yield convs.values.filter(EstablishedListFilter)
 
-  lazy val regularConversationListData = conversationData(Normal)
-  lazy val archiveConversationListData = conversationData(Archive)
+  lazy val regularConversationListData: Signal[Seq[NamedConversation]] = conversationData(Normal)
+  lazy val archiveConversationListData: Signal[Seq[NamedConversation]] = conversationData(Archive)
 
   lazy val hasConversationsAndArchive = for {
     convsStorage <- inject[Signal[ConversationStorage]]
     convs        <- convsStorage.contents.map(_.values.filterNot(c => c.hidden || ignoredConvTypes.contains(c.convType)))
   } yield (convs.exists(!_.archived), convs.exists(_.archived))
 
-  private def conversationData(listMode: ListMode) =
+  private def conversationData(listMode: ListMode): Signal[Seq[NamedConversation]] =
     for {
-      convsStorage  <- inject[Signal[ConversationStorage]]
-      conversations <- convsStorage.contents
+      convsStorage   <- inject[Signal[ConversationStorage]]
+      conversations  <- convsStorage.contents
+      convs          =  conversations.values.filter(listMode.filter).toSeq.sorted(listMode.sort)
+      namedConvs     <- Signal.sequence(convs.map(c => convController.conversationName(c.id).map(n => NamedConversation(c, n))): _*)
     } yield
-      conversations.values.filter(listMode.filter).toSeq.sorted(listMode.sort)
+      namedConvs
 
   lazy val incomingConversationListData: Signal[Seq[ConvId]] =
     for {
@@ -121,31 +127,35 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     case None           => Signal.const(None)
   }
 
-  lazy val favoriteConversations: Signal[Seq[ConversationData]] = for {
+  lazy val favoriteConversations: Signal[Seq[NamedConversation]] = for {
     favId <- favoritesFolderId
-    convs <- favId.fold(Signal.const(Seq.empty[ConversationData]))(folderConversations)
+    convs <- favId.fold(Signal.const(Seq.empty[NamedConversation]))(folderConversations)
   } yield convs
 
-  def folderConversations(folderId: FolderId): Signal[Seq[ConversationData]] = for {
+  def folderConversations(folderId: FolderId): Signal[Seq[NamedConversation]] = for {
     fwc     <- foldersWithConvs
     convIds =  fwc.getOrElse(folderId, Set.empty)
     convs   <- regularConversationListData
-  } yield convs.filter(c => convIds.contains(c.id))
+  } yield convs.filter { c => convIds.contains(c.conv.id) }
 
-  private lazy val conversationsWithoutFolder: Signal[Seq[(ConversationData, Boolean)]] = for {
+  private lazy val conversationsWithoutFolder: Signal[Seq[(NamedConversation, Boolean)]] = for {
     customFolders      <- customFoldersWithConvs
     folderConvIds      =  customFolders.values.flatten.toSet
     convs              <- regularConversationListData
-    convsWithoutFolder =  convs.filter(c => !folderConvIds.contains(c.id))
+    convsWithoutFolder =  convs.filterNot { c => folderConvIds.contains(c.conv.id) }
     convService        <- convService
-    results            <- Signal.sequence(convsWithoutFolder.map(c => convService.groupConversation(c.id).map(b => c -> b)): _*)
+    results            <- Signal.sequence(convsWithoutFolder.map { c =>
+                            convService.groupConversation(c.conv.id).map(b => (c, b))
+                          }.toArray: _*)
   } yield results
 
-  lazy val groupConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(_._2).map(_._1))
+  lazy val groupConvsWithoutFolder: Signal[Seq[NamedConversation]] =
+    conversationsWithoutFolder.map(_.filter(_._2).map(_._1))
 
-  lazy val oneToOneConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(!_._2).map(_._1))
+  lazy val oneToOneConvsWithoutFolder: Signal[Seq[NamedConversation]] =
+    conversationsWithoutFolder.map(_.filterNot(_._2).map(_._1))
 
-  lazy val customFolderConversations: Signal[Seq[(FolderData, Seq[ConversationData])]] = {
+  lazy val customFolderConversations: Signal[Seq[(FolderData, Seq[NamedConversation])]] = {
     for {
       customFolderIds  <- customFolderIds
       customFoldersOpt <- Signal.sequence(customFolderIds.toSeq.map(folder): _*)
@@ -239,6 +249,8 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 }
 
 object ConversationListController {
+
+  case class NamedConversation(conv: ConversationData, name: Name)
 
   type Filter = ConversationData => Boolean
 

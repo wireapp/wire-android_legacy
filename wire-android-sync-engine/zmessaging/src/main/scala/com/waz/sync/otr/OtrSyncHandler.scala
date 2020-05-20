@@ -145,6 +145,8 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
           } yield acceptedOrBlocked.keySet ++ myTeamIds
       }
 
+      import com.waz.utils.RichEither
+
       broadcastRecipients.flatMap { recp =>
         for {
           content  <- service.encryptForUsers(recp, message, useFakeOnError = retry > 0, previous)
@@ -152,6 +154,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                         OtrMessage(selfClientId, content, report_missing = Some(recp)),
                         ignoreMissing = retry > 1
                       ).future
+          _        <- response.map(_.deleted).mapFuture(service.deleteClients)
           res      <- loopIfMissingClients(
                        response,
                        retry,

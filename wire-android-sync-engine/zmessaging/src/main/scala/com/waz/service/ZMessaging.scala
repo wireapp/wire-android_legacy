@@ -238,7 +238,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val giphy: GiphyService                        = new GiphyServiceImpl(giphyClient)(Threading.Background)
   lazy val youtubeMedia                               = wire[YouTubeMediaService]
   lazy val googleMapsMediaService                     = wire[GoogleMapsMediaServiceImpl]
-  lazy val otrService: OtrServiceImpl                 = wire[OtrServiceImpl]
+  lazy val otrService: OtrService                     = wire[OtrServiceImpl]
   lazy val genericMsgs: GenericMessageService         = wire[GenericMessageService]
   lazy val reactions: ReactionsService                = wire[ReactionsService]
   lazy val notifications: NotificationService         = wire[NotificationServiceImpl]

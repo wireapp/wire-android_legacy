@@ -22,7 +22,7 @@ import com.waz.content.{MembersStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model._
-import com.waz.service.{ConnectionService, ZMessaging}
+import com.waz.service.{ConnectionService, UserService, ZMessaging}
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -32,7 +32,6 @@ import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
-
 import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
@@ -45,10 +44,10 @@ class UsersController(implicit injector: Injector, context: Context)
   private lazy val membersStorage    = inject[Signal[MembersStorage]]
   private lazy val connectionService = inject[Signal[ConnectionService]]
   private lazy val selfUserId        = inject[Signal[UserId]]
+  private lazy val userService       = inject[Signal[UserService]]
 
   private lazy val itemSeparator = getString(R.string.content__system__item_separator)
   private lazy val lastSeparator = getString(R.string.content__system__last_item_separator)
-
 
   //Always returns the other user for the conversation for a given message, regardless of who sent the message
   def getOtherUser(message: Signal[MessageData]): Signal[Option[UserData]] = for {
@@ -60,9 +59,24 @@ class UsersController(implicit injector: Injector, context: Context)
     user <- userId.fold(Signal.const(Option.empty[UserData]))(uId => user(uId).map(Some(_)))
   } yield user
 
-  def displayName(id: UserId): Signal[DisplayName] = zms.flatMap { zms =>
-    if (zms.selfUserId == id) Signal const Me
-    else user(id).map(u => Other(if (u.deleted) getString(R.string.default_deleted_username) else u.name))
+  // this is the same as ConversationController.DefaultDeletedName but it's possible just as well
+  // that the default name for a conversation is different from the default name for a user
+  private lazy val DefaultDeletedName: Name = Name(getString(R.string.default_deleted_username))
+
+  def displayName(id: UserId): Signal[DisplayName] = selfUserId.flatMap {
+    case selfId if selfId == id =>
+      Signal.const[DisplayName](Me)
+    case _ =>
+      userService.flatMap(_.userNames.map(_.getOrElse(id, DefaultDeletedName)).map(Other(_)))
+  }
+
+  def syncUserAndCheckIfDeleted(userId: UserId): Future[(Option[UserData], Option[UserData])] = {
+    import Threading.Implicits.Background
+    for {
+      service <- userService.head
+      oldUser <- service.findUser(userId)
+      newUser <- if (oldUser.nonEmpty) service.syncUser(userId) else Future.successful(None)
+    } yield (oldUser, newUser)
   }
 
   lazy val availabilityVisible: Signal[Boolean] = for {

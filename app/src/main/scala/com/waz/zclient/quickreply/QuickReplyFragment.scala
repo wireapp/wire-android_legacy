@@ -32,6 +32,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.popup.ViewPagerLikeLayoutManager
 import com.waz.zclient.ui.text.{TypefaceEditText, TypefaceTextView}
@@ -76,10 +77,17 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
 
   lazy val adapter = new QuickReplyContentAdapter(getContext, accountId, convId)
 
-  lazy val conv = for {
-    zs <- zms
+  private lazy val conv = for {
+    zs   <- zms
     conv <- zs.convsStorage.signal(convId)
   } yield conv
+
+  private lazy val convName = for {
+    zs   <- zms
+    name <- zs.conversations.conversationName(convId)
+  } yield
+    if (name.isEmpty) inject[ConversationController].DefaultDeletedName
+    else name
 
   val firstVisibleItemPosition = Signal(0)
 
@@ -159,7 +167,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
     }
 
     subscriptions = Seq(
-      conv.map(_.displayName).onUi(name.setText(_)),
+      convName.onUi(name.setText(_)),
       accentColor.map(_.color).onUi(message.setAccentColor),
       counterStr.onUi { case (visible, str) =>
         counter.setVisible(visible)

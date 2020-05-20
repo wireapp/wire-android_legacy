@@ -47,9 +47,11 @@ trait UserService {
   def userUpdateEventsStage: Stage.Atomic
   def userDeleteEventsStage: Stage.Atomic
 
-  def selfUser: Signal[UserData]
+  def deleteUsers(ids: Set[UserId]): Future[Unit]
 
+  def selfUser: Signal[UserData]
   def currentConvMembers: Signal[Set[UserId]]
+  def userNames: Signal[Map[UserId, Name]]
 
   def getSelfUser: Future[Option[UserData]]
   def findUser(id: UserId): Future[Option[UserData]]
@@ -59,6 +61,7 @@ trait UserService {
   def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None): Future[Option[UserData]]
   def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]]
   def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]]
+  def syncUser(userId: UserId): Future[Option[UserData]]
   def acceptedOrBlockedUsers: Signal[Map[UserId, UserData]]
 
   def updateSyncedUsers(users: Seq[UserInfo], timestamp: LocalInstant = LocalInstant.Now): Future[Set[UserData]]
@@ -120,6 +123,9 @@ class UserServiceImpl(selfUserId:        UserId,
 
   currentConvMembers(syncIfNeeded(_))
 
+  override lazy val userNames: Signal[Map[UserId, Name]] =
+    usersStorage.contents.map(_.mapValues(_.name))
+
   //Update user data for other accounts
   accounts.accountsWithManagers.map(_ - selfUserId)(userIds => syncIfNeeded(userIds))
 
@@ -148,11 +154,17 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   override val userDeleteEventsStage: Stage.Atomic = EventScheduler.Stage[UserDeleteEvent] { (c, e) =>
-    //TODO handle deleting db and stuff?
     Future.sequence(e.map(event => accounts.logout(event.user, reason = UserDeleted))).flatMap { _ =>
-      usersStorage.updateAll2(e.map(_.user)(breakOut), _.copy(deleted = true))
+      deleteUsers(e.map(_.user).toSet)
     }
   }
+
+  override def deleteUsers(ids: Set[UserId]): Future[Unit] =
+    for {
+      members <- membersStorage.getByUsers(ids)
+      _       <- membersStorage.removeAll(members.map(_.id).toSet)
+      _       <- usersStorage.updateAll2(ids, _.copy(deleted = true))
+    } yield ()
 
   override lazy val acceptedOrBlockedUsers: Signal[Map[UserId, UserData]] =
     new AggregatingSignal[Seq[UserData], Map[UserId, UserData]](
@@ -192,20 +204,19 @@ class UserServiceImpl(selfUserId:        UserId,
     }
   }
 
+  override def syncUser(userId: UserId): Future[Option[UserData]] =
+    usersClient.loadUser(userId).future.flatMap {
+      case Left(e) =>
+        Future.failed(e)
+      case Right(Some(info)) =>
+        updateSyncedUsers(Seq(info)).map(_.headOption)
+      case Right(None) =>
+        deleteUsers(Set(userId)).map(_ => None)
+    }
+
   def syncSelfNow: Future[Option[UserData]] = Serialized.future("syncSelfNow", selfUserId) {
     usersClient.loadSelf().future.flatMap {
       case Right(info) =>
-        //TODO: Do we still need this?
-//        val v2profilePic = info.mediumPicture.filter(_.convId.isDefined)
-//
-//        v2profilePic.fold(Future.successful(())){ pic =>
-//          verbose(l"User has v2 picture - re-uploading as v3")
-//          for {
-//            _ <- sync.postSelfPicture(v2profilePic.map(_.id))
-//            _ <- assetsStorage.update(pic.id, _.copy(convId = None)) //mark assets as v3
-//            _ <- usersClient.updateSelf(info).future
-//          } yield (())
-//        }.flatMap (_ => )
         updateSyncedUsers(Seq(info)) map { _.headOption }
       case Left(err) =>
         error(l"loadSelf() failed: $err")

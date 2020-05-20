@@ -19,6 +19,7 @@ package com.waz.service.conversation
 
 import com.waz.api.Message
 import com.waz.content._
+import com.waz.log.BasicLogging.LogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConversationData, ConversationRole, _}
 import com.waz.service._
@@ -399,7 +400,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), defaultRole = ConversationRole.MemberRole))
+      val (data, sId) = result(convsUi.createGroupConversation(name = convName, defaultRole = ConversationRole.MemberRole))
       data shouldEqual conv
       sId shouldEqual syncId
     }
@@ -419,7 +420,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (sync.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
+      val (data, sId) = result(convsUi.createGroupConversation(name = convName, members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
       data shouldEqual conv
       sId shouldEqual syncId
     }
@@ -534,4 +535,120 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     }
   }
 
+  feature("Conversation name") {
+    implicit val logTag: LogTag = LogTag("ConversationServiceSpec")
+
+    scenario("Return empty name if the conversation is not in the storage") {
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(None))
+
+      result(service.conversationName(convId).head) shouldEqual Name.Empty
+    }
+
+    scenario("Return the defined name if the conversation has it and is a group chat") {
+      val name = Name("conversation")
+      val conv = ConversationData(
+        id = convId,
+        name = Some(name),
+        convType = ConversationType.Group
+      )
+
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(conv)))
+
+      result(service.conversationName(convId).head) shouldEqual name
+    }
+
+    scenario("Return the name of the other user if the conversation is 1:1") {
+      val self = UserData(selfUserId.str)
+      val user2 = UserData(name = Name("user2"))
+      val convId = ConvId(user2.id.str)
+      val conv = ConversationData(
+        id = convId,
+        name = None,
+        convType = ConversationType.OneToOne
+      )
+
+      val userNames = Map(selfUserId -> self.name, user2.id -> user2.name)
+
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(conv)))
+      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+
+      result(service.conversationName(convId).head) shouldEqual user2.name
+    }
+
+    scenario("Return the name of the other user if the conversation is fake 1:1") {
+      val self = UserData(selfUserId.str)
+      val user2 = UserData(name = Name("user2"))
+      val conv = ConversationData(
+        id = convId,
+        name = None,
+        convType = ConversationType.Group
+      )
+
+      val userNames = Map(selfUserId -> self.name, user2.id -> user2.name)
+
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(conv)))
+      (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().returning(
+        Future.successful(IndexedSeq(
+          ConversationMemberData(self.id, conv.id, ConversationRole.AdminRole),
+          ConversationMemberData(user2.id, conv.id, ConversationRole.AdminRole)
+        ))
+      )
+      (membersStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream())
+      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+
+      result(service.conversationName(convId).head) shouldEqual user2.name
+    }
+
+    scenario("Return the defined name of the conversation even if it is fake 1:1") {
+      val self = UserData(selfUserId.str)
+      val user2 = UserData(name = Name("user2"))
+      val name = Name("conversation")
+      val conv = ConversationData(
+        id = convId,
+        name = Some(name),
+        convType = ConversationType.Group
+      )
+
+      val userNames = Map(selfUserId -> self.name, user2.id -> user2.name)
+
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(conv)))
+      (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().returning(
+        Future.successful(IndexedSeq(
+          ConversationMemberData(self.id, conv.id, ConversationRole.AdminRole),
+          ConversationMemberData(user2.id, conv.id, ConversationRole.AdminRole)
+        ))
+      )
+      (membersStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream())
+      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+
+      result(service.conversationName(convId).head) shouldEqual name
+    }
+
+    scenario("Return the name generated out of usernames if the name is not defined") {
+      val self = UserData(selfUserId.str)
+      val user2 = UserData(name = Name("user2"))
+      val user3 = UserData(name = Name("user3"))
+      val conv = ConversationData(
+        id = convId,
+        name = None,
+        convType = ConversationType.Group
+      )
+
+      val userNames = Map(selfUserId -> self.name, user2.id -> user2.name, user3.id -> user3.name)
+
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(conv)))
+      (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().returning(
+        Future.successful(IndexedSeq(
+          ConversationMemberData(self.id, conv.id, ConversationRole.AdminRole),
+          ConversationMemberData(user2.id, conv.id, ConversationRole.AdminRole),
+          ConversationMemberData(user3.id, conv.id, ConversationRole.AdminRole)
+        ))
+      )
+      (membersStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream())
+      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+
+      val generatedName = Name(List(user2, user3).map(_.name).mkString(", "))
+      result(service.conversationName(convId).head) shouldEqual generatedName
+    }
+  }
 }

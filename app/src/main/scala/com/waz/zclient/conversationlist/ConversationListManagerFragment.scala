@@ -520,17 +520,19 @@ class ConversationListManagerFragment extends Fragment
   private def handleGroupConvError(errorData: ErrorData) = {
     errorsController.dismissSyncError(errorData.id)
     errorData.convId.fold(showDefaultGroupConvDeleteError())(cId =>
-      convController.conversationData(cId).head.flatMap {
-        case Some(data) if data.name.nonEmpty => showErrorDialog(
-          getString(R.string.delete_group_conversation_error_title),
-          getString(R.string.delete_group_conversation_error_message_with_group_name, data.displayName))
-          Future.successful(())
-        case _ => showDefaultGroupConvDeleteError()
-          Future.successful(())
-      }.recoverWith {
+      convController.conversationData(cId).head.map {
+        case Some(_) =>
+          convController.conversationName(cId).head.foreach(convName =>
+            showErrorDialog(
+              getString(R.string.delete_group_conversation_error_title),
+              getString(R.string.delete_group_conversation_error_message_with_group_name, convName)
+            )
+          )
+        case _ =>
+          showDefaultGroupConvDeleteError()
+      }.recover {
         case ex: Exception =>
           error(l"Error while fetching deleted conversation name. Conv id: ${errorData.convId}", ex)
-          Future.successful(())
       }
     )
   }

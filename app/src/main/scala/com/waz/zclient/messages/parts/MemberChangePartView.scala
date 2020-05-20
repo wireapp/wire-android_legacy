@@ -82,7 +82,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
     zms         <- zMessaging
     msg         <- message
     displayName <- senderName
-    names <- users.getMemberNamesSplit(msg.members, zms.selfUserId)
+    names       <- users.getMemberNamesSplit(msg.members, zms.selfUserId)
     namesListString = users.membersNamesString(names.main, separateLast = names.others.isEmpty && !names.andYou, boldNames = true)
   } yield {
     import Message.Type._

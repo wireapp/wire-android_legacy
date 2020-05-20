@@ -29,7 +29,6 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.integrations.IntegrationDetailsFragment
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
@@ -40,6 +39,8 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 import com.waz.api.ConnectionStatus._
+import com.waz.zclient.messages.UsersController
+import com.waz.zclient.utils.ContextUtils
 
 import scala.concurrent.Future
 
@@ -54,7 +55,7 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
   private lazy val bodyContainer             = view[View](R.id.fl__participant__container)
   private lazy val participantsContainerView = view[View](R.id.ll__participant__container)
 
-  private lazy val convController         = inject[ConversationController]
+  private lazy val usersController        = inject[UsersController]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val screenController       = inject[IConversationScreenController]
   private lazy val singleImageController  = inject[ISingleImageController]
@@ -112,7 +113,15 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
     participantsContainerView
 
     participantsController.onShowUser {
-      case Some(userId) => showUser(userId)
+      case Some(userId) =>
+        usersController.syncUserAndCheckIfDeleted(userId).foreach {
+          case (Some(user), None) =>
+            ContextUtils.showToast(getString(R.string.participant_was_removed_from_team, user.name.str))
+          case (None, None) =>
+            warn(l"Trying to show a non-existing user with id $userId")
+          case _ =>
+            showUser(userId)
+        }
       case _ =>
     }
   }

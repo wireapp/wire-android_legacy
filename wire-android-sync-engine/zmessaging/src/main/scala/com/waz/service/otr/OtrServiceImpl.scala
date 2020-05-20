@@ -20,7 +20,7 @@ package com.waz.service.otr
 import java.io._
 
 import com.waz.cache.{CacheService, LocalData}
-import com.waz.content.{GlobalPreferences, MembersStorageImpl, OtrClientsStorage}
+import com.waz.content.{GlobalPreferences, MembersStorage, MembersStorageImpl, OtrClientsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.ClientAction.SessionReset
@@ -76,7 +76,8 @@ class OtrServiceImpl(selfUserId:     UserId,
                      clientId:       ClientId,
                      clients:        OtrClientsService,
                      cryptoBox:      CryptoBoxService,
-                     members:        MembersStorageImpl,
+                     users:          => UserService, // lazy, bcs otherwise we'd have a circular dependency
+                     members:        MembersStorage,
                      sync:           SyncServiceHandle,
                      cache:          CacheService,
                      metadata:       MetaDataService,
@@ -234,9 +235,15 @@ class OtrServiceImpl(selfUserId:     UserId,
   }
 
   def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any] = Future.traverse(userMap) {
-    case (user, cs) => clients.removeClients(user, cs) flatMap { _ =>
-      Future.traverse(cs) { c => sessions.deleteSession(SessionId(user, c)) }
-    }
+    case (user, cs) =>
+      for {
+        removalResult <- clients.removeClients(user, cs)
+        _             <- Future.traverse(cs) { c => sessions.deleteSession(SessionId(user, c)) }
+        _             <- if (removalResult.exists(_._2.clients.isEmpty))
+                           users.syncUser(user)
+                         else
+                           Future.successful(())
+      } yield ()
   }
 
   def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =

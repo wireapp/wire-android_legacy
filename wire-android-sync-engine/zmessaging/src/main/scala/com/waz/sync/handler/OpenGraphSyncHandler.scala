@@ -32,7 +32,6 @@ import com.waz.model._
 import com.waz.model.errors._
 import com.waz.service.assets.{AES_CBC_Encryption, AssetService, Content, ContentForUpload, Asset => Asset2}
 import com.waz.service.messages.MessagesService
-import com.waz.service.otr.OtrServiceImpl
 import com.waz.sync.SyncResult
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
@@ -46,7 +45,6 @@ import scala.concurrent.Future
 
 class OpenGraphSyncHandler(convs:           ConversationStorage,
                            messages:        MessagesStorage,
-                           otrService:      OtrServiceImpl,
                            assets:          AssetService,
                            otrSync:         OtrSyncHandler,
                            client:          OpenGraphClient,
