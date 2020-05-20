@@ -1,6 +1,7 @@
 package com.waz.zclient.feature.settings.devices.list
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
@@ -9,35 +10,31 @@ import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.clients.Client
 import com.waz.zclient.shared.clients.ClientLocation
 import com.waz.zclient.shared.clients.usecase.GetAllClientsUseCase
-import junit.framework.Assert.assertTrue
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
-import org.mockito.MockitoAnnotations
 
-@ExperimentalCoroutinesApi
-class SettingsDeviceListViewModelTest {
+class SettingsDeviceListViewModelTest : UnitTest() {
 
     @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
+    val coroutinesRule = CoroutinesTestRule()
+
+    @get:Rule
+    val instantTaskRule = InstantTaskExecutorRule()
 
     private lateinit var viewModel: SettingsDeviceListViewModel
 
     @Mock
     private lateinit var getAllClientsUseCase: GetAllClientsUseCase
 
-    @get:Rule
-    val rule = InstantTaskExecutorRule()
-
     @Before
     fun setup() {
-        MockitoAnnotations.initMocks(this)
         viewModel = SettingsDeviceListViewModel(getAllClientsUseCase)
     }
 
@@ -47,11 +44,11 @@ class SettingsDeviceListViewModelTest {
         val location = mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(time = TEST_TIME, label = TEST_LABEL, type = TEST_TYPE, id = TEST_ID, clazz = TEST_CLASS, model = TEST_MODEL, location = location)
 
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client))) }
+
         viewModel.loading.observeOnce { isLoading ->
             assertTrue(isLoading)
         }
-
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client))) }
 
         viewModel.loadData()
 

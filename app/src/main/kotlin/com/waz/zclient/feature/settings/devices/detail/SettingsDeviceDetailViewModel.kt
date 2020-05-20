@@ -1,6 +1,5 @@
 package com.waz.zclient.feature.settings.devices.detail
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -38,7 +37,7 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetClientU
 
     private fun handleGetDeviceError(failure: Failure) {
         handleLoading(false)
-        Log.e(LOG_TAG, "Failure: $failure")
+//        Log.e(LOG_TAG, "Failure: $failure")
     }
 
     private fun handleGetDeviceSuccess(client: Client) {
