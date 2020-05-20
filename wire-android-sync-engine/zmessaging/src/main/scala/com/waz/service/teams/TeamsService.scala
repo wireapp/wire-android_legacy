@@ -25,7 +25,7 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
-import com.waz.service.{ConversationRolesService, ErrorsService, EventScheduler, SearchKey, SearchQuery}
+import com.waz.service.{ConversationRolesService, ErrorsService, EventScheduler, SearchKey, SearchQuery, UserService}
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -62,6 +62,7 @@ trait TeamsService {
 class TeamsServiceImpl(selfUser:           UserId,
                        teamId:             Option[TeamId],
                        teamStorage:        TeamsStorage,
+                       userService:        UserService,
                        userStorage:        UsersStorage,
                        convsStorage:       ConversationStorage,
                        convMemberStorage:  MembersStorage,
@@ -216,18 +217,13 @@ class TeamsServiceImpl(selfUser:           UserId,
     } yield {}
   }
 
-  private def onMembersLeft(userIds: Set[UserId]) = {
-    verbose(l"onTeamMembersLeft: users: $userIds")
-    if (userIds.contains(selfUser)) {
+  private def onMembersLeft(members: Set[UserId]) = {
+    verbose(l"onMembersLeft: members: $members")
+    if (members.contains(selfUser)) {
       warn(l"Self user removed from team")
       Future.successful {}
-    } else {
-      for {
-        members <- convMemberStorage.getByUsers(userIds)
-        _       <- convMemberStorage.removeAll(members.map(_.id))
-        _       <- userStorage.updateAll2(userIds, _.copy(deleted = true))
-      } yield {}
-    }
+    } else
+      userService.deleteUsers(members)
   }
   
   //So far, a member update just means we need to check the permissions for that user, and we only care about permissions

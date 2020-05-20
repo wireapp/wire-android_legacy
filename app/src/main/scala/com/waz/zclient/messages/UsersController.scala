@@ -70,6 +70,15 @@ class UsersController(implicit injector: Injector, context: Context)
       userService.flatMap(_.userNames.map(_.getOrElse(id, DefaultDeletedName)).map(Other(_)))
   }
 
+  def syncUserAndCheckIfDeleted(userId: UserId): Future[(Option[UserData], Option[UserData])] = {
+    import Threading.Implicits.Background
+    for {
+      service <- userService.head
+      oldUser <- service.findUser(userId)
+      newUser <- if (oldUser.nonEmpty) service.syncUser(userId) else Future.successful(None)
+    } yield (oldUser, newUser)
+  }
+
   lazy val availabilityVisible: Signal[Boolean] = for {
     selfId <- selfUserId
     self   <- user(selfId)

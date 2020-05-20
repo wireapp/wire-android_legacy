@@ -43,10 +43,13 @@ import com.waz.zclient.conversation.{ConversationController, LikesAndReadsFragme
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.drawing.DrawingFragment
 import com.waz.zclient.giphy.GiphySharingPreviewFragment
+import com.waz.zclient.log.LogUI._
+import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.fragments.ParticipantFragment
+import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.views.ConversationFragment
 import com.waz.zclient.{FragmentHelper, R}
 
@@ -59,6 +62,7 @@ class ConversationManagerFragment extends FragmentHelper
   import Threading.Implicits.Ui
 
   private lazy val convController         = inject[ConversationController]
+  private lazy val usersController        = inject[UsersController]
   private lazy val collectionController   = inject[CollectionController]
   private lazy val navigationController   = inject[INavigationController]
   private lazy val cameraController       = inject[ICameraController]
@@ -121,10 +125,17 @@ class ConversationManagerFragment extends FragmentHelper
     }
 
     subs += participantsController.onShowParticipantsWithUserId.onUi { p =>
-      keyboard.hideKeyboardIfVisible()
-      navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
-      participantsController.selectParticipant(p.userId)
-      showFragment(ParticipantFragment.newInstance(p.userId, p.fromDeepLink), ParticipantFragment.TAG)
+      usersController.syncUserAndCheckIfDeleted(p.userId).foreach {
+        case (Some(user), None) =>
+          ContextUtils.showToast(getString(R.string.participant_was_removed_from_team, user.name.str))
+        case (None, None) =>
+          warn(l"Trying to show a non-existing user with id ${p.userId}")
+        case _ =>
+          keyboard.hideKeyboardIfVisible()
+          navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
+          participantsController.selectParticipant(p.userId)
+          showFragment(ParticipantFragment.newInstance(p.userId, p.fromDeepLink), ParticipantFragment.TAG)
+      }
     }
 
     subs += participantsController.onLeaveParticipants.onUi { withAnimations =>
