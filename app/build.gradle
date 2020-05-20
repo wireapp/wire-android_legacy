@@ -90,7 +90,7 @@ android {
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode System.getenv("BUILD_NUMBER") as Integer ?: 99999
+        versionCode System.getenv("BUILD_NUMBER") as Integer ?: 56666
         versionName = (System.getenv("CLIENT_VERSION") ?: Versions.ANDROID_CLIENT_MAJOR_VERSION) + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
