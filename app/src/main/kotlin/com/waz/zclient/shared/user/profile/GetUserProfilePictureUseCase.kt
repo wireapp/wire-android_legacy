@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.mapNotNull
 class GetUserProfilePictureUseCase(
     private val usersRepository: UsersRepository,
     private val profilePictureMapper: ProfilePictureMapper
-) : ObservableUseCase<ProfilePictureAsset, Unit>() {
+) : ObservableUseCase<ProfilePictureAsset, Unit> {
 
     override suspend fun run(params: Unit): Flow<ProfilePictureAsset> =
         usersRepository.profileDetails().mapNotNull { it.picture }.map { profilePictureMapper.map(it) }

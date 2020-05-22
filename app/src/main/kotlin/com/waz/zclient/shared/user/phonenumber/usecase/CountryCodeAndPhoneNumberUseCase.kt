@@ -10,7 +10,7 @@ import com.waz.zclient.shared.user.phonenumber.PhoneNumberInvalid
 import java.util.Locale
 
 class CountryCodeAndPhoneNumberUseCase(private val phoneNumberUtil: PhoneNumberUtil) :
-    UseCase<PhoneNumber, CountryCodeAndPhoneNumberParams>() {
+    UseCase<PhoneNumber, CountryCodeAndPhoneNumberParams> {
 
     override suspend fun run(params: CountryCodeAndPhoneNumberParams): Either<Failure, PhoneNumber> {
         val number = params.phoneNumber

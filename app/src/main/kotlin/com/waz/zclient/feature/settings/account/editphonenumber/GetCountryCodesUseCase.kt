@@ -11,7 +11,7 @@ import java.util.Locale
 class GetCountryCodesUseCase(
     private val phoneNumberUtils: PhoneNumberUtil,
     private val developerOptionsConfig: DeveloperOptionsConfig
-) : UseCase<List<Country>, GetCountryCodesParams>() {
+) : UseCase<List<Country>, GetCountryCodesParams> {
 
     override suspend fun run(params: GetCountryCodesParams): Either<Failure, List<Country>> {
         val countries = mutableListOf<Country>()

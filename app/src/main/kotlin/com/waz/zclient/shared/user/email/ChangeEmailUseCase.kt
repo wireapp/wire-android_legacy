@@ -6,7 +6,7 @@ import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.shared.user.UsersRepository
 
 class ChangeEmailUseCase(private val usersRepository: UsersRepository) :
-    UseCase<Any, ChangeEmailParams>() {
+    UseCase<Any, ChangeEmailParams> {
 
     override suspend fun run(params: ChangeEmailParams): Either<Failure, Any> =
         usersRepository.changeEmail(params.newEmail)

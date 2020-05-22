@@ -76,11 +76,11 @@ class InputStreamFetcherTest : UnitTest() {
 
         private fun mockUseCase() = mock(UseCase::class.java) as UseCase<InputStream, String>
 
-        private fun errorUseCase(failure: Failure) = object : UseCase<InputStream, String>() {
+        private fun errorUseCase(failure: Failure) = object : UseCase<InputStream, String> {
             override suspend fun run(params: String): Either<Failure, InputStream> = Either.Left(failure)
         }
 
-        private fun successUseCase(inputStream: InputStream) = object : UseCase<InputStream, String>() {
+        private fun successUseCase(inputStream: InputStream) = object : UseCase<InputStream, String> {
             override suspend fun run(params: String): Either<Failure, InputStream> = Either.Right(inputStream)
         }
     }

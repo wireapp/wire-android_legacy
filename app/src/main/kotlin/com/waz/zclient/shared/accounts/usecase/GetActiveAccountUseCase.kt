@@ -16,7 +16,7 @@ sealed class ActiveAccountsErrors : FeatureFailure()
 class GetActiveAccountUseCase(
     private val accountsRepository: AccountsRepository,
     private val userRepository: UsersRepository
-) : UseCase<ActiveAccount, Unit>() {
+) : UseCase<ActiveAccount, Unit> {
 
     override suspend fun run(params: Unit): Either<Failure, ActiveAccount> =
         userRepository.currentUserId().let {

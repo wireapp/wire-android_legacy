@@ -43,6 +43,7 @@ class DefaultUseCaseExecutor : UseCaseExecutor {
     }
 
     @ExperimentalCoroutinesApi
+    @Suppress("TooGenericExceptionCaught")
     override operator fun <T, P> ObservableUseCase<T, P>.invoke(
         scope: CoroutineScope,
         params: P,
@@ -58,5 +59,4 @@ class DefaultUseCaseExecutor : UseCaseExecutor {
             }
         }
     }
-
 }

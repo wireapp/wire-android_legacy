@@ -5,7 +5,7 @@ import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
 
-class ValidateNameUseCase : UseCase<Unit, ValidateNameParams>() {
+class ValidateNameUseCase : UseCase<Unit, ValidateNameParams> {
 
     override suspend fun run(params: ValidateNameParams): Either<Failure, Unit> =
         when {

@@ -7,7 +7,7 @@ import com.waz.zclient.shared.user.handle.HandleInvalid
 import com.waz.zclient.shared.user.handle.HandleTooLong
 import com.waz.zclient.shared.user.handle.HandleTooShort
 
-class ValidateHandleUseCase : UseCase<String, ValidateHandleParams>() {
+class ValidateHandleUseCase : UseCase<String, ValidateHandleParams> {
 
     override suspend fun run(params: ValidateHandleParams): Either<Failure, String> =
         if (!handleCharactersValid(params.newHandle)) {
