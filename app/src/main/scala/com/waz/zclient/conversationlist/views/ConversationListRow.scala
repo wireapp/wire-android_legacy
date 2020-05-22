@@ -49,7 +49,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.ui.views.properties.MoveToAnimateable
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{StringUtils, UiStorage, UserSetSignal, UserSignal, ViewUtils}
+import com.waz.zclient.utils.{ConversationSignal, StringUtils, UiStorage, UserSetSignal, UserSignal, ViewUtils}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 
@@ -76,9 +76,19 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private val controller = inject[ConversationListController]
   private val zms = inject[Signal[ZMessaging]]
 
-  private val conversation = Signal[ConversationData]()
+  private val conversationId = Signal[Option[ConvId]](None)
+
+  private val conversation = for {
+    Some(convId) <- conversationId
+    conv         <- ConversationSignal(convId)
+  } yield conv
+
   var conversationData = Option.empty[ConversationData]
-  private val members = conversation.flatMap(c => controller.members(c.id))
+
+  private lazy val members = conversationId.flatMap {
+    case Some(cId) => controller.members(cId)
+    case None      => Signal.const(Seq.empty[UserId])
+  }
 
   private val container = ViewUtils.getView(this, R.id.conversation_row_container).asInstanceOf[ConstraintLayout]
   private val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
@@ -135,7 +145,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   private def userData(id: Option[UserId]) = id.fold2(Signal.const(Option.empty[UserData]), uid => UserSignal(uid).map(Option(_)))
 
-  val avatarInfo = for {
+  private lazy val avatarInfo = for {
     z <- zms
     conv <- conversation
     memberIds <- members
@@ -163,8 +173,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   // User availability (for 1:1)
   (for {
-    conv         <- conversation
-    availability <- controller.availability(conv.id)
+    Some(cId)    <- conversationId
+    availability <- controller.availability(cId)
   } yield availability).onUi {
     case Availability.None => AvailabilityView.hideAvailabilityIcon(title)
     case availability      => AvailabilityView.displayStartOfText(title, availability, title.getCurrentTextColor, pushDown = true)
@@ -172,8 +182,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   // conversation name
   (for {
-    conv <- conversation
-    name <- controller.conversationName(conv.id)
+    Some(cId) <- conversationId
+    name      <- controller.conversationName(cId)
   } yield name).onUi(name => title.setText(name.str))
 
   avatarInfo.onUi {
@@ -220,10 +230,9 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       subtitle.setText("")
       avatar.clearImages()
       avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
-      conversation.publish(conversationData, Threading.Ui)
+      conversationId.publish(Option(conversationData.id), Threading.Ui)
       closeImmediate()
     }
-
 
   menuIndicatorView.setClickable(false)
   menuIndicatorView.setMaxOffset(menuOpenOffset)
