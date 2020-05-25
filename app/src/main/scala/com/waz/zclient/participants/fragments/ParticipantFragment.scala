@@ -113,15 +113,7 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
     participantsContainerView
 
     participantsController.onShowUser {
-      case Some(userId) =>
-        usersController.syncUserAndCheckIfDeleted(userId).foreach {
-          case (Some(user), None) =>
-            ContextUtils.showToast(getString(R.string.participant_was_removed_from_team, user.name.str))
-          case (None, None) =>
-            warn(l"Trying to show a non-existing user with id $userId")
-          case _ =>
-            showUser(userId)
-        }
+      case Some(userId) => showUser(userId)
       case _ =>
     }
   }
@@ -221,48 +213,52 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       .commit
   }
 
-  private def showUser(userId: UserId): Unit = {
-    convScreenController.showUser(userId)
-    participantsController.selectParticipant(userId)
+  private def openUserProfileFragment(fragment: Fragment, tag: String) =
+    getChildFragmentManager.beginTransaction
+      .setCustomAnimations(
+        R.anim.fragment_animation_second_page_slide_in_from_right,
+        R.anim.fragment_animation_second_page_slide_out_to_left,
+        R.anim.fragment_animation_second_page_slide_in_from_left,
+        R.anim.fragment_animation_second_page_slide_out_to_right)
+      .replace(R.id.fl__participant__container, fragment, tag)
+      .addToBackStack(tag)
+      .commit
 
-    def openUserProfileFragment(fragment: Fragment, tag: String) = {
-      getChildFragmentManager.beginTransaction
-        .setCustomAnimations(
-          R.anim.fragment_animation_second_page_slide_in_from_right,
-          R.anim.fragment_animation_second_page_slide_out_to_left,
-          R.anim.fragment_animation_second_page_slide_in_from_left,
-          R.anim.fragment_animation_second_page_slide_out_to_right)
-        .replace(R.id.fl__participant__container, fragment, tag)
-        .addToBackStack(tag)
-        .commit
-    }
+  private def showUser(userId: UserId): Unit = usersController.syncUserAndCheckIfDeleted(userId).foreach {
+    case (Some(user), None) =>
+      ContextUtils.showToast(getString(R.string.participant_was_removed_from_team, user.name.str))
+    case (None, None) =>
+      warn(l"Trying to show a non-existing user with id $userId")
+    case _ =>
+      convScreenController.showUser(userId)
+      participantsController.selectParticipant(userId)
 
-    KeyboardUtils.hideKeyboard(getActivity)
+      KeyboardUtils.hideKeyboard(getActivity)
 
-    for {
-      userOpt      <- participantsController.getUser(userId)
-      isTeamMember <- userAccountsController.isTeamMember(userId).head
-    } userOpt match {
-      case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
-        openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+      for {
+        userOpt      <- participantsController.getUser(userId)
+        isTeamMember <- userAccountsController.isTeamMember(userId).head
+      } userOpt match {
+        case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
+          openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
 
-      case Some(user) if user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
-        import PendingConnectRequestFragment._
-        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
+        case Some(user) if user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
+          import PendingConnectRequestFragment._
+          openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
 
-      case Some(user) if user.connection == PENDING_FROM_OTHER =>
-        import ConnectRequestFragment._
-        openUserProfileFragment(newInstance(userId,UserRequester.PARTICIPANTS), Tag)
+        case Some(user) if user.connection == PENDING_FROM_OTHER =>
+          import ConnectRequestFragment._
+          openUserProfileFragment(newInstance(userId,UserRequester.PARTICIPANTS), Tag)
 
-      case Some(user) if user.connection == BLOCKED =>
-        import BlockedUserFragment._
-        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
+        case Some(user) if user.connection == BLOCKED =>
+          import BlockedUserFragment._
+          openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
 
-      case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
-        import SendConnectRequestFragment._
-        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
-      case _ =>
-    }
+        case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
+          import SendConnectRequestFragment._
+          openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
+        case _ =>
+      }
   }
 
   override def onHideUser(): Unit = if (screenController.isShowingUser) {
