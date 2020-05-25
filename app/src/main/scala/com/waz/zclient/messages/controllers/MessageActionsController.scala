@@ -229,7 +229,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   }
 
   private def revealMessageInConversation(message: MessageData) = {
-    zms.head.flatMap(z => z.messagesStorage.get(message.id)).onComplete{
+    zms.head.flatMap(z => z.messagesStorage.get(message.id)).onComplete {
       case Success(msg) =>  messageToReveal ! msg
       case _ =>
     }

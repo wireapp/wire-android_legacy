@@ -68,8 +68,7 @@ class MessageIndexStorage(context: Context, storage: ZmsDatabase, messagesStorag
       cursor <- storage.read(MessageContentIndexDao.findContent(contentSearchQuery, convId)(_)) // find messages
       _ <- getAll(CursorIterator.list[MessageId](cursor, close = false)(MsgIdReader)) // prefetch index entries to ensure following get calls are fast
       lastRead <- convId.fold2(Future.successful(None), conversationStorage.get(_).map(_.map(_.lastRead)))
-    } yield
-      new MessagesCursor(cursor, 0, lastRead.getOrElse(RemoteInstant.Epoch), loader, tracking)(MessagesCursor.Descending)
+    } yield new MessagesCursor(cursor, 0, lastRead.getOrElse(RemoteInstant.Epoch), loader, tracking)(MessagesCursor.Descending)
 
   def matchingMessages(contentSearchQuery: ContentSearchQuery, convId: Option[ConvId]): Future[Set[MessageId]] =
     storage.read { implicit db =>
