@@ -5,7 +5,7 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.eq
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -30,14 +30,15 @@ class LogoutViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given a logoutUseCase, when onVerifyButtonClicked is called, calls logoutUseCase`() =
-        runBlockingTest {
+    fun `given a logoutUseCase, when onVerifyButtonClicked is called, calls logoutUseCase`() {
+        runBlocking {
             `when`(logoutUseCase.run(Unit)).thenReturn(Either.Right(NoAccountsLeft))
 
             logoutViewModel.onVerifyButtonClicked()
 
             verify(logoutUseCase).run(eq(Unit))
         }
+    }
 
     @Test
     fun `given logoutUseCase returns success, when onVerifyButtonClicked is called, notifies logoutLiveData`() {
