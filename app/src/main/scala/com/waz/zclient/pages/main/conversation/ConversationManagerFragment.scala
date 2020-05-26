@@ -34,7 +34,6 @@ import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.controllers.camera.{CameraActionObserver, ICameraController}
 import com.waz.zclient.controllers.collections.CollectionsObserver
-import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingDestination.CAMERA_PREVIEW_VIEW
 import com.waz.zclient.controllers.location.{ILocationController, LocationObserver}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
@@ -48,6 +47,7 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.participants.fragments.ParticipantFragment
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.views.ConversationFragment
@@ -68,7 +68,6 @@ class ConversationManagerFragment extends FragmentHelper
   private lazy val cameraController       = inject[ICameraController]
   private lazy val convScreenController   = inject[IConversationScreenController]
   private lazy val screenController       = inject[ScreenController]
-  private lazy val drawingController      = inject[IDrawingController]
   private lazy val locationController     = inject[ILocationController]
   private lazy val createConvController   = inject[CreateConversationController]
   private lazy val participantsController = inject[ParticipantsController]
@@ -114,28 +113,26 @@ class ConversationManagerFragment extends FragmentHelper
     }
 
     subs += screenController.showMessageDetails.onUi {
-      case Some(ScreenController.MessageDetailsParams(_, tab)) => showFragment(LikesAndReadsFragment.newInstance(tab), LikesAndReadsFragment.Tag)
-      case None      => getChildFragmentManager.popBackStack(LikesAndReadsFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+      case Some(ScreenController.MessageDetailsParams(_, tab)) =>
+        showFragment(LikesAndReadsFragment.newInstance(tab), LikesAndReadsFragment.Tag)
+      case None =>
+        getChildFragmentManager.popBackStack(LikesAndReadsFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     }
 
-    subs += participantsController.onShowParticipants.onUi { childTag =>
-      keyboard.hideKeyboardIfVisible()
-      navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
-      showFragment(ParticipantFragment.newInstance(childTag), ParticipantFragment.TAG)
+    subs += participantsController.onShowParticipants.onUi { page =>
+      participantsController.otherParticipantId.head.map {
+        case Some(userId) =>
+          openParticipantFragment(userId, Left(page))
+        case None =>
+          // opens a group participant fragment
+          keyboard.hideKeyboardIfVisible()
+          navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
+          showFragment(ParticipantFragment.newInstance(page), ParticipantFragment.TAG)
+      }
     }
 
     subs += participantsController.onShowParticipantsWithUserId.onUi { p =>
-      usersController.syncUserAndCheckIfDeleted(p.userId).foreach {
-        case (Some(user), None) =>
-          ContextUtils.showToast(getString(R.string.participant_was_removed_from_team, user.name.str))
-        case (None, None) =>
-          warn(l"Trying to show a non-existing user with id ${p.userId}")
-        case _ =>
-          keyboard.hideKeyboardIfVisible()
-          navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
-          participantsController.selectParticipant(p.userId)
-          showFragment(ParticipantFragment.newInstance(p.userId, p.fromDeepLink), ParticipantFragment.TAG)
-      }
+      openParticipantFragment(p.userId, Right(p))
     }
 
     subs += participantsController.onLeaveParticipants.onUi { withAnimations =>
@@ -248,6 +245,22 @@ class ConversationManagerFragment extends FragmentHelper
     if (location != null) convController.sendMessage(location)
     hideFragment(LocationFragment.TAG)
   }
+
+  private def openParticipantFragment(userId: UserId, request: Either[Option[String], ParticipantRequest]): Unit =
+    usersController.syncUserAndCheckIfDeleted(userId).foreach {
+      case (Some(user), None) =>
+        ContextUtils.showToast(getString(R.string.participant_was_removed_from_team, user.name.str))
+      case (None, None) =>
+        warn(l"Trying to show a non-existing user with id $userId")
+      case _ =>
+        val fragment = request match {
+          case Right(p)   => ParticipantFragment.newInstance(p.userId, p.fromDeepLink)
+          case Left(page) => ParticipantFragment.newInstance(page)
+        }
+        keyboard.hideKeyboardIfVisible()
+        navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
+        showFragment(fragment, ParticipantFragment.TAG)
+    }
 
   private def showFragment(fragment: Fragment, tag: String): Unit =
     showFragment(fragment, tag, None)

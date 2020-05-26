@@ -18,15 +18,14 @@
 package com.waz.zclient.collection.adapters
 
 import android.content.Context
+import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import android.view.ViewGroup
 import com.waz.api.{ContentSearchQuery, MessageFilter}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConvId
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
@@ -37,31 +36,27 @@ import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.usersearch.views.{SearchResultRowView, TextSearchResultRowView}
 import com.waz.zclient.{Injectable, Injector}
 
-/*
-TODO: some of this stuff is duplicated from MessagesListAdapter. Maybe there's a possibility of some refactoring and create a 'base adapter' for messageCursors
- */
 class SearchAdapter()(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag { adapter =>
 
-  val zms = inject[Signal[ZMessaging]]
-  val contentSearchQuery = inject[CollectionController].contentSearchQuery
+  private val zms = inject[Signal[ZMessaging]]
+  private val contentSearchQuery = inject[CollectionController].contentSearchQuery
 
-  val cursor = for {
+  val cursor: Signal[RecyclerCursor] = for {
     zs <- zms
     convId <- inject[ConversationController].currentConvId
     query <- contentSearchQuery
-  } yield
-    new RecyclerCursor(convId, zs, notifier, messageFilter = Some(MessageFilter(None, Some(query))))
+  } yield new RecyclerCursor(convId, zs, notifier, messageFilter = Some(MessageFilter(None, Some(query))))
 
   private var messages = Option.empty[RecyclerCursor]
   private var convId = ConvId()
 
-  val cursorLoader = for{
+  private val cursorLoader = for {
     c <- cursor
     true <- c.cursorLoaded
   } yield c
 
-  cursorLoader.on(Threading.Ui) { c =>
+  cursorLoader.onUi { c =>
     if (!messages.contains(c)) {
       verbose(l"cursor changed: ${c.count}")
       messages.foreach(_.close())
@@ -91,7 +86,7 @@ class SearchAdapter()(implicit context: Context, injector: Injector, eventContex
 
   override def getItemId(position: Int): Long = message(position).message.id.str.hashCode
 
-  lazy val notifier = new RecyclerNotifier {
+  private lazy val notifier = new RecyclerNotifier {
 
     private def notifyChangedIfExists(position: Int) =
       if (position >= 0 && position < getItemCount)
