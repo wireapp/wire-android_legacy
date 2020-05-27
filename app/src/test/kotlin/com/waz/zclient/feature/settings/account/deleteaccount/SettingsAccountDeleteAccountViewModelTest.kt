@@ -11,7 +11,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.lenient
+import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 class SettingsAccountDeleteAccountViewModelTest : UnitTest() {
@@ -31,7 +31,7 @@ class SettingsAccountDeleteAccountViewModelTest : UnitTest() {
 
     @Test
     fun `given delete account confirmed, when delete account use case is a success, then confirm deletion`() = runBlockingTest {
-        lenient().`when`(deleteAccountUseCase.run(Unit)).thenReturn(Either.Right(Unit))
+        `when`(deleteAccountUseCase.run(Unit)).thenReturn(Either.Right(Unit))
 
         deleteAccountViewModel.onDeleteAccountConfirmed()
 

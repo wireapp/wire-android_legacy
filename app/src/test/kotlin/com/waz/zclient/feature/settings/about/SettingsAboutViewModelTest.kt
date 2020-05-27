@@ -6,14 +6,14 @@ import com.waz.zclient.core.config.AppDetailsConfig
 import com.waz.zclient.core.config.HostUrlConfig
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
+import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBe
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -52,30 +52,28 @@ class SettingsAboutViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given terms button is clicked, when team id exists, then provide team terms and conditions url`() = runBlockingTest {
-        `when`(user.teamId).thenReturn(TEST_TEAM_ID)
-        `when`(profileUseCase.run(Unit)).thenReturn(userFlow)
+    fun `given terms button is clicked, when team id exists, then provide team terms and conditions url`() {
+        runBlocking {
+            `when`(user.teamId).thenReturn(TEST_TEAM_ID)
+            `when`(profileUseCase.run(Unit)).thenReturn(userFlow)
 
-        settingsAboutViewModel.onTermsButtonClicked()
+            settingsAboutViewModel.onTermsButtonClicked()
 
-        userFlow.collect {
-            settingsAboutViewModel.urlLiveData.observeOnce {
-                assertEquals(TEAM_TERMS_AND_CONDITIONS_TEST_URL, it.url)
-            }
+            val url = settingsAboutViewModel.urlLiveData.awaitValue().url
+            assertEquals(TEAM_TERMS_AND_CONDITIONS_TEST_URL, url)
         }
     }
 
     @Test
-    fun `given terms button is clicked, when team id is empty, then open personal terms and conditions url`() = runBlockingTest {
-        `when`(user.teamId).thenReturn(String.empty())
-        `when`(profileUseCase.run(Unit)).thenReturn(userFlow)
+    fun `given terms button is clicked, when team id is empty, then open personal terms and conditions url`() {
+        runBlocking {
+            `when`(user.teamId).thenReturn(String.empty())
+            `when`(profileUseCase.run(Unit)).thenReturn(userFlow)
 
-        settingsAboutViewModel.onTermsButtonClicked()
+            settingsAboutViewModel.onTermsButtonClicked()
 
-        userFlow.collect {
-            settingsAboutViewModel.urlLiveData.observeOnce {
-                assertEquals(PERSONAL_TERMS_AND_CONDITIONS_TEST_URL, it.url)
-            }
+            val url = settingsAboutViewModel.urlLiveData.awaitValue().url
+            assertEquals(PERSONAL_TERMS_AND_CONDITIONS_TEST_URL, url)
         }
     }
 
