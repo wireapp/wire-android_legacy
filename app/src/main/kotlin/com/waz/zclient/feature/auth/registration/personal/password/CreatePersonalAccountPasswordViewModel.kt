@@ -69,23 +69,15 @@ class CreatePersonalAccountPasswordViewModel(
     }
 
     private fun registerFailure(failure: Failure) {
-        if (!isNetworkConnectionFailure(failure)) {
-            when (failure) {
-                is UnauthorizedEmail -> _registerErrorLiveData.value =
-                    ErrorMessage(R.string.create_personal_account_unauthorized_email_error)
-                is InvalidActivationCode -> _registerErrorLiveData.value =
-                    ErrorMessage(R.string.create_personal_account_invalid_activation_code_error)
-                is EmailInUse -> _registerErrorLiveData.value =
-                    ErrorMessage(R.string.create_personal_account_email_in_use_error)
-            }
+        when (failure) {
+            is NetworkConnection -> _networkConnectionErrorLiveData.value = Unit
+            is UnauthorizedEmail -> _registerErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_unauthorized_email_error)
+            is InvalidActivationCode -> _registerErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_invalid_activation_code_error)
+            is EmailInUse -> _registerErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_email_in_use_error)
         }
-    }
-
-    private fun isNetworkConnectionFailure(failure: Failure): Boolean {
-        return if (failure is NetworkConnection) {
-            _networkConnectionErrorLiveData.value = Unit
-            true
-        } else false
     }
 }
 

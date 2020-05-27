@@ -44,13 +44,12 @@ class CreatePersonalAccountPinCodeViewModel(
     }
 
     private fun sendActivationCodeFailure(failure: Failure) {
-        if (!isNetworkConnectionFailure(failure)) {
-            when (failure) {
-                is EmailBlacklisted -> _sendActivationCodeErrorLiveData.value =
-                    ErrorMessage(R.string.create_personal_account_with_email_email_blacklisted_error)
-                is EmailInUse -> _sendActivationCodeErrorLiveData.value =
-                    ErrorMessage(R.string.create_personal_account_with_email_email_in_use_error)
-            }
+        when (failure) {
+            is NetworkConnection -> _networkConnectionErrorLiveData.value = Unit
+            is EmailBlacklisted -> _sendActivationCodeErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_with_email_email_blacklisted_error)
+            is EmailInUse -> _sendActivationCodeErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_with_email_email_in_use_error)
         }
     }
 
@@ -65,19 +64,11 @@ class CreatePersonalAccountPinCodeViewModel(
     }
 
     private fun activateEmailFailure(failure: Failure) {
-        if (!isNetworkConnectionFailure(failure)) {
-            when (failure) {
-                is InvalidCode -> _activateEmailErrorLiveData.value =
-                    ErrorMessage(R.string.email_verification_invalid_code_error)
-            }
+        when (failure) {
+            is NetworkConnection -> _networkConnectionErrorLiveData.value = Unit
+            is InvalidCode -> _activateEmailErrorLiveData.value =
+                ErrorMessage(R.string.email_verification_invalid_code_error)
         }
-    }
-
-    private fun isNetworkConnectionFailure(failure: Failure): Boolean {
-        return if (failure is NetworkConnection) {
-            _networkConnectionErrorLiveData.value = Unit
-            true
-        } else false
     }
 }
 
