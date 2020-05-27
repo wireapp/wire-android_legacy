@@ -8,7 +8,7 @@ import com.waz.zclient.shared.user.profile.ProfilePictureAsset
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -36,7 +36,7 @@ class BackgroundAssetViewModelTest : UnitTest() {
     @InternalCoroutinesApi
     @Test
     fun `given useCase emits an asset, when fetchProfilePicture is called, then updates profilePicture with that asset`() =
-        runBlockingTest {
+        runBlocking {
             val profilePictureAsset = Mockito.mock(ProfilePictureAsset::class.java)
             `when`(getUserProfilePictureUseCase.run(Unit)).thenReturn(flowOf(profilePictureAsset))
 

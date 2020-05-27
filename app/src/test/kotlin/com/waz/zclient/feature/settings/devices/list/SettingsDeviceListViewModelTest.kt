@@ -6,6 +6,7 @@ import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
+import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.clients.Client
 import com.waz.zclient.shared.clients.ClientLocation
@@ -44,70 +45,74 @@ class SettingsDeviceListViewModelTest : UnitTest() {
         val location = mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(time = TEST_TIME, label = TEST_LABEL, type = TEST_TYPE, id = TEST_ID, clazz = TEST_CLASS, model = TEST_MODEL, location = location)
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client))) }
+        runBlocking {
+            `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client)))
 
-        viewModel.loading.observeOnce { isLoading ->
-            assertTrue(isLoading)
-        }
+            viewModel.loading.observeOnce { isLoading ->
+                assertTrue(isLoading)
+            }
 
-        viewModel.loadData()
+            viewModel.loadData()
 
-        viewModel.otherDevices.observeOnce {
-            val clientItem = it[0].client
+            val otherDevices = viewModel.otherDevices.awaitValue()
+            val clientItem = otherDevices[0].client
+
             assertEquals(viewModel.loading.value, false)
             assertEquals(clientItem.label, TEST_LABEL)
             assertEquals(clientItem.time, TEST_TIME)
             assertEquals(clientItem.id, TEST_ID)
-            assertEquals(it.size, 1)
+            assertEquals(otherDevices.size, 1)
         }
-
     }
 
     @Test
     fun `given data source returns NetworkError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(NetworkConnection)) }
+        runBlocking {
+            `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(NetworkConnection))
 
-        viewModel.loading.observeOnce { isLoading ->
-            assertTrue(isLoading)
-        }
+            viewModel.loading.observeOnce { isLoading ->
+                assertTrue(isLoading)
+            }
 
-        viewModel.loadData()
+            viewModel.loadData()
 
-        viewModel.error.observeOnce {
-            assertTrue(viewModel.loading.value == false)
+            viewModel.error.awaitValue()
             //TODO update loading live data scenario when it has been confirmed
+            assertTrue(viewModel.loading.value == false)
         }
     }
 
     @Test
     fun `given data source returns ServerError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(ServerError)) }
+        runBlocking {
+            `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(ServerError))
 
-        viewModel.loading.observeOnce { isLoading ->
-            assertTrue(isLoading)
-        }
+            viewModel.loading.observeOnce { isLoading ->
+                assertTrue(isLoading)
+            }
 
-        viewModel.loadData()
+            viewModel.loadData()
 
-        viewModel.error.observeOnce {
-            assertTrue(viewModel.loading.value == false)
+            viewModel.error.awaitValue()
             //TODO update loading live data scenario when it has been confirmed
+            assertTrue(viewModel.loading.value == false)
         }
     }
 
     @Test
     fun `given data source returns CancellationError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(NetworkConnection)) }
+        runBlocking {
+            `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(NetworkConnection))
 
-        viewModel.loading.observeOnce { isLoading ->
-            assertTrue(isLoading)
-        }
+            viewModel.loading.observeOnce { isLoading ->
+                assertTrue(isLoading)
+            }
 
-        viewModel.loadData()
+            viewModel.loadData()
 
-        viewModel.error.observeOnce {
-            assertTrue(viewModel.loading.value == false)
+            viewModel.error.awaitValue()
             //TODO update loading live data scenario when it has been confirmed
+            assertTrue(viewModel.loading.value == false)
         }
     }
 

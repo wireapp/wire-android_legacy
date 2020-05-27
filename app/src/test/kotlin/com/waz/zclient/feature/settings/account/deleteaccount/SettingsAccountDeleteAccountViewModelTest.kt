@@ -3,10 +3,10 @@ package com.waz.zclient.feature.settings.account.deleteaccount
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
-import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.framework.livedata.awaitValue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
-import org.amshove.kluent.shouldBe
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -30,13 +30,13 @@ class SettingsAccountDeleteAccountViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given delete account confirmed, when delete account use case is a success, then confirm deletion`() = runBlockingTest {
-        `when`(deleteAccountUseCase.run(Unit)).thenReturn(Either.Right(Unit))
+    fun `given delete account confirmed, when delete account use case is a success, then confirm deletion`() {
+        runBlocking {
+            `when`(deleteAccountUseCase.run(Unit)).thenReturn(Either.Right(Unit))
 
-        deleteAccountViewModel.onDeleteAccountConfirmed()
+            deleteAccountViewModel.onDeleteAccountConfirmed()
 
-        deleteAccountViewModel.deletionConfirmedLiveData.observeOnce {
-            it shouldBe Unit
+            assertEquals(Unit, deleteAccountViewModel.deletionConfirmedLiveData.awaitValue())
         }
     }
 }

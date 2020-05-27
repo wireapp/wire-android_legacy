@@ -1,6 +1,5 @@
 package com.waz.zclient.feature.settings.devices.list
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -41,7 +40,7 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
 
     private fun handleAllDevicesError(failure: Failure) {
         handleLoading(false)
-        Log.e(LOG_TAG, "Failure: $failure")
+        handleFailure("Failure $failure")
     }
 
     private fun handleAllDevicesSuccess(clients: List<Client>) {
@@ -59,9 +58,5 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
 
     private fun handleFailure(message: String) {
         mutableError.value = message
-    }
-
-    companion object {
-        private const val LOG_TAG = "SettingsDeviceListVM"
     }
 }

@@ -68,15 +68,16 @@ class SettingsDeviceDetailViewModelTest : UnitTest() {
     @Test
     fun `given data source returns NetworkError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(NetworkConnection)) }
+        runBlocking {
+            `when`(getClientUseCase.run(params)).thenReturn(Either.Left(NetworkConnection))
 
-        viewModel.loading.observeOnce { isLoading ->
-            assertTrue(isLoading)
-        }
+            viewModel.loading.observeOnce { isLoading ->
+                assertTrue(isLoading)
+            }
 
-        viewModel.loadData(TEST_ID)
+            viewModel.loadData(TEST_ID)
 
-        viewModel.error.observeOnce {
+            viewModel.error.awaitValue()
             assertTrue(viewModel.loading.value == false)
             //TODO update loading live data scenario when it has been confirmed
         }
@@ -85,15 +86,16 @@ class SettingsDeviceDetailViewModelTest : UnitTest() {
     @Test
     fun `given data source returns ServerError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(ServerError)) }
+        runBlocking {
+            `when`(getClientUseCase.run(params)).thenReturn(Either.Left(ServerError))
 
-        viewModel.loading.observeOnce { isLoading ->
-            assertTrue(isLoading)
-        }
+            viewModel.loading.observeOnce { isLoading ->
+                assertTrue(isLoading)
+            }
 
-        viewModel.loadData(TEST_ID)
+            viewModel.loadData(TEST_ID)
 
-        viewModel.error.observeOnce {
+            viewModel.error.awaitValue()
             assertTrue(viewModel.loading.value == false)
             //TODO update loading live data scenario when it has been confirmed
         }
@@ -110,10 +112,9 @@ class SettingsDeviceDetailViewModelTest : UnitTest() {
 
             viewModel.loadData(TEST_ID)
 
-            viewModel.error.observeOnce {
-                assertTrue(viewModel.loading.value == false)
-                //TODO update loading live data scenario when it has been confirmed
-            }
+            viewModel.error.awaitValue()
+            assertTrue(viewModel.loading.value == false)
+            //TODO update loading live data scenario when it has been confirmed
         }
     }
 

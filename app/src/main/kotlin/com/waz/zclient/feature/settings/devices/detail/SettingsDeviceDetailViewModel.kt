@@ -37,7 +37,7 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetClientU
 
     private fun handleGetDeviceError(failure: Failure) {
         handleLoading(false)
-//        Log.e(LOG_TAG, "Failure: $failure")
+        handleFailure("Failure: $failure")
     }
 
     private fun handleGetDeviceSuccess(client: Client) {
@@ -55,9 +55,5 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetClientU
 
     private fun handleLoading(isLoading: Boolean) {
         mutableLoading.postValue(isLoading)
-    }
-
-    companion object {
-        private const val LOG_TAG = "SettingsDeviceDetailVM"
     }
 }

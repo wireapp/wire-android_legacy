@@ -7,7 +7,6 @@ import com.waz.zclient.core.config.HostUrlConfig
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
-import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -81,8 +80,8 @@ class SettingsAboutViewModelTest : UnitTest() {
     fun `given about button is clicked, then open config url`() {
         settingsAboutViewModel.onAboutButtonClicked()
 
-        settingsAboutViewModel.urlLiveData.observeOnce {
-            it.url shouldBe CONFIG_URL
+        runBlocking {
+            assertEquals(CONFIG_URL, settingsAboutViewModel.urlLiveData.awaitValue().url)
         }
     }
 
@@ -90,8 +89,8 @@ class SettingsAboutViewModelTest : UnitTest() {
     fun `given privacy button is clicked, then open privacy url`() {
         settingsAboutViewModel.onPrivacyButtonClicked()
 
-        settingsAboutViewModel.urlLiveData.observeOnce {
-            assert(it.url == PRIVACY_POLICY_TEST_URL)
+        runBlocking {
+            assertEquals(PRIVACY_POLICY_TEST_URL, settingsAboutViewModel.urlLiveData.awaitValue().url)
         }
     }
 
@@ -99,8 +98,8 @@ class SettingsAboutViewModelTest : UnitTest() {
     fun `given third party licenses button is clicked, then third party licenses url`() {
         settingsAboutViewModel.onThirdPartyLicenseButtonClicked()
 
-        settingsAboutViewModel.urlLiveData.observeOnce {
-            assert(it.url == THIRD_PARTY_LICENSES_TEST_URL)
+        runBlocking {
+            assertEquals(THIRD_PARTY_LICENSES_TEST_URL, settingsAboutViewModel.urlLiveData.awaitValue().url)
         }
     }
 
@@ -111,11 +110,13 @@ class SettingsAboutViewModelTest : UnitTest() {
         for (i in 1..11) {
             settingsAboutViewModel.onVersionButtonClicked()
         }
-        settingsAboutViewModel.versionDetailsLiveData.observeOnce {
-            it.appVersionDetails shouldBe TEST_VERSION
-            assert(it.audioNotificationVersionRes == R.string.audio_notifications_version)
-            assert(it.avsVersionRes == R.string.avs_version)
-            it.translationsVersionId shouldBe WIRE_TRANSLATION_VERSION_ID
+        runBlocking {
+            settingsAboutViewModel.versionDetailsLiveData.awaitValue().let {
+                it.appVersionDetails shouldBe TEST_VERSION
+                assertEquals(it.audioNotificationVersionRes, R.string.audio_notifications_version)
+                assertEquals(it.avsVersionRes, R.string.avs_version)
+                it.translationsVersionId shouldBe WIRE_TRANSLATION_VERSION_ID
+            }
         }
     }
 

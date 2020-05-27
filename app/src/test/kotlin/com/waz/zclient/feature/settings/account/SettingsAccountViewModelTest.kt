@@ -11,7 +11,6 @@ import com.waz.zclient.feature.settings.account.logout.CouldNotReadRemainingAcco
 import com.waz.zclient.feature.settings.account.logout.NoAccountsLeft
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
-import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.email.ChangeEmailParams
@@ -23,7 +22,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -162,14 +160,12 @@ class SettingsAccountViewModelTest : UnitTest() {
     fun `given account name is updated and fails with HttpError, then error observer is notified`() {
         val changeNameParams = ChangeNameParams(TEST_NAME)
 
-        runBlockingTest {
+        runBlocking {
             `when`(changeNameUseCase.run(changeNameParams)).thenReturn(Either.Left(ServerError))
 
             viewModel.updateName(TEST_NAME)
 
-            viewModel.errorLiveData.observeOnce {
-                assertEquals(it, "Failure: $ServerError")
-            }
+            assertEquals("Failure: $ServerError", viewModel.errorLiveData.awaitValue())
         }
     }
 
@@ -177,14 +173,12 @@ class SettingsAccountViewModelTest : UnitTest() {
     fun `given account email is updated and fails with HttpError, then error observer is notified`() {
         val changeEmailParams = ChangeEmailParams(TEST_EMAIL)
 
-        runBlockingTest {
+        runBlocking {
             `when`(changeEmailUseCase.run(changeEmailParams)).thenReturn(Either.Left(ServerError))
 
             viewModel.updateEmail(TEST_EMAIL)
 
-            viewModel.errorLiveData.observeOnce {
-                assertEquals("Failure: $ServerError", it)
-            }
+            assertEquals("Failure: $ServerError", viewModel.errorLiveData.awaitValue())
         }
     }
 
@@ -194,8 +188,9 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.onResetPasswordClicked()
 
-        viewModel.resetPasswordUrlLiveData.observeOnce {
-            assertEquals("$TEST_ACCOUNT_CONFIG_URL$TEST_RESET_PASSWORD_URL_SUFFIX", it)
+        runBlocking {
+            val url = viewModel.resetPasswordUrlLiveData.awaitValue()
+            assertEquals("$TEST_ACCOUNT_CONFIG_URL$TEST_RESET_PASSWORD_URL_SUFFIX", url)
         }
     }
 
@@ -203,8 +198,8 @@ class SettingsAccountViewModelTest : UnitTest() {
     fun `given onUserLoggedOut called with status NoAccountsLeft, then updates logoutNavigationAction with ACTION_NO_USER_LEFT`() {
         viewModel.onUserLoggedOut(NoAccountsLeft)
 
-        viewModel.logoutNavigationAction.observeOnce {
-            assertEquals("com.wire.ACTION_NO_USER_LEFT", it)
+        runBlocking {
+            assertEquals("com.wire.ACTION_NO_USER_LEFT", viewModel.logoutNavigationAction.awaitValue())
         }
     }
 
@@ -212,8 +207,8 @@ class SettingsAccountViewModelTest : UnitTest() {
     fun `given onUserLoggedOut called with status CouldNotReadRemainingAccounts, then updates logoutNavigationAction with ACTION_NO_USER_LEFT`() {
         viewModel.onUserLoggedOut(CouldNotReadRemainingAccounts)
 
-        viewModel.logoutNavigationAction.observeOnce {
-            assertEquals("com.wire.ACTION_NO_USER_LEFT", it)
+        runBlocking {
+            assertEquals("com.wire.ACTION_NO_USER_LEFT", viewModel.logoutNavigationAction.awaitValue())
         }
     }
 
@@ -221,8 +216,8 @@ class SettingsAccountViewModelTest : UnitTest() {
     fun `given onUserLoggedOut called with status AnotherAccountExists, then updates logoutNavigationAction with ACTION_CURRENT_USER_CHANGED`() {
         viewModel.onUserLoggedOut(AnotherAccountExists)
 
-        viewModel.logoutNavigationAction.observeOnce {
-            assertEquals("com.wire.ACTION_CURRENT_USER_CHANGED", it)
+        runBlocking {
+            assertEquals("com.wire.ACTION_CURRENT_USER_CHANGED", viewModel.logoutNavigationAction.awaitValue())
         }
     }
 
@@ -232,8 +227,8 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.onUserLogoutError(failure)
 
-        viewModel.errorLiveData.observeOnce {
-            assertEquals(it, "Error logging out: $failure")
+        runBlocking {
+            assertEquals("Error logging out: $failure", viewModel.errorLiveData.awaitValue())
         }
     }
 
