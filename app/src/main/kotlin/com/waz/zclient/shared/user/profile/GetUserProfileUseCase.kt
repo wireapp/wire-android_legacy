@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 @ExperimentalCoroutinesApi
 class GetUserProfileUseCase(private val usersRepository: UsersRepository) :
-    ObservableUseCase<User, Unit>() {
+    ObservableUseCase<User, Unit> {
 
     override suspend fun run(params: Unit): Flow<User> =
         usersRepository.profileDetails()

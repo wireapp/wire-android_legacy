@@ -5,16 +5,14 @@ import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.UsersRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runBlockingTest
-import org.amshove.kluent.shouldBe
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.lenient
+import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
@@ -28,25 +26,20 @@ class GetHandleUseCaseTest : UnitTest() {
     @Mock
     private lateinit var user: User
 
-    private lateinit var userFlow: Flow<User>
-
     @Before
     fun setup() {
         getHandleUseCase = GetHandleUseCase(usersRepository)
-        userFlow = flow { user }
     }
 
     @Test
     fun `Given get handle use case is executed, then the repository should retrieve profile details`() = runBlockingTest {
-        lenient().`when`(usersRepository.profileDetails()).thenReturn(userFlow)
-        lenient().`when`(user.handle).thenReturn(TEST_HANDLE)
+        `when`(usersRepository.profileDetails()).thenReturn(flowOf(user))
+        `when`(user.handle).thenReturn(TEST_HANDLE)
 
-        getHandleUseCase.run(Unit)
+        val handleFlow = getHandleUseCase.run(Unit)
 
-        userFlow.mapLatest {
-            getHandleUseCase.run(Unit).collect {
-                it shouldBe TEST_HANDLE
-            }
+        handleFlow.collect {
+            assertEquals(TEST_HANDLE, it)
         }
     }
 

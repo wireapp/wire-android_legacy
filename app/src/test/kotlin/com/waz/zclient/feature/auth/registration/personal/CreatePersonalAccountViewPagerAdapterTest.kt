@@ -2,10 +2,9 @@ package com.waz.zclient.feature.auth.registration.personal
 
 import androidx.fragment.app.FragmentManager
 import com.waz.zclient.UnitTest
-import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock

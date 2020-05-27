@@ -9,6 +9,8 @@ import com.waz.zclient.R
 import com.waz.zclient.core.config.AppDetailsConfig
 import com.waz.zclient.core.config.HostUrlConfig
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,7 +20,8 @@ class SettingsAboutViewModel(
     private val appDetailsConfig: AppDetailsConfig,
     private val hostUrlConfig: HostUrlConfig,
     private val getUserProfileUseCase: GetUserProfileUseCase
-) : ViewModel() {
+) : ViewModel(),
+    UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private var _urlLiveData = MutableLiveData<AboutUrl>()
     private var _versionDetailsLiveData = MutableLiveData<VersionDetails>()

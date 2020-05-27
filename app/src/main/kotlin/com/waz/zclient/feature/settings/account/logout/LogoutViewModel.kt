@@ -5,8 +5,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 
-class LogoutViewModel(private val logoutUseCase: LogoutUseCase) : ViewModel() {
+class LogoutViewModel(private val logoutUseCase: LogoutUseCase) : ViewModel(),
+    UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private var _successLiveData = MutableLiveData<LogoutStatus>()
     private var _errorLiveData = MutableLiveData<Failure>()

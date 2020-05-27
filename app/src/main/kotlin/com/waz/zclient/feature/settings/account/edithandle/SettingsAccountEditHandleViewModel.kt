@@ -5,6 +5,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.shared.user.handle.HandleIsAvailable
 import com.waz.zclient.shared.user.handle.HandleSameAsCurrent
 import com.waz.zclient.shared.user.handle.UnknownError
@@ -29,7 +31,8 @@ class SettingsAccountEditHandleViewModel(
     private val changeHandleUseCase: ChangeHandleUseCase,
     private val getHandleUseCase: GetHandleUseCase,
     private val validateHandleUseCase: ValidateHandleUseCase
-) : ViewModel() {
+) : ViewModel(),
+    UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _handleLiveData = MutableLiveData<String>()
     private val _errorLiveData = MutableLiveData<ValidateHandleError>()

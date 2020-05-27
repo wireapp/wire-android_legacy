@@ -9,7 +9,7 @@ import com.waz.zclient.shared.activation.ActivationRepository
 
 class ActivateEmailUseCase(
     private val activationRepository: ActivationRepository
-) : UseCase<Unit, ActivateEmailParams>() {
+) : UseCase<Unit, ActivateEmailParams> {
     override suspend fun run(params: ActivateEmailParams): Either<Failure, Unit> =
         activationRepository.activateEmail(params.email, params.code)
             .fold({

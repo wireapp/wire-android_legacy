@@ -6,7 +6,7 @@ import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.shared.user.handle.UserHandleRepository
 
 class ChangeHandleUseCase(private val handleRepository: UserHandleRepository) :
-    UseCase<Any, ChangeHandleParams>() {
+    UseCase<Any, ChangeHandleParams> {
 
     override suspend fun run(params: ChangeHandleParams): Either<Failure, Any> =
         handleRepository.changeHandle(params.newHandle)

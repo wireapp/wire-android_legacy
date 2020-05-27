@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.settings.account
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.Failure
@@ -8,7 +9,8 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.settings.account.logout.AnotherAccountExists
 import com.waz.zclient.feature.settings.account.logout.CouldNotReadRemainingAccounts
 import com.waz.zclient.feature.settings.account.logout.NoAccountsLeft
-import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.framework.coroutines.CoroutinesTestRule
+import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.email.ChangeEmailParams
@@ -17,23 +19,26 @@ import com.waz.zclient.shared.user.name.ChangeNameParams
 import com.waz.zclient.shared.user.name.ChangeNameUseCase
 import com.waz.zclient.shared.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.test.runBlockingTest
-import org.amshove.kluent.shouldBe
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.lenient
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
-@InternalCoroutinesApi
 class SettingsAccountViewModelTest : UnitTest() {
+
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
+
+    @get:Rule
+    val instantTaskRule = InstantTaskExecutorRule()
 
     private lateinit var viewModel: SettingsAccountViewModel
 
@@ -59,127 +64,121 @@ class SettingsAccountViewModelTest : UnitTest() {
 
     @Before
     fun setup() {
+        runBlocking {
+            //TODO: add test cases for getActiveAccountUseCase
+            `when`(getActiveAccountUseCase.run(Unit)).thenReturn(Either.Left(ServerError))
+        }
         viewModel = SettingsAccountViewModel(
             getUserProfileUseCase,
             changeNameUseCase,
             changeEmailUseCase,
             getActiveAccountUseCase,
             accountsUrlConfig)
-        userFlow = flow { user }
+        userFlow = flowOf(user)
     }
 
     @Test
-    fun `given profile is loaded successfully, then account name observer is notified`() = runBlockingTest {
-        lenient().`when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
-        lenient().`when`(user.name).thenReturn(TEST_NAME)
+    fun `given profile is loaded successfully, then account name observer is notified`() {
+        runBlocking {
+            `when`(user.name).thenReturn(TEST_NAME)
+            `when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
 
-        viewModel.loadProfileDetails()
+            viewModel.loadProfileDetails()
 
-        userFlow.collect {
-            viewModel.nameLiveData.observeOnce {
-                it shouldBe TEST_NAME
-            }
+            assertEquals(TEST_NAME, viewModel.nameLiveData.awaitValue())
+            verify(getUserProfileUseCase).run(Unit)
         }
     }
 
     @Test
-    fun `given profile is loaded successfully, then account handle observer is notified`() = runBlockingTest {
-        lenient().`when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
-        lenient().`when`(user.handle).thenReturn(TEST_HANDLE)
+    fun `given profile is loaded successfully, then account handle observer is notified`() {
+        runBlocking {
+            `when`(user.handle).thenReturn(TEST_HANDLE)
+            `when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
 
-        viewModel.loadProfileDetails()
+            viewModel.loadProfileDetails()
 
-        userFlow.collect {
-            viewModel.handleLiveData.observeOnce {
-                it shouldBe TEST_HANDLE
-            }
+            assertEquals(TEST_HANDLE, viewModel.handleLiveData.awaitValue())
+            verify(getUserProfileUseCase).run(Unit)
+        }
+    }
+
+
+    @Test
+    fun `given profile is loaded successfully and account email is not null, then account email observer is notified and user email state is success`() {
+        runBlocking {
+            `when`(user.email).thenReturn(TEST_EMAIL)
+            `when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
+
+            viewModel.loadProfileDetails()
+
+            assertEquals(ProfileDetail(TEST_EMAIL), viewModel.emailLiveData.awaitValue())
+            verify(getUserProfileUseCase).run(Unit)
         }
     }
 
     @Test
-    fun `given profile is loaded successfully and account email is not null, then account email observer is notified and user email state is success`() = runBlockingTest {
-        lenient().`when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
-        lenient().`when`(user.email).thenReturn(TEST_EMAIL)
+    fun `given profile is loaded successfully and account email is null, then account email observer is notified and then user email state isNull`() {
+        runBlocking {
+            `when`(user.email).thenReturn(null)
+            `when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
 
-        viewModel.loadProfileDetails()
+            viewModel.loadProfileDetails()
 
-        userFlow.collect {
-            viewModel.emailLiveData.observeOnce {
-                it shouldBe ProfileDetail(TEST_NAME)
-            }
+            assertEquals(ProfileDetail.EMPTY, viewModel.emailLiveData.awaitValue())
+            verify(getUserProfileUseCase).run(Unit)
         }
     }
 
     @Test
-    fun `given profile is loaded successfully and account email is null, then account email observer is notified and then user email state isNull`() = runBlockingTest {
-        lenient().`when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
-        lenient().`when`(user.email).thenReturn(null)
+    fun `given profile is loaded successfully and account phone is not null, then account phone observer is notified and then user phone state is success`() {
+        runBlocking {
+            `when`(user.phone).thenReturn(TEST_PHONE)
+            `when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
 
-        viewModel.loadProfileDetails()
+            viewModel.loadProfileDetails()
 
-        userFlow.collect {
-            viewModel.emailLiveData.observeOnce {
-                it shouldBe ProfileDetail.EMPTY
-            }
+            assertEquals(ProfileDetail(TEST_PHONE), viewModel.phoneNumberLiveData.awaitValue())
+            verify(getUserProfileUseCase).run(Unit)
         }
     }
 
     @Test
-    fun `given profile is loaded successfully and account phone is not null, then account phone observer is notified and then user phone state is success`() = runBlockingTest {
-        lenient().`when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
-        lenient().`when`(user.email).thenReturn(TEST_PHONE)
+    fun `given profile is loaded successfully and account phone is null, then account phone observer is notified and then user phone state isNull`() {
+        runBlocking {
+            `when`(user.phone).thenReturn(null)
+            `when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
 
-        viewModel.loadProfileDetails()
+            viewModel.loadProfileDetails()
 
-        userFlow.collect {
-            viewModel.phoneNumberLiveData.observeOnce {
-                it shouldBe ProfileDetail(TEST_PHONE)
-            }
-        }
-    }
-
-    @Test
-    fun `given profile is loaded successfully and account phone is null, then account phone observer is notified and then user phone state isNull`() = runBlockingTest {
-        lenient().`when`(getUserProfileUseCase.run(Unit)).thenReturn(userFlow)
-        lenient().`when`(user.email).thenReturn(null)
-
-        viewModel.loadProfileDetails()
-
-        userFlow.collect {
-            viewModel.phoneNumberLiveData.observeOnce {
-                it shouldBe ProfileDetail.EMPTY
-            }
+            assertEquals(ProfileDetail.EMPTY, viewModel.phoneNumberLiveData.awaitValue())
+            verify(getUserProfileUseCase).run(Unit)
         }
     }
 
     @Test
     fun `given account name is updated and fails with HttpError, then error observer is notified`() {
-        val changeNameParams = mock(ChangeNameParams::class.java)
+        val changeNameParams = ChangeNameParams(TEST_NAME)
 
-        runBlockingTest {
-            lenient().`when`(changeNameUseCase.run(changeNameParams)).thenReturn(Either.Left(ServerError))
+        runBlocking {
+            `when`(changeNameUseCase.run(changeNameParams)).thenReturn(Either.Left(ServerError))
+
+            viewModel.updateName(TEST_NAME)
+
+            assertEquals("Failure: $ServerError", viewModel.errorLiveData.awaitValue())
         }
-
-        viewModel.updateName(TEST_NAME)
-
-        viewModel.errorLiveData.observeOnce {
-            it shouldBe "Failure: $ServerError"
-        }
-
     }
 
     @Test
     fun `given account email is updated and fails with HttpError, then error observer is notified`() {
-        val changeEmailParams = mock(ChangeEmailParams::class.java)
+        val changeEmailParams = ChangeEmailParams(TEST_EMAIL)
 
-        runBlockingTest {
-            lenient().`when`(changeEmailUseCase.run(changeEmailParams)).thenReturn(Either.Left(ServerError))
-        }
+        runBlocking {
+            `when`(changeEmailUseCase.run(changeEmailParams)).thenReturn(Either.Left(ServerError))
 
-        viewModel.updateEmail(TEST_EMAIL)
+            viewModel.updateEmail(TEST_EMAIL)
 
-        viewModel.errorLiveData.observeOnce {
-            it shouldBe "Failure: $ServerError"
+            assertEquals("Failure: $ServerError", viewModel.errorLiveData.awaitValue())
         }
     }
 
@@ -189,9 +188,9 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.onResetPasswordClicked()
 
-
-        viewModel.resetPasswordUrlLiveData.observeOnce {
-            assertEquals(it, "$TEST_ACCOUNT_CONFIG_URL$TEST_RESET_PASSWORD_URL_SUFFIX")
+        runBlocking {
+            val url = viewModel.resetPasswordUrlLiveData.awaitValue()
+            assertEquals("$TEST_ACCOUNT_CONFIG_URL$TEST_RESET_PASSWORD_URL_SUFFIX", url)
         }
     }
 
@@ -199,8 +198,8 @@ class SettingsAccountViewModelTest : UnitTest() {
     fun `given onUserLoggedOut called with status NoAccountsLeft, then updates logoutNavigationAction with ACTION_NO_USER_LEFT`() {
         viewModel.onUserLoggedOut(NoAccountsLeft)
 
-        viewModel.logoutNavigationAction.observeOnce {
-            it shouldBe "com.wire.ACTION_NO_USER_LEFT"
+        runBlocking {
+            assertEquals("com.wire.ACTION_NO_USER_LEFT", viewModel.logoutNavigationAction.awaitValue())
         }
     }
 
@@ -208,8 +207,8 @@ class SettingsAccountViewModelTest : UnitTest() {
     fun `given onUserLoggedOut called with status CouldNotReadRemainingAccounts, then updates logoutNavigationAction with ACTION_NO_USER_LEFT`() {
         viewModel.onUserLoggedOut(CouldNotReadRemainingAccounts)
 
-        viewModel.logoutNavigationAction.observeOnce {
-            it shouldBe "com.wire.ACTION_NO_USER_LEFT"
+        runBlocking {
+            assertEquals("com.wire.ACTION_NO_USER_LEFT", viewModel.logoutNavigationAction.awaitValue())
         }
     }
 
@@ -217,8 +216,8 @@ class SettingsAccountViewModelTest : UnitTest() {
     fun `given onUserLoggedOut called with status AnotherAccountExists, then updates logoutNavigationAction with ACTION_CURRENT_USER_CHANGED`() {
         viewModel.onUserLoggedOut(AnotherAccountExists)
 
-        viewModel.logoutNavigationAction.observeOnce {
-            it shouldBe "com.wire.ACTION_CURRENT_USER_CHANGED"
+        runBlocking {
+            assertEquals("com.wire.ACTION_CURRENT_USER_CHANGED", viewModel.logoutNavigationAction.awaitValue())
         }
     }
 
@@ -228,8 +227,8 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.onUserLogoutError(failure)
 
-        viewModel.errorLiveData.observeOnce {
-            assertEquals(it, "Error logging out: $failure")
+        runBlocking {
+            assertEquals("Error logging out: $failure", viewModel.errorLiveData.awaitValue())
         }
     }
 

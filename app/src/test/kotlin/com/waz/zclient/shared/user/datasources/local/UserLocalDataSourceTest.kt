@@ -2,7 +2,6 @@ package com.waz.zclient.shared.user.datasources.local
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
-import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
 import com.waz.zclient.storage.pref.global.GlobalPreferences
@@ -16,16 +15,12 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.lenient
 import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class UserLocalDataSourceTest : UnitTest() {
 
     private lateinit var usersLocalDataSource: UsersLocalDataSource
-
-    @Mock
-    private lateinit var userDatabase: UserDatabase
 
     @Mock
     private lateinit var globalPreferences: GlobalPreferences
@@ -38,7 +33,6 @@ class UserLocalDataSourceTest : UnitTest() {
 
     @Before
     fun setup() {
-        lenient().`when`(userDatabase.userDao()).thenReturn(userDao)
         `when`(globalPreferences.activeUserId).thenReturn(TEST_USER_ID)
         usersLocalDataSource = UsersLocalDataSource(userDao, globalPreferences)
     }

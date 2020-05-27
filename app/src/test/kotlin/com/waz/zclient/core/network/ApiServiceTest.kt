@@ -18,7 +18,6 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.lenient
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoInteractions
 import retrofit2.Response
@@ -47,9 +46,6 @@ class ApiServiceTest : UnitTest() {
     fun `given no network connection, when request called, returns NetworkConnection failure immediately`() {
         runBlocking {
             `when`(mockNetworkHandler.isConnected).thenReturn(false)
-
-            val response = mock(Response::class.java) as Response<String>
-            lenient().`when`(responseFunc.invoke()).thenReturn(response)
 
             val result = apiService.request(default = null, call = responseFunc)
 

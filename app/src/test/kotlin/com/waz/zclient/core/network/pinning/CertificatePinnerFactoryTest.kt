@@ -5,7 +5,6 @@ import com.waz.zclient.eq
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.lenient
 import org.mockito.Mockito.verify
 
 class CertificatePinnerFactoryTest : UnitTest() {
@@ -20,7 +19,7 @@ class CertificatePinnerFactoryTest : UnitTest() {
     fun `Given CertificatePinner is generated, when pin is injected, then verify pin is generated`() {
         `when`(certificationPin.certificate).thenReturn(certificate)
         `when`(certificationPin.domain).thenReturn(TEST_DOMAIN)
-        lenient().`when`(pinGenerator.pin(certificate)).thenReturn("sha256/")
+        `when`(pinGenerator.pin(certificate)).thenReturn("sha256/")
 
         CertificatePinnerFactory.create(certificationPin, pinGenerator)
 

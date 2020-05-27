@@ -6,7 +6,7 @@ import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.shared.user.phonenumber.CountryCodeInvalid
 import com.waz.zclient.shared.user.phonenumber.PhoneNumberInvalid
 
-class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams>() {
+class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams> {
 
     override suspend fun run(params: ValidatePhoneNumberParams) =
         when (!isCountryCodeValid(params.countryCode)) {

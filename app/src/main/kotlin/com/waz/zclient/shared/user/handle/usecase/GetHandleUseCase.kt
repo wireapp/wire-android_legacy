@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.mapLatest
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
-class GetHandleUseCase(private val userRepository: UsersRepository) : ObservableUseCase<String?, Unit>() {
+class GetHandleUseCase(private val userRepository: UsersRepository) : ObservableUseCase<String?, Unit> {
 
     override suspend fun run(params: Unit): Flow<String?> =
         userRepository.profileDetails().mapLatest { it.handle }
