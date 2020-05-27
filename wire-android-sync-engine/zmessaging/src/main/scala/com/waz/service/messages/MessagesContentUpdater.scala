@@ -58,6 +58,8 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     case Some((msg, updated)) if msg != updated =>
       assert(updated.id == id && updated.convId == msg.convId)
       Some(updated)
+    case Some((msg, _)) =>
+      Some(msg)
     case _ =>
       None
   }
@@ -142,7 +144,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
    */
   def updateOrCreateLocalMessage(convId: ConvId, msgType: Message.Type, update: MessageData => MessageData, create: => MessageData) =
     Serialized.future("update-or-create-local-msg", convId, msgType) {
-      messagesStorage.lastLocalMessage(convId, msgType) flatMap {
+      messagesStorage.lastLocalMessage(convId, msgType).flatMap {
         case Some(msg) => // got local message, try updating
           @volatile var shouldCreate = false
           verbose(l"got local message: $msg, will update")
@@ -177,8 +179,8 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
 
   private def addSystemMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Seq[MessageData]] =
     if (msgs.isEmpty) Future.successful(Seq.empty)
-    else {
-      messagesStorage.getMessages(msgs.map(_.id): _*) flatMap { prev =>
+    else
+      messagesStorage.getMessages(msgs.map(_.id): _*).flatMap { prev =>
         val prevIds: Set[MessageId] = prev.collect { case Some(m) => m.id } (breakOut)
         val toAdd = msgs.filterNot(m => prevIds.contains(m.id))
 
@@ -186,25 +188,24 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
           val msg = ms.last
           messagesStorage.hasSystemMessage(convId, msg.time, msg.msgType, msg.userId).flatMap {
             case false =>
-              messagesStorage.lastLocalMessage(convId, msg.msgType).flatMap {
-                case Some(m) if m.userId == msg.userId =>
-                  verbose(l"lastLocalMessage(${msg.msgType}) : $m")
-
-                  if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) {
-                    val remaining = m.members.diff(msg.members)
-                    if (remaining.nonEmpty) addMessage(m.copy(id = MessageId(), members = remaining))
-                  }
-                  messagesStorage.remove(m.id).flatMap(_ => messagesStorage.addMessage(msg.copy(localTime = m.localTime)))
-                case res =>
-                  verbose(l"lastLocalMessage(${msg.msgType}) returned: $res")
-                  messagesStorage.addMessage(msg)
-              }.map(Some(_))
+              // we don't have that exact system message but there still might be another message of the same type
+              messagesStorage.getLastSystemMessage(convId, msg.msgType, msg.userId).flatMap {
+                case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) && m.members == msg.members =>
+                  // we have a duplicate, do nothing
+                  Future.successful(None)
+                case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) && m.isLocal =>
+                  // the message is local, i.e. it was not sent yet, so we can update it
+                  updateMessage(m.id)(_.copy(members = m.members ++ msg.members, localTime = m.localTime))
+                case Some(m) if m.isLocal =>
+                  messagesStorage.remove(m.id).flatMap(_ => messagesStorage.addMessage(msg.copy(localTime = m.localTime))).map(Some(_))
+                case _ =>
+                  messagesStorage.addMessage(msg).map(Some(_))
+              }
             case true =>
               Future.successful(None)
           }
         }.map(_.flatten)
       }
-    }
 
   private def addContentMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Set[MessageData]] =
     msgs.size match {

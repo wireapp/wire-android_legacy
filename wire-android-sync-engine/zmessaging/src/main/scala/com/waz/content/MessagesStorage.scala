@@ -64,6 +64,7 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   //System message events no longer have IDs, so we need to search by type, timestamp and sender
   def hasSystemMessage(conv: ConvId, serverTime: RemoteInstant, tpe: Message.Type, sender: UserId): Future[Boolean]
 
+  def getLastSystemMessage(conv: ConvId, tpe: Message.Type, sender: UserId): Future[Option[MessageData]]
   def getLastMessage(conv: ConvId): Future[Option[MessageData]]
   def getLastSentMessage(conv: ConvId): Future[Option[MessageData]]
   def lastLocalMessage(conv: ConvId, tpe: Message.Type): Future[Option[MessageData]]
@@ -305,6 +306,11 @@ class MessagesStorageImpl(context:     Context,
         warn(l"Found multiple system messages with given timestamp")
         true
     }
+  }
+
+  override def getLastSystemMessage(conv: ConvId, tpe: Message.Type, sender: UserId): Future[Option[MessageData]] = {
+    def matches(msg: MessageData) = msg.convId == conv && msg.msgType == tpe && msg.userId == sender
+    find(matches, MessageDataDao.findLastSystemMessage(conv, tpe, sender)(_), identity).map(_.headOption)
   }
 
   private def deleteUnsentMessages(convId: ConvId)(implicit storage: DB): Unit = {

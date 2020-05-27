@@ -29,6 +29,7 @@ import com.waz.service.UserSearchService.UserSearchEntry
 import com.waz.service.UserService._
 import com.waz.service.assets.{AssetService, AssetStorage, Content, ContentForUpload, NoEncryption}
 import com.waz.service.conversation.SelectedConversationService
+import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient.Retention
@@ -100,7 +101,9 @@ class UserServiceImpl(selfUserId:        UserId,
                       sync:              SyncServiceHandle,
                       assetsStorage:     AssetStorage,
                       credentialsClient: CredentialsUpdateClient,
-                      selectedConv:      SelectedConversationService) extends UserService with DerivedLogTag {
+                      selectedConv:      SelectedConversationService,
+                      messages:          MessagesService
+                     ) extends UserService with DerivedLogTag {
 
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
@@ -163,6 +166,7 @@ class UserServiceImpl(selfUserId:        UserId,
     for {
       members <- membersStorage.getByUsers(ids)
       _       <- membersStorage.removeAll(members.map(_.id).toSet)
+      _       <- Future.sequence(members.map(m => messages.addMemberLeaveMessage(m.convId, selfUserId, m.userId)))
       _       <- usersStorage.updateAll2(ids, _.copy(deleted = true))
     } yield ()
 
