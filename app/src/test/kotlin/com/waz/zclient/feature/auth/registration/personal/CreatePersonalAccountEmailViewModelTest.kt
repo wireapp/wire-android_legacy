@@ -1,30 +1,37 @@
 package com.waz.zclient.feature.auth.registration.personal
 
+import com.waz.zclient.R
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountEmailViewModel
-import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.framework.coroutines.CoroutinesTestRule
+import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
 import com.waz.zclient.shared.activation.usecase.EmailInUse
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 import com.waz.zclient.shared.user.email.EmailInvalid
 import com.waz.zclient.shared.user.email.EmailTooShort
 import com.waz.zclient.shared.user.email.ValidateEmailUseCase
+import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertFalse
+import junit.framework.Assert.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
-import org.amshove.kluent.shouldBe
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.lenient
-import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class CreatePersonalAccountEmailViewModelTest : UnitTest() {
+
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var createPersonalAccountEmailViewModel: CreatePersonalAccountEmailViewModel
 
@@ -45,90 +52,74 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
     @Test
     fun `given validateEmail is called, when the validation succeeds then ok button should be enabled`() =
-        runBlockingTest {
-            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
+        runBlocking {
+            `when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             createPersonalAccountEmailViewModel.validateEmail(TEST_EMAIL)
 
-            createPersonalAccountEmailViewModel.isValidEmailLiveData.observeOnce {
-                it shouldBe true
-            }
+            assertTrue(createPersonalAccountEmailViewModel.isValidEmailLiveData.awaitValue())
         }
 
     @Test
     fun `given validateEmail is called, when the validation fails with EmailTooShortError then ok button should be disabled`() =
-        runBlockingTest {
-            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailTooShort))
+        runBlocking {
+            `when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailTooShort))
 
             createPersonalAccountEmailViewModel.validateEmail(TEST_EMAIL)
 
-            createPersonalAccountEmailViewModel.isValidEmailLiveData.observeOnce {
-                it shouldBe false
-            }
+            assertFalse(createPersonalAccountEmailViewModel.isValidEmailLiveData.awaitValue())
         }
 
     @Test
     fun `given validateEmail is called, when the validation fails with EmailInvalidError then ok button should be disabled`() =
-        runBlockingTest {
-            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailInvalid))
+        runBlocking {
+            `when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailInvalid))
 
             createPersonalAccountEmailViewModel.validateEmail(TEST_EMAIL)
 
-            createPersonalAccountEmailViewModel.isValidEmailLiveData.observeOnce {
-                it shouldBe false
-            }
+            assertFalse(createPersonalAccountEmailViewModel.isValidEmailLiveData.awaitValue())
         }
 
     @Test
     fun `given sendActivationCode is called, when the email is blacklisted then the activation code is not sent`() =
-        runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlacklisted))
+        runBlocking {
+            `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlacklisted))
 
             createPersonalAccountEmailViewModel.sendActivationCode(TEST_EMAIL)
 
-            createPersonalAccountEmailViewModel.sendActivationCodeErrorLiveData.observeOnce {
-                it shouldBe EmailBlacklisted
-            }
+            val error = createPersonalAccountEmailViewModel.sendActivationCodeErrorLiveData.awaitValue()
+            assertEquals(R.string.create_personal_account_with_email_email_blacklisted_error, error.message)
         }
 
     @Test
     fun `given sendActivationCode is called, when the email is in use then the activation code is not sent`() =
-        runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
+        runBlocking {
+            `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
             createPersonalAccountEmailViewModel.sendActivationCode(TEST_EMAIL)
 
-            createPersonalAccountEmailViewModel.sendActivationCodeErrorLiveData.observeOnce {
-                it shouldBe EmailInUse
-            }
+            val error = createPersonalAccountEmailViewModel.sendActivationCodeErrorLiveData.awaitValue()
+            assertEquals(R.string.create_personal_account_with_email_email_in_use_error, error.message)
         }
 
     @Test
     fun `given sendActivationCode is called, when there is a network connection error then the activation code is not sent`() =
-        runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
+        runBlocking {
+            `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
             createPersonalAccountEmailViewModel.sendActivationCode(TEST_EMAIL)
 
-            createPersonalAccountEmailViewModel.networkConnectionErrorLiveData.observeOnce {
-                it shouldBe Unit
-            }
-
-            createPersonalAccountEmailViewModel.sendActivationCodeSuccessLiveData.observeOnce {
-                verifyNoInteractions(it)
-            }
+            assertEquals(Unit, createPersonalAccountEmailViewModel.networkConnectionErrorLiveData.awaitValue())
         }
 
     @Test
     fun `given sendActivationCode is called, when there is no error then the activation code is sent`() =
-        runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
+        runBlocking {
+            `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             createPersonalAccountEmailViewModel.sendActivationCode(TEST_EMAIL)
 
-            createPersonalAccountEmailViewModel.sendActivationCodeSuccessLiveData.observeOnce {
-                it shouldBe Unit
-            }
+            assertEquals(Unit, createPersonalAccountEmailViewModel.sendActivationCodeSuccessLiveData.awaitValue())
         }
 
     companion object {
