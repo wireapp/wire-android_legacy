@@ -4,6 +4,7 @@ import com.waz.zclient.R
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.config.PasswordLengthConfig
+import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
 import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
@@ -33,6 +34,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.lenient
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
@@ -115,7 +117,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
 
             val error = createPersonalAccountWithEmailViewModel.sendActivationCodeErrorLiveData.awaitValue()
-            assertEquals(error.errorMessage, R.string.create_personal_account_with_email_email_blacklisted_error)
+            assertEquals(error.message, R.string.create_personal_account_with_email_email_blacklisted_error)
         }
 
     @Test
@@ -126,7 +128,18 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
 
             val error = createPersonalAccountWithEmailViewModel.sendActivationCodeErrorLiveData.awaitValue()
-            assertEquals(error.errorMessage, R.string.create_personal_account_with_email_email_in_use_error)
+            assertEquals(error.message, R.string.create_personal_account_with_email_email_in_use_error)
+        }
+
+    @Test
+    fun `given sendActivationCode is called, when there is a network connection error then the activation code is not sent`() =
+        runBlocking {
+            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
+
+            createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
+
+            assertEquals(Unit, createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.awaitValue())
+
         }
 
     @Test
@@ -148,7 +161,18 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
 
             val error = createPersonalAccountWithEmailViewModel.activateEmailErrorLiveData.awaitValue()
-            assertEquals(error.errorMessage, R.string.email_verification_invalid_code_error)
+            assertEquals(error.message, R.string.email_verification_invalid_code_error)
+        }
+
+    @Test
+    fun `given activateEmail is called, when there is a network connection error then the activation is not done`() =
+        runBlocking {
+            lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
+
+            createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
+
+            assertEquals(Unit, createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.awaitValue())
+
         }
 
     @Test
@@ -171,7 +195,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             val error = createPersonalAccountWithEmailViewModel.registerErrorLiveData.awaitValue()
-            assertEquals(error.errorMessage, R.string.create_personal_account_unauthorized_email_error)
+            assertEquals(error.message, R.string.create_personal_account_unauthorized_email_error)
         }
 
     @Test
@@ -182,7 +206,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             val error = createPersonalAccountWithEmailViewModel.registerErrorLiveData.awaitValue()
-            assertEquals(error.errorMessage, R.string.create_personal_account_invalid_activation_code_error)
+            assertEquals(error.message, R.string.create_personal_account_invalid_activation_code_error)
         }
 
     @Test
@@ -193,7 +217,18 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             val error = createPersonalAccountWithEmailViewModel.registerErrorLiveData.awaitValue()
-            assertEquals(error.errorMessage, R.string.create_personal_account_email_in_use_error)
+            assertEquals(error.message, R.string.create_personal_account_email_in_use_error)
+        }
+
+    @Test
+    fun `given register is called, when there is a network connection error then the registration is not done`() =
+        runBlocking {
+            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
+
+            createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
+
+            assertEquals(Unit, createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.awaitValue())
+
         }
 
     @Test
