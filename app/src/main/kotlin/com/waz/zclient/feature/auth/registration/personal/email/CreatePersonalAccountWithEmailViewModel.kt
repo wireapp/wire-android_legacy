@@ -89,14 +89,13 @@ class CreatePersonalAccountWithEmailViewModel(
     }
 
     private fun sendActivationCodeFailure(failure: Failure) {
-        if (!isNetworkConnectionFailure(failure)) {
             when (failure) {
+                is NetworkConnection -> _networkConnectionErrorLiveData.postValue(Unit)
                 is EmailBlacklisted -> _sendActivationCodeErrorLiveData.value =
                     ErrorMessage(R.string.create_personal_account_with_email_email_blacklisted_error)
                 is EmailInUse -> _sendActivationCodeErrorLiveData.value =
                     ErrorMessage(R.string.create_personal_account_with_email_email_in_use_error)
             }
-        }
     }
 
     fun activateEmail(email: String, code: String) {
@@ -106,12 +105,11 @@ class CreatePersonalAccountWithEmailViewModel(
     }
 
     private fun activateEmailFailure(failure: Failure) {
-        if (!isNetworkConnectionFailure(failure)) {
             when (failure) {
+                is NetworkConnection -> _networkConnectionErrorLiveData.postValue(Unit)
                 is InvalidCode -> _activateEmailErrorLiveData.value =
                     ErrorMessage(R.string.email_verification_invalid_code_error)
             }
-        }
     }
 
     fun validateName(name: String) {
@@ -152,23 +150,15 @@ class CreatePersonalAccountWithEmailViewModel(
     }
 
     private fun registerFailure(failure: Failure) {
-        if (!isNetworkConnectionFailure(failure)) {
-            when (failure) {
-                is UnauthorizedEmail -> _registerErrorLiveData.value =
-                    ErrorMessage(R.string.create_personal_account_unauthorized_email_error)
-                is InvalidActivationCode -> _registerErrorLiveData.value =
-                    ErrorMessage(R.string.create_personal_account_invalid_activation_code_error)
-                is EmailInUse -> _registerErrorLiveData.value =
-                    ErrorMessage(R.string.create_personal_account_email_in_use_error)
-            }
+        when (failure) {
+            is NetworkConnection -> _networkConnectionErrorLiveData.postValue(Unit)
+            is UnauthorizedEmail -> _registerErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_unauthorized_email_error)
+            is InvalidActivationCode -> _registerErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_invalid_activation_code_error)
+            is EmailInUse -> _registerErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_email_in_use_error)
         }
-    }
-
-    private fun isNetworkConnectionFailure(failure: Failure): Boolean {
-        return if (failure is NetworkConnection) {
-            _networkConnectionErrorLiveData.postValue(Unit)
-            true
-        } else false
     }
 }
 

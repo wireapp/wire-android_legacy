@@ -90,7 +90,6 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
         .create()
         .show()
 
-
     private fun showGenericErrorDialog(messageResId: Int) = AlertDialog.Builder(context)
         .setMessage(messageResId)
         .setPositiveButton(android.R.string.ok) { _, _ -> }

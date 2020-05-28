@@ -114,7 +114,6 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
         .create()
         .show()
 
-
     private fun showGenericErrorDialog(messageResId: Int) = AlertDialog.Builder(context)
         .setMessage(messageResId)
         .setPositiveButton(android.R.string.ok) { _, _ -> }
