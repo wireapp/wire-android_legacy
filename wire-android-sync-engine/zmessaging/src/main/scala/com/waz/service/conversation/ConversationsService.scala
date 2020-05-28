@@ -363,6 +363,13 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _             <- Future.sequence(usersRemoved.flatMap {
                          case (cId, uIds) => uIds.map(uId => messages.addMemberLeaveMessage(cId, uId, uId))
                        })
+      _             <- Future.sequence(usersRemoved.map { case (cId, removedUsers) =>
+                         val oldUsers = activeUsers(cId)
+                         if ((oldUsers -- removedUsers - selfUserId).isEmpty)
+                           renameConversationIfNeeded(cId, oldUsers - selfUserId)
+                         else
+                           Future.successful(())
+                       })
       usersToDelete =  usersRemoved.flatMap(_._2).toSet
       _             <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
                        else Future.successful(())
@@ -379,12 +386,28 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _              <- membersStorage.remove(convId, userIds)
       usersLeft      <- membersStorage.getByUsers(userIds).map(_.map(_.userId).toSet)
       usersToDelete  =  userIds -- usersLeft
+      _              <- if ((usersLeft - selfUserId).isEmpty)
+                          renameConversationIfNeeded(convId, userIds - selfUserId)
+                        else
+                          Future.successful(())
       isGroup        <- if (sendSystemMessage) isGroupConversation(convId) else Future.successful(false)
       _              <- if (isGroup) Future.sequence(userIds.map(uId => messages.addMemberLeaveMessage(convId, remover, uId)))
                         else Future.successful(())
       _              <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
                         else Future.successful(())
     } yield ()
+
+  private def renameConversationIfNeeded(convId: ConvId, userIds: Set[UserId]): Future[Unit] =
+    convsStorage.get(convId).flatMap {
+      case Some(conv) if conv.name.forall(_.isEmpty) =>
+        users.userNames.map(names => userIds.map(names)).head.flatMap { names =>
+          val newConvName = createConversationName(names.toSeq)
+          if (newConvName.nonEmpty) content.updateConversationName(convId, newConvName).map(_ => ())
+          else Future.successful(())
+        }
+      case _ =>
+        Future.successful(())
+    }
 
   private def updateRoles(convIds: Map[ConvId, RConvId], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit] =
     Future.sequence(convIds.collect {
@@ -448,14 +471,17 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         for {
           members   <- activeMembersData(conv.id)
           memberIds =  members.filterNot(_.userId == selfUserId).take(4).map(_.userId).toSet
-          userNames <- users.userNames.map(_.filterKeys(memberIds.contains).values)
+          userNames <- users.userNames.map(names => memberIds.map(names))
         } yield
-          if (userNames.isEmpty) Name.Empty
-          else if (userNames.size == 1) userNames.head
-          // This is for backward compatibility: all new real group conversations should have their names set.
-          // For those who don't, we create the name from first four members' names.
-          else Name(userNames.map(_.str).toSeq.sorted.mkString(", "))
+          createConversationName(userNames.toSeq)
     }
+
+  private def createConversationName(userNames: Seq[Name]): Name =
+    if (userNames.isEmpty) Name.Empty
+    else if (userNames.size == 1) userNames.head
+    // This is for backward compatibility: all new real group conversations should have their names set.
+    // For those who don't, we create the name from first four members' names.
+    else Name(userNames.map(_.str).sorted.mkString(", "))
 
   private def deleteConversation(convData: ConversationData): Future[Unit] = (for {
       convMessageIds <- messages.findMessageIds(convData.id)
