@@ -1,6 +1,5 @@
 package com.waz.zclient.feature.auth.registration.personal.pincode
 
-import android.content.DialogInterface
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
