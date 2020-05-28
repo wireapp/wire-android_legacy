@@ -126,8 +126,21 @@ class UserServiceImpl(selfUserId:        UserId,
 
   currentConvMembers(syncIfNeeded(_))
 
-  override lazy val userNames: Signal[Map[UserId, Name]] =
-    usersStorage.contents.map(_.mapValues(_.name))
+  override lazy val userNames: Signal[Map[UserId, Name]] = {
+    val added = usersStorage.onAdded.map(_.map(user => user.id -> user.name).toMap)
+
+    val updated = usersStorage.onUpdated.map(_.collect {
+      case (o, n) if o.name != n.name => n.id -> n.name
+    }.toMap).filter(_.nonEmpty)
+
+    def initialLoad = usersStorage.list().map(_.map(user => user.id -> user.name).toMap)
+
+    new AggregatingSignal[Map[UserId, Name], Map[UserId, Name]](
+      EventStream.union(added, updated),
+      initialLoad,
+      { (values, changes) => values ++ changes }
+    )
+  }
 
   //Update user data for other accounts
   accounts.accountsWithManagers.map(_ - selfUserId)(userIds => syncIfNeeded(userIds))
