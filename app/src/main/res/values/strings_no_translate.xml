@@ -204,5 +204,7 @@
     <string translatable="false" name="url_contact_support">https://support.wire.com/hc/requests/new</string>
     <string translatable="false" name="url_invalid_email_help">https://support.wire.com/hc/en-us/articles/115004082129-My-email-address-is-already-in-use-and-I-cannot-create-an-account-What-can-I-do-</string>
     <string translatable="false" name="url_teams_set_email_about">https://support.wire.com/hc/en-us/articles/115004082129</string>
+
+    <string translatable="false" name="url_play_store_listing">http://play.google.com/store/apps/details?id=com.wire</string>
 </resources>
 
