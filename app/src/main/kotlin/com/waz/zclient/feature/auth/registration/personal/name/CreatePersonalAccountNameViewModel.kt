@@ -5,6 +5,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.shared.user.name.ValidateNameFailure
 import com.waz.zclient.shared.user.name.ValidateNameParams
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
@@ -12,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountNameViewModel(
     private val validateNameUseCase: ValidateNameUseCase
-) : ViewModel() {
+) : ViewModel(), UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _isValidNameLiveData = MutableLiveData<Boolean>()
     val isValidNameLiveData: LiveData<Boolean> = _isValidNameLiveData

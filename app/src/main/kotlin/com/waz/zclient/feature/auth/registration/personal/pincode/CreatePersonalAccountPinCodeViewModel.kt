@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.waz.zclient.R
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.NetworkConnection
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.shared.activation.usecase.ActivateEmailParams
 import com.waz.zclient.shared.activation.usecase.ActivateEmailUseCase
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
@@ -19,7 +21,7 @@ import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 class CreatePersonalAccountPinCodeViewModel(
     private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase,
     private val activateEmailUseCase: ActivateEmailUseCase
-) : ViewModel() {
+) : ViewModel(), UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _sendActivationCodeSuccessLiveData = MutableLiveData<Unit>()
     private val _sendActivationCodeErrorLiveData = MutableLiveData<ErrorMessage>()

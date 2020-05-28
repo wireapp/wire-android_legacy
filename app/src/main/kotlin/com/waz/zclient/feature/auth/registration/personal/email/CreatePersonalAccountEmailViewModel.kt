@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.waz.zclient.R
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.NetworkConnection
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
 import com.waz.zclient.shared.activation.usecase.EmailInUse
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeParams
@@ -20,7 +22,7 @@ import kotlinx.coroutines.Dispatchers
 class CreatePersonalAccountEmailViewModel(
     private val validateEmailUseCase: ValidateEmailUseCase,
     private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase
-) : ViewModel() {
+) : ViewModel(), UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _isValidEmailLiveData = MutableLiveData<Boolean>()
     private val _sendActivationCodeSuccessLiveData = MutableLiveData<Unit>()

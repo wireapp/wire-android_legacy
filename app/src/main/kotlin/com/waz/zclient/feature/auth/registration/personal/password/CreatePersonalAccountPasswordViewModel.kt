@@ -9,6 +9,8 @@ import com.waz.zclient.R
 import com.waz.zclient.core.config.PasswordLengthConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.NetworkConnection
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
 import com.waz.zclient.feature.auth.registration.register.usecase.RegistrationParams
@@ -23,7 +25,7 @@ class CreatePersonalAccountPasswordViewModel(
     private val validatePasswordCase: ValidatePasswordUseCase,
     private val passwordLengthConfig: PasswordLengthConfig,
     private val registerPersonalAccountWithEmailUseCase: RegisterPersonalAccountWithEmailUseCase
-) : ViewModel() {
+) : ViewModel(), UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _isValidPasswordLiveData = MutableLiveData<Boolean>()
     private val _registerSuccessLiveData = MutableLiveData<Unit>()
