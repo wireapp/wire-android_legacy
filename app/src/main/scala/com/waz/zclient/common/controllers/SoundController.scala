@@ -82,6 +82,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   private val vibrator            = Option(inject[Vibrator])
   private val accountsService     = inject[AccountsService]
   private val notificationManager = inject[NotificationManager]
+  private val ZenModeKey          = "zen_mode"
 
   private val mediaManager   = zms.flatMap(z => Signal.future(z.mediamanager.mediaManager))
   private val soundIntensity = zms.flatMap(_.mediamanager.soundIntensity)
@@ -100,21 +101,22 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   private def shouldPlayCallTone: Boolean = if (Build.VERSION.SDK_INT >= 23) {
     matchCallToneSettings(notificationManager.getCurrentInterruptionFilter, shouldPrioritise = true)
   } else {
-    matchCallToneSettings(Settings.Global.getInt(cxt.getContentResolver, "zen_mode"))
+    matchCallToneSettings(Settings.Global.getInt(cxt.getContentResolver, ZenModeKey))
   }
 
-  private def matchCallToneSettings(callToneSetting: Int, shouldPrioritise: Boolean = false): Boolean = callToneSetting match {
-      case NotificationManager.INTERRUPTION_FILTER_ALL      => true
-      case NotificationManager.INTERRUPTION_FILTER_PRIORITY => if (shouldPrioritise) {
+  private def matchCallToneSettings(callToneSetting: Int, shouldPrioritise: Boolean = false): Boolean =
+    callToneSetting match {
+      case NotificationManager.INTERRUPTION_FILTER_ALL                            => true
+      case NotificationManager.INTERRUPTION_FILTER_PRIORITY if (shouldPrioritise) =>
         val policy = notificationManager.getNotificationPolicy
         (policy.priorityCallSenders == NotificationManager.Policy.PRIORITY_SENDERS_ANY
           || policy.priorityCategories == NotificationManager.Policy.PRIORITY_CATEGORY_CALLS
           || policy.priorityCategories == NotificationManager.Policy.PRIORITY_CATEGORY_REPEAT_CALLERS)
-      } else true
-      case NotificationManager.INTERRUPTION_FILTER_UNKNOWN  => true
-      case NotificationManager.INTERRUPTION_FILTER_ALARMS   => false
-      case NotificationManager.INTERRUPTION_FILTER_NONE     => true
-      case _                                                => true
+      case NotificationManager.INTERRUPTION_FILTER_PRIORITY                       => true
+      case NotificationManager.INTERRUPTION_FILTER_UNKNOWN                        => true
+      case NotificationManager.INTERRUPTION_FILTER_ALARMS                         => false
+      case NotificationManager.INTERRUPTION_FILTER_NONE                           => true
+      case _                                                                      => true
     }
 
   private val tonePrefs = (for {
