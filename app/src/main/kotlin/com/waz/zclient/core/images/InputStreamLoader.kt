@@ -7,7 +7,9 @@ import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.data.DataFetcher
 import com.bumptech.glide.load.model.ModelLoader
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
 import com.waz.zclient.core.usecase.UseCase
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import kotlinx.coroutines.runBlocking
 import org.koin.core.KoinComponent
 import java.io.InputStream
@@ -34,7 +36,8 @@ class InputStreamLoader<T>(
 class InputStreamFetcher<T>(
     private val item: T,
     private val useCase: UseCase<InputStream, T>
-) : DataFetcher<InputStream> {
+) : DataFetcher<InputStream>,
+    UseCaseExecutor by DefaultUseCaseExecutor() {
 
     override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in InputStream>) {
         runBlocking {

@@ -1,36 +1,45 @@
 package com.waz.zclient.feature.settings.devices.detail
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.waz.zclient.UnitTest
+import com.waz.zclient.any
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.framework.coroutines.CoroutinesTestRule
+import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.clients.Client
 import com.waz.zclient.shared.clients.ClientLocation
 import com.waz.zclient.shared.clients.usecase.GetClientUseCase
 import com.waz.zclient.shared.clients.usecase.GetSpecificClientParams
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import org.mockito.MockitoAnnotations
 
-class SettingsDeviceDetailViewModelTest {
+@ExperimentalCoroutinesApi
+class SettingsDeviceDetailViewModelTest : UnitTest() {
+
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
+
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private lateinit var viewModel: SettingsDeviceDetailViewModel
 
     @Mock
     private lateinit var getClientUseCase: GetClientUseCase
 
-    @get:Rule
-    val rule = InstantTaskExecutorRule()
-
     @Before
     fun setup() {
-        MockitoAnnotations.initMocks(this)
         viewModel = SettingsDeviceDetailViewModel(getClientUseCase)
     }
 
@@ -40,37 +49,36 @@ class SettingsDeviceDetailViewModelTest {
         val location = Mockito.mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(time = TEST_TIME, label = TEST_LABEL, clazz = TEST_CLASS, type = TEST_TYPE, id = TEST_ID, model = TEST_MODEL, location = location)
 
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Right(client)) }
+        runBlocking {
+            `when`(getClientUseCase.run(params)).thenReturn(Either.Right(client))
 
-        viewModel.loadData(TEST_ID)
+            viewModel.loading.observeOnce { assertTrue(it) }
 
-        viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
+            viewModel.loadData(TEST_ID)
+
+            with(viewModel.currentDevice.awaitValue().client) {
+                assertEquals(viewModel.loading.value, false)
+                assertEquals(TEST_LABEL, label)
+                assertEquals(TEST_TIME, time)
+                assertEquals(TEST_ID, id)
+            }
         }
-
-        viewModel.currentDevice.observeOnce {
-            val clientItem = it.client
-            assert(viewModel.loading.value == false)
-            assert(clientItem.label == TEST_LABEL)
-            assert(clientItem.time == TEST_TIME)
-            assert(clientItem.id == TEST_ID)
-        }
-
     }
 
     @Test
     fun `given data source returns NetworkError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(NetworkConnection)) }
+        runBlocking {
+            `when`(getClientUseCase.run(params)).thenReturn(Either.Left(NetworkConnection))
 
-        viewModel.loadData(TEST_ID)
+            viewModel.loading.observeOnce { isLoading ->
+                assertTrue(isLoading)
+            }
 
-        viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
-        }
+            viewModel.loadData(TEST_ID)
 
-        viewModel.error.observeOnce {
-            assert(viewModel.loading.value == false)
+            viewModel.error.awaitValue()
+            assertTrue(viewModel.loading.value == false)
             //TODO update loading live data scenario when it has been confirmed
         }
     }
@@ -78,33 +86,34 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns ServerError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(ServerError)) }
+        runBlocking {
+            `when`(getClientUseCase.run(params)).thenReturn(Either.Left(ServerError))
 
-        viewModel.loadData(TEST_ID)
+            viewModel.loading.observeOnce { isLoading ->
+                assertTrue(isLoading)
+            }
 
-        viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
-        }
+            viewModel.loadData(TEST_ID)
 
-        viewModel.error.observeOnce {
-            assert(viewModel.loading.value == false)
+            viewModel.error.awaitValue()
+            assertTrue(viewModel.loading.value == false)
             //TODO update loading live data scenario when it has been confirmed
         }
     }
 
     @Test
     fun `given data source returns CancellationError, then update error live data`() {
-        val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(NetworkConnection)) }
+        runBlocking {
+            `when`(getClientUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
-        viewModel.loadData(TEST_ID)
+            viewModel.loading.observeOnce { isLoading ->
+                assertTrue(isLoading)
+            }
 
-        viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
-        }
+            viewModel.loadData(TEST_ID)
 
-        viewModel.error.observeOnce {
-            assert(viewModel.loading.value == false)
+            viewModel.error.awaitValue()
+            assertTrue(viewModel.loading.value == false)
             //TODO update loading live data scenario when it has been confirmed
         }
     }

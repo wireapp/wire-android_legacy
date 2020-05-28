@@ -4,10 +4,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 
 class SettingsAccountDeleteAccountViewModel(
     private val deleteAccountUserCase: DeleteAccountUseCase
-) : ViewModel() {
+) : ViewModel(),
+    UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _deletionConfirmedLiveData = MutableLiveData<Unit>()
 

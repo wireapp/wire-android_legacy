@@ -6,7 +6,7 @@ import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.shared.user.UsersRepository
 
 class ChangeNameUseCase(private val usersRepository: UsersRepository) :
-    UseCase<Any, ChangeNameParams>() {
+    UseCase<Any, ChangeNameParams> {
 
     override suspend fun run(params: ChangeNameParams): Either<Failure, Any> =
         usersRepository.changeName(params.newName)

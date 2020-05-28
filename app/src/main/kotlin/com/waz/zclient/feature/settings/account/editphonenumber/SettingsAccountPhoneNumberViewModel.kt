@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.waz.zclient.R
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.shared.user.phonenumber.Country
 import com.waz.zclient.shared.user.phonenumber.CountryCodeInvalid
 import com.waz.zclient.shared.user.phonenumber.PhoneNumberInvalid
@@ -26,7 +28,8 @@ class SettingsAccountPhoneNumberViewModel(
     private val changePhoneNumberNumberUseCase: ChangePhoneNumberUseCase,
     private val countryCodeAndPhoneNumberUseCase: CountryCodeAndPhoneNumberUseCase,
     private val deletePhoneNumberUseCase: DeletePhoneNumberUseCase
-) : ViewModel() {
+) : ViewModel(),
+    UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _countryCodeErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
     private val _phoneNumberErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()

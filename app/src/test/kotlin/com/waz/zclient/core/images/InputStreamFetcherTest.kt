@@ -4,7 +4,6 @@ import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
 import com.waz.zclient.UnitTest
-import com.waz.zclient.any
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
@@ -12,8 +11,10 @@ import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.eq
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import java.io.InputStream
@@ -32,11 +33,13 @@ class InputStreamFetcherTest : UnitTest() {
     @Test
     fun `given an item, when loadData is called, calls use case with given item`() = runBlockingTest {
         val useCase = mockUseCase()
+        `when`(useCase.run(ITEM)).thenReturn(Either.Left(ServerError))
+
         inputStreamFetcher = InputStreamFetcher(ITEM, useCase)
 
         inputStreamFetcher.loadData(priority, callback)
 
-        verify(useCase).invoke(any(), eq(ITEM), any(), any())
+        verify(useCase).run(eq(ITEM))
     }
 
     @Test
@@ -65,7 +68,7 @@ class InputStreamFetcherTest : UnitTest() {
 
         val dataSource = inputStreamFetcher.dataSource
 
-        assert(dataSource == DataSource.REMOTE)
+        assertEquals(DataSource.REMOTE, dataSource)
     }
 
     companion object {
@@ -73,11 +76,11 @@ class InputStreamFetcherTest : UnitTest() {
 
         private fun mockUseCase() = mock(UseCase::class.java) as UseCase<InputStream, String>
 
-        private fun errorUseCase(failure: Failure) = object : UseCase<InputStream, String>() {
+        private fun errorUseCase(failure: Failure) = object : UseCase<InputStream, String> {
             override suspend fun run(params: String): Either<Failure, InputStream> = Either.Left(failure)
         }
 
-        private fun successUseCase(inputStream: InputStream) = object : UseCase<InputStream, String>() {
+        private fun successUseCase(inputStream: InputStream) = object : UseCase<InputStream, String> {
             override suspend fun run(params: String): Either<Failure, InputStream> = Either.Right(inputStream)
         }
     }

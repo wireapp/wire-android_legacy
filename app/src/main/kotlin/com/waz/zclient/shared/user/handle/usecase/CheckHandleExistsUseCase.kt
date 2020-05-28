@@ -7,7 +7,7 @@ import com.waz.zclient.shared.user.handle.UserHandleRepository
 import com.waz.zclient.shared.user.handle.ValidateHandleSuccess
 
 class CheckHandleExistsUseCase(private val handleRepository: UserHandleRepository) :
-    UseCase<ValidateHandleSuccess, CheckHandleExistsParams>() {
+    UseCase<ValidateHandleSuccess, CheckHandleExistsParams> {
 
     override suspend fun run(params: CheckHandleExistsParams): Either<Failure, ValidateHandleSuccess> =
         handleRepository.doesHandleExist(params.newHandle)

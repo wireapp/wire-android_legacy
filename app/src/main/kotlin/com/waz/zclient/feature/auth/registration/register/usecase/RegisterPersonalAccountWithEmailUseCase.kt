@@ -10,7 +10,7 @@ import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.feature.auth.registration.register.RegisterRepository
 
 class RegisterPersonalAccountWithEmailUseCase(private val registerRepository: RegisterRepository) :
-    UseCase<Unit, RegistrationParams>() {
+    UseCase<Unit, RegistrationParams> {
     override suspend fun run(params: RegistrationParams): Either<Failure, Unit> =
         registerRepository.registerPersonalAccountWithEmail(
             params.name,

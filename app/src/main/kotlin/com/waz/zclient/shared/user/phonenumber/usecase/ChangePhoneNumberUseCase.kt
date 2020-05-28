@@ -6,7 +6,7 @@ import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.shared.user.phonenumber.PhoneNumberRepository
 
 class ChangePhoneNumberUseCase(private val phoneNumberRepository: PhoneNumberRepository) :
-    UseCase<Any, ChangePhoneNumberParams>() {
+    UseCase<Any, ChangePhoneNumberParams> {
 
     override suspend fun run(params: ChangePhoneNumberParams): Either<Failure, Any> =
         phoneNumberRepository.changePhone(params.newPhoneNumber)

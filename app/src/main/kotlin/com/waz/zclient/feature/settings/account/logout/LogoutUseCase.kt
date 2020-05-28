@@ -12,7 +12,7 @@ class LogoutUseCase(
     private val accountsRepository: AccountsRepository,
     private val accessTokenRepository: AccessTokenRepository,
     private val usersRepository: UsersRepository
-) : UseCase<LogoutStatus, Unit>() {
+) : UseCase<LogoutStatus, Unit> {
 
     override suspend fun run(params: Unit): Either<Failure, LogoutStatus> {
         logout() //TODO check w/ backend team what is the side effect if this call fails

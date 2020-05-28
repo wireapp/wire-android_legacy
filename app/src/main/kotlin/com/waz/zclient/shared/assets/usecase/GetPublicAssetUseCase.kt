@@ -6,7 +6,7 @@ import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.shared.assets.AssetsRepository
 import java.io.InputStream
 
-class GetPublicAssetUseCase(private val assetsRepository: AssetsRepository) : UseCase<InputStream, PublicAsset>() {
+class GetPublicAssetUseCase(private val assetsRepository: AssetsRepository) : UseCase<InputStream, PublicAsset> {
 
     override suspend fun run(params: PublicAsset): Either<Failure, InputStream> =
         assetsRepository.publicAsset(params.assetId)

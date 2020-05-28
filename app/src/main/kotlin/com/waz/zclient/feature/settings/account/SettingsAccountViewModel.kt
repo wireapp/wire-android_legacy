@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.feature.settings.account.logout.AnotherAccountExists
 import com.waz.zclient.feature.settings.account.logout.CouldNotReadRemainingAccounts
 import com.waz.zclient.feature.settings.account.logout.LogoutStatus
@@ -29,7 +31,8 @@ class SettingsAccountViewModel(
     private val changeEmailUseCase: ChangeEmailUseCase,
     private val getActiveAccountUseCase: GetActiveAccountUseCase,
     private val accountUrlConfig: AccountUrlConfig
-) : ViewModel() {
+) : ViewModel(),
+    UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val profileLiveData = MutableLiveData<User>()
     private val activeAccountLiveData = MutableLiveData<ActiveAccount>()

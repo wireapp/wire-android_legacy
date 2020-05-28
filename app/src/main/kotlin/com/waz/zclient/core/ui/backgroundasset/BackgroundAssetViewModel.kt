@@ -5,13 +5,16 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.functional.onSuccess
+import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
+import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.shared.user.profile.GetUserProfilePictureUseCase
 import com.waz.zclient.shared.user.profile.ProfilePictureAsset
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 class BackgroundAssetViewModel(private val getUserProfilePictureUseCase: GetUserProfilePictureUseCase) : ViewModel(),
-    BackgroundAssetOwner {
+    BackgroundAssetOwner,
+    UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _backgroundAsset = MutableLiveData<ProfilePictureAsset>()
     override val backgroundAsset: LiveData<*> = _backgroundAsset
