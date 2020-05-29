@@ -1,8 +1,11 @@
 package com.waz.zclient.feature.auth.registration.di
 
 import com.waz.zclient.core.network.NetworkClient
-import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
+import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountEmailViewModel
 import com.waz.zclient.feature.auth.registration.personal.email.EmailCredentialsViewModel
+import com.waz.zclient.feature.auth.registration.personal.name.CreatePersonalAccountNameViewModel
+import com.waz.zclient.feature.auth.registration.personal.password.CreatePersonalAccountPasswordViewModel
+import com.waz.zclient.feature.auth.registration.personal.pincode.CreatePersonalAccountPinCodeViewModel
 import com.waz.zclient.feature.auth.registration.register.RegisterRepository
 import com.waz.zclient.feature.auth.registration.register.datasources.RegisterDataSource
 import com.waz.zclient.feature.auth.registration.register.datasources.remote.RegisterApi
@@ -21,7 +24,10 @@ val registrationModules: List<Module>
 
 val createPersonalAccountModule: Module = module {
     scope(named(REGISTRATION_SCOPE)) {
-        viewModel { CreatePersonalAccountWithEmailViewModel(get(), get(), get(), get(), get(), get(), get()) }
+        viewModel { CreatePersonalAccountEmailViewModel(get(), get()) }
+        viewModel { CreatePersonalAccountPinCodeViewModel(get(), get()) }
+        viewModel { CreatePersonalAccountNameViewModel(get()) }
+        viewModel { CreatePersonalAccountPasswordViewModel(get(), get(), get()) }
         viewModel { EmailCredentialsViewModel() }
     }
 }
