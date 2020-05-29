@@ -6,6 +6,7 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.auth.registration.personal.name.CreatePersonalAccountNameViewModel
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.user.email.EmailTooShort
+import com.waz.zclient.shared.user.name.NameTooShort
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -36,7 +37,7 @@ class CreatePersonalAccountNameViewModelTest : UnitTest() {
     @Test
     fun `given validateName is called, when the validation fails with NameTooShort then ok button should be disabled`() =
         runBlocking {
-            Mockito.`when`(validateNameUseCase.run(any())).thenReturn(Either.Left(EmailTooShort))
+            Mockito.`when`(validateNameUseCase.run(any())).thenReturn(Either.Left(NameTooShort))
 
             createPersonalAccountNameViewModel.validateName(TEST_NAME)
 
