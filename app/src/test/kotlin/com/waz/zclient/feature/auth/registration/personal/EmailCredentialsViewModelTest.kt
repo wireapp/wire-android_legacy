@@ -2,16 +2,21 @@ package com.waz.zclient.feature.auth.registration.personal
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.feature.auth.registration.personal.email.EmailCredentialsViewModel
+import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBe
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class EmailCredentialsViewModelTest : UnitTest() {
+
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var createPersonalAccountWithEmailSharedViewModel: EmailCredentialsViewModel
 
@@ -22,7 +27,7 @@ class EmailCredentialsViewModelTest : UnitTest() {
 
     @Test
     fun `given saveEmail() is called, then the email should be added to the credentials`() =
-        runBlockingTest {
+        runBlocking {
 
             createPersonalAccountWithEmailSharedViewModel.saveEmail(TEST_EMAIL)
 
@@ -31,7 +36,7 @@ class EmailCredentialsViewModelTest : UnitTest() {
 
     @Test
     fun `given saveActivationCode() is called, then the activation code should be added to the credentials`() =
-        runBlockingTest {
+        runBlocking {
 
             createPersonalAccountWithEmailSharedViewModel.saveActivationCode(TEST_CODE)
 
@@ -40,7 +45,7 @@ class EmailCredentialsViewModelTest : UnitTest() {
 
     @Test
     fun `given saveName() is called, then the name should be added to the credentials`() =
-        runBlockingTest {
+        runBlocking {
 
             createPersonalAccountWithEmailSharedViewModel.saveName(TEST_NAME)
 
