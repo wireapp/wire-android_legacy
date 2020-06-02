@@ -2,7 +2,7 @@ package com.waz.zclient.appentry
 
 import android.os.{Bundle, CountDownTimer}
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{ProgressBar, TextView}
+import android.widget.ProgressBar
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.model2.transport.responses.SSOFound
