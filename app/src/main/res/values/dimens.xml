@@ -656,7 +656,7 @@
     <dimen name="start_sso_notice_card_margin_end">16dp</dimen>
     <dimen name="start_sso_notice_card_corner_radius">8dp</dimen>
     <dimen name="start_sso_notice_card_elevation">0dp</dimen>
-    <dimen name="start_sso_notice_description_text_size">14sp</dimen>
+    <dimen name="start_sso_notice_description_text_size">16sp</dimen>
     <dimen name="start_sso_notice_description_text_line_spacing">6sp</dimen>
     <dimen name="start_sso_notice_description_margin_start">27dp</dimen>
     <dimen name="start_sso_notice_description_margin_end">27dp</dimen>
