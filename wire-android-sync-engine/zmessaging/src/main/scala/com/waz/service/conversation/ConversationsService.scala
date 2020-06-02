@@ -221,7 +221,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
     case MemberLeaveEvent(_, time, from, userIds) =>
       for {
-        _              <- deleteMembers(conv.id, userIds.toSet)
+        _              <- deleteMembers(conv.id, userIds.toSet, from, sendSystemMessage = true)
         selfUserLeaves =  userIds.contains(selfUserId)
         _              <- if (selfUserLeaves) content.setConvActive(conv.id, active = false) else Future.successful(())
                           // if the user removed themselves from another device, archived on this device
@@ -356,10 +356,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       toUpdate      =  responses.map(c => (c.id, c.members)).flatMap {
                          case (remoteId, members) => convs.get(remoteId).map(c => c.id -> (members + (c.creator -> ConversationRole.AdminRole)))
                        }.toMap
-      userIds       <- membersStorage.getActiveUsers2(convs.map(_._2.id).toSet).map(_.flatMap(_._2).toSet)
+      activeUsers   <- membersStorage.getActiveUsers2(convs.map(_._2.id).toSet)
       _             <- membersStorage.setAll(toUpdate)
-      usersLeft     <- membersStorage.getByUsers(userIds).map(_.map(_.userId).toSet)
-      usersToDelete =  userIds -- usersLeft
+      usersLeft     <- membersStorage.getByUsers(activeUsers.flatMap(_._2).toSet).map(_.map(_.userId).toSet)
+      usersRemoved  =  activeUsers.map { case (cId, uIds) => cId -> (uIds -- usersLeft) }.filter(_._2.nonEmpty)
+      _             <- Future.sequence(usersRemoved.flatMap {
+                         case (cId, uIds) => uIds.map(uId => messages.addMemberLeaveMessage(cId, uId, uId))
+                       })
+      usersToDelete =  usersRemoved.flatMap(_._2).toSet
       _             <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
                        else Future.successful(())
     } yield ()
@@ -367,14 +371,17 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   private def deleteMembers(convId: ConvId): Future[Unit] =
     for {
       userIds <- membersStorage.getActiveUsers(convId).map(_.toSet)
-      _       <- deleteMembers(convId, userIds)
+      _       <- deleteMembers(convId, userIds, selfUserId, sendSystemMessage = false)
     } yield ()
 
-  private def deleteMembers(convId: ConvId, userIds: Set[UserId]): Future[Unit] =
+  private def deleteMembers(convId: ConvId, userIds: Set[UserId], remover: UserId, sendSystemMessage: Boolean): Future[Unit] =
     for {
       _              <- membersStorage.remove(convId, userIds)
       usersLeft      <- membersStorage.getByUsers(userIds).map(_.map(_.userId).toSet)
       usersToDelete  =  userIds -- usersLeft
+      isGroup        <- if (sendSystemMessage) isGroupConversation(convId) else Future.successful(false)
+      _              <- if (isGroup) Future.sequence(userIds.map(uId => messages.addMemberLeaveMessage(convId, remover, uId)))
+                        else Future.successful(())
       _              <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
                         else Future.successful(())
     } yield ()
@@ -384,7 +391,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       case (cId, rId) if roles.contains(rId) => rolesService.createOrUpdate(cId, roles(rId))
     }).map(_ => ())
 
-  private def updateConversations(responses: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[(Seq[ConversationData], Seq[ConversationData])] =
+  private def updateConversations(responses: Seq[ConversationResponse],
+                                  roles:     Map[RConvId, Set[ConversationRole]]
+                                 ): Future[(Seq[ConversationData], Seq[ConversationData])] =
     for {
       (convs, created) <- updateConversationData(responses)
       _                <- updateRoles(convs.map(data => data.id -> data.remoteId).toMap, roles)

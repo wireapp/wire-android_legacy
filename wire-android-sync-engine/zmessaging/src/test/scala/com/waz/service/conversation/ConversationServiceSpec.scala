@@ -151,6 +151,10 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (membersStorage.remove(_: ConvId, _: Iterable[UserId])).expects(*, *)
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
       (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(convData)))
+      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, selfUserId).atLeastOnce().returning(
+        Future.successful(())
+      )
 
       // EXPECT
       (content.updateConversationState _).expects(where { (id, state) =>
@@ -175,8 +179,9 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         muted = MuteSet.AllMuted
       )
 
+      val remover = UserId()
       val events = Seq(
-        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), UserId(), Seq(selfUserId))
+        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), remover, Seq(selfUserId))
       )
 
       (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
@@ -188,6 +193,10 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (membersStorage.remove(_: ConvId, _: Iterable[UserId])).expects(*, *)
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
       (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(convData)))
+      (messages.addMemberLeaveMessage _).expects(convId, remover, selfUserId).atLeastOnce().returning(
+        Future.successful(())
+      )
 
       // EXPECT
       (content.updateConversationState _).expects(*, *).never()
@@ -226,6 +235,10 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
       (messages.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(convData)))
+      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, otherUserId).atLeastOnce().returning(
+        Future.successful(())
+      )
 
       // EXPECT
       (content.updateConversationState _).expects(*, *).never()
