@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.auth.registration.personal.password
+package com.waz.zclient.feature.auth.registration.personal.email.password
 
 import android.app.AlertDialog
 import android.os.Bundle
@@ -12,15 +12,15 @@ import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import com.waz.zclient.feature.auth.registration.personal.email.EmailCredentialsViewModel
+import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountEmailCredentialsViewModel
 import kotlinx.android.synthetic.main.fragment_create_personal_account_password.*
 
 class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_personal_account_password) {
 
-    private val createPersonalAccountPasswordViewModel: CreatePersonalAccountPasswordViewModel
+    private val passwordViewModel: CreatePersonalAccountPasswordViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val emailCredentialsViewModel: EmailCredentialsViewModel
+    private val emailCredentialsViewModel: CreatePersonalAccountEmailCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     private val name: String
@@ -43,7 +43,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun observePasswordValidationData() {
-        createPersonalAccountPasswordViewModel.isValidPasswordLiveData.observe(viewLifecycleOwner) {
+        passwordViewModel.isValidPasswordLiveData.observe(viewLifecycleOwner) {
             updateConfirmationButtonStatus(it)
         }
     }
@@ -54,7 +54,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
 
     private fun initPasswordChangedListener() {
         createPersonalAccountPasswordEditText.doAfterTextChanged {
-            createPersonalAccountPasswordViewModel.validatePassword(
+            passwordViewModel.validatePassword(
                 it.toString()
             )
         }
@@ -68,7 +68,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun registerNewUser() {
-        createPersonalAccountPasswordViewModel.register(
+        passwordViewModel.register(
             name = name,
             email = email,
             activationCode = activationCode,
@@ -77,7 +77,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun observeRegistrationData() {
-        with(createPersonalAccountPasswordViewModel) {
+        with(passwordViewModel) {
             registerSuccessLiveData.observe(viewLifecycleOwner) {
                 //TODO move the new registered user to right scala activity/fragment
                 Toast.makeText(requireContext(), getString(R.string.alert_dialog__confirmation),
@@ -90,7 +90,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun observeNetworkConnectionError() {
-        createPersonalAccountPasswordViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
+        passwordViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
             showNetworkConnectionErrorDialog()
         }
     }

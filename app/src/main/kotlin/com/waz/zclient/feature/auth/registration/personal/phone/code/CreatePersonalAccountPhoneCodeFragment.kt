@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.auth.registration.personal.pincode
+package com.waz.zclient.feature.auth.registration.personal.phone.code
 
 import android.app.AlertDialog
 import android.os.Bundle
@@ -12,29 +12,27 @@ import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import com.waz.zclient.feature.auth.registration.personal.email.EmailCredentialsViewModel
-import com.waz.zclient.feature.auth.registration.personal.name.CreatePersonalAccountNameFragment
-import kotlinx.android.synthetic.main.fragment_create_personal_account_pin_code.*
+import com.waz.zclient.feature.auth.registration.personal.phone.CreatePersonalAccountPhoneCredentialsViewModel
+import com.waz.zclient.feature.auth.registration.personal.phone.name.CreatePersonalAccountPhoneNameFragment
+import kotlinx.android.synthetic.main.fragment_create_personal_account_phone_code.*
 
-class CreatePersonalAccountPinCodeFragment : Fragment(
-    R.layout.fragment_create_personal_account_pin_code
+class CreatePersonalAccountPhoneCodeFragment : Fragment(
+    R.layout.fragment_create_personal_account_phone_code
 ) {
-
-    private val createPersonalAccountPinCodeViewModel: CreatePersonalAccountPinCodeViewModel
+    private val phoneCodeViewModel: CreatePersonalAccountPhoneCodeViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val emailCredentialsViewModel: EmailCredentialsViewModel
+    private val phoneCredentialsViewModel: CreatePersonalAccountPhoneCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
-    private val email: String
-        get() = emailCredentialsViewModel.email()
+    private val phone: String
+        get() = phoneCredentialsViewModel.phone()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        observeActivateEmailData()
+        observeActivatePhoneData()
         observeActivationCodeData()
         observeNetworkConnectionError()
-        initChangeMailListener()
         initDescriptionTextView()
         initResendCodeListener()
         initPinCodeListener()
@@ -42,34 +40,34 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     }
 
     private fun initDescriptionTextView() {
-        createPersonalAccountPinCodeDescriptionTextView.text =
-            getString(R.string.email_verification_description, email)
+        createPersonalAccountPhoneCodeDescriptionTextView.text =
+            getString(R.string.create_personal_account_phone_code_description, phone)
     }
 
     private fun initResendCodeListener() {
-        createPersonalAccountPinCodeResendCodeTextView.setOnClickListener {
-            createPersonalAccountPinCodeViewModel.sendActivationCode(email)
+        createPersonalAccountPhoneCodeResendCodeTextView.setOnClickListener {
+            phoneCodeViewModel.sendActivationCode(phone)
         }
     }
 
     private fun initPinCodeListener() {
-        createPersonalAccountPinCodePinEditText.onTextCompleteListener = object : OnTextCompleteListener {
+        createPersonalAccountPhoneCodePinEditText.onTextCompleteListener = object : OnTextCompleteListener {
             override fun onTextComplete(code: String): Boolean {
-                createPersonalAccountPinCodeViewModel.activateEmail(email, code)
+                phoneCodeViewModel.activatePhone(phone, code)
                 return false
             }
         }
     }
 
-    private fun observeActivateEmailData() {
-        with(createPersonalAccountPinCodeViewModel) {
-            activateEmailSuccessLiveData.observe(viewLifecycleOwner) {
-                emailCredentialsViewModel.saveActivationCode(
-                    createPersonalAccountPinCodePinEditText.text.toString()
+    private fun observeActivatePhoneData() {
+        with(phoneCodeViewModel) {
+            activatePhoneSuccessLiveData.observe(viewLifecycleOwner) {
+                phoneCredentialsViewModel.saveActivationCode(
+                    createPersonalAccountPhoneCodePinEditText.text.toString()
                 )
-                showEnterNameScreen()
+                showNameScreen()
             }
-            activateEmailErrorLiveData.observe(viewLifecycleOwner) {
+            activatePhoneErrorLiveData.observe(viewLifecycleOwner) {
                 showGenericErrorDialog(it.message)
                 clearPinCode()
                 showKeyboard()
@@ -78,7 +76,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     }
 
     private fun observeActivationCodeData() {
-        with(createPersonalAccountPinCodeViewModel) {
+        with(phoneCodeViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
                 //TODO show correctly send activation code success messages
             }
@@ -88,23 +86,17 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
         }
     }
 
-    private fun showEnterNameScreen() {
+    private fun showNameScreen() {
         replaceFragment(
             R.id.activityCreateAccountLayoutContainer,
-            CreatePersonalAccountNameFragment.newInstance()
+            CreatePersonalAccountPhoneNameFragment.newInstance()
         )
     }
 
-    private fun clearPinCode() = createPersonalAccountPinCodePinEditText.text?.clear()
-
-    private fun initChangeMailListener() {
-        createPersonalAccountPinCodeChangeMailTextView.setOnClickListener {
-            requireActivity().onBackPressed()
-        }
-    }
+    private fun clearPinCode() = createPersonalAccountPhoneCodePinEditText.text?.clear()
 
     private fun observeNetworkConnectionError() {
-        createPersonalAccountPinCodeViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
+        phoneCodeViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
             showNetworkConnectionErrorDialog()
         }
     }
@@ -123,6 +115,6 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
         .show()
 
     companion object {
-        fun newInstance() = CreatePersonalAccountPinCodeFragment()
+        fun newInstance() = CreatePersonalAccountPhoneCodeFragment()
     }
 }

@@ -24,85 +24,69 @@
     android:background="@color/athens_gray_light">
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/topGuideline"
+        android:id="@+id/createPersonalAccountPhoneCodeTopGuideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.194" />
 
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createPersonalAccountPinCodeTitleTextView"
+        android:id="@+id/createPersonalAccountPhoneCodeTitleTextView"
         style="@style/TextView.RobotoLight"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:text="@string/email_verification_title"
+        android:text="@string/create_personal_account_phone_code_title"
         android:textColor="@color/outer_space"
-        android:textSize="@dimen/email_verification_title_text_size"
+        android:textSize="@dimen/create_personal_account_code_title_text_size"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/topGuideline" />
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPhoneCodeTopGuideline" />
 
     <!-- TODO feature specific color namings -->
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createPersonalAccountPinCodeDescriptionTextView"
+        android:id="@+id/createPersonalAccountPhoneCodeDescriptionTextView"
         style="@style/TextView.RobotoRegular"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/email_verification_description_text_margin_start"
-        android:layout_marginTop="@dimen/email_verification_description_text_margin_top"
-        android:layout_marginEnd="@dimen/email_verification_description_text_margin_end"
+        android:layout_marginStart="@dimen/create_personal_account_code_description_text_margin_start"
+        android:layout_marginTop="@dimen/create_personal_account_code_description_text_margin_top"
+        android:layout_marginEnd="@dimen/create_personal_account_code_description_text_margin_end"
         android:gravity="center_horizontal"
-        android:text="@string/email_verification_description"
+        android:text="@string/create_personal_account_phone_code_description"
         android:textColor="@color/teams_description_text"
-        android:textSize="@dimen/email_verification_description_text_size"
+        android:textSize="@dimen/create_personal_account_code_description_text_size"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPinCodeTitleTextView" />
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPhoneCodeTitleTextView" />
 
     <com.poovam.pinedittextfield.SquarePinField
-        android:id="@+id/createPersonalAccountPinCodePinEditText"
+        android:id="@+id/createPersonalAccountPhoneCodePinEditText"
         style="@style/EditText.Pin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/email_verification_digit_edit_text_margin_top"
+        android:layout_marginTop="@dimen/create_personal_account_code_digit_edit_text_margin_top"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPinCodeDescriptionTextView">
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPhoneCodeDescriptionTextView">
 
         <requestFocus />
     </com.poovam.pinedittextfield.SquarePinField>
 
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createPersonalAccountPinCodeResendCodeTextView"
+        android:id="@+id/createPersonalAccountPhoneCodeResendCodeTextView"
         style="@style/TextView.RobotoBold"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:text="@string/email_verification_resend_code"
+        android:text="@string/create_personal_account_phone_code_resend_code"
         android:textColor="@color/graphite"
-        android:textSize="@dimen/email_verification_resend_code_text_size"
+        android:textSize="@dimen/create_personal_account_code_resend_code_text_size"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.23"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPinCodePinEditText"
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPhoneCodePinEditText"
         app:layout_constraintVertical_bias="0.151" />
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createPersonalAccountPinCodeChangeMailTextView"
-        style="@style/TextView.RobotoBold"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:text="@string/email_verification_change_email"
-        android:textColor="@color/graphite"
-        android:textSize="@dimen/email_verification_change_email_text_size"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.77"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPinCodePinEditText"
-        app:layout_constraintVertical_bias="0.151" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

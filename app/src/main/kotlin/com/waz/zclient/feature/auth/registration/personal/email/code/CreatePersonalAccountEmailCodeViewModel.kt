@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.auth.registration.personal.pincode
+package com.waz.zclient.feature.auth.registration.personal.email.code
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.LiveData
@@ -14,11 +14,11 @@ import com.waz.zclient.shared.activation.usecase.ActivateEmailParams
 import com.waz.zclient.shared.activation.usecase.ActivateEmailUseCase
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
 import com.waz.zclient.shared.activation.usecase.EmailInUse
-import com.waz.zclient.shared.activation.usecase.InvalidCode
+import com.waz.zclient.shared.activation.usecase.InvalidEmailCode
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeParams
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 
-class CreatePersonalAccountPinCodeViewModel(
+class CreatePersonalAccountEmailCodeViewModel(
     private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase,
     private val activateEmailUseCase: ActivateEmailUseCase
 ) : ViewModel(), UseCaseExecutor by DefaultUseCaseExecutor() {
@@ -68,8 +68,8 @@ class CreatePersonalAccountPinCodeViewModel(
     private fun activateEmailFailure(failure: Failure) {
         when (failure) {
             is NetworkConnection -> _networkConnectionErrorLiveData.value = Unit
-            is InvalidCode -> _activateEmailErrorLiveData.value =
-                ErrorMessage(R.string.email_verification_invalid_code_error)
+            is InvalidEmailCode -> _activateEmailErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_email_code_invalid_code_error)
         }
     }
 }

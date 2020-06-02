@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.auth.registration.personal.name
+package com.waz.zclient.feature.auth.registration.personal.email.name
 
 import android.os.Bundle
 import android.view.View
@@ -11,16 +11,16 @@ import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import com.waz.zclient.feature.auth.registration.personal.email.EmailCredentialsViewModel
-import com.waz.zclient.feature.auth.registration.personal.password.CreatePersonalAccountPasswordFragment
+import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountEmailCredentialsViewModel
+import com.waz.zclient.feature.auth.registration.personal.email.password.CreatePersonalAccountPasswordFragment
 import kotlinx.android.synthetic.main.fragment_create_personal_account_name.*
 
-class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_personal_account_name) {
+class CreatePersonalAccountEmailNameFragment : Fragment(R.layout.fragment_create_personal_account_name) {
 
-    private val createPersonalAccountNameViewModel: CreatePersonalAccountNameViewModel
+    private val nameViewModel: CreatePersonalAccountEmailNameViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val emailCredentialsViewModel: EmailCredentialsViewModel
+    private val emailCredentialsViewModel: CreatePersonalAccountEmailCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -32,7 +32,7 @@ class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_pers
     }
 
     private fun observeNameValidationData() {
-        createPersonalAccountNameViewModel.isValidNameLiveData.observe(viewLifecycleOwner) {
+        nameViewModel.isValidNameLiveData.observe(viewLifecycleOwner) {
             updateConfirmationButtonStatus(it)
         }
     }
@@ -43,7 +43,7 @@ class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_pers
 
     private fun initNameChangedListener() {
         createPersonalAccountNameEditText.doAfterTextChanged {
-            createPersonalAccountNameViewModel.validateName(it.toString())
+            nameViewModel.validateName(it.toString())
         }
     }
 
@@ -51,11 +51,11 @@ class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_pers
         updateConfirmationButtonStatus(false)
         createPersonalAccountNameConfirmationButton.setOnClickListener {
             saveName()
-            showPasswordInputScreen()
+            showPasswordScreen()
         }
     }
 
-    private fun showPasswordInputScreen() {
+    private fun showPasswordScreen() {
         replaceFragment(
             R.id.activityCreateAccountLayoutContainer,
             CreatePersonalAccountPasswordFragment.newInstance()
@@ -67,6 +67,6 @@ class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_pers
     }
 
     companion object {
-        fun newInstance() = CreatePersonalAccountNameFragment()
+        fun newInstance() = CreatePersonalAccountEmailNameFragment()
     }
 }

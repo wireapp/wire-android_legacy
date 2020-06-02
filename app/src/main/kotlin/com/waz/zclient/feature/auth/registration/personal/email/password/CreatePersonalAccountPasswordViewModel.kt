@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.auth.registration.personal.password
+package com.waz.zclient.feature.auth.registration.personal.email.password
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.LiveData
@@ -11,9 +11,9 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
 import com.waz.zclient.core.usecase.UseCaseExecutor
-import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
+import com.waz.zclient.feature.auth.registration.register.usecase.EmailRegistrationParams
+import com.waz.zclient.feature.auth.registration.register.usecase.InvalidEmailActivationCode
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
-import com.waz.zclient.feature.auth.registration.register.usecase.RegistrationParams
 import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedEmail
 import com.waz.zclient.shared.activation.usecase.EmailInUse
 import com.waz.zclient.shared.user.password.ValidatePasswordFailure
@@ -60,7 +60,7 @@ class CreatePersonalAccountPasswordViewModel(
     fun register(name: String, email: String, password: String, activationCode: String) {
         registerPersonalAccountWithEmailUseCase(
             viewModelScope,
-            RegistrationParams(name, email, password, activationCode)
+            EmailRegistrationParams(name, email, password, activationCode)
         ) {
             it.fold(::registerFailure) { registerSuccess() }
         }
@@ -75,7 +75,7 @@ class CreatePersonalAccountPasswordViewModel(
             is NetworkConnection -> _networkConnectionErrorLiveData.value = Unit
             is UnauthorizedEmail -> _registerErrorLiveData.value =
                 ErrorMessage(R.string.create_personal_account_unauthorized_email_error)
-            is InvalidActivationCode -> _registerErrorLiveData.value =
+            is InvalidEmailActivationCode -> _registerErrorLiveData.value =
                 ErrorMessage(R.string.create_personal_account_invalid_activation_code_error)
             is EmailInUse -> _registerErrorLiveData.value =
                 ErrorMessage(R.string.create_personal_account_email_in_use_error)

@@ -7,21 +7,21 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.shared.activation.ActivationRepository
 
-class ActivateEmailUseCase(
+class ActivatePhoneUseCase(
     private val activationRepository: ActivationRepository
-) : UseCase<Unit, ActivateEmailParams> {
-    override suspend fun run(params: ActivateEmailParams): Either<Failure, Unit> =
-        activationRepository.activateEmail(params.email, params.code)
+) : UseCase<Unit, ActivatePhoneParams> {
+    override suspend fun run(params: ActivatePhoneParams): Either<Failure, Unit> =
+        activationRepository.activatePhone(params.phone, params.code)
             .fold({
                 when (it) {
-                    is NotFound -> Either.Left(InvalidEmailCode)
+                    is NotFound -> Either.Left(InvalidSmsCode)
                     else -> Either.Left(it)
                 }
             }) { Either.Right(it) }!!
 }
 
-data class ActivateEmailParams(val email: String, val code: String)
+data class ActivatePhoneParams(val phone: String, val code: String)
 
-object InvalidEmailCode : ActivateEmailFailure()
+object InvalidSmsCode : ActivatePhoneFailure()
 
-sealed class ActivateEmailFailure : FeatureFailure()
+sealed class ActivatePhoneFailure : FeatureFailure()

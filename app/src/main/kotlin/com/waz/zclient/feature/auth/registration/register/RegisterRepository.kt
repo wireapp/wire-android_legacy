@@ -10,4 +10,10 @@ interface RegisterRepository {
         password: String,
         activationCode: String
     ): Either<Failure, Unit>
+
+    suspend fun registerPersonalAccountWithPhone(
+        name: String,
+        phone: String,
+        activationCode: String
+    ): Either<Failure, Unit>
 }

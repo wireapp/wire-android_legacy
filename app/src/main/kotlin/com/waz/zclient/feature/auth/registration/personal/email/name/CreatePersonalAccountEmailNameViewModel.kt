@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.auth.registration.personal.name
+package com.waz.zclient.feature.auth.registration.personal.email.name
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,7 +12,7 @@ import com.waz.zclient.shared.user.name.ValidateNameParams
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import kotlinx.coroutines.Dispatchers
 
-class CreatePersonalAccountNameViewModel(
+class CreatePersonalAccountEmailNameViewModel(
     private val validateNameUseCase: ValidateNameUseCase
 ) : ViewModel(), UseCaseExecutor by DefaultUseCaseExecutor() {
 
