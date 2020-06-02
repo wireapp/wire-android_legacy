@@ -34,12 +34,10 @@ val createPersonalAccountModule: Module = module {
         viewModel { CreatePersonalAccountEmailNameViewModel(get()) }
         viewModel { CreatePersonalAccountPasswordViewModel(get(), get(), get()) }
         viewModel { CreatePersonalAccountEmailCredentialsViewModel() }
-
         viewModel { CreatePersonalAccountPhoneViewModel(get()) }
         viewModel { CreatePersonalAccountPhoneCodeViewModel(get(), get()) }
         viewModel { CreatePersonalAccountPhoneNameViewModel(get(), get()) }
         viewModel { CreatePersonalAccountPhoneCredentialsViewModel() }
-
     }
 }
 
