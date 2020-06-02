@@ -2,7 +2,7 @@ package com.waz.zclient.appentry
 
 import android.os.{Bundle, CountDownTimer}
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{ProgressBar, TextView}
+import android.widget.ProgressBar
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.model2.transport.responses.SSOFound
@@ -22,7 +22,6 @@ class StartSSOFragment extends SSOFragment {
   private val COUNTDOWN_INTERVAL: Int = 1000
   private val FULL_PERCENTAGE: Int = 100
   private lazy val progressBar = view[ProgressBar](R.id.startSsoProgressBar)
-  private lazy val linkTextView = view[TextView](R.id.startSsoLinkTextView)
   private lazy val backendController = inject[BackendController]
 
   private lazy val timer = new CountDownTimer(TIME_TO_WAIT, COUNTDOWN_INTERVAL) {
@@ -43,7 +42,6 @@ class StartSSOFragment extends SSOFragment {
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
-    showCustomBackendLink()
     timer.start()
   }
 
@@ -75,10 +73,6 @@ class StartSSOFragment extends SSOFragment {
     }
 
   private def updateProgressBar(progress: Double): Unit = progressBar.foreach(_.setProgress(progress.toInt))
-
-  private def showCustomBackendLink(): Unit = linkTextView.foreach(
-    _.setText(backendController.customBackendConfigUrl.getOrElse(""))
-  )
 }
 
 object StartSSOFragment {
