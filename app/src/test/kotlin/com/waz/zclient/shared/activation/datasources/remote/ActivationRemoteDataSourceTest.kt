@@ -43,7 +43,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
     }
 
     @Test
-    fun `Given sendActivationCode() is called, when api response success, then return an success`() =
+    fun `Given sendEmailActivationCode() is called, when api response success, then return an success`() =
         runBlocking {
 
             `when`(emptyResponse.body()).thenReturn(Unit)
@@ -59,7 +59,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
         }
 
     @Test
-    fun `Given sendActivationCode() is called, when api response failed, then return an error`() =
+    fun `Given sendEmailActivationCode() is called, when api response failed, then return an error`() =
         runBlocking {
 
             `when`(emptyResponse.isSuccessful).thenReturn(false)
@@ -73,7 +73,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
         }
 
     @Test(expected = CancellationException::class)
-    fun `Given  sendActivationCode()() is called, when api response is cancelled, then return an error`() =
+    fun `Given  sendEmailActivationCode()() is called, when api response is cancelled, then return an error`() =
         runBlocking {
 
             `when`(emptyResponse.body()).thenReturn(Unit)
@@ -81,6 +81,54 @@ class ActivationRemoteDataSourceTest : UnitTest() {
             `when`(activationApi.sendActivationCode(any())).thenReturn(emptyResponse)
 
             val response = activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
+
+            verify(activationApi).sendActivationCode(any())
+
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+
+            assertTrue(response.isLeft)
+        }
+
+    @Test
+    fun `Given sendPhoneActivationCode() is called, when api response success, then return an success`() =
+        runBlocking {
+
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+
+            `when`(activationApi.sendActivationCode(any())).thenReturn(emptyResponse)
+
+            val response = activationRemoteDataSource.sendPhoneActivationCode(TEST_PHONE)
+
+            verify(activationApi).sendActivationCode(any())
+
+            assertTrue(response.isRight)
+        }
+
+    @Test
+    fun `Given sendPhoneActivationCode() is called, when api response failed, then return an error`() =
+        runBlocking {
+
+            `when`(emptyResponse.isSuccessful).thenReturn(false)
+            `when`(activationApi.sendActivationCode(any())).thenReturn(emptyResponse)
+
+            val response = activationRemoteDataSource.sendPhoneActivationCode(TEST_PHONE)
+
+            verify(activationApi).sendActivationCode(any())
+
+            assertTrue(response.isLeft)
+        }
+
+    @Test(expected = CancellationException::class)
+    fun `Given  sendPhoneActivationCode()() is called, when api response is cancelled, then return an error`() =
+        runBlocking {
+
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(activationApi.sendActivationCode(any())).thenReturn(emptyResponse)
+
+            val response = activationRemoteDataSource.sendPhoneActivationCode(TEST_PHONE)
 
             verify(activationApi).sendActivationCode(any())
 
@@ -138,10 +186,59 @@ class ActivationRemoteDataSourceTest : UnitTest() {
             assertTrue(response.isLeft)
         }
 
+    @Test
+    fun `Given activatePhone() is called, when api response success, then return an success`() =
+        runBlocking {
+
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+
+            `when`(activationApi.activate(any())).thenReturn(emptyResponse)
+
+            val response = activationRemoteDataSource.activatePhone(TEST_PHONE, TEST_CODE)
+
+            verify(activationApi).activate(any())
+
+            assertTrue(response.isRight)
+        }
+
+    @Test
+    fun `Given activatePhone() is called, when api response failed, then return an error`() =
+        runBlocking {
+
+            `when`(emptyResponse.isSuccessful).thenReturn(false)
+            `when`(activationApi.activate(any())).thenReturn(emptyResponse)
+
+            val response = activationRemoteDataSource.activatePhone(TEST_PHONE, TEST_CODE)
+
+            verify(activationApi).activate(any())
+
+            assertTrue(response.isLeft)
+        }
+
+    @Test(expected = CancellationException::class)
+    fun `Given  activatePhone()() is called, when api response is cancelled, then return an error`() =
+        runBlocking {
+
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(activationApi.activate(any())).thenReturn(emptyResponse)
+
+            val response = activationRemoteDataSource.activatePhone(TEST_PHONE, TEST_CODE)
+
+            verify(activationApi).activate(any())
+
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+
+            assertTrue(response.isLeft)
+        }
+
     companion object {
         private const val CANCELLATION_DELAY = 200L
         private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
         private const val TEST_EMAIL = "test@wire.com"
         private const val TEST_CODE = "000000"
+        private const val TEST_PHONE = "+499999999"
     }
 }

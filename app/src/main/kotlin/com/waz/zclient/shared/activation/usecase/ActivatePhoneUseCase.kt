@@ -14,7 +14,7 @@ class ActivatePhoneUseCase(
         activationRepository.activatePhone(params.phone, params.code)
             .fold({
                 when (it) {
-                    is NotFound -> Either.Left(InvalidSmsCode)
+                    is NotFound -> Either.Left(InvalidPhoneCode)
                     else -> Either.Left(it)
                 }
             }) { Either.Right(it) }!!
@@ -22,6 +22,6 @@ class ActivatePhoneUseCase(
 
 data class ActivatePhoneParams(val phone: String, val code: String)
 
-object InvalidSmsCode : ActivatePhoneFailure()
+object InvalidPhoneCode : ActivatePhoneFailure()
 
 sealed class ActivatePhoneFailure : FeatureFailure()

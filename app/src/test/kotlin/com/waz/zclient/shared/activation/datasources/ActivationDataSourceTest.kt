@@ -58,6 +58,31 @@ class ActivationDataSourceTest : UnitTest() {
         }
 
     @Test
+    fun `Given sendPhoneActivationCode() is called and remote request fails then return failure`() =
+        runBlocking {
+
+            `when`(activationRemoteDataSource.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Left(ServerError))
+
+            val response = activationDataSource.sendPhoneActivationCode(TEST_PHONE)
+
+            verify(activationRemoteDataSource).sendPhoneActivationCode(TEST_PHONE)
+
+            assertTrue(response.isLeft)
+        }
+
+    @Test
+    fun `Given sendPhoneActivationCode() is called and remote request is success, then return success`() =
+        runBlocking {
+            `when`(activationRemoteDataSource.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Right(Unit))
+
+            val response = activationDataSource.sendPhoneActivationCode(TEST_PHONE)
+
+            verify(activationRemoteDataSource).sendPhoneActivationCode(TEST_PHONE)
+
+            assertTrue(response.isRight)
+        }
+
+    @Test
     fun `Given activateEmail() is called and remote request fails then return failure`() =
         runBlocking {
 
@@ -82,9 +107,35 @@ class ActivationDataSourceTest : UnitTest() {
             assertTrue(response.isRight)
         }
 
+    @Test
+    fun `Given activatePhone() is called and remote request fails then return failure`() =
+        runBlocking {
+
+            `when`(activationRemoteDataSource.activatePhone(TEST_PHONE, TEST_CODE)).thenReturn(Either.Left(ServerError))
+
+            val response = activationDataSource.activatePhone(TEST_PHONE, TEST_CODE)
+
+            verify(activationRemoteDataSource).activatePhone(TEST_PHONE, TEST_CODE)
+
+            assertTrue(response.isLeft)
+        }
+
+    @Test
+    fun `Given activatePhone() is called and remote request is success, then return success`() =
+        runBlocking {
+            `when`(activationRemoteDataSource.activatePhone(TEST_PHONE, TEST_CODE)).thenReturn(Either.Right(Unit))
+
+            val response = activationDataSource.activatePhone(TEST_PHONE, TEST_CODE)
+
+            verify(activationRemoteDataSource).activatePhone(TEST_PHONE, TEST_CODE)
+
+            assertTrue(response.isRight)
+        }
+
     companion object {
         private const val TEST_EMAIL = "test@wire.com"
         private const val TEST_CODE = "000000"
+        private const val TEST_PHONE = "+499999999"
     }
 
 }

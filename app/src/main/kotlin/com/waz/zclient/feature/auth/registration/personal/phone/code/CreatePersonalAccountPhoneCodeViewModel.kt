@@ -12,7 +12,7 @@ import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
 import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.shared.activation.usecase.ActivatePhoneParams
 import com.waz.zclient.shared.activation.usecase.ActivatePhoneUseCase
-import com.waz.zclient.shared.activation.usecase.InvalidSmsCode
+import com.waz.zclient.shared.activation.usecase.InvalidPhoneCode
 import com.waz.zclient.shared.activation.usecase.PhoneBlacklisted
 import com.waz.zclient.shared.activation.usecase.PhoneInUse
 import com.waz.zclient.shared.activation.usecase.SendPhoneActivationCodeParams
@@ -68,7 +68,7 @@ class CreatePersonalAccountPhoneCodeViewModel(
     private fun activatePhoneFailure(failure: Failure) {
         when (failure) {
             is NetworkConnection -> _networkConnectionErrorLiveData.value = Unit
-            is InvalidSmsCode -> _activatePhoneErrorLiveData.value =
+            is InvalidPhoneCode -> _activatePhoneErrorLiveData.value =
                 ErrorMessage(R.string.create_personal_account_phone_code_invalid_code_error)
         }
     }

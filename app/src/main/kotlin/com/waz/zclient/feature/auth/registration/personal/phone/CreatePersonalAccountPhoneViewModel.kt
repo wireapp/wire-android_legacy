@@ -29,6 +29,7 @@ class CreatePersonalAccountPhoneViewModel(
     val sendActivationCodeErrorLiveData: LiveData<ErrorMessage> = _sendActivationCodeErrorLiveData
     val networkConnectionErrorLiveData: LiveData<Unit> = _networkConnectionErrorLiveData
 
+    // TODO missing phone validation
     fun validatePhone(phone: String) {
         _isValidPhoneLiveData.value = true
     }

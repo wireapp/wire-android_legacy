@@ -94,16 +94,68 @@ class RegisterDataSourceTest : UnitTest() {
             response.onSuccess {
                 assertEquals(Unit, it)
             }
-
             assertTrue(response.isRight)
         }
 
+    @Test
+    fun `Given registerPersonalAccountWithPhone() is called and remote request fails then return failure`() =
+        runBlocking {
+
+            `when`(registerRemoteDataSource.registerPersonalAccountWithPhone(
+                TEST_NAME,
+                TEST_PHONE,
+                TEST_ACTIVATION_CODE
+            )).thenReturn(Either.Left(ServerError))
+
+            val response = registerDataSource.registerPersonalAccountWithPhone(
+                TEST_NAME,
+                TEST_PHONE,
+                TEST_ACTIVATION_CODE
+            )
+
+            verify(registerRemoteDataSource).registerPersonalAccountWithPhone(
+                TEST_NAME,
+                TEST_PHONE,
+                TEST_ACTIVATION_CODE
+            )
+
+            assertTrue(response.isLeft)
+        }
+
+    @Test
+    fun `Given registerPersonalAccountWithPhone() is called and remote request is success, then return success`() =
+        runBlocking {
+
+            `when`(registerRemoteDataSource.registerPersonalAccountWithPhone(
+                TEST_NAME,
+                TEST_PHONE,
+                TEST_ACTIVATION_CODE
+            )).thenReturn(Either.Right(userResponse))
+
+            val response = registerDataSource.registerPersonalAccountWithPhone(
+                TEST_NAME,
+                TEST_PHONE,
+                TEST_ACTIVATION_CODE
+            )
+
+            verify(registerRemoteDataSource).registerPersonalAccountWithPhone(
+                TEST_NAME,
+                TEST_PHONE,
+                TEST_ACTIVATION_CODE
+            )
+
+            response.onSuccess {
+                assertEquals(Unit, it)
+            }
+            assertTrue(response.isRight)
+        }
 
     companion object {
         private const val TEST_NAME = "testName"
         private const val TEST_EMAIL = "test@wire.com"
         private const val TEST_PASSWORD = "testPass"
         private const val TEST_ACTIVATION_CODE = "000000"
+        private const val TEST_PHONE = "+499999999"
     }
 
 }
