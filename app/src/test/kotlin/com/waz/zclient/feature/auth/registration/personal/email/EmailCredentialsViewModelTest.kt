@@ -1,12 +1,11 @@
-package com.waz.zclient.feature.auth.registration.personal
+package com.waz.zclient.feature.auth.registration.personal.email
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.feature.auth.registration.personal.email.EmailCredentialsViewModel
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import org.amshove.kluent.shouldBe
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -16,40 +15,41 @@ import org.junit.Test
 class EmailCredentialsViewModelTest : UnitTest() {
 
     @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
+    val testRule = CoroutinesTestRule()
 
-    private lateinit var createPersonalAccountWithEmailSharedViewModel: EmailCredentialsViewModel
+    private lateinit var emailCredentialsViewModel: CreatePersonalAccountEmailCredentialsViewModel
 
     @Before
     fun setup() {
-        createPersonalAccountWithEmailSharedViewModel = EmailCredentialsViewModel()
+        emailCredentialsViewModel = CreatePersonalAccountEmailCredentialsViewModel()
     }
 
     @Test
     fun `given saveEmail() is called, then the email should be added to the credentials`() =
         runBlocking {
 
-            createPersonalAccountWithEmailSharedViewModel.saveEmail(TEST_EMAIL)
+            emailCredentialsViewModel.saveEmail(TEST_EMAIL)
 
-            createPersonalAccountWithEmailSharedViewModel.email() shouldBe TEST_EMAIL
+            assertEquals(TEST_EMAIL, emailCredentialsViewModel.email())
         }
 
     @Test
     fun `given saveActivationCode() is called, then the activation code should be added to the credentials`() =
         runBlocking {
 
-            createPersonalAccountWithEmailSharedViewModel.saveActivationCode(TEST_CODE)
+            emailCredentialsViewModel.saveActivationCode(TEST_CODE)
 
-            createPersonalAccountWithEmailSharedViewModel.activationCode() shouldBe TEST_CODE
+            assertEquals(TEST_CODE, emailCredentialsViewModel.activationCode())
         }
 
     @Test
     fun `given saveName() is called, then the name should be added to the credentials`() =
         runBlocking {
 
-            createPersonalAccountWithEmailSharedViewModel.saveName(TEST_NAME)
+            emailCredentialsViewModel.saveName(TEST_NAME)
 
-            createPersonalAccountWithEmailSharedViewModel.name() shouldBe TEST_NAME
+            assertEquals(TEST_NAME, emailCredentialsViewModel.name())
+
         }
 
     companion object {

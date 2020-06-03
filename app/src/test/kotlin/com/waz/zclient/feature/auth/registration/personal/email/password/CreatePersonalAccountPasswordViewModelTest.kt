@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.auth.registration.personal
+package com.waz.zclient.feature.auth.registration.personal.email.password
 
 import com.waz.zclient.R
 import com.waz.zclient.UnitTest
@@ -6,13 +6,12 @@ import com.waz.zclient.any
 import com.waz.zclient.core.config.PasswordLengthConfig
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.feature.auth.registration.personal.password.CreatePersonalAccountPasswordViewModel
-import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
+import com.waz.zclient.feature.auth.registration.register.usecase.EmailInUse
+import com.waz.zclient.feature.auth.registration.register.usecase.InvalidEmailActivationCode
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
 import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedEmail
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
-import com.waz.zclient.shared.activation.usecase.EmailInUse
 import com.waz.zclient.shared.user.password.NoDigit
 import com.waz.zclient.shared.user.password.NoLowerCaseLetter
 import com.waz.zclient.shared.user.password.NoSpecialCharacter
@@ -20,16 +19,15 @@ import com.waz.zclient.shared.user.password.NoUpperCaseLetter
 import com.waz.zclient.shared.user.password.PasswordTooLong
 import com.waz.zclient.shared.user.password.PasswordTooShort
 import com.waz.zclient.shared.user.password.ValidatePasswordUseCase
-import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
@@ -37,9 +35,9 @@ import org.mockito.Mockito.`when`
 class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
+    val testRule = CoroutinesTestRule()
 
-    private lateinit var createPersonalAccountPasswordViewModel: CreatePersonalAccountPasswordViewModel
+    private lateinit var passwordViewModel: CreatePersonalAccountPasswordViewModel
 
     @Mock
     private lateinit var validatePasswordUseCase: ValidatePasswordUseCase
@@ -52,7 +50,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Before
     fun setup() {
-        createPersonalAccountPasswordViewModel = CreatePersonalAccountPasswordViewModel(
+        passwordViewModel = CreatePersonalAccountPasswordViewModel(
             validatePasswordUseCase,
             passwordLengthConfig,
             registerPersonalAccountWithEmailUseCase
@@ -60,73 +58,73 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given validatePassword is called, when the validation fails with isPasswordTooShort then ok button should be disabled`() =
+    fun `given validatePassword is called, when the validation fails with isPasswordTooShort then isValidPassword should be false`() =
         runBlocking {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(PasswordTooShort))
 
-            createPersonalAccountPasswordViewModel.validatePassword(TEST_PASSWORD)
+            passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(createPersonalAccountPasswordViewModel.isValidPasswordLiveData.awaitValue())
+            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
-    fun `given validatePassword is called, when the validation fails with PasswordTooLong then ok button should be disabled`() =
+    fun `given validatePassword is called, when the validation fails with PasswordTooLong then isValidPassword should be false`() =
         runBlocking {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(PasswordTooLong))
 
-            createPersonalAccountPasswordViewModel.validatePassword(TEST_PASSWORD)
+            passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(createPersonalAccountPasswordViewModel.isValidPasswordLiveData.awaitValue())
+            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
-    fun `given validatePassword is called, when the validation fails with NoLowerCaseLetter then ok button should be disabled`() =
+    fun `given validatePassword is called, when the validation fails with NoLowerCaseLetter then isValidPassword should be false`() =
         runBlocking {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(NoLowerCaseLetter))
 
-            createPersonalAccountPasswordViewModel.validatePassword(TEST_PASSWORD)
+            passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(createPersonalAccountPasswordViewModel.isValidPasswordLiveData.awaitValue())
+            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
-    fun `given validatePassword is called, when the validation fails with NoUpperCaseLetter then ok button should be disabled`() =
+    fun `given validatePassword is called, when the validation fails with NoUpperCaseLetter then isValidPassword should be false`() =
         runBlocking {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(NoUpperCaseLetter))
 
-            createPersonalAccountPasswordViewModel.validatePassword(TEST_PASSWORD)
+            passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(createPersonalAccountPasswordViewModel.isValidPasswordLiveData.awaitValue())
+            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
-    fun `given validatePassword is called, when the validation fails with NoDigit then ok button should be disabled`() =
+    fun `given validatePassword is called, when the validation fails with NoDigit then isValidPassword should be false`() =
         runBlocking {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(NoDigit))
 
-            createPersonalAccountPasswordViewModel.validatePassword(TEST_PASSWORD)
+            passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(createPersonalAccountPasswordViewModel.isValidPasswordLiveData.awaitValue())
+            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
-    fun `given validatePassword is called, when the validation fails with NoSpecialCharacter then ok button should be disabled`() =
+    fun `given validatePassword is called, when the validation fails with NoSpecialCharacter then isValidPassword should be false`() =
         runBlocking {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(NoSpecialCharacter))
 
-            createPersonalAccountPasswordViewModel.validatePassword(TEST_PASSWORD)
+            passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(createPersonalAccountPasswordViewModel.isValidPasswordLiveData.awaitValue())
+            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
-    fun `given validatePassword is called, when the validation succeeds then ok button should be enabled`() =
+    fun `given validatePassword is called, when the validation succeeds then isValidPassword should be true`() =
         runBlocking {
-            Mockito.`when`(validatePasswordUseCase.run(any())).thenReturn(Either.Right(Unit))
+            `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountPasswordViewModel.validatePassword(TEST_PASSWORD)
+            passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertTrue(createPersonalAccountPasswordViewModel.isValidPasswordLiveData.awaitValue())
+            Assert.assertTrue(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
@@ -134,20 +132,20 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
         runBlocking {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(UnauthorizedEmail))
 
-            createPersonalAccountPasswordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
+            passwordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
-            val error = createPersonalAccountPasswordViewModel.registerErrorLiveData.awaitValue()
+            val error = passwordViewModel.registerErrorLiveData.awaitValue()
             assertEquals(R.string.create_personal_account_unauthorized_email_error, error.message)
         }
 
     @Test
     fun `given register is called, when the activation code is invalid then the registration is not done`() =
         runBlocking {
-            `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(InvalidActivationCode))
+            `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(InvalidEmailActivationCode))
 
-            createPersonalAccountPasswordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
+            passwordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
-            val error = createPersonalAccountPasswordViewModel.registerErrorLiveData.awaitValue()
+            val error = passwordViewModel.registerErrorLiveData.awaitValue()
             assertEquals(R.string.create_personal_account_invalid_activation_code_error, error.message)
         }
 
@@ -156,9 +154,9 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
         runBlocking {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
-            createPersonalAccountPasswordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
+            passwordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
-            val error = createPersonalAccountPasswordViewModel.registerErrorLiveData.awaitValue()
+            val error = passwordViewModel.registerErrorLiveData.awaitValue()
             assertEquals(R.string.create_personal_account_email_in_use_error, error.message)
         }
 
@@ -168,9 +166,9 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
-            createPersonalAccountPasswordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
+            passwordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
-            assertEquals(Unit, createPersonalAccountPasswordViewModel.networkConnectionErrorLiveData.awaitValue())
+            assertEquals(Unit, passwordViewModel.networkConnectionErrorLiveData.awaitValue())
         }
 
     @Test
@@ -178,9 +176,9 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
         runBlocking {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountPasswordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
+            passwordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
-            assertEquals(Unit, createPersonalAccountPasswordViewModel.registerSuccessLiveData.awaitValue())
+            assertEquals(Unit, passwordViewModel.registerSuccessLiveData.awaitValue())
         }
 
     companion object {

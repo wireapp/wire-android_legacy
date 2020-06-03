@@ -1,12 +1,10 @@
-package com.waz.zclient.feature.auth.registration.personal
+package com.waz.zclient.feature.auth.registration.personal.email.name
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.feature.auth.registration.personal.name.CreatePersonalAccountNameViewModel
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
-import com.waz.zclient.shared.user.email.EmailTooShort
 import com.waz.zclient.shared.user.name.NameTooShort
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,41 +20,41 @@ import org.mockito.Mockito
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-class CreatePersonalAccountNameViewModelTest : UnitTest() {
+class CreatePersonalAccountEmailNameViewModelTest : UnitTest() {
 
     @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
+    val testRule = CoroutinesTestRule()
 
-    private lateinit var createPersonalAccountNameViewModel: CreatePersonalAccountNameViewModel
+    private lateinit var nameViewModel: CreatePersonalAccountEmailNameViewModel
 
     @Mock
     private lateinit var validateNameUseCase: ValidateNameUseCase
 
     @Before
     fun setup() {
-        createPersonalAccountNameViewModel = CreatePersonalAccountNameViewModel(
+        nameViewModel = CreatePersonalAccountEmailNameViewModel(
             validateNameUseCase
         )
     }
 
     @Test
-    fun `given validateName is called, when the validation fails with NameTooShort then ok button should be disabled`() =
+    fun `given validateName is called, when the validation fails with NameTooShort then isValidName should be false`() =
         runBlocking {
             Mockito.`when`(validateNameUseCase.run(any())).thenReturn(Either.Left(NameTooShort))
 
-            createPersonalAccountNameViewModel.validateName(TEST_NAME)
+            nameViewModel.validateName(TEST_NAME)
 
-            assertFalse(createPersonalAccountNameViewModel.isValidNameLiveData.awaitValue())
+            assertFalse(nameViewModel.isValidNameLiveData.awaitValue())
         }
 
     @Test
-    fun `given validateName is called, when the validation succeeds then ok button should be enabled`() =
+    fun `given validateName is called, when the validation succeeds then isValidName should be true`() =
         runBlocking {
             Mockito.`when`(validateNameUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountNameViewModel.validateName(TEST_NAME)
+            nameViewModel.validateName(TEST_NAME)
 
-            assertTrue(createPersonalAccountNameViewModel.isValidNameLiveData.awaitValue())
+            assertTrue(nameViewModel.isValidNameLiveData.awaitValue())
         }
 
     companion object {

@@ -1,22 +1,21 @@
-package com.waz.zclient.feature.auth.registration.personal
+package com.waz.zclient.feature.auth.registration.personal.email.code
 
 import com.waz.zclient.R
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.feature.auth.registration.personal.pincode.CreatePersonalAccountPinCodeViewModel
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.activation.usecase.ActivateEmailUseCase
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
 import com.waz.zclient.shared.activation.usecase.EmailInUse
-import com.waz.zclient.shared.activation.usecase.InvalidCode
+import com.waz.zclient.shared.activation.usecase.InvalidEmailCode
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
-import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -25,12 +24,12 @@ import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-class CreatePersonalAccountPinCodeViewModelTest : UnitTest() {
+class CreatePersonalAccountEmailCodeViewModelTest : UnitTest() {
 
     @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
+    val testRule = CoroutinesTestRule()
 
-    private lateinit var createPersonalAccountPinCodeViewModel: CreatePersonalAccountPinCodeViewModel
+    private lateinit var emailCodeViewModel: CreatePersonalAccountEmailCodeViewModel
 
     @Mock
     private lateinit var sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase
@@ -41,7 +40,7 @@ class CreatePersonalAccountPinCodeViewModelTest : UnitTest() {
 
     @Before
     fun setup() {
-        createPersonalAccountPinCodeViewModel = CreatePersonalAccountPinCodeViewModel(
+        emailCodeViewModel = CreatePersonalAccountEmailCodeViewModel(
             sendEmailActivationCodeUseCase,
             activateEmailUseCase
         )
@@ -52,9 +51,9 @@ class CreatePersonalAccountPinCodeViewModelTest : UnitTest() {
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlacklisted))
 
-            createPersonalAccountPinCodeViewModel.sendActivationCode(TEST_EMAIL)
+            emailCodeViewModel.sendActivationCode(TEST_EMAIL)
 
-            val error = createPersonalAccountPinCodeViewModel.sendActivationCodeErrorLiveData.awaitValue()
+            val error = emailCodeViewModel.sendActivationCodeErrorLiveData.awaitValue()
             assertEquals(R.string.create_personal_account_with_email_email_blacklisted_error, error.message)
         }
 
@@ -63,9 +62,9 @@ class CreatePersonalAccountPinCodeViewModelTest : UnitTest() {
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
-            createPersonalAccountPinCodeViewModel.sendActivationCode(TEST_EMAIL)
+            emailCodeViewModel.sendActivationCode(TEST_EMAIL)
 
-            val error = createPersonalAccountPinCodeViewModel.sendActivationCodeErrorLiveData.awaitValue()
+            val error = emailCodeViewModel.sendActivationCodeErrorLiveData.awaitValue()
             assertEquals(R.string.create_personal_account_with_email_email_in_use_error, error.message)
         }
 
@@ -74,9 +73,9 @@ class CreatePersonalAccountPinCodeViewModelTest : UnitTest() {
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
-            createPersonalAccountPinCodeViewModel.sendActivationCode(TEST_EMAIL)
+            emailCodeViewModel.sendActivationCode(TEST_EMAIL)
 
-            assertEquals(Unit, createPersonalAccountPinCodeViewModel.networkConnectionErrorLiveData.awaitValue())
+            assertEquals(Unit, emailCodeViewModel.networkConnectionErrorLiveData.awaitValue())
         }
 
     @Test
@@ -84,20 +83,20 @@ class CreatePersonalAccountPinCodeViewModelTest : UnitTest() {
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountPinCodeViewModel.sendActivationCode(TEST_EMAIL)
+            emailCodeViewModel.sendActivationCode(TEST_EMAIL)
 
-            assertEquals(Unit, createPersonalAccountPinCodeViewModel.sendActivationCodeSuccessLiveData.awaitValue())
+            assertEquals(Unit, emailCodeViewModel.sendActivationCodeSuccessLiveData.awaitValue())
         }
 
     @Test
     fun `given activateEmail is called, when the code is invalid then the activation is not done`() =
         runBlocking {
-            `when`(activateEmailUseCase.run(any())).thenReturn(Either.Left(InvalidCode))
+            `when`(activateEmailUseCase.run(any())).thenReturn(Either.Left(InvalidEmailCode))
 
-            createPersonalAccountPinCodeViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
+            emailCodeViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
 
-            val error = createPersonalAccountPinCodeViewModel.activateEmailErrorLiveData.awaitValue()
-            assertEquals(R.string.email_verification_invalid_code_error, error.message)
+            val error = emailCodeViewModel.activateEmailErrorLiveData.awaitValue()
+            assertEquals(R.string.create_personal_account_email_code_invalid_code_error, error.message)
         }
 
     @Test
@@ -105,9 +104,9 @@ class CreatePersonalAccountPinCodeViewModelTest : UnitTest() {
         runBlocking {
             `when`(activateEmailUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
-            createPersonalAccountPinCodeViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
+            emailCodeViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
 
-            assertEquals(Unit, createPersonalAccountPinCodeViewModel.networkConnectionErrorLiveData.awaitValue())
+            assertEquals(Unit, emailCodeViewModel.networkConnectionErrorLiveData.awaitValue())
         }
 
     @Test
@@ -115,9 +114,9 @@ class CreatePersonalAccountPinCodeViewModelTest : UnitTest() {
         runBlocking {
             `when`(activateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountPinCodeViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
+            emailCodeViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
 
-            assertEquals(Unit, createPersonalAccountPinCodeViewModel.activateEmailSuccessLiveData.awaitValue())
+            assertEquals(Unit, emailCodeViewModel.activateEmailSuccessLiveData.awaitValue())
         }
 
     companion object {
