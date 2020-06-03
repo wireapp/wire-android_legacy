@@ -223,7 +223,8 @@ class TeamsServiceImpl(selfUser:           UserId,
       warn(l"Self user removed from team")
       Future.successful {}
     } else
-      userService.deleteUsers(members)
+    // remove users from convs before deleting them so we still have their data when generating system messages
+      convsService.deleteMembersFromConversations(members).flatMap(_ => userService.deleteUsers(members))
   }
   
   //So far, a member update just means we need to check the permissions for that user, and we only care about permissions
