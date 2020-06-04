@@ -228,14 +228,13 @@ class MainActivity extends BaseActivity
 
     userPreferences.flatMap(_.preference[Boolean](UserPreferences.ShouldWarnAVSUpgrade).signal).onUi { shouldWarn =>
       if (shouldWarn) {
-        accentColorController.accentColor.foreach { accentColor =>
+        accentColorController.accentColor.head.foreach { accentColor =>
           showAVSUpgradeWarning(accentColor) { didConfirm =>
             if (didConfirm) inject[BrowserController].openPlayStoreListing()
+            userPreferences.head.foreach { prefs =>
+              prefs(UserPreferences.ShouldWarnAVSUpgrade) := false
+            }
           }
-        }
-
-        userPreferences.foreach { prefs =>
-          prefs(UserPreferences.ShouldWarnAVSUpgrade) := false
         }
       }
     }

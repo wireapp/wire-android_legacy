@@ -528,7 +528,7 @@ class CallingServiceImpl(val accountId:       UserId,
       val curTime = LocalInstant(clock.instant + drift)
       verbose(l"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime")
       avs.onReceiveMessage(w, msg, curTime, msgTime, convId, from, sender).foreach { result =>
-        userPrefs(UserPreferences.ShouldWarnAVSUpgrade) := result == AvsCallError.UnknownProtocol
+        userPrefs(UserPreferences.ShouldWarnAVSUpgrade).mutate(_ | result == AvsCallError.UnknownProtocol)
       }
     }
 
