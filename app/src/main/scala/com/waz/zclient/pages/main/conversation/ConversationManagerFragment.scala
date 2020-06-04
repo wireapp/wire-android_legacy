@@ -259,6 +259,7 @@ class ConversationManagerFragment extends FragmentHelper
         }
         keyboard.hideKeyboardIfVisible()
         navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
+        participantsController.selectedParticipant ! Some(userId)
         showFragment(fragment, ParticipantFragment.TAG)
     }
 
