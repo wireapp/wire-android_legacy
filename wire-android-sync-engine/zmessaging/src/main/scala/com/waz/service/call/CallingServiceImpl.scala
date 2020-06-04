@@ -78,7 +78,6 @@ trait CallingService {
   def calls:          Signal[Map[ConvId, CallInfo]]
   def joinableCalls:  Signal[Map[ConvId, CallInfo]]
   def currentCall:    Signal[Option[CallInfo]]
-  def callError:      Signal[AvsCallError]
 
   /**
     * @param skipTerminating Used to skip the terminating state when the self user ends the call
@@ -191,7 +190,6 @@ class CallingServiceImpl(val accountId:       UserId,
   override val calls          = callProfile.map(_.calls).disableAutowiring() //all calls
   override val joinableCalls  = callProfile.map(_.joinableCalls).disableAutowiring() //any call a user can potentially join in the UI
   override val currentCall    = callProfile.map(_.activeCall).disableAutowiring() //state about any call for which we should show the CallingActivity
-  override val callError    = Signal(AvsCallError.None)
 
   val joinableCallsNotMuted   = joinableCalls.map(_.filter { case (_, call) => call.shouldRing })
 
@@ -530,7 +528,7 @@ class CallingServiceImpl(val accountId:       UserId,
       val curTime = LocalInstant(clock.instant + drift)
       verbose(l"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime")
       avs.onReceiveMessage(w, msg, curTime, msgTime, convId, from, sender).foreach { result =>
-        callError ! result
+        userPrefs(UserPreferences.ShouldWarnAVSUpgrade) := result == AvsCallError.UnknownProtocol
       }
     }
 

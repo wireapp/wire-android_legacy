@@ -18,12 +18,11 @@
 package com.waz.zclient
 
 import android.app.Activity
+import android.content.Intent
 import android.content.res.Configuration
-import android.content.{DialogInterface, Intent}
 import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences._
 import com.waz.content.{TeamsStorage, UserPreferences}
@@ -33,7 +32,6 @@ import com.waz.model._
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.ZMessaging.clock
-import com.waz.service.call.Avs.AvsCallError
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -228,18 +226,20 @@ class MainActivity extends BaseActivity
         startFirstFragment()
     }
 
-    callController.onCallError.onUi {
-      case AvsCallError.UnknownProtocol =>
-        new AlertDialog.Builder(this)
-          .setTitle(R.string.call_error_unsupported_version_title)
-          .setMessage(R.string.call_error_unsupported_version_message)
-          .setPositiveButton(R.string.call_error_unsupported_version_button_ok, new DialogInterface.OnClickListener {
-            override def onClick(dialog: DialogInterface, which: AvsCallError): Unit = inject[BrowserController].openPlayStoreListing()
-          })
-          .setNegativeButton(R.string.call_error_unsupported_version_button_dismiss, null)
-          .show()
-      case _ =>
+    userPreferences.flatMap(_.preference[Boolean](UserPreferences.ShouldWarnAVSUpgrade).signal).onUi { shouldWarn =>
+      if (shouldWarn) {
+        accentColorController.accentColor.foreach { accentColor =>
+          showAVSUpgradeWarning(accentColor) { didConfirm =>
+            if (didConfirm) inject[BrowserController].openPlayStoreListing()
+          }
+        }
+
+        userPreferences.foreach { prefs =>
+          prefs(UserPreferences.ShouldWarnAVSUpgrade) := false
+        }
+      }
     }
+
   }
 
   override def onStart(): Unit = {

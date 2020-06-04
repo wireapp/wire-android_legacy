@@ -25,7 +25,7 @@ import com.waz.content.GlobalPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging.clock
-import com.waz.service.call.Avs.{AvsCallError, VideoState}
+import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
@@ -187,11 +187,6 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       cs <- callingService
       c  <- callConvId
     } yield (cs, c)
-
-  val onCallError = callingService
-    .flatMap(_.callError)
-    .onChanged
-    .filter { _ != AvsCallError.None }
 
   private val zmsConvId = callingZms.zip(callConvId)
   val conversation: Signal[ConversationData] = zmsConvId.flatMap { case (z, cId) => z.convsStorage.signal(cId) }
