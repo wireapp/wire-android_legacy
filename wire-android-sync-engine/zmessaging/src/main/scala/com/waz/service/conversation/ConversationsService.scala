@@ -72,6 +72,7 @@ trait ConversationsService {
 
   def deleteConversation(rConvId: RConvId): Future[Unit]
   def conversationName(convId: ConvId): Signal[Name]
+  def deleteMembersFromConversations(members: Set[UserId]): Future[Unit]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -221,7 +222,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
     case MemberLeaveEvent(_, time, from, userIds) =>
       for {
-        _              <- deleteMembers(conv.id, userIds.toSet, from, sendSystemMessage = true)
+        _              <- deleteMembers(conv.id, userIds.toSet, Some(from), sendSystemMessage = true)
         selfUserLeaves =  userIds.contains(selfUserId)
         _              <- if (selfUserLeaves) content.setConvActive(conv.id, active = false) else Future.successful(())
                           // if the user removed themselves from another device, archived on this device
@@ -363,28 +364,78 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _             <- Future.sequence(usersRemoved.flatMap {
                          case (cId, uIds) => uIds.map(uId => messages.addMemberLeaveMessage(cId, uId, uId))
                        })
+      _             <- Future.sequence(usersRemoved.map {
+                         case (cId, _) => renameConversationIfNeeded(cId, activeUsers(cId))
+                       })
       usersToDelete =  usersRemoved.flatMap(_._2).toSet
       _             <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
                        else Future.successful(())
     } yield ()
 
+  override def deleteMembersFromConversations(members: Set[UserId]): Future[Unit] =
+    for {
+      convMembers <- membersStorage.getByUsers(members)
+      _           <- Future.sequence(convMembers.groupBy(_.convId).map { case (convId, uIds) =>
+                       deleteMembers(convId, uIds.map(_.userId).toSet, remover = None, sendSystemMessage = true)
+                     })
+    } yield ()
+
   private def deleteMembers(convId: ConvId): Future[Unit] =
     for {
       userIds <- membersStorage.getActiveUsers(convId).map(_.toSet)
-      _       <- deleteMembers(convId, userIds, selfUserId, sendSystemMessage = false)
+      _       <- deleteMembers(convId, userIds, remover = None, sendSystemMessage = false)
     } yield ()
 
-  private def deleteMembers(convId: ConvId, userIds: Set[UserId], remover: UserId, sendSystemMessage: Boolean): Future[Unit] =
+  private def deleteMembers(convId: ConvId, toRemove: Set[UserId], remover: Option[UserId], sendSystemMessage: Boolean): Future[Unit] =
     for {
-      _              <- membersStorage.remove(convId, userIds)
-      usersLeft      <- membersStorage.getByUsers(userIds).map(_.map(_.userId).toSet)
-      usersToDelete  =  userIds -- usersLeft
+      _              <- membersStorage.remove(convId, toRemove)
+      _              <- renameConversationIfNeeded(convId, toRemove)
       isGroup        <- if (sendSystemMessage) isGroupConversation(convId) else Future.successful(false)
-      _              <- if (isGroup) Future.sequence(userIds.map(uId => messages.addMemberLeaveMessage(convId, remover, uId)))
-                        else Future.successful(())
+      _              <- if (isGroup)
+                          Future.sequence(toRemove.map(uId => messages.addMemberLeaveMessage(convId, remover.getOrElse(uId), uId)))
+                        else
+                          Future.successful(())
+      stillInTeam    <- membersStorage.getByUsers(toRemove).map(_.map(_.userId).toSet)
+      usersToDelete  =  toRemove -- stillInTeam
       _              <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
                         else Future.successful(())
     } yield ()
+
+  // The conversation needs to be renamed if:
+  // 1. The last users other than self are being removed from it (i.e. afterwards only self or nobody stays in the conv)
+  // 2. AND the conv doesn't have its name set already (e.g. real group convs usually have)
+  // 3. AND we have names of the last leaving users (in large teams it's not sure)
+  private def renameConversationIfNeeded(convId: ConvId, usersRemoved: Set[UserId]): Future[Unit] = {
+    def updateConversationNameWithUserNames(names: Seq[Name]): Future[Unit] =
+      createConversationName(names) match {
+        case newConvName if newConvName.nonEmpty =>
+          content.updateConversationName(convId, newConvName).map(_ => ())
+        case _ => Future.successful(())
+      }
+
+    def getUserNames(userIds: Set[UserId]): Future[Seq[Name]] =
+      users.userNames.map(names => userIds.toSeq.map(names).sortBy(_.str)).head
+
+    def isConversationNameEmpty: Future[Boolean] =
+      convsStorage.get(convId).map {
+        case Some(conv) => conv.name.forall(_.isEmpty)
+        case None       => false
+      }
+
+    def isConversationStillActive: Future[Boolean] =
+      membersStorage.getActiveUsers(convId).map(uIds => (uIds.toSet - selfUserId).nonEmpty)
+
+    val otherRemovedUserIds = usersRemoved - selfUserId
+    if (otherRemovedUserIds.nonEmpty)
+      isConversationStillActive.flatMap {
+        case true  => Future.successful(())
+        case false => isConversationNameEmpty.flatMap {
+          case true  => getUserNames(otherRemovedUserIds).flatMap(updateConversationNameWithUserNames)
+          case false => Future.successful(())
+        }
+      }
+    else Future.successful(())
+  }
 
   private def updateRoles(convIds: Map[ConvId, RConvId], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit] =
     Future.sequence(convIds.collect {
@@ -448,14 +499,17 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         for {
           members   <- activeMembersData(conv.id)
           memberIds =  members.filterNot(_.userId == selfUserId).take(4).map(_.userId).toSet
-          userNames <- users.userNames.map(_.filterKeys(memberIds.contains).values)
+          userNames <- users.userNames.map(names => memberIds.map(names))
         } yield
-          if (userNames.isEmpty) Name.Empty
-          else if (userNames.size == 1) userNames.head
-          // This is for backward compatibility: all new real group conversations should have their names set.
-          // For those who don't, we create the name from first four members' names.
-          else Name(userNames.map(_.str).toSeq.sorted.mkString(", "))
+          createConversationName(userNames.toSeq)
     }
+
+  private def createConversationName(userNames: Seq[Name]): Name =
+    if (userNames.isEmpty) Name.Empty
+    else if (userNames.size == 1) userNames.head
+    // This is for backward compatibility: all new real group conversations should have their names set.
+    // For those who don't, we create the name from first four members' names.
+    else Name(userNames.map(_.str).sorted.mkString(", "))
 
   private def deleteConversation(convData: ConversationData): Future[Unit] = (for {
       convMessageIds <- messages.findMessageIds(convData.id)
