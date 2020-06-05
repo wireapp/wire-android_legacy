@@ -1,4 +1,4 @@
-package com.waz.zclient.shared.user.phonenumber
+package com.waz.zclient.shared.countrycode
 
 import com.waz.zclient.core.extension.empty
 

@@ -7,11 +7,14 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import com.waz.zclient.feature.auth.registration.personal.phone.code.CreatePersonalAccountPhoneCodeFragment
+import com.waz.zclient.shared.countrycode.Country
+import com.waz.zclient.shared.countrycode.CountryCodePickerFragment
 import kotlinx.android.synthetic.main.fragment_create_personal_account_phone.*
 
 class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_personal_account_phone) {
@@ -28,6 +31,7 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         observePhoneValidationData()
         observeActivationCodeData()
         observeNetworkConnectionError()
+        initCountryCodePickerListener()
         initPhoneChangedListener()
         initConfirmationButton()
     }
@@ -42,9 +46,18 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         createPersonalAccountPhoneConfirmationButton.isEnabled = enabled
     }
 
+    private fun initCountryCodePickerListener() {
+        createPersonalAccountCountryCodeCountryCodePickerTextView.setOnClickListener {
+            showCountryCodePickerDialog(createPersonalAccountCountryCodeEditText.text.toString())
+        }
+    }
+
     private fun initPhoneChangedListener() {
+        createPersonalAccountCountryCodeEditText.doAfterTextChanged {
+            phoneViewModel.validatePhone(it.toString(), createPersonalAccountPhoneEditText.text.toString())
+        }
         createPersonalAccountPhoneEditText.doAfterTextChanged {
-            phoneViewModel.validatePhone(it.toString())
+            phoneViewModel.validatePhone(createPersonalAccountCountryCodeEditText.text.toString(), it.toString())
         }
     }
 
@@ -96,6 +109,18 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         .setPositiveButton(android.R.string.ok) { _, _ -> }
         .create()
         .show()
+
+    private fun showCountryCodePickerDialog(countryDisplayName: String) {
+        CountryCodePickerFragment.newInstance(
+            countryDisplayName,
+            object : CountryCodePickerFragment.CountryCodePickerListener {
+                override fun onCountryCodeSelected(countryCode: Country) {
+                    createPersonalAccountCountryCodeEditText.setText(countryCode.countryCode)
+                    createPersonalAccountCountryCodeCountryCodePickerTextView.text = countryCode.countryDisplayName
+                }
+            }
+        ).show(requireActivity().supportFragmentManager, String.empty())
+    }
 
     companion object {
         fun newInstance() = CreatePersonalAccountPhoneFragment()

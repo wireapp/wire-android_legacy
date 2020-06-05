@@ -10,6 +10,7 @@ import com.waz.zclient.shared.accounts.di.accountsModule
 import com.waz.zclient.shared.activation.di.activationModule
 import com.waz.zclient.shared.assets.di.assetsModule
 import com.waz.zclient.shared.clients.di.clientsModule
+import com.waz.zclient.shared.countrycode.di.countryCodePickerModule
 import com.waz.zclient.shared.user.di.usersModule
 import com.waz.zclient.storage.di.storageModule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,7 +39,8 @@ object Injector {
         clientsModule,
         accountsModule,
         assetsModule,
-        activationModule
+        activationModule,
+        countryCodePickerModule
     )
 
     /**

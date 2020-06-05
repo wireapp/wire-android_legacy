@@ -14,8 +14,13 @@ import com.waz.zclient.shared.activation.usecase.PhoneBlacklisted
 import com.waz.zclient.shared.activation.usecase.PhoneInUse
 import com.waz.zclient.shared.activation.usecase.SendPhoneActivationCodeParams
 import com.waz.zclient.shared.activation.usecase.SendPhoneActivationCodeUseCase
+import com.waz.zclient.shared.user.phonenumber.usecase.ValidatePhoneNumberFailure
+import com.waz.zclient.shared.user.phonenumber.usecase.ValidatePhoneNumberParams
+import com.waz.zclient.shared.user.phonenumber.usecase.ValidatePhoneNumberUseCase
+import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountPhoneViewModel(
+    private val validatePhoneNumberUseCase: ValidatePhoneNumberUseCase,
     private val sendPhoneActivationCodeUseCase: SendPhoneActivationCodeUseCase
 ) : ViewModel(), UseCaseExecutor by DefaultUseCaseExecutor() {
 
@@ -29,9 +34,22 @@ class CreatePersonalAccountPhoneViewModel(
     val sendActivationCodeErrorLiveData: LiveData<ErrorMessage> = _sendActivationCodeErrorLiveData
     val networkConnectionErrorLiveData: LiveData<Unit> = _networkConnectionErrorLiveData
 
-    // TODO missing phone validation
-    fun validatePhone(phone: String) {
+
+    fun validatePhone(countryCode: String, phoneNumber: String) {
+        validatePhoneNumberUseCase(viewModelScope,
+            ValidatePhoneNumberParams(countryCode, phoneNumber), Dispatchers.Default) {
+            it.fold(::validatePhoneFailure) { validatePhoneSuccess() }
+        }
+    }
+
+    private fun validatePhoneSuccess() {
         _isValidPhoneLiveData.value = true
+    }
+
+    private fun validatePhoneFailure(failure: Failure) {
+        if (failure is ValidatePhoneNumberFailure) {
+            _isValidPhoneLiveData.value = false
+        }
     }
 
     fun sendActivationCode(phone: String) {

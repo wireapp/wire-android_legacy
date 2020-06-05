@@ -3,8 +3,6 @@ package com.waz.zclient.shared.user.phonenumber.usecase
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
-import com.waz.zclient.shared.user.phonenumber.CountryCodeInvalid
-import com.waz.zclient.shared.user.phonenumber.PhoneNumberInvalid
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
