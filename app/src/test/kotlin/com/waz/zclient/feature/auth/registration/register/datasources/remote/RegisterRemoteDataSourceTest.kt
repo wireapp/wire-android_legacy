@@ -3,7 +3,6 @@ package com.waz.zclient.feature.auth.registration.register.datasources.remote
 import com.waz.zclient.UnitTest
 import com.waz.zclient.capture
 import com.waz.zclient.core.network.NetworkHandler
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,7 +11,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Captor
@@ -24,9 +22,6 @@ import retrofit2.Response
 
 @ExperimentalCoroutinesApi
 class RegisterRemoteDataSourceTest : UnitTest() {
-
-    @get:Rule
-    val testRule = CoroutinesTestRule()
 
     private lateinit var registerRemoteDataSource: RegisterRemoteDataSource
 

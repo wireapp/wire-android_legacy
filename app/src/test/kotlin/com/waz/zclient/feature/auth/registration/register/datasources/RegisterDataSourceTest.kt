@@ -7,13 +7,11 @@ import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.feature.auth.registration.register.RegisterRepository
 import com.waz.zclient.feature.auth.registration.register.datasources.remote.RegisterRemoteDataSource
 import com.waz.zclient.feature.auth.registration.register.datasources.remote.UserResponse
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -21,9 +19,6 @@ import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class RegisterDataSourceTest : UnitTest() {
-
-    @get:Rule
-    val testRule = CoroutinesTestRule()
 
     private lateinit var registerDataSource: RegisterRepository
 

@@ -5,7 +5,6 @@ import com.waz.zclient.any
 import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.user.handle.HandleAlreadyExists
 import com.waz.zclient.shared.user.handle.HandleInvalid
@@ -27,7 +26,6 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Ignore
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -37,9 +35,6 @@ import org.mockito.Mockito.verifyNoInteractions
 @InternalCoroutinesApi
 @Ignore("The test class and the viewModel class have diverged too much. I leave fixing the tests to original author.")
 class SettingsAccountEditHandleViewModelTest : UnitTest() {
-
-    @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var editHandleViewModel: SettingsAccountEditHandleViewModel
 

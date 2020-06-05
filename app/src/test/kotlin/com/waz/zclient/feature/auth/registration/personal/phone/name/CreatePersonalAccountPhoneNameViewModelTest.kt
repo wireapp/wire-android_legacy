@@ -9,7 +9,6 @@ import com.waz.zclient.feature.auth.registration.register.usecase.InvalidPhoneAc
 import com.waz.zclient.feature.auth.registration.register.usecase.PhoneInUse
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithPhoneUseCase
 import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedPhone
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.user.name.NameTooShort
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
@@ -20,7 +19,6 @@ import org.junit.Assert
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
@@ -29,9 +27,6 @@ import org.mockito.Mockito.`when`
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
-
-    @get:Rule
-    val testRule = CoroutinesTestRule()
 
     private lateinit var nameViewModel: CreatePersonalAccountPhoneNameViewModel
 

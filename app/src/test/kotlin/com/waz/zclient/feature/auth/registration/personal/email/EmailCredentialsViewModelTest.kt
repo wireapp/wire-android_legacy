@@ -1,21 +1,16 @@
 package com.waz.zclient.feature.auth.registration.personal.email
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class EmailCredentialsViewModelTest : UnitTest() {
-
-    @get:Rule
-    val testRule = CoroutinesTestRule()
 
     private lateinit var emailCredentialsViewModel: CreatePersonalAccountEmailCredentialsViewModel
 

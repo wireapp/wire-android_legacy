@@ -3,7 +3,6 @@ package com.waz.zclient.feature.settings.account.editphonenumber
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.user.phonenumber.Country
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -11,16 +10,12 @@ import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBe
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 class CountryCodePickerViewModelTest : UnitTest() {
-
-    @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var countryCodePickerViewModel: CountryCodePickerViewModel
 

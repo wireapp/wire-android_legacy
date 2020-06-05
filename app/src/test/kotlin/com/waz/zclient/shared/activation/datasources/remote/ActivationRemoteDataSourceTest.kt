@@ -3,7 +3,6 @@ package com.waz.zclient.shared.activation.datasources.remote
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.network.NetworkHandler
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -11,7 +10,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -21,9 +19,6 @@ import retrofit2.Response
 
 @ExperimentalCoroutinesApi
 class ActivationRemoteDataSourceTest : UnitTest() {
-
-    @get:Rule
-    val testRule = CoroutinesTestRule()
 
     private lateinit var activationRemoteDataSource: ActivationRemoteDataSource
 

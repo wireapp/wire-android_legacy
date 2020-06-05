@@ -7,14 +7,12 @@ import com.waz.zclient.core.exception.InternalServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.shared.activation.ActivationRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -22,9 +20,6 @@ import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class SendPhoneActivationCodeUseCaseTest : UnitTest() {
-
-    @get:Rule
-    val testRule = CoroutinesTestRule()
 
     private lateinit var sendPhoneActivationCodeUseCase: SendPhoneActivationCodeUseCase
 

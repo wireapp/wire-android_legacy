@@ -5,7 +5,6 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.activation.usecase.ActivatePhoneUseCase
 import com.waz.zclient.shared.activation.usecase.InvalidPhoneCode
@@ -17,7 +16,6 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -25,9 +23,6 @@ import org.mockito.Mockito.`when`
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
-
-    @get:Rule
-    val testRule = CoroutinesTestRule()
 
     private lateinit var phoneCodeViewModel: CreatePersonalAccountPhoneCodeViewModel
 

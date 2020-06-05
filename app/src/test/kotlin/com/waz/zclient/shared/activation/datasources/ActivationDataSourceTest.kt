@@ -3,14 +3,12 @@ package com.waz.zclient.shared.activation.datasources
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.shared.activation.ActivationRepository
 import com.waz.zclient.shared.activation.datasources.remote.ActivationRemoteDataSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -18,9 +16,6 @@ import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class ActivationDataSourceTest : UnitTest() {
-
-    @get:Rule
-    val testRule = CoroutinesTestRule()
 
     private lateinit var activationDataSource: ActivationRepository
 

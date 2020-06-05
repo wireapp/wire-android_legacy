@@ -10,7 +10,6 @@ import com.waz.zclient.feature.auth.registration.register.usecase.EmailInUse
 import com.waz.zclient.feature.auth.registration.register.usecase.InvalidEmailActivationCode
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
 import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedEmail
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.user.password.NoDigit
 import com.waz.zclient.shared.user.password.NoLowerCaseLetter
@@ -25,7 +24,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -33,9 +31,6 @@ import org.mockito.Mockito.`when`
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
-
-    @get:Rule
-    val testRule = CoroutinesTestRule()
 
     private lateinit var passwordViewModel: CreatePersonalAccountPasswordViewModel
 
