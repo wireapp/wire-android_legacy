@@ -713,6 +713,32 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       result(service.conversationName(convId).head) shouldEqual generatedName
     }
 
+    scenario("Return the name generated out of usernames if one of usernames is not available") {
+      val self = UserData(selfUserId.str)
+      val user2 = UserData(name = Name("user2"))
+      val user3 = UserData(name = Name("user3"))
+      val conv = ConversationData(
+        id = convId,
+        name = None,
+        convType = ConversationType.Group
+      )
+
+      val userNames = Map(selfUserId -> self.name, user3.id -> user3.name)
+
+      (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(conv)))
+      (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().returning(
+        Future.successful(IndexedSeq(
+          ConversationMemberData(self.id, conv.id, ConversationRole.AdminRole),
+          ConversationMemberData(user2.id, conv.id, ConversationRole.AdminRole),
+          ConversationMemberData(user3.id, conv.id, ConversationRole.AdminRole)
+        ))
+      )
+      (membersStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream())
+      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+
+      result(service.conversationName(convId).head) shouldEqual user3.name
+    }
+
     scenario("Preserve the name after the last other user leaves the conversation") {
       import com.waz.threading.Threading.Implicits.Background
 
