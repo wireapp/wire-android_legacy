@@ -99,6 +99,8 @@ object Calling {
 
   @native def wcall_set_proxy(host: String, port: Int): Int
 
+  @native def wcall_set_network_quality_handler(inst: Handle, wcall_network_quality_h: NetworkQualityChangedHandler, intervalInSeconds: Int, arg: Pointer): Int
+
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use
      * for calling.
@@ -109,17 +111,17 @@ object Calling {
 
   /* Send calling message otr data */
   trait SendHandler extends Callback {
-    def onSend(ctx: Pointer, convId: String, userid_self: String, clientid_self: String, userid_dest: String, clientid_dest: String, data: Pointer, len: Size_t, transient: Boolean, arg: Pointer): Int
+    def onSend(ctx: Pointer, convId: String, userIdSelf: String, clientIdSelf: String, userIdDest: String, clientIdDest: String, data: Pointer, len: Size_t, isTransient: Boolean, arg: Pointer): Int
   }
 
   /* Incoming call */
   trait IncomingCallHandler extends Callback {
-    def onIncomingCall(convid: String, msg_time: Uint32_t, userid: String, video_call: Boolean, should_ring: Boolean, arg: Pointer): Unit
+    def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, clientId: String, isVideoCall: Boolean, shouldRing: Boolean, arg: Pointer): Unit
   }
 
   /* Missed call */
   trait MissedCallHandler extends Callback {
-    def onMissedCall(convId: String, msg_time: Uint32_t, userId: String, video_call: Boolean, arg: Pointer): Unit
+    def onMissedCall(convId: String, msgTime: Uint32_t, userId: String, isVideoCall: Boolean, arg: Pointer): Unit
   }
 
   trait AnsweredCallHandler extends Callback {
@@ -131,15 +133,15 @@ object Calling {
 
   /* Call established (with media) */
   trait EstablishedCallHandler extends Callback {
-    def onEstablishedCall(convId: String, userId: String, arg: Pointer): Unit
+    def onEstablishedCall(convId: String, userId: String, clientId: String, arg: Pointer): Unit
   }
 
   trait CloseCallHandler extends Callback {
-    def onClosedCall(reason: Int, convid: String, msg_time: Uint32_t, userid: String, arg: Pointer): Unit
+    def onClosedCall(reason: Int, convId: String, msgTime: Uint32_t, userId: String, clientId: String, arg: Pointer): Unit
   }
 
   trait CbrStateChangeHandler extends Callback {
-    def onBitRateStateChanged(userId: String, enabled: Boolean, arg: Pointer): Unit
+    def onBitRateStateChanged(userId: String, clientId: String, isEnabled: Boolean, arg: Pointer): Unit
   }
 
   trait CallStateChangeHandler extends Callback {
@@ -165,6 +167,17 @@ object Calling {
     //      ]
     //}
     def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit
+  }
+
+  trait NetworkQualityChangedHandler extends Callback {
+    def onNetworkQualityChanged(convId: String,
+                                userId: String,
+                                clientId: String,
+                                quality: Int,
+                                roundTripTimeInMilliseconds: Int,
+                                upstreamPacketLossPercentage: Int,
+                                downstreamPacketLossPercentage: Int,
+                                arg: Pointer): Unit
   }
 
   trait MetricsHandler extends Callback {
