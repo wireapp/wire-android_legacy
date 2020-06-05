@@ -20,7 +20,7 @@ import org.mockito.Mockito.verify
 @ExperimentalCoroutinesApi
 class RegisterDataSourceTest : UnitTest() {
 
-    private lateinit var registerDataSource: RegisterRepository
+    private lateinit var registerRepository: RegisterRepository
 
     @Mock
     private lateinit var registerRemoteDataSource: RegisterRemoteDataSource
@@ -30,7 +30,7 @@ class RegisterDataSourceTest : UnitTest() {
 
     @Before
     fun setup() {
-        registerDataSource = RegisterDataSource(registerRemoteDataSource)
+        registerRepository = RegisterDataSource(registerRemoteDataSource)
     }
 
     @Test
@@ -44,7 +44,7 @@ class RegisterDataSourceTest : UnitTest() {
                 TEST_ACTIVATION_CODE
             )).thenReturn(Either.Left(ServerError))
 
-            val response = registerDataSource.registerPersonalAccountWithEmail(
+            val response = registerRepository.registerPersonalAccountWithEmail(
                 TEST_NAME,
                 TEST_EMAIL,
                 TEST_PASSWORD,
@@ -72,7 +72,7 @@ class RegisterDataSourceTest : UnitTest() {
                 TEST_ACTIVATION_CODE
             )).thenReturn(Either.Right(userResponse))
 
-            val response = registerDataSource.registerPersonalAccountWithEmail(
+            val response = registerRepository.registerPersonalAccountWithEmail(
                 TEST_NAME,
                 TEST_EMAIL,
                 TEST_PASSWORD,
@@ -102,7 +102,7 @@ class RegisterDataSourceTest : UnitTest() {
                 TEST_ACTIVATION_CODE
             )).thenReturn(Either.Left(ServerError))
 
-            val response = registerDataSource.registerPersonalAccountWithPhone(
+            val response = registerRepository.registerPersonalAccountWithPhone(
                 TEST_NAME,
                 TEST_PHONE,
                 TEST_ACTIVATION_CODE
@@ -127,7 +127,7 @@ class RegisterDataSourceTest : UnitTest() {
                 TEST_ACTIVATION_CODE
             )).thenReturn(Either.Right(userResponse))
 
-            val response = registerDataSource.registerPersonalAccountWithPhone(
+            val response = registerRepository.registerPersonalAccountWithPhone(
                 TEST_NAME,
                 TEST_PHONE,
                 TEST_ACTIVATION_CODE

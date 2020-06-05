@@ -17,14 +17,14 @@ import org.mockito.Mockito.verify
 @ExperimentalCoroutinesApi
 class ActivationDataSourceTest : UnitTest() {
 
-    private lateinit var activationDataSource: ActivationRepository
+    private lateinit var activationRepository: ActivationRepository
 
     @Mock
     private lateinit var activationRemoteDataSource: ActivationRemoteDataSource
 
     @Before
     fun setup() {
-        activationDataSource = ActivationDataSource(activationRemoteDataSource)
+        activationRepository = ActivationDataSource(activationRemoteDataSource)
     }
 
     @Test
@@ -33,7 +33,7 @@ class ActivationDataSourceTest : UnitTest() {
 
             `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(ServerError))
 
-            val response = activationDataSource.sendEmailActivationCode(TEST_EMAIL)
+            val response = activationRepository.sendEmailActivationCode(TEST_EMAIL)
 
             verify(activationRemoteDataSource).sendEmailActivationCode(TEST_EMAIL)
 
@@ -45,7 +45,7 @@ class ActivationDataSourceTest : UnitTest() {
         runBlocking {
             `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
-            val response = activationDataSource.sendEmailActivationCode(TEST_EMAIL)
+            val response = activationRepository.sendEmailActivationCode(TEST_EMAIL)
 
             verify(activationRemoteDataSource).sendEmailActivationCode(TEST_EMAIL)
 
@@ -58,7 +58,7 @@ class ActivationDataSourceTest : UnitTest() {
 
             `when`(activationRemoteDataSource.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Left(ServerError))
 
-            val response = activationDataSource.sendPhoneActivationCode(TEST_PHONE)
+            val response = activationRepository.sendPhoneActivationCode(TEST_PHONE)
 
             verify(activationRemoteDataSource).sendPhoneActivationCode(TEST_PHONE)
 
@@ -70,7 +70,7 @@ class ActivationDataSourceTest : UnitTest() {
         runBlocking {
             `when`(activationRemoteDataSource.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Right(Unit))
 
-            val response = activationDataSource.sendPhoneActivationCode(TEST_PHONE)
+            val response = activationRepository.sendPhoneActivationCode(TEST_PHONE)
 
             verify(activationRemoteDataSource).sendPhoneActivationCode(TEST_PHONE)
 
@@ -83,7 +83,7 @@ class ActivationDataSourceTest : UnitTest() {
 
             `when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(ServerError))
 
-            val response = activationDataSource.activateEmail(TEST_EMAIL, TEST_CODE)
+            val response = activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)
 
             verify(activationRemoteDataSource).activateEmail(TEST_EMAIL, TEST_CODE)
 
@@ -95,7 +95,7 @@ class ActivationDataSourceTest : UnitTest() {
         runBlocking {
             `when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
 
-            val response = activationDataSource.activateEmail(TEST_EMAIL, TEST_CODE)
+            val response = activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)
 
             verify(activationRemoteDataSource).activateEmail(TEST_EMAIL, TEST_CODE)
 
@@ -108,7 +108,7 @@ class ActivationDataSourceTest : UnitTest() {
 
             `when`(activationRemoteDataSource.activatePhone(TEST_PHONE, TEST_CODE)).thenReturn(Either.Left(ServerError))
 
-            val response = activationDataSource.activatePhone(TEST_PHONE, TEST_CODE)
+            val response = activationRepository.activatePhone(TEST_PHONE, TEST_CODE)
 
             verify(activationRemoteDataSource).activatePhone(TEST_PHONE, TEST_CODE)
 
@@ -120,7 +120,7 @@ class ActivationDataSourceTest : UnitTest() {
         runBlocking {
             `when`(activationRemoteDataSource.activatePhone(TEST_PHONE, TEST_CODE)).thenReturn(Either.Right(Unit))
 
-            val response = activationDataSource.activatePhone(TEST_PHONE, TEST_CODE)
+            val response = activationRepository.activatePhone(TEST_PHONE, TEST_CODE)
 
             verify(activationRemoteDataSource).activatePhone(TEST_PHONE, TEST_CODE)
 
