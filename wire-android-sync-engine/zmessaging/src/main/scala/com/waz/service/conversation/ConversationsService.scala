@@ -414,7 +414,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       }
 
     def getUserNames(userIds: Set[UserId]): Future[Seq[Name]] =
-      users.userNames.map(names => userIds.toSeq.map(names).sortBy(_.str)).head
+      users.userNames.map(names => userIds.toSeq.flatMap(names.get).sortBy(_.str)).head
 
     def isConversationNameEmpty: Future[Boolean] =
       convsStorage.get(convId).map {
@@ -499,7 +499,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         for {
           members   <- activeMembersData(conv.id)
           memberIds =  members.filterNot(_.userId == selfUserId).take(4).map(_.userId).toSet
-          userNames <- users.userNames.map(names => memberIds.map(names))
+          userNames <- users.userNames.map(names => memberIds.flatMap(names.get))
         } yield
           createConversationName(userNames.toSeq)
     }
