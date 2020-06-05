@@ -7,7 +7,7 @@ import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.activation.usecase.ActivatePhoneUseCase
-import com.waz.zclient.shared.activation.usecase.InvalidPhoneCode
+import com.waz.zclient.shared.activation.usecase.InvalidSmsCode
 import com.waz.zclient.shared.activation.usecase.PhoneBlacklisted
 import com.waz.zclient.shared.activation.usecase.PhoneInUse
 import com.waz.zclient.shared.activation.usecase.SendPhoneActivationCodeUseCase
@@ -86,7 +86,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
     @Test
     fun `given activatePhone is called, when the code is invalid then the activation is not done`() =
         runBlocking {
-            `when`(activatePhoneUseCase.run(any())).thenReturn(Either.Left(InvalidPhoneCode))
+            `when`(activatePhoneUseCase.run(any())).thenReturn(Either.Left(InvalidSmsCode))
 
             phoneCodeViewModel.activatePhone(TEST_PHONE, TEST_CODE)
 

@@ -44,7 +44,7 @@ class ActivatePhoneUseCaseTest : UnitTest() {
 
             verify(activationRepository).activatePhone(TEST_PHONE, TEST_CODE)
 
-            response.onFailure { assertEquals(InvalidPhoneCode, it) }
+            response.onFailure { assertEquals(InvalidSmsCode, it) }
 
             assertTrue(response.isLeft)
         }
