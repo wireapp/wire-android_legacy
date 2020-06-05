@@ -18,11 +18,12 @@ import com.waz.zclient.shared.user.password.NoUpperCaseLetter
 import com.waz.zclient.shared.user.password.PasswordTooLong
 import com.waz.zclient.shared.user.password.PasswordTooShort
 import com.waz.zclient.shared.user.password.ValidatePasswordUseCase
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -59,7 +60,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
+            assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
@@ -69,7 +70,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
+            assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
@@ -79,7 +80,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
+            assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
@@ -89,7 +90,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
+            assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
@@ -99,7 +100,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
+            assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
@@ -109,7 +110,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
+            assertFalse(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test
@@ -119,7 +120,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
 
-            Assert.assertTrue(passwordViewModel.isValidPasswordLiveData.awaitValue())
+            assertTrue(passwordViewModel.isValidPasswordLiveData.awaitValue())
         }
 
     @Test

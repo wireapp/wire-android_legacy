@@ -14,7 +14,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
@@ -35,7 +35,7 @@ class CreatePersonalAccountEmailNameViewModelTest : UnitTest() {
     @Test
     fun `given validateName is called, when the validation fails with NameTooShort then isValidName should be false`() =
         runBlocking {
-            Mockito.`when`(validateNameUseCase.run(any())).thenReturn(Either.Left(NameTooShort))
+            `when`(validateNameUseCase.run(any())).thenReturn(Either.Left(NameTooShort))
 
             nameViewModel.validateName(TEST_NAME)
 
@@ -45,7 +45,7 @@ class CreatePersonalAccountEmailNameViewModelTest : UnitTest() {
     @Test
     fun `given validateName is called, when the validation succeeds then isValidName should be true`() =
         runBlocking {
-            Mockito.`when`(validateNameUseCase.run(any())).thenReturn(Either.Right(Unit))
+            `when`(validateNameUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             nameViewModel.validateName(TEST_NAME)
 

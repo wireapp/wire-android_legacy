@@ -12,16 +12,15 @@ import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedPh
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.user.name.NameTooShort
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
+import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
@@ -47,7 +46,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
     @Test
     fun `given validateName is called, when the validation fails with NameTooShort then isValidName should be false`() =
         runBlocking {
-            Mockito.`when`(validateNameUseCase.run(any())).thenReturn(Either.Left(NameTooShort))
+            `when`(validateNameUseCase.run(any())).thenReturn(Either.Left(NameTooShort))
 
             nameViewModel.validateName(TEST_NAME)
 
@@ -57,7 +56,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
     @Test
     fun `given validateName is called, when the validation succeeds then isValidName should be true`() =
         runBlocking {
-            Mockito.`when`(validateNameUseCase.run(any())).thenReturn(Either.Right(Unit))
+            `when`(validateNameUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             nameViewModel.validateName(TEST_NAME)
 
@@ -72,7 +71,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
             nameViewModel.register(TEST_NAME, TEST_PHONE, TEST_CODE)
 
             val error = nameViewModel.registerErrorLiveData.awaitValue()
-            Assert.assertEquals(R.string.create_personal_account_unauthorized_phone_error, error.message)
+            assertEquals(R.string.create_personal_account_unauthorized_phone_error, error.message)
         }
 
     @Test
@@ -83,7 +82,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
             nameViewModel.register(TEST_NAME, TEST_PHONE, TEST_CODE)
 
             val error = nameViewModel.registerErrorLiveData.awaitValue()
-            Assert.assertEquals(R.string.create_personal_account_invalid_activation_code_error, error.message)
+            assertEquals(R.string.create_personal_account_invalid_activation_code_error, error.message)
         }
 
     @Test
@@ -94,7 +93,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
             nameViewModel.register(TEST_NAME, TEST_PHONE, TEST_CODE)
 
             val error = nameViewModel.registerErrorLiveData.awaitValue()
-            Assert.assertEquals(R.string.create_personal_account_phone_in_use_error, error.message)
+            assertEquals(R.string.create_personal_account_phone_in_use_error, error.message)
         }
 
     @Test
@@ -105,7 +104,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
 
             nameViewModel.register(TEST_NAME, TEST_PHONE, TEST_CODE)
 
-            Assert.assertEquals(Unit, nameViewModel.networkConnectionErrorLiveData.awaitValue())
+            assertEquals(Unit, nameViewModel.networkConnectionErrorLiveData.awaitValue())
         }
 
     @Test
@@ -115,7 +114,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
 
             nameViewModel.register(TEST_NAME, TEST_PHONE, TEST_CODE)
 
-            Assert.assertEquals(Unit, nameViewModel.registerSuccessLiveData.awaitValue())
+            assertEquals(Unit, nameViewModel.registerSuccessLiveData.awaitValue())
         }
 
     companion object {
