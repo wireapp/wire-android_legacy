@@ -25,8 +25,8 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.SkipTerminatingState
 import com.waz.content.{GlobalPreferences, MembersStorage, UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
+import com.waz.log.LogShow.SafeToLog
 import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, RConvId, UserId, _}
 import com.waz.permissions.PermissionsService
@@ -35,9 +35,9 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
-import com.waz.service.call.Avs.{AvsClosedReason, VideoState, WCall}
-import com.waz.service.call.CallInfo.{CallState, Participant}
+import com.waz.service.call.Avs.{AvsCallError, AvsClosedReason, VideoState, WCall}
 import com.waz.service.call.CallInfo.CallState._
+import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallingService.GlobalCallProfile
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
@@ -190,8 +190,8 @@ class CallingServiceImpl(val accountId:       UserId,
   override val calls          = callProfile.map(_.calls).disableAutowiring() //all calls
   override val joinableCalls  = callProfile.map(_.joinableCalls).disableAutowiring() //any call a user can potentially join in the UI
   override val currentCall    = callProfile.map(_.activeCall).disableAutowiring() //state about any call for which we should show the CallingActivity
-  val joinableCallsNotMuted   = joinableCalls.map(_.filter { case (_, call) => call.shouldRing })
 
+  val joinableCallsNotMuted   = joinableCalls.map(_.filter { case (_, call) => call.shouldRing })
 
   //exposed for tests only
   private[call] lazy val wCall = returningF(avs.registerAccount(this)) { call =>
@@ -527,7 +527,9 @@ class CallingServiceImpl(val accountId:       UserId,
       val drift = pushService.beDrift.currentValue.getOrElse(Duration.ZERO)
       val curTime = LocalInstant(clock.instant + drift)
       verbose(l"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime")
-      avs.onReceiveMessage(w, msg, curTime, msgTime, convId, from, sender)
+      avs.onReceiveMessage(w, msg, curTime, msgTime, convId, from, sender).foreach { result =>
+        userPrefs(UserPreferences.ShouldWarnAVSUpgrade).mutate(_ | result == AvsCallError.UnknownProtocol)
+      }
     }
 
   private def withConv(convId: RConvId)(f: (WCall, ConversationData) => Unit) =
