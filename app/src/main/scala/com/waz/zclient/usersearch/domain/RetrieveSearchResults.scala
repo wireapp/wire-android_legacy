@@ -111,10 +111,11 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
     }
 
     def addContacts(): Unit = {
-      val directoryTeamMembers = currentUser.map(_.teamId) match {
-        case Some(teamId) => directoryResults.filter(_.teamId == teamId)
+      val directoryTeamMembers = currentUser.flatMap(_.teamId) match {
+        case Some(teamId) => directoryResults.filter(_.teamId.contains(teamId))
         case None         => Nil
       }
+
       val contactsList = (localResults ++ directoryTeamMembers).distinctBy(_.id)
       if (contactsList.nonEmpty) {
         mergedResult += SectionViewItem(ContactsSection, 0, teamName)
@@ -144,13 +145,14 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
     }
 
     def addConnections(): Unit = {
-      val directoryExternalMembers = currentUser.map(_.teamId) match {
-        case Some(teamId) => directoryResults.filterNot(_.teamId == teamId)
-        case None         => Nil
+      val directoryExternalMembers = currentUser.flatMap(_.teamId) match {
+        case Some(teamId) => directoryResults.filterNot(_.teamId.contains(teamId))
+        case None         => directoryResults
       }
+
       if (directoryExternalMembers.nonEmpty) {
         mergedResult += SectionViewItem(DirectorySection, 0)
-        mergedResult ++= directoryResults.zipWithIndex.map { case (user, index) =>
+        mergedResult ++= directoryExternalMembers.zipWithIndex.map { case (user, index) =>
           ConnectionViewItem(index, user, team.map(_.id), connected = false)
         }
       }
