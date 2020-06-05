@@ -42,7 +42,7 @@ trait Avs {
   def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean): Unit
   def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer): Future[Unit]
   def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit]
-  def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, userId: UserId, clientId: ClientId): Unit
+  def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, userId: UserId, clientId: ClientId): Future[Int]
   def endCall(wCall: WCall, convId: RConvId): Unit
   def rejectCall(wCall: WCall, convId: RConvId): Unit
   def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
@@ -201,9 +201,9 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer) =
     withAvs(wcall_resp(wCall, status, reason, arg))
 
-  override def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId) = {
+  override def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Future[Int] = {
     val bytes = msg.getBytes("UTF-8")
-    withAvs(wcall_recv_msg(wCall, bytes, bytes.length, uint32_tTime(currTime.instant), uint32_tTime(msgTime.instant), convId.str, from.str, sender.str))
+    withAvsReturning(wcall_recv_msg(wCall, bytes, bytes.length, uint32_tTime(currTime.instant), uint32_tTime(msgTime.instant), convId.str, from.str, sender.str), onFailure = 0)
   }
 
   override def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit] =
@@ -235,6 +235,12 @@ object Avs extends DerivedLogTag {
 
   def uint32_tTime(instant: Instant) =
     returning(Uint32_t((instant.toEpochMilli / 1000).toInt))(t => verbose(l"uint32_tTime for $instant = ${t.value}"))
+
+  type AvsCallError = Int
+  object AvsCallError {
+    val None = 0
+    val UnknownProtocol = 1000
+  }
 
   /**
     * NOTE: All values should be kept up to date as defined in:

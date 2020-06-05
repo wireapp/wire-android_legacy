@@ -58,6 +58,9 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
       location.getZoom,
       location.getName)) foreach { context.startActivity }
 
+  def openPlayStoreListing(): Unit =
+    openUrl(getString(R.string.url_play_store_listing))
+
   // Accounts
 
   def openForgotPassword(): Try[Unit] =

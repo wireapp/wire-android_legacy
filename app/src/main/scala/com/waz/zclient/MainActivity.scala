@@ -40,7 +40,7 @@ import com.waz.zclient.Intents.{RichIntent, _}
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
-import com.waz.zclient.common.controllers.{SharingController, UserAccountsController}
+import com.waz.zclient.common.controllers.{BrowserController, SharingController, UserAccountsController}
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -225,6 +225,20 @@ class MainActivity extends BaseActivity
         verbose(l"the default path (no deep link, or a link handled later)")
         startFirstFragment()
     }
+
+    userPreferences.flatMap(_.preference[Boolean](UserPreferences.ShouldWarnAVSUpgrade).signal).onUi { shouldWarn =>
+      if (shouldWarn) {
+        accentColorController.accentColor.head.foreach { accentColor =>
+          showAVSUpgradeWarning(accentColor) { didConfirm =>
+            if (didConfirm) inject[BrowserController].openPlayStoreListing()
+            userPreferences.head.foreach { prefs =>
+              prefs(UserPreferences.ShouldWarnAVSUpgrade) := false
+            }
+          }
+        }
+      }
+    }
+
   }
 
   override def onStart(): Unit = {
