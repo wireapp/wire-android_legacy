@@ -34,7 +34,6 @@ class CreatePersonalAccountPhoneViewModel(
     val sendActivationCodeErrorLiveData: LiveData<ErrorMessage> = _sendActivationCodeErrorLiveData
     val networkConnectionErrorLiveData: LiveData<Unit> = _networkConnectionErrorLiveData
 
-
     fun validatePhone(countryCode: String, phoneNumber: String) {
         validatePhoneNumberUseCase(viewModelScope,
             ValidatePhoneNumberParams(countryCode, phoneNumber), Dispatchers.Default) {

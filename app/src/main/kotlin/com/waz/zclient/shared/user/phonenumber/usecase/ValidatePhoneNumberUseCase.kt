@@ -42,7 +42,6 @@ data class ValidatePhoneNumberParams(
     val phoneNumber: String
 )
 
-
 object CountryCodeInvalid : ValidatePhoneNumberFailure()
 object PhoneNumberInvalid : ValidatePhoneNumberFailure()
 
