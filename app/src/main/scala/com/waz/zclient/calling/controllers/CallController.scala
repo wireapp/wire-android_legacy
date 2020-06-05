@@ -188,7 +188,6 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       c  <- callConvId
     } yield (cs, c)
 
-
   private val zmsConvId = callingZms.zip(callConvId)
   val conversation: Signal[ConversationData] = zmsConvId.flatMap { case (z, cId) => z.convsStorage.signal(cId) }
   val conversationName: Signal[Name] = zmsConvId.flatMap { case (z, cId) => z.conversations.conversationName(cId) }
