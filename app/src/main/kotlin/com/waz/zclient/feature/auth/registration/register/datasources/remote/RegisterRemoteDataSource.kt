@@ -4,11 +4,10 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.core.network.NetworkHandler
-import java.util.Locale
-import java.util.UUID
+import java.util.*
 
 class RegisterRemoteDataSource(
-    private val activationApi: RegisterApi,
+    private val registerApi: RegisterApi,
     override val networkHandler: NetworkHandler
 ) : ApiService() {
     suspend fun registerPersonalAccountWithEmail(
@@ -17,7 +16,7 @@ class RegisterRemoteDataSource(
         password: String,
         activationCode: String
     ): Either<Failure, UserResponse> = request {
-        activationApi.register(RegisterRequestBody(
+        registerApi.register(RegisterRequestBody(
             name = name,
             email = email,
             password = password,
@@ -32,7 +31,7 @@ class RegisterRemoteDataSource(
         phone: String,
         activationCode: String
     ): Either<Failure, UserResponse> = request {
-        activationApi.register(RegisterRequestBody(
+        registerApi.register(RegisterRequestBody(
             name = name,
             phone = phone,
             phoneCode = activationCode,
