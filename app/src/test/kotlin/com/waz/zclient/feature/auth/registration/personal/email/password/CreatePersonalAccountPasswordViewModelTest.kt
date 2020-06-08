@@ -124,7 +124,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given register is called, when the email is unauthorized then the registration is not done`() =
+    fun `given register is called, when the email is unauthorized then an error message is propagated`() =
         runBlocking {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(UnauthorizedEmail))
 
@@ -135,7 +135,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given register is called, when the activation code is invalid then the registration is not done`() =
+    fun `given register is called, when the activation code is invalid then an error message is propagated`() =
         runBlocking {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(InvalidEmailActivationCode))
 
@@ -146,7 +146,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given register is called, when the email is in use then the registration is not done`() =
+    fun `given register is called, when the email is in use then an error message is propagated`() =
         runBlocking {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
@@ -157,7 +157,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given register is called, when there is a network connection error then the registration is not done`() =
+    fun `given register is called, when there is a network connection error then a network error message is propagated`() =
         runBlocking {
 
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))

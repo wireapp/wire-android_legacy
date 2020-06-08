@@ -42,7 +42,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given sendActivationCode is called, when the phone is blacklisted then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when the phone is blacklisted then an error message is propagated`() =
         runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(PhoneBlacklisted))
 
@@ -53,7 +53,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given sendActivationCode is called, when the phone is in use then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when the phone is in use then an error message is propagated`() =
         runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(PhoneInUse))
 
@@ -64,7 +64,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given sendActivationCode is called, when there is a network connection error then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when there is a network connection error then a network error message is propagated`() =
         runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
@@ -84,7 +84,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given activatePhone is called, when the code is invalid then the activation is not done`() =
+    fun `given activatePhone is called, when the code is invalid then an error message is propagated`() =
         runBlocking {
             `when`(activatePhoneUseCase.run(any())).thenReturn(Either.Left(InvalidSmsCode))
 
@@ -95,7 +95,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given activatePhone is called, when there is a network connection error then the activation is not done`() =
+    fun `given activatePhone is called, when there is a network connection error then a network error message is propagated`() =
         runBlocking {
             `when`(activatePhoneUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 

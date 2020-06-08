@@ -36,7 +36,7 @@ class CreatePersonalAccountPhoneViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given sendActivationCode is called, when the phone is blacklisted then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when the phone is blacklisted then an error message is propagated`() =
         runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(PhoneBlacklisted))
 
@@ -47,7 +47,7 @@ class CreatePersonalAccountPhoneViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given sendActivationCode is called, when the phone is in use then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when the phone is in use then an error message is propagated`() =
         runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(PhoneInUse))
 
@@ -58,7 +58,7 @@ class CreatePersonalAccountPhoneViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given sendActivationCode is called, when there is a network connection error then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when there is a network connection error then a network error message is propagated`() =
         runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 

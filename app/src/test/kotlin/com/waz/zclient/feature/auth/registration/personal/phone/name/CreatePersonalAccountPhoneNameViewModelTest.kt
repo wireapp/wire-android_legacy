@@ -64,7 +64,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given register is called, when the phone is unauthorized then the registration is not done`() =
+    fun `given register is called, when the phone is unauthorized then an error message is propagated`() =
         runBlocking {
             `when`(registerPersonalAccountWithPhoneUseCase.run(any())).thenReturn(Either.Left(UnauthorizedPhone))
 
@@ -75,7 +75,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given register is called, when the activation code is invalid then the registration is not done`() =
+    fun `given register is called, when the activation code is invalid then an error message is propagated`() =
         runBlocking {
             `when`(registerPersonalAccountWithPhoneUseCase.run(any())).thenReturn(Either.Left(InvalidPhoneActivationCode))
 
@@ -86,7 +86,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given register is called, when the phone is in use then the registration is not done`() =
+    fun `given register is called, when the phone is in use then an error message is propagated`() =
         runBlocking {
             `when`(registerPersonalAccountWithPhoneUseCase.run(any())).thenReturn(Either.Left(PhoneInUse))
 
@@ -97,7 +97,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given register is called, when there is a network connection error then the registration is not done`() =
+    fun `given register is called, when there is a network connection error then a network error message is propagated`() =
         runBlocking {
 
             `when`(registerPersonalAccountWithPhoneUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))

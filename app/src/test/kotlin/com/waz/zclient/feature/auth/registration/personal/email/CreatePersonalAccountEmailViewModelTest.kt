@@ -75,7 +75,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given sendActivationCode is called, when the email is blacklisted then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when the email is blacklisted then an error message is propagated`() =
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlacklisted))
 
@@ -86,7 +86,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given sendActivationCode is called, when the email is in use then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when the email is in use then an error message is propagated`() =
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
@@ -97,7 +97,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given sendActivationCode is called, when there is a network connection error then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when there is a network connection error then a network error message is propagated`() =
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
