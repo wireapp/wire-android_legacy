@@ -65,7 +65,7 @@ class CreatePersonalAccountEmailFragment : Fragment(
                 emailCredentialsViewModel.saveEmail(
                     createPersonalAccountEmailEditText.text.toString()
                 )
-                showEmailEmailCodeScreen()
+                showEmailCodeScreen()
             }
             sendActivationCodeErrorLiveData.observe(viewLifecycleOwner) {
                 showGenericErrorDialog(it.message)
@@ -73,7 +73,7 @@ class CreatePersonalAccountEmailFragment : Fragment(
         }
     }
 
-    private fun showEmailEmailCodeScreen() {
+    private fun showEmailCodeScreen() {
         replaceFragment(
             R.id.activityCreateAccountLayoutContainer,
             CreatePersonalAccountEmailCodeFragment.newInstance()

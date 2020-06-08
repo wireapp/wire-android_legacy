@@ -19,7 +19,7 @@ class CreatePersonalAccountPhoneCredentialsViewModel : ViewModel() {
     }
 }
 
-data class Credentials(
+private data class Credentials(
     var phone: String = String.empty(),
     var activationCode: String = String.empty()
 )

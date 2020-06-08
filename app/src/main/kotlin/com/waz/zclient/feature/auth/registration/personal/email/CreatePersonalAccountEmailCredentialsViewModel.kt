@@ -24,7 +24,7 @@ class CreatePersonalAccountEmailCredentialsViewModel : ViewModel() {
     }
 }
 
-data class Credentials(
+private data class Credentials(
     var email: String = String.empty(),
     var activationCode: String = String.empty(),
     var name: String = String.empty()

@@ -13,10 +13,8 @@ class ActivatePhoneUseCase(
     override suspend fun run(params: ActivatePhoneParams): Either<Failure, Unit> =
         activationRepository.activatePhone(params.phone, params.code)
             .fold({
-                when (it) {
-                    is NotFound -> Either.Left(InvalidSmsCode)
-                    else -> Either.Left(it)
-                }
+                if (it is NotFound) Either.Left(InvalidSmsCode)
+                else Either.Left(it)
             }) { Either.Right(it) }!!
 }
 
