@@ -32,13 +32,12 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
     @Before
     fun setup() {
         sendEmailActivationCodeUseCase = SendEmailActivationCodeUseCase(activationRepository)
+        `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
     }
 
     @Test
     fun `Given send email activation code use case is executed, when there is a Forbidden error then return EmailBlackListed`() =
         runBlocking {
-
-            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
             `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(Forbidden))
 
 
@@ -54,7 +53,6 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
     @Test
     fun `given send email activation code use case is executed, there is a Conflict error then return EmailInUse`() =
         runBlocking {
-            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
             `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(Conflict))
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
@@ -69,7 +67,6 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
     @Test
     fun `given send email activation code use case is executed, there is any other type of error then return this error`() =
         runBlocking {
-            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
             `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(InternalServerError))
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
@@ -84,7 +81,6 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
     @Test
     fun `given send email activation code use case is executed, when there is no error then return success`() =
         runBlocking {
-            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
             `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)

@@ -31,13 +31,13 @@ class ActivateEmailUseCaseTest : UnitTest() {
     @Before
     fun setup() {
         activateEmailUseCase = ActivateEmailUseCase(activationRepository)
+        `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
+        `when`(activateEmailParams.code).thenReturn(TEST_CODE)
     }
 
     @Test
     fun `Given activate email use case is executed, when there is a Not found error then return InvalidEmailCode`() =
         runBlocking {
-            `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
-            `when`(activateEmailParams.code).thenReturn(TEST_CODE)
             `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(NotFound))
 
             val response = activateEmailUseCase.run(activateEmailParams)
@@ -52,8 +52,6 @@ class ActivateEmailUseCaseTest : UnitTest() {
     @Test
     fun `given  activate email use case is executed, there is any other type of error then return this error`() =
         runBlocking {
-            `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
-            `when`(activateEmailParams.code).thenReturn(TEST_CODE)
             `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(InternalServerError))
 
             val response = activateEmailUseCase.run(activateEmailParams)
@@ -68,8 +66,6 @@ class ActivateEmailUseCaseTest : UnitTest() {
     @Test
     fun `given activate email use case is executed, when there is no error then returns success`() =
         runBlocking {
-            `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
-            `when`(activateEmailParams.code).thenReturn(TEST_CODE)
             `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
 
             val response = activateEmailUseCase.run(activateEmailParams)

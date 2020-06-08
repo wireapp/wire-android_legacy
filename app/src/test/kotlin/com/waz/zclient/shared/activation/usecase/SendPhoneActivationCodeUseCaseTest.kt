@@ -32,15 +32,14 @@ class SendPhoneActivationCodeUseCaseTest : UnitTest() {
     @Before
     fun setup() {
         sendPhoneActivationCodeUseCase = SendPhoneActivationCodeUseCase(activationRepository)
+        `when`(sendPhoneActivationCodeParams.phone).thenReturn(TEST_PHONE)
     }
 
     @Test
     fun `Given send phone activation code use case is executed, when there is a Forbidden error then return PhoneBlackListed`() =
         runBlocking {
 
-            `when`(sendPhoneActivationCodeParams.phone).thenReturn(TEST_PHONE)
             `when`(activationRepository.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Left(Forbidden))
-
 
             val response = sendPhoneActivationCodeUseCase.run(sendPhoneActivationCodeParams)
 
@@ -54,7 +53,6 @@ class SendPhoneActivationCodeUseCaseTest : UnitTest() {
     @Test
     fun `given send phone activation code use case is executed, there is a Conflict error then return PhoneInUse`() =
         runBlocking {
-            `when`(sendPhoneActivationCodeParams.phone).thenReturn(TEST_PHONE)
             `when`(activationRepository.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Left(Conflict))
 
             val response = sendPhoneActivationCodeUseCase.run(sendPhoneActivationCodeParams)
@@ -69,7 +67,6 @@ class SendPhoneActivationCodeUseCaseTest : UnitTest() {
     @Test
     fun `given send phone activation code use case is executed, there is any other type of error then return this error`() =
         runBlocking {
-            `when`(sendPhoneActivationCodeParams.phone).thenReturn(TEST_PHONE)
             `when`(activationRepository.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Left(InternalServerError))
 
             val response = sendPhoneActivationCodeUseCase.run(sendPhoneActivationCodeParams)
@@ -84,7 +81,6 @@ class SendPhoneActivationCodeUseCaseTest : UnitTest() {
     @Test
     fun `given send phone activation code use case is executed, when there is no error then return success`() =
         runBlocking {
-            `when`(sendPhoneActivationCodeParams.phone).thenReturn(TEST_PHONE)
             `when`(activationRepository.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Right(Unit))
 
             val response = sendPhoneActivationCodeUseCase.run(sendPhoneActivationCodeParams)
