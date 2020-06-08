@@ -35,8 +35,10 @@ class CreatePersonalAccountPhoneViewModel(
     val networkConnectionErrorLiveData: LiveData<Unit> = _networkConnectionErrorLiveData
 
     fun validatePhone(countryCode: String, phoneNumber: String) {
-        validatePhoneNumberUseCase(viewModelScope,
-            ValidatePhoneNumberParams(countryCode, phoneNumber), Dispatchers.Default) {
+        validatePhoneNumberUseCase(
+            viewModelScope,
+            ValidatePhoneNumberParams(countryCode, phoneNumber),
+            Dispatchers.Default) {
             it.fold(::validatePhoneFailure) { validatePhoneSuccess() }
         }
     }

@@ -26,6 +26,19 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
     private val phoneCredentialsViewModel: CreatePersonalAccountPhoneCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
+    private var countryName: String
+        get() = createPersonalAccountPhoneCountryCodePickerTextView.text.toString()
+        set(value) {
+            createPersonalAccountPhoneCountryCodePickerTextView.text = value
+        }
+
+    private var countryCode: String
+        get() = createPersonalAccountPhoneCountryCodeEditText.text.toString()
+        set(value) = createPersonalAccountPhoneCountryCodeEditText.setText(value)
+
+    private val phoneNumber: String
+        get() = createPersonalAccountPhoneNumberEditText.text.toString()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         observePhoneValidationData()
@@ -47,17 +60,17 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
     }
 
     private fun initCountryCodePickerListener() {
-        createPersonalAccountCountryCodeCountryCodePickerTextView.setOnClickListener {
-            showCountryCodePickerDialog(createPersonalAccountCountryCodeEditText.text.toString())
+        createPersonalAccountPhoneCountryCodePickerTextView.setOnClickListener {
+            showCountryCodePickerDialog()
         }
     }
 
     private fun initPhoneChangedListener() {
-        createPersonalAccountCountryCodeEditText.doAfterTextChanged {
-            phoneViewModel.validatePhone(it.toString(), createPersonalAccountPhoneEditText.text.toString())
+        createPersonalAccountPhoneCountryCodeEditText.doAfterTextChanged {
+            phoneViewModel.validatePhone(it.toString(), phoneNumber)
         }
-        createPersonalAccountPhoneEditText.doAfterTextChanged {
-            phoneViewModel.validatePhone(createPersonalAccountCountryCodeEditText.text.toString(), it.toString())
+        createPersonalAccountPhoneNumberEditText.doAfterTextChanged {
+            phoneViewModel.validatePhone(countryCode, it.toString())
         }
     }
 
@@ -65,7 +78,7 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         updateConfirmationButtonStatus(false)
         createPersonalAccountPhoneConfirmationButton.setOnClickListener {
             phoneViewModel.sendActivationCode(
-                createPersonalAccountPhoneEditText.text.toString()
+                countryCode.plus(phoneNumber)
             )
         }
     }
@@ -74,7 +87,7 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         with(phoneViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
                 phoneCredentialsViewModel.savePhone(
-                    createPersonalAccountPhoneEditText.text.toString()
+                    countryCode.plus(phoneNumber)
                 )
                 showPhoneCodeScreen()
             }
@@ -110,13 +123,13 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         .create()
         .show()
 
-    private fun showCountryCodePickerDialog(countryDisplayName: String) {
+    private fun showCountryCodePickerDialog() {
         CountryCodePickerFragment.newInstance(
-            countryDisplayName,
+            countryName,
             object : CountryCodePickerFragment.CountryCodePickerListener {
-                override fun onCountryCodeSelected(countryCode: Country) {
-                    createPersonalAccountCountryCodeEditText.setText(countryCode.countryCode)
-                    createPersonalAccountCountryCodeCountryCodePickerTextView.text = countryCode.countryDisplayName
+                override fun onCountryCodeSelected(country: Country) {
+                    countryCode = country.countryCode
+                    countryName = country.countryDisplayName
                 }
             }
         ).show(requireActivity().supportFragmentManager, String.empty())

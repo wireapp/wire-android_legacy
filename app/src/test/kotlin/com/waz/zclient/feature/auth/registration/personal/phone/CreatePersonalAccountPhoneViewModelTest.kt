@@ -79,7 +79,7 @@ class CreatePersonalAccountPhoneViewModelTest : UnitTest() {
             val countryCode = "+49"
             val phoneNumber = "3099999999"
 
-            `when`(validatePhoneNumberUseCase.run(any())).thenReturn(Either.Right(countryCode + phoneNumber))
+            `when`(validatePhoneNumberUseCase.run(any())).thenReturn(Either.Right(countryCode.plus(phoneNumber)))
 
             phoneViewModel.validatePhone(countryCode, phoneNumber)
 

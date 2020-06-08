@@ -25,7 +25,7 @@
 
     <!--TODO Replace Germany and +49 by the country from the sim card or device Locale -->
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createPersonalAccountCountryCodeCountryCodePickerTextView"
+        android:id="@+id/createPersonalAccountPhoneCountryCodePickerTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="@dimen/create_personal_account_text_country_text_padding"
@@ -36,7 +36,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/createPersonalAccountCountryCodeEditText"
+        android:id="@+id/createPersonalAccountPhoneCountryCodeEditText"
         style="@style/EditText.Authentication"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -45,7 +45,7 @@
         android:text="@string/create_personal_account_with_phone_default_country_code"
         app:layout_constraintEnd_toStartOf="@+id/createPersonalAccountPhoneTextInputLayout"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountCountryCodeCountryCodePickerTextView" />
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPhoneCountryCodePickerTextView" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/createPersonalAccountPhoneTextInputLayout"
@@ -54,11 +54,11 @@
         android:background="@color/white"
         app:hintEnabled="false"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/createPersonalAccountCountryCodeEditText"
-        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountCountryCodeCountryCodePickerTextView">
+        app:layout_constraintStart_toEndOf="@+id/createPersonalAccountPhoneCountryCodeEditText"
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountPhoneCountryCodePickerTextView">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/createPersonalAccountPhoneEditText"
+            android:id="@+id/createPersonalAccountPhoneNumberEditText"
             style="@style/EditText.Authentication"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
