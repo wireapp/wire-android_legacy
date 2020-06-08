@@ -11,6 +11,7 @@ import com.waz.zclient.shared.activation.usecase.PhoneInUse
 import com.waz.zclient.shared.activation.usecase.SendPhoneActivationCodeUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -36,7 +37,7 @@ class CreatePersonalAccountPhoneViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when the phone is blacklisted then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(PhoneBlacklisted))
 
             phoneViewModel.sendActivationCode(TEST_PHONE)
@@ -47,7 +48,7 @@ class CreatePersonalAccountPhoneViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when the phone is in use then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(PhoneInUse))
 
             phoneViewModel.sendActivationCode(TEST_PHONE)
@@ -58,7 +59,7 @@ class CreatePersonalAccountPhoneViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when there is a network connection error then a network error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
             phoneViewModel.sendActivationCode(TEST_PHONE)
@@ -68,7 +69,7 @@ class CreatePersonalAccountPhoneViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when there is no error then the activation code is sent`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             phoneViewModel.sendActivationCode(TEST_PHONE)

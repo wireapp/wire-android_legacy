@@ -6,6 +6,7 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.shared.activation.ActivationRepository
 import com.waz.zclient.shared.activation.datasources.remote.ActivationRemoteDataSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -28,7 +29,7 @@ class ActivationDataSourceTest : UnitTest() {
 
     @Test
     fun `Given sendEmailActivationCode() is called and remote request fails then return failure`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
 
             `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(ServerError))
 
@@ -41,7 +42,7 @@ class ActivationDataSourceTest : UnitTest() {
 
     @Test
     fun `Given sendEmailActivationCode() is called and remote request is success, then return success`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
             val response = activationRepository.sendEmailActivationCode(TEST_EMAIL)
@@ -53,7 +54,7 @@ class ActivationDataSourceTest : UnitTest() {
 
     @Test
     fun `Given sendPhoneActivationCode() is called and remote request fails then return failure`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
 
             `when`(activationRemoteDataSource.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Left(ServerError))
 
@@ -66,7 +67,7 @@ class ActivationDataSourceTest : UnitTest() {
 
     @Test
     fun `Given sendPhoneActivationCode() is called and remote request is success, then return success`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(activationRemoteDataSource.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Right(Unit))
 
             val response = activationRepository.sendPhoneActivationCode(TEST_PHONE)
@@ -78,7 +79,7 @@ class ActivationDataSourceTest : UnitTest() {
 
     @Test
     fun `Given activateEmail() is called and remote request fails then return failure`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
 
             `when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(ServerError))
 
@@ -91,7 +92,7 @@ class ActivationDataSourceTest : UnitTest() {
 
     @Test
     fun `Given activateEmail() is called and remote request is success, then return success`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
 
             val response = activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)
@@ -103,7 +104,7 @@ class ActivationDataSourceTest : UnitTest() {
 
     @Test
     fun `Given activatePhone() is called and remote request fails then return failure`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
 
             `when`(activationRemoteDataSource.activatePhone(TEST_PHONE, TEST_CODE)).thenReturn(Either.Left(ServerError))
 
@@ -116,7 +117,7 @@ class ActivationDataSourceTest : UnitTest() {
 
     @Test
     fun `Given activatePhone() is called and remote request is success, then return success`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(activationRemoteDataSource.activatePhone(TEST_PHONE, TEST_CODE)).thenReturn(Either.Right(Unit))
 
             val response = activationRepository.activatePhone(TEST_PHONE, TEST_CODE)

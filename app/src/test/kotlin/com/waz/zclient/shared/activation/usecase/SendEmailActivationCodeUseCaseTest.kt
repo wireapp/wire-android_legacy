@@ -9,6 +9,7 @@ import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.shared.activation.ActivationRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -35,9 +36,11 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
 
     @Test
     fun `Given send email activation code use case is executed, when there is a Forbidden error then return EmailBlackListed`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
 
+            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
             `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(Forbidden))
+
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
 
@@ -50,7 +53,8 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
 
     @Test
     fun `given send email activation code use case is executed, there is a Conflict error then return EmailInUse`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
+            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
             `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(Conflict))
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
@@ -64,7 +68,8 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
 
     @Test
     fun `given send email activation code use case is executed, there is any other type of error then return this error`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
+            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
             `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(InternalServerError))
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
@@ -78,7 +83,8 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
 
     @Test
     fun `given send email activation code use case is executed, when there is no error then return success`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
+            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
             `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)

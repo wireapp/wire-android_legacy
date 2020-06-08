@@ -14,6 +14,7 @@ import com.waz.zclient.shared.user.email.EmailTooShort
 import com.waz.zclient.shared.user.email.ValidateEmailUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -45,7 +46,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
     @Test
     fun `given validateEmail is called, when the validation succeeds then isValidEmail should be true`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             emailViewModel.validateEmail(TEST_EMAIL)
@@ -55,7 +56,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
     @Test
     fun `given validateEmail is called, when the validation fails with EmailTooShort error then isValidEmail should be false`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailTooShort))
 
             emailViewModel.validateEmail(TEST_EMAIL)
@@ -65,7 +66,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
     @Test
     fun `given validateEmail is called, when the validation fails with EmailInvalid error then isValidEmail should be false`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailInvalid))
 
             emailViewModel.validateEmail(TEST_EMAIL)
@@ -75,7 +76,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when the email is blacklisted then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlacklisted))
 
             emailViewModel.sendActivationCode(TEST_EMAIL)
@@ -86,7 +87,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when the email is in use then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
             emailViewModel.sendActivationCode(TEST_EMAIL)
@@ -97,7 +98,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when there is a network connection error then a network error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
             emailViewModel.sendActivationCode(TEST_EMAIL)
@@ -107,7 +108,7 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when there is no error then the activation code is sent`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             emailViewModel.sendActivationCode(TEST_EMAIL)

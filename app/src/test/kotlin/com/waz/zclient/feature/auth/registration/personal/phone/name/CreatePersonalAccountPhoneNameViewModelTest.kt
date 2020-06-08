@@ -15,6 +15,7 @@ import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -44,7 +45,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
 
     @Test
     fun `given validateName is called, when the validation fails with NameTooShort then isValidName should be false`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(validateNameUseCase.run(any())).thenReturn(Either.Left(NameTooShort))
 
             nameViewModel.validateName(TEST_NAME)
@@ -54,7 +55,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
 
     @Test
     fun `given validateName is called, when the validation succeeds then isValidName should be true`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(validateNameUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             nameViewModel.validateName(TEST_NAME)
@@ -64,7 +65,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when the phone is unauthorized then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(registerPersonalAccountWithPhoneUseCase.run(any())).thenReturn(Either.Left(UnauthorizedPhone))
 
             nameViewModel.register(TEST_NAME, TEST_PHONE, TEST_CODE)
@@ -75,7 +76,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when the activation code is invalid then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(registerPersonalAccountWithPhoneUseCase.run(any())).thenReturn(Either.Left(InvalidPhoneActivationCode))
 
             nameViewModel.register(TEST_NAME, TEST_PHONE, TEST_CODE)
@@ -86,7 +87,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when the phone is in use then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(registerPersonalAccountWithPhoneUseCase.run(any())).thenReturn(Either.Left(PhoneInUse))
 
             nameViewModel.register(TEST_NAME, TEST_PHONE, TEST_CODE)
@@ -97,7 +98,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when there is a network connection error then a network error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
 
             `when`(registerPersonalAccountWithPhoneUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
@@ -108,7 +109,7 @@ class CreatePersonalAccountPhoneNameViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when there is no error then the registration is done`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(registerPersonalAccountWithPhoneUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             nameViewModel.register(TEST_NAME, TEST_PHONE, TEST_CODE)

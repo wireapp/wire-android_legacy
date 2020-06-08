@@ -13,6 +13,7 @@ import com.waz.zclient.shared.activation.usecase.PhoneInUse
 import com.waz.zclient.shared.activation.usecase.SendPhoneActivationCodeUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -42,7 +43,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when the phone is blacklisted then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(PhoneBlacklisted))
 
             phoneCodeViewModel.sendActivationCode(TEST_PHONE)
@@ -53,7 +54,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when the phone is in use then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(PhoneInUse))
 
             phoneCodeViewModel.sendActivationCode(TEST_PHONE)
@@ -64,7 +65,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when there is a network connection error then a network error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
             phoneCodeViewModel.sendActivationCode(TEST_PHONE)
@@ -74,7 +75,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
 
     @Test
     fun `given sendActivationCode is called, when there is no error then the activation code is sent`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(sendPhoneActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             phoneCodeViewModel.sendActivationCode(TEST_PHONE)
@@ -84,7 +85,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
 
     @Test
     fun `given activatePhone is called, when the code is invalid then an error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(activatePhoneUseCase.run(any())).thenReturn(Either.Left(InvalidSmsCode))
 
             phoneCodeViewModel.activatePhone(TEST_PHONE, TEST_CODE)
@@ -95,7 +96,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
 
     @Test
     fun `given activatePhone is called, when there is a network connection error then a network error message is propagated`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(activatePhoneUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
             phoneCodeViewModel.activatePhone(TEST_PHONE, TEST_CODE)
@@ -105,7 +106,7 @@ class CreatePersonalAccountPhoneCodeViewModelTest : UnitTest() {
 
     @Test
     fun `given activatePhone is called, when the code is valid then the activation is done`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
             `when`(activatePhoneUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             phoneCodeViewModel.activatePhone(TEST_PHONE, TEST_CODE)

@@ -8,6 +8,7 @@ import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.shared.activation.ActivationRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -34,8 +35,9 @@ class ActivateEmailUseCaseTest : UnitTest() {
 
     @Test
     fun `Given activate email use case is executed, when there is a Not found error then return InvalidEmailCode`() =
-        coroutinesTestRule.runBlockingTest {
-
+        runBlocking {
+            `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
+            `when`(activateEmailParams.code).thenReturn(TEST_CODE)
             `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(NotFound))
 
             val response = activateEmailUseCase.run(activateEmailParams)
@@ -49,7 +51,9 @@ class ActivateEmailUseCaseTest : UnitTest() {
 
     @Test
     fun `given  activate email use case is executed, there is any other type of error then return this error`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
+            `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
+            `when`(activateEmailParams.code).thenReturn(TEST_CODE)
             `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(InternalServerError))
 
             val response = activateEmailUseCase.run(activateEmailParams)
@@ -63,7 +67,9 @@ class ActivateEmailUseCaseTest : UnitTest() {
 
     @Test
     fun `given activate email use case is executed, when there is no error then returns success`() =
-        coroutinesTestRule.runBlockingTest {
+        runBlocking {
+            `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
+            `when`(activateEmailParams.code).thenReturn(TEST_CODE)
             `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
 
             val response = activateEmailUseCase.run(activateEmailParams)

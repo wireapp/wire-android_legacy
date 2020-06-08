@@ -3,13 +3,14 @@ package com.waz.zclient.feature.auth.registration.personal.phone
 import com.waz.zclient.UnitTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-class CreatePersonalAccountPhoneCredentialsViewModelTest : UnitTest() {
+class PhoneCredentialsViewModelTest : UnitTest() {
 
     private lateinit var phoneCredentialsViewModel: CreatePersonalAccountPhoneCredentialsViewModel
 
@@ -19,20 +20,22 @@ class CreatePersonalAccountPhoneCredentialsViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given savePhone() is called, then the phone should be added to the credentials`() {
+    fun `given savePhone() is called, then the phone should be added to the credentials`() =
+        runBlocking {
 
-        phoneCredentialsViewModel.savePhone(TEST_PHONE)
+            phoneCredentialsViewModel.savePhone(TEST_PHONE)
 
-        assertEquals(TEST_PHONE, phoneCredentialsViewModel.phone())
-    }
+            assertEquals(TEST_PHONE, phoneCredentialsViewModel.phone())
+        }
 
     @Test
-    fun `given saveActivationCode() is called, then the activation code should be added to the credentials`() {
+    fun `given saveActivationCode() is called, then the activation code should be added to the credentials`() =
+        runBlocking {
 
-        phoneCredentialsViewModel.saveActivationCode(TEST_CODE)
+            phoneCredentialsViewModel.saveActivationCode(TEST_CODE)
 
-        assertEquals(TEST_CODE, phoneCredentialsViewModel.activationCode())
-    }
+            assertEquals(TEST_CODE, phoneCredentialsViewModel.activationCode())
+        }
 
     companion object {
         private const val TEST_PHONE = "+499999999"
