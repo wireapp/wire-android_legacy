@@ -152,7 +152,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
       if (directoryExternalMembers.nonEmpty) {
         mergedResult += SectionViewItem(DirectorySection, 0)
-        mergedResult ++= directoryExternalMembers.zipWithIndex.map { case (user, index) =>
+        mergedResult ++= directoryResults.zipWithIndex.map { case (user, index) =>
           ConnectionViewItem(index, user, team.map(_.id), connected = false)
         }
       }
