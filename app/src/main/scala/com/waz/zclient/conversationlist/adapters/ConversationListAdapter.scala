@@ -31,7 +31,8 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
+import scala.util.Try
 
 abstract class ConversationListAdapter (implicit context: Context, eventContext: EventContext, injector: Injector)
   extends RecyclerView.Adapter[ConversationRowViewHolder]
@@ -44,7 +45,7 @@ abstract class ConversationListAdapter (implicit context: Context, eventContext:
   val onConversationClick: SourceStream[ConvId] = EventStream[ConvId]()
   val onConversationLongClick: SourceStream[ConversationData] = EventStream[ConversationData]()
 
-  protected val items = new ListBuffer[Item]
+  protected val items = mutable.ListBuffer[Item]()
   protected var maxAlpha = 1.0f
 
   def setMaxAlpha(maxAlpha: Float): Unit = {
@@ -58,7 +59,7 @@ abstract class ConversationListAdapter (implicit context: Context, eventContext:
     * @param newItems the new data source.
     */
   protected def updateList(newItems: List[Item]): Unit = {
-    DiffUtil.calculateDiff(new DiffCallback(items.toList, newItems), false).dispatchUpdatesTo(this)
+    DiffUtil.calculateDiff(new DiffCallback(items, newItems), false).dispatchUpdatesTo(this)
     items.clear()
     items.appendAll(newItems)
   }
@@ -97,19 +98,20 @@ abstract class ConversationListAdapter (implicit context: Context, eventContext:
     }
   }
 
-  override def onClick(position: Int): Unit = items(position) match {
+  override def onClick(position: Int): Unit = Try(items(position)).foreach {
     case Item.IncomingRequests(first, _) => onConversationClick ! first
     case Item.Conversation(conv, _, _)   => onConversationClick ! conv.id
     case _                               =>
   }
 
-  override def onLongClick(position: Int): Boolean = items(position) match {
+  override def onLongClick(position: Int): Boolean = Try(items(position)).map {
     case Item.Conversation(conv, _, _) =>
       onConversationLongClick ! conv
       true
     case _ =>
       false
-  }
+  }.getOrElse(false)
+
 }
 
 object ConversationListAdapter {
