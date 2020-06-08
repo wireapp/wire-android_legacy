@@ -14,7 +14,9 @@ import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import com.waz.zclient.feature.auth.registration.personal.phone.code.CreatePersonalAccountPhoneCodeFragment
 import kotlinx.android.synthetic.main.fragment_create_personal_account_phone.*
 
-class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_personal_account_phone) {
+class CreatePersonalAccountPhoneFragment : Fragment(
+    R.layout.fragment_create_personal_account_phone
+) {
 
     //TODO Add loading status
     private val phoneViewModel: CreatePersonalAccountPhoneViewModel

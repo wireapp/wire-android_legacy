@@ -15,7 +15,9 @@ import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import com.waz.zclient.feature.auth.registration.personal.phone.CreatePersonalAccountPhoneCredentialsViewModel
 import kotlinx.android.synthetic.main.fragment_create_personal_account_name.*
 
-class CreatePersonalAccountPhoneNameFragment : Fragment(R.layout.fragment_create_personal_account_name) {
+class CreatePersonalAccountPhoneNameFragment : Fragment(
+    R.layout.fragment_create_personal_account_name
+) {
 
     private val nameViewModel: CreatePersonalAccountPhoneNameViewModel
         by viewModel(REGISTRATION_SCOPE_ID)

@@ -14,7 +14,9 @@ import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import com.waz.zclient.feature.auth.registration.personal.email.code.CreatePersonalAccountEmailCodeFragment
 import kotlinx.android.synthetic.main.fragment_create_personal_account_email.*
 
-class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_personal_account_email) {
+class CreatePersonalAccountEmailFragment : Fragment(
+    R.layout.fragment_create_personal_account_email
+) {
 
     //TODO Add loading status
     private val emailViewModel: CreatePersonalAccountEmailViewModel

@@ -15,7 +15,9 @@ import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAc
 import com.waz.zclient.feature.auth.registration.personal.email.password.CreatePersonalAccountPasswordFragment
 import kotlinx.android.synthetic.main.fragment_create_personal_account_name.*
 
-class CreatePersonalAccountEmailNameFragment : Fragment(R.layout.fragment_create_personal_account_name) {
+class CreatePersonalAccountEmailNameFragment : Fragment(
+    R.layout.fragment_create_personal_account_name
+) {
 
     private val nameViewModel: CreatePersonalAccountEmailNameViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
