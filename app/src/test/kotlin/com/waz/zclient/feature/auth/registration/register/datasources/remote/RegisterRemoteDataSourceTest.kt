@@ -2,15 +2,20 @@ package com.waz.zclient.feature.auth.registration.register.datasources.remote
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
+import com.waz.zclient.capture
 import com.waz.zclient.core.network.NetworkHandler
+import junit.framework.TestCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
@@ -34,6 +39,9 @@ class RegisterRemoteDataSourceTest : UnitTest() {
     @Mock
     private lateinit var userResponse: UserResponse
 
+    @Captor
+    private lateinit var registerRequestBodyCapture: ArgumentCaptor<RegisterRequestBody>
+
     @Before
     fun setUp() {
         `when`(networkHandler.isConnected).thenReturn(true)
@@ -51,8 +59,12 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
             val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
 
-            verify(registerApi).register(any())
+            verify(registerApi).register(capture(registerRequestBodyCapture))
 
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_EMAIL, registerRequestBodyCapture.value.email)
+            assertEquals(TEST_PASSWORD, registerRequestBodyCapture.value.password)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.emailCode)
             assertTrue(response.isRight)
         }
 
@@ -65,9 +77,12 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
             val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
 
-            verify(registerApi).register(any())
+            verify(registerApi).register(capture(registerRequestBodyCapture))
 
-
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_EMAIL, registerRequestBodyCapture.value.email)
+            assertEquals(TEST_PASSWORD, registerRequestBodyCapture.value.password)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.emailCode)
             assertTrue(response.isLeft)
 
         }
@@ -82,11 +97,15 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
             val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
 
-            verify(registerApi).register(any())
+            verify(registerApi).register(capture(registerRequestBodyCapture))
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
             delay(CANCELLATION_DELAY)
 
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_EMAIL, registerRequestBodyCapture.value.email)
+            assertEquals(TEST_PASSWORD, registerRequestBodyCapture.value.password)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.emailCode)
             assertTrue(response.isLeft)
         }
 
@@ -101,8 +120,11 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
             val response = registerRemoteDataSource.registerPersonalAccountWithPhone(TEST_NAME, TEST_PHONE, TEST_ACTIVATION_CODE)
 
-            verify(registerApi).register(any())
+            verify(registerApi).register(capture(registerRequestBodyCapture))
 
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_PHONE, registerRequestBodyCapture.value.phone)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.phoneCode)
             assertTrue(response.isRight)
         }
 
@@ -115,8 +137,11 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
             val response = registerRemoteDataSource.registerPersonalAccountWithPhone(TEST_NAME, TEST_PHONE, TEST_ACTIVATION_CODE)
 
-            verify(registerApi).register(any())
+            verify(registerApi).register(capture(registerRequestBodyCapture))
 
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_PHONE, registerRequestBodyCapture.value.phone)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.phoneCode)
             assertTrue(response.isLeft)
 
         }
@@ -131,11 +156,14 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
             val response = registerRemoteDataSource.registerPersonalAccountWithPhone(TEST_NAME, TEST_PHONE, TEST_ACTIVATION_CODE)
 
-            verify(registerApi).register(any())
+            verify(registerApi).register(capture(registerRequestBodyCapture))
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
             delay(CANCELLATION_DELAY)
 
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_PHONE, registerRequestBodyCapture.value.phone)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.phoneCode)
             assertTrue(response.isLeft)
         }
 
