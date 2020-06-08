@@ -10,7 +10,6 @@ import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.feature.auth.registration.register.RegisterRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -33,15 +32,11 @@ class RegisterPersonalAccountWithPhoneUseCaseTest : UnitTest() {
     @Before
     fun setup() {
         registerPersonalAccountWithPhoneUseCase = RegisterPersonalAccountWithPhoneUseCase(registerRepository)
-
-        `when`(phoneRegistrationParams.name).thenReturn(TEST_NAME)
-        `when`(phoneRegistrationParams.phone).thenReturn(TEST_PHONE)
-        `when`(phoneRegistrationParams.activationCode).thenReturn(TEST_ACTIVATION_CODE)
     }
 
     @Test
     fun `Given register personal account with phone use case is executed, when there is a Forbidden error then return UnauthorizedPhone`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithPhone(
                 TEST_NAME,
@@ -63,7 +58,7 @@ class RegisterPersonalAccountWithPhoneUseCaseTest : UnitTest() {
 
     @Test
     fun `Given register personal account with phone use case is executed, when there is a NotFound error then return InvalidPhoneActivationCode`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithPhone(
                 TEST_NAME,
@@ -85,7 +80,7 @@ class RegisterPersonalAccountWithPhoneUseCaseTest : UnitTest() {
 
     @Test
     fun `Given register personal account with phone use case is executed, when there is a Conflict error then return PhoneInUse`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithPhone(
                 TEST_NAME,
@@ -107,7 +102,7 @@ class RegisterPersonalAccountWithPhoneUseCaseTest : UnitTest() {
 
     @Test
     fun `given register personal account with phone  use case is executed, there is any other type of error then return this error`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithPhone(
                 TEST_NAME,
@@ -129,7 +124,7 @@ class RegisterPersonalAccountWithPhoneUseCaseTest : UnitTest() {
 
     @Test
     fun `given activate phone use case is executed, when there is no error then returns success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithPhone(
                 TEST_NAME,

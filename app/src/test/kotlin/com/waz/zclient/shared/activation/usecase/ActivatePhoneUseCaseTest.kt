@@ -8,7 +8,6 @@ import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.shared.activation.ActivationRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -35,9 +34,7 @@ class ActivatePhoneUseCaseTest : UnitTest() {
 
     @Test
     fun `Given activate phone use case is executed, when there is a Not found error then return InvalidSmsCode`() =
-        runBlocking {
-            `when`(activatePhoneParams.phone).thenReturn(TEST_PHONE)
-            `when`(activatePhoneParams.code).thenReturn(TEST_CODE)
+        coroutinesTestRule.runBlockingTest {
             `when`(activationRepository.activatePhone(TEST_PHONE, TEST_CODE)).thenReturn(Either.Left(NotFound))
 
             val response = activatePhoneUseCase.run(activatePhoneParams)
@@ -51,9 +48,7 @@ class ActivatePhoneUseCaseTest : UnitTest() {
 
     @Test
     fun `given activate phone use case is executed, there is any other type of error then return this error`() =
-        runBlocking {
-            `when`(activatePhoneParams.phone).thenReturn(TEST_PHONE)
-            `when`(activatePhoneParams.code).thenReturn(TEST_CODE)
+        coroutinesTestRule.runBlockingTest {
             `when`(activationRepository.activatePhone(TEST_PHONE, TEST_CODE)).thenReturn(Either.Left(InternalServerError))
 
             val response = activatePhoneUseCase.run(activatePhoneParams)
@@ -67,9 +62,7 @@ class ActivatePhoneUseCaseTest : UnitTest() {
 
     @Test
     fun `given activate phone use case is executed, when there is no error then returns success`() =
-        runBlocking {
-            `when`(activatePhoneParams.phone).thenReturn(TEST_PHONE)
-            `when`(activatePhoneParams.code).thenReturn(TEST_CODE)
+        coroutinesTestRule.runBlockingTest {
             `when`(activationRepository.activatePhone(TEST_PHONE, TEST_CODE)).thenReturn(Either.Right(Unit))
 
             val response = activatePhoneUseCase.run(activatePhoneParams)

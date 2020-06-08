@@ -39,7 +39,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given sendEmailActivationCode() is called, when api response success, then return an success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(emptyResponse.body()).thenReturn(Unit)
             `when`(emptyResponse.isSuccessful).thenReturn(true)
@@ -55,7 +55,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given sendEmailActivationCode() is called, when api response failed, then return an error`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(emptyResponse.isSuccessful).thenReturn(false)
             `when`(activationApi.sendActivationCode(any())).thenReturn(emptyResponse)
@@ -68,7 +68,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
         }
 
     @Test(expected = CancellationException::class)
-    fun `Given  sendEmailActivationCode()() is called, when api response is cancelled, then return an error`() =
+    fun `Given sendEmailActivationCode()() is called, when api response is cancelled, then return an error`() =
         runBlocking {
 
             `when`(emptyResponse.body()).thenReturn(Unit)
@@ -87,7 +87,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given sendPhoneActivationCode() is called, when api response success, then return an success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(emptyResponse.body()).thenReturn(Unit)
             `when`(emptyResponse.isSuccessful).thenReturn(true)
@@ -103,7 +103,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given sendPhoneActivationCode() is called, when api response failed, then return an error`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(emptyResponse.isSuccessful).thenReturn(false)
             `when`(activationApi.sendActivationCode(any())).thenReturn(emptyResponse)
@@ -116,7 +116,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
         }
 
     @Test(expected = CancellationException::class)
-    fun `Given  sendPhoneActivationCode()() is called, when api response is cancelled, then return an error`() =
+    fun `Given sendPhoneActivationCode()() is called, when api response is cancelled, then return an error`() =
         runBlocking {
 
             `when`(emptyResponse.body()).thenReturn(Unit)
@@ -135,7 +135,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given activateEmail() is called, when api response success, then return an success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(emptyResponse.body()).thenReturn(Unit)
             `when`(emptyResponse.isSuccessful).thenReturn(true)
@@ -151,7 +151,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given activateEmail() is called, when api response failed, then return an error`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(emptyResponse.isSuccessful).thenReturn(false)
             `when`(activationApi.activate(any())).thenReturn(emptyResponse)
@@ -164,7 +164,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
         }
 
     @Test(expected = CancellationException::class)
-    fun `Given  activateEmail()() is called, when api response is cancelled, then return an error`() =
+    fun `Given activateEmail()() is called, when api response is cancelled, then return an error`() =
         runBlocking {
 
             `when`(emptyResponse.body()).thenReturn(Unit)
@@ -183,7 +183,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given activatePhone() is called, when api response success, then return an success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(emptyResponse.body()).thenReturn(Unit)
             `when`(emptyResponse.isSuccessful).thenReturn(true)
@@ -199,7 +199,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given activatePhone() is called, when api response failed, then return an error`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(emptyResponse.isSuccessful).thenReturn(false)
             `when`(activationApi.activate(any())).thenReturn(emptyResponse)
@@ -212,7 +212,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
         }
 
     @Test(expected = CancellationException::class)
-    fun `Given  activatePhone()() is called, when api response is cancelled, then return an error`() =
+    fun `Given activatePhone()() is called, when api response is cancelled, then return an error`() =
         runBlocking {
 
             `when`(emptyResponse.body()).thenReturn(Unit)

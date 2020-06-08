@@ -9,7 +9,6 @@ import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.shared.activation.ActivationRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -36,11 +35,8 @@ class SendPhoneActivationCodeUseCaseTest : UnitTest() {
 
     @Test
     fun `Given send phone activation code use case is executed, when there is a Forbidden error then return PhoneBlackListed`() =
-        runBlocking {
-
-            `when`(sendPhoneActivationCodeParams.phone).thenReturn(TEST_PHONE)
+        coroutinesTestRule.runBlockingTest {
             `when`(activationRepository.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Left(Forbidden))
-
 
             val response = sendPhoneActivationCodeUseCase.run(sendPhoneActivationCodeParams)
 
@@ -53,8 +49,7 @@ class SendPhoneActivationCodeUseCaseTest : UnitTest() {
 
     @Test
     fun `given send phone activation code use case is executed, there is a Conflict error then return PhoneInUse`() =
-        runBlocking {
-            `when`(sendPhoneActivationCodeParams.phone).thenReturn(TEST_PHONE)
+        coroutinesTestRule.runBlockingTest {
             `when`(activationRepository.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Left(Conflict))
 
             val response = sendPhoneActivationCodeUseCase.run(sendPhoneActivationCodeParams)
@@ -68,8 +63,7 @@ class SendPhoneActivationCodeUseCaseTest : UnitTest() {
 
     @Test
     fun `given send phone activation code use case is executed, there is any other type of error then return this error`() =
-        runBlocking {
-            `when`(sendPhoneActivationCodeParams.phone).thenReturn(TEST_PHONE)
+        coroutinesTestRule.runBlockingTest {
             `when`(activationRepository.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Left(InternalServerError))
 
             val response = sendPhoneActivationCodeUseCase.run(sendPhoneActivationCodeParams)
@@ -83,8 +77,7 @@ class SendPhoneActivationCodeUseCaseTest : UnitTest() {
 
     @Test
     fun `given send phone activation code use case is executed, when there is no error then return success`() =
-        runBlocking {
-            `when`(sendPhoneActivationCodeParams.phone).thenReturn(TEST_PHONE)
+        coroutinesTestRule.runBlockingTest {
             `when`(activationRepository.sendPhoneActivationCode(TEST_PHONE)).thenReturn(Either.Right(Unit))
 
             val response = sendPhoneActivationCodeUseCase.run(sendPhoneActivationCodeParams)

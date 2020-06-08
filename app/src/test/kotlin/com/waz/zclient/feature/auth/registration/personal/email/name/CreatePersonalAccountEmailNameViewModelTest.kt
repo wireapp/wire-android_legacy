@@ -8,7 +8,6 @@ import com.waz.zclient.shared.user.name.NameTooShort
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -34,7 +33,7 @@ class CreatePersonalAccountEmailNameViewModelTest : UnitTest() {
 
     @Test
     fun `given validateName is called, when the validation fails with NameTooShort then isValidName should be false`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(validateNameUseCase.run(any())).thenReturn(Either.Left(NameTooShort))
 
             nameViewModel.validateName(TEST_NAME)
@@ -44,7 +43,7 @@ class CreatePersonalAccountEmailNameViewModelTest : UnitTest() {
 
     @Test
     fun `given validateName is called, when the validation succeeds then isValidName should be true`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(validateNameUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             nameViewModel.validateName(TEST_NAME)

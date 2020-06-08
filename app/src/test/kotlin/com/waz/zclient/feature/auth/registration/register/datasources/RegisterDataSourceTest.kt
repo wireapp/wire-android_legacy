@@ -8,7 +8,6 @@ import com.waz.zclient.feature.auth.registration.register.RegisterRepository
 import com.waz.zclient.feature.auth.registration.register.datasources.remote.RegisterRemoteDataSource
 import com.waz.zclient.feature.auth.registration.register.datasources.remote.UserResponse
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -35,7 +34,7 @@ class RegisterDataSourceTest : UnitTest() {
 
     @Test
     fun `Given registerPersonalAccountWithEmail() is called and remote request fails then return failure`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRemoteDataSource.registerPersonalAccountWithEmail(
                 TEST_NAME,
@@ -63,7 +62,7 @@ class RegisterDataSourceTest : UnitTest() {
 
     @Test
     fun `Given registerPersonalAccountWithEmail() is called and remote request is success, then return success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRemoteDataSource.registerPersonalAccountWithEmail(
                 TEST_NAME,
@@ -94,7 +93,7 @@ class RegisterDataSourceTest : UnitTest() {
 
     @Test
     fun `Given registerPersonalAccountWithPhone() is called and remote request fails then return failure`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRemoteDataSource.registerPersonalAccountWithPhone(
                 TEST_NAME,
@@ -119,7 +118,7 @@ class RegisterDataSourceTest : UnitTest() {
 
     @Test
     fun `Given registerPersonalAccountWithPhone() is called and remote request is success, then return success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRemoteDataSource.registerPersonalAccountWithPhone(
                 TEST_NAME,

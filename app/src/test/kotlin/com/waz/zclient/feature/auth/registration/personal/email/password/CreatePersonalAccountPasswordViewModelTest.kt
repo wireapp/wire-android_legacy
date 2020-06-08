@@ -21,7 +21,6 @@ import com.waz.zclient.shared.user.password.ValidatePasswordUseCase
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -55,7 +54,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given validatePassword is called, when the validation fails with isPasswordTooShort then isValidPassword should be false`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(PasswordTooShort))
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
@@ -65,7 +64,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given validatePassword is called, when the validation fails with PasswordTooLong then isValidPassword should be false`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(PasswordTooLong))
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
@@ -75,7 +74,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given validatePassword is called, when the validation fails with NoLowerCaseLetter then isValidPassword should be false`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(NoLowerCaseLetter))
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
@@ -85,7 +84,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given validatePassword is called, when the validation fails with NoUpperCaseLetter then isValidPassword should be false`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(NoUpperCaseLetter))
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
@@ -95,7 +94,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given validatePassword is called, when the validation fails with NoDigit then isValidPassword should be false`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(NoDigit))
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
@@ -105,7 +104,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given validatePassword is called, when the validation fails with NoSpecialCharacter then isValidPassword should be false`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Left(NoSpecialCharacter))
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
@@ -115,7 +114,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given validatePassword is called, when the validation succeeds then isValidPassword should be true`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(validatePasswordUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             passwordViewModel.validatePassword(TEST_PASSWORD)
@@ -125,7 +124,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when the email is unauthorized then an error message is propagated`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(UnauthorizedEmail))
 
             passwordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
@@ -136,7 +135,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when the activation code is invalid then an error message is propagated`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(InvalidEmailActivationCode))
 
             passwordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
@@ -147,7 +146,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when the email is in use then an error message is propagated`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
             passwordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
@@ -158,7 +157,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when there is a network connection error then a network error message is propagated`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
@@ -169,7 +168,7 @@ class CreatePersonalAccountPasswordViewModelTest : UnitTest() {
 
     @Test
     fun `given register is called, when there is no error then the registration is done`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
             `when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             passwordViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)

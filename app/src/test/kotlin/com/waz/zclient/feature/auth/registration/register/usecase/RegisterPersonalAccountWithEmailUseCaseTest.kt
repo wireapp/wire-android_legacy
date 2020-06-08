@@ -10,7 +10,6 @@ import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.feature.auth.registration.register.RegisterRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -33,16 +32,11 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
     @Before
     fun setup() {
         registerPersonalAccountWithEmailUseCase = RegisterPersonalAccountWithEmailUseCase(registerRepository)
-
-        `when`(emailRegistrationParams.name).thenReturn(TEST_NAME)
-        `when`(emailRegistrationParams.email).thenReturn(TEST_EMAIL)
-        `when`(emailRegistrationParams.password).thenReturn(TEST_PASSWORD)
-        `when`(emailRegistrationParams.activationCode).thenReturn(TEST_ACTIVATION_CODE)
     }
 
     @Test
     fun `Given register personal account with email use case is executed, when there is a Forbidden error then return UnauthorizedEmail`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithEmail(
                 TEST_NAME,
@@ -66,7 +60,7 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
 
     @Test
     fun `Given register personal account with email use case is executed, when there is a NotFound error then return InvalidEmailActivationCode`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithEmail(
                 TEST_NAME,
@@ -90,7 +84,7 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
 
     @Test
     fun `Given register personal account with email use case is executed, when there is a Conflict error then return EmailInUse`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithEmail(
                 TEST_NAME,
@@ -114,7 +108,7 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
 
     @Test
     fun `given register personal account with email  use case is executed, there is any other type of error then return this error`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithEmail(
                 TEST_NAME,
@@ -138,7 +132,7 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
 
     @Test
     fun `given activate email use case is executed, when there is no error then returns success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(registerRepository.registerPersonalAccountWithEmail(
                 TEST_NAME,

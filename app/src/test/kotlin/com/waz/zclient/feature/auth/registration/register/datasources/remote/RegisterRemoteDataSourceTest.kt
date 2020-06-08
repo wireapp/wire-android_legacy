@@ -48,7 +48,7 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given registerPersonalAccountWithEmail() is called, when api response success, then return an success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(response.body()).thenReturn(userResponse)
             `when`(response.isSuccessful).thenReturn(true)
@@ -68,7 +68,7 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given registerPersonalAccountWithEmail() is called, when api response failed, then return an error`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(response.isSuccessful).thenReturn(false)
             `when`(registerApi.register(capture(registerRequestBodyCapture))).thenReturn(response)
@@ -87,7 +87,7 @@ class RegisterRemoteDataSourceTest : UnitTest() {
         }
 
     @Test(expected = CancellationException::class)
-    fun `Given  registerPersonalAccountWithEmail() is called, when api response is cancelled, then return an error`() =
+    fun `Given registerPersonalAccountWithEmail() is called, when api response is cancelled, then return an error`() =
         runBlocking {
 
             `when`(response.body()).thenReturn(userResponse)
@@ -110,7 +110,7 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given registerPersonalAccountWithPhone() is called, when api response success, then return an success`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(response.body()).thenReturn(userResponse)
             `when`(response.isSuccessful).thenReturn(true)
@@ -129,7 +129,7 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given registerPersonalAccountWithPhone() is called, when api response failed, then return an error`() =
-        runBlocking {
+        coroutinesTestRule.runBlockingTest {
 
             `when`(response.isSuccessful).thenReturn(false)
             `when`(registerApi.register(capture(registerRequestBodyCapture))).thenReturn(response)
@@ -146,7 +146,7 @@ class RegisterRemoteDataSourceTest : UnitTest() {
         }
 
     @Test(expected = CancellationException::class)
-    fun `Given  registerPersonalAccountWithPhone() is called, when api response is cancelled, then return an error`() =
+    fun `Given registerPersonalAccountWithPhone() is called, when api response is cancelled, then return an error`() =
         runBlocking {
 
             `when`(response.body()).thenReturn(userResponse)
