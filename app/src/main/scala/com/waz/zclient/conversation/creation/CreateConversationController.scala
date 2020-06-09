@@ -83,43 +83,42 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext)
 
   def createConversation(): Future[ConvId] =
     for {
-      z                   <- zms.head
-      name                <- name.head
-      userIds             <- users.head
-      integrationIds      <- integrations.head
-      shouldFullConv      <- inject[GlobalPreferences].preference(ShouldCreateFullConversation).apply()
-      userIds             <-
-        if (userIds.isEmpty && integrationIds.isEmpty && shouldFullConv) {
+      z              <- zms.head
+      name           <- name.head
+      userIds        <- users.head
+      integrationIds <- integrations.head
+      shouldFullConv <- inject[GlobalPreferences].preference(ShouldCreateFullConversation).apply()
+      userIds        <-
+        if (userIds.isEmpty && integrationIds.isEmpty && shouldFullConv)
           z.usersStorage.list().map(
-            _.filter(u => (u.isConnected || (u.teamId.isDefined && u.teamId == z.teamId)) && u.id != z.selfUserId).map(_.id).toSet.take(ConversationController.MaxParticipants - 1)
+            _.filter(u => (u.isConnected || (u.teamId.isDefined && u.teamId == z.teamId)) && u.id != z.selfUserId)
+              .map(_.id).toSet
+              .take(ConversationController.MaxParticipants - 1)
           )
-        } else Future.successful(userIds)
-      teamOnly            <- teamOnly.head
-      readReceipts        <- if(z.teamId.isEmpty) Future.successful(false) else readReceipts.head
-      _                   =  verbose(l"creating conv with  ${userIds.size} users, ${integrationIds.size} bots, shouldFullConv $shouldFullConv, teamOnly $teamOnly and readReceipts $readReceipts")
-      conv                <- conversationController.createGroupConversation(Name(name.trim), userIds, teamOnly, readReceipts)
-      _                   <- Future.sequence(integrationIds.map { case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId)) })
-      from                <- fromScreen.head
-      (guests, nonGuests) <- z.usersStorage.getAll(userIds).map(_.flatten.partition(_.isGuest(z.teamId)))
+        else Future.successful(userIds)
+      teamOnly       <- teamOnly.head
+      readReceipts   <- if(z.teamId.isEmpty) Future.successful(false) else readReceipts.head
+      _              =  verbose(l"creating conv with  ${userIds.size} users, ${integrationIds.size} bots, shouldFullConv $shouldFullConv, teamOnly $teamOnly and readReceipts $readReceipts")
+      conv           <- conversationController.createGroupConversation(Name(name.trim), userIds, teamOnly, readReceipts)
+      _              <- Future.sequence(integrationIds.map { case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId)) })
+      from           <- fromScreen.head
     } yield {
-      tracking.track(AddParticipantsEvent(!teamOnly, nonGuests.size + 1, guests.size, from))
       tracking.track(GroupConversationSuccessful(userIds.nonEmpty, !teamOnly, from))
       conv.id
     }
 
   def addUsersToConversation(): Future[Unit] = {
     for {
-      z                   <- zms.head
-      Some(convId)        <- convId.head
-      Some(conv)          <- z.convsStorage.get(convId)
-      userIds             <- users.head
-      integrationIds      <- integrations.head
-      from                <- fromScreen.head
-      _                   <- if (userIds.nonEmpty) conversationController.addMembers(convId, userIds) else Future.successful({})
-      _                   <- Future.sequence(integrationIds.map { case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId)) })
-      (guests, nonGuests) <- z.usersStorage.getAll(userIds).map(_.flatten.partition(_.isGuest(z.teamId)))
-    } yield {
-      tracking.track(AddParticipantsEvent(!conv.isTeamOnly, nonGuests.size, guests.size, from))
-    }
+      z              <- zms.head
+      Some(convId)   <- convId.head
+      Some(conv)     <- z.convsStorage.get(convId)
+      userIds        <- users.head
+      integrationIds <- integrations.head
+      _              <- if (userIds.nonEmpty) conversationController.addMembers(convId, userIds)
+                        else Future.successful({})
+      _              <- Future.sequence(integrationIds.map {
+                          case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId))
+                        })
+    } yield ()
   }
 }
