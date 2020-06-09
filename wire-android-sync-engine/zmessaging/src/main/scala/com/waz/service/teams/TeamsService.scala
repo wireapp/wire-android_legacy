@@ -47,6 +47,8 @@ trait TeamsService {
 
   val selfTeam: Signal[Option[TeamData]]
 
+  def onTeamUpdated(id: TeamId, name: Option[Name], icon: AssetId): Future[Unit]
+
   def onTeamSynced(team: TeamData, members: Seq[TeamMember], roles: Set[ConversationRole]): Future[Unit]
 
   def onMemberSynced(member: TeamMember): Future[Unit]
@@ -57,6 +59,7 @@ trait TeamsService {
 
   def onGroupConversationDeleteError(error: ErrorResponse, rConvId: RConvId): Future[Unit]
 
+  def syncTeamData(): Future[SyncId]
 }
 
 class TeamsServiceImpl(selfUser:           UserId,
@@ -143,7 +146,10 @@ class TeamsServiceImpl(selfUser:           UserId,
     case None =>
       Signal.const[Option[TeamData]](None)
     case Some(id) =>
-      new RefreshingSignal(CancellableFuture.lift(teamStorage.get(id)), teamStorage.onChanged.map(_.map(_.id)))
+      new RefreshingSignal(
+        CancellableFuture.lift(teamStorage.get(id)),
+        teamStorage.onChanged.map(_.filter(_.id == id)).filter(_.nonEmpty)
+      )
   }
 
   // TODO: change to AggregatingSignal for better performance
@@ -169,7 +175,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     val memberIds = members.map(_.user).toSet
 
     for {
-      _          <- teamStorage.insert(team)
+      _          <- onTeamUpdated(team.id, Some(team.name), team.icon)
       oldMembers <- userStorage.getByTeam(Set(team.id))
       _          <- userStorage.updateAll2(oldMembers.map(_.id) -- memberIds, _.copy(deleted = true))
       _          <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
@@ -198,14 +204,12 @@ class TeamsServiceImpl(selfUser:           UserId,
     result <- sync.deleteGroupConversation(tid, rConvId)
   } yield { result }
 
-  private def onTeamUpdated(id: TeamId, name: Option[Name], icon: AssetId) = {
+  override def onTeamUpdated(id: TeamId, name: Option[Name], icon: AssetId): Future[Unit] = {
     verbose(l"onTeamUpdated: $id, name: $name, icon: $icon")
     teamStorage.update(id, team => team.copy (
       name    = name.getOrElse(team.name),
       icon    = icon)
-    ).map(_ =>
-      lastTeamUpdate := Instant.now()
-    )
+    ).flatMap(_ => lastTeamUpdate := Instant.now())
   }
 
   private def onMembersJoined(members: Set[UserId]) = {
@@ -226,7 +230,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     // remove users from convs before deleting them so we still have their data when generating system messages
       convsService.deleteMembersFromConversations(members).flatMap(_ => userService.deleteUsers(members))
   }
-  
+
   //So far, a member update just means we need to check the permissions for that user, and we only care about permissions
   //for the self user.
   private def onMembersUpdated(userIds: Set[UserId]) =
@@ -242,4 +246,6 @@ class TeamsServiceImpl(selfUser:           UserId,
       ))
     }
   }
+
+  override def syncTeamData(): Future[SyncId] = sync.syncTeamData()
 }

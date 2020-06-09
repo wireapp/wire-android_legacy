@@ -28,7 +28,8 @@ import com.bumptech.glide.request.RequestOptions
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
-import com.waz.model.{AccentColor, Availability, Picture, UserPermissions}
+import com.waz.model.{AccentColor, Availability, Picture, TeamData, UserPermissions}
+import com.waz.service.teams.TeamsService
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -48,6 +49,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views.AvailabilityView
+
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
@@ -260,7 +262,11 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
     self   <- UserSignal(userId)
   } yield self
 
-  val team = zms.flatMap(_.teams.selfTeam)
+  lazy val team: Signal[Option[TeamData]] = {
+    val teams = inject[Signal[TeamsService]]
+    teams.head.foreach(_.syncTeamData())(Threading.Background)
+    teams.flatMap(_.selfTeam)
+  }
 
   self.map(_.picture).collect { case Some(pic) => pic }.onUi { view.setProfilePicture }
 
@@ -280,6 +286,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
     userId    <- currentUser
     av <- usersController.availability(userId)
   } yield av
+
 
   usersController.availabilityVisible.zip(self.map(_.availability)).on(Threading.Ui) {
     case (visible, availability) => view.setAvailability(visible, availability)

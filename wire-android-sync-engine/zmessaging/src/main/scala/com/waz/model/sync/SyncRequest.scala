@@ -78,6 +78,7 @@ object SyncRequest {
   case object SyncSelfPermissions extends BaseRequest(Cmd.SyncSelfPermissions)
   case object SyncClientsLocation extends BaseRequest(Cmd.SyncClientLocation)
   case object SyncTeam            extends BaseRequest(Cmd.SyncTeam)
+  case object SyncTeamData        extends BaseRequest(Cmd.SyncTeamData)
   case object SyncProperties      extends BaseRequest(Cmd.SyncProperties)
   case object PostFolders         extends BaseRequest(Cmd.PostFolders)
   case object SyncFolders         extends BaseRequest(Cmd.SyncFolders)
@@ -401,6 +402,7 @@ object SyncRequest {
           case Cmd.DeleteAccount             => DeleteAccount
           case Cmd.SyncConversations         => SyncConversations
           case Cmd.SyncTeam                  => SyncTeam
+          case Cmd.SyncTeamData              => SyncTeamData
           case Cmd.SyncTeamMember            => SyncTeamMember(userId)
           case Cmd.SyncConnections           => SyncConnections
           case Cmd.RegisterPushToken         => RegisterPushToken(decodeId[PushToken]('token))
@@ -549,7 +551,7 @@ object SyncRequest {
         case PostStringProperty(key, value) =>
           o.put("key", key)
           o.put("value", value)
-        case PostFolders | SyncFolders | SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
+        case PostFolders | SyncFolders | SyncSelf | SyncTeam | SyncTeamData | DeleteAccount | SyncConversations | SyncConnections |
              SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | Unknown => () // nothing to do
         case DeleteGroupConversation(teamId, rConvId)  =>
           o.put("teamId", teamId.str)
