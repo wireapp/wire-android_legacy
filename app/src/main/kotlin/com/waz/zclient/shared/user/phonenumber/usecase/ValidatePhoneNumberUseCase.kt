@@ -1,13 +1,14 @@
 package com.waz.zclient.shared.user.phonenumber.usecase
 
 import androidx.core.text.isDigitsOnly
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
 
 class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams> {
 
-    override suspend fun run(params: ValidatePhoneNumberParams) =
+    override suspend fun run(params: ValidatePhoneNumberParams): Either<Failure, String> =
         when (!isCountryCodeValid(params.countryCode)) {
             true -> Either.Left(CountryCodeInvalid)
             else -> {
