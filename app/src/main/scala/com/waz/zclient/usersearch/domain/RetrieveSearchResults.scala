@@ -152,6 +152,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
       if (directoryExternalMembers.nonEmpty) {
         mergedResult += SectionViewItem(DirectorySection, 0)
+        //directoryResults needs to be zipped with Index not directoryExternalMembers here
         mergedResult ++= directoryResults.zipWithIndex.map { case (user, index) =>
           ConnectionViewItem(index, user, team.map(_.id), connected = false)
         }
