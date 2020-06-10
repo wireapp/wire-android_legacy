@@ -6,6 +6,7 @@ import com.waz.zclient.core.functional.onSuccess
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
 import org.junit.Before
@@ -82,13 +83,13 @@ class ValidatePhoneNumberUseCaseTest : UnitTest() {
     fun `Given run is executed, when full phone number is E164 format then return success`() =
         runBlockingTest {
             val countryCode = "+49"
-            val phoneNumber = "17688373822"
+            val phoneNumber = "1769999999"
 
             `when`(validatePhoneNumberParams.countryCode).thenReturn(countryCode)
             `when`(validatePhoneNumberParams.phoneNumber).thenReturn(phoneNumber)
 
             val response = validatePhoneNumberUseCase.run(validatePhoneNumberParams)
-            assertTrue(response.isRight)
+
             response.onSuccess { assertEquals("${countryCode}${phoneNumber}", it) }
         }
 }
