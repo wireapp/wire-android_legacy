@@ -5,6 +5,7 @@ import com.waz.zclient.core.extension.empty
 
 class CreatePersonalAccountEmailCredentialsViewModel : ViewModel() {
 
+    //TODO Using SavedStateHandle with Koin to save the data
     private val credentials = Credentials()
 
     fun email() = credentials.email
