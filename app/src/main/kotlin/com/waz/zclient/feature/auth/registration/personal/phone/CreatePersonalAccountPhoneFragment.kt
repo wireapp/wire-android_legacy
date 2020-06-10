@@ -7,11 +7,14 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import com.waz.zclient.feature.auth.registration.personal.phone.code.CreatePersonalAccountPhoneCodeFragment
+import com.waz.zclient.shared.countrycode.Country
+import com.waz.zclient.shared.countrycode.CountryCodePickerFragment
 import kotlinx.android.synthetic.main.fragment_create_personal_account_phone.*
 
 class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_personal_account_phone) {
@@ -23,11 +26,25 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
     private val phoneCredentialsViewModel: CreatePersonalAccountPhoneCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
+    private var countryName: String
+        get() = createPersonalAccountPhoneCountryCodePickerTextView.text.toString()
+        set(value) {
+            createPersonalAccountPhoneCountryCodePickerTextView.text = value
+        }
+
+    private var countryCode: String
+        get() = createPersonalAccountPhoneCountryCodeEditText.text.toString()
+        set(value) = createPersonalAccountPhoneCountryCodeEditText.setText(value)
+
+    private val phoneNumber: String
+        get() = createPersonalAccountPhoneNumberEditText.text.toString()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         observePhoneValidationData()
         observeActivationCodeData()
         observeNetworkConnectionError()
+        initCountryCodePickerListener()
         initPhoneChangedListener()
         initConfirmationButton()
     }
@@ -42,9 +59,18 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         createPersonalAccountPhoneConfirmationButton.isEnabled = enabled
     }
 
+    private fun initCountryCodePickerListener() {
+        createPersonalAccountPhoneCountryCodePickerTextView.setOnClickListener {
+            showCountryCodePickerDialog()
+        }
+    }
+
     private fun initPhoneChangedListener() {
-        createPersonalAccountPhoneEditText.doAfterTextChanged {
-            phoneViewModel.validatePhone(it.toString())
+        createPersonalAccountPhoneCountryCodeEditText.doAfterTextChanged {
+            phoneViewModel.validatePhone(it.toString(), phoneNumber)
+        }
+        createPersonalAccountPhoneNumberEditText.doAfterTextChanged {
+            phoneViewModel.validatePhone(countryCode, it.toString())
         }
     }
 
@@ -52,7 +78,7 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         updateConfirmationButtonStatus(false)
         createPersonalAccountPhoneConfirmationButton.setOnClickListener {
             phoneViewModel.sendActivationCode(
-                createPersonalAccountPhoneEditText.text.toString()
+                countryCode.plus(phoneNumber)
             )
         }
     }
@@ -61,7 +87,7 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         with(phoneViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
                 phoneCredentialsViewModel.savePhone(
-                    createPersonalAccountPhoneEditText.text.toString()
+                    countryCode.plus(phoneNumber)
                 )
                 showPhoneCodeScreen()
             }
@@ -96,6 +122,18 @@ class CreatePersonalAccountPhoneFragment : Fragment(R.layout.fragment_create_per
         .setPositiveButton(android.R.string.ok) { _, _ -> }
         .create()
         .show()
+
+    private fun showCountryCodePickerDialog() {
+        CountryCodePickerFragment.newInstance(
+            countryName,
+            object : CountryCodePickerFragment.CountryCodePickerListener {
+                override fun onCountryCodeSelected(country: Country) {
+                    countryCode = country.countryCode
+                    countryName = country.countryDisplayName
+                }
+            }
+        ).show(requireActivity().supportFragmentManager, String.empty())
+    }
 
     companion object {
         fun newInstance() = CreatePersonalAccountPhoneFragment()

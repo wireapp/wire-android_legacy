@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.settings.account.editphonenumber
+package com.waz.zclient.shared.countrycode
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,15 +11,13 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.getDeviceLocale
-import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
-import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
-import com.waz.zclient.shared.user.phonenumber.Country
 import kotlinx.android.synthetic.main.fragment_dialog_country_code_picker.*
+import org.koin.android.viewmodel.ext.android.viewModel
 
 class CountryCodePickerFragment : DialogFragment() {
 
-    private val viewModel by viewModel<CountryCodePickerViewModel>(SETTINGS_SCOPE_ID)
+    private val viewModel by viewModel<CountryCodePickerViewModel>()
 
     private val countryDisplayName: String by lazy {
         arguments?.getString(COUNTRY_DISPLAY_NAME_BUNDLE_KEY, String.empty()) ?: String.empty()

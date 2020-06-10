@@ -1500,6 +1500,8 @@
     <string name="create_personal_account_with_email_email_in_use_error">This email address you used is already linked to an account.\nUse another email address or try to login if you own this account.</string>
     <string name="create_personal_account_with_phone_phone_blacklisted_error">This phone number is not allowed.</string>
     <string name="create_personal_account_with_phone_phone_in_use_error">This phone number you used is already linked to an account.\nUse another phone number or try to login if you own this account.</string>
+    <string name="create_personal_account_with_phone_default_country_name">Germany</string>
+    <string name="create_personal_account_with_phone_default_country_code">+49</string>
 
     <!-- Create Personal Account - Email Code screen -->
     <string name="create_personal_account_email_code_title">You\'ve got mail</string>

@@ -1,13 +1,13 @@
-package com.waz.zclient.feature.settings.account.editphonenumber
+package com.waz.zclient.shared.countrycode
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.awaitValue
-import com.waz.zclient.shared.user.phonenumber.Country
+import com.waz.zclient.shared.countrycode.usecase.GetCountryCodesParams
+import com.waz.zclient.shared.countrycode.usecase.GetCountryCodesUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import org.amshove.kluent.shouldBe
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -51,8 +51,8 @@ class CountryCodePickerViewModelTest : UnitTest() {
             countryCodePickerViewModel.onCountryCodeChanged(TEST_COUNTRY, FRANCE_DISPLAY_NAME)
 
             countryCodePickerViewModel.dismissLiveData.awaitValue().let {
-                countryCodePickerViewModel.selectedCountryLiveData.value shouldBe TEST_COUNTRY
-                it shouldBe Unit
+                assertEquals(TEST_COUNTRY, countryCodePickerViewModel.selectedCountryLiveData.value)
+                assertEquals(Unit, it)
             }
         }
 
@@ -60,8 +60,7 @@ class CountryCodePickerViewModelTest : UnitTest() {
     fun `given country code is updated, when country code is the same as the one in db, return empty country`() =
         runBlocking {
             countryCodePickerViewModel.onCountryCodeChanged(TEST_COUNTRY, GERMANY_DISPLAY_NAME)
-
-            countryCodePickerViewModel.dismissLiveData.awaitValue() shouldBe Unit
+            assertEquals(Unit, countryCodePickerViewModel.dismissLiveData.awaitValue())
         }
 
 
