@@ -14,7 +14,7 @@ class ActivateEmailUseCase(
         activationRepository.activateEmail(params.email, params.code)
             .fold({
                 when (it) {
-                    is NotFound -> Either.Left(InvalidCode)
+                    is NotFound -> Either.Left(InvalidEmailCode)
                     else -> Either.Left(it)
                 }
             }) { Either.Right(it) }!!
@@ -22,6 +22,6 @@ class ActivateEmailUseCase(
 
 data class ActivateEmailParams(val email: String, val code: String)
 
-object InvalidCode : ActivateEmailFailure()
+object InvalidEmailCode : ActivateEmailFailure()
 
 sealed class ActivateEmailFailure : FeatureFailure()

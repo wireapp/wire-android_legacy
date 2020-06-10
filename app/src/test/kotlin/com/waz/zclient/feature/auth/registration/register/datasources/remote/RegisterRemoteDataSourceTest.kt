@@ -1,14 +1,17 @@
 package com.waz.zclient.feature.auth.registration.register.datasources.remote
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.any
 import com.waz.zclient.capture
 import com.waz.zclient.core.network.NetworkHandler
+import junit.framework.TestCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.amshove.kluent.shouldBe
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
@@ -46,64 +49,123 @@ class RegisterRemoteDataSourceTest : UnitTest() {
     }
 
     @Test
-    fun `Given registerPersonalAccountWithEmail() is called, when api response success, then return an success`() = runBlocking {
+    fun `Given registerPersonalAccountWithEmail() is called, when api response success, then return an success`() =
+        runBlocking {
 
-        `when`(response.body()).thenReturn(userResponse)
-        `when`(response.isSuccessful).thenReturn(true)
+            `when`(response.body()).thenReturn(userResponse)
+            `when`(response.isSuccessful).thenReturn(true)
 
-        `when`(registerApi.register(capture(registerRequestBodyCapture))).thenReturn(response)
+            `when`(registerApi.register(any())).thenReturn(response)
 
-        val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
+            val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
 
-        verify(registerApi).register(capture(registerRequestBodyCapture))
+            verify(registerApi).register(capture(registerRequestBodyCapture))
 
-        registerRequestBodyCapture.value.name shouldBe TEST_NAME
-        registerRequestBodyCapture.value.email shouldBe TEST_EMAIL
-        registerRequestBodyCapture.value.password shouldBe TEST_PASSWORD
-        registerRequestBodyCapture.value.emailCode shouldBe TEST_ACTIVATION_CODE
-
-        response.isRight shouldBe true
-    }
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_EMAIL, registerRequestBodyCapture.value.email)
+            assertEquals(TEST_PASSWORD, registerRequestBodyCapture.value.password)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.emailCode)
+            assertTrue(response.isRight)
+        }
 
     @Test
-    fun `Given registerPersonalAccountWithEmail() is called, when api response failed, then return an error`() = runBlocking {
+    fun `Given registerPersonalAccountWithEmail() is called, when api response failed, then return an error`() =
+        runBlocking {
 
-        `when`(response.isSuccessful).thenReturn(false)
-        `when`(registerApi.register(capture(registerRequestBodyCapture))).thenReturn(response)
+            `when`(response.isSuccessful).thenReturn(false)
+            `when`(registerApi.register(any())).thenReturn(response)
 
-        val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
+            val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
 
-        verify(registerApi).register(capture(registerRequestBodyCapture))
+            verify(registerApi).register(capture(registerRequestBodyCapture))
 
-        registerRequestBodyCapture.value.name shouldBe TEST_NAME
-        registerRequestBodyCapture.value.email shouldBe TEST_EMAIL
-        registerRequestBodyCapture.value.password shouldBe TEST_PASSWORD
-        registerRequestBodyCapture.value.emailCode shouldBe TEST_ACTIVATION_CODE
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_EMAIL, registerRequestBodyCapture.value.email)
+            assertEquals(TEST_PASSWORD, registerRequestBodyCapture.value.password)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.emailCode)
+            assertTrue(response.isLeft)
 
-        response.isLeft shouldBe true
-    }
+        }
 
     @Test(expected = CancellationException::class)
-    fun `Given  registerPersonalAccountWithEmail() is called, when api response is cancelled, then return an error`() = runBlocking {
+    fun `Given  registerPersonalAccountWithEmail() is called, when api response is cancelled, then return an error`() =
+        runBlocking {
 
-        `when`(response.body()).thenReturn(userResponse)
-        `when`(response.isSuccessful).thenReturn(true)
-        `when`(registerApi.register(capture(registerRequestBodyCapture))).thenReturn(response)
+            `when`(response.body()).thenReturn(userResponse)
+            `when`(response.isSuccessful).thenReturn(true)
+            `when`(registerApi.register(any())).thenReturn(response)
 
-        val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
+            val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
 
-        verify(registerApi).register(capture(registerRequestBodyCapture))
+            verify(registerApi).register(capture(registerRequestBodyCapture))
 
-        cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
-        delay(CANCELLATION_DELAY)
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
 
-        registerRequestBodyCapture.value.name shouldBe TEST_NAME
-        registerRequestBodyCapture.value.email shouldBe TEST_EMAIL
-        registerRequestBodyCapture.value.password shouldBe TEST_PASSWORD
-        registerRequestBodyCapture.value.emailCode shouldBe TEST_ACTIVATION_CODE
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_EMAIL, registerRequestBodyCapture.value.email)
+            assertEquals(TEST_PASSWORD, registerRequestBodyCapture.value.password)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.emailCode)
+            assertTrue(response.isLeft)
+        }
 
-        response.isLeft shouldBe true
-    }
+    @Test
+    fun `Given registerPersonalAccountWithPhone() is called, when api response success, then return an success`() =
+        runBlocking {
+
+            `when`(response.body()).thenReturn(userResponse)
+            `when`(response.isSuccessful).thenReturn(true)
+
+            `when`(registerApi.register(any())).thenReturn(response)
+
+            val response = registerRemoteDataSource.registerPersonalAccountWithPhone(TEST_NAME, TEST_PHONE, TEST_ACTIVATION_CODE)
+
+            verify(registerApi).register(capture(registerRequestBodyCapture))
+
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_PHONE, registerRequestBodyCapture.value.phone)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.phoneCode)
+            assertTrue(response.isRight)
+        }
+
+    @Test
+    fun `Given registerPersonalAccountWithPhone() is called, when api response failed, then return an error`() =
+        runBlocking {
+
+            `when`(response.isSuccessful).thenReturn(false)
+            `when`(registerApi.register(any())).thenReturn(response)
+
+            val response = registerRemoteDataSource.registerPersonalAccountWithPhone(TEST_NAME, TEST_PHONE, TEST_ACTIVATION_CODE)
+
+            verify(registerApi).register(capture(registerRequestBodyCapture))
+
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_PHONE, registerRequestBodyCapture.value.phone)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.phoneCode)
+            assertTrue(response.isLeft)
+
+        }
+
+    @Test(expected = CancellationException::class)
+    fun `Given  registerPersonalAccountWithPhone() is called, when api response is cancelled, then return an error`() =
+        runBlocking {
+
+            `when`(response.body()).thenReturn(userResponse)
+            `when`(response.isSuccessful).thenReturn(true)
+            `when`(registerApi.register(any())).thenReturn(response)
+
+            val response = registerRemoteDataSource.registerPersonalAccountWithPhone(TEST_NAME, TEST_PHONE, TEST_ACTIVATION_CODE)
+
+            verify(registerApi).register(capture(registerRequestBodyCapture))
+
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+
+            assertEquals(TEST_NAME, registerRequestBodyCapture.value.name)
+            assertEquals(TEST_PHONE, registerRequestBodyCapture.value.phone)
+            assertEquals(TEST_ACTIVATION_CODE, registerRequestBodyCapture.value.phoneCode)
+            assertTrue(response.isLeft)
+        }
 
     companion object {
         private const val CANCELLATION_DELAY = 200L
@@ -112,5 +174,6 @@ class RegisterRemoteDataSourceTest : UnitTest() {
         private const val TEST_EMAIL = "test@wire.com"
         private const val TEST_PASSWORD = "testPass"
         private const val TEST_ACTIVATION_CODE = "000000"
+        private const val TEST_PHONE = "+499999999"
     }
 }

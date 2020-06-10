@@ -5,7 +5,6 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.clients.Client
@@ -22,9 +21,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
 class SettingsDeviceListViewModelTest : UnitTest() {
-
-    @get:Rule
-    val coroutinesRule = CoroutinesTestRule()
 
     @get:Rule
     val instantTaskRule = InstantTaskExecutorRule()

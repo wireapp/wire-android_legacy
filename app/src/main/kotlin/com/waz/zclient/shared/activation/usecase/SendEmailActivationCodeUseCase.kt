@@ -23,7 +23,7 @@ class SendEmailActivationCodeUseCase(private val activationRepository: Activatio
 
 data class SendEmailActivationCodeParams(val email: String)
 
-object EmailBlacklisted : SendActivationCodeFailure()
-object EmailInUse : SendActivationCodeFailure()
+object EmailBlacklisted : SendEmailActivationCodeFailure()
+object EmailInUse : SendEmailActivationCodeFailure()
 
-sealed class SendActivationCodeFailure : FeatureFailure()
+sealed class SendEmailActivationCodeFailure : FeatureFailure()

@@ -5,7 +5,6 @@ import com.waz.zclient.any
 import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.user.handle.HandleAlreadyExists
 import com.waz.zclient.shared.user.handle.HandleInvalid
@@ -21,25 +20,18 @@ import com.waz.zclient.shared.user.handle.usecase.ValidateHandleUseCase
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertFalse
 import junit.framework.Assert.assertTrue
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.test.setMain
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.lenient
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class SettingsAccountEditHandleViewModelTest : UnitTest() {
-
-    @get:Rule
-    val crTestRule = CoroutinesTestRule()
 
     private lateinit var editHandleViewModel: SettingsAccountEditHandleViewModel
 

@@ -5,12 +5,13 @@ import com.waz.zclient.core.exception.Conflict
 import com.waz.zclient.core.exception.Forbidden
 import com.waz.zclient.core.exception.InternalServerError
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.map
-import com.waz.zclient.eq
+import com.waz.zclient.core.functional.onFailure
+import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.shared.activation.ActivationRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
-import org.amshove.kluent.shouldBe
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -31,72 +32,65 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
     @Before
     fun setup() {
         sendEmailActivationCodeUseCase = SendEmailActivationCodeUseCase(activationRepository)
+        `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
     }
 
     @Test
     fun `Given send email activation code use case is executed, when there is a Forbidden error then return EmailBlackListed`() =
-        runBlockingTest {
-            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
-            `when`(activationRepository.sendEmailActivationCode(eq(TEST_EMAIL))).thenReturn(Either.Left(Forbidden))
+        runBlocking {
+            `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(Forbidden))
+
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
 
-            verify(activationRepository).sendEmailActivationCode(eq(TEST_EMAIL))
+            verify(activationRepository).sendEmailActivationCode(TEST_EMAIL)
 
-            response.isLeft shouldBe true
+            response.onFailure { assertEquals(EmailBlacklisted, it) }
 
-            response.fold({
-                it shouldBe EmailBlacklisted
-            }) { assert(false) }
+            assertTrue(response.isLeft)
         }
 
     @Test
     fun `given send email activation code use case is executed, there is a Conflict error then return EmailInUse`() =
-        runBlockingTest {
-            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
-            `when`(activationRepository.sendEmailActivationCode(eq(TEST_EMAIL))).thenReturn(Either.Left(Conflict))
+        runBlocking {
+            `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(Conflict))
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
 
-            verify(activationRepository).sendEmailActivationCode(eq(TEST_EMAIL))
+            verify(activationRepository).sendEmailActivationCode(TEST_EMAIL)
 
-            response.isLeft shouldBe true
-            response.fold({
-                it shouldBe EmailInUse
-            }) { assert(false) }
+            response.onFailure { assertEquals(EmailInUse, it) }
+
+            assertTrue(response.isLeft)
         }
 
     @Test
     fun `given send email activation code use case is executed, there is any other type of error then return this error`() =
-        runBlockingTest {
-            `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
-            `when`(activationRepository.sendEmailActivationCode(eq(TEST_EMAIL))).thenReturn(Either.Left(InternalServerError))
+        runBlocking {
+            `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(InternalServerError))
 
             val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
 
-            verify(activationRepository).sendEmailActivationCode(eq(TEST_EMAIL))
+            verify(activationRepository).sendEmailActivationCode(TEST_EMAIL)
 
-            response.isLeft shouldBe true
-            response.fold({
-                it shouldBe InternalServerError
-            }) { assert(false) }
+            response.onFailure { assertEquals(InternalServerError, it) }
+
+            assertTrue(response.isLeft)
         }
 
     @Test
-    fun `given send email activation code use case is executed, when there is no error then return ActivationCodeSent`() = runBlockingTest {
-        `when`(sendEmailActivationCodeParams.email).thenReturn(TEST_EMAIL)
-        `when`(activationRepository.sendEmailActivationCode(eq(TEST_EMAIL))).thenReturn(Either.Right(Unit))
+    fun `given send email activation code use case is executed, when there is no error then return success`() =
+        runBlocking {
+            `when`(activationRepository.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
-        val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
+            val response = sendEmailActivationCodeUseCase.run(sendEmailActivationCodeParams)
 
-        verify(activationRepository).sendEmailActivationCode(eq(TEST_EMAIL))
+            verify(activationRepository).sendEmailActivationCode(TEST_EMAIL)
 
-        response.isRight shouldBe true
-        response.map {
-            it shouldBe Unit
+            response.onSuccess { assertEquals(Unit, it) }
+
+            assertTrue(response.isRight)
         }
-    }
-
 
     companion object {
         private const val TEST_EMAIL = "test@wire"

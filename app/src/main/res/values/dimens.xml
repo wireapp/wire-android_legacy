@@ -598,29 +598,29 @@
     <!-- Create Personal Account - Main screen -->
     <dimen name="create_personal_account_title_text_size">32sp</dimen>
     <dimen name="create_personal_account_text_input_layout_margin_top">14dp</dimen>
+    <dimen name="create_personal_account_text_country_text_padding">16dp</dimen>
+    <dimen name="create_personal_account_text_country_text_size">14sp</dimen>
 
-    <!-- Create Personal Account - Email Verification screen -->
-    <dimen name="email_verification_title_text_size">40sp</dimen>
-    <dimen name="email_verification_description_text_size">16sp</dimen>
-    <dimen name="email_verification_description_text_margin_top">24dp</dimen>
-    <dimen name="email_verification_description_text_margin_start">24dp</dimen>
-    <dimen name="email_verification_description_text_margin_end">24dp</dimen>
-    <dimen name="email_verification_resend_code_text_size">12sp</dimen>
-    <dimen name="email_verification_change_email_text_size">12sp</dimen>
-    <dimen name="email_verification_first_digit_edit_text_margin_start">16dp</dimen>
-    <dimen name="email_verification_last_digit_edit_text_margin_end">16dp</dimen>
-    <dimen name="email_verification_digit_edit_text_margin_top">60dp</dimen>
+    <!-- Create Personal Account - Code screen -->
+    <dimen name="create_personal_account_code_title_text_size">40sp</dimen>
+    <dimen name="create_personal_account_code_description_text_size">16sp</dimen>
+    <dimen name="create_personal_account_code_description_text_margin_top">24dp</dimen>
+    <dimen name="create_personal_account_code_description_text_margin_start">24dp</dimen>
+    <dimen name="create_personal_account_code_description_text_margin_end">24dp</dimen>
+    <dimen name="create_personal_account_code_resend_code_text_size">12sp</dimen>
+    <dimen name="create_personal_account_code_change_email_text_size">12sp</dimen>
+    <dimen name="create_personal_account_code_digit_edit_text_margin_top">60dp</dimen>
 
     <!-- PIN Code (Shared dimensions between email verification and phone verification screens) -->
     <dimen name="pin_code_digit_padding">8dp</dimen>
     <dimen name="pin_code_digit_text_size">32sp</dimen>
     <dimen name="pin_code_digit_corner_radius">2dp</dimen>
 
-    <!-- Create Personal Account - Name Input screen -->
+    <!-- Create Personal Account - Name screen -->
     <dimen name="create_personal_account_name_input_title_text_size">32sp</dimen>
     <dimen name="create_personal_account_name_input_input_layout_margin_top">64dp</dimen>
 
-    <!-- Create Personal Account - Password Input screen -->
+    <!-- Create Personal Account - Password screen -->
     <dimen name="create_personal_account_password_input_title_text_size">32sp</dimen>
     <dimen name="create_personal_account_password_input_input_layout_margin_top">64dp</dimen>
 

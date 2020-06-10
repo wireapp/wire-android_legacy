@@ -9,7 +9,6 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.settings.account.logout.AnotherAccountExists
 import com.waz.zclient.feature.settings.account.logout.CouldNotReadRemainingAccounts
 import com.waz.zclient.feature.settings.account.logout.NoAccountsLeft
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.shared.user.User
@@ -33,9 +32,6 @@ import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class SettingsAccountViewModelTest : UnitTest() {
-
-    @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
 
     @get:Rule
     val instantTaskRule = InstantTaskExecutorRule()

@@ -21,4 +21,14 @@ class RegisterDataSource(
         password,
         activationCode
     ).map { Unit }
+
+    override suspend fun registerPersonalAccountWithPhone(
+        name: String,
+        phone: String,
+        activationCode: String
+    ): Either<Failure, Unit> = registerRemoteDataSource.registerPersonalAccountWithPhone(
+        name,
+        phone,
+        activationCode
+    ).map { Unit }
 }
