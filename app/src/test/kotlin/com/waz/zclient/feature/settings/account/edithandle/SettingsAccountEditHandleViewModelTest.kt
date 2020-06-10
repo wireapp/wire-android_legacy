@@ -57,7 +57,6 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
 
     @Before
     fun setup() {
-        Dispatchers.setMain(Dispatchers.Default)
         editHandleViewModel = SettingsAccountEditHandleViewModel(checkHandleExistsUseCase, changeHandleUseCase, getHandleUseCase, validateHandleUseCase)
     }
 
