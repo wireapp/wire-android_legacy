@@ -11,11 +11,11 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
 import com.waz.zclient.core.usecase.UseCaseExecutor
+import com.waz.zclient.feature.auth.registration.register.usecase.EmailInUse
 import com.waz.zclient.feature.auth.registration.register.usecase.EmailRegistrationParams
 import com.waz.zclient.feature.auth.registration.register.usecase.InvalidEmailActivationCode
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
 import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedEmail
-import com.waz.zclient.shared.activation.usecase.EmailInUse
 import com.waz.zclient.shared.user.password.ValidatePasswordFailure
 import com.waz.zclient.shared.user.password.ValidatePasswordParams
 import com.waz.zclient.shared.user.password.ValidatePasswordUseCase

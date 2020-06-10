@@ -1,11 +1,10 @@
-package com.waz.zclient.feature.settings.account.editphonenumber
+package com.waz.zclient.shared.countrycode
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
-import com.waz.zclient.shared.user.phonenumber.Country
 import kotlinx.android.synthetic.main.item_view_country_code.view.*
 
 class CountryCodesRecyclerAdapter(val countryClickAction: (Country) -> Unit) :

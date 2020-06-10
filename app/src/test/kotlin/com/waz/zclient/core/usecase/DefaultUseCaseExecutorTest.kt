@@ -6,7 +6,6 @@ import com.waz.zclient.core.exception.GenericUseCaseError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -17,7 +16,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -26,9 +24,6 @@ import org.mockito.Mockito.mock
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 class DefaultUseCaseExecutorTest : UnitTest() {
-
-    @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var executor: DefaultUseCaseExecutor
 

@@ -4,17 +4,16 @@ import com.waz.zclient.R
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
-import com.waz.zclient.shared.user.phonenumber.Country
-import com.waz.zclient.shared.user.phonenumber.CountryCodeInvalid
-import com.waz.zclient.shared.user.phonenumber.PhoneNumberInvalid
+import com.waz.zclient.shared.countrycode.Country
 import com.waz.zclient.shared.user.phonenumber.usecase.ChangePhoneNumberParams
 import com.waz.zclient.shared.user.phonenumber.usecase.ChangePhoneNumberUseCase
 import com.waz.zclient.shared.user.phonenumber.usecase.CountryCodeAndPhoneNumberParams
 import com.waz.zclient.shared.user.phonenumber.usecase.CountryCodeAndPhoneNumberUseCase
+import com.waz.zclient.shared.user.phonenumber.usecase.CountryCodeInvalid
 import com.waz.zclient.shared.user.phonenumber.usecase.DeletePhoneNumberUseCase
 import com.waz.zclient.shared.user.phonenumber.usecase.PhoneNumber
+import com.waz.zclient.shared.user.phonenumber.usecase.PhoneNumberInvalid
 import com.waz.zclient.shared.user.phonenumber.usecase.ValidatePhoneNumberParams
 import com.waz.zclient.shared.user.phonenumber.usecase.ValidatePhoneNumberUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,16 +21,12 @@ import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBe
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 class SettingsAccountPhoneNumberViewModelTest : UnitTest() {
-
-    @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var settingsAccountPhoneNumberViewModel: SettingsAccountPhoneNumberViewModel
 

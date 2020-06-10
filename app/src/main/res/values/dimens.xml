@@ -598,6 +598,8 @@
     <!-- Create Personal Account - Main screen -->
     <dimen name="create_personal_account_title_text_size">32sp</dimen>
     <dimen name="create_personal_account_text_input_layout_margin_top">14dp</dimen>
+    <dimen name="create_personal_account_text_country_text_padding">16dp</dimen>
+    <dimen name="create_personal_account_text_country_text_size">14sp</dimen>
 
     <!-- Create Personal Account - Code screen -->
     <dimen name="create_personal_account_code_title_text_size">40sp</dimen>

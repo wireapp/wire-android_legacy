@@ -1,12 +1,10 @@
-package com.waz.zclient.feature.auth.registration.personal
+package com.waz.zclient.feature.auth.registration.personal.email
 
 import com.waz.zclient.R
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountEmailViewModel
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
 import com.waz.zclient.shared.activation.usecase.EmailInUse
@@ -14,14 +12,13 @@ import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 import com.waz.zclient.shared.user.email.EmailInvalid
 import com.waz.zclient.shared.user.email.EmailTooShort
 import com.waz.zclient.shared.user.email.ValidateEmailUseCase
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertFalse
-import junit.framework.Assert.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -30,10 +27,7 @@ import org.mockito.Mockito.`when`
 @InternalCoroutinesApi
 class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
-    @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
-
-    private lateinit var createPersonalAccountEmailViewModel: CreatePersonalAccountEmailViewModel
+    private lateinit var emailViewModel: CreatePersonalAccountEmailViewModel
 
     @Mock
     private lateinit var validateEmailUseCase: ValidateEmailUseCase
@@ -44,72 +38,72 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
 
     @Before
     fun setup() {
-        createPersonalAccountEmailViewModel = CreatePersonalAccountEmailViewModel(
+        emailViewModel = CreatePersonalAccountEmailViewModel(
             validateEmailUseCase,
             sendEmailActivationCodeUseCase
         )
     }
 
     @Test
-    fun `given validateEmail is called, when the validation succeeds then ok button should be enabled`() =
+    fun `given validateEmail is called, when the validation succeeds then isValidEmail should be true`() =
         runBlocking {
             `when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountEmailViewModel.validateEmail(TEST_EMAIL)
+            emailViewModel.validateEmail(TEST_EMAIL)
 
-            assertTrue(createPersonalAccountEmailViewModel.isValidEmailLiveData.awaitValue())
+            assertTrue(emailViewModel.isValidEmailLiveData.awaitValue())
         }
 
     @Test
-    fun `given validateEmail is called, when the validation fails with EmailTooShortError then ok button should be disabled`() =
+    fun `given validateEmail is called, when the validation fails with EmailTooShort error then isValidEmail should be false`() =
         runBlocking {
             `when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailTooShort))
 
-            createPersonalAccountEmailViewModel.validateEmail(TEST_EMAIL)
+            emailViewModel.validateEmail(TEST_EMAIL)
 
-            assertFalse(createPersonalAccountEmailViewModel.isValidEmailLiveData.awaitValue())
+            assertFalse(emailViewModel.isValidEmailLiveData.awaitValue())
         }
 
     @Test
-    fun `given validateEmail is called, when the validation fails with EmailInvalidError then ok button should be disabled`() =
+    fun `given validateEmail is called, when the validation fails with EmailInvalid error then isValidEmail should be false`() =
         runBlocking {
             `when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailInvalid))
 
-            createPersonalAccountEmailViewModel.validateEmail(TEST_EMAIL)
+            emailViewModel.validateEmail(TEST_EMAIL)
 
-            assertFalse(createPersonalAccountEmailViewModel.isValidEmailLiveData.awaitValue())
+            assertFalse(emailViewModel.isValidEmailLiveData.awaitValue())
         }
 
     @Test
-    fun `given sendActivationCode is called, when the email is blacklisted then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when the email is blacklisted then an error message is propagated`() =
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlacklisted))
 
-            createPersonalAccountEmailViewModel.sendActivationCode(TEST_EMAIL)
+            emailViewModel.sendActivationCode(TEST_EMAIL)
 
-            val error = createPersonalAccountEmailViewModel.sendActivationCodeErrorLiveData.awaitValue()
+            val error = emailViewModel.sendActivationCodeErrorLiveData.awaitValue()
             assertEquals(R.string.create_personal_account_with_email_email_blacklisted_error, error.message)
         }
 
     @Test
-    fun `given sendActivationCode is called, when the email is in use then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when the email is in use then an error message is propagated`() =
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
-            createPersonalAccountEmailViewModel.sendActivationCode(TEST_EMAIL)
+            emailViewModel.sendActivationCode(TEST_EMAIL)
 
-            val error = createPersonalAccountEmailViewModel.sendActivationCodeErrorLiveData.awaitValue()
+            val error = emailViewModel.sendActivationCodeErrorLiveData.awaitValue()
             assertEquals(R.string.create_personal_account_with_email_email_in_use_error, error.message)
         }
 
     @Test
-    fun `given sendActivationCode is called, when there is a network connection error then the activation code is not sent`() =
+    fun `given sendActivationCode is called, when there is a network connection error then a network error message is propagated`() =
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
 
-            createPersonalAccountEmailViewModel.sendActivationCode(TEST_EMAIL)
+            emailViewModel.sendActivationCode(TEST_EMAIL)
 
-            assertEquals(Unit, createPersonalAccountEmailViewModel.networkConnectionErrorLiveData.awaitValue())
+            assertEquals(Unit, emailViewModel.networkConnectionErrorLiveData.awaitValue())
         }
 
     @Test
@@ -117,9 +111,9 @@ class CreatePersonalAccountEmailViewModelTest : UnitTest() {
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountEmailViewModel.sendActivationCode(TEST_EMAIL)
+            emailViewModel.sendActivationCode(TEST_EMAIL)
 
-            assertEquals(Unit, createPersonalAccountEmailViewModel.sendActivationCodeSuccessLiveData.awaitValue())
+            assertEquals(Unit, emailViewModel.sendActivationCodeSuccessLiveData.awaitValue())
         }
 
     companion object {

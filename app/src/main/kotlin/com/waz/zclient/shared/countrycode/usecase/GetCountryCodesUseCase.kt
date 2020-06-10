@@ -1,11 +1,11 @@
-package com.waz.zclient.feature.settings.account.editphonenumber
+package com.waz.zclient.shared.countrycode.usecase
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.waz.zclient.core.config.DeveloperOptionsConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
-import com.waz.zclient.shared.user.phonenumber.Country
+import com.waz.zclient.shared.countrycode.Country
 import java.util.Locale
 
 class GetCountryCodesUseCase(

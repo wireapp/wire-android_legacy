@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.settings.account.editphonenumber
+package com.waz.zclient.shared.countrycode
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -6,7 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.usecase.DefaultUseCaseExecutor
 import com.waz.zclient.core.usecase.UseCaseExecutor
-import com.waz.zclient.shared.user.phonenumber.Country
+import com.waz.zclient.shared.countrycode.usecase.GetCountryCodesParams
+import com.waz.zclient.shared.countrycode.usecase.GetCountryCodesUseCase
 import kotlinx.coroutines.Dispatchers
 
 class CountryCodePickerViewModel(
