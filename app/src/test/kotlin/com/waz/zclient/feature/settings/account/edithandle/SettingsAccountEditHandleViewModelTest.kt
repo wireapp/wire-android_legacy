@@ -136,7 +136,6 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onOkButtonClicked is called, when validateHandle fails with HandleTooLongError then ok button should be disabled`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
             `when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLong))
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
@@ -147,7 +146,6 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onOkButtonClicked is called, when validateHandle fails with HandleTooShortError then ok button should be disabled`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
             `when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooShort))
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
@@ -158,7 +156,6 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onOkButtonClicked is called, when validateHandle fails with HandleInvalidError then ok button should be disabled and error updated`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
             `when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalid))
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
@@ -170,7 +167,6 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onOkButtonClicked is called, when validateHandle fails with HandleUnknownError then error message should be updated`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
             `when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(UnknownError))
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
@@ -217,8 +213,6 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onBackButtonClicked is called, when suggestedHandle is null, then dialog should dismiss`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
-
             editHandleViewModel.onBackButtonClicked(null)
 
             assertEquals(Unit, editHandleViewModel.dismissLiveData.awaitValue())
@@ -227,8 +221,6 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onBackButtonClicked is called, when suggestedHandle is empty, then dialog should dismiss`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
-
             editHandleViewModel.onBackButtonClicked(String.empty())
 
             assertEquals(Unit, editHandleViewModel.dismissLiveData.awaitValue())
