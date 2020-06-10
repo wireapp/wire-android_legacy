@@ -5,7 +5,6 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.config.AppDetailsConfig
 import com.waz.zclient.core.config.HostUrlConfig
 import com.waz.zclient.core.extension.empty
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.awaitValue
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.profile.GetUserProfileUseCase
@@ -16,16 +15,12 @@ import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBe
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 class SettingsAboutViewModelTest : UnitTest() {
-
-    @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var settingsAboutViewModel: SettingsAboutViewModel
 

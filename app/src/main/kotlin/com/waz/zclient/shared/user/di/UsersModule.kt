@@ -14,6 +14,7 @@ import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import com.waz.zclient.shared.user.password.ValidatePasswordUseCase
 import com.waz.zclient.shared.user.phonenumber.PhoneNumberDataSource
 import com.waz.zclient.shared.user.phonenumber.PhoneNumberRepository
+import com.waz.zclient.shared.user.phonenumber.usecase.ValidatePhoneNumberUseCase
 import com.waz.zclient.shared.user.profile.GetUserProfilePictureUseCase
 import com.waz.zclient.shared.user.profile.GetUserProfileUseCase
 import com.waz.zclient.shared.user.profile.ProfilePictureMapper
@@ -43,4 +44,5 @@ val usersModule: Module = module {
     factory { ValidateEmailUseCase() }
     factory { ValidateNameUseCase() }
     factory { ValidatePasswordUseCase() }
+    factory { ValidatePhoneNumberUseCase() }
 }

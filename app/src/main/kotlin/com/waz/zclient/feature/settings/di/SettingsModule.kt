@@ -1,13 +1,10 @@
 package com.waz.zclient.feature.settings.di
 
-import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.waz.zclient.feature.settings.about.SettingsAboutViewModel
 import com.waz.zclient.feature.settings.account.SettingsAccountViewModel
 import com.waz.zclient.feature.settings.account.deleteaccount.DeleteAccountUseCase
 import com.waz.zclient.feature.settings.account.deleteaccount.SettingsAccountDeleteAccountViewModel
 import com.waz.zclient.feature.settings.account.edithandle.SettingsAccountEditHandleViewModel
-import com.waz.zclient.feature.settings.account.editphonenumber.CountryCodePickerViewModel
-import com.waz.zclient.feature.settings.account.editphonenumber.GetCountryCodesUseCase
 import com.waz.zclient.feature.settings.account.editphonenumber.SettingsAccountPhoneNumberViewModel
 import com.waz.zclient.feature.settings.account.logout.LogoutUseCase
 import com.waz.zclient.feature.settings.account.logout.LogoutViewModel
@@ -80,15 +77,12 @@ val settingsAccountModule: Module = module {
         viewModel { SettingsAccountEditHandleViewModel(get(), get(), get(), get()) }
         viewModel { SettingsAccountPhoneNumberViewModel(get(), get(), get(), get()) }
         viewModel { SettingsAccountDeleteAccountViewModel(get()) }
-        viewModel { CountryCodePickerViewModel(get()) }
         viewModel { LogoutViewModel(get()) }
 
-        scoped { PhoneNumberUtil.getInstance() }
         factory { ChangePhoneNumberUseCase(get()) }
         factory { DeletePhoneNumberUseCase(get()) }
         factory { CountryCodeAndPhoneNumberUseCase(get()) }
         factory { ValidatePhoneNumberUseCase() }
-        factory { GetCountryCodesUseCase(get(), get()) }
 
         factory { CheckHandleExistsUseCase(get()) }
         factory { GetHandleUseCase(get()) }

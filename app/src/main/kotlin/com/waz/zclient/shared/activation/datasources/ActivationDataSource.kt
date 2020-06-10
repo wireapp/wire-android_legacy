@@ -10,6 +10,12 @@ class ActivationDataSource(private val activationRemoteDataSource: ActivationRem
     override suspend fun sendEmailActivationCode(email: String): Either<Failure, Unit> =
         activationRemoteDataSource.sendEmailActivationCode(email)
 
+    override suspend fun sendPhoneActivationCode(phone: String): Either<Failure, Unit> =
+        activationRemoteDataSource.sendPhoneActivationCode(phone)
+
     override suspend fun activateEmail(email: String, code: String): Either<Failure, Unit> =
         activationRemoteDataSource.activateEmail(email, code)
+
+    override suspend fun activatePhone(phone: String, code: String): Either<Failure, Unit> =
+        activationRemoteDataSource.activatePhone(phone, code)
 }

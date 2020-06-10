@@ -10,8 +10,8 @@ import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.feature.auth.registration.register.RegisterRepository
 
 class RegisterPersonalAccountWithEmailUseCase(private val registerRepository: RegisterRepository) :
-    UseCase<Unit, RegistrationParams> {
-    override suspend fun run(params: RegistrationParams): Either<Failure, Unit> =
+    UseCase<Unit, EmailRegistrationParams> {
+    override suspend fun run(params: EmailRegistrationParams): Either<Failure, Unit> =
         registerRepository.registerPersonalAccountWithEmail(
             params.name,
             params.email,
@@ -20,14 +20,14 @@ class RegisterPersonalAccountWithEmailUseCase(private val registerRepository: Re
         ).fold({
             when (it) {
                 is Forbidden -> Either.Left(UnauthorizedEmail)
-                is NotFound -> Either.Left(InvalidActivationCode)
+                is NotFound -> Either.Left(InvalidEmailActivationCode)
                 is Conflict -> Either.Left(EmailInUse)
                 else -> Either.Left(it)
             }
         }) { Either.Right(it) }!!
 }
 
-data class RegistrationParams(
+data class EmailRegistrationParams(
     val name: String,
     val email: String,
     val password: String,
@@ -35,7 +35,7 @@ data class RegistrationParams(
 )
 
 object UnauthorizedEmail : RegisterPersonalAccountWithEmailFailure()
-object InvalidActivationCode : RegisterPersonalAccountWithEmailFailure()
+object InvalidEmailActivationCode : RegisterPersonalAccountWithEmailFailure()
 object EmailInUse : RegisterPersonalAccountWithEmailFailure()
 
 sealed class RegisterPersonalAccountWithEmailFailure : FeatureFailure()
