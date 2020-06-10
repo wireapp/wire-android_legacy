@@ -37,8 +37,10 @@ class CreatePersonalAccountPhoneViewModel(
     fun validatePhone(countryCode: String, phoneNumber: String) {
         validatePhoneNumberUseCase(
             viewModelScope,
-            ValidatePhoneNumberParams(countryCode, phoneNumber),
-            Dispatchers.Default) {
+            ValidatePhoneNumberParams(
+                countryCode,
+                phoneNumber
+            ), Dispatchers.Default) {
             it.fold(::validatePhoneFailure) { validatePhoneSuccess() }
         }
     }
