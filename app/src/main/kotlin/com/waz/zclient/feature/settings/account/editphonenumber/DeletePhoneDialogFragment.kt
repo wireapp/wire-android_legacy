@@ -4,15 +4,15 @@ import android.app.Dialog
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.withArgs
+import com.waz.zclient.core.ui.dialog.DialogOwner
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
 
-class DeletePhoneDialogFragment : DialogFragment() {
+class DeletePhoneDialogFragment : DialogFragment(), DialogOwner {
 
     private val phoneViewModel by sharedViewModel<SettingsAccountPhoneNumberViewModel>(SETTINGS_SCOPE_ID)
 
@@ -21,17 +21,17 @@ class DeletePhoneDialogFragment : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-        AlertDialog.Builder(requireActivity())
-            .setTitle(getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__title))
-            .setMessage(
+        createDialog(requireContext()) {
+            setTitle(getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__title))
+            setMessage(
                 getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__message,
                     phoneNumber)
             )
-            .setPositiveButton(android.R.string.ok) { _, _ ->
+            setPositiveButton(android.R.string.ok) { _, _ ->
                 phoneViewModel.onDeleteNumberButtonConfirmed()
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
+            setNegativeButton(android.R.string.cancel, null)
+        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

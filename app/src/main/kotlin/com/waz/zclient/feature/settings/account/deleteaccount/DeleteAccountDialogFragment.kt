@@ -4,7 +4,6 @@ import android.app.Dialog
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
@@ -12,9 +11,10 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.toSpanned
 import com.waz.zclient.core.extension.withArgs
+import com.waz.zclient.core.ui.dialog.DialogOwner
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
 
-class DeleteAccountDialogFragment : DialogFragment() {
+class DeleteAccountDialogFragment : DialogFragment(), DialogOwner {
 
     private val deleteAccountViewModel by sharedViewModel<SettingsAccountDeleteAccountViewModel>(SETTINGS_SCOPE_ID)
 
@@ -37,14 +37,14 @@ class DeleteAccountDialogFragment : DialogFragment() {
             else -> String.empty()
         }.toSpanned()
 
-        return AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.pref_account_delete_warning_title))
-            .setMessage(message)
-            .setPositiveButton(getString(R.string.pref_account_delete_warning_verify)) { _, _ ->
+        return createDialog(requireContext()) {
+            setTitle(getString(R.string.pref_account_delete_warning_title))
+            setMessage(message)
+            setPositiveButton(getString(R.string.pref_account_delete_warning_verify)) { _, _ ->
                 deleteAccountViewModel.onDeleteAccountConfirmed()
             }
-            .setNegativeButton(getString(R.string.pref_account_delete_warning_cancel), null)
-            .create()
+            setNegativeButton(getString(R.string.pref_account_delete_warning_cancel), null)
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -11,6 +11,7 @@ import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.ui.dialog.DialogOwner
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountEmailCredentialsViewModel
 import com.waz.zclient.feature.auth.registration.personal.email.name.CreatePersonalAccountEmailNameFragment
@@ -18,7 +19,7 @@ import kotlinx.android.synthetic.main.fragment_create_personal_account_email_cod
 
 class CreatePersonalAccountEmailCodeFragment : Fragment(
     R.layout.fragment_create_personal_account_email_code
-) {
+), DialogOwner {
 
     private val emailCodeViewModel: CreatePersonalAccountEmailCodeViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
@@ -116,11 +117,10 @@ class CreatePersonalAccountEmailCodeFragment : Fragment(
         .create()
         .show()
 
-    private fun showGenericErrorDialog(messageResId: Int) = AlertDialog.Builder(context)
-        .setMessage(messageResId)
-        .setPositiveButton(android.R.string.ok) { _, _ -> }
-        .create()
-        .show()
+    private fun showGenericErrorDialog(messageResId: Int) = showErrorDialog(
+        requireContext(),
+        getString(messageResId)
+    )
 
     companion object {
         fun newInstance() = CreatePersonalAccountEmailCodeFragment()

@@ -11,6 +11,7 @@ import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.ui.dialog.DialogOwner
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import com.waz.zclient.feature.auth.registration.personal.phone.CreatePersonalAccountPhoneCredentialsViewModel
 import com.waz.zclient.feature.auth.registration.personal.phone.name.CreatePersonalAccountPhoneNameFragment
@@ -18,7 +19,7 @@ import kotlinx.android.synthetic.main.fragment_create_personal_account_phone_cod
 
 class CreatePersonalAccountPhoneCodeFragment : Fragment(
     R.layout.fragment_create_personal_account_phone_code
-) {
+), DialogOwner {
     private val phoneCodeViewModel: CreatePersonalAccountPhoneCodeViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
@@ -108,11 +109,10 @@ class CreatePersonalAccountPhoneCodeFragment : Fragment(
         .create()
         .show()
 
-    private fun showGenericErrorDialog(messageResId: Int) = AlertDialog.Builder(context)
-        .setMessage(messageResId)
-        .setPositiveButton(android.R.string.ok) { _, _ -> }
-        .create()
-        .show()
+    private fun showGenericErrorDialog(messageResId: Int) = showErrorDialog(
+        requireContext(),
+        getString(messageResId)
+    )
 
     companion object {
         fun newInstance() = CreatePersonalAccountPhoneCodeFragment()

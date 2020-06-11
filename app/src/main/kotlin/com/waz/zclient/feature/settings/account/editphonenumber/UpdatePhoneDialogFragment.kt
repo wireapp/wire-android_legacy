@@ -10,9 +10,10 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.withArgs
+import com.waz.zclient.core.ui.dialog.DialogOwner
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
 
-class UpdatePhoneDialogFragment : DialogFragment() {
+class UpdatePhoneDialogFragment : DialogFragment(), DialogOwner {
 
     private val viewModel by sharedViewModel<SettingsAccountPhoneNumberViewModel>(SETTINGS_SCOPE_ID)
 
@@ -21,14 +22,14 @@ class UpdatePhoneDialogFragment : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-        AlertDialog.Builder(requireActivity())
-            .setTitle(getString(R.string.pref__account_action__dialog__add_phone__confirm__title))
-            .setMessage(getString(R.string.edit_phone_dialog_confirm_phone_confirmation, phoneNumber))
-            .setPositiveButton(android.R.string.ok) { _, _ ->
+        createDialog(requireContext()) {
+            setTitle(getString(R.string.pref__account_action__dialog__add_phone__confirm__title))
+            setMessage(getString(R.string.edit_phone_dialog_confirm_phone_confirmation, phoneNumber))
+            setPositiveButton(android.R.string.ok) { _, _ ->
                 viewModel.onPhoneNumberConfirmed(phoneNumber)
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
+            setNegativeButton(android.R.string.cancel, null)
+        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
