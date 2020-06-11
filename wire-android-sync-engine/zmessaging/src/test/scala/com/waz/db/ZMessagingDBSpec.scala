@@ -31,7 +31,7 @@ import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.model.sync.{SyncCommand, SyncJob}
 import com.waz.utils.wrappers.{DB, URI}
 import com.waz.utils.{DbLoader, returning}
-import com.waz.{DisabledTrackingService, Generators}
+import com.waz.DisabledTrackingService
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.scalatest._
@@ -164,7 +164,7 @@ import org.threeten.bp.Instant
       }
     }
 
-    scenario("Drop excludeFromPYMK and search from sync jobs in 75") {
+ /*   scenario("Drop excludeFromPYMK and search from sync jobs in 75") {
       implicit val db = loadDb("/db/zmessaging_60.db")
       import Generators._
       import SyncRequests._
@@ -217,7 +217,7 @@ import org.threeten.bp.Instant
 
       SyncJobDao.list should have size 100
       SyncJobDao.list shouldEqual before
-    }
+    }*/
 
     scenario("Remove unused columns from Conversations in 90") {
       implicit val db = loadDb("/db/zmessaging_60.db")
