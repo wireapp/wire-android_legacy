@@ -3,11 +3,9 @@ package com.waz.zclient.feature.settings.account.logout
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.eq
-import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -15,9 +13,6 @@ import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class LogoutViewModelTest : UnitTest() {
-
-    @get:Rule
-    val coroutinesTestRule = CoroutinesTestRule()
 
     @Mock
     private lateinit var logoutUseCase: LogoutUseCase

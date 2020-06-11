@@ -300,6 +300,11 @@
     <string name="call_banner_incoming_group">%1$s \u30FB %2$s is calling…</string>
     <string name="call_banner_tap_to_return_to_call">Tap to return to call \u30FB %1$s</string>
 
+    <string name="call_error_unsupported_version_title">Please update Wire</string>
+    <string name="call_error_unsupported_version_message">You received a call that isn\'t supported by this version of Wire.\n\nGet the latest version in the Play Store.</string>
+    <string name="call_error_unsupported_version_button_ok">Go to Play Store</string>
+    <string name="call_error_unsupported_version_button_dismiss">Later</string>
+
     <string name="calling_ongoing_call_title">Ongoing call</string>
 
     <string name="calling_ongoing_call_start_message">A call is active in another conversation.\nCalling here will hang up the other call.</string>
@@ -1498,13 +1503,23 @@
     <string name="create_personal_account_with_phone_edit_text_hint">PHONE NUMBER</string>
     <string name="create_personal_account_with_email_email_blacklisted_error">This email address is not allowed.</string>
     <string name="create_personal_account_with_email_email_in_use_error">This email address you used is already linked to an account.\nUse another email address or try to login if you own this account.</string>
+    <string name="create_personal_account_with_phone_phone_blacklisted_error">This phone number is not allowed.</string>
+    <string name="create_personal_account_with_phone_phone_in_use_error">This phone number you used is already linked to an account.\nUse another phone number or try to login if you own this account.</string>
+    <string name="create_personal_account_with_phone_default_country_name">Germany</string>
+    <string name="create_personal_account_with_phone_default_country_code">+49</string>
 
-    <!-- Create Personal Account - Email Verification screen -->
-    <string name="email_verification_title">You\'ve got mail</string>
-    <string name="email_verification_description">Enter the verification code we sent to %s</string>
-    <string name="email_verification_resend_code">RESEND CODE</string>
-    <string name="email_verification_change_email">CHANGE EMAIL</string>
-    <string name="email_verification_invalid_code_error">Please enter a valid code</string>
+    <!-- Create Personal Account - Email Code screen -->
+    <string name="create_personal_account_email_code_title">You\'ve got mail</string>
+    <string name="create_personal_account_email_code_description">Enter the verification code we sent to %s</string>
+    <string name="create_personal_account_email_code_change_email">CHANGE EMAIL</string>
+    <string name="create_personal_account_email_code_resend_code">RESEND CODE</string>
+    <string name="create_personal_account_email_code_invalid_code_error">Please enter a valid code</string>
+
+    <!-- Create Personal Account - Phone Code screen -->
+    <string name="create_personal_account_phone_code_title">SMS code</string>
+    <string name="create_personal_account_phone_code_description">Enter the code we sent to %s</string>
+    <string name="create_personal_account_phone_code_resend_code">RESEND CODE</string>
+    <string name="create_personal_account_phone_code_invalid_code_error">Please enter a valid code</string>
 
     <!-- Create Personal Account - Name screen -->
     <string name="create_personal_account_name_input_title">Your name</string>
@@ -1516,16 +1531,18 @@
 
     <!-- Create Personal Account - Registration errors -->
     <string name="create_personal_account_unauthorized_email_error">Unauthorized e-mail address.</string>
-    <string name="create_personal_account_invalid_activation_code_error">Invalid activation code.</string>
     <string name="create_personal_account_email_in_use_error">The given e-mail address is in use.</string>
+    <string name="create_personal_account_invalid_activation_code_error">Invalid activation code.</string>
+    <string name="create_personal_account_unauthorized_phone_error">Unauthorized phone number.</string>
+    <string name="create_personal_account_phone_in_use_error">The given phone number is in use.</string>
 
     <!-- Composite Message -->
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
     <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
 
     <!-- StartSSO Screen  -->
-    <string name="start_sso_leaving_wire">Leaving Wire</string>
-    <string name="start_sso_redirected_to">You are being redirected to</string>
+    <string name="start_sso_leaving_wire">Redirecting…</string>
+    <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
     <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
 </resources>
 

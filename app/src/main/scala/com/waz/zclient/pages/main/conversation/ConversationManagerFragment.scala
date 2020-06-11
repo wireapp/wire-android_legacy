@@ -253,13 +253,15 @@ class ConversationManagerFragment extends FragmentHelper
       case (None, None) =>
         warn(l"Trying to show a non-existing user with id $userId")
       case _ =>
-        val fragment = request match {
-          case Right(p)   => ParticipantFragment.newInstance(p.userId, p.fromDeepLink)
-          case Left(page) => ParticipantFragment.newInstance(page)
-        }
         keyboard.hideKeyboardIfVisible()
         navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
-        showFragment(fragment, ParticipantFragment.TAG)
+        request match {
+          case Right(p)   =>
+            participantsController.selectedParticipant ! Some(p.userId)
+            showFragment(ParticipantFragment.newInstance(p.userId, p.fromDeepLink), ParticipantFragment.TAG)
+          case Left(page) =>
+            showFragment(ParticipantFragment.newInstance(page), ParticipantFragment.TAG)
+        }
     }
 
   private def showFragment(fragment: Fragment, tag: String): Unit =

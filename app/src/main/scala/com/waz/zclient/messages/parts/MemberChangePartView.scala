@@ -117,7 +117,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
       case (MEMBER_LEAVE, Other(name), _)                                                  => getString(R.string.content__system__other_removed_other, name, namesListString)
 
       case _ =>
-        verbose(l"Unexpected system message format: (${msg.msgType} from $displayName with ${msg.members.toSeq})")
+        warn(l"Unexpected system message format: (${msg.msgType} from $displayName with ${msg.members.toSeq})")
         ""
     }
   }

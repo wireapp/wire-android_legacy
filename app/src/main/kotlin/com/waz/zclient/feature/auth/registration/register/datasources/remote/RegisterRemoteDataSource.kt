@@ -8,7 +8,7 @@ import java.util.Locale
 import java.util.UUID
 
 class RegisterRemoteDataSource(
-    private val activationApi: RegisterApi,
+    private val registerApi: RegisterApi,
     override val networkHandler: NetworkHandler
 ) : ApiService() {
     suspend fun registerPersonalAccountWithEmail(
@@ -17,11 +17,25 @@ class RegisterRemoteDataSource(
         password: String,
         activationCode: String
     ): Either<Failure, UserResponse> = request {
-        activationApi.register(RegisterRequestBody(
+        registerApi.register(RegisterRequestBody(
             name = name,
             email = email,
             password = password,
             emailCode = activationCode,
+            locale = Locale.getDefault().toLanguageTag(),
+            label = UUID.randomUUID().toString()
+        ))
+    }
+
+    suspend fun registerPersonalAccountWithPhone(
+        name: String,
+        phone: String,
+        activationCode: String
+    ): Either<Failure, UserResponse> = request {
+        registerApi.register(RegisterRequestBody(
+            name = name,
+            phone = phone,
+            phoneCode = activationCode,
             locale = Locale.getDefault().toLanguageTag(),
             label = UUID.randomUUID().toString()
         ))

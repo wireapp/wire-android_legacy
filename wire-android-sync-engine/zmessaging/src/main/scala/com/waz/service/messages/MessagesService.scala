@@ -62,7 +62,7 @@ trait MessagesService {
 
   //TODO forceCreate is a hacky workaround for a bug where previous system messages are not marked as SENT. Do NOT use!
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false): Future[Option[MessageData]]
-  def addMemberLeaveMessage(convId: ConvId, selfUserId: UserId, user: UserId): Future[Any]
+  def addMemberLeaveMessage(convId: ConvId, remover: UserId, user: UserId): Future[Unit]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: Name): Future[Option[MessageData]]
   def addReceiptModeChangeMessage(convId: ConvId, from: UserId, receiptMode: Int): Future[Option[MessageData]]
   def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: RemoteInstant): Future[Unit]
@@ -364,7 +364,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
     }
 
     // check if we have local leave message with same users
-    storage.lastLocalMessage(convId, Message.Type.MEMBER_LEAVE) flatMap {
+    storage.lastLocalMessage(convId, Message.Type.MEMBER_LEAVE).flatMap {
       case Some(msg) if users.exists(msg.members) =>
         val toRemove = msg.members -- users
         val toAdd = users -- msg.members
@@ -377,8 +377,8 @@ class MessagesServiceImpl(selfUserId:      UserId,
     }
   }
 
-  def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any] = {
-    storage.lastLocalMessage(convId, Message.Type.MEMBER_JOIN) flatMap {
+  def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any] =
+    storage.lastLocalMessage(convId, Message.Type.MEMBER_JOIN).flatMap {
       case Some(msg) =>
         val members = msg.members -- users
         if (members.isEmpty) {
@@ -390,20 +390,18 @@ class MessagesServiceImpl(selfUserId:      UserId,
         warn(l"removeLocalMemberJoinMessage: no local join message found")
         CancellableFuture.successful(())
     }
-  }
 
-  override def addMemberLeaveMessage(convId: ConvId, selfUserId: UserId, user: UserId) = {
+  override def addMemberLeaveMessage(convId: ConvId, remover: UserId, user: UserId): Future[Unit] =
     // check if we have local join message with this user and just remove him from the list
-    storage.lastLocalMessage(convId, Message.Type.MEMBER_JOIN) flatMap {
+    storage.lastLocalMessage(convId, Message.Type.MEMBER_JOIN).flatMap {
       case Some(msg) if msg.members == Set(user) => updater.deleteMessage(msg) // FIXME: race condition
-      case Some(msg) if msg.members(user) => updater.updateMessage(msg.id)(_.copy(members = msg.members - user)) // FIXME: race condition
+      case Some(msg) if msg.members(user) =>
+        updater.updateMessage(msg.id)(_.copy(members = msg.members - user)) // FIXME: race condition
       case _ =>
-        // check for local MemberLeave message before creating new one
-        def newMessage = MessageData(MessageId(), convId, Message.Type.MEMBER_LEAVE, selfUserId, members = Set(user))
+        val newMessage = MessageData(MessageId(), convId, Message.Type.MEMBER_LEAVE, remover, members = Set(user))
         def update(msg: MessageData) = msg.copy(members = msg.members + user)
         updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_LEAVE, update, newMessage)
-    }
-  }
+    }.map(_ => ())
 
   override def addOtrVerifiedMessage(convId: ConvId) =
     storage.getLastMessage(convId) flatMap {

@@ -105,7 +105,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val event = MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, membersAdded.map(_ -> ConversationRole.AdminRole).toMap)
 
       (storage.hasSystemMessage _).expects(conv.id, event.time, MEMBER_JOIN, sender).returning(Future.successful(false))
-      (storage.lastLocalMessage _).expects(conv.id, MEMBER_JOIN).returning(Future.successful(None))
+      (storage.getLastSystemMessage _).expects(conv.id, MEMBER_JOIN, sender).returning(Future.successful(None))
       (storage.addMessage _).expects(*).once().onCall { m: MessageData =>
         messagesInStorage.mutate(_ ++ Seq(m))
         Future.successful(m)
@@ -163,7 +163,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val event = RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), selfUserId, Name("new name"))
 
       (storage.hasSystemMessage _).expects(conv.id, event.time, RENAME, selfUserId).returning(Future.successful(false))
-      (storage.lastLocalMessage _).expects(conv.id, RENAME).returning(Future.successful(Some(localMsg)))
+      (storage.getLastSystemMessage _).expects(conv.id, RENAME, selfUserId).returning(Future.successful(Some(localMsg)))
       (storage.remove (_: MessageId)).expects(localMsg.id).returning(Future.successful({}))
       (storage.addMessage _).expects(*).onCall { msg : MessageData =>
         messagesInStorage.mutate(_ ++ Seq(msg))

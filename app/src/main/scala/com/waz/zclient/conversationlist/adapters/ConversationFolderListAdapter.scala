@@ -30,6 +30,8 @@ import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 import com.waz.zclient.utils.ContextUtils.getString
 
+import scala.util.Try
+
 /**
   * A list adapter for displaying conversations grouped into folders.
   */
@@ -89,7 +91,7 @@ class ConversationFolderListAdapter(implicit context: Context, eventContext: Eve
       case (folderData, conversations) => Folder(folderData, conversations)
     }.sortBy(_.title.toLowerCase(Locale.getDefault))
 
-  override def onClick(position: Int): Unit = items(position) match {
+  override def onClick(position: Int): Unit = Try(items(position)).foreach {
     case header: Item.Header => collapseOrExpand(header, position)
     case _                   => super.onClick(position)
   }

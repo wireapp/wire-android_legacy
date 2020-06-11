@@ -12,6 +12,12 @@ class ActivationRemoteDataSource(
     suspend fun sendEmailActivationCode(email: String): Either<Failure, Unit> =
         request { activationApi.sendActivationCode(SendActivationCodeRequest(email = email)) }
 
+    suspend fun sendPhoneActivationCode(phone: String): Either<Failure, Unit> =
+        request { activationApi.sendActivationCode(SendActivationCodeRequest(phone = phone)) }
+
     suspend fun activateEmail(email: String, code: String): Either<Failure, Unit> =
         request { activationApi.activate(ActivationRequest(email = email, code = code, dryrun = true)) }
+
+    suspend fun activatePhone(phone: String, code: String): Either<Failure, Unit> =
+        request { activationApi.activate(ActivationRequest(phone = phone, code = code, dryrun = true)) }
 }

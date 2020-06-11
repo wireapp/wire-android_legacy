@@ -42,7 +42,7 @@ trait Avs {
   def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean): Unit
   def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer): Future[Unit]
   def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit]
-  def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, userId: UserId, clientId: ClientId): Unit
+  def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, userId: UserId, clientId: ClientId): Future[Int]
   def endCall(wCall: WCall, convId: RConvId): Unit
   def rejectCall(wCall: WCall, convId: RConvId): Unit
   def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
@@ -64,7 +64,8 @@ class AvsImpl() extends Avs with DerivedLogTag {
     returning(Calling.wcall_init(Calling.WCALL_ENV_DEFAULT)) { res =>
       Calling.wcall_set_log_handler(new LogHandler {
         override def onLog(level: Int, msg: String, arg: Pointer): Unit = {
-          val log = l"${showString(msg)}"
+          val newMsg = msg.split('\n').map(_.trim.filter(_ >= ' ')).mkString
+          val log = l"${showString(newMsg)}"
           level match {
             case LogLevelDebug => debug(log)(AvsLogTag)
             case LogLevelInfo  => info(log)(AvsLogTag)
@@ -101,29 +102,29 @@ class AvsImpl() extends Avs with DerivedLogTag {
         }
       },
       new SendHandler {
-        override def onSend(ctx: Pointer, convId: String, userid_self: String, clientid_self: String, userid_dest: String, clientid_dest: String, data: Pointer, len: Size_t, transient: Boolean, arg: Pointer) = {
-          cs.onSend(ctx, RConvId(convId), UserId(userid_dest), ClientId(clientid_dest), data.getString(0, "UTF-8"))
+        override def onSend(ctx: Pointer, convId: String, userIdSelf: String, clientIdSelf: String, userIdDest: String, clientIdDest: String, data: Pointer, len: Size_t, isTransient: Boolean, arg: Pointer) = {
+          cs.onSend(ctx, RConvId(convId), UserId(userIdDest), ClientId(clientIdDest), data.getString(0, "UTF-8"))
           0
         }
       },
       new IncomingCallHandler {
-        override def onIncomingCall(convId: String, msg_time: Uint32_t, userId: String, video_call: Boolean, should_ring: Boolean, arg: Pointer) =
-          cs.onIncomingCall(RConvId(convId), UserId(userId), video_call, should_ring)
+        override def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, clientId: String, isVideoCall: Boolean, shouldRing: Boolean, arg: Pointer) =
+          cs.onIncomingCall(RConvId(convId), UserId(userId), isVideoCall, shouldRing)
       },
       new MissedCallHandler {
-        override def onMissedCall(convId: String, msg_time: Uint32_t, userId: String, video_call: Boolean, arg: Pointer): Unit =
-          cs.onMissedCall(RConvId(convId), remoteInstant(msg_time), UserId(userId), video_call)
+        override def onMissedCall(convId: String, msgTime: Uint32_t, userId: String, isVideoCall: Boolean, arg: Pointer): Unit =
+          cs.onMissedCall(RConvId(convId), remoteInstant(msgTime), UserId(userId), isVideoCall)
       },
       new AnsweredCallHandler {
         override def onAnsweredCall(convId: String, arg: Pointer) = cs.onOtherSideAnsweredCall(RConvId(convId))
       },
       new EstablishedCallHandler {
-        override def onEstablishedCall(convId: String, userId: String, arg: Pointer) =
+        override def onEstablishedCall(convId: String, userId: String, clientId: String, arg: Pointer) =
           cs.onEstablishedCall(RConvId(convId), UserId(userId))
       },
       new CloseCallHandler {
-        override def onClosedCall(reasonCode: Int, convId: String, msg_time: Uint32_t, userId: String, arg: Pointer) =
-          cs.onClosedCall(reasonCode, RConvId(convId), remoteInstant(msg_time), UserId(userId))
+        override def onClosedCall(reasonCode: Int, convId: String, msgTime: Uint32_t, userId: String, clientId: String, arg: Pointer) =
+          cs.onClosedCall(reasonCode, RConvId(convId), remoteInstant(msgTime), UserId(userId))
       },
       new MetricsHandler {
         override def onMetricsReady(convId: String, metricsJson: String, arg: Pointer) =
@@ -134,8 +135,8 @@ class AvsImpl() extends Avs with DerivedLogTag {
           cs.onConfigRequest(inst)
       },
       new CbrStateChangeHandler {
-        override def onBitRateStateChanged(userId: String, enabled: Boolean, arg: Pointer): Unit =
-          cs.onBitRateStateChanged(enabled)
+        override def onBitRateStateChanged(userId: String, clientId: String, isEnabled: Boolean, arg: Pointer): Unit =
+          cs.onBitRateStateChanged(isEnabled)
       },
       new VideoReceiveStateHandler {
         override def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit =
@@ -155,6 +156,23 @@ class AvsImpl() extends Avs with DerivedLogTag {
       }
 
       Calling.wcall_set_participant_changed_handler(wCall, participantChangedHandler, arg = null)
+
+      val networkQualityHandler = new NetworkQualityChangedHandler {
+        override def onNetworkQualityChanged(convId: String,
+                                             userId: String,
+                                             clientId: String,
+                                             quality: Int,
+                                             roundTripTimeInMilliseconds: Int,
+                                             upstreamPacketLossPercentage: Int,
+                                             downstreamPacketLossPercentage: Int,
+                                             arg: Pointer): Unit = {
+          val participant = Participant(UserId(userId), ClientId(clientId))
+          cs.onNetworkQualityChanged(ConvId(convId), participant, NetworkQuality(quality))
+        }
+      }
+
+      Calling.wcall_set_network_quality_handler(wCall, networkQualityHandler, intervalInSeconds = 5, arg = null)
+
       wCall
     }
   }
@@ -183,9 +201,9 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer) =
     withAvs(wcall_resp(wCall, status, reason, arg))
 
-  override def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId) = {
+  override def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Future[Int] = {
     val bytes = msg.getBytes("UTF-8")
-    withAvs(wcall_recv_msg(wCall, bytes, bytes.length, uint32_tTime(currTime.instant), uint32_tTime(msgTime.instant), convId.str, from.str, sender.str))
+    withAvsReturning(wcall_recv_msg(wCall, bytes, bytes.length, uint32_tTime(currTime.instant), uint32_tTime(msgTime.instant), convId.str, from.str, sender.str), onFailure = 0)
   }
 
   override def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit] =
@@ -209,7 +227,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
 object Avs extends DerivedLogTag {
 
-  val AvsLogTag: LogTag = LogTag("AVS")
+  val AvsLogTag: LogTag = LogTag("AVS-N")
 
   type WCall = Calling.Handle
 
@@ -217,6 +235,12 @@ object Avs extends DerivedLogTag {
 
   def uint32_tTime(instant: Instant) =
     returning(Uint32_t((instant.toEpochMilli / 1000).toInt))(t => verbose(l"uint32_tTime for $instant = ${t.value}"))
+
+  type AvsCallError = Int
+  object AvsCallError {
+    val None = 0
+    val UnknownProtocol = 1000
+  }
 
   /**
     * NOTE: All values should be kept up to date as defined in:
@@ -273,6 +297,16 @@ object Avs extends DerivedLogTag {
   }
 
   /**
+    * WCALL_AUDIO_STATE_CONNECTING       0
+    * WCALL_AUDIO_STATE_ESTABLISHED      1
+    * WCALL_AUDIO_STATE_NETWORK_PROBLEM  2
+    */
+  type AudioState = AudioState.Value
+  object AudioState extends Enumeration {
+    val Connecting, Established, NetworkProblem = Value
+  }
+
+  /**
     *   WCALL_VIDEO_STATE_STOPPED           0
     *   WCALL_VIDEO_STATE_STARTED           1
     *   WCALL_VIDEO_STATE_BAD_CONN          2
@@ -284,6 +318,17 @@ object Avs extends DerivedLogTag {
   type VideoState = VideoState.Value
   object VideoState extends Enumeration {
     val Stopped, Started, BadConnection, Paused, ScreenShare, NoCameraPermission, Unknown = Value
+  }
+
+  /**
+    * WCALL_QUALITY_NORMAL          1
+    * WCALL_QUALITY_MEDIUM          2
+    * WCALL_QUALITY_POOR            3
+    * WCALL_QUALITY_NETWORK_PROBLEM 4
+    */
+  type NetworkQuality = NetworkQuality.Value
+  object NetworkQuality extends Enumeration(1) {
+    val Normal, Medium, Poor, Problem = Value
   }
 
   /**

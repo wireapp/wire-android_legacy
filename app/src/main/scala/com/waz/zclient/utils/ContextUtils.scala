@@ -325,4 +325,14 @@ object ContextUtils {
       Future.successful(())
     }
   }
+
+  def showAVSUpgradeWarning(color: AccentColor)(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    showConfirmationDialog(
+      title = getString(R.string.call_error_unsupported_version_title),
+      msg = getString(R.string.call_error_unsupported_version_message),
+      positiveRes = R.string.call_error_unsupported_version_button_ok,
+      negativeRes = R.string.call_error_unsupported_version_button_dismiss,
+      color
+    ).foreach(onConfirm)
+  }
 }

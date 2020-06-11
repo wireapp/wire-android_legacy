@@ -142,18 +142,27 @@ public class TextViewUtils {
 
     private static CharSequence getTypefaceHighlightText(Context context, String string, @StringRes int typefaceRes,
                                                          Integer highlightColor, int colorHighlightStart, int colorHighlightEnd) {
+        if (string == null || string.isEmpty())  {
+            Logger.error(TAG, "Failed to highlight text - getTypefaceHighlightText called on an empty or null string");
+            return new SpannableString("");
+        }
+
         List<Pair<Integer, Integer>> spanPositions = new ArrayList<>();
         int highlightStart;
         int highlightEnd = 0;
 
-        while (string.substring(highlightEnd, string.length()).contains("[[")) {
+        while (string.length() > highlightEnd && string.substring(highlightEnd).contains("[[")) {
             highlightStart = string.indexOf("[[");
             highlightEnd = string.indexOf("]]") - 2;
-            spanPositions.add(new Pair<>(highlightStart, highlightEnd));
-            string = string.replaceFirst("\\[\\[", "").replaceFirst("]]", "");
-            if (highlightColor != null && colorHighlightStart <= highlightStart && colorHighlightEnd >= highlightEnd) {
-                // need to deduct the [[ and ]] from the color span
-                colorHighlightEnd -= 4;
+            if (highlightEnd > highlightStart) {
+                spanPositions.add(new Pair<>(highlightStart, highlightEnd));
+                string = string.replaceFirst("\\[\\[", "").replaceFirst("]]", "");
+                if (highlightColor != null && colorHighlightStart <= highlightStart && colorHighlightEnd >= highlightEnd) {
+                    // need to deduct the [[ and ]] from the color span
+                    colorHighlightEnd -= 4;
+                }
+            } else {
+                Logger.error(TAG, "Malformed string: " + string);
             }
         }
 
