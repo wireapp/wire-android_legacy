@@ -37,7 +37,6 @@ import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
-import com.waz.zclient.{BuildConfig, _}
 import com.waz.zclient.appentry.{AppEntryActivity, DialogErrorMessage}
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
@@ -49,6 +48,7 @@ import com.waz.zclient.ui.utils.TextViewUtils._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
+import com.waz.zclient.{BuildConfig, _}
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -332,10 +332,9 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
             .flatMap(_ => accounts.accountsWithManagers.head.map(_.isEmpty)).map {
             case true =>
               context.startActivity(AppEntryActivity.newIntent(context))
-              Option(context.asInstanceOf[Activity]).foreach(_.finish())
+              finishPreferencesActivity()
             case false =>
-              navigator.back()
-              navigator.back()
+              finishPreferencesActivity()
           }
         }
       }, null)
@@ -392,6 +391,9 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       .addToBackStack(tag)
       .commit
   }
+
+  private def finishPreferencesActivity() =
+    Option(context.asInstanceOf[Activity]).foreach(_.finish())
 
   inject[UserAccountsController].readReceiptsEnabled.onUi(view.setReadReceipt)
 
