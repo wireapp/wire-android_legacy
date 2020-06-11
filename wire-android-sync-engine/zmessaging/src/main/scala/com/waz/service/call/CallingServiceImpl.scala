@@ -51,6 +51,7 @@ import com.waz.utils.events._
 import com.waz.utils.wrappers.Context
 import com.waz.utils.{RichInstant, Serialized, returning, returningF}
 import org.threeten.bp.Duration
+import org.threeten.bp.temporal.ChronoUnit
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.{Future, Promise}
@@ -529,11 +530,16 @@ class CallingServiceImpl(val accountId:       UserId,
 
   private def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit =
     wCall.map { w =>
+      import CallingServiceImpl._
+
       val drift = pushService.beDrift.currentValue.getOrElse(Duration.ZERO)
       val curTime = LocalInstant(clock.instant + drift)
       verbose(l"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime")
-      avs.onReceiveMessage(w, msg, curTime, msgTime, convId, from, sender).foreach { result =>
-        userPrefs(UserPreferences.ShouldWarnAVSUpgrade).mutate(_ | result == AvsCallError.UnknownProtocol)
+      avs.onReceiveMessage(w, msg, curTime, msgTime, convId, from, sender).foreach {
+        case AvsCallError.UnknownProtocol if shouldTriggerAlert(convId) =>
+          instantOfLastErrorByConversationId += convId -> LocalInstant.Now
+          userPrefs(UserPreferences.ShouldWarnAVSUpgrade) := true
+        case _ => // Ignore
       }
     }
 
@@ -618,4 +624,18 @@ class CallingServiceImpl(val accountId:       UserId,
   }
 }
 
+object CallingServiceImpl {
 
+  /// AVS error alerts are rate limited so that they occur once within a 15 minute interval
+  /// per conversation.
+
+  private var instantOfLastErrorByConversationId = Map[RConvId, LocalInstant]()
+
+  private def shouldTriggerAlert(convId: RConvId): Boolean = {
+    val instantOfLastError = instantOfLastErrorByConversationId.getOrElse(convId, LocalInstant.Epoch).instant
+    val secondsSinceLastError = instantOfLastError.until(LocalInstant.Now.instant, ChronoUnit.SECONDS)
+    val moreThan15MinutesHavePassed = secondsSinceLastError > 60 * 15
+    moreThan15MinutesHavePassed
+  }
+
+}
