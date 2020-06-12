@@ -47,6 +47,7 @@ trait SyncServiceHandle {
   def syncConversations(ids: Set[ConvId] = Set.empty, dependsOn: Option[SyncId] = None): Future[SyncId]
   def syncConvLink(id: ConvId): Future[SyncId]
   def syncTeam(dependsOn: Option[SyncId] = None): Future[SyncId]
+  def syncTeamData(): Future[SyncId]
   def syncTeamMember(id: UserId): Future[SyncId]
   def syncConnections(dependsOn: Option[SyncId] = None): Future[SyncId]
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId]
@@ -147,6 +148,7 @@ class AndroidSyncServiceHandle(account:         UserId,
     else              addRequest(SyncConversations,     priority = Priority.High,   dependsOn = dependsOn.toSeq)
   def syncConvLink(id: ConvId) = addRequest(SyncConvLink(id))
   def syncTeam(dependsOn: Option[SyncId] = None): Future[SyncId] = addRequest(SyncTeam, priority = Priority.High, dependsOn = dependsOn.toSeq)
+  def syncTeamData(): Future[SyncId] = addRequest(SyncTeamData)
   def syncTeamMember(id: UserId): Future[SyncId] = addRequest(SyncTeamMember(id))
   def syncConnections(dependsOn: Option[SyncId]) = addRequest(SyncConnections, dependsOn = dependsOn.toSeq)
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority) = addRequest(SyncRichMedia(id), priority = priority)
@@ -268,6 +270,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostConnection(userId, name, message)           => zms.connectionsSync.postConnection(userId, name, message)
           case PostConnectionStatus(userId, status)            => zms.connectionsSync.postConnectionStatus(userId, status)
           case SyncTeam                                        => zms.teamsSync.syncTeam()
+          case SyncTeamData                                    => zms.teamsSync.syncTeamData()
           case SyncTeamMember(userId)                          => zms.teamsSync.syncMember(userId)
           case SyncConnections                                 => zms.connectionsSync.syncConnections()
           case SyncSelf                                        => zms.usersSync.syncSelfUser()
