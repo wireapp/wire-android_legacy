@@ -59,12 +59,13 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   lazy val isGroup: Signal[Boolean]                                 = convController.currentConvIsGroup
   lazy val selfRole: Signal[ConversationRole]                       = convController.selfRole
 
-  lazy val otherParticipantId: Signal[Option[UserId]] = otherParticipants.flatMap {
-    case others if others.size == 1 => Signal.const(others.headOption.map(_._1))
-    case others                     => selectedParticipant
+  lazy val otherParticipantId: Signal[Option[UserId]] = Signal(otherParticipants, selectedParticipant).map {
+    case (others, _) if others.size == 1                               => others.headOption.map(_._1)
+    case (others, selected) if selected.exists(others.keySet.contains) => selected
+    case _                                                             => None
   }
 
-  lazy val otherParticipant = for {
+  lazy val otherParticipant: Signal[UserData] = for {
     z        <- zms
     Some(id) <- otherParticipantId
     user     <- z.usersStorage.signal(id)
@@ -135,6 +136,10 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
           override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = {
             screenController.hideUser()
             convController.removeMember(userId)
+            selectedParticipant.mutate {
+              case Some(uId) if uId == userId => None
+              case other                      => other
+            }
           }
 
           override def negativeButtonClicked(): Unit = {}
