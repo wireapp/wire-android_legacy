@@ -260,6 +260,7 @@ class ConversationManagerFragment extends FragmentHelper
             participantsController.selectedParticipant ! Some(p.userId)
             showFragment(ParticipantFragment.newInstance(p.userId, p.fromDeepLink), ParticipantFragment.TAG)
           case Left(page) =>
+            participantsController.selectedParticipant ! None
             showFragment(ParticipantFragment.newInstance(page), ParticipantFragment.TAG)
         }
     }

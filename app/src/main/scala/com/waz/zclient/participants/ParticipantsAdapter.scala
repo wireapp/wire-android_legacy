@@ -89,9 +89,8 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     selfId       <- selfId
     usersStorage <- usersStorage
     tId          <- team
-    convId       <- convController.currentConvId
     participants <- participants
-    users        <- usersStorage.listSignal(participants.keys.toList)
+    users        <- usersStorage.listSignal(participants.keys)
     f            <- filter
   } yield
     users
