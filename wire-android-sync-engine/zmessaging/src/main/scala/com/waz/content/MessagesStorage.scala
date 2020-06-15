@@ -64,10 +64,9 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   //System message events no longer have IDs, so we need to search by type, timestamp and sender
   def hasSystemMessage(conv: ConvId, serverTime: RemoteInstant, tpe: Message.Type, sender: UserId): Future[Boolean]
 
-  def getLastSystemMessage(conv: ConvId, tpe: Message.Type, sender: UserId): Future[Option[MessageData]]
+  def getLastSystemMessage(conv: ConvId, tpe: Message.Type, noOlderThan: RemoteInstant = RemoteInstant.Epoch): Future[Option[MessageData]]
   def getLastMessage(conv: ConvId): Future[Option[MessageData]]
   def getLastSentMessage(conv: ConvId): Future[Option[MessageData]]
-  def lastLocalMessage(conv: ConvId, tpe: Message.Type): Future[Option[MessageData]]
   def countLaterThan(conv: ConvId, time: RemoteInstant): Future[Long]
 
   def findMessageIds(convId: ConvId): Future[Set[MessageId]]
@@ -77,8 +76,6 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]]
 
   def clear(convId: ConvId, clearTime: RemoteInstant): Future[Unit]
-
-  def lastMessageFromSelfAndFromOther(conv: ConvId): Signal[(Option[MessageData], Option[MessageData])]
 
   def findQuotesOf(msgId: MessageId): Future[Seq[MessageData]]
   def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount]
@@ -132,7 +129,7 @@ class MessagesStorageImpl(context:     Context,
       msgsIndex(convId).flatMap { index =>
         index.add(msgs).flatMap(_ => index.firstMessageId) map { first =>
           // XXX: calling update here is a bit ugly
-          val ms = msgs.map {
+          msgs.map {
             case msg if first.contains(msg.id) =>
               update(msg.id, _.copy(firstMessage = first.contains(msg.id)))
               msg.copy(firstMessage = first.contains(msg.id))
@@ -203,12 +200,6 @@ class MessagesStorageImpl(context:     Context,
 
   override def getMessages(ids: MessageId*) = getAll(ids)
 
-  def getEntries(conv: ConvId) = Signal.future(msgsIndex(conv)).flatMap(_.signals.messagesCursor)
-
-  def lastMessage(conv: ConvId) = Signal.future(msgsIndex(conv)).flatMap(_.signals.lastMessage)
-
-  def lastMessageFromSelfAndFromOther(conv: ConvId) = Signal.future(msgsIndex(conv)).flatMap(mi => mi.signals.lastMessageFromSelf zip mi.signals.lastMessageFromOther)
-
   def getLastMessage(conv: ConvId) = msgsIndex(conv).flatMap(_.getLastMessage)
 
   def getLastSentMessage(conv: ConvId) = msgsIndex(conv).flatMap(_.getLastSentMessage)
@@ -216,12 +207,6 @@ class MessagesStorageImpl(context:     Context,
   def unreadCount(conv: ConvId): Signal[Int] = Signal.future(msgsIndex(conv)).flatMap(_.signals.unreadCount).map(_.messages)
 
   def lastRead(conv: ConvId) = Signal.future(msgsIndex(conv)).flatMap(_.signals.lastReadTime)
-
-  override def lastLocalMessage(conv: ConvId, tpe: Message.Type) =
-    msgsIndex(conv).flatMap(_.lastLocalMessage(tpe)).flatMap {
-      case Some(id) => get(id)
-      case _ => CancellableFuture.successful(None)
-    }
 
   //TODO: use local instant?
   override def findLocalFrom(conv: ConvId, time: RemoteInstant) =
@@ -308,9 +293,9 @@ class MessagesStorageImpl(context:     Context,
     }
   }
 
-  override def getLastSystemMessage(conv: ConvId, tpe: Message.Type, sender: UserId): Future[Option[MessageData]] = {
-    def matches(msg: MessageData) = msg.convId == conv && msg.msgType == tpe && msg.userId == sender
-    find(matches, MessageDataDao.findLastSystemMessage(conv, tpe, sender)(_), identity).map(_.headOption)
+  override def getLastSystemMessage(conv: ConvId, tpe: Message.Type, noOlderThan: RemoteInstant = RemoteInstant.Epoch): Future[Option[MessageData]] = {
+    def matches(msg: MessageData) = msg.convId == conv && msg.msgType == tpe && msg.time >= noOlderThan
+    find(matches, MessageDataDao.findLastSystemMessage(conv, tpe, noOlderThan)(_), identity).map(_.headOption)
   }
 
   private def deleteUnsentMessages(convId: ConvId)(implicit storage: DB): Unit = {

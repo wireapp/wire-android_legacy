@@ -130,7 +130,11 @@ case class UserData(override val id:       UserId,
 
   def matchesQuery(query: SearchQuery): Boolean =
       handle.exists(_.startsWithQuery(query.str)) ||
-        (!query.handleOnly && (SearchKey(query.str).isAtTheStartOfAnyWordIn(searchKey) || email.exists(e => query.str.trim.equalsIgnoreCase(e.str))))
+        (!query.handleOnly &&
+          (SearchKey(query.str).isAtTheStartOfAnyWordIn(searchKey) ||
+           email.exists(e => query.str.trim.equalsIgnoreCase(e.str))
+          )
+        )
 
   def matchesQuery(query: Option[SearchKey] = None, handleOnly: Boolean = false): Boolean = query match {
     case Some(q) =>

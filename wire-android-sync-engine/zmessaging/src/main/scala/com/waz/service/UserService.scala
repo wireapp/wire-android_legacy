@@ -177,10 +177,13 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def deleteUsers(ids: Set[UserId]): Future[Unit] =
     for {
-      members <- membersStorage.getByUsers(ids)
-      _       <- membersStorage.removeAll(members.map(_.id).toSet)
-      _       <- Future.sequence(members.map(m => messages.addMemberLeaveMessage(m.convId, selfUserId, m.userId)))
-      _       <- usersStorage.updateAll2(ids, _.copy(deleted = true))
+      members       <- membersStorage.getByUsers(ids)
+      _             <- membersStorage.removeAll(members.map(_.id).toSet)
+      memberInConvs =  members.groupBy(_.convId)
+      _             <- Future.traverse(memberInConvs) {
+                         case (convId, ms) => messages.addMemberLeaveMessage(convId, selfUserId, ms.map(_.userId).toSet)
+                       }
+      _             <- usersStorage.updateAll2(ids, _.copy(deleted = true))
     } yield ()
 
   override lazy val acceptedOrBlockedUsers: Signal[Map[UserId, UserData]] =

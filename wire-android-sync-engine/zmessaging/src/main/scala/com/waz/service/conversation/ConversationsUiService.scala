@@ -302,7 +302,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       toDelete <- if (user != selfUserId) members.getByUsers(Set(user)).map(_.isEmpty)
                   else Future.successful(false)
       _        <- if (toDelete) usersStorage.remove(user) else Future.successful(())
-      _        <- messages.addMemberLeaveMessage(conv, selfUserId, user)
+      _        <- messages.addMemberLeaveMessage(conv, selfUserId, Set(user))
       syncId   <- sync.postConversationMemberLeave(conv, user)
     } yield Option(syncId))
       .recover {
