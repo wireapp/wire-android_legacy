@@ -31,8 +31,7 @@ class SettingsAccountEditHandleViewModel(
     private val changeHandleUseCase: ChangeHandleUseCase,
     private val getHandleUseCase: GetHandleUseCase,
     private val validateHandleUseCase: ValidateHandleUseCase
-) : ViewModel(),
-    UseCaseExecutor by DefaultUseCaseExecutor() {
+) : ViewModel(), UseCaseExecutor by DefaultUseCaseExecutor() {
 
     private val _handleLiveData = MutableLiveData<String>()
     private val _errorLiveData = MutableLiveData<ValidateHandleError>()
