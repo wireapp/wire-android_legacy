@@ -107,6 +107,9 @@ class AvsImpl() extends Avs with DerivedLogTag {
           0
         }
       },
+      new SFTRequestHandler {
+        override def onSFTRequest(ctx: Pointer, url: String, data: Pointer, length: Size_t, arg: Pointer): Int = 0
+      },
       new IncomingCallHandler {
         override def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, clientId: String, isVideoCall: Boolean, shouldRing: Boolean, convType: Int, arg: Pointer) =
           cs.onIncomingCall(RConvId(convId), UserId(userId), isVideoCall, shouldRing)

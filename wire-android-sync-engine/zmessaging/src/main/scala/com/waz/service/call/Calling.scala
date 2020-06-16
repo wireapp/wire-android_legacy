@@ -52,6 +52,7 @@ object Calling {
                            clientid:  String,
                            readyh:    ReadyHandler,
                            sendh:     SendHandler,
+                           sftreqh:   SFTRequestHandler,
                            incomingh: IncomingCallHandler,
                            missedh:   MissedCallHandler,
                            answeredh: AnsweredCallHandler,
