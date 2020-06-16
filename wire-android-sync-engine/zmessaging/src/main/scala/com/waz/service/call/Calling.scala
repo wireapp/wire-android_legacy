@@ -202,4 +202,8 @@ object Calling {
     def onClientsRequest(convId: String, arg: Pointer): Unit
   }
 
+  trait SFTRequestHandler extends Callback {
+    def onSFTRequest(ctx: Pointer, url: String, data: Pointer, length: Size_t, arg: Pointer): Int
+  }
+
 }
