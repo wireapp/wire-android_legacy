@@ -23,7 +23,7 @@ import com.waz.sync.client.AuthenticationManager.AccessToken
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import org.scalatest.{FeatureSpec, Ignore, Matchers}
+import org.scalatest.{FeatureSpec, Matchers}
 import org.threeten.bp.Instant
 
 @RunWith(classOf[JUnitRunner])
@@ -43,15 +43,24 @@ class KeyValuePrefSpec extends FeatureSpec with Matchers with GeneratorDrivenPro
     }
 
     scenario("token serialization") {
-      forAll { t: Option[AccessToken] => AuthTokenCodec.decode(AuthTokenCodec.encode(t)) shouldEqual t }
+      forAll { (accessToken: Option[String], tokenType: String) =>
+        val t = accessToken.map(at => AccessToken(at, tokenType))
+        AuthTokenCodec.decode(AuthTokenCodec.encode(t)) shouldEqual t
+      }
     }
 
-/*    scenario("instant serialization") {
-      forAll { i: Instant => InstantCodec.decode(InstantCodec.encode(i)) shouldEqual i }
+   scenario("instant serialization") {
+      forAll { ii: Int =>
+        val i = Instant.ofEpochSecond(ii)
+        InstantCodec.decode(InstantCodec.encode(i)) shouldEqual i
+      }
     }
 
     scenario("uid serialization") {
-      forAll { uid: Uid => idCodec[Uid].decode(idCodec[Uid].encode(uid)) shouldEqual uid }
-    }*/
+      forAll { s: String =>
+        val uid = Uid(s)
+        idCodec[Uid].decode(idCodec[Uid].encode(uid)) shouldEqual uid
+      }
+    }
   }
 }
