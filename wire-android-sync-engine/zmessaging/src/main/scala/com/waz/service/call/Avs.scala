@@ -107,6 +107,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
           0
         }
       },
+      // TODO: Implement
       new SFTRequestHandler {
         override def onSFTRequest(ctx: Pointer, url: String, data: Pointer, length: Size_t, arg: Pointer): Int = 0
       },
