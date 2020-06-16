@@ -196,4 +196,8 @@ object Calling {
     def onConfigRequest(inst: Handle, arg: Pointer): Int
   }
 
+  trait ClientsRequestHandler extends Callback {
+    def onClientsRequest(convId: String, arg: Pointer): Unit
+  }
+
 }
