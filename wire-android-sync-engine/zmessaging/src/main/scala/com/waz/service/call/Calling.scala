@@ -101,6 +101,10 @@ object Calling {
 
   @native def wcall_set_network_quality_handler(inst: Handle, wcall_network_quality_h: NetworkQualityChangedHandler, intervalInSeconds: Int, arg: Pointer): Int
 
+  @native def wcall_set_req_clients_handler(inst: Handle,  wcall_req_clients_h: ClientsRequestHandler): Unit
+
+  @native def wcall_set_clients_for_conv(inst: Handle, convId: String, clientsJson: String): Int
+
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use
      * for calling.
