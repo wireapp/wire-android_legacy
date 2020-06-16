@@ -54,15 +54,16 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     _      <- Future.sequence(msgIds.map(buttonsStorage.deleteAllForMessage))
   } yield ()
 
-  def updateMessage(id: MessageId)(updater: MessageData => MessageData): Future[Option[MessageData]] = messagesStorage.update(id, updater) map {
-    case Some((msg, updated)) if msg != updated =>
-      assert(updated.id == id && updated.convId == msg.convId)
-      Some(updated)
-    case Some((msg, _)) =>
-      Some(msg)
-    case _ =>
-      None
-  }
+  def updateMessage(id: MessageId)(updater: MessageData => MessageData): Future[Option[MessageData]] =
+    messagesStorage.update(id, updater) map {
+      case Some((msg, updated)) if msg != updated =>
+        assert(updated.id == id && updated.convId == msg.convId)
+        Some(updated)
+      case Some((msg, _)) =>
+        Some(msg)
+      case _ =>
+        None
+    }
 
   def updateButtonConfirmations(confirmations: Map[MessageId, Option[ButtonId]]): Future[Unit] =
     Future.sequence(confirmations.map {
@@ -144,22 +145,24 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
    */
   def updateOrCreateLocalMessage(convId: ConvId, msgType: Message.Type, update: MessageData => MessageData, create: => MessageData) =
     Serialized.future("update-or-create-local-msg", convId, msgType) {
-      messagesStorage.lastLocalMessage(convId, msgType).flatMap {
-        case Some(msg) => // got local message, try updating
-          @volatile var shouldCreate = false
-          verbose(l"got local message: $msg, will update")
-          updateMessage(msg.id) { msg =>
-            if (msg.isLocal) update(msg)
-            else { // msg was already synced, need to create new local message
-              shouldCreate = true
-              msg
+      lastSentEventTime(convId).flatMap { time =>
+        messagesStorage.getLastSystemMessage(convId, msgType, time).flatMap {
+          case Some(msg) if msg.isLocal => // got local message, try updating
+            @volatile var shouldCreate = false
+            verbose(l"got local message: $msg, will update")
+            updateMessage(msg.id) { updatedMsg =>
+              if (updatedMsg.isLocal) update(updatedMsg).copy(time = time)
+              else { // msg was already synced, need to create new local message
+                shouldCreate = true
+                updatedMsg
+              }
+            } flatMap { res =>
+              verbose(l"shouldCreate: $shouldCreate")
+              if (shouldCreate) addLocalMessage(create).map(Some(_))
+              else Future.successful(res)
             }
-          } flatMap { res =>
-            verbose(l"shouldCreate: $shouldCreate")
-            if (shouldCreate) addLocalMessage(create).map(Some(_))
-            else Future.successful(res)
-          }
-        case _ => addLocalMessage(create).map(Some(_))
+          case _ => addLocalMessage(create).map(Some(_))
+        }
       }
     }
 
@@ -188,18 +191,19 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
           val msg = ms.last
           messagesStorage.hasSystemMessage(convId, msg.time, msg.msgType, msg.userId).flatMap {
             case false =>
-              // we don't have that exact system message but there still might be another message of the same type
-              messagesStorage.getLastSystemMessage(convId, msg.msgType, msg.userId).flatMap {
-                case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) && m.members == msg.members =>
-                  // we have a duplicate, do nothing
-                  Future.successful(None)
-                case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) && m.isLocal =>
-                  // the message is local, i.e. it was not sent yet, so we can update it
-                  updateMessage(m.id)(_.copy(members = m.members ++ msg.members, localTime = m.localTime))
-                case Some(m) if m.isLocal =>
-                  messagesStorage.remove(m.id).flatMap(_ => messagesStorage.addMessage(msg.copy(localTime = m.localTime))).map(Some(_))
-                case _ =>
-                  messagesStorage.addMessage(msg).map(Some(_))
+              lastSentEventTime(convId).flatMap { time =>
+                // we don't have that exact system message but there still might be another message of the same type
+                messagesStorage.getLastSystemMessage(convId, msg.msgType, time).flatMap {
+                  case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) && m.members == msg.members && !m.isLocal =>
+                    // we have a duplicate, do nothing
+                    Future.successful(None)
+                  case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) && m.isLocal =>
+                    updateMessage(m.id)(_.copy(members = m.members ++ msg.members, localTime = m.localTime))
+                  case Some(m) if m.isLocal =>
+                    messagesStorage.remove(m.id).flatMap(_ => messagesStorage.addMessage(msg.copy(localTime = m.localTime))).map(Some(_))
+                  case _ =>
+                    messagesStorage.addMessage(msg).map(Some(_))
+                }
               }
             case true =>
               Future.successful(None)

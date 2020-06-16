@@ -62,7 +62,7 @@ trait MessagesService {
 
   //TODO forceCreate is a hacky workaround for a bug where previous system messages are not marked as SENT. Do NOT use!
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false): Future[Option[MessageData]]
-  def addMemberLeaveMessage(convId: ConvId, remover: UserId, user: UserId): Future[Unit]
+  def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId]): Future[Unit]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: Name): Future[Option[MessageData]]
   def addReceiptModeChangeMessage(convId: ConvId, from: UserId, receiptMode: Int): Future[Option[MessageData]]
   def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: RemoteInstant): Future[Unit]
@@ -80,7 +80,7 @@ trait MessagesService {
   def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: RemoteInstant, state: Message.Status = Message.Status.PENDING): Future[Option[MessageData]]
   def applyMessageEdit(convId: ConvId, userId: UserId, time: RemoteInstant, gm: GenericMessage): Future[Option[MessageData]]
 
-  def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any]
+  def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Unit]
 
   def messageSent(convId: ConvId, msgId: MessageId, newTime: RemoteInstant): Future[Option[MessageData]]
   def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]]
@@ -351,57 +351,29 @@ class MessagesServiceImpl(selfUserId:      UserId,
   }
 
   override def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false) = {
-    verbose(l"addMemberJoinMessage($convId, $creator, $users)")
+    def update(msg: MessageData) = msg.copy(members = msg.members ++ users)
+    def create = MessageData(MessageId(), convId, Message.Type.MEMBER_JOIN, creator, members = users, firstMessage = firstMessage)
 
-    def updateOrCreate(added: Set[UserId]) = {
-      def update(msg: MessageData) = msg.copy(members = msg.members ++ added)
-      def create = MessageData(MessageId(), convId, Message.Type.MEMBER_JOIN, creator, members = added, firstMessage = firstMessage)
-
-      if (forceCreate)
-        updater.addLocalSentMessage(create).map(Some(_))
-      else
-        updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_JOIN, update, create)
-    }
-
-    // check if we have local leave message with same users
-    storage.lastLocalMessage(convId, Message.Type.MEMBER_LEAVE).flatMap {
-      case Some(msg) if users.exists(msg.members) =>
-        val toRemove = msg.members -- users
-        val toAdd = users -- msg.members
-        if (toRemove.isEmpty) updater.deleteMessage(msg) // FIXME: race condition
-        else updater.updateMessage(msg.id)(_.copy(members = toRemove)) // FIXME: race condition
-
-        if (toAdd.isEmpty) successful(None) else updateOrCreate(toAdd)
-      case _ =>
-        updateOrCreate(users)
-    }
+    if (forceCreate) updater.addLocalSentMessage(create).map(Some(_))
+    else updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_JOIN, update, create)
   }
 
-  def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Any] =
-    storage.lastLocalMessage(convId, Message.Type.MEMBER_JOIN).flatMap {
-      case Some(msg) =>
+  override def removeLocalMemberJoinMessage(convId: ConvId, users: Set[UserId]): Future[Unit] =
+    storage.getLastSystemMessage(convId, Message.Type.MEMBER_JOIN).flatMap {
+      case Some(msg) if msg.isLocal =>
         val members = msg.members -- users
-        if (members.isEmpty) {
-          updater.deleteMessage(msg)
-        } else {
-          updater.updateMessage(msg.id) { _.copy(members = members) } // FIXME: possible race condition with addMemberJoinMessage or sync
-        }
+        if (members.isEmpty) updater.deleteMessage(msg)
+        else updater.updateMessage(msg.id) { _.copy(members = members) }.map(_ => ()) // FIXME: possible race condition with addMemberJoinMessage or sync
       case _ =>
-        warn(l"removeLocalMemberJoinMessage: no local join message found")
-        CancellableFuture.successful(())
+        Future.successful(())
     }
 
-  override def addMemberLeaveMessage(convId: ConvId, remover: UserId, user: UserId): Future[Unit] =
-    // check if we have local join message with this user and just remove him from the list
-    storage.lastLocalMessage(convId, Message.Type.MEMBER_JOIN).flatMap {
-      case Some(msg) if msg.members == Set(user) => updater.deleteMessage(msg) // FIXME: race condition
-      case Some(msg) if msg.members(user) =>
-        updater.updateMessage(msg.id)(_.copy(members = msg.members - user)) // FIXME: race condition
-      case _ =>
-        val newMessage = MessageData(MessageId(), convId, Message.Type.MEMBER_LEAVE, remover, members = Set(user))
-        def update(msg: MessageData) = msg.copy(members = msg.members + user)
-        updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_LEAVE, update, newMessage)
-    }.map(_ => ())
+  override def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId]): Future[Unit] = {
+    val newMessage = MessageData(MessageId(), convId, Message.Type.MEMBER_LEAVE, remover, members = users)
+    def update(msg: MessageData) = msg.copy(members = msg.members ++ users)
+    updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_LEAVE, update, newMessage).map(_ => ())
+  }
+
 
   override def addOtrVerifiedMessage(convId: ConvId) =
     storage.getLastMessage(convId) flatMap {

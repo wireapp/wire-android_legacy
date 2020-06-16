@@ -29,7 +29,6 @@ import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import com.waz.utils.events.{EventStream, RefreshingSignal, Signal, SourceSignal}
 
-import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -45,7 +44,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConvMessagesIndex")
 
   private val indexChanged = EventStream[Change]()
-  private val lastLocalMessageByType = new mutable.HashMap[Message.Type, MessageData]
   private var firstMessage = Option.empty[MessageData]
 
   private object sources {
@@ -56,7 +54,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
     val lastSentMessage = Signal(Option.empty[MessageData])
     val lastReadTime = returning(Signal[RemoteInstant]())(_.disableAutowiring())
     val lastMessageFromSelf = Signal(Option.empty[MessageData])
-    val lastMessageFromOther = Signal(Option.empty[MessageData])
   }
 
   object signals {
@@ -69,7 +66,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
     val lastMessage: Signal[Option[MessageData]] = returning(sources.lastMessage)(_.disableAutowiring())
     val lastSentMessage: Signal[Option[MessageData]] = returning(sources.lastSentMessage)(_.disableAutowiring())
     val lastMessageFromSelf: Signal[Option[MessageData]] = returning(sources.lastMessageFromSelf)(_.disableAutowiring())
-    val lastMessageFromOther: Signal[Option[MessageData]] = returning(sources.lastMessageFromOther)(_.disableAutowiring())
 
     val unreadCount = for {
       time   <- sources.lastReadTime
@@ -87,10 +83,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
 
     storage.read { implicit db =>
       logTime(l"Initial load conversation entries for: $convId") {
-
-        lastLocalMessageByType ++= MessageDataDao.listLocalMessages(convId).groupBy(m => m.msgType).map {
-          case (tpe, msgs) => tpe -> msgs.maxBy(_.time)
-        }
         missedCall ! MessageDataDao.lastMissedCall(convId)
         incomingKnock ! MessageDataDao.lastIncomingKnock(convId, selfUserId)
         failedCount ! MessageDataDao.countFailed(convId).toInt
@@ -98,7 +90,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
         lastMessage ! MessageDataDao.last(convId)
         lastSentMessage ! MessageDataDao.lastSent(convId)
         lastMessageFromSelf ! MessageDataDao.lastFromSelf(convId, selfUserId)
-        lastMessageFromOther ! MessageDataDao.lastFromOther(convId, selfUserId)
       }
     }.map { _ =>
       Signal(signals.unreadCount, signals.failedCount, signals.lastMissedCall, signals.incomingKnock).throttle(500.millis) { case (unread, failed, missed, knock) =>
@@ -133,15 +124,10 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
 
   def getLastSentMessage = init.map { _ => signals.lastSentMessage.currentValue.flatten }
 
-  def lastLocalMessage(tpe: Message.Type) = init.map { _ => lastLocalMessageByType.get(tpe).map(_.id) }
-
   def firstMessageId = init.map { _ => firstMessage.map(_.id) }
 
   private[content] def delete(msg: MessageData): Future[Unit] = init map { _ =>
     if (msg.state.isFailed) failedCount.mutate(c => math.max(c - 1, 0))
-
-    if (msg.isLocal && lastLocalMessageByType.get(msg.msgType).exists(_.id == msg.id))
-      lastLocalMessageByType.remove(msg.msgType)
 
     removeLast(_.id == msg.id)
 
@@ -151,7 +137,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
   private[content] def delete(upTo: RemoteInstant = RemoteInstant.Max): Future[Unit] = init map { _ =>
     failedCount ! 0 // XXX: this might be wrong, hopefully not too often
 
-    lastLocalMessageByType.filter { case (_, index) => !index.time.isAfter(upTo) } foreach { case (k, _) => lastLocalMessageByType.remove(k) }
     firstMessage = firstMessage.filter(_.time.isAfter(upTo))
     incomingKnock.mutate(_.filter(_.time.isAfter(upTo)))
 
@@ -164,7 +149,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
     val lastRemoved = lastMessage.mutate(_ filterNot f)
     val lastSentRemoved = lastSentMessage.mutate(_ filterNot f)
     val lastFromSelfRemoved = lastMessageFromSelf.mutate(_ filterNot f)
-    val lastFromOtherRemoved = lastMessageFromOther.mutate(_ filterNot f)
 
     if (lastRemoved || lastSentRemoved || lastFromSelfRemoved) {
       verbose(l"last message was removed, need to fetch it from db")
@@ -172,17 +156,12 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
         MessageDataDao.last(convId) foreach updateSignal(lastMessage)
         MessageDataDao.lastSent(convId) foreach updateSignal(lastSentMessage)
         MessageDataDao.lastFromSelf(convId, selfUserId) foreach updateSignal(lastMessageFromSelf)
-        MessageDataDao.lastFromOther(convId, selfUserId) foreach updateSignal(lastMessageFromOther)
       }
     }
   }
 
   private[content] def add(msgs: Seq[MessageData]): Future[Unit] = init map { _ =>
     msgs foreach { msg =>
-
-      if (msg.isLocal && lastLocalMessageByType.get(msg.msgType).forall(_.time.isBefore(msg.time)))
-        lastLocalMessageByType(msg.msgType) = msg
-
       if (!msg.isLocal) {
         if (msg.msgType == Message.Type.MISSED_CALL) missedCall.mutate(_.filter(_.time.isAfter(msg.time)).orElse(Some(msg)))
         if (msg.msgType == Message.Type.KNOCK && msg.userId != selfUserId) incomingKnock.mutate(_.filter(_.time.isAfter(msg.time)).orElse(Some(msg)))
@@ -207,16 +186,6 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
   }
 
   private[content] def update(updates: Seq[(MessageData, MessageData)]): Future[Unit] = init map { _ =>
-    updates foreach { case (msg, updated) =>
-      verbose(l"update($msg, $updated)")
-      assert(msg.id == updated.id, "trying to change message id")
-
-      if (msg.isLocal && !updated.isLocal && lastLocalMessageByType.get(msg.msgType).exists(_.id == msg.id))
-        lastLocalMessageByType.remove(msg.msgType)
-      else if (updated.isLocal && !msg.isLocal)
-        debug(l"non-local message was updated to local: $msg -> $updated")
-    }
-
     if (updates.nonEmpty) {
       val failed = updates.foldLeft(0) { case (count, (p, u)) =>
         if (p.state.isFailed == u.state.isFailed) count
@@ -236,9 +205,8 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
     val sent = msgs.filter(m => m.state == Status.SENT || m.state == Status.DELIVERED)
     if (sent.nonEmpty) updateSignal(lastSentMessage)(sent.maxBy(_.time))
 
-    val (fromSelf, fromOther) = msgs.filter(m => isUserContent(m.msgType)).partition(_.userId == selfUserId)
+    val fromSelf = msgs.filter(m => isUserContent(m.msgType)).filter(_.userId == selfUserId)
     if (fromSelf.nonEmpty) updateSignal(lastMessageFromSelf)(fromSelf.maxBy(_.time))
-    if (fromOther.nonEmpty) updateSignal(lastMessageFromOther)(fromOther.maxBy(_.time))
   }
 
   private def updateSignal(signal: SourceSignal[Option[MessageData]])(last: MessageData): Unit =

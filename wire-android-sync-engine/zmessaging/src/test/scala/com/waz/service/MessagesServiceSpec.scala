@@ -77,10 +77,9 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     val newMsg = MessageData(MessageId(), convId, Message.Type.MEMBER_JOIN, instigator, members = usersAdded, state = Status.PENDING, time = RemoteInstant(clock.instant()), localTime = LocalInstant(clock.instant()))
 
     //no previous member join events
-    (storage.lastLocalMessage _).expects(convId, MEMBER_LEAVE).once().returning(Future.successful(None))
-    (storage.lastLocalMessage _).expects(convId, MEMBER_JOIN).once().returning(Future.successful(None))
-
-    (storage.getLastMessage _).expects(convId).once().returning(Future.successful(Some(lastMsg)))
+    (storage.getLastSystemMessage _).expects(convId, MEMBER_JOIN, *).anyNumberOfTimes().returning(Future.successful(None))
+    (storage.getLastSentMessage _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(lastMsg)))
+    (storage.getLastMessage _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(lastMsg)))
 
     (storage.addMessage _).expects(*).once().onCall { msg: MessageData => Future.successful(msg) }
 
@@ -234,8 +233,9 @@ class MessagesServiceSpec extends AndroidFreeSpec {
 
     // There is a normal message but not a rename message
     val lastMsg = MessageData(MessageId(), convId, TEXT, fromUserId, time = RemoteInstant(clock.instant()))
-    (storage.getLastMessage _).expects(convId).once().returning(Future.successful(Some(lastMsg)))
-    (storage.lastLocalMessage _).expects(convId, RENAME).once().returning(Future.successful(None))
+    (storage.getLastMessage _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(lastMsg)))
+    (storage.getLastSentMessage _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(lastMsg)))
+    (storage.getLastSystemMessage _).expects(convId, RENAME, *).anyNumberOfTimes().returning(Future.successful(None))
     (storage.addMessage _).expects(*).once().onCall { msg: MessageData => Future.successful(msg)}
 
     // When
@@ -260,8 +260,9 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(conv)))
 
     // There is already a rename message
-    val lastMsg = MessageData(msgId, convId, RENAME, fromUserId, name = Some(oldName), time = RemoteInstant(clock.instant()))
-    (storage.lastLocalMessage _).expects(convId, RENAME).once().returning(Future.successful(Some(lastMsg)))
+    val lastMsg = MessageData(msgId, convId, RENAME, fromUserId, name = Some(oldName), time = RemoteInstant(clock.instant()), state = Message.Status.PENDING)
+    (storage.getLastSentMessage _).expects(convId).anyNumberOfTimes().returning(Future.successful(None))
+    (storage.getLastSystemMessage _).expects(convId, RENAME, *).once().returning(Future.successful(Some(lastMsg)))
 
     // Update this message with the new name
     (storage.update _).expects(msgId, *).once().returning(Future.successful(Some((lastMsg, lastMsg.copy(name = Some(newName))))))

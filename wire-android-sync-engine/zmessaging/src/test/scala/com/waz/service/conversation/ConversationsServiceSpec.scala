@@ -166,7 +166,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
       (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
       (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(convData)))
-      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, selfUserId).atLeastOnce().returning(
+      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, Set(selfUserId)).atLeastOnce().returning(
         Future.successful(())
       )
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(convData)))
@@ -210,7 +210,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
       (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
       (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(convData)))
-      (messages.addMemberLeaveMessage _).expects(convId, removerId, selfUserId).atLeastOnce().returning(
+      (messages.addMemberLeaveMessage _).expects(convId, removerId, Set(selfUserId)).atLeastOnce().returning(
         Future.successful(())
       )
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(convData)))
@@ -257,7 +257,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (messages.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(convData)))
-      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, otherUserId).atLeastOnce().returning(
+      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, Set(otherUserId)).atLeastOnce().returning(
         Future.successful(())
       )
       (membersStorage.getActiveUsers _).expects(convId).anyNumberOfTimes().returning(

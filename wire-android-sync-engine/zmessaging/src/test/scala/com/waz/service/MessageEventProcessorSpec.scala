@@ -17,6 +17,7 @@
  */
 package com.waz.service
 
+import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.api.Message.Type._
 import com.waz.content._
@@ -105,7 +106,9 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val event = MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, membersAdded.map(_ -> ConversationRole.AdminRole).toMap)
 
       (storage.hasSystemMessage _).expects(conv.id, event.time, MEMBER_JOIN, sender).returning(Future.successful(false))
-      (storage.getLastSystemMessage _).expects(conv.id, MEMBER_JOIN, sender).returning(Future.successful(None))
+      (storage.getLastSentMessage _).expects(conv.id).anyNumberOfTimes().returning(Future.successful(None))
+      (convsStorage.get _).expects(conv.id).anyNumberOfTimes().returning(Future.successful(Some(conv)))
+      (storage.getLastSystemMessage _).expects(conv.id, MEMBER_JOIN, *).anyNumberOfTimes().returning(Future.successful(None))
       (storage.addMessage _).expects(*).once().onCall { m: MessageData =>
         messagesInStorage.mutate(_ ++ Seq(m))
         Future.successful(m)
@@ -151,10 +154,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
 
     scenario("System message events are overridden if only local version is present") {
       val conv = ConversationData(ConvId("conv"), RConvId("r_conv"), None, UserId("creator"), ConversationType.OneToOne)
-      val membersAdded = Set(
-        UserId("user1"),
-        UserId("user2")
-      )
+      (convsStorage.get _).expects(conv.id).anyNumberOfTimes().returning(Future.successful(Some(conv)))
 
       clock.advance(1.second) //here, we create a local message
       val localMsg = MessageData(MessageId(), conv.id, RENAME, selfUserId, time = RemoteInstant(clock.instant()), localTime = LocalInstant(clock.instant()), state = Status.PENDING)
@@ -163,7 +163,8 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val event = RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), selfUserId, Name("new name"))
 
       (storage.hasSystemMessage _).expects(conv.id, event.time, RENAME, selfUserId).returning(Future.successful(false))
-      (storage.getLastSystemMessage _).expects(conv.id, RENAME, selfUserId).returning(Future.successful(Some(localMsg)))
+      (storage.getLastSentMessage _).expects(conv.id).anyNumberOfTimes().returning(Future.successful(None))
+      (storage.getLastSystemMessage _).expects(conv.id, RENAME, *).anyNumberOfTimes().returning(Future.successful(Some(localMsg)))
       (storage.remove (_: MessageId)).expects(localMsg.id).returning(Future.successful({}))
       (storage.addMessage _).expects(*).onCall { msg : MessageData =>
         messagesInStorage.mutate(_ ++ Seq(msg))

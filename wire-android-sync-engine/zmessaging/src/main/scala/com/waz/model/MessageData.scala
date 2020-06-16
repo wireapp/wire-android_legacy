@@ -398,8 +398,6 @@ object MessageData extends
 
     def lastFromSelf(conv: ConvId, selfUserId: UserId)(implicit db: DB) = single(db.query(table.name, null, s"${Conv.name} = '${Conv(conv)}' AND ${User.name} = '${User(selfUserId)}' AND $userContentPredicate", null, null, null, s"${Time.name} DESC", "1"))
 
-    def lastFromOther(conv: ConvId, selfUserId: UserId)(implicit db: DB) = single(db.query(table.name, null, s"${Conv.name} = '${Conv(conv)}' AND ${User.name} != '${User(selfUserId)}' AND $userContentPredicate", null, null, null, s"${Time.name} DESC", "1"))
-
     private val userContentPredicate = isUserContent.map(t => s"${Type.name} = '${Type(t)}'").mkString("(", " OR ", ")")
 
     def lastIncomingKnock(convId: ConvId, selfUser: UserId)(implicit db: DB): Option[MessageData] = single(
@@ -454,8 +452,8 @@ object MessageData extends
     def findSystemMessage(conv: ConvId, serverTime: RemoteInstant, tpe: Message.Type, sender: UserId)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '${conv.str}' and ${Time.name} = ${Time(serverTime)} and ${Type.name} = '${Type(tpe)}' and ${User.name} = '${User(sender)}'", null, null, null, s"${Time.name} DESC"))
 
-    def findLastSystemMessage(conv: ConvId, tpe: Message.Type, sender: UserId)(implicit db: DB) =
-      iterating(db.query(table.name, null, s"${Conv.name} = '${conv.str}' and ${Type.name} = '${Type(tpe)}' and ${User.name} = '${User(sender)}'", null, null, null, s"${Time.name} DESC LIMIT 1"))
+    def findLastSystemMessage(conv: ConvId, tpe: Message.Type, noOlderThan: RemoteInstant)(implicit db: DB) =
+      iterating(db.query(table.name, null, s"${Conv.name} = '${conv.str}' and ${Type.name} = '${Type(tpe)}' and  ${Time.name} >= ${Time(noOlderThan)}", null, null, null, s"${Time.name} DESC LIMIT 1"))
 
     def getAssetIds(messageIds: Set[MessageId])(implicit db:DB) = {
       val idList = messageIds.map(t => s"'${Id(t)}'").mkString("(", "," , ")")
