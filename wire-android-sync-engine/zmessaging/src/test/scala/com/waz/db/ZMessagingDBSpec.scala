@@ -19,7 +19,8 @@ package com.waz.db
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
-import com.waz.api.{ContentSearchQuery, Message}
+import com.waz.DisabledTrackingService
+import com.waz.api.Message
 import com.waz.model.AssetData.AssetDataDao
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.ConversationData.ConversationDataDao
@@ -28,10 +29,8 @@ import com.waz.model.MsgDeletion.MsgDeletionDao
 import com.waz.model.UserData.UserDataDao
 import com.waz.model._
 import com.waz.model.sync.SyncJob.SyncJobDao
-import com.waz.model.sync.{SyncCommand, SyncJob}
 import com.waz.utils.wrappers.{DB, URI}
 import com.waz.utils.{DbLoader, returning}
-import com.waz.{DisabledTrackingService, Generators}
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.scalatest._
@@ -101,7 +100,6 @@ import org.threeten.bp.Instant
 
       val assets = AssetDataDao.list
       assets should have size 57
-//      forAll(assets) { _.isInstanceOf[AssetData] shouldEqual true }
 
       val data = AssetData(metaData = Some(AssetMetaData.Image(Dim2(12, 13), Medium)), source = Some(URI.parse("url")))
       val im = AssetDataDao.insertOrReplace(data)
@@ -166,14 +164,6 @@ import org.threeten.bp.Instant
 
     scenario("Drop excludeFromPYMK and search from sync jobs in 75") {
       implicit val db = loadDb("/db/zmessaging_60.db")
-      import Generators._
-      import SyncRequests._
-
-      forAll { job: SyncJob =>
-        whenever(job.request.cmd != SyncCommand.SyncSearchQuery) {
-          SyncJobDao.insertOrIgnore(job)
-        }
-      }
 
       val before = SyncJobDao.list
 
