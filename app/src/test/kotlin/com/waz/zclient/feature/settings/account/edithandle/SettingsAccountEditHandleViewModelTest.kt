@@ -53,7 +53,7 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given afterHandleTextChanged is called, when input contains capital letters then popragate handle with lowercase value`() =
+    fun `given afterHandleTextChanged is called, when input contains capital letters then propagate handle with lowercase value`() =
         runBlockingTest {
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE.toUpperCase())
             assertEquals(TEST_HANDLE.toLowerCase(), editHandleViewModel.handleLiveData.awaitValue())
@@ -85,7 +85,7 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, when input is not duplicate your current handle and handle does not exist, then propagate HandleAlreadyExists error and disable ok button`() =
+    fun `given afterHandleTextChanged is called, when input is not duplicate your current handle and handle already exists on the API, then propagate HandleAlreadyExists error and disable ok button`() =
         runBlockingTest {
             val handleFlow = flowOf(NON_DUPLICATED_TEST_HANDLE)
 
@@ -100,7 +100,7 @@ class SettingsAccountEditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, when input is not duplicate of your current handle and new handle exists, then propagate HandleIsAvailable and enable ok button`() =
+    fun `given afterHandleTextChanged is called, when input is not duplicate of your current handle and new handle is available, then propagate HandleIsAvailable and enable ok button`() =
         runBlockingTest {
             val handleFlow = flowOf(NON_DUPLICATED_TEST_HANDLE)
 
