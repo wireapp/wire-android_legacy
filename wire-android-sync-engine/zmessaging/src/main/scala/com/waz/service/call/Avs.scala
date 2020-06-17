@@ -107,7 +107,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
           0
         }
       },
-      // TODO: Implement
+      // TODO: Invoke CallingService method to make the SFT request.
       new SFTRequestHandler {
         override def onSFTRequest(ctx: Pointer, url: String, data: Pointer, length: Size_t, arg: Pointer): Int = 0
       },
@@ -178,7 +178,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       Calling.wcall_set_network_quality_handler(wCall, networkQualityHandler, intervalInSeconds = 5, arg = null)
 
       val clientsRequestHandler = new ClientsRequestHandler {
-        // TODO: Implement
+        // TODO: Fetch list of clients in the conversation
         override def onClientsRequest(convId: String, arg: Pointer): Unit = Unit
       }
 
