@@ -42,6 +42,7 @@ import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.F
 import com.waz.zclient.conversationlist.{ConversationListController, FolderStateController}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.shared.assets.FileWhitelist
 import com.waz.zclient.utils.Callback
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
@@ -67,6 +68,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val uriHelper             = inject[UriHelper]
   private lazy val accentColorController = inject[AccentColorController]
   private lazy val selfId                = inject[Signal[UserId]]
+
+  private lazy val fileWhitelist = new FileWhitelist()
 
   val DefaultDeletedName: Name = Name(getString(R.string.default_deleted_username))
 
@@ -282,11 +285,15 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
                        activity: Activity,
                        exp:      Option[Option[FiniteDuration]],
                        convs:    Seq[ConvId] = Seq()): Future[Option[MessageData]] =
-    for {
-      content <- Future.fromTry(uriHelper.extractFileName(uri).map(ContentForUpload(_,  Content.Uri(uri))))
-      msg     <- if (convs.isEmpty) sendAssetMessage(content, activity, exp)
-                 else sendAssetMessage(convs, content, activity, exp).map(_.head)
-    } yield msg
+    Future.fromTry(uriHelper.extractFileName(uri)).flatMap {
+      case fileName if fileWhitelist.isAllowed(fileName) =>
+        val content = ContentForUpload(fileName,  Content.Uri(uri))
+        if (convs.isEmpty) sendAssetMessage(content, activity, exp)
+        else sendAssetMessage(convs, content, activity, exp).map(_.head)
+      case _ =>
+        showToast(R.string.asset_upload_error__not_found__message) // TODO: change to the correct string
+        Future.successful(None)
+    }
 
   def sendAssetMessages(uris:    Seq[URI],
                        activity: Activity,
@@ -295,7 +302,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     for {
       ui       <- convsUi.head
       color    <- accentColorController.accentColor.head
-      contents <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(ContentForUpload(_,  Content.Uri(uri)))) }
+      names    <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(uri -> _)) }
+      contents =  names.collect { case (uri, fileName) if fileWhitelist.isAllowed(fileName) => ContentForUpload(fileName,  Content.Uri(uri)) }
       _        <- Future.traverse(convs) { id => ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp) }
     } yield ()
 
