@@ -52,6 +52,7 @@ object Calling {
                            clientid:  String,
                            readyh:    ReadyHandler,
                            sendh:     SendHandler,
+                           sftreqh:   SFTRequestHandler,
                            incomingh: IncomingCallHandler,
                            missedh:   MissedCallHandler,
                            answeredh: AnsweredCallHandler,
@@ -101,6 +102,12 @@ object Calling {
 
   @native def wcall_set_network_quality_handler(inst: Handle, wcall_network_quality_h: NetworkQualityChangedHandler, intervalInSeconds: Int, arg: Pointer): Int
 
+  @native def wcall_set_req_clients_handler(inst: Handle,  wcall_req_clients_h: ClientsRequestHandler): Unit
+
+  @native def wcall_set_clients_for_conv(inst: Handle, convId: String, clientsJson: String): Int
+
+  @native def wcall_sft_resp(inst: Handle, error: Int, data: Pointer, length: Size_t, ctx: Pointer): Unit
+
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use
      * for calling.
@@ -116,7 +123,7 @@ object Calling {
 
   /* Incoming call */
   trait IncomingCallHandler extends Callback {
-    def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, clientId: String, isVideoCall: Boolean, shouldRing: Boolean, arg: Pointer): Unit
+    def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, clientId: String, isVideoCall: Boolean, shouldRing: Boolean, convType: Int, arg: Pointer): Unit
   }
 
   /* Missed call */
@@ -190,6 +197,14 @@ object Calling {
 
   trait CallConfigRequestHandler extends Callback {
     def onConfigRequest(inst: Handle, arg: Pointer): Int
+  }
+
+  trait ClientsRequestHandler extends Callback {
+    def onClientsRequest(convId: String, arg: Pointer): Unit
+  }
+
+  trait SFTRequestHandler extends Callback {
+    def onSFTRequest(ctx: Pointer, url: String, data: Pointer, length: Size_t, arg: Pointer): Int
   }
 
 }
