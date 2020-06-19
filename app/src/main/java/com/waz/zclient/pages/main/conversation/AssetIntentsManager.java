@@ -26,6 +26,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.webkit.MimeTypeMap;
+
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
@@ -36,12 +38,13 @@ import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.Intents;
 import com.waz.zclient.core.logging.Logger;
+import com.waz.zclient.shared.assets.FileWhitelist;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.Locale;
+import java.util.*;
 
 public class AssetIntentsManager {
     private static final String INTENT_GALLERY_TYPE = "image/*";
@@ -60,19 +63,37 @@ public class AssetIntentsManager {
         this.callback = callback;
     }
 
-    @SuppressLint("WrongConstant")
     private void openDocument(String mimeType, IntentType tpe, boolean allowMultiple) {
+        openDocument(Collections.singletonList(mimeType), tpe, allowMultiple);
+    }
+
+    @SuppressLint("WrongConstant")
+    private void openDocument(List<String> mimeTypes, IntentType tpe, boolean allowMultiple) {
+        String mainMimeType = "*/*";
+        List<String> extraMimeTypes = Collections.emptyList();
+        if (!mimeTypes.isEmpty()) {
+            mainMimeType = mimeTypes.get(0);
+            if (mimeTypes.size() > 1) {
+                extraMimeTypes = mimeTypes.subList(1, mimeTypes.size());
+            }
+        }
         if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             // trying to load file from testing gallery,
             // this is needed because we are not able to override DocumentsUI on some android versions.
-            Intent intent = new Intent("com.wire.testing.GET_DOCUMENT").setType(mimeType);
+            Intent intent = new Intent("com.wire.testing.GET_DOCUMENT").setType(mainMimeType);
+            if (!extraMimeTypes.isEmpty()) {
+                intent.putExtra(Intent.EXTRA_MIME_TYPES, extraMimeTypes.toArray());
+            }
             if (!context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL).isEmpty()) {
                 callback.openIntent(intent, tpe);
                 return;
             }
             Logger.info(TAG, "Did not resolve testing gallery for intent:" + intent.toString());
         }
-        Intent documentIntent = new Intent(openDocumentAction()).setType(mimeType).addCategory(Intent.CATEGORY_OPENABLE);
+        Intent documentIntent = new Intent(openDocumentAction()).setType(mainMimeType).addCategory(Intent.CATEGORY_OPENABLE);
+        if (!extraMimeTypes.isEmpty()) {
+            documentIntent.putExtra(Intent.EXTRA_MIME_TYPES, extraMimeTypes.toArray());
+        }
         if (allowMultiple) {
             documentIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
@@ -80,7 +101,22 @@ public class AssetIntentsManager {
     }
 
     public void openFileSharing() {
-        openDocument("*/*", IntentType.FILE_SHARING, true);
+        FileWhitelist whitelist = new FileWhitelist();
+        List<String> mimeTypes = new ArrayList<>();
+        if (!whitelist.getEnabled()) {
+            mimeTypes.add("*/*");
+        } else {
+            for (String ext: whitelist.getExtensions()){
+                String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+                if (mimeType != null) {
+                    mimeTypes.add(mimeType);
+                } else {
+                    Logger.warn(TAG, "No mime type found for extension: " + ext);
+                    mimeTypes.add("application/" + ext);
+                }
+            }
+        }
+        openDocument(mimeTypes, IntentType.FILE_SHARING, true);
     }
 
     public void openBackupImport() {

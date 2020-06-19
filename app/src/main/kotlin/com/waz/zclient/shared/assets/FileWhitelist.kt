@@ -4,19 +4,22 @@ import com.waz.zclient.BuildConfig
 import java.util.*
 
 class FileWhitelist {
-    private val enabled: Boolean
-    private val list: List<String>
-
-    constructor(enabled: Boolean, listStr: String) {
-        this.enabled = enabled
-        list = if (enabled) listStr.split(",").map { it.trim() } else emptyList()
-    }
+    val enabled: Boolean
+    val extensions: Set<String>
 
     constructor(): this(BuildConfig.ENABLE_FILE_WHITELIST, BuildConfig.FILE_WHITELIST)
+    constructor(enabled: Boolean, listStr: String) {
+        this.enabled = enabled
+        this.extensions =
+            if (enabled)
+                listStr.split(",").map { it.trim().toLowerCase(Locale.ROOT) }.toSet()
+            else
+                emptySet()
+    }
 
     fun isAllowed(fileName: String): Boolean =
         if (enabled)
-            list.contains(fileName.split(".").last().trim().toLowerCase(Locale.ROOT))
+            extensions.contains(fileName.split(".").last().trim().toLowerCase(Locale.ROOT))
         else
             true
 }

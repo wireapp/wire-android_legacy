@@ -69,8 +69,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val accentColorController = inject[AccentColorController]
   private lazy val selfId                = inject[Signal[UserId]]
 
-  private lazy val fileWhitelist = new FileWhitelist()
-
   val DefaultDeletedName: Name = Name(getString(R.string.default_deleted_username))
 
   private var lastConvId = Option.empty[ConvId]
@@ -286,7 +284,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
                        exp:      Option[Option[FiniteDuration]],
                        convs:    Seq[ConvId] = Seq()): Future[Option[MessageData]] =
     Future.fromTry(uriHelper.extractFileName(uri)).flatMap {
-      case fileName if fileWhitelist.isAllowed(fileName) =>
+      case fileName if new FileWhitelist().isAllowed(fileName) =>
         val content = ContentForUpload(fileName,  Content.Uri(uri))
         if (convs.isEmpty) sendAssetMessage(content, activity, exp)
         else sendAssetMessage(convs, content, activity, exp).map(_.head)
@@ -300,11 +298,12 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
                        exp:      Option[Option[FiniteDuration]],
                        convs:    Seq[ConvId]): Future[Unit] =
     for {
-      ui       <- convsUi.head
-      color    <- accentColorController.accentColor.head
-      names    <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(uri -> _)) }
-      contents =  names.collect { case (uri, fileName) if fileWhitelist.isAllowed(fileName) => ContentForUpload(fileName,  Content.Uri(uri)) }
-      _        <- Future.traverse(convs) { id => ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp) }
+      ui        <- convsUi.head
+      color     <- accentColorController.accentColor.head
+      names     <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(uri -> _)) }
+      whitelist =  new FileWhitelist()
+      contents  =  names.collect { case (uri, name) if whitelist.isAllowed(name) => ContentForUpload(name,  Content.Uri(uri)) }
+      _         <- Future.traverse(convs) { id => ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp) }
     } yield ()
 
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =

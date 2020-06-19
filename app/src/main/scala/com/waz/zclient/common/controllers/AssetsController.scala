@@ -80,8 +80,6 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   lazy val imageNotifications: ImageNotificationsController = inject[ImageNotificationsController]
   private lazy val externalFileSharing = inject[ExternalFileSharing]
 
-  private lazy val fileWhitelist = new FileWhitelist()
-
   //TODO make a preference controller for handling UI preferences in conjunction with SE preferences
   val downloadsAlwaysEnabled =
     zms.flatMap(_.userPrefs.preference(DownloadImagesAlways).signal).disableAutowiring()
@@ -185,7 +183,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def openFile(idGeneral: GeneralAssetId): Unit = idGeneral match {
     case id: AssetId =>
       assetForSharing(id).foreach {
-        case AssetForShare(asset, file) if fileWhitelist.isAllowed(file.getName) =>
+        case AssetForShare(asset, file) if new FileWhitelist().isAllowed(file.getName) =>
           asset.details match {
             case _: Video =>
               context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
@@ -262,7 +260,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveImageToGallery(asset: Asset): Unit =
     saveAssetContentToFile(asset, createWireImageDirectory()).onComplete {
-      case Success(file) if fileWhitelist.isAllowed(file.getName) =>
+      case Success(file) if new FileWhitelist().isAllowed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
         showToast(R.string.message_bottom_menu_action_save_ok)
@@ -278,7 +276,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveToDownloads(asset: Asset): Unit =
     saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
-      case Success(file) if fileWhitelist.isAllowed(file.getName) =>
+      case Success(file) if new FileWhitelist().isAllowed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
         downloadManager.addCompletedDownload(
