@@ -22,7 +22,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.content.{ConversationStorage, MembersStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
+import com.waz.log.LogSE.{error, _}
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.conversation.ConversationsService
@@ -231,8 +231,11 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       Some(conv) <- convStorage.get(convId)
       message = OtrMessage(selfClientId, EncryptedContent.Empty, nativePush = false)
       response <- msgClient.postMessage(conv.remoteId, message, ignoreMissing = false).future
-    } yield {
-      response.fold(identity, _.missing)
+    } yield response match {
+      case Left(error) =>
+        Left(error)
+      case Right(messageResponse) =>
+        Right(messageResponse.missing)
     }
   }
 
