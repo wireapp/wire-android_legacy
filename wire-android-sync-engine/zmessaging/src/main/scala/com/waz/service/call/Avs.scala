@@ -48,6 +48,7 @@ trait Avs {
   def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
   def setCallMuted(wCall: WCall, muted: Boolean): Unit
   def setProxy(host: String, port: Int): Unit
+  def onClientsRequest(wCall: WCall, convId: RConvId, userClients: Map[UserId, Seq[ClientId]]): Unit
 }
 
 /**
@@ -178,8 +179,9 @@ class AvsImpl() extends Avs with DerivedLogTag {
       Calling.wcall_set_network_quality_handler(wCall, networkQualityHandler, intervalInSeconds = 5, arg = null)
 
       val clientsRequestHandler = new ClientsRequestHandler {
-        // TODO: Fetch list of clients in the conversation
-        override def onClientsRequest(convId: String, arg: Pointer): Unit = Unit
+        override def onClientsRequest(convId: String, arg: Pointer): Unit = {
+          cs.onClientsRequest(ConvId(convId))
+        }
       }
 
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)
@@ -234,6 +236,22 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
   override def setProxy(host: String, port: Int): Unit =
     withAvs(wcall_set_proxy(host, port))
+
+  override def onClientsRequest(wCall: WCall, convId: RConvId, userClients: Map[UserId, Seq[ClientId]]): Unit = {
+    import ClientListEncoder._
+
+    val clients = userClients.flatMap { pair =>
+      val (userId, clientIds) = pair
+      clientIds.map { clientId =>
+        Client(userId.str, clientId.str)
+      }
+    }
+
+    val clientList  = ClientList(clients.toSeq)
+    val json = encode(clientList)
+    withAvs(wcall_set_clients_for_conv(wCall, convId.str, json))
+  }
+
 }
 
 object Avs extends DerivedLogTag {
@@ -364,4 +382,18 @@ object Avs extends DerivedLogTag {
     def decode(json: String): Option[AvsParticipantsChange] =
       parser.decode(json)(decoder).right.toOption
   }
+
+  object ClientListEncoder extends CirceJSONSupport {
+
+    import io.circe.Encoder
+
+    case class ClientList(clients: Seq[Client])
+    case class Client(userid: String, clientid: String)
+
+    private lazy val encoder: Encoder[ClientList] = Encoder.apply
+
+    def encode(clientList: ClientList): String = encoder(clientList).toString
+
+  }
+
 }
