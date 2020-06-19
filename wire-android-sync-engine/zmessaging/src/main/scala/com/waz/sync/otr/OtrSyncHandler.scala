@@ -52,6 +52,7 @@ trait OtrSyncHandler {
                        previous:   EncryptedContent = EncryptedContent.Empty,
                        recipients: Option[Set[UserId]] = None
                       ): Future[Either[ErrorResponse, RemoteInstant]]
+  def postClientDiscoveryMessage(convId: ConvId): Future[Either[ErrorResponse, Map[UserId, Seq[ClientId]]]]
 }
 
 class OtrSyncHandlerImpl(teamId:             Option[TeamId],
@@ -224,6 +225,18 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         }
     }
   }
+
+  override def postClientDiscoveryMessage(convId: ConvId): Future[Either[ErrorResponse, Map[UserId, Seq[ClientId]]]] = {
+    for {
+      _ <- push.waitProcessing
+      Some(conv) <- convStorage.get(convId)
+      message = OtrMessage(selfClientId, EncryptedContent.Empty, nativePush = false)
+      response <- msgClient.postMessage(conv.remoteId, message, ignoreMissing = false).future
+    } yield {
+      response.right.map(_.missing)
+    }
+  }
+
 }
 
 object OtrSyncHandler {
