@@ -179,9 +179,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       Calling.wcall_set_network_quality_handler(wCall, networkQualityHandler, intervalInSeconds = 5, arg = null)
 
       val clientsRequestHandler = new ClientsRequestHandler {
-        override def onClientsRequest(convId: String, arg: Pointer): Unit = {
-          cs.onClientsRequest(ConvId(convId))
-        }
+        override def onClientsRequest(convId: String, arg: Pointer): Unit = cs.onClientsRequest(ConvId(convId))
       }
 
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)
@@ -240,15 +238,13 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def onClientsRequest(wCall: WCall, convId: RConvId, userClients: Map[UserId, Seq[ClientId]]): Unit = {
     import ClientListEncoder._
 
-    val clients = userClients.flatMap { pair =>
-      val (userId, clientIds) = pair
+    val clients = userClients.flatMap { case (userId, clientIds) =>
       clientIds.map { clientId =>
         Client(userId.str, clientId.str)
       }
     }
 
-    val clientList  = ClientList(clients.toSeq)
-    val json = encode(clientList)
+    val json = encode(ClientList(clients.toSeq))
     withAvs(wcall_set_clients_for_conv(wCall, convId.str, json))
   }
 
