@@ -232,7 +232,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       message = OtrMessage(selfClientId, EncryptedContent.Empty, nativePush = false)
       response <- msgClient.postMessage(conv.remoteId, message, ignoreMissing = false).future
     } yield {
-      response.right.map(_.missing)
+      response.fold(identity, _.missing)
     }
   }
 
