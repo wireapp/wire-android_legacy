@@ -45,7 +45,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.shared.assets.FileWhitelist
 import com.waz.zclient.utils.Callback
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -284,7 +284,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
                        exp:      Option[Option[FiniteDuration]],
                        convs:    Seq[ConvId] = Seq()): Future[Option[MessageData]] =
     Future.fromTry(uriHelper.extractFileName(uri)).flatMap {
-      case fileName if new FileWhitelist().isAllowed(fileName) =>
+      case fileName if !BuildConfig.FILE_WHITELIST_ENABLED || new FileWhitelist().isWhiteListed(fileName) =>
         val content = ContentForUpload(fileName,  Content.Uri(uri))
         if (convs.isEmpty) sendAssetMessage(content, activity, exp)
         else sendAssetMessage(convs, content, activity, exp).map(_.head)
@@ -296,15 +296,18 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def sendAssetMessages(uris:    Seq[URI],
                        activity: Activity,
                        exp:      Option[Option[FiniteDuration]],
-                       convs:    Seq[ConvId]): Future[Unit] =
+                       convs:    Seq[ConvId]): Future[Unit] = {
+    lazy val whitelist = new FileWhitelist()
     for {
       ui        <- convsUi.head
       color     <- accentColorController.accentColor.head
       names     <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(uri -> _)) }
-      whitelist =  new FileWhitelist()
-      contents  =  names.collect { case (uri, name) if whitelist.isAllowed(name) => ContentForUpload(name,  Content.Uri(uri)) }
+      contents  =  names.collect {
+                     case (uri, name) if !BuildConfig.FILE_WHITELIST_ENABLED || whitelist.isWhiteListed(name) => ContentForUpload(name,  Content.Uri(uri))
+                   }
       _         <- Future.traverse(convs) { id => ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp) }
     } yield ()
+  }
 
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendLocationMessage(id, location))

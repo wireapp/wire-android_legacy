@@ -80,7 +80,7 @@ public class AssetIntentsManager {
         if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             // trying to load file from testing gallery,
             // this is needed because we are not able to override DocumentsUI on some android versions.
-            Intent intent = new Intent("com.wire.testing.GET_DOCUMENT").setType(mainMimeType);
+            final Intent intent = new Intent("com.wire.testing.GET_DOCUMENT").setType(mainMimeType);
             if (!extraMimeTypes.isEmpty()) {
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, extraMimeTypes.toArray());
             }
@@ -90,7 +90,7 @@ public class AssetIntentsManager {
             }
             Logger.info(TAG, "Did not resolve testing gallery for intent:" + intent.toString());
         }
-        Intent documentIntent = new Intent(openDocumentAction()).setType(mainMimeType).addCategory(Intent.CATEGORY_OPENABLE);
+        final Intent documentIntent = new Intent(openDocumentAction()).setType(mainMimeType).addCategory(Intent.CATEGORY_OPENABLE);
         if (!extraMimeTypes.isEmpty()) {
             documentIntent.putExtra(Intent.EXTRA_MIME_TYPES, extraMimeTypes.toArray());
         }
@@ -101,13 +101,13 @@ public class AssetIntentsManager {
     }
 
     public void openFileSharing() {
-        FileWhitelist whitelist = new FileWhitelist();
-        List<String> mimeTypes = new ArrayList<>();
-        if (!whitelist.getEnabled()) {
+        final FileWhitelist whitelist = new FileWhitelist();
+        final List<String> mimeTypes = new ArrayList<>();
+        if (!BuildConfig.FILE_WHITELIST_ENABLED) {
             mimeTypes.add("*/*");
         } else {
-            for (String ext: whitelist.getExtensions()){
-                String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+            for (final String ext: whitelist.getExtensions()){
+                final String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
                 if (mimeType != null) {
                     mimeTypes.add(mimeType);
                 } else {

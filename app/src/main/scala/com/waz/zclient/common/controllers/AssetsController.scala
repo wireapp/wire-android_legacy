@@ -52,7 +52,7 @@ import com.waz.zclient.notifications.controllers.ImageNotificationsController
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ExternalFileSharing
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import com.waz.znet2.http.HttpClient.Progress
 import org.threeten.bp.Duration
 
@@ -183,7 +183,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def openFile(idGeneral: GeneralAssetId): Unit = idGeneral match {
     case id: AssetId =>
       assetForSharing(id).foreach {
-        case AssetForShare(asset, file) if new FileWhitelist().isAllowed(file.getName) =>
+        case AssetForShare(asset, file) if !BuildConfig.FILE_WHITELIST_ENABLED || new FileWhitelist().isWhiteListed(file.getName) =>
           asset.details match {
             case _: Video =>
               context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
@@ -260,7 +260,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveImageToGallery(asset: Asset): Unit =
     saveAssetContentToFile(asset, createWireImageDirectory()).onComplete {
-      case Success(file) if new FileWhitelist().isAllowed(file.getName) =>
+      case Success(file) if !BuildConfig.FILE_WHITELIST_ENABLED || new FileWhitelist().isWhiteListed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
         showToast(R.string.message_bottom_menu_action_save_ok)
@@ -276,7 +276,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveToDownloads(asset: Asset): Unit =
     saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
-      case Success(file) if new FileWhitelist().isAllowed(file.getName) =>
+      case Success(file) if !BuildConfig.FILE_WHITELIST_ENABLED || new FileWhitelist().isWhiteListed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
         downloadManager.addCompletedDownload(

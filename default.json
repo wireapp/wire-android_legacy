@@ -41,6 +41,6 @@
   "developer_features_enabled": false,
   "logging_enabled": false,
   "safe_logging": false,
-  "enable_file_whitelist": false,
+  "file_whitelist_enabled": false,
   "file_whitelist": ""
 }

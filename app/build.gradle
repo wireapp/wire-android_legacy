@@ -137,7 +137,7 @@ android {
         buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    "$buildtimeConfiguration.configuration.developer_features_enabled"
         buildConfigField 'boolean', 'LOGGING_ENABLED',               "$buildtimeConfiguration.configuration.logging_enabled"
         buildConfigField 'boolean', 'SAFE_LOGGING',                  "$buildtimeConfiguration.configuration.safe_logging"
-        buildConfigField 'boolean', 'ENABLE_FILE_WHITELIST',         "$buildtimeConfiguration.configuration.enable_file_whitelist"
+        buildConfigField 'boolean', 'FILE_WHITELIST_ENABLED',        "$buildtimeConfiguration.configuration.file_whitelist_enabled"
         buildConfigField 'String',  'FILE_WHITELIST',                "\"$buildtimeConfiguration.configuration.file_whitelist\""
 
         //Kotlin Feature Flags
