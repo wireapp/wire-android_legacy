@@ -228,7 +228,6 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 
   override def postClientDiscoveryMessage(convId: ConvId): Future[Either[ErrorResponse, Map[UserId, Seq[ClientId]]]] = {
     for {
-      _ <- push.waitProcessing
       Some(conv) <- convStorage.get(convId)
       message = OtrMessage(selfClientId, EncryptedContent.Empty, nativePush = false)
       response <- msgClient.postMessage(conv.remoteId, message, ignoreMissing = false).future
