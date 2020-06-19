@@ -83,32 +83,34 @@ class AvsSpec extends AndroidFreeSpec with DerivedLogTag  {
     val result = encode(clientList)
 
     // Then
-    result shouldEqual
+    minify(result) shouldEqual minify(
       """
         |{
         |  "clients" : [
         |    {
         |      "userid" : "user1",
-        |      "clientid : "client1"
+        |      "clientid" : "client1"
         |    },
         |    {
         |      "userid" : "user1",
-        |      "clientid : "client2"
+        |      "clientid" : "client2"
         |    },
         |    {
         |      "userid" : "user2",
-        |      "clientid : "client1"
+        |      "clientid" : "client1"
         |    },
         |    {
         |      "userid" : "user3",
-        |      "clientid : "client1"
+        |      "clientid" : "client1"
         |    },
         |    {
         |      "userid" : "user3",
-        |      "clientid : "client2"
+        |      "clientid" : "client2"
         |    }
         |  ]
-        |}""".stripMargin
+        |}""".stripMargin)
   }
+
+  private def minify(text: String): String = text.replaceAll("\\s", "")
 
 }
