@@ -200,7 +200,7 @@ object Calling {
   }
 
   trait ClientsRequestHandler extends Callback {
-    def onClientsRequest(convId: String, arg: Pointer): Unit
+    def onClientsRequest(inst: Handle, convId: String, arg: Pointer): Unit
   }
 
   trait SFTRequestHandler extends Callback {
