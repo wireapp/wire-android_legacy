@@ -36,7 +36,6 @@ import com.waz.service._
 import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsCallError, AvsClosedReason, NetworkQuality, VideoState, WCall}
-import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallingService.GlobalCallProfile
@@ -214,6 +213,15 @@ class CallingServiceImpl(val accountId:       UserId,
   def onSend(ctx: Pointer, convId: RConvId, userId: UserId, clientId: ClientId, msg: String): Future[Unit] =
     withConv(convId) { (_, conv) =>
       sendCallMessage(conv.id, GenericMessage(Uid(), GenericContent.Calling(msg)), ctx)
+    }
+
+  def onSftRequest(ctx: Pointer, url: String, data: String): Unit =
+    callingClient.connectToSft(url, data).foreach {
+      case Left(error) =>
+        error(l"Could not connect to sft server", error)
+        wCall.foreach(avs.onSftResponse(_, None, ctx))
+      case Right(responseData) =>
+        wCall.foreach(avs.onSftResponse(_, Some(responseData), ctx))
     }
 
   /**

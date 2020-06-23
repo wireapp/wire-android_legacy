@@ -106,7 +106,7 @@ object Calling {
 
   @native def wcall_set_clients_for_conv(inst: Handle, convId: String, clientsJson: String): Int
 
-  @native def wcall_sft_resp(inst: Handle, error: Int, data: Pointer, length: Size_t, ctx: Pointer): Unit
+  @native def wcall_sft_resp(inst: Handle, error: Int, data: Array[Byte], length: Int, ctx: Pointer): Unit
 
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use
