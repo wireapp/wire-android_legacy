@@ -76,6 +76,8 @@ trait ConversationsUiService {
   def setConversationMuted(id: ConvId, muted: MuteSet): Future[Option[ConversationData]]
   def setConversationName(id: ConvId, name: Name): Future[Option[ConversationData]]
 
+  def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]]
+
   def addConversationMembers(conv: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]]
   def removeConversationMember(conv: ConvId, user: UserId): Future[Option[SyncId]]
 
@@ -278,6 +280,9 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
         CancellableFuture.successful(None)
     }
   }
+
+  override def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]]
+    = messages.addRestrictedFileMessage(convId, from, extension)
 
   override def addConversationMembers(conv: ConvId, users: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
     (for {

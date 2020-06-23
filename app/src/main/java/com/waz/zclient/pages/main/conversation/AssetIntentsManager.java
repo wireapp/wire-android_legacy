@@ -31,6 +31,7 @@ import android.webkit.MimeTypeMap;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
+import com.waz.service.ZMessaging;
 import com.waz.utils.IoUtils;
 import com.waz.utils.wrappers.AndroidURI;
 import com.waz.utils.wrappers.AndroidURIUtil;
@@ -38,7 +39,7 @@ import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.Intents;
 import com.waz.zclient.core.logging.Logger;
-import com.waz.zclient.shared.assets.FileWhitelist;
+import com.waz.service.assets.FileWhitelist;
 
 import java.io.File;
 import java.io.IOException;
@@ -104,9 +105,9 @@ public class AssetIntentsManager {
     }
 
     public void openFileSharing() {
-        final FileWhitelist whitelist = new FileWhitelist();
         final Set<String> mimeTypes = new HashSet<>();
-        if (!BuildConfig.FILE_WHITELIST_ENABLED) {
+        FileWhitelist whitelist = ZMessaging.currentGlobal().fileWhitelist();
+        if (!whitelist.getEnabled()) {
             mimeTypes.add(INTENT_ALL_TYPES);
         } else {
             for (final String ext: whitelist.getExtensions()){

@@ -253,7 +253,8 @@ object MessageView extends DerivedLogTag {
              WirelessLink |
              ConversationStart |
              MessageTimer |
-             ReadReceipts => SystemLike
+             ReadReceipts |
+             RestrictedFile => SystemLike
         case MsgPart.MissedCall => MissedCall
         case _ => Other
       }

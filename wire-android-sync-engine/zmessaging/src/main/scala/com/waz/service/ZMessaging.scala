@@ -379,11 +379,13 @@ object ZMessaging extends DerivedLogTag { self =>
   private var syncRequests:    SyncRequestService = _
   private var notificationsUi: NotificationUiController = _
   private var assets2Module:   Assets2Module = _
+  private var fileWhitelist:   FileWhitelist = _
 
   //var for tests - and set here so that it is globally available without the need for DI
   var clock = Clock.systemUTC()
 
-  private lazy val _global: GlobalModule = new GlobalModuleImpl(context, backend, httpProxy, prefs, googleApi, syncRequests, notificationsUi)
+  private lazy val _global: GlobalModule =
+    new GlobalModuleImpl(context, backend, httpProxy, prefs, googleApi, syncRequests, notificationsUi, fileWhitelist)
   private lazy val ui: UiModule = new UiModule(_global)
 
   //Try to avoid using these - map from the futures instead.
@@ -407,7 +409,9 @@ object ZMessaging extends DerivedLogTag { self =>
                googleApi:      GoogleApi,
                syncRequests:   SyncRequestService,
                notificationUi: NotificationUiController,
-               assets2:        Assets2Module) = {
+               assets2:        Assets2Module,
+               fileWhitelist:  FileWhitelist
+              ) = {
     Threading.assertUiThread()
 
     if (this.currentUi == null) {
@@ -419,6 +423,8 @@ object ZMessaging extends DerivedLogTag { self =>
       this.syncRequests = syncRequests
       this.notificationsUi = notificationUi
       this.assets2Module = assets2
+      this.fileWhitelist = fileWhitelist
+
       currentUi = ui
       currentGlobal = _global
       currentAccounts = currentGlobal.accountsService

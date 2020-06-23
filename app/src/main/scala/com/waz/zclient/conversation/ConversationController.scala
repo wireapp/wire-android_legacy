@@ -30,7 +30,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.AccountManager
-import com.waz.service.assets.{AssetInput, Content, ContentForUpload, UriHelper}
+import com.waz.service.assets.{AssetInput, Content, ContentForUpload, FileWhitelist, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
@@ -42,10 +42,9 @@ import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.F
 import com.waz.zclient.conversationlist.{ConversationListController, FolderStateController}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.shared.assets.FileWhitelist
 import com.waz.zclient.utils.Callback
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
+import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -284,29 +283,33 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
                        exp:      Option[Option[FiniteDuration]],
                        convs:    Seq[ConvId] = Seq()): Future[Option[MessageData]] =
     Future.fromTry(uriHelper.extractFileName(uri)).flatMap {
-      case fileName if !BuildConfig.FILE_WHITELIST_ENABLED || new FileWhitelist().isWhiteListed(fileName) =>
+      case fileName if inject[FileWhitelist].isWhiteListed(fileName) =>
         val content = ContentForUpload(fileName,  Content.Uri(uri))
         if (convs.isEmpty) sendAssetMessage(content, activity, exp)
         else sendAssetMessage(convs, content, activity, exp).map(_.head)
-      case _ =>
-        showToast(R.string.asset_upload_error__not_found__message) // TODO: change to the correct string
-        Future.successful(None)
+      case fileName =>
+        convsUiwithCurrentConv((ui, id) => ui.addRestrictedFileMessage(id, extension = fileName.split(".").lastOption))
     }
 
   def sendAssetMessages(uris:    Seq[URI],
                        activity: Activity,
                        exp:      Option[Option[FiniteDuration]],
                        convs:    Seq[ConvId]): Future[Unit] = {
-    lazy val whitelist = new FileWhitelist()
+    lazy val whitelist = inject[FileWhitelist]
     for {
       ui        <- convsUi.head
       color     <- accentColorController.accentColor.head
       names     <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(uri -> _)) }
-      contents  =  names.collect {
-                     case (uri, name) if !BuildConfig.FILE_WHITELIST_ENABLED || whitelist.isWhiteListed(name) => ContentForUpload(name,  Content.Uri(uri))
+      (upload, restrict) = names.partition { case (_, name) => whitelist.isWhiteListed(name) }
+      contents  =  upload.map {
+                     case (uri, name) if whitelist.isWhiteListed(name) => ContentForUpload(name,  Content.Uri(uri))
                    }
       _         <- Future.traverse(convs) { id => ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp) }
-    } yield ()
+    } yield
+      if (restrict.nonEmpty) Future.traverse(convs) { id =>
+        Future.traverse(restrict) { case (_, name) => ui.addRestrictedFileMessage(id, extension = name.split(".").lastOption) }
+      }
+      else Future.successful(())
   }
 
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =

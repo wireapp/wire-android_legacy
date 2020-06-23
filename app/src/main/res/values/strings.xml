@@ -227,12 +227,16 @@
     <string name="content__file__status__downloading__size_and_extension">%1$s · %2$s · DOWNLOADING&#8230;</string>
     <string name="content__file__status__download_failed__size_and_extension">%1$s · %2$s · DOWNLOAD FAILED</string>
     <string name="content__file__status__upload_failed__size_and_extension">%1$s · %2$s · UPLOAD FAILED</string>
+    <string name="content__file__status__forbidden">%1$s · %2$s · UPLOAD FAILED</string>
 
     <string name="content__file__action__open">OPEN</string>
     <string name="content__file__action__save">SAVE</string>
     <string name="content__file__action__open__no_app_found">No app found to open this file type</string>
     <string name="content__file__action__save_completed">File successfully saved</string>
     <string name="content__file__action__save_error">Unable to save file</string>
+
+    <string name="file_restrictions__sender_error">Sharing files with the .%1$s extension is not permitted by your organization</string>
+    <string name="file_restrictions__receiver_error">File from %1$s can\'t be opened. _Why?_</string>
 
     <string name="content__location__no_map_placeholder">THE LOCATION WILL APPEAR ON THE MAP WHEN YOU ARE BACK ONLINE.</string>
 

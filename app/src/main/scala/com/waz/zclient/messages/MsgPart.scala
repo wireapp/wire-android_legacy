@@ -49,6 +49,7 @@ object MsgPart {
   case object MessageTimer extends MsgPart
   case object ReadReceipts extends MsgPart
   case object Composite extends MsgPart
+  case object RestrictedFile extends MsgPart
   case object Empty extends MsgPart
   case object Unknown extends MsgPart
 
@@ -93,6 +94,7 @@ object MsgPart {
       case MESSAGE_TIMER => MessageTimer
       case READ_RECEIPTS_ON | READ_RECEIPTS_OFF => if (isOneToOne) Empty else ReadReceipts
       case COMPOSITE => Composite
+      case RESTRICTED_FILE => RestrictedFile
       case _ => Unknown
     }
   }

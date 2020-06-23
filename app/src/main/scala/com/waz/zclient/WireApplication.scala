@@ -42,7 +42,7 @@ import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
-import com.waz.service.assets.{AssetDetailsService, AssetPreviewService, AssetService, AssetStorage, UriHelper}
+import com.waz.service.assets.{AssetDetailsService, AssetPreviewService, AssetService, AssetStorage, FileWhitelist, UriHelper}
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService, ConversationsUiService, FoldersService, SelectedConversationService}
 import com.waz.service.messages.MessagesService
@@ -268,6 +268,7 @@ object WireApplication extends DerivedLogTag {
 
     bind [ClipboardUtils]       to new ClipboardUtils(ctx)
     bind [ExternalFileSharing]  to new ExternalFileSharing(ctx)
+    bind [FileWhitelist]        to new FileWhitelist(BuildConfig.FILE_WHITELIST, BuildConfig.FILE_WHITELIST_ENABLED)
 
     bind [DeepLinkService]      to new DeepLinkService()
 
@@ -438,7 +439,9 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       googleApi,
       null, //TODO: Use sync engine's version for now
       inject[MessageNotificationsController],
-      assets2Module)
+      assets2Module,
+      inject[FileWhitelist]
+    )
 
     val activityLifecycleCallback = inject[ActivityLifecycleCallback]
     // we're unable to check if the callback is already registered - we have to re-register it to be sure

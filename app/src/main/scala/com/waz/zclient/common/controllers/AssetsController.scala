@@ -36,7 +36,7 @@ import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service
 import com.waz.service.ZMessaging
-import com.waz.service.assets.{Asset, AssetService, DownloadAsset, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
+import com.waz.service.assets.{Asset, AssetService, DownloadAsset, FileWhitelist, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
 import com.waz.service.assets.Asset.{Audio, Video}
 import com.waz.service.messages.MessagesService
@@ -52,14 +52,13 @@ import com.waz.zclient.notifications.controllers.ImageNotificationsController
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ExternalFileSharing
-import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
+import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.znet2.http.HttpClient.Progress
 import org.threeten.bp.Duration
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.util.Success
-import com.waz.zclient.shared.assets.FileWhitelist
 
 class AssetsController(implicit context: Context, inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag { controller =>
@@ -183,7 +182,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def openFile(idGeneral: GeneralAssetId): Unit = idGeneral match {
     case id: AssetId =>
       assetForSharing(id).foreach {
-        case AssetForShare(asset, file) if !BuildConfig.FILE_WHITELIST_ENABLED || new FileWhitelist().isWhiteListed(file.getName) =>
+        case AssetForShare(asset, file) if inject[FileWhitelist].isWhiteListed(file.getName) =>
           asset.details match {
             case _: Video =>
               context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
@@ -191,8 +190,11 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
             case _ =>
               showOpenFileDialog(externalFileSharing.getUriForFile(file), asset)
           }
-        case _: AssetForShare =>
-          showToast(R.string.content__file__action__save_error)
+        case AssetForShare(_, file) =>
+          showErrorDialog(
+            getString(R.string.empty_string),
+            getString(R.string.file_restrictions__sender_error, file.getName.split(".").last)
+          )
         case _ =>
           error(l"Asset $id is not for share")
       }
@@ -260,7 +262,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveImageToGallery(asset: Asset): Unit =
     saveAssetContentToFile(asset, createWireImageDirectory()).onComplete {
-      case Success(file) if !BuildConfig.FILE_WHITELIST_ENABLED || new FileWhitelist().isWhiteListed(file.getName) =>
+      case Success(file) if inject[FileWhitelist].isWhiteListed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
         showToast(R.string.message_bottom_menu_action_save_ok)
@@ -276,7 +278,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveToDownloads(asset: Asset): Unit =
     saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
-      case Success(file) if !BuildConfig.FILE_WHITELIST_ENABLED || new FileWhitelist().isWhiteListed(file.getName) =>
+      case Success(file) if inject[FileWhitelist].isWhiteListed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
         downloadManager.addCompletedDownload(

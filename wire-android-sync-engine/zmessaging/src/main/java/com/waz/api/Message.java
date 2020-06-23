@@ -30,7 +30,7 @@ public interface Message extends UiObservable {
     enum Type { //TODO BUTTONS: add new message types here
         TEXT, TEXT_EMOJI_ONLY,
 
-        IMAGE_ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET,
+        IMAGE_ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RESTRICTED_FILE,
 
         KNOCK, MEMBER_JOIN, RICH_MEDIA, LOCATION, RECALLED,
 
