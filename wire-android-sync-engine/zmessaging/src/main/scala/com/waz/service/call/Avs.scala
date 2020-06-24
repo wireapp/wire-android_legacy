@@ -254,7 +254,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
   override def onSftResponse(wCall: WCall, data: Option[Array[Byte]], ctx: Pointer): Unit =
     withAvs {
-      val errorCode = if (data.isDefined) 0 else 1
+      val errorCode = if (data.isDefined) AvsSftError.None else AvsSftError.NoResponseData
       val responseData = data.getOrElse(Array())
       wcall_sft_resp(wCall, errorCode, responseData, responseData.length, ctx)
     }
@@ -275,6 +275,12 @@ object Avs extends DerivedLogTag {
   object AvsCallError {
     val None = 0
     val UnknownProtocol = 1000
+  }
+
+  type AvsSftError = Int
+  object AvsSftError {
+    val None = 0
+    val NoResponseData = 1
   }
 
   /**
