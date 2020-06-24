@@ -69,7 +69,6 @@ class MessageViewFactory extends DerivedLogTag {
         case MessageTimer       => inflate(R.layout.message_msg_timer_changed, parent, false)
         case OtrMessage         => inflate(R.layout.message_otr_part, parent, false)
         case Composite          => inflate(R.layout.message_composite, parent, false)
-        case RestrictedFile    =>  inflate(R.layout.message_restricted_file, parent, false)
         case Reply(Text)        => inflate(R.layout.message_reply_text, parent, false)
         case Reply(Image)       => inflate(R.layout.message_reply_image, parent, false)
         case Reply(Location)    => inflate(R.layout.message_reply_location, parent, false)

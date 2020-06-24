@@ -39,7 +39,7 @@ import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.Intents;
 import com.waz.zclient.core.logging.Logger;
-import com.waz.service.assets.FileWhitelist;
+import com.waz.service.assets.FileRestrictionList;
 
 import java.io.File;
 import java.io.IOException;
@@ -106,11 +106,11 @@ public class AssetIntentsManager {
 
     public void openFileSharing() {
         final Set<String> mimeTypes = new HashSet<>();
-        FileWhitelist whitelist = ZMessaging.currentGlobal().fileWhitelist();
-        if (!whitelist.getEnabled()) {
+        FileRestrictionList fileRestrictions = ZMessaging.currentGlobal().fileRestrictionList();
+        if (!fileRestrictions.getEnabled()) {
             mimeTypes.add(INTENT_ALL_TYPES);
         } else {
-            for (final String ext: whitelist.getExtensions()){
+            for (final String ext: fileRestrictions.getExtensions()){
                 final String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
                 if (mimeType != null) {
                     mimeTypes.add(mimeType);

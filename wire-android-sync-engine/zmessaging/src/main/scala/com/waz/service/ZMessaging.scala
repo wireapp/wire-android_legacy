@@ -59,6 +59,7 @@ import org.threeten.bp.{Clock, Duration, Instant}
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
+import com.waz.log.LogSE._
 
 class ZMessagingFactory(global: GlobalModule) {
 
@@ -372,20 +373,20 @@ object ZMessaging extends DerivedLogTag { self =>
 
   private[waz] var context: Context = _
 
-  private var prefs:           GlobalPreferences = _
-  private var googleApi:       GoogleApi = _
-  private var backend:         BackendConfig = _
-  private var httpProxy:       Option[Proxy] = _
-  private var syncRequests:    SyncRequestService = _
-  private var notificationsUi: NotificationUiController = _
-  private var assets2Module:   Assets2Module = _
-  private var fileWhitelist:   FileWhitelist = _
+  private var prefs:               GlobalPreferences = _
+  private var googleApi:           GoogleApi = _
+  private var backend:             BackendConfig = _
+  private var httpProxy:           Option[Proxy] = _
+  private var syncRequests:        SyncRequestService = _
+  private var notificationsUi:     NotificationUiController = _
+  private var assets2Module:       Assets2Module = _
+  private var fileRestrictionList: FileRestrictionList = _
 
   //var for tests - and set here so that it is globally available without the need for DI
   var clock = Clock.systemUTC()
 
   private lazy val _global: GlobalModule =
-    new GlobalModuleImpl(context, backend, httpProxy, prefs, googleApi, syncRequests, notificationsUi, fileWhitelist)
+    new GlobalModuleImpl(context, backend, httpProxy, prefs, googleApi, syncRequests, notificationsUi, fileRestrictionList)
   private lazy val ui: UiModule = new UiModule(_global)
 
   //Try to avoid using these - map from the futures instead.
@@ -402,15 +403,15 @@ object ZMessaging extends DerivedLogTag { self =>
   def currentBeDrift = beDrift.currentValue.getOrElse(Duration.ZERO)
 
   //TODO - we should probably just request the entire GlobalModule from the UI here
-  def onCreate(context:        Context,
-               beConfig:       BackendConfig,
-               httpProxy:      Option[Proxy],
-               prefs:          GlobalPreferences,
-               googleApi:      GoogleApi,
-               syncRequests:   SyncRequestService,
-               notificationUi: NotificationUiController,
-               assets2:        Assets2Module,
-               fileWhitelist:  FileWhitelist
+  def onCreate(context:             Context,
+               beConfig:            BackendConfig,
+               httpProxy:           Option[Proxy],
+               prefs:               GlobalPreferences,
+               googleApi:           GoogleApi,
+               syncRequests:        SyncRequestService,
+               notificationUi:      NotificationUiController,
+               assets2:             Assets2Module,
+               fileRestrictionList: FileRestrictionList
               ) = {
     Threading.assertUiThread()
 
@@ -423,7 +424,7 @@ object ZMessaging extends DerivedLogTag { self =>
       this.syncRequests = syncRequests
       this.notificationsUi = notificationUi
       this.assets2Module = assets2
-      this.fileWhitelist = fileWhitelist
+      this.fileRestrictionList = fileRestrictionList
 
       currentUi = ui
       currentGlobal = _global

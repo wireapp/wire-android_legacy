@@ -258,7 +258,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     if (DownloadAsset.getStatus(asset) == DownloadAssetStatus.Cancelled) RichMessage.Empty else {
       val tpe = Option(asset.original) match {
         case None                      => UNKNOWN
-        case Some(org) if !globalModule.fileWhitelist.isWhiteListed(Mime(org.mimeType).extension) => RESTRICTED_FILE
+        case Some(org) if !globalModule.fileRestrictionList.isAllowed(Mime(org.mimeType).extension) => RESTRICTED_FILE
         case Some(org) if org.hasVideo => VIDEO_ASSET
         case Some(org) if org.hasAudio => AUDIO_ASSET
         case Some(org) if org.hasImage => IMAGE_ASSET

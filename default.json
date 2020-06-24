@@ -41,6 +41,6 @@
   "developer_features_enabled": false,
   "logging_enabled": false,
   "safe_logging": false,
-  "file_whitelist_enabled": true,
-  "file_whitelist": "pdf, txt, csv, xml, sql, vcf, eml, msg, pst, html, css, doc, docx, rtf, tex, ppt, pps, pptx, key, xls, xlsx, ods, odt, md, jpg, jpeg, gif, png, bmp, ico, svg, tiff, mp3, m4v, mp4, avi,  mov, midi, wmv, vid, zip, 7z, tar, gz, psd, 3gpp, webm, webp, tiff, mpeg3, mpeg, m4a, aac, 3gpp, amr, ogg, flac, wav"
+  "file_restriction_enabled": false,
+  "file_restriction_list":  "3gpp, aac, amr, avi, bmp, css, csv, dib, doc, docx, eml, flac, gif, html, ico, jfif, jpeg, jpg, jpg-large, key, m4a, m4v, md, midi, mkv, mov, mp3, mp4, mpeg, mpeg3, mpg, msg, ods, odt, ogg, pdf, pjp, pjpeg, png, pps, ppt, pptx, psd, pst, rtf, sql, svg, tex, tiff, txt, vcf, vid, wav, webm, webp, wmv, xls, xlsx, xml"
 }

@@ -30,7 +30,7 @@ import com.waz.client.{RegistrationClient, RegistrationClientImpl}
 import com.waz.content._
 import com.waz.log.{LogsService, LogsServiceImpl}
 import com.waz.permissions.PermissionsService
-import com.waz.service.assets.{AudioTranscoder, FileWhitelist, GeneralFileCacheImpl, GlobalRecordAndPlayService}
+import com.waz.service.assets.{AudioTranscoder, FileRestrictionList, GeneralFileCacheImpl, GlobalRecordAndPlayService}
 import com.waz.service.backup.{BackupManager, BackupManagerImpl}
 import com.waz.service.call._
 import com.waz.service.push._
@@ -105,17 +105,17 @@ trait GlobalModule {
   def customBackendClient:      CustomBackendClient
   def httpProxy:                Option[Proxy]
 
-  def fileWhitelist:            FileWhitelist
+  def fileRestrictionList:      FileRestrictionList
 }
 
-class GlobalModuleImpl(val context:         AContext,
-                       val backend:         BackendConfig,
-                       val httpProxy:       Option[Proxy],
-                       val prefs:           GlobalPreferences,
-                       val googleApi:       GoogleApi,
-                       val syncRequests:    SyncRequestService,
-                       val notificationsUi: NotificationUiController,
-                       val fileWhitelist:   FileWhitelist) extends GlobalModule { global =>
+class GlobalModuleImpl(val context:             AContext,
+                       val backend:             BackendConfig,
+                       val httpProxy:           Option[Proxy],
+                       val prefs:               GlobalPreferences,
+                       val googleApi:           GoogleApi,
+                       val syncRequests:        SyncRequestService,
+                       val notificationsUi:     NotificationUiController,
+                       val fileRestrictionList: FileRestrictionList) extends GlobalModule { global =>
 
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
@@ -237,6 +237,6 @@ class EmptyGlobalModule extends GlobalModule {
   override def logsService:              LogsService                                         = ???
   override def customBackendClient:      CustomBackendClient                                 = ???
   override def httpProxy:                Option[Proxy]                                       = ???
-  override def fileWhitelist:            FileWhitelist                                       = ???
+  override def fileRestrictionList:      FileRestrictionList                                 = ???
 }
 

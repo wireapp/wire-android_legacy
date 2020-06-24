@@ -42,7 +42,7 @@ import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
-import com.waz.service.assets.{AssetDetailsService, AssetPreviewService, AssetService, AssetStorage, FileWhitelist, UriHelper}
+import com.waz.service.assets.{AssetDetailsService, AssetPreviewService, AssetService, AssetStorage, FileRestrictionList, UriHelper}
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService, ConversationsUiService, FoldersService, SelectedConversationService}
 import com.waz.service.messages.MessagesService
@@ -268,7 +268,7 @@ object WireApplication extends DerivedLogTag {
 
     bind [ClipboardUtils]       to new ClipboardUtils(ctx)
     bind [ExternalFileSharing]  to new ExternalFileSharing(ctx)
-    bind [FileWhitelist]        to new FileWhitelist(BuildConfig.FILE_WHITELIST, BuildConfig.FILE_WHITELIST_ENABLED)
+    bind [FileRestrictionList]  to new FileRestrictionList(BuildConfig.FILE_RESTRICTION_LIST, BuildConfig.FILE_RESTRICTION_ENABLED)
 
     bind [DeepLinkService]      to new DeepLinkService()
 
@@ -440,7 +440,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       null, //TODO: Use sync engine's version for now
       inject[MessageNotificationsController],
       assets2Module,
-      inject[FileWhitelist]
+      inject[FileRestrictionList]
     )
 
     val activityLifecycleCallback = inject[ActivityLifecycleCallback]

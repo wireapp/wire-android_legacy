@@ -36,7 +36,7 @@ import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service
 import com.waz.service.ZMessaging
-import com.waz.service.assets.{Asset, AssetService, DownloadAsset, FileWhitelist, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
+import com.waz.service.assets.{Asset, AssetService, DownloadAsset, FileRestrictionList, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
 import com.waz.service.assets.Asset.{Audio, Video}
 import com.waz.service.messages.MessagesService
@@ -182,7 +182,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def openFile(idGeneral: GeneralAssetId): Unit = idGeneral match {
     case id: AssetId =>
       assetForSharing(id).foreach {
-        case AssetForShare(asset, file) if inject[FileWhitelist].isWhiteListed(file.getName) =>
+        case AssetForShare(asset, file) if inject[FileRestrictionList].isAllowed(file.getName) =>
           asset.details match {
             case _: Video =>
               context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
@@ -193,7 +193,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
         case AssetForShare(_, file) =>
           showErrorDialog(
             getString(R.string.empty_string),
-            getString(R.string.file_restrictions__sender_error, file.getName.split(".").last)
+            getString(R.string.file_restrictions__sender_error, file.getName.split('.').last)
           )
         case _ =>
           error(l"Asset $id is not for share")
@@ -262,7 +262,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveImageToGallery(asset: Asset): Unit =
     saveAssetContentToFile(asset, createWireImageDirectory()).onComplete {
-      case Success(file) if inject[FileWhitelist].isWhiteListed(file.getName) =>
+      case Success(file) if inject[FileRestrictionList].isAllowed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
         showToast(R.string.message_bottom_menu_action_save_ok)
@@ -278,7 +278,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveToDownloads(asset: Asset): Unit =
     saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
-      case Success(file) if inject[FileWhitelist].isWhiteListed(file.getName) =>
+      case Success(file) if inject[FileRestrictionList].isAllowed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
         downloadManager.addCompletedDownload(

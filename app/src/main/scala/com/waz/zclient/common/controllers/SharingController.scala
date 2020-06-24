@@ -20,6 +20,7 @@ package com.waz.zclient.common.controllers
 import android.app.Activity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConvId
+import com.waz.service.assets.{FileRestrictionList, UriHelper}
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
@@ -29,6 +30,7 @@ import com.waz.zclient.{Injectable, Injector, WireContext}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
+import scala.util.Success
 
 class SharingController(implicit injector: Injector, wContext: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {
@@ -38,8 +40,9 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   private implicit val dispatcher = new SerialDispatchQueue(name = "SharingController")
 
   val sharableContent     = Signal(Option.empty[SharableContent])
-  val targetConvs         = Signal(Seq.empty[ConvId])
   val ephemeralExpiration = Signal(Option.empty[FiniteDuration])
+
+  private val targetConvs = Signal(Seq.empty[ConvId])
 
   def onContentShared(activity: Activity, convs: Seq[ConvId]): Unit = {
     targetConvs ! convs
@@ -47,15 +50,22 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   }
 
   def sendContent(activity: Activity): Future[Seq[ConvId]] = {
-    def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) =
+    def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]): Future[Unit] =
       content match {
         case NewContent     =>
           inject[ConversationController].switchConversation(convs.head)
         case TextContent(t) =>
-          inject[ConversationController].sendTextMessage(convs, t, Nil, None, Some(expiration))
+          inject[ConversationController].sendTextMessage(convs, t, Nil, None, Some(expiration)).map(_ => ())
         case uriContent     =>
-          val uris = uriContent.uris.map(URIWrapper.toJava)
-          inject[ConversationController].sendAssetMessages(uris, activity, Some(expiration), convs)
+          val uriHelper = inject[UriHelper]
+          val fileRestrictionList = inject[FileRestrictionList]
+          val allowedUris = uriContent.uris.map(URIWrapper.toJava).map(uri => uri -> uriHelper.extractFileName(uri)).collect {
+            case (uri, Success(fileName)) if fileRestrictionList.isAllowed(fileName) => uri
+          }
+          if (allowedUris.nonEmpty)
+            inject[ConversationController].sendAssetMessages(allowedUris, activity, Some(expiration), convs)
+          else
+            Future.successful(Nil)
       }
 
     for {
