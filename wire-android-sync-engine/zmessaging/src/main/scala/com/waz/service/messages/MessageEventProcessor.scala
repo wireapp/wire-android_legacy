@@ -24,7 +24,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.{GenericContent, _}
-import com.waz.service.{EventScheduler, GlobalModule}
+import com.waz.service.{EventScheduler, GlobalModule, ZMessaging}
 import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.threading.Threading
@@ -43,7 +43,7 @@ class MessageEventProcessor(selfUserId:           UserId,
                             convsService:         ConversationsService,
                             convs:                ConversationsContentUpdater,
                             downloadAssetStorage: DownloadAssetStorage,
-                            globalModule:         GlobalModule
+                            global:               GlobalModule
                            ) extends DerivedLogTag {
   import MessageEventProcessor._
   import Threading.Implicits.Background
@@ -258,7 +258,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     if (DownloadAsset.getStatus(asset) == DownloadAssetStatus.Cancelled) RichMessage.Empty else {
       val tpe = Option(asset.original) match {
         case None                      => UNKNOWN
-        case Some(org) if !globalModule.fileRestrictionList.isAllowed(Mime(org.mimeType).extension) => RESTRICTED_FILE
+        case Some(org) if !global.fileRestrictionList.isAllowed(Mime(org.mimeType).extension) => RESTRICTED_FILE
         case Some(org) if org.hasVideo => VIDEO_ASSET
         case Some(org) if org.hasAudio => AUDIO_ASSET
         case Some(org) if org.hasImage => IMAGE_ASSET

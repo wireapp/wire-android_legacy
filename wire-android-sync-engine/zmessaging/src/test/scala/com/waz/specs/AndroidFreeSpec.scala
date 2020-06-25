@@ -27,6 +27,7 @@ import com.waz.model.UserId
 import com.waz.model.otr.ClientId
 import com.waz.service.AccountsService.{AccountState, InForeground, LoggedOut}
 import com.waz.service._
+import com.waz.service.assets.FileRestrictionList
 import com.waz.service.tracking.TrackingService
 import com.waz.testutils.TestClock
 import com.waz.threading.Threading.{Background, IO, ImageDispatcher, Ui}
@@ -100,6 +101,8 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
 
   ZMessaging.currentGlobal = new EmptyGlobalModule {
     override def trackingService = tracking
+
+    override def fileRestrictionList: FileRestrictionList = new FileRestrictionList("", false)
   }
   ZMessaging.globalReady = Promise[GlobalModule]()
   ZMessaging.globalReady.success(ZMessaging.currentGlobal)
