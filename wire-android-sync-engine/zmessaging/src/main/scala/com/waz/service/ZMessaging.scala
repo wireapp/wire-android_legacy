@@ -59,7 +59,6 @@ import org.threeten.bp.{Clock, Duration, Instant}
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
-import com.waz.log.LogSE._
 
 class ZMessagingFactory(global: GlobalModule) {
 

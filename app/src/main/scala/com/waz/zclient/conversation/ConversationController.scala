@@ -286,10 +286,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     Future.fromTry(uriHelper.extractFileName(uri)).flatMap {
       case fileName if fileRestrictions.isAllowed(fileName) =>
         val content = ContentForUpload(fileName,  Content.Uri(uri))
-        if (convs.isEmpty)
-          sendAssetMessage(content, activity, exp).map(_ => ())
-        else
-          sendAssetMessage(convs, content, activity, exp).map(_ => ())
+        if (convs.isEmpty) sendAssetMessage(content, activity, exp).map(_ => ())
+        else sendAssetMessage(convs, content, activity, exp).map(_ => ())
       case fileName =>
         convsUiwithCurrentConv((ui, id) =>
           ui.addRestrictedFileMessage(id, None, Some(fileName.split('.').last))

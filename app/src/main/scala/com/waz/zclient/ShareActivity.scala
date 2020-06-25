@@ -183,8 +183,8 @@ object ShareActivity extends DerivedLogTag {
               getDocumentPath(context, contentUri)
             case _ =>
               val split = docId.split(":")
-              if ("primary".equalsIgnoreCase(split(0))) Some(fromFile(new File(Environment.getExternalStorageDirectory + "/" + split(1))))
-              else if ("raw".equalsIgnoreCase(split(0))) Some(fromFile(new File(Environment.getExternalStorageDirectory + "/" + split(1))))
+              if ("primary".equalsIgnoreCase(split(0))) Some(fromFile(new File(Environment.getExternalStorageDirectory, split(1))))
+              else if ("raw".equalsIgnoreCase(split(0))) Some(fromFile(new File(Environment.getExternalStorageDirectory, split(1))))
               else None
           }
         case "com.android.providers.media.documents" =>

@@ -227,7 +227,6 @@
     <string name="content__file__status__downloading__size_and_extension">%1$s · %2$s · DOWNLOADING&#8230;</string>
     <string name="content__file__status__download_failed__size_and_extension">%1$s · %2$s · DOWNLOAD FAILED</string>
     <string name="content__file__status__upload_failed__size_and_extension">%1$s · %2$s · UPLOAD FAILED</string>
-    <string name="content__file__status__forbidden">%1$s · %2$s · UPLOAD FAILED</string>
 
     <string name="content__file__action__open">OPEN</string>
     <string name="content__file__action__save">SAVE</string>

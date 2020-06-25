@@ -17,11 +17,8 @@ class FileRestrictionList(
 
     fun isAllowed(fileName: String): Boolean =
         if (enabled)
-            extensions.contains(getExtension(fileName))
+            extensions.contains(fileName.split('.').last().trim().toLowerCase(Locale.ROOT))
         else
             true
-
-    private fun getExtension(fileName: String): String =
-        fileName.split('.').last().trim().toLowerCase(Locale.ROOT)
 }
 
