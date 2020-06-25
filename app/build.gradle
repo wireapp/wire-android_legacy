@@ -137,6 +137,8 @@ android {
         buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    "$buildtimeConfiguration.configuration.developer_features_enabled"
         buildConfigField 'boolean', 'LOGGING_ENABLED',               "$buildtimeConfiguration.configuration.logging_enabled"
         buildConfigField 'boolean', 'SAFE_LOGGING',                  "$buildtimeConfiguration.configuration.safe_logging"
+        buildConfigField 'boolean', 'FILE_RESTRICTION_ENABLED',      "$buildtimeConfiguration.configuration.file_restriction_enabled"
+        buildConfigField 'String',  'FILE_RESTRICTION_LIST',         "\"$buildtimeConfiguration.configuration.file_restriction_list\""
 
         //Kotlin Feature Flags
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"

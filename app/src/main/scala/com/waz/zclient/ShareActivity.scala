@@ -30,84 +30,105 @@ import androidx.core.app.ShareCompat
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
+import com.waz.service.assets.{FileRestrictionList, UriHelper}
 import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.waz.utils.wrappers.AndroidURI
 import com.waz.utils.wrappers.AndroidURIUtil.fromFile
-import com.waz.zclient.Intents.RichIntent
+import com.waz.utils.wrappers.{AndroidURI, URI => URIWrapper}
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, NewContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.sharing.ConversationSelectorFragment
+import com.waz.zclient.utils.ContextUtils.showErrorDialog
 import com.waz.zclient.views.menus.ConfirmationMenu
 
 import scala.collection.immutable.ListSet
 import scala.util.control.NonFatal
-
+import scala.util.{Success, Try}
+import com.waz.zclient.Intents._
 
 class ShareActivity extends BaseActivity with ActivityHelper {
   import ShareActivity._
 
-  lazy val sharing = inject[SharingController]
-  lazy val accounts = inject[AccountsService]
-
   private lazy val confirmationMenu = returning(findById[ConfirmationMenu](R.id.cm__conversation_list__login_prompt)) { cm =>
     cm.setCallback(new TwoButtonConfirmationCallback() {
-      override def positiveButtonClicked(checkboxIsSelected: Boolean) = finish()
-      override def negativeButtonClicked() = {}
-      override def onHideAnimationEnd(confirmed: Boolean, canceled: Boolean, checkboxIsSelected: Boolean) = {}
+      override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = finish()
+      override def negativeButtonClicked(): Unit = {}
+      override def onHideAnimationEnd(confirmed: Boolean, canceled: Boolean, checkboxIsSelected: Boolean): Unit = {}
     })
 
     inject[AccentColorController].accentColor.map(_.color).onUi(cm.setButtonColor)
-    accounts.accountManagers.map(_.isEmpty).onUi(cm.animateToShow)
+    inject[AccountsService].accountManagers.map(_.isEmpty).onUi(cm.animateToShow)
   }
 
-  override def onCreate(savedInstanceState: Bundle) = {
+  override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.main_share)
 
-    if (savedInstanceState == null) {
+    if (savedInstanceState == null)
       getSupportFragmentManager
         .beginTransaction
-        .add(R.id.fl_main_content, ConversationSelectorFragment.newInstance(getIntent.getType != MessageIntentType), ConversationSelectorFragment.TAG)
+        .add(
+          R.id.fl_main_content,
+          ConversationSelectorFragment.newInstance(getIntent.getType != MessageIntentType),
+          ConversationSelectorFragment.TAG
+        )
         .commit
-    }
     confirmationMenu
   }
 
-  override def onStart() = {
+  override def onStart(): Unit = {
     super.onStart()
     handleIncomingIntent()
   }
 
-  override def getBaseTheme = R.style.Theme_Share
+  override def getBaseTheme: Int = R.style.Theme_Share
 
-  override protected def onNewIntent(intent: Intent) = {
+  override protected def onNewIntent(intent: Intent): Unit = {
     setIntent(intent)
     handleIncomingIntent()
   }
 
-  private def handleIncomingIntent() = {
+  private def handleIncomingIntent(): Unit = {
     val incomingIntent = ShareCompat.IntentReader.from(this)
     if (!incomingIntent.isShareIntent) finish()
     else {
-      if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == TextIntentType) sharing.publishTextContent(incomingIntent.getText.toString)
-      else if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == MessageIntentType) sharing.sharableContent ! Some(NewContent)
-      else {
+      val sharing = inject[SharingController]
+      if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == TextIntentType)
+        sharing.publishTextContent(incomingIntent.getText.toString)
+      else if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == MessageIntentType)
+        sharing.sharableContent ! Some(NewContent)
+      else
         inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>
             verbose(l"${RichIntent(getIntent)}")
+            val uriHelper = inject[UriHelper]
+            val fileRestrictionList = inject[FileRestrictionList]
             val uris =
-              (if (incomingIntent.isMultipleShare) (0 until incomingIntent.getStreamCount).flatMap(i => Option(incomingIntent.getStream(i))) else Option(incomingIntent.getStream).toSeq)
-                .flatMap(uri => getPath(getApplicationContext, uri))
-            if (uris.nonEmpty)
-              sharing.sharableContent ! Some(if (incomingIntent.getType.startsWith(ImageIntentType) && uris.size == 1) ImageContent(uris) else FileContent(uris))
-            else finish()
-          case _    => finish()
+              (if (incomingIntent.isMultipleShare) (0 until incomingIntent.getStreamCount).flatMap(i => Option(incomingIntent.getStream(i)))
+               else Option(incomingIntent.getStream).toSeq).flatMap(uri => getPath(getApplicationContext, uri))
+            val restricted =
+              uris.map(URIWrapper.toJava)
+                  .map(uriHelper.extractFileName)
+                  .collect { case Success(name) if !fileRestrictionList.isAllowed(name) => name }
+                  .map { _.split('.').last }
+                  .distinct
+                  .sorted
+            if (restricted.nonEmpty)
+              showErrorDialog("", getString(R.string.file_restrictions__sender_error, restricted.mkString(", ")))(this)
+                .map(_ => finish())(Threading.Ui)
+            else if (uris.nonEmpty)
+              sharing.sharableContent ! Some(
+                if (incomingIntent.getType.startsWith(ImageIntentType) && uris.size == 1) ImageContent(uris)
+                else FileContent(uris)
+              )
+            else
+              finish()
+          case _ =>
+            finish()
         }(Threading.Ui)
-      }
     }
   }
 
@@ -155,16 +176,24 @@ object ShareActivity extends DerivedLogTag {
           else None
 
         case "com.android.providers.downloads.documents" =>
-          val contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), getDocumentId(uri).toLong)
-          getDocumentPath(context, contentUri)
-
+          val docId = getDocumentId(uri)
+          Try(docId.toLong) match {
+            case Success(id) =>
+              val contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), id)
+              getDocumentPath(context, contentUri)
+            case _ =>
+              val split = docId.split(":")
+              if ("primary".equalsIgnoreCase(split(0))) Some(fromFile(new File(Environment.getExternalStorageDirectory, split(1))))
+              else if ("raw".equalsIgnoreCase(split(0))) Some(fromFile(new File(Environment.getExternalStorageDirectory, split(1))))
+              else None
+          }
         case "com.android.providers.media.documents" =>
           val split = getDocumentId(uri).split(":")
           val contentUri = split(0) match {
             case "image" => Some(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             case "video" => Some(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             case "audio" => Some(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-            case _ => None
+            case _       => None
           }
           contentUri.flatMap(uri => getDocumentPath(context, uri, "_id=?", Array[String](split(1))))
         case _ if isDocumentUri(context, uri) =>

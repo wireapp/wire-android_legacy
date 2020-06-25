@@ -40,5 +40,7 @@
   "password_max_attempts": 0,
   "developer_features_enabled": false,
   "logging_enabled": false,
-  "safe_logging": false
+  "safe_logging": false,
+  "file_restriction_enabled": false,
+  "file_restriction_list":  "3gpp, aac, amr, avi, bmp, css, csv, dib, doc, docx, eml, flac, gif, html, ico, jfif, jpeg, jpg, jpg-large, key, m4a, m4v, md, midi, mkv, mov, mp3, mp4, mpeg, mpeg3, mpg, msg, ods, odt, ogg, pdf, pjp, pjpeg, png, pps, ppt, pptx, psd, pst, rtf, sql, svg, tex, tiff, txt, vcf, vid, wav, webm, webp, wmv, xls, xlsx, xml"
 }

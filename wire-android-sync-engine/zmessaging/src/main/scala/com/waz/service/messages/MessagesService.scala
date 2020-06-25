@@ -64,6 +64,7 @@ trait MessagesService {
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false): Future[Option[MessageData]]
   def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId]): Future[Unit]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: Name): Future[Option[MessageData]]
+  def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]]
   def addReceiptModeChangeMessage(convId: ConvId, from: UserId, receiptMode: Int): Future[Option[MessageData]]
   def addTimerChangedMessage(convId: ConvId, from: UserId, duration: Option[FiniteDuration], time: RemoteInstant): Future[Unit]
   def addHistoryLostMessages(cs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
@@ -272,6 +273,13 @@ class MessagesServiceImpl(selfUserId:      UserId,
     def update(msg: MessageData) = msg.copy(name = Some(name))
     def create = MessageData(MessageId(), convId, Message.Type.RENAME, from, name = Some(name))
     updater.updateOrCreateLocalMessage(convId, Message.Type.RENAME, update, create)
+  }
+
+  override def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]] = {
+    val userId = from.getOrElse(selfUserId)
+    def update(msg: MessageData) = msg.copy(name = extension.map(Name(_)), userId = userId)
+    def create = MessageData(MessageId(), convId, Message.Type.RESTRICTED_FILE, userId, name = extension.map(Name(_)))
+    updater.updateOrCreateLocalMessage(convId, Message.Type.RESTRICTED_FILE, update, create)
   }
 
   override def addReceiptModeChangeMessage(convId: ConvId, from: UserId, receiptMode: Int) = {

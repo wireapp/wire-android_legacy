@@ -24,7 +24,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.{GenericContent, _}
-import com.waz.service.EventScheduler
+import com.waz.service.{EventScheduler, GlobalModule, ZMessaging}
 import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.threading.Threading
@@ -42,7 +42,9 @@ class MessageEventProcessor(selfUserId:           UserId,
                             msgsService:          MessagesService,
                             convsService:         ConversationsService,
                             convs:                ConversationsContentUpdater,
-                            downloadAssetStorage: DownloadAssetStorage) extends DerivedLogTag {
+                            downloadAssetStorage: DownloadAssetStorage,
+                            global:               GlobalModule
+                           ) extends DerivedLogTag {
   import MessageEventProcessor._
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
@@ -75,7 +77,7 @@ class MessageEventProcessor(selfUserId:           UserId,
       _                <- addButtons(richMessages)
       _                <- addUnexpectedMembers(conv.id, events)
       res              <- contentUpdater.addMessages(conv.id, msgs)
-      _                <- Future.traverse(richMessages.flatMap(_.assets))(assets.save)
+      _                <- Future.traverse(richMessages.filterNot(_.message.msgType == RESTRICTED_FILE).flatMap(_.assets))(assets.save)
       _                <- updateLastReadFromOwnMessages(conv.id, msgs)
       _                <- deleteCancelled(richMessages)
       _                <- applyRecalls(conv.id, toProcess)
@@ -256,14 +258,16 @@ class MessageEventProcessor(selfUserId:           UserId,
     if (DownloadAsset.getStatus(asset) == DownloadAssetStatus.Cancelled) RichMessage.Empty else {
       val tpe = Option(asset.original) match {
         case None                      => UNKNOWN
+        case Some(org) if !global.fileRestrictionList.isAllowed(Mime(org.mimeType).extension) => RESTRICTED_FILE
         case Some(org) if org.hasVideo => VIDEO_ASSET
         case Some(org) if org.hasAudio => AUDIO_ASSET
         case Some(org) if org.hasImage => IMAGE_ASSET
         case Some(_)                   => ANY_ASSET
       }
 
-      val assetAndPreview =
-        if (asset.hasUploaded) {
+      val assetAndPreview: Option[(GeneralAsset, Option[GeneralAsset])] =
+        if (tpe == RESTRICTED_FILE) None
+        else if (asset.hasUploaded) {
           val preview = Option(asset.preview).map(Asset2.create)
 
           lazy val previouslyProcessedDownloadAsset = acc

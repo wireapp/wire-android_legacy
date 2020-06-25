@@ -27,7 +27,7 @@ import android.os.Environment
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.{Gravity, View}
-import android.widget.{TextView, Toast}
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatDialog
 import com.waz.content.MessagesStorage
 import com.waz.content.UserPreferences.DownloadImagesAlways
@@ -36,7 +36,7 @@ import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service
 import com.waz.service.ZMessaging
-import com.waz.service.assets.{Asset, AssetService, DownloadAsset, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
+import com.waz.service.assets.{Asset, AssetService, DownloadAsset, FileRestrictionList, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
 import com.waz.service.assets.Asset.{Audio, Video}
 import com.waz.service.messages.MessagesService
@@ -182,7 +182,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def openFile(idGeneral: GeneralAssetId): Unit = idGeneral match {
     case id: AssetId =>
       assetForSharing(id).foreach {
-        case AssetForShare(asset, file) =>
+        case AssetForShare(asset, file) if inject[FileRestrictionList].isAllowed(file.getName) =>
           asset.details match {
             case _: Video =>
               context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
@@ -190,6 +190,11 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
             case _ =>
               showOpenFileDialog(externalFileSharing.getUriForFile(file), asset)
           }
+        case AssetForShare(_, file) =>
+          showErrorDialog(
+            getString(R.string.empty_string),
+            getString(R.string.file_restrictions__sender_error, file.getName.split('.').last)
+          )
         case _ =>
           error(l"Asset $id is not for share")
       }
@@ -197,7 +202,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       error(l"GeneralAssetId is not AssetId: $idGeneral")
   }
 
-  def showOpenFileDialog(uri: Uri, asset: Asset): Unit = {
+  private def showOpenFileDialog(uri: Uri, asset: Asset): Unit = {
     val intent = getOpenFileIntent(uri, asset.mime.orDefault.str)
     val fileCanBeOpened = fileTypeCanBeOpened(context.getPackageManager, intent)
 
@@ -257,13 +262,13 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveImageToGallery(asset: Asset): Unit =
     saveAssetContentToFile(asset, createWireImageDirectory()).onComplete {
-      case Success(file) =>
+      case Success(file) if inject[FileRestrictionList].isAllowed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
-        Toast.makeText(context, R.string.message_bottom_menu_action_save_ok, Toast.LENGTH_SHORT).show()
+        showToast(R.string.message_bottom_menu_action_save_ok)
         context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(Uri.fromFile(file))))
       case _             =>
-        Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
+        showToast(R.string.content__file__action__save_error)
     }
 
   private def createWireImageDirectory() =
@@ -273,7 +278,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def saveToDownloads(asset: Asset): Unit =
     saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
-      case Success(file) =>
+      case Success(file) if inject[FileRestrictionList].isAllowed(file.getName) =>
         val uri = URIWrapper.fromFile(file)
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
         downloadManager.addCompletedDownload(
@@ -284,10 +289,10 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
           uri.getPath,
           asset.size,
           true)
-        Toast.makeText(context, R.string.content__file__action__save_completed, Toast.LENGTH_SHORT).show()
+        showToast(R.string.content__file__action__save_completed)
         context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(URIWrapper.unwrap(uri))))
       case _ =>
-        Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
+        showToast(R.string.content__file__action__save_error)
     }
 
   def assetForSharing(id: AssetId): Future[AssetForShare] = {

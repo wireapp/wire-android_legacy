@@ -35,7 +35,6 @@ import com.waz.utils.Json.syntax._
 import com.waz.utils.crypto.LibSodiumUtils
 import com.waz.utils.{IoUtils, JsonDecoder, JsonEncoder, RichTry, returning}
 import com.waz.zclient.storage.db.UserDatabase
-import com.waz.zms.BuildConfig
 import org.json.JSONObject
 import org.threeten.bp.Instant
 

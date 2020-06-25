@@ -25,7 +25,7 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.api.UpdateListener
 import com.waz.log.LogSE._
-import com.waz.model.{LocalInstant, WireInstant}
+import com.waz.model.{LocalInstant, Mime, WireInstant}
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.crypto.AESUtils

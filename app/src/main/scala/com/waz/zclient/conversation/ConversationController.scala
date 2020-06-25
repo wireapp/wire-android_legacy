@@ -30,7 +30,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.AccountManager
-import com.waz.service.assets.{AssetInput, Content, ContentForUpload, UriHelper}
+import com.waz.service.assets.{AssetInput, Content, ContentForUpload, FileRestrictionList, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
@@ -67,6 +67,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val uriHelper             = inject[UriHelper]
   private lazy val accentColorController = inject[AccentColorController]
   private lazy val selfId                = inject[Signal[UserId]]
+  private lazy val fileRestrictions      = inject[FileRestrictionList]
 
   val DefaultDeletedName: Name = Name(getString(R.string.default_deleted_username))
 
@@ -281,22 +282,33 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def sendAssetMessage(uri:      URI,
                        activity: Activity,
                        exp:      Option[Option[FiniteDuration]],
-                       convs:    Seq[ConvId] = Seq()): Future[Option[MessageData]] =
-    for {
-      content <- Future.fromTry(uriHelper.extractFileName(uri).map(ContentForUpload(_,  Content.Uri(uri))))
-      msg     <- if (convs.isEmpty) sendAssetMessage(content, activity, exp)
-                 else sendAssetMessage(convs, content, activity, exp).map(_.head)
-    } yield msg
+                       convs:    Seq[ConvId] = Seq()): Future[Unit] =
+    Future.fromTry(uriHelper.extractFileName(uri)).flatMap {
+      case fileName if fileRestrictions.isAllowed(fileName) =>
+        val content = ContentForUpload(fileName,  Content.Uri(uri))
+        if (convs.isEmpty) sendAssetMessage(content, activity, exp).map(_ => ())
+        else sendAssetMessage(convs, content, activity, exp).map(_ => ())
+      case fileName =>
+        convsUiwithCurrentConv((ui, id) =>
+          ui.addRestrictedFileMessage(id, None, Some(fileName.split('.').last))
+        ).map(_ => ())
+    }
 
-  def sendAssetMessages(uris:    Seq[URI],
-                       activity: Activity,
-                       exp:      Option[Option[FiniteDuration]],
-                       convs:    Seq[ConvId]): Future[Unit] =
+  def sendAssetMessages(uris:     Seq[URI],
+                        activity: Activity,
+                        exp:      Option[Option[FiniteDuration]],
+                        convs:    Seq[ConvId]): Future[Unit] =
     for {
-      ui       <- convsUi.head
-      color    <- accentColorController.accentColor.head
-      contents <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(ContentForUpload(_,  Content.Uri(uri)))) }
-      _        <- Future.traverse(convs) { id => ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp) }
+      ui        <- convsUi.head
+      color     <- accentColorController.accentColor.head
+      names     <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(uri -> _)) }
+      contents  =  names.collect { case (uri, name) if fileRestrictions.isAllowed(name) => ContentForUpload(name,  Content.Uri(uri)) }
+      _         <- if (contents.nonEmpty)
+                     Future.traverse(convs) { id =>
+                       ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp)
+                     }
+                   else
+                     Future.successful(())
     } yield ()
 
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =

@@ -285,7 +285,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
     //often repeated mocks
     (deletions.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
 
-    new MessageEventProcessor(selfUserId, storage, content, assets, replyHashing, msgsService, convsService, convs, downloadStorage)
+    new MessageEventProcessor(selfUserId, storage, content, assets, replyHashing, msgsService, convsService, convs, downloadStorage, ZMessaging.currentGlobal)
   }
 
   // if we need those utility methods in other specs, we can think of turning them into `apply` methods in GenericContent

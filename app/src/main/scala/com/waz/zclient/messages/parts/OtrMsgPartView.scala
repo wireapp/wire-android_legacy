@@ -20,7 +20,7 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.util.AttributeSet
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.ZMessaging
+import com.waz.model.{Name, UserId}
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{BrowserController, ScreenController}
@@ -45,76 +45,89 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
 
   override val tpe = MsgPart.OtrMessage
 
-  lazy val screenController = inject[ScreenController]
-  lazy val participantsController = inject[ParticipantsController]
-  lazy val browserController = inject[BrowserController]
+  private lazy val screenController       = inject[ScreenController]
+  private lazy val participantsController = inject[ParticipantsController]
+  private lazy val browserController      = inject[BrowserController]
+  private lazy val selfUserId             = inject[Signal[UserId]]
+  private lazy val memberIsJustSelf       = users.memberIsJustSelf(message)
+  private lazy val affectedUserName       = message.map(_.userId).flatMap(users.displayName)
 
-  val accentColor = inject[AccentColorController]
-  val users = inject[UsersController]
-  val zms = inject[Signal[ZMessaging]]
+  private val accentColor = inject[AccentColorController]
+  private val users       = inject[UsersController]
+  private val msgType     = message.map(_.msgType)
 
-  val msgType = message.map(_.msgType)
-
-  val affectedUserName = message.map(_.userId).flatMap(users.displayName)
-
-  val memberNames = for {
-    zms <- zms
-    msg <- message
-    names <- users.getMemberNamesSplit(msg.members, zms.selfUserId)
-    mainString = users.membersNamesString(names.main, separateLast = names.others.isEmpty && !names.andYou)
+  private lazy val memberNames = for {
+    selfUserId <- selfUserId
+    msg        <- message
+    names      <- users.getMemberNamesSplit(msg.members, selfUserId)
+    mainString =  users.membersNamesString(names.main, separateLast = names.others.isEmpty && !names.andYou)
   } yield (mainString, names.others.size, names.andYou)
 
-  val memberIsJustSelf = users.memberIsJustSelf(message)
-
-  val shieldIcon = msgType map {
-    case OTR_ERROR | OTR_IDENTITY_CHANGED | HISTORY_LOST      => Some(R.drawable.red_alert)
-    case OTR_VERIFIED                                         => Some(R.drawable.shield_full)
-    case OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED => Some(R.drawable.shield_half)
-    case STARTED_USING_DEVICE                                 => None
-    case _                                                    => None
-  }
-
-  val msgString = msgType.flatMap {
-    case HISTORY_LOST         => Signal.const(getString(R.string.content__otr__lost_history))
-    case STARTED_USING_DEVICE => Signal.const(getString(R.string.content__otr__start_this_device__message))
-    case OTR_VERIFIED         => Signal.const(getString(R.string.content__otr__all_fingerprints_verified))
-    case OTR_ERROR            => affectedUserName.map({
-      case Me          => getString(R.string.content__otr__message_error_you)
-      case Other(name) => getString(R.string.content__otr__message_error, name.toUpperCase)
-    })
-    case OTR_IDENTITY_CHANGED => affectedUserName.map({
-      case Me          => getString(R.string.content__otr__identity_changed_error_you)
-      case Other(name) => getString(R.string.content__otr__identity_changed_error, name.toUpperCase)
-    })
-    case OTR_UNVERIFIED => memberIsJustSelf.flatMap({
-      case true  => Signal const getString(R.string.content__otr__your_unverified_device__message)
-      case false => memberNames map {
-        case (main, _, _) => getString(R.string.content__otr__unverified_device__message, main)
-      }
-    })
-    case OTR_DEVICE_ADDED => memberNames.map {
-      case (main, 0, true)  => getString(R.string.content__otr__someone_and_you_added_new_device__message, main)
-      case (main, 0, false)  => getString(R.string.content__otr__someone_added_new_device__message, main)
-      case (main, others, true) => getString(R.string.content__otr__someone_others_and_you_added_new_device__message, main, others.toString)
-      case (main, others, false) => getString(R.string.content__otr__someone_and_others_added_new_device__message, main, others.toString)
-    }
-    case OTR_MEMBER_ADDED => Signal.const(getString(R.string.content__otr__new_member__message))
-    case _                => Signal.const("")
-  }
-
-  shieldIcon.onUi {
+  (msgType.map {
+    case OTR_ERROR | OTR_IDENTITY_CHANGED | HISTORY_LOST | RESTRICTED_FILE => Some(R.drawable.red_alert)
+    case OTR_VERIFIED                                                      => Some(R.drawable.shield_full)
+    case OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED              => Some(R.drawable.shield_half)
+    case STARTED_USING_DEVICE                                              => None
+    case _                                                                 => None
+  }).onUi {
     case None       => setIcon(null)
     case Some(icon) => setIcon(icon)
   }
 
-  Signal(message, msgString, accentColor.accentColor, memberIsJustSelf).onUi {
-    case (msg, text, color, isMe) => setTextWithLink(text, color.color) {
+  private val msgString = msgType.flatMap {
+    case HISTORY_LOST =>
+      Signal.const(getString(R.string.content__otr__lost_history))
+    case STARTED_USING_DEVICE =>
+      Signal.const(getString(R.string.content__otr__start_this_device__message))
+    case OTR_VERIFIED  =>
+      Signal.const(getString(R.string.content__otr__all_fingerprints_verified))
+    case OTR_ERROR =>
+      affectedUserName.map({
+        case Me          => getString(R.string.content__otr__message_error_you)
+        case Other(name) => getString(R.string.content__otr__message_error, name.toUpperCase)
+      })
+    case OTR_IDENTITY_CHANGED =>
+      affectedUserName.map({
+        case Me          => getString(R.string.content__otr__identity_changed_error_you)
+        case Other(name) => getString(R.string.content__otr__identity_changed_error, name.toUpperCase)
+      })
+    case OTR_UNVERIFIED =>
+      memberIsJustSelf.flatMap {
+        case true  => Signal.const(getString(R.string.content__otr__your_unverified_device__message))
+        case false => memberNames.map { case (main, _, _) => getString(R.string.content__otr__unverified_device__message, main) }
+      }
+    case OTR_DEVICE_ADDED =>
+      memberNames.map {
+        case (main, 0, true)       => getString(R.string.content__otr__someone_and_you_added_new_device__message, main)
+        case (main, 0, false)      => getString(R.string.content__otr__someone_added_new_device__message, main)
+        case (main, others, true)  => getString(R.string.content__otr__someone_others_and_you_added_new_device__message, main, others.toString)
+        case (main, others, false) => getString(R.string.content__otr__someone_and_others_added_new_device__message, main, others.toString)
+      }
+    case OTR_MEMBER_ADDED =>
+      Signal.const(getString(R.string.content__otr__new_member__message))
+    case RESTRICTED_FILE =>
+      Signal(affectedUserName, message.map(_.name)).map {
+        case (Other(name), _)     => getString(R.string.file_restrictions__receiver_error, name)
+        case (_, Some(Name(ext))) => getString(R.string.file_restrictions__sender_error, ext)
+        case (user, name)         => ""
+      }
+    case _ =>
+      Signal.const("")
+  }
+
+  Signal(message, msgString, accentColor.accentColor, memberIsJustSelf).onUi { case (msg, text, color, isMe) =>
+    setTextWithLink(text, color.color) {
       (msg.msgType, isMe) match {
-        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, true)  => screenController.openOtrDevicePreferences()
-        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, false) => participantsController.onShowParticipants ! Some(SingleParticipantFragment.DevicesTab.str)
-        case (STARTED_USING_DEVICE, _)                  => screenController.openOtrDevicePreferences()
-        case (OTR_ERROR, _)                             => browserController.openDecryptionError1()
-        case (OTR_IDENTITY_CHANGED, _)                  => browserController.openDecryptionError2()
+        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, true)  =>
+          screenController.openOtrDevicePreferences()
+        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, false) =>
+          participantsController.onShowParticipants ! Some(SingleParticipantFragment.DevicesTab.str)
+        case (STARTED_USING_DEVICE, _) =>
+          screenController.openOtrDevicePreferences()
+        case (OTR_ERROR, _)            =>
+          browserController.openDecryptionError1()
+        case (OTR_IDENTITY_CHANGED, _) =>
+          browserController.openDecryptionError2()
         case _ =>
           info(l"unhandled help link click for $msg")
       }

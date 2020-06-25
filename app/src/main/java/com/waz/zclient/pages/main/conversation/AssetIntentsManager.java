@@ -26,9 +26,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.webkit.MimeTypeMap;
+
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
+import com.waz.service.ZMessaging;
 import com.waz.utils.IoUtils;
 import com.waz.utils.wrappers.AndroidURI;
 import com.waz.utils.wrappers.AndroidURIUtil;
@@ -36,15 +39,21 @@ import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.Intents;
 import com.waz.zclient.core.logging.Logger;
+import com.waz.service.assets.FileRestrictionList;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 public class AssetIntentsManager {
     private static final String INTENT_GALLERY_TYPE = "image/*";
+    private static final String INTENT_ALL_TYPES = "*/*";
+
     private final Context context;
     private final Callback callback;
 
@@ -60,27 +69,58 @@ public class AssetIntentsManager {
         this.callback = callback;
     }
 
-    @SuppressLint("WrongConstant")
     private void openDocument(String mimeType, IntentType tpe, boolean allowMultiple) {
+        openDocument(Collections.singleton(mimeType), tpe, allowMultiple);
+    }
+
+    @SuppressLint("WrongConstant")
+    private void openDocument(Set<String> mimeTypes, IntentType tpe, boolean allowMultiple) {
         if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             // trying to load file from testing gallery,
             // this is needed because we are not able to override DocumentsUI on some android versions.
-            Intent intent = new Intent("com.wire.testing.GET_DOCUMENT").setType(mimeType);
+            final Intent intent = new Intent("com.wire.testing.GET_DOCUMENT");
+            if (mimeTypes.size() == 1) {
+                intent.setType(mimeTypes.iterator().next());
+            } else {
+                intent.setType(INTENT_ALL_TYPES);
+                intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toArray());
+            }
             if (!context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL).isEmpty()) {
                 callback.openIntent(intent, tpe);
                 return;
             }
             Logger.info(TAG, "Did not resolve testing gallery for intent:" + intent.toString());
         }
-        Intent documentIntent = new Intent(openDocumentAction()).setType(mimeType).addCategory(Intent.CATEGORY_OPENABLE);
-        if (allowMultiple) {
-            documentIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        final Intent intent = new Intent(openDocumentAction()).addCategory(Intent.CATEGORY_OPENABLE);
+        if (mimeTypes.size() == 1) {
+            intent.setType(mimeTypes.iterator().next());
+        } else {
+            intent.setType(INTENT_ALL_TYPES);
+            intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toArray());
         }
-        callback.openIntent(documentIntent, tpe);
+        if (allowMultiple) {
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        }
+        callback.openIntent(intent, tpe);
     }
 
     public void openFileSharing() {
-        openDocument("*/*", IntentType.FILE_SHARING, true);
+        final Set<String> mimeTypes = new HashSet<>();
+        FileRestrictionList fileRestrictions = ZMessaging.currentGlobal().fileRestrictionList();
+        if (!fileRestrictions.getEnabled()) {
+            mimeTypes.add(INTENT_ALL_TYPES);
+        } else {
+            for (final String ext: fileRestrictions.getExtensions()){
+                final String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+                if (mimeType != null) {
+                    mimeTypes.add(mimeType);
+                } else {
+                    Logger.warn(TAG, "No mime type found for extension: " + ext);
+                    mimeTypes.add("application/" + ext);
+                }
+            }
+        }
+        openDocument(mimeTypes, IntentType.FILE_SHARING, true);
     }
 
     public void openBackupImport() {
