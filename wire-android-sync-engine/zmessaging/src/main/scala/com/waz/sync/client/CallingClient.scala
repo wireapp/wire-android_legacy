@@ -17,13 +17,16 @@
  */
 package com.waz.sync.client
 
+import java.net.URL
+
 import com.waz.api.impl.ErrorResponse
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
-import com.waz.znet2.http.{HttpClient, Request}
+import com.waz.znet2.http.{Headers, HttpClient, Request}
 
 trait CallingClient {
   def getConfig: ErrorOrResponse[String]
+  def connectToSft(url: String, data: String): ErrorOrResponse[Array[Byte]]
 }
 
 class CallingClientImpl(implicit
@@ -32,18 +35,25 @@ class CallingClientImpl(implicit
                         authRequestInterceptor: AuthRequestInterceptor) extends CallingClient {
 
   import CallingClientImpl._
-  import HttpClient.dsl._
   import HttpClient.AutoDerivationOld._
+  import HttpClient.dsl._
 
-  override def getConfig: ErrorOrResponse[String] = {
+  private val absoluteUrlCreator = UrlCreator.create(new URL(_))
+
+  override def getConfig: ErrorOrResponse[String] =
     Request.Get(relativePath = CallConfigPath)
       .withResultType[String]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
 
+  override def connectToSft(url: String, data: String): ErrorOrResponse[Array[Byte]] =
+    Request.Post(url, headers = sftHeaders, body = data)(absoluteUrlCreator)
+      .withResultType[Array[Byte]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
 }
 
 object CallingClientImpl {
   val CallConfigPath = "/calls/config/v2"
+  val sftHeaders = Headers(("Content-Type", "application/json"), ("Accept", "application/json"))
 }
