@@ -36,9 +36,11 @@ import com.waz.api.impl.ContentUriAssetForUpload
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
+import com.waz.service.assets.{FileRestrictionList, UriHelper}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events._
+import com.waz.utils.wrappers.URI
 import com.waz.utils.{RichWireInstant, returning}
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.SharingController
@@ -52,7 +54,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, KeyboardUtils}
 import com.waz.zclient.ui.views.CursorIconButton
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
-import com.waz.zclient.utils.ContextUtils.{getDimenPx, showToast}
+import com.waz.zclient.utils.ContextUtils.{getDimenPx, showErrorDialog, showToast}
 import com.waz.zclient.utils.{RichView, ViewUtils}
 
 import scala.util.Success
@@ -113,6 +115,14 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
     }
   }
 
+  private def checkFileRestrictions(uris: Seq[URI]): Seq[String] =
+    uris.map(URI.toJava)
+      .map(inject[UriHelper].extractFileName)
+      .collect { case Success(name) if !inject[FileRestrictionList].isAllowed(name) => name }
+      .map { _.split('.').last }
+      .distinct
+      .sorted
+
   lazy val contentLayout = returning(view[RelativeLayout](R.id.content_container)) { vh =>
     //It's possible for an app to share multiple uris at once but we're only showing the preview for one
 
@@ -144,24 +154,29 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
             }
 
           case FileContent(uris) =>
-            returning(inflater.inflate(R.layout.share_preview_file, layout)) { previewLayout =>
-              val assetForUpload = ContentUriAssetForUpload(AssetId(), uris.head)
+            val restricted = checkFileRestrictions(uris)
+            if (restricted.nonEmpty)
+              showErrorDialog("", getString(R.string.file_restrictions__sender_error, restricted.mkString(", ")))
+                .foreach(_ => getActivity.finish())(Threading.Ui)
+            else
+              returning(inflater.inflate(R.layout.share_preview_file, layout)) { previewLayout =>
+                val assetForUpload = ContentUriAssetForUpload(AssetId(), uris.head)
 
-              assetForUpload.name.onComplete {
-                case Success(Some(name)) => previewLayout.findViewById[TextView](R.id.file_name).setText(name)
-                case _ =>
-              }(Threading.Ui)
+                assetForUpload.name.onComplete {
+                  case Success(Some(name)) => previewLayout.findViewById[TextView](R.id.file_name).setText(name)
+                  case _ =>
+                }(Threading.Ui)
 
-              assetForUpload.sizeInBytes.onComplete {
-                case Success(Some(size)) =>
-                  returning(previewLayout.findViewById(R.id.file_info).asInstanceOf[TextView]) { tv =>
-                    tv.setVisibility(View.GONE)
-                    tv.setText(Formatter.formatFileSize(getContext, size))
-                  }
+                assetForUpload.sizeInBytes.onComplete {
+                  case Success(Some(size)) =>
+                    returning(previewLayout.findViewById(R.id.file_info).asInstanceOf[TextView]) { tv =>
+                      tv.setVisibility(View.GONE)
+                      tv.setText(Formatter.formatFileSize(getContext, size))
+                    }
 
-                case _ => previewLayout.findViewById[TextView](R.id.file_info).setVisibility(View.GONE)
-              }(Threading.Ui)
-            }
+                  case _ => previewLayout.findViewById[TextView](R.id.file_info).setVisibility(View.GONE)
+                }(Threading.Ui)
+              }
         }
       }
       case _ =>

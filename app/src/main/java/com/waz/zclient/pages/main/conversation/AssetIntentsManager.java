@@ -26,12 +26,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.MediaStore;
-import android.webkit.MimeTypeMap;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
-import com.waz.service.ZMessaging;
 import com.waz.utils.IoUtils;
 import com.waz.utils.wrappers.AndroidURI;
 import com.waz.utils.wrappers.AndroidURIUtil;
@@ -39,7 +37,6 @@ import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.Intents;
 import com.waz.zclient.core.logging.Logger;
-import com.waz.service.assets.FileRestrictionList;
 
 import java.io.File;
 import java.io.IOException;
@@ -106,7 +103,10 @@ public class AssetIntentsManager {
 
     public void openFileSharing() {
         final Set<String> mimeTypes = new HashSet<>();
-        FileRestrictionList fileRestrictions = ZMessaging.currentGlobal().fileRestrictionList();
+        // FIXME: For now we let the user choose from all files and we check restrictions before sending
+        // The reason is, restricting access to files via intent make some file pickers restrict also
+        // access to certain folders, while other file pickers ignore the restrictions altogether.
+        /*FileRestrictionList fileRestrictions = ZMessaging.currentGlobal().fileRestrictionList();
         if (!fileRestrictions.getEnabled()) {
             mimeTypes.add(INTENT_ALL_TYPES);
         } else {
@@ -119,7 +119,8 @@ public class AssetIntentsManager {
                     mimeTypes.add("application/" + ext);
                 }
             }
-        }
+        }*/
+        mimeTypes.add(INTENT_ALL_TYPES);
         openDocument(mimeTypes, IntentType.FILE_SHARING, true);
     }
 
