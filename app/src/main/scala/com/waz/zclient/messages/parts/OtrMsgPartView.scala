@@ -109,7 +109,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
       Signal(affectedUserName, message.map(_.name)).map {
         case (Other(name), _)     => getString(R.string.file_restrictions__receiver_error, name)
         case (_, Some(Name(ext))) => getString(R.string.file_restrictions__sender_error, ext)
-        case (user, name)         => ""
+        case _                    => getString(R.string.file_restrictions__sender_error, "")
       }
     case _ =>
       Signal.const("")

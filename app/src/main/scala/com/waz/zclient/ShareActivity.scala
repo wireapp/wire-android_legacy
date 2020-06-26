@@ -30,18 +30,16 @@ import androidx.core.app.ShareCompat
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
-import com.waz.service.assets.{FileRestrictionList, UriHelper}
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.utils.wrappers.AndroidURIUtil.fromFile
-import com.waz.utils.wrappers.{AndroidURI, URI => URIWrapper}
+import com.waz.utils.wrappers.AndroidURI
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, NewContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.sharing.ConversationSelectorFragment
-import com.waz.zclient.utils.ContextUtils.showErrorDialog
 import com.waz.zclient.views.menus.ConfirmationMenu
 
 import scala.collection.immutable.ListSet
@@ -104,22 +102,10 @@ class ShareActivity extends BaseActivity with ActivityHelper {
         inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>
             verbose(l"${RichIntent(getIntent)}")
-            val uriHelper = inject[UriHelper]
-            val fileRestrictionList = inject[FileRestrictionList]
             val uris =
               (if (incomingIntent.isMultipleShare) (0 until incomingIntent.getStreamCount).flatMap(i => Option(incomingIntent.getStream(i)))
                else Option(incomingIntent.getStream).toSeq).flatMap(uri => getPath(getApplicationContext, uri))
-            val restricted =
-              uris.map(URIWrapper.toJava)
-                  .map(uriHelper.extractFileName)
-                  .collect { case Success(name) if !fileRestrictionList.isAllowed(name) => name }
-                  .map { _.split('.').last }
-                  .distinct
-                  .sorted
-            if (restricted.nonEmpty)
-              showErrorDialog("", getString(R.string.file_restrictions__sender_error, restricted.mkString(", ")))(this)
-                .map(_ => finish())(Threading.Ui)
-            else if (uris.nonEmpty)
+            if (uris.nonEmpty)
               sharing.sharableContent ! Some(
                 if (incomingIntent.getType.startsWith(ImageIntentType) && uris.size == 1) ImageContent(uris)
                 else FileContent(uris)
