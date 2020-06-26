@@ -22,7 +22,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.model.AssetData.AssetDataDao
 import com.waz.model.AssetStatus.UploadDone
 import com.waz.model._
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.{CachedStorageImpl, TrimmingLruCache, _}
 

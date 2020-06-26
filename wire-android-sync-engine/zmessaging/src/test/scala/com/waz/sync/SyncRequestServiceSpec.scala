@@ -31,8 +31,8 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.queue.SyncContentUpdaterImpl
 import com.waz.testutils.TestUserPreferences
-import com.waz.threading.CancellableFuture
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.wire.signals.Signal
 import com.waz.utils.wrappers.{Context, DB}
 
 import scala.concurrent.Future

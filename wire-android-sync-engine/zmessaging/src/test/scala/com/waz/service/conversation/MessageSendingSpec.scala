@@ -27,7 +27,7 @@ import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}

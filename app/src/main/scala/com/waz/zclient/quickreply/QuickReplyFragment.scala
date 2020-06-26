@@ -28,7 +28,7 @@ import com.waz.model.{ConvId, UserId}
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
 import com.waz.service.{AccountsService, ZMessaging}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.global.AccentColorController

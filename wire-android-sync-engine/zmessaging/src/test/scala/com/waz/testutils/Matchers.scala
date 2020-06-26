@@ -23,7 +23,7 @@ import com.waz.RobolectricUtils
 import com.waz.utils.JsonDecoder.{apply => _, _}
 import com.waz.utils.JsonEncoder._
 import com.waz.utils._
-import com.waz.utils.events._
+import com.wire.signals._
 import org.robolectric.Robolectric
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.exceptions.TestFailedException
@@ -76,7 +76,7 @@ object Matchers {
   }
 
   def withEvent[A, B](p: EventStream[A])(f: PartialFunction[A, Boolean])(body: => B)(implicit timeout: FiniteDuration = 15.seconds): B = {
-    import com.waz.utils.events.EventContext.Implicits.global
+    import com.wire.signals.EventContext.Implicits.global
 
     var gotNotification = false
     p {

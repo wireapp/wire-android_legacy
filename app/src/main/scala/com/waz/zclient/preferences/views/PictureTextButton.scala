@@ -24,7 +24,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.{OnClickListener, OnLongClickListener}
 import android.widget.{ImageView, RelativeLayout}
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.getDrawable
 import com.waz.zclient.utils.RichView

@@ -17,7 +17,7 @@
  */
 package com.waz.zclient
 
-import com.waz.utils.events.{EventContext, Signal, SourceSignal}
+import com.wire.signals.{EventContext, Signal, SourceSignal}
 import com.waz.zclient.SpinnerController.{Hide, Show, SpinnerParameters}
 import com.waz.zclient.views.LoadingIndicatorView._
 

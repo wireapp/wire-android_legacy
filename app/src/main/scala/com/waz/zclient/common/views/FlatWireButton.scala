@@ -24,7 +24,7 @@ import android.view.View.OnClickListener
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.FrameLayout.LayoutParams
 import android.widget.LinearLayout
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.{R, ViewHelper}

@@ -22,7 +22,7 @@ import android.util.AttributeSet
 import android.widget.ImageView
 import com.waz.model.Picture
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.ViewHelper
 import com.waz.zclient.glide._
 

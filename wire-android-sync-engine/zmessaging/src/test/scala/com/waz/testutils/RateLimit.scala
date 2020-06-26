@@ -19,7 +19,7 @@ package com.waz.testutils
 
 import java.util.concurrent.atomic.AtomicReference
 
-import com.waz.threading.CancellableFuture._
+import com.wire.signals.CancellableFuture._
 
 import scala.concurrent.duration._
 import scala.concurrent.duration.Duration._

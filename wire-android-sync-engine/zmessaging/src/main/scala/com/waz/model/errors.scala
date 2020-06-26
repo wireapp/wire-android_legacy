@@ -18,7 +18,7 @@
 package com.waz.model
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.log.LogSE.asSize
 
 import scala.concurrent.{ ExecutionContext, Future }

@@ -19,7 +19,7 @@ package com.waz.api.impl
 
 import com.waz.api
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.events.{AggregatingSignal, EventStream, Signal}
+import com.wire.signals.{AggregatingSignal, EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.log.LogSE._
 

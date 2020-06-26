@@ -26,7 +26,7 @@ import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.preferences.views.SwitchPreference
 import com.waz.service.tracking.TrackingService.analyticsPrefKey

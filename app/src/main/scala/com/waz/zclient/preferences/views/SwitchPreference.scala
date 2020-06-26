@@ -26,7 +26,7 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.RichView
 

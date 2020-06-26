@@ -20,7 +20,7 @@ package com.waz.zclient.collection
 import android.util.SparseArray
 import androidx.recyclerview.widget.{GridLayoutManager, RecyclerView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.utils.returning
 import com.waz.zclient.collection.adapters.CollectionAdapter
 

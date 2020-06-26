@@ -23,7 +23,7 @@ import android.util.{AttributeSet, TypedValue}
 import android.view.Gravity
 import com.waz.model.AccentColor
 import com.waz.model.{ConvExpiry, EphemeralDuration, MessageExpiry}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.paintcode.{EphemeralIcon, HourGlassIcon}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx}

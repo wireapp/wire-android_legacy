@@ -33,7 +33,7 @@ import com.waz.model.{AssetData, AssetId, Dim2, MessageContent}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
 import com.waz.zclient.glide.WireGlide

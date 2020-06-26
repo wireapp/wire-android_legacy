@@ -23,7 +23,7 @@ import android.os.Bundle
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.paintcode.{WireDrawable, WireStyleKit}

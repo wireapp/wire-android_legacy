@@ -18,47 +18,54 @@
 package com.waz.threading
 
 import java.util.Timer
-import java.util.concurrent.{Executor, ExecutorService, Executors}
+import java.util.concurrent.Executors
 
 import android.os.{Handler, HandlerThread, Looper}
-import com.waz.log.BasicLogging.LogTag
-import com.waz.log.LogSE._
 import com.waz.utils.returning
 import com.waz.zms.BuildConfig
+import com.wire.signals.Threading.{Cpus, executionContext}
+import com.wire.signals.{DispatchQueue, DispatchQueueStats, EventContext, EventStream, Events, LimitedDispatchQueue, Signal, Subscription}
 
-import scala.concurrent.{ExecutionContext, Future, Promise, blocking}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.control.NonFatal
 
 object Threading {
 
+  implicit class RichSignal[E](val signal: Signal[E]) extends AnyVal {
+    def onUi(subscriber: Events.Subscriber[E])(implicit context: EventContext): Subscription =
+      signal.on(Threading.Ui)(subscriber)(context)
+  }
+
+  implicit class RichEventStream[E](val stream: EventStream[E]) extends AnyVal {
+    def onUi(subscriber: Events.Subscriber[E])(implicit context: EventContext): Subscription =
+      stream.on(Threading.Ui)(subscriber)(context)
+  }
+
+  class UiDispatchQueue() extends DispatchQueue {
+    //override private[signals] val name: String = "UiDispatchQueue"
+    private val handler = new Handler(Looper.getMainLooper)
+
+    override def execute(runnable: Runnable): Unit = handler.post(DispatchQueueStats("UiDispatchQueue", runnable))
+  }
+
   object Implicits {
-    implicit lazy val Background: DispatchQueue    = Threading.ThreadPool
-    implicit lazy val Ui:         DispatchQueue    = Threading.Ui
-    implicit lazy val Image:      DispatchQueue    = Threading.ImageDispatcher
+    implicit lazy val Background: DispatchQueue = Threading.ThreadPool
+    implicit lazy val Ui:         DispatchQueue = Threading.Ui
+    implicit lazy val Image:      DispatchQueue = Threading.ImageDispatcher
     implicit lazy val IO: ExecutionContext = Threading.IO
   }
 
-  var AssertsEnabled = BuildConfig.DEBUG
-
-  val Cpus = math.max(2, Runtime.getRuntime.availableProcessors())
-
-  def executionContext(service: ExecutorService)(implicit tag: LogTag): ExecutionContext = new ExecutionContext {
-    override def reportFailure(cause: Throwable): Unit = {
-//      exception(cause, "ExecutionContext failed") TODO make threading mockable and then inject tracking
-      error(l"${showString(cause.getMessage)}", cause)
-    }
-    override def execute(runnable: Runnable): Unit = service.execute(runnable)
-  }
+  var AssertsEnabled: Boolean = BuildConfig.DEBUG
 
   /**
    * Thread pool for non-blocking background tasks.
    */
-  val ThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool())(LogTag("CpuThreadPool")), "CpuThreadPool")
+  val ThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool()), "CpuThreadPool")
 
   /**
    * Thread pool for IO tasks.
    */
-  val IOThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool())(LogTag("IoThreadPool")), "IoThreadPool")
+  val IOThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool()), "IoThreadPool")
 
   val Background = ThreadPool
 

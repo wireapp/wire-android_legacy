@@ -26,7 +26,7 @@ import com.waz.model.MessageData.MessageDataDao
 import com.waz.model.{MessageData, MessageId, RemoteInstant}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading.Implicits.Background
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.DBCursor
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageDataSource.{MessageEntry, MessageEntryReader}

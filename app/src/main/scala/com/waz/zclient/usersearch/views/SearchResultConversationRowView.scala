@@ -24,7 +24,7 @@ import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
 import com.waz.model.ConversationData
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.ui.text.TypefaceTextView

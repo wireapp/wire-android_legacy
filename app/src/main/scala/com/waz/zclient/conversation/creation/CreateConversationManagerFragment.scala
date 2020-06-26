@@ -24,7 +24,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.annotation.IdRes
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.conversation.ConversationController

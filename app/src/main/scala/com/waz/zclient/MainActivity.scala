@@ -34,7 +34,7 @@ import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.Intents.{RichIntent, _}
 import com.waz.zclient.SpinnerController.{Hide, Show}
@@ -62,6 +62,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{Emojis, IntentUtils, ResString, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
+import com.waz.threading.Threading._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._

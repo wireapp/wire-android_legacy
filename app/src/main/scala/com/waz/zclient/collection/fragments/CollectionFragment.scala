@@ -31,7 +31,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.collection.adapters.CollectionAdapter.AdapterState
 import com.waz.zclient.collection.adapters.{CollectionAdapter, SearchAdapter}
 import com.waz.zclient.collection.controllers.CollectionController

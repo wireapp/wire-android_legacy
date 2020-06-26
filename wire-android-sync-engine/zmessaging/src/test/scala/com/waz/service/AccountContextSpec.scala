@@ -20,7 +20,7 @@ package com.waz.service
 import com.waz.service.AccountsService.{InForeground, LoggedOut}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 class AccountContextSpec extends AndroidFreeSpec {
 

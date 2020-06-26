@@ -26,7 +26,7 @@ import androidx.fragment.app.Fragment
 import android.view._
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState
-import com.waz.utils.events.Subscription
+import com.wire.signals.Subscription
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
 import com.waz.zclient.log.LogUI._

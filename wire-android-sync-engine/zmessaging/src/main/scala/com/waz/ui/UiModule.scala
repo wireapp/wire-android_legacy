@@ -20,8 +20,8 @@ package com.waz.ui
 import android.os.{Handler, Looper}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service._
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events._
+import com.wire.signals.{CancellableFuture, EventContext, ForcedEventSource, Publisher, SourceSignal}
+import com.waz.threading.Threading
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -22,7 +22,7 @@ import android.view.{View, ViewGroup}
 import androidx.recyclerview.widget.{DiffUtil, RecyclerView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, FolderId, Name}
-import com.waz.utils.events.{EventContext, EventStream, SourceStream}
+import com.wire.signals.{EventContext, EventStream, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.ConversationListController.NamedConversation
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}

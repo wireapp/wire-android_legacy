@@ -21,9 +21,9 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.model.ReadReceipt.ReadReceiptDao
 import com.waz.model.{MessageId, ReadReceipt}
 import com.waz.service.messages.MessagesService
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.waz.utils.events.{RefreshingSignal, Signal}
+import com.wire.signals.{RefreshingSignal, Signal}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,7 +37,7 @@ trait ReadReceiptsStorage extends CachedStorage[ReadReceipt.Id, ReadReceipt] {
 class ReadReceiptsStorageImpl(context: Context, storage: Database, msgStorage: MessagesStorage, msgService: MessagesService)
   extends CachedStorageImpl[ReadReceipt.Id, ReadReceipt](new TrimmingLruCache(context, Fixed(ReadReceiptsStorage.cacheSize)), storage)(ReadReceiptDao, LogTag("ReadReceiptsStorage"))
   with ReadReceiptsStorage {
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
   private implicit val dispatcher: ExecutionContext = new SerialDispatchQueue()
 
   msgStorage.onDeleted { ids => removeAllForMessages(ids.toSet) }

@@ -21,7 +21,7 @@ import java.io.InputStream
 import java.net.URL
 import java.util.Locale
 
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.znet2.http.HttpClient.ProgressCallback
 
 import scala.concurrent.ExecutionContext

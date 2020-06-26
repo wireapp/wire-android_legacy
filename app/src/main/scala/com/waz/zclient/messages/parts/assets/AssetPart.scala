@@ -24,7 +24,7 @@ import com.waz.model.{Dim2, MessageContent}
 import com.waz.service.assets.{AssetStatus, DownloadAssetStatus, ImageDetails, UploadAssetStatus, VideoDetails}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.controllers.global.AccentColorController

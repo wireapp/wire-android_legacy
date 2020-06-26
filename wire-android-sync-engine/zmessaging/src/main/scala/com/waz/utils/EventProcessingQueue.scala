@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.model.Event
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue, Serialized}
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -53,7 +53,7 @@ object EventProcessingQueue {
     val classTag = implicitly[ClassTag[A]]
 
     new EventProcessingQueue[A] {
-      import Threading.Implicits.Background
+      import com.waz.threading.Threading.Implicits.Background
       override protected implicit val evClassTag = classTag
       override def enqueue(event: A): Future[Any] = eventProcessor(event)
       override def enqueue(events: Seq[A]): Future[Any] = Future.traverse(events)(eventProcessor)
@@ -123,14 +123,13 @@ class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Fu
   private val waiting = new AtomicBoolean(false)
   @volatile private var waitFuture: CancellableFuture[Any] = CancellableFuture.successful(())
   private var lastDispatched = 0L
-  private implicit val logTag: LogTag = LogTag(name)
 
   override protected def processQueue(): Future[Any] =
     if (waiting.compareAndSet(false, true)) {
       post {
         val d = math.max(0, lastDispatched - System.currentTimeMillis() + delay.toMillis)
         waitFuture = CancellableFuture.delay(d.millis)
-        if (!waiting.get()) waitFuture.cancel()(logTag) // to avoid race conditions with `flush`
+        if (!waiting.get()) waitFuture.cancel() // to avoid race conditions with `flush`
         waitFuture.future.flatMap { _ =>
           CancellableFuture.lift(processQueueNow())
         } .recover {
@@ -148,7 +147,7 @@ class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Fu
 
   def flush() = {
     waiting.set(false)
-    waitFuture.cancel()(logTag)
+    waitFuture.cancel()
     post {
       processQueueNow()
     }

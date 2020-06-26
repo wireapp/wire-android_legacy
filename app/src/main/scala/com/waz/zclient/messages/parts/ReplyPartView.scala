@@ -29,7 +29,7 @@ import com.waz.model._
 import com.waz.service.assets.Asset
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.glide.WireGlide

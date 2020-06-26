@@ -23,7 +23,7 @@ import android.widget.{LinearLayout, TextView}
 import com.waz.model.{UserData, UserId}
 import com.waz.service.IntegrationsService
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}

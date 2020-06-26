@@ -27,7 +27,7 @@ import com.waz.model.UserId
 import com.waz.model.otr.ClientId
 import com.waz.sync.SyncResult._
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.Intents.ShowDevicesIntent
 import com.waz.zclient.common.controllers.BrowserController

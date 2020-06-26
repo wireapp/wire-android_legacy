@@ -22,8 +22,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.waz.ui.SignalLoader.{LoaderHandle, LoadingReference, ZmsLoaderHandle}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 import scala.ref.{ReferenceQueue, WeakReference}
 

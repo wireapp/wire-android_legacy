@@ -19,7 +19,7 @@ package com.waz.zclient
 
 import android.content.ClipboardManager.OnPrimaryClipChangedListener
 import android.content.{ClipData, ClipboardManager, Context}
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 
 class ClipboardUtils(context: Context) {
 

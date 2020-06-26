@@ -19,7 +19,7 @@ package com.waz.znet2
 
 import java.net.URL
 
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.znet2
 import com.waz.znet2.WebSocketFactory.SocketEvent
 import com.waz.znet2.http.{Body, Method, Request}

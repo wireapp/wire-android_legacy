@@ -26,7 +26,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier

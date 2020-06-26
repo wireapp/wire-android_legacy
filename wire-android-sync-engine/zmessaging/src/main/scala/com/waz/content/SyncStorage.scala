@@ -18,12 +18,11 @@
 package com.waz.content
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
 import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.utils.ThrottledProcessingQueue
-import com.waz.utils.events.Publisher
+import com.wire.signals.Publisher
 
 import scala.collection.mutable
 import scala.concurrent.duration._

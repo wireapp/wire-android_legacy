@@ -29,7 +29,7 @@ import com.waz.content.UserPreferences
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
-import com.waz.utils.events.{Signal, Subscription}
+import com.wire.signals.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController

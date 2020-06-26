@@ -30,7 +30,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.log.{BufferedLogOutput, InternalLog}
 import com.waz.model.{Mime, UserId}
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{IoUtils, RichFuture}
 import org.threeten.bp.Instant

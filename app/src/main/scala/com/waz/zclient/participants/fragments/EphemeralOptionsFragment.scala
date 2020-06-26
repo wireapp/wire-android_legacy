@@ -22,7 +22,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{LinearLayout, RelativeLayout, TextView}
 import com.waz.model.{ConvExpiry, ConvId}
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController._

@@ -23,7 +23,7 @@ import android.widget.{LinearLayout, TextView}
 import com.waz.content.{ReactionsStorage, UsersStorage}
 import com.waz.model.MessageId
 import com.waz.service.messages.MessageAndLikes
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 

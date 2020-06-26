@@ -25,7 +25,7 @@ import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
+import com.wire.signals.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.utils.{JsonDecoder, RichFuture}
 import org.json.JSONObject
 

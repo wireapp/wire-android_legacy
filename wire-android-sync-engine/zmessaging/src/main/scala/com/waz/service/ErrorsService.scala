@@ -27,9 +27,9 @@ import com.waz.content.ZmsDatabase
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountsService.InForeground
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.waz.utils.events.{RefreshingSignal, Signal}
+import com.wire.signals.{RefreshingSignal, Signal}
 import com.waz.utils.{CachedStorageImpl, TrimmingLruCache}
 
 import scala.collection.{breakOut, mutable}
@@ -52,7 +52,7 @@ class ErrorsServiceImpl(userId:    UserId,
                         storage:   ZmsDatabase,
                         accounts:  AccountsService,
                         messages:  MessagesStorage) extends ErrorsService with DerivedLogTag {
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ErrorsService")
 

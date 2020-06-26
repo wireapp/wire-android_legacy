@@ -30,7 +30,7 @@ import com.waz.content.UserPreferences._
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.preferences.PreferencesActivity

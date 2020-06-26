@@ -22,7 +22,8 @@ import java.io.File
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.utils.{Cleanup, Managed}
 
 import scala.concurrent.Future

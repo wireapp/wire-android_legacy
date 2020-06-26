@@ -17,7 +17,7 @@
  */
 package com.waz.testutils
 
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.znet._
 
 import scala.concurrent.duration._

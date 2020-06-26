@@ -26,7 +26,8 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.ImageView
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.wrappers.{AndroidURIUtil, Bitmap, URI}
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout
 import com.waz.zclient.utils.{LocalThumbnailCache, RichView}

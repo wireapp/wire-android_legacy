@@ -39,7 +39,7 @@ import com.waz.model.{MessageContent => _, _}
 import com.waz.service.assets.{FileRestrictionList, UriHelper}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{RichWireInstant, returning}
 import com.waz.zclient._

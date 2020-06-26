@@ -61,7 +61,7 @@ import com.waz.model.ConversationData;
 import com.waz.permissions.PermissionsService;
 import com.waz.service.ZMessaging;
 import com.waz.service.tracking.ContributionEvent;
-import com.waz.utils.events.EventContext;
+import com.wire.signals.EventContext;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.OnBackPressedListener;

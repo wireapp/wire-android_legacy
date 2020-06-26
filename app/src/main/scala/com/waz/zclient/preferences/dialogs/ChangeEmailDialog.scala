@@ -32,7 +32,7 @@ import com.waz.model.AccountData.Password
 import com.waz.model.EmailAddress
 import com.waz.service.{UserService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.pages.main.profile.validator.EmailValidator

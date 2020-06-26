@@ -24,9 +24,9 @@ import com.waz.model.EmailAddress
 import com.waz.service.AccountsService
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils._
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.appentry.controllers.InvitationsController._
 import com.waz.zclient.tracking.TeamInviteSent
 import com.waz.zclient.{Injectable, Injector}

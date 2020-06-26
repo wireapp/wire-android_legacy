@@ -19,7 +19,7 @@ package com.waz
 
 import java.util.concurrent.TimeoutException
 
-import com.waz.utils.events.{EventContext, EventStream, Subscription}
+import com.wire.signals.{EventContext, EventStream, Subscription}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.{Duration, _}

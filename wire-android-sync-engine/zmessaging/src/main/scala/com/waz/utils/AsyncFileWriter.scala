@@ -20,7 +20,7 @@ package com.waz.utils
 import java.io.{File, FileOutputStream}
 import java.nio.ByteBuffer
 
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.threading.Threading.{Background,IO}
 
 import scala.concurrent.Future.successful

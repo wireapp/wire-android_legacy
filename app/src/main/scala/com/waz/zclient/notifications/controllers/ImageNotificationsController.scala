@@ -26,7 +26,7 @@ import com.waz.model.AssetId
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._

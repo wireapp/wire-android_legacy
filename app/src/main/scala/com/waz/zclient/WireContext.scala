@@ -32,7 +32,7 @@ import androidx.fragment.app.{Fragment, FragmentActivity, FragmentManager}
 import androidx.preference.Preference
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.utils.returning
 import com.waz.zclient.FragmentHelper.getNextAnimationDuration
 import com.waz.zclient.calling.CallingActivity
@@ -40,6 +40,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.{ContextUtils, RichView}
+import com.waz.threading.Threading._
 
 import scala.language.implicitConversions
 

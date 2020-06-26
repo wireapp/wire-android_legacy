@@ -22,7 +22,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
 import com.waz.model.UserId
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.utils.StringUtils
 import com.waz.zclient.{R, ViewHelper}

@@ -21,7 +21,7 @@ import java.io.File
 
 import com.waz.cache2.{FileCache, LruFileCache, SimpleFileCache}
 import com.waz.model.{AssetId, UploadAssetId}
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration

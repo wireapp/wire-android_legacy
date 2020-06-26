@@ -20,7 +20,7 @@ package com.waz.zclient.calling.views
 import android.content.Context
 import android.util.AttributeSet
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.zclient.calling.CallParticipantsAdapter
 import com.waz.zclient.{R, ViewHelper}
 

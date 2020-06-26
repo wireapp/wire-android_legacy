@@ -30,7 +30,7 @@ import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import org.threeten.bp.Clock
 
 import scala.concurrent.Future

@@ -24,7 +24,7 @@ import android.telephony.TelephonyManager
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.returning
 
 trait NetworkModeService {

@@ -19,7 +19,7 @@
 package com.waz.zclient.participants
 import android.content.Context
 import com.waz.model.{ConvId, MuteSet}
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
+import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.zclient.participants.OptionsMenuController.BaseMenuItem

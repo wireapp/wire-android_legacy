@@ -22,7 +22,7 @@ import android.util.AttributeSet
 import android.widget.LinearLayout
 import com.waz.api.Message.Type._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}

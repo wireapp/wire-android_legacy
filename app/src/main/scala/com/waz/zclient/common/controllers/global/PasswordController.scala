@@ -21,7 +21,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.service.{AccountsService, GlobalModule, UserService}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.security.ActivityLifecycleCallback
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.log.LogUI._

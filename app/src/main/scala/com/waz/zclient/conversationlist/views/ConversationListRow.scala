@@ -34,7 +34,7 @@ import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState.SelfCalling
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.conversationlist.ConversationListController

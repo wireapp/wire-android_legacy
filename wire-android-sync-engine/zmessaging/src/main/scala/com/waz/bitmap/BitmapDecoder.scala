@@ -23,7 +23,8 @@ import android.graphics.BitmapFactory.Options
 import android.graphics.BitmapFactory
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.wrappers.Bitmap
 import com.waz.utils.wrappers

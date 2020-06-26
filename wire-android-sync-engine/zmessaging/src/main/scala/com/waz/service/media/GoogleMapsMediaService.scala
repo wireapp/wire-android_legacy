@@ -22,7 +22,7 @@ import com.waz.model._
 import com.waz.service.assets.AssetInput
 import com.waz.service.media.RichMediaContentParser.GoogleMapsLocation
 import com.waz.sync.client.GoogleMapsClient
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 
 import scala.concurrent.ExecutionContext
 

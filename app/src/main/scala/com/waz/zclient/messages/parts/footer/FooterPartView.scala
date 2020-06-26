@@ -32,7 +32,7 @@ import com.waz.zclient.messages.LikesController._
 import com.waz.model.{MessageContent, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.conversation.{ConversationController, LikesAndReadsFragment}

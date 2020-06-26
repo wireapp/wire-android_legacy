@@ -27,7 +27,8 @@ import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.Retry
 import com.waz.sync.client.PushTokenClient
 import com.waz.sync.client.PushTokenClient.PushTokenRegistration
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 
 import scala.concurrent.Future
 

@@ -23,7 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConvId
 import com.waz.model.sync.SyncJob.Priority
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 
 import scala.collection.immutable.Queue
 import scala.collection.mutable

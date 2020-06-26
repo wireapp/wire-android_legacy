@@ -26,7 +26,7 @@ import com.waz.service.push.WSPushServiceImpl.RequestCreator
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client.{AccessTokenProvider, JsonObjectResponse, PushNotificationEncoded}
-import com.waz.utils.events.{EventStream, SourceStream}
+import com.wire.signals.{EventStream, SourceStream}
 import com.waz.utils.{Backoff, ExponentialBackoff}
 import com.waz.znet2.WebSocketFactory.SocketEvent
 import com.waz.znet2._

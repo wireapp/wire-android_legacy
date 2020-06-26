@@ -33,7 +33,8 @@ import com.waz.model.UserId
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
 import com.waz.service.backup.BackupManager.InvalidMetadata
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.utils.{returning, _}
 import com.waz.zclient.appentry.AppEntryActivity

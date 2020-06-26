@@ -18,7 +18,7 @@
 package com.waz.zclient.conversationlist.adapters
 
 import android.content.Context
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.zclient.Injector
 import com.waz.zclient.conversationlist.ConversationListController.NamedConversation
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._

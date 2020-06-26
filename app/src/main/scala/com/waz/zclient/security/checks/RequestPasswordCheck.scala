@@ -23,7 +23,7 @@ import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.security.SecurityChecklist

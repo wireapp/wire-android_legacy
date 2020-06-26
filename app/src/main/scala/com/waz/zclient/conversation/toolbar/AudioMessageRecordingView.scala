@@ -35,7 +35,7 @@ import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
 import com.waz.service.assets.GlobalRecordAndPlayService.AssetMediaKey
 import com.waz.threading.Threading
-import com.waz.utils.events.{ClockSignal, Signal}
+import com.wire.signals.{ClockSignal, Signal}
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{RichThreetenBPDuration, returning}
 import com.waz.zclient.common.controllers.AssetsController.PlaybackControls

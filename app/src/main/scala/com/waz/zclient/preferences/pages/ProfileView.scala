@@ -33,7 +33,7 @@ import com.waz.service.teams.TeamsService
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.BuildConfig.ACCOUNT_CREATION_ENABLED
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity

@@ -24,7 +24,7 @@ import android.view.{MotionEvent, View, ViewGroup}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.utils.events.{EventContext, EventStream}
+import com.wire.signals.{EventContext, EventStream}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.views.ProfileAccountTab

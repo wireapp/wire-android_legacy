@@ -25,7 +25,7 @@ import android.widget.{ImageView, TextView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccentColor
 import com.waz.threading.Threading
-import com.waz.utils.events.{ClockSignal, Signal}
+import com.wire.signals.{ClockSignal, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.MessageViewPart

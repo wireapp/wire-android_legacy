@@ -26,9 +26,10 @@ import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService, FoldersService}
 import com.waz.service.teams.TeamsService
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
+import com.wire.signals.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling

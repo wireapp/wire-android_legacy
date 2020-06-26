@@ -22,10 +22,10 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
 import com.waz.model._
 import com.waz.service.SearchKey
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils._
-import com.waz.utils.events._
+import com.wire.signals._
 
 import scala.collection.breakOut
 import scala.concurrent.Future

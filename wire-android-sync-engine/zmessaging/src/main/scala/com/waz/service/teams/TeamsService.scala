@@ -28,9 +28,9 @@ import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsS
 import com.waz.service.{ConversationRolesService, ErrorsService, EventScheduler, SearchKey, SearchQuery, UserService}
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.ContentChange.{Added, Removed, Updated}
-import com.waz.utils.events.{AggregatingSignal, EventStream, RefreshingSignal, Signal}
+import com.wire.signals.{AggregatingSignal, EventStream, RefreshingSignal, Signal}
 import com.waz.utils.{ContentChange, RichFuture, RichInstant}
 import org.threeten.bp.Instant
 
@@ -78,7 +78,7 @@ class TeamsServiceImpl(selfUser:           UserId,
                        rolesService:       ConversationRolesService
                       ) extends TeamsService with DerivedLogTag {
 
-  private implicit val dispatcher = SerialDispatchQueue()
+  private implicit val dispatcher = new SerialDispatchQueue(name = "TeamsService")
 
   private val shouldSyncTeam = userPrefs.preference(UserPreferences.ShouldSyncTeam)
   private val lastTeamUpdate = userPrefs.preference(UserPreferences.LastTeamUpdate)

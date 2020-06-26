@@ -23,7 +23,7 @@ import com.waz.content.{GlobalPreferences, UsersStorage}
 import com.waz.model.UserId
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.utils.crypto.ZSecureRandom
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.{Injectable, Injector}
 
 class AccentColorController(implicit inj: Injector) extends Injectable {

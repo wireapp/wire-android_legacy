@@ -29,9 +29,10 @@ import android.view.{OrientationEventListener, Surface, WindowManager}
 import androidx.exifinterface.media.ExifInterface
 import com.waz.bitmap.BitmapUtils
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.RichFuture
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.WireContext
 import com.waz.zclient.camera.{CameraFacing, FlashMode}
 import com.waz.zclient.core.logging.Logger

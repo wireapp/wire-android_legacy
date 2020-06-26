@@ -23,13 +23,13 @@ import com.waz.model.{Availability, _}
 import com.waz.service.assets.{AssetService, AssetStorage}
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.messages.MessagesService
-import com.waz.service.push.PushService
+import com.waz.service.push.{BgEventSource, PushService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
 import com.waz.testutils.TestUserPreferences
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{BgEventSource, Signal, SourceSignal}
+import com.wire.signals.{CancellableFuture, Signal, SourceSignal}
+import com.waz.threading.Threading
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future

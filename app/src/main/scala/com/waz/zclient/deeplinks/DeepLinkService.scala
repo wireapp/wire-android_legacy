@@ -24,7 +24,7 @@ import com.waz.model.UserId
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service.{AccountManager, AccountsService, UserService}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.deeplinks.DeepLink.{Conversation, UserTokenInfo}
 import com.waz.zclient.log.LogUI._

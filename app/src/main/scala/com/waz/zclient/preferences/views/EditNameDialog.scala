@@ -25,7 +25,7 @@ import android.os.Bundle
 import android.text.TextUtils
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.pages.BaseDialogFragment
 import com.waz.zclient.preferences.views.EditNameDialog._

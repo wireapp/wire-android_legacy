@@ -30,7 +30,7 @@ import com.waz.service._
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.OtrClient
 import com.waz.utils._
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 import scala.collection.immutable.Map
 import scala.concurrent.Future
@@ -65,7 +65,7 @@ class OtrClientsServiceImpl(selfId:    UserId,
                             accounts:  AccountsService) extends OtrClientsService with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
 
   override lazy val lastSelfClientsSyncPref: Preferences.Preference[Long] = userPrefs.preference(LastSelfClientsSyncRequestedTime)
 

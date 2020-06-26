@@ -35,7 +35,7 @@ import com.waz.model._
 import com.waz.service.push.NotificationUiController
 import com.waz.service.{AccountsService, UiLifeCycle}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.Bitmap
 import com.waz.zclient.WireApplication._
 import com.waz.zclient.common.controllers.SoundController

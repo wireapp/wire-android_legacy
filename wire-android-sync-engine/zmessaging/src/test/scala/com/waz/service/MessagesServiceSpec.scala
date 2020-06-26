@@ -32,7 +32,7 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestGlobalPreferences
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._

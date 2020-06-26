@@ -27,7 +27,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestUserPreferences
 import com.waz.utils.Managed
-import com.waz.utils.events.{EventStream, Signal, SourceSignal}
+import com.wire.signals.{EventStream, Signal, SourceSignal}
 import com.waz.utils.wrappers.DB
 
 import scala.collection.breakOut

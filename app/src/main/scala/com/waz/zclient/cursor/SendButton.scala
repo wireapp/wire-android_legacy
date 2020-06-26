@@ -21,7 +21,7 @@ import android.animation.{Animator, AnimatorListenerAdapter, ValueAnimator}
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.ui.animation.interpolators.penner.Expo

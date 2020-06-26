@@ -19,7 +19,7 @@ package com.waz.log
 
 import com.waz.content.GlobalPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 
@@ -33,7 +33,7 @@ trait LogsService {
 class LogsServiceImpl(globalPreferences: GlobalPreferences)
   extends LogsService with DerivedLogTag {
   
-  import com.waz.utils.events.EventContext.Implicits._
+  import com.wire.signals.EventContext.Implicits._
 
   override lazy val logsEnabledGlobally: Signal[Boolean] =
     globalPreferences(GlobalPreferences.LogsEnabled).signal

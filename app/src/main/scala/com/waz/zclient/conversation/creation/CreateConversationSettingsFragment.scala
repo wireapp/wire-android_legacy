@@ -24,7 +24,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, TextView}
 import android.widget.CompoundButton.OnCheckedChangeListener
 import androidx.appcompat.widget.SwitchCompat
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.KeyboardController

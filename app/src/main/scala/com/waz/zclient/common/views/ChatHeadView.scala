@@ -48,7 +48,7 @@ import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.Picture
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.{NameParts, returning}
 import com.waz.zclient.common.views.ChatHeadView._
 import com.waz.zclient.glide.WireGlide

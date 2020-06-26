@@ -25,8 +25,8 @@ import com.waz.api.{ContentSearchQuery, Message, TypeFilter}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.events.{EventStream, Signal, SourceSignal}
+import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{EventStream, Signal, SourceSignal}
 import com.waz.zclient.collection.controllers.CollectionController.CollectionInfo
 import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.conversation.ConversationController

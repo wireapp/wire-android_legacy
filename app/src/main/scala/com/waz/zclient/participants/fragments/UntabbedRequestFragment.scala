@@ -5,8 +5,9 @@ import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.model.{ConversationRole, UserId}
 import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.common.controllers.ThemeController

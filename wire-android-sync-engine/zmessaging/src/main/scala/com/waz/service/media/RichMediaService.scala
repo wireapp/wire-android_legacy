@@ -27,7 +27,7 @@ import com.waz.model.messages.media.MediaAssetData
 import com.waz.service.messages.MessagesContentUpdater
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.utils.wrappers.URI
 import com.waz.sync.client.ErrorOr
 

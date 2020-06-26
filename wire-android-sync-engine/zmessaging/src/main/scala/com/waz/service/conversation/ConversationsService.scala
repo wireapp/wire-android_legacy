@@ -36,7 +36,7 @@ import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{AggregatingSignal, EventContext, Signal}
+import com.wire.signals.{AggregatingSignal, EventContext, Signal}
 
 import scala.collection.{breakOut, mutable}
 import scala.concurrent.Future

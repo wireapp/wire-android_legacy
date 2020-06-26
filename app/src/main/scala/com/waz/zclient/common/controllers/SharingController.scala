@@ -20,8 +20,8 @@ package com.waz.zclient.common.controllers
 import android.app.Activity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConvId
-import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.Intents._
 import com.waz.zclient.conversation.ConversationController

@@ -29,8 +29,9 @@ import com.waz.utils._
 import ContextUtils._
 import android.view.View
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import org.threeten.bp.Instant
 
 import concurrent.duration._

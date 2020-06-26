@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.messages.controllers
 
-import com.waz.utils.events.{Signal, SourceSignal}
+import com.wire.signals.{Signal, SourceSignal}
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.{Injectable, Injector}
 

@@ -26,7 +26,7 @@ import com.waz.content.{AccountStorage, TeamsStorage}
 import com.waz.model._
 import com.waz.service.AccountsService
 import com.waz.utils.NameParts
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.drawables.TeamIconDrawable
 import com.waz.zclient.ui.views.CircleView

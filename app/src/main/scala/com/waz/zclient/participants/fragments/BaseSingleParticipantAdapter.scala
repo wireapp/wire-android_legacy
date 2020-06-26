@@ -26,7 +26,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConversationRole, UserId}
-import com.waz.utils.events.{EventStream, SourceStream}
+import com.wire.signals.{EventStream, SourceStream}
 import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.paintcode.GuestIcon
 import com.waz.zclient.ui.text.TypefaceTextView

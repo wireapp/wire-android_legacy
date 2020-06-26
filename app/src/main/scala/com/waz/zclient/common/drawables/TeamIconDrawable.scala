@@ -23,7 +23,7 @@ import android.graphics.drawable.Drawable
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Picture
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.drawables.TeamIconDrawable._
 import com.waz.zclient.glide.WireGlide

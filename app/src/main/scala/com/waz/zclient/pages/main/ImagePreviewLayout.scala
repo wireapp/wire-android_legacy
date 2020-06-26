@@ -28,7 +28,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Mime, Name}
 import com.waz.service.assets.Content
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.common.controllers.global.AccentColorController

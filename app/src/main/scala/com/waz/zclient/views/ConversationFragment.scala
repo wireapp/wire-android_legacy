@@ -38,8 +38,9 @@ import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
 import com.waz.service.call.CallingService
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.{EventStreamWithAuxSignal, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{returning, returningF}
 import com.waz.zclient.Intents.ShowDevicesIntent

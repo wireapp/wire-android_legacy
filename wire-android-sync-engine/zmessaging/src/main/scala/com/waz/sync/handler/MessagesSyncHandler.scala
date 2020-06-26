@@ -42,7 +42,7 @@ import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.ErrorOrResponse
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.{SyncResult, SyncServiceHandle}
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils._
 import com.waz.znet2.http.ResponseCode
 

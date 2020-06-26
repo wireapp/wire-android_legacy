@@ -30,9 +30,9 @@ import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService
 import com.waz.service.assets.Asset.Image
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils._
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.AssetsController.AssetForShare
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.common.controllers.global.KeyboardController

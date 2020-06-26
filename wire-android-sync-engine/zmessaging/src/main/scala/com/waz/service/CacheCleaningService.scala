@@ -24,8 +24,9 @@ import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.LastCacheCleanup
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.EventContext
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.EventContext
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

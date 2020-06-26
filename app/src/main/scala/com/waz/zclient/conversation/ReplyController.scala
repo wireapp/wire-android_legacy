@@ -19,7 +19,7 @@ package com.waz.zclient.conversation
 
 import android.content.Context
 import com.waz.model._
-import com.waz.utils.events.{EventContext, Signal, SourceSignal}
+import com.wire.signals.{EventContext, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.{Injectable, Injector}

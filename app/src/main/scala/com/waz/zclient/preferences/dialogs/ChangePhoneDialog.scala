@@ -39,7 +39,7 @@ import androidx.interpolator.view.animation.{FastOutLinearInInterpolator, Linear
 import com.waz.model.PhoneNumber
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.PhoneError

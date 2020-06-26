@@ -28,7 +28,8 @@ import android.media.AudioTrack.{MODE_STREAM, OnPlaybackPositionUpdateListener, 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.service.assets.GlobalRecordAndPlayService.{MediaPointer, PCMContent}
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import PCM.SizeOfShort
 import org.threeten.bp
 

@@ -26,7 +26,7 @@ import com.waz.model.{ConvId, MessageId, RemoteInstant, SyncId}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.queue.SyncContentUpdater.StaleJobTimeout
 import com.waz.sync.queue.SyncContentUpdaterImpl
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils.wrappers.DB
 
 class SyncContentUpdaterSpec extends AndroidFreeSpec {

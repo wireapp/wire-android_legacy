@@ -30,8 +30,9 @@ import com.waz.model.{ErrorData, Uid}
 import com.waz.permissions.PermissionsService
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.collection.controllers.CollectionController

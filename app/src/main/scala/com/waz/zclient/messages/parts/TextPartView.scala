@@ -29,7 +29,7 @@ import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.model.{Mention, MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.log.LogUI._

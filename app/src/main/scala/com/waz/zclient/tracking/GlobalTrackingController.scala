@@ -29,8 +29,9 @@ import com.waz.model.{UserId, _}
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.service.tracking._
-import com.waz.threading.{SerialDispatchQueue, Threading}
-import com.waz.utils.events.EventContext
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
+import com.wire.signals.EventContext
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}

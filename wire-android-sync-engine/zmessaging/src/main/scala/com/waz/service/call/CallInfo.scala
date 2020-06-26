@@ -28,7 +28,7 @@ import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState}
 import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
-import com.waz.utils.events.{ClockSignal, Signal}
+import com.wire.signals.{ClockSignal, Signal}
 import org.threeten.bp.Duration
 import org.threeten.bp.Duration.between
 

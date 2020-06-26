@@ -28,7 +28,7 @@ import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.threading.Threading.Implicits.Background
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.utils.returning
 import com.waz.utils.wrappers.DBCursor
 import com.waz.zclient.conversation.ConversationController

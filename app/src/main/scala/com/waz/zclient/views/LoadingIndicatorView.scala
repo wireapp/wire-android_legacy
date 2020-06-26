@@ -21,7 +21,7 @@ import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
 import android.widget.{FrameLayout, ProgressBar}
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView

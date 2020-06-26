@@ -21,7 +21,8 @@ import android.content.Context
 import com.waz.db.{BaseDaoDB, RoomDaoDB, ZMessagingDB}
 import com.waz.model.UserId
 import com.waz.service.tracking.TrackingService
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.di.StorageModule
 

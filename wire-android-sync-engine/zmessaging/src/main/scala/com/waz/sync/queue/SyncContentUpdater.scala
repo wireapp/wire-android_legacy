@@ -25,9 +25,9 @@ import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.model.sync._
 import com.waz.sync.queue.SyncJobMerger.{Merged, Unchanged, Updated}
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils._
-import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
+import com.wire.signals.{AggregatingSignal, EventContext, EventStream, Signal}
 
 import scala.collection.mutable
 import scala.concurrent.Future

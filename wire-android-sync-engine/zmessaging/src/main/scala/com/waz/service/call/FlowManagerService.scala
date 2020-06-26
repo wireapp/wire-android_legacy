@@ -27,9 +27,9 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service._
 import com.waz.service.call.FlowManagerService.VideoCaptureDevice
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils._
-import com.waz.utils.events._
+import com.wire.signals._
 
 import scala.collection.breakOut
 import scala.concurrent.{ExecutionContext, Future}

@@ -25,15 +25,14 @@ import com.waz.model.{ConversationData, ConversationRole, _}
 import com.waz.service._
 import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.push.{NotificationService, PushService}
+import com.waz.service.push.{NotificationService, PushService, BgEventSource}
 import com.waz.service.teams.{TeamsService, TeamsServiceImpl}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
-import com.waz.threading.CancellableFuture
-import com.waz.utils.events.{BgEventSource, EventStream, Signal, SourceSignal}
+import com.wire.signals.{CancellableFuture, EventStream, Signal, SourceSignal}
 import org.json.JSONObject
 import org.threeten.bp.Instant
 

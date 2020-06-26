@@ -31,8 +31,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.{NetworkModeService, ZMessaging}
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers._
 import com.waz.zclient.common.controllers.global.AccentColorController

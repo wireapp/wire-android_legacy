@@ -31,7 +31,7 @@ import com.waz.service.AccountsService.InForeground
 import com.waz.service.push.WSPushService
 import com.waz.service.{AccountsService, GlobalModule, NetworkModeService}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient._

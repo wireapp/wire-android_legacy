@@ -21,7 +21,7 @@ import java.net.UnknownServiceException
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.znet2.http.HttpClient._
 import com.waz.znet2.http.Request.QueryParameter
 

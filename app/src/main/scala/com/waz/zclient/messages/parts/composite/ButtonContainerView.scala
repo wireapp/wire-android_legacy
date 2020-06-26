@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import com.waz.model.{ButtonId, MessageId}
-import com.waz.utils.events.{EventStream, Subscription}
+import com.wire.signals.{EventStream, Subscription}
 import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.{R, ViewHelper}
 

@@ -21,7 +21,7 @@ import android.content.Context
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.model.EmailAddress
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.zclient.appentry.InvitesAdapter._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.controllers.InvitationsController.Sent

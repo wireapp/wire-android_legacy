@@ -26,9 +26,9 @@ import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.sync.SyncServiceHandle
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.RichFuture.traverseSequential
-import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream}
+import com.wire.signals.{AggregatingSignal, EventContext, EventStream}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

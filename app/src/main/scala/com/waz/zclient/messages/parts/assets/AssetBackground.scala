@@ -21,7 +21,7 @@ import android.graphics._
 import android.graphics.drawable.Drawable
 import com.waz.model.AccentColor
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.views.ProgressDotsDrawable
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.ColorUtils

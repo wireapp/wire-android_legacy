@@ -30,7 +30,7 @@ import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.assets.AssetStatus
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}

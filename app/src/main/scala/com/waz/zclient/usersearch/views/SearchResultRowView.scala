@@ -25,7 +25,7 @@ import com.waz.api.ContentSearchQuery
 import com.waz.content.MessageIndexStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.ChatHeadView

@@ -22,7 +22,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, NumberPicker}
 import androidx.appcompat.view.ContextThemeWrapper
-import com.waz.utils.events.{EventStream, Subscription}
+import com.wire.signals.{EventStream, Subscription}
 import com.waz.zclient.conversation.ConversationController._
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._

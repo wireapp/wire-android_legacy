@@ -22,7 +22,8 @@ import java.net.URL
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.utils.{IoUtils, JsonDecoder, JsonEncoder}
 import com.waz.znet2.http.HttpClient.{ConnectionError, HttpClientError, UnknownServiceError}

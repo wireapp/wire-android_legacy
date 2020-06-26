@@ -23,7 +23,7 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.zclient.ViewHelper.inflate
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo

@@ -55,7 +55,7 @@ import com.waz.sync.client.CustomBackendClient
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.utils.SafeBase64
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
 import com.waz.zclient.assets.{AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}

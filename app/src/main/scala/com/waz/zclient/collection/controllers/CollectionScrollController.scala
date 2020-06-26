@@ -20,7 +20,7 @@ package com.waz.zclient.collection.controllers
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.waz.model.ConvId
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.messages.MessagesListView.UnreadIndex
 import CollectionScrollController._
 

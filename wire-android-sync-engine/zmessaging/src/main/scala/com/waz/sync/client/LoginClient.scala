@@ -32,7 +32,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.LoginClient.LoginResult
 import com.waz.sync.client.TeamsClient.{TeamsPageSize, TeamsPath}
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.{ExponentialBackoff, JsonEncoder, _}
 import com.waz.znet2.http
 import com.waz.znet2.http.HttpClient.dsl._

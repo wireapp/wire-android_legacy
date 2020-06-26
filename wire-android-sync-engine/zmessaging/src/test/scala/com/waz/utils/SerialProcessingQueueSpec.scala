@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.waz.model._
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.DefaultPatienceConfig
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
 import org.threeten.bp.Instant

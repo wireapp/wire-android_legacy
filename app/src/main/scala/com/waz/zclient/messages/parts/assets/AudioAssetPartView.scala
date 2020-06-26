@@ -24,7 +24,7 @@ import android.widget.{FrameLayout, SeekBar}
 import com.waz.service.assets.AssetStatus
 import com.waz.service.assets.Asset.{Audio, Video}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.R
 import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.cursor.CursorController.KeyboardState

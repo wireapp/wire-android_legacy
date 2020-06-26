@@ -21,7 +21,7 @@ import android.app.Activity
 import android.graphics.Rect
 import android.view.{View, ViewTreeObserver}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, WireContext}

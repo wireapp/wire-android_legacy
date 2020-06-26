@@ -21,8 +21,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
 import com.waz.model.errors.PermissionDeniedError
-import com.waz.threading.{SerialDispatchQueue, Threading}
-import com.waz.utils.events.{EventStream, RefreshingSignal, Signal}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
+import com.wire.signals.{EventStream, RefreshingSignal, Signal}
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.{Future, Promise}

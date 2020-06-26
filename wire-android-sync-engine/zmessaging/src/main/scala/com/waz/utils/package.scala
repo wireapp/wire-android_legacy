@@ -26,7 +26,8 @@ import com.waz.api.UpdateListener
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.model.{LocalInstant, WireInstant}
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.{URI, URIBuilder}
 import org.json.{JSONArray, JSONObject}

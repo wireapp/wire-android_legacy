@@ -35,7 +35,7 @@ import com.waz.model.{AccentColor, EmailAddress, PhoneNumber, Picture}
 import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.appentry.{AppEntryActivity, DialogErrorMessage}
 import com.waz.zclient.common.controllers.global.PasswordController

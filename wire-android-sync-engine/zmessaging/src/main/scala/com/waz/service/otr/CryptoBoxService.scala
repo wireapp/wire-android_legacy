@@ -28,7 +28,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.model.otr.{Client, ClientId, SignalingKey}
 import com.waz.service.MetaDataService
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.utils._
 import com.wire.cryptobox.{CryptoBox, PreKey}
 import org.threeten.bp.Instant

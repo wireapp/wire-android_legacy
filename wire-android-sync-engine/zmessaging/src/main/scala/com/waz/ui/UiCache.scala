@@ -22,8 +22,9 @@ import com.waz.CacheLike
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.waz.utils.ThrottledProcessingQueue
-import com.waz.utils.events.{EventContext, EventStream, Subscription}
+import com.wire.signals.{EventContext, EventStream, Subscription}
 
 import scala.collection._
 import scala.concurrent.Future

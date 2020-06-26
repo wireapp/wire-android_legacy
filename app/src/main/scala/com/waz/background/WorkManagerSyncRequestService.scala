@@ -35,7 +35,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.{SyncHandler, SyncRequestService, SyncResult}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.{Injectable, Injector, WireApplication, WireContext}
 import com.waz.zclient.log.LogUI._

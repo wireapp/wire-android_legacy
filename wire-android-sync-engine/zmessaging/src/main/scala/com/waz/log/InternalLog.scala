@@ -22,7 +22,7 @@ import java.io._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.BasicLogging.{Log, LogTag}
 import com.waz.service.ZMessaging.clock
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 import scala.Ordered._
 import scala.collection.mutable

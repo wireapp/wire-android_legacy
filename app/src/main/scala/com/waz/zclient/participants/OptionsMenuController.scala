@@ -19,7 +19,7 @@ package com.waz.zclient.participants
 
 import androidx.annotation.StringRes
 import com.waz.log.LogShow.SafeToLog
-import com.waz.utils.events.{SourceStream, _}
+import com.wire.signals.{SourceStream, _}
 import com.waz.zclient.participants.OptionsMenuController._
 import com.waz.zclient.{R, WireApplication}
 

@@ -27,7 +27,7 @@ import com.waz.cache.{CacheEntryData, Expiration}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.CacheKey
 import com.waz.service.ZMessaging
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading.Implicits.Background
 import com.waz.utils.returning
 import com.waz.utils.wrappers.{AndroidURI, URI}

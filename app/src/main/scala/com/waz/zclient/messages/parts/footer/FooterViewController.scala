@@ -23,9 +23,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{LocalInstant, MessageData, ReadReceipt, UserId}
 import com.waz.service.messages.{MessageAndLikes, MessagesService}
 import com.waz.service.{NetworkModeService, ZMessaging}
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils._
-import com.waz.utils.events.{ClockSignal, EventContext, Signal}
+import com.wire.signals.{ClockSignal, EventContext, Signal}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions

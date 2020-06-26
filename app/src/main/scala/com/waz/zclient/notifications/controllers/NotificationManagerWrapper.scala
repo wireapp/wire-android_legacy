@@ -37,7 +37,7 @@ import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountsService
 import com.waz.services.notifications.NotificationsHandlerService
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.Bitmap
 import com.waz.utils.{IoUtils, returning}
 import com.waz.zclient.Intents.{CallIntent, QuickReplyIntent}

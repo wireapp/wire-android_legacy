@@ -26,9 +26,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.media.manager.config.Configuration
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.media.manager.{MediaManager, MediaManagerListener}
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils._
-import com.waz.utils.events._
+import com.wire.signals._
 import org.json.JSONObject
 
 import scala.collection.JavaConverters._

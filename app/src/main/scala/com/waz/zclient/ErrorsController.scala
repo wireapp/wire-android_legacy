@@ -21,7 +21,7 @@ package com.waz.zclient
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Uid
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 

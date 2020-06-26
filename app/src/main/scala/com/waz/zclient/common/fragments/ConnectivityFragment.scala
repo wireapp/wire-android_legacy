@@ -23,8 +23,8 @@ import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import com.waz.api.NetworkMode
 import com.waz.service.ZMessaging
-import com.waz.threading.CancellableFuture
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.pages.main.connectivity.ConnectivityIndicatorView

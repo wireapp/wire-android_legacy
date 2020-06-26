@@ -25,7 +25,7 @@ import java.net.{Proxy, UnknownServiceException}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.service.CertificatePin
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{ExecutorServiceWrapper, IoUtils, RichOption}
 import com.waz.znet.ServerTrust

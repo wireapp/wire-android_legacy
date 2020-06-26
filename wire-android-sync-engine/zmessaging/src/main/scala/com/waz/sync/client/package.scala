@@ -19,7 +19,7 @@ package com.waz.sync
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.cache.CacheEntry
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import org.json.{JSONArray, JSONObject}
 
 import scala.concurrent.Future

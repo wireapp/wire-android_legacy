@@ -26,7 +26,7 @@ import com.bumptech.glide.load.model.{ModelLoader, ModelLoaderFactory, MultiMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Picture
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.core.images.AssetKey
 import com.waz.zclient.glide.{AssetRequest, ImageAssetFetcher}
 import com.waz.zclient.log.LogUI._

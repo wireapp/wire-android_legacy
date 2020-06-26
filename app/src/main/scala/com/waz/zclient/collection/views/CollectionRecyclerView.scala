@@ -25,7 +25,7 @@ import android.view.{MotionEvent, View}
 import androidx.recyclerview.widget.{GridLayoutManager, LinearLayoutManager, RecyclerView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Dim2
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.ViewHelper
 import com.waz.zclient.collection.CollectionSpanSizeLookup
 import com.waz.zclient.collection.adapters.CollectionAdapter

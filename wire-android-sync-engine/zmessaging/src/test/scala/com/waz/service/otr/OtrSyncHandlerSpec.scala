@@ -31,7 +31,7 @@ import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageR
 import com.waz.sync.client.{MessagesClient, OtrClient}
 import com.waz.sync.otr.OtrSyncHandler.OtrMessage
 import com.waz.sync.otr.{OtrClientsSyncHandler, OtrSyncHandlerImpl}
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 
 import scala.concurrent.Future
 

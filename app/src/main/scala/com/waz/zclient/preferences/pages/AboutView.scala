@@ -25,7 +25,7 @@ import android.view.View
 import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{MetaDataService, ZMessaging}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.preferences.pages.AboutView._
 import com.waz.zclient.preferences.views.TextButton

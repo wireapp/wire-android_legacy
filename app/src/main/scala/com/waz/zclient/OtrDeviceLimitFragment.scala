@@ -21,12 +21,13 @@ import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.service.AccountManager
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
-import com.waz.utils.events.{Signal, Subscription}
+import com.wire.signals.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.pages.BaseDialogFragment
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
+import com.waz.threading.Threading._
 
 class OtrDeviceLimitFragment extends BaseDialogFragment[OtrDeviceLimitFragment.Container] with FragmentHelper {
 

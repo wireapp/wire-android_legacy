@@ -22,9 +22,8 @@ import com.waz.log.LogSE._
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.threading.Threading
-import com.waz.utils.crypto.AESUtils
-import com.waz.utils.events.{AggregatingSignal, EventStream}
-import com.waz.utils.{Serialized, returning}
+import com.wire.signals.{AggregatingSignal, EventStream, Serialized}
+import com.waz.utils.returning
 import com.wire.cryptobox.{CryptoBox, CryptoSession, PreKey}
 
 import scala.concurrent.Future

@@ -23,7 +23,7 @@ import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import org.threeten.bp.Duration
 
 import scala.concurrent.Future

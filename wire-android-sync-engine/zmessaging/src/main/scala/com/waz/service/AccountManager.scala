@@ -34,13 +34,12 @@ import com.waz.service.AccountsService.ClientDeleted
 import com.waz.service.assets.Content
 import com.waz.service.backup.BackupManager
 import com.waz.service.otr.OtrService.SessionId
-import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse, InvitationClientImpl, OtrClientImpl}
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
-import com.waz.utils.events.Signal
-import com.waz.utils.wrappers.{Context, URI}
+import com.wire.signals._
+import com.waz.utils.wrappers.URI
 import com.waz.znet2.http.ResponseCode
 import com.waz.znet2.{AuthRequestInterceptor, AuthRequestInterceptorImpl}
 

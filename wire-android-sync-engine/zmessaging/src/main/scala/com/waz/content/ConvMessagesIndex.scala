@@ -25,9 +25,9 @@ import com.waz.log.LogSE._
 import com.waz.model.MessageData.{MessageDataDao, isUserContent}
 import com.waz.model._
 import com.waz.service.tracking.TrackingService
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
-import com.waz.utils.events.{EventStream, RefreshingSignal, Signal, SourceSignal}
+import com.wire.signals.{EventStream, RefreshingSignal, Signal, SourceSignal}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -40,7 +40,7 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
 
   private implicit val tag: LogTag = LogTag(s"ConvMessagesIndex_$convId")
 
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConvMessagesIndex")
 
   private val indexChanged = EventStream[Change]()

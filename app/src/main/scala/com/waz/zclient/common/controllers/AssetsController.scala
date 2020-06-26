@@ -41,7 +41,7 @@ import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content
 import com.waz.service.assets.Asset.{Audio, Video}
 import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{IoUtils, returning, sha2}
 import com.waz.zclient.controllers.singleimage.ISingleImageController

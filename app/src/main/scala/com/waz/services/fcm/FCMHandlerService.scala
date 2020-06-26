@@ -29,8 +29,8 @@ import com.waz.service.push._
 import com.waz.services.ZMessagingService
 import com.waz.services.fcm.FCMHandlerService._
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
-import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
+import com.wire.signals.{EventContext, Serialized}
+import com.waz.utils.{JsonDecoder, RichInstant}
 import com.waz.zclient.WireApplication
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security._

@@ -28,8 +28,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Picture
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
-import com.waz.threading.{SerialDispatchQueue, Threading}
-import com.waz.utils.events.Signal
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}

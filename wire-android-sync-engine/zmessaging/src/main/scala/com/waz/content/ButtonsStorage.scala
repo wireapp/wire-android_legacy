@@ -5,7 +5,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ButtonData.{ButtonDataDao, ButtonDataDaoId}
 import com.waz.model.{ButtonData, ButtonId, MessageId}
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 

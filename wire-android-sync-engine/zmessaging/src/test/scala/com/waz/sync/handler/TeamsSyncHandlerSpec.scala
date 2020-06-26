@@ -25,7 +25,7 @@ import com.waz.sync.SyncResult
 import com.waz.sync.client.TeamsClient
 import com.waz.sync.client.TeamsClient.{Permissions, TeamMember, TeamMembers}
 import com.waz.testutils.TestUserPreferences
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 
 import scala.concurrent.Future
 

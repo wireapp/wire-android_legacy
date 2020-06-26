@@ -39,9 +39,9 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
-import com.waz.threading.CancellableFuture.lift
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
-import com.waz.utils.events.{Signal, _}
+import com.waz.threading.Threading
+import com.wire.signals.CancellableFuture.lift
+import com.wire.signals.{CancellableFuture, EventSource, SerialDispatchQueue, Signal, SourceSignal, Serialized}
 import com.waz.utils.{RichInstant, _}
 import com.waz.znet2.http.ResponseCode
 import org.json.JSONObject
@@ -62,10 +62,14 @@ import scala.concurrent.{Future, Promise}
   * receive them in the right order.
   */
 
+trait BgEventSource[T] extends EventSource[T] {
+  override val executionContext = Some(Threading.Background)
+}
+
 trait PushService {
   def syncNotifications(syncMode: SyncMode): Future[Unit]
 
-  def onHistoryLost: SourceSignal[Instant] with BgEventSource
+  def onHistoryLost: SourceSignal[Instant] with BgEventSource[Instant]
   def processing: Signal[Boolean]
   def waitProcessing: Future[Unit]
 
@@ -101,7 +105,7 @@ class PushServiceImpl(selfUserId:           UserId,
   implicit val logTag: LogTag = accountTag[PushServiceImpl](selfUserId)
   private implicit val dispatcher = new SerialDispatchQueue(name = "PushService")
 
-  override val onHistoryLost = new SourceSignal[Instant] with BgEventSource
+  override val onHistoryLost = new SourceSignal[Instant] with BgEventSource[Instant]
   override val processing = Signal(false)
 
   override def waitProcessing =

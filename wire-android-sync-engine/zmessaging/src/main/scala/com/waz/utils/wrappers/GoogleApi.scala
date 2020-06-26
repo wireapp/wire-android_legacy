@@ -19,7 +19,7 @@ package com.waz.utils.wrappers
 
 import android.app.Activity
 import com.waz.model.PushToken
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 trait GoogleApi {
   def isGooglePlayServicesAvailable: Signal[Boolean]

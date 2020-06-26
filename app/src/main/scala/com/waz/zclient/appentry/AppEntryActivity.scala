@@ -31,7 +31,7 @@ import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.{AccountsService, GlobalModule}
 import com.waz.sync.client.CustomBackendClient
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
