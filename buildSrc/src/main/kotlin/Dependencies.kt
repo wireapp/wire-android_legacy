@@ -62,6 +62,9 @@ object Versions {
 
     //dev
     const val STETHO = "1.5.0"
+
+    // signals
+    const val WIRE_SIGNALS = "0.1"
 }
 
 object BuildDependencies {
@@ -133,6 +136,8 @@ object BuildDependencies {
     val jna = "net.java.dev.jna:jna:${Versions.JNA}"
     val libPhoneNumber = "com.googlecode.libphonenumber:libphonenumber:${Versions.LIB_PHONE_NUMBER}"
     val pinEditText = "com.poovam:pin-edittext-field:${Versions.PIN_EDITTEXT}"
+
+    val wireSignals = "com.wire:wire-signals_2.11:${Versions.WIRE_SIGNALS}"
 }
 
 object ModuleDependencies {

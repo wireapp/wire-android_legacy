@@ -426,6 +426,8 @@ dependencies {
     implementation BuildDependencies.jna
     implementation BuildDependencies.pinEditText
 
+    implementation BuildDependencies.wireSignals
+
     // Unit Tests
     testImplementation TestDependencies.jUnit
     testImplementation TestDependencies.mockito.core

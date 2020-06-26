@@ -22,8 +22,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.AssetData
 import com.waz.model.AssetData.ProcessingTaskKey
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
-
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import scala.collection.mutable
 import scala.concurrent.Future
 
@@ -41,7 +40,7 @@ object Cancellable {
     task
   } .flatten
 
-  def cancel(key: Any*)(implicit tag: LogTag) = Future {
+  def cancel(key: Any*)(implicit tag: LogTag): Future[Unit] = Future {
     tasks.remove(key).foreach { task =>
       verbose(l"canceling task: $task")
       task.cancel()
@@ -54,22 +53,8 @@ object AssetProcessing extends DerivedLogTag {
 
   private val tasks = new mutable.HashMap[ProcessingTaskKey, CancellableFuture[Option[AssetData]]]
 
-  def get(key: ProcessingTaskKey) = {
+  def get(key: ProcessingTaskKey): Future[Option[AssetData]] = {
     verbose(l"getting processing task for key: $key, has value?: ${tasks.contains(key)}")
-    tasks.getOrElse(key, CancellableFuture successful None)
-  }
-
-  def apply(key: ProcessingTaskKey)(task: CancellableFuture[Option[AssetData]]): CancellableFuture[Option[AssetData]] = dispatcher {
-    verbose(l"adding processing entry for key: $key")
-    tasks(key) = task
-    task.onComplete { _ => if (tasks.get(key).contains(task)) tasks -= key }
-    task
-  }.flatten
-
-  def cancel(key: ProcessingTaskKey)(implicit tag: LogTag) = Future {
-    tasks.remove(key).foreach { task =>
-      verbose(l"canceling asset processing task: $task")(tag)
-      task.cancel()(tag)
-    }
+    tasks.getOrElse(key, CancellableFuture.successful(None)).future
   }
 }
