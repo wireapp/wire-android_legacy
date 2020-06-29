@@ -95,7 +95,7 @@ dependencies {
     implementation "com.wire:icu4j-shrunk:57.1"
     implementation "com.googlecode.mp4parser:isoparser:1.1.7"
     implementation "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2"
-    implementation "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:0.1"
+    implementation "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:${Versions.WIRE_SIGNALS}"
 
     //Provided dependencies
     compileOnly "com.softwaremill.macwire:macros_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"

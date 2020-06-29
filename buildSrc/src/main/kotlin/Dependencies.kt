@@ -137,7 +137,7 @@ object BuildDependencies {
     val libPhoneNumber = "com.googlecode.libphonenumber:libphonenumber:${Versions.LIB_PHONE_NUMBER}"
     val pinEditText = "com.poovam:pin-edittext-field:${Versions.PIN_EDITTEXT}"
 
-    val wireSignals = "com.wire:wire-signals_2.11:${Versions.WIRE_SIGNALS}"
+    val wireSignals = "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:${Versions.WIRE_SIGNALS}"
 }
 
 object ModuleDependencies {

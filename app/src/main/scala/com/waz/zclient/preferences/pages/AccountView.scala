@@ -266,7 +266,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
 
   if (BuildConfig.ALLOW_CHANGE_OF_EMAIL) view.onEmailClick.onUi { _ =>
     import Threading.Implicits.Ui
-    accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().foreach {
+    accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().future.foreach {
       case Left(ex) =>
         val (h, b) = DialogErrorMessage.genericError(ex.code)
         showErrorDialog(h, b)

@@ -104,7 +104,7 @@ class BaseActivity extends AppCompatActivity
   }
 
   def onBaseActivityResume(): Unit =
-    CancellableFuture.delay(150.millis).foreach { case _ =>
+    CancellableFuture.delay(150.millis).foreach { _ =>
       WebSocketService(this)
     }(Threading.Ui)
 

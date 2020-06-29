@@ -202,9 +202,9 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
   def showStartSSOScreen() = showFragment(StartSSOFragment.newInstance(), StartSSOFragment.TAG, animated = false)
 
-  def loadBackendConfig(configUrl: URL) = {
+  def loadBackendConfig(configUrl: URL): Unit = {
     enableProgress(true)
-    inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+    inject[CustomBackendClient].loadBackendConfig(configUrl).future.foreach {
       case Left(ErrorResponse(ErrorResponse.NotFound, _, _)) =>
         enableProgress(false)
         showErrorDialog(
