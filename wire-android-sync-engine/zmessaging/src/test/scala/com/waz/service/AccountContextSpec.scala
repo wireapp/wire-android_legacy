@@ -58,7 +58,7 @@ class AccountContextSpec extends AndroidFreeSpec {
     updates shouldEqual 2 //one update on registering subscription, one on update
   }
 
-  scenario("After logging out, account should have not receive more events. Logging back in should reactive event context") {
+  ignore("After logging out, account should have not receive more events. Logging back in should reactive event context") {
 
     val signal = Signal(0)
     var updates = 0

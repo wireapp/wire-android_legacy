@@ -39,14 +39,20 @@ class SerialProcessingQueueSpec extends AndroidFreeSpec with Matchers with Scala
     scenario("Enqueue events and await results") {
       val processedCount = new AtomicInteger(0)
       val queue = new GroupedEventProcessingQueue[ConversationEvent, RConvId](_.convId, {
-        case (_, events) => CancellableFuture.delayed(250.millis) { processedCount.addAndGet(events.length) } .future
+        case (_, events) =>
+          CancellableFuture.delayed(250.millis) { processedCount.addAndGet(events.length) }.future
       })
 
       val convId = RConvId()
-      val future = queue.enqueue(Seq(TypingEvent(convId, RemoteInstant(Instant.now()), UserId(), true), TypingEvent(convId, RemoteInstant(Instant.now()), UserId(), true), TypingEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), true)))
+      val future = queue.enqueue(
+        Seq(
+          TypingEvent(convId, RemoteInstant(Instant.now()), UserId(), isTyping = true),
+          TypingEvent(convId, RemoteInstant(Instant.now()), UserId(), isTyping = true),
+          TypingEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), isTyping = true)
+        )
+      )
 
-      val res = Await.result(future, 1.second)
-      info(s"res: $res")
+      Await.result(future, 1.second)
       processedCount.get() shouldEqual 3
     }
   }
