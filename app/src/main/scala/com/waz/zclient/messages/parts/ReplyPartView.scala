@@ -45,6 +45,7 @@ import com.waz.zclient.utils.Time.DateTimeStamp
 import com.waz.zclient.utils.{RichTextView, RichView}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
+import com.waz.threading.Threading._
 
 abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

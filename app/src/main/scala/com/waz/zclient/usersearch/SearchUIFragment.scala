@@ -67,6 +67,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 import com.waz.zclient.usersearch.SearchUIFragment._
+import com.waz.threading.Threading._
 
 class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper

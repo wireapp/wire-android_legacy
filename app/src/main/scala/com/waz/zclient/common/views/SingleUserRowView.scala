@@ -37,6 +37,7 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 import com.waz.zclient.utils._
+import com.waz.threading.Threading._
 
 class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   extends RelativeLayout(context, attrs, style) with ViewHelper with ThemedView {

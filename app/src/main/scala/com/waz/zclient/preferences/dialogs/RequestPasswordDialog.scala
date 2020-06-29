@@ -37,6 +37,7 @@ import com.waz.utils.returning
 import com.waz.zclient.messages.ExecutorWrapper
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.threading.Threading._
 
 class RequestPasswordDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
   import RequestPasswordDialog._

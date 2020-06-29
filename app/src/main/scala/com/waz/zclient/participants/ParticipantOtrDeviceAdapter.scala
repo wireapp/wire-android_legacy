@@ -36,6 +36,7 @@ import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichClient, RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.threading.Threading._
 
 class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ParticipantOtrDeviceAdapter.ViewHolder]

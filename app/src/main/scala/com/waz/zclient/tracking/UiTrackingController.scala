@@ -24,6 +24,7 @@ import com.waz.threading.Threading
 import com.wire.signals.EventContext
 import com.waz.zclient.cursor.{CursorController, CursorMenuItem}
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.threading.Threading._
 
 class UiTrackingController(implicit injector: Injector, ctx: Context, ec: EventContext) extends Injectable {
   val cursorController      = inject[CursorController]

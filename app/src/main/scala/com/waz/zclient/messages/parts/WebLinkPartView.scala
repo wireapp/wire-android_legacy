@@ -42,6 +42,7 @@ import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
   extends CardView(context, attrs, style)

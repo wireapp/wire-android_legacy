@@ -40,6 +40,7 @@ import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationM
 import com.waz.zclient.ui.theme.OptionsDarkTheme
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)

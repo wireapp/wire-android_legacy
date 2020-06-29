@@ -47,6 +47,7 @@ import com.waz.zclient.utils.RingtoneUtils
 import scala.concurrent.Future
 import scala.util.Try
 import scala.util.control.NonFatal
+import com.waz.threading.Threading._
 
 class CallingNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable with DerivedLogTag {
 

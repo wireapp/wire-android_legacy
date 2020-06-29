@@ -57,6 +57,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends ImageView(context, attrs, defStyleAttr) with ViewHelper with DerivedLogTag {

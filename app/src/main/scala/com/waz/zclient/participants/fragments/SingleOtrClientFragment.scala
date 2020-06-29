@@ -42,6 +42,7 @@ import com.waz.zclient.ui.views.e2ee.OtrSwitch
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.threading.Threading._
 
 class SingleOtrClientFragment extends FragmentHelper {
 

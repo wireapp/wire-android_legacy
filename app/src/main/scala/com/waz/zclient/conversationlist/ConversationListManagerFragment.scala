@@ -60,6 +60,7 @@ import com.waz.zclient.{ErrorsController, FragmentHelper, R}
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class ConversationListManagerFragment extends Fragment
   with FragmentHelper

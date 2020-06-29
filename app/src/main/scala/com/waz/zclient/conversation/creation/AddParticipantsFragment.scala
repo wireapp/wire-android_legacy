@@ -52,6 +52,7 @@ import com.waz.zclient.utils.{ResColor, RichView}
 
 import scala.collection.immutable.Set
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class AddParticipantsFragment extends FragmentHelper {
 

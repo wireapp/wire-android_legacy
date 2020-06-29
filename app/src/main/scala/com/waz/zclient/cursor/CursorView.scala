@@ -48,6 +48,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends LinearLayout(context, attrs, defStyleAttr)

@@ -20,7 +20,7 @@ package com.waz.services.websocket
 
 import android.app._
 import android.content
-import android.content.{BroadcastReceiver, Context, Intent}
+import android.content.{BroadcastReceiver, ComponentName, Context, Intent}
 import android.os.{Build, IBinder}
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -204,5 +204,5 @@ object WebSocketService {
 
   val ForegroundId = 41235
 
-  def apply(context: Context) = context.startService(new Intent(context, classOf[WebSocketService]))
+  def apply(context: Context): ComponentName = context.startService(new Intent(context, classOf[WebSocketService]))
 }

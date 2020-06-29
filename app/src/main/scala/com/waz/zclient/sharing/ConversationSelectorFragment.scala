@@ -58,6 +58,7 @@ import com.waz.zclient.utils.ContextUtils.{getDimenPx, showErrorDialog, showToas
 import com.waz.zclient.utils.{RichView, ViewUtils}
 
 import scala.util.Success
+import com.waz.threading.Threading._
 
 class ConversationSelectorFragment extends FragmentHelper with OnBackPressedListener {
 

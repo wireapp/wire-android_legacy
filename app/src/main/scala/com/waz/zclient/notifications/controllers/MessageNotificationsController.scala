@@ -51,6 +51,7 @@ import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_INT > Build.VERSION_CODES.M,
                                      applicationId: String = BuildConfig.APPLICATION_ID)

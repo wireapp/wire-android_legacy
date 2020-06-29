@@ -45,6 +45,7 @@ import com.waz.zclient.preferences.pages.{AdvancedBackStackKey, DevicesBackStack
 import com.waz.zclient.utils.{BackStackNavigator, RingtoneUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{BaseActivity, R, _}
+import com.waz.threading.Threading._
 
 class PreferencesActivity extends BaseActivity
   with CallingBannerActivity with CameraActionObserver {

@@ -30,7 +30,7 @@ import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.{GlobalModule, ZMessaging}
-import com.wire.signals.{CancellableFuture, EventContext, Signal}
+import com.wire.signals.{ButtonSignal, CancellableFuture, ClockSignal, EventContext, Signal, SourceSignal}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.zclient.calling.CallingActivity
@@ -44,6 +44,7 @@ import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {

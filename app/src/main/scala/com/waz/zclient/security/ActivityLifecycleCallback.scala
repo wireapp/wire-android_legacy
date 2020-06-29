@@ -28,6 +28,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{BuildConfig, Injectable, Injector, LaunchActivity}
 
 import scala.collection.convert.DecorateAsScala
+import com.waz.threading.Threading._
 
 class ActivityLifecycleCallback(implicit injector: Injector)
   extends Application.ActivityLifecycleCallbacks

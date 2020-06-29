@@ -34,6 +34,7 @@ import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.BuildConfig
+import com.waz.threading.Threading._
 
 class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

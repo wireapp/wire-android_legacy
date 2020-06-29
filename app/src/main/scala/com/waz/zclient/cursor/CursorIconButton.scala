@@ -52,6 +52,7 @@ import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.ui.views.FilledCircularBackgroundDrawable
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class CursorIconButton(context: Context, attrs: AttributeSet, defStyleAttr: Int)
   extends GenericStyleKitView(context, attrs, defStyleAttr)

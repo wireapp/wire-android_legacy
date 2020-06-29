@@ -36,6 +36,7 @@ import com.waz.zclient.common.controllers.ThemeController.Theme
 
 import scala.concurrent.Future
 import scala.util.Try
+import com.waz.threading.Threading._
 
 class CallControlButtonView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper with ThemedView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

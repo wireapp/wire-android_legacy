@@ -30,6 +30,7 @@ import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 object TeamIconDrawable {
   
@@ -100,7 +101,7 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
       })
   } yield bitmap
 
-  bitmap .onUi{ bitmap =>
+  bitmap.onUi{ bitmap =>
     currentBitmap = bitmap
     invalidateSelf()
   }

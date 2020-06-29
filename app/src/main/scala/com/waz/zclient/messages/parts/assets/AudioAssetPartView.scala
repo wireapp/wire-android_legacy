@@ -31,6 +31,7 @@ import com.waz.zclient.cursor.CursorController.KeyboardState
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.{RichSeekBar, RichView, StringUtils}
 import org.threeten.bp.Duration
+import com.waz.threading.Threading._
 
 class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with FileLayoutAssetPart with HighlightViewPart {

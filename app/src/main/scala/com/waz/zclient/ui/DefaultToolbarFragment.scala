@@ -31,6 +31,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getDimenPx, getInt}
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.threading.Threading._
 
 abstract class DefaultToolbarFragment[T] extends BaseFragment[T] with FragmentHelper {
 

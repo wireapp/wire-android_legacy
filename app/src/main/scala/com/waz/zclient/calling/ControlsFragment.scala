@@ -33,6 +33,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, MainActivity, R}
+import com.waz.threading.Threading._
 
 class ControlsFragment extends FragmentHelper {
 

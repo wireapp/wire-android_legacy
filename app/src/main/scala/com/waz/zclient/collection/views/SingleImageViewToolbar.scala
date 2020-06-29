@@ -34,6 +34,7 @@ import MessageAction._
 import android.view.View
 import com.waz.content.ReactionsStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.threading.Threading._
 
 class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

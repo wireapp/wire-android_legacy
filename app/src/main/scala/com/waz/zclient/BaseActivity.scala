@@ -104,10 +104,9 @@ class BaseActivity extends AppCompatActivity
   }
 
   def onBaseActivityResume(): Unit =
-    CancellableFuture.delay(150.millis).foreach { _ =>
+    CancellableFuture.delay(150.millis).foreach { case _ =>
       WebSocketService(this)
-    } (Threading.Ui)
-
+    }(Threading.Ui)
 
   def getBaseTheme: Int = themeController.forceLoadDarkTheme
 

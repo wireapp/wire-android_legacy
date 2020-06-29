@@ -41,6 +41,7 @@ import com.waz.zclient.utils._
 import com.waz.zclient.views.AvailabilityView
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentHelper {
   import Threading.Implicits.Ui

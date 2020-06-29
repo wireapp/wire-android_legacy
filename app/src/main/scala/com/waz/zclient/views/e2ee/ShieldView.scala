@@ -24,6 +24,7 @@ import com.waz.utils.returning
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.utils.RichView
+import com.waz.threading.Threading._
 
 class ShieldView(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends ImageView(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

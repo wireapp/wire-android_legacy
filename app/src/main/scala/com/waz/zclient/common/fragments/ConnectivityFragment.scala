@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.fragments
+package com.waz.zclient.common.fragments
 
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -34,14 +34,15 @@ import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{FragmentHelper, R}
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class ConnectivityFragment extends Fragment with FragmentHelper with ConnectivityIndicatorView.OnExpandListener {
 
   import ConnectivityFragment._
 
-  lazy val network        = Option(ZMessaging.currentGlobal).map(_.network.networkMode).getOrElse(Signal.const(NetworkMode.UNKNOWN))
-  lazy val accentColor    = inject[AccentColorController].accentColor
-  lazy val longProcess    = inject[Signal[ZMessaging]].flatMap(_.push.processing).flatMap {
+  private lazy val network     = Option(ZMessaging.currentGlobal).map(_.network.networkMode).getOrElse(Signal.const(NetworkMode.UNKNOWN))
+  private lazy val accentColor = inject[AccentColorController].accentColor
+  private lazy val longProcess = inject[Signal[ZMessaging]].flatMap(_.push.processing).flatMap {
     case true => Signal.future(CancellableFuture.delay(LongProcessingDelay)).map(_ => true).orElse(Signal.const(false))
     case _ => Signal.const(false)
   }

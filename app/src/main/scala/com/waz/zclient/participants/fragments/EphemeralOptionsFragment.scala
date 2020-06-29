@@ -32,6 +32,7 @@ import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class EphemeralOptionsFragment extends FragmentHelper {
 

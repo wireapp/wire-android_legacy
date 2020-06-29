@@ -44,6 +44,7 @@ import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class SingleParticipantFragment extends FragmentHelper {
   import Threading.Implicits.Ui

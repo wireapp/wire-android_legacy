@@ -27,6 +27,7 @@ import com.waz.zclient.calling.views.CallParticipantsView
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.threading.Threading._
 
 class CallParticipantsFragment extends FragmentHelper {
   private lazy val themeController = inject[ThemeController]

@@ -37,6 +37,7 @@ import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class InputBox(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

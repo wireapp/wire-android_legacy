@@ -7,6 +7,7 @@ import com.waz.model.{ButtonId, MessageId}
 import com.wire.signals.{EventStream, Subscription}
 import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
     extends LinearLayout(context, attrs, style)

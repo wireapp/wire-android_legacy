@@ -39,6 +39,7 @@ import com.waz.zclient.ui.text.LinkTextView
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.{BuildConfig, R, ViewHelper}
+import com.waz.threading.Threading._
 
 class TextPartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

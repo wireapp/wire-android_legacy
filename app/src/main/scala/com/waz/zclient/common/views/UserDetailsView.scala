@@ -26,6 +26,7 @@ import com.wire.signals.Signal
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.utils.StringUtils
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyle: Int) extends LinearLayout(context, attrs, defStyle) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

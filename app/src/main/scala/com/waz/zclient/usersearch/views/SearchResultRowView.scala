@@ -38,6 +38,7 @@ import com.waz.zclient.ui.utils.{ColorUtils, TextViewUtils}
 import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils._
+import com.waz.threading.Threading._
 
 trait SearchResultRowView extends MessageViewPart with ViewHelper {
   val searchedQuery = Signal[ContentSearchQuery]()

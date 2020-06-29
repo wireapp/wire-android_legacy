@@ -35,6 +35,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getColor, getDrawable, getString}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.threading.Threading._
 
 class CallParticipantsAdapter(implicit context: Context, eventContext: EventContext, inj: Injector)
   extends RecyclerView.Adapter[ViewHolder]

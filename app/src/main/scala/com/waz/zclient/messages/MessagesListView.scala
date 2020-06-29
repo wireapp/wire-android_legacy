@@ -40,6 +40,7 @@ import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
+import com.waz.threading.Threading._
 
 class MessagesListView(context: Context, attrs: AttributeSet, style: Int)
   extends RecyclerView(context, attrs, style) with ViewHelper with DerivedLogTag {

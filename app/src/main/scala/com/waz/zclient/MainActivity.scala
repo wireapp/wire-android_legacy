@@ -48,7 +48,6 @@ import com.waz.zclient.deeplinks.DeepLink.{logTag => _, _}
 import com.waz.zclient.deeplinks.DeepLinkService
 import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, SSOLoginTooManyAccounts}
 import com.waz.zclient.deeplinks.DeepLinkService._
-import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.messages.controllers.NavigationController
@@ -63,6 +62,7 @@ import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{Emojis, IntentUtils, ResString, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.threading.Threading._
+import com.waz.zclient.common.fragments.ConnectivityFragment
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._

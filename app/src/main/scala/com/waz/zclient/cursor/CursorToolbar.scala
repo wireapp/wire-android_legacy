@@ -44,6 +44,7 @@ import com.wire.signals.Signal
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.ui.utils.CursorUtils
 import com.waz.zclient.utils.ContextUtils.getDimenPx
+import com.waz.threading.Threading._
 
 class CursorToolbar(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends LinearLayout(context, attrs, defStyleAttr)

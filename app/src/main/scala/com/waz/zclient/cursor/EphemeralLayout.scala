@@ -29,6 +29,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.concurrent.duration.FiniteDuration
+import com.waz.threading.Threading._
 
 class EphemeralLayout(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
   import EphemeralLayout._

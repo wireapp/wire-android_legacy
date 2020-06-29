@@ -28,6 +28,7 @@ import com.waz.zclient.usersearch.listitems._
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.collection.mutable
+import com.waz.threading.Threading._
 
 class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventContext) extends Injectable
   with DerivedLogTag {

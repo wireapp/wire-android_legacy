@@ -50,6 +50,7 @@ import com.waz.zclient.utils.{RichEditText, RichView}
 import com.waz.zclient.views.LoadingIndicatorView
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 //TODO Should be splitted in two fragments
 class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragment.Container]

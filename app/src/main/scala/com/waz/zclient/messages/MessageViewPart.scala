@@ -45,6 +45,7 @@ import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx}
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 trait MessageViewPart extends View {
   def tpe: MsgPart

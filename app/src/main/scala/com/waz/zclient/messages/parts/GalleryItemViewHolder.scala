@@ -75,7 +75,7 @@ class CursorGalleryItem(context: Context, attrs: AttributeSet, defStyleAttr: Int
         cache.getOrCreate(LocalThumbnailCache.Thumbnail(path, mh, mh))
       }(Threading.Background))
     } {
-      _.foreach { bm =>
+      _.foreach { case bm =>
         setImageBitmap(bm)
         animator.start()
       }(Threading.Ui)

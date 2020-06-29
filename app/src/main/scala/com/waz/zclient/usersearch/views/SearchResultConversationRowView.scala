@@ -30,6 +30,7 @@ import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.{ConversationMembersSignal, UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, R, ViewHelper}
+import com.waz.threading.Threading._
 
 class SearchResultConversationRowView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr)

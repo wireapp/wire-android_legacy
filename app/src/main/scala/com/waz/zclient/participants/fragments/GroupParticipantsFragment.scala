@@ -37,6 +37,7 @@ import com.waz.zclient.utils.ContextUtils.showToast
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
+import com.waz.threading.Threading._
 
 class GroupParticipantsFragment extends FragmentHelper {
 

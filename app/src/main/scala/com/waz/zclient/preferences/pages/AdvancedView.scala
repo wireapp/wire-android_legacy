@@ -40,6 +40,7 @@ import com.waz.zclient.{BaseActivity, BuildConfig, R, ViewHelper}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 trait AdvancedView
 

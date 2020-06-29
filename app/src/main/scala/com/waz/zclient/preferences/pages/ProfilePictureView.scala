@@ -32,6 +32,7 @@ import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.utils.{BackStackKey, UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
+import com.waz.threading.Threading._
 
 trait ProfilePictureView {
     def setPicture(picture: Picture): Unit

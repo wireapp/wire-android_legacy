@@ -48,6 +48,7 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.{LocalDateTime, ZoneId}
+import com.waz.threading.Threading._
 
 class CollectionFragment extends BaseFragment[CollectionFragment.Container] with FragmentHelper {
 

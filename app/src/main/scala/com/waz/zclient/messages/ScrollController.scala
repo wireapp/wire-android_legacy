@@ -27,6 +27,7 @@ import ScrollController._
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
+import com.waz.threading.Threading._
 
 class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, layoutManager: MessagesListLayoutManager)(implicit ec: EventContext)
   extends DerivedLogTag {

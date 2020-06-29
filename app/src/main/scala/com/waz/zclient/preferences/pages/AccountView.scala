@@ -49,6 +49,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
 import com.waz.zclient.{BuildConfig, _}
+import com.waz.threading.Threading._
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]

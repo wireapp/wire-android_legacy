@@ -55,6 +55,7 @@ import com.waz.zclient.{FragmentHelper, R}
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 object DrawingFragment {
   val Tag: String = classOf[DrawingFragment].getName

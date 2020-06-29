@@ -36,6 +36,7 @@ import com.waz.zclient.paintcode._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 import scala.async.Async._
 import scala.collection.immutable.ListSet

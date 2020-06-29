@@ -33,6 +33,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{ContextUtils, _}
 import com.waz.zclient.{ClipboardUtils, R, ViewHelper}
+import com.waz.threading.Threading._
 
 import scala.concurrent.Future
 

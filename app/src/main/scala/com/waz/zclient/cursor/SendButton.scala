@@ -29,6 +29,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class SendButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends CursorIconButton(context, attrs, defStyleAttr) { view =>
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }

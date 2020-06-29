@@ -27,6 +27,7 @@ import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
+import com.waz.threading.Threading._
 
 class NotificationsOptionsFragment extends FragmentHelper {
   import com.waz.threading.Threading.Implicits.Ui

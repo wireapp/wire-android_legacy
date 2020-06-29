@@ -14,6 +14,7 @@ import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class SendConnectRequestFragment extends UntabbedRequestFragment {
   import Threading.Implicits.Ui

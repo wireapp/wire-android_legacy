@@ -34,6 +34,7 @@ import com.waz.zclient.pages.NoOpContainer
 import com.waz.zclient.ui.DefaultToolbarFragment
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
+import com.waz.threading.Threading._
 
 class CreateConversationManagerFragment extends DefaultToolbarFragment[NoOpContainer] with FragmentHelper {
 

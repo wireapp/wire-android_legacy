@@ -37,6 +37,7 @@ import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

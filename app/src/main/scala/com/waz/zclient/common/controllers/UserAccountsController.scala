@@ -32,6 +32,7 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
+import com.waz.threading.Threading._
 
 import scala.concurrent.Future
 

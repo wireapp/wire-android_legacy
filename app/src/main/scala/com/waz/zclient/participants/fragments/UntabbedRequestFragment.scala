@@ -17,6 +17,7 @@ import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.utils.StringUtils
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 abstract class UntabbedRequestFragment extends SingleParticipantFragment {
   import Threading.Implicits.Ui

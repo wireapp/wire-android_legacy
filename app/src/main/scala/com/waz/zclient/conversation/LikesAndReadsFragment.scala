@@ -42,6 +42,7 @@ import com.waz.zclient.utils.ContextUtils.getColor
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.utils.Time.SameDayTimeStamp
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.threading.Threading._
 
 class LikesAndReadsFragment extends FragmentHelper {
   import LikesAndReadsFragment._

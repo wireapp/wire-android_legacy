@@ -25,6 +25,7 @@ import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.security.ActivityLifecycleCallback
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.log.LogUI._
+import com.waz.threading.Threading._
 
 import scala.concurrent.Future
 

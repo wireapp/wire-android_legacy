@@ -37,6 +37,7 @@ import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 import com.waz.zclient.{FragmentHelper, R}
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class SSOWebViewFragment extends FragmentHelper {
   import Threading.Implicits.Ui

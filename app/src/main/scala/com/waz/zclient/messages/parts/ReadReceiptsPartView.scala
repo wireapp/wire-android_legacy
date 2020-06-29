@@ -30,6 +30,7 @@ import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, Us
 import com.waz.zclient.paintcode.ViewWithColor
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class ReadReceiptsPartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

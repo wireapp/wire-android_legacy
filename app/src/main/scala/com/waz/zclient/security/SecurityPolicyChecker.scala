@@ -34,6 +34,7 @@ import org.threeten.bp.Instant
 import org.threeten.bp.temporal.ChronoUnit
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) extends Injectable with DerivedLogTag {
   import SecurityPolicyChecker._

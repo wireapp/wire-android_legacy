@@ -34,6 +34,7 @@ import com.waz.zclient.messages.parts.assets.DeliveryState.{Downloading, OtherUp
 import com.waz.zclient.messages.parts.{EphemeralIndicatorPartView, EphemeralPartView, ImagePartView}
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 trait AssetPart extends View with ClickableViewPart with ViewHelper with EphemeralPartView { self =>
   val controller = inject[AssetsController]

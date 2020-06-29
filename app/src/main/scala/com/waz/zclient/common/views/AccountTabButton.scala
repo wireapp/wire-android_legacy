@@ -38,6 +38,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.CircleView
 import com.waz.zclient.utils.{RichView, UiStorage, UserSignal}
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class AccountTabButton(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr)

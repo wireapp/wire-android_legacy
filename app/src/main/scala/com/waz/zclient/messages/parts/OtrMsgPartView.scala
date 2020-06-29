@@ -31,6 +31,7 @@ import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
   extends SystemMessageView(context, attrs, style)

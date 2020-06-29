@@ -26,6 +26,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.wire.signals.Signal
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   import LikeDetailsView.MaxLikesSize

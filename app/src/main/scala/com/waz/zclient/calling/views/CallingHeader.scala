@@ -24,6 +24,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.GlyphButton
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

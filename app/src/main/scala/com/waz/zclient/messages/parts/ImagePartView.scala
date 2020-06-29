@@ -36,6 +36,7 @@ import com.waz.zclient.messages.parts.assets.ImageLayoutAssetPart
 import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)

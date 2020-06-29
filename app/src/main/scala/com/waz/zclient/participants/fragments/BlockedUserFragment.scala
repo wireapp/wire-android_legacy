@@ -9,6 +9,7 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
+import com.waz.threading.Threading._
 
 class BlockedUserFragment extends UntabbedRequestFragment {
 

@@ -38,6 +38,7 @@ import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
   extends RelativeLayout(context, attrs, style)

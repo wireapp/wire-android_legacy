@@ -50,6 +50,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class SignInFragment extends FragmentHelper with View.OnClickListener with CountryController.Observer {
 

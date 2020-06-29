@@ -35,6 +35,7 @@ import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.usersearch.views.{SearchResultRowView, TextSearchResultRowView}
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.threading.Threading._
 
 class SearchAdapter()(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag { adapter =>

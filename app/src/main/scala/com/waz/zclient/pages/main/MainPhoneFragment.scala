@@ -66,6 +66,7 @@ import com.waz.zclient.views.menus.ConfirmationMenu
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class MainPhoneFragment extends FragmentHelper
   with OnBackPressedListener

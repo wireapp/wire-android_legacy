@@ -49,7 +49,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views.AvailabilityView
-
+import com.waz.threading.Threading._
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]

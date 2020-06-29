@@ -54,6 +54,7 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.Set
+import com.waz.threading.Threading._
 
 trait ConversationListRow extends View
 

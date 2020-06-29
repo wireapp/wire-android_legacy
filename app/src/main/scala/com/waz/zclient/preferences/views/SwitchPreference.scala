@@ -29,6 +29,7 @@ import com.waz.threading.Threading
 import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.RichView
+import com.waz.threading.Threading._
 
 trait Switchable {
   val onCheckedChange: EventStream[Boolean]

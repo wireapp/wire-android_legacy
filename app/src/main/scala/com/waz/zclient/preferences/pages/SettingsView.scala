@@ -32,6 +32,7 @@ import com.waz.zclient.feature.settings.about.SettingsAboutActivity
 import com.waz.zclient.feature.settings.support.SettingsSupportActivity
 import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
+import com.waz.threading.Threading._
 
 trait SettingsView {
 

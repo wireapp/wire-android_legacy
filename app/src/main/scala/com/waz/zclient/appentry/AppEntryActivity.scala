@@ -51,7 +51,7 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog, showLogoutWarningIfNeeded}
 import com.waz.zclient.utils.{BackendController, ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-
+import com.waz.threading.Threading._
 import scala.collection.JavaConverters._
 
 object AppEntryActivity {

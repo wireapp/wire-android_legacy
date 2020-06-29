@@ -29,6 +29,7 @@ import com.waz.zclient.common.views.InputBox.GroupNameValidator
 import com.waz.zclient.ui.DefaultToolbarFragment
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils
+import com.waz.threading.Threading._
 
 class CreateNewFolderFragment extends DefaultToolbarFragment[CreateNewFolderFragment.Container] {
 

@@ -21,7 +21,6 @@ package com.waz.zclient
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
 import androidx.appcompat.app.AppCompatActivity
-import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
@@ -43,9 +42,9 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
   private def loadBackend(): Unit = {
     val callback: BackendConfig => Unit = { be =>
       getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
-      inject[AccountsService].activeAccountId.head(LogTag("BackendSelector")).map {
+      inject[AccountsService].activeAccountId.head.map {
         case Some(_) => startMain()
-        case _ => startSignUp()
+        case _       => startSignUp()
       }(Threading.Ui)
     }
 

@@ -55,6 +55,7 @@ import com.waz.zclient.BuildConfig
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   extends Injectable with DerivedLogTag {

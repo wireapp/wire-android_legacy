@@ -36,6 +36,7 @@ import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor, Vie
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.getStyledColor
 import com.waz.zclient.utils.RichView
+import com.waz.threading.Threading._
 
 class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
   private lazy val createConversationController = inject[CreateConversationController]

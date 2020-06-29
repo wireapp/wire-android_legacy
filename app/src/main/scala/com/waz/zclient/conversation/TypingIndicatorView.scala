@@ -28,6 +28,7 @@ import com.waz.zclient.utils.ContextUtils._
 
 
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {

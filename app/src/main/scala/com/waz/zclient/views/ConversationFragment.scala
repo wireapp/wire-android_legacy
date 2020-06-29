@@ -85,6 +85,7 @@ import com.waz.zclient.{ErrorsController, FragmentHelper, R}
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class ConversationFragment extends FragmentHelper {
   import ConversationFragment._
@@ -117,7 +118,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val cameraController           = inject[ICameraController]
   private lazy val confirmationController     = inject[IConfirmationController]
 
-  private var subs = Set.empty[com.waz.utils.events.Subscription]
+  private var subs = Set.empty[com.wire.signals.Subscription]
 
   private val previewShown = Signal(false)
   private lazy val convChange = convController.convChanged.filter { _.to.isDefined }

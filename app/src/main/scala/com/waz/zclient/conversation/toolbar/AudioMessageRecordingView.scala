@@ -53,6 +53,7 @@ import org.threeten.bp.{Duration, Instant}
 import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr)

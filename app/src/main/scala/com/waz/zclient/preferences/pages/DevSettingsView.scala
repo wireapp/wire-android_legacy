@@ -45,6 +45,7 @@ import com.waz.zclient.utils.ContextUtils.showToast
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 trait DevSettingsView
 

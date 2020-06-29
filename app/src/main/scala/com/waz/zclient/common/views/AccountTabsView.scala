@@ -29,6 +29,7 @@ import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.views.ProfileAccountTab
 import com.waz.zclient.{Injectable, Injector, ViewHelper}
+import com.waz.threading.Threading._
 
 class AccountTabsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends RecyclerView(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

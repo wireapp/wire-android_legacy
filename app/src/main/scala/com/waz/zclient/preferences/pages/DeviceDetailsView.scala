@@ -50,6 +50,7 @@ import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.util.Try
+import com.waz.threading.Threading._
 
 trait DeviceDetailsView {
   val onVerifiedChecked: EventStream[Boolean]

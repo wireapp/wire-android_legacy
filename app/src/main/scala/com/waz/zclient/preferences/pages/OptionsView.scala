@@ -43,6 +43,7 @@ import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.content.GlobalPreferences.{AppLockEnabled, IncognitoKeyboardEnabled}
+import com.waz.threading.Threading._
 
 trait OptionsView {
   def setSounds(level: IntensityLevel): Unit
