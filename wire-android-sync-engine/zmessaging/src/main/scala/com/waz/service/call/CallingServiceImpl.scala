@@ -36,7 +36,6 @@ import com.waz.service._
 import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsCallError, AvsClosedReason, NetworkQuality, VideoState, WCall}
-import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallingService.GlobalCallProfile
@@ -216,6 +215,15 @@ class CallingServiceImpl(val accountId:       UserId,
       sendCallMessage(conv.id, GenericMessage(Uid(), GenericContent.Calling(msg)), ctx)
     }
 
+  def onSftRequest(ctx: Pointer, url: String, data: String): Unit =
+    callingClient.connectToSft(url, data).foreach {
+      case Left(responseError) =>
+        error(l"Could not connect to sft server", responseError)
+        wCall.foreach(avs.onSftResponse(_, None, ctx))
+      case Right(responseData) =>
+        wCall.foreach(avs.onSftResponse(_, Some(responseData), ctx))
+    }
+
   /**
     * @param shouldRing "Also we give you a bool to indicate whether you should ring in incoming. its always true in 1:1,
     *                   true if someone called recently for group but false if the call was started more than 30 seconds ago"
@@ -390,6 +398,16 @@ class CallingServiceImpl(val accountId:       UserId,
   // TODO: Implement
   def onNetworkQualityChanged(convId: ConvId, participant: Participant, quality: NetworkQuality): Future[Unit] =
     Future.successful(())
+
+  def onClientsRequest(convId: ConvId): Future[Unit] =
+    withConv(convId) { (wCall, conv) =>
+      otrSyncHandler.postClientDiscoveryMessage(convId).map {
+        case Right(clients) =>
+          avs.onClientsRequest(wCall, conv.remoteId, clients)
+        case Left(errorResponse) =>
+          warn(l"Could not post client discovery message: $errorResponse")
+      }
+    }
 
   override def startCall(convId: ConvId, isVideo: Boolean = false, forceOption: Boolean = false) =
     Serialized.future(self) {

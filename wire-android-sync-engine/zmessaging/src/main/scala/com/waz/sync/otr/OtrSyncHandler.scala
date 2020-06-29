@@ -22,7 +22,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.content.{ConversationStorage, MembersStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
+import com.waz.log.LogSE.{error, _}
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.conversation.ConversationsService
@@ -52,6 +52,7 @@ trait OtrSyncHandler {
                        previous:   EncryptedContent = EncryptedContent.Empty,
                        recipients: Option[Set[UserId]] = None
                       ): Future[Either[ErrorResponse, RemoteInstant]]
+  def postClientDiscoveryMessage(convId: ConvId): Future[Either[ErrorResponse, Map[UserId, Seq[ClientId]]]]
 }
 
 class OtrSyncHandlerImpl(teamId:             Option[TeamId],
@@ -224,6 +225,20 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         }
     }
   }
+
+  override def postClientDiscoveryMessage(convId: ConvId): Future[Either[ErrorResponse, Map[UserId, Seq[ClientId]]]] = {
+    for {
+      Some(conv) <- convStorage.get(convId)
+      message = OtrMessage(selfClientId, EncryptedContent.Empty, nativePush = false)
+      response <- msgClient.postMessage(conv.remoteId, message, ignoreMissing = false).future
+    } yield response match {
+      case Left(error) =>
+        Left(error)
+      case Right(messageResponse) =>
+        Right(messageResponse.missing)
+    }
+  }
+
 }
 
 object OtrSyncHandler {

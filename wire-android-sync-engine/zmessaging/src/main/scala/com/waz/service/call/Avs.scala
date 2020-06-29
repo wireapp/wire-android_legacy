@@ -48,6 +48,8 @@ trait Avs {
   def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
   def setCallMuted(wCall: WCall, muted: Boolean): Unit
   def setProxy(host: String, port: Int): Unit
+  def onClientsRequest(wCall: WCall, convId: RConvId, userClients: Map[UserId, Seq[ClientId]]): Unit
+  def onSftResponse(wCall: WCall, data: Option[Array[Byte]], ctx: Pointer): Unit
 }
 
 /**
@@ -107,8 +109,14 @@ class AvsImpl() extends Avs with DerivedLogTag {
           0
         }
       },
+      new SFTRequestHandler {
+        override def onSFTRequest(ctx: Pointer, url: String, data: Pointer, length: Size_t, arg: Pointer): Int = {
+          cs.onSftRequest(ctx, url, data.getString(0, "UTF-8"))
+          0
+        }
+      },
       new IncomingCallHandler {
-        override def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, clientId: String, isVideoCall: Boolean, shouldRing: Boolean, arg: Pointer) =
+        override def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, clientId: String, isVideoCall: Boolean, shouldRing: Boolean, convType: Int, arg: Pointer) =
           cs.onIncomingCall(RConvId(convId), UserId(userId), isVideoCall, shouldRing)
       },
       new MissedCallHandler {
@@ -173,6 +181,13 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
       Calling.wcall_set_network_quality_handler(wCall, networkQualityHandler, intervalInSeconds = 5, arg = null)
 
+      val clientsRequestHandler = new ClientsRequestHandler {
+        override def onClientsRequest(inst: Calling.Handle, convId: String, arg: Pointer): Unit =
+          cs.onClientsRequest(ConvId(convId))
+      }
+
+      Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)
+
       wCall
     }
   }
@@ -223,6 +238,26 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
   override def setProxy(host: String, port: Int): Unit =
     withAvs(wcall_set_proxy(host, port))
+
+  override def onClientsRequest(wCall: WCall, convId: RConvId, userClients: Map[UserId, Seq[ClientId]]): Unit = {
+    import ClientListEncoder._
+
+    val clients = userClients.flatMap { case (userId, clientIds) =>
+      clientIds.map { clientId =>
+        Client(userId.str, clientId.str)
+      }
+    }
+
+    val json = encode(ClientList(clients.toSeq))
+    withAvs(wcall_set_clients_for_conv(wCall, convId.str, json))
+  }
+
+  override def onSftResponse(wCall: WCall, data: Option[Array[Byte]], ctx: Pointer): Unit =
+    withAvs {
+      val errorCode = if (data.isDefined) AvsSftError.None else AvsSftError.NoResponseData
+      val responseData = data.getOrElse(Array())
+      wcall_sft_resp(wCall, errorCode, responseData, responseData.length, ctx)
+    }
 }
 
 object Avs extends DerivedLogTag {
@@ -240,6 +275,12 @@ object Avs extends DerivedLogTag {
   object AvsCallError {
     val None = 0
     val UnknownProtocol = 1000
+  }
+
+  type AvsSftError = Int
+  object AvsSftError {
+    val None = 0
+    val NoResponseData = 1
   }
 
   /**
@@ -353,4 +394,18 @@ object Avs extends DerivedLogTag {
     def decode(json: String): Option[AvsParticipantsChange] =
       parser.decode(json)(decoder).right.toOption
   }
+
+  object ClientListEncoder extends CirceJSONSupport {
+
+    import io.circe.Encoder
+
+    case class ClientList(clients: Seq[Client])
+    case class Client(userid: String, clientid: String)
+
+    private lazy val encoder: Encoder[ClientList] = Encoder.apply
+
+    def encode(clientList: ClientList): String = encoder(clientList).toString
+
+  }
+
 }

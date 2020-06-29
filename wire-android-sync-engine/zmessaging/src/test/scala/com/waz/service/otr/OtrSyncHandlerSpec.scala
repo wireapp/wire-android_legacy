@@ -211,6 +211,32 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
     result(sh.postOtrMessage(conv.id, msg))
   }
 
+  scenario("Fetch clients through client discovery message") {
+    val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
+    val encryptedContent = EncryptedContent.Empty
+
+    val missingClients: Map[UserId, Seq[ClientId]] = Map(
+      UserId("user1") -> Seq(ClientId("client1"), ClientId("client2")),
+      UserId("user2") -> Seq(ClientId("client1"), ClientId("client2"))
+    )
+
+    (convStorage.get _)
+      .expects(conv.id)
+      .returning(Future.successful(Some(conv)))
+
+    (msgClient.postMessage _)
+      .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent, nativePush = false), *)
+      .returning(CancellableFuture.successful(Right(MessageResponse.Success(
+        ClientMismatch(
+          missing = missingClients,
+          time = RemoteInstant.Epoch
+        )
+      ))))
+
+    val sh = getSyncHandler
+    result(sh.postClientDiscoveryMessage(conv.id)) shouldEqual Right(missingClients)
+  }
+
   def getSyncHandler = {
     (push.waitProcessing _).expects().anyNumberOfTimes.returning(Future.successful({}))
     new OtrSyncHandlerImpl(teamId, selfClientId, otrClient, msgClient, service, convsService, convStorage, users, members, errors, clientsSyncHandler, push, usersStorage)
