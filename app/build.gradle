@@ -227,8 +227,8 @@ android {
                                     applicationIcon        : "@mipmap/ic_launcher_wire_dev",
                                     sharedUserId           : ""]
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'false'
             buildConfigField 'boolean', 'CONFERENCE_CALLING', 'true'
         }
 
@@ -240,8 +240,8 @@ android {
                                     sharedUserId           : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.loggingEnabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
         }
 
         prod {
@@ -251,8 +251,8 @@ android {
                                     sharedUserId           : buildtimeConfiguration.configuration.userId]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.loggingEnabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
         }
 
         internal {
@@ -262,9 +262,9 @@ android {
                                     applicationIcon  : "@mipmap/ic_launcher_wire_internal",
                                     sharedUserId     : ""]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
             buildConfigField 'boolean', 'CONFERENCE_CALLING', 'true'
         }
 
@@ -276,8 +276,8 @@ android {
                                     sharedUserId           : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
             buildConfigField 'boolean', 'CONFERENCE_CALLING', 'true'
         }
     }
