@@ -30,7 +30,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.adapters.CollectionAdapter._
 import com.waz.zclient.collection.controllers.CollectionController._

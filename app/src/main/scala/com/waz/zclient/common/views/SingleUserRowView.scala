@@ -25,7 +25,7 @@ import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import androidx.appcompat.widget.AppCompatCheckBox
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
-import com.waz.utils.events.{EventStream, SourceStream}
+import com.wire.signals.{EventStream, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
@@ -37,6 +37,7 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 import com.waz.zclient.utils._
+import com.waz.threading.Threading._
 
 class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   extends RelativeLayout(context, attrs, style) with ViewHelper with ThemedView {

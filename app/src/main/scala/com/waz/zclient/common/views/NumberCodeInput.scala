@@ -27,12 +27,13 @@ import android.view.View.OnTouchListener
 import android.view._
 import android.widget.{FrameLayout, LinearLayout, ProgressBar}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.ui.cursor.CursorEditText
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{ContextUtils, _}
 import com.waz.zclient.{ClipboardUtils, R, ViewHelper}
+import com.waz.threading.Threading._
 
 import scala.concurrent.Future
 

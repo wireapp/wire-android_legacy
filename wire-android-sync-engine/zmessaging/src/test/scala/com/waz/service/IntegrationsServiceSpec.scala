@@ -24,7 +24,8 @@ import com.waz.service.messages.MessagesService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.IntegrationsClient
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 
 import scala.concurrent.Future
 

@@ -24,7 +24,7 @@ import android.view._
 import android.widget.LinearLayout
 import androidx.core.view.GestureDetectorCompat
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal, SourceSignal}
+import com.wire.signals.{EventStream, Signal, SourceSignal}
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.ui.cursor.CursorMenuItem
 import com.waz.zclient.{R, ViewHelper}

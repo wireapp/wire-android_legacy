@@ -26,6 +26,7 @@ import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.DeprecationUtils
+import com.waz.threading.Threading._
 
 class CallingActivity extends BaseActivity {
 

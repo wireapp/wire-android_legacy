@@ -5,8 +5,9 @@ import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.model.{ConversationRole, UserId}
 import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.common.controllers.ThemeController
@@ -16,6 +17,7 @@ import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.utils.StringUtils
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 abstract class UntabbedRequestFragment extends SingleParticipantFragment {
   import Threading.Implicits.Ui

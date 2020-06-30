@@ -20,7 +20,8 @@ package com.waz.content
 import android.content.Context
 import com.waz.db.{BaseDaoDB, RoomDaoDB, ZGlobalDB}
 import com.waz.service.tracking.TrackingService
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.zclient.storage.db.{GlobalDatabase => RoomGlobalDatabase}
 import com.waz.zclient.storage.di.StorageModule
 

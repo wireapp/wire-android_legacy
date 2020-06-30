@@ -24,7 +24,7 @@ import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{MessageViewPart, MsgPart}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}

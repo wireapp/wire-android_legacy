@@ -24,10 +24,11 @@ import android.view.View.OnClickListener
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.FrameLayout.LayoutParams
 import android.widget.LinearLayout
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class FlatWireButton(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

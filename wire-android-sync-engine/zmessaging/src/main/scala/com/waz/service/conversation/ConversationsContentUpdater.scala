@@ -27,7 +27,7 @@ import com.waz.model.sync.ReceiptType
 import com.waz.model.{UserId, _}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -76,7 +76,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                       messagesStorage: => MessagesStorage,
                                       tracking:        TrackingService,
                                       syncHandler:     SyncServiceHandle) extends ConversationsContentUpdater with DerivedLogTag {
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationContentUpdater")
 

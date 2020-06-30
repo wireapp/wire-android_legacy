@@ -29,7 +29,7 @@ import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.returning
 import org.scalatest.Inside
 

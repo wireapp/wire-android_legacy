@@ -30,7 +30,7 @@ import com.waz.sync.SyncResult
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 
 import scala.concurrent.Future
 

@@ -41,6 +41,7 @@ import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.sharing.ConversationSelectorFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
+import com.waz.threading.Threading._
 
 import scala.collection.immutable.ListSet
 import scala.util.control.NonFatal

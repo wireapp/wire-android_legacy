@@ -31,7 +31,7 @@ import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.client.UserSearchClient.UserSearchResponse
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events._
+import com.wire.signals._
 
 import scala.collection.immutable.Set
 import scala.concurrent.Future

@@ -22,7 +22,7 @@ import java.net.Proxy
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.sync.client.{BinaryResponse, JsonObjectResponse, ResponseContent, StringResponse}
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.znet2.WebSocketFactory.SocketEvent
 import com.waz.znet2.http.{Body, Request}
 import okio.ByteString

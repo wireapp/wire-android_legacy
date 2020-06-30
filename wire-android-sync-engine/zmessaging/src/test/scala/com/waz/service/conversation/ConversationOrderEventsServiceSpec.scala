@@ -27,8 +27,8 @@ import com.waz.service.messages.MessagesService
 import com.waz.service.{EventPipeline, EventPipelineImpl, EventScheduler, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
-import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.events.Signal
+import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.Signal
 import org.threeten.bp.Instant
 import com.waz.model.GenericContent.Quote
 

@@ -28,7 +28,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model.{EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.{returning, PasswordValidator => StrongValidator}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.{EmailError, PhoneError}
@@ -50,6 +50,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class SignInFragment extends FragmentHelper with View.OnClickListener with CountryController.Observer {
 

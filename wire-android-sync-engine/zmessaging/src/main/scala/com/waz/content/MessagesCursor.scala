@@ -25,9 +25,10 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.utils.wrappers.DBCursor
 
 import scala.collection.Searching.{Found, InsertionPoint}
@@ -49,7 +50,7 @@ class MessagesCursor(cursor: DBCursor,
                      loader: MessageAndLikesStorage,
                      tracking: TrackingService)(implicit ordering: Ordering[RemoteInstant]) extends MsgCursor with DerivedLogTag { self =>
   import MessagesCursor._
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
 
   import scala.concurrent.duration._
 

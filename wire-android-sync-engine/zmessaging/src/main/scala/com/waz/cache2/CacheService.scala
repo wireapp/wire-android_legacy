@@ -23,7 +23,7 @@ import com.waz.log.LogSE._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.errors.{FailedExpectationsError, FileSystemError, NotFoundLocal, ZError}
 import com.waz.utils.IoUtils
-import com.waz.utils.events._
+import com.wire.signals._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}

@@ -19,7 +19,7 @@ package com.waz.zclient.views
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, Mention}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.cursor.CursorText

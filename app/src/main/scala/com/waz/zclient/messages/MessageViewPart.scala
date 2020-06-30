@@ -31,7 +31,7 @@ import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -45,6 +45,7 @@ import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx}
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 trait MessageViewPart extends View {
   def tpe: MsgPart

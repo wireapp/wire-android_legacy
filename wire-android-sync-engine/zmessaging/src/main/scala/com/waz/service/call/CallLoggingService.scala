@@ -26,7 +26,7 @@ import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.service.tracking.TrackingService
 import com.waz.utils.RichWireInstant
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import org.threeten.bp.Duration
 
 class CallLoggingService(selfUserId:  UserId,

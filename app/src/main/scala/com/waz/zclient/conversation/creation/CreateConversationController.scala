@@ -23,7 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.tracking._
 import com.waz.service.{IntegrationsService, ZMessaging}
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.UiStorage

@@ -22,7 +22,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.{ConnectionService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.controllers.confirmation.{ConfirmationRequest, IConfirmationController, TwoButtonConfirmationCallback}
 import com.waz.zclient.conversation.ConversationController

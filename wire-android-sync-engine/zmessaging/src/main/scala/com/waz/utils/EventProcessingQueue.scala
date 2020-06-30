@@ -23,12 +23,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.model.Event
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue, Serialized}
 
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 trait EventProcessingQueue[A <: Event] {
 
@@ -53,7 +54,7 @@ object EventProcessingQueue {
     val classTag = implicitly[ClassTag[A]]
 
     new EventProcessingQueue[A] {
-      import Threading.Implicits.Background
+      import com.waz.threading.Threading.Implicits.Background
       override protected implicit val evClassTag = classTag
       override def enqueue(event: A): Future[Any] = eventProcessor(event)
       override def enqueue(events: Seq[A]): Future[Any] = Future.traverse(events)(eventProcessor)
@@ -61,24 +62,30 @@ object EventProcessingQueue {
   }
 }
 
-class SerialEventProcessingQueue[A <: Event](processor: Seq[A] => Future[Any], name: String = "")(implicit val evClassTag: ClassTag[A]) extends SerialProcessingQueue[A](processor, name) with EventProcessingQueue[A]
+class SerialEventProcessingQueue[A <: Event](processor: Seq[A] => Future[Any], name: String = "")(implicit val evClassTag: ClassTag[A])
+  extends SerialProcessingQueue[A](processor, name) with EventProcessingQueue[A]
 
-class GroupedEventProcessingQueue[A <: Event, Key](groupBy: A => Key, processor: (Key, Seq[A]) => Future[Any], name: String = "")(implicit val evClassTag: ClassTag[A]) extends EventProcessingQueue[A] {
+class GroupedEventProcessingQueue[A <: Event, Key]
+  (groupBy: A => Key, processor: (Key, Seq[A]) => Future[Any], name: String = "")(implicit val evClassTag: ClassTag[A])
+  extends EventProcessingQueue[A] {
 
   private implicit val dispatcher = new SerialDispatchQueue(name = s"GroupedEventProcessingQueue[${evClassTag.runtimeClass.getSimpleName}]")
 
   private val queues = new mutable.HashMap[Key, SerialProcessingQueue[A]]
 
-  private def queue(key: Key) = queues.getOrElseUpdate(key, new SerialProcessingQueue[A](processor(key, _), s"${name}_$key"))
+  private def queue(key: Key) =
+    queues.getOrElseUpdate(key, new SerialProcessingQueue[A](processor(key, _), s"${name}_$key"))
 
   override def enqueue(event: A): Future[Any] = Future(queue(groupBy(event))).flatMap(_.enqueue(event))
 
   override def enqueue(events: Seq[A]): Future[Vector[Any]] =
-    Future.traverse(events.groupBy(groupBy).toVector) { case (key, es) => Future(queue(key)).flatMap(_.enqueue(es)) }
+    Future.traverse(events.groupBy(groupBy).toVector) {
+      case (key, es) => Future(queue(key)).flatMap(_.enqueue(es))
+    }
 
-  def post[T](k: Key)(task: => Future[T]) = Future {
+  def post[T](k: Key)(task: => Future[T]): Future[T] = Future {
     queue(k).post(task)
-  } flatMap identity
+  }.flatMap(identity)
 }
 
 class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = "") {
@@ -91,7 +98,7 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
     processQueue()
   }
 
-  def !(event: A) = enqueue(event)
+  def !(event: A): Future[Any] = enqueue(event)
 
   def enqueue(events: Seq[A]): Future[Any] = if (events.nonEmpty) {
     events.foreach(queue.offer)
@@ -104,15 +111,20 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
     post(processQueueNow())
   }
 
+  private final def fromTry[T](f: => Future[T]): Future[T] = Try(f) match {
+    case Success(value) => value
+    case Failure(ex)    => Future.failed(ex)
+  }
+
   protected def processQueueNow(): Future[Any] = {
     val events = Iterator.continually(queue.poll()).takeWhile(_ != null).toVector
     verbose(l"processQueueNow, events: $events")
-    if (events.nonEmpty) processor(events).recoverWithLog()
+    if (events.nonEmpty) fromTry(processor(events)).recoverWithLog()
     else Future.successful(())
   }
 
   // post some task on this queue, effectively blocking all other processing while this task executes
-  def post[T](f: => Future[T]): Future[T] = Serialized.future(this)(f)
+  def post[T](f: => Future[T]): Future[T] = Serialized.future(this)(fromTry(f))
 
   /* just for tests! */
   def clear(): Unit = queue.clear()
@@ -123,14 +135,13 @@ class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Fu
   private val waiting = new AtomicBoolean(false)
   @volatile private var waitFuture: CancellableFuture[Any] = CancellableFuture.successful(())
   private var lastDispatched = 0L
-  private implicit val logTag: LogTag = LogTag(name)
 
   override protected def processQueue(): Future[Any] =
     if (waiting.compareAndSet(false, true)) {
       post {
         val d = math.max(0, lastDispatched - System.currentTimeMillis() + delay.toMillis)
         waitFuture = CancellableFuture.delay(d.millis)
-        if (!waiting.get()) waitFuture.cancel()(logTag) // to avoid race conditions with `flush`
+        if (!waiting.get()) waitFuture.cancel() // to avoid race conditions with `flush`
         waitFuture.future.flatMap { _ =>
           CancellableFuture.lift(processQueueNow())
         } .recover {
@@ -148,7 +159,7 @@ class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Fu
 
   def flush() = {
     waiting.set(false)
-    waitFuture.cancel()(logTag)
+    waitFuture.cancel()
     post {
       processQueueNow()
     }

@@ -23,7 +23,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.sync.client.ConnectionsClient.PageSize
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.JsonDecoder._
 import com.waz.utils.{Json, _}
 import com.waz.znet2.AuthRequestInterceptor

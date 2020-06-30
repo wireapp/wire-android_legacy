@@ -21,7 +21,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService.{Permission, PermissionKey, PermissionProvider}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.threading.Threading
-import com.waz.utils.events.{Signal, SourceSignal}
+import com.wire.signals.{Signal, SourceSignal}
 
 import scala.collection.immutable.ListSet
 

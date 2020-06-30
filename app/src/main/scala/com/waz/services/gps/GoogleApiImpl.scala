@@ -31,7 +31,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.PushToken
 import com.waz.service.BackendConfig
 import com.waz.service.FirebaseOptions
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.log.LogUI._

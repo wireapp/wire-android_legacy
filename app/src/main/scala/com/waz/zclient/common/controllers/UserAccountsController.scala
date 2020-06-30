@@ -27,11 +27,12 @@ import com.waz.model._
 import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason, UserInitiated}
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
+import com.waz.threading.Threading._
 
 import scala.concurrent.Future
 

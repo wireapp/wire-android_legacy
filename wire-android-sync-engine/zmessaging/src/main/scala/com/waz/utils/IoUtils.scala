@@ -24,7 +24,7 @@ import java.util.zip.{GZIPOutputStream, ZipEntry, ZipInputStream, ZipOutputStrea
 
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.errors.FileSystemError
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 
 import scala.annotation.tailrec
 import scala.collection.Iterator.continually
@@ -84,7 +84,7 @@ object IoUtils {
     promise.trySuccess(copy(new CancellableStream(in, cancelled), out))
 
     new CancellableFuture(promise) {
-      override def cancel()(implicit tag: LogTag): Boolean = cancelled.compareAndSet(false, true)
+      override def cancel(): Boolean = cancelled.compareAndSet(false, true)
     }
   }
 

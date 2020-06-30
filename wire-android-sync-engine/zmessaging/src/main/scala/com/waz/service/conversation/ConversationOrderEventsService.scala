@@ -26,7 +26,7 @@ import com.waz.service.EventScheduler.Stage
 import com.waz.service.messages.MessagesService
 import com.waz.service.{EventPipeline, EventScheduler, UserService}
 import com.waz.sync.SyncServiceHandle
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils._
 
 import scala.concurrent.Future

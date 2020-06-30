@@ -28,7 +28,7 @@ import com.waz.model.{UserData, UserId}
 import com.waz.service.{IntegrationsService, NetworkModeService}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
@@ -37,6 +37,7 @@ import com.waz.zclient.utils.ContextUtils.showToast
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
+import com.waz.threading.Threading._
 
 class GroupParticipantsFragment extends FragmentHelper {
 

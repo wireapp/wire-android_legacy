@@ -31,8 +31,9 @@ import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.model._
 import com.waz.model.sync.SyncCommand._
 import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{Signal, Subscription}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
@@ -59,6 +60,7 @@ import com.waz.zclient.{ErrorsController, FragmentHelper, R}
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class ConversationListManagerFragment extends Fragment
   with FragmentHelper

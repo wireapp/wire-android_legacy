@@ -29,7 +29,7 @@ import com.waz.content.UserPreferences
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
-import com.waz.utils.events.{Signal, Subscription}
+import com.wire.signals.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -51,6 +51,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R, ViewHolder}
+import com.waz.threading.Threading._
 
 /**
   * Due to how we use the NormalConversationListFragment - it gets replaced by the ArchiveConversationListFragment or

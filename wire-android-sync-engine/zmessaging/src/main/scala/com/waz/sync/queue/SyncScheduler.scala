@@ -28,9 +28,9 @@ import com.waz.service.AccountsService.{Active, LoggedOut}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountContext, AccountsService, NetworkModeService}
 import com.waz.sync.{SyncHandler, SyncRequestServiceImpl, SyncResult}
-import com.waz.threading.CancellableFuture.CancelException
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture.CancelException
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.Signal
 import com.waz.utils.{WhereAmI, returning}
 
 import scala.collection.mutable

@@ -30,7 +30,7 @@ import com.waz.sync.client.TeamsClient
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.testutils.TestUserPreferences
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 
 import scala.collection.breakOut
 import scala.concurrent.Future

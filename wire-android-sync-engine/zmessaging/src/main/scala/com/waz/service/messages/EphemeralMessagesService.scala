@@ -30,9 +30,9 @@ import com.waz.model.sync.ReceiptType
 import com.waz.service.assets.AssetService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
-import com.waz.threading.CancellableFuture
+import com.wire.signals.{CancellableFuture, Serialized}
 import com.waz.utils.crypto.ZSecureRandom
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils._
 
 import scala.concurrent.Future
@@ -49,7 +49,7 @@ class EphemeralMessagesService(selfUserId: UserId,
                                assets:     AssetService) extends DerivedLogTag {
   import EphemeralMessagesService._
   import com.waz.threading.Threading.Implicits.Background
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
   
   private val nextExpiryTime = Signal[LocalInstant](LocalInstant.Max)
 

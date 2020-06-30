@@ -21,7 +21,7 @@ import com.waz.api.{Subscriber, Subscription, UpdateListener}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.ui.{SignalLoading, UiModule}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 trait UiObservable extends com.waz.api.UiObservable {
   private val updateListeners = new ListenerList[UpdateListener]

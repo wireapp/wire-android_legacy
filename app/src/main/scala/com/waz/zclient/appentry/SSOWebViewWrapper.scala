@@ -24,7 +24,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.sync.client.AuthenticationManager.Cookie
 import com.waz.sync.client.LoginClient
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.appentry.SSOWebViewWrapper._
 import com.waz.zclient.log.LogUI._

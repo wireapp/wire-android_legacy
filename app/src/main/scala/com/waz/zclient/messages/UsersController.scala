@@ -25,7 +25,7 @@ import com.waz.model._
 import com.waz.service.{ConnectionService, UserService, ZMessaging}
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.UsersController._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}

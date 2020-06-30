@@ -34,8 +34,8 @@ import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.LoginClient.LoginResult
 import com.waz.sync.client.{ErrorOr, LoginClient}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.utils.{Serialized, returning, _}
+import com.wire.signals.{EventContext, EventStream, Serialized, Signal}
+import com.waz.utils.{returning, _}
 
 import scala.concurrent.Future
 import scala.reflect.io.Directory

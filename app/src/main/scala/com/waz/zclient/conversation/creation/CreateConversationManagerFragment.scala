@@ -24,7 +24,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.annotation.IdRes
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.conversation.ConversationController
@@ -34,6 +34,7 @@ import com.waz.zclient.pages.NoOpContainer
 import com.waz.zclient.ui.DefaultToolbarFragment
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
+import com.waz.threading.Threading._
 
 class CreateConversationManagerFragment extends DefaultToolbarFragment[NoOpContainer] with FragmentHelper {
 

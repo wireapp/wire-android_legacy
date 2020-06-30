@@ -19,11 +19,12 @@
 package com.waz.zclient.participants
 import android.content.Context
 import com.waz.model.{ConvId, MuteSet}
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
+import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.zclient.participants.OptionsMenuController.BaseMenuItem
 import com.waz.zclient.utils.ContextUtils.getString
+import com.waz.threading.Threading._
 
 class NotificationsOptionsMenuController(convId: ConvId, fromConversationList: Boolean)
                                         (implicit injector: Injector, context: Context, ec: EventContext)

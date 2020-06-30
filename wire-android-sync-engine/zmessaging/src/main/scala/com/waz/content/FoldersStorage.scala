@@ -22,7 +22,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.model.ConversationFolderData.ConversationFolderDataDao
 import com.waz.model.FolderData.FolderDataDao
 import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId}
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 import com.waz.utils.TrimmingLruCache.Fixed
 

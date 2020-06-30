@@ -22,7 +22,7 @@ import java.util.Locale
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.utils.events.{EventContext, EventStream, SourceStream}
+import com.wire.signals.{EventContext, EventStream, SourceStream}
 import com.waz.zclient.conversationlist.ConversationListController.NamedConversation
 import com.waz.zclient.{Injector, R}
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder._

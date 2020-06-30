@@ -27,7 +27,8 @@ import com.waz.content.Database
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{CacheKey, Uid}
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.utils.TrimmingLruCache.{Fixed, Relative}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, SerialProcessingQueue, TrimmingLruCache}
 
@@ -42,7 +43,7 @@ class CacheStorageImpl(storage: Database, context: Context)
     with DerivedLogTag {
 
   import com.waz.cache.CacheStorage._
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "CacheStorage")
 

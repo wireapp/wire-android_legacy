@@ -23,13 +23,14 @@ import android.graphics.drawable.Drawable
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Picture
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.drawables.TeamIconDrawable._
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 object TeamIconDrawable {
   
@@ -100,7 +101,7 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
       })
   } yield bitmap
 
-  bitmap .onUi{ bitmap =>
+  bitmap.onUi{ bitmap =>
     currentBitmap = bitmap
     invalidateSelf()
   }

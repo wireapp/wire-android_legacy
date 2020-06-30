@@ -10,6 +10,7 @@ import com.waz.zclient.messages.parts.TextPartView
 import com.waz.zclient.messages.ClickableViewPart
 import com.waz.zclient.messages.{MessagesController, MsgPart}
 import com.waz.zclient.{Injectable, R, ViewHelper}
+import com.waz.threading.Threading._
 
 class CompositePartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

@@ -29,7 +29,7 @@ import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, Downloa
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.utils.{RichFuture, _}
 
 import scala.concurrent.Future

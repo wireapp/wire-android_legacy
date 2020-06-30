@@ -25,13 +25,14 @@ import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
 import com.waz.model.Picture
 import com.waz.service.ZMessaging
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.views.GlyphButton
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.utils.{BackStackKey, UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
+import com.waz.threading.Threading._
 
 trait ProfilePictureView {
     def setPicture(picture: Picture): Unit

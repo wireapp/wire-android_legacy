@@ -29,7 +29,7 @@ import com.waz.model._
 import com.waz.service.assets.Asset
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.glide.WireGlide
@@ -45,6 +45,7 @@ import com.waz.zclient.utils.Time.DateTimeStamp
 import com.waz.zclient.utils.{RichTextView, RichView}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
+import com.waz.threading.Threading._
 
 abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

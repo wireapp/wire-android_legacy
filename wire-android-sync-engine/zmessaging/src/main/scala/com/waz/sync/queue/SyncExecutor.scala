@@ -29,7 +29,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult._
 import com.waz.sync.{SyncHandler, SyncResult}
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import org.threeten.bp.Instant
 

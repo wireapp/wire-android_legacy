@@ -32,7 +32,7 @@ import com.waz.zclient.messages.LikesController._
 import com.waz.model.{MessageContent, MessageId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.conversation.{ConversationController, LikesAndReadsFragment}
@@ -45,6 +45,7 @@ import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 //TODO tracking ?
 class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ClickableViewPart with ViewHelper {

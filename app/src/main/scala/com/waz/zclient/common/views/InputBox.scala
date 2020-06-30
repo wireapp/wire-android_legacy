@@ -27,7 +27,7 @@ import android.widget.TextView.OnEditorActionListener
 import android.widget.{LinearLayout, ProgressBar, TextView}
 import com.waz.model.EmailAddress
 import com.waz.threading.Threading
-import com.waz.utils.events.{Signal, SourceSignal}
+import com.wire.signals.{Signal, SourceSignal}
 import com.waz.zclient.common.views.InputBox._
 import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.ui.cursor.CursorEditText
@@ -37,6 +37,7 @@ import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class InputBox(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

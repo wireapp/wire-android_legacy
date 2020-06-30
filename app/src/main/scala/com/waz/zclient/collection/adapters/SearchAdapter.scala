@@ -26,7 +26,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConvId
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.conversation.ConversationController
@@ -35,6 +35,7 @@ import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.usersearch.views.{SearchResultRowView, TextSearchResultRowView}
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.threading.Threading._
 
 class SearchAdapter()(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag { adapter =>

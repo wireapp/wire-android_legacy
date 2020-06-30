@@ -30,7 +30,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{FragmentHelper, R}

@@ -40,9 +40,10 @@ import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

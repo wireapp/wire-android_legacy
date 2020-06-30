@@ -6,7 +6,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.model2.transport.responses.SSOFound
 import com.waz.threading.Threading
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.utils.BackendController

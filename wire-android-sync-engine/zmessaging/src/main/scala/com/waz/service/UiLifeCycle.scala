@@ -17,8 +17,8 @@
  */
 package com.waz.service
 
-import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.events.Signal
+import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.Signal
 
 trait UiLifeCycle {
   //App is in the foregound

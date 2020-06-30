@@ -33,7 +33,7 @@ import com.waz.content.UserPreferences
 import com.waz.service.assets.Content
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.Intents._
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.camera.CameraFragment
@@ -45,6 +45,7 @@ import com.waz.zclient.preferences.pages.{AdvancedBackStackKey, DevicesBackStack
 import com.waz.zclient.utils.{BackStackNavigator, RingtoneUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{BaseActivity, R, _}
+import com.waz.threading.Threading._
 
 class PreferencesActivity extends BaseActivity
   with CallingBannerActivity with CameraActionObserver {

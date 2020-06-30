@@ -37,7 +37,7 @@ import com.waz.service.assets.AudioLevels.peakLoudness
 import com.waz.service.{AccountsService, ErrorsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{ClockSignal, EventContext, EventStream, Signal}
+import com.wire.signals._
 import com.waz.utils.wrappers.URI
 import org.threeten.bp
 import org.threeten.bp.Instant

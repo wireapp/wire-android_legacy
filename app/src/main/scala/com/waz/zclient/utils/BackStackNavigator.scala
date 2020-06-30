@@ -22,7 +22,7 @@ import java.util
 import android.content.Context
 import android.os.{Bundle, Parcel, Parcelable}
 import android.view.{LayoutInflater, View, ViewGroup, ViewPropertyAnimator}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.Injectable
 import BackStackNavigator._
 

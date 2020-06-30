@@ -32,7 +32,7 @@ import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.{OpenSelectParticipants, TrackingService}
 import com.waz.threading.Threading
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.ThemeController.Theme
@@ -52,6 +52,7 @@ import com.waz.zclient.utils.{ResColor, RichView}
 
 import scala.collection.immutable.Set
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class AddParticipantsFragment extends FragmentHelper {
 

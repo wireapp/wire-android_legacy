@@ -20,7 +20,7 @@ package com.waz.zclient.messages
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.api.Message.Type._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

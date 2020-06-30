@@ -33,7 +33,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.UserSearchService
 import com.waz.threading.Threading
-import com.waz.utils.events.{Signal, SourceSignal}
+import com.wire.signals.{Signal, SourceSignal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.conversation.{ConversationController, ReplyController}
@@ -48,6 +48,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends LinearLayout(context, attrs, defStyleAttr)

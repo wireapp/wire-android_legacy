@@ -22,8 +22,9 @@ import android.os.Bundle
 import androidx.appcompat.widget.Toolbar
 import android.view._
 import android.widget.TextView
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.ManagerFragment.Page
 import com.waz.zclient.common.controllers.ThemeController
@@ -40,6 +41,7 @@ import com.waz.zclient.utils._
 import com.waz.zclient.views.AvailabilityView
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentHelper {
   import Threading.Implicits.Ui

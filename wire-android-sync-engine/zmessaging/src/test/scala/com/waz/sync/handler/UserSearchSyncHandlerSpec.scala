@@ -8,7 +8,7 @@ import com.waz.sync.SyncResult
 import com.waz.sync.client.{UserSearchClient, UsersClient}
 import com.waz.sync.client.UserSearchClient.UserSearchResponse
 import com.waz.sync.client.UserSearchClient.UserSearchResponse.User
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 
 import scala.concurrent.Future
 

@@ -28,7 +28,7 @@ import com.waz.model.{ConvId, UserId}
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
 import com.waz.service.{AccountsService, ZMessaging}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -39,6 +39,7 @@ import com.waz.zclient.ui.text.{TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils._
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.threading.Threading._
 
 object QuickReplyFragment {
   private val ConvIdExtra = "EXTRA_CONVERSATION_ID"
@@ -96,7 +97,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
     selectedPos <- firstVisibleItemPosition
   } yield (unreadCount > 1, getString(R.string.quick_reply__counter, new Integer(math.max(1, selectedPos + 1)), new Integer(unreadCount)))
 
-  var subscriptions = Seq.empty[com.waz.utils.events.Subscription]
+  var subscriptions = Seq.empty[com.wire.signals.Subscription]
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     verbose(l"onCreateView")

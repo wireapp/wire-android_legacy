@@ -20,7 +20,7 @@ package com.waz.zclient.messages.parts
 import android.view.ViewGroup
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.log.LogUI._

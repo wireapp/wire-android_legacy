@@ -27,7 +27,7 @@ import com.waz.content.{MessagesStorage, ReactionsStorage}
 import com.waz.model.{AssetId, Liking, MessageId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.ScreenController
@@ -41,6 +41,7 @@ import com.waz.zclient.ui.cursor.CursorMenuItem
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.{LocalDateTime, ZoneId}
+import com.waz.threading.Threading._
 
 object ImageFragment {
   val Tag = ImageFragment.getClass.getSimpleName

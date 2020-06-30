@@ -27,7 +27,7 @@ import com.waz.model.{MessageId, ReadReceipt, UserId}
 import com.waz.service.conversation.ConversationsService
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful

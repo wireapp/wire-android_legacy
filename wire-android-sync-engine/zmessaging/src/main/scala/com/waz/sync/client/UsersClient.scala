@@ -21,7 +21,8 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator

@@ -21,7 +21,7 @@ import android.content.Context
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.model.EmailAddress
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.zclient.appentry.InvitesAdapter._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.controllers.InvitationsController.Sent
@@ -30,7 +30,7 @@ import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.collection.immutable.ListMap
-
+import com.waz.threading.Threading._
 
 class InvitesAdapter()(implicit inj: Injector, eventContext: EventContext, context: Context) extends RecyclerView.Adapter[InviteViewHolder] with Injectable {
 

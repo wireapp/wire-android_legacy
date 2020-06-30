@@ -22,7 +22,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.services.{FutureService, ZMessagingService}
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.utils.returning
 import com.waz.utils.wrappers.Intent
 import com.waz.zclient.log.LogUI._

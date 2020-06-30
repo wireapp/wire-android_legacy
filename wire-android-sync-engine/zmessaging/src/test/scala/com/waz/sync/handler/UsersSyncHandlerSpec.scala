@@ -11,7 +11,7 @@ import com.waz.sync.client.OtrClient.EncryptedContent
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import org.scalamock.function.FunctionAdapter1
 import org.threeten.bp.Instant
 

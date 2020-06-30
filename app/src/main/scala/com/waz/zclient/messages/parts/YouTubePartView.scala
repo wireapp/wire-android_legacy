@@ -28,7 +28,7 @@ import com.waz.model.messages.media.MediaAssetData
 import com.waz.service.NetworkModeService
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.core.images.transformations.DarkenTransformation
 import com.waz.zclient.glide.WireGlide
@@ -38,6 +38,7 @@ import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
   extends RelativeLayout(context, attrs, style)

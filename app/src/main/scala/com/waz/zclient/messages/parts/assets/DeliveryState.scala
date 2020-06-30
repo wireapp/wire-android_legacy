@@ -21,7 +21,7 @@ import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model._
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.log.LogSE._
 import com.waz.service.assets
 import com.waz.service.assets.{DownloadAssetStatus, UploadAssetStatus}

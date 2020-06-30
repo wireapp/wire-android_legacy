@@ -28,9 +28,9 @@ import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.tracking.ContributionEvent.fromMime
 import com.waz.service.tracking.TrackingService.ZmsProvider
 import com.waz.service.{AccountsService, ZMessaging}
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.RichWireInstant
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zms.BuildConfig
 
 import scala.annotation.tailrec
@@ -129,7 +129,7 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
     case false => Future.successful(())
   }
 
-  override def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag) = isTrackingEnabled.head(tag).flatMap {
+  override def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag) = isTrackingEnabled.head.flatMap {
     case true =>
       val cause = rootCause(e)
       track(ExceptionEvent(cause.getClass.getSimpleName, details(cause), description, throwable = Some(e))(tag), userId)

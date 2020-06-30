@@ -29,7 +29,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.views.MenuRowButton
 import com.waz.zclient.log.LogUI._

@@ -38,8 +38,9 @@ import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
 import com.waz.service.call.CallingService
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.{EventStreamWithAuxSignal, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{returning, returningF}
 import com.waz.zclient.Intents.ShowDevicesIntent
@@ -84,6 +85,7 @@ import com.waz.zclient.{ErrorsController, FragmentHelper, R}
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class ConversationFragment extends FragmentHelper {
   import ConversationFragment._
@@ -116,7 +118,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val cameraController           = inject[ICameraController]
   private lazy val confirmationController     = inject[IConfirmationController]
 
-  private var subs = Set.empty[com.waz.utils.events.Subscription]
+  private var subs = Set.empty[com.wire.signals.Subscription]
 
   private val previewShown = Signal(false)
   private lazy val convChange = convController.convChanged.filter { _.to.isDefined }

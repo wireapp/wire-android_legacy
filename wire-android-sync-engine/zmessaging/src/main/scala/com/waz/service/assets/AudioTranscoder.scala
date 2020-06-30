@@ -34,7 +34,8 @@ import com.waz.api.impl.ProgressIndicator
 import com.waz.api.impl.ProgressIndicator.{ProgressData, ProgressReporter}
 import com.waz.bitmap.video.MediaCodecHelper.{inputDequeueTimeoutMicros, outputDequeueTimeoutMicros}
 import com.waz.service.TempFileService
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.Deprecated.{INFO_OUTPUT_BUFFERS_CHANGED, inputBuffersOf, outputBuffersOf}
 import com.waz.utils.wrappers.URI

@@ -28,8 +28,9 @@ import com.waz.content.GlobalPreferences.WsForegroundKey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogsService
 import com.waz.service.{FCMNotificationStatsService, GlobalModule, ZMessaging}
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.preferences.dialogs.FullSyncDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
@@ -39,6 +40,7 @@ import com.waz.zclient.{BaseActivity, BuildConfig, R, ViewHelper}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 trait AdvancedView
 

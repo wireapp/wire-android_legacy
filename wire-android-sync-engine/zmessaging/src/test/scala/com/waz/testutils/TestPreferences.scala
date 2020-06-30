@@ -20,7 +20,7 @@ package com.waz.testutils
 import com.waz.content.Preferences.{PrefKey, Preference}
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 
 //TODO make Global and User preferences traits so that we don't have to override them both.
 class TestGlobalPreferences extends GlobalPreferences(null, null) {

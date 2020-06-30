@@ -30,7 +30,7 @@ import com.waz.content.UserPreferences._
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.preferences.PreferencesActivity
@@ -43,6 +43,7 @@ import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.content.GlobalPreferences.{AppLockEnabled, IncognitoKeyboardEnabled}
+import com.waz.threading.Threading._
 
 trait OptionsView {
   def setSounds(level: IntensityLevel): Unit

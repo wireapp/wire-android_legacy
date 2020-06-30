@@ -42,7 +42,7 @@ import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.ErrorOrResponse
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.{SyncResult, SyncServiceHandle}
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils._
 import com.waz.znet2.http.ResponseCode
 
@@ -309,7 +309,7 @@ class MessagesSyncHandler(selfUserId: UserId,
 
     //want to wait until asset meta and preview data is loaded before we send any messages
     for {
-      _ <- AssetProcessing.get(ProcessingTaskKey(msg.assetId.get))
+      _ <- AssetProcessing.get(ProcessingTaskKey(msg.assetId.get)).toCancellable
       rawAsset <- uploadAssetStorage.find(msg.assetId.collect { case id: UploadAssetId => id }.get).toCancellable
       result <- rawAsset match {
         case None =>

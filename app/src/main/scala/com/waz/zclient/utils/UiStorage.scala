@@ -20,7 +20,7 @@ package com.waz.zclient.utils
 import android.util.LruCache
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.utils.UiStorage._

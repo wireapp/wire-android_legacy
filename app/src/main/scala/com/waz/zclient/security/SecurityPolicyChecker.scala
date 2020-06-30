@@ -23,7 +23,7 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountManager, ZMessaging}
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
@@ -34,6 +34,7 @@ import org.threeten.bp.Instant
 import org.threeten.bp.temporal.ChronoUnit
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) extends Injectable with DerivedLogTag {
   import SecurityPolicyChecker._

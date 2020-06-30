@@ -31,8 +31,9 @@ import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
 import com.waz.service.AccountsService.{InvalidCredentials, UserInitiated}
 import com.waz.service.{AccountManager, AccountsService}
 import com.waz.threading.Threading.Implicits.Ui
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import com.waz.utils.{returning, PasswordValidator => StrongValidator, _}
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.common.controllers.BrowserController
@@ -48,6 +49,7 @@ import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.znet2.http.ResponseCode
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 //Do not rely on having ZMS!
 abstract class CredentialsFragment extends FragmentHelper {

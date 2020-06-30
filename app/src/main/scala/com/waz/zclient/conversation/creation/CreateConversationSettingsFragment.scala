@@ -24,7 +24,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, TextView}
 import android.widget.CompoundButton.OnCheckedChangeListener
 import androidx.appcompat.widget.SwitchCompat
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.KeyboardController
@@ -36,6 +36,7 @@ import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor, Vie
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.getStyledColor
 import com.waz.zclient.utils.RichView
+import com.waz.threading.Threading._
 
 class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
   private lazy val createConversationController = inject[CreateConversationController]

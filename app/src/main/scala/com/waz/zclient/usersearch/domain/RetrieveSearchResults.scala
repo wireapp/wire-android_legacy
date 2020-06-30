@@ -19,7 +19,7 @@ package com.waz.zclient.usersearch.domain
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.search.SearchController
@@ -28,6 +28,7 @@ import com.waz.zclient.usersearch.listitems._
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.collection.mutable
+import com.waz.threading.Threading._
 
 class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventContext) extends Injectable
   with DerivedLogTag {

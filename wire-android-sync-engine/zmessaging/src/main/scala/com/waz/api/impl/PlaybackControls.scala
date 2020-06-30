@@ -21,7 +21,7 @@ import com.waz.api
 import com.waz.service.ZMessaging
 import com.waz.service.assets.GlobalRecordAndPlayService.{Content, MediaKey}
 import com.waz.ui.{SignalLoading, UiModule}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import org.threeten.bp.Duration
 
 class PlaybackControls(key: MediaKey, content: Content, durationSource: ZMessaging => Signal[Duration])(implicit ui: UiModule) extends api.PlaybackControls with UiObservable with SignalLoading {

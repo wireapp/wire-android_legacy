@@ -20,7 +20,8 @@ package com.waz.bitmap.gif
 import android.graphics.Bitmap
 import com.waz.bitmap
 import com.waz.log.BasicLogging.LogTag
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 
 import scala.concurrent.Promise
 import scala.concurrent.duration.{FiniteDuration, _}
@@ -64,9 +65,9 @@ class GifAnimator(gif: Gif, reserveFrameMemory: () => Unit, frameCallback: Bitma
     }
 
     new CancellableFuture[Unit](p) {
-      override def cancel()(implicit tag: LogTag): Boolean = {
-        frameFuture.cancel()(tag)
-        super.cancel()(tag)
+      override def cancel(): Boolean = {
+        frameFuture.cancel()
+        super.cancel()
       }
     }
   }

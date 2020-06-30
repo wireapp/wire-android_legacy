@@ -26,7 +26,7 @@ import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{EventContext, Signal, Subscription}
+import com.wire.signals.{EventContext, Signal, Subscription}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.{Injectable, Injector}

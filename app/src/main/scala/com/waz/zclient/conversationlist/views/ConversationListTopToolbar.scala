@@ -25,7 +25,7 @@ import android.widget.{FrameLayout, ImageView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Availability, UserData}
 import com.waz.service.teams.TeamsService
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.{NameParts, returning}
 import com.waz.zclient.common.drawables.TeamIconDrawable
 import com.waz.zclient.common.views.GlyphButton
@@ -39,6 +39,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 abstract class ConversationListTopToolbar(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr)

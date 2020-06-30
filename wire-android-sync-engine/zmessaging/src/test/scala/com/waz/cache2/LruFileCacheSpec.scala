@@ -19,9 +19,9 @@ package com.waz.cache2
 
 import java.io.{ByteArrayInputStream, File}
 
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils.IoUtils
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.{FilesystemUtils, TestData, ZIntegrationSpec}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner

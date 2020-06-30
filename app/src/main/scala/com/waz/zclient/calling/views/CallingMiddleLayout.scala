@@ -21,12 +21,13 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.waz.service.call.CallInfo.CallState.{OtherCalling, SelfConnected}
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.utils.ContextUtils.getDimenPx
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {

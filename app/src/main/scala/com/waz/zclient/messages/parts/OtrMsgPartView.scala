@@ -21,7 +21,7 @@ import android.content.Context
 import android.util.AttributeSet
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Name, UserId}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{BrowserController, ScreenController}
 import com.waz.zclient.log.LogUI._
@@ -31,6 +31,7 @@ import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
   extends SystemMessageView(context, attrs, style)

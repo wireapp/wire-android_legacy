@@ -33,7 +33,7 @@ import com.waz.sync.client.ConversationsClient
 import com.waz.sync.client.ConversationsClient.{ConversationInitState, ConversationResponse}
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 
 import scala.concurrent.Future
 import scala.util.Right

@@ -24,9 +24,9 @@ import com.waz.content.Database
 import com.waz.db.DaoIdOps
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.errors.NotFoundLocal
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.ContentChange.{Added, Removed, Updated}
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.utils.wrappers.DB
 
 import scala.collection.JavaConverters._

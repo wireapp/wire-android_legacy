@@ -28,7 +28,7 @@ import com.waz.service.push.PushService
 import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.utils.RichFuture
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import io.circe.{Decoder, Encoder}
 
 import scala.concurrent.Future

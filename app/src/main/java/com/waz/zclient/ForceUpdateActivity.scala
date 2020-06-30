@@ -21,9 +21,9 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import com.waz.service.ZMessaging
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.zclient.pages.startup.UpdateFragment
-
+import com.waz.threading.Threading._
 
 class ForceUpdateActivity extends BaseActivity {
 

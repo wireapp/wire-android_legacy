@@ -32,7 +32,7 @@ import androidx.preference.Preference
 import androidx.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.otr.Client
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.paintcode.WireDrawable
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior

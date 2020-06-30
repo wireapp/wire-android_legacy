@@ -22,8 +22,8 @@ import androidx.appcompat.app.AlertDialog
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events._
+import com.wire.signals.{CancellableFuture, EventContext, EventStream, EventStreamWithAuxSignal, Signal, SourceStream}
+import com.waz.threading.Threading
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}

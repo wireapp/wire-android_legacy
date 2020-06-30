@@ -26,7 +26,7 @@ import com.bumptech.glide.load.model.ModelLoader.LoadData
 import com.waz.api.MessageContent.Location
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.core.images.AssetKey
 import com.waz.zclient.{Injectable, Injector, WireContext}
 import com.waz.zclient.glide.{GoogleMapRequest, ImageAssetFetcher}

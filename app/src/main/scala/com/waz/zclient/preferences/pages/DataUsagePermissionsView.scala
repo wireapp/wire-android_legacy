@@ -26,7 +26,7 @@ import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.preferences.views.SwitchPreference
 import com.waz.service.tracking.TrackingService.analyticsPrefKey
@@ -34,6 +34,7 @@ import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.BuildConfig
+import com.waz.threading.Threading._
 
 class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

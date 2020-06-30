@@ -32,7 +32,7 @@ import com.waz.model.AccountData.Password
 import com.waz.model.Uid
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.{AccountManager, ZMessaging}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.PasswordController
@@ -45,6 +45,7 @@ import com.waz.zclient.utils.ContextUtils.showToast
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 trait DevSettingsView
 

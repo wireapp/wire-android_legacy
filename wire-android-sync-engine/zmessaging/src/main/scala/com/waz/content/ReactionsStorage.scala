@@ -22,9 +22,9 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Liking.{Action, LikingDao}
 import com.waz.model._
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.waz.utils.events.{AggregatingSignal, EventContext, RefreshingSignal, Signal}
+import com.wire.signals.{AggregatingSignal, EventContext, RefreshingSignal, Signal}
 import com.waz.utils._
 
 import scala.collection.{breakOut, mutable}

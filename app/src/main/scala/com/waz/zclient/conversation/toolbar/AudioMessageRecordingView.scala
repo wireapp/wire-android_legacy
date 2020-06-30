@@ -35,7 +35,7 @@ import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
 import com.waz.service.assets.GlobalRecordAndPlayService.AssetMediaKey
 import com.waz.threading.Threading
-import com.waz.utils.events.{ClockSignal, Signal}
+import com.wire.signals.{ClockSignal, Signal}
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{RichThreetenBPDuration, returning}
 import com.waz.zclient.common.controllers.AssetsController.PlaybackControls
@@ -53,6 +53,7 @@ import org.threeten.bp.{Duration, Instant}
 import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr)

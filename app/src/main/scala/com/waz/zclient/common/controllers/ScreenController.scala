@@ -19,7 +19,7 @@ package com.waz.zclient.common.controllers
 
 import android.content.Context
 import com.waz.model.MessageId
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.Intents.ShowDevicesIntent
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingDestination

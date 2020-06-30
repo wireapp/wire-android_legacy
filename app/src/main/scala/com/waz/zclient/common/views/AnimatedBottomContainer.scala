@@ -21,7 +21,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.utils.ViewUtils
 

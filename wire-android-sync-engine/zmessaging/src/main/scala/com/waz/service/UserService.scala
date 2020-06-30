@@ -34,9 +34,9 @@ import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
+import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.utils.wrappers.AndroidURIUtil
 
 import scala.collection.breakOut

@@ -26,7 +26,7 @@ import com.waz.model.UserId
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model.otr.UserClients.UserClientsDao
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
 import scala.collection.breakOut

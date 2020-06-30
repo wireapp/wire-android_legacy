@@ -27,6 +27,7 @@ import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, Us
 import com.waz.zclient.paintcode.HourGlassIcon
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class MessageTimerPartView (context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

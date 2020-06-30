@@ -34,7 +34,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.TestGlobalPreferences
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.returning
 import org.scalatest.Inside
 

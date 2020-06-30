@@ -21,7 +21,7 @@ import android.app.AlertDialog.Builder
 import android.content.DialogInterface
 import android.os.Bundle
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.pages.BaseDialogFragment
 import com.waz.zclient.preferences.dialogs.FullSyncDialog._
 import com.waz.zclient.{FragmentHelper, R}

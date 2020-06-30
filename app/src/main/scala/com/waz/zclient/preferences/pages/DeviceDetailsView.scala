@@ -33,7 +33,7 @@ import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.sync.SyncResult
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.{ClientsController, PasswordController}
 import com.waz.zclient.log.LogUI._
@@ -50,6 +50,7 @@ import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.util.Try
+import com.waz.threading.Threading._
 
 trait DeviceDetailsView {
   val onVerifiedChecked: EventStream[Boolean]

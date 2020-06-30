@@ -26,10 +26,10 @@ import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model.ConversationData.ConversationType.Group
 import com.waz.model._
 import com.waz.service.SearchKey
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils._
-import com.waz.utils.events._
+import com.wire.signals._
 
 import scala.collection.GenMap
 import scala.concurrent.Future

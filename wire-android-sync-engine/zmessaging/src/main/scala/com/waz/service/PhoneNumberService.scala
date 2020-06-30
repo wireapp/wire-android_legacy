@@ -24,7 +24,7 @@ import com.google.i18n.phonenumbers.Phonenumber.{PhoneNumber => GooglePhoneNumbe
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.PhoneNumber
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 
 import scala.concurrent.Future
 

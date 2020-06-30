@@ -23,7 +23,7 @@ import android.widget.{LinearLayout, TextView}
 import com.waz.model.{UserData, UserId}
 import com.waz.service.IntegrationsService
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
@@ -32,6 +32,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)

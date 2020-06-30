@@ -26,7 +26,7 @@ import android.util.AttributeSet
 import android.view._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
-import com.waz.threading.CancellableFuture.CancelException
+import com.wire.signals.CancellableFuture.CancelException
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.camera._

@@ -27,7 +27,7 @@ import android.widget.EditText
 import com.google.android.material.textfield.TextInputLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.utils.{PasswordValidator, returning}
 import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.{BuildConfig, FragmentHelper, R}

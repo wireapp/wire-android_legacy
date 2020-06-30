@@ -43,7 +43,7 @@ import androidx.core.content.res.ResourcesCompat
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccentColor
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.paintcode.StyleKitView.StyleKitDrawMethod
 import com.waz.zclient.paintcode.{GenericStyleKitView, StyleKitView, WireStyleKit}
@@ -52,6 +52,7 @@ import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.ui.views.FilledCircularBackgroundDrawable
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class CursorIconButton(context: Context, attrs: AttributeSet, defStyleAttr: Int)
   extends GenericStyleKitView(context, attrs, defStyleAttr)

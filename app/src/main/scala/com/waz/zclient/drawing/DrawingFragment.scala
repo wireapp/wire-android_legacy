@@ -33,7 +33,7 @@ import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.assets.{AssetService, Content, UriHelper}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.common.controllers.ScreenController
@@ -55,6 +55,7 @@ import com.waz.zclient.{FragmentHelper, R}
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 object DrawingFragment {
   val Tag: String = classOf[DrawingFragment].getName

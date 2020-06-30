@@ -20,7 +20,7 @@ package com.waz.znet2
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.sync.client.AuthenticationManager
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.znet2.http.HttpClient.ProgressCallback
 import com.waz.znet2.http._
 

@@ -30,8 +30,8 @@ import com.waz.service.assets.Asset.{General, Video}
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient.{AssetContent, Metadata, Retention, UploadResponse2}
 import com.waz.sync.client.{AssetClient, ErrorOrResponse}
-import com.waz.threading.CancellableFuture
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.wire.signals.Signal
 import com.waz.utils.streams.CountInputStream
 import com.waz.utils.wrappers.Bitmap
 import com.waz.utils.{Cancellable, IoUtils}

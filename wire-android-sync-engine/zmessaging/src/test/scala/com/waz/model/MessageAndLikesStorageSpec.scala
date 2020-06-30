@@ -19,7 +19,7 @@ package com.waz.model
 
 import com.waz.content.{Likes, MessageAndLikesStorageImpl, MessagesStorage, ReactionsStorage}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._

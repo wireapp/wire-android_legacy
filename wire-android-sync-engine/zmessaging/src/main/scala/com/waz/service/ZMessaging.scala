@@ -45,10 +45,11 @@ import com.waz.sync.client._
 import com.waz.sync.handler._
 import com.waz.sync.otr.{OtrClientsSyncHandler, OtrClientsSyncHandlerImpl, OtrSyncHandler, OtrSyncHandlerImpl}
 import com.waz.sync.queue.{SyncContentUpdater, SyncContentUpdaterImpl}
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.ui.UiModule
 import com.waz.utils.crypto._
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.utils.wrappers.{AndroidContext, DB, GoogleApi}
 import com.waz.utils.{IoUtils, Locales}
 import com.waz.znet2.http.HttpClient

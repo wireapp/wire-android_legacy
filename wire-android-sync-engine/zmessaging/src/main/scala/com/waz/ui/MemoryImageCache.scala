@@ -21,7 +21,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
 import com.waz.model.AssetId
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache.BitmapRequest
 import com.waz.ui.MemoryImageCache.BitmapRequest.{Blurred, Regular, Round, Single}
 import com.waz.utils.{Cache, TrimmingLruCache}

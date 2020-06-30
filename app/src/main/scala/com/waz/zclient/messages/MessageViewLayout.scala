@@ -28,11 +28,12 @@ import android.widget.FrameLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
 import com.waz.zclient.messages.parts.ReplyPartView
+import com.waz.threading.Threading._
 
 abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: Int)
   extends ViewGroup(context, attrs, style) with DerivedLogTag {

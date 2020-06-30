@@ -26,8 +26,8 @@ import com.waz.model.{SyncId, UserId}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountContext, AccountsService, NetworkModeService, ReportingService}
 import com.waz.sync.queue.{SyncContentUpdater, SyncScheduler, SyncSchedulerImpl}
-import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.events.Signal
+import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 import scala.concurrent.duration.{Duration, FiniteDuration}

@@ -23,7 +23,7 @@ import android.os.Bundle
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.paintcode.{WireDrawable, WireStyleKit}
@@ -32,6 +32,7 @@ import com.waz.zclient.utils.ViewUtils.getView
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{DialogHelper, R}
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.threading.Threading._
 
 case class OptionsMenu(context: Context, controller: OptionsMenuController) extends BottomSheetDialog(context, R.style.message__bottom_sheet__base) with DialogHelper {
   private implicit val ctx: Context = context

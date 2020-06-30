@@ -36,7 +36,7 @@ import com.waz.sync.client.OtrClient.EncryptedContent
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.wire.cryptobox.CryptoException
 import javax.crypto.Mac
 import org.json.JSONObject

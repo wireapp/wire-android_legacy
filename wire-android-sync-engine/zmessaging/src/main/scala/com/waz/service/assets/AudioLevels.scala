@@ -29,8 +29,9 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
 import com.waz.model.AssetMetaData
 import com.waz.model.Mime
-import com.waz.threading.CancellableFuture.{CancelException, DefaultCancelException}
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture.{CancelException, DefaultCancelException}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{Cleanup, ContentURIs, Managed, RichFuture, returning}
 
@@ -81,7 +82,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
   private def createOtherAudioOverview(content: URI, numBars: Int): CancellableFuture[Option[AssetMetaData.Loudness]] = {
     val cancelRequested = new AtomicBoolean
     returning(CancellableFuture {
-      val overview = for {
+      (for {
         extractor <- Managed(new MediaExtractor)
         trackInfo  = extractAudioTrackInfo(extractor, content)
         helper    <- Managed(new MediaCodecHelper(audioDecoder(trackInfo)))
@@ -97,9 +98,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
         }.toArray
 
         loudnessOverview(numBars, rmsOfBuffers) // select RMS peaks and convert to an intuitive scale
-      }
-
-      overview.acquire(levels => Some(AssetMetaData.Loudness(levels)))
+      }).acquire(levels => Some(AssetMetaData.Loudness(levels)))
     }(Threading.Background).recover {
       case c: CancelException => throw c
       case NonFatal(cause) =>

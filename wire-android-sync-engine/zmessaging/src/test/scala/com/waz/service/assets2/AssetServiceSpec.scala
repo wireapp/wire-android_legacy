@@ -32,7 +32,7 @@ import com.waz.service.assets._
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient.{FileWithSha, Retention}
 import com.waz.sync.client.{AssetClient, AssetClientImpl}
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils.{IoUtils, ReactiveStorageImpl2, UnlimitedInMemoryStorage, returning}
 import com.waz.{AuthenticationConfig, FilesystemUtils, ZIntegrationMockSpec}
 import org.junit.runner.RunWith

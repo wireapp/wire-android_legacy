@@ -23,7 +23,7 @@ import androidx.recyclerview.widget.DiffUtil
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
+import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessagesPagedListAdapter._

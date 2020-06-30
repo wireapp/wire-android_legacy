@@ -23,7 +23,7 @@ import com.waz.api.Message
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetStatus
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
+import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.messages.MessageBottomSheetDialog.{Actions, MessageAction, Params}
 import com.waz.zclient.messages.controllers.MessageActionsController

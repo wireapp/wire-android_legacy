@@ -26,7 +26,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.UserClients
 import com.waz.service.messages.MessagesService
-import com.waz.utils.Serialized
+import com.wire.signals.Serialized
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -47,7 +47,7 @@ class VerificationStateUpdater(selfUserId:     UserId,
   import Verification._
   import VerificationStateUpdater._
   import com.waz.threading.Threading.Implicits.Background
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
 
   private val SerializationKey = serializationKey(selfUserId)
 

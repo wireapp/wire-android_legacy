@@ -23,8 +23,9 @@ import com.waz.content.{GlobalPreferences, UsersStorage}
 import com.waz.model.UserId
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.utils.crypto.ZSecureRandom
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.threading.Threading._
 
 class AccentColorController(implicit inj: Injector) extends Injectable {
   private lazy val accounts     = inject[AccountsService]
@@ -69,10 +70,8 @@ class AccentColorController(implicit inj: Injector) extends Injectable {
     case None => randomColor
   }
 
-  def accentColorForJava(callback: AccentColorCallback, ec: EventContext): Unit = {
+  def accentColorForJava(callback: AccentColorCallback, ec: EventContext): Unit =
     accentColor.onUi(callback.color)(ec)
-  }
-
 }
 
 trait AccentColorCallback {

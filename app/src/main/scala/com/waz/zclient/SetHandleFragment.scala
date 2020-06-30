@@ -29,7 +29,7 @@ import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ZSecureRandom
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -39,6 +39,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.{ContextUtils, RichView, StringUtils}
+import com.waz.threading.Threading._
 
 import scala.util.{Failure, Success}
 

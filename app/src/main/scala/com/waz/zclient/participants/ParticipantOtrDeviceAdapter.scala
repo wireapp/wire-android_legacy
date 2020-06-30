@@ -30,12 +30,13 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
+import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichClient, RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.threading.Threading._
 
 class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ParticipantOtrDeviceAdapter.ViewHolder]

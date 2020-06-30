@@ -26,8 +26,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.errors.NotSupportedError
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetInput
-import com.waz.threading.CancellableFuture
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

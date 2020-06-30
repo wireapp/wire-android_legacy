@@ -32,7 +32,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import org.threeten.bp.Duration
 
 import scala.collection.Seq

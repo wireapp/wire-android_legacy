@@ -27,7 +27,7 @@ import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConnectionsClient
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 
 import scala.concurrent.Future
 

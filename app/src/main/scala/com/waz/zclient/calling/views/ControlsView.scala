@@ -27,7 +27,7 @@ import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.CallInfo.CallState.{SelfCalling, SelfConnected, SelfJoining}
 import com.waz.service.call.{CallInfo, CallingService}
-import com.waz.utils.events.{EventStream, Signal, SourceStream}
+import com.wire.signals.{EventStream, Signal, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.CallControlButtonView.ButtonColor
@@ -36,6 +36,7 @@ import com.waz.zclient.paintcode._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 import scala.async.Async._
 import scala.collection.immutable.ListSet

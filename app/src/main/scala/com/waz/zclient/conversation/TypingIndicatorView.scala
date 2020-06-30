@@ -23,11 +23,12 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, TextView}
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.utils.ContextUtils._
 
 
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {

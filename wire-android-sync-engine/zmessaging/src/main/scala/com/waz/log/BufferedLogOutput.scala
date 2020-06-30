@@ -21,7 +21,8 @@ import java.io.{BufferedWriter, File, FileWriter, IOException}
 
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.InternalLog.{LogLevel, dateTag, stackTrace}
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.wire.signals.SerialDispatchQueue
+import com.waz.threading.Threading
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.returning
 

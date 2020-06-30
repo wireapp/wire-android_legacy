@@ -19,7 +19,7 @@ package com.waz.api.impl
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.testutils.Matchers._
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.utils.returning
 import org.scalatest._
 import com.waz.specs.AndroidFreeSpec

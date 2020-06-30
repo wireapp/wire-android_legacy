@@ -36,9 +36,9 @@ import com.waz.service.push.PushService
 import com.waz.service.{MediaManagerService, NetworkModeService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.RichInstant
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.jna.Uint32_t
 import com.waz.utils.wrappers.Context
 import org.junit.Ignore

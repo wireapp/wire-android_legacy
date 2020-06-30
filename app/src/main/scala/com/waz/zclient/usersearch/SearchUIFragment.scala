@@ -34,8 +34,9 @@ import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.tracking.{GroupConversationEvent, TrackingEvent, TrackingService}
 import com.waz.service.{SearchQuery, ZMessaging}
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{Signal, Subscription}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers._
@@ -66,6 +67,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 import com.waz.zclient.usersearch.SearchUIFragment._
+import com.waz.threading.Threading._
 
 class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper

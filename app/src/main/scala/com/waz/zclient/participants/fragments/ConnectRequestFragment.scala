@@ -12,6 +12,7 @@ import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils._
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
+import com.waz.threading.Threading._
 
 class ConnectRequestFragment extends UntabbedRequestFragment {
   import com.waz.threading.Threading.Implicits.Ui

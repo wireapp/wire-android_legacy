@@ -22,9 +22,9 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao
 import com.waz.model._
-import com.waz.threading.SerialDispatchQueue
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.waz.utils.events.{AggregatingSignal, Signal}
+import com.wire.signals.{AggregatingSignal, Signal}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
 import scala.concurrent.Future

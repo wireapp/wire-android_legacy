@@ -24,7 +24,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.media.GiphyService.GifObject
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.main.conversation.views.AspectRatioImageView

@@ -24,7 +24,7 @@ import com.waz.log.LogSE._
 import com.waz.model.VersionBlacklist
 import com.waz.sync.client.VersionBlacklistClient
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

@@ -32,11 +32,12 @@ import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.otr.VerificationStateUpdater.{ClientUnverified, MemberAdded, VerificationChange}
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.{CancellableFuture, Serialized}
+import com.waz.threading.Threading
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.{EventContext, EventStream, RefreshingSignal, Signal}
+import com.wire.signals.{EventContext, EventStream, RefreshingSignal, Signal}
 
 import scala.collection.breakOut
 import scala.concurrent.Future

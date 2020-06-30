@@ -30,7 +30,7 @@ import com.waz.api.EmailCredentials
 import com.waz.model.AccountData.Password
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.utils.RichView

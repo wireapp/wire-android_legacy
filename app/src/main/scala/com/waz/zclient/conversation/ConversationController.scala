@@ -32,9 +32,11 @@ import com.waz.model.otr.Client
 import com.waz.service.AccountManager
 import com.waz.service.assets.{AssetInput, Content, ContentForUpload, FileRestrictionList, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
-import com.waz.utils.{Serialized, returning, _}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.waz.threading.Threading
+import com.waz.threading.Threading._
+import com.wire.signals.{Serialized, EventContext, EventStream, Signal, SourceStream}
+import com.waz.utils.{returning, _}
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController.ConversationChange

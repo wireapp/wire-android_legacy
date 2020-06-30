@@ -23,11 +23,12 @@ import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{BuildConfig, Injectable, Injector, LaunchActivity}
 
 import scala.collection.convert.DecorateAsScala
+import com.waz.threading.Threading._
 
 class ActivityLifecycleCallback(implicit injector: Injector)
   extends Application.ActivityLifecycleCallbacks
@@ -35,7 +36,7 @@ class ActivityLifecycleCallback(implicit injector: Injector)
     with DerivedLogTag
     with DecorateAsScala {
 
-  import com.waz.utils.events.EventContext.Implicits.global
+  import com.wire.signals.EventContext.Implicits.global
 
   private lazy val shouldHideScreenContent = for {
     prefs <- userPreferences

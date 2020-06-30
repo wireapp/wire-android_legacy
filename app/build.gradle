@@ -335,6 +335,7 @@ dependencies {
     implementation LegacyDependencies.scalaReflect
     implementation LegacyDependencies.scalaShapeless
 
+
     implementation BuildDependencies.kotlin.standardLibrary
     implementation BuildDependencies.kotlin.coroutinesCore
     implementation BuildDependencies.kotlin.coroutinesAndroid
@@ -425,6 +426,8 @@ dependencies {
     implementation BuildDependencies.commonMark
     implementation BuildDependencies.jna
     implementation BuildDependencies.pinEditText
+
+    implementation BuildDependencies.wireSignals
 
     // Unit Tests
     testImplementation TestDependencies.jUnit

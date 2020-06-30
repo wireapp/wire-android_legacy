@@ -21,7 +21,7 @@ import com.waz.model.{AssetId, ConvId, IntegrationId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.service.call.CallInfo
 import com.waz.service.tracking.{ContributionEvent, IntegrationAdded, TrackingEvent, TrackingService}
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 
 import scala.concurrent.Future
 

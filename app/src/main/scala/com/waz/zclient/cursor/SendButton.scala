@@ -21,7 +21,7 @@ import android.animation.{Animator, AnimatorListenerAdapter, ValueAnimator}
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
@@ -29,6 +29,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class SendButton(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends CursorIconButton(context, attrs, defStyleAttr) { view =>
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }

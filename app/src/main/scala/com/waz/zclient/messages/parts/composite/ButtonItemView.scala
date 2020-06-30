@@ -6,7 +6,7 @@ import android.view.View
 import android.widget.{ProgressBar, TextView}
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.waz.model.{ButtonData, ButtonId, MessageId}
-import com.waz.utils.events.SourceStream
+import com.wire.signals.SourceStream
 import com.waz.zclient.{R, ViewHelper}
 
 class ButtonItemView(context: Context, attrs: AttributeSet, style: Int)

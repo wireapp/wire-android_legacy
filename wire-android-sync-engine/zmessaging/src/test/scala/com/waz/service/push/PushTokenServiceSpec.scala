@@ -32,8 +32,9 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushTokenClient
 import com.waz.sync.client.PushTokenClient.PushTokenRegistration
 import com.waz.testutils.{TestBackoff, TestGlobalPreferences}
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
 

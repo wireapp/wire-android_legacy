@@ -30,7 +30,7 @@ import com.waz.model
 import com.waz.model._
 import com.waz.service.IntegrationsService
 import com.waz.service.tracking.{IntegrationAdded, TrackingService}
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}

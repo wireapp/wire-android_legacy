@@ -27,6 +27,7 @@ import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
 import com.waz.zclient.ui.text.ThemedTextView._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class ThemedTextView(val context: Context, val attrs: AttributeSet, val defStyle: Int)
   extends AppCompatTextView(context, attrs, defStyle)

@@ -30,10 +30,10 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
-import com.waz.threading.{DispatchQueue, SerialDispatchQueue, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.waz.utils.events.{Signal, SourceSignal}
-import com.waz.utils.{CachedStorageImpl, CirceJSONSupport, JsonDecoder, JsonEncoder, Serialized, TrimmingLruCache, returning}
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Serialized, Signal, SourceSignal}
+import com.waz.utils.{CachedStorageImpl, CirceJSONSupport, JsonDecoder, JsonEncoder, TrimmingLruCache, returning}
 import com.waz.zms.BuildConfig
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}

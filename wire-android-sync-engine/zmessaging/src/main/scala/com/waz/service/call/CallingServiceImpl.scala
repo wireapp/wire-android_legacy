@@ -45,10 +45,9 @@ import com.waz.service.push.PushService
 import com.waz.service.tracking.{AVSMetricsEvent, TrackingService}
 import com.waz.sync.client.CallingClient
 import com.waz.sync.otr.OtrSyncHandler
-import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.events._
+import com.wire.signals._
 import com.waz.utils.wrappers.Context
-import com.waz.utils.{RichInstant, Serialized, returning, returningF}
+import com.waz.utils.{RichInstant, returning, returningF}
 import org.threeten.bp.Duration
 import org.threeten.bp.temporal.ChronoUnit
 
@@ -216,7 +215,7 @@ class CallingServiceImpl(val accountId:       UserId,
     }
 
   def onSftRequest(ctx: Pointer, url: String, data: String): Unit =
-    callingClient.connectToSft(url, data).foreach {
+    callingClient.connectToSft(url, data).future.foreach {
       case Left(responseError) =>
         error(l"Could not connect to sft server", responseError)
         wCall.foreach(avs.onSftResponse(_, None, ctx))

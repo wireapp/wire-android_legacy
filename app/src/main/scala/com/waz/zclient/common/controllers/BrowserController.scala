@@ -23,7 +23,7 @@ import com.waz.api.MessageContent.Location
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageId
 import com.waz.service.BackendConfig
-import com.waz.utils.events.{EventStream, SourceStream}
+import com.wire.signals.{EventStream, SourceStream}
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.IntentUtils

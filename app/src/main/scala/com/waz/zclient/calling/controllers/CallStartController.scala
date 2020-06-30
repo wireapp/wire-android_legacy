@@ -26,7 +26,7 @@ import com.waz.permissions.PermissionsService
 import com.waz.service.{AccountsService, NetworkModeService, ZMessaging}
 import com.waz.service.call.CallInfo.CallState
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.log.LogUI._

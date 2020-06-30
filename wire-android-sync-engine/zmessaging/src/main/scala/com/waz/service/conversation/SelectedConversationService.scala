@@ -20,7 +20,7 @@ package com.waz.service.conversation
 import com.waz.content.UserPreferences.SelectedConvId
 import com.waz.content.{Preferences, UserPreferences}
 import com.waz.model.ConvId
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 

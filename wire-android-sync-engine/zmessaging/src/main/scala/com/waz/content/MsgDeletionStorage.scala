@@ -21,7 +21,8 @@ import android.content.Context
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.MsgDeletion.MsgDeletionDao
 import com.waz.model.{MessageId, MsgDeletion}
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils._
 import com.waz.utils.crypto.ZSecureRandom

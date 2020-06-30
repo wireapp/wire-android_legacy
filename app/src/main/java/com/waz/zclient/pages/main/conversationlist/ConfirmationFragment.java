@@ -23,7 +23,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.waz.model.AccentColor;
-import com.waz.utils.events.EventContext;
+import com.wire.signals.EventContext;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;

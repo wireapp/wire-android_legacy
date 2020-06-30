@@ -27,7 +27,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model.AccentColor
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.utils.RichView

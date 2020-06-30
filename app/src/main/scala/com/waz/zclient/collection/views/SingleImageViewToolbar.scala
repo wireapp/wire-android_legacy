@@ -22,7 +22,7 @@ import android.util.AttributeSet
 import android.widget.LinearLayout
 import com.waz.model.{Liking, UserId}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.views.GlyphButton
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
@@ -34,6 +34,7 @@ import MessageAction._
 import android.view.View
 import com.waz.content.ReactionsStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.threading.Threading._
 
 class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)

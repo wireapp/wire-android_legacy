@@ -32,8 +32,8 @@ import com.waz.service._
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{ErrorOr, PushTokenClient}
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
-import com.waz.utils.events.{EventContext, Signal}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.utils.{Backoff, ExponentialBackoff, RichEither, returning}
 

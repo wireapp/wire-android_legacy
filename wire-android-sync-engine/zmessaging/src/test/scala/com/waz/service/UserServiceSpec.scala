@@ -23,13 +23,13 @@ import com.waz.model.{Availability, _}
 import com.waz.service.assets.{AssetService, AssetStorage}
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.messages.MessagesService
-import com.waz.service.push.PushService
+import com.waz.service.push.{BgEventSource, PushService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
 import com.waz.testutils.TestUserPreferences
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{BgEventSource, Signal, SourceSignal}
+import com.wire.signals.{CancellableFuture, Signal, SourceSignal}
+import com.waz.threading.Threading
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -62,7 +62,7 @@ class UserServiceSpec extends AndroidFreeSpec {
 
   (usersStorage.optSignal _).expects(*).anyNumberOfTimes().onCall((id: UserId) => Signal.const(users.find(_.id == id)))
   (accountsService.accountsWithManagers _).expects().anyNumberOfTimes().returning(Signal.empty)
-  (pushService.onHistoryLost _).expects().anyNumberOfTimes().returning(new SourceSignal(Some(Instant.now())) with BgEventSource)
+  (pushService.onHistoryLost _).expects().anyNumberOfTimes().returning(new SourceSignal(Some(Instant.now())) with BgEventSource[Instant])
   (sync.syncUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(SyncId()))
   (selectedConv.selectedConversationId _).expects().anyNumberOfTimes().returning(Signal.const(None))
 

@@ -22,7 +22,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{LinearLayout, RelativeLayout, TextView}
 import com.waz.model.{ConvExpiry, ConvId}
 import com.waz.service.ZMessaging
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController._
@@ -32,6 +32,7 @@ import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class EphemeralOptionsFragment extends FragmentHelper {
 

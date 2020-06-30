@@ -27,7 +27,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
+import com.wire.signals.{NoAutowiring, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
@@ -36,6 +36,7 @@ import com.waz.zclient.messages.parts.assets.ImageLayoutAssetPart
 import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)

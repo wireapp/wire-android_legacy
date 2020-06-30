@@ -31,7 +31,7 @@ import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.{AccountsService, GlobalModule}
 import com.waz.sync.client.CustomBackendClient
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
@@ -51,7 +51,7 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog, showLogoutWarningIfNeeded}
 import com.waz.zclient.utils.{BackendController, ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-
+import com.waz.threading.Threading._
 import scala.collection.JavaConverters._
 
 object AppEntryActivity {
@@ -202,9 +202,9 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
   def showStartSSOScreen() = showFragment(StartSSOFragment.newInstance(), StartSSOFragment.TAG, animated = false)
 
-  def loadBackendConfig(configUrl: URL) = {
+  def loadBackendConfig(configUrl: URL): Unit = {
     enableProgress(true)
-    inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+    inject[CustomBackendClient].loadBackendConfig(configUrl).future.foreach {
       case Left(ErrorResponse(ErrorResponse.NotFound, _, _)) =>
         enableProgress(false)
         showErrorDialog(

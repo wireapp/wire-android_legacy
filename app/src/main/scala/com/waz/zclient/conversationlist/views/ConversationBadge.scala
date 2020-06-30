@@ -22,7 +22,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.FrameLayout
-import com.waz.utils.events.EventStream
+import com.wire.signals.EventStream
 import com.waz.zclient.conversationlist.views.ConversationBadge.{Status, _}
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}

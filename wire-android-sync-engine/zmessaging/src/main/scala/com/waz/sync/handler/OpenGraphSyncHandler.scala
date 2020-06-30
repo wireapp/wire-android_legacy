@@ -37,7 +37,7 @@ import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.sync.client.{ErrorOr, OpenGraphClient}
 import com.waz.sync.otr.OtrSyncHandler
-import com.waz.threading.CancellableFuture
+import com.wire.signals.CancellableFuture
 import com.waz.utils.RichFuture
 import com.waz.utils.wrappers.URI
 

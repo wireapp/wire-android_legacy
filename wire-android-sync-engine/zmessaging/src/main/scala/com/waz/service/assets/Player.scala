@@ -21,7 +21,7 @@ import java.util.UUID
 
 import android.content.Context
 import com.waz.service.assets.GlobalRecordAndPlayService.{MediaPointer, PCMContent, UnauthenticatedContent, Content => GRAPContent}
-import com.waz.utils._
+import com.wire.signals.Serialized
 import org.threeten.bp
 
 import scala.concurrent.Future

@@ -27,6 +27,7 @@ import com.waz.model._
 import com.waz.service.ZMessaging.clock
 import com.waz.threading.Threading
 import com.waz.utils._
+import com.wire.signals.Serialized
 import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut

@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.appentry.controllers
 
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.zclient.{Injectable, Injector}
 
 class CreateTeamController(implicit inj: Injector, eventContext: EventContext) extends Injectable {

@@ -20,7 +20,7 @@ package com.waz.zclient.tracking
 import com.waz.log.InternalLog
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
+import com.wire.signals.EventContext
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
 import scala.util.control.NonFatal

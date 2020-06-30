@@ -34,7 +34,7 @@ import com.waz.service.media.GiphyService.GifObject
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
@@ -50,6 +50,7 @@ import com.waz.zclient.utils.{RichEditText, RichView}
 import com.waz.zclient.views.LoadingIndicatorView
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 //TODO Should be splitted in two fragments
 class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragment.Container]

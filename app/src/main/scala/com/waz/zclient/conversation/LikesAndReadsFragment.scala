@@ -28,7 +28,7 @@ import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.content.{MessagesStorage, ReactionsStorage, ReadReceiptsStorage}
 import com.waz.model.{MessageData, RemoteInstant, UserData, UserId}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
@@ -42,6 +42,7 @@ import com.waz.zclient.utils.ContextUtils.getColor
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.utils.Time.SameDayTimeStamp
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.threading.Threading._
 
 class LikesAndReadsFragment extends FragmentHelper {
   import LikesAndReadsFragment._

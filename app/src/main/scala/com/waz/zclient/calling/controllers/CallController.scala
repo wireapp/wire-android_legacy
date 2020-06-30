@@ -30,14 +30,13 @@ import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.{GlobalModule, ZMessaging}
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.{ButtonSignal, CancellableFuture, ClockSignal, EventContext, Signal, SourceSignal}
+import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events._
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
@@ -45,6 +44,7 @@ import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
+import com.waz.threading.Threading._
 
 class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {
@@ -54,7 +54,6 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   private lazy val screenManager  = new ScreenManager
   private lazy val soundController = inject[SoundController]
-  private lazy val convController = inject[ConversationController]
 
   inject[GlobalPreferences].apply(GlobalPreferences.SkipTerminatingState) := true
 

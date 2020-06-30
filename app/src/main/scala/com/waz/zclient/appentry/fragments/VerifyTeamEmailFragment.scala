@@ -37,6 +37,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 case class VerifyTeamEmailFragment() extends CreateTeamFragment{
 

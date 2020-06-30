@@ -33,8 +33,9 @@ import com.waz.permissions.PermissionsService.{Permission, PermissionProvider}
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.services.SecurityPolicyService
 import com.waz.services.websocket.WebSocketService
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{Signal, Subscription}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
+import com.wire.signals.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
@@ -105,8 +106,7 @@ class BaseActivity extends AppCompatActivity
   def onBaseActivityResume(): Unit =
     CancellableFuture.delay(150.millis).foreach { _ =>
       WebSocketService(this)
-    } (Threading.Ui)
-
+    }(Threading.Ui)
 
   def getBaseTheme: Int = themeController.forceLoadDarkTheme
 

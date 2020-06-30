@@ -26,7 +26,7 @@ import com.waz.content.UserPreferences.DarkTheme
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal, SourceSignal}
+import com.wire.signals.{EventContext, Signal, SourceSignal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.ui.theme.{OptionsDarkTheme, OptionsLightTheme, OptionsTheme}

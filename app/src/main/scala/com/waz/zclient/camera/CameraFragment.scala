@@ -44,6 +44,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, SquareOrientation}
 import com.waz.zclient.views.ProgressView
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.threading.Threading._
 
 import scala.concurrent.duration._
 

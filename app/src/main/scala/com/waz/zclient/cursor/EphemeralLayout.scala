@@ -22,13 +22,14 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, NumberPicker}
 import androidx.appcompat.view.ContextThemeWrapper
-import com.waz.utils.events.{EventStream, Subscription}
+import com.wire.signals.{EventStream, Subscription}
 import com.waz.zclient.conversation.ConversationController._
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.concurrent.duration.FiniteDuration
+import com.waz.threading.Threading._
 
 class EphemeralLayout(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
   import EphemeralLayout._

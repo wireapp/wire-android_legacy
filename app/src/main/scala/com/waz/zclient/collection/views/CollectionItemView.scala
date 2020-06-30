@@ -34,7 +34,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceSignal}
+import com.wire.signals.{EventContext, EventStream, Signal, SourceSignal}
 import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.BrowserController
@@ -47,6 +47,7 @@ import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedLogTag {
   protected lazy val civZms = inject[Signal[ZMessaging]]
@@ -88,7 +89,7 @@ trait CollectionNormalItemView extends CollectionItemView with ClickableViewPart
       .map(TimeStamp(_, showWeekday = false).string)
       .onUi(messageTime.setText)
 
-  messageAndLikesResolver.on(Threading.Ui) { mal => set(mal, content) }
+  messageAndLikesResolver.onUi { mal => set(mal, content) }
 
   onClicked { _ =>
     import Threading.Implicits.Ui

@@ -26,11 +26,12 @@ import com.waz.cache.CacheEntryData.CacheEntryDao
 import com.waz.content.Database
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.threading.CancellableFuture.CancelException
+import com.wire.signals.CancellableFuture.CancelException
 import com.waz.threading.Threading.Implicits.Background
-import com.waz.threading.{CancellableFuture, Threading}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.crypto.AESUtils
-import com.waz.utils.events.Signal
+import com.wire.signals.Signal
 import com.waz.utils.{IoUtils, returning}
 
 import scala.concurrent.{ExecutionContext, Future}

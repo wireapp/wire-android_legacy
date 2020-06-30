@@ -35,7 +35,7 @@ import com.waz.model.{AccentColor, EmailAddress, PhoneNumber, Picture}
 import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.appentry.{AppEntryActivity, DialogErrorMessage}
 import com.waz.zclient.common.controllers.global.PasswordController
@@ -49,6 +49,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
 import com.waz.zclient.{BuildConfig, _}
+import com.waz.threading.Threading._
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -265,7 +266,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
 
   if (BuildConfig.ALLOW_CHANGE_OF_EMAIL) view.onEmailClick.onUi { _ =>
     import Threading.Implicits.Ui
-    accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().foreach {
+    accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().future.foreach {
       case Left(ex) =>
         val (h, b) = DialogErrorMessage.genericError(ex.code)
         showErrorDialog(h, b)

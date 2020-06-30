@@ -52,6 +52,7 @@ import com.waz.zclient.participants.fragments.ParticipantFragment
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.views.ConversationFragment
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.threading.Threading._
 
 class ConversationManagerFragment extends FragmentHelper
   with ConversationScreenControllerObserver
@@ -73,7 +74,7 @@ class ConversationManagerFragment extends FragmentHelper
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val keyboard               = inject[KeyboardController]
 
-  private var subs = Set.empty[com.waz.utils.events.Subscription]
+  private var subs = Set.empty[com.wire.signals.Subscription]
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     inflater.inflate(R.layout.fragment_conversation_manager, container, false)
