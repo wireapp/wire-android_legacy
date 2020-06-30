@@ -215,7 +215,7 @@ class CallingServiceImpl(val accountId:       UserId,
     }
 
   def onSftRequest(ctx: Pointer, url: String, data: String): Unit =
-    callingClient.connectToSft(url, data).foreach {
+    callingClient.connectToSft(url, data).future.foreach {
       case Left(responseError) =>
         error(l"Could not connect to sft server", responseError)
         wCall.foreach(avs.onSftResponse(_, None, ctx))
