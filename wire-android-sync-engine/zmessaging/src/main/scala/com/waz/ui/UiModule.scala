@@ -20,7 +20,7 @@ package com.waz.ui
 import android.os.{Handler, Looper}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service._
-import com.wire.signals.{CancellableFuture, EventContext, ForcedEventSource, Publisher, SourceSignal}
+import com.wire.signals.{CancellableFuture, EventContext, ForcedEventSource, SourceSignal, SourceStream}
 import com.waz.threading.Threading
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,7 +43,7 @@ trait UiEventContext {
   private[ui] var startCount = 0
 
   val onStarted = new SourceSignal[Boolean]() with ForcedEventSource[Boolean]
-  val onReset = new Publisher[Boolean] with ForcedEventSource[Boolean]
+  val onReset = new SourceStream[Boolean] with ForcedEventSource[Boolean]
 
   def onStart(): Unit = {
     Threading.assertUiThread()

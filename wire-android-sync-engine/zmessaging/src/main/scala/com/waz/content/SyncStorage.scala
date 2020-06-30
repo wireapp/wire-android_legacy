@@ -22,7 +22,7 @@ import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.utils.ThrottledProcessingQueue
-import com.wire.signals.Publisher
+import com.wire.signals.SourceStream
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -37,9 +37,9 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
 
   private val jobsMap = new mutable.HashMap[SyncId, SyncJob]
 
-  val onAdded   = new Publisher[SyncJob]
-  val onUpdated = new Publisher[(SyncJob, SyncJob)] // (prev, updated)
-  val onRemoved = new Publisher[SyncJob]
+  val onAdded   = new SourceStream[SyncJob]
+  val onUpdated = new SourceStream[(SyncJob, SyncJob)] // (prev, updated)
+  val onRemoved = new SourceStream[SyncJob]
 
   private val saveQueue = new ThrottledProcessingQueue[SyncId](SaveDelay, { ids =>
     val toAdd = new mutable.HashMap[SyncId, SyncJob]

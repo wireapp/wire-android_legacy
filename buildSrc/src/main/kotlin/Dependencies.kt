@@ -62,9 +62,6 @@ object Versions {
 
     //dev
     const val STETHO = "1.5.0"
-
-    // signals
-    const val WIRE_SIGNALS = "0.1"
 }
 
 object BuildDependencies {
@@ -137,7 +134,7 @@ object BuildDependencies {
     val libPhoneNumber = "com.googlecode.libphonenumber:libphonenumber:${Versions.LIB_PHONE_NUMBER}"
     val pinEditText = "com.poovam:pin-edittext-field:${Versions.PIN_EDITTEXT}"
 
-    val wireSignals = "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:${Versions.WIRE_SIGNALS}"
+    val wireSignals = "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:${LegacyDependencies.WIRE_SIGNALS}"
 }
 
 object ModuleDependencies {
@@ -173,6 +170,8 @@ object DevDependencies {
 object LegacyDependencies {
     const val SCALA_MAJOR_VERSION = "2.11"
     const val SCALA_VERSION = SCALA_MAJOR_VERSION.plus(".12")
+    // signals
+    const val WIRE_SIGNALS = "0.2"
 
     //build
     val scalaLibrary = "org.scala-lang:scala-library:$SCALA_VERSION"
