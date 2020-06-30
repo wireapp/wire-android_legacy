@@ -39,7 +39,6 @@ class CallingNotificationsService extends ServiceHelper with DerivedLogTag {
       startForeground(not.convId.str.hashCode, builder.build())
     case _ =>
       stopForeground(true)
-      stopSelf()
   }
 
   override def onBind(intent: Intent): IBinder = null
