@@ -424,7 +424,10 @@ class CallingServiceImpl(val accountId:       UserId,
           if (convSize > VideoCallMaxMembers) Avs.WCallType.ForcedAudio
           else if (isVideo) Avs.WCallType.Video
           else Avs.WCallType.Normal
-        convType = if (isGroup) Avs.WCallConvType.Group else Avs.WCallConvType.OneOnOne
+        convType =
+          if (isGroup && conferenceCallingEnabled) Avs.WCallConvType.Conference
+          else if (isGroup && !conferenceCallingEnabled) Avs.WCallConvType.Group
+          else Avs.WCallConvType.OneOnOne
         _ <- permissions.ensurePermissions(ListSet(android.Manifest.permission.RECORD_AUDIO) ++ (if(forceOption && isVideo) ListSet(android.Manifest.permission.CAMERA) else ListSet()))
         _ <-
           profile.activeCall match {
