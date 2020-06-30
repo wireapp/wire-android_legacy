@@ -169,7 +169,8 @@ class CallingServiceImpl(val accountId:       UserId,
                          globalPrefs:         GlobalPreferences,
                          permissions:         PermissionsService,
                          userStorage:         UsersStorage,
-                         tracking:            TrackingService)(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
+                         tracking:            TrackingService,
+                         conferenceCallingEnabled: Boolean)(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
 
   import CallingService._
 
