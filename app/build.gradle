@@ -145,8 +145,8 @@ android {
         buildConfigField 'boolean', 'KOTLIN_REGISTRATION', "$rootProject.ext.kotlinRegistration"
         buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
 
-        // Internal feature flags
-        buildConfigField 'boolean', 'CONFERENCE_CALLING', "$rootProject.ext.conferenceCalling"
+        // Internal feature flags to override in productFlavors
+        buildConfigField 'boolean', 'CONFERENCE_CALLING', 'false'
     }
 
     packagingOptions {
