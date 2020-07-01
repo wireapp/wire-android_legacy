@@ -47,7 +47,7 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
   private lazy val convOptions = view[View](R.id.create_conv_options)
   private lazy val convOptionsArrow = view[ImageView](R.id.create_conv_options_icon)
   private lazy val callInfo = returning(view[TextView](R.id.call_info)) { vh =>
-    vh.foreach(_.setText(getString(R.string.call_info_text, ConversationController.MaxParticipants.toString)))
+    vh.foreach(_.setText(getString(R.string.call_info_text, ConversationController.MaxParticipants.toString, CallingService.videoCallMaxMembersExcludingSelf.toString)))
   }
 
   private lazy val readReceiptsToggle  = returning(view[SwitchCompat](R.id.read_receipts_toggle)) { vh =>
