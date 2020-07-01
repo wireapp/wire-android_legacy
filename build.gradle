@@ -93,9 +93,6 @@ ext {
     kotlinSettings = false
     kotlinRegistration = false
     kotlinCore = kotlinSettings || kotlinRegistration
-
-    // Internal feature flags
-    conferenceCalling = false
 }
 
 class BuildtimeConfiguration {
