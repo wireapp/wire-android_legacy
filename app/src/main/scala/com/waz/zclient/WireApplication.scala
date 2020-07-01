@@ -440,7 +440,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       null, //TODO: Use sync engine's version for now
       inject[MessageNotificationsController],
       assets2Module,
-      inject[FileRestrictionList]
+      inject[FileRestrictionList],
+      BuildConfig.CONFERENCE_CALLING
     )
 
     val activityLifecycleCallback = inject[ActivityLifecycleCallback]
