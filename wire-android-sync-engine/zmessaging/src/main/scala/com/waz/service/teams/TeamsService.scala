@@ -47,7 +47,7 @@ trait TeamsService {
 
   val selfTeam: Signal[Option[TeamData]]
 
-  def onTeamUpdated(id: TeamId, name: Option[Name], icon: AssetId): Future[Unit]
+  def onTeamUpdated(team: TeamData): Future[Unit]
 
   def onTeamSynced(team: TeamData, members: Seq[TeamMember], roles: Set[ConversationRole]): Future[Unit]
 
@@ -102,7 +102,10 @@ class TeamsServiceImpl(selfUser:           UserId,
 
     for {
       _ <- RichFuture.traverseSequential(events.collect { case e: Update => e }) {
-             case Update(id, name, icon) => onTeamUpdated(id, name, icon)
+             case Update(id, name, icon) =>
+               teamStorage.get(id).collect {
+                 case Some(team) => onTeamUpdated(team.copy(name = name.getOrElse(team.name), icon = icon))
+               }
            }
       _ <- onMembersJoined(membersJoined -- membersLeft)
       _ <- onMembersLeft(membersLeft -- membersJoined)
@@ -175,7 +178,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     val memberIds = members.map(_.user).toSet
 
     for {
-      _          <- onTeamUpdated(team.id, Some(team.name), team.icon)
+      _          <- onTeamUpdated(team)
       oldMembers <- userStorage.getByTeam(Set(team.id))
       _          <- userStorage.updateAll2(oldMembers.map(_.id) -- memberIds, _.copy(deleted = true))
       _          <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
@@ -204,12 +207,9 @@ class TeamsServiceImpl(selfUser:           UserId,
     result <- sync.deleteGroupConversation(tid, rConvId)
   } yield { result }
 
-  override def onTeamUpdated(id: TeamId, name: Option[Name], icon: AssetId): Future[Unit] = {
-    verbose(l"onTeamUpdated: $id, name: $name, icon: $icon")
-    teamStorage.update(id, team => team.copy (
-      name    = name.getOrElse(team.name),
-      icon    = icon)
-    ).flatMap(_ => lastTeamUpdate := Instant.now())
+  override def onTeamUpdated(team: TeamData): Future[Unit] = {
+    verbose(l"onTeamUpdated: ${team.id}, name: ${team.name}, icon: ${team.icon}")
+    teamStorage.insert(team).flatMap(_ => lastTeamUpdate := Instant.now())
   }
 
   private def onMembersJoined(members: Set[UserId]) = {

@@ -26,7 +26,6 @@ import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.content.UserPreferences
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
 import com.waz.model.{AccentColor, Availability, Picture, TeamData, UserPermissions}
 import com.waz.service.teams.TeamsService
@@ -138,13 +137,9 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setAccentColor(color: Int): Unit = {}
 
-  override def setTeamName(name: Option[String]) = {
-    name match {
-      case Some(teamName) =>
-        teamNameText.setText(context.getString(R.string.preferences_profile_in_team, teamName))
-      case None =>
-        teamNameText.setText("")
-    }
+  override def setTeamName(name: Option[String]): Unit = name match {
+    case Some(teamName) => teamNameText.setText(context.getString(R.string.preferences_profile_in_team, teamName))
+    case None           => teamNameText.setText("")
   }
 
   override def setManageTeamEnabled(enabled: Boolean): Unit = {
@@ -242,7 +237,7 @@ case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 }
 
 class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext)
-  extends Injectable with DerivedLogTag {
+  extends Injectable {
 
   import ProfileViewController._
 
