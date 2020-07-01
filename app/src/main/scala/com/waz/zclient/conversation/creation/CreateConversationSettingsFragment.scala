@@ -24,6 +24,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, TextView}
 import android.widget.CompoundButton.OnCheckedChangeListener
 import androidx.appcompat.widget.SwitchCompat
+import com.waz.service.call.CallingService
 import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
