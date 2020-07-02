@@ -431,6 +431,8 @@ object ZMessaging extends DerivedLogTag { self =>
       this.fileRestrictionList = fileRestrictionList
       this.conferenceCallingEnabled = conferenceCallingEnabled
 
+      if (conferenceCallingEnabled) CallingService.VideoCallMaxMembers = 100
+
       currentUi = ui
       currentGlobal = _global
       currentAccounts = currentGlobal.accountsService

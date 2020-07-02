@@ -1333,7 +1333,7 @@
     <string name="backup_import_error_wrong_account">You cannot restore history from a different account.</string>
     <string name="video_paused">Video paused</string>
     <string name="calling_degraded_title">New device</string>
-    <string name="call_info_text">Up to %1$s people can join a group conversation. Video calls work with up to 3 other people and you.</string>
+    <string name="call_info_text">Up to %1$s people can join a group conversation. Video calls work with up to %2$s other people and you.</string>
 
     <string name="markdown_link_dialog_title">Visit Link</string>
     <string name="markdown_link_dialog_message">This will take you to\n%1$s</string>

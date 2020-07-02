@@ -80,7 +80,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.e2ee.ShieldView
-import com.waz.zclient.{ErrorsController, FragmentHelper, R}
+import com.waz.zclient.{BuildConfig, ErrorsController, FragmentHelper, R}
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
@@ -220,7 +220,7 @@ class ConversationFragment extends FragmentHelper {
     } yield {
       if (isCallActive || !isConvActive || participantsNumber <= 1)
         Option.empty[Int]
-      else if (!isGroup || (isTeam && participantsNumber <= CallingService.VideoCallMaxMembers))
+      else if (!isGroup || ((isTeam || BuildConfig.CONFERENCE_CALLING) && participantsNumber <= CallingService.VideoCallMaxMembers))
         Some(R.menu.conversation_header_menu_video)
       else
         Some(R.menu.conversation_header_menu_audio)

@@ -109,7 +109,8 @@ trait CallingService {
 
 object CallingService {
 
-  val VideoCallMaxMembers: Int = 4
+  var VideoCallMaxMembers: Int = 4
+  def videoCallMaxMembersExcludingSelf: Int = VideoCallMaxMembers - 1
 
   trait AbstractCallProfile[A] {
 
