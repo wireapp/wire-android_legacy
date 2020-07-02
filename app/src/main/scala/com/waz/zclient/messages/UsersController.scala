@@ -61,7 +61,7 @@ class UsersController(implicit injector: Injector, context: Context)
 
   // this is the same as ConversationController.DefaultDeletedName but it's possible just as well
   // that the default name for a conversation is different from the default name for a user
-  private lazy val DefaultDeletedName: Name = Name(getString(R.string.default_deleted_username))
+  lazy val DefaultDeletedName: Name = Name(getString(R.string.default_deleted_username))
 
   def displayName(id: UserId): Signal[DisplayName] = selfUserId.flatMap {
     case selfId if selfId == id =>

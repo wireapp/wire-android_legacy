@@ -91,7 +91,12 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
     val userId = msg.userId
     val shorten = names.others.nonEmpty
     val othersCount = names.others.size
-
+    val isOtherUserUnknown = names.main.nonEmpty && names.main.forall(_.name == users.DefaultDeletedName.str)
+    val isSenderUnknown = displayName match {
+      case Other(name) => name == users.DefaultDeletedName.str
+      case _           => false
+    }
+    
     (msg.msgType, displayName, msg.members.toSeq) match {
         //Create Conv
       case (MEMBER_JOIN, Me, _)       if msg.firstMessage && msg.name.isDefined && shorten => getQuantityString(R.plurals.content__system__with_others_only, othersCount, namesListString, othersCount.toString)
@@ -112,9 +117,15 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
 
         //Remove
       case (MEMBER_LEAVE, Me, Seq(`me`))                                                   => getString(R.string.content__system__you_left)
+      case (MEMBER_LEAVE, Me, _) if isOtherUserUnknown                                     => getString(R.string.content__system__you_removed_someone)
       case (MEMBER_LEAVE, Me, _)                                                           => getString(R.string.content__system__you_removed_other, namesListString)
+      case (MEMBER_LEAVE, Other(_), Seq(`me`)) if isSenderUnknown                          => getString(R.string.content__system__someone_removed_you)
       case (MEMBER_LEAVE, Other(name), Seq(`me`))                                          => getString(R.string.content__system__other_removed_you, name)
+      case (MEMBER_LEAVE, Other(_), Seq(`userId`)) if isSenderUnknown                      => getString(R.string.content__system__someone_left)
       case (MEMBER_LEAVE, Other(name), Seq(`userId`))                                      => getString(R.string.content__system__other_left, name)
+      case (MEMBER_LEAVE, Other(_), _) if isSenderUnknown && isOtherUserUnknown            => getString(R.string.content__system__someone_was_removed)
+      case (MEMBER_LEAVE, Other(_), _) if isSenderUnknown                                  => getString(R.string.content__system__other_was_removed, namesListString)
+      case (MEMBER_LEAVE, Other(name), _) if isOtherUserUnknown                            => getString(R.string.content__system__other_removed_someone, name)
       case (MEMBER_LEAVE, Other(name), _)                                                  => getString(R.string.content__system__other_removed_other, name, namesListString)
 
       case _ =>

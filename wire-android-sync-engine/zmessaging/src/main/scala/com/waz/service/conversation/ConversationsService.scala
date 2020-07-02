@@ -221,12 +221,15 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       } yield ()
 
     case MemberLeaveEvent(_, time, from, userIds) =>
+      val userIdSet = userIds.toSet
       for {
-        _              <- deleteMembers(conv.id, userIds.toSet, Some(from), sendSystemMessage = true)
-        selfUserLeaves =  userIds.contains(selfUserId)
+        syncId         <- users.syncIfNeeded(userIdSet -- Set(selfUserId))
+        _              <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
+        _              <- deleteMembers(conv.id, userIdSet, Some(from), sendSystemMessage = true)
+        selfUserLeaves =  userIdSet.contains(selfUserId)
         _              <- if (selfUserLeaves) content.setConvActive(conv.id, active = false) else Future.successful(())
                           // if the user removed themselves from another device, archived on this device
-        _              <- if (selfUserLeaves && from.equals(selfUserId))
+        _              <- if (selfUserLeaves && from == selfUserId)
                             content.updateConversationState(conv.id, ConversationState(Option(true), Option(time)))
                           else
                             Future.successful(None)

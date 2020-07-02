@@ -163,10 +163,17 @@
 
     <!-- Remove people -->
     <string name="content__system__other_removed_other">[[%1$s]] removed %2$s</string>
+    <string name="content__system__other_removed_someone">[[%1$s]] removed someone</string>
+    <string name="content__system__someone_removed_other">Someone removed %2$s</string>
     <string name="content__system__other_removed_you">[[%1$s]] removed you</string>
+    <string name="content__system__someone_removed_you">Someone removed you</string>
     <string name="content__system__you_removed_other">You removed %1$s</string>
+    <string name="content__system__you_removed_someone">You removed someone</string>
     <string name="content__system__you_left">[[You]] left</string>
     <string name="content__system__other_left">[[%1$s]] left</string>
+    <string name="content__system__someone_left">Someone left</string>
+    <string name="content__system__other_was_removed">%1$s was removed</string>
+    <string name="content__system__someone_was_removed">Someone was removed</string>
 
     <!-- Create conversation -->
     <string name="content__system__you_started_conversation">You started the conversation</string>
