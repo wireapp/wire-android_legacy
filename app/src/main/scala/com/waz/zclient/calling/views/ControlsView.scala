@@ -35,7 +35,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.{BuildConfig, R, ViewHelper}
 import com.waz.threading.Threading._
 
 import scala.async.Async._
@@ -85,7 +85,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
       established    <- controller.isCallEstablished
       showVideo      <- controller.isVideoCall
       members        <- controller.conversationMembers.map(_.size)
-    } yield members <= CallingService.VideoCallMaxMembers && ((established && (isTeam || !isGroup)) || showVideo)).onUi(button.setEnabled)
+    } yield members <= CallingService.VideoCallMaxMembers && ((established && (BuildConfig.CONFERENCE_CALLING || isTeam || !isGroup)) || showVideo)).onUi(button.setEnabled)
   }
 
   returning(findById[CallControlButtonView](R.id.speaker_flip_call)) { button =>
