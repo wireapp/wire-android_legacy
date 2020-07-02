@@ -16,7 +16,6 @@ class UserDatabaseHelper {
     private val notificationDataTableQuery = """CREATE TABLE IF NOT EXISTS NotificationData (_id TEXT PRIMARY KEY, data TEXT )""".trimIndent()
     private val clientsTableQuery = """CREATE TABLE IF NOT EXISTS Clients (_id TEXT PRIMARY KEY, data TEXT )""".trimIndent()
     private val likingsTableQuery = """CREATE TABLE IF NOT EXISTS Likings (message_id TEXT , user_id TEXT , timestamp INTEGER , action INTEGER , PRIMARY KEY (message_id, user_id))""".trimIndent()
-    private val emailAddressesTableQuery = """CREATE TABLE IF NOT EXISTS EmailAddresses (contact TEXT , email_address TEXT )""".trimIndent()
     private val msgDeletionTableQuery = """CREATE TABLE IF NOT EXISTS MsgDeletion (message_id TEXT , timestamp INTEGER , PRIMARY KEY (message_id))""".trimIndent()
     private val editHistoryTableQuery = """CREATE TABLE IF NOT EXISTS EditHistory (original_id TEXT , updated_id TEXT , timestamp INTEGER , PRIMARY KEY (original_id))""".trimIndent()
     private val pushNotificationEventsTableQuery = """CREATE TABLE IF NOT EXISTS PushNotificationEvents (pushId TEXT , event_index INTEGER , decrypted INTEGER , event TEXT , plain BLOB , transient INTEGER , PRIMARY KEY (event_index))""".trimIndent()
@@ -36,7 +35,7 @@ class UserDatabaseHelper {
         userTableQuery, assetsTableQuery, conversationsTableQuery,
         conversationMembersTableQuery, messagesTableQuery, keyValuesTableQuery,
         syncJobsTableQuery, errorsTableQuery, notificationDataTableQuery,
-        clientsTableQuery, likingsTableQuery, emailAddressesTableQuery, msgDeletionTableQuery, editHistoryTableQuery,
+        clientsTableQuery, likingsTableQuery, msgDeletionTableQuery, editHistoryTableQuery,
         pushNotificationEventsTableQuery, readReceiptsTableQuery, propertiesTableQuery,
         uploadAssetsTableQuery, downloadAssetsTableQuery, assets2TableQuery,
         fcmNotificationsTableQuery, fcmNotificationStatsTableQuery, foldersTableQuery,
