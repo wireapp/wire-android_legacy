@@ -33,6 +33,7 @@ import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.SearchQuery
+import com.waz.service.call.CallingService
 import com.wire.signals._
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
