@@ -197,13 +197,31 @@ class CallingFragment extends FragmentHelper {
 
         gridViews.zipWithIndex.foreach { case (r, index) =>
           val (row, col, span) = index match {
+
             case 0 if !isVideoBeingSent && gridViews.size == 2 => (0, 0, 2)
             case 0                                             => (0, 0, 1)
             case 1 if !isVideoBeingSent && gridViews.size == 2 => (1, 0, 2)
             case 1                                             => (0, 1, 1)
+
             case 2 if gridViews.size == 3                      => (1, 0, 2)
             case 2                                             => (1, 0, 1)
             case 3                                             => (1, 1, 1)
+
+            case 4 if gridViews.size == 5                      => (2, 0, 2)
+            case 4                                             => (2, 0, 1)
+            case 5                                             => (2, 1, 1)
+
+            case 6 if gridViews.size == 7                      => (3, 0, 2)
+            case 6                                             => (3, 0, 1)
+            case 7                                             => (3, 1, 1)
+
+            case 8 if gridViews.size == 9                      => (4, 0, 2)
+            case 8                                             => (4, 0, 1)
+            case 9                                             => (4, 1, 1)
+
+            case 10 if gridViews.size == 11                    => (5, 0, 2)
+            case 10                                            => (5, 0, 1)
+            case 11                                            => (5, 1, 1)
           }
           r.setLayoutParams(returning(new GridLayout.LayoutParams()) { params =>
             params.width      = 0

@@ -28,7 +28,7 @@
         android:id="@+id/video_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:rowCount="2"
+        app:rowCount="6"
         app:columnCount="2"
         app:orientation="horizontal"
         android:background="@color/accent_blue"
