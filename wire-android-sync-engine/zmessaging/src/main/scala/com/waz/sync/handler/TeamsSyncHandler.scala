@@ -72,8 +72,7 @@ class TeamsSyncHandlerImpl(userId:    UserId,
     case None     => Future.successful(SyncResult.Success)
     case Some(id) =>
       client.getTeamData(id).future.flatMap {
-        case Right(data) =>
-          service.onTeamUpdated(id, Some(data.name), data.icon).map(_ => SyncResult.Success)
+        case Right(data) => service.onTeamUpdated(data).map(_ => SyncResult.Success)
         case Left(err)   => Future.successful(SyncResult(err))
       }
   }
