@@ -149,6 +149,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(selfUserId))
       )
+      (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
 
       // check if the self is still in any conversation (they are - with self)
       (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
@@ -199,6 +200,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), removerId, Seq(selfUserId))
       )
 
+      (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
       (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
         Future.successful(IndexedSeq(ConversationMemberData(selfUserId, convId, ConversationRole.AdminRole)))
       )
@@ -244,6 +246,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(otherUserId))
       )
 
+      (users.syncIfNeeded _).expects(Set(otherUserId), *).anyNumberOfTimes().returning(Future.successful(None))
       (membersStorage.getByUsers _).expects(Set(otherUserId)).anyNumberOfTimes().returning(
         Future.successful(IndexedSeq(ConversationMemberData(otherUserId, convId, ConversationRole.MemberRole)))
       )
@@ -765,6 +768,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head }
       (membersStorage.onChanged _).expects().anyNumberOfTimes().onCall(_ => EventStream.wrap(membersOnChanged))
       (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+      (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
       (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes().returning(convSignal.head)
       (membersStorage.remove(_: ConvId, _:Iterable[UserId])).expects(convId, *).anyNumberOfTimes().onCall { (_: ConvId, userIds: Iterable[UserId]) =>
         members.head.map { ms =>

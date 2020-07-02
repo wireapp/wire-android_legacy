@@ -223,7 +223,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case MemberLeaveEvent(_, time, from, userIds) =>
       val userIdSet = userIds.toSet
       for {
-        syncId         <- users.syncIfNeeded(userIdSet)
+        syncId         <- users.syncIfNeeded(userIdSet -- Set(selfUserId))
         _              <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
         _              <- deleteMembers(conv.id, userIdSet, Some(from), sendSystemMessage = true)
         selfUserLeaves =  userIdSet.contains(selfUserId)
