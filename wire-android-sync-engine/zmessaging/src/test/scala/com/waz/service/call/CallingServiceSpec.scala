@@ -90,7 +90,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   lazy val service: CallingServiceImpl = initCallingService()
 
   scenario("CallingService intialization") {
-    val handle = 1.asInstanceOf[Uint32_t]
+    val handle = Uint32_t(1)
     val service = initCallingService(handle)
     result(service.wCall) shouldEqual handle
   }
@@ -908,7 +908,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     result(signal.filter(test).head)
   }
 
-  def initCallingService(wCall: WCall = 1.asInstanceOf[Uint32_t]) = {
+  def initCallingService(wCall: WCall = Uint32_t(1)) = {
     val prefs = new TestUserPreferences()
 
     (convs.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
