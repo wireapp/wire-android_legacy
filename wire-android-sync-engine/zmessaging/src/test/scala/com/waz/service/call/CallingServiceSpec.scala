@@ -41,7 +41,6 @@ import com.waz.utils.RichInstant
 import com.wire.signals.Signal
 import com.waz.utils.jna.Uint32_t
 import com.waz.utils.wrappers.Context
-import org.junit.Ignore
 import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.Future
@@ -49,7 +48,6 @@ import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
 //fixme: solve native library loading problem
-@Ignore
 class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   implicit val executionContext = new SerialDispatchQueue(name = "CallingServiceSpec")
