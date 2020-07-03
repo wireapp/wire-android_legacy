@@ -109,11 +109,18 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       clock.advance(10.seconds)
 
+      (convsService.activeMembersData _).expects(_1to1Conv.id).once().returning(
+        Signal(Seq(ConversationMemberData(otherUserId, _1to1Conv.id, "member")))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
+
       val callJoined = Signal(false)
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         callJoined.filter(identity).head.foreach { _ =>
           clock.advance(10.seconds)
           service.onEstablishedCall(_1to1Conv.remoteId, otherUserId)
+          service.onParticipantsChanged(_1to1Conv.remoteId, Set(otherUser))
         }
       }
 
@@ -197,11 +204,18 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       clock.advance(10.seconds)
 
+      (convsService.activeMembersData _).expects(team1to1Conv.id).once().returning(
+        Signal(Seq(ConversationMemberData(otherUserId, team1to1Conv.id, "member")))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
+
       val callJoined = Signal(false)
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         callJoined.filter(identity).head.foreach { _ =>
           clock.advance(10.seconds)
           service.onEstablishedCall(team1to1Conv.remoteId, otherUserId)
+          service.onParticipantsChanged(team1to1Conv.remoteId, Set(otherUser))
         }
       }
 
