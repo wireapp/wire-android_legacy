@@ -279,6 +279,12 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     val checkpoint5 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
 
     def progressToSelfConnected(conv: ConversationData = _1to1Conv): Unit = {
+      (convsService.activeMembersData _).expects(conv.id).once().returning(
+        Signal(Seq(ConversationMemberData(otherUserId, conv.id, "member")))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
+
       (avs.startCall _).expects(*, conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
       service.startCall(conv.id, isVideo = false, forceOption = false)
       awaitCP(checkpoint1)
@@ -289,6 +295,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       clock.advance(10.seconds)
       service.onEstablishedCall(conv.remoteId, otherUserId)
+      service.onParticipantsChanged(conv.remoteId, Set(otherUser))
       awaitCP(checkpoint3)
     }
 
@@ -364,6 +371,12 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint4 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == Terminating   && c.otherParticipants.keySet == Set(otherUser) && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))))
       val checkpoint5 = callCheckpoint(_.get(team1to1Conv.id).exists(c => c.convId == team1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
 
+      (convsService.activeMembersData _).expects(team1to1Conv.id).once().returning(
+        Signal(Seq(ConversationMemberData(otherUserId, team1to1Conv.id, "member")))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
+
       (avs.startCall _).expects(*, team1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
       service.startCall(team1to1Conv.id, isVideo = false, forceOption = false)
       awaitCP(checkpoint1)
@@ -374,6 +387,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       clock.advance(10.seconds)
       service.onEstablishedCall(team1to1Conv.remoteId, otherUserId)
+      service.onParticipantsChanged(team1to1Conv.remoteId, Set(otherUser))
       awaitCP(checkpoint3)
 
       (avs.endCall _).expects(*, team1to1Conv.remoteId).once().onCall { (_, _) =>
@@ -399,6 +413,12 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         case Some(Terminating) => terminatingPhaseEntered = true
         case _ =>
       }
+
+      (convsService.activeMembersData _).expects(_1to1Conv.id).once().returning(
+        Signal(Seq(ConversationMemberData(otherUserId, _1to1Conv.id, "member")))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
       (avs.startCall _).expects(*, _1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
       service.startCall(_1to1Conv.id, isVideo = false, forceOption = false)
