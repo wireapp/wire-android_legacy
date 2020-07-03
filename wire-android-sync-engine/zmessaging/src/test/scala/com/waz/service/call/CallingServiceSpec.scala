@@ -622,6 +622,15 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       awaitCP(checkpoint1)
 
+      (convsService.activeMembersData _).expects(groupConv.id).once().returning(
+        Signal(Seq(
+          ConversationMemberData(otherUserId, groupConv.id, "member"),
+          ConversationMemberData(otherUser2Id, groupConv.id, "member")
+        ))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
+
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(groupConv.remoteId, otherUserId)
         service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
@@ -648,6 +657,15 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
 
       awaitCP(checkpoint1)
+
+      (convsService.activeMembersData _).expects(groupConv.id).once().returning(
+        Signal(Seq(
+          ConversationMemberData(otherUserId, groupConv.id, "member"),
+          ConversationMemberData(otherUser2Id, groupConv.id, "member")
+        ))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(groupConv.remoteId, otherUserId)
@@ -679,6 +697,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("If a user joins an ongoing group call in the background, it shouldn't be bumped to active") {
       await(globalPrefs(SkipTerminatingState) := true)
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onParticipantsChanged(groupConv.remoteId, Set(otherUser))
 
       service.endCall(groupConv.id)
       service.dismissCall()
