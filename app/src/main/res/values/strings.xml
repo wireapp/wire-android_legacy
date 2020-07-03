@@ -1300,7 +1300,7 @@
         \n\nChoose a strong password to protect the backup file.</string>
     <string name="pref_account_backup_title">Back up conversations</string>
     <string name="backup_password_dialog_title">Set password</string>
-    <string name="backup_password_dialog_message">The backup will be compressed, and if you set a password, also encrypted. Make sure to store it in a secure place.</string>
+    <string name="backup_password_dialog_message">The backup will be compressed and encrypted with a password. Make sure to store it in a secure place.</string>
     <string name="backup_password_dialog_ok">OK</string>
     <string name="backup_password_dialog_no_password">Cancel</string>
     <string name="restore_password_dialog_title">This backup is password protected.</string>
