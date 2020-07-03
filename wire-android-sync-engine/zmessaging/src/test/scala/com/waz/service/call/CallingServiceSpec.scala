@@ -447,6 +447,15 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       awaitCP(checkpoint1)
 
+      (convsService.activeMembersData _).expects(groupConv.id).once().returning(
+        Signal(Seq(
+          ConversationMemberData(otherUserId, groupConv.id, "member"),
+          ConversationMemberData(otherUser2Id, groupConv.id, "member")
+        ))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
+
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(groupConv.remoteId, otherUserId)
         service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
@@ -463,6 +472,15 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint3 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.otherParticipants.keySet == Set(otherUser)))
       val checkpoint4 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.otherParticipants.keySet == Set(otherUser, otherUser2)))
 
+      (convsService.activeMembersData _).expects(groupConv.id).once().returning(
+        Signal(Seq(
+          ConversationMemberData(otherUserId, groupConv.id, "member"),
+          ConversationMemberData(otherUser2Id, groupConv.id, "member")
+        ))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
+
       (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
 
       service.startCall(groupConv.id)
@@ -471,8 +489,8 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onOtherSideAnsweredCall(groupConv.remoteId)
       awaitCP(checkpoint2)
 
-      //TODO which user from a group conversation gets passed down here?
       service.onEstablishedCall(groupConv.remoteId, otherUserId)
+      service.onParticipantsChanged(groupConv.remoteId, Set(otherUser))
       awaitCP(checkpoint3)
 
       service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
@@ -485,6 +503,15 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint3 = callCheckpoint(_.contains(teamGroupConv.id), _.exists(cur => cur.convId == teamGroupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.otherParticipants.keySet == Set(otherUser)))
       val checkpoint4 = callCheckpoint(_.contains(teamGroupConv.id), _.exists(cur => cur.convId == teamGroupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.otherParticipants.keySet == Set(otherUser, otherUser2)))
 
+      (convsService.activeMembersData _).expects(teamGroupConv.id).once().returning(
+        Signal(Seq(
+          ConversationMemberData(otherUserId, teamGroupConv.id, "member"),
+          ConversationMemberData(otherUser2Id, teamGroupConv.id, "member")
+        ))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
+
       (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
 
       service.startCall(teamGroupConv.id)
@@ -494,6 +521,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       awaitCP(checkpoint2)
 
       service.onEstablishedCall(teamGroupConv.remoteId, otherUserId)
+      service.onParticipantsChanged(teamGroupConv.remoteId, Set(otherUser))
       awaitCP(checkpoint3)
 
       service.onParticipantsChanged(teamGroupConv.remoteId, Set(otherUser, otherUser2))
@@ -509,6 +537,15 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
 
       clock + 10.seconds
+
+      (convsService.activeMembersData _).expects(groupConv.id).once().returning(
+        Signal(Seq(
+          ConversationMemberData(otherUserId, groupConv.id, "member"),
+          ConversationMemberData(otherUser2Id, groupConv.id, "member")
+        ))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(groupConv.remoteId, otherUserId)
@@ -541,6 +578,15 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("Cancel outgoing group call should set it to Ended") {
       val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfCalling && cur.caller == selfUserId))
       val checkpoint2 = callCheckpoint(_.get(groupConv.id).exists(c => c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)), _.isEmpty)
+
+      (convsService.activeMembersData _).expects(groupConv.id).once().returning(
+        Signal(Seq(
+          ConversationMemberData(otherUserId, groupConv.id, "member"),
+          ConversationMemberData(otherUser2Id, groupConv.id, "member")
+        ))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
       (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
 
