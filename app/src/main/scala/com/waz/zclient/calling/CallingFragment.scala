@@ -197,12 +197,10 @@ class CallingFragment extends FragmentHelper {
 
         gridViews.zipWithIndex.foreach { case (r, index) =>
           val (row, col, span) = index match {
-
             case 0 if !isVideoBeingSent && gridViews.size == 2 => (0, 0, 2)
             case 0                                             => (0, 0, 1)
             case 1 if !isVideoBeingSent && gridViews.size == 2 => (1, 0, 2)
             case 1                                             => (0, 1, 1)
-
             // The max number of columns is 2 and the max number of rows is undefined
             // if the index of the video preview is odd, display it in row n/2, column 1 , span 1
             case n if n % 2 != 0                               => (n / 2, 1, 1)
