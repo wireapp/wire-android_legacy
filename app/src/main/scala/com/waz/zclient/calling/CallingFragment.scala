@@ -203,25 +203,13 @@ class CallingFragment extends FragmentHelper {
             case 1 if !isVideoBeingSent && gridViews.size == 2 => (1, 0, 2)
             case 1                                             => (0, 1, 1)
 
-            case 2 if gridViews.size == 3                      => (1, 0, 2)
-            case 2                                             => (1, 0, 1)
-            case 3                                             => (1, 1, 1)
-
-            case 4 if gridViews.size == 5                      => (2, 0, 2)
-            case 4                                             => (2, 0, 1)
-            case 5                                             => (2, 1, 1)
-
-            case 6 if gridViews.size == 7                      => (3, 0, 2)
-            case 6                                             => (3, 0, 1)
-            case 7                                             => (3, 1, 1)
-
-            case 8 if gridViews.size == 9                      => (4, 0, 2)
-            case 8                                             => (4, 0, 1)
-            case 9                                             => (4, 1, 1)
-
-            case 10 if gridViews.size == 11                    => (5, 0, 2)
-            case 10                                            => (5, 0, 1)
-            case 11                                            => (5, 1, 1)
+            // The max number of columns is 2 and the max number of rows is undefined
+            // if the index of the video preview is odd, display it in row n/2, column 1 , span 1
+            case n if n % 2 != 0                               => (n / 2, 1, 1)
+            // else if the gridViews size is n+1 , display it in row n/2, column 0 , span 2
+            case n if gridViews.size == n + 1                  => (n / 2, 0, 2)
+            // else display it in row n/2, column 0 , span 1
+            case n                                             => (n / 2, 0, 1)
           }
           r.setLayoutParams(returning(new GridLayout.LayoutParams()) { params =>
             params.width      = 0
