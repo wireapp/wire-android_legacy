@@ -23,7 +23,7 @@ import android.os.{Handler, HandlerThread, Looper}
 import com.waz.utils.returning
 import com.waz.zms.BuildConfig
 import com.wire.signals.Threading.{Cpus, executionContext}
-import com.wire.signals.{DispatchQueue, DispatchQueueStats, EventContext, EventStream, Events, LimitedDispatchQueue, Signal, Subscription}
+import com.wire.signals.{DispatchQueue, EventContext, EventStream, Events, LimitedDispatchQueue, Signal, Subscription}
 
 import scala.concurrent.{Future, Promise}
 import scala.util.control.NonFatal
@@ -43,7 +43,7 @@ object Threading {
   final class UiDispatchQueue() extends DispatchQueue {
     private val handler = new Handler(Looper.getMainLooper)
 
-    override def execute(runnable: Runnable): Unit = handler.post(DispatchQueueStats("UiDispatchQueue", runnable))
+    override def execute(runnable: Runnable): Unit = handler.post(runnable)
   }
 
   object Implicits {

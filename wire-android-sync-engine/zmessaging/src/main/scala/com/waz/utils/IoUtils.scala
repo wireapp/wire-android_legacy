@@ -208,12 +208,12 @@ object IoUtils {
 
 class CancellableStream(stream: InputStream, cancelled: AtomicBoolean) extends FilterInputStream(stream) {
   override def read(buffer: Array[Byte], byteOffset: Int, byteCount: Int): Int = {
-    if (cancelled.get) throw CancellableFuture.DefaultCancelException
+    if (cancelled.get) throw CancellableFuture.CancelException
     else super.read(buffer, byteOffset, byteCount)
   }
 
   override def read(): Int = {
-    if (cancelled.get) throw CancellableFuture.DefaultCancelException
+    if (cancelled.get) throw CancellableFuture.CancelException
     else super.read()
   }
 }

@@ -29,7 +29,7 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
 import com.waz.model.AssetMetaData
 import com.waz.model.Mime
-import com.wire.signals.CancellableFuture.{CancelException, DefaultCancelException}
+import com.wire.signals.CancellableFuture.CancelException
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.waz.utils.wrappers.URI
@@ -62,7 +62,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
 
             // will contain at least 1 RMS value per buffer, but more if needed (up to numBars in case there is only 1 buffer)
             val rmsOfBuffers = Iterator.continually(stream.read(buffer.array)).takeWhile(_ >= 0).flatMap { bytesRead =>
-              if (cancelRequested.get) throw DefaultCancelException
+              if (cancelRequested.get) throw CancelException
               buffer.position(0).limit(bytesRead)
               AudioLevels.rms(buffer, estimatedBucketSize, ByteOrder.LITTLE_ENDIAN)
             }.toArray
@@ -72,7 +72,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
 
           overview.acquire(levels => Some(AssetMetaData.Loudness(levels)))
         }(Threading.IO).recover {
-          case c: CancelException => throw c
+          case CancelException => throw CancelException
           case NonFatal(cause) =>
             error(l"PCM overview generation failed", cause)
             None
@@ -93,14 +93,14 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
 
         // will contain at least 1 RMS value per buffer, but more if needed (up to numBars in case there is only 1 buffer)
         val rmsOfBuffers = decoder.flatten.flatMap { buf =>
-          if (cancelRequested.get) throw DefaultCancelException
+          if (cancelRequested.get) throw CancelException
           returning(AudioLevels.rms(buf.buffer, estimatedBucketSize, ByteOrder.nativeOrder))(_ => buf.release())
         }.toArray
 
         loudnessOverview(numBars, rmsOfBuffers) // select RMS peaks and convert to an intuitive scale
       }).acquire(levels => Some(AssetMetaData.Loudness(levels)))
     }(Threading.Background).recover {
-      case c: CancelException => throw c
+      case CancelException => throw CancelException
       case NonFatal(cause) =>
         error(l"overview generation failed", cause)
         None
