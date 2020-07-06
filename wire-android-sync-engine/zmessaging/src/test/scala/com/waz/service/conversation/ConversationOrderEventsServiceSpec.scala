@@ -27,8 +27,7 @@ import com.waz.service.messages.MessagesService
 import com.waz.service.{EventPipeline, EventPipelineImpl, EventScheduler, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
-import com.wire.signals.SerialDispatchQueue
-import com.wire.signals.Signal
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Signal}
 import org.threeten.bp.Instant
 import com.waz.model.GenericContent.Quote
 
@@ -36,7 +35,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ConversationOrderEventsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
-  implicit val outputDispatcher = new SerialDispatchQueue(name = "OutputWriter")
+  implicit val outputDispatcher: DispatchQueue = SerialDispatchQueue(name = "OutputWriter")
 
   scenario("All batched conversation events go to the order event service before any other conv-related service") {
 

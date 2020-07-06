@@ -29,8 +29,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountContext, AccountsService, NetworkModeService}
 import com.waz.sync.{SyncHandler, SyncRequestServiceImpl, SyncResult}
 import com.wire.signals.CancellableFuture.CancelException
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
-import com.wire.signals.Signal
+import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue, Signal}
 import com.waz.utils.{WhereAmI, returning}
 
 import scala.collection.mutable
@@ -60,7 +59,7 @@ class SyncSchedulerImpl(accountId:   UserId,
                         tracking:    TrackingService)
                        (implicit accountContext: AccountContext) extends SyncScheduler with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SyncSchedulerQueue")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "SyncSchedulerQueue")
 
   private val queue                 = new SyncSerializer
   private[sync] val executor        = new SyncExecutor(accountId, this, content, network, handler, tracking)

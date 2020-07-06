@@ -20,8 +20,7 @@ package com.waz.zclient.common.controllers
 import android.app.Activity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConvId
-import com.wire.signals.SerialDispatchQueue
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.{DispatchQueue, EventContext, SerialDispatchQueue, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.Intents._
 import com.waz.zclient.conversation.ConversationController
@@ -35,7 +34,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
 
   import SharingController._
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SharingController")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "SharingController")
 
   val sharableContent     = Signal(Option.empty[SharableContent])
   val ephemeralExpiration = Signal(Option.empty[FiniteDuration])

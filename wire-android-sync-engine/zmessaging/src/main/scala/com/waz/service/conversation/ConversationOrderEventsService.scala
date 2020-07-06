@@ -26,7 +26,7 @@ import com.waz.service.EventScheduler.Stage
 import com.waz.service.messages.MessagesService
 import com.waz.service.{EventPipeline, EventScheduler, UserService}
 import com.waz.sync.SyncServiceHandle
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import com.waz.utils._
 
 import scala.concurrent.Future
@@ -40,7 +40,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
                                      sync:       SyncServiceHandle,
                                      pipeline:   EventPipeline) extends DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationEventsDispatcher")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "ConversationEventsDispatcher")
 
   private[service] def shouldChangeOrder(event: ConversationEvent): Boolean =
     event match {

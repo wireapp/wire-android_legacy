@@ -22,7 +22,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.model.ConversationFolderData.ConversationFolderDataDao
 import com.waz.model.FolderData.FolderDataDao
 import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 import com.waz.utils.TrimmingLruCache.Fixed
 
@@ -35,7 +35,7 @@ trait FoldersStorage extends CachedStorage[FolderId, FolderData] {
 class FoldersStorageImpl(context: Context, storage: Database)
   extends CachedStorageImpl[FolderId, FolderData](new TrimmingLruCache(context, Fixed(1024)), storage)(FolderDataDao, LogTag("FolderStorage_Cached"))
     with FoldersStorage {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "FoldersStorage")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "FoldersStorage")
 
   override def getByType(folderType: Int): Future[Seq[FolderData]] = find(_.folderType == folderType, FolderDataDao.findForType(folderType)(_), identity)
 }
@@ -50,7 +50,7 @@ trait ConversationFoldersStorage extends CachedStorage[(ConvId, FolderId), Conve
 class ConversationFoldersStorageImpl(context: Context, storage: Database)
   extends CachedStorageImpl[(ConvId, FolderId), ConversationFolderData](new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationFolderDataDao, LogTag("ConversationFoldersStorage"))
     with ConversationFoldersStorage {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationFoldersStorage")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "ConversationFoldersStorage")
 
   override def findForConv(convId: ConvId): Future[Set[FolderId]] =
     find(_.convId == convId, ConversationFolderDataDao.findForConv(convId)(_), identity).map(_.map(_.folderId).toSet)

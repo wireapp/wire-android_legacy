@@ -25,9 +25,8 @@ import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.model.sync._
 import com.waz.sync.queue.SyncJobMerger.{Merged, Unchanged, Updated}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{AggregatingSignal, DispatchQueue, EventContext, EventStream, SerialDispatchQueue, Signal}
 import com.waz.utils._
-import com.wire.signals.{AggregatingSignal, EventContext, EventStream, Signal}
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -52,10 +51,9 @@ trait SyncContentUpdater {
 }
 
 class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with DerivedLogTag {
-  import EventContext.Implicits.global
   import SyncContentUpdater._
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SyncContentUpdaterQueue")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "SyncContentUpdaterQueue")
 
   private val mergers = new mutable.HashMap[Any, SyncJobMerger]
 

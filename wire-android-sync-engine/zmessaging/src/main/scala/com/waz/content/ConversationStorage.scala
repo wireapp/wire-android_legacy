@@ -52,8 +52,7 @@ class ConversationStorageImpl(storage: ZmsDatabase)
   extends CachedStorageImpl[ConvId, ConversationData](new UnlimitedLruCache(), storage)(ConversationDataDao, LogTag("ConversationStorage_Cached"))
     with ConversationStorage with DerivedLogTag {
 
-  import EventContext.Implicits.global
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationStorage")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "ConversationStorage")
 
   onAdded.on(dispatcher) { cs => updateSearchKey(cs)}
 

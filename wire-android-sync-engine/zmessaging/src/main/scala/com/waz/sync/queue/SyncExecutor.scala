@@ -29,7 +29,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult._
 import com.waz.sync.{SyncHandler, SyncResult}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue}
 import com.waz.utils._
 import org.threeten.bp.Instant
 
@@ -46,7 +46,7 @@ class SyncExecutor(account:     UserId,
                    tracking:    TrackingService) extends DerivedLogTag {
 
   import SyncExecutor._
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SyncExecutorQueue")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "SyncExecutorQueue")
 
   def apply(job: SyncJob): Future[SyncResult] = {
     def withJob(f: SyncJob => Future[SyncResult]) =

@@ -41,7 +41,7 @@ import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.threading.Threading
 import com.wire.signals.CancellableFuture.lift
-import com.wire.signals.{CancellableFuture, EventSource, SerialDispatchQueue, Signal, SourceSignal, Serialized}
+import com.wire.signals.{CancellableFuture, DispatchQueue, EventSource, SerialDispatchQueue, Serialized, Signal, SourceSignal}
 import com.waz.utils.{RichInstant, _}
 import com.waz.znet2.http.ResponseCode
 import org.json.JSONObject
@@ -103,7 +103,7 @@ class PushServiceImpl(selfUserId:           UserId,
   import PushService._
 
   implicit val logTag: LogTag = accountTag[PushServiceImpl](selfUserId)
-  private implicit val dispatcher = new SerialDispatchQueue(name = "PushService")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "PushService")
 
   override val onHistoryLost = new SourceSignal[Instant] with BgEventSource[Instant]
   override val processing = Signal(false)

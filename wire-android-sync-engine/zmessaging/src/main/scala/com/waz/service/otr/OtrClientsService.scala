@@ -63,9 +63,7 @@ class OtrClientsServiceImpl(selfId:    UserId,
                             storage:   OtrClientsStorage,
                             sync:      SyncServiceHandle,
                             accounts:  AccountsService) extends OtrClientsService with DerivedLogTag {
-
   import com.waz.threading.Threading.Implicits.Background
-  import com.wire.signals.EventContext.Implicits.global
 
   override lazy val lastSelfClientsSyncPref: Preferences.Preference[Long] = userPrefs.preference(LastSelfClientsSyncRequestedTime)
 

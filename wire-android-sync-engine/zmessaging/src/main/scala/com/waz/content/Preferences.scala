@@ -200,7 +200,7 @@ object Preferences {
   */
 class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Preferences {
 
-  override protected implicit val dispatcher = new SerialDispatchQueue(name = "GlobalPreferencesDispatcher")
+  override protected implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "GlobalPreferencesDispatcher")
   override protected implicit val logTag = LogTag[GlobalPreferences]
 
   def v31AssetsEnabled = false
@@ -246,17 +246,15 @@ class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Pref
     }).asInstanceOf[A]
   }
 
-  override protected def buildPreference[A: PrefCodec](key: PrefKey[A]) =
+  override protected def buildPreference[A: PrefCodec](key: PrefKey[A]): Preference[A] =
     new Preference[A](this, key) {
 
       //No need to update the signal. The SharedPreferences Listener will do this for us.
-      override def update(value: A) = {
-        setValue[A](key, value)
-      }
+      override def update(value: A): Future[Unit] = setValue[A](key, value)
 
       private def load = getFromPref(key)
 
-      override lazy val signal = new SourceSignal[A](Some(load)) {
+      override lazy val signal: SourceSignal[A] = new SourceSignal[A](Some(load)) {
 
         private val listener = new OnSharedPreferenceChangeListener {
           override def onSharedPreferenceChanged(sharedPreferences: SharedPreferences, k: String): Unit =

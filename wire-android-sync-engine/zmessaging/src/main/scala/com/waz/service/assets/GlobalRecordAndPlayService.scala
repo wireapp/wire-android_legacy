@@ -52,7 +52,6 @@ class RecordAndPlayService(userId:        UserId,
                            globalService: GlobalRecordAndPlayService,
                            errors:        ErrorsService,
                            accounts:      AccountsService) {
-  import EventContext.Implicits.global
   import Threading.Implicits.Background
 
   globalService.onError { err =>

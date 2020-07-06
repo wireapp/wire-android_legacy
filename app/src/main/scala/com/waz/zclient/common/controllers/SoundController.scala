@@ -31,12 +31,12 @@ import com.waz.media.manager.context.IntensityLevel
 import com.waz.model.UserId
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RingtoneUtils.{getUriForRawId, isDefaultValue}
 import com.waz.zclient.utils.{DeprecationUtils, RingtoneUtils}
 import com.waz.zclient.{R, _}
+import com.wire.signals.Signal
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{FiniteDuration, _}
@@ -71,8 +71,6 @@ trait SoundController {
 //For that, however, we would need more signals in the app, and hence more scala classes...
 class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   extends SoundController with Injectable with DerivedLogTag {
-
-  private implicit val ev = EventContext.Implicits.global
   private implicit val ec = Threading.Background
 
   private val zms                 = inject[Signal[ZMessaging]]

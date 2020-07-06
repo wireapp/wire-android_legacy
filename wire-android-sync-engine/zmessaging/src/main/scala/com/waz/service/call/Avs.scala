@@ -25,7 +25,7 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.Calling._
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import com.waz.utils.jna.{Size_t, Uint32_t}
 import com.waz.utils.{CirceJSONSupport, returning}
 import org.threeten.bp.Instant
@@ -58,7 +58,7 @@ trait Avs {
   */
 class AvsImpl() extends Avs with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "AvsWrapper")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "AvsWrapper")
 
   import Avs._
 

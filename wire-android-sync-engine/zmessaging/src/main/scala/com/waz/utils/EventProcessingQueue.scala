@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.model.Event
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue, Serialized}
+import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue, Serialized}
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -69,7 +69,7 @@ class GroupedEventProcessingQueue[A <: Event, Key]
   (groupBy: A => Key, processor: (Key, Seq[A]) => Future[Any], name: String = "")(implicit val evClassTag: ClassTag[A])
   extends EventProcessingQueue[A] {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = s"GroupedEventProcessingQueue[${evClassTag.runtimeClass.getSimpleName}]")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = s"GroupedEventProcessingQueue[${evClassTag.runtimeClass.getSimpleName}]")
 
   private val queues = new mutable.HashMap[Key, SerialProcessingQueue[A]]
 
@@ -131,7 +131,7 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
 }
 
 class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Future[Any], name: String = "") extends SerialProcessingQueue[A](processor, name)  {
-  private implicit val dispatcher = new SerialDispatchQueue(name = if (name.isEmpty) "ThrottledProcessingQueue_" + hashCode() else name)
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = if (name.isEmpty) "ThrottledProcessingQueue_" + hashCode() else name)
   private val waiting = new AtomicBoolean(false)
   @volatile private var waitFuture: CancellableFuture[Any] = CancellableFuture.successful(())
   private var lastDispatched = 0L

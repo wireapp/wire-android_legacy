@@ -32,10 +32,9 @@ import com.waz.model.otr.Client
 import com.waz.service.AccountManager
 import com.waz.service.assets.{AssetInput, Content, ContentForUpload, FileRestrictionList, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, DispatchQueue, EventContext, EventStream, SerialDispatchQueue, Serialized, Signal, SourceStream}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
-import com.wire.signals.{Serialized, EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{returning, _}
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -56,7 +55,7 @@ import scala.util.{Success, Try}
 class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
   extends Injectable with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "ConversationController")
 
   private lazy val selectedConv          = inject[Signal[SelectedConversationService]]
   private lazy val convsUi               = inject[Signal[ConversationsUiService]]

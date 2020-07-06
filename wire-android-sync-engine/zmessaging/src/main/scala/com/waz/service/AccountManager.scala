@@ -58,7 +58,7 @@ class AccountManager(val userId:   UserId,
                      isLogin:     Option[Boolean]) extends DerivedLogTag {
   import AccountManager._
 
-  implicit val dispatcher = new SerialDispatchQueue()
+  implicit val dispatcher: DispatchQueue = SerialDispatchQueue()
   implicit val accountContext: AccountContext = new AccountContext(userId, accounts)
   verbose(l"Creating for: $userId, team: $teamId, initialSelf: $initialSelf, startJustAfterBackup: $startedJustAfterBackup, isLogin: $isLogin")
 

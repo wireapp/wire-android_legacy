@@ -30,12 +30,11 @@ import com.waz.service._
 import com.waz.service.assets.FileRestrictionList
 import com.waz.service.tracking.TrackingService
 import com.waz.testutils.TestClock
-import com.waz.threading.Threading.{Background, IO, ImageDispatcher, Ui}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.threading.Threading
+import com.waz.threading.Threading.{Background, IO, ImageDispatcher, Ui}
 import com.waz.utils._
-import com.wire.signals.Signal
 import com.waz.utils.wrappers.{Intent, JVMIntentUtil, JavaURIUtil, URI, _}
+import com.wire.signals.{CancellableFuture, DispatchQueue, Signal}
 import org.junit.runner.RunWith
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
@@ -137,11 +136,15 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
 
     Intent.setUtil(JVMIntentUtil)
 
-    Threading.setUi(new SerialDispatchQueue({
-      com.wire.signals.Threading.executionContext(Executors.newSingleThreadExecutor(new ThreadFactory {
-        override def newThread(r: Runnable) = new Thread(r, Threading.testUiThreadName)
-      }))
-    }, Threading.testUiThreadName))
+    Threading.setUi(
+      DispatchQueue(
+        1,
+        Executors.newSingleThreadExecutor(new ThreadFactory {
+          override def newThread(r: Runnable) = new Thread(r, Threading.testUiThreadName)
+        }),
+        Threading.testUiThreadName
+      )
+    )
   }
 
   /**

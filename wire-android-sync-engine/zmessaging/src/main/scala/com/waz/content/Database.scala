@@ -26,12 +26,11 @@ import com.waz.utils.wrappers.DB
 import scala.concurrent.Future
 
 trait Database {
-  implicit val dispatcher: SerialDispatchQueue
+  implicit val dispatcher: DispatchQueue
 
   val dbHelper: BaseDaoDB
 
-  lazy val readExecutionContext: DispatchQueue =
-    new UnlimitedDispatchQueue(Threading.IO, name = "Database_readQueue_" + hashCode().toHexString)
+  lazy val readExecutionContext: DispatchQueue = DispatchQueue(0, Threading.IO)
 
   def apply[A](f: DB => A)(implicit logTag: LogTag = LogTag("")): CancellableFuture[A] = dispatcher {
     implicit val db:DB = dbHelper.getWritableDatabase

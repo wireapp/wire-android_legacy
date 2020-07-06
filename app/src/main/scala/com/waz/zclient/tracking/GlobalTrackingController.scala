@@ -29,9 +29,8 @@ import com.waz.model.{UserId, _}
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.service.tracking._
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, EventContext, SerialDispatchQueue}
 import com.waz.threading.Threading
-import com.wire.signals.EventContext
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}
@@ -45,7 +44,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   extends Injectable with DerivedLogTag {
   import GlobalTrackingController._
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "Tracking")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "Tracking")
 
   //For automation tests
   def getId: String = ""

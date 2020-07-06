@@ -22,7 +22,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.AssetData
 import com.waz.model.AssetData.ProcessingTaskKey
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue}
+
 import scala.collection.mutable
 import scala.concurrent.Future
 
@@ -30,7 +31,7 @@ import scala.concurrent.Future
   * Global registry of cancellable tasks.
   */
 object Cancellable {
-  private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "Cancellable")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "Cancellable")
 
   private val tasks = new mutable.HashMap[Any, CancellableFuture[_]]
 
@@ -49,7 +50,7 @@ object Cancellable {
 }
 
 object AssetProcessing extends DerivedLogTag {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "AssetProcessing")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "AssetProcessing")
 
   private val tasks = new mutable.HashMap[ProcessingTaskKey, CancellableFuture[Option[AssetData]]]
 

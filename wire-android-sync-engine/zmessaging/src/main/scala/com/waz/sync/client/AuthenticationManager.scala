@@ -30,10 +30,9 @@ import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client.LoginClient.LoginResult
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Serialized}
 import com.waz.utils.JsonEncoder.encodeInstant
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
-import com.wire.signals.Serialized
 import com.waz.znet2.http.ResponseCode
 import org.json.JSONObject
 import org.threeten.bp.Instant
@@ -62,7 +61,7 @@ class AuthenticationManager(id: UserId,
 
   import AuthenticationManager._
 
-  implicit val dispatcher = new SerialDispatchQueue(name = "AuthenticationManager")
+  implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "AuthenticationManager")
 
   private def token  = withAccount(_.accessToken)
   private def cookie = withAccount(_.cookie)

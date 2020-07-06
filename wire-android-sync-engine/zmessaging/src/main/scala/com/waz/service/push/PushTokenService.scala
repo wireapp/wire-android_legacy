@@ -32,8 +32,7 @@ import com.waz.service._
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{ErrorOr, PushTokenClient}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.{CancellableFuture, DispatchQueue, EventContext, SerialDispatchQueue, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.utils.{Backoff, ExponentialBackoff, RichEither, returning}
 
@@ -54,7 +53,7 @@ class PushTokenService(userId:       UserId,
 
   implicit lazy val logTag: LogTag = accountTag[PushTokenService](userId)
 
-  implicit val dispatcher = new SerialDispatchQueue(name = "PushTokenService")
+  implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "PushTokenService")
 
   private val isLoggedIn = accounts.accountState(userId).map {
     case _: Active => true
@@ -133,8 +132,7 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
                              tracking:  TrackingService) extends GlobalTokenService with DerivedLogTag {
   import PushTokenService._
 
-  implicit val dispatcher = new SerialDispatchQueue(name = "GlobalTokenService")
-  implicit val ev = EventContext.Global
+  implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "GlobalTokenService")
 
 //  val pushEnabled  = prefs.preference(PushEnabledKey) //TODO delete the push token if the PushEnabledKey is false
   val _currentToken = prefs.preference(GlobalPreferences.PushToken)

@@ -27,7 +27,7 @@ import com.waz.content.Database
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{CacheKey, Uid}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import com.waz.threading.Threading
 import com.waz.utils.TrimmingLruCache.{Fixed, Relative}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, SerialProcessingQueue, TrimmingLruCache}
@@ -43,9 +43,8 @@ class CacheStorageImpl(storage: Database, context: Context)
     with DerivedLogTag {
 
   import com.waz.cache.CacheStorage._
-  import com.wire.signals.EventContext.Implicits.global
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "CacheStorage")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue("CacheStorage")
 
   onUpdated { _ foreach {
     case (prev, updated) if prev.fileId != updated.fileId => cleanup(prev)

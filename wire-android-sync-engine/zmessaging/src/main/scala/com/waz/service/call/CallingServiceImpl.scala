@@ -174,7 +174,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
   import CallingService._
 
-  private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "CallingService")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "CallingService")
 
   //need to ensure that flow manager and media manager are initialised for v3 (they are lazy values)
   flowManagerService.flowManager

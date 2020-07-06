@@ -36,9 +36,8 @@ import com.waz.service.push.PushService
 import com.waz.service.{MediaManagerService, NetworkModeService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Signal}
 import com.waz.utils.RichInstant
-import com.wire.signals.Signal
 import com.waz.utils.jna.Uint32_t
 import com.waz.utils.wrappers.Context
 import org.junit.Ignore
@@ -52,7 +51,7 @@ import scala.util.control.NonFatal
 @Ignore
 class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
-  implicit val executionContext = new SerialDispatchQueue(name = "CallingServiceSpec")
+  implicit val executionContext: DispatchQueue = SerialDispatchQueue(name = "CallingServiceSpec")
 
   val context        = mock[Context]
   val avs            = mock[Avs]

@@ -43,8 +43,6 @@ import scala.concurrent.{ Future, Promise, Await }
 import scala.concurrent.duration._
 
 class OkHttpWebSocketSpec extends WordSpec with MustMatchers with Inside with BeforeAndAfterEach {
-
-  import EventContext.Implicits.global
   import com.waz.BlockingSyntax.toBlocking
 
   private var wsPort: Int = _

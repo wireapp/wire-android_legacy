@@ -23,7 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConvId
 import com.waz.model.sync.SyncJob.Priority
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 
 import scala.collection.immutable.Queue
 import scala.collection.mutable
@@ -31,7 +31,7 @@ import scala.concurrent.{Future, Promise}
 
 class SyncSerializer extends DerivedLogTag {
   import SyncSerializer._
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SyncSerializer")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "SyncSerializer")
 
   private var runningJobs = 0
   private val convs = new mutable.HashSet[ConvId]

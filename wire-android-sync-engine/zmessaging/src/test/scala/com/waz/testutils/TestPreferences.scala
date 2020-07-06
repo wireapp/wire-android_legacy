@@ -20,11 +20,11 @@ package com.waz.testutils
 import com.waz.content.Preferences.{PrefKey, Preference}
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 
 //TODO make Global and User preferences traits so that we don't have to override them both.
 class TestGlobalPreferences extends GlobalPreferences(null, null) {
-  override implicit val dispatcher = new SerialDispatchQueue(name = "TestGlobalPreferenceQueue")
+  override implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "TestGlobalPreferenceQueue")
 
   private var values = Map.empty[String, String]
 
@@ -42,7 +42,7 @@ class TestGlobalPreferences extends GlobalPreferences(null, null) {
 
 class TestUserPreferences extends UserPreferences(null, null) {
 
-  override implicit val dispatcher = new SerialDispatchQueue(name = "TestUserPreferenceQueue")
+  override implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "TestUserPreferenceQueue")
 
   private var values = Map.empty[String, String]
 

@@ -26,9 +26,8 @@ import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.sync.SyncServiceHandle
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{AggregatingSignal, CancellableFuture, DispatchQueue, EventContext, EventStream, SerialDispatchQueue}
 import com.waz.utils.RichFuture.traverseSequential
-import com.wire.signals.{AggregatingSignal, EventContext, EventStream}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -43,8 +42,7 @@ class TypingService(userId:        UserId,
 
   import timeouts.typing._
 
-  private implicit val ev = EventContext.Global
-  private implicit val dispatcher = new SerialDispatchQueue(name = "TypingService")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "TypingService")
   private val beDriftPref = prefs.preference(BackendDrift)
 
   private var typing: ConvId Map IndexedSeq[TypingUser] = Map().withDefaultValue(Vector.empty)

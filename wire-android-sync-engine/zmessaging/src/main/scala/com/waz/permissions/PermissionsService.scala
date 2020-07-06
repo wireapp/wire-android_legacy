@@ -21,9 +21,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
 import com.waz.model.errors.PermissionDeniedError
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, EventStream, RefreshingSignal, SerialDispatchQueue, Signal}
 import com.waz.threading.Threading
-import com.wire.signals.{EventStream, RefreshingSignal, Signal}
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.{Future, Promise}
@@ -32,7 +31,7 @@ import scala.util.Try
 class PermissionsService extends DerivedLogTag {
 
   import PermissionsService._
-  private implicit val ec = new SerialDispatchQueue(name = "PermissionsService")
+  private implicit val ec: DispatchQueue = SerialDispatchQueue(name = "PermissionsService")
 
   protected[permissions] val providers      = Signal(Vector.empty[PermissionProvider])
   protected[permissions] val providerSignal = providers.map(_.lastOption)

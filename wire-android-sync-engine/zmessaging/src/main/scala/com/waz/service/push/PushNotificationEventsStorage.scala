@@ -27,9 +27,8 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.push.PushNotificationEventsStorage.{EventHandler, EventIndex, PlainWriter}
 import com.waz.sync.client.PushNotificationEncoded
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, EventContext, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.wire.signals.EventContext
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 import org.json.JSONObject
 
@@ -59,7 +58,7 @@ class PushNotificationEventsStorageImpl(context: Context, storage: Database, cli
     with PushNotificationEventsStorage
     with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "PushNotificationEventsStorage")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "PushNotificationEventsStorage")
 
   override def setAsDecrypted(index: EventIndex): Future[Unit] = {
     update(index, u => u.copy(decrypted = true)).map {

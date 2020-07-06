@@ -47,7 +47,6 @@ class VerificationStateUpdater(selfUserId:     UserId,
   import Verification._
   import VerificationStateUpdater._
   import com.waz.threading.Threading.Implicits.Background
-  import com.wire.signals.EventContext.Implicits.global
 
   private val SerializationKey = serializationKey(selfUserId)
 

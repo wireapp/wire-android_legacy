@@ -25,8 +25,7 @@ import com.waz.api.{ContentSearchQuery, Message, TypeFilter}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.wire.signals.SerialDispatchQueue
-import com.wire.signals.{EventStream, Signal, SourceSignal}
+import com.wire.signals.{DispatchQueue, EventStream, SerialDispatchQueue, Signal, SourceSignal}
 import com.waz.zclient.collection.controllers.CollectionController.CollectionInfo
 import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.conversation.ConversationController
@@ -35,7 +34,7 @@ import com.waz.zclient.{Injectable, Injector}
 class CollectionController(implicit injector: Injector)
   extends Injectable with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "CollectionController")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "CollectionController")
 
   val zms = inject[Signal[ZMessaging]]
 

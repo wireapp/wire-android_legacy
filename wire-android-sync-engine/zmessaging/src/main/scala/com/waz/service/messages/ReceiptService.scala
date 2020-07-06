@@ -37,7 +37,6 @@ class ReceiptService(messages: MessagesStorage,
                      selfUserId: UserId,
                      convsService: ConversationsService,
                      readReceiptsStorage: ReadReceiptsStorage) extends DerivedLogTag {
-  import EventContext.Implicits.global
   import Threading.Implicits.Background
 
   messages.onAdded { msgs =>

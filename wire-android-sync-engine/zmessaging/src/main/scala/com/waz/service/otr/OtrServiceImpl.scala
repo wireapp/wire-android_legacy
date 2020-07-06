@@ -84,7 +84,6 @@ class OtrServiceImpl(selfUserId:     UserId,
                      clientsStorage: OtrClientsStorage,
                      prefs:          GlobalPreferences,
                      tracking:       TrackingService) extends OtrService with DerivedLogTag {
-  import EventContext.Implicits.global
   import OtrService._
   import Threading.Implicits.Background
 

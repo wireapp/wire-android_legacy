@@ -17,8 +17,7 @@
  */
 package com.waz.service
 
-import com.wire.signals.SerialDispatchQueue
-import com.wire.signals.Signal
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Signal}
 
 trait UiLifeCycle {
   //App is in the foregound
@@ -30,7 +29,7 @@ trait UiLifeCycle {
 
 class UiLifeCycleImpl extends UiLifeCycle {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "LifeCycleDispatcher")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "LifeCycleDispatcher")
 
   private val uiCount = Signal(0)
 

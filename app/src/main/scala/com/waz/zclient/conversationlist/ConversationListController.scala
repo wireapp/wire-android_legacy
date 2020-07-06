@@ -26,10 +26,9 @@ import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService, FoldersService}
 import com.waz.service.teams.TeamsService
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{AggregatingSignal, DispatchQueue, EventContext, EventStream, SerialDispatchQueue, Signal}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.wire.signals.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
@@ -310,7 +309,7 @@ object ConversationListController {
   // Only keeps up to 4 users other than self user, this list is to be used for avatar in conv list.
   // We keep this always in memory to avoid reloading members list for every list row view (caused performance issues)
   class MembersCache(zms: ZMessaging)(implicit inj: Injector, ec: EventContext) extends Injectable {
-    private implicit val dispatcher = new SerialDispatchQueue(name = "MembersCache")
+    private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "MembersCache")
 
     private def entries(convMembers: Seq[ConversationMemberData]) =
       convMembers.groupBy(_.convId).map { case (convId, ms) =>

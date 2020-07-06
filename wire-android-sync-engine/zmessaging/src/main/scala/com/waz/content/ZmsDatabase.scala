@@ -21,7 +21,7 @@ import android.content.Context
 import com.waz.db.{BaseDaoDB, RoomDaoDB, ZMessagingDB}
 import com.waz.model.UserId
 import com.waz.service.tracking.TrackingService
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import com.waz.threading.Threading
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.di.StorageModule
@@ -30,7 +30,7 @@ import com.waz.zclient.storage.di.StorageModule
   * Single user storage. Keeps data specific to used user account.
   */
 class ZmsDatabase(user: UserId, context: Context, tracking: TrackingService) extends Database {
-  override implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(executor = Threading.IOThreadPool, name = "ZmsDatabase_" + user.str.substring(24))
+  override implicit val dispatcher: DispatchQueue = DispatchQueue(concurrentTasks = 1, executor = Threading.IOThreadPool, name = Some("ZmsDatabase_" + user.str.substring(24)))
   override          val dbHelper  : BaseDaoDB           =
     new RoomDaoDB(StorageModule.getUserDatabase(
       context, user.str,

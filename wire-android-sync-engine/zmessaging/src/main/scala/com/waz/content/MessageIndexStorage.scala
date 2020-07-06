@@ -26,7 +26,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.tracking.TrackingService
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.wrappers.DBCursor
 import com.waz.utils.{CachedStorageImpl, TrimmingLruCache}
@@ -41,9 +41,8 @@ class MessageIndexStorage(context: Context, storage: ZmsDatabase, messagesStorag
 
   import MessageIndexStorage._
   import MessageContentIndex.TextMessageTypes
-  import com.wire.signals.EventContext.Implicits.global
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "MessageIndexStorage")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "MessageIndexStorage")
 
   private def entry(m: MessageData) =
     MessageContentIndexEntry(m.id, m.convId, ContentSearchQuery.transliterated(m.contentString), m.time)

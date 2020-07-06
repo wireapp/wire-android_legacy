@@ -24,7 +24,7 @@ import com.google.i18n.phonenumbers.Phonenumber.{PhoneNumber => GooglePhoneNumbe
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.PhoneNumber
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 
 import scala.concurrent.Future
 
@@ -35,7 +35,7 @@ trait PhoneNumberService {
 }
 
 class PhoneNumberServiceImpl(context: Context) extends PhoneNumberService with DerivedLogTag {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "PhoneNumberService")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "PhoneNumberService")
 
   private lazy val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE).asInstanceOf[TelephonyManager]
   private lazy val phoneNumberUtil = PhoneNumberUtil.getInstance()

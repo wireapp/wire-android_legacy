@@ -28,9 +28,8 @@ import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.tracking.ContributionEvent.fromMime
 import com.waz.service.tracking.TrackingService.ZmsProvider
 import com.waz.service.{AccountsService, ZMessaging}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, EventContext, EventStream, SerialDispatchQueue, Signal}
 import com.waz.utils.RichWireInstant
-import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zms.BuildConfig
 
 import scala.annotation.tailrec
@@ -83,8 +82,7 @@ object TrackingService {
 
   type ZmsProvider = Option[UserId] => Future[Option[ZMessaging]]
 
-  implicit val dispatcher = new SerialDispatchQueue(name = "TrackingService")
-  private[waz] implicit val ec: EventContext = EventContext.Global
+  implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "TrackingService")
 
   trait NoReporting { self: Throwable => }
 

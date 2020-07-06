@@ -106,7 +106,6 @@ class UserServiceImpl(selfUserId:        UserId,
                      ) extends UserService with DerivedLogTag {
 
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   private val shouldSyncUsers = userPrefs.preference(UserPreferences.ShouldSyncUsers)
 
@@ -386,7 +385,7 @@ class ExpiredUsersService(push:         PushService,
                           usersStorage: UsersStorage,
                           sync:         SyncServiceHandle)(implicit ev: AccountContext) extends DerivedLogTag {
 
-  private implicit val ec = new SerialDispatchQueue(name = "ExpiringUsers")
+  private implicit val ec: DispatchQueue = SerialDispatchQueue(name = "ExpiringUsers")
 
   private var timers = Map[UserId, CancellableFuture[Unit]]()
 

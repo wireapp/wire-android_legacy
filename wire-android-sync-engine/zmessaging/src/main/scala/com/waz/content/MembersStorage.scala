@@ -22,9 +22,8 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao
 import com.waz.model._
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{AggregatingSignal, DispatchQueue, SerialDispatchQueue, Signal}
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.wire.signals.{AggregatingSignal, Signal}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
 import scala.concurrent.Future
@@ -53,7 +52,7 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
   extends CachedStorageImpl[(UserId, ConvId), ConversationMemberData](new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationMemberDataDao, LogTag("MembersStorage_Cached"))
     with MembersStorage with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "MembersStorage")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "MembersStorage")
 
   def getByConv(conv: ConvId) = find(_.convId == conv, ConversationMemberDataDao.findForConv(conv)(_), identity)
 

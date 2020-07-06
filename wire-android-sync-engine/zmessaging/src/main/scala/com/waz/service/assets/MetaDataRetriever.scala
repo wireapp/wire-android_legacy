@@ -22,15 +22,15 @@ import java.io.File
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import com.wire.signals.SerialDispatchQueue
 import com.waz.threading.Threading
 import com.waz.utils.{Cleanup, Managed}
+import com.wire.signals.DispatchQueue
 
 import scala.concurrent.Future
 
 object MetaDataRetriever {
 
-  private implicit val dispatcher = new SerialDispatchQueue(Threading.IO, "MetaDataRetriever")
+  private implicit val dispatcher: DispatchQueue = DispatchQueue(1, Threading.IO, Some("MetaDataRetriever"))
 
   implicit lazy val RetrieverCleanup = new Cleanup[MediaMetadataRetriever] {
     override def apply(a: MediaMetadataRetriever): Unit = a.release()
