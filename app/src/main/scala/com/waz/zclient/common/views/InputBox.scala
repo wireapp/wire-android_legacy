@@ -181,7 +181,7 @@ object InputBox {
   //TODO: Unify this code with the one from the change username fragment
   object UsernameValidator extends Validator({ t =>
     val ValidUsername = s"""^([a-z]|[0-9]|_)*""".r
-    val MaxLength = 21
+    val MaxLength = 256
     val MinLength = 2
     t match {
       case ValidUsername(_) =>

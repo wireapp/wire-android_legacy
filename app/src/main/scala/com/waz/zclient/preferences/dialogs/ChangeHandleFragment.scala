@@ -256,7 +256,7 @@ object ChangeHandleFragment {
     val InvalidCharacters, AlreadyTaken, TooLong, TooShort, NoError = Value
   }
 
-  val MaxLength = 21
+  val MaxLength = 256
   val MinLength = 2
   val checkMultipleAvailabilityPath = "/users"
   val checkSingleAvailabilityPath = "/users/handles/"

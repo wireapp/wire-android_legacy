@@ -64,7 +64,7 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
 
   private lazy val browser = inject[BrowserController]
 
-  private val USERNAME_MAX_LENGTH = 21
+  private val USERNAME_MAX_LENGTH = 256
   private val NORMAL_ATTEMPTS = 30
   private val RANDOM_ATTEMPTS = 20
   private val MAX_RANDOM_TRAILING_NUMBER = 1000
