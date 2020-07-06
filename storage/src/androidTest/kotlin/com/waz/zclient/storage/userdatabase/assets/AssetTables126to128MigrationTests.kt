@@ -85,7 +85,6 @@ class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
     @Test
     fun givenDownloadAssetInsertedIntoDownloadAssetsTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
         val assetId = "i747749kk-77"
-        val assetName = "IMAGE"
         val mime = "png"
         val name = "Test image"
         val size = 1024L
@@ -126,7 +125,6 @@ class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
     fun givenUploadAssetInsertedIntoUploadAssetsTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
         val uploadAssetId = "1100"
         val assetId = "i747749kk-77"
-        val assetToken = "084782999838_Aa--4777277_"
         val assetName = "IMAGE"
         val encryption = "AES256"
         val mime = "png"
