@@ -64,7 +64,6 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
 
   private lazy val browser = inject[BrowserController]
 
-  private val USERNAME_MAX_LENGTH = 21
   private val NORMAL_ATTEMPTS = 30
   private val RANDOM_ATTEMPTS = 20
   private val MAX_RANDOM_TRAILING_NUMBER = 1000
@@ -174,7 +173,7 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
 
   private def getAttempts(base: String, attempts: Int): Seq[Handle] =
     (0 until attempts).map(getTrailingNumber).map { tN =>
-      Handle(StringUtils.truncate(base, USERNAME_MAX_LENGTH - tN.length) + tN)
+      Handle(StringUtils.truncate(base, HandleLength.HandleMaxLength - tN.length) + tN)
     }
 
   private def getTrailingNumber(attempt: Int): String = {

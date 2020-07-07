@@ -30,7 +30,7 @@ class ValidateHandleUseCase : UseCase<String, ValidateHandleParams> {
         handle.length < HANDLE_MIN_LENGTH
 
     companion object {
-        private const val HANDLE_MAX_LENGTH = 21
+        private const val HANDLE_MAX_LENGTH = 256
         private const val HANDLE_MIN_LENGTH = 2
         private val HANDLE_REGEX = """^([a-z]|[0-9]|_)*""".toRegex()
     }

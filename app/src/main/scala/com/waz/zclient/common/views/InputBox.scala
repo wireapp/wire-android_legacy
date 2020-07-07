@@ -34,7 +34,7 @@ import com.waz.zclient.ui.cursor.CursorEditText
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils._
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.{HandleLength, R, ViewHelper}
 
 import scala.concurrent.Future
 import com.waz.threading.Threading._
@@ -181,8 +181,8 @@ object InputBox {
   //TODO: Unify this code with the one from the change username fragment
   object UsernameValidator extends Validator({ t =>
     val ValidUsername = s"""^([a-z]|[0-9]|_)*""".r
-    val MaxLength = 21
-    val MinLength = 2
+    val MaxLength = HandleLength.HandleMaxLength
+    val MinLength = HandleLength.HandleMinLength
     t match {
       case ValidUsername(_) =>
         t.length match {
