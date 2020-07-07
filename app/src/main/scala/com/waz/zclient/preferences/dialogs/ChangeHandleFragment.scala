@@ -33,7 +33,7 @@ import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.views.LoadingIndicatorView
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{FragmentHelper, HandleLength, R}
 import com.waz.zclient.log.LogUI._
 
 import scala.util.Try
@@ -256,8 +256,8 @@ object ChangeHandleFragment {
     val InvalidCharacters, AlreadyTaken, TooLong, TooShort, NoError = Value
   }
 
-  val MaxLength = 256
-  val MinLength = 2
+  val MaxLength = HandleLength.HandleMaxLength
+  val MinLength = HandleLength.HandleMinLength
   val checkMultipleAvailabilityPath = "/users"
   val checkSingleAvailabilityPath = "/users/handles/"
   val handlesQuery = "handles"
