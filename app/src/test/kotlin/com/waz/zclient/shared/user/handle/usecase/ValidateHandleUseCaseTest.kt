@@ -35,7 +35,7 @@ class ValidateHandleUseCaseTest : UnitTest() {
 
     @Test
     fun `Given run is executed, when handle matches regex and length is over max, then return failure`() {
-        val handle = "thisisalonghandlethatshouldnotbethislong"
+        val handle = "thisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislongthisisalonghandlethatshouldnotbethislong"
         verifyValidateUseCase(handle)
     }
 
