@@ -47,7 +47,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
-//fixme: solve native library loading problem
 class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   implicit val executionContext = new SerialDispatchQueue(name = "CallingServiceSpec")
@@ -1141,7 +1140,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val s = new CallingServiceImpl(
       selfUserId, selfClientId, null, context, avs, convs, convsService, members, null,
-      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking, conferenceCallingEnabled = false
+      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking, httpProxy = None, conferenceCallingEnabled = false
     )
     result(s.wCall)
     s
