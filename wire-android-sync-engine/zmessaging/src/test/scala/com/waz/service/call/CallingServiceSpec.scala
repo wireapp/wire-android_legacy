@@ -1008,43 +1008,49 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
   }
 
-//  feature("tracking") {
-//
-//    scenario("Toggling audio or video state during a call sets wasVideoToggled to true for the rest of the call") {
-//
-//      val checkpoint1 = callCheckpoint(_.nonEmpty, _.exists(_.state == SelfCalling))
-//      val checkpoint2 = callCheckpoint(_.nonEmpty, _.exists(_.state == SelfJoining))
-//      val checkpoint3 = callCheckpoint(_.nonEmpty, _.exists(_.state == SelfConnected))
-//      val checkpoint4 = callCheckpoint(_.nonEmpty, _.exists(_.isVideoCall))
-//      val checkpoint5 = callCheckpoint(_.nonEmpty, _.exists(_.state == Terminating))
-//      val checkpoint6 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.state == Ended && c.wasVideoToggled), _.isEmpty)
-//
-//      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
-//      (avs.setVideoSendState _).expects(*, *, *).twice()
-//
-//      service.startCall(_1to1Conv.id)
-//      awaitCP(checkpoint1)
-//
-//      service.onOtherSideAnsweredCall(_1to1Conv.remoteId)
-//      awaitCP(checkpoint2)
-//
-//      service.onEstablishedCall(_1to1Conv.remoteId, otherUserId)
-//      awaitCP(checkpoint3)
-//
-//      service.setVideoSendState(_1to1Conv.id, VideoState.Started)
-//      awaitCP(checkpoint4)
-//
-//      (avs.endCall _).expects(*, *).once().onCall { (_: WCall, convId: RConvId) =>
-//        service.onClosedCall(Avs.AvsClosedReason.Normal, convId, RemoteInstant(clock.instant()), selfUserId)
-//      }
-//
-//      service.endCall(_1to1Conv.id)
-//      awaitCP(checkpoint5)
-//
-//      service.dismissCall()
-//      awaitCP(checkpoint6)
-//    }
-//  }
+  feature("tracking") {
+
+    scenario("Toggling audio or video state during a call sets wasVideoToggled to true for the rest of the call") {
+
+      val checkpoint1 = callCheckpoint(_.nonEmpty, _.exists(_.state == SelfCalling))
+      val checkpoint2 = callCheckpoint(_.nonEmpty, _.exists(_.state == SelfJoining))
+      val checkpoint3 = callCheckpoint(_.nonEmpty, _.exists(_.state == SelfConnected))
+      val checkpoint4 = callCheckpoint(_.nonEmpty, _.exists(_.isVideoCall))
+      val checkpoint5 = callCheckpoint(_.nonEmpty, _.exists(_.state == Terminating))
+      val checkpoint6 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.state == Ended && c.wasVideoToggled), _.isEmpty)
+
+      (convsService.activeMembersData _).expects(_1to1Conv.id).atLeastOnce().returning(
+        Signal(Seq(ConversationMemberData(otherUserId, _1to1Conv.id, "member")))
+      )
+
+      (permissions.ensurePermissions _).expects(*).atLeastOnce().returning(Future.successful(()))
+
+      (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
+      (avs.setVideoSendState _).expects(*, *, *).twice()
+
+      service.startCall(_1to1Conv.id)
+      awaitCP(checkpoint1)
+
+      service.onOtherSideAnsweredCall(_1to1Conv.remoteId)
+      awaitCP(checkpoint2)
+
+      service.onEstablishedCall(_1to1Conv.remoteId, otherUserId)
+      awaitCP(checkpoint3)
+
+      service.setVideoSendState(_1to1Conv.id, VideoState.Started)
+      awaitCP(checkpoint4)
+
+      (avs.endCall _).expects(*, *).once().onCall { (_: WCall, convId: RConvId) =>
+        service.onClosedCall(Avs.AvsClosedReason.Normal, convId, RemoteInstant(clock.instant()), selfUserId)
+      }
+
+      service.endCall(_1to1Conv.id)
+      awaitCP(checkpoint5)
+
+      service.dismissCall()
+      awaitCP(checkpoint6)
+    }
+  }
 
   var cpCount = 0
   def awaitCP(cp: CallStateCheckpoint) = {
