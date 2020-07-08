@@ -9,7 +9,6 @@ import com.waz.model2.transport.responses.SSOFound
 import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
-import com.waz.zclient.utils.BackendController
 import com.waz.zclient.utils.ContextUtils.showErrorDialog
 
 import scala.concurrent.Future
@@ -22,7 +21,6 @@ class StartSSOFragment extends SSOFragment {
   private val COUNTDOWN_INTERVAL: Int = 1000
   private val FULL_PERCENTAGE: Int = 100
   private lazy val progressBar = view[ProgressBar](R.id.startSsoProgressBar)
-  private lazy val backendController = inject[BackendController]
 
   private lazy val timer = new CountDownTimer(TIME_TO_WAIT, COUNTDOWN_INTERVAL) {
     def onTick(millisUntilFinished: Long): Unit = {
