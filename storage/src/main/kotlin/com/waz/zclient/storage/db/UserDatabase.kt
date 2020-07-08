@@ -10,6 +10,7 @@ import com.waz.zclient.storage.db.assets.DownloadAssetsDao
 import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
 import com.waz.zclient.storage.db.assets.UploadAssetsDao
 import com.waz.zclient.storage.db.assets.UploadAssetsEntity
+import com.waz.zclient.storage.db.buttons.ButtonEntity
 import com.waz.zclient.storage.db.conversations.ConversationFoldersDao
 import com.waz.zclient.storage.db.conversations.ConversationFoldersEntity
 import com.waz.zclient.storage.db.conversations.ConversationMembersDao

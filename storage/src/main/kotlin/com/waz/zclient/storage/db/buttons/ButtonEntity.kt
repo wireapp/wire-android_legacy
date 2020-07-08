@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db
+package com.waz.zclient.storage.db.buttons
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

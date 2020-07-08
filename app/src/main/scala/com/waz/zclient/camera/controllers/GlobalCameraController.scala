@@ -50,7 +50,6 @@ class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireCon
       override def newThread(r: Runnable): Thread = new Thread(r, "CAMERA")
     })
 
-
     override def reportFailure(cause: Throwable): Unit = Logger.error("GlobalCameraController", "Problem executing on Camera Thread.", cause)
 
     override def execute(runnable: Runnable): Unit = executor.submit(runnable)
@@ -58,7 +57,7 @@ class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireCon
 
   //values protected for testing
   protected[camera] val camInfos = cameraFactory.getCameraInfos
-  protected[camera] var currentCamera = Option.empty[WireCamera]
+  protected[camera] var currentCamera = Option.empty[ WireCamera]
   protected[camera] var loadFuture = CancellableFuture.cancelled[(PreviewSize, Set[FlashMode])]()
   protected[camera] var currentCamInfo = camInfos.headOption //save this in global controller for consistency during the life of the app
 
