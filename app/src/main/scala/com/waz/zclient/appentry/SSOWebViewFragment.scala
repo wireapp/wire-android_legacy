@@ -88,12 +88,7 @@ class SSOWebViewFragment extends FragmentHelper {
   }
 
   override def onBackPressed(): Boolean = {
-    activity.getSupportFragmentManager.popBackStackImmediate(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-    if (backendController.hasCustomBackend) {
-      activity.showFragment(new CustomBackendLoginFragment, CustomBackendLoginFragment.TAG, animated = false)
-    } else {
-      activity.showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
-    }
+    showWelcomeScreen()
     inject[UserAccountsController].ssoToken ! None
     true
   }
@@ -125,6 +120,15 @@ class SSOWebViewFragment extends FragmentHelper {
       webView.clearFormData
       webView.clearHistory
 
+    }
+  }
+
+  private def showWelcomeScreen(): Unit = {
+    activity.getSupportFragmentManager.popBackStackImmediate(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    if (backendController.hasCustomBackend) {
+      activity.showFragment(new CustomBackendLoginFragment, CustomBackendLoginFragment.TAG, animated = false)
+    } else {
+      activity.showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
     }
   }
 
