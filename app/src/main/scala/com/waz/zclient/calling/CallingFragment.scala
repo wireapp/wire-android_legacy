@@ -133,6 +133,7 @@ class OtherVideoView(context: Context, participant: Participant) extends UserVid
 
 class CallingFragment extends FragmentHelper {
 
+  private val maxVideoPreviews = 12
   private lazy val controller       = inject[CallController]
   private lazy val themeController  = inject[ThemeController]
   private lazy val controlsFragment = ControlsFragment.newInstance
@@ -197,17 +198,17 @@ class CallingFragment extends FragmentHelper {
 
         gridViews.zipWithIndex.foreach { case (r, index) =>
           val (row, col, span) = index match {
-            case 0 if !isVideoBeingSent && gridViews.size == 2 => (0, 0, 2)
-            case 0                                             => (0, 0, 1)
-            case 1 if !isVideoBeingSent && gridViews.size == 2 => (1, 0, 2)
-            case 1                                             => (0, 1, 1)
+            case 0 if !isVideoBeingSent && gridViews.size == 2              => (0, 0, 2)
+            case 0                                                          => (0, 0, 1)
+            case 1 if !isVideoBeingSent && gridViews.size == 2              => (1, 0, 2)
+            case 1                                                          => (0, 1, 1)
             // The max number of columns is 2 and the max number of rows is undefined
             // if the index of the video preview is odd, display it in row n/2, column 1 , span 1
-            case n if n % 2 != 0                               => (n / 2, 1, 1)
+            case n if (n % 2 != 0) && (n < maxVideoPreviews)                => (n / 2, 1, 1)
             // else if the gridViews size is n+1 , display it in row n/2, column 0 , span 2
-            case n if gridViews.size == n + 1                  => (n / 2, 0, 2)
+            case n if (gridViews.size == n + 1) && (n < maxVideoPreviews)   => (n / 2, 0, 2)
             // else display it in row n/2, column 0 , span 1
-            case n                                             => (n / 2, 0, 1)
+            case n if n < maxVideoPreviews                                  => (n / 2, 0, 1)
           }
           r.setLayoutParams(returning(new GridLayout.LayoutParams()) { params =>
             params.width      = 0
