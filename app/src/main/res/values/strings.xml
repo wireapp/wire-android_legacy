@@ -331,6 +331,7 @@
     <string name="group_calling_title">Start a call</string>
     <string name="group_calling_message" tools:ignore="PluralsCandidate">This will call %1$s people</string>
     <string name="group_calling_confirm">Call</string>
+    <string name="calling_self">%s (You)</string>
 
     <!-- Connect request -->
     <string name="connect__message">Hi %1$s,\nLet\'s connect on Wire.\n%2$s</string>
