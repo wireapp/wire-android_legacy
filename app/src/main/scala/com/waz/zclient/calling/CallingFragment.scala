@@ -72,10 +72,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   protected val nameTextView = findById[TextView](R.id.nameTextView)
 
-  controller.isGroupCall.head.foreach {
-    case true => showParticipantName()
-    case false =>
-  }(Threading.Ui)
+  controller.isGroupCall.ifTrue.onUi(_ => showParticipantName())
 
   private def showParticipantName() = controller.participantInfos().onUi { v =>
     v.collect {
