@@ -4,6 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'jp.leafytree.android-scala'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
+apply plugin: 'kotlinx-serialization'
 
 //region avs
 //TODO: Migrate this configuration to new dependency system
@@ -412,6 +413,9 @@ dependencies {
 
     //OkHttp
     implementation BuildDependencies.okHttpLoggingInterceptor
+
+    // JSON
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0"
 
     //DI - Koin
     implementation BuildDependencies.koin.androidCore

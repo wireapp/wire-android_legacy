@@ -5,7 +5,7 @@ object Versions {
     const val ANDROID_CLIENT_MAJOR_VERSION = "3.51."
 
     //core
-    const val KOTLIN = "1.3.60"
+    const val KOTLIN = "1.3.70"
     const val WIRE_TRANSLATIONS = "1.+"
     val AVS = System.getenv("AVS_VERSION") ?: "5.3.191@aar"
     val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
@@ -116,6 +116,9 @@ object BuildDependencies {
         "gsonConverter" to "com.squareup.retrofit2:converter-gson:${Versions.RETROFIT}"
     ))
     val okHttpLoggingInterceptor = "com.squareup.okhttp3:logging-interceptor:${Versions.OKHTTP}"
+
+
+
     val koin = KoinDependencyMap(mapOf(
         "androidCore" to "org.koin:koin-android:${Versions.KOIN}",
         "androidScope" to "org.koin:koin-android-scope:${Versions.KOIN}",

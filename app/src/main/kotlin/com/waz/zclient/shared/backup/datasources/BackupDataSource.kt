@@ -2,9 +2,11 @@ package com.waz.zclient.shared.backup.datasources
 
 import com.waz.model.Handle
 import com.waz.model.UserId
+import com.waz.zclient.core.functional.Either
 import com.waz.zclient.shared.backup.BackupRepository
 import com.waz.zclient.shared.backup.Password
 import com.waz.zclient.shared.backup.datasources.local.*
+import java.io.File
 
 class BackupDataSource(
      private val assetLocalDataSource: AssetLocalDataSource,
@@ -21,7 +23,7 @@ class BackupDataSource(
      private val readReceiptsLocalDataSource: ReadReceiptsLocalDataSource,
      private val userLocalDataSource: UserLocalDataSource
 ): BackupRepository {
-    override suspend fun exportDatabase(userId: UserId, userHandle: Handle, backupPassword: Password) {
+    override suspend fun exportDatabase(userId: UserId, userHandle: Handle, backupPassword: Password, targetDir: File): Either<String, File> {
         TODO("Not yet implemented")
     }
 
