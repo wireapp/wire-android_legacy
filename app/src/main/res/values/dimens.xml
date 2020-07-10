@@ -556,6 +556,9 @@
     <dimen name="call_control_icon_size">16dp</dimen>
     <dimen name="hangup_call_icon_size">20dp</dimen>
     <dimen name="calling_profile_margin_side">32dp</dimen>
+    <dimen name="calling_participant_info_card_margin">8dp</dimen>
+    <dimen name="calling_participant_info_card_corner_radius">12dp</dimen>
+    <dimen name="calling_participant_name_padding">4dp</dimen>
     <dimen name="services_warning_icon_width">48dp</dimen>
     <dimen name="services_warning_icon_height">48dp</dimen>
     <dimen name="services_warning_text_width">204dp</dimen>

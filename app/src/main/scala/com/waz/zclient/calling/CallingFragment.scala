@@ -70,6 +70,17 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     _.setBackgroundColor(getColor(R.color.black_16))
   }
 
+  protected val nameTextView = findById[TextView](R.id.nameTextView)
+
+  controller.isGroupCall.ifTrue.onUi(_ => showParticipantName())
+
+  private def showParticipantName() = controller.participantInfos().onUi { v =>
+    v.collect {
+      case p if p.userId.str == participant.userId.str =>
+        if (p.isSelf) nameTextView.setText(getString(R.string.calling_self, p.displayName))
+        else nameTextView.setText(p.displayName)
+    }
+  }
   protected def registerHandler(view: View) = {
     controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
       case VideoState.Paused | VideoState.Stopped => view.fadeOut()
