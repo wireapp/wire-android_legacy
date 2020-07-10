@@ -126,7 +126,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
     closeButton.onClick(abortAddAccount())
 
-    showFragment()
+    showWelcomeScreen()
 
     skipButton.setVisibility(View.GONE)
     getSupportFragmentManager.addOnBackStackChangedListener(new OnBackStackChangedListener {
@@ -235,7 +235,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
      showFragment(customBackendLoginFragment, CustomBackendLoginFragment.TAG, animated = false)
   }
 
-  private def showFragment(): Unit =
+  def showWelcomeScreen(): Unit =
     if (backendController.hasCustomBackend) {
       getSupportFragmentManager.popBackStackImmediate(CustomBackendLoginFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
       showCustomBackendLoginScreen()

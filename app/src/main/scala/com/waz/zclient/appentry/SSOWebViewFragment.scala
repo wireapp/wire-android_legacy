@@ -24,7 +24,6 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.webkit.WebView
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
-import androidx.fragment.app.FragmentManager
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
@@ -34,7 +33,7 @@ import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.appentry.SSOWebViewWrapper.SSOResponse
 import com.waz.zclient.appentry.fragments.FirstLaunchAfterLoginFragment
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.utils.{BackendController, ContextUtils, ViewUtils}
+import com.waz.zclient.utils.{ ContextUtils, ViewUtils}
 import com.waz.zclient.{FragmentHelper, R}
 
 import scala.concurrent.Future
@@ -42,7 +41,6 @@ import scala.concurrent.Future
 class SSOWebViewFragment extends FragmentHelper {
   import Threading.Implicits.Ui
 
-  private lazy val backendController = inject[BackendController]
   private lazy val webView = view[WebView](R.id.web_view)
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
@@ -88,7 +86,7 @@ class SSOWebViewFragment extends FragmentHelper {
   }
 
   override def onBackPressed(): Boolean = {
-    showWelcomeScreen()
+    activity.showWelcomeScreen()
     inject[UserAccountsController].ssoToken ! None
     true
   }
@@ -120,15 +118,6 @@ class SSOWebViewFragment extends FragmentHelper {
       webView.clearFormData
       webView.clearHistory
 
-    }
-  }
-
-  private def showWelcomeScreen(): Unit = {
-    activity.getSupportFragmentManager.popBackStackImmediate(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-    if (backendController.hasCustomBackend) {
-      activity.showFragment(new CustomBackendLoginFragment, CustomBackendLoginFragment.TAG, animated = false)
-    } else {
-      activity.showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
     }
   }
 
