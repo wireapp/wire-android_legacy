@@ -380,11 +380,7 @@ class CallingServiceImpl(val accountId:       UserId,
   def onParticipantsChanged(rConvId: RConvId, participants: Set[Participant]): Future[Unit] =
     updateCallIfActive(rConvId) { (_, conv, call) =>
       verbose(l"group participants changed, convId: ${conv.id}, other participants: $participants")
-      val updated = participants.map { p =>
-        p -> call.otherParticipants.getOrElse(p, Some(LocalInstant.Now))
-      }.toMap
-
-      call.copy(otherParticipants = updated, maxParticipants = math.max(call.maxParticipants, participants.size + 1))
+      call.copy(otherParticipants = participants, maxParticipants = math.max(call.maxParticipants, participants.size + 1))
     } ("onParticipantsChanged")
 
   network.networkMode.onChanged { _ =>
