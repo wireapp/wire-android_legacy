@@ -110,6 +110,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ZMessaging")
 
+  val httpProxy: Option[Proxy] = ZMessaging.httpProxy
   val conferenceCallingEnabled: Boolean = ZMessaging.conferenceCallingEnabled
 
   val clock = ZMessaging.clock

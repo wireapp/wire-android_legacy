@@ -18,6 +18,7 @@
 package com.waz.service.call
 
 import java.net.InetSocketAddress
+import java.net.Proxy
 
 import android.Manifest.permission.CAMERA
 import com.sun.jna.Pointer
@@ -170,6 +171,7 @@ class CallingServiceImpl(val accountId:       UserId,
                          permissions:         PermissionsService,
                          userStorage:         UsersStorage,
                          tracking:            TrackingService,
+                         httpProxy:           Option[Proxy],
                          conferenceCallingEnabled: Boolean)(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
 
   import CallingService._
@@ -182,7 +184,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
   private[call] val callProfile = Signal(CallProfile.Empty)
 
-  ZMessaging.currentGlobal.httpProxy.foreach { proxy =>
+  httpProxy.foreach { proxy =>
      val proxyAddress = proxy.address().asInstanceOf[InetSocketAddress]
      avs.setProxy(proxyAddress.getHostName, proxyAddress.getPort)
   }
