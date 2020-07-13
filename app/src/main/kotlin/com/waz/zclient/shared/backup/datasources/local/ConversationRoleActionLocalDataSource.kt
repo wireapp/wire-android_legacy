@@ -4,8 +4,13 @@ import com.waz.zclient.storage.db.conversations.ConversationRoleActionDao
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
 import kotlinx.serialization.Serializable
 
-class ConversationRoleActionLocalDataSource(private val conversationRoleActionDao: ConversationRoleActionDao) {
-    suspend fun getAllConversationRoleActions(): List<ConversationRoleActionEntity> = conversationRoleActionDao.allConversationRoleActions()
+class ConversationRoleActionLocalDataSource(private val conversationRoleActionDao: ConversationRoleActionDao): BackupLocalDataSource<ConversationRoleActionEntity>() {
+    override suspend fun getAll(): List<ConversationRoleActionEntity> = conversationRoleActionDao.allConversationRoleActions()
+
+    override fun serialize(entity: ConversationRoleActionEntity): String =
+        json.stringify(ConversationRoleActionJSONEntity.serializer(), ConversationRoleActionJSONEntity.from(entity))
+    override fun deserialize(jsonStr: String): ConversationRoleActionEntity =
+        json.parse(ConversationRoleActionJSONEntity.serializer(), jsonStr).toEntity()
 }
 
 @Serializable

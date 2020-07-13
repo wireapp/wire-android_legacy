@@ -7,10 +7,10 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "KeyValues")
 data class KeyValuesEntity(
 
-        @ColumnInfo(name = "key")
-        @PrimaryKey
-        val key: String,
+    @ColumnInfo(name = "key")
+    @PrimaryKey
+    val key: String,
 
-        @ColumnInfo(name = "value", defaultValue = "")
-        val value: String
+    @ColumnInfo(name = "value", defaultValue = "")
+    val value: String
 )

@@ -4,8 +4,13 @@ import com.waz.zclient.storage.db.property.KeyValuesDao
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import kotlinx.serialization.Serializable
 
-class KeyValueLocalDataSource(private val keyValuesDao: KeyValuesDao) {
-    suspend fun getAllKeyValues(): List<KeyValuesEntity> = keyValuesDao.allKeyValues()
+class KeyValuesLocalDataSource(private val keyValuesDao: KeyValuesDao): BackupLocalDataSource<KeyValuesEntity>() {
+    override suspend fun getAll(): List<KeyValuesEntity> = keyValuesDao.allKeyValues()
+
+    override fun serialize(entity: KeyValuesEntity): String =
+        json.stringify(KeyValuesJSONEntity.serializer(), KeyValuesJSONEntity.from(entity))
+    override fun deserialize(jsonStr: String): KeyValuesEntity =
+        json.parse(KeyValuesJSONEntity.serializer(), jsonStr).toEntity()
 }
 
 @Serializable

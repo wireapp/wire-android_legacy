@@ -1,13 +1,18 @@
 package com.waz.zclient.shared.backup.datasources.local
 
+import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Companion.toByteArray
+import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Companion.toIntArray
 import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
 import kotlinx.serialization.Serializable
-import com.waz.zclient.shared.backup.datasources.BackupDataJSONConverter.Companion.toByteArray
-import com.waz.zclient.shared.backup.datasources.BackupDataJSONConverter.Companion.toIntArray
 
-class AssetLocalDataSource(private val assetsDao: AssetsDao) {
-    suspend fun getAllAssets(): List<AssetsEntity> = assetsDao.allAssets()
+class AssetLocalDataSource(private val assetsDao: AssetsDao): BackupLocalDataSource<AssetsEntity>() {
+    override suspend fun getAll(): List<AssetsEntity> = assetsDao.allAssets()
+
+    override fun serialize(entity: AssetsEntity): String =
+        json.stringify(AssetsJSONEntity.serializer(), AssetsJSONEntity.from(entity))
+    override fun deserialize(jsonStr: String): AssetsEntity =
+        json.parse(AssetsJSONEntity.serializer(), jsonStr).toEntity()
 }
 
 @Serializable
@@ -27,7 +32,7 @@ data class AssetsJSONEntity(
     override fun hashCode(): Int =
         id.hashCode() + token.hashCode() + name.hashCode() + encryption.hashCode() +
                 mime.hashCode() + size.hashCode() + source.hashCode() + preview.hashCode() +
-                details.hashCode() + conversationId.hashCode() + (sha?.size ?: 0)
+                details.hashCode() + conversationId.hashCode() //+ (sha?.size ?: 0)
 
     override fun equals(other: Any?): Boolean =
         other != null && other is AssetsJSONEntity && other.id == id && other.token == token &&

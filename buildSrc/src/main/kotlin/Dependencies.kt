@@ -40,6 +40,7 @@ object Versions {
     const val GLIDE = "4.11.0"
     const val RETROFIT = "2.6.2"
     const val OKHTTP = "3.14.6"
+    const val KOTLINX_SERIALIZATION = "0.20.0"
     const val KOIN = "2.0.1"
     const val RX_KOTLIN = "2.3.0"
     const val RX_ANDROID = "2.1.1"
@@ -117,7 +118,7 @@ object BuildDependencies {
     ))
     val okHttpLoggingInterceptor = "com.squareup.okhttp3:logging-interceptor:${Versions.OKHTTP}"
 
-
+    val kotlinXSerialization = "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.KOTLINX_SERIALIZATION}"
 
     val koin = KoinDependencyMap(mapOf(
         "androidCore" to "org.koin:koin-android:${Versions.KOIN}",

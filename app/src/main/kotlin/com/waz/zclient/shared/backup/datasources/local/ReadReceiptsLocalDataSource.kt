@@ -4,8 +4,13 @@ import com.waz.zclient.storage.db.receipts.ReadReceiptsDao
 import com.waz.zclient.storage.db.receipts.ReadReceiptsEntity
 import kotlinx.serialization.Serializable
 
-class ReadReceiptsLocalDataSource(private val readReceiptsDao: ReadReceiptsDao) {
-    suspend fun getAllReadReceipts(): List<ReadReceiptsEntity> = readReceiptsDao.allReceipts()
+class ReadReceiptsLocalDataSource(private val readReceiptsDao: ReadReceiptsDao): BackupLocalDataSource<ReadReceiptsEntity>() {
+    override suspend fun getAll(): List<ReadReceiptsEntity> = readReceiptsDao.allReceipts()
+
+    override fun serialize(entity: ReadReceiptsEntity): String =
+        json.stringify(ReadReceiptsJSONEntity.serializer(), ReadReceiptsJSONEntity.from(entity))
+    override fun deserialize(jsonStr: String): ReadReceiptsEntity =
+        json.parse(ReadReceiptsJSONEntity.serializer(), jsonStr).toEntity()
 }
 
 @Serializable

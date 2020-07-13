@@ -4,8 +4,13 @@ import com.waz.zclient.storage.db.buttons.ButtonDao
 import com.waz.zclient.storage.db.buttons.ButtonEntity
 import kotlinx.serialization.Serializable
 
-class ButtonLocalDataSource(private val buttonDao: ButtonDao) {
-    suspend fun getAllButtons(): List<ButtonEntity> = buttonDao.allButtons()
+class ButtonLocalDataSource(private val buttonDao: ButtonDao): BackupLocalDataSource<ButtonEntity>() {
+    override suspend fun getAll(): List<ButtonEntity> = buttonDao.allButtons()
+
+    override fun serialize(entity: ButtonEntity): String =
+        json.stringify(ButtonJSONEntity.serializer(), ButtonJSONEntity.from(entity))
+    override fun deserialize(jsonStr: String): ButtonEntity =
+        json.parse(ButtonJSONEntity.serializer(), jsonStr).toEntity()
 }
 
 @Serializable

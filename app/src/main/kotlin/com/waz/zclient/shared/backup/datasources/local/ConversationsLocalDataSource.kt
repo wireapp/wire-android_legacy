@@ -4,8 +4,13 @@ import com.waz.zclient.storage.db.conversations.ConversationsDao
 import com.waz.zclient.storage.db.conversations.ConversationsEntity
 import kotlinx.serialization.Serializable
 
-class ConversationLocalDataSource(private val conversationsDao: ConversationsDao){
-    suspend fun getAllConversations(): List<ConversationsEntity> = conversationsDao.allConversations()
+class ConversationsLocalDataSource(private val conversationsDao: ConversationsDao): BackupLocalDataSource<ConversationsEntity>() {
+    override suspend fun getAll(): List<ConversationsEntity> = conversationsDao.allConversations()
+
+    override fun serialize(entity: ConversationsEntity): String =
+        json.stringify(ConversationsJSONEntity.serializer(), ConversationsJSONEntity.from(entity))
+    override fun deserialize(jsonStr: String): ConversationsEntity =
+        json.parse(ConversationsJSONEntity.serializer(), jsonStr).toEntity()
 }
 
 @Serializable

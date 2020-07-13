@@ -1,13 +1,18 @@
 package com.waz.zclient.shared.backup.datasources.local
 
+import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Companion.toByteArray
+import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Companion.toIntArray
 import com.waz.zclient.storage.db.messages.MessagesDao
 import com.waz.zclient.storage.db.messages.MessagesEntity
 import kotlinx.serialization.Serializable
-import com.waz.zclient.shared.backup.datasources.BackupDataJSONConverter.Companion.toByteArray
-import com.waz.zclient.shared.backup.datasources.BackupDataJSONConverter.Companion.toIntArray
 
-class MessagesLocalDataSource(private val messagesDao: MessagesDao) {
-    suspend fun getAllMessages(): List<MessagesEntity> = messagesDao.allMessages()
+class MessagesLocalDataSource(private val messagesDao: MessagesDao): BackupLocalDataSource<MessagesEntity>() {
+    override suspend fun getAll(): List<MessagesEntity> = messagesDao.allMessages()
+
+    override fun serialize(entity: MessagesEntity): String =
+        json.stringify(MessagesJSONEntity.serializer(), MessagesJSONEntity.from(entity))
+    override fun deserialize(jsonStr: String): MessagesEntity =
+        json.parse(MessagesJSONEntity.serializer(), jsonStr).toEntity()
 }
 
 @Serializable

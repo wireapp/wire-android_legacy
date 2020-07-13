@@ -1,15 +1,16 @@
 package com.waz.zclient.shared.backup.datasources.local
 
-import androidx.room.ColumnInfo
-import androidx.room.PrimaryKey
-import com.waz.zclient.shared.backup.datasources.BackupDataJSONConverter
-import com.waz.zclient.storage.db.messages.MessagesEntity
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
 import kotlinx.serialization.Serializable
 
-class UserLocalDataSource(private val userDao: UserDao) {
-    suspend fun getAllUsers(): List<UserEntity> = userDao.allUsers()
+class UserLocalDataSource(private val userDao: UserDao): BackupLocalDataSource<UserEntity>() {
+    override suspend fun getAll(): List<UserEntity> = userDao.allUsers()
+
+    override fun serialize(entity: UserEntity): String =
+        json.stringify(UserJSONEntity.serializer(), UserJSONEntity.from(entity))
+    override fun deserialize(jsonStr: String): UserEntity =
+        json.parse(UserJSONEntity.serializer(), jsonStr).toEntity()
 }
 
 @Serializable

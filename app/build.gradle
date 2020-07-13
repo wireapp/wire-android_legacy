@@ -415,7 +415,7 @@ dependencies {
     implementation BuildDependencies.okHttpLoggingInterceptor
 
     // JSON
-    implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0"
+    implementation BuildDependencies.kotlinXSerialization
 
     //DI - Koin
     implementation BuildDependencies.koin.androidCore

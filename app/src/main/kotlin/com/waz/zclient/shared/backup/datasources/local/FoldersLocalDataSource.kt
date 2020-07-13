@@ -4,8 +4,13 @@ import com.waz.zclient.storage.db.folders.FoldersDao
 import com.waz.zclient.storage.db.folders.FoldersEntity
 import kotlinx.serialization.Serializable
 
-class FoldersLocalDataSource(private val foldersDao: FoldersDao) {
-    suspend fun getAllFolders(): List<FoldersEntity> = foldersDao.allFolders()
+class FoldersLocalDataSource(private val foldersDao: FoldersDao): BackupLocalDataSource<FoldersEntity>() {
+    override suspend fun getAll(): List<FoldersEntity> = foldersDao.allFolders()
+
+    override fun serialize(entity: FoldersEntity): String =
+        json.stringify(FoldersJSONEntity.serializer(), FoldersJSONEntity.from(entity))
+    override fun deserialize(jsonStr: String): FoldersEntity =
+        json.parse(FoldersJSONEntity.serializer(), jsonStr).toEntity()
 }
 
 @Serializable
