@@ -123,10 +123,13 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     allVideoReceiveStates.map(_.groupBy(_._1.userId).mapValues(_.values.toSet))
   }
 
-  def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
+  def orderedParticipantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
+    participantInfos(take).map(_.sortBy(_.displayName))
+
+  private def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
     for {
       cZms         <- callingZms
-      participants <- orderedParticipants(take)
+      participants <- otherParticipants.map(_.toSeq)
       ids           = participants.map(_.userId)
       users        <- cZms.usersStorage.listSignal(ids)
       videoStates  <- mergedVideoStates
@@ -142,13 +145,6 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
         isSelf         = cZms.selfUserId == user.id
       )
     }
-
-  private def orderedParticipants(take: Option[Int] = None): Signal[Seq[Participant]] = {
-    otherParticipants.map { participants =>
-      val orderedByTimeDescending = participants.toSeq.sortBy(_._2.getOrElse(LocalInstant.Epoch)).reverse.map(_._1)
-      take.fold(orderedByTimeDescending)(orderedByTimeDescending.take)
-    }
-  }
 
   val flowManager = callingZms.map(_.flowmanager)
 
@@ -192,7 +188,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val conversationName: Signal[Name] = zmsConvId.flatMap { case (z, cId) => z.conversations.conversationName(cId) }
   val conversationMembers: Signal[Map[UserId, ConversationRole]] = zmsConvId.flatMap { case (z, cId) => z.conversations.convMembers(cId) }
 
-  private lazy val otherUser = Signal(isGroupCall, userStorage, otherParticipants.map(_.keys.toSeq.headOption)).flatMap {
+  private lazy val otherUser = Signal(isGroupCall, userStorage, otherParticipants.map(_.toSeq.headOption)).flatMap {
     case (false, usersStorage, Some(participant)) =>
       // 1:1 conversation has the same id as the other user, so we can access it directly
       usersStorage.optSignal(participant.userId)
