@@ -4,15 +4,13 @@ import com.waz.zclient.storage.db.buttons.ButtonDao
 import com.waz.zclient.storage.db.buttons.ButtonEntity
 import kotlinx.serialization.Serializable
 
-class ButtonLocalDataSource(private val buttonDao: ButtonDao): BackupLocalDataSource<ButtonEntity>() {
-    override suspend fun getAll(): List<ButtonEntity> = buttonDao.allButtons()
-    override suspend fun getInBatch(maxSize: Int, offset: Int): List<ButtonEntity> =
-        buttonDao.getButtonsInBatch(maxSize, offset)
+class ButtonLocalDataSource(private val buttonDao: ButtonDao):
+    BackupLocalDataSource<ButtonEntity, ButtonJSONEntity>(ButtonJSONEntity.serializer()) {
+    override suspend fun getInBatch(batchSize: Int, offset: Int): List<ButtonEntity> =
+        buttonDao.getButtonsInBatch(batchSize, offset)
 
-    override fun serialize(entity: ButtonEntity): String =
-        json.stringify(ButtonJSONEntity.serializer(), ButtonJSONEntity.from(entity))
-    override fun deserialize(jsonStr: String): ButtonEntity =
-        json.parse(ButtonJSONEntity.serializer(), jsonStr).toEntity()
+    override fun toJSONType(entity: ButtonEntity): ButtonJSONEntity = ButtonJSONEntity.from(entity)
+    override fun toEntityType(json: ButtonJSONEntity): ButtonEntity = json.toEntity()
 }
 
 @Serializable

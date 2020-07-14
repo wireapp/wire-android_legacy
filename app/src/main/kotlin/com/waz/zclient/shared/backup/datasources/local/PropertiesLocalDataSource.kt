@@ -4,15 +4,13 @@ import com.waz.zclient.storage.db.property.PropertiesDao
 import com.waz.zclient.storage.db.property.PropertiesEntity
 import kotlinx.serialization.Serializable
 
-class PropertiesLocalDataSource(private val propertiesDao: PropertiesDao): BackupLocalDataSource<PropertiesEntity>() {
-    override suspend fun getAll(): List<PropertiesEntity> = propertiesDao.allProperties()
+class PropertiesLocalDataSource(private val propertiesDao: PropertiesDao):
+    BackupLocalDataSource<PropertiesEntity, PropertiesJSONEntity>(PropertiesJSONEntity.serializer()) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<PropertiesEntity> =
         propertiesDao.getPropertiesInBatch(batchSize, offset)
 
-    override fun serialize(entity: PropertiesEntity): String =
-        json.stringify(PropertiesJSONEntity.serializer(), PropertiesJSONEntity.from(entity))
-    override fun deserialize(jsonStr: String): PropertiesEntity =
-        json.parse(PropertiesJSONEntity.serializer(), jsonStr).toEntity()
+    override fun toJSONType(entity: PropertiesEntity): PropertiesJSONEntity = PropertiesJSONEntity.from(entity)
+    override fun toEntityType(json: PropertiesJSONEntity): PropertiesEntity = json.toEntity()
 }
 
 @Serializable

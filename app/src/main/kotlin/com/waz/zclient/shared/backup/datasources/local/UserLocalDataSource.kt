@@ -4,15 +4,13 @@ import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
 import kotlinx.serialization.Serializable
 
-class UserLocalDataSource(private val userDao: UserDao): BackupLocalDataSource<UserEntity>() {
-    override suspend fun getAll(): List<UserEntity> = userDao.allUsers()
+class UserLocalDataSource(private val userDao: UserDao):
+    BackupLocalDataSource<UserEntity, UserJSONEntity>(UserJSONEntity.serializer()) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<UserEntity> =
         userDao.getUsersInBatch(batchSize, offset)
 
-    override fun serialize(entity: UserEntity): String =
-        json.stringify(UserJSONEntity.serializer(), UserJSONEntity.from(entity))
-    override fun deserialize(jsonStr: String): UserEntity =
-        json.parse(UserJSONEntity.serializer(), jsonStr).toEntity()
+    override fun toJSONType(entity: UserEntity): UserJSONEntity = UserJSONEntity.from(entity)
+    override fun toEntityType(json: UserJSONEntity): UserEntity = json.toEntity()
 }
 
 @Serializable

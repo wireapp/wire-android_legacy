@@ -5,16 +5,15 @@ import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Com
 import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.list
 
-class AssetLocalDataSource(private val assetsDao: AssetsDao): BackupLocalDataSource<AssetsEntity>() {
-    override suspend fun getAll(): List<AssetsEntity> = assetsDao.allAssets()
+class AssetLocalDataSource(private val assetsDao: AssetsDao):
+    BackupLocalDataSource<AssetsEntity, AssetsJSONEntity>(AssetsJSONEntity.serializer()) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<AssetsEntity> =
         assetsDao.getAssetsInBatch(batchSize, offset)
 
-    override fun serialize(entity: AssetsEntity): String =
-        json.stringify(AssetsJSONEntity.serializer(), AssetsJSONEntity.from(entity))
-    override fun deserialize(jsonStr: String): AssetsEntity =
-        json.parse(AssetsJSONEntity.serializer(), jsonStr).toEntity()
+    override fun toJSONType(entity: AssetsEntity): AssetsJSONEntity = AssetsJSONEntity.from(entity)
+    override fun toEntityType(json: AssetsJSONEntity): AssetsEntity = json.toEntity()
 }
 
 @Serializable
@@ -33,17 +32,17 @@ data class AssetsJSONEntity(
 ) {
     override fun hashCode(): Int =
         id.hashCode() + token.hashCode() + name.hashCode() + encryption.hashCode() +
-                mime.hashCode() + size.hashCode() + source.hashCode() + preview.hashCode() +
-                details.hashCode() + conversationId.hashCode() //+ (sha?.size ?: 0)
+        mime.hashCode() + size.hashCode() + source.hashCode() + preview.hashCode() +
+        details.hashCode() + conversationId.hashCode() + (sha?.size ?: 0)
 
     override fun equals(other: Any?): Boolean =
         other != null && other is AssetsJSONEntity && other.id == id && other.token == token &&
-                other.name == name && other.encryption == encryption && other.mime == mime &&
-                other.size == size && other.source == source && other.preview == preview &&
-                other.details == details && other.conversationId == conversationId &&
-                ((other.sha == null && sha == null) || other.sha != null && sha !== null &&
-                    other.sha.zip(sha).all { it.first == it.second }
-                )
+        other.name == name && other.encryption == encryption && other.mime == mime &&
+        other.size == size && other.source == source && other.preview == preview &&
+        other.details == details && other.conversationId == conversationId &&
+        ((other.sha == null && sha == null) || other.sha != null && sha !== null &&
+            other.sha.zip(sha).all { it.first == it.second }
+        )
 
     fun toEntity(): AssetsEntity = AssetsEntity(
         id = id,

@@ -4,15 +4,13 @@ import com.waz.zclient.storage.db.messages.LikesDao
 import com.waz.zclient.storage.db.messages.LikesEntity
 import kotlinx.serialization.Serializable
 
-class LikesLocalDataSource(private val likesDao: LikesDao): BackupLocalDataSource<LikesEntity>()  {
-    override suspend fun getAll(): List<LikesEntity> = likesDao.allLikes()
-    override suspend fun getInBatch(maxSize: Int, offset: Int): List<LikesEntity> =
-        likesDao.getLikesInBatch(maxSize, offset)
+class LikesLocalDataSource(private val likesDao: LikesDao):
+    BackupLocalDataSource<LikesEntity, LikesJSONEntity>(LikesJSONEntity.serializer())  {
+    override suspend fun getInBatch(batchSize: Int, offset: Int): List<LikesEntity> =
+        likesDao.getLikesInBatch(batchSize, offset)
 
-    override fun serialize(entity: LikesEntity): String =
-        json.stringify(LikesJSONEntity.serializer(), LikesJSONEntity.from(entity))
-    override fun deserialize(jsonStr: String): LikesEntity =
-        json.parse(LikesJSONEntity.serializer(), jsonStr).toEntity()
+    override fun toJSONType(entity: LikesEntity): LikesJSONEntity = LikesJSONEntity.from(entity)
+    override fun toEntityType(json: LikesJSONEntity): LikesEntity = json.toEntity()
 }
 
 @Serializable

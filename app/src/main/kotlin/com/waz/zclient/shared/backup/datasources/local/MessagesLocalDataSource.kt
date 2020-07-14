@@ -6,15 +6,13 @@ import com.waz.zclient.storage.db.messages.MessagesDao
 import com.waz.zclient.storage.db.messages.MessagesEntity
 import kotlinx.serialization.Serializable
 
-class MessagesLocalDataSource(private val messagesDao: MessagesDao): BackupLocalDataSource<MessagesEntity>() {
-    override suspend fun getAll(): List<MessagesEntity> = messagesDao.allMessages()
+class MessagesLocalDataSource(private val messagesDao: MessagesDao):
+    BackupLocalDataSource<MessagesEntity, MessagesJSONEntity>(MessagesJSONEntity.serializer()) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<MessagesEntity> =
         messagesDao.getMessagesInBatch(batchSize, offset)
 
-    override fun serialize(entity: MessagesEntity): String =
-        json.stringify(MessagesJSONEntity.serializer(), MessagesJSONEntity.from(entity))
-    override fun deserialize(jsonStr: String): MessagesEntity =
-        json.parse(MessagesJSONEntity.serializer(), jsonStr).toEntity()
+    override fun toJSONType(entity: MessagesEntity): MessagesJSONEntity = MessagesJSONEntity.from(entity)
+    override fun toEntityType(json: MessagesJSONEntity): MessagesEntity = json.toEntity()
 }
 
 @Serializable
@@ -46,24 +44,24 @@ data class MessagesJSONEntity(
 ) {
     override fun hashCode(): Int =
         id.hashCode() + conversationId.hashCode() + messageType.hashCode() + userId.hashCode() +
-            content.hashCode() + time.hashCode() + firstMessage.hashCode() + members.hashCode() +
-            recipient.hashCode() + email.hashCode() + name.hashCode() + messageState.hashCode() +
-            contentSize.hashCode() + localTime.hashCode() + editTime.hashCode() + ephemeral.hashCode() +
-            expiryTime.hashCode() + expired.hashCode() + duration.hashCode() + quote.hashCode() +
-            quoteValidity.hashCode() + forceReadReceipts.hashCode() + assetId.hashCode() +
-            (protos?.size ?: 0)
+        content.hashCode() + time.hashCode() + firstMessage.hashCode() + members.hashCode() +
+        recipient.hashCode() + email.hashCode() + name.hashCode() + messageState.hashCode() +
+        contentSize.hashCode() + localTime.hashCode() + editTime.hashCode() + ephemeral.hashCode() +
+        expiryTime.hashCode() + expired.hashCode() + duration.hashCode() + quote.hashCode() +
+        quoteValidity.hashCode() + forceReadReceipts.hashCode() + assetId.hashCode() +
+        (protos?.size ?: 0)
 
     override fun equals(other: Any?): Boolean =
         other != null && other is MessagesJSONEntity &&
-            id == other.id && conversationId == other.conversationId && messageType == other.messageType &&
-            userId == other.userId && content == other.content && time == other.time && firstMessage == other.firstMessage &&
-            members == other.members && recipient == other.recipient && email == other.email &&
-            name == other.name && messageState == other.messageState && contentSize == other.contentSize &&
-            localTime == other.localTime && editTime == other.editTime && ephemeral == other.ephemeral &&
-            expiryTime == other.expiryTime && expired == other.expired && duration == other.duration &&
-            quote == other.quote && quoteValidity == other.quoteValidity && forceReadReceipts == other.forceReadReceipts &&
-            assetId == other.assetId && ((protos == null && other.protos == null) ||
-            protos != null && other.protos != null && protos.zip(other.protos).all { it.first == it.second })
+        id == other.id && conversationId == other.conversationId && messageType == other.messageType &&
+        userId == other.userId && content == other.content && time == other.time && firstMessage == other.firstMessage &&
+        members == other.members && recipient == other.recipient && email == other.email &&
+        name == other.name && messageState == other.messageState && contentSize == other.contentSize &&
+        localTime == other.localTime && editTime == other.editTime && ephemeral == other.ephemeral &&
+        expiryTime == other.expiryTime && expired == other.expired && duration == other.duration &&
+        quote == other.quote && quoteValidity == other.quoteValidity && forceReadReceipts == other.forceReadReceipts &&
+        assetId == other.assetId && ((protos == null && other.protos == null) ||
+        protos != null && other.protos != null && protos.zip(other.protos).all { it.first == it.second })
 
     fun toEntity(): MessagesEntity = MessagesEntity(
         id = id,

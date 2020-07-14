@@ -4,15 +4,13 @@ import com.waz.zclient.storage.db.conversations.ConversationMembersDao
 import com.waz.zclient.storage.db.conversations.ConversationMembersEntity
 import kotlinx.serialization.Serializable
 
-class ConversationMembersLocalDataSource(private val conversationMembersDao: ConversationMembersDao): BackupLocalDataSource<ConversationMembersEntity>() {
-    override suspend fun getAll(): List<ConversationMembersEntity> = conversationMembersDao.allConversationMembers()
+class ConversationMembersLocalDataSource(private val conversationMembersDao: ConversationMembersDao):
+    BackupLocalDataSource<ConversationMembersEntity, ConversationMembersJSONEntity>(ConversationMembersJSONEntity.serializer()) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<ConversationMembersEntity> =
         conversationMembersDao.getConversationMembersInBatch(batchSize, offset)
 
-    override fun serialize(entity: ConversationMembersEntity): String =
-        json.stringify(ConversationMembersJSONEntity.serializer(), ConversationMembersJSONEntity.from(entity))
-    override fun deserialize(jsonStr: String): ConversationMembersEntity =
-        json.parse(ConversationMembersJSONEntity.serializer(), jsonStr).toEntity()
+    override fun toJSONType(entity: ConversationMembersEntity): ConversationMembersJSONEntity = ConversationMembersJSONEntity.from(entity)
+    override fun toEntityType(json: ConversationMembersJSONEntity): ConversationMembersEntity = json.toEntity()
 }
 
 @Serializable

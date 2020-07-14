@@ -4,15 +4,13 @@ import com.waz.zclient.storage.db.conversations.ConversationRoleActionDao
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
 import kotlinx.serialization.Serializable
 
-class ConversationRoleActionLocalDataSource(private val conversationRoleActionDao: ConversationRoleActionDao): BackupLocalDataSource<ConversationRoleActionEntity>() {
-    override suspend fun getAll(): List<ConversationRoleActionEntity> = conversationRoleActionDao.allConversationRoleActions()
+class ConversationRoleActionLocalDataSource(private val conversationRoleActionDao: ConversationRoleActionDao):
+    BackupLocalDataSource<ConversationRoleActionEntity, ConversationRoleActionJSONEntity>(ConversationRoleActionJSONEntity.serializer()) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<ConversationRoleActionEntity> =
         conversationRoleActionDao.getConversationRoleActionsInBatch(batchSize, offset)
 
-    override fun serialize(entity: ConversationRoleActionEntity): String =
-        json.stringify(ConversationRoleActionJSONEntity.serializer(), ConversationRoleActionJSONEntity.from(entity))
-    override fun deserialize(jsonStr: String): ConversationRoleActionEntity =
-        json.parse(ConversationRoleActionJSONEntity.serializer(), jsonStr).toEntity()
+    override fun toJSONType(entity: ConversationRoleActionEntity): ConversationRoleActionJSONEntity = ConversationRoleActionJSONEntity.from(entity)
+    override fun toEntityType(json: ConversationRoleActionJSONEntity): ConversationRoleActionEntity = json.toEntity()
 }
 
 @Serializable
