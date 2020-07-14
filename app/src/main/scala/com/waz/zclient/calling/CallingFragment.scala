@@ -41,6 +41,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 
 abstract class UserVideoView(context: Context, val participant: Participant) extends FrameLayout(context, null, 0) with ViewHelper {
   protected lazy val controller: CallController = inject[CallController]
@@ -53,6 +54,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     z             <- controller.callingZms
     Some(picture) <- z.usersStorage.signal(participant.userId).map(_.picture)
   } yield picture
+
 
   protected val imageView = returning(findById[ImageView](R.id.image_view)) { view =>
     pictureId.onUi(BackgroundRequest(_).into(view))
@@ -70,17 +72,20 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     _.setBackgroundColor(getColor(R.color.black_16))
   }
 
-  protected val nameTextView = findById[TextView](R.id.nameTextView)
+  private val participantInfo: Signal[Option[CallParticipantInfo]] =
+    for {
+      isGroup <- controller.isGroupCall
+      infos   <- if (isGroup) controller.participantInfos() else Signal.const(Vector.empty)
+    } yield infos.find(_.userId == participant.userId)
 
-  controller.isGroupCall.ifTrue.onUi(_ => showParticipantName())
-
-  private def showParticipantName() = controller.participantInfos().onUi { v =>
-    v.collect {
-      case p if p.userId.str == participant.userId.str =>
-        if (p.isSelf) nameTextView.setText(getString(R.string.calling_self, p.displayName))
-        else nameTextView.setText(p.displayName)
+  protected val nameTextView = returning(findById[TextView](R.id.nameTextView)) { view =>
+    participantInfo.onUi {
+      case Some(p) if p.isSelf => view.setText(getString(R.string.calling_self, p.displayName))
+      case Some(p)             => view.setText(p.displayName)
+      case _                   =>
     }
   }
+
   protected def registerHandler(view: View) = {
     controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
       case VideoState.Paused | VideoState.Stopped => view.fadeOut()
