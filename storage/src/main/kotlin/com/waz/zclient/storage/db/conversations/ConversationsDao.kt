@@ -12,4 +12,7 @@ interface ConversationsDao {
 
     @Insert
     suspend fun insertConversation(conversation: ConversationsEntity)
+
+    @Query("SELECT * FROM Conversations ORDER BY _id LIMIT :batchSize OFFSET :offset")
+    suspend fun getConversationsInBatch(batchSize: Int, offset: Int): List<ConversationsEntity>
 }

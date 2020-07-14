@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 
 class ConversationFoldersLocalDataSource(private val conversationFoldersDao: ConversationFoldersDao): BackupLocalDataSource<ConversationFoldersEntity>() {
     override suspend fun getAll(): List<ConversationFoldersEntity> = conversationFoldersDao.allConversationFolders()
+    override suspend fun getInBatch(batchSize: Int, offset: Int): List<ConversationFoldersEntity> =
+        conversationFoldersDao.getConversationFoldersInBatch(batchSize, offset)
 
     override fun serialize(entity: ConversationFoldersEntity): String =
         json.stringify(ConversationFoldersJSONEntity.serializer(), ConversationFoldersJSONEntity.from(entity))

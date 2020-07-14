@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 
 class ReadReceiptsLocalDataSource(private val readReceiptsDao: ReadReceiptsDao): BackupLocalDataSource<ReadReceiptsEntity>() {
     override suspend fun getAll(): List<ReadReceiptsEntity> = readReceiptsDao.allReceipts()
+    override suspend fun getInBatch(batchSize: Int, offset: Int): List<ReadReceiptsEntity> =
+        readReceiptsDao.getReadReceiptsInBatch(batchSize, offset)
 
     override fun serialize(entity: ReadReceiptsEntity): String =
         json.stringify(ReadReceiptsJSONEntity.serializer(), ReadReceiptsJSONEntity.from(entity))

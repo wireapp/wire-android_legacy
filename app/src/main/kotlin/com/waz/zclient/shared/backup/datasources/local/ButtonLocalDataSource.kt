@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 
 class ButtonLocalDataSource(private val buttonDao: ButtonDao): BackupLocalDataSource<ButtonEntity>() {
     override suspend fun getAll(): List<ButtonEntity> = buttonDao.allButtons()
+    override suspend fun getInBatch(maxSize: Int, offset: Int): List<ButtonEntity> =
+        buttonDao.getButtonsInBatch(maxSize, offset)
 
     override fun serialize(entity: ButtonEntity): String =
         json.stringify(ButtonJSONEntity.serializer(), ButtonJSONEntity.from(entity))

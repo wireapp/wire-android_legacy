@@ -15,4 +15,7 @@ interface KeyValuesDao {
 
     @Insert
     fun insert(keyValuesEntityList: List<KeyValuesEntity>)
+
+    @Query("SELECT * FROM KeyValues ORDER BY key LIMIT :batchSize OFFSET :offset")
+    suspend fun getKeyValuesInBatch(batchSize: Int, offset: Int): List<KeyValuesEntity>
 }

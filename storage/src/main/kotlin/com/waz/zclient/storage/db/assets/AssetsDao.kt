@@ -12,4 +12,7 @@ interface AssetsDao {
 
     @Insert
     suspend fun insertAsset(asset: AssetsEntity)
+
+    @Query("SELECT * FROM Assets2 ORDER BY _id LIMIT :maxSize OFFSET :offset")
+    suspend fun getAssetsInBatch(maxSize: Int, offset: Int): List<AssetsEntity>
 }

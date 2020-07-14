@@ -7,4 +7,7 @@ import androidx.room.Query
 interface FoldersDao {
     @Query("SELECT * FROM Folders")
     suspend fun allFolders(): List<FoldersEntity>
+
+    @Query("SELECT * FROM Folders ORDER BY _id LIMIT :batchSize OFFSET :offset")
+    suspend fun getFoldersInBatch(batchSize: Int, offset: Int): List<FoldersEntity>
 }

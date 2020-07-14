@@ -7,4 +7,7 @@ import androidx.room.Query
 interface LikesDao {
     @Query("SELECT * FROM Likings")
     suspend fun allLikes(): List<LikesEntity>
+
+    @Query("SELECT * FROM Likings ORDER BY message_id, user_id LIMIT :batchSize OFFSET :offset")
+    suspend fun getLikesInBatch(batchSize: Int, offset: Int): List<LikesEntity>
 }

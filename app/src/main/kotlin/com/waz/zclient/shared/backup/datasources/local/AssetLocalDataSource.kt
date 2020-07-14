@@ -8,6 +8,8 @@ import kotlinx.serialization.Serializable
 
 class AssetLocalDataSource(private val assetsDao: AssetsDao): BackupLocalDataSource<AssetsEntity>() {
     override suspend fun getAll(): List<AssetsEntity> = assetsDao.allAssets()
+    override suspend fun getInBatch(batchSize: Int, offset: Int): List<AssetsEntity> =
+        assetsDao.getAssetsInBatch(batchSize, offset)
 
     override fun serialize(entity: AssetsEntity): String =
         json.stringify(AssetsJSONEntity.serializer(), AssetsJSONEntity.from(entity))

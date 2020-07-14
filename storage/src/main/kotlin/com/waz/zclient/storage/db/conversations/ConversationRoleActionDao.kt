@@ -12,4 +12,7 @@ interface ConversationRoleActionDao {
 
     @Insert
     suspend fun insertConversationRoleAction(roleAction: ConversationRoleActionEntity)
+
+    @Query("SELECT * FROM ConversationRoleAction ORDER BY label, conv_id LIMIT :batchSize OFFSET :offset")
+    suspend fun getConversationRoleActionsInBatch(batchSize: Int, offset: Int): List<ConversationRoleActionEntity>
 }

@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 
 class PropertiesLocalDataSource(private val propertiesDao: PropertiesDao): BackupLocalDataSource<PropertiesEntity>() {
     override suspend fun getAll(): List<PropertiesEntity> = propertiesDao.allProperties()
+    override suspend fun getInBatch(batchSize: Int, offset: Int): List<PropertiesEntity> =
+        propertiesDao.getPropertiesInBatch(batchSize, offset)
 
     override fun serialize(entity: PropertiesEntity): String =
         json.stringify(PropertiesJSONEntity.serializer(), PropertiesJSONEntity.from(entity))

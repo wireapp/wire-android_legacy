@@ -13,7 +13,7 @@ class BackupDataSource(
         private val buttonLocalDataSource: ButtonLocalDataSource,
         private val conversationFoldersLocalDataSource: ConversationFoldersLocalDataSource,
         private val conversationLocalDataSource: ConversationsLocalDataSource,
-        private val conversationMemberLocalDataSource: ConversationMemberLocalDataSource,
+        private val conversationMemberLocalDataSource: ConversationMembersLocalDataSource,
         private val conversationRoleActionLocalDataSource: ConversationRoleActionLocalDataSource,
         private val foldersLocalDataSource: FoldersLocalDataSource,
         private val keyValueLocalDataSource: KeyValuesLocalDataSource,

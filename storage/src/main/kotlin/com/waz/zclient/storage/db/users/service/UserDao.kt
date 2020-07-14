@@ -29,4 +29,7 @@ interface UserDao {
 
     @Query("UPDATE Users SET phone=:phone WHERE _id = :userId")
     suspend fun updatePhone(userId: String, phone: String)
+
+    @Query("SELECT * FROM Users ORDER BY _id LIMIT :batchSize OFFSET :offset")
+    suspend fun getUsersInBatch(batchSize: Int, offset: Int): List<UserEntity>
 }

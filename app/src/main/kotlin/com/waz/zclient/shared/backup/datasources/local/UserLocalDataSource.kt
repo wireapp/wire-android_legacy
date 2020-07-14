@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 
 class UserLocalDataSource(private val userDao: UserDao): BackupLocalDataSource<UserEntity>() {
     override suspend fun getAll(): List<UserEntity> = userDao.allUsers()
+    override suspend fun getInBatch(batchSize: Int, offset: Int): List<UserEntity> =
+        userDao.getUsersInBatch(batchSize, offset)
 
     override fun serialize(entity: UserEntity): String =
         json.stringify(UserJSONEntity.serializer(), UserJSONEntity.from(entity))

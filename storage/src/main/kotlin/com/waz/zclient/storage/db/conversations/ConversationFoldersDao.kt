@@ -12,4 +12,7 @@ interface ConversationFoldersDao {
 
     @Insert
     suspend fun insertConversationFolder(conversationFolder: ConversationFoldersEntity)
+
+    @Query("SELECT * FROM ConversationFolders ORDER BY conv_id, folder_id LIMIT :batchSize OFFSET :offset")
+    suspend fun getConversationFoldersInBatch(batchSize: Int, offset: Int): List<ConversationFoldersEntity>
 }

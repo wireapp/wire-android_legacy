@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 
 class KeyValuesLocalDataSource(private val keyValuesDao: KeyValuesDao): BackupLocalDataSource<KeyValuesEntity>() {
     override suspend fun getAll(): List<KeyValuesEntity> = keyValuesDao.allKeyValues()
+    override suspend fun getInBatch(batchSize: Int, offset: Int): List<KeyValuesEntity> =
+        keyValuesDao.getKeyValuesInBatch(batchSize, offset)
 
     override fun serialize(entity: KeyValuesEntity): String =
         json.stringify(KeyValuesJSONEntity.serializer(), KeyValuesJSONEntity.from(entity))

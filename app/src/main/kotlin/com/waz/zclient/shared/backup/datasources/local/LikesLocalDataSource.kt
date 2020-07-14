@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 
 class LikesLocalDataSource(private val likesDao: LikesDao): BackupLocalDataSource<LikesEntity>()  {
     override suspend fun getAll(): List<LikesEntity> = likesDao.allLikes()
+    override suspend fun getInBatch(maxSize: Int, offset: Int): List<LikesEntity> =
+        likesDao.getLikesInBatch(maxSize, offset)
 
     override fun serialize(entity: LikesEntity): String =
         json.stringify(LikesJSONEntity.serializer(), LikesJSONEntity.from(entity))

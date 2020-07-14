@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 
 class FoldersLocalDataSource(private val foldersDao: FoldersDao): BackupLocalDataSource<FoldersEntity>() {
     override suspend fun getAll(): List<FoldersEntity> = foldersDao.allFolders()
+    override suspend fun getInBatch(batchSize: Int, offset: Int): List<FoldersEntity> =
+        foldersDao.getFoldersInBatch(batchSize, offset)
 
     override fun serialize(entity: FoldersEntity): String =
         json.stringify(FoldersJSONEntity.serializer(), FoldersJSONEntity.from(entity))
