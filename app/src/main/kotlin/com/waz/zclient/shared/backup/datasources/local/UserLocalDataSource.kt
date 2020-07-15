@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 class UserLocalDataSource(
     private val userDao: UserDao,
     batchSize: Int = BatchSize
-): BackupLocalDataSource<UserEntity, UserJSONEntity>(UserJSONEntity.serializer(), batchSize) {
+) : BackupLocalDataSource<UserEntity, UserJSONEntity>(UserJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<UserEntity> =
         userDao.getUsersInBatch(batchSize, offset)
 

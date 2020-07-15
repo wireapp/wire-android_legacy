@@ -1,7 +1,6 @@
 package com.waz.zclient.shared.backup.datasources
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.shared.backup.datasources.local.AssetsJSONEntity
 import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.MessagesJSONEntity
 import com.waz.zclient.shared.backup.datasources.local.MessagesLocalDataSource

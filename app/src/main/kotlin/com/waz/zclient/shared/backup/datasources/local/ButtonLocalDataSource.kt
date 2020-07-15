@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 class ButtonLocalDataSource(
     private val buttonDao: ButtonDao,
     batchSize: Int = BatchSize
-): BackupLocalDataSource<ButtonEntity, ButtonJSONEntity>(ButtonJSONEntity.serializer(), batchSize) {
+) : BackupLocalDataSource<ButtonEntity, ButtonJSONEntity>(ButtonJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<ButtonEntity> =
         buttonDao.getButtonsInBatch(batchSize, offset)
 
@@ -15,13 +15,14 @@ class ButtonLocalDataSource(
     override fun toEntity(json: ButtonJSONEntity): ButtonEntity = json.toEntity()
 }
 
+@SuppressWarnings("ParameterListWrapping")
 @Serializable
 data class ButtonJSONEntity(
-        val messageId: String = "",
-        val buttonId: String = "",
-        val title: String = "",
-        val ordinal: Int = 0,
-        val state: Int = 0
+    val messageId: String = "",
+    val buttonId: String = "",
+    val title: String = "",
+    val ordinal: Int = 0,
+    val state: Int = 0
 ) {
     fun toEntity(): ButtonEntity = ButtonEntity(
         messageId = messageId,

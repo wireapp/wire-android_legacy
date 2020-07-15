@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 class ReadReceiptsLocalDataSource(
     private val readReceiptsDao: ReadReceiptsDao,
     batchSize: Int = BatchSize
-): BackupLocalDataSource<ReadReceiptsEntity, ReadReceiptsJSONEntity>(ReadReceiptsJSONEntity.serializer(), batchSize) {
+) : BackupLocalDataSource<ReadReceiptsEntity, ReadReceiptsJSONEntity>(ReadReceiptsJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<ReadReceiptsEntity> =
         readReceiptsDao.getReadReceiptsInBatch(batchSize, offset)
 

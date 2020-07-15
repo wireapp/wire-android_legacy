@@ -7,7 +7,12 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 val backupModule: Module = module {
-    single { BackupDataSource(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) as BackupRepository }
+    single {
+        BackupDataSource(
+            get(), get(), get(), get(), get(), get(), get(),
+            get(), get(), get(), get(), get(), get()
+        ) as BackupRepository
+    }
     factory { AssetLocalDataSource(get()) }
     factory { ButtonLocalDataSource(get()) }
     factory { ConversationFoldersLocalDataSource(get()) }

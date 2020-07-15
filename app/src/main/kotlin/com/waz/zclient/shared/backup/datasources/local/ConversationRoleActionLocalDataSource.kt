@@ -7,12 +7,15 @@ import kotlinx.serialization.Serializable
 class ConversationRoleActionLocalDataSource(
     private val conversationRoleActionDao: ConversationRoleActionDao,
     batchSize: Int = BatchSize
-): BackupLocalDataSource<ConversationRoleActionEntity, ConversationRoleActionJSONEntity>(ConversationRoleActionJSONEntity.serializer(), batchSize) {
+) : BackupLocalDataSource<ConversationRoleActionEntity, ConversationRoleActionJSONEntity>
+    (ConversationRoleActionJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<ConversationRoleActionEntity> =
         conversationRoleActionDao.getConversationRoleActionsInBatch(batchSize, offset)
 
-    override fun toJSON(entity: ConversationRoleActionEntity): ConversationRoleActionJSONEntity = ConversationRoleActionJSONEntity.from(entity)
-    override fun toEntity(json: ConversationRoleActionJSONEntity): ConversationRoleActionEntity = json.toEntity()
+    override fun toJSON(entity: ConversationRoleActionEntity): ConversationRoleActionJSONEntity =
+            ConversationRoleActionJSONEntity.from(entity)
+    override fun toEntity(json: ConversationRoleActionJSONEntity): ConversationRoleActionEntity =
+            json.toEntity()
 }
 
 @Serializable

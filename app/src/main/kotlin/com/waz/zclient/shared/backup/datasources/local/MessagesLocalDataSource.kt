@@ -1,7 +1,5 @@
 package com.waz.zclient.shared.backup.datasources.local
 
-import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Companion.toByteArray
-import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Companion.toIntArray
 import com.waz.zclient.storage.db.messages.MessagesDao
 import com.waz.zclient.storage.db.messages.MessagesEntity
 import kotlinx.serialization.Serializable
@@ -9,7 +7,7 @@ import kotlinx.serialization.Serializable
 class MessagesLocalDataSource(
     private val messagesDao: MessagesDao,
     batchSize: Int = BatchSize
-): BackupLocalDataSource<MessagesEntity, MessagesJSONEntity>(MessagesJSONEntity.serializer(), batchSize) {
+) : BackupLocalDataSource<MessagesEntity, MessagesJSONEntity>(MessagesJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<MessagesEntity> =
         messagesDao.getMessagesInBatch(batchSize, offset)
 
@@ -25,7 +23,7 @@ data class MessagesJSONEntity(
     val messageType: String = "",
     val userId: String = "",
     val content: String? = null,
-    val protos: IntArray? = null,
+    val protos: ByteArray? = null,
     val time: Int = 0,
     val firstMessage: Boolean = false,
     val members: String? = null,
@@ -63,8 +61,8 @@ data class MessagesJSONEntity(
         localTime == other.localTime && editTime == other.editTime && ephemeral == other.ephemeral &&
         expiryTime == other.expiryTime && expired == other.expired && duration == other.duration &&
         quote == other.quote && quoteValidity == other.quoteValidity && forceReadReceipts == other.forceReadReceipts &&
-        assetId == other.assetId && ((protos == null && other.protos == null) ||
-        protos != null && other.protos != null && protos.zip(other.protos).all { it.first == it.second })
+        assetId == other.assetId &&
+        ((protos == null && other.protos == null) || protos != null && other.protos != null && other.protos.contentEquals(protos))
 
     fun toEntity(): MessagesEntity = MessagesEntity(
         id = id,
@@ -72,7 +70,7 @@ data class MessagesJSONEntity(
         messageType = messageType,
         userId = userId,
         content = content,
-        protos = toByteArray(protos),
+        protos = protos,
         time = time,
         firstMessage = firstMessage,
         members = members,
@@ -100,7 +98,7 @@ data class MessagesJSONEntity(
             messageType = entity.messageType,
             userId = entity.userId,
             content = entity.content,
-            protos = toIntArray(entity.protos),
+            protos = entity.protos,
             time = entity.time,
             firstMessage = entity.firstMessage,
             members = entity.members,

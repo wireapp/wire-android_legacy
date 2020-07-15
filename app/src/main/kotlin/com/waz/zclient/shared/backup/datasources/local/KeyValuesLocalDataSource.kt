@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 class KeyValuesLocalDataSource(
         private val keyValuesDao: KeyValuesDao,
         batchSize: Int = BatchSize
-): BackupLocalDataSource<KeyValuesEntity, KeyValuesJSONEntity>(KeyValuesJSONEntity.serializer(), batchSize) {
+) : BackupLocalDataSource<KeyValuesEntity, KeyValuesJSONEntity>(KeyValuesJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<KeyValuesEntity> =
         keyValuesDao.getKeyValuesInBatch(batchSize, offset)
 
@@ -15,6 +15,7 @@ class KeyValuesLocalDataSource(
     override fun toEntity(json: KeyValuesJSONEntity): KeyValuesEntity = json.toEntity()
 }
 
+@SuppressWarnings("ParameterListWrapping")
 @Serializable
 data class KeyValuesJSONEntity(
     val key: String,

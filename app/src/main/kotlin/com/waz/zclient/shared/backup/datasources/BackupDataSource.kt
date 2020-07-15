@@ -23,7 +23,12 @@ class BackupDataSource(
     private val readReceiptsLocalDataSource: ReadReceiptsLocalDataSource,
     private val userLocalDataSource: UserLocalDataSource
 ): BackupRepository {
-    override suspend fun exportDatabase(userId: UserId, userHandle: Handle, backupPassword: Password, targetDir: File): Either<String, File> {
+    override suspend fun exportDatabase(
+        userId: UserId,
+        userHandle: Handle,
+        backupPassword: Password,
+        targetDir: File
+    ): Either<String, File> {
         TODO("Not yet implemented")
     }
 }

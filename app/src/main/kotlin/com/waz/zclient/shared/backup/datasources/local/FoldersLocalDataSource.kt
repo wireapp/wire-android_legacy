@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 class FoldersLocalDataSource(
     private val foldersDao: FoldersDao,
     batchSize: Int = BatchSize
-): BackupLocalDataSource<FoldersEntity, FoldersJSONEntity>(FoldersJSONEntity.serializer(), batchSize) {
+) : BackupLocalDataSource<FoldersEntity, FoldersJSONEntity>(FoldersJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<FoldersEntity> =
         foldersDao.getFoldersInBatch(batchSize, offset)
 

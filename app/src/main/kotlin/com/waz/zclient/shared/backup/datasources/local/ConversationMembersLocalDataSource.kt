@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 class ConversationMembersLocalDataSource(
     private val conversationMembersDao: ConversationMembersDao,
     batchSize: Int = BatchSize
-): BackupLocalDataSource<ConversationMembersEntity, ConversationMembersJSONEntity>(ConversationMembersJSONEntity.serializer(), batchSize) {
+) : BackupLocalDataSource<ConversationMembersEntity, ConversationMembersJSONEntity>(ConversationMembersJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<ConversationMembersEntity> =
         conversationMembersDao.getConversationMembersInBatch(batchSize, offset)
 
