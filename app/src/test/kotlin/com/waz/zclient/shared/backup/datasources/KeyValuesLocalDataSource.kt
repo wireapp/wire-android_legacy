@@ -25,7 +25,7 @@ class KeyValuesLocalDataSourceTest : UnitTest() {
 
     @Before
     fun setup() {
-        dataSource =  KeyValuesLocalDataSource(keyValuesDao)
+        dataSource = KeyValuesLocalDataSource(keyValuesDao)
     }
 
     @Test
@@ -42,4 +42,5 @@ class KeyValuesLocalDataSourceTest : UnitTest() {
         val result = dataSource.deserialize(jsonStr)
         result shouldEqual keyValuesEntity
     }
+
 }

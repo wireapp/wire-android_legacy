@@ -8,10 +8,13 @@ import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Com
 import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldEqual
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mock
+import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 class AssetLocalDataSourceTest : UnitTest() {
@@ -51,7 +54,7 @@ class AssetLocalDataSourceTest : UnitTest() {
     }
 
     @Test
-    fun `two json entites made from one asset entity should be equal`(): Unit {
+    fun `two json entities made from one asset entity should be equal`(): Unit {
         val one = AssetsJSONEntity.from(assetsEntity)
         val two = AssetsJSONEntity.from(assetsEntity)
 
@@ -76,4 +79,5 @@ class AssetLocalDataSourceTest : UnitTest() {
 
         result.id shouldEqual assetsEntity.id
     }
+
 }

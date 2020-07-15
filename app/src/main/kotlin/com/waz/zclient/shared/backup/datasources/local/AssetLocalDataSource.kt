@@ -5,17 +5,19 @@ import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Com
 import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.list
 
-class AssetLocalDataSource(private val assetsDao: AssetsDao):
-    BackupLocalDataSource<AssetsEntity, AssetsJSONEntity>(AssetsJSONEntity.serializer()) {
+class AssetLocalDataSource(
+    private val assetsDao: AssetsDao,
+    batchSize: Int = BatchSize
+): BackupLocalDataSource<AssetsEntity, AssetsJSONEntity>(AssetsJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<AssetsEntity> =
         assetsDao.getAssetsInBatch(batchSize, offset)
 
-    override fun toJSONType(entity: AssetsEntity): AssetsJSONEntity = AssetsJSONEntity.from(entity)
-    override fun toEntityType(json: AssetsJSONEntity): AssetsEntity = json.toEntity()
+    override fun toJSON(entity: AssetsEntity): AssetsJSONEntity = AssetsJSONEntity.from(entity)
+    override fun toEntity(json: AssetsJSONEntity): AssetsEntity = json.toEntity()
 }
 
+@SuppressWarnings("ComplexMethod")
 @Serializable
 data class AssetsJSONEntity(
         val id: String,

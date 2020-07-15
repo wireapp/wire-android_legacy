@@ -6,15 +6,18 @@ import com.waz.zclient.storage.db.messages.MessagesDao
 import com.waz.zclient.storage.db.messages.MessagesEntity
 import kotlinx.serialization.Serializable
 
-class MessagesLocalDataSource(private val messagesDao: MessagesDao):
-    BackupLocalDataSource<MessagesEntity, MessagesJSONEntity>(MessagesJSONEntity.serializer()) {
+class MessagesLocalDataSource(
+    private val messagesDao: MessagesDao,
+    batchSize: Int = BatchSize
+): BackupLocalDataSource<MessagesEntity, MessagesJSONEntity>(MessagesJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<MessagesEntity> =
         messagesDao.getMessagesInBatch(batchSize, offset)
 
-    override fun toJSONType(entity: MessagesEntity): MessagesJSONEntity = MessagesJSONEntity.from(entity)
-    override fun toEntityType(json: MessagesJSONEntity): MessagesEntity = json.toEntity()
+    override fun toJSON(entity: MessagesEntity): MessagesJSONEntity = MessagesJSONEntity.from(entity)
+    override fun toEntity(json: MessagesJSONEntity): MessagesEntity = json.toEntity()
 }
 
+@SuppressWarnings("ComplexMethod")
 @Serializable
 data class MessagesJSONEntity(
     val id: String,
