@@ -22,7 +22,7 @@ abstract class BackupLocalDataSource<EntityType, JSONType>(
     fun deserialize(jsonStr: String): EntityType = toEntity(json.parse(serializer, jsonStr))
 
     fun serializeList(list: List<EntityType>): String =
-        json.stringify(serializer.list, list.map { entity -> toJSON(entity) } )
+        json.stringify(serializer.list, list.map { entity -> toJSON(entity) })
 
     fun deserializeList(jsonListStr: String): List<EntityType> =
         json.parse(serializer.list, jsonListStr).map { jsonEntity -> toEntity(jsonEntity) }

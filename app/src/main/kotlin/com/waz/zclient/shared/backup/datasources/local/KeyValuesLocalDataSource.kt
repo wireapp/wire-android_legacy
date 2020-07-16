@@ -4,10 +4,8 @@ import com.waz.zclient.storage.db.property.KeyValuesDao
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import kotlinx.serialization.Serializable
 
-class KeyValuesLocalDataSource(
-        private val keyValuesDao: KeyValuesDao,
-        batchSize: Int = BatchSize
-) : BackupLocalDataSource<KeyValuesEntity, KeyValuesJSONEntity>(KeyValuesJSONEntity.serializer(), batchSize) {
+class KeyValuesLocalDataSource(private val keyValuesDao: KeyValuesDao, batchSize: Int = BatchSize) :
+BackupLocalDataSource<KeyValuesEntity, KeyValuesJSONEntity>(KeyValuesJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<KeyValuesEntity> =
         keyValuesDao.getKeyValuesInBatch(batchSize, offset)
 
@@ -15,12 +13,8 @@ class KeyValuesLocalDataSource(
     override fun toEntity(json: KeyValuesJSONEntity): KeyValuesEntity = json.toEntity()
 }
 
-@SuppressWarnings("ParameterListWrapping")
 @Serializable
-data class KeyValuesJSONEntity(
-    val key: String,
-    val value: String = ""
-) {
+data class KeyValuesJSONEntity(val key: String, val value: String = "") {
     fun toEntity(): KeyValuesEntity = KeyValuesEntity(
         key = key,
         value = value

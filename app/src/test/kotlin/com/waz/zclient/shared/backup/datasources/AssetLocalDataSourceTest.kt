@@ -64,7 +64,7 @@ class AssetLocalDataSourceTest : UnitTest() {
         val assetsJSONEntity = AssetsJSONEntity.from(assetsEntity)
         val result: AssetsEntity = assetsJSONEntity.toEntity()
 
-        result.id shouldEqual assetsEntity.id
+        result shouldEqual assetsEntity
     }
 
     @Test
@@ -74,7 +74,6 @@ class AssetLocalDataSourceTest : UnitTest() {
 
         val result = dataSource.deserialize(jsonStr)
 
-        result.id shouldEqual assetsEntity.id
+        result shouldEqual assetsEntity
     }
-
 }

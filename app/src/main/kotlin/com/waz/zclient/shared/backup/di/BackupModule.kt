@@ -2,9 +2,21 @@ package com.waz.zclient.shared.backup.di
 
 import com.waz.zclient.shared.backup.BackupRepository
 import com.waz.zclient.shared.backup.datasources.BackupDataSource
-import com.waz.zclient.shared.backup.datasources.local.*
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import com.waz.zclient.shared.backup.datasources.local.AssetLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.ButtonLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.ConversationFoldersLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.ConversationsLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.ConversationMembersLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.ConversationRoleActionLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.FoldersLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.KeyValuesLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.LikesLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.MessagesLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.PropertiesLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.ReadReceiptsLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.UserLocalDataSource
 
 val backupModule: Module = module {
     single {

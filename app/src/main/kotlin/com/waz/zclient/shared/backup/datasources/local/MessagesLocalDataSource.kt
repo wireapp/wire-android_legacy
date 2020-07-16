@@ -3,11 +3,10 @@ package com.waz.zclient.shared.backup.datasources.local
 import com.waz.zclient.storage.db.messages.MessagesDao
 import com.waz.zclient.storage.db.messages.MessagesEntity
 import kotlinx.serialization.Serializable
+import java.util.Arrays
 
-class MessagesLocalDataSource(
-    private val messagesDao: MessagesDao,
-    batchSize: Int = BatchSize
-) : BackupLocalDataSource<MessagesEntity, MessagesJSONEntity>(MessagesJSONEntity.serializer(), batchSize) {
+class MessagesLocalDataSource(private val messagesDao: MessagesDao, batchSize: Int = BatchSize) :
+BackupLocalDataSource<MessagesEntity, MessagesJSONEntity>(MessagesJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<MessagesEntity> =
         messagesDao.getMessagesInBatch(batchSize, offset)
 
@@ -49,8 +48,7 @@ data class MessagesJSONEntity(
         recipient.hashCode() + email.hashCode() + name.hashCode() + messageState.hashCode() +
         contentSize.hashCode() + localTime.hashCode() + editTime.hashCode() + ephemeral.hashCode() +
         expiryTime.hashCode() + expired.hashCode() + duration.hashCode() + quote.hashCode() +
-        quoteValidity.hashCode() + forceReadReceipts.hashCode() + assetId.hashCode() +
-        (protos?.size ?: 0)
+        quoteValidity.hashCode() + forceReadReceipts.hashCode() + assetId.hashCode() + Arrays.hashCode(protos)
 
     override fun equals(other: Any?): Boolean =
         other != null && other is MessagesJSONEntity &&

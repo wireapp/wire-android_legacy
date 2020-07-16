@@ -3,11 +3,10 @@ package com.waz.zclient.shared.backup.datasources.local
 import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
 import kotlinx.serialization.Serializable
+import java.util.Arrays
 
-class AssetLocalDataSource(
-    private val assetsDao: AssetsDao,
-    batchSize: Int = BatchSize
-) : BackupLocalDataSource<AssetsEntity, AssetsJSONEntity>(AssetsJSONEntity.serializer(), batchSize) {
+class AssetLocalDataSource(private val assetsDao: AssetsDao, batchSize: Int = BatchSize) :
+BackupLocalDataSource<AssetsEntity, AssetsJSONEntity>(AssetsJSONEntity.serializer(), batchSize) {
     override suspend fun getInBatch(batchSize: Int, offset: Int): List<AssetsEntity> =
         assetsDao.getAssetsInBatch(batchSize, offset)
 
@@ -15,7 +14,7 @@ class AssetLocalDataSource(
     override fun toEntity(json: AssetsJSONEntity): AssetsEntity = json.toEntity()
 }
 
-@SuppressWarnings("ComplexMethod", "ParameterListWrapping")
+@SuppressWarnings("ComplexMethod")
 @Serializable
 data class AssetsJSONEntity(
     val id: String,
@@ -33,7 +32,7 @@ data class AssetsJSONEntity(
     override fun hashCode(): Int =
         id.hashCode() + token.hashCode() + name.hashCode() + encryption.hashCode() +
         mime.hashCode() + size.hashCode() + source.hashCode() + preview.hashCode() +
-        details.hashCode() + conversationId.hashCode() + (sha?.size ?: 0)
+        details.hashCode() + conversationId.hashCode() + Arrays.hashCode(sha)
 
     override fun equals(other: Any?): Boolean =
         other != null && other is AssetsJSONEntity && other.id == id && other.token == token &&
