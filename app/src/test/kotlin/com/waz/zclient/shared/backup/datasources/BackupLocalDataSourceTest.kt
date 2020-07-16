@@ -10,7 +10,7 @@ import org.amshove.kluent.shouldEqual
 import org.junit.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.`when`
 
 @ExperimentalCoroutinesApi
 class BackupLocalDataSourceTest : UnitTest() {
@@ -23,7 +23,7 @@ class BackupLocalDataSourceTest : UnitTest() {
         val dataSource = KeyValuesLocalDataSource(keyValuesDao)
         val keyValuesEntity = KeyValuesEntity("key", "value")
 
-        Mockito.`when`(keyValuesDao.getKeyValuesInBatch(ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt())).thenReturn(listOf(keyValuesEntity))
+        `when`(keyValuesDao.getKeyValuesInBatch(ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt())).thenReturn(listOf(keyValuesEntity))
 
         val jsonStr = dataSource.nextJSONArrayAsString()!!
 
@@ -36,18 +36,18 @@ class BackupLocalDataSourceTest : UnitTest() {
     fun `read only the first batch of data as a json array string`(): Unit = runBlocking {
         val batchSize = 3
         val entities = listOf(
-                KeyValuesEntity("1", "a"),
-                KeyValuesEntity("2", "b"),
-                KeyValuesEntity("3", "c"),
-                KeyValuesEntity("4", "d"),
-                KeyValuesEntity("5", "e")
+            KeyValuesEntity("1", "a"),
+            KeyValuesEntity("2", "b"),
+            KeyValuesEntity("3", "c"),
+            KeyValuesEntity("4", "d"),
+            KeyValuesEntity("5", "e")
         )
 
         val dataSource = KeyValuesLocalDataSource(keyValuesDao, batchSize)
 
-        Mockito.`when`(keyValuesDao.getKeyValuesInBatch(3, 0)).thenReturn(entities.take(3))
-        Mockito.`when`(keyValuesDao.getKeyValuesInBatch(3, 3)).thenReturn(entities.drop(3).take(3))
-        Mockito.`when`(keyValuesDao.getKeyValuesInBatch(3, 5)).thenReturn(emptyList())
+        `when`(keyValuesDao.getKeyValuesInBatch(3, 0)).thenReturn(entities.take(3))
+        `when`(keyValuesDao.getKeyValuesInBatch(3, 3)).thenReturn(entities.drop(3).take(3))
+        `when`(keyValuesDao.getKeyValuesInBatch(3, 5)).thenReturn(emptyList())
 
         val jsonStr1 = dataSource.nextJSONArrayAsString()!!
         val result1: List<KeyValuesEntity> = dataSource.deserializeList(jsonStr1)
