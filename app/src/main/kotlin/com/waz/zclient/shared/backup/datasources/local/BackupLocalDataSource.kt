@@ -1,5 +1,7 @@
 package com.waz.zclient.shared.backup.datasources.local
 
+import com.waz.zclient.core.utilities.SuspendIterable
+import com.waz.zclient.core.utilities.SuspendIterator
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
@@ -8,7 +10,7 @@ import kotlinx.serialization.json.JsonConfiguration
 abstract class BackupLocalDataSource<EntityType, JSONType>(
     private val serializer: KSerializer<JSONType>,
     private val batchSize: Int = BatchSize
-) {
+) : SuspendIterable<String> {
     private var currentOffset: Int = 0
 
     protected abstract suspend fun getInBatch(batchSize: Int, offset: Int): List<EntityType>
@@ -39,6 +41,10 @@ abstract class BackupLocalDataSource<EntityType, JSONType>(
             currentOffset += list.size
             serializeList(list)
         }
+    }
+
+    override fun iterator(): SuspendIterator<String> = object : SuspendIterator<String> {
+        override suspend fun next(): String? = nextJSONArrayAsString()
     }
 
     companion object {
