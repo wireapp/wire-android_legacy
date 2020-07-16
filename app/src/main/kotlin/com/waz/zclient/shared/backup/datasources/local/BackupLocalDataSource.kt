@@ -9,8 +9,6 @@ abstract class BackupLocalDataSource<EntityType, JSONType>(
     private val serializer: KSerializer<JSONType>,
     private val batchSize: Int = BatchSize
 ) {
-    protected val json by lazy { Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true)) }
-
     private var currentOffset: Int = 0
 
     protected abstract suspend fun getInBatch(batchSize: Int, offset: Int): List<EntityType>
@@ -44,8 +42,7 @@ abstract class BackupLocalDataSource<EntityType, JSONType>(
     }
 
     companion object {
-        fun toIntArray(bytes: ByteArray?): IntArray? = bytes?.map { it.toInt() }?.toIntArray()
-        fun toByteArray(ints: IntArray?): ByteArray? = ints?.map { it.toByte() }?.toByteArray()
+        protected val json by lazy { Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true)) }
 
         const val BatchSize: Int = 1000
     }

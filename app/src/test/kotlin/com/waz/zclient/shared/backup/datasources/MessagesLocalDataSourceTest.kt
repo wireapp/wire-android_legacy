@@ -1,7 +1,6 @@
 package com.waz.zclient.shared.backup.datasources
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.MessagesJSONEntity
 import com.waz.zclient.shared.backup.datasources.local.MessagesLocalDataSource
 import com.waz.zclient.storage.db.messages.MessagesDao
@@ -49,17 +48,6 @@ class MessagesLocalDataSourceTest : UnitTest() {
     @Before
     fun setup() {
         dataSource = MessagesLocalDataSource(messagesDao)
-    }
-
-    @Test
-    fun `serialize and deserialize the message's protos`(): Unit {
-        val ints: IntArray? = BackupLocalDataSource.toIntArray(messagesEntity.protos)
-        val result: ByteArray = BackupLocalDataSource.toByteArray(ints)!!
-
-        result.size shouldEqual messagesEntity.protos?.size
-        for (i in IntRange(0, result.size - 1)) {
-            result[i] shouldEqual messagesEntity.protos?.get(i)
-        }
     }
 
     @Test

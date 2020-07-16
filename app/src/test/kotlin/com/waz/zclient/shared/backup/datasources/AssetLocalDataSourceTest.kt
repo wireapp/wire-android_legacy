@@ -3,8 +3,6 @@ package com.waz.zclient.shared.backup.datasources
 import com.waz.zclient.UnitTest
 import com.waz.zclient.shared.backup.datasources.local.AssetLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.AssetsJSONEntity
-import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Companion.toByteArray
-import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource.Companion.toIntArray
 import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,17 +38,6 @@ class AssetLocalDataSourceTest : UnitTest() {
     }
 
     @Test
-    fun `serialize and deserialize the asset's sha`(): Unit {
-        val ints: IntArray? = toIntArray(assetsEntity.sha)
-        val result: ByteArray = toByteArray(ints)!!
-
-        result.size shouldEqual assetsEntity.sha?.size
-        for (i in IntRange(0, result.size - 1)) {
-            result[i] shouldEqual assetsEntity.sha?.get(i)
-        }
-    }
-
-    @Test
     fun `two json entities made from one asset entity should be equal`(): Unit {
         val one = AssetsJSONEntity.from(assetsEntity)
         val two = AssetsJSONEntity.from(assetsEntity)
@@ -74,6 +61,6 @@ class AssetLocalDataSourceTest : UnitTest() {
 
         val result = dataSource.deserialize(jsonStr)
 
-        result shouldEqual assetsEntity
+        result.id shouldEqual assetsEntity.id
     }
 }
