@@ -2,7 +2,7 @@ package com.waz.zclient.shared.backup.datasources
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.shared.backup.datasources.local.UserJSONEntity
-import com.waz.zclient.shared.backup.datasources.local.UserLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.UsersLocalDataSource
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,11 +45,11 @@ class UserLocalDataSourceTest : UnitTest() {
 
     @Mock
     private lateinit var userDao: UserDao
-    private lateinit var dataSource: UserLocalDataSource
+    private lateinit var dataSource: UsersLocalDataSource
 
     @Before
     fun setup() {
-        dataSource = UserLocalDataSource(userDao)
+        dataSource = UsersLocalDataSource(userDao)
     }
 
     @Test

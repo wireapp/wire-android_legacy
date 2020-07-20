@@ -7,10 +7,7 @@ import com.waz.zclient.storage.db.users.service.UserDao
 import com.waz.zclient.storage.pref.global.GlobalPreferences
 import kotlinx.coroutines.flow.Flow
 
-class UsersLocalDataSource constructor(
-    private val userDao: UserDao,
-    private val globalPreferences: GlobalPreferences
-) {
+class UsersLocalDataSource constructor (private val userDao: UserDao, private val globalPreferences: GlobalPreferences) {
 
     private val userId: String
         get() = globalPreferences.activeUserId

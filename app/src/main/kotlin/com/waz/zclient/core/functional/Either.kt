@@ -119,3 +119,31 @@ fun <L, R> Either<L, R>.getOrElse(value: R): R =
         is Either.Left -> value
         is Either.Right -> b
     }
+
+/**
+ * Maps over an iterable of T where the mapping function returns an Either<F, S>.
+ * If the mapping function returns Left<F>, signifying an error, the whole mapRight is interrupted and
+ * the error is returned. If the mapping function returns Right for all elements, the result
+ * is Right<List<S>>. You can think of this method as a functional version of a map wrapped in
+ * a try/catch because the mapping function can throw an exception.
+ */
+fun <T, S, F> Iterable<T>.mapRight(fn: (T) -> Either<F, S>): Either<F, List<S>> {
+    var finished = false
+    val results = mutableListOf<S>()
+    var failure: F? = null
+
+    val it = this.iterator()
+    do {
+        val value = it.next()
+        if (value != null) {
+            when (val res = fn(value)) {
+                is Right -> results += res.b
+                is Left -> failure = res.a
+            }
+        } else {
+            finished = true
+        }
+    } while (!finished && failure == null)
+
+    return if (failure != null) Left(failure) else Right(results.toList())
+}

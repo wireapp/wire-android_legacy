@@ -3,11 +3,12 @@ package com.waz.zclient.storage.db.users.service
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import com.waz.zclient.storage.db.BatchReader
 import com.waz.zclient.storage.db.users.model.UserEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface UserDao {
+interface UserDao : BatchReader<UserEntity> {
 
     @Query("SELECT * FROM Users")
     suspend fun allUsers(): List<UserEntity>
@@ -31,5 +32,8 @@ interface UserDao {
     suspend fun updatePhone(userId: String, phone: String)
 
     @Query("SELECT * FROM Users ORDER BY _id LIMIT :batchSize OFFSET :offset")
-    suspend fun getUsersInBatch(batchSize: Int, offset: Int): List<UserEntity>
+    override suspend fun getBatch(batchSize: Int, offset: Int): List<UserEntity>
+
+    @Query("SELECT COUNT(*) FROM Users")
+    override suspend fun size(): Int
 }

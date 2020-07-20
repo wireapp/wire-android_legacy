@@ -1,7 +1,7 @@
 package com.waz.zclient.shared.backup.datasources
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.shared.backup.datasources.local.AssetLocalDataSource
+import com.waz.zclient.shared.backup.datasources.local.AssetsLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.AssetsJSONEntity
 import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
@@ -30,11 +30,11 @@ class AssetLocalDataSourceTest : UnitTest() {
 
     @Mock
     private lateinit var assetsDao: AssetsDao
-    private lateinit var dataSource: AssetLocalDataSource
+    private lateinit var dataSource: AssetsLocalDataSource
 
     @Before
     fun setup() {
-        dataSource = AssetLocalDataSource(assetsDao)
+        dataSource = AssetsLocalDataSource(assetsDao)
     }
 
     @Test

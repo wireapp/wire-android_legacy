@@ -4,11 +4,8 @@ import com.waz.zclient.storage.db.property.KeyValuesDao
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import kotlinx.serialization.Serializable
 
-class KeyValuesLocalDataSource(private val keyValuesDao: KeyValuesDao, batchSize: Int = BatchSize) :
-BackupLocalDataSource<KeyValuesEntity, KeyValuesJSONEntity>(KeyValuesJSONEntity.serializer(), batchSize) {
-    override suspend fun getInBatch(batchSize: Int, offset: Int): List<KeyValuesEntity> =
-        keyValuesDao.getKeyValuesInBatch(batchSize, offset)
-
+class KeyValuesLocalDataSource(dao: KeyValuesDao, batchSize: Int = BatchSize) :
+BackupLocalDataSource<KeyValuesEntity, KeyValuesJSONEntity>("keyValues", dao, batchSize, KeyValuesJSONEntity.serializer()) {
     override fun toJSON(entity: KeyValuesEntity): KeyValuesJSONEntity = KeyValuesJSONEntity.from(entity)
     override fun toEntity(json: KeyValuesJSONEntity): KeyValuesEntity = json.toEntity()
 }

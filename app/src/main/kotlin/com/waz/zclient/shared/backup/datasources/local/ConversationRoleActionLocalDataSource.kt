@@ -4,12 +4,9 @@ import com.waz.zclient.storage.db.conversations.ConversationRoleActionDao
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
 import kotlinx.serialization.Serializable
 
-class ConversationRoleActionLocalDataSource(private val conversationRoleActionDao: ConversationRoleActionDao, batchSize: Int = BatchSize) :
+class ConversationRoleActionLocalDataSource(dao: ConversationRoleActionDao, batchSize: Int = BatchSize) :
 BackupLocalDataSource<ConversationRoleActionEntity, ConversationRoleActionJSONEntity>
-    (ConversationRoleActionJSONEntity.serializer(), batchSize) {
-    override suspend fun getInBatch(batchSize: Int, offset: Int): List<ConversationRoleActionEntity> =
-        conversationRoleActionDao.getConversationRoleActionsInBatch(batchSize, offset)
-
+    ("conversationRoles", dao, batchSize, ConversationRoleActionJSONEntity.serializer()) {
     override fun toJSON(entity: ConversationRoleActionEntity): ConversationRoleActionJSONEntity =
             ConversationRoleActionJSONEntity.from(entity)
     override fun toEntity(json: ConversationRoleActionJSONEntity): ConversationRoleActionEntity =

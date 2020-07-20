@@ -1,19 +1,19 @@
 package com.waz.zclient.shared.backup.datasources.local
 
-import com.waz.zclient.core.utilities.SuspendIterable
-import com.waz.zclient.core.utilities.SuspendIterator
+import com.waz.zclient.core.extension.empty
+import com.waz.zclient.storage.db.BatchReader
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 
 abstract class BackupLocalDataSource<EntityType, JSONType>(
-    private val serializer: KSerializer<JSONType>,
-    private val batchSize: Int = BatchSize
-) : SuspendIterable<String> {
-    private var currentOffset: Int = 0
-
-    protected abstract suspend fun getInBatch(batchSize: Int, offset: Int): List<EntityType>
+    val name: String,
+    protected val dao: BatchReader<EntityType>,
+    protected val batchSize: Int,
+    private val serializer: KSerializer<JSONType>
+) : Iterable<String> {
     protected abstract fun toJSON(entity: EntityType): JSONType
     protected abstract fun toEntity(json: JSONType): EntityType
 
@@ -22,29 +22,27 @@ abstract class BackupLocalDataSource<EntityType, JSONType>(
     fun deserialize(jsonStr: String): EntityType = toEntity(json.parse(serializer, jsonStr))
 
     fun serializeList(list: List<EntityType>): String =
-        json.stringify(serializer.list, list.map { entity -> toJSON(entity) })
+        json.stringify(serializer.list, list.map { toJSON(it) })
 
     fun deserializeList(jsonListStr: String): List<EntityType> =
-        json.parse(serializer.list, jsonListStr).map { jsonEntity -> toEntity(jsonEntity) }
+        json.parse(serializer.list, jsonListStr).map { toEntity(it) }
 
-    fun resetCurrentOffset() {
-        currentOffset = 0
-    }
+    @SuppressWarnings("IteratorNotThrowingNoSuchElementException")
+    override fun iterator(): Iterator<String> = object : Iterator<String> {
+        private var currentOffset: Int = 0
+        private val listSize: Int by lazy { runBlocking { dao.size() } }
 
-    fun getCurrentOffset(): Int = currentOffset
+        override fun hasNext(): Boolean = currentOffset < listSize
 
-    suspend fun nextJSONArrayAsString(): String? {
-        val list = getInBatch(batchSize, currentOffset)
-        return if (list.isEmpty()) {
-            null
-        } else {
-            currentOffset += list.size
-            serializeList(list)
+        override fun next(): String = runBlocking {
+            val list = dao.getBatch(batchSize, currentOffset)
+            if (list.isEmpty()) {
+                String.empty()
+            } else {
+                currentOffset += list.size
+                serializeList(list)
+            }
         }
-    }
-
-    override fun iterator(): SuspendIterator<String> = object : SuspendIterator<String> {
-        override suspend fun next(): String? = nextJSONArrayAsString()
     }
 
     companion object {

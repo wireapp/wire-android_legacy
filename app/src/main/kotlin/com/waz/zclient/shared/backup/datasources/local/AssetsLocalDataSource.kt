@@ -5,11 +5,8 @@ import com.waz.zclient.storage.db.assets.AssetsEntity
 import kotlinx.serialization.Serializable
 import java.util.Arrays
 
-class AssetLocalDataSource(private val assetsDao: AssetsDao, batchSize: Int = BatchSize) :
-BackupLocalDataSource<AssetsEntity, AssetsJSONEntity>(AssetsJSONEntity.serializer(), batchSize) {
-    override suspend fun getInBatch(batchSize: Int, offset: Int): List<AssetsEntity> =
-        assetsDao.getAssetsInBatch(batchSize, offset)
-
+class AssetsLocalDataSource(dao: AssetsDao, batchSize: Int = BatchSize) :
+BackupLocalDataSource<AssetsEntity, AssetsJSONEntity>("assets", dao, batchSize, AssetsJSONEntity.serializer()) {
     override fun toJSON(entity: AssetsEntity): AssetsJSONEntity = AssetsJSONEntity.from(entity)
     override fun toEntity(json: AssetsJSONEntity): AssetsEntity = json.toEntity()
 }

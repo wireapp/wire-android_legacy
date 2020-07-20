@@ -23,9 +23,9 @@ class BackupLocalDataSourceTest : UnitTest() {
         val dataSource = KeyValuesLocalDataSource(keyValuesDao)
         val keyValuesEntity = KeyValuesEntity("key", "value")
 
-        `when`(keyValuesDao.getKeyValuesInBatch(ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt())).thenReturn(listOf(keyValuesEntity))
+        `when`(keyValuesDao.getBatch(ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt())).thenReturn(listOf(keyValuesEntity))
 
-        val jsonStr = dataSource.nextJSONArrayAsString()!!
+        val jsonStr = dataSource.iterator().next()
 
         val result: List<KeyValuesEntity> = dataSource.deserializeList(jsonStr)
         result.size shouldEqual 1
@@ -33,7 +33,7 @@ class BackupLocalDataSourceTest : UnitTest() {
     }
 
     @Test
-    fun `read only the first batch of data as a json array string`(): Unit = runBlocking {
+    fun `read data as a json array strings in batches`(): Unit = runBlocking {
         val batchSize = 3
         val entities = listOf(
             KeyValuesEntity("1", "a"),
@@ -45,19 +45,19 @@ class BackupLocalDataSourceTest : UnitTest() {
 
         val dataSource = KeyValuesLocalDataSource(keyValuesDao, batchSize)
 
-        `when`(keyValuesDao.getKeyValuesInBatch(3, 0)).thenReturn(entities.take(3))
-        `when`(keyValuesDao.getKeyValuesInBatch(3, 3)).thenReturn(entities.drop(3).take(3))
-        `when`(keyValuesDao.getKeyValuesInBatch(3, 5)).thenReturn(emptyList())
+        `when`(keyValuesDao.size()).thenReturn(entities.size)
+        `when`(keyValuesDao.getBatch(3, 0)).thenReturn(entities.take(3))
+        `when`(keyValuesDao.getBatch(3, 3)).thenReturn(entities.drop(3).take(3))
 
-        val jsonStr1 = dataSource.nextJSONArrayAsString()!!
+        val it = dataSource.iterator()
+        val jsonStr1 = it.next()
         val result1: List<KeyValuesEntity> = dataSource.deserializeList(jsonStr1)
         result1.size shouldEqual 3
+        it.hasNext() shouldEqual true
 
-        val jsonStr2 = dataSource.nextJSONArrayAsString()!!
+        val jsonStr2 = it.next()
         val result2: List<KeyValuesEntity> = dataSource.deserializeList(jsonStr2)
         result2.size shouldEqual 2
-
-        val jsonStr3 = dataSource.nextJSONArrayAsString()
-        jsonStr3 shouldEqual null
+        it.hasNext() shouldEqual false
     }
 }

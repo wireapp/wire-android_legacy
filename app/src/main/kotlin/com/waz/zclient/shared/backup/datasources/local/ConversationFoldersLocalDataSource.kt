@@ -4,11 +4,9 @@ import com.waz.zclient.storage.db.conversations.ConversationFoldersDao
 import com.waz.zclient.storage.db.conversations.ConversationFoldersEntity
 import kotlinx.serialization.Serializable
 
-class ConversationFoldersLocalDataSource(private val conversationFoldersDao: ConversationFoldersDao, batchSize: Int = BatchSize) :
-BackupLocalDataSource<ConversationFoldersEntity, ConversationFoldersJSONEntity>(ConversationFoldersJSONEntity.serializer(), batchSize) {
-    override suspend fun getInBatch(batchSize: Int, offset: Int): List<ConversationFoldersEntity> =
-        conversationFoldersDao.getConversationFoldersInBatch(batchSize, offset)
-
+class ConversationFoldersLocalDataSource(dao: ConversationFoldersDao, batchSize: Int = BatchSize) :
+BackupLocalDataSource<ConversationFoldersEntity, ConversationFoldersJSONEntity>
+    ("conversationFolders", dao, batchSize, ConversationFoldersJSONEntity.serializer()) {
     override fun toJSON(entity: ConversationFoldersEntity): ConversationFoldersJSONEntity = ConversationFoldersJSONEntity.from(entity)
     override fun toEntity(json: ConversationFoldersJSONEntity): ConversationFoldersEntity = json.toEntity()
 }
