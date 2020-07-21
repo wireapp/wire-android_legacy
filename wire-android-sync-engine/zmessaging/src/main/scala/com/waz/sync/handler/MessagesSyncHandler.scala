@@ -30,8 +30,8 @@ import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.errors._
 import com.waz.model.sync.ReceiptType
-import com.waz.service.assets.{AssetService, AssetStorage, PreviewEmpty, PreviewNotReady, PreviewNotUploaded, PreviewUploaded, UploadAsset, UploadAssetStatus, UploadAssetStorage}
 import com.waz.service.assets.Asset.{General, Image}
+import com.waz.service.assets._
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.OtrClientsService
@@ -41,10 +41,11 @@ import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.ErrorOrResponse
 import com.waz.sync.otr.OtrSyncHandler
+import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.sync.{SyncResult, SyncServiceHandle}
-import com.wire.signals.CancellableFuture
 import com.waz.utils._
 import com.waz.znet2.http.ResponseCode
+import com.wire.signals.CancellableFuture
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
@@ -104,7 +105,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         }
 
         otrSync
-          .postOtrMessage(conv.id, msg, recipients = Some(recipients), nativePush = false)
+          .postOtrMessage(conv.id, msg, TargetRecipients.SpecificUsers(recipients), nativePush = false)
           .map(SyncResult(_))
       case None =>
         successful(Failure("conversation not found"))
@@ -117,7 +118,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         result <- otrSync.postOtrMessage(
                     msg.convId,
                     GenericMessage(Uid(), ButtonAction(buttonId.str, messageId.str)),
-                    recipients = Option(Set(senderId)),
+                    TargetRecipients.SpecificUsers(Set(senderId)),
                     enforceIgnoreMissing = true)
         _      <- result.fold(_ => service.setButtonError(messageId, buttonId), _ => Future.successful(()))
       } yield SyncResult(result)

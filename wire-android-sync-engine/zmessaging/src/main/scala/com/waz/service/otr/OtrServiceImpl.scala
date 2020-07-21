@@ -55,6 +55,11 @@ trait OtrService {
   def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any]
   def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]]
 
+  def encryptMessage(msg:             GenericMessage,
+                     recipients:      Map[UserId, Set[ClientId]],
+                     userFakeOnError: Boolean = false,
+                     partialResult:   EncryptedContent): Future[EncryptedContent]
+
   def encryptForUsers(users:          Set[UserId],
                       msg:            GenericMessage,
                       useFakeOnError: Boolean = false,
@@ -186,12 +191,27 @@ class OtrServiceImpl(selfUserId:     UserId,
       warn(l"can not decrypt gcm, no signaling key found: $c")
       None
   }
-
+  // We can get rid of this
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
     val msgData = GenericMessage.toByteArray(msg)
 
     sessions.withSession(SessionId(user, client)) { session =>
       EncryptedContent(Map(user -> Map(client -> session.encrypt(msgData))))
+    }
+  }
+
+  override def encryptMessage(msg:             GenericMessage,
+                              recipients:      Map[UserId, Set[ClientId]],
+                              userFakeOnError: Boolean = false,
+                              partialResult:   EncryptedContent): Future[EncryptedContent] = {
+
+    val msgData = GenericMessage.toByteArray(msg)
+
+    Future.traverse(recipients) { case (userId, clientIds) =>
+      encryptForClients(userId, clientIds, msgData, userFakeOnError, partialResult)
+    }.map { encryptedPayloads =>
+      val encryptedPayloadsByUserId = encryptedPayloads.toMap
+      EncryptedContent(encryptedPayloadsByUserId.filter(_._2.nonEmpty))
     }
   }
 
@@ -204,35 +224,42 @@ class OtrServiceImpl(selfUserId:     UserId,
                                useFakeOnError: Boolean = false,
                                partialResult:  EncryptedContent) = {
 
-    val msgData = GenericMessage.toByteArray(msg)
-
-    def encryptForClients(user: UserId, clients: Seq[Client], msgData: Array[Byte], useFakeOnError: Boolean, partialResult: EncryptedContent) =
-      Future.traverse(clients) { client =>
-
-        val previous = partialResult.content.get(user).flatMap(_.get(client.id)).filter(arr => arr.nonEmpty && arr.sameElements(EncryptionFailedMsg))
-
-        previous match {
-          case Some(bytes) => Future successful Some(client.id -> bytes)
-          case None =>
-            verbose(l"encrypt for client: $client")
-            sessions.withSession(SessionId(user, client.id)) { session => client.id -> session.encrypt(msgData) }.recover {
-              case e: Throwable =>
-                tracking.exception(e, s"encryption failed")
-                if (useFakeOnError) Some(client.id -> EncryptionFailedMsg) else None
-            }
-        }
-
-      }.map(ms => user -> ms.flatten.toMap)
-
     Future.traverse(users) { user =>
       // list of clients to which the message should be sent for given user
-      val targetClients = clientsStorage.getClients(user).map { cs =>
-        if (user == selfUserId) cs.filter(_.id != clientId) else cs
+      clientsStorage.getClients(user).map { cs =>
+        val clients = if (user == selfUserId) cs.filter(_.id != clientId) else cs
+        user -> clients.map(_.id).toSet
       }
-
-      targetClients.flatMap(encryptForClients(user, _, msgData, useFakeOnError, partialResult))
-    } map (res => EncryptedContent(res.toMap.filter(_._2.nonEmpty)))
+    }.flatMap { recipients =>
+      encryptMessage(msg, recipients.toMap, useFakeOnError, partialResult)
+    }
   }
+
+  private def encryptForClients(user: UserId,
+                                clients: Set[ClientId],
+                                msgData: Array[Byte],
+                                useFakeOnError: Boolean,
+                                partialResult: EncryptedContent
+                               ): Future[(UserId, Map[ClientId, Array[Byte]])] =
+
+    Future.traverse(clients) { clientId =>
+      val previous = partialResult.content
+        .get(user)
+        .flatMap(_.get(clientId))
+        .filter(arr => arr.nonEmpty && arr.sameElements(EncryptionFailedMsg))
+
+      previous match {
+        case Some(bytes) =>
+          Future successful Some(clientId -> bytes)
+        case None =>
+          verbose(l"encrypt for client: $clientId")
+          sessions.withSession(SessionId(user, clientId)) { session => clientId -> session.encrypt(msgData) }.recover {
+            case e: Throwable =>
+              tracking.exception(e, s"encryption failed")
+              if (useFakeOnError) Some(clientId -> EncryptionFailedMsg) else None
+          }
+      }
+    }.map(ms => user -> ms.flatten.toMap)
 
   def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any] = Future.traverse(userMap) {
     case (user, cs) =>

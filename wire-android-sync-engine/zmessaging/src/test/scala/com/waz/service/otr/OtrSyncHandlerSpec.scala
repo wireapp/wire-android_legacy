@@ -19,9 +19,9 @@ package com.waz.service.otr
 
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{ConversationStorage, MembersStorage, UsersStorage}
+import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.model.GenericMessage.TextMessage
-import com.waz.model.otr.ClientId
+import com.waz.model.otr.{Client, ClientId}
 import com.waz.model._
 import com.waz.service.conversation.ConversationsService
 import com.waz.service.push.PushService
@@ -50,6 +50,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
   val clientsSyncHandler = mock[OtrClientsSyncHandler]
   val push               = mock[PushService]
   val usersStorage       = mock[UsersStorage]
+  val clientsStorage     = mock[OtrClientsStorage]
 
   scenario("Encrypt and send message with no errors") {
 
@@ -57,7 +58,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
     val msg = TextMessage("content", Nil, expectsReadConfirmation = false)
 
     val otherUser = UserId("other-user-id")
-    val otherUsersClient = ClientId("client-id")
+    val otherUsersClient = ClientId("other-user-client-id")
     val content = "content".getBytes
 
     val encryptedContent = EncryptedContent(Map(otherUser -> Map(otherUsersClient -> content)))
@@ -70,8 +71,18 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       .expects(conv.id)
       .returning(Future.successful(Seq(account1Id, otherUser)))
 
-    (service.encryptForUsers _)
-      .expects(Set(account1Id, otherUser), msg, *, EncryptedContent.Empty)
+    (clientsStorage.getClients _)
+      .expects(otherUser)
+      .once()
+      .returning(Future.successful(Seq(Client(otherUsersClient, ""))))
+
+    (clientsStorage.getClients _)
+      .expects(account1Id)
+      .once()
+      .returning(Future.successful(Seq(Client(selfClientId, ""))))
+
+    (service.encryptMessage _)
+      .expects(msg, Map(account1Id -> Set.empty[ClientId], otherUser -> Set(otherUsersClient)), *, EncryptedContent.Empty)
       .returning(Future.successful(encryptedContent))
 
     (msgClient.postMessage _)
@@ -147,19 +158,34 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         }
       }
 
-    var callsToEncrypt = 0
-    (service.encryptForUsers _)
-      .expects(*, msg, *, *)
+    (clientsStorage.getClients _)
+      .expects(otherUser)
       .twice()
-      .onCall { (us, _, _, previous) =>
+      .returning(Future.successful(Seq(Client(otherUsersClient, ""))))
+
+    (clientsStorage.getClients _)
+      .expects(account1Id)
+      .twice()
+      .returning(Future.successful(Seq(Client(selfClientId, ""))))
+
+    (clientsStorage.getClients _)
+      .expects(missingUser)
+      .once()
+      .returning(Future.successful(Seq(Client(missingUserClient, ""))))
+
+    var callsToEncrypt = 0
+    (service.encryptMessage _)
+      .expects(msg, *, *, *)
+      .twice()
+      .onCall { (_, recipients, _, previous) =>
         callsToEncrypt += 1
         callsToEncrypt match {
           case 1 =>
-            us shouldEqual Set(account1Id, otherUser)
+            recipients shouldEqual Map(account1Id -> Set.empty[ClientId], otherUser -> Set(otherUsersClient))
             previous shouldEqual EncryptedContent.Empty
             Future.successful(encryptedContent1)
           case 2 =>
-            us shouldEqual Set(account1Id, otherUser, missingUser)
+            recipients shouldEqual Map(account1Id -> Set.empty[ClientId], otherUser -> Set(otherUsersClient), missingUser -> Set(missingUserClient))
             previous shouldEqual encryptedContent1
             Future.successful(encryptedContent2)
         }
@@ -239,7 +265,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
   def getSyncHandler = {
     (push.waitProcessing _).expects().anyNumberOfTimes.returning(Future.successful({}))
-    new OtrSyncHandlerImpl(teamId, selfClientId, otrClient, msgClient, service, convsService, convStorage, users, members, errors, clientsSyncHandler, push, usersStorage)
+    new OtrSyncHandlerImpl(teamId, selfClientId, otrClient, msgClient, service, convsService, convStorage, users, members, errors, clientsSyncHandler, push, usersStorage, clientsStorage)
   }
 
 }
