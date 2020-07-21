@@ -7,7 +7,7 @@ import com.waz.zclient.core.functional.Either
 import java.io.File
 
 interface BackupRepository {
-    suspend fun exportDatabase(userId: UserId, userHandle: Handle, backupPassword: String, targetDir: File): Either<String, File>
+    suspend fun exportDatabase(userId: UserId, userHandle: Handle, password: String, targetDir: File): Either<Failure, File>
 
     fun writeAllToFiles(targetDir: File): Either<Failure, List<File>>
 }

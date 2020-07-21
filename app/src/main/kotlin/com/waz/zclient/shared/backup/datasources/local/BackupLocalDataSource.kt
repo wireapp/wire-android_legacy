@@ -1,6 +1,5 @@
 package com.waz.zclient.shared.backup.datasources.local
 
-import com.waz.zclient.core.extension.empty
 import com.waz.zclient.storage.db.BatchReader
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.KSerializer
@@ -34,14 +33,10 @@ abstract class BackupLocalDataSource<EntityType, JSONType>(
 
         override fun hasNext(): Boolean = currentOffset < listSize
 
-        override fun next(): String = runBlocking {
-            val list = dao.getBatch(batchSize, currentOffset)
-            if (list.isNullOrEmpty()) {
-                String.empty()
-            } else {
-                currentOffset += list.size
-                serializeList(list)
-            }
+        override fun next(): String {
+            val list = runBlocking { dao.getBatch(batchSize, currentOffset) } ?: emptyList()
+            currentOffset += list.size
+            return serializeList(list)
         }
     }
 

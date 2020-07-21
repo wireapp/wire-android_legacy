@@ -17,12 +17,11 @@
  */
 package com.waz.service.backup
 
-import java.io.{BufferedInputStream, File, FileInputStream}
+import java.io.File
 import java.nio.ByteBuffer
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.IoUtils
-import com.waz.utils.IoUtils.withResource
 
 object EncryptedBackupHeader extends DerivedLogTag {
   val androidMagicNumber: String = "WBUA"

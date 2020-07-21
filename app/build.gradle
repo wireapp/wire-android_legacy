@@ -439,6 +439,8 @@ dependencies {
 
     implementation BuildDependencies.wireSignals
 
+    implementation BuildDependencies.libSodium
+
     // Unit Tests
     testImplementation TestDependencies.jUnit
     testImplementation TestDependencies.mockito.core

@@ -52,6 +52,7 @@ object Versions {
     const val JNA = "4.4.0@aar"
     const val LIB_PHONE_NUMBER = "7.1.1" // 7.2.x breaks protobuf
     const val PIN_EDITTEXT = "1.2.1"
+    const val LIB_SODIUM = "2.0.2"
 
     //testing
     const val JUNIT = "4.12"
@@ -137,6 +138,7 @@ object BuildDependencies {
     val jna = "net.java.dev.jna:jna:${Versions.JNA}"
     val libPhoneNumber = "com.googlecode.libphonenumber:libphonenumber:${Versions.LIB_PHONE_NUMBER}"
     val pinEditText = "com.poovam:pin-edittext-field:${Versions.PIN_EDITTEXT}"
+    val libSodium = "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:${Versions.LIB_SODIUM}"
 
     val wireSignals = "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:${LegacyDependencies.WIRE_SIGNALS}"
 }

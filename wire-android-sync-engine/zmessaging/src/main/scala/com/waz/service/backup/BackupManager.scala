@@ -22,7 +22,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.zip.{ZipFile, ZipOutputStream}
 
-import com.waz.db.ZMessagingDB
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.AccountData.Password

@@ -89,6 +89,11 @@ fun <T, L, R> Either<L, R>.flatMap(fn: (R) -> Either<L, T>): Either<L, T> =
     }
 
 /**
+ * A more readable shortcut for flattening nested Eithers.
+ */
+fun <L, R> Either<L, Either<L, R>>.flatten(): Either<L, R> = flatMap { it }
+
+/**
  * Left-biased onFailure() FP convention dictates that when this class is Left, it'll perform
  * the onFailure functionality passed as a parameter, but, overall will still return an either
  * object so you chain calls.
