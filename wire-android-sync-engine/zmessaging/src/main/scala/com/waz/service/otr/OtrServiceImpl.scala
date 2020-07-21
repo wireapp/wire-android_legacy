@@ -191,7 +191,7 @@ class OtrServiceImpl(selfUserId:     UserId,
       warn(l"can not decrypt gcm, no signaling key found: $c")
       None
   }
-  // We can get rid of this
+
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
     val msgData = GenericMessage.toByteArray(msg)
 
