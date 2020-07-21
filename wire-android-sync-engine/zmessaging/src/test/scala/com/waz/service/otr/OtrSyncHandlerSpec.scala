@@ -29,7 +29,7 @@ import com.waz.service.{ErrorsService, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
 import com.waz.sync.client.{MessagesClient, OtrClient}
-import com.waz.sync.otr.OtrSyncHandler.OtrMessage
+import com.waz.sync.otr.OtrSyncHandler.{OtrMessage, TargetRecipients}
 import com.waz.sync.otr.{OtrClientsSyncHandler, OtrSyncHandlerImpl}
 import com.wire.signals.CancellableFuture
 
@@ -113,7 +113,6 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
     result(sh.postOtrMessage(conv.id, GenericMessage(Uid(), GenericContent.Calling("msg")))) shouldEqual Left(ErrorResponse.Unverified)
 
   }
-
 
   scenario("Unexpected users and/or clients in missing response should be updated and added to members, and previously encrypted content should be updated") {
 
@@ -235,6 +234,45 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
     val sh = getSyncHandler
     result(sh.postOtrMessage(conv.id, msg))
+  }
+
+  scenario("Target message to specific clients") {
+    val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
+    val msg = TextMessage("content", Nil, expectsReadConfirmation = false)
+
+    val otherUser1 = UserId("other-user-1")
+    val otherUser2 = UserId("other-user-2")
+
+    val otherClient1 = ClientId("other-client-1")
+    val otherClient2 = ClientId("other-client-2")
+
+    val content = "content".getBytes
+
+    val encryptedContent = EncryptedContent(Map(otherUser1 -> Map(otherClient1 -> content, otherClient2 -> content)))
+
+    (convStorage.get _)
+      .expects(conv.id)
+      .returning(Future.successful(Some(conv)))
+
+    (service.encryptMessage _)
+      .expects(msg, Map(otherUser1 -> Set(otherClient1), otherUser2 -> Set(otherClient2)), *, EncryptedContent.Empty)
+      .returning(Future.successful(encryptedContent))
+
+    (msgClient.postMessage _)
+      .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent), true)
+      .returning(CancellableFuture.successful(Right(MessageResponse.Success(ClientMismatch(time = RemoteInstant.Epoch)))))
+
+    (service.deleteClients _)
+      .expects(Map.empty[UserId, Seq[ClientId]])
+      .returning(Future.successful({}))
+
+    (convsService.addUnexpectedMembersToConv _)
+      .expects(conv.id, Set.empty[UserId])
+      .returning(Future.successful({}))
+
+    val sh = getSyncHandler
+    val targetRecipients = Map(otherUser1 -> Set(otherClient1), otherUser2 -> Set(otherClient2))
+    result(sh.postOtrMessage(conv.id, msg, TargetRecipients.SpecificClients(targetRecipients)))
   }
 
   scenario("Fetch clients through client discovery message") {
