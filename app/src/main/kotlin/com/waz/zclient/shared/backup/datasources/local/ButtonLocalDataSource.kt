@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 
 class ButtonLocalDataSource(dao: ButtonDao, batchSize: Int = BatchSize) :
 BackupLocalDataSource<ButtonEntity, ButtonJSONEntity>("buttons", dao, batchSize, ButtonJSONEntity.serializer()) {
-    override fun toJSON(entity: ButtonEntity): ButtonJSONEntity = ButtonJSONEntity.from(entity)
-    override fun toEntity(json: ButtonJSONEntity): ButtonEntity = json.toEntity()
+    override fun toJSON(entity: ButtonEntity) = ButtonJSONEntity.from(entity)
+    override fun toEntity(json: ButtonJSONEntity) = json.toEntity()
 }
 
 @Serializable
@@ -18,7 +18,7 @@ data class ButtonJSONEntity(
     val ordinal: Int = 0,
     val state: Int = 0
 ) {
-    fun toEntity(): ButtonEntity = ButtonEntity(
+    fun toEntity() = ButtonEntity(
         messageId = messageId,
         buttonId = buttonId,
         title = title,
@@ -27,7 +27,7 @@ data class ButtonJSONEntity(
     )
 
     companion object {
-        fun from(entity: ButtonEntity): ButtonJSONEntity = ButtonJSONEntity(
+        fun from(entity: ButtonEntity) = ButtonJSONEntity(
             messageId = entity.messageId,
             buttonId = entity.buttonId,
             title = entity.title,

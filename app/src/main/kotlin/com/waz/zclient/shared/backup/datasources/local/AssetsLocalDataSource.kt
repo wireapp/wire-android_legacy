@@ -7,8 +7,8 @@ import java.util.Arrays
 
 class AssetsLocalDataSource(dao: AssetsDao, batchSize: Int = BatchSize) :
 BackupLocalDataSource<AssetsEntity, AssetsJSONEntity>("assets", dao, batchSize, AssetsJSONEntity.serializer()) {
-    override fun toJSON(entity: AssetsEntity): AssetsJSONEntity = AssetsJSONEntity.from(entity)
-    override fun toEntity(json: AssetsJSONEntity): AssetsEntity = json.toEntity()
+    override fun toJSON(entity: AssetsEntity) = AssetsJSONEntity.from(entity)
+    override fun toEntity(json: AssetsJSONEntity) = json.toEntity()
 }
 
 @SuppressWarnings("ComplexMethod")
@@ -26,19 +26,19 @@ data class AssetsJSONEntity(
     val details: String = "",
     val conversationId: String? = null
 ) {
-    override fun hashCode(): Int =
+    override fun hashCode() =
         id.hashCode() + token.hashCode() + name.hashCode() + encryption.hashCode() +
         mime.hashCode() + size.hashCode() + source.hashCode() + preview.hashCode() +
         details.hashCode() + conversationId.hashCode() + Arrays.hashCode(sha)
 
-    override fun equals(other: Any?): Boolean =
+    override fun equals(other: Any?) =
         other != null && other is AssetsJSONEntity && other.id == id && other.token == token &&
         other.name == name && other.encryption == encryption && other.mime == mime &&
         other.size == size && other.source == source && other.preview == preview &&
         other.details == details && other.conversationId == conversationId &&
-        ((other.sha == null && sha == null) || other.sha != null && sha !== null && other.sha.contentEquals(sha))
+        ((other.sha == sha) || other.sha != null && sha !== null && other.sha.contentEquals(sha))
 
-    fun toEntity(): AssetsEntity = AssetsEntity(
+    fun toEntity() = AssetsEntity(
         id = id,
         token = token,
         name = name,
@@ -53,7 +53,7 @@ data class AssetsJSONEntity(
     )
 
     companion object {
-        fun from(entity: AssetsEntity): AssetsJSONEntity = AssetsJSONEntity(
+        fun from(entity: AssetsEntity) = AssetsJSONEntity(
             id = entity.id,
             token = entity.token,
             name = entity.name,

@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 
 class FoldersLocalDataSource(dao: FoldersDao, batchSize: Int = BatchSize) :
 BackupLocalDataSource<FoldersEntity, FoldersJSONEntity>("folders", dao, batchSize, FoldersJSONEntity.serializer()) {
-    override fun toJSON(entity: FoldersEntity): FoldersJSONEntity = FoldersJSONEntity.from(entity)
-    override fun toEntity(json: FoldersJSONEntity): FoldersEntity = json.toEntity()
+    override fun toJSON(entity: FoldersEntity) = FoldersJSONEntity.from(entity)
+    override fun toEntity(json: FoldersJSONEntity) = json.toEntity()
 }
 
 @Serializable
@@ -16,14 +16,14 @@ data class FoldersJSONEntity(
     val name: String = "",
     val type: Int = 0
 ) {
-    fun toEntity(): FoldersEntity = FoldersEntity(
+    fun toEntity() = FoldersEntity(
         id = id,
         name = name,
         type = type
     )
 
     companion object {
-        fun from(entity: FoldersEntity): FoldersJSONEntity = FoldersJSONEntity(
+        fun from(entity: FoldersEntity) = FoldersJSONEntity(
             id = entity.id,
             name = entity.name,
             type = entity.type

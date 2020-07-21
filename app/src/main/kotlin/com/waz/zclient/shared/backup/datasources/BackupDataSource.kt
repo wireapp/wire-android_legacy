@@ -2,7 +2,6 @@ package com.waz.zclient.shared.backup.datasources
 
 import com.waz.model.Handle
 import com.waz.model.UserId
-import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.functional.mapRight
@@ -16,14 +15,11 @@ class BackupDataSource(private val dataSources: List<BackupLocalDataSource<out A
         TODO("Not yet implemented")
     }
 
-    override fun writeAllToFiles(targetDir: File): Either<Failure, List<File>> =
+    override fun writeAllToFiles(targetDir: File) =
         dataSources.mapRight { writeToFiles(targetDir, it) }.map { it.flatten() }
 
-    private fun <Entity, JSON> writeToFiles(targetDir: File, dataSource: BackupLocalDataSource<Entity, JSON>): Either<Failure, List<File>> {
-        var index = 0
-
-        return dataSource.mapRight {
-            writeTextToFile(targetDir, "${dataSource.name}_$index.json") { it }.apply { ++index }
+    private fun <Entity, JSON> writeToFiles(targetDir: File, dataSource: BackupLocalDataSource<Entity, JSON>) =
+        dataSource.withIndex().mapRight {
+            writeTextToFile(targetDir, "${dataSource.name}_${it.index}.json") { it.value }
         }
-    }
 }

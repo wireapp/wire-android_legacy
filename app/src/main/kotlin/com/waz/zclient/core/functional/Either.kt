@@ -128,22 +128,19 @@ fun <L, R> Either<L, R>.getOrElse(value: R): R =
  * a try/catch because the mapping function can throw an exception.
  */
 fun <T, S, F> Iterable<T>.mapRight(fn: (T) -> Either<F, S>): Either<F, List<S>> {
-    var finished = false
     val results = mutableListOf<S>()
     var failure: F? = null
 
     val it = this.iterator()
-    do {
+    while (it.hasNext() && failure == null) {
         val value = it.next()
         if (value != null) {
             when (val res = fn(value)) {
                 is Right -> results += res.b
                 is Left -> failure = res.a
             }
-        } else {
-            finished = true
         }
-    } while (!finished && failure == null)
+    }
 
     return if (failure != null) Left(failure) else Right(results.toList())
 }

@@ -7,8 +7,8 @@ import java.util.Arrays
 
 class MessagesLocalDataSource(dao: MessagesDao, batchSize: Int = BatchSize) :
 BackupLocalDataSource<MessagesEntity, MessagesJSONEntity>("messages", dao, batchSize, MessagesJSONEntity.serializer()) {
-    override fun toJSON(entity: MessagesEntity): MessagesJSONEntity = MessagesJSONEntity.from(entity)
-    override fun toEntity(json: MessagesJSONEntity): MessagesEntity = json.toEntity()
+    override fun toJSON(entity: MessagesEntity) = MessagesJSONEntity.from(entity)
+    override fun toEntity(json: MessagesJSONEntity) = json.toEntity()
 }
 
 @SuppressWarnings("ComplexMethod")
@@ -39,7 +39,7 @@ data class MessagesJSONEntity(
     val forceReadReceipts: Int? = null,
     val assetId: String? = null
 ) {
-    override fun hashCode(): Int =
+    override fun hashCode() =
         id.hashCode() + conversationId.hashCode() + messageType.hashCode() + userId.hashCode() +
         content.hashCode() + time.hashCode() + firstMessage.hashCode() + members.hashCode() +
         recipient.hashCode() + email.hashCode() + name.hashCode() + messageState.hashCode() +
@@ -47,7 +47,7 @@ data class MessagesJSONEntity(
         expiryTime.hashCode() + expired.hashCode() + duration.hashCode() + quote.hashCode() +
         quoteValidity.hashCode() + forceReadReceipts.hashCode() + assetId.hashCode() + Arrays.hashCode(protos)
 
-    override fun equals(other: Any?): Boolean =
+    override fun equals(other: Any?) =
         other != null && other is MessagesJSONEntity &&
         id == other.id && conversationId == other.conversationId && messageType == other.messageType &&
         userId == other.userId && content == other.content && time == other.time && firstMessage == other.firstMessage &&
@@ -57,9 +57,9 @@ data class MessagesJSONEntity(
         expiryTime == other.expiryTime && expired == other.expired && duration == other.duration &&
         quote == other.quote && quoteValidity == other.quoteValidity && forceReadReceipts == other.forceReadReceipts &&
         assetId == other.assetId &&
-        ((protos == null && other.protos == null) || protos != null && other.protos != null && other.protos.contentEquals(protos))
+        ((protos == other.protos) || protos != null && other.protos != null && other.protos.contentEquals(protos))
 
-    fun toEntity(): MessagesEntity = MessagesEntity(
+    fun toEntity() = MessagesEntity(
         id = id,
         conversationId = conversationId,
         messageType = messageType,
@@ -87,7 +87,7 @@ data class MessagesJSONEntity(
     )
 
     companion object {
-        fun from(entity: MessagesEntity): MessagesJSONEntity = MessagesJSONEntity(
+        fun from(entity: MessagesEntity) = MessagesJSONEntity(
             id = entity.id,
             conversationId = entity.conversationId,
             messageType = entity.messageType,

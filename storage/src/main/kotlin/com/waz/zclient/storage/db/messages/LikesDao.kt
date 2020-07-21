@@ -10,7 +10,7 @@ interface LikesDao : BatchReader<LikesEntity> {
     suspend fun allLikes(): List<LikesEntity>
 
     @Query("SELECT * FROM Likings ORDER BY message_id, user_id LIMIT :batchSize OFFSET :offset")
-    override suspend fun getBatch(batchSize: Int, offset: Int): List<LikesEntity>
+    override suspend fun getBatch(batchSize: Int, offset: Int): List<LikesEntity>?
 
     @Query("SELECT COUNT(*) FROM Likings")
     override suspend fun size(): Int

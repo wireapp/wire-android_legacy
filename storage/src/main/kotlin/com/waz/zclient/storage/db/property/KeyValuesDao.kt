@@ -18,7 +18,7 @@ interface KeyValuesDao : BatchReader<KeyValuesEntity> {
     fun insert(keyValuesEntityList: List<KeyValuesEntity>)
 
     @Query("SELECT * FROM KeyValues ORDER BY key LIMIT :batchSize OFFSET :offset")
-    override suspend fun getBatch(batchSize: Int, offset: Int): List<KeyValuesEntity>
+    override suspend fun getBatch(batchSize: Int, offset: Int): List<KeyValuesEntity>?
 
     @Query("SELECT COUNT(*) FROM KeyValues")
     override suspend fun size(): Int

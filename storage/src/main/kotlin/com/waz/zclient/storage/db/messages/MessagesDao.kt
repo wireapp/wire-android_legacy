@@ -10,7 +10,7 @@ interface MessagesDao : BatchReader<MessagesEntity> {
     suspend fun allMessages(): List<MessagesEntity>
 
     @Query("SELECT * FROM Messages ORDER BY _id LIMIT :batchSize OFFSET :offset")
-    override suspend fun getBatch(batchSize: Int, offset: Int): List<MessagesEntity>
+    override suspend fun getBatch(batchSize: Int, offset: Int): List<MessagesEntity>?
 
     @Query("SELECT COUNT(*) FROM Messages")
     override suspend fun size(): Int

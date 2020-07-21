@@ -9,11 +9,11 @@ import com.waz.zclient.storage.db.property.PropertiesDao
 import com.waz.zclient.storage.db.property.PropertiesEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.amshove.kluent.shouldEqual
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
-import java.io.File
 import java.nio.file.Files
 
 @ExperimentalCoroutinesApi
@@ -43,7 +43,7 @@ class BackupDataSourceTest : UnitTest() {
         PropertiesEntity("p4", "D"),
         PropertiesEntity("p5", "E")
     )
-    
+
     @Before
     fun setup() {
         keyValuesLocalDataSource = KeyValuesLocalDataSource(keyValuesDao, 3)
@@ -63,12 +63,39 @@ class BackupDataSourceTest : UnitTest() {
         `when`(propertiesDao.getBatch(2, 4)).thenReturn(properties.drop(4).take(2))
 
         val targetDir = Files.createTempDirectory("backupDataSourceTest_${System.currentTimeMillis()}").toFile()
+        targetDir.deleteOnExit()
 
         backupDataSource.writeAllToFiles(targetDir)
 
-        targetDir.walkTopDown().forEach { file ->
-            println(file.absolutePath)
-        }
+        val res: Map<String, String> = targetDir.walkTopDown().filter { it.name.endsWith(".json") }.map { file ->
+            file.name to file.readText()
+        }.toMap()
+
+        res.size shouldEqual 5
+        res.keys.filter { it.startsWith(propertiesLocalDataSource.name) }.size shouldEqual 3
+        res.keys.filter { it.startsWith(keyValuesLocalDataSource.name) }.size shouldEqual 2
+        res.values.all { it.isNotEmpty() } shouldEqual true
     }
 
+    @Test
+    fun `don't create files for empty db tables`() = runBlocking {
+        `when`(keyValuesDao.size()).thenReturn(keyValues.size)
+        `when`(keyValuesDao.getBatch(3, 0)).thenReturn(keyValues.take(3))
+        `when`(keyValuesDao.getBatch(3, 3)).thenReturn(keyValues.drop(3).take(3))
+        `when`(propertiesDao.size()).thenReturn(0)
+
+        val targetDir = Files.createTempDirectory("backupDataSourceTest_${System.currentTimeMillis()}").toFile()
+        targetDir.deleteOnExit()
+
+        backupDataSource.writeAllToFiles(targetDir)
+
+        val res: Map<String, String> = targetDir.walkTopDown().filter { it.name.endsWith(".json") }.map { file ->
+            file.name to file.readText()
+        }.toMap()
+
+        res.size shouldEqual 2
+        res.keys.filter { it.startsWith(propertiesLocalDataSource.name) }.size shouldEqual 0
+        res.keys.filter { it.startsWith(keyValuesLocalDataSource.name) }.size shouldEqual 2
+        res.values.all { it.isNotEmpty() } shouldEqual true
+    }
 }

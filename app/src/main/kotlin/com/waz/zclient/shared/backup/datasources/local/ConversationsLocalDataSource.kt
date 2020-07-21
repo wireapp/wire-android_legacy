@@ -7,8 +7,8 @@ import kotlinx.serialization.Serializable
 class ConversationsLocalDataSource(dao: ConversationsDao, batchSize: Int = BatchSize) :
 BackupLocalDataSource<ConversationsEntity, ConversationsJSONEntity>
     ("conversations", dao, batchSize, ConversationsJSONEntity.serializer()) {
-    override fun toJSON(entity: ConversationsEntity): ConversationsJSONEntity = ConversationsJSONEntity.from(entity)
-    override fun toEntity(json: ConversationsJSONEntity): ConversationsEntity = json.toEntity()
+    override fun toJSON(entity: ConversationsEntity) = ConversationsJSONEntity.from(entity)
+    override fun toEntity(json: ConversationsJSONEntity) = json.toEntity()
 }
 
 @Serializable
@@ -47,7 +47,7 @@ data class ConversationsJSONEntity(
     val unreadQuoteCount: Int = 0,
     val receiptMode: Int? = null
 ) {
-    fun toEntity(): ConversationsEntity = ConversationsEntity(
+    fun toEntity() = ConversationsEntity(
         id = id,
         remoteId = remoteId,
         name = name,
@@ -84,7 +84,7 @@ data class ConversationsJSONEntity(
     )
 
     companion object {
-        fun from(entity: ConversationsEntity): ConversationsJSONEntity = ConversationsJSONEntity(
+        fun from(entity: ConversationsEntity) = ConversationsJSONEntity(
             id = entity.id,
             remoteId = entity.remoteId,
             name = entity.name,

@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 
 class UsersLocalDataSource(dao: UserDao, batchSize: Int = BatchSize) :
 BackupLocalDataSource<UserEntity, UserJSONEntity>("users", dao, batchSize, UserJSONEntity.serializer()) {
-    override fun toJSON(entity: UserEntity): UserJSONEntity = UserJSONEntity.from(entity)
-    override fun toEntity(json: UserJSONEntity): UserEntity = json.toEntity()
+    override fun toJSON(entity: UserEntity) = UserJSONEntity.from(entity)
+    override fun toEntity(json: UserJSONEntity) = json.toEntity()
 }
 
 @Serializable
@@ -39,7 +39,7 @@ data class UserJSONEntity(
     val copyPermission: Int = 0,
     val createdBy: String? = null
 ) {
-    fun toEntity(): UserEntity = UserEntity(
+    fun toEntity() = UserEntity(
         id = id,
         teamId = teamId,
         name = name,
@@ -69,7 +69,7 @@ data class UserJSONEntity(
     )
 
     companion object {
-        fun from(entity: UserEntity): UserJSONEntity = UserJSONEntity(
+        fun from(entity: UserEntity) = UserJSONEntity(
             id = entity.id,
             teamId = entity.teamId,
             name = entity.name,

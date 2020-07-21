@@ -32,7 +32,7 @@ interface UserDao : BatchReader<UserEntity> {
     suspend fun updatePhone(userId: String, phone: String)
 
     @Query("SELECT * FROM Users ORDER BY _id LIMIT :batchSize OFFSET :offset")
-    override suspend fun getBatch(batchSize: Int, offset: Int): List<UserEntity>
+    override suspend fun getBatch(batchSize: Int, offset: Int): List<UserEntity>?
 
     @Query("SELECT COUNT(*) FROM Users")
     override suspend fun size(): Int

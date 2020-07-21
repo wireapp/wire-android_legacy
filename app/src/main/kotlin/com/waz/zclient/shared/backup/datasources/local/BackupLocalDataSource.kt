@@ -17,26 +17,26 @@ abstract class BackupLocalDataSource<EntityType, JSONType>(
     protected abstract fun toJSON(entity: EntityType): JSONType
     protected abstract fun toEntity(json: JSONType): EntityType
 
-    fun serialize(entity: EntityType): String = json.stringify(serializer, toJSON(entity))
+    fun serialize(entity: EntityType) = json.stringify(serializer, toJSON(entity))
 
-    fun deserialize(jsonStr: String): EntityType = toEntity(json.parse(serializer, jsonStr))
+    fun deserialize(jsonStr: String) = toEntity(json.parse(serializer, jsonStr))
 
-    fun serializeList(list: List<EntityType>): String =
+    fun serializeList(list: List<EntityType>) =
         json.stringify(serializer.list, list.map { toJSON(it) })
 
-    fun deserializeList(jsonListStr: String): List<EntityType> =
+    fun deserializeList(jsonListStr: String) =
         json.parse(serializer.list, jsonListStr).map { toEntity(it) }
 
     @SuppressWarnings("IteratorNotThrowingNoSuchElementException")
     override fun iterator(): Iterator<String> = object : Iterator<String> {
-        private var currentOffset: Int = 0
-        private val listSize: Int by lazy { runBlocking { dao.size() } }
+        private var currentOffset = 0
+        private val listSize by lazy { runBlocking { dao.size() } }
 
         override fun hasNext(): Boolean = currentOffset < listSize
 
         override fun next(): String = runBlocking {
             val list = dao.getBatch(batchSize, currentOffset)
-            if (list.isEmpty()) {
+            if (list == null || list.isEmpty()) {
                 String.empty()
             } else {
                 currentOffset += list.size

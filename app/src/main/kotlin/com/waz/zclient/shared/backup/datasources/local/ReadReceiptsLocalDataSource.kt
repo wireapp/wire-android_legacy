@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 
 class ReadReceiptsLocalDataSource(dao: ReadReceiptsDao, batchSize: Int = BatchSize) :
 BackupLocalDataSource<ReadReceiptsEntity, ReadReceiptsJSONEntity>("readReceipts", dao, batchSize, ReadReceiptsJSONEntity.serializer()) {
-    override fun toJSON(entity: ReadReceiptsEntity): ReadReceiptsJSONEntity = ReadReceiptsJSONEntity.from(entity)
-    override fun toEntity(json: ReadReceiptsJSONEntity): ReadReceiptsEntity = json.toEntity()
+    override fun toJSON(entity: ReadReceiptsEntity) = ReadReceiptsJSONEntity.from(entity)
+    override fun toEntity(json: ReadReceiptsJSONEntity) = json.toEntity()
 }
 
 @Serializable
@@ -16,14 +16,14 @@ data class ReadReceiptsJSONEntity(
     val userId: String = "",
     val timestamp: Int = 0
 ) {
-    fun toEntity(): ReadReceiptsEntity = ReadReceiptsEntity(
+    fun toEntity() = ReadReceiptsEntity(
         messageId = messageId,
         userId = userId,
         timestamp = timestamp
     )
 
     companion object {
-        fun from(entity: ReadReceiptsEntity): ReadReceiptsJSONEntity = ReadReceiptsJSONEntity(
+        fun from(entity: ReadReceiptsEntity) = ReadReceiptsJSONEntity(
             messageId = entity.messageId,
             userId = entity.userId,
             timestamp = entity.timestamp

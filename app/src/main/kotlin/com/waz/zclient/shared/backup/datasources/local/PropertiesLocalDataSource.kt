@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 
 class PropertiesLocalDataSource(dao: PropertiesDao, batchSize: Int = BatchSize) :
 BackupLocalDataSource<PropertiesEntity, PropertiesJSONEntity>("properties", dao, batchSize, PropertiesJSONEntity.serializer()) {
-    override fun toJSON(entity: PropertiesEntity): PropertiesJSONEntity = PropertiesJSONEntity.from(entity)
-    override fun toEntity(json: PropertiesJSONEntity): PropertiesEntity = json.toEntity()
+    override fun toJSON(entity: PropertiesEntity) = PropertiesJSONEntity.from(entity)
+    override fun toEntity(json: PropertiesJSONEntity) = json.toEntity()
 }
 
 @Serializable
@@ -15,13 +15,13 @@ data class PropertiesJSONEntity(
     val key: String,
     val value: String = ""
 ) {
-    fun toEntity(): PropertiesEntity = PropertiesEntity(
+    fun toEntity() = PropertiesEntity(
         key = key,
         value = value
     )
 
     companion object {
-        fun from(entity: PropertiesEntity): PropertiesJSONEntity = PropertiesJSONEntity(
+        fun from(entity: PropertiesEntity) = PropertiesJSONEntity(
             key = entity.key,
             value = entity.value
         )

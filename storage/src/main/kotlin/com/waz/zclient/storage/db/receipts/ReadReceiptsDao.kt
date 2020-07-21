@@ -10,7 +10,7 @@ interface ReadReceiptsDao : BatchReader<ReadReceiptsEntity> {
     suspend fun allReceipts(): List<ReadReceiptsEntity>
 
     @Query("SELECT * FROM ReadReceipts ORDER BY message_id, user_id LIMIT :batchSize OFFSET :offset")
-    override suspend fun getBatch(batchSize: Int, offset: Int): List<ReadReceiptsEntity>
+    override suspend fun getBatch(batchSize: Int, offset: Int): List<ReadReceiptsEntity>?
 
     @Query("SELECT COUNT(*) FROM ReadReceipts")
     override suspend fun size(): Int
