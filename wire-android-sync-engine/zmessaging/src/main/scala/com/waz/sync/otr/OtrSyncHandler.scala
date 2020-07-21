@@ -184,7 +184,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 
       broadcastRecipients.flatMap { recp =>
         for {
-          content  <- service.encryptForUsers(recp, message, useFakeOnError = retry > 0, previous)
+          content  <- service.encryptMessageForUsers(message, recp, useFakeOnError = retry > 0, previous)
           response <- otrClient.broadcastMessage(
                         OtrMessage(selfClientId, content, report_missing = Some(recp)),
                         ignoreMissing = retry > 1

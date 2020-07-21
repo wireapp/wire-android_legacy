@@ -55,15 +55,15 @@ trait OtrService {
   def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any]
   def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]]
 
-  def encryptMessage(msg:             GenericMessage,
+  def encryptMessageForUsers(message:        GenericMessage,
+                             users:          Set[UserId],
+                             useFakeOnError: Boolean = false,
+                             partialResult:  EncryptedContent): Future[EncryptedContent]
+
+  def encryptMessage(message:         GenericMessage,
                      recipients:      Map[UserId, Set[ClientId]],
                      userFakeOnError: Boolean = false,
                      partialResult:   EncryptedContent): Future[EncryptedContent]
-
-  def encryptForUsers(users:          Set[UserId],
-                      msg:            GenericMessage,
-                      useFakeOnError: Boolean = false,
-                      partialResult:  EncryptedContent): Future[EncryptedContent]
 
   def encryptAssetData(key: AESKey, data: LocalData):Future[(Sha256, LocalData, EncryptionAlgorithm)]
 
@@ -200,29 +200,14 @@ class OtrServiceImpl(selfUserId:     UserId,
     }
   }
 
-  override def encryptMessage(msg:             GenericMessage,
-                              recipients:      Map[UserId, Set[ClientId]],
-                              userFakeOnError: Boolean = false,
-                              partialResult:   EncryptedContent): Future[EncryptedContent] = {
-
-    val msgData = GenericMessage.toByteArray(msg)
-
-    Future.traverse(recipients) { case (userId, clientIds) =>
-      encryptForClients(userId, clientIds, msgData, userFakeOnError, partialResult)
-    }.map { encryptedPayloads =>
-      val encryptedPayloadsByUserId = encryptedPayloads.toMap
-      EncryptedContent(encryptedPayloadsByUserId.filter(_._2.nonEmpty))
-    }
-  }
-
   /**
     * @param useFakeOnError when true, we will return bomb emoji as msg content on encryption errors (for failing client)
     * @param partialResult partial content encrypted in previous run, we will use that instead of encrypting again when available
     */
-  override def encryptForUsers(users:          Set[UserId],
-                               msg:            GenericMessage,
-                               useFakeOnError: Boolean = false,
-                               partialResult:  EncryptedContent) = {
+  override def encryptMessageForUsers(message:        GenericMessage,
+                                      users:          Set[UserId],
+                                      useFakeOnError: Boolean = false,
+                                      partialResult:  EncryptedContent): Future[EncryptedContent] = {
 
     Future.traverse(users) { user =>
       // list of clients to which the message should be sent for given user
@@ -231,7 +216,22 @@ class OtrServiceImpl(selfUserId:     UserId,
         user -> clients.map(_.id).toSet
       }
     }.flatMap { recipients =>
-      encryptMessage(msg, recipients.toMap, useFakeOnError, partialResult)
+      encryptMessage(message, recipients.toMap, useFakeOnError, partialResult)
+    }
+  }
+
+  override def encryptMessage(message:         GenericMessage,
+                              recipients:      Map[UserId, Set[ClientId]],
+                              userFakeOnError: Boolean = false,
+                              partialResult:   EncryptedContent): Future[EncryptedContent] = {
+
+    val msgData = GenericMessage.toByteArray(message)
+
+    Future.traverse(recipients) { case (userId, clientIds) =>
+      encryptForClients(userId, clientIds, msgData, userFakeOnError, partialResult)
+    }.map { encryptedPayloads =>
+      val encryptedPayloadsByUserId = encryptedPayloads.toMap
+      EncryptedContent(encryptedPayloadsByUserId.filter(_._2.nonEmpty))
     }
   }
 
