@@ -13,17 +13,9 @@ BackupLocalDataSource<ConversationMembersEntity, ConversationMembersJSONEntity>
 
 @Serializable
 data class ConversationMembersJSONEntity(val userId: String = "", val conversationId: String = "", val role: String = "") {
-    fun toEntity() = ConversationMembersEntity(
-        userId = userId,
-        conversationId = conversationId,
-        role = role
-    )
+    fun toEntity() = ConversationMembersEntity(userId, conversationId, role)
 
     companion object {
-        fun from(entity: ConversationMembersEntity) = ConversationMembersJSONEntity(
-            userId = entity.userId,
-            conversationId = entity.conversationId,
-            role = entity.role
-        )
+        fun from(entity: ConversationMembersEntity) = ConversationMembersJSONEntity(entity.userId, entity.conversationId, entity.role)
     }
 }

@@ -11,22 +11,10 @@ BackupLocalDataSource<FoldersEntity, FoldersJSONEntity>("folders", dao, batchSiz
 }
 
 @Serializable
-data class FoldersJSONEntity(
-    val id: String,
-    val name: String = "",
-    val type: Int = 0
-) {
-    fun toEntity() = FoldersEntity(
-        id = id,
-        name = name,
-        type = type
-    )
+data class FoldersJSONEntity(val id: String, val name: String = "", val type: Int = 0) {
+    fun toEntity() = FoldersEntity(id, name, type)
 
     companion object {
-        fun from(entity: FoldersEntity) = FoldersJSONEntity(
-            id = entity.id,
-            name = entity.name,
-            type = entity.type
-        )
+        fun from(entity: FoldersEntity) = FoldersJSONEntity(entity.id, entity.name, entity.type)
     }
 }

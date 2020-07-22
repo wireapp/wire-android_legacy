@@ -12,15 +12,9 @@ BackupLocalDataSource<KeyValuesEntity, KeyValuesJSONEntity>("keyValues", dao, ba
 
 @Serializable
 data class KeyValuesJSONEntity(val key: String, val value: String = "") {
-    fun toEntity() = KeyValuesEntity(
-        key = key,
-        value = value
-    )
+    fun toEntity() = KeyValuesEntity(key, value)
 
     companion object {
-        fun from(entity: KeyValuesEntity) = KeyValuesJSONEntity(
-            key = entity.key,
-            value = entity.value
-        )
+        fun from(entity: KeyValuesEntity) = KeyValuesJSONEntity(entity.key, entity.value)
     }
 }

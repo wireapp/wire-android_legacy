@@ -11,22 +11,10 @@ BackupLocalDataSource<ReadReceiptsEntity, ReadReceiptsJSONEntity>("readReceipts"
 }
 
 @Serializable
-data class ReadReceiptsJSONEntity(
-    val messageId: String = "",
-    val userId: String = "",
-    val timestamp: Int = 0
-) {
-    fun toEntity() = ReadReceiptsEntity(
-        messageId = messageId,
-        userId = userId,
-        timestamp = timestamp
-    )
+data class ReadReceiptsJSONEntity(val messageId: String = "", val userId: String = "", val timestamp: Int = 0) {
+    fun toEntity() = ReadReceiptsEntity(messageId, userId, timestamp)
 
     companion object {
-        fun from(entity: ReadReceiptsEntity) = ReadReceiptsJSONEntity(
-            messageId = entity.messageId,
-            userId = entity.userId,
-            timestamp = entity.timestamp
-        )
+        fun from(entity: ReadReceiptsEntity) = ReadReceiptsJSONEntity(entity.messageId, entity.userId, entity.timestamp)
     }
 }

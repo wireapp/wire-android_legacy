@@ -12,19 +12,10 @@ BackupLocalDataSource<ConversationFoldersEntity, ConversationFoldersJSONEntity>
 }
 
 @Serializable
-data class ConversationFoldersJSONEntity(
-    val convId: String = "",
-    val folderId: String = ""
-) {
-    fun toEntity() = ConversationFoldersEntity(
-        convId = convId,
-        folderId = folderId
-    )
+data class ConversationFoldersJSONEntity(val convId: String = "", val folderId: String = "") {
+    fun toEntity() = ConversationFoldersEntity(convId, folderId)
 
     companion object {
-        fun from(entity: ConversationFoldersEntity) = ConversationFoldersJSONEntity(
-            convId = entity.convId,
-            folderId = entity.folderId
-        )
+        fun from(entity: ConversationFoldersEntity) = ConversationFoldersJSONEntity(entity.convId, entity.folderId)
     }
 }

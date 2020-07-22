@@ -18,21 +18,9 @@ data class ButtonJSONEntity(
     val ordinal: Int = 0,
     val state: Int = 0
 ) {
-    fun toEntity() = ButtonEntity(
-        messageId = messageId,
-        buttonId = buttonId,
-        title = title,
-        ordinal = ordinal,
-        state = state
-    )
+    fun toEntity() = ButtonEntity(messageId, buttonId, title, ordinal, state)
 
     companion object {
-        fun from(entity: ButtonEntity) = ButtonJSONEntity(
-            messageId = entity.messageId,
-            buttonId = entity.buttonId,
-            title = entity.title,
-            ordinal = entity.ordinal,
-            state = entity.state
-        )
+        fun from(entity: ButtonEntity) = ButtonJSONEntity(entity.messageId, entity.buttonId, entity.title, entity.ordinal, entity.state)
     }
 }

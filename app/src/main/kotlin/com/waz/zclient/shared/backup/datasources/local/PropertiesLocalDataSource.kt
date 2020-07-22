@@ -11,19 +11,10 @@ BackupLocalDataSource<PropertiesEntity, PropertiesJSONEntity>("properties", dao,
 }
 
 @Serializable
-data class PropertiesJSONEntity(
-    val key: String,
-    val value: String = ""
-) {
-    fun toEntity() = PropertiesEntity(
-        key = key,
-        value = value
-    )
+data class PropertiesJSONEntity(val key: String, val value: String = "") {
+    fun toEntity() = PropertiesEntity(key, value)
 
     companion object {
-        fun from(entity: PropertiesEntity) = PropertiesJSONEntity(
-            key = entity.key,
-            value = entity.value
-        )
+        fun from(entity: PropertiesEntity) = PropertiesJSONEntity(entity.key, entity.value)
     }
 }

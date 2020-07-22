@@ -13,17 +13,9 @@ BackupLocalDataSource<ConversationRoleActionEntity, ConversationRoleActionJSONEn
 
 @Serializable
 data class ConversationRoleActionJSONEntity(val label: String = "", val action: String = "", val convId: String = "") {
-    fun toEntity() = ConversationRoleActionEntity(
-        label = label,
-        action = action,
-        convId = convId
-    )
+    fun toEntity() = ConversationRoleActionEntity(label, action, convId)
 
     companion object {
-        fun from(entity: ConversationRoleActionEntity) = ConversationRoleActionJSONEntity(
-            label = entity.label,
-            action = entity.action,
-            convId = entity.convId
-        )
+        fun from(entity: ConversationRoleActionEntity) = ConversationRoleActionJSONEntity(entity.label, entity.action, entity.convId)
     }
 }

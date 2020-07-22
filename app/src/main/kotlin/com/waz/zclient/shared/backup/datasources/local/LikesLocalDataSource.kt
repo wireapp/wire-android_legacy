@@ -12,19 +12,9 @@ BackupLocalDataSource<LikesEntity, LikesJSONEntity>("likes", dao, batchSize, Lik
 
 @Serializable
 data class LikesJSONEntity(val messageId: String = "", val userId: String = "", val timeStamp: Int = 0, val action: Int = 0) {
-    fun toEntity() = LikesEntity(
-        messageId = messageId,
-        userId = userId,
-        timeStamp = timeStamp,
-        action = action
-    )
+    fun toEntity() = LikesEntity(messageId, userId, timeStamp, action)
 
     companion object {
-        fun from(entity: LikesEntity) = LikesJSONEntity(
-            messageId = entity.messageId,
-            userId = entity.userId,
-            timeStamp = entity.timeStamp,
-            action = entity.action
-        )
+        fun from(entity: LikesEntity) = LikesJSONEntity(entity.messageId, entity.userId, entity.timeStamp, entity.action)
     }
 }
