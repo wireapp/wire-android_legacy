@@ -20,7 +20,8 @@ package com.waz.service.call
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, UserId}
-import com.waz.service.call.Avs.ClientListEncoder._
+import com.waz.service.call.Avs.{AvsClient, AvsClientList}
+import com.waz.service.call.Avs.AvsClientList._
 import com.waz.specs.AndroidFreeSpec
 
 class AvsSpec extends AndroidFreeSpec with DerivedLogTag  {
@@ -71,12 +72,12 @@ class AvsSpec extends AndroidFreeSpec with DerivedLogTag  {
 
   scenario("Client list can be encoded") {
     // Given
-    val clientList = ClientList(Seq(
-      Client("user1", "client1"),
-      Client("user1", "client2"),
-      Client("user2", "client1"),
-      Client("user3", "client1"),
-      Client("user3", "client2")
+    val clientList = AvsClientList(Seq(
+      AvsClient("user1", "client1"),
+      AvsClient("user1", "client2"),
+      AvsClient("user2", "client1"),
+      AvsClient("user3", "client1"),
+      AvsClient("user3", "client2")
     ))
 
     // When

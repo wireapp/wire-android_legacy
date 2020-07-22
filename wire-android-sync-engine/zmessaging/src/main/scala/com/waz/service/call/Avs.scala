@@ -240,15 +240,15 @@ class AvsImpl() extends Avs with DerivedLogTag {
     withAvs(wcall_set_proxy(host, port))
 
   override def onClientsRequest(wCall: WCall, convId: RConvId, userClients: Map[UserId, Seq[ClientId]]): Unit = {
-    import ClientListEncoder._
+    import AvsClientList._
 
     val clients = userClients.flatMap { case (userId, clientIds) =>
       clientIds.map { clientId =>
-        Client(userId.str, clientId.str)
+        AvsClient(userId.str, clientId.str)
       }
     }
 
-    val json = encode(ClientList(clients.toSeq))
+    val json = encode(AvsClientList(clients.toSeq))
     withAvs(wcall_set_clients_for_conv(wCall, convId.str, json))
   }
 
@@ -395,16 +395,18 @@ object Avs extends DerivedLogTag {
       parser.decode(json)(decoder).right.toOption
   }
 
-  object ClientListEncoder extends CirceJSONSupport {
+  case class AvsClientList(clients: Seq[AvsClient])
+  case class AvsClient(userid: String, clientid: String)
 
-    import io.circe.Encoder
+  object AvsClientList extends CirceJSONSupport {
 
-    case class ClientList(clients: Seq[Client])
-    case class Client(userid: String, clientid: String)
+    import io.circe.{Encoder, Decoder, parser}
 
-    private lazy val encoder: Encoder[ClientList] = Encoder.apply
+    private lazy val encoder: Encoder[AvsClientList] = Encoder.apply
+    private lazy val decoder: Decoder[AvsClientList] = Decoder.apply
 
-    def encode(clientList: ClientList): String = encoder(clientList).toString
+    def encode(clientList: AvsClientList): String = encoder(clientList).toString
+    def decode(json: String): Option[AvsClientList] = parser.decode(json)(decoder).right.toOption
 
   }
 
