@@ -51,7 +51,7 @@ object CustomBackendClient {
 
   case class EndPoints(backendURL: URL,
                        backendWSURL: URL,
-                       blackListURL: URL,
+                       blackListURL: Option[URL],
                        teamsURL: URL,
                        accountsURL: URL,
                        websiteURL: URL)
