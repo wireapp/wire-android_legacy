@@ -5,7 +5,7 @@ import com.waz.model.UserId
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.functional.mapRight
-import com.waz.zclient.core.utilities.UiUtils.writeTextToFile
+import com.waz.zclient.core.utilities.IOHandler.writeTextToFile
 import com.waz.zclient.shared.backup.BackupRepository
 import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource
 import java.io.File
