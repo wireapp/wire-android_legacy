@@ -1,6 +1,10 @@
 package com.waz.zclient.shared.backup.di
 
+import com.waz.zclient.shared.backup.ZipBackupHandler
+import com.waz.zclient.shared.backup.ZipBackupHandlerImpl
 import com.waz.zclient.shared.backup.BackupRepository
+import com.waz.zclient.shared.backup.EncryptionHandler
+import com.waz.zclient.shared.backup.EncryptionHandlerImpl
 import com.waz.zclient.shared.backup.datasources.local.AssetsLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.ButtonLocalDataSource
@@ -22,6 +26,8 @@ import org.koin.dsl.module
 
 val backupModule: Module = module {
     single { BackupDataSource(get()) as BackupRepository }
+    single { ZipBackupHandlerImpl() as ZipBackupHandler }
+    single { EncryptionHandlerImpl() as EncryptionHandler }
 
     factory {
         listOf<BackupLocalDataSource<out Any, out Any>>(
