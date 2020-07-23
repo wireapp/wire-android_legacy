@@ -104,9 +104,35 @@ class AvsImpl() extends Avs with DerivedLogTag {
         }
       },
       new SendHandler {
-        override def onSend(ctx: Pointer, convId: String, userIdSelf: String, clientIdSelf: String, userIdDest: String, clientIdDest: String, data: Pointer, len: Size_t, isTransient: Boolean, arg: Pointer) = {
-          cs.onSend(ctx, RConvId(convId), UserId(userIdDest), ClientId(clientIdDest), data.getString(0, "UTF-8"))
-          0
+        override def onSend(ctx: Pointer,
+                            convId: String,
+                            userIdSelf: String,
+                            clientIdSelf: String,
+                            targetRecipientsJson: String, // Change: was userIdDest but has been re-purposed.
+                            clientIdDest: String,         // Deprecated: AVS will no longer pass a value here.
+                            data: Pointer,
+                            len: Size_t,
+                            isTransient: Boolean,
+                            arg: Pointer): Int = {
+
+          if (!(userIdSelf == cs.accountId.str && clientIdSelf == cs.clientId.str)) {
+            warn(l"Received request to send calling message from non self user and/or client")
+            return AvsCallbackError.InvalidArgument
+          }
+
+          try {
+            val message = data.getString(0, "UTF-8")
+            val targetRecipients = Option(targetRecipientsJson).map { json =>
+              AvsClientList.decode(json).fold({ throw _ }, identity)
+            }
+
+            cs.onSend(ctx, message, RConvId(convId), targetRecipients)
+            AvsCallbackError.None
+          } catch {
+            case e: Throwable =>
+              error(l"Could not decode AvsClientList", e)
+              AvsCallbackError.CouldNotDecodeArgument
+          }
         }
       },
       new SFTRequestHandler {
@@ -283,6 +309,13 @@ object Avs extends DerivedLogTag {
     val NoResponseData = 1
   }
 
+  type AvsCallbackError = Int
+  object AvsCallbackError {
+    val None = 0
+    val InvalidArgument = 1
+    val CouldNotDecodeArgument = 2
+  }
+
   /**
     * NOTE: All values should be kept up to date as defined in:
     * https://github.com/wearezeta/avs/blob/master/include/avs_wcall.h
@@ -400,13 +433,13 @@ object Avs extends DerivedLogTag {
 
   object AvsClientList extends CirceJSONSupport {
 
-    import io.circe.{Encoder, Decoder, parser}
+    import io.circe.{Encoder, Decoder, parser, Error}
 
     private lazy val encoder: Encoder[AvsClientList] = Encoder.apply
     private lazy val decoder: Decoder[AvsClientList] = Decoder.apply
 
     def encode(clientList: AvsClientList): String = encoder(clientList).toString
-    def decode(json: String): Option[AvsClientList] = parser.decode(json)(decoder).right.toOption
+    def decode(json: String): Either[Error, AvsClientList] = parser.decode(json)(decoder)
 
   }
 
