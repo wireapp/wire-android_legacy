@@ -517,8 +517,6 @@ class CallingServiceImpl(val accountId:       UserId,
         avs.onHttpResponse(wCall, 200, "", ctx)
       case Left(ErrorResponse.Unverified) =>
         warn(l"Conversation degraded, delay sending message on behalf of AVS")
-        //TODO need to handle degrading of conversation during a call
-        //Currently, the call will just time out...
         updateActiveCall(_.copy(outstandingMsg = Some(OutstandingMessage(msg, targetRecipients, ctx))))("sendCallMessage/unverified")
       case Left(ErrorResponse(code, errorMsg, label)) =>
         avs.onHttpResponse(wCall, code, errorMsg, ctx)
