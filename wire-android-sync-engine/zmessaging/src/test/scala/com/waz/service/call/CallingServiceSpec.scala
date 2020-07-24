@@ -17,6 +17,7 @@
  */
 package com.waz.service.call
 
+import com.sun.jna.Pointer
 import com.waz.api.NetworkMode
 import com.waz.content.GlobalPreferences.SkipTerminatingState
 import com.waz.content.{MembersStorage, UsersStorage}
@@ -35,6 +36,8 @@ import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.service.{MediaManagerService, NetworkModeService}
 import com.waz.specs.AndroidFreeSpec
+import com.waz.sync.otr.OtrSyncHandler
+import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
 import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.RichInstant
@@ -43,7 +46,7 @@ import com.waz.utils.jna.Uint32_t
 import com.waz.utils.wrappers.Context
 import org.threeten.bp.{Duration, Instant}
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
@@ -63,6 +66,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val permissions    = mock[PermissionsService]
   val push           = mock[PushService]
   val usersStorage   = mock[UsersStorage]
+  val otrSyncHandler = mock[OtrSyncHandler]
   val globalPrefs    = new TestGlobalPreferences
 
   val selfUserId      = UserId("self-user")
@@ -1051,6 +1055,59 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
   }
 
+  feature("Targeted call messages") {
+
+    def progressToSelfConnected(): Unit = {
+      val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected  && cur.otherParticipants == Set(otherUser, otherUser2)))
+
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+
+      (convsService.activeMembersData _).expects(groupConv.id).once().returning(
+        Signal(Seq(
+          ConversationMemberData(otherUserId, groupConv.id, "member"),
+          ConversationMemberData(otherUser2Id, groupConv.id, "member")
+        ))
+      )
+
+      (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
+
+      (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
+        service.onEstablishedCall(groupConv.remoteId, otherUserId)
+        service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+      }
+
+      service.startCall(groupConv.id)
+      awaitCP(checkpoint1)
+    }
+
+    scenario("Messages are targeted if target recipients are specified") {
+      val expectedTargetRecipients = TargetRecipients.SpecificClients(Map(otherUser.userId -> Set(otherUser.clientId)))
+
+      (otrSyncHandler.postOtrMessage _)
+        .expects(groupConv.id, *, expectedTargetRecipients, *, *)
+        .once()
+        .returning(Future.successful(Right(RemoteInstant(Instant.now(clock)))))
+
+      val ctx = Pointer.createConstant(0)
+      val targetRecipients = AvsClientList(Seq(AvsClient(otherUser.userId.str, otherUser.clientId.str)))
+
+      progressToSelfConnected()
+      result(service.onSend(ctx, msg = "", groupConv.remoteId, Some(targetRecipients)))
+    }
+
+    scenario("Messages are not targeted if no target recipients are specified") {
+      (otrSyncHandler.postOtrMessage _)
+        .expects(groupConv.id, *, TargetRecipients.ConversationParticipants, *, *)
+        .once()
+        .returning(Future.successful(Right(RemoteInstant(Instant.now(clock)))))
+
+      val ctx = Pointer.createConstant(0)
+
+      progressToSelfConnected()
+      result(service.onSend(ctx, msg = "", groupConv.remoteId, targetRecipients = None))
+    }
+  }
+
   var cpCount = 0
   def awaitCP(cp: CallStateCheckpoint) = {
     cpCount += 1
@@ -1082,7 +1139,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     (convs.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
       Future.successful {
-        if (id == _1to1Conv.remoteId)     Some(_1to1Conv)
+        if (id == _1to1Conv.remoteId)          Some(_1to1Conv)
         else if (id == _1to1Conv2.remoteId)    Some(_1to1Conv2)
         else if (id == groupConv.remoteId)     Some(groupConv)
         else if (id == team1to1Conv.remoteId)  Some(team1to1Conv)
@@ -1093,7 +1150,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     (convs.convById _).expects(*).anyNumberOfTimes().onCall { id: ConvId =>
       Future.successful {
-        if (id == _1to1Conv.id)     Some(_1to1Conv)
+        if (id == _1to1Conv.id)          Some(_1to1Conv)
         else if (id == _1to1Conv2.id)    Some(_1to1Conv2)
         else if (id == groupConv.id)     Some(groupConv)
         else if (id == team1to1Conv.id)  Some(team1to1Conv)
@@ -1139,7 +1196,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (usersStorage.get _).expects(selfUserId).anyNumberOfTimes().returning(Future.successful(Some(selfUserData)))
 
     val s = new CallingServiceImpl(
-      selfUserId, selfClientId, null, context, avs, convs, convsService, members, null,
+      selfUserId, selfClientId, null, context, avs, convs, convsService, members, otrSyncHandler,
       flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking, httpProxy = None, conferenceCallingEnabled = false
     )
     result(s.wCall)

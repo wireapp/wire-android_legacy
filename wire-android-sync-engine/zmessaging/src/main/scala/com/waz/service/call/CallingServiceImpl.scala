@@ -215,13 +215,13 @@ class CallingServiceImpl(val accountId:       UserId,
   )
 
   def onSend(ctx: Pointer, msg: String, convId: RConvId, targetRecipients: Option[AvsClientList]): Future[Unit] =
-    withConv(convId) { (_, conv) =>
+    withConv(convId) { (wCall, conv) =>
       val recipients = targetRecipients match {
         case Some(clientList) => TargetRecipients.SpecificClients(clientsMap(clientList.clients.toSet))
         case None             => TargetRecipients.ConversationParticipants
       }
 
-      sendCallMessage(conv.id, GenericMessage(Uid(), GenericContent.Calling(msg)), recipients, ctx)
+      sendCallMessage(wCall, conv.id, GenericMessage(Uid(), GenericContent.Calling(msg)), recipients, ctx)
     }
 
   private def clientsMap(avsClients: Set[AvsClient]): Map[UserId, Set[ClientId]] = {
@@ -505,24 +505,26 @@ class CallingServiceImpl(val accountId:       UserId,
     }
 
   private def sendOutstandingCallMessage(convId: ConvId, message: OutstandingMessage): Unit =
-    sendCallMessage(convId, message.message, message.recipients, message.context)
-
-  private def sendCallMessage(convId: ConvId, msg: GenericMessage, targetRecipients: TargetRecipients, ctx: Pointer): Unit =
-    withConv(convId) { (w, conv) =>
-      verbose(l"Sending msg on behalf of avs: convId: $convId")
-      otrSyncHandler.postOtrMessage(convId, msg, targetRecipients).map {
-        case Right(_) =>
-          updateActiveCall(_.copy(outstandingMsg = None))("sendCallMessage/verified")
-          avs.onHttpResponse(w, 200, "", ctx)
-        case Left(ErrorResponse.Unverified) =>
-          warn(l"Conversation degraded, delay sending message on behalf of AVS")
-          //TODO need to handle degrading of conversation during a call
-          //Currently, the call will just time out...
-          updateActiveCall(_.copy(outstandingMsg = Some(OutstandingMessage(msg, targetRecipients, ctx))))("sendCallMessage/unverified")
-        case Left(ErrorResponse(code, errorMsg, label)) =>
-          avs.onHttpResponse(w, code, errorMsg, ctx)
-      }
+    withConv(convId) { (wCall, _) =>
+      sendCallMessage(wCall, convId, message.message, message.recipients, message.context)
     }
+
+  private def sendCallMessage(wCall: WCall, convId: ConvId, msg: GenericMessage, targetRecipients: TargetRecipients, ctx: Pointer): Unit = {
+    verbose(l"Sending msg on behalf of avs: convId: $convId")
+    otrSyncHandler.postOtrMessage(convId, msg, targetRecipients).map {
+      case Right(_) =>
+        updateActiveCall(_.copy(outstandingMsg = None))("sendCallMessage/verified")
+        avs.onHttpResponse(wCall, 200, "", ctx)
+      case Left(ErrorResponse.Unverified) =>
+        warn(l"Conversation degraded, delay sending message on behalf of AVS")
+        //TODO need to handle degrading of conversation during a call
+        //Currently, the call will just time out...
+        updateActiveCall(_.copy(outstandingMsg = Some(OutstandingMessage(msg, targetRecipients, ctx))))("sendCallMessage/unverified")
+      case Left(ErrorResponse(code, errorMsg, label)) =>
+        avs.onHttpResponse(wCall, code, errorMsg, ctx)
+    }
+
+  }
 
   //Drop the current call in case of incoming GSM interruption
   //TODO - we should actually end all calls here - we don't want any other incoming calls to compete with GSM
