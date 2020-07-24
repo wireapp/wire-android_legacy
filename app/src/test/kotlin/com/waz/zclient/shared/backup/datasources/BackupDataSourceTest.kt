@@ -53,7 +53,7 @@ class BackupDataSourceTest : UnitTest() {
     }
 
     @Test
-    fun `create files and write down json arrays to them`() = runBlocking {
+    fun `given KeyValues and Properties, when writing data to files in batches, then filenames should match the data type names and number of batches`() = runBlocking {
         `when`(keyValuesDao.size()).thenReturn(keyValues.size)
         `when`(keyValuesDao.getBatch(3, 0)).thenReturn(keyValues.take(3))
         `when`(keyValuesDao.getBatch(3, 3)).thenReturn(keyValues.drop(3).take(3))
@@ -78,7 +78,7 @@ class BackupDataSourceTest : UnitTest() {
     }
 
     @Test
-    fun `don't create files for empty db tables`() = runBlocking {
+    fun `given KeyValues and Properties, when writing data to files in batches, then don't create files for empty DB tables`() = runBlocking {
         `when`(keyValuesDao.size()).thenReturn(keyValues.size)
         `when`(keyValuesDao.getBatch(3, 0)).thenReturn(keyValues.take(3))
         `when`(keyValuesDao.getBatch(3, 3)).thenReturn(keyValues.drop(3).take(3))

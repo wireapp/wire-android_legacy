@@ -36,7 +36,7 @@ abstract class BackupLocalDataSource<EntityType, JSONType>(
 
         override fun next(): String = runBlocking {
             val list = dao.getBatch(batchSize, currentOffset)
-            if (list == null || list.isEmpty()) {
+            if (list.isNullOrEmpty()) {
                 String.empty()
             } else {
                 currentOffset += list.size
