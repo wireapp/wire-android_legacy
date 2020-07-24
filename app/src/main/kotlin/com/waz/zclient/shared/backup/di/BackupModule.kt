@@ -1,10 +1,6 @@
 package com.waz.zclient.shared.backup.di
 
-import com.waz.zclient.shared.backup.ZipBackupHandler
-import com.waz.zclient.shared.backup.ZipBackupHandlerImpl
 import com.waz.zclient.shared.backup.BackupRepository
-import com.waz.zclient.shared.backup.EncryptionHandler
-import com.waz.zclient.shared.backup.EncryptionHandlerImpl
 import com.waz.zclient.shared.backup.datasources.local.AssetsLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.BackupLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.ButtonLocalDataSource
@@ -20,6 +16,13 @@ import com.waz.zclient.shared.backup.datasources.local.PropertiesLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.ReadReceiptsLocalDataSource
 import com.waz.zclient.shared.backup.datasources.local.UsersLocalDataSource
 import com.waz.zclient.shared.backup.datasources.BackupDataSource
+import com.waz.zclient.shared.backup.handlers.LibSodiumEncryption
+import com.waz.zclient.shared.backup.handlers.LibSodiumEncryptionImpl
+import com.waz.zclient.shared.backup.handlers.EncryptionHandler
+import com.waz.zclient.shared.backup.handlers.EncryptionHandlerImpl
+import com.waz.zclient.shared.backup.handlers.ZipBackupHandler
+import com.waz.zclient.shared.backup.handlers.ZipBackupHandlerImpl
+import com.waz.zclient.shared.backup.usecase.BackupUseCase
 
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -27,7 +30,10 @@ import org.koin.dsl.module
 val backupModule: Module = module {
     single { BackupDataSource(get()) as BackupRepository }
     single { ZipBackupHandlerImpl() as ZipBackupHandler }
-    single { EncryptionHandlerImpl() as EncryptionHandler }
+    single { EncryptionHandlerImpl(get()) as EncryptionHandler }
+    single { LibSodiumEncryptionImpl() as LibSodiumEncryption }
+
+    single { BackupUseCase(get(), get(), get()) }
 
     factory {
         listOf<BackupLocalDataSource<out Any, out Any>>(
@@ -46,18 +52,4 @@ val backupModule: Module = module {
             UsersLocalDataSource(get())
         )
     }
-
-    factory { AssetsLocalDataSource(get()) }
-    factory { ButtonLocalDataSource(get()) }
-    factory { ConversationFoldersLocalDataSource(get()) }
-    factory { ConversationMembersLocalDataSource(get()) }
-    factory { ConversationRoleActionLocalDataSource(get()) }
-    factory { ConversationsLocalDataSource(get()) }
-    factory { FoldersLocalDataSource(get()) }
-    factory { KeyValuesLocalDataSource(get()) }
-    factory { LikesLocalDataSource(get()) }
-    factory { MessagesLocalDataSource(get()) }
-    factory { PropertiesLocalDataSource(get()) }
-    factory { ReadReceiptsLocalDataSource(get()) }
-    factory { UsersLocalDataSource(get()) }
 }

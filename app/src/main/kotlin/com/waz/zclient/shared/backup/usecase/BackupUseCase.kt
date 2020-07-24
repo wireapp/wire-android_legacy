@@ -7,14 +7,14 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.shared.backup.BackupRepository
-import com.waz.zclient.shared.backup.EncryptionHandler
-import com.waz.zclient.shared.backup.ZipBackupHandler
+import com.waz.zclient.shared.backup.handlers.EncryptionHandler
+import com.waz.zclient.shared.backup.handlers.ZipBackupHandler
 import java.io.File
 
 class BackupUseCase(
-     private val backupRepository: BackupRepository,
-     private val zipBackupHandler: ZipBackupHandler,
-     private val encryptionHandler: EncryptionHandler
+    private val backupRepository: BackupRepository,
+    private val zipBackupHandler: ZipBackupHandler,
+    private val encryptionHandler: EncryptionHandler
 ) {
     fun exportDatabase(userId: UserId, userHandle: Handle, password: String, targetDir: File): Either<Failure, File> =
         backupRepository.writeAllToFiles(targetDir).flatMap { files ->

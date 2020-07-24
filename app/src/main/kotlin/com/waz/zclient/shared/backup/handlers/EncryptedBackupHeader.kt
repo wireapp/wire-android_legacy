@@ -1,4 +1,4 @@
-package com.waz.zclient.shared.backup
+package com.waz.zclient.shared.backup.handlers
 
 import com.waz.zclient.core.logging.Logger.Companion.error
 import java.nio.ByteBuffer
@@ -50,18 +50,15 @@ data class EncryptedBackupHeader(
                 null
             }
 
-        fun serializeHeader(header: EncryptedBackupHeader): ByteArray {
-            val buffer = ByteBuffer.allocate(totalHeaderLength)
-
-            buffer.put(androidMagicNumber.toByteArray())
-            buffer.put(0.toByte())
-            buffer.putShort(header.version)
-            buffer.put(header.salt)
-            buffer.put(header.uuidHash)
-            buffer.putInt(header.opslimit)
-            buffer.putInt(header.memlimit)
-
-            return buffer.array()
-        }
+        fun serializeHeader(header: EncryptedBackupHeader): ByteArray =
+            ByteBuffer.allocate(totalHeaderLength).apply {
+                put(androidMagicNumber.toByteArray())
+                put(0.toByte())
+                putShort(header.version)
+                put(header.salt)
+                put(header.uuidHash)
+                putInt(header.opslimit)
+                putInt(header.memlimit)
+            }.array()
     }
 }

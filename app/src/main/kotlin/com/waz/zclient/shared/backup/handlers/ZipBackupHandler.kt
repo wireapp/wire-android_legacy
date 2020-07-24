@@ -1,4 +1,4 @@
-package com.waz.zclient.shared.backup
+package com.waz.zclient.shared.backup.handlers
 
 import com.waz.model.Handle
 import com.waz.zclient.core.exception.Failure
@@ -14,7 +14,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
 import java.util.zip.ZipOutputStream
 
 interface ZipBackupHandler {
