@@ -244,10 +244,11 @@ class OtrServiceImpl(selfUserId:     UserId,
     val msgData = GenericMessage.toByteArray(message)
 
     for {
-      encryptedPayloads <- Future.traverse(recipients) { case (userId, clientIds) =>
-                               encryptForClients(userId, clientIds, msgData, useFakeOnError, partialResult)
-                           }
-      content            = encryptedPayloads.filter(_._2.nonEmpty).toMap
+      payloads <- Future.traverse(recipients) { case (userId, clientIds) =>
+                    val partialResultForUser = partialResult.content.getOrElse(userId, Map.empty)
+                    encryptForClients(userId, clientIds, msgData, useFakeOnError, partialResultForUser)
+                  }
+      content   = payloads.filter(_._2.nonEmpty).toMap
     } yield EncryptedContent(content)
   }
 
@@ -255,13 +256,11 @@ class OtrServiceImpl(selfUserId:     UserId,
                                 clients: Set[ClientId],
                                 msgData: Array[Byte],
                                 useFakeOnError: Boolean,
-                                partialResult: EncryptedContent
+                                partialResult: Map[ClientId, Array[Byte]]
                                ): Future[(UserId, Map[ClientId, Array[Byte]])] =
 
     Future.traverse(clients) { clientId =>
-      val previous = partialResult.content
-        .getOrElse(user, Map.empty)
-        .get(clientId)
+      val previous = partialResult.get(clientId)
         .filter(arr => arr.nonEmpty && arr.sameElements(EncryptionFailedMsg))
 
       previous match {
