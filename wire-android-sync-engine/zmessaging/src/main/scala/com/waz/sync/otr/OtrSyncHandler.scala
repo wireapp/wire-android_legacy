@@ -20,7 +20,7 @@ package com.waz.sync.otr
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
-import com.waz.content.{ConversationStorage, MembersStorage, UsersStorage}
+import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE.{error, _}
 import com.waz.model._
@@ -33,6 +33,9 @@ import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
 import com.waz.sync.client._
+import com.waz.sync.otr.OtrSyncHandler.MissingClientsStrategy._
+import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
+import com.waz.sync.otr.OtrSyncHandler.TargetRecipients._
 import com.waz.utils.crypto.AESUtils
 
 import scala.concurrent.Future
@@ -42,10 +45,11 @@ import scala.util.control.NonFatal
 trait OtrSyncHandler {
   def postOtrMessage(convId:               ConvId,
                      message:              GenericMessage,
-                     recipients:           Option[Set[UserId]] = None,
+                     targetRecipients:     TargetRecipients = ConversationParticipants,
                      nativePush:           Boolean = true,
                      enforceIgnoreMissing: Boolean = false
                     ): Future[Either[ErrorResponse, RemoteInstant]]
+
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
   def broadcastMessage(message:    GenericMessage,
                        retry:      Int = 0,
@@ -67,14 +71,15 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                          errors:             ErrorsService,
                          clientsSyncHandler: OtrClientsSyncHandler,
                          push:               PushService,
-                         usersStorage:       UsersStorage) extends OtrSyncHandler with DerivedLogTag {
+                         usersStorage:       UsersStorage,
+                         clientsStorage:     OtrClientsStorage) extends OtrSyncHandler with DerivedLogTag {
 
   import OtrSyncHandler._
   import com.waz.threading.Threading.Implicits.Background
 
   override def postOtrMessage(convId:               ConvId,
                               message:              GenericMessage,
-                              recipients:           Option[Set[UserId]] = None,
+                              targetRecipients:     TargetRecipients = ConversationParticipants,
                               nativePush:           Boolean = true,
                               enforceIgnoreMissing: Boolean = false
                              ): Future[Either[ErrorResponse, RemoteInstant]] = {
@@ -89,15 +94,21 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         _          <- push.waitProcessing
         Some(conv) <- convStorage.get(convId)
         _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
-        us         <- recipients.fold(members.getActiveUsers(convId).map(_.toSet))(rs => Future.successful(rs))
-        content    <- service.encryptForUsers(us, msg, retries > 0, previous)
-        resp       <- if (content.estimatedSize < MaxContentSize)
+        recipients <- clientsMap(targetRecipients, convId)
+        content    <- service.encryptMessage(msg, recipients, retries > 0, previous)
+        resp       <- if (content.estimatedSize < MaxContentSize) {
+                        val (shouldIgnoreMissingClients, targetUsers) = missingClientsStrategy(targetRecipients) match {
+                          case DoNotIgnoreMissingClients                    => (false, None)
+                          case IgnoreMissingClientsExceptFromUsers(userIds) => (false, Some(userIds))
+                          case IgnoreMissingClients                         => (true, None)
+                        }
+
                         msgClient.postMessage(
                           conv.remoteId,
-                          OtrMessage(selfClientId, content, external, nativePush, recipients),
-                          ignoreMissing = enforceIgnoreMissing || retries > 1
+                          OtrMessage(selfClientId, content, external, nativePush, report_missing = targetUsers),
+                          ignoreMissing = shouldIgnoreMissingClients || enforceIgnoreMissing || retries > 1
                         ).future
-                      else {
+                      } else {
                         verbose(l"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
                         val key = AESKey()
                         val (sha, data) = AESUtils.encrypt(key, GenericMessage.toByteArray(msg))
@@ -130,6 +141,29 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
     }.mapRight(_.mismatch.time)
   }
 
+  private def missingClientsStrategy(targetRecipients: TargetRecipients): MissingClientsStrategy =
+    targetRecipients match {
+      case ConversationParticipants => DoNotIgnoreMissingClients
+      case SpecificUsers(userIds)   => IgnoreMissingClientsExceptFromUsers(userIds)
+      case SpecificClients(_)       => IgnoreMissingClients
+    }
+
+  private def clientsMap(targetRecipients: TargetRecipients, convId: ConvId): Future[Map[UserId, Set[ClientId]]] = {
+    def clientIds(userIds: Set[UserId]): Future[Map[UserId, Set[ClientId]]] = {
+      Future.traverse(userIds) { userId =>
+        clientsStorage.getClients(userId).map { clients =>
+          userId -> clients.map(_.id).filterNot(_ == selfClientId).toSet
+        }
+      }.map(_.toMap)
+    }
+
+    targetRecipients match {
+      case ConversationParticipants       => members.getActiveUsers(convId).map(_.toSet).flatMap(clientIds)
+      case SpecificUsers(userIds)         => clientIds(userIds)
+      case SpecificClients(clientsByUser) => Future.successful(clientsByUser)
+    }
+  }
+
   override def broadcastMessage(message:    GenericMessage,
                                 retry:      Int = 0,
                                 previous:   EncryptedContent = EncryptedContent.Empty,
@@ -150,7 +184,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 
       broadcastRecipients.flatMap { recp =>
         for {
-          content  <- service.encryptForUsers(recp, message, useFakeOnError = retry > 0, previous)
+          content  <- service.encryptMessageForUsers(message, recp, useFakeOnError = retry > 0, previous)
           response <- otrClient.broadcastMessage(
                         OtrMessage(selfClientId, content, report_missing = Some(recp)),
                         ignoreMissing = retry > 1
@@ -253,4 +287,33 @@ object OtrSyncHandler {
 
   val MaxInlineSize  = 10 * 1024
   val MaxContentSize = 256 * 1024 // backend accepts 256KB for otr messages, but we would prefer to send less
+
+  /// Describes who should receive a message.
+  sealed trait TargetRecipients
+
+  object TargetRecipients {
+    /// All participants (and all their clients) should receive the message.
+    object ConversationParticipants extends TargetRecipients
+
+    /// All clients of the given users should receive the message.
+    case class SpecificUsers(userIds: Set[UserId]) extends TargetRecipients
+
+    /// These exact clients should receive the message.
+    case class SpecificClients(clientsByUser: Map[UserId, Set[ClientId]]) extends TargetRecipients
+  }
+
+  /// Describes how missing clients should be handled.
+  sealed trait MissingClientsStrategy
+
+  object MissingClientsStrategy {
+    /// Fetch missing clients and resend the message.
+    object DoNotIgnoreMissingClients extends MissingClientsStrategy
+
+    /// Send the message without fetching missing clients.
+    object IgnoreMissingClients extends MissingClientsStrategy
+
+    /// Only fetch missing clients from the given users and resend the message.
+    case class IgnoreMissingClientsExceptFromUsers(userIds: Set[UserId]) extends MissingClientsStrategy
+  }
+
 }
