@@ -549,6 +549,7 @@ class MainActivity extends BaseActivity
 
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
 
+  // TODO: remove after release 3.53
   private def shouldShowDiscontinuedDialog() =
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
       showDiscontinuedSupportDialog()
@@ -556,12 +557,14 @@ class MainActivity extends BaseActivity
 
   // TODO: remove after release 3.53
   def showDiscontinuedSupportDialog() : Future[Unit] = {
+
     def showDialog(accentColor: AccentColor): Future[Boolean] = showConfirmationDialog(
       getString(R.string.discontinued_support_warning_title),
       getString(R.string.discontinued_support_warning_message),
       R.string.discontinued_support_warning_action_ok,
       R.string.discontinued_support_warning_action_do_not_show_again,
-      accentColor)
+      accentColor
+    )
 
     val prefs = inject[GlobalPreferences]
 
