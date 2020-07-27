@@ -25,7 +25,7 @@ import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences._
-import com.waz.content.{TeamsStorage, UserPreferences}
+import com.waz.content.{GlobalPreferences, TeamsStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus.{apply => _}
 import com.waz.model._
@@ -34,13 +34,14 @@ import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.wire.signals.Signal
+import com.waz.threading.Threading._
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.Intents.{RichIntent, _}
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
 import com.waz.zclient.common.controllers.{BrowserController, SharingController, UserAccountsController}
+import com.waz.zclient.common.fragments.ConnectivityFragment
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -61,8 +62,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{Emojis, IntentUtils, ResString, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-import com.waz.threading.Threading._
-import com.waz.zclient.common.fragments.ConnectivityFragment
+import com.wire.signals.Signal
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -101,6 +101,8 @@ class MainActivity extends BaseActivity
   override def onCreate(savedInstanceState: Bundle) = {
     Option(getActionBar).foreach(_.hide())
     super.onCreate(savedInstanceState)
+
+    shouldShowDiscontinuedDialog()
 
     //Prevent drawing the default background to reduce overdraw
     getWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT))
@@ -546,6 +548,32 @@ class MainActivity extends BaseActivity
       .commit
 
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
+
+  private def shouldShowDiscontinuedDialog() =
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+      showDiscontinuedSupportDialog()
+    }
+
+  // TODO: remove after release 3.53
+  def showDiscontinuedSupportDialog() : Future[Unit] = {
+    def showDialog(accentColor: AccentColor): Future[Boolean] = showConfirmationDialog(
+      getString(R.string.discontinued_support_warning_title),
+      getString(R.string.discontinued_support_warning_message),
+      R.string.discontinued_support_warning_action_ok,
+      R.string.discontinued_support_warning_action_do_not_show_again,
+      accentColor)
+
+    val prefs = inject[GlobalPreferences]
+
+    for {
+      shouldWarn <- prefs(GlobalPreferences.ShouldWarnAndroid5And6Users).apply()
+      color <- accentColorController.accentColor.head
+    } yield {
+      if (shouldWarn) {
+        showDialog(color).foreach { doNotShowAgain => prefs(GlobalPreferences.ShouldWarnAndroid5And6Users) := !doNotShowAgain }
+      }
+    }
+  }
 }
 
 object MainActivity {
