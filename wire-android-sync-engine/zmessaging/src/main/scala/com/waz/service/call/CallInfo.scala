@@ -26,8 +26,9 @@ import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState}
-import com.waz.service.call.CallInfo.{CallState, Participant}
+import com.waz.service.call.CallInfo.{CallState, OutstandingMessage, Participant}
 import com.waz.service.call.CallInfo.CallState._
+import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.wire.signals.{ClockSignal, Signal}
 import org.threeten.bp.Duration
 import org.threeten.bp.Duration.between
@@ -39,22 +40,22 @@ case class CallInfo(convId:             ConvId,
                     isGroup:            Boolean,
                     caller:             UserId,
                     state:              CallState,
-                    prevState:          Option[CallState]                      = None,
-                    otherParticipants:  Set[Participant]                       = Set.empty,
-                    maxParticipants:    Int                                    = 0, //maintains the largest number of users that were ever in the call (for tracking)
-                    muted:              Boolean                                = false,
-                    isCbrEnabled:       Boolean                                = false,
-                    startedAsVideoCall: Boolean                                = false,
-                    videoSendState:     VideoState                             = VideoState.Stopped,
-                    videoReceiveStates: Map[Participant, VideoState]           = Map.empty,
-                    wasVideoToggled:    Boolean                                = false, //for tracking
-                    startTime:          LocalInstant                           = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
-                    joinedTime:         Option[LocalInstant]                   = None, //the time the call was joined, if any
-                    estabTime:          Option[LocalInstant]                   = None, //the time that a joined call was established, if any
-                    endTime:            Option[LocalInstant]                   = None,
-                    endReason:          Option[AvsClosedReason]                = None,
-                    outstandingMsg:     Option[(GenericMessage, Pointer)]      = None, //Any messages we were unable to send due to conv degradation
-                    shouldRing:         Boolean                                = true) extends DerivedLogTag {
+                    prevState:          Option[CallState]            = None,
+                    otherParticipants:  Set[Participant]             = Set.empty,
+                    maxParticipants:    Int                          = 0, //maintains the largest number of users that were ever in the call (for tracking)
+                    muted:              Boolean                      = false,
+                    isCbrEnabled:       Boolean                      = false,
+                    startedAsVideoCall: Boolean                      = false,
+                    videoSendState:     VideoState                   = VideoState.Stopped,
+                    videoReceiveStates: Map[Participant, VideoState] = Map.empty,
+                    wasVideoToggled:    Boolean                      = false, //for tracking
+                    startTime:          LocalInstant                 = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
+                    joinedTime:         Option[LocalInstant]         = None, //the time the call was joined, if any
+                    estabTime:          Option[LocalInstant]         = None, //the time that a joined call was established, if any
+                    endTime:            Option[LocalInstant]         = None,
+                    endReason:          Option[AvsClosedReason]      = None,
+                    outstandingMsg:     Option[OutstandingMessage]   = None, //Any messages we were unable to send due to conv degradation
+                    shouldRing:         Boolean                      = true) extends DerivedLogTag {
 
   val duration = estabTime match {
     case Some(est) => ClockSignal(1.second).map(_ => Option(between(est.instant, LocalInstant.Now.instant)))
@@ -123,6 +124,8 @@ case class CallInfo(convId:             ConvId,
 object CallInfo {
 
   case class Participant(userId: UserId, clientId: ClientId)
+
+  case class OutstandingMessage(message: GenericMessage, recipients: TargetRecipients, context: Pointer)
 
   sealed trait CallState extends SafeToLog
 

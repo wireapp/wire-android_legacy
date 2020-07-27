@@ -36,9 +36,9 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
-import com.waz.service.call.Avs.{AvsCallError, AvsClosedReason, NetworkQuality, VideoState, WCall}
+import com.waz.service.call.Avs.{AvsCallError, AvsClient, AvsClientList, AvsClosedReason, NetworkQuality, VideoState, WCall}
 import com.waz.service.call.CallInfo.CallState._
-import com.waz.service.call.CallInfo.{CallState, Participant}
+import com.waz.service.call.CallInfo.{CallState, OutstandingMessage, Participant}
 import com.waz.service.call.CallingService.GlobalCallProfile
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
@@ -46,6 +46,7 @@ import com.waz.service.push.PushService
 import com.waz.service.tracking.{AVSMetricsEvent, TrackingService}
 import com.waz.sync.client.CallingClient
 import com.waz.sync.otr.OtrSyncHandler
+import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.wire.signals._
 import com.waz.utils.wrappers.Context
 import com.waz.utils.{RichInstant, returning, returningF}
@@ -213,10 +214,22 @@ class CallingServiceImpl(val accountId:       UserId,
     }(EventContext.Global)
   )
 
-  def onSend(ctx: Pointer, convId: RConvId, userId: UserId, clientId: ClientId, msg: String): Future[Unit] =
-    withConv(convId) { (_, conv) =>
-      sendCallMessage(conv.id, GenericMessage(Uid(), GenericContent.Calling(msg)), ctx)
+  def onSend(ctx: Pointer, msg: String, convId: RConvId, targetRecipients: Option[AvsClientList]): Future[Unit] =
+    withConv(convId) { (wCall, conv) =>
+      val recipients = targetRecipients match {
+        case Some(clientList) => TargetRecipients.SpecificClients(clientsMap(clientList.clients.toSet))
+        case None             => TargetRecipients.ConversationParticipants
+      }
+
+      sendCallMessage(wCall, conv.id, GenericMessage(Uid(), GenericContent.Calling(msg)), recipients, ctx)
     }
+
+  private def clientsMap(avsClients: Set[AvsClient]): Map[UserId, Set[ClientId]] = {
+    avsClients
+      .groupBy(_.userid)
+      .mapValues(_.map(_.clientid))
+      .map { case (userId, clientIds) => UserId(userId) -> clientIds.map(ClientId(_)) }
+  }
 
   def onSftRequest(ctx: Pointer, url: String, data: String): Unit =
     callingClient.connectToSft(url, data).future.foreach {
@@ -484,29 +497,32 @@ class CallingServiceImpl(val accountId:       UserId,
     currentCall.head.map {
       case Some(info) =>
         (info.outstandingMsg, info.state) match {
-          case (Some((msg, ctx)), _) => convs.storage.setUnknownVerification(info.convId).map(_ => sendCallMessage(info.convId, msg, ctx))
+          case (Some(message), _)   => convs.storage.setUnknownVerification(info.convId).map(_ => sendOutstandingCallMessage(info.convId, message))
           case (None, OtherCalling) => convs.storage.setUnknownVerification(info.convId).map(_ => startCall(info.convId))
-          case _ => error(l"Tried resending message on invalid info: ${info.convId} in state ${info.state}")
+          case _                    => error(l"Tried resending message on invalid info: ${info.convId} in state ${info.state}")
         }
       case None => warn(l"Tried to continue degraded call without a current active call")
     }
 
-  private def sendCallMessage(convId: ConvId, msg: GenericMessage, ctx: Pointer): Unit =
-    withConv(convId) { (w, conv) =>
-      verbose(l"Sending msg on behalf of avs: convId: $convId")
-      otrSyncHandler.postOtrMessage(convId, msg).map {
-        case Right(_) =>
-          updateActiveCall(_.copy(outstandingMsg = None))("sendCallMessage/verified")
-          avs.onHttpResponse(w, 200, "", ctx)
-        case Left(ErrorResponse.Unverified) =>
-          warn(l"Conversation degraded, delay sending message on behalf of AVS")
-          //TODO need to handle degrading of conversation during a call
-          //Currently, the call will just time out...
-          updateActiveCall(_.copy(outstandingMsg = Some(msg, ctx)))("sendCallMessage/unverified")
-        case Left(ErrorResponse(code, errorMsg, label)) =>
-          avs.onHttpResponse(w, code, errorMsg, ctx)
-      }
+  private def sendOutstandingCallMessage(convId: ConvId, message: OutstandingMessage): Unit =
+    withConv(convId) { (wCall, _) =>
+      sendCallMessage(wCall, convId, message.message, message.recipients, message.context)
     }
+
+  private def sendCallMessage(wCall: WCall, convId: ConvId, msg: GenericMessage, targetRecipients: TargetRecipients, ctx: Pointer): Unit = {
+    verbose(l"Sending msg on behalf of avs: convId: $convId")
+    otrSyncHandler.postOtrMessage(convId, msg, targetRecipients).map {
+      case Right(_) =>
+        updateActiveCall(_.copy(outstandingMsg = None))("sendCallMessage/verified")
+        avs.onHttpResponse(wCall, 200, "", ctx)
+      case Left(ErrorResponse.Unverified) =>
+        warn(l"Conversation degraded, delay sending message on behalf of AVS")
+        updateActiveCall(_.copy(outstandingMsg = Some(OutstandingMessage(msg, targetRecipients, ctx))))("sendCallMessage/unverified")
+      case Left(ErrorResponse(code, errorMsg, label)) =>
+        avs.onHttpResponse(wCall, code, errorMsg, ctx)
+    }
+
+  }
 
   //Drop the current call in case of incoming GSM interruption
   //TODO - we should actually end all calls here - we don't want any other incoming calls to compete with GSM

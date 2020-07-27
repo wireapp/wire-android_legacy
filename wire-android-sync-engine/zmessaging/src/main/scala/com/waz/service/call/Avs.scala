@@ -104,9 +104,35 @@ class AvsImpl() extends Avs with DerivedLogTag {
         }
       },
       new SendHandler {
-        override def onSend(ctx: Pointer, convId: String, userIdSelf: String, clientIdSelf: String, userIdDest: String, clientIdDest: String, data: Pointer, len: Size_t, isTransient: Boolean, arg: Pointer) = {
-          cs.onSend(ctx, RConvId(convId), UserId(userIdDest), ClientId(clientIdDest), data.getString(0, "UTF-8"))
-          0
+        override def onSend(ctx: Pointer,
+                            convId: String,
+                            userIdSelf: String,
+                            clientIdSelf: String,
+                            targetRecipientsJson: String, // Change: was userIdDest but has been re-purposed.
+                            clientIdDest: String,         // Deprecated: AVS will no longer pass a value here.
+                            data: Pointer,
+                            len: Size_t,
+                            isTransient: Boolean,
+                            arg: Pointer): Int = {
+
+          if (!(userIdSelf == cs.accountId.str && clientIdSelf == cs.clientId.str)) {
+            warn(l"Received request to send calling message from non self user and/or client")
+            return AvsCallbackError.InvalidArgument
+          }
+
+          try {
+            val message = data.getString(0, "UTF-8")
+            val targetRecipients = Option(targetRecipientsJson).map { json =>
+              AvsClientList.decode(json).fold({ throw _ }, identity)
+            }
+
+            cs.onSend(ctx, message, RConvId(convId), targetRecipients)
+            AvsCallbackError.None
+          } catch {
+            case e: Throwable =>
+              error(l"Could not decode AvsClientList", e)
+              AvsCallbackError.CouldNotDecodeArgument
+          }
         }
       },
       new SFTRequestHandler {
@@ -240,15 +266,15 @@ class AvsImpl() extends Avs with DerivedLogTag {
     withAvs(wcall_set_proxy(host, port))
 
   override def onClientsRequest(wCall: WCall, convId: RConvId, userClients: Map[UserId, Seq[ClientId]]): Unit = {
-    import ClientListEncoder._
+    import AvsClientList._
 
     val clients = userClients.flatMap { case (userId, clientIds) =>
       clientIds.map { clientId =>
-        Client(userId.str, clientId.str)
+        AvsClient(userId.str, clientId.str)
       }
     }
 
-    val json = encode(ClientList(clients.toSeq))
+    val json = encode(AvsClientList(clients.toSeq))
     withAvs(wcall_set_clients_for_conv(wCall, convId.str, json))
   }
 
@@ -281,6 +307,13 @@ object Avs extends DerivedLogTag {
   object AvsSftError {
     val None = 0
     val NoResponseData = 1
+  }
+
+  type AvsCallbackError = Int
+  object AvsCallbackError {
+    val None = 0
+    val InvalidArgument = 1
+    val CouldNotDecodeArgument = 2
   }
 
   /**
@@ -395,16 +428,18 @@ object Avs extends DerivedLogTag {
       parser.decode(json)(decoder).right.toOption
   }
 
-  object ClientListEncoder extends CirceJSONSupport {
+  case class AvsClientList(clients: Seq[AvsClient])
+  case class AvsClient(userid: String, clientid: String)
 
-    import io.circe.Encoder
+  object AvsClientList extends CirceJSONSupport {
 
-    case class ClientList(clients: Seq[Client])
-    case class Client(userid: String, clientid: String)
+    import io.circe.{Encoder, Decoder, parser, Error}
 
-    private lazy val encoder: Encoder[ClientList] = Encoder.apply
+    private lazy val encoder: Encoder[AvsClientList] = Encoder.apply
+    private lazy val decoder: Decoder[AvsClientList] = Decoder.apply
 
-    def encode(clientList: ClientList): String = encoder(clientList).toString
+    def encode(clientList: AvsClientList): String = encoder(clientList).toString
+    def decode(json: String): Either[Error, AvsClientList] = parser.decode(json)(decoder)
 
   }
 
