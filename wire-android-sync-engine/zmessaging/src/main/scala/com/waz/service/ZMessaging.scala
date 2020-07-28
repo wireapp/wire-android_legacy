@@ -111,7 +111,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   private implicit val dispatcher = new SerialDispatchQueue(name = "ZMessaging")
 
   val httpProxy: Option[Proxy] = ZMessaging.httpProxy
-  val conferenceCallingEnabled: Boolean = ZMessaging.conferenceCallingEnabled
 
   val clock = ZMessaging.clock
 
@@ -384,7 +383,6 @@ object ZMessaging extends DerivedLogTag { self =>
   private var notificationsUi:     NotificationUiController = _
   private var assets2Module:       Assets2Module = _
   private var fileRestrictionList: FileRestrictionList = _
-  private var conferenceCallingEnabled: Boolean = _
 
   //var for tests - and set here so that it is globally available without the need for DI
   var clock = Clock.systemUTC()
@@ -415,8 +413,7 @@ object ZMessaging extends DerivedLogTag { self =>
                syncRequests:        SyncRequestService,
                notificationUi:      NotificationUiController,
                assets2:             Assets2Module,
-               fileRestrictionList: FileRestrictionList,
-               conferenceCallingEnabled: Boolean
+               fileRestrictionList: FileRestrictionList
               ) = {
     Threading.assertUiThread()
 
@@ -430,9 +427,6 @@ object ZMessaging extends DerivedLogTag { self =>
       this.notificationsUi = notificationUi
       this.assets2Module = assets2
       this.fileRestrictionList = fileRestrictionList
-      this.conferenceCallingEnabled = conferenceCallingEnabled
-
-      if (conferenceCallingEnabled) CallingService.VideoCallMaxMembers = 100
 
       currentUi = ui
       currentGlobal = _global

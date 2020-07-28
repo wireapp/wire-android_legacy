@@ -384,6 +384,9 @@ object GlobalPreferences {
 
   lazy val BackendDrift = PrefKey[Duration]("backend_drift")
 
+  // TODO: remove after release 3.53
+  lazy val ShouldWarnAndroid5And6Users = PrefKey[Boolean]( "should_warn_android_5_and_6_users", customDefault = true)
+
   //TODO think of a nicer way of ensuring that these key values are used in UI - right now, we need to manually check they're correct
   lazy val AutoAnswerCallPrefKey = PrefKey[Boolean]("PREF_KEY_AUTO_ANSWER_ENABLED")
   lazy val V31AssetsEnabledKey = PrefKey[Boolean]("PREF_V31_ASSETS_ENABLED")
@@ -500,4 +503,5 @@ object UserPreferences {
   lazy val FailedPasswordAttempts = PrefKey[Int]("failed_password_attempts", customDefault = 0)
 
   lazy val ShouldWarnAVSUpgrade = PrefKey[Boolean]("should_warn_avs_upgrade", customDefault = false)
+  lazy val ConferenceCallingEnabled = PrefKey[Boolean]("conference_calling_enabled", customDefault = false)
 }

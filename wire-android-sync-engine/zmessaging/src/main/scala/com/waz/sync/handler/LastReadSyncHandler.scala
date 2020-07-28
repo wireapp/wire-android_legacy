@@ -17,7 +17,6 @@
  */
 package com.waz.sync.handler
 
-import com.waz.log.LogSE._
 import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.LastRead
@@ -26,6 +25,7 @@ import com.waz.service.MetaDataService
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.otr.OtrSyncHandler
+import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.utils.RichWireInstant
 
 import scala.concurrent.Future
@@ -45,7 +45,7 @@ class LastReadSyncHandler(selfUserId: UserId,
       case Some(conv) =>
         val msg = GenericMessage(Uid(), LastRead(conv.remoteId, time))
         otrSync
-          .postOtrMessage(ConvId(selfUserId.str), msg, recipients = Some(Set(selfUserId)))
+          .postOtrMessage(ConvId(selfUserId.str), msg, TargetRecipients.SpecificUsers(Set(selfUserId)))
           .map(SyncResult(_))
       case None =>
         Future.successful(Failure(s"No conversation found for id: $convId"))

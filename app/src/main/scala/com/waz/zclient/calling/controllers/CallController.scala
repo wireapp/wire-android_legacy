@@ -110,6 +110,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val cbrEnabled            = currentCall.map(_.isCbrEnabled)
   val duration              = currentCall.flatMap(_.durationFormatted)
   val otherParticipants     = currentCall.map(_.otherParticipants)
+  val isConferenceCall      = currentCall.map(_.isConferenceCall)
 
   val lastCallAccountId: SourceSignal[UserId] = Signal()
   currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
