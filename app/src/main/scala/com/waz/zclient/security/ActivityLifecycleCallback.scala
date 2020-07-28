@@ -17,18 +17,17 @@
   */
 package com.waz.zclient.security
 
-import android.app.{Activity, ActivityManager, Application}
+import android.app.{Activity, Application}
 import android.os.Bundle
-import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.wire.signals._
+import com.waz.threading.Threading._
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{BuildConfig, Injectable, Injector, LaunchActivity}
+import com.wire.signals._
 
 import scala.collection.convert.DecorateAsScala
-import com.waz.threading.Threading._
 
 class ActivityLifecycleCallback(implicit injector: Injector)
   extends Application.ActivityLifecycleCallbacks
@@ -80,7 +79,7 @@ class ActivityLifecycleCallback(implicit injector: Injector)
       }
     }
   }
-  
+
   override def onActivityPaused(activity: Activity): Unit = {}
 
   override def onActivityDestroyed(activity: Activity): Unit = {}
