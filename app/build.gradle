@@ -14,8 +14,8 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '6.1.9@aar'
-    customAvsInternalVersion = '6.2.10@aar'
+    customAvsVersion = '6.2.12@aar'
+    customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
 }
