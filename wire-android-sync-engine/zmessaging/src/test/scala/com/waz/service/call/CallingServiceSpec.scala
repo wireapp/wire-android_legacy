@@ -107,7 +107,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     val checkpoint5 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
 
     def progressToSelfConnected(): Unit = {
-      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       awaitCP(checkpoint1)
 
       clock.advance(10.seconds)
@@ -202,7 +202,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint4 = callCheckpoint(_.contains(team1to1Conv.id), _.exists(c => c.convId == team1to1Conv.id && c.state == Terminating   && c.otherParticipants == Set(otherUser) && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))))
       val checkpoint5 = callCheckpoint(_.get(team1to1Conv.id).exists(c => c.convId == team1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)      && c.endTime.contains(LocalInstant(Instant.EPOCH + 30.seconds))), _.isEmpty)
 
-      service.onIncomingCall(team1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(team1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       awaitCP(checkpoint1)
 
       clock.advance(10.seconds)
@@ -254,7 +254,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         case _ =>
       }
 
-      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       awaitCP(checkpoint1)
 
       (avs.rejectCall _).expects(*, *).once()
@@ -446,7 +446,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint2 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfJoining))
       val checkpoint3 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected  && cur.otherParticipants == Set(otherUser, otherUser2)))
 
-      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
 
       awaitCP(checkpoint1)
 
@@ -537,7 +537,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(c => c.state == SelfConnected && c.estabTime.contains(estTime)))
       val checkpoint2 = callCheckpoint(_.get(groupConv.id).exists(c => c.state == Ongoing && c.estabTime.contains(estTime)), _.isEmpty)
 
-      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
 
       clock + 10.seconds
 
@@ -571,7 +571,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(_.state == OtherCalling))
       val checkpoint2 = callCheckpoint(_.get(groupConv.id).exists(c => c.state == Ended && c.endReason.contains(AvsClosedReason.AnsweredElsewhere)), _.isEmpty)
 
-      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       awaitCP(checkpoint1)
 
       service.onClosedCall(AnsweredElsewhere, groupConv.remoteId, RemoteInstant(clock.instant()), otherUserId)
@@ -621,7 +621,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("Leaving a group call with more than 1 other member should put the call into the Ongoing state if we skip terminating") {
       await(globalPrefs(SkipTerminatingState) := true)
 
-      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
 
       awaitCP(checkpoint1)
 
@@ -657,7 +657,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
 
     scenario("Leaving a group call with more than 1 other member should put the call into the Ongoing state after the terminating state") {
-      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
 
       awaitCP(checkpoint1)
 
@@ -699,7 +699,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     scenario("If a user joins an ongoing group call in the background, it shouldn't be bumped to active") {
       await(globalPrefs(SkipTerminatingState) := true)
-      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       service.onParticipantsChanged(groupConv.remoteId, Set(otherUser))
 
       service.endCall(groupConv.id)
@@ -712,7 +712,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       awaitCP(checkpoint8)
 
-      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = false) //Group check message gets triggered after a bit
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = false, isConferenceCall = false) //Group check message gets triggered after a bit
 
       awaitCP(checkpoint9)
     }
@@ -726,7 +726,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint2 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == SelfCalling) && cur.exists(_.otherParticipants.isEmpty))
       val checkpoint3 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == SelfConnected) && cur.exists(_.otherParticipants.contains(otherUser2)))
 
-      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(_1to1Conv.remoteId, otherUserId)
         service.onParticipantsChanged(_1to1Conv.remoteId, Set(otherUser))
@@ -858,7 +858,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       awaitCP(checkpoint5)
 
       clock.advance(10.seconds)
-      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       awaitCP(checkpoint6)
     }
   }
@@ -885,7 +885,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
-      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(_1to1Conv.remoteId, otherUserId)
         service.onParticipantsChanged(_1to1Conv.remoteId, Set(otherUser))
@@ -893,7 +893,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.startCall(_1to1Conv.id)
       awaitCP(checkpoint1)
 
-      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2Id, videoCall = false, shouldRing = true) //Receive the second call after first is established
+      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2Id, videoCall = false, shouldRing = true, isConferenceCall = false) //Receive the second call after first is established
       awaitCP(checkpoint2)
 
       (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
@@ -925,7 +925,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
-      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(_1to1Conv.remoteId, otherUserId)
         service.onParticipantsChanged(_1to1Conv.remoteId, Set(otherUser))
@@ -933,7 +933,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.startCall(_1to1Conv.id)
       awaitCP(checkpoint1)
 
-      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2Id, videoCall = false, shouldRing = true) //Receive the second call after first is established
+      service.onIncomingCall(_1to1Conv2.remoteId, otherUser2Id, videoCall = false, shouldRing = true, isConferenceCall = false) //Receive the second call after first is established
       awaitCP(checkpoint2)
 
       service.onClosedCall(Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUserId)
@@ -960,14 +960,14 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       //Join group call
       val checkpoint5 = callCheckpoint(_.contains(groupConv.id), _.exists(c => c.otherParticipants == Set(otherUser, otherUser2) && c.state == SelfConnected))
 
-      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       (avs.rejectCall _).expects(*, *).anyNumberOfTimes().onCall { (_, _) =>
         service.onClosedCall(StillOngoing, groupConv.remoteId, RemoteInstant(clock.instant()), otherUserId)
       }
       service.endCall(groupConv.id) //user rejects the group call
       awaitCP(checkpoint1)
 
-      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (rId, _, _, _) =>
         service.onEstablishedCall(_1to1Conv.remoteId, otherUserId)
         service.onParticipantsChanged(_1to1Conv.remoteId, Set(otherUser))
@@ -1060,7 +1060,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     def progressToSelfConnected(): Unit = {
       val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected  && cur.otherParticipants == Set(otherUser, otherUser2)))
 
-      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true)
+      service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
 
       (convsService.activeMembersData _).expects(groupConv.id).once().returning(
         Signal(Seq(
@@ -1197,7 +1197,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val s = new CallingServiceImpl(
       selfUserId, selfClientId, null, context, avs, convs, convsService, members, otrSyncHandler,
-      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking, httpProxy = None,
+      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking, httpProxy = None
     )
     result(s.wCall)
     s
