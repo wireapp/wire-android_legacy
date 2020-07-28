@@ -1,6 +1,5 @@
 package com.waz.zclient.core.extension
 
-import android.os.Build
 import android.text.Html
 
 fun String.Companion.empty() = ""
