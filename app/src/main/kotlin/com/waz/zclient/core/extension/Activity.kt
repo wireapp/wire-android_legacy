@@ -24,11 +24,7 @@ fun AppCompatActivity.removeFragment(fragment: Fragment) =
     supportFragmentManager.doTransaction { remove(fragment) }
 
 fun Activity.getDeviceLocale(): Locale =
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-        DeprecationUtils.getDefaultLocale(this)
-    } else {
-        resources.configuration.locales.get(0)
-    }
+    resources.configuration.locales.get(0)
 
 fun Activity.hideKeyboard() {
     val inputMethodManager = this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager

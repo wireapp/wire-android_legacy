@@ -18,7 +18,7 @@
 package com.waz.zclient.security
 
 import android.app.{Activity, ActivityManager, Application}
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import com.waz.content.UserPreferences
@@ -71,16 +71,14 @@ class ActivityLifecycleCallback(implicit injector: Injector)
   override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {}
 
   override def onActivityResumed(activity: Activity): Unit = {
-    (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1, BuildConfig.FORCE_HIDE_SCREEN_CONTENT) match {
-      case (true, true)   => excludeFromRecents(true)
-      case (false, true)  => activity.getWindow.addFlags(FLAG_SECURE)
-      case (true, false)  =>
-        shouldHideScreenContent.onUi(excludeFromRecents)
-      case (false, false) =>
-        shouldHideScreenContent.onUi {
-          case true  => activity.getWindow.addFlags(FLAG_SECURE)
-          case false => activity.getWindow.clearFlags(FLAG_SECURE)
-        }
+    if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
+      excludeFromRecents(true)
+      activity.getWindow.addFlags(FLAG_SECURE)
+    } else {
+      shouldHideScreenContent.onUi {
+        case true  => activity.getWindow.addFlags(FLAG_SECURE)
+        case false => activity.getWindow.clearFlags(FLAG_SECURE)
+      }
     }
   }
 

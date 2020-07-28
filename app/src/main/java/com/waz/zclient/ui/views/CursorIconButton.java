@@ -119,33 +119,10 @@ public class CursorIconButton extends GlyphTextView {
     }
 
     public void initTextColor(int selectedColor) {
-        int pressedColor;
-        int focusedColor;
-        int enabledColor;
-        int disabledColor;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            pressedColor = getResources().getColor(R.color.text__primary_dark_40);
-            focusedColor = pressedColor;
-            //noinspection deprecation
-            enabledColor = getResources().getColor(R.color.text__primary_dark);
-            //noinspection deprecation
-            disabledColor = getResources().getColor(R.color.text__primary_dark_16);
-
-            if (!ThemeUtils.isDarkTheme(getContext())) {
-                //noinspection deprecation
-                pressedColor = getResources().getColor(R.color.text__primary_light__40);
-                focusedColor = pressedColor;
-                //noinspection deprecation
-                enabledColor = getResources().getColor(R.color.text__primary_light);
-                //noinspection deprecation
-                disabledColor = getResources().getColor(R.color.text__primary_light_16);
-            }
-        } else {
-            pressedColor = getResources().getColor(R.color.text__primary_dark_40, getContext().getTheme());
-            focusedColor = pressedColor;
-            enabledColor = getResources().getColor(R.color.text__primary_dark, getContext().getTheme());
-            disabledColor = getResources().getColor(R.color.text__primary_dark_16, getContext().getTheme());
+        int pressedColor = getResources().getColor(R.color.text__primary_dark_40, getContext().getTheme());
+        int focusedColor = pressedColor;
+        int enabledColor = getResources().getColor(R.color.text__primary_dark, getContext().getTheme());
+        int disabledColor = getResources().getColor(R.color.text__primary_dark_16, getContext().getTheme());
 
             if (!ThemeUtils.isDarkTheme(getContext())) {
                 pressedColor = getResources().getColor(R.color.text__primary_light__40, getContext().getTheme());
@@ -153,7 +130,6 @@ public class CursorIconButton extends GlyphTextView {
                 enabledColor = getResources().getColor(R.color.text__primary_light, getContext().getTheme());
                 disabledColor = getResources().getColor(R.color.text__primary_light_16, getContext().getTheme());
             }
-        }
 
         int[] colors = {pressedColor, focusedColor, selectedColor, enabledColor, disabledColor};
         int[][] states = {{android.R.attr.state_pressed}, {android.R.attr.state_focused}, {android.R.attr.state_selected}, {android.R.attr.state_enabled}, {-android.R.attr.state_enabled}};

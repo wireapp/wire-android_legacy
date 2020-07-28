@@ -25,14 +25,13 @@ import android.app.{Activity, ActivityManager, NotificationManager}
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
 import android.media.AudioManager
-import android.os.{Build, PowerManager, Vibrator}
+import android.os.{PowerManager, Vibrator}
 import android.renderscript.RenderScript
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.fragment.app.{FragmentActivity, FragmentManager}
 import androidx.multidex.MultiDexApplication
 import com.evernote.android.job.{JobCreator, JobManager}
-import com.google.android.gms.security.ProviderInstaller
 import com.waz.api.NetworkMode
 import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._
@@ -42,9 +41,9 @@ import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
-import com.waz.service.assets.{AssetDetailsService, AssetPreviewService, AssetService, AssetStorage, FileRestrictionList, UriHelper}
+import com.waz.service.assets._
 import com.waz.service.call.GlobalCallingService
-import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService, ConversationsUiService, FoldersService, SelectedConversationService}
+import com.waz.service.conversation._
 import com.waz.service.messages.MessagesService
 import com.waz.service.teams.TeamsService
 import com.waz.service.tracking.TrackingService
@@ -55,7 +54,6 @@ import com.waz.sync.client.CustomBackendClient
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.utils.SafeBase64
-import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
 import com.waz.zclient.assets.{AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
@@ -92,12 +90,11 @@ import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecke
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
-import javax.net.ssl.SSLContext
+import com.wire.signals.{EventContext, Signal}
 import org.threeten.bp.Clock
 
 import scala.concurrent.Future
 import scala.util.Try
-import scala.util.control.NonFatal
 
 object WireApplication extends DerivedLogTag {
   var APP_INSTANCE: WireApplication = _
@@ -361,20 +358,6 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   def contextModule(ctx: WireContext): Injector = controllers(ctx)
 
-  private def enableTLS12OnOldDevices(): Unit = {
-    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-      try {
-        ProviderInstaller.installIfNeeded(getApplicationContext)
-        val sslContext = SSLContext.getInstance("TLSv1.2")
-        sslContext.init(null, null, null)
-        sslContext.createSSLEngine
-      } catch {
-        case NonFatal(error) =>
-          verbose(l"Error while enabling TLS 1.2 on old device. $error")
-      }
-    }
-  }
-
   override def onCreate(): Unit = {
     super.onCreate()
 
@@ -390,8 +373,6 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     }
 
     verbose(l"onCreate")
-
-    enableTLS12OnOldDevices()
 
     controllerFactory = new ControllerFactory(getApplicationContext)
 
@@ -490,12 +471,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
   override def onTerminate(): Unit = {
     controllerFactory.tearDown()
     controllerFactory = null
-    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1){
-      RenderScript.releaseAllContexts()
-    } else {
-      inject[RenderScript].destroy()
-    }
-
+    RenderScript.releaseAllContexts()
     InternalLog.flush()
 
     super.onTerminate()

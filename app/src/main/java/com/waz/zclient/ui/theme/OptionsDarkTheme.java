@@ -41,22 +41,12 @@ public class OptionsDarkTheme implements OptionsTheme {
 
     @Override
     public int getTextColorPrimary() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            return resource.getColor(R.color.text__primary_dark);
-        } else {
-            return resource.getColor(R.color.text__primary_dark, theme);
-        }
+        return resource.getColor(R.color.text__primary_dark, theme);
     }
 
     @Override
     public int getOverlayColor() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            return resource.getColor(R.color.background_overlay_dark);
-        } else {
-            return resource.getColor(R.color.background_overlay_dark, theme);
-        }
+        return resource.getColor(R.color.background_overlay_dark, theme);
     }
 
     @Override
@@ -66,12 +56,7 @@ public class OptionsDarkTheme implements OptionsTheme {
 
     @Override
     public int getCheckboxTextColor() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            return resource.getColor(R.color.text__primary_light);
-        } else {
-            return resource.getColor(R.color.text__primary_light, theme);
-        }
+        return resource.getColor(R.color.text__primary_light, theme);
     }
 
     @Override
@@ -81,12 +66,7 @@ public class OptionsDarkTheme implements OptionsTheme {
 
     @Override
     public ColorStateList getIconButtonTextColor() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            return resource.getColorStateList(R.color.selector__icon_button__text_color__dark);
-        } else {
-            return resource.getColorStateList(R.color.selector__icon_button__text_color__dark, theme);
-        }
+        return resource.getColorStateList(R.color.selector__icon_button__text_color__dark, theme);
     }
 
     @Override

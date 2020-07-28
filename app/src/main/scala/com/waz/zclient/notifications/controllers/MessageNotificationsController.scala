@@ -53,8 +53,7 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import com.waz.threading.Threading._
 
-class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_INT > Build.VERSION_CODES.M,
-                                     applicationId: String = BuildConfig.APPLICATION_ID)
+class MessageNotificationsController(applicationId: String = BuildConfig.APPLICATION_ID)
                                     (implicit inj: Injector, cxt: Context, eventContext: EventContext)
   extends Injectable
     with NotificationUiController
@@ -162,7 +161,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
 
   private def createSummaryNotificationProps(userId: UserId, nots: Set[NotificationData], teamName: Option[Name]) = {
     verbose(l"createSummaryNotificationProps: $userId, ${nots.size}")
-    if (nots.nonEmpty && bundleEnabled)
+    if (nots.nonEmpty)
       notificationColor(userId).map { color =>
         Some(NotificationProps (userId,
           when                     = Some(nots.minBy(_.time.instant).time.instant.toEpochMilli),
@@ -185,14 +184,11 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       val (ephemeral, normal) = nots.toSeq.sortBy(_.time).partition(_.ephemeral)
 
       val groupedConvs =
-        if (bundleEnabled)
           normal.groupBy(_.conv).map {
             case (convId, ns) => toNotificationConvId(accountId, convId) -> ns
           } ++ ephemeral.groupBy(_.conv).map {
             case (convId, ns) => toEphemeralNotificationConvId(accountId, convId) -> ns
           }
-        else
-          Map(toNotificationGroupId(accountId) -> normal, toEphemeralNotificationGroupId(accountId) -> ephemeral)
 
       val teamNameOpt = if (groupedConvs.keys.size > 1) None else teamName
 
@@ -218,7 +214,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         category      = Some(NotificationCompat.CATEGORY_MESSAGE),
         priority      = Some(NotificationCompat.PRIORITY_HIGH),
         smallIcon     = Some(R.drawable.ic_menu_logo),
-        vibrate       = if (soundController.isVibrationEnabled(userId)) Some(getIntArray(R.array.new_message_gcm).map(_.toLong)) else Some(Array(0l,0l)),
+        vibrate       = if (soundController.isVibrationEnabled(userId)) Some(getIntArray(R.array.new_message_gcm).map(_.toLong)) else Some(Array(0L,0l)),
         autoCancel    = Some(true),
         sound         = getSound(ns),
         onlyAlertOnce = Some(ns.forall(_.hasBeenDisplayed)),
@@ -243,8 +239,8 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   private def getOpenConvIntent(account: UserId, n: NotificationData, requestBase: Int) : Option[(UserId, ConvId, Int)] =
     if (n.isConvDeleted) None else Some((account, n.conv, requestBase))
 
-  private def getAction(account: UserId, n: NotificationData, requestBase: Int, offset: Int, bundleEnabled: Boolean)=
-    if (n.isConvDeleted) None else Some((account, n.conv, requestBase + 1, bundleEnabled))
+  private def getAction(account: UserId, n: NotificationData, requestBase: Int, offset: Int)=
+    if (n.isConvDeleted) None else Some((account, n.conv, requestBase + 1))
 
   private def singleNotificationProperties(props: NotificationProps, account: UserId, n: NotificationData, teamName: Option[Name]) = {
     verbose(l"singleNotificationProperties: $account, $n, $teamName")
@@ -266,8 +262,8 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         specProps
       } else {
         specProps.copy(
-          action1 = getAction(account, n, requestBase, 1, bundleEnabled),
-          action2 = getAction(account, n, requestBase, 2, bundleEnabled)
+          action1 = getAction(account, n, requestBase, 1),
+          action2 = getAction(account, n, requestBase, 2)
         )
       }
     }
@@ -476,7 +472,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
           )
 
       val requestBase = System.currentTimeMillis.toInt
-      val inboxStyle  = StyleBuilder(StyleBuilder.Inbox, title = title, summaryText = (if (bundleEnabled) teamName else None).map(_.str), lines = messages)
+      val inboxStyle  = StyleBuilder(StyleBuilder.Inbox, title = title, summaryText = (teamName).map(_.str), lines = messages)
 
       val specProps = props.copy(
         contentTitle = Some(title),
@@ -488,8 +484,8 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         specProps.copy(
           openConvIntent           = getOpenConvIntent(account, n, requestBase),
           clearNotificationsIntent = Some((account, Some(n.conv))),
-          action1                  = getAction(account, n, requestBase, 1, bundleEnabled),
-          action2                  = getAction(account, n, requestBase, 2, bundleEnabled)
+          action1                  = getAction(account, n, requestBase, 1),
+          action2                  = getAction(account, n, requestBase, 2)
         )
       else
         specProps.copy(
