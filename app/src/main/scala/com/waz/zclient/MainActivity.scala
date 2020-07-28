@@ -102,7 +102,7 @@ class MainActivity extends BaseActivity
     Option(getActionBar).foreach(_.hide())
     super.onCreate(savedInstanceState)
 
-    shouldShowDiscontinuedDialog()
+    showDiscontiniuedSupportDialogIfNeeded()
 
     //Prevent drawing the default background to reduce overdraw
     getWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT))
@@ -550,14 +550,13 @@ class MainActivity extends BaseActivity
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
 
   // TODO: remove after release 3.53
-  private def shouldShowDiscontinuedDialog() =
+  private def showDiscontiniuedSupportDialogIfNeeded() =
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
       showDiscontinuedSupportDialog()
     }
 
   // TODO: remove after release 3.53
   def showDiscontinuedSupportDialog() : Future[Unit] = {
-
     def showDialog(accentColor: AccentColor): Future[Boolean] = showConfirmationDialog(
       getString(R.string.discontinued_support_warning_title),
       getString(R.string.discontinued_support_warning_message),
