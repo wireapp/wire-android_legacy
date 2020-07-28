@@ -18,9 +18,9 @@
 package com.waz.zclient.newreg.fragments.country;
 
 import android.content.Context;
-import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;

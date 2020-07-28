@@ -18,16 +18,18 @@
 package com.waz.zclient.ui.colorpicker;
 
 import android.content.Context;
-import android.os.Build;
-import androidx.recyclerview.widget.RecyclerView;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.waz.zclient.R;
 import com.waz.zclient.utils.ViewUtils;
+
 import java.util.List;
 
 public class EmojiAdapter extends RecyclerView.Adapter<EmojiAdapter.ViewHolder> {

@@ -18,14 +18,15 @@
 package com.waz.zclient.ui.colorpicker;
 
 import android.content.Context;
-import android.os.Build;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
+
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.waz.zclient.R;
 import com.waz.zclient.ui.views.tab.TabIndicatorLayout;
 import com.waz.zclient.utils.Emojis;

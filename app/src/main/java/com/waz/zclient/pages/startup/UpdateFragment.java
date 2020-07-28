@@ -20,15 +20,15 @@ package com.waz.zclient.pages.startup;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import com.waz.zclient.R;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.ui.views.ZetaButton;
+import com.waz.zclient.utils.ViewUtils;
 
 public class UpdateFragment extends BaseFragment<UpdateFragment.Container> {
 

@@ -27,16 +27,16 @@ import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
-import android.os.Build;
 import android.os.PowerManager;
 import android.os.Vibrator;
-import androidx.core.app.NotificationCompat;
-import androidx.core.view.ViewCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.Html;
 import android.text.Spanned;
 import android.view.View;
 import android.view.WindowManager;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.view.ViewCompat;
 
 import java.util.Locale;
 

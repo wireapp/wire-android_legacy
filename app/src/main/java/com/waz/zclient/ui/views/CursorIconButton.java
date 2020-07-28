@@ -22,8 +22,8 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
-import android.os.Build;
 import android.util.AttributeSet;
+
 import com.waz.zclient.R;
 import com.waz.zclient.ui.cursor.CursorMenuItem;
 import com.waz.zclient.ui.text.GlyphTextView;
