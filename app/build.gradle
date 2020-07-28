@@ -144,9 +144,6 @@ android {
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
         buildConfigField 'boolean', 'KOTLIN_REGISTRATION', "$rootProject.ext.kotlinRegistration"
         buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
-
-        // Internal feature flags to override in productFlavors
-        buildConfigField 'boolean', 'CONFERENCE_CALLING', 'false'
     }
 
     packagingOptions {
@@ -229,7 +226,6 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
             buildConfigField 'boolean', 'SAFE_LOGGING', 'false'
-            buildConfigField 'boolean', 'CONFERENCE_CALLING', 'true'
         }
 
         candidate {
@@ -265,7 +261,6 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
-            buildConfigField 'boolean', 'CONFERENCE_CALLING', 'true'
         }
 
         experimental {
@@ -278,7 +273,6 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
-            buildConfigField 'boolean', 'CONFERENCE_CALLING', 'true'
         }
     }
 

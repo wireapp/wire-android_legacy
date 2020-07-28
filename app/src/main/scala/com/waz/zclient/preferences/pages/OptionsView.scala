@@ -70,6 +70,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   inflate(R.layout.preferences_options_layout)
 
   val vbrSwitch               = findById[SwitchPreference](R.id.preferences_vbr)
+  val conferenceCallingSwitch = findById[SwitchPreference](R.id.preferences_conference_calling)
   val vibrationSwitch         = findById[SwitchPreference](R.id.preferences_vibration)
   val darkThemeSwitch         = findById[SwitchPreference](R.id.preferences_dark_theme)
   val sendButtonSwitch        = findById[SwitchPreference](R.id.preferences_send_button)
@@ -77,7 +78,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val soundsButton            = findById[TextButton](R.id.preferences_sounds)
   val downloadImagesSwitch    = findById[SwitchPreference](R.id.preferences_options_image_download)
   val hideScreenContentSwitch = findById[SwitchPreference](R.id.preferences_hide_screen)
-  val messagePreviewSwitch = findById[SwitchPreference](R.id.preferences_message_previews)
+  val messagePreviewSwitch    = findById[SwitchPreference](R.id.preferences_message_previews)
   val incognitoKeyboardSwitch = findById[SwitchPreference](R.id.preferences_incognito_keyboard)
 
   val ringToneButton         = findById[TextButton](R.id.preference_sounds_ringtone)
@@ -98,6 +99,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   downloadImagesSwitch.setPreference(DownloadImagesAlways)
   hideScreenContentSwitch.setPreference(HideScreenContent)
   vbrSwitch.setPreference(VBREnabled)
+  conferenceCallingSwitch.setPreference(ConferenceCallingEnabled)
   messagePreviewSwitch.setPreference(MessagePreview)
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)

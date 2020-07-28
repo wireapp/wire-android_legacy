@@ -31,7 +31,7 @@ import androidx.annotation.Nullable
 import androidx.appcompat.widget.{ActionMenuView, Toolbar}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.ErrorType
-import com.waz.content.GlobalPreferences
+import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
@@ -80,7 +80,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.e2ee.ShieldView
-import com.waz.zclient.{BuildConfig, ErrorsController, FragmentHelper, R}
+import com.waz.zclient.{ErrorsController, FragmentHelper, R}
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
@@ -106,6 +106,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val callStartController    = inject[CallStartController]
   private lazy val accountsController     = inject[UserAccountsController]
   private lazy val globalPrefs            = inject[GlobalPreferences]
+  private lazy val userPrefs              = inject[Signal[UserPreferences]]
   private lazy val replyController        = inject[ReplyController]
   private lazy val accentColor            = inject[Signal[AccentColor]]
 
@@ -210,17 +211,19 @@ class ConversationFragment extends FragmentHelper {
     }
 
     (for {
-      (convId, isConvActive) <- convController.currentConv.map(c => (c.id, c.isActive))
-      isGroup                <- convController.groupConversation(convId)
-      participantsNumber     <- convController.convMembers(convId).map(_.size)
-      selfUserId             <- zms.map(_.selfUserId)
-      call                   <- callController.currentCallOpt
-      isCallActive           = call.exists(_.convId == convId) && call.exists(_.selfParticipant.userId == selfUserId)
-      isTeam                 <- accountsController.isTeam
+      (convId, isConvActive)   <- convController.currentConv.map(c => (c.id, c.isActive))
+      isGroup                  <- convController.groupConversation(convId)
+      participantsNumber       <- convController.convMembers(convId).map(_.size)
+      selfUserId               <- zms.map(_.selfUserId)
+      call                     <- callController.currentCallOpt
+      isCallActive              = call.exists(_.convId == convId) && call.exists(_.selfParticipant.userId == selfUserId)
+      isTeam                   <- accountsController.isTeam
+      prefs                    <- userPrefs
+      conferenceCallingEnabled <- prefs(UserPreferences.ConferenceCallingEnabled).signal
     } yield {
       if (isCallActive || !isConvActive || participantsNumber <= 1)
         Option.empty[Int]
-      else if (!isGroup || ((isTeam || BuildConfig.CONFERENCE_CALLING) && participantsNumber <= CallingService.VideoCallMaxMembers))
+      else if (!isGroup || conferenceCallingEnabled || (isTeam && participantsNumber <= CallingService.LegacyVideoCallMaxMembers))
         Some(R.menu.conversation_header_menu_video)
       else
         Some(R.menu.conversation_header_menu_audio)
