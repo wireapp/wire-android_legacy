@@ -481,7 +481,7 @@ class CallingServiceImpl(val accountId:       UserId,
                         isGroup,
                         accountId,
                         SelfCalling,
-                        isConferenceCall = callType == WCallConvType.Conference,
+                        isConferenceCall = convType == WCallConvType.Conference,
                         startedAsVideoCall = isVideo,
                         videoSendState = if (isVideo) VideoState.Started else VideoState.Stopped)
                       callProfile.mutate(_.copy(calls = profile.calls + (newCall.convId -> newCall)))
