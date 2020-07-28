@@ -72,7 +72,6 @@ class ActivityLifecycleCallback(implicit injector: Injector)
 
   override def onActivityResumed(activity: Activity): Unit = {
     if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
-      excludeFromRecents(true)
       activity.getWindow.addFlags(FLAG_SECURE)
     } else {
       shouldHideScreenContent.onUi {
@@ -81,16 +80,7 @@ class ActivityLifecycleCallback(implicit injector: Injector)
       }
     }
   }
-
-  private def excludeFromRecents(exclude: Boolean) = {
-    inject[ActivityManager].getAppTasks.asScala.toList.foreach(_.setExcludeFromRecents(exclude))
-  }
-
-  private def addSecureFlags(activity: Activity): Unit = {
-    activity.getWindow.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-  }
-
-
+  
   override def onActivityPaused(activity: Activity): Unit = {}
 
   override def onActivityDestroyed(activity: Activity): Unit = {}
