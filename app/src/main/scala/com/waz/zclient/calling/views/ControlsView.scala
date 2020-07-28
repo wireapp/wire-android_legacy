@@ -89,9 +89,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
       members          <- controller.conversationMembers.map(_.size)
       isConferenceCall <- controller.isConferenceCall
     } yield {
-      if (isGroup && isConferenceCall) {
-        established
-      } else if (isGroup && !isConferenceCall) {
+      if (isGroup && !isConferenceCall) {
         (isTeam && established || showVideo) && members <= CallingService.LegacyVideoCallMaxMembers
       } else {
         established
