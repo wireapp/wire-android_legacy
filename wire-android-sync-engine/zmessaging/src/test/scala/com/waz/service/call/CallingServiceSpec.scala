@@ -1197,7 +1197,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val s = new CallingServiceImpl(
       selfUserId, selfClientId, null, context, avs, convs, convsService, members, otrSyncHandler,
-      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking, httpProxy = None, conferenceCallingEnabled = false
+      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking, httpProxy = None,
     )
     result(s.wCall)
     s

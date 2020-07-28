@@ -22,6 +22,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.GridLayout
+import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.VideoState._
@@ -35,7 +36,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.{BuildConfig, R, ViewHelper}
+import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
 
 import scala.async.Async._
@@ -56,6 +57,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   private lazy val controller  = inject[CallController]
   private lazy val permissions = inject[PermissionsService]
+  private lazy val preferences = inject[Signal[UserPreferences]]
 
   val onButtonClick: SourceStream[Unit] = EventStream[Unit]
 
@@ -78,14 +80,23 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
     isVideoBeingSent.onUi(button.setActivated)
 
     (for {
-      zms            <- controller.callingZms
-      conv           <- controller.conversation
-      isGroup        <- zms.conversations.groupConversation(conv.id)
-      isTeam         =  zms.teamId.isDefined
-      established    <- controller.isCallEstablished
-      showVideo      <- controller.isVideoCall
-      members        <- controller.conversationMembers.map(_.size)
-    } yield members <= CallingService.VideoCallMaxMembers && ((established && (BuildConfig.CONFERENCE_CALLING || isTeam || !isGroup)) || showVideo)).onUi(button.setEnabled)
+      zms              <- controller.callingZms
+      conv             <- controller.conversation
+      isGroup          <- zms.conversations.groupConversation(conv.id)
+      isTeam           =  zms.teamId.isDefined
+      established      <- controller.isCallEstablished
+      showVideo        <- controller.isVideoCall
+      members          <- controller.conversationMembers.map(_.size)
+      isConferenceCall <- controller.isConferenceCall
+    } yield {
+      if (isGroup && isConferenceCall) {
+        established
+      } else if (isGroup && !isConferenceCall) {
+        (isTeam && established || showVideo) && members <= CallingService.LegacyVideoCallMaxMembers
+      } else {
+        established
+      }
+    }).onUi(button.setEnabled)
   }
 
   returning(findById[CallControlButtonView](R.id.speaker_flip_call)) { button =>

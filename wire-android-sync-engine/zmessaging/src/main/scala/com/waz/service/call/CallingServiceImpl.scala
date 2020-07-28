@@ -36,7 +36,7 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
-import com.waz.service.call.Avs.{AvsCallError, AvsClient, AvsClientList, AvsClosedReason, NetworkQuality, VideoState, WCall}
+import com.waz.service.call.Avs.{AvsCallError, AvsClient, AvsClientList, AvsClosedReason, NetworkQuality, VideoState, WCall, WCallConvType}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.call.CallInfo.{CallState, OutstandingMessage, Participant}
 import com.waz.service.call.CallingService.GlobalCallProfile
@@ -111,8 +111,8 @@ trait CallingService {
 
 object CallingService {
 
-  var VideoCallMaxMembers: Int = 4
-  def videoCallMaxMembersExcludingSelf: Int = VideoCallMaxMembers - 1
+  var LegacyVideoCallMaxMembers: Int = 4
+  def videoCallMaxMembersExcludingSelf: Int = LegacyVideoCallMaxMembers - 1
 
   trait AbstractCallProfile[A] {
 
@@ -172,8 +172,7 @@ class CallingServiceImpl(val accountId:       UserId,
                          permissions:         PermissionsService,
                          userStorage:         UsersStorage,
                          tracking:            TrackingService,
-                         httpProxy:           Option[Proxy],
-                         conferenceCallingEnabled: Boolean)(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
+                         httpProxy:           Option[Proxy])(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
 
   import CallingService._
 
@@ -245,7 +244,7 @@ class CallingServiceImpl(val accountId:       UserId,
     *                   true if someone called recently for group but false if the call was started more than 30 seconds ago"
     *                                                                                                               - Chris the All-Knowing.
     */
-  def onIncomingCall(convId: RConvId, userId: UserId, videoCall: Boolean, shouldRing: Boolean): Future[Unit] = {
+  def onIncomingCall(convId: RConvId, userId: UserId, videoCall: Boolean, shouldRing: Boolean, isConferenceCall: Boolean): Future[Unit] = {
     def showCall(conv: ConversationData, isGroup: Boolean) = {
       verbose(l"Incoming call from $userId in conv: $convId (should ring: $shouldRing)")
 
@@ -263,6 +262,7 @@ class CallingServiceImpl(val accountId:       UserId,
         isGroup,
         userId,
         OtherCalling,
+        isConferenceCall,
         startedAsVideoCall = videoCall,
         videoSendState = VideoState.NoCameraPermission,
         shouldRing = !conv.muted.isAllMuted && shouldRing)
@@ -425,14 +425,15 @@ class CallingServiceImpl(val accountId:       UserId,
     Serialized.future(self) {
       verbose(l"startCall $convId, isVideo: $isVideo, forceOption: $forceOption")
       (for {
-        w          <- wCall
-        Some(conv) <- convs.convById(convId)
-        profile <- callProfile.head
-        isGroup <- convsService.isGroupConversation(convId)
-        vbr     <- userPrefs.preference(UserPreferences.VBREnabled).apply()
-        convSize <- convsService.activeMembersData(conv.id).map(_.size).head
+        w                        <- wCall
+        Some(conv)               <- convs.convById(convId)
+        profile                  <- callProfile.head
+        isGroup                  <- convsService.isGroupConversation(convId)
+        vbr                      <- userPrefs.preference(UserPreferences.VBREnabled).apply()
+        conferenceCallingEnabled <- userPrefs.preference(UserPreferences.ConferenceCallingEnabled).apply()
+        convSize                 <- convsService.activeMembersData(conv.id).map(_.size).head
         callType =
-          if (convSize > VideoCallMaxMembers) Avs.WCallType.ForcedAudio
+          if (!conferenceCallingEnabled && convSize > LegacyVideoCallMaxMembers) Avs.WCallType.ForcedAudio
           else if (isVideo) Avs.WCallType.Video
           else Avs.WCallType.Normal
         convType =
@@ -480,6 +481,7 @@ class CallingServiceImpl(val accountId:       UserId,
                         isGroup,
                         accountId,
                         SelfCalling,
+                        isConferenceCall = callType == WCallConvType.Conference,
                         startedAsVideoCall = isVideo,
                         videoSendState = if (isVideo) VideoState.Started else VideoState.Stopped)
                       callProfile.mutate(_.copy(calls = profile.calls + (newCall.convId -> newCall)))

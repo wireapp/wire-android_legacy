@@ -40,6 +40,7 @@ case class CallInfo(convId:             ConvId,
                     isGroup:            Boolean,
                     caller:             UserId,
                     state:              CallState,
+                    isConferenceCall:   Boolean,
                     prevState:          Option[CallState]            = None,
                     otherParticipants:  Set[Participant]             = Set.empty,
                     maxParticipants:    Int                          = 0, //maintains the largest number of users that were ever in the call (for tracking)
