@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -19,180 +18,165 @@
 
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            >
+            android:orientation="vertical">
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                android:text="@string/pref_options_calls_category_title"
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"
                 android:paddingEnd="@dimen/wire__padding__16"
-                android:textColor="@color/accent_blue"/>
+                android:text="@string/pref_options_calls_category_title"
+                android:textColor="@color/accent_blue" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_vbr"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:title="@string/pref_options_vbr_title"
                 app:subtitle="@string/pref_options_vbr_summary"
-                />
+                app:title="@string/pref_options_vbr_title" />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                android:text="@string/pref_options_conference_calls_category_title"
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"
                 android:paddingEnd="@dimen/wire__padding__16"
-                android:textColor="@color/accent_blue"/>
+                android:text="@string/pref_options_conference_calls_category_title"
+                android:textColor="@color/accent_blue" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_conference_calling"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:title="@string/pref_options_conference_calls_beta_program_title"
+                android:contentDescription="@string/pref_options_conference_calls_beta_program_title"
                 app:subtitle="@string/pref_options_conference_calls_beta_program_summary"
-                />
+                app:title="@string/pref_options_conference_calls_beta_program_title" />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                android:text="@string/pref_options_alerts_category_title"
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"
                 android:paddingEnd="@dimen/wire__padding__16"
-                android:textColor="@color/accent_blue"/>
+                android:text="@string/pref_options_alerts_category_title"
+                android:textColor="@color/accent_blue" />
 
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_sounds"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_sounds_title"
-                />
+                app:title="@string/pref_options_sounds_title" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_vibration"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_vibration_title"
-                />
+                app:title="@string/pref_options_vibration_title" />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                android:text="@string/pref_options_ringtones_category_title"
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"
                 android:paddingEnd="@dimen/wire__padding__16"
-                android:textColor="@color/accent_blue"/>
+                android:text="@string/pref_options_ringtones_category_title"
+                android:textColor="@color/accent_blue" />
 
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preference_sounds_ringtone"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_ringtones_ringtone_title"
-                />
+                app:title="@string/pref_options_ringtones_ringtone_title" />
 
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preference_sounds_text"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_ringtones_text_title"
-                />
+                app:title="@string/pref_options_ringtones_text_title" />
 
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preference_sounds_ping"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_ringtones_ping_title"
-                />
+                app:title="@string/pref_options_ringtones_ping_title" />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 android:gravity="center_vertical"
-                android:paddingEnd="@dimen/wire__padding__16"
                 android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
                 android:text="@string/pref_options_requested_category_title"
-                android:textColor="@color/accent_blue"/>
+                android:textColor="@color/accent_blue" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_dark_theme"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_dark_theme_title"
-                />
+                app:title="@string/pref_options_dark_theme_title" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_send_button"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_cursor_send_button_title"
                 app:subtitle="@string/pref_options_cursor_send_button_summary"
-                />
+                app:title="@string/pref_options_cursor_send_button_title" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_app_lock"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_app_lock_title"
                 app:subtitle="@string/pref_options_app_lock_summary"
-                />
+                app:title="@string/pref_options_app_lock_title" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_incognito_keyboard"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_incognito_keyboard"
                 app:subtitle="@string/pref_options_incognito_keyboard_summary"
-                />
+                app:title="@string/pref_options_incognito_keyboard" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_hide_screen"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_hide_screen_title"
                 app:subtitle="@string/pref_options_hide_screen_summary"
-                />
+                app:title="@string/pref_options_hide_screen_title" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_message_previews"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_message_previews"
                 app:subtitle="@string/pref_options_message_previews_summary"
-                />
+                app:title="@string/pref_options_message_previews" />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 android:gravity="center_vertical"
-                android:paddingEnd="@dimen/wire__padding__16"
                 android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
                 android:text="@string/pref_options_media_category_title"
-                android:textColor="@color/accent_blue"/>
+                android:textColor="@color/accent_blue" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_options_image_download"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
-                app:title="@string/pref_options_image_download_title"
-                />
+                app:title="@string/pref_options_image_download_title" />
 
         </LinearLayout>
 
