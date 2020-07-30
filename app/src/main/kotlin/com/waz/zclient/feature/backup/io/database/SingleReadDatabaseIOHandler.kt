@@ -1,26 +1,33 @@
 package com.waz.zclient.feature.backup.io.database
 
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.network.requestDatabase
 import com.waz.zclient.feature.backup.BackUpIOHandler
+import com.waz.zclient.feature.backup.io.BatchReader
+import com.waz.zclient.feature.backup.io.forEach
 
-class SingleReadDatabaseIOHandler<T>(private val singleReadDao: SingleReadDao<T>) : BackUpIOHandler<T> {
+class SingleReadDatabaseIOHandler<E>(private val singleReadDao: SingleReadDao<E>) : BackUpIOHandler<E> {
 
-    override fun write(iterator: Iterator<T>) {
-        while (iterator.hasNext()) {
-            singleReadDao.insert(iterator.next())
+    override suspend fun write(iterator: BatchReader<E>): Either<Failure, Unit> =
+        iterator.forEach {
+            requestDatabase { singleReadDao.insert(it) }
         }
-    }
 
-    @Suppress("IteratorNotThrowingNoSuchElementException") //listIterator throws it
-    override fun readIterator() = object : Iterator<T> {
-        val listIterator by lazy { singleReadDao.getAll().iterator() }
+    override fun readIterator(): BatchReader<E> = object : BatchReader<E> {
+        var count = 0
+        private var items: List<E>? = null
 
-        override fun hasNext(): Boolean = listIterator.hasNext()
-
-        override fun next(): T = listIterator.next()
+        override suspend fun readNext(): Either<Failure, E?> = requestDatabase {
+            if (items == null) {
+                items = singleReadDao.getAll()
+            }
+            items!!.getOrNull(count)?.also { count++ }
+        }
     }
 }
 
-interface SingleReadDao<T> {
-    fun insert(item: T)
-    fun getAll(): List<T>
+interface SingleReadDao<E> {
+    suspend fun insert(item: E)
+    suspend fun getAll(): List<E>
 }

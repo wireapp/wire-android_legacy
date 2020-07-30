@@ -1,6 +1,10 @@
 package com.waz.zclient.feature.backup.io.file
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.feature.backup.assertItems
+import com.waz.zclient.feature.backup.io.BatchReader
+import com.waz.zclient.feature.backup.mockNextItems
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
@@ -12,6 +16,9 @@ class BackUpFileIOHandlerTest : UnitTest() {
 
     @Mock
     private lateinit var jsonConverter: JsonConverter<Int>
+
+    @Mock
+    private lateinit var batchReader: BatchReader<Int>
 
     private lateinit var backUpFileIOHandler: BackUpFileIOHandler<Int>
 
@@ -30,15 +37,15 @@ class BackUpFileIOHandlerTest : UnitTest() {
             testFileWrite(it)
         }
 
-    private fun testFileWrite(uniqueFileName: String) {
-        val items = listOf(1, 2, 3)
+    private fun testFileWrite(uniqueFileName: String) = runBlocking {
+        batchReader.mockNextItems(listOf(1, 2, 3))
         `when`(jsonConverter.toJson(1)).thenReturn("line 1")
         `when`(jsonConverter.toJson(2)).thenReturn("line 2")
         `when`(jsonConverter.toJson(3)).thenReturn("line 3")
 
         backUpFileIOHandler = BackUpFileIOHandler(uniqueFileName, jsonConverter)
 
-        backUpFileIOHandler.write(items.listIterator())
+        backUpFileIOHandler.write(batchReader)
 
         with(File(uniqueFileName)) {
             useLines { seq ->
@@ -65,8 +72,8 @@ class BackUpFileIOHandlerTest : UnitTest() {
 
             backUpFileIOHandler = BackUpFileIOHandler(fileName, jsonConverter)
 
-            backUpFileIOHandler.readIterator().withIndex().forEach {
-                assertEquals(it.index + 1, it.value)
+            runBlocking {
+                backUpFileIOHandler.readIterator().assertItems(listOf(1,2,3))
             }
         }
 

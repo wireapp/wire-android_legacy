@@ -1,6 +1,13 @@
 package com.waz.zclient.feature.backup.io.file
 
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.IOFailure
+import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.backup.BackUpIOHandler
+import com.waz.zclient.feature.backup.io.BatchReader
+import com.waz.zclient.feature.backup.io.forEach
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class BackUpFileIOHandler<T>(
@@ -8,33 +15,38 @@ class BackUpFileIOHandler<T>(
     private val jsonConverter: JsonConverter<T>
 ) : BackUpIOHandler<T> {
 
-    override fun write(iterator: Iterator<T>) {
-        val file = File(fileName).also {
-            it.delete()
-            it.createNewFile()
-        }
-        while (iterator.hasNext()) {
-            val jsonStr = jsonConverter.toJson(iterator.next())
-            file.appendText("$jsonStr\n")
+    @Suppress("TooGenericExceptionCaught")
+    override suspend fun write(iterator: BatchReader<T>): Either<Failure, Unit> = withContext(Dispatchers.IO) {
+        try {
+            val file = File(fileName).also {
+                it.delete()
+                it.createNewFile()
+            }
+
+            iterator.forEach {
+                val jsonStr = jsonConverter.toJson(it)
+                file.appendText("$jsonStr\n")
+                Either.Right(Unit)
+            }
+        } catch (ex: Exception) {
+            Either.Left(IOFailure(ex))
         }
     }
 
-    //TODO close bufferedReader in case of exception, error, etc.
-    @Suppress("IteratorNotThrowingNoSuchElementException") //lineIterator already throws it
-    override fun readIterator(): Iterator<T> {
-        val reader = File(fileName).bufferedReader()
-        val lineIterator = reader.lineSequence().iterator()
+    override fun readIterator() = object : BatchReader<T> {
+        private val reader by lazy { File(fileName).bufferedReader() }
 
-        return object : Iterator<T> {
-            var closeReaderAfterNext = false
-
-            override fun hasNext(): Boolean = lineIterator.hasNext().also { hasNext ->
-                if (!hasNext) closeReaderAfterNext = true
-            }
-
-            override fun next(): T = lineIterator.next().let {
-                if (closeReaderAfterNext) reader.close()
-                jsonConverter.fromJson(it)
+        @Suppress("TooGenericExceptionCaught")
+        override suspend fun readNext(): Either<Failure, T?> = withContext(Dispatchers.IO) {
+            try {
+                val jsonStr = reader.readLine()
+                if (jsonStr == null) {
+                    reader.close()
+                }
+                Either.Right(jsonConverter.fromJson(jsonStr))
+            } catch (ex: Exception) {
+                reader.close()
+                Either.Left(IOFailure(ex))
             }
         }
     }
