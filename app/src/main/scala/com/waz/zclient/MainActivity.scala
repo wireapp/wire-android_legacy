@@ -560,8 +560,8 @@ class MainActivity extends BaseActivity
     def showDialog(accentColor: AccentColor): Future[Boolean] = showConfirmationDialog(
       getString(R.string.discontinued_support_warning_title),
       getString(R.string.discontinued_support_warning_message),
-      R.string.discontinued_support_warning_action_ok,
       R.string.discontinued_support_warning_action_do_not_show_again,
+      R.string.discontinued_support_warning_action_ok,
       accentColor
     )
 
