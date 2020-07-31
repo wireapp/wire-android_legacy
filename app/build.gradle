@@ -4,6 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'jp.leafytree.android-scala'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
+apply plugin: 'kotlinx-serialization'
 
 //region avs
 //TODO: Migrate this configuration to new dependency system
@@ -415,6 +416,9 @@ dependencies {
     // RxJava
     implementation BuildDependencies.rxJava.rxKotlin
     implementation BuildDependencies.rxJava.rxAndroid
+
+    //JSON
+    implementation BuildDependencies.kotlinXSerialization
 
     //third party libraries
     implementation BuildDependencies.androidJob
