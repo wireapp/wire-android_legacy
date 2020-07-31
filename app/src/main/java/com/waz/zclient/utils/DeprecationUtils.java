@@ -1,17 +1,17 @@
 /**
  * Wire
  * Copyright (C) 2018 Wire Swiss GmbH
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -38,8 +38,6 @@ import android.view.WindowManager;
 import androidx.core.app.NotificationCompat;
 import androidx.core.view.ViewCompat;
 
-import java.util.Locale;
-
 import static android.hardware.Camera.getNumberOfCameras;
 
 @SuppressWarnings("Deprecation")
@@ -53,16 +51,12 @@ public class DeprecationUtils {
     public static int FLAG_SHOW_WHEN_LOCKED = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
 
     public static int WAKE_LOCK_OPTIONS = PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
-                                          PowerManager.FULL_WAKE_LOCK          |
-                                          PowerManager.ACQUIRE_CAUSES_WAKEUP;
+        PowerManager.FULL_WAKE_LOCK |
+        PowerManager.ACQUIRE_CAUSES_WAKEUP;
 
     public static int FLAG_DISMISS_KEYGUARD = WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
     public static final int NUMBER_OF_CAMERAS = getNumberOfCameras();
-
-    public static Locale getDefaultLocale(Context context) {
-        return context.getResources().getConfiguration().locale;
-    }
 
     public static Drawable getDrawable(Context context, int resId) {
         return context.getResources().getDrawable(resId);
