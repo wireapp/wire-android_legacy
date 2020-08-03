@@ -7,7 +7,6 @@ import com.waz.zclient.storage.DbSQLiteOpenHelper
 class MessagesTableTestHelper private constructor() {
 
     companion object {
-
         private const val MESSAGES_TABLE_NAME = "Messages"
         private const val MESSAGES_ID_COL = "_id"
         private const val MESSAGES_CONV_ID_COL = "conv_id"

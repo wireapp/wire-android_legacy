@@ -12,7 +12,4 @@ interface KeyValuesDao {
 
     @Insert
     fun insert(keyValuesEntity: KeyValuesEntity)
-
-    @Insert
-    fun insert(keyValuesEntityList: List<KeyValuesEntity>)
 }

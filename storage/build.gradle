@@ -53,6 +53,7 @@ android {
 dependencies {
     //Core Dependencies
     implementation BuildDependencies.kotlin.standardLibrary
+    androidTestImplementation project(ModuleDependencies.commonTest)
 
     // Room Data Storage
     implementation BuildDependencies.androidX.coreKtx

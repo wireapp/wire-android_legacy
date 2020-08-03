@@ -12,26 +12,25 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import java.io.File
+import java.io.IOException
 
 class BackUpFileIOHandler<T>(
     private val fileName: String,
     private val jsonConverter: JsonConverter<T>
 ) : BackUpIOHandler<T> {
 
-    @Suppress("TooGenericExceptionCaught")
     override suspend fun write(iterator: BatchReader<T>): Either<Failure, Unit> = withContext(Dispatchers.IO) {
         try {
             val file = File(fileName).also {
                 it.delete()
                 it.createNewFile()
             }
-
             iterator.forEach {
                 val jsonStr = jsonConverter.toJson(it)
-                file.appendText("$jsonStr\n")
+                file.appendText("${jsonStr}\n")
                 Either.Right(Unit)
             }
-        } catch (ex: Exception) {
+        } catch (ex: IOException) {
             Either.Left(IOFailure(ex))
         }
     }

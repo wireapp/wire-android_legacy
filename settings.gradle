@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-include ':app', ':custom-checkstyle', ':storage',
+include ':app', ':common-test', ':custom-checkstyle', ':storage',
     ':wire-android-sync-engine:zmessaging', ':wire-android-sync-engine:macrosupport'
 
 rootProject.name = 'zclient-root'

@@ -3,10 +3,10 @@ package com.waz.zclient.storage.db.messages
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.waz.zclient.storage.db.property.KeyValuesEntity
+import com.waz.zclient.storage.db.BatchDao
 
 @Dao
-interface MessagesDao {
+interface MessagesDao : BatchDao<MessagesEntity> {
     @Query("SELECT * FROM Messages")
     suspend fun allMessages(): List<MessagesEntity>
 
@@ -14,8 +14,8 @@ interface MessagesDao {
     suspend fun insert(message: MessagesEntity)
 
     @Query("SELECT * FROM Messages ORDER BY _id LIMIT :batchSize OFFSET :offset")
-    suspend fun getBatch(offset: Int, batchSize: Int): List<MessagesEntity>?
+    override suspend fun batch(offset: Int, batchSize: Int): List<MessagesEntity>?
 
     @Query("SELECT COUNT(*) FROM Messages")
-    suspend fun size(): Int
+    override suspend fun size(): Int
 }

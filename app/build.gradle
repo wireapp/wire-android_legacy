@@ -443,6 +443,7 @@ dependencies {
     testImplementation TestDependencies.androidX.testCore
     testImplementation TestDependencies.okHttpMockWebServer
     testImplementation(LegacyDependencies.scalaTest) { exclude module: 'scala-library' }
+    testImplementation project(ModuleDependencies.commonTest)
 
     // Functional Tests
     androidTestImplementation TestDependencies.jUnit
