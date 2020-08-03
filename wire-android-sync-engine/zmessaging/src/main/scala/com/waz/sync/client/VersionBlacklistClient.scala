@@ -25,6 +25,7 @@ import com.waz.model._
 import com.waz.service.BackendConfig
 import com.waz.znet2.http.{HttpClient, Method, Request}
 import com.waz.log.LogSE._
+import com.wire.signals.CancellableFuture
 
 trait VersionBlacklistClient {
   def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist]
@@ -36,18 +37,23 @@ class VersionBlacklistClientImpl(backendConfig: BackendConfig)
   import HttpClient.dsl._
   import HttpClient.AutoDerivationOld._
 
-  def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist] = {
-    val url = blacklistsUrl
-    verbose(l"Loading blacklist from: $url")
-    Request.create(method = Method.Get, url)
-      .withResultType[VersionBlacklist]
-      .withErrorType[ErrorResponse]
-      .executeSafe
-  }
+  def loadVersionBlacklist(): ErrorOrResponse[VersionBlacklist] =
+    blacklistsUrl match {
+      case Some(url) =>
+      verbose(l"Loading blacklist from: $url")
+      Request.create(method = Method.Get, url)
+        .withResultType[VersionBlacklist]
+        .withErrorType[ErrorResponse]
+        .executeSafe
+      case _ =>
+        //if url wasn't given, then just accept any version
+        CancellableFuture.successful(Right(VersionBlacklist()))
+    }
 
-  def blacklistsUrl: URL = {
-    val uri = backendConfig.blacklistHost
-    new URL(if (uri.getPath.endsWith("/android")) uri.toString
-    else uri.buildUpon.appendPath("android").build.toString)
+  def blacklistsUrl: Option[URL] = {
+    backendConfig.blacklistHost.map { uri =>
+      new URL(if (uri.getPath.endsWith("/android")) uri.toString
+      else uri.buildUpon.appendPath("android").build.toString)
+    }
   }
 }
