@@ -23,8 +23,8 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
-import android.os.Build;
 import android.util.AttributeSet;
+
 import com.waz.zclient.R;
 import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.ui.utils.ColorUtils;
@@ -87,17 +87,9 @@ public class ZetaButton extends TypefaceTextView {
         accentColor = color;
         int strokeWidth = getResources().getDimensionPixelSize(R.dimen.button__stroke_width);
         int cornerRadius = getResources().getDimensionPixelSize(R.dimen.button__corner_radius);
-        int fillColor;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            fillColor = isFilled ?
-                accentColor :
-                getResources().getColor(R.color.transparent);
-        } else {
-            fillColor = isFilled ?
-                accentColor :
-                getResources().getColor(R.color.transparent, getContext().getTheme());
-        }
+        int fillColor = isFilled ?
+            accentColor :
+            getResources().getColor(R.color.transparent, getContext().getTheme());
         ViewUtils.setBackground(this, getButtonBackground(accentColor, fillColor, strokeWidth, cornerRadius));
 
         if (!isFilled && !keepTextColor) {

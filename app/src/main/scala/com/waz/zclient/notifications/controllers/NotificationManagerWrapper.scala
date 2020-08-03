@@ -37,15 +37,15 @@ import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountsService
 import com.waz.services.notifications.NotificationsHandlerService
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.Bitmap
 import com.waz.utils.{IoUtils, returning}
-import com.waz.zclient.Intents.{CallIntent, QuickReplyIntent}
+import com.waz.zclient.Intents.CallIntent
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{MessageNotificationsChannelId, PingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.{ResString, RingtoneUtils, format}
 import com.waz.zclient.{Injectable, Injector, Intents, R}
+import com.wire.signals.{EventContext, Signal}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -176,8 +176,8 @@ case class NotificationProps(accountId:                UserId,
                              onlyAlertOnce:            Option[Boolean] = None,
                              lights:                   Option[(Int, Int, Int)] = None,
                              largeIcon:                Option[Bitmap] = None,
-                             action1:                  Option[(UserId, ConvId, Int, Boolean)] = None,
-                             action2:                  Option[(UserId, ConvId, Int, Boolean)] = None,
+                             action1:                  Option[(UserId, ConvId, Int)] = None,
+                             action2:                  Option[(UserId, ConvId, Int)] = None,
                              lastIsPing:               Option[Boolean] = None
                             ) {
   override def toString: String =
@@ -244,28 +244,25 @@ case class NotificationProps(accountId:                UserId,
     largeIcon.foreach(bmp => builder.setLargeIcon(bmp))
 
     action1.map {
-      case (userId, convId, requestBase, _) =>
+      case (userId, convId, requestBase) =>
         new NotificationCompat.Action.Builder(R.drawable.ic_action_call, getString(R.string.notification__action__call), CallIntent(userId, convId, requestBase)).build()
     }.foreach(builder.addAction)
 
     action2.map {
-      case (userId, convId, requestBase, bundleEnabled) => createQuickReplyAction(userId, convId, requestBase, bundleEnabled)
+      case (userId, convId, requestBase) => createQuickReplyAction(userId, convId, requestBase)
     }.foreach(builder.addAction)
 
     builder.build()
   }
 
-  private def createQuickReplyAction(userId: UserId, convId: ConvId, requestCode: Int, bundleEnabled: Boolean)(implicit cxt: Context) = {
-    if (bundleEnabled) {
-      val remoteInput = new RemoteInput.Builder(NotificationsHandlerService.InstantReplyKey)
-        .setLabel(getString(R.string.notification__action__reply))
-        .build
-      new NotificationCompat.Action.Builder(R.drawable.ic_action_reply, getString(R.string.notification__action__reply), NotificationsHandlerService.quickReplyIntent(userId, convId))
-        .addRemoteInput(remoteInput)
-        .setAllowGeneratedReplies(true)
-        .build()
-    } else
-      new NotificationCompat.Action.Builder(R.drawable.ic_action_reply, getString(R.string.notification__action__reply), QuickReplyIntent(userId, convId, requestCode)).build()
+  private def createQuickReplyAction(userId: UserId, convId: ConvId, requestCode: Int)(implicit cxt: Context) = {
+    val remoteInput = new RemoteInput.Builder(NotificationsHandlerService.InstantReplyKey)
+      .setLabel(getString(R.string.notification__action__reply))
+      .build
+    new NotificationCompat.Action.Builder(R.drawable.ic_action_reply, getString(R.string.notification__action__reply), NotificationsHandlerService.quickReplyIntent(userId, convId))
+      .addRemoteInput(remoteInput)
+      .setAllowGeneratedReplies(true)
+      .build()
   }
 }
 
@@ -379,12 +376,7 @@ object NotificationManagerWrapper {
     }
 
     override def getActiveNotificationIds: Seq[Int] =
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         notificationManager.getActiveNotifications.toSeq.map(_.getId)
-      else {
-        warn(l"Tried to access method getActiveNotifications from api level: ${Build.VERSION.SDK_INT}")
-        Seq.empty
-      }
 
     def getNotificationChannel(channelId: String) = notificationManager.getNotificationChannel(channelId)
 

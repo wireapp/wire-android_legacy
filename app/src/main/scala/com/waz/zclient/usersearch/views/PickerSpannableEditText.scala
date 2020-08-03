@@ -19,7 +19,6 @@ package com.waz.zclient.usersearch.views
 
 import android.content.Context
 import android.graphics.drawable.ShapeDrawable
-import android.os.Build
 import android.text._
 import android.text.style.{AbsoluteSizeSpan, ReplacementSpan}
 import android.util.AttributeSet
@@ -98,7 +97,7 @@ class PickerSpannableEditText(val context: Context, val attrs: AttributeSet, val
   }
 
   override protected def setHintCursorSize(cursorDrawable: ShapeDrawable): Unit =
-    if (!(hasText || Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) && !(getHint.length() == 0)) {
+    if (!hasText && !(getHint.length() == 0)) {
       val padding = toPx(PickerSpannableEditText.EXTRA_PADDING_DP)
       val textSizeDifferencePx = getTextSize.toInt - hintTextSize
       val bottomPadding = textSizeDifferencePx + padding

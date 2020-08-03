@@ -20,15 +20,15 @@ package com.waz.zclient.pages.startup;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import com.waz.zclient.R;
 import com.waz.zclient.pages.BaseFragment;
-import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.ui.views.ZetaButton;
+import com.waz.zclient.utils.ViewUtils;
 
 public class UpdateFragment extends BaseFragment<UpdateFragment.Container> {
 
@@ -43,12 +43,7 @@ public class UpdateFragment extends BaseFragment<UpdateFragment.Container> {
         View view = inflater.inflate(R.layout.fragment_update, container, false);
 
         ZetaButton zetaButton = ViewUtils.getView(view, R.id.zb__update__download);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            zetaButton.setAccentColor(getResources().getColor(R.color.forced_update__button__background));
-        } else {
-            zetaButton.setAccentColor(getResources().getColor(R.color.forced_update__button__background, getContext().getTheme()));
-        }
+        zetaButton.setAccentColor(getResources().getColor(R.color.forced_update__button__background, getContext().getTheme()));
 
         zetaButton.setOnClickListener(new View.OnClickListener() {
             @Override

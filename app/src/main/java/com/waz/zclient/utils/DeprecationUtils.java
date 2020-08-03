@@ -1,17 +1,17 @@
 /**
  * Wire
  * Copyright (C) 2018 Wire Swiss GmbH
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -27,18 +27,16 @@ import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
-import android.os.Build;
 import android.os.PowerManager;
 import android.os.Vibrator;
-import androidx.core.app.NotificationCompat;
-import androidx.core.view.ViewCompat;
 import android.telephony.PhoneNumberUtils;
 import android.text.Html;
 import android.text.Spanned;
 import android.view.View;
 import android.view.WindowManager;
 
-import java.util.Locale;
+import androidx.core.app.NotificationCompat;
+import androidx.core.view.ViewCompat;
 
 import static android.hardware.Camera.getNumberOfCameras;
 
@@ -53,16 +51,12 @@ public class DeprecationUtils {
     public static int FLAG_SHOW_WHEN_LOCKED = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
 
     public static int WAKE_LOCK_OPTIONS = PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
-                                          PowerManager.FULL_WAKE_LOCK          |
-                                          PowerManager.ACQUIRE_CAUSES_WAKEUP;
+        PowerManager.FULL_WAKE_LOCK |
+        PowerManager.ACQUIRE_CAUSES_WAKEUP;
 
     public static int FLAG_DISMISS_KEYGUARD = WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
     public static final int NUMBER_OF_CAMERAS = getNumberOfCameras();
-
-    public static Locale getDefaultLocale(Context context) {
-        return context.getResources().getConfiguration().locale;
-    }
 
     public static Drawable getDrawable(Context context, int resId) {
         return context.getResources().getDrawable(resId);
@@ -141,11 +135,7 @@ public class DeprecationUtils {
      * https://stackoverflow.com/a/39841101/158703
      */
     public static Spanned fromHtml(String source) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            return Html.fromHtml(source, Html.FROM_HTML_MODE_LEGACY);
-        } else {
-            return Html.fromHtml(source);
-        }
+        return Html.fromHtml(source, Html.FROM_HTML_MODE_LEGACY);
     }
 
     /**

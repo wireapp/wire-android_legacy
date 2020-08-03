@@ -18,9 +18,9 @@
 package com.waz.zclient.newreg.fragments.country;
 
 import android.content.Context;
-import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;
@@ -97,13 +97,7 @@ public class CountryController {
     @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops")
     private void populateCountries(Context context) {
         List<Country> countries = new ArrayList<>();
-        String deviceLanguage;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            //noinspection deprecation
-            deviceLanguage = context.getResources().getConfiguration().locale.getLanguage();
-        } else {
-            deviceLanguage = context.getResources().getConfiguration().getLocales().get(0).getLanguage();
-        }
+        String deviceLanguage = context.getResources().getConfiguration().getLocales().get(0).getLanguage();
         PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
 
         for (String region : phoneNumberUtil.getSupportedRegions()) {
