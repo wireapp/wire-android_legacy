@@ -8,6 +8,9 @@ import com.waz.zclient.feature.backup.io.BatchReader
 import com.waz.zclient.feature.backup.io.forEach
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import java.io.File
 
 class BackUpFileIOHandler<T>(
@@ -52,12 +55,10 @@ class BackUpFileIOHandler<T>(
     }
 }
 
-class JsonConverter<T> {
-    fun fromJson(jsonString: String): T {
-        TODO("add kotlinx.serialization")
-    }
+class JsonConverter<T>(private val serializer: KSerializer<T>) {
+    private val json by lazy { Json(JsonConfiguration.Stable) }
 
-    fun toJson(model: T): String {
-        TODO("add kotlinx.serialization")
-    }
+    fun fromJson(jsonString: String): T = json.parse(serializer, jsonString)
+
+    fun toJson(model: T): String = json.stringify(serializer, model)
 }
