@@ -143,7 +143,7 @@ class CallingFragment extends FragmentHelper {
 
   private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
     Signal(
-      controller.allVideoReceiveStates,
+      controller.allVideoReceiveStates.map{ _.take(maxVideoPreviews)},
       controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)),
       controller.isVideoCall,
       controller.isCallIncoming)
@@ -204,11 +204,11 @@ class CallingFragment extends FragmentHelper {
             case 1                                                          => (0, 1, 1)
             // The max number of columns is 2 and the max number of rows is undefined
             // if the index of the video preview is odd, display it in row n/2, column 1 , span 1
-            case n if (n % 2 != 0) && (n < maxVideoPreviews)                => (n / 2, 1, 1)
+            case n if (n % 2 != 0)                                          => (n / 2, 1, 1)
             // else if the gridViews size is n+1 , display it in row n/2, column 0 , span 2
-            case n if (gridViews.size == n + 1) && (n < maxVideoPreviews)   => (n / 2, 0, 2)
+            case n if (gridViews.size == n + 1)                             => (n / 2, 0, 2)
             // else display it in row n/2, column 0 , span 1
-            case n if n < maxVideoPreviews                                  => (n / 2, 0, 1)
+            case n                                                          => (n / 2, 0, 1)
           }
           r.setLayoutParams(returning(new GridLayout.LayoutParams()) { params =>
             params.width      = 0
