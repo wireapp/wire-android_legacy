@@ -13,18 +13,16 @@ class CreateBackUpUseCase(
 ) : UseCase<Unit, Unit> {
 
     override suspend fun run(params: Unit): Either<Failure, Unit> {
-        var failure = false
-        coroutineScope.launch {
-            failure = backUpRepositories.map {
-                async(Dispatchers.IO) {
-                    it.saveBackup()
-                }
-            }.awaitAll().any { it.isLeft }
-        }
         //TODO would be nice to log the actual exception somewhere
         //TODO rollback changes if something goes wrong
-        return if (failure) Either.Left(BackUpCreationFailure) else Either.Right(Unit)
+        return if (hasBackupFailed()) Either.Left(BackUpCreationFailure) else Either.Right(Unit)
     }
+
+    private suspend fun hasBackupFailed(): Boolean =
+        backUpRepositories
+            .map { coroutineScope.async(Dispatchers.IO) { it.saveBackup() } }
+            .awaitAll()
+            .any { it.isLeft }
 }
 
 object BackUpCreationFailure : FeatureFailure()
