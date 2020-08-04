@@ -1,28 +1,32 @@
 package com.waz.zclient.feature.backup
 
-//TODO: implement BackUpRepository
-@Suppress("IteratorNotThrowingNoSuchElementException")
-//TODO handle NoSuchElement when signature changes
-abstract class BackUpDataSource<T, E> {
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.map
+import com.waz.zclient.feature.backup.io.BatchReader
+
+abstract class BackUpDataSource<T, E> : BackUpRepository {
     abstract val databaseLocalDataSource: BackUpIOHandler<E>
     abstract val backUpLocalDataSource: BackUpIOHandler<T>
     abstract val mapper: BackUpDataMapper<T, E>
 
-    fun backUp() {
+    override suspend fun backUp(): Either<Failure, Unit> {
         val readIterator = databaseLocalDataSource.readIterator()
-        val writeIterator: Iterator<T> = object : Iterator<T> {
-            override fun hasNext(): Boolean = readIterator.hasNext()
-            override fun next(): T = mapper.fromEntity(readIterator.next())
+        val writeIterator: BatchReader<T> = object : BatchReader<T> {
+            override suspend fun readNext(): Either<Failure, T?> = readIterator.readNext().map {
+                it?.let { mapper.fromEntity(it) }
+            }
         }
-        backUpLocalDataSource.write(writeIterator)
+        return backUpLocalDataSource.write(writeIterator)
     }
 
-    fun restore() {
+    override suspend fun restore(): Either<Failure, Unit> {
         val readIterator = backUpLocalDataSource.readIterator()
-        val writeIterator: Iterator<E> = object : Iterator<E> {
-            override fun hasNext(): Boolean = readIterator.hasNext()
-            override fun next(): E = mapper.toEntity(readIterator.next())
+        val writeIterator: BatchReader<E> = object : BatchReader<E> {
+            override suspend fun readNext(): Either<Failure, E?> = readIterator.readNext().map {
+                it?.let { mapper.toEntity(it) }
+            }
         }
-        databaseLocalDataSource.write(writeIterator)
+        return databaseLocalDataSource.write(writeIterator)
     }
 }

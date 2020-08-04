@@ -5,7 +5,7 @@ object Versions {
     const val ANDROID_CLIENT_MAJOR_VERSION = "3.54."
 
     //core
-    const val KOTLIN = "1.3.60"
+    const val KOTLIN = "1.3.72"
     const val WIRE_TRANSLATIONS = "1.+"
     val AVS = System.getenv("AVS_VERSION") ?: "5.3.191@aar"
     val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
@@ -43,6 +43,7 @@ object Versions {
     const val KOIN = "2.0.1"
     const val RX_KOTLIN = "2.3.0"
     const val RX_ANDROID = "2.1.1"
+    const val KOTLINX_SERIALIZATION = "0.20.0"
     const val ANDROID_JOB = "1.2.6"
     const val THREE_TEN_BP_ANDROID = "1.1.0"
     const val THREE_TEN_BP_JAVA = "1.3.8"
@@ -125,6 +126,7 @@ object BuildDependencies {
         "rxKotlin" to "io.reactivex.rxjava2:rxkotlin:${Versions.RX_KOTLIN}",
         "rxAndroid" to "io.reactivex.rxjava2:rxandroid:${Versions.RX_ANDROID}"
     ))
+    val kotlinXSerialization = "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.KOTLINX_SERIALIZATION}"
     val androidJob = "com.evernote:android-job:${Versions.ANDROID_JOB}"
     val threetenbpAndroid = "com.jakewharton.threetenabp:threetenabp:${Versions.THREE_TEN_BP_ANDROID}"
     val threetenbpJava = "org.threeten:threetenbp:${Versions.THREE_TEN_BP_JAVA}"
