@@ -34,14 +34,18 @@
         android:layout_gravity="start|bottom"
         android:layout_margin="@dimen/calling_participant_info_card_margin"
         app:cardBackgroundColor="@color/white_16"
-        app:cardCornerRadius="@dimen/calling_participant_info_card_corner_radius">
+        app:cardCornerRadius="@dimen/calling_participant_info_card_corner_radius"
+        app:cardElevation="@dimen/calling_participant_info_card_corner_elevation">
 
         <TextView
             android:id="@+id/nameTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-medium"
-            android:padding="@dimen/calling_participant_name_padding"
+            android:paddingStart="@dimen/calling_participant_name_padding_start"
+            android:paddingTop="@dimen/calling_participant_name_padding_top"
+            android:paddingEnd="@dimen/calling_participant_name_padding_end"
+            android:paddingBottom="@dimen/calling_participant_name_padding_bottom"
             android:textColor="@color/white"
             android:textSize="@dimen/wire__text_size__small" />
 
