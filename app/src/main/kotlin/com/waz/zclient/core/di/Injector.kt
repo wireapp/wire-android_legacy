@@ -5,7 +5,7 @@ import com.waz.zclient.core.backend.di.backendModule
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.core.network.di.networkModule
 import com.waz.zclient.feature.auth.registration.di.registrationModules
-import com.waz.zclient.feature.backup.di.backUpModule
+import com.waz.zclient.feature.backup.di.backupModules
 import com.waz.zclient.feature.settings.di.settingsModules
 import com.waz.zclient.shared.accounts.di.accountsModule
 import com.waz.zclient.shared.activation.di.activationModule
@@ -50,8 +50,9 @@ object Injector {
      */
     private val featureModules: List<Module> = listOf(
         registrationModules,
-        settingsModules
-    ).flatten().plus(backUpModule)
+        settingsModules,
+        backupModules
+    ).flatten()
 
     @JvmStatic
     fun start(context: Context) {
