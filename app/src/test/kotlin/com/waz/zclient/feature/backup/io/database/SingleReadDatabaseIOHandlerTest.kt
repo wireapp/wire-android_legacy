@@ -1,8 +1,10 @@
 package com.waz.zclient.feature.backup.io.database
 
 import com.waz.zclient.UnitTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import com.waz.zclient.feature.backup.assertItems
+import com.waz.zclient.feature.backup.io.BatchReader
+import com.waz.zclient.feature.backup.mockNextItems
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyInt
@@ -16,6 +18,9 @@ class SingleReadDatabaseIOHandlerTest : UnitTest() {
     @Mock
     private lateinit var singleReadDao: SingleReadDao<Int>
 
+    @Mock
+    private lateinit var batchReader: BatchReader<Int>
+
     private lateinit var singleReadDatabaseIOHandler: SingleReadDatabaseIOHandler<Int>
 
     @Before
@@ -25,28 +30,29 @@ class SingleReadDatabaseIOHandlerTest : UnitTest() {
 
     @Test
     fun `given an iterator, when write() is called, then inserts every item received into dao`() {
-        val items = listOf(1, 2, 3)
+        runBlocking {
+            val items = listOf(1, 2, 3)
+            batchReader.mockNextItems(items)
 
-        singleReadDatabaseIOHandler.write(items.iterator())
+            singleReadDatabaseIOHandler.write(batchReader)
 
-        verify(singleReadDao, times(items.size)).insert(anyInt())
-        items.forEach {
-            verify(singleReadDao).insert(it)
+            verify(singleReadDao, times(items.size)).insert(anyInt())
+            items.forEach {
+                verify(singleReadDao).insert(it)
+            }
         }
     }
 
     @Test
     fun `given a singleReadDao, when readIterator() is called, then fetches all items at once and returns the proper iterator`() {
-        val allItems = listOf(1, 2, 3, 4)
-        `when`(singleReadDao.getAll()).thenReturn(allItems)
+        runBlocking {
+            val allItems = listOf(1, 2, 3, 4)
+            `when`(singleReadDao.getAll()).thenReturn(allItems)
 
-        val readIterator = singleReadDatabaseIOHandler.readIterator()
+            val readIterator = singleReadDatabaseIOHandler.readIterator()
 
-        readIterator.withIndex().forEach {
-            assertEquals(allItems[it.index], it.value)
+            readIterator.assertItems(allItems)
+            verify(singleReadDao).getAll()
         }
-        assertFalse(readIterator.hasNext())
-
-        verify(singleReadDao).getAll()
     }
 }
