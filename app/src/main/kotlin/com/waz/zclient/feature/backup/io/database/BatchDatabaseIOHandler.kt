@@ -7,7 +7,10 @@ import com.waz.zclient.feature.backup.BackUpIOHandler
 import com.waz.zclient.feature.backup.io.BatchReader
 import com.waz.zclient.feature.backup.io.forEach
 
-class BatchDatabaseIOHandler<E>(private val batchReadableDao: BatchReadableDao<E>, private val batchSize: Int) : BackUpIOHandler<E> {
+class BatchDatabaseIOHandler<E>(
+    private val batchReadableDao: BatchReadableDao<E>,
+    private val batchSize: Int
+) : BackUpIOHandler<E> {
 
     override suspend fun write(iterator: BatchReader<E>): Either<Failure, Unit> =
         iterator.forEach {
