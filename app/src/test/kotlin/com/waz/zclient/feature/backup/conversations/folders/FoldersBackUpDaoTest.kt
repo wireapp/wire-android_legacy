@@ -1,6 +1,7 @@
 package com.waz.zclient.feature.backup.conversations.folders
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.feature.backup.folders.FoldersBackUpDao
 import com.waz.zclient.storage.db.folders.FoldersDao
 import com.waz.zclient.storage.db.folders.FoldersEntity
 import kotlinx.coroutines.runBlocking

@@ -11,5 +11,5 @@ interface ConversationRoleActionDao {
     suspend fun allConversationRoleActions(): List<ConversationRoleActionEntity>
 
     @Insert
-    suspend fun insertConversationRoleAction(roleAction: ConversationRoleActionEntity)
+    suspend fun insert(entity: ConversationRoleActionEntity)
 }

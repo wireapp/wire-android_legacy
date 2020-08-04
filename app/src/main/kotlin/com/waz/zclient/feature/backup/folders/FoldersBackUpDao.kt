@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.backup.conversations.folders
+package com.waz.zclient.feature.backup.folders
 
 import com.waz.zclient.feature.backup.io.database.SingleReadDao
 import com.waz.zclient.storage.db.folders.FoldersDao
