@@ -2,6 +2,7 @@ package com.waz.zclient.feature.backup
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.capture
+import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.backup.io.BatchReader
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -12,26 +13,27 @@ import org.mockito.Captor
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
+import java.io.File
 
 class BackUpDataSourceTest : UnitTest() {
 
     @Mock
-    private lateinit var backUpLocalDataSource: BackUpIOHandler<String>
+    private lateinit var backUpLocalDataSource: BackUpIOHandler<String, File>
 
     @Mock
-    private lateinit var databaseLocalDataSource: BackUpIOHandler<Int>
+    private lateinit var databaseLocalDataSource: BackUpIOHandler<Int, Unit>
 
     @Mock
-    private lateinit var backUpBatchReader: BatchReader<String>
+    private lateinit var backUpBatchReader: BatchReader<List<String>>
 
     @Mock
-    private lateinit var databaseBatchReader: BatchReader<Int>
+    private lateinit var databaseBatchReader: BatchReader<List<Int>>
 
     @Captor
-    private lateinit var backUpWriteIterator: ArgumentCaptor<BatchReader<String>>
+    private lateinit var backUpWriteIterator: ArgumentCaptor<BatchReader<List<String>>>
 
     @Captor
-    private lateinit var databaseWriteIterator: ArgumentCaptor<BatchReader<Int>>
+    private lateinit var databaseWriteIterator: ArgumentCaptor<BatchReader<List<Int>>>
 
     @Mock
     private lateinit var mapper: BackUpDataMapper<String, Int>
@@ -41,10 +43,10 @@ class BackUpDataSourceTest : UnitTest() {
     @Before
     fun setUp() {
         backUpDataSource = object : BackUpDataSource<String, Int>() {
-            override val databaseLocalDataSource: BackUpIOHandler<Int> =
+            override val databaseLocalDataSource: BackUpIOHandler<Int, Unit> =
                 this@BackUpDataSourceTest.databaseLocalDataSource
 
-            override val backUpLocalDataSource: BackUpIOHandler<String> =
+            override val backUpLocalDataSource: BackUpIOHandler<String, File> =
                 this@BackUpDataSourceTest.backUpLocalDataSource
 
             override val mapper: BackUpDataMapper<String, Int> =
@@ -57,8 +59,8 @@ class BackUpDataSourceTest : UnitTest() {
         runBlocking {
             databaseBatchReader.mockNextItems(entitiesList)
             `when`(databaseLocalDataSource.readIterator()).thenReturn(databaseBatchReader)
-            entitiesList.forEachIndexed { index, i ->
-                `when`(mapper.fromEntity(i)).thenReturn(modelsList[index])
+            entitiesList[0].forEachIndexed { index, i ->
+                `when`(mapper.fromEntity(i)).thenReturn(modelsList[0][index])
             }
 
             backUpDataSource.saveBackup()
@@ -67,7 +69,7 @@ class BackUpDataSourceTest : UnitTest() {
 
             verify(backUpLocalDataSource).write(capture(backUpWriteIterator))
             backUpWriteIterator.value.assertItems(modelsList)
-            entitiesList.forEach {
+            entitiesList[0].forEach {
                 verify(mapper).fromEntity(it)
             }
         }
@@ -78,8 +80,9 @@ class BackUpDataSourceTest : UnitTest() {
         runBlocking {
             backUpBatchReader.mockNextItems(modelsList)
             `when`(backUpLocalDataSource.readIterator()).thenReturn(backUpBatchReader)
-            modelsList.forEachIndexed { index, s ->
-                `when`(mapper.toEntity(s)).thenReturn(entitiesList[index])
+            `when`(databaseLocalDataSource.write(capture(databaseWriteIterator))).thenReturn(Either.Right(emptyList()))
+            modelsList[0].forEachIndexed { index, s ->
+                `when`(mapper.toEntity(s)).thenReturn(entitiesList[0][index])
             }
 
             backUpDataSource.restoreBackup()
@@ -87,14 +90,14 @@ class BackUpDataSourceTest : UnitTest() {
             verify(backUpLocalDataSource).readIterator()
             verify(databaseLocalDataSource).write(capture(databaseWriteIterator))
             databaseWriteIterator.value.assertItems(entitiesList)
-            modelsList.forEach {
+            modelsList[0].forEach {
                 verify(mapper).toEntity(it)
             }
         }
     }
 
     companion object {
-        private val modelsList = listOf("one", "two", "three")
-        private val entitiesList = listOf(1, 2, 3)
+        private val modelsList = listOf(listOf("one", "two", "three"))
+        private val entitiesList = listOf(listOf(1, 2, 3))
     }
 }

@@ -5,37 +5,24 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestDatabase
 import com.waz.zclient.feature.backup.BackUpIOHandler
 import com.waz.zclient.feature.backup.io.BatchReader
-import com.waz.zclient.feature.backup.io.forEach
+import com.waz.zclient.feature.backup.io.mapRight
 
-class BatchDatabaseIOHandler<E>(
-    private val batchReadableDao: BatchReadableDao<E>,
-    private val batchSize: Int
-) : BackUpIOHandler<E> {
+class BatchDatabaseIOHandler<E>(private val batchReadableDao: BatchReadableDao<E>, private val batchSize: Int) : BackUpIOHandler<E, Unit> {
+    override suspend fun write(iterator: BatchReader<List<E>>): Either<Failure, List<Unit>> =
+        iterator.mapRight {
+            batchReadableDao.insertAll(it)
+            Either.Right(Unit)
+        }
 
-    override suspend fun write(iterator: BatchReader<E>): Either<Failure, Unit> =
-        iterator.forEach {
-            requestDatabase {
-                //TODO write in batches with a buffered approach (for performance)
-                batchReadableDao.insert(it)
+    override fun readIterator(): BatchReader<List<E>> = object : BatchReader<List<E>> {
+        private var count = 0
+        override suspend fun readNext(): Either<Failure, List<E>?> = requestDatabase {
+            batchReadableDao.nextBatch(count, Math.min(batchReadableDao.count() - count, batchSize)).also {
+                count += it?.size ?: 0
             }
         }
 
-    override fun readIterator(): BatchReader<E> = object : BatchReader<E> {
-        var count = 0
-        val currentBatch = mutableListOf<E>()
-
-        override suspend fun readNext(): Either<Failure, E?> = requestDatabase {
-            if (count % batchSize == 0) {
-                currentBatch.clear()
-                currentBatch.addAll(batchReadableDao.nextBatch(
-                    start = count,
-                    batchSize = (batchReadableDao.count() - count).coerceAtMost(batchSize)
-                ) ?: emptyList())
-            }
-            currentBatch[count % batchSize].also {
-                count++
-            }
-        }
+        override suspend fun hasNext(): Boolean = batchReadableDao.count() > count
     }
 }
 
@@ -45,4 +32,8 @@ interface BatchReadableDao<E> {
     suspend fun nextBatch(start: Int, batchSize: Int): List<E>?
 
     suspend fun insert(item: E)
+
+    suspend fun insertAll(items: List<E>) {
+        items.forEach { insert(it) }
+    }
 }

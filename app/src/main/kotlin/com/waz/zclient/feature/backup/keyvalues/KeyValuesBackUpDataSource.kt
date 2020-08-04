@@ -5,10 +5,11 @@ import com.waz.zclient.feature.backup.BackUpDataSource
 import com.waz.zclient.feature.backup.BackUpIOHandler
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import kotlinx.serialization.Serializable
+import java.io.File
 
 class KeyValuesBackUpDataSource(
-    override val databaseLocalDataSource: BackUpIOHandler<KeyValuesEntity>,
-    override val backUpLocalDataSource: BackUpIOHandler<KeyValuesBackUpModel>,
+    override val databaseLocalDataSource: BackUpIOHandler<KeyValuesEntity, Unit>,
+    override val backUpLocalDataSource: BackUpIOHandler<KeyValuesBackUpModel, File>,
     override val mapper: BackUpDataMapper<KeyValuesBackUpModel, KeyValuesEntity>
 ) : BackUpDataSource<KeyValuesBackUpModel, KeyValuesEntity>()
 

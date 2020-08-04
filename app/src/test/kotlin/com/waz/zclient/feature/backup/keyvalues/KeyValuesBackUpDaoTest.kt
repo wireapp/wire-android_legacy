@@ -10,6 +10,7 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.eq
 
 class KeyValuesBackUpDaoTest : UnitTest() {
 
@@ -26,9 +27,12 @@ class KeyValuesBackUpDaoTest : UnitTest() {
     @Test
     fun `given all items are requested, then get items from dao`() {
         runBlocking {
-            keyValuesBackUpDao.allItems()
+            val start = 0
+            val batchSize = 5
 
-            verify(keyValuesDao).allKeyValues()
+            keyValuesBackUpDao .nextBatch(start, batchSize)
+
+            verify(keyValuesDao).batch(eq(start), eq(batchSize))
         }
     }
 

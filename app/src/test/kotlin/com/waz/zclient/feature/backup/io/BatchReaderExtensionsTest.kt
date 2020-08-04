@@ -61,7 +61,8 @@ class BatchReaderExtensionsTest : UnitTest() {
     @Test
     fun `given forEach is called, when readNext() fails, then returns that failure immediately and does not read any more`() {
         runBlocking {
-            `when`(batchReader.readNext()).thenReturn(Either.Right("a"), Either.Left(DatabaseError))
+            `when`(batchReader.hasNext()).thenReturn(true, true, true, false)
+            `when`(batchReader.readNext()).thenReturn(Either.Right("a"), Either.Left(DatabaseError), Either.Right("b"))
 
             val result = batchReader.forEach {
                 assertEquals("a", it)

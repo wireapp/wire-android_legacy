@@ -1,9 +1,9 @@
 package com.waz.zclient.feature.backup.di
 
+import android.os.Environment
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.io.database.BatchDatabaseIOHandler
-import com.waz.zclient.feature.backup.io.database.SingleReadDatabaseIOHandler
 import com.waz.zclient.feature.backup.io.file.BackUpFileIOHandler
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpDao
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpDataSource
@@ -23,6 +23,10 @@ import org.koin.dsl.module
 const val KEY_VALUES_FILE_NAME = "KeyValues"
 const val MESSAGES_FILE_NAME = "Messages"
 
+const val BATCH_SIZE = 1000
+
+val targetDirForBackupFiles = Environment.getExternalStorageDirectory()
+
 val backupModules: List<Module>
     get() = listOf(backUpModule)
 
@@ -31,17 +35,17 @@ val backUpModule = module {
 
     // KeyValues
     factory { KeyValuesBackUpDao(get()) }
-    factory { SingleReadDatabaseIOHandler<KeyValuesEntity>(get()) }
+    factory { BatchDatabaseIOHandler<KeyValuesEntity>(get(), batchSize = BATCH_SIZE) }
     factory { JsonConverter(KeyValuesBackUpModel.serializer()) } //TODO check if koin can resolve generics. use named parameters otherwise.
-    factory { BackUpFileIOHandler<KeyValuesBackUpModel>(KEY_VALUES_FILE_NAME, get()) }
+    factory { BackUpFileIOHandler<KeyValuesBackUpModel>(KEY_VALUES_FILE_NAME, get(), targetDirForBackupFiles) }
     factory { KeyValuesBackUpMapper() }
     factory { KeyValuesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
 
     // Messages
     factory { MessagesBackUpDao(get()) }
-    factory { BatchDatabaseIOHandler<MessagesEntity>(get(), batchSize = 20) }
+    factory { BatchDatabaseIOHandler<MessagesEntity>(get(), batchSize = BATCH_SIZE) }
     factory { JsonConverter(MessagesBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<MessagesBackUpModel>(MESSAGES_FILE_NAME, get()) }
+    factory { BackUpFileIOHandler<MessagesBackUpModel>(MESSAGES_FILE_NAME, get(), targetDirForBackupFiles) }
     factory { MessagesBackUpDataMapper() }
     factory { MessagesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
 }
