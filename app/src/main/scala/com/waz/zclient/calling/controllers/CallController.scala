@@ -125,7 +125,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   }
 
   def orderedParticipantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
-    participantInfos(take).map(_.sortBy(_.displayName))
+    participantInfos(take).map(_.sortBy(_.displayName.toLowerCase))
 
   def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
     for {
