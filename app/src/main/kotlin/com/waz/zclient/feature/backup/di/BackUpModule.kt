@@ -1,10 +1,10 @@
 package com.waz.zclient.feature.backup.di
 
+import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.io.database.BatchDatabaseIOHandler
 import com.waz.zclient.feature.backup.io.database.SingleReadDatabaseIOHandler
 import com.waz.zclient.feature.backup.io.file.BackUpFileIOHandler
-import com.waz.zclient.feature.backup.io.file.JsonConverter
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpDao
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpDataSource
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpMapper

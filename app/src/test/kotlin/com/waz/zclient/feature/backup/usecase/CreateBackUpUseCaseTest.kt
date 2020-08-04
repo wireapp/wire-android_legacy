@@ -27,9 +27,9 @@ class CreateBackUpUseCaseTest : UnitTest() {
 
             val result = createBackUpUseCase.run(Unit)
 
-            verify(repo1).backUp()
-            verify(repo2).backUp()
-            verify(repo3).backUp()
+            verify(repo1).saveBackup()
+            verify(repo2).saveBackup()
+            verify(repo3).saveBackup()
 
             assertEquals(Either.Right(Unit), result)
         }
@@ -46,8 +46,8 @@ class CreateBackUpUseCaseTest : UnitTest() {
 
             val result = createBackUpUseCase.run(Unit)
 
-            verify(repo1).backUp()
-            verify(repo2).backUp()
+            verify(repo1).saveBackup()
+            verify(repo2).saveBackup()
             verifyNoInteractions(repo3)
 
             assertEquals(Either.Left(BackUpCreationFailure), result)
@@ -56,7 +56,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
 
     companion object {
         suspend fun mockBackUpRepo(backUpSuccess: Boolean = true) = mock(BackUpRepository::class.java).also {
-            `when`(it.backUp()).thenReturn(if (backUpSuccess) Either.Right(Unit) else Either.Left(DatabaseError))
+            `when`(it.saveBackup()).thenReturn(if (backUpSuccess) Either.Right(Unit) else Either.Left(DatabaseError))
         }
     }
 }

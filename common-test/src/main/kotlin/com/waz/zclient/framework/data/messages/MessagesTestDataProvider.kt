@@ -57,5 +57,5 @@ object MessagesTestDataProvider : TestDataProvider<MessageTestData>() {
         assetId = null
     )
 
-    const val PROTOS_BYTE_SIZE = 256
+    private const val PROTOS_BYTE_SIZE = 256
 }

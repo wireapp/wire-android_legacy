@@ -10,7 +10,7 @@ abstract class BackUpDataSource<T, E> : BackUpRepository {
     abstract val backUpLocalDataSource: BackUpIOHandler<T>
     abstract val mapper: BackUpDataMapper<T, E>
 
-    override suspend fun backUp(): Either<Failure, Unit> {
+    override suspend fun saveBackup(): Either<Failure, Unit> {
         val readIterator = databaseLocalDataSource.readIterator()
         val writeIterator: BatchReader<T> = object : BatchReader<T> {
             override suspend fun readNext(): Either<Failure, T?> = readIterator.readNext().map {
@@ -20,7 +20,7 @@ abstract class BackUpDataSource<T, E> : BackUpRepository {
         return backUpLocalDataSource.write(writeIterator)
     }
 
-    override suspend fun restore(): Either<Failure, Unit> {
+    override suspend fun restoreBackup(): Either<Failure, Unit> {
         val readIterator = backUpLocalDataSource.readIterator()
         val writeIterator: BatchReader<E> = object : BatchReader<E> {
             override suspend fun readNext(): Either<Failure, E?> = readIterator.readNext().map {
