@@ -15,4 +15,3 @@ object FoldersTestDataProvider : TestDataProvider<FoldersTestData>() {
         type = 0
     )
 }
-
