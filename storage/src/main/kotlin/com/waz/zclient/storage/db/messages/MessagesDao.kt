@@ -3,7 +3,6 @@ package com.waz.zclient.storage.db.messages
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.waz.zclient.storage.db.property.KeyValuesEntity
 
 @Dao
 interface MessagesDao {
