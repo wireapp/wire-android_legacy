@@ -1,6 +1,7 @@
 package com.waz.zclient.feature.backup.io.file
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.utilities.converters.JsonConverter
 import kotlinx.serialization.Serializable
 import org.junit.Assert.assertEquals
 import org.junit.Before

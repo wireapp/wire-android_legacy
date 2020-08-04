@@ -47,12 +47,12 @@ class SingleReadDatabaseIOHandlerTest : UnitTest() {
     fun `given a singleReadDao, when readIterator() is called, then fetches all items at once and returns the proper iterator`() {
         runBlocking {
             val allItems = listOf(1, 2, 3, 4)
-            `when`(singleReadDao.getAll()).thenReturn(allItems)
+            `when`(singleReadDao.allItems()).thenReturn(allItems)
 
             val readIterator = singleReadDatabaseIOHandler.readIterator()
 
             readIterator.assertItems(allItems)
-            verify(singleReadDao).getAll()
+            verify(singleReadDao).allItems()
         }
     }
 }
