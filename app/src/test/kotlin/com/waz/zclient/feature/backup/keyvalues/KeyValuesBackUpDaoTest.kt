@@ -24,18 +24,22 @@ class KeyValuesBackUpDaoTest : UnitTest() {
     }
 
     @Test
-    fun `given all items are requested, then get items from dao`(): Unit = runBlocking {
-        keyValuesBackUpDao.allItems()
+    fun `given all items are requested, then get items from dao`() {
+        runBlocking {
+            keyValuesBackUpDao.allItems()
 
-        verify(keyValuesDao).allKeyValues()
+            verify(keyValuesDao).allKeyValues()
+        }
     }
 
     @Test
-    fun `given entity, when insert is called, then insert same entity`(): Unit = runBlocking {
-        val entity = mock(KeyValuesEntity::class.java)
+    fun `given entity, when insert is called, then insert same entity`() {
+        runBlocking {
+            val entity = mock(KeyValuesEntity::class.java)
 
-        keyValuesBackUpDao.insert(entity)
+            keyValuesBackUpDao.insert(entity)
 
-        verify(keyValuesDao).insert(eq(entity))
+            verify(keyValuesDao).insert(entity)
+        }
     }
 }

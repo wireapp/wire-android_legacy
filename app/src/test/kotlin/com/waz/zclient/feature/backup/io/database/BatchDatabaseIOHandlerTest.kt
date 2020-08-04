@@ -12,10 +12,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mock
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.spy
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.Mockito.*
 
 class BatchDatabaseIOHandlerTest : UnitTest() {
 
@@ -36,7 +33,7 @@ class BatchDatabaseIOHandlerTest : UnitTest() {
 
         runBlocking {
             batchDatabaseIOHandler.readIterator().assertItems(allItems)
-            verify(batchReadableDao, times(4)).getNextBatch(anyInt(), eq(batchSize))
+            verify(batchReadableDao, times(4)).nextBatch(anyInt(), eq(batchSize))
         }
     }
 
@@ -49,12 +46,12 @@ class BatchDatabaseIOHandlerTest : UnitTest() {
             batchReadableDao = spy(batchReadableDaoOf(allItems))
             batchDatabaseIOHandler = BatchDatabaseIOHandler(batchReadableDao, batchSize)
 
-            batchDatabaseIOHandler.readIterator().forEach { Either.Right(Unit)/* just consume all */}
+            batchDatabaseIOHandler.readIterator().forEach { Either.Right(Unit)/* just consume all */ }
 
             //[1, 2, 3], [4, 5, 6]
-            verify(batchReadableDao, times(2)).getNextBatch(anyInt(), eq(batchSize))
+            verify(batchReadableDao, times(2)).nextBatch(anyInt(), eq(batchSize))
             //[7]
-            verify(batchReadableDao).getNextBatch(anyInt(), eq(1))
+            verify(batchReadableDao).nextBatch(anyInt(), eq(1))
         }
     }
 
@@ -80,7 +77,7 @@ class BatchDatabaseIOHandlerTest : UnitTest() {
         private fun batchReadableDaoOf(list: List<Int>) = object : BatchReadableDao<Int> {
             override suspend fun count(): Int = list.size
 
-            override suspend fun getNextBatch(start: Int, batchSize: Int): List<Int> = list.subList(start, (start + batchSize))
+            override suspend fun nextBatch(start: Int, batchSize: Int): List<Int> = list.subList(start, (start + batchSize))
 
             override suspend fun insert(item: Int) { /*not needed*/ }
         }
