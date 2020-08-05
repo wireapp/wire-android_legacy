@@ -1,8 +1,6 @@
 package com.waz.zclient.feature.backup.di
 
 import com.waz.zclient.core.utilities.converters.JsonConverter
-import com.waz.zclient.feature.auth.registration.di.createPersonalAccountModule
-import com.waz.zclient.feature.auth.registration.di.registerModule
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.io.database.BatchDatabaseIOHandler
 import com.waz.zclient.feature.backup.io.database.SingleReadDatabaseIOHandler
