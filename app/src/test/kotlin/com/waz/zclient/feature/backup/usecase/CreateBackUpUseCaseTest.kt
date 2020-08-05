@@ -50,7 +50,8 @@ class CreateBackUpUseCaseTest : UnitTest() {
 
             verify(repo1).backUp()
             verify(repo2).backUp()
-//            verifyNoInteractions(repo3)
+            //TODO implement a fail-fast approach inside the use-case to accommodate this
+            //verifyNoInteractions(repo3)
 
             assertEquals(Either.Left(BackUpCreationFailure), result)
         }
@@ -58,6 +59,6 @@ class CreateBackUpUseCaseTest : UnitTest() {
 
     companion object {
         suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository = mock(BackUpRepository::class.java)
-            .also { `when`(it.saveBackup()).thenReturn(if (backUpSuccess) Either.Right(Unit) else Either.Left(DatabaseError)) }
+            .also { `when`(it.backUp()).thenReturn(if (backUpSuccess) Either.Right(Unit) else Either.Left(DatabaseError)) }
     }
 }
