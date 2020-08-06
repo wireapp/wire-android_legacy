@@ -60,29 +60,22 @@ class BackUpFileIOHandlerTest : UnitTest() {
     @Test
     fun `given an existing file, when readIterator() is called, then returns an iterator which reads it line by line`() =
         runTestWithFile(uniqueFileName()) { fileName ->
-
             File(fileName).also {
                 it.delete()
                 it.createNewFile()
-                it.writeText("line 1\nline 2\nline 3\n")
+                it.writeText("line 1\n line 2\n line 3\n")
             }
-
-            `when`(jsonConverter.fromJson("line 1")).thenReturn(1)
-            `when`(jsonConverter.fromJson("line 2")).thenReturn(2)
-            `when`(jsonConverter.fromJson("line 3")).thenReturn(3)
 
             backUpFileIOHandler = BackUpFileIOHandler(fileName, jsonConverter)
 
-            runBlocking {
-                backUpFileIOHandler.readIterator().assertItems(listOf(1, 2, 3))
-            }
+            runBlocking { backUpFileIOHandler.readIterator().assertItems(listOf(1, 2, 3)) }
         }
 
     private fun runTestWithFile(fileName: String, testWithFile: (String) -> Unit): Unit {
         try {
             testWithFile(fileName)
         } catch (ex: Exception) {
-            fail("Exception occured: $ex")
+            fail("Exception occurred: $ex")
         } finally {
             File(fileName).deleteOnExit()
         }
