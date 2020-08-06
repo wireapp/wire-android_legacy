@@ -17,6 +17,7 @@ package com.waz.zclient
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.waz.zclient.framework.coroutines.CoroutinesTestRule
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Rule
 import org.junit.runner.RunWith
 import org.mockito.junit.MockitoJUnitRunner
@@ -36,6 +37,7 @@ abstract class UnitTest {
     @get:Rule
     val rule = InstantTaskExecutorRule()
 
+    @ExperimentalCoroutinesApi
     @get:Rule
     val coroutinesTestRule = CoroutinesTestRule()
 }

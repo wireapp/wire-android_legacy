@@ -7,12 +7,12 @@ import com.waz.zclient.feature.backup.BackUpIOHandler
 import com.waz.zclient.feature.backup.io.BatchReader
 import com.waz.zclient.feature.backup.io.forEach
 
-class SingleReadDatabaseIOHandler<E>(private val singleReadDao: SingleReadDao<E>) : BackUpIOHandler<E> {
+class SingleReadDatabaseIOHandler<E>(
+    private val singleReadDao: SingleReadDao<E>
+) : BackUpIOHandler<E> {
 
     override suspend fun write(iterator: BatchReader<E>): Either<Failure, Unit> =
-        iterator.forEach {
-            requestDatabase { singleReadDao.insert(it) }
-        }
+        iterator.forEach { requestDatabase { singleReadDao.insert(it) } }
 
     override fun readIterator(): BatchReader<E> = object : BatchReader<E> {
         var count = 0
@@ -20,7 +20,7 @@ class SingleReadDatabaseIOHandler<E>(private val singleReadDao: SingleReadDao<E>
 
         override suspend fun readNext(): Either<Failure, E?> = requestDatabase {
             if (items == null) {
-                items = singleReadDao.getAll()
+                items = singleReadDao.allItems()
             }
             items!!.getOrNull(count)?.also { count++ }
         }
@@ -29,5 +29,5 @@ class SingleReadDatabaseIOHandler<E>(private val singleReadDao: SingleReadDao<E>
 
 interface SingleReadDao<E> {
     suspend fun insert(item: E)
-    suspend fun getAll(): List<E>
+    suspend fun allItems(): List<E>
 }
