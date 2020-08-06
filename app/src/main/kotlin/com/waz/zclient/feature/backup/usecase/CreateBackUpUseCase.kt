@@ -24,7 +24,7 @@ class CreateBackUpUseCase(
 
     private suspend fun hasBackupFailed(): Boolean =
         backUpRepositories
-            .map { coroutineScope.async(Dispatchers.IO) { it.backUp() } }
+            .map { coroutineScope.async(Dispatchers.IO) { it.saveBackup() } }
             .awaitAll()
             .any { it.isLeft }
 }
