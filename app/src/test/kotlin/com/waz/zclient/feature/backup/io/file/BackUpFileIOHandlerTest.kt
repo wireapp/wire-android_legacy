@@ -1,7 +1,6 @@
 package com.waz.zclient.feature.backup.io.file
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.assertItems
 import com.waz.zclient.feature.backup.io.BatchReader
 import com.waz.zclient.feature.backup.mockNextItems
