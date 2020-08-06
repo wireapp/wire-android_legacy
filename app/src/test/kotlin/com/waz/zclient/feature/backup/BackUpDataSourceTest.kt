@@ -61,7 +61,7 @@ class BackUpDataSourceTest : UnitTest() {
                 `when`(mapper.fromEntity(i)).thenReturn(modelsList[index])
             }
 
-            backUpDataSource.backUp()
+            backUpDataSource.saveBackup()
 
             verify(databaseLocalDataSource).readIterator()
 
@@ -82,7 +82,7 @@ class BackUpDataSourceTest : UnitTest() {
                 `when`(mapper.toEntity(s)).thenReturn(entitiesList[index])
             }
 
-            backUpDataSource.restore()
+            backUpDataSource.restoreBackup()
 
             verify(backUpLocalDataSource).readIterator()
             verify(databaseLocalDataSource).write(capture(databaseWriteIterator))

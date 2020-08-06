@@ -27,10 +27,10 @@ class BatchDatabaseIOHandler<E>(
         override suspend fun readNext(): Either<Failure, E?> = requestDatabase {
             if (count % batchSize == 0) {
                 currentBatch.clear()
-                currentBatch.addAll(batchReadableDao.getNextBatch(
+                currentBatch.addAll(batchReadableDao.nextBatch(
                     start = count,
-                    batchSize = (batchReadableDao.count() - count).coerceAtMost(batchSize))
-                )
+                    batchSize = (batchReadableDao.count() - count).coerceAtMost(batchSize)
+                ) ?: emptyList())
             }
             currentBatch[count % batchSize].also {
                 count++
@@ -42,7 +42,7 @@ class BatchDatabaseIOHandler<E>(
 interface BatchReadableDao<E> {
     suspend fun count(): Int
 
-    suspend fun getNextBatch(start: Int, batchSize: Int): List<E>
+    suspend fun nextBatch(start: Int, batchSize: Int): List<E>?
 
     suspend fun insert(item: E)
 }

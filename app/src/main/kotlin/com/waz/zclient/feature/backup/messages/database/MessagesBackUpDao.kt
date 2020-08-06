@@ -8,8 +8,8 @@ class MessagesBackUpDao(private val messagesDao: MessagesDao) : BatchReadableDao
 
     override suspend fun count(): Int = messagesDao.size()
 
-    override suspend fun getNextBatch(start: Int, batchSize: Int): List<MessagesEntity> =
-        messagesDao.getBatch(start, batchSize).orEmpty() //TODO is it better to return null?
+    override suspend fun nextBatch(start: Int, batchSize: Int): List<MessagesEntity>? =
+        messagesDao.batch(start, batchSize)
 
     override suspend fun insert(item: MessagesEntity) = messagesDao.insert(item)
 }

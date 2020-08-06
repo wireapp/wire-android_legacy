@@ -1,5 +1,6 @@
 package com.waz.zclient.storage.userdatabase.messages
 
+import com.waz.zclient.framework.data.messages.MessagesTestDataProvider
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
@@ -14,83 +15,62 @@ class MessagesTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
 
     @Test
     fun givenMessageInsertedIntoMessagesTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
-
-        val id = "testId"
-        val conversationId = "testId"
-        val messageType = "testType"
-        val userId = "testUserId"
-        val content = "testContent"
-        val proto = ByteArray(5)
-        val time = 1584710479
-        val message = false
-        val members = "testMembers"
-        val recipient = "testRecipient"
-        val email = "test@wire.com"
-        val name = "testName"
-        val messageState = "delivered"
-        val contentSize = 5000
-        val ephemeral = 40
-        val expired = true
-        val duration = 5050505
-        val quote = "testQuote"
-        val quoteValidity = 9000
-        val forceReadReceipts = 0
-        val assetId = "testAssetId"
-
+        val data = MessagesTestDataProvider.data()
         MessagesTableTestHelper.insertMessage(
-            id = id,
-            conversationId = conversationId,
-            messageType = messageType,
-            userId = userId,
-            content = content,
-            protos = proto,
-            time = time,
-            localTime = time,
-            firstMessage = message,
-            members = members,
-            recipient = recipient,
-            email = email,
-            name = name,
-            messageState = messageState,
-            contentSize = contentSize,
-            editTime = time,
-            ephemeral = ephemeral,
-            expiryTime = time,
-            expired = expired,
-            duration = duration,
-            quote = quote,
-            quoteValidity = quoteValidity,
-            forceReadReceipts = forceReadReceipts,
-            assetId = assetId,
-            openHelper = testOpenHelper)
+            id = data.id,
+            conversationId = data.conversationId,
+            messageType = data.messageType,
+            userId = data.userId,
+            content = data.content,
+            protos = data.protos,
+            time = data.time,
+            localTime = data.localTime,
+            firstMessage = data.firstMessage,
+            members = data.members,
+            recipient = data.recipient,
+            email = data.email,
+            name = data.name,
+            messageState = data.messageState,
+            contentSize = data.contentSize,
+            editTime = data.editTime,
+            ephemeral = data.ephemeral,
+            expiryTime = data.time,
+            expired = data.expired,
+            duration = data.duration,
+            quote = data.quote,
+            quoteValidity = data.quoteValidity,
+            forceReadReceipts = data.forceReadReceipts,
+            assetId = data.assetId,
+            openHelper = testOpenHelper
+        )
 
         validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(allMessages()[0]) {
-                assertEquals(this.id, id)
-                assertEquals(this.conversationId, conversationId)
-                assertEquals(this.messageType, messageType)
-                assertEquals(this.userId, userId)
-                assertEquals(this.content, content)
-                assertTrue(this.protos!!.contentEquals(protos!!))
-                assertEquals(this.time, time)
-                assertEquals(firstMessage, message)
-                assertEquals(this.members, members)
-                assertEquals(this.recipient, recipient)
-                assertEquals(this.email, email)
-                assertEquals(this.name, name)
-                assertEquals(this.messageState, messageState)
-                assertEquals(this.contentSize, contentSize)
-                assertEquals(this.editTime, editTime)
-                assertEquals(this.ephemeral, ephemeral)
-                assertEquals(this.expiryTime, expiryTime)
-                assertEquals(this.expired, expired)
-                assertEquals(this.duration, duration)
-                assertEquals(this.quote, quote)
-                assertEquals(this.quoteValidity, quoteValidity)
-                assertEquals(this.forceReadReceipts, forceReadReceipts)
-                assertEquals(this.assetId, assetId)
+                assertEquals(this.id, data.id)
+                assertEquals(this.conversationId, data.conversationId)
+                assertEquals(this.messageType, data.messageType)
+                assertEquals(this.userId, data.userId)
+                assertEquals(this.content, data.content)
+                assertTrue(this.protos!!.contentEquals(data.protos!!))
+                assertEquals(this.time, data.time)
+                assertEquals(firstMessage, data.firstMessage)
+                assertEquals(this.members, data.members)
+                assertEquals(this.recipient, data.recipient)
+                assertEquals(this.email, data.email)
+                assertEquals(this.name, data.name)
+                assertEquals(this.messageState, data.messageState)
+                assertEquals(this.contentSize, data.contentSize)
+                assertEquals(this.editTime, data.editTime)
+                assertEquals(this.ephemeral, data.ephemeral)
+                assertEquals(this.expiryTime, data.expiryTime)
+                assertEquals(this.expired, data.expired)
+                assertEquals(this.duration, data.duration)
+                assertEquals(this.quote, data.quote)
+                assertEquals(this.quoteValidity, data.quoteValidity)
+                assertEquals(this.forceReadReceipts, data.forceReadReceipts)
+                assertEquals(this.assetId, data.assetId)
             }
         }
     }
