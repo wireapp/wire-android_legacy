@@ -213,24 +213,30 @@ class CallingFragment extends FragmentHelper {
         }
 
         gridViews.zipWithIndex.foreach { case (r, index) =>
-          val (row, col, span) = index match {
-            case 0 if !isVideoBeingSent && gridViews.size == 2              => (0, 0, 2)
-            case 0                                                          => (0, 0, 1)
-            case 1 if !isVideoBeingSent && gridViews.size == 2              => (1, 0, 2)
-            case 1                                                          => (0, 1, 1)
+          val (row, col, span, width) = index match {
+            case 0 if !isVideoBeingSent && gridViews.size == 2 => (0, 0, 2, 0)
+            case 0 => (0, 0, 1, 0)
+            case 1 if !isVideoBeingSent && gridViews.size == 2 => (1, 0, 2, 0)
+            case 1 => (0, 1, 1, 0)
             // The max number of columns is 2 and the max number of rows is undefined
-            // if the index of the video preview is odd, display it in row n/2, column 1 , span 1
-            case n if n % 2 != 0                                            => (n / 2, 1, 1)
-            // else if the gridViews size is n+1 , display it in row n/2, column 0 , span 2
-            case n if gridViews.size == n + 1                               => (n / 2, 0, 2)
-            // else display it in row n/2, column 0 , span 1
-            case n                                                          => (n / 2, 0, 1)
+            // if the index of the video preview is even, display it in row n/2, column 1 , span 1 , width match_parent(0)
+            case n if n % 2 != 0 => (n / 2, 1, 1, 0)
+            // else if the gridViews size is n+1 , display it in row n/2, column 0 , span 2, , width view size / 2
+            case n if gridViews.size == n + 1 => (n / 2, 0, 2, v.getWidth / 2)
+            // else display it in row n/2, column 0 , span 1, , width match_parent(0)
+            case n => (n / 2, 0, 1, 0)
           }
+
+          val columnAlignment = width match {
+            case 0 => GridLayout.FILL
+            case _ => GridLayout.CENTER
+          }
+
           r.setLayoutParams(returning(new GridLayout.LayoutParams()) { params =>
-            params.width      = 0
-            params.height     = 0
-            params.rowSpec    = GridLayout.spec(row, 1, GridLayout.FILL, 1f)
-            params.columnSpec = GridLayout.spec(col, span, GridLayout.FILL, 1f)
+            params.width = width
+            params.height = 0
+            params.rowSpec = GridLayout.spec(row, 1, GridLayout.FILL, 1f)
+            params.columnSpec = GridLayout.spec(col, span, columnAlignment,1f)
           })
 
           if (r.getParent == null) v.addView(r)
