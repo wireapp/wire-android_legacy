@@ -70,8 +70,7 @@ class PushTokenServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       result(global._currentToken.signal.filter(_.contains(token)).head)
     }
 
-    @Ignore
-    scenario("Failing push token generation should continually retry on IOException, if there is a network connection") {
+    ignore("Failing push token generation should continually retry on IOException, if there is a network connection") {
 
       googlePlayAvailable ! true
 
