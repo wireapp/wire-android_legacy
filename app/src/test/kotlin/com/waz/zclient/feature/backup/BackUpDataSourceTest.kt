@@ -60,7 +60,7 @@ class BackUpDataSourceTest : UnitTest() {
             databaseBatchReader.mockNextItems(entitiesList)
             `when`(databaseLocalDataSource.readIterator()).thenReturn(databaseBatchReader)
             entitiesList[0].forEachIndexed { index, i ->
-                `when`(mapper.fromEntity(i)).thenReturn(modelsList[0][index])
+                `when`(mapper.fromEntity(i)).thenReturn(modelsList.first()[index])
             }
 
             backUpDataSource.saveBackup()
@@ -69,7 +69,7 @@ class BackUpDataSourceTest : UnitTest() {
 
             verify(backUpLocalDataSource).write(capture(backUpWriteIterator))
             backUpWriteIterator.value.assertItems(modelsList)
-            entitiesList[0].forEach {
+            entitiesList.first().forEach {
                 verify(mapper).fromEntity(it)
             }
         }
@@ -81,8 +81,8 @@ class BackUpDataSourceTest : UnitTest() {
             backUpBatchReader.mockNextItems(modelsList)
             `when`(backUpLocalDataSource.readIterator()).thenReturn(backUpBatchReader)
             `when`(databaseLocalDataSource.write(capture(databaseWriteIterator))).thenReturn(Either.Right(emptyList()))
-            modelsList[0].forEachIndexed { index, s ->
-                `when`(mapper.toEntity(s)).thenReturn(entitiesList[0][index])
+            modelsList.first().forEachIndexed { index, s ->
+                `when`(mapper.toEntity(s)).thenReturn(entitiesList.first()[index])
             }
 
             backUpDataSource.restoreBackup()
@@ -90,7 +90,7 @@ class BackUpDataSourceTest : UnitTest() {
             verify(backUpLocalDataSource).readIterator()
             verify(databaseLocalDataSource).write(capture(databaseWriteIterator))
             databaseWriteIterator.value.assertItems(entitiesList)
-            modelsList[0].forEach {
+            modelsList.first().forEach {
                 verify(mapper).toEntity(it)
             }
         }

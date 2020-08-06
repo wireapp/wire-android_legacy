@@ -18,6 +18,8 @@ class CreateBackUpUseCase(
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : UseCase<Unit, Unit> {
 
+    //TODO would be nice to log the actual exception somewhere
+    //TODO rollback changes if something goes wrong
     override suspend fun run(params: Unit): Either<Failure, Unit> =
         if (hasBackupFailed()) Either.Left(BackUpCreationFailure) else Either.Right(Unit)
 

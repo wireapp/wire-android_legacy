@@ -7,7 +7,10 @@ import com.waz.zclient.feature.backup.BackUpIOHandler
 import com.waz.zclient.feature.backup.io.BatchReader
 import com.waz.zclient.feature.backup.io.mapRight
 
-class BatchDatabaseIOHandler<E>(private val batchReadableDao: BatchReadableDao<E>, private val batchSize: Int) : BackUpIOHandler<E, Unit> {
+class BatchDatabaseIOHandler<E>(
+    private val batchReadableDao: BatchReadableDao<E>,
+    private val batchSize: Int = BATCH_SIZE
+) : BackUpIOHandler<E, Unit> {
     override suspend fun write(iterator: BatchReader<List<E>>): Either<Failure, List<Unit>> =
         iterator.mapRight {
             batchReadableDao.insertAll(it)
@@ -23,6 +26,10 @@ class BatchDatabaseIOHandler<E>(private val batchReadableDao: BatchReadableDao<E
         }
 
         override suspend fun hasNext(): Boolean = batchReadableDao.count() > count
+    }
+
+    companion object {
+        private const val BATCH_SIZE = 1000
     }
 }
 

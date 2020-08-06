@@ -20,32 +20,30 @@ import org.koin.core.module.Module
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-const val KEY_VALUES_FILE_NAME = "KeyValues"
-const val MESSAGES_FILE_NAME = "Messages"
-
-const val BATCH_SIZE = 1000
-
-val targetDirForBackupFiles = Environment.getExternalStorageDirectory()
+private const val KEY_VALUES_FILE_NAME = "KeyValues"
+private const val MESSAGES_FILE_NAME = "Messages"
 
 val backupModules: List<Module>
     get() = listOf(backUpModule)
 
 val backUpModule = module {
+    single { Environment.getExternalStorageDirectory() }
+
     factory { CreateBackUpUseCase(getAll()) } //this resolves all instances of type BackUpRepository
 
     // KeyValues
     factory { KeyValuesBackUpDao(get()) }
-    factory { BatchDatabaseIOHandler<KeyValuesEntity>(get(), batchSize = BATCH_SIZE) }
+    factory { BatchDatabaseIOHandler<KeyValuesEntity>(get()) }
     factory { JsonConverter(KeyValuesBackUpModel.serializer()) } //TODO check if koin can resolve generics. use named parameters otherwise.
-    factory { BackUpFileIOHandler<KeyValuesBackUpModel>(KEY_VALUES_FILE_NAME, get(), targetDirForBackupFiles) }
+    factory { BackUpFileIOHandler<KeyValuesBackUpModel>(KEY_VALUES_FILE_NAME, get(), get()) }
     factory { KeyValuesBackUpMapper() }
     factory { KeyValuesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
 
     // Messages
     factory { MessagesBackUpDao(get()) }
-    factory { BatchDatabaseIOHandler<MessagesEntity>(get(), batchSize = BATCH_SIZE) }
+    factory { BatchDatabaseIOHandler<MessagesEntity>(get()) }
     factory { JsonConverter(MessagesBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<MessagesBackUpModel>(MESSAGES_FILE_NAME, get(), targetDirForBackupFiles) }
+    factory { BackUpFileIOHandler<MessagesBackUpModel>(MESSAGES_FILE_NAME, get(), get()) }
     factory { MessagesBackUpDataMapper() }
     factory { MessagesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
 }

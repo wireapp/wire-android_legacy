@@ -31,21 +31,19 @@ suspend fun <T, R> BatchReader<T>.forEach(action: suspend (T) -> Either<Failure,
  * A bit more specific version of [[com.waz.zclient.core.extension.mapRight]].
  * BatchReader does not extend [[Iterable]] and can't use the generic mapRight.
  */
-@SuppressWarnings("NestedBlockDepth")
 suspend fun <T, R> BatchReader<T>.mapRight(action: suspend (T) -> Either<Failure, R>): Either<Failure, List<R>> {
     val rightValues = mutableListOf<R>()
     var failure: Failure? = null
 
+    suspend fun performAction(value: T) =
+        when (val res = action(value)) {
+            is Either.Right -> rightValues += res.b
+            is Either.Left -> failure = res.a
+        }
+
     while (hasNext() && failure == null) {
         when (val next = readNext()) {
-            is Either.Right -> {
-                next.b?.let {
-                    when (val res = action(it)) {
-                        is Either.Right -> rightValues += res.b
-                        is Either.Left -> failure = res.a
-                    }
-                }
-            }
+            is Either.Right -> next.b?.let { performAction(it) }
             is Either.Left -> failure = next.a
         }
     }
