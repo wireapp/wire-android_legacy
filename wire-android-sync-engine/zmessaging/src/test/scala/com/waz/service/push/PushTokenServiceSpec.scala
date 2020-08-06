@@ -35,7 +35,6 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
 import com.wire.signals.{CancellableFuture, Signal}
-import org.junit.Ignore
 
 import scala.concurrent.Future
 
