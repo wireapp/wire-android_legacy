@@ -19,7 +19,6 @@ package com.waz.service.push
 
 import java.io.IOException
 
-import com.waz.DisabledTrackingService
 import com.waz.api.NetworkMode
 import com.waz.content.{AccountStorage, GlobalPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -32,11 +31,11 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushTokenClient
 import com.waz.sync.client.PushTokenClient.PushTokenRegistration
 import com.waz.testutils.{TestBackoff, TestGlobalPreferences}
-import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
-import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
+import com.wire.signals.{CancellableFuture, Signal}
+import org.junit.Ignore
 
 import scala.concurrent.Future
 
@@ -71,6 +70,7 @@ class PushTokenServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       result(global._currentToken.signal.filter(_.contains(token)).head)
     }
 
+    @Ignore
     scenario("Failing push token generation should continually retry on IOException, if there is a network connection") {
 
       googlePlayAvailable ! true
