@@ -19,5 +19,4 @@ interface FoldersDao : BatchDao<FoldersEntity> {
 
     @Query("SELECT COUNT(*) FROM Folders")
     override suspend fun count(): Int
-
 }
