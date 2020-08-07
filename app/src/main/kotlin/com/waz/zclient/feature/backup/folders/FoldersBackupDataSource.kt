@@ -5,6 +5,7 @@ import com.waz.zclient.feature.backup.BackUpDataSource
 import com.waz.zclient.feature.backup.BackUpIOHandler
 import com.waz.zclient.storage.db.folders.FoldersEntity
 import kotlinx.serialization.Serializable
+import java.io.File
 
 @Serializable
 data class FoldersBackUpModel(
@@ -22,7 +23,7 @@ class FoldersBackupMapper : BackUpDataMapper<FoldersBackUpModel, FoldersEntity> 
 }
 
 class FoldersBackupDataSource(
-    override val databaseLocalDataSource: BackUpIOHandler<FoldersEntity>,
-    override val backUpLocalDataSource: BackUpIOHandler<FoldersBackUpModel>,
+    override val databaseLocalDataSource: BackUpIOHandler<FoldersEntity, Unit>,
+    override val backUpLocalDataSource: BackUpIOHandler<FoldersBackUpModel, File>,
     override val mapper: BackUpDataMapper<FoldersBackUpModel, FoldersEntity>
 ) : BackUpDataSource<FoldersBackUpModel, FoldersEntity>()

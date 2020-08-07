@@ -1,7 +1,6 @@
 package com.waz.zclient.feature.backup.io
 
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.extension.foldSuspendable
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 
@@ -14,6 +13,8 @@ interface BatchReader<T> {
      * Either.Right(null) if there are no more items to read.
      */
     suspend fun readNext(): Either<Failure, T?>
+
+    suspend fun hasNext(): Boolean
 }
 
 /**
@@ -24,18 +25,28 @@ interface BatchReader<T> {
  * @return Either.Right(Unit) if all items are read and actions are applied successfully,
  * Either.Left(Failure) otherwise
  */
-suspend fun <T> BatchReader<T>.forEach(action: suspend (T) -> Either<Failure, Unit>): Either<Failure, Unit> {
-    var next = readNext()
+suspend fun <T, R> BatchReader<T>.forEach(action: suspend (T) -> Either<Failure, R>): Either<Failure, Unit> = mapRight(action).map { Unit }
 
-    while (next.fold({ false }) { it != null }!!) {
-        next.foldSuspendable({}) {
-            action(it!!).foldSuspendable({
-                next = Either.Left(it)
-            }) {
-                next = readNext()
-                Unit
-            }
+/**
+ * A bit more specific version of [[com.waz.zclient.core.extension.mapRight]].
+ * BatchReader does not extend [[Iterable]] and can't use the generic mapRight.
+ */
+suspend fun <T, R> BatchReader<T>.mapRight(action: suspend (T) -> Either<Failure, R>): Either<Failure, List<R>> {
+    val rightValues = mutableListOf<R>()
+    var failure: Failure? = null
+
+    suspend fun performAction(value: T) =
+        when (val res = action(value)) {
+            is Either.Right -> rightValues += res.b
+            is Either.Left -> failure = res.a
+        }
+
+    while (hasNext() && failure == null) {
+        when (val next = readNext()) {
+            is Either.Right -> next.b?.let { performAction(it) }
+            is Either.Left -> failure = next.a
         }
     }
-    return next.map { Unit }
+
+    return if (failure != null) Either.Left(failure!!) else Either.Right(rightValues.toList())
 }

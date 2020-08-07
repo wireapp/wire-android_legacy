@@ -5,6 +5,7 @@ import com.waz.zclient.feature.backup.BackUpDataSource
 import com.waz.zclient.feature.backup.BackUpIOHandler
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
 import kotlinx.serialization.Serializable
+import java.io.File
 
 @Serializable
 data class ConversationRoleActionBackUpModel(
@@ -22,7 +23,7 @@ class ConversationRoleBackupMapper : BackUpDataMapper<ConversationRoleActionBack
 }
 
 class ConversationRolesBackupDataSource(
-    override val databaseLocalDataSource: BackUpIOHandler<ConversationRoleActionEntity>,
-    override val backUpLocalDataSource: BackUpIOHandler<ConversationRoleActionBackUpModel>,
+    override val databaseLocalDataSource: BackUpIOHandler<ConversationRoleActionEntity, Unit>,
+    override val backUpLocalDataSource: BackUpIOHandler<ConversationRoleActionBackUpModel, File>,
     override val mapper: BackUpDataMapper<ConversationRoleActionBackUpModel, ConversationRoleActionEntity>
 ) : BackUpDataSource<ConversationRoleActionBackUpModel, ConversationRoleActionEntity>()
