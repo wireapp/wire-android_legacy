@@ -59,7 +59,7 @@ class BackUpDataSourceTest : UnitTest() {
         runBlocking {
             databaseBatchReader.mockNextItems(entitiesList)
             `when`(databaseLocalDataSource.readIterator()).thenReturn(databaseBatchReader)
-            entitiesList[0].forEachIndexed { index, i ->
+            entitiesList.first().forEachIndexed { index, i ->
                 `when`(mapper.fromEntity(i)).thenReturn(modelsList.first()[index])
             }
 

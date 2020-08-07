@@ -12,11 +12,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mock
-import org.mockito.Mockito.mock
 import org.mockito.Mockito.spy
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
-import org.mockito.Mockito.any
+import org.mockito.Mockito.mock
 
 class BatchDatabaseIOHandlerTest : UnitTest() {
 
@@ -70,8 +69,9 @@ class BatchDatabaseIOHandlerTest : UnitTest() {
             batchDatabaseIOHandler = BatchDatabaseIOHandler(batchDao, 3)
 
             batchDatabaseIOHandler.write(batchReader)
+            
+            verify(batchDao, times(allItems.size)).insertAll(ArgumentMatchers.anyList())
 
-            verify(batchDao, times(allItems.size)).insertAll(any())
             allItems.listIterator().forEach {
                 verify(batchDao).insertAll(it)
             }
