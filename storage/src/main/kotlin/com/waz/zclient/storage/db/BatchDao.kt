@@ -1,13 +1,17 @@
 package com.waz.zclient.storage.db
 
+import androidx.room.Insert
+
 interface BatchDao<E> {
+
     suspend fun count(): Int
 
-    suspend fun nextBatch(start: Int, batchSize: Int): List<E>?
+    suspend fun nextBatch(start: Int, batchSize: Int): List<@JvmSuppressWildcards E>?
 
+    @Insert
     suspend fun insert(item: E)
 
-    suspend fun insertAll(items: List<E>) {
-        items.forEach { insert(it) }
-    }
+    @Insert
+    @JvmSuppressWildcards
+    suspend fun insertAll(items: List<E>)
 }

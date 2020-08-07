@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.db.conversations
 
 import androidx.room.Dao
-import androidx.room.Insert
 import androidx.room.Query
 import com.waz.zclient.storage.db.BatchDao
 
@@ -10,9 +9,6 @@ interface ConversationRoleActionDao : BatchDao<ConversationRoleActionEntity> {
 
     @Query("SELECT * FROM ConversationRoleAction")
     suspend fun allConversationRoleActions(): List<ConversationRoleActionEntity>
-
-    @Insert
-    override suspend fun insert(item: ConversationRoleActionEntity)
 
     @Query("SELECT * FROM ConversationRoleAction ORDER BY conv_id LIMIT :batchSize OFFSET :start")
     override suspend fun nextBatch(start: Int, batchSize: Int): List<ConversationRoleActionEntity>?
