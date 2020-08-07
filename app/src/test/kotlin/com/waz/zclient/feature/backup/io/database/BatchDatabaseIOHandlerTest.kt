@@ -83,6 +83,8 @@ class BatchDatabaseIOHandlerTest : UnitTest() {
                 if (start < list.size) list.subList(start, (start + batchSize)) else null
 
             override suspend fun insert(item: Int) { /*not needed*/ }
+
+            override suspend fun insertAll(items: List<Int>) {/*not needed*/ }
         }
     }
 }
