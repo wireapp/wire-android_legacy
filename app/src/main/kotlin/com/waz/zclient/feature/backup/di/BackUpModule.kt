@@ -12,6 +12,7 @@ import com.waz.zclient.feature.backup.conversations.ConversationRolesBackupDataS
 import com.waz.zclient.feature.backup.folders.FoldersBackUpModel
 import com.waz.zclient.feature.backup.folders.FoldersBackupDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackupMapper
+import com.waz.zclient.feature.backup.ZipHandler
 import com.waz.zclient.feature.backup.io.database.BatchDatabaseIOHandler
 import com.waz.zclient.feature.backup.io.file.BackUpFileIOHandler
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpDataSource
@@ -37,6 +38,7 @@ val backupModules: List<Module>
 
 val backUpModule = module {
     single { Environment.getExternalStorageDirectory() }
+    single { ZipHandler(get()) }
 
     factory { CreateBackUpUseCase(getAll()) } //this resolves all instances of type BackUpRepository
 

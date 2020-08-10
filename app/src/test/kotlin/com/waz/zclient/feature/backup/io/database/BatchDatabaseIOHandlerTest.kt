@@ -69,7 +69,7 @@ class BatchDatabaseIOHandlerTest : UnitTest() {
             batchDatabaseIOHandler = BatchDatabaseIOHandler(batchDao, 3)
 
             batchDatabaseIOHandler.write(batchReader)
-            
+
             verify(batchDao, times(allItems.size)).insertAll(ArgumentMatchers.anyList())
 
             allItems.listIterator().forEach {
