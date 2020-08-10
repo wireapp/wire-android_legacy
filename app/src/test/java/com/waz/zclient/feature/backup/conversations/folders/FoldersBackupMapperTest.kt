@@ -20,7 +20,7 @@ class FoldersBackupMapperTest : UnitTest() {
 
     @Test
     fun `given a FoldersEntity, when fromEntity() is called, then maps it into a FoldersBackUpModel`() {
-        val data = FoldersTestDataProvider.data()
+        val data = FoldersTestDataProvider.provideDummyTestData()
 
         val entity = FoldersEntity(id = data.id, name = data.name, type = data.type)
 
@@ -33,7 +33,7 @@ class FoldersBackupMapperTest : UnitTest() {
 
     @Test
     fun `given a FoldersBackUpModel, when toEntity() is called, then maps it into a FoldersEntity`() {
-        val data = FoldersTestDataProvider.data()
+        val data = FoldersTestDataProvider.provideDummyTestData()
 
         val model = FoldersBackUpModel(id = data.id, name = data.name, type = data.type)
 

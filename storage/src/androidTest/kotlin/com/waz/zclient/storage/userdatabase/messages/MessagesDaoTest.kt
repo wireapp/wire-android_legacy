@@ -47,30 +47,24 @@ class MessagesDaoTest : IntegrationTest() {
 
     @Test
     fun givenAListOfEntries_whenGetBatchIsCalledAndOffsetIs0_thenAssert5ItemIsCollectedAndSizeIs5(): Unit = runBlocking {
-        insertRandomItems(4)
-        messagesDao.insert(messagesEntity(TEST_FIFTH_ITEM_ID))
-        insertRandomItems(5)
+        insertRandomItems(10)
+        val storedMessages = messagesDao.nextBatch(0, 5)
 
-        val storedMessages = messagesDao.batch(0, 5)
-
-        assertEquals(storedMessages?.last()?.id, TEST_FIFTH_ITEM_ID)
         assertEquals(storedMessages?.size, 5)
-        assertEquals(messagesDao.size(), 10)
+        assertEquals(messagesDao.count(), 10)
     }
 
     @Test
     fun givenAListOfEntries_whenGetBatchIsCalledAndOffsetIs5_thenAssert5ItemIsCollectedAndSizeIs10(): Unit = runBlocking {
-        insertRandomItems(9)
-        messagesDao.insert(messagesEntity(TEST_TENTH_ITEM_ID))
+        insertRandomItems(10)
 
-        val storedMessages = messagesDao.batch(5, 5)
-        assertEquals(storedMessages?.last()?.id, TEST_TENTH_ITEM_ID)
+        val storedMessages = messagesDao.nextBatch(5, 5)
         assertEquals(storedMessages?.size, 5)
-        assertEquals(messagesDao.size(), 10)
+        assertEquals(messagesDao.count(), 10)
     }
 
     private fun messagesEntity(messageKey: String): MessagesEntity {
-        val data = MessagesTestDataProvider.data()
+        val data = MessagesTestDataProvider.provideDummyTestData()
         return MessagesEntity(
             id = messageKey,
             conversationId = data.conversationId,

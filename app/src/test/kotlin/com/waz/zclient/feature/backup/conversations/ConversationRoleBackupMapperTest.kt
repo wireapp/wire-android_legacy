@@ -18,7 +18,7 @@ class ConversationRoleBackupMapperTest : UnitTest() {
 
     @Test
     fun `given a ConversationRoleActionEntity, when fromEntity() is called, then maps it into a ConversationRoleActionBackUpModel`() {
-        val data = ConversationRolesTestDataProvider.data()
+        val data = ConversationRolesTestDataProvider.provideDummyTestData()
 
         val entity = ConversationRoleActionEntity(label = data.label, action = data.action, convId = data.convId)
 
@@ -31,7 +31,7 @@ class ConversationRoleBackupMapperTest : UnitTest() {
 
     @Test
     fun `given a ConversationRoleActionBackUpModel, when toEntity() is called, then maps it into a ConversationRoleActionEntity`() {
-        val data = ConversationRolesTestDataProvider.data()
+        val data = ConversationRolesTestDataProvider.provideDummyTestData()
 
         val model = ConversationRoleActionBackUpModel(label = data.label, action = data.action, convId = data.convId)
 

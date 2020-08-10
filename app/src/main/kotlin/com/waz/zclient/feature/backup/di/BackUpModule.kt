@@ -3,6 +3,9 @@ package com.waz.zclient.feature.backup.di
 import android.os.Environment
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpRepository
+import com.waz.zclient.feature.backup.assets.AssetsBackUpModel
+import com.waz.zclient.feature.backup.assets.AssetsBackupDataSource
+import com.waz.zclient.feature.backup.assets.AssetsBackupMapper
 import com.waz.zclient.feature.backup.conversations.ConversationRoleActionBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationRoleBackupMapper
 import com.waz.zclient.feature.backup.conversations.ConversationRolesBackupDataSource
@@ -27,6 +30,7 @@ private const val KEY_VALUES_FILE_NAME = "KeyValues"
 private const val MESSAGES_FILE_NAME = "Messages"
 private const val FOLDERS_FILE_NAME = "Folders"
 private const val CONVERSATION_ROLE_ACTION_FILE_NAME = "ConversationRoleAction"
+private const val ASSETS_FILE_NAME = "Assets"
 
 val backupModules: List<Module>
     get() = listOf(backUpModule)
@@ -56,6 +60,13 @@ val backUpModule = module {
     factory { BackUpFileIOHandler<ConversationRoleActionBackUpModel>(CONVERSATION_ROLE_ACTION_FILE_NAME, get(), get()) }
     factory { ConversationRoleBackupMapper() }
     factory { ConversationRolesBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+
+    // Assets
+    factory { BatchDatabaseIOHandler(get<UserDatabase>().assetsDao()) }
+    factory { JsonConverter(AssetsBackUpModel.serializer()) }
+    factory { BackUpFileIOHandler<AssetsBackUpModel>(ASSETS_FILE_NAME, get(), get()) }
+    factory { AssetsBackupMapper() }
+    factory { AssetsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
 
     // Messages
     factory { BatchDatabaseIOHandler(get<UserDatabase>().messagesDao()) }
