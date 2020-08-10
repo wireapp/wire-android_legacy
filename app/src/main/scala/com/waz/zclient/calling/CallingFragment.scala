@@ -25,7 +25,7 @@ import androidx.cardview.widget.CardView
 import androidx.gridlayout.widget.GridLayout
 import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.Picture
+import com.waz.model.{Picture, UserId}
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.wire.signals.SerialDispatchQueue
@@ -84,6 +84,11 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
       case Some(p)             => view.setText(p.displayName)
       case _                   =>
     }
+  }
+
+  controller.isGroupCall.onUi {
+    case true => nameTextView.setVisibility(View.VISIBLE)
+    case false => nameTextView.setVisibility(View.GONE)
   }
 
   protected def registerHandler(view: View) = {
@@ -159,20 +164,24 @@ class CallingFragment extends FragmentHelper {
 
   private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
     Signal(
-      controller.allVideoReceiveStates.map{ _.take(maxVideoPreviews)},
+      controller.allVideoReceiveStates,
       controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)),
       controller.isVideoCall,
-      controller.isCallIncoming)
-      .onUi { case (vrs, selfParticipant, videoCall, incoming) =>
+      controller.isCallIncoming,
+      controller.participantInfos()
+    )
+      .onUi { case (vrs, selfParticipant, videoCall, incoming, infos) =>
 
-      def createView(participant: Participant): UserVideoView = returning {
-        if (participant == selfParticipant) new SelfVideoView(getContext, participant)
-        else new OtherVideoView(getContext, participant)
-      } { v =>
-        viewMap = viewMap.updated(participant, v)
-      }
+        def createView(participant: Participant): UserVideoView = returning {
+          if (participant == selfParticipant) new SelfVideoView(getContext, participant)
+          else new OtherVideoView(getContext, participant)
+        } { v =>
+          viewMap = viewMap.updated(participant, v)
+        }
 
-      val isVideoBeingSent = !vrs.get(selfParticipant).contains(VideoState.Stopped)
+        def findParticipantNameById(userId: UserId): String = infos.find(_.userId == userId).get.displayName
+
+        val isVideoBeingSent = !vrs.get(selfParticipant).contains(VideoState.Stopped)
 
       vh.foreach { v =>
         val videoUsers = vrs.toSeq.collect {
@@ -209,8 +218,9 @@ class CallingFragment extends FragmentHelper {
           case _ => true
         }.sortWith {
           case (_:SelfVideoView, _) => true
-          case (v1, v2)             => v1.hashCode > v2.hashCode
-        }
+          case (v1, v2) => findParticipantNameById(v1.participant.userId).toLowerCase <
+            findParticipantNameById(v2.participant.userId).toLowerCase
+        }.take(maxVideoPreviews)
 
         gridViews.zipWithIndex.foreach { case (r, index) =>
           val (row, col, span, width) = index match {
