@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.backup.conversations
 
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.feature.backup.BackUpDataMapper
 import com.waz.zclient.feature.backup.BackUpDataSource
 import com.waz.zclient.feature.backup.BackUpIOHandler
@@ -9,9 +10,9 @@ import java.io.File
 
 @Serializable
 data class ConversationRoleActionBackUpModel(
-    val label: String,
-    val action: String,
-    val convId: String
+    val label: String = String.empty(),
+    val action: String = String.empty(),
+    val convId: String = String.empty()
 )
 
 class ConversationRoleBackupMapper : BackUpDataMapper<ConversationRoleActionBackUpModel, ConversationRoleActionEntity> {

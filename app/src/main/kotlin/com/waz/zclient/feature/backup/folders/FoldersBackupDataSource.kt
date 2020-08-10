@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.backup.folders
 
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.feature.backup.BackUpDataMapper
 import com.waz.zclient.feature.backup.BackUpDataSource
 import com.waz.zclient.feature.backup.BackUpIOHandler
@@ -10,8 +11,8 @@ import java.io.File
 @Serializable
 data class FoldersBackUpModel(
     val id: String,
-    val name: String,
-    val type: Int
+    val name: String = String.empty(),
+    val type: Int = 0
 )
 
 class FoldersBackupMapper : BackUpDataMapper<FoldersBackUpModel, FoldersEntity> {
