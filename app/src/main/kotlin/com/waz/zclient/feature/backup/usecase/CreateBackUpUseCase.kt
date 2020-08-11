@@ -11,16 +11,17 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 
+import java.io.File
+
 class CreateBackUpUseCase(
-    private val backUpRepositories: List<BackUpRepository>,
+    private val backUpRepositories: List<BackUpRepository<File>>,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : UseCase<Unit, Unit> {
 
-    override suspend fun run(params: Unit): Either<Failure, Unit> {
-        //TODO would be nice to log the actual exception somewhere
-        //TODO rollback changes if something goes wrong
-        return if (hasBackupFailed()) Either.Left(BackUpCreationFailure) else Either.Right(Unit)
-    }
+    //TODO would be nice to log the actual exception somewhere
+    //TODO rollback changes if something goes wrong
+    override suspend fun run(params: Unit): Either<Failure, Unit> =
+        if (hasBackupFailed()) Either.Left(BackUpCreationFailure) else Either.Right(Unit)
 
     private suspend fun hasBackupFailed(): Boolean =
         backUpRepositories

@@ -19,7 +19,7 @@ class MessagesBackUpDataMapperTest : UnitTest() {
 
     @Test
     fun `given a MessagesEntity, when fromEntity() is called, then maps it into a MessagesBackUpModel`() {
-        val data = MessagesTestDataProvider.data()
+        val data = MessagesTestDataProvider.provideDummyTestData()
         val entity = MessagesEntity(
             id = data.id,
             conversationId = data.conversationId,
@@ -76,7 +76,7 @@ class MessagesBackUpDataMapperTest : UnitTest() {
 
     @Test
     fun `given a MessagesBackUpModel, when toEntity() is called, then maps it into a MessagesEntity`() {
-        val data = MessagesTestDataProvider.data()
+        val data = MessagesTestDataProvider.provideDummyTestData()
         val model = MessagesBackUpModel(
             id = data.id,
             conversationId = data.conversationId,

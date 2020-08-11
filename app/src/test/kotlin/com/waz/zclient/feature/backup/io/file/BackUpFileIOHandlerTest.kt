@@ -1,6 +1,7 @@
 package com.waz.zclient.feature.backup.io.file
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.assertItems
 import com.waz.zclient.feature.backup.io.BatchReader
@@ -11,6 +12,7 @@ import org.junit.Assert.fail
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
+import scala.util.Right
 import java.io.File
 
 class BackUpFileIOHandlerTest : UnitTest() {
@@ -19,69 +21,160 @@ class BackUpFileIOHandlerTest : UnitTest() {
     private lateinit var jsonConverter: JsonConverter<Int>
 
     @Mock
-    private lateinit var batchReader: BatchReader<Int>
+    private lateinit var batchReader: BatchReader<List<Int>>
 
     private lateinit var backUpFileIOHandler: BackUpFileIOHandler<Int>
 
     @Test
-    fun `given an iterator, when write() is called, then creates a new file and writes contents to it`() =
-        runTestWithFile(uniqueFileName()) {
-            testFileWrite(it)
-        }
+    fun `given an iterator, when write() is called, then create a new file and write contents to it`() =
+        runTestWithFile(uniqueFileName()) { name ->
+            runBlocking {
+                val jsonStr = """
+                    [
+                        "line 1",
+                        "line 2",
+                        "line 3"
+                    ]
+                """.trimIndent()
 
-    @Test
-    fun `given an existing file, when write() is called, then erases the file's contents and writes on top of it`() =
-        runTestWithFile(uniqueFileName()) {
+                batchReader.mockNextItems(listOf(listOf(1, 2, 3)))
+                `when`(jsonConverter.toJsonList(listOf(1, 2, 3))).thenReturn(jsonStr)
 
-            File(it).writeText("Some dummy \ntext 123..%x&")
-
-            testFileWrite(it)
-        }
-
-    private fun testFileWrite(uniqueFileName: String) = runBlocking {
-        batchReader.mockNextItems(listOf(1, 2, 3))
-        `when`(jsonConverter.toJson(1)).thenReturn("line 1")
-        `when`(jsonConverter.toJson(2)).thenReturn("line 2")
-        `when`(jsonConverter.toJson(3)).thenReturn("line 3")
-
-        backUpFileIOHandler = BackUpFileIOHandler(uniqueFileName, jsonConverter)
-
-        backUpFileIOHandler.write(batchReader)
-
-        with(File(uniqueFileName)) {
-            useLines { seq ->
-                seq.iterator().withIndex().forEach {
-                    assertEquals("line ${it.index + 1}", it.value)
+                val tempDir = createTempDir()
+                backUpFileIOHandler = BackUpFileIOHandler(name, jsonConverter, tempDir)
+                backUpFileIOHandler.write(batchReader)
+                getFilesWithPrefix(tempDir, name).also {
+                    assertEquals(1, it.size)
+                    assertEquals(jsonStr, it.first().readText())
                 }
             }
         }
-    }
+
+    @Test
+    fun `given an iterator, when write() is called, then create two files and write contents to them`() =
+        runTestWithFile(uniqueFileName()) { name ->
+            runBlocking {
+                val jsonStr1 = """
+                    [
+                        "line 1",
+                        "line 2",
+                        "line 3"
+                    ]
+                """.trimIndent()
+                val jsonStr2 = """
+                    [
+                        "line 4",
+                        "line 5",
+                        "line 6"
+                    ]
+                """.trimIndent()
+
+                batchReader.mockNextItems(listOf(listOf(1, 2, 3), listOf(4, 5, 6)))
+                `when`(jsonConverter.toJsonList(listOf(1, 2, 3))).thenReturn(jsonStr1)
+                `when`(jsonConverter.toJsonList(listOf(4, 5, 6))).thenReturn(jsonStr2)
+
+                val tempDir = createTempDir()
+                backUpFileIOHandler = BackUpFileIOHandler(name, jsonConverter, tempDir)
+                when (val res = backUpFileIOHandler.write(batchReader)) {
+                    is Either.Right -> res.b.let {
+                        assertEquals(2, it.size)
+                        assertEquals(jsonStr1, it[0].readText())
+                        assertEquals(jsonStr2, it[1].readText())
+                    }
+                    is Either.Left -> fail(res.a.toString())
+                }
+            }
+        }
+
+    @Test
+    fun `given an iterator, when write() is called twice, then replace contents of the file`() =
+        runTestWithFile(uniqueFileName()) { name ->
+            runBlocking {
+                val jsonStr1 = """
+                    [
+                        "line 1",
+                        "line 2",
+                        "line 3"
+                    ]
+                """.trimIndent()
+                val jsonStr2 = """
+                    [
+                        "line 4",
+                        "line 5",
+                        "line 6"
+                    ]
+                """.trimIndent()
+
+                val tempDir = createTempDir()
+
+                `when`(jsonConverter.toJsonList(listOf(1, 2, 3))).thenReturn(jsonStr1)
+                `when`(jsonConverter.toJsonList(listOf(4, 5, 6))).thenReturn(jsonStr2)
+
+                backUpFileIOHandler = BackUpFileIOHandler(name, jsonConverter, tempDir)
+
+                batchReader.mockNextItems(listOf(listOf(1, 2, 3)))
+                backUpFileIOHandler.write(batchReader)
+                val firstBatch = getFilesWithPrefix(tempDir, name).also {
+                    assertEquals(1, it.size)
+                    assertEquals(jsonStr1, it.first().readText())
+                }
+
+                batchReader.mockNextItems(listOf(listOf(4, 5, 6)))
+
+                backUpFileIOHandler.write(batchReader)
+                getFilesWithPrefix(tempDir, name).also {
+                    assertEquals(1, it.size)
+                    assertEquals(firstBatch.first().name, it.first().name)
+                    assertEquals(jsonStr2, it.first().readText())
+                }
+            }
+        }
 
     @Test
     fun `given an existing file, when readIterator() is called, then returns an iterator which reads it line by line`() =
         runTestWithFile(uniqueFileName()) { fileName ->
-            File(fileName).also {
-                it.delete()
-                it.createNewFile()
-                it.writeText("line 1\n line 2\n line 3\n")
+            val tempDir = createTempDir()
+
+            val jsonStr = """
+                [
+                    "line 1",
+                    "line 2",
+                    "line 3"
+                ]
+            """.trimIndent()
+
+            val numbers = listOf(1, 2, 3)
+
+            `when`(jsonConverter.toJsonList(numbers)).thenReturn(jsonStr)
+            `when`(jsonConverter.fromJsonList(jsonStr)).thenReturn(numbers)
+
+            backUpFileIOHandler = BackUpFileIOHandler(fileName, jsonConverter, tempDir)
+
+            runBlocking {
+                batchReader.mockNextItems(listOf(numbers))
+                backUpFileIOHandler.write(batchReader)
+                backUpFileIOHandler.readIterator().assertItems(listOf(numbers))
             }
-
-            backUpFileIOHandler = BackUpFileIOHandler(fileName, jsonConverter)
-
-            runBlocking { backUpFileIOHandler.readIterator().assertItems(listOf(1, 2, 3)) }
         }
-
-    private fun runTestWithFile(fileName: String, testWithFile: (String) -> Unit): Unit {
-        try {
-            testWithFile(fileName)
-        } catch (ex: Exception) {
-            fail("Exception occurred: $ex")
-        } finally {
-            File(fileName).deleteOnExit()
-        }
-    }
 
     companion object {
-        private fun uniqueFileName() = "backUpFileIOHandlerTest_${System.currentTimeMillis()}.txt"
+        private fun uniqueFileName() = "backUpFileIOHandlerTest_${System.currentTimeMillis()}"
+
+        private fun getFilesWithPrefix(dir: File, prefix: String) =
+            dir.walkTopDown().toList().filter { it.name.startsWith(prefix) }.sortedBy { it.path }
+
+        private fun runTestWithFile(fileName: String, testWithFile: (String) -> Unit): Unit {
+            try {
+                testWithFile(fileName)
+            } catch (ex: Exception) {
+                fail("Exception occured: $ex")
+            }
+        }
+
+        private fun createTempDir(): File = File.createTempFile("temp", System.currentTimeMillis().toString()).also {
+            it.delete()
+            it.mkdir()
+            it.deleteOnExit()
+        }
     }
 }
