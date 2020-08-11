@@ -30,7 +30,7 @@ data class MessageTestData(
 )
 
 object MessagesTestDataProvider : TestDataProvider<MessageTestData>() {
-    override fun data(): MessageTestData = MessageTestData(
+    override fun provideDummyTestData(): MessageTestData = MessageTestData(
         id = "3-1-70b5baab-323d-446e-936d-745c64d6c7d8",
         conversationId = "3762d820-83a1-4fae-ae58-6c39fb2e9d8a",
         messageType = "ConnectRequest",

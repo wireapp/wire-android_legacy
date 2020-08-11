@@ -18,7 +18,7 @@ class KeyValuesBackUpMapperTest : UnitTest() {
 
     @Test
     fun `given a KeyValuesEntity, when fromEntity() is called, then maps it into a KeyValueBackUpModel`() {
-        val data = KeyValueTestDataProvider.data()
+        val data = KeyValueTestDataProvider.provideDummyTestData()
 
         val entity = KeyValuesEntity(key =  data.key, value = data.value)
 
@@ -30,7 +30,7 @@ class KeyValuesBackUpMapperTest : UnitTest() {
 
     @Test
     fun `given a KeyValueBackUpModel, when toEntity() is called, then maps it into a KeyValuesEntity`() {
-        val data = KeyValueTestDataProvider.data()
+        val data = KeyValueTestDataProvider.provideDummyTestData()
 
         val model = KeyValuesBackUpModel(key =  data.key, value = data.value)
 

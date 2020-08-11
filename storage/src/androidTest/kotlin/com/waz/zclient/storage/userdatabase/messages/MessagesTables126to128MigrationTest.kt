@@ -15,7 +15,7 @@ class MessagesTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
 
     @Test
     fun givenMessageInsertedIntoMessagesTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
-        val data = MessagesTestDataProvider.data()
+        val data = MessagesTestDataProvider.provideDummyTestData()
         MessagesTableTestHelper.insertMessage(
             id = data.id,
             conversationId = data.conversationId,

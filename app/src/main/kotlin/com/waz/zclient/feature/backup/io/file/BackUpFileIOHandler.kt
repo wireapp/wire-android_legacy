@@ -6,47 +6,57 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpIOHandler
 import com.waz.zclient.feature.backup.io.BatchReader
-import com.waz.zclient.feature.backup.io.forEach
+import com.waz.zclient.feature.backup.io.mapRight
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 
 class BackUpFileIOHandler<T>(
-    private val fileName: String,
-    private val jsonConverter: JsonConverter<T>
-) : BackUpIOHandler<T> {
+    private val fileNamePrefix: String,
+    private val jsonConverter: JsonConverter<T>,
+    private val targetDir: File
+) : BackUpIOHandler<T, File> {
+    override suspend fun write(iterator: BatchReader<List<T>>) = withContext(Dispatchers.IO) {
+        var index = 0
 
-    override suspend fun write(iterator: BatchReader<T>): Either<Failure, Unit> = withContext(Dispatchers.IO) {
-        try {
-            val file = File(fileName).also {
-                it.delete()
-                it.createNewFile()
-            }
-            iterator.forEach {
-                val jsonStr = jsonConverter.toJson(it)
-                file.appendText("${jsonStr}\n")
-                Either.Right(Unit)
-            }
-        } catch (ex: IOException) {
-            Either.Left(IOFailure(ex))
-        }
-    }
-
-    override fun readIterator() = object : BatchReader<T> {
-        private val reader by lazy { File(fileName).bufferedReader() }
-
-        override suspend fun readNext(): Either<Failure, T?> = withContext(Dispatchers.IO) {
+        iterator.mapRight {
             try {
-                val jsonStr = reader.readLine()
-                if (jsonStr == null) {
-                    reader.close()
+                val file = getFile(index).also {
+                    it.delete()
+                    it.createNewFile()
+                    it.deleteOnExit()
                 }
-                Either.Right(jsonConverter.fromJson(jsonStr))
+                val jsonStr = jsonConverter.toJsonList(it)
+                file.writeText(jsonStr)
+                ++index
+                Either.Right(file)
             } catch (ex: IOException) {
-                reader.close()
                 Either.Left(IOFailure(ex))
             }
         }
     }
+
+    override fun readIterator() = object : BatchReader<List<T>> {
+        private var index = 0
+
+        override suspend fun readNext(): Either<Failure, List<T>?> =
+            try {
+                val file = getFile(index)
+                if (file.exists()) {
+                    val jsonStr = file.bufferedReader().readText()
+                    Either.Right(jsonConverter.fromJsonList(jsonStr)).also { ++index }
+                } else {
+                    Either.Right(null)
+                }
+            } catch (ex: IOException) {
+                Either.Left(IOFailure(ex))
+            }
+
+        override suspend fun hasNext(): Boolean = getFile(index).exists()
+    }
+
+    private fun getFile(index: Int): File =
+        if (index == 0) File(targetDir, "$fileNamePrefix.json")
+        else File(targetDir, "${fileNamePrefix}_$index.json")
 }

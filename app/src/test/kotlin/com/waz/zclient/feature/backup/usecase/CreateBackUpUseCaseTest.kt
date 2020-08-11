@@ -9,7 +9,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import java.io.File
 
 @ExperimentalCoroutinesApi
 class CreateBackUpUseCaseTest : UnitTest() {
@@ -58,7 +61,11 @@ class CreateBackUpUseCaseTest : UnitTest() {
     }
 
     companion object {
-        suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository = mock(BackUpRepository::class.java)
-            .also { `when`(it.saveBackup()).thenReturn(if (backUpSuccess) Either.Right(Unit) else Either.Left(DatabaseError)) }
+        suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository<File> = mock(BackUpRepository::class.java).also {
+            `when`(it.saveBackup()).thenReturn(
+                    if (backUpSuccess) Either.Right(File.createTempFile("temp", System.currentTimeMillis().toString()))
+                    else Either.Left(DatabaseError)
+            )
+        } as BackUpRepository<File>
     }
 }
