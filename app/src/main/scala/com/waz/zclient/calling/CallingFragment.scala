@@ -52,7 +52,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     Some(picture) <- z.usersStorage.signal(participant.userId).map(_.picture)
   } yield picture
 
-  protected val audioStatusImageView = findById[ImageView](R.id.audioStatusImageView)
+  protected val audioStatusImageView = findById[ImageView](R.id.audio_status_image_view)
 
   protected val imageView = returning(findById[ImageView](R.id.image_view)) { view =>
     pictureId.onUi(BackgroundRequest(_).into(view))
@@ -60,7 +60,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   protected val pausedText = findById[TextView](R.id.paused_text_view)
 
-  protected val participantInfoCardView = findById[CardView](R.id.participantInfoCardView)
+  private val participantInfoCardView = findById[CardView](R.id.participant_info_card_view)
 
   protected val stateMessageText = controller.stateMessageText(participant)
   stateMessageText.onUi(msg => pausedText.setText(msg.getOrElse("")))
@@ -78,7 +78,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
       infos   <- if (isGroup) controller.participantInfos() else Signal.const(Vector.empty)
     } yield infos.find(_.userId == participant.userId)
 
-  protected val nameTextView = returning(findById[TextView](R.id.nameTextView)) { view =>
+  protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
     participantInfo.onUi {
       case Some(p) if p.isSelf => view.setText(getString(R.string.calling_self, p.displayName))
       case Some(p)             => view.setText(p.displayName)
@@ -86,7 +86,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  controller.isGroupCall.onUi{
+  controller.isGroupCall.onUi {
     case true => participantInfoCardView.setVisibility(View.VISIBLE)
     case false => participantInfoCardView.setVisibility(View.GONE)
   }
@@ -143,7 +143,7 @@ class SelfVideoView(context: Context, participant: Participant)
 class OtherVideoView(context: Context, participant: Participant) extends UserVideoView(context, participant) {
 
   participantInfo.onUi { info =>
-     if (info.get.isMuted) audioStatusImageView.setImageResource(R.drawable.ic_muted_video_grid)
+    if (info.get.isMuted) audioStatusImageView.setImageResource(R.drawable.ic_muted_video_grid)
     else audioStatusImageView.setImageResource(R.drawable.ic_unmuted_video_grid)
   }
 

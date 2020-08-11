@@ -144,7 +144,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
         isExternal     = user.isExternal(cZms.teamId),
         isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started, ScreenShare)).nonEmpty),
         isSelf         = cZms.selfUserId == user.id,
-        isMuted        = participants.find(_.userId == user.id).map(_.muted).get
+        isMuted        = participants.find(_.userId == user.id).map(_.muted).getOrElse(false)
       )
     }
 

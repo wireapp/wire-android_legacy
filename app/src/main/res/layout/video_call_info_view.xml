@@ -28,7 +28,7 @@
         android:layout_height="match_parent" />
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/participantInfoCardView"
+        android:id="@+id/participant_info_card_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start|bottom"
@@ -45,7 +45,7 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:id="@+id/audioStatusImageView"
+                android:id="@+id/audio_status_image_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingStart="@dimen/calling_participant_audio_status_padding_start"
@@ -54,7 +54,7 @@
                 android:src="@drawable/ic_muted_video_grid" />
 
             <TextView
-                android:id="@+id/nameTextView"
+                android:id="@+id/name_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
