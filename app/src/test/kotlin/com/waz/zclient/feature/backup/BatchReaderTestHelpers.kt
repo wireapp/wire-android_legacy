@@ -10,7 +10,12 @@ import org.mockito.Mockito.`when`
 suspend fun <T> BatchReader<T>.mockNextItems(items: List<T>) {
     val itemsArray = items.map { Either.Right(it) }.plus(Either.Right(null)).toTypedArray()
     `when`(this.readNext()).thenReturn(itemsArray[0], *itemsArray.sliceArray(1 until itemsArray.size))
-    `when`(this.hasNext()).thenReturn(itemsArray[0].isRight && itemsArray[0].b != null , *itemsArray.map { it.isRight && it.b != null }.toTypedArray())
+    if (!items.isEmpty()) {
+        `when`(this.hasNext()).thenReturn(itemsArray[0].isRight && itemsArray[0].b != null, *itemsArray.map { it.isRight && it.b != null }.toTypedArray())
+    } else {
+        `when`(this.hasNext()).thenReturn(false)
+    }
+
 }
 
 suspend fun <T> BatchReader<T>.assertItems(expectedItems: List<T>) {
