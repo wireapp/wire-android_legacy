@@ -28,24 +28,21 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Picture, UserId}
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
-import com.wire.signals.SerialDispatchQueue
 import com.waz.threading.Threading
-import com.wire.signals.Signal
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.glide.BackgroundRequest
-import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R, ViewHelper}
-import com.waz.threading.Threading._
-import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
+import com.wire.signals.{SerialDispatchQueue, Signal}
 
 abstract class UserVideoView(context: Context, val participant: Participant) extends FrameLayout(context, null, 0) with ViewHelper {
   protected lazy val controller: CallController = inject[CallController]
-
   private implicit val dispatcher = new SerialDispatchQueue(name = s"UserVideoView-$participant")
 
   inflate(R.layout.video_call_info_view)
@@ -55,12 +52,15 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     Some(picture) <- z.usersStorage.signal(participant.userId).map(_.picture)
   } yield picture
 
+  protected val audioStatusImageView = findById[ImageView](R.id.audioStatusImageView)
 
   protected val imageView = returning(findById[ImageView](R.id.image_view)) { view =>
     pictureId.onUi(BackgroundRequest(_).into(view))
   }
 
   protected val pausedText = findById[TextView](R.id.paused_text_view)
+
+  protected val participantInfoCardView = findById[CardView](R.id.participantInfoCardView)
 
   protected val stateMessageText = controller.stateMessageText(participant)
   stateMessageText.onUi(msg => pausedText.setText(msg.getOrElse("")))
@@ -72,7 +72,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     _.setBackgroundColor(getColor(R.color.black_16))
   }
 
-  private val participantInfo: Signal[Option[CallParticipantInfo]] =
+   protected val participantInfo: Signal[Option[CallParticipantInfo]] =
     for {
       isGroup <- controller.isGroupCall
       infos   <- if (isGroup) controller.participantInfos() else Signal.const(Vector.empty)
@@ -86,9 +86,9 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  controller.isGroupCall.onUi {
-    case true => nameTextView.setVisibility(View.VISIBLE)
-    case false => nameTextView.setVisibility(View.GONE)
+  controller.isGroupCall.onUi{
+    case true => participantInfoCardView.setVisibility(View.VISIBLE)
+    case false => participantInfoCardView.setVisibility(View.GONE)
   }
 
   protected def registerHandler(view: View) = {
@@ -122,14 +122,10 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 class SelfVideoView(context: Context, participant: Participant)
   extends UserVideoView(context, participant) with DerivedLogTag {
 
-  protected val muteIcon = returning(findById[GenericStyleKitView](R.id.mute_icon)) { icon =>
-    icon.setOnDraw(WireStyleKit.drawMute)
-  }
-
-  controller.isMuted.onUi {
-    case true  => muteIcon.fadeIn()
-    case false => muteIcon.fadeOut(setToGoneWithEndAction = true)
-  }
+    controller.isMuted.onUi {
+        case true => audioStatusImageView.setImageResource(R.drawable.ic_muted_video_grid)
+        case false => audioStatusImageView.setImageResource(R.drawable.ic_unmuted_video_grid)
+      }
 
   controller.videoSendState.filter(_ == VideoState.Started).head.foreach { _ =>
     registerHandler(returning(new VideoPreview(getContext)) { v =>
@@ -145,6 +141,12 @@ class SelfVideoView(context: Context, participant: Participant)
 }
 
 class OtherVideoView(context: Context, participant: Participant) extends UserVideoView(context, participant) {
+
+  participantInfo.onUi { info =>
+     if (info.get.isMuted) audioStatusImageView.setImageResource(R.drawable.ic_muted_video_grid)
+    else audioStatusImageView.setImageResource(R.drawable.ic_unmuted_video_grid)
+  }
+
   override lazy val shouldShowInfo = pausedTextVisible
   registerHandler(returning(new VideoRenderer(getContext, participant.userId.str, participant.clientId.str, false)) { v =>
     v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))

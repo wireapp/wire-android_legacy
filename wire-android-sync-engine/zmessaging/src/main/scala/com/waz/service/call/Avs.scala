@@ -183,7 +183,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       val participantChangedHandler = new ParticipantChangedHandler {
         override def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit = {
           ParticipantsChangeDecoder.decode(data).fold(()) { participantsChange =>
-            val participants = participantsChange.members.map(m => Participant(m.userid, m.clientid)).toSet
+            val participants = participantsChange.members.map(m => Participant(m.userid, m.clientid,if (m.muted == 1) true else false)).toSet
             cs.onParticipantsChanged(RConvId(convId), participants)
           }
         }
@@ -420,7 +420,7 @@ object Avs extends DerivedLogTag {
     import io.circe.{Decoder, parser}
 
     case class AvsParticipantsChange(convid: ConvId, members: Seq[Member])
-    case class Member(userid: UserId, clientid: ClientId, aestab: Int, vrecv: Int)
+    case class Member(userid: UserId, clientid: ClientId, aestab: Int, vrecv: Int, muted:Int)
 
     private lazy val decoder: Decoder[AvsParticipantsChange] = Decoder.apply
 
