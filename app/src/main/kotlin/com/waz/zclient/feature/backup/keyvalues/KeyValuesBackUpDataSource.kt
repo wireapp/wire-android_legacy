@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.backup.keyvalues
 
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.feature.backup.BackUpDataMapper
 import com.waz.zclient.feature.backup.BackUpDataSource
 import com.waz.zclient.feature.backup.BackUpIOHandler
@@ -14,7 +15,10 @@ class KeyValuesBackUpDataSource(
 ) : BackUpDataSource<KeyValuesBackUpModel, KeyValuesEntity>()
 
 @Serializable
-data class KeyValuesBackUpModel(val key: String, val value: String)
+data class KeyValuesBackUpModel(
+    val key: String,
+    val value: String = String.empty()
+)
 
 class KeyValuesBackUpMapper : BackUpDataMapper<KeyValuesBackUpModel, KeyValuesEntity> {
     override fun fromEntity(entity: KeyValuesEntity) =

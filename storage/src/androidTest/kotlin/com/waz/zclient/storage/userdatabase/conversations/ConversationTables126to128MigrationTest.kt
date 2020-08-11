@@ -1,5 +1,6 @@
 package com.waz.zclient.storage.userdatabase.conversations
 
+import com.waz.zclient.framework.data.conversations.ConversationRolesTestDataProvider
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
@@ -56,14 +57,11 @@ class ConversationTables126to128MigrationTest : UserDatabaseMigrationTest(126, 1
 
     @Test
     fun givenRoleActionInsertedIntoConversationRoleActionTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
-        val convId = "7577489"
-        val label = "Join"
-        val action = "JOINED"
-
+        val data = ConversationRolesTestDataProvider.data()
         ConversatonsRoleActionTableTestHelper.insertConversationRoleAction(
-            convId,
-            label,
-            action,
+            data.convId,
+            data.label,
+            data.action,
             testOpenHelper
         )
 
@@ -71,9 +69,9 @@ class ConversationTables126to128MigrationTest : UserDatabaseMigrationTest(126, 1
 
         runBlocking {
             with(allConversationRoleActions()[0]) {
-                assertEquals(this.convId, convId)
-                assertEquals(this.label, label)
-                assertEquals(this.action, action)
+                assertEquals(this.convId, data.convId)
+                assertEquals(this.label, data.label)
+                assertEquals(this.action, data.action)
             }
         }
     }

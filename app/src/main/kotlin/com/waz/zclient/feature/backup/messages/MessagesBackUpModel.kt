@@ -1,31 +1,32 @@
 package com.waz.zclient.feature.backup.messages
 
+import com.waz.zclient.core.extension.empty
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class MessagesBackUpModel(
     val id: String,
-    val conversationId: String,
-    val messageType: String,
-    val userId: String,
-    val content: String?,
-    val protos: ByteArray?, //TODO override equals/hashCode if necessary
-    val time: Int,
-    val firstMessage: Boolean,
-    val members: String?,
-    val recipient: String?,
-    val email: String?,
-    val name: String?,
-    val messageState: String,
-    val contentSize: Int,
-    val localTime: Int,
-    val editTime: Int,
-    val ephemeral: Int?,
-    val expiryTime: Int?,
-    val expired: Boolean,
-    val duration: Int?,
-    val quote: String?,
-    val quoteValidity: Int,
-    val forceReadReceipts: Int?,
-    val assetId: String?
+    val conversationId: String = String.empty(),
+    val messageType: String = String.empty(),
+    val userId: String = String.empty(),
+    val content: String? = null,
+    val protos: ByteArray? = null,
+    val time: Int = 0,
+    val firstMessage: Boolean = false,
+    val members: String? = null,
+    val recipient: String? = null,
+    val email: String? = null,
+    val name: String? = null,
+    val messageState: String = String.empty(),
+    val contentSize: Int = 0,
+    val localTime: Int = 0,
+    val editTime: Int = 0,
+    val ephemeral: Int? = null,
+    val expiryTime: Int? = null,
+    val expired: Boolean = false,
+    val duration: Int? = null,
+    val quote: String? = null,
+    val quoteValidity: Int = 0,
+    val forceReadReceipts: Int? = null,
+    val assetId: String? = null
 )
