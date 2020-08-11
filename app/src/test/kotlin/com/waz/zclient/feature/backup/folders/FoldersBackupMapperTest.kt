@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.backup.conversations.folders
+package com.waz.zclient.feature.backup.folders
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.feature.backup.folders.FoldersBackUpModel

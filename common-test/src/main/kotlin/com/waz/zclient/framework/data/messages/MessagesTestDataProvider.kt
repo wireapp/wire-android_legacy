@@ -42,7 +42,7 @@ object MessagesTestDataProvider : TestDataProvider<MessageTestData>() {
         members = null,
         recipient = "2f9e89c9-78a7-477d-8def-fbd7ca3846b5",
         email = null,
-        name = "",
+        name = "Test name",
         messageState = "SENT",
         contentSize = 1,
         localTime = 0,
