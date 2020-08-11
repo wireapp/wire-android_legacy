@@ -30,4 +30,3 @@ class ConversationFoldersBackupDataSource(
     override val backUpLocalDataSource: BackUpIOHandler<ConversationFoldersBackUpModel, File>,
     override val mapper: BackUpDataMapper<ConversationFoldersBackUpModel, ConversationFoldersEntity>
 ) : BackUpDataSource<ConversationFoldersBackUpModel, ConversationFoldersEntity>()
-
