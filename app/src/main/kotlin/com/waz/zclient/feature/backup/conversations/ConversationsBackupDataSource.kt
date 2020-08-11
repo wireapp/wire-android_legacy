@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.backup.conversations
 
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.feature.backup.BackUpDataMapper
 import com.waz.zclient.feature.backup.BackUpDataSource
 import com.waz.zclient.feature.backup.BackUpIOHandler
@@ -10,9 +11,9 @@ import java.io.File
 @Serializable
 data class ConversationsBackUpModel(
     val id: String,
-    val remoteId: String = "",
+    val remoteId: String = String.empty(),
     val name: String? = null,
-    val creator: String = "",
+    val creator: String = String.empty(),
     val conversationType: Int = 0,
     val team: String? = null,
     val managed: Boolean? = null,
@@ -24,7 +25,7 @@ data class ConversationsBackUpModel(
     val archived: Boolean = false,
     val archiveTime: Int = 0,
     val cleared: Int? = null,
-    val generatedName: String = "",
+    val generatedName: String = String.empty(),
     val searchKey: String? = null,
     val unreadCount: Int = 0,
     val unsentCount: Int = 0,

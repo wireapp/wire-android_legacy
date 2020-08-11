@@ -55,7 +55,7 @@ object ConversationsTestDataProvider : TestDataProvider<ConversationsTestData>()
         archived = false,
         archiveTime = 0,
         cleared = null,
-        generatedName = "",
+        generatedName = "Conversation name",
         searchKey = null,
         unreadCount = 0,
         unsentCount = 0,
