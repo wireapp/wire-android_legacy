@@ -142,9 +142,11 @@ class SelfVideoView(context: Context, participant: Participant)
 
 class OtherVideoView(context: Context, participant: Participant) extends UserVideoView(context, participant) {
 
-  participantInfo.onUi { info =>
-    if (info.get.isMuted) audioStatusImageView.setImageResource(R.drawable.ic_muted_video_grid)
-    else audioStatusImageView.setImageResource(R.drawable.ic_unmuted_video_grid)
+  participantInfo.onUi {
+    case Some(info) =>
+      if (info.isMuted) audioStatusImageView.setImageResource(R.drawable.ic_muted_video_grid)
+      else audioStatusImageView.setImageResource(R.drawable.ic_unmuted_video_grid)
+    case _ =>
   }
 
   override lazy val shouldShowInfo = pausedTextVisible
