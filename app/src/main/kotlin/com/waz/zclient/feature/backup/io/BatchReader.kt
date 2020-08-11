@@ -28,8 +28,11 @@ interface BatchReader<T> {
 suspend fun <T, R> BatchReader<T>.forEach(action: suspend (T) -> Either<Failure, R>): Either<Failure, Unit> = mapRight(action).map { Unit }
 
 /**
- * A bit more specific version of [[com.waz.zclient.core.extension.mapRight]].
- * BatchReader does not extend [[Iterable]] and can't use the generic mapRight.
+ * Maps over batches of type T where the mapping function returns either a failure or a successful result.
+ * If the mapping function returns [Left<Failure>], the whole [mapRight] is interrupted and
+ * the left value is returned. If the mapping function returns [Right<R>] for all elements, the total result
+ * becomes [Right<List<R>>]. You can think of this method as a functional version of a map wrapped in
+ * a try/catch because the mapping function can throw an exception.
  */
 suspend fun <T, R> BatchReader<T>.mapRight(action: suspend (T) -> Either<Failure, R>): Either<Failure, List<R>> {
     val rightValues = mutableListOf<R>()

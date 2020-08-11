@@ -13,7 +13,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 
 class BatchDatabaseIOHandlerTest : UnitTest() {
 
@@ -30,12 +33,12 @@ class BatchDatabaseIOHandlerTest : UnitTest() {
         val itemsInBatches = listOf(listOf(1, 2, 3), listOf(4, 5, 6), listOf(7, 8, 9), listOf(10, 11, 12))
         val batchSize = 3
 
-        batchDao = Mockito.spy(batchReadableDaoOf(allItems))
+        batchDao = spy(batchReadableDaoOf(allItems))
         batchDatabaseIOHandler = BatchDatabaseIOHandler(batchDao, batchSize)
 
         runBlocking {
             batchDatabaseIOHandler.readIterator().assertItems(itemsInBatches)
-            Mockito.verify(batchDao, Mockito.times(4)).nextBatch(ArgumentMatchers.anyInt(), eq(batchSize))
+            verify(batchDao, times(4)).nextBatch(ArgumentMatchers.anyInt(), eq(batchSize))
         }
     }
 
@@ -45,22 +48,22 @@ class BatchDatabaseIOHandlerTest : UnitTest() {
             val allItems = listOf(1, 2, 3, 4, 5, 6, 7)
             val batchSize = 3
 
-            batchDao = Mockito.spy(batchReadableDaoOf(allItems))
+            batchDao = spy(batchReadableDaoOf(allItems))
             batchDatabaseIOHandler = BatchDatabaseIOHandler(batchDao, batchSize)
 
             batchDatabaseIOHandler.readIterator().forEach { Either.Right(Unit)/* just consume all */ }
 
             //[1, 2, 3], [4, 5, 6]
-            Mockito.verify(batchDao, Mockito.times(2)).nextBatch(ArgumentMatchers.anyInt(), eq(batchSize))
+            verify(batchDao, times(2)).nextBatch(ArgumentMatchers.anyInt(), eq(batchSize))
             //[7]
-            Mockito.verify(batchDao).nextBatch(ArgumentMatchers.anyInt(), eq(1))
+            verify(batchDao).nextBatch(ArgumentMatchers.anyInt(), eq(1))
         }
     }
 
     @Test
     fun `given a dao, when write() is called with an iterator, then inserts each next item of the iterator to dao`() {
         runBlocking {
-            batchDao = Mockito.mock(BatchDao::class.java) as BatchDao<Int>
+            batchDao = mock(BatchDao::class.java) as BatchDao<Int>
             val allItems = listOf(listOf(1, 2, 3), listOf(4, 5))
             batchReader.mockNextItems(allItems)
 
@@ -68,9 +71,9 @@ class BatchDatabaseIOHandlerTest : UnitTest() {
 
             batchDatabaseIOHandler.write(batchReader)
 
-            Mockito.verify(batchDao, Mockito.times(allItems.size)).insertAll(any())
+            verify(batchDao, times(allItems.size)).insertAll(any())
             allItems.listIterator().forEach {
-                Mockito.verify(batchDao).insertAll(it)
+                verify(batchDao).insertAll(it)
             }
         }
     }
