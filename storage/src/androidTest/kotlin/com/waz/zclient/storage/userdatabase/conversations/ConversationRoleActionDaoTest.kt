@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.util.*
 
 class ConversationRoleActionDaoTest : IntegrationTest() {
 
@@ -34,7 +35,7 @@ class ConversationRoleActionDaoTest : IntegrationTest() {
 
     @Test
     fun givenAListOfEntries_whenAllConversationRolesIsCalled_thenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
-        val data = ConversationRolesTestDataProvider.data()
+        val data = ConversationRolesTestDataProvider.provideDummyTestData()
         convRoleActionDao.insert(ConversationRoleActionEntity(data.label, data.action, data.convId))
 
         val storedMessages = convRoleActionDao.allConversationRoleActions()
@@ -43,4 +44,37 @@ class ConversationRoleActionDaoTest : IntegrationTest() {
         assertEquals(storedMessages.first().label, data.label)
         assertEquals(storedMessages.first().convId, data.convId)
     }
+
+    @Test
+    fun givenAListOfEntries_whenGetBatchIsCalledAndOffsetIs0_thenAssert5ItemIsCollectedAndSizeIs5(): Unit = runBlocking {
+        insertRandomItems(10)
+
+        val storedRoles = convRoleActionDao.nextBatch(0, 5)
+
+        assertEquals(storedRoles?.size, 5)
+        assertEquals(convRoleActionDao.count(), 10)
+    }
+
+    @Test
+    fun givenAListOfEntries_whenGetBatchIsCalledAndOffsetIs5_thenAssert5ItemIsCollectedAndSizeIs10(): Unit = runBlocking {
+        insertRandomItems(10)
+
+        val storedRoles = convRoleActionDao.nextBatch(5, 5)
+        assertEquals(storedRoles?.size, 5)
+        assertEquals(convRoleActionDao.count(), 10)
+    }
+
+    private suspend fun insertRandomItems(numberOfItems: Int) {
+        repeat(numberOfItems) {
+            val normalEntity = convRoleEntity()
+            convRoleActionDao.insert(normalEntity)
+        }
+    }
+
+    private fun convRoleEntity() =
+        ConversationRoleActionEntity(
+            convId = UUID.randomUUID().toString(),
+            label = UUID.randomUUID().toString(),
+            action = UUID.randomUUID().toString()
+        )
 }

@@ -9,7 +9,7 @@ data class ConversationRoleActionTestData(
 )
 
 object ConversationRolesTestDataProvider : TestDataProvider<ConversationRoleActionTestData>() {
-    override fun data() = ConversationRoleActionTestData(
+    override fun provideDummyTestData() = ConversationRoleActionTestData(
         label = "Join",
         action = "JOINED",
         convId = "3762d820-83a1-4fae-ae58-6c39fb2e9d8a"

@@ -9,7 +9,7 @@ data class FoldersTestData(
 )
 
 object FoldersTestDataProvider : TestDataProvider<FoldersTestData>() {
-    override fun data() = FoldersTestData(
+    override fun provideDummyTestData() = FoldersTestData(
         id = "3762d820-83a1-4fae-ae58-6c39fb2e9d8a",
         name = "Work colleagues",
         type = 0

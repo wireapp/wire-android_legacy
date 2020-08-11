@@ -26,7 +26,7 @@ class AssetsV2TableTestHelper private constructor() {
             name: String,
             encryption: String,
             mime: String,
-            sha: ByteArray,
+            sha: ByteArray?,
             size: Int,
             source: String?,
             preview: String?,

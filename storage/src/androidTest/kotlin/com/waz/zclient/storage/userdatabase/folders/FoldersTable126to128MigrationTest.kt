@@ -14,7 +14,7 @@ class FoldersTable126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
 
     @Test
     fun givenFolderInsertedIntoFoldersTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
-        val data = FoldersTestDataProvider.data()
+        val data = FoldersTestDataProvider.provideDummyTestData()
         FoldersTableTestHelper.insertFolder(
             id = data.id,
             name = data.name,

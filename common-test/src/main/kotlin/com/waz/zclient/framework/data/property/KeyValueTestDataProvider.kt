@@ -8,5 +8,5 @@ data class KeyValueTestData(
 )
 
 object KeyValueTestDataProvider : TestDataProvider<KeyValueTestData>() {
-    override fun data(): KeyValueTestData = KeyValueTestData("logging_in_user", "true")
+    override fun provideDummyTestData(): KeyValueTestData = KeyValueTestData("logging_in_user", "true")
 }
