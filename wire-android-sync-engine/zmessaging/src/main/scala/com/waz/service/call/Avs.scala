@@ -25,9 +25,9 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.Calling._
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.jna.{Size_t, Uint32_t}
 import com.waz.utils.{CirceJSONSupport, returning}
+import com.wire.signals.SerialDispatchQueue
 import org.threeten.bp.Instant
 
 import scala.concurrent.{Future, Promise}
@@ -183,7 +183,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       val participantChangedHandler = new ParticipantChangedHandler {
         override def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit = {
           ParticipantsChangeDecoder.decode(data).fold(()) { participantsChange =>
-            val participants = participantsChange.members.map(m => Participant(m.userid, m.clientid)).toSet
+            val participants = participantsChange.members.map(m => Participant(m.userid, m.clientid, m.muted == 1)).toSet
             cs.onParticipantsChanged(RConvId(convId), participants)
           }
         }
@@ -420,7 +420,8 @@ object Avs extends DerivedLogTag {
     import io.circe.{Decoder, parser}
 
     case class AvsParticipantsChange(convid: ConvId, members: Seq[Member])
-    case class Member(userid: UserId, clientid: ClientId, aestab: Int, vrecv: Int)
+
+    case class Member(userid: UserId, clientid: ClientId, aestab: Int, vrecv: Int, muted: Int)
 
     private lazy val decoder: Decoder[AvsParticipantsChange] = Decoder.apply
 
@@ -433,7 +434,7 @@ object Avs extends DerivedLogTag {
 
   object AvsClientList extends CirceJSONSupport {
 
-    import io.circe.{Encoder, Decoder, parser, Error}
+    import io.circe.{Decoder, Encoder, Error, parser}
 
     private lazy val encoder: Encoder[AvsClientList] = Encoder.apply
     private lazy val decoder: Decoder[AvsClientList] = Decoder.apply

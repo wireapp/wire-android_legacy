@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -29,6 +28,7 @@
         android:layout_height="match_parent" />
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/participant_info_card_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start|bottom"
@@ -37,17 +37,34 @@
         app:cardCornerRadius="@dimen/calling_participant_info_card_corner_radius"
         app:cardElevation="@dimen/calling_participant_info_card_corner_elevation">
 
-        <TextView
-            android:id="@+id/nameTextView"
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
-            android:paddingStart="@dimen/calling_participant_name_padding_start"
-            android:paddingTop="@dimen/calling_participant_name_padding_top"
-            android:paddingEnd="@dimen/calling_participant_name_padding_end"
-            android:paddingBottom="@dimen/calling_participant_name_padding_bottom"
-            android:textColor="@color/white"
-            android:textSize="@dimen/wire__text_size__small" />
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/audio_status_image_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/calling_participant_audio_status_padding_start"
+                android:paddingTop="@dimen/calling_participant_audio_status_padding_top"
+                android:paddingBottom="@dimen/calling_participant_audio_status_padding_bottom"
+                android:src="@drawable/ic_muted_video_grid" />
+
+            <TextView
+                android:id="@+id/name_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:paddingStart="@dimen/calling_participant_name_padding_start"
+                android:paddingTop="@dimen/calling_participant_name_padding_top"
+                android:paddingEnd="@dimen/calling_participant_name_padding_end"
+                android:paddingBottom="@dimen/calling_participant_name_padding_bottom"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small" />
+        </LinearLayout>
 
     </androidx.cardview.widget.CardView>
 
@@ -59,13 +76,6 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <com.waz.zclient.paintcode.GenericStyleKitView
-            android:id="@+id/mute_icon"
-            android:layout_width="@dimen/call_control_icon_size"
-            android:layout_height="@dimen/call_control_icon_size"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:visibility="gone" />
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/paused_text_view"
