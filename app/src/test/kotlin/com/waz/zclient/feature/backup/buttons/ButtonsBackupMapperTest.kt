@@ -2,29 +2,29 @@ package com.waz.zclient.feature.backup.buttons
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.framework.data.buttons.ButtonsTestDataProvider
-import com.waz.zclient.storage.db.ButtonEntity
+import com.waz.zclient.storage.db.buttons.ButtonsEntity
 import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-class ButtonBackupMapperTest : UnitTest() {
-    private lateinit var backupMapper: ButtonBackupMapper
+class ButtonsBackupMapperTest : UnitTest() {
+    private lateinit var backupMapper: ButtonsBackupMapper
 
     @Before
     fun setup() {
-        backupMapper = ButtonBackupMapper()
+        backupMapper = ButtonsBackupMapper()
     }
 
     @Test
     fun `given a ButtonEntity, when fromEntity() is called, then maps it into a ButtonBackUpModel`() {
         val data = ButtonsTestDataProvider.provideDummyTestData()
 
-        val entity = ButtonEntity(
-            messageId = data.messageId,
-            buttonId = data.buttonId,
-            title = data.title,
-            ordinal = data.ordinal,
-            state = data.state
+        val entity = ButtonsEntity(
+                messageId = data.messageId,
+                buttonId = data.buttonId,
+                title = data.title,
+                ordinal = data.ordinal,
+                state = data.state
         )
 
         val model = backupMapper.fromEntity(entity)
@@ -40,7 +40,7 @@ class ButtonBackupMapperTest : UnitTest() {
     fun `given a ButtonBackUpModel, when toEntity() is called, then maps it into a ButtonEntity`() {
         val data = ButtonsTestDataProvider.provideDummyTestData()
 
-        val model = ButtonBackUpModel(
+        val model = ButtonsBackUpModel(
             messageId = data.messageId,
             buttonId = data.buttonId,
             title = data.title,
