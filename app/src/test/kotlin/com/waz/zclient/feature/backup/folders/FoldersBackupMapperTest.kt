@@ -1,8 +1,6 @@
 package com.waz.zclient.feature.backup.folders
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.feature.backup.folders.FoldersBackUpModel
-import com.waz.zclient.feature.backup.folders.FoldersBackupMapper
 import com.waz.zclient.framework.data.folders.FoldersTestDataProvider
 import com.waz.zclient.storage.db.folders.FoldersEntity
 import junit.framework.TestCase.assertEquals

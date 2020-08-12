@@ -1,7 +1,6 @@
-package com.waz.zclient.feature.backup.messages.mapper
+package com.waz.zclient.feature.backup.messages
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.feature.backup.messages.MessagesBackUpModel
 import com.waz.zclient.framework.data.messages.MessagesTestDataProvider
 import com.waz.zclient.storage.db.messages.MessagesEntity
 import junit.framework.TestCase.assertEquals
