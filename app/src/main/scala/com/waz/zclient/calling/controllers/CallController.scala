@@ -142,7 +142,8 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
         isGuest        = user.isGuest(cZms.teamId),
         isVerified     = user.isVerified,
         isExternal     = user.isExternal(cZms.teamId),
-        isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started, ScreenShare)).nonEmpty),
+        isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started)).nonEmpty),
+        isScreenShareEnabled = videoStates.get(user.id).exists(_.intersect(Set(ScreenShare)).nonEmpty),
         isSelf         = cZms.selfUserId == user.id,
         isMuted        = participants.find(_.userId == user.id).map(_.muted).getOrElse(false)
       )
@@ -525,6 +526,7 @@ object CallController {
                                  isVerified:     Boolean,
                                  isExternal:     Boolean,
                                  isVideoEnabled: Boolean,
+                                 isScreenShareEnabled: Boolean,
                                  isSelf:         Boolean,
                                  isMuted:        Boolean
                                 )

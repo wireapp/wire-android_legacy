@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -19,11 +18,10 @@
 
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="@dimen/user_row_height"
-    >
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/user_row_height">
 
     <com.waz.zclient.common.views.ChatHeadView
         android:id="@+id/chathead"
@@ -32,73 +30,60 @@
         android:layout_alignParentStart="true"
         android:layout_centerVertical="true"
         android:layout_marginStart="@dimen/wire__padding__regular"
-        android:layout_marginEnd="@dimen/wire__padding__regular"
-        />
+        android:layout_marginEnd="@dimen/wire__padding__regular" />
 
     <LinearLayout
         android:id="@+id/aux_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:layout_marginStart="@dimen/wire__padding__small"
-        android:layout_marginEnd="@dimen/wire__padding__small">
+        android:layout_marginEnd="@dimen/wire__padding__small"
+        android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/verified_shield"
+            android:id="@+id/video_status_image_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/shield_full"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/wire__padding__small"
-            android:layout_marginEnd="@dimen/wire__padding__small"
-            android:visibility="gone"
-            />
+            android:layout_marginEnd="@dimen/wire__padding__small" />
 
         <ImageView
-            android:id="@+id/guest_indicator"
-            android:layout_width="@dimen/user_row_icon_size"
-            android:layout_height="@dimen/user_row_icon_size"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="@dimen/wire__padding__small"
-            android:layout_marginEnd="@dimen/wire__padding__small"
-            android:visibility="gone"
-            android:tint="?wirePrimaryTextColor"
-            />
-
-        <ImageView
-            android:id="@+id/external_icon"
+            android:id="@+id/audio_status_image_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_external_grey"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/wire__padding__small"
-            android:layout_marginEnd="@dimen/wire__padding__small"
-            android:visibility="gone"
-            android:tint="?wirePrimaryTextColor"
-            />
+            android:layout_marginEnd="@dimen/wire__padding__small" />
 
         <ImageView
-            android:id="@+id/video_indicator"
-            android:layout_width="@dimen/user_row_icon_size"
-            android:layout_height="@dimen/user_row_icon_size"
+            android:id="@+id/guest_external_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small" />
+
+        <ImageView
+            android:id="@+id/verified_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/wire__padding__small"
             android:layout_marginEnd="@dimen/wire__padding__small"
-            android:visibility="gone"
-            />
+            android:src="@drawable/ic_verified" />
 
         <androidx.appcompat.widget.AppCompatCheckBox
             android:id="@+id/checkbox"
             android:layout_width="@dimen/share_extension__row__checkbox_size"
             android:layout_height="@dimen/share_extension__row__checkbox_size"
-            android:button="@drawable/checkbox_black"
-            tools:targetApi="lollipop"
             android:layout_marginStart="@dimen/wire__padding__small"
             android:layout_marginEnd="@dimen/wire__padding__small"
+            android:button="@drawable/checkbox_black"
             android:visibility="gone"
-        />
+            tools:targetApi="lollipop" />
 
         <ImageView
             android:id="@+id/next_indicator"
@@ -107,59 +92,55 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/wire__padding__small"
             android:layout_marginEnd="@dimen/wire__padding__small"
-            android:visibility="gone"
-        />
+            android:visibility="gone" />
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:layout_centerVertical="true"
-        android:layout_toEndOf="@id/chathead"
         android:layout_toStartOf="@id/aux_container"
-        >
+        android:layout_toEndOf="@id/chathead"
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:orientation="horizontal"
-            >
+            android:orientation="horizontal">
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/name_text"
+                style="?startUiUserRowLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:drawablePadding="@dimen/wire__padding__6"
                 android:ellipsize="end"
                 android:gravity="start|center_vertical"
                 android:maxLines="1"
-                android:drawablePadding="@dimen/wire__padding__6"
-                app:w_font="@string/wire__typeface__light"
-                style="?startUiUserRowLabel"
                 app:themedColor="Primary"
-                />
+                app:w_font="@string/wire__typeface__light" />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/you_text"
+                style="?startUiUserRowLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:drawablePadding="@dimen/wire__padding__6"
-                android:layout_weight="0"
                 android:layout_marginStart="@dimen/wire__padding__small"
                 android:layout_marginEnd="@dimen/wire__padding__small"
-                app:w_font="@string/wire__typeface__light"
-                style="?startUiUserRowLabel"
-                app:themedColor="Primary"
+                android:layout_weight="0"
+                android:drawablePadding="@dimen/wire__padding__6"
                 android:visibility="gone"
-                />
+                app:themedColor="Primary"
+                app:w_font="@string/wire__typeface__light" />
 
         </LinearLayout>
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/username_text"
+            style="?startUiUserRowSubLabel"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -167,10 +148,8 @@
             android:gravity="start|top"
             android:maxLines="1"
             android:textSize="@dimen/wire__text_size__small"
-            app:w_font="@string/wire__typeface__light"
-            style="?startUiUserRowSubLabel"
             app:themedColor="Secondary"
-            />
+            app:w_font="@string/wire__typeface__light" />
 
     </LinearLayout>
 
@@ -178,9 +157,8 @@
         android:id="@+id/separator"
         android:layout_width="match_parent"
         android:layout_height="@dimen/wire__divider__height__thin"
-        android:background="?thinDividerColor"
-        android:layout_toEndOf="@id/chathead"
         android:layout_alignParentBottom="true"
-        />
+        android:layout_toEndOf="@id/chathead"
+        android:background="?thinDividerColor" />
 
 </merge>
