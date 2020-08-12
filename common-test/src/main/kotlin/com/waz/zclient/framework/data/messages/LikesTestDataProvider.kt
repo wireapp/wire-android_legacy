@@ -1,4 +1,4 @@
-package com.waz.zclient.framework.data.likes
+package com.waz.zclient.framework.data.messages
 
 import com.waz.zclient.framework.data.TestDataProvider
 import java.util.UUID
@@ -12,10 +12,10 @@ data class LikesTestData(
 
 object LikesTestDataProvider : TestDataProvider<LikesTestData>() {
     override fun provideDummyTestData(): LikesTestData =
-            LikesTestData(
-                messageId = UUID.randomUUID().toString(),
-                userId = UUID.randomUUID().toString(),
-                timeStamp = System.currentTimeMillis().toInt(),
-                action = 0
-            )
+        LikesTestData(
+            messageId = UUID.randomUUID().toString(),
+            userId = UUID.randomUUID().toString(),
+            timeStamp = System.currentTimeMillis().toInt(),
+            action = 0
+        )
 }

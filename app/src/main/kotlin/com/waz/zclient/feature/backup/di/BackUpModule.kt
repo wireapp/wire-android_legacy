@@ -30,12 +30,12 @@ import com.waz.zclient.feature.backup.io.file.BackUpFileIOHandler
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpDataSource
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpMapper
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpModel
-import com.waz.zclient.feature.backup.likes.LikesBackUpModel
-import com.waz.zclient.feature.backup.likes.LikesBackupDataSource
-import com.waz.zclient.feature.backup.likes.LikesBackupMapper
+import com.waz.zclient.feature.backup.messages.LikesBackUpModel
+import com.waz.zclient.feature.backup.messages.LikesBackupDataSource
+import com.waz.zclient.feature.backup.messages.LikesBackupMapper
 import com.waz.zclient.feature.backup.messages.MessagesBackUpDataSource
 import com.waz.zclient.feature.backup.messages.MessagesBackUpModel
-import com.waz.zclient.feature.backup.messages.mapper.MessagesBackUpDataMapper
+import com.waz.zclient.feature.backup.messages.MessagesBackUpDataMapper
 import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
 import com.waz.zclient.storage.db.UserDatabase
 import org.koin.core.module.Module

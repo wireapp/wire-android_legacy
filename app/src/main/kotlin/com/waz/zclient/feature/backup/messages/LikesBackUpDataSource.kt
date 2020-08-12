@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.backup.likes
+package com.waz.zclient.feature.backup.messages
 
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.feature.backup.BackUpDataMapper
