@@ -7,8 +7,6 @@ data class PropertiesTestData(
     val value: String
 )
 
-object PropertiesTestDataProvider : TestDataProvider<KeyValueTestData>() {
-    override fun provideDummyTestData(): KeyValueTestData = KeyValueTestData("logging_in_user", "true")
+object PropertiesTestDataProvider : TestDataProvider<PropertiesTestData>() {
+    override fun provideDummyTestData(): PropertiesTestData = PropertiesTestData("logging_in_user", "true")
 }
-
-
