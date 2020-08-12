@@ -10,6 +10,8 @@ import com.waz.zclient.storage.db.assets.DownloadAssetsDao
 import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
 import com.waz.zclient.storage.db.assets.UploadAssetsDao
 import com.waz.zclient.storage.db.assets.UploadAssetsEntity
+import com.waz.zclient.storage.db.buttons.ButtonsDao
+import com.waz.zclient.storage.db.buttons.ButtonsEntity
 import com.waz.zclient.storage.db.conversations.ConversationFoldersDao
 import com.waz.zclient.storage.db.conversations.ConversationFoldersEntity
 import com.waz.zclient.storage.db.conversations.ConversationMembersDao
@@ -66,7 +68,7 @@ import com.waz.zclient.storage.db.users.service.UserDao
         ConversationFoldersEntity::class, FoldersEntity::class, CloudNotificationStatsEntity::class,
         CloudNotificationsEntity::class, AssetsEntity::class, DownloadAssetsEntity::class,
         UploadAssetsEntity::class, PropertiesEntity::class, ReadReceiptsEntity::class,
-        PushNotificationEventEntity::class, EditHistoryEntity::class, ButtonEntity::class,
+        PushNotificationEventEntity::class, EditHistoryEntity::class, ButtonsEntity::class,
         MessageContentIndexEntity::class],
     version = UserDatabase.VERSION
 )
@@ -99,6 +101,7 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun readReceiptsDao(): ReadReceiptsDao
     abstract fun editHistoryDao(): EditHistoryDao
     abstract fun messageContentIndexDao(): MessageContentIndexDao
+    abstract fun buttonsDao(): ButtonsDao
 
     companion object {
         const val VERSION = 129

@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.backup.messages.mapper
+package com.waz.zclient.feature.backup.messages
 
 import com.waz.zclient.feature.backup.BackUpDataMapper
 import com.waz.zclient.feature.backup.messages.MessagesBackUpModel

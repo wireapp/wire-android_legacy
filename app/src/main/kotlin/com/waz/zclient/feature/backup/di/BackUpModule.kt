@@ -7,8 +7,8 @@ import com.waz.zclient.feature.backup.ZipHandler
 import com.waz.zclient.feature.backup.assets.AssetsBackUpModel
 import com.waz.zclient.feature.backup.assets.AssetsBackupDataSource
 import com.waz.zclient.feature.backup.assets.AssetsBackupMapper
-import com.waz.zclient.feature.backup.buttons.ButtonBackUpModel
-import com.waz.zclient.feature.backup.buttons.ButtonBackupMapper
+import com.waz.zclient.feature.backup.buttons.ButtonsBackUpModel
+import com.waz.zclient.feature.backup.buttons.ButtonsBackupMapper
 import com.waz.zclient.feature.backup.buttons.ButtonsBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationFoldersBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationFoldersBackupDataSource
@@ -30,9 +30,12 @@ import com.waz.zclient.feature.backup.io.file.BackUpFileIOHandler
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpDataSource
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpMapper
 import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpModel
+import com.waz.zclient.feature.backup.messages.LikesBackUpModel
+import com.waz.zclient.feature.backup.messages.LikesBackupDataSource
+import com.waz.zclient.feature.backup.messages.LikesBackupMapper
 import com.waz.zclient.feature.backup.messages.MessagesBackUpDataSource
 import com.waz.zclient.feature.backup.messages.MessagesBackUpModel
-import com.waz.zclient.feature.backup.messages.mapper.MessagesBackUpDataMapper
+import com.waz.zclient.feature.backup.messages.MessagesBackUpDataMapper
 import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
 import com.waz.zclient.storage.db.UserDatabase
 import org.koin.core.module.Module
@@ -48,6 +51,7 @@ private const val CONVERSATION_ROLE_ACTION_FILE_NAME = "ConversationRoleAction"
 private const val ASSETS_FILE_NAME = "Assets"
 private const val BUTTONS_FILE_NAME = "Buttons"
 private const val CONVERSATION_MEMBERS_FILE_NAME = "Buttons"
+private const val LIKES_FILE_NAME = "Likes"
 
 val backupModules: List<Module>
     get() = listOf(backUpModule)
@@ -108,10 +112,10 @@ val backUpModule = module {
     factory { MessagesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
 
     // Buttons
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().conversationsDao()) }
-    factory { JsonConverter(ButtonBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<ButtonBackUpModel>(BUTTONS_FILE_NAME, get(), get()) }
-    factory { ButtonBackupMapper() }
+    factory { BatchDatabaseIOHandler(get<UserDatabase>().buttonsDao()) }
+    factory { JsonConverter(ButtonsBackUpModel.serializer()) }
+    factory { BackUpFileIOHandler<ButtonsBackUpModel>(BUTTONS_FILE_NAME, get(), get()) }
+    factory { ButtonsBackupMapper() }
     factory { ButtonsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
 
     // ConversationMembers
@@ -120,4 +124,11 @@ val backUpModule = module {
     factory { BackUpFileIOHandler<ConversationMembersBackUpModel>(CONVERSATION_MEMBERS_FILE_NAME, get(), get()) }
     factory { ConversationMembersBackupMapper() }
     factory { ConversationMembersBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+
+    // Likes
+    factory { BatchDatabaseIOHandler(get<UserDatabase>().likesDao()) }
+    factory { JsonConverter(LikesBackUpModel.serializer()) }
+    factory { BackUpFileIOHandler<LikesBackUpModel>(LIKES_FILE_NAME, get(), get()) }
+    factory { LikesBackupMapper() }
+    factory { LikesBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
 }

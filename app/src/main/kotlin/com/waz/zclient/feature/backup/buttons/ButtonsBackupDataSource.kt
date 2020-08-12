@@ -4,12 +4,12 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.feature.backup.BackUpDataMapper
 import com.waz.zclient.feature.backup.BackUpDataSource
 import com.waz.zclient.feature.backup.BackUpIOHandler
-import com.waz.zclient.storage.db.ButtonEntity
+import com.waz.zclient.storage.db.buttons.ButtonsEntity
 import kotlinx.serialization.Serializable
 import java.io.File
 
 @Serializable
-data class ButtonBackUpModel(
+data class ButtonsBackUpModel(
     val messageId: String = String.empty(),
     val buttonId: String = String.empty(),
     val title: String = String.empty(),
@@ -17,8 +17,8 @@ data class ButtonBackUpModel(
     val state: Int = 0
 )
 
-class ButtonBackupMapper : BackUpDataMapper<ButtonBackUpModel, ButtonEntity> {
-    override fun fromEntity(entity: ButtonEntity) = ButtonBackUpModel(
+class ButtonsBackupMapper : BackUpDataMapper<ButtonsBackUpModel, ButtonsEntity> {
+    override fun fromEntity(entity: ButtonsEntity) = ButtonsBackUpModel(
         messageId = entity.messageId,
         buttonId = entity.buttonId,
         title = entity.title,
@@ -26,17 +26,17 @@ class ButtonBackupMapper : BackUpDataMapper<ButtonBackUpModel, ButtonEntity> {
         state = entity.state
     )
 
-    override fun toEntity(model: ButtonBackUpModel) = ButtonEntity(
-        messageId = model.messageId,
-        buttonId = model.buttonId,
-        title = model.title,
-        ordinal = model.ordinal,
-        state = model.state
+    override fun toEntity(model: ButtonsBackUpModel) = ButtonsEntity(
+            messageId = model.messageId,
+            buttonId = model.buttonId,
+            title = model.title,
+            ordinal = model.ordinal,
+            state = model.state
     )
 }
 
 class ButtonsBackupDataSource(
-    override val databaseLocalDataSource: BackUpIOHandler<ButtonEntity, Unit>,
-    override val backUpLocalDataSource: BackUpIOHandler<ButtonBackUpModel, File>,
-    override val mapper: BackUpDataMapper<ButtonBackUpModel, ButtonEntity>
-) : BackUpDataSource<ButtonBackUpModel, ButtonEntity>()
+    override val databaseLocalDataSource: BackUpIOHandler<ButtonsEntity, Unit>,
+    override val backUpLocalDataSource: BackUpIOHandler<ButtonsBackUpModel, File>,
+    override val mapper: BackUpDataMapper<ButtonsBackUpModel, ButtonsEntity>
+) : BackUpDataSource<ButtonsBackUpModel, ButtonsEntity>()
