@@ -19,6 +19,9 @@ import com.waz.zclient.feature.backup.conversations.ConversationRolesBackupDataS
 import com.waz.zclient.feature.backup.conversations.ConversationsBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationsBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationsBackupMapper
+import com.waz.zclient.feature.backup.conversations.ConversationMembersBackUpModel
+import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupDataSource
+import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupMapper
 import com.waz.zclient.feature.backup.folders.FoldersBackUpModel
 import com.waz.zclient.feature.backup.folders.FoldersBackupDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackupMapper
@@ -44,6 +47,7 @@ private const val CONVERSATION_FOLDERS_FILE_NAME = "ConversationFolders"
 private const val CONVERSATION_ROLE_ACTION_FILE_NAME = "ConversationRoleAction"
 private const val ASSETS_FILE_NAME = "Assets"
 private const val BUTTONS_FILE_NAME = "Buttons"
+private const val CONVERSATION_MEMBERS_FILE_NAME = "Buttons"
 
 val backupModules: List<Module>
     get() = listOf(backUpModule)
@@ -109,4 +113,11 @@ val backUpModule = module {
     factory { BackUpFileIOHandler<ButtonBackUpModel>(BUTTONS_FILE_NAME, get(), get()) }
     factory { ButtonBackupMapper() }
     factory { ButtonsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+
+    // ConversationMembers
+    factory { BatchDatabaseIOHandler(get<UserDatabase>().conversationsDao()) }
+    factory { JsonConverter(ConversationMembersBackUpModel.serializer()) }
+    factory { BackUpFileIOHandler<ConversationMembersBackUpModel>(CONVERSATION_MEMBERS_FILE_NAME, get(), get()) }
+    factory { ConversationMembersBackupMapper() }
+    factory { ConversationMembersBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
 }
