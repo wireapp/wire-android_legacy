@@ -115,7 +115,7 @@ val backUpModule = module {
     factory { ButtonsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
 
     // ConversationMembers
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().conversationsDao()) }
+    factory { BatchDatabaseIOHandler(get<UserDatabase>().conversationMembersDao()) }
     factory { JsonConverter(ConversationMembersBackUpModel.serializer()) }
     factory { BackUpFileIOHandler<ConversationMembersBackUpModel>(CONVERSATION_MEMBERS_FILE_NAME, get(), get()) }
     factory { ConversationMembersBackupMapper() }
