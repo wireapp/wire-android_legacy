@@ -8,8 +8,8 @@ import com.waz.zclient.storage.pref.global.GlobalPreferences
 import kotlinx.coroutines.flow.Flow
 
 class UsersLocalDataSource constructor(
-        private val usersDao: UsersDao,
-        private val globalPreferences: GlobalPreferences
+    private val usersDao: UsersDao,
+    private val globalPreferences: GlobalPreferences
 ) {
 
     private val userId: String
