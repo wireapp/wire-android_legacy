@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.property
 
 import androidx.room.Room
-import com.waz.zclient.framework.data.property.KeyValueTestDataProvider
 import com.waz.zclient.framework.data.property.PropertiesTestDataProvider
 import com.waz.zclient.storage.IntegrationTest
 import com.waz.zclient.storage.db.UserDatabase
@@ -35,9 +34,9 @@ class PropertiesDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun givenAListOfEntries_whenAllKeyValuesIsCalled_thenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
+    fun givenAListOfEntries_whenAllPropertiesIsCalled_thenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
         val numberOfItems = 3
-        val data = KeyValueTestDataProvider.listOfData(numberOfItems)
+        val data = PropertiesTestDataProvider.listOfData(numberOfItems)
         data.forEach {
             propertiesDao.insert(PropertiesEntity(UUID.randomUUID().toString(), it.value))
         }
