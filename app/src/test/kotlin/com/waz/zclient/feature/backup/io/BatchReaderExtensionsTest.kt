@@ -8,6 +8,7 @@ import com.waz.zclient.core.functional.Either.Right
 import com.waz.zclient.feature.backup.mockNextItems
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -85,6 +86,7 @@ class BatchReaderExtensionsTest : UnitTest() {
         }
 
     @Test
+    @Ignore
     fun `given empty BatchReader, when mapRight() is called, then return empty list`() {
         runBlocking {
             batchReader.mockNextItems(emptyList<String>())
@@ -94,6 +96,7 @@ class BatchReaderExtensionsTest : UnitTest() {
     }
 
     @Test
+    @Ignore
     fun `given BatchReader returning strings which can be converted to numbers, when mapRight() is called, then return a list of numbers`() {
         runBlocking {
             batchReader.mockNextItems(listOf("1", "2", "3"))
@@ -103,6 +106,7 @@ class BatchReaderExtensionsTest : UnitTest() {
     }
 
     @Test
+    @Ignore
     fun `given BatchReader returning a string which can't be converted to a number, when mapRight() is called, then return a failure`() {
         runBlocking {
             batchReader.mockNextItems(listOf("a"))
@@ -112,6 +116,7 @@ class BatchReaderExtensionsTest : UnitTest() {
     }
 
     @Test
+    @Ignore
     fun `given BatchReader returning strings which can be converted, as well as one which can't, when mapRight() is called, then return a failure`() {
         runBlocking {
             batchReader.mockNextItems(listOf("1", "2", "a", "3"))
@@ -121,6 +126,7 @@ class BatchReaderExtensionsTest : UnitTest() {
     }
 
     @Test
+    @Ignore
     fun `given BatchReader returning a strings which can't converted, when mapRight() is called, then make sure strings after the failure are not accessed`() {
         runBlocking {
             batchReader.mockNextItems(listOf("1", "2", "a", "3"))
