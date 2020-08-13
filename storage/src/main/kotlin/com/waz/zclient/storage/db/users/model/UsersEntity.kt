@@ -12,7 +12,7 @@ import androidx.room.PrimaryKey
         Index(name = "UserData_search_key", value = ["skey"])
     ]
 )
-data class UserEntity(
+data class UsersEntity(
 
     @ColumnInfo(name = "_id")
     @PrimaryKey

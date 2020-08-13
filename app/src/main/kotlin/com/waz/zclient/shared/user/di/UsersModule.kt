@@ -34,7 +34,7 @@ val usersModule: Module = module {
     factory { UsersRemoteDataSource(get(), get()) }
     factory { UsersLocalDataSource(get(), get()) }
     factory { get<NetworkClient>().create(UsersApi::class.java) }
-    factory { get<UserDatabase>().userDao() }
+    factory { get<UserDatabase>().usersDao() }
     factory { get<UserDatabase>().keyValuesDao() }
 
     factory { GetUserProfileUseCase(get()) }

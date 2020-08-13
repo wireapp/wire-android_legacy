@@ -55,11 +55,11 @@ import com.waz.zclient.storage.db.userclients.UserClientsEntity
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_128_TO_129
-import com.waz.zclient.storage.db.users.model.UserEntity
-import com.waz.zclient.storage.db.users.service.UserDao
+import com.waz.zclient.storage.db.users.model.UsersEntity
+import com.waz.zclient.storage.db.users.service.UsersDao
 
 @Database(
-    entities = [UserEntity::class, AssetsV1Entity::class, ConversationsEntity::class,
+    entities = [UsersEntity::class, AssetsV1Entity::class, ConversationsEntity::class,
         ConversationMembersEntity::class, MessagesEntity::class, KeyValuesEntity::class,
         SyncJobsEntity::class, ErrorsEntity::class, NotificationDataEntity::class,
         UserClientsEntity::class,
@@ -76,7 +76,7 @@ import com.waz.zclient.storage.db.users.service.UserDao
 @Suppress("TooManyFunctions")
 abstract class UserDatabase : RoomDatabase() {
 
-    abstract fun userDao(): UserDao
+    abstract fun usersDao(): UsersDao
     abstract fun userClientDao(): UserClientDao
     abstract fun assetsV1Dao(): AssetsV1Dao
     abstract fun assetsDao(): AssetsDao
