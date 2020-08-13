@@ -29,7 +29,7 @@ import com.waz.zclient.storage.db.receipts.ReadReceiptsEntity
 import com.waz.zclient.storage.db.sync.SyncJobsEntity
 import com.waz.zclient.storage.db.teams.TeamsEntity
 import com.waz.zclient.storage.db.userclients.UserClientsEntity
-import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UsersEntity
 import kotlinx.coroutines.runBlocking
 
 object KotlinMigrationHelper {
@@ -196,10 +196,10 @@ object KotlinMigrationHelper {
         }
 
     @JvmStatic
-    fun assertUserEntity(roomDB: UserDatabase, userEntity: UserEntity) =
+    fun assertUsersEntity(roomDB: UserDatabase, usersEntity: UsersEntity) =
         runBlocking {
-            val entity = roomDB.userDao().allUsers()[0]
-            check(userEntity, entity)
+            val entity = roomDB.usersDao().allUsers()[0]
+            check(usersEntity, entity)
         }
 
     @JvmStatic

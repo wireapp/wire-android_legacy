@@ -105,5 +105,5 @@ class UserTable126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
         }
     }
 
-    private suspend fun getAllUsers() = getDatabase().userDao().allUsers()
+    private suspend fun getAllUsers() = getDatabase().usersDao().allUsers()
 }
