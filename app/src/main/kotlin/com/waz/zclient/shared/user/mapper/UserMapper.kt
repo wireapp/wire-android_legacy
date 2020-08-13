@@ -3,7 +3,7 @@ package com.waz.zclient.shared.user.mapper
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.datasources.remote.UserResponse
-import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UsersEntity
 
 class UserMapper {
 
@@ -20,7 +20,7 @@ class UserMapper {
         )
     }
 
-    fun toUser(userEntity: UserEntity) = with(userEntity) {
+    fun toUser(usersEntity: UsersEntity) = with(usersEntity) {
         User(
             id = id,
             teamId = teamId,
@@ -52,7 +52,7 @@ class UserMapper {
     }
 
     fun toUserEntity(user: User) = with(user) {
-        UserEntity(
+        UsersEntity(
             id = id,
             teamId = teamId,
             name = name,

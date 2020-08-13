@@ -3,7 +3,7 @@ package com.waz.zclient.shared.user.mapper
 import com.waz.zclient.UnitTest
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.datasources.remote.UserResponse
-import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UsersEntity
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 import org.mockito.Mock
@@ -17,7 +17,7 @@ class UserMapperTest : UnitTest() {
     private lateinit var userResponse: UserResponse
 
     @Mock
-    private lateinit var userEntity: UserEntity
+    private lateinit var usersEntity: UsersEntity
 
     @Mock
     private lateinit var user: User
@@ -51,34 +51,34 @@ class UserMapperTest : UnitTest() {
     @Test
     fun `Given a UserEntity object, when toUser() is called, then it should be mapped to User object`() {
 
-        `when`(userEntity.id).thenReturn(TEST_ID)
-        `when`(userEntity.teamId).thenReturn(TEST_TEAM_ID)
-        `when`(userEntity.name).thenReturn(TEST_NAME)
-        `when`(userEntity.email).thenReturn(TEST_EMAIL)
-        `when`(userEntity.phone).thenReturn(TEST_PHONE)
-        `when`(userEntity.trackingId).thenReturn(TEST_TRACKING_ID)
-        `when`(userEntity.picture).thenReturn(TEST_PICTURE)
-        `when`(userEntity.accentId).thenReturn(TEST_ACCENT)
-        `when`(userEntity.sKey).thenReturn(TEST_SKEY)
-        `when`(userEntity.connection).thenReturn(TEST_CONNECTION)
-        `when`(userEntity.connectionTimestamp).thenReturn(TEST_CONNECTION_TIMESTAMP)
-        `when`(userEntity.connectionMessage).thenReturn(TEST_CONNECTION_MESSAGE)
-        `when`(userEntity.conversation).thenReturn(TEST_CONVERSATION)
-        `when`(userEntity.relation).thenReturn(TEST_RELATION)
-        `when`(userEntity.timestamp).thenReturn(TEST_TIMESTAMP)
-        `when`(userEntity.verified).thenReturn(TEST_VERIFIED)
-        `when`(userEntity.deleted).thenReturn(TEST_DELETED)
-        `when`(userEntity.availability).thenReturn(TEST_AVAILABILITY)
-        `when`(userEntity.handle).thenReturn(TEST_HANDLE)
-        `when`(userEntity.providerId).thenReturn(TEST_PROVIDER_ID)
-        `when`(userEntity.integrationId).thenReturn(TEST_INTEGRATION_ID)
-        `when`(userEntity.expiresAt).thenReturn(TEST_EXPIRE_AT)
-        `when`(userEntity.managedBy).thenReturn(TEST_MANAGED_BY)
-        `when`(userEntity.selfPermission).thenReturn(TEST_SELF_PERMISSION)
-        `when`(userEntity.copyPermission).thenReturn(TEST_COPY_PERMISSION)
-        `when`(userEntity.createdBy).thenReturn(TEST_CREATED_BY)
+        `when`(usersEntity.id).thenReturn(TEST_ID)
+        `when`(usersEntity.teamId).thenReturn(TEST_TEAM_ID)
+        `when`(usersEntity.name).thenReturn(TEST_NAME)
+        `when`(usersEntity.email).thenReturn(TEST_EMAIL)
+        `when`(usersEntity.phone).thenReturn(TEST_PHONE)
+        `when`(usersEntity.trackingId).thenReturn(TEST_TRACKING_ID)
+        `when`(usersEntity.picture).thenReturn(TEST_PICTURE)
+        `when`(usersEntity.accentId).thenReturn(TEST_ACCENT)
+        `when`(usersEntity.sKey).thenReturn(TEST_SKEY)
+        `when`(usersEntity.connection).thenReturn(TEST_CONNECTION)
+        `when`(usersEntity.connectionTimestamp).thenReturn(TEST_CONNECTION_TIMESTAMP)
+        `when`(usersEntity.connectionMessage).thenReturn(TEST_CONNECTION_MESSAGE)
+        `when`(usersEntity.conversation).thenReturn(TEST_CONVERSATION)
+        `when`(usersEntity.relation).thenReturn(TEST_RELATION)
+        `when`(usersEntity.timestamp).thenReturn(TEST_TIMESTAMP)
+        `when`(usersEntity.verified).thenReturn(TEST_VERIFIED)
+        `when`(usersEntity.deleted).thenReturn(TEST_DELETED)
+        `when`(usersEntity.availability).thenReturn(TEST_AVAILABILITY)
+        `when`(usersEntity.handle).thenReturn(TEST_HANDLE)
+        `when`(usersEntity.providerId).thenReturn(TEST_PROVIDER_ID)
+        `when`(usersEntity.integrationId).thenReturn(TEST_INTEGRATION_ID)
+        `when`(usersEntity.expiresAt).thenReturn(TEST_EXPIRE_AT)
+        `when`(usersEntity.managedBy).thenReturn(TEST_MANAGED_BY)
+        `when`(usersEntity.selfPermission).thenReturn(TEST_SELF_PERMISSION)
+        `when`(usersEntity.copyPermission).thenReturn(TEST_COPY_PERMISSION)
+        `when`(usersEntity.createdBy).thenReturn(TEST_CREATED_BY)
 
-        val user = userMapper.toUser(userEntity)
+        val user = userMapper.toUser(usersEntity)
 
         assertEquals(TEST_ID, user.id)
         assertEquals(TEST_TEAM_ID, user.teamId)

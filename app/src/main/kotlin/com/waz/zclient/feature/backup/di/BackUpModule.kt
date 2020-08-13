@@ -43,6 +43,9 @@ import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackUpModel
 import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackupDataSource
 import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackupMapper
 import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
+import com.waz.zclient.feature.backup.users.UsersBackUpDataSource
+import com.waz.zclient.feature.backup.users.UsersBackUpDataMapper
+import com.waz.zclient.feature.backup.users.UsersBackUpModel
 import com.waz.zclient.storage.db.UserDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.bind
@@ -56,10 +59,11 @@ private const val CONVERSATION_FOLDERS_FILE_NAME = "ConversationFolders"
 private const val CONVERSATION_ROLE_ACTION_FILE_NAME = "ConversationRoleAction"
 private const val ASSETS_FILE_NAME = "Assets"
 private const val BUTTONS_FILE_NAME = "Buttons"
-private const val CONVERSATION_MEMBERS_FILE_NAME = "Buttons"
+private const val CONVERSATION_MEMBERS_FILE_NAME = "ConversationMembers"
 private const val LIKES_FILE_NAME = "Likes"
 private const val PROPERTIES_FILE_NAME = "Properties"
 private const val READ_RECEIPTS_FILE_NAME = "ReadReceipts"
+private const val USERS_FILE_NAME = "Users"
 
 val backupModules: List<Module>
     get() = listOf(backUpModule)
@@ -146,11 +150,18 @@ val backUpModule = module {
     factory { BackUpFileIOHandler<PropertiesBackUpModel>(PROPERTIES_FILE_NAME, get(), get()) }
     factory { PropertiesBackUpMapper() }
     factory { PropertiesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
-
+    
     // ReadReceipts
     factory { BatchDatabaseIOHandler(get<UserDatabase>().readReceiptsDao()) }
     factory { JsonConverter(ReadReceiptsBackUpModel.serializer()) }
     factory { BackUpFileIOHandler<ReadReceiptsBackUpModel>(READ_RECEIPTS_FILE_NAME, get(), get()) }
     factory { ReadReceiptsBackupMapper() }
     factory { ReadReceiptsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+
+    // Users
+    factory { BatchDatabaseIOHandler((get<UserDatabase>()).usersDao()) }
+    factory { JsonConverter(UsersBackUpModel.serializer()) }
+    factory { BackUpFileIOHandler<UsersBackUpModel>(USERS_FILE_NAME, get(), get()) }
+    factory { UsersBackUpDataMapper() }
+    factory { UsersBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
 }
