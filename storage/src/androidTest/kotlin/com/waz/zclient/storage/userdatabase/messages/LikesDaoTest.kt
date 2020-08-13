@@ -34,7 +34,7 @@ class LikesDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun givenAListOfEntries_whenAllButtonsIsCalled_thenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
+    fun givenAListOfEntries_whenAllLikesIsCalled_thenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
         val numberOfItems = 3
         val data = LikesTestDataProvider.listOfData(numberOfItems)
         data.forEach {

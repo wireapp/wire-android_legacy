@@ -39,6 +39,9 @@ import com.waz.zclient.feature.backup.messages.MessagesBackUpDataMapper
 import com.waz.zclient.feature.backup.properties.PropertiesBackUpDataSource
 import com.waz.zclient.feature.backup.properties.PropertiesBackUpMapper
 import com.waz.zclient.feature.backup.properties.PropertiesBackUpModel
+import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackUpModel
+import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackupDataSource
+import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackupMapper
 import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
 import com.waz.zclient.storage.db.UserDatabase
 import org.koin.core.module.Module
@@ -56,6 +59,7 @@ private const val BUTTONS_FILE_NAME = "Buttons"
 private const val CONVERSATION_MEMBERS_FILE_NAME = "Buttons"
 private const val LIKES_FILE_NAME = "Likes"
 private const val PROPERTIES_FILE_NAME = "Properties"
+private const val READ_RECEIPTS_FILE_NAME = "ReadReceipts"
 
 val backupModules: List<Module>
     get() = listOf(backUpModule)
@@ -142,4 +146,11 @@ val backUpModule = module {
     factory { BackUpFileIOHandler<PropertiesBackUpModel>(PROPERTIES_FILE_NAME, get(), get()) }
     factory { PropertiesBackUpMapper() }
     factory { PropertiesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
+
+    // ReadReceipts
+    factory { BatchDatabaseIOHandler(get<UserDatabase>().readReceiptsDao()) }
+    factory { JsonConverter(ReadReceiptsBackUpModel.serializer()) }
+    factory { BackUpFileIOHandler<ReadReceiptsBackUpModel>(READ_RECEIPTS_FILE_NAME, get(), get()) }
+    factory { ReadReceiptsBackupMapper() }
+    factory { ReadReceiptsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
 }

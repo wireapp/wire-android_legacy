@@ -3,7 +3,7 @@ package com.waz.zclient.storage.userdatabase.conversations
 import android.content.ContentValues
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
-class ConversatonsRoleActionTableTestHelper private constructor() {
+class ConversationsRoleActionTableTestHelper private constructor() {
 
     companion object {
 
