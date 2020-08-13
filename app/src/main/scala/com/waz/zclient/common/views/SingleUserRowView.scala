@@ -85,7 +85,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     case (Theme.Light, false, true) => videoIndicator.setImageResource(R.drawable.ic_screenshare_light_theme)
     case (Theme.Dark, true, _) => videoIndicator.setImageResource(R.drawable.ic_video_dark_theme)
     case (Theme.Dark, false, true) => videoIndicator.setImageResource(R.drawable.ic_screenshare_dark_theme)
-    case (_, _, _) =>
+    case _ =>
   }
 
   private val isMuted = Signal(false)
@@ -95,7 +95,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     case (Theme.Light, false) => audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
     case (Theme.Dark, true) => audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
     case (Theme.Dark, false) => audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
-    case (_, _) =>
+    case _ =>
   }
 
   private val isGuest = Signal(false)
@@ -107,7 +107,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     case (Theme.Light, false, true) => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_light_theme)
     case (Theme.Dark, true, _) => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_dark_theme)
     case (Theme.Dark, false, true) => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_dark_theme)
-    case (_, _, _) =>
+    case _ =>
   }
 
   def setTitle(text: String, isSelf: Boolean): Unit = {
