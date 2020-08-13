@@ -7,7 +7,7 @@ import com.waz.zclient.storage.db.users.model.UsersEntity
 import java.io.File
 
 class UsersBackUpDataSource(
-        override val databaseLocalDataSource: BackUpIOHandler<UsersEntity, Unit>,
-        override val backUpLocalDataSource: BackUpIOHandler<UsersBackUpModel, File>,
-        override val mapper: BackUpDataMapper<UsersBackUpModel, UsersEntity>
+    override val databaseLocalDataSource: BackUpIOHandler<UsersEntity, Unit>,
+    override val backUpLocalDataSource: BackUpIOHandler<UsersBackUpModel, File>,
+    override val mapper: BackUpDataMapper<UsersBackUpModel, UsersEntity>
 ) : BackUpDataSource<UsersBackUpModel, UsersEntity>()

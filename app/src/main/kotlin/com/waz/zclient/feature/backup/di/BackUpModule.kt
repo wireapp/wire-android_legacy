@@ -150,7 +150,7 @@ val backUpModule = module {
     factory { BackUpFileIOHandler<PropertiesBackUpModel>(PROPERTIES_FILE_NAME, get(), get()) }
     factory { PropertiesBackUpMapper() }
     factory { PropertiesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
-    
+
     // ReadReceipts
     factory { BatchDatabaseIOHandler(get<UserDatabase>().readReceiptsDao()) }
     factory { JsonConverter(ReadReceiptsBackUpModel.serializer()) }
