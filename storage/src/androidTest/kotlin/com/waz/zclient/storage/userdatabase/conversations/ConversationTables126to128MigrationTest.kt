@@ -58,7 +58,7 @@ class ConversationTables126to128MigrationTest : UserDatabaseMigrationTest(126, 1
     @Test
     fun givenRoleActionInsertedIntoConversationRoleActionTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
         val data = ConversationRolesTestDataProvider.provideDummyTestData()
-        ConversatonsRoleActionTableTestHelper.insertConversationRoleAction(
+        ConversationsRoleActionTableTestHelper.insertConversationRoleAction(
             data.convId,
             data.label,
             data.action,
