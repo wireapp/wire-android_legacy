@@ -86,9 +86,12 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  controller.isGroupCall.onUi {
-    case true => participantInfoCardView.setVisibility(View.VISIBLE)
-    case false => participantInfoCardView.setVisibility(View.GONE)
+  Signal(
+    controller.isGroupCall,
+    controller.controlsVisible
+  ).onUi {
+    case (true, false) => participantInfoCardView.setVisibility(View.VISIBLE)
+    case _ => participantInfoCardView.setVisibility(View.GONE)
   }
 
   protected def registerHandler(view: View) = {
