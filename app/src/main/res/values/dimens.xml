@@ -563,7 +563,7 @@
     <dimen name="calling_participant_name_padding_end">8dp</dimen>
     <dimen name="calling_participant_name_padding_top">4dp</dimen>
     <dimen name="calling_participant_name_padding_bottom">4dp</dimen>
-    <dimen name="calling_participant_audio_status_padding_start">8dp</dimen>
+    <dimen name="calling_participant_audio_status_padding_start">4dp</dimen>
     <dimen name="calling_participant_audio_status_padding_top">4dp</dimen>
     <dimen name="calling_participant_audio_status_padding_bottom">4dp</dimen>
     <dimen name="services_warning_icon_width">48dp</dimen>
