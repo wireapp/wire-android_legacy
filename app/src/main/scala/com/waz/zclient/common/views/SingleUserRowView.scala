@@ -20,7 +20,7 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
-import android.view.View.{ OnClickListener}
+import android.view.View.OnClickListener
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import androidx.appcompat.widget.AppCompatCheckBox
@@ -38,6 +38,7 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 import com.wire.signals.{EventStream, Signal, SourceStream}
 import com.wire.signals.{EventStream, SourceStream}
+import com.wire.signals.{EventStream, Signal, SourceStream}
 import org.threeten.bp.Instant
 
 class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
