@@ -161,7 +161,6 @@
         android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_marginEnd="@dimen/wire__padding__regular"
         android:background="?thinDividerColor" />
-        android:layout_toEndOf="@id/chathead"
-        android:background="?thinDividerColor" />
+
 
 </merge>
