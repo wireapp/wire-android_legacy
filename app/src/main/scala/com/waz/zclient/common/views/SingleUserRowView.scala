@@ -20,7 +20,7 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
-import android.view.View.{ OnClickListener}
+import android.view.View.OnClickListener
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import androidx.appcompat.widget.AppCompatCheckBox
@@ -36,7 +36,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{GuestUtils, StringUtils, _}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
-import com.wire.signals.{EventStream, SourceStream}
+import com.wire.signals.{EventStream, Signal, SourceStream}
 import org.threeten.bp.Instant
 
 class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
@@ -73,7 +73,42 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     override def onClick(v: View): Unit = setChecked(!checkbox.isChecked)
   })
 
-  currentTheme.collect { case Some(t) => t }.onUi { theme => setTheme(theme, solidBackground) }
+  private val chosenCurrentTheme = currentTheme.collect { case Some(t) => t }
+  chosenCurrentTheme.onUi { theme => setTheme(theme, solidBackground) }
+
+  private val videoEnabled = Signal(false)
+  private val screenShareEnabled = Signal(false)
+
+  Signal(videoEnabled, screenShareEnabled).map { case (v, s) => v || s }.onUi(videoIndicator.setVisible)
+  Signal(chosenCurrentTheme, videoEnabled, screenShareEnabled).onUi {
+    case (Theme.Light, true, _) => videoIndicator.setImageResource(R.drawable.ic_video_light_theme)
+    case (Theme.Light, false, true) => videoIndicator.setImageResource(R.drawable.ic_screenshare_light_theme)
+    case (Theme.Dark, true, _) => videoIndicator.setImageResource(R.drawable.ic_video_dark_theme)
+    case (Theme.Dark, false, true) => videoIndicator.setImageResource(R.drawable.ic_screenshare_dark_theme)
+    case (_, _, _) =>
+  }
+
+  private val isMuted = Signal(false)
+  audioIndicator.setVisible(true)
+  Signal(chosenCurrentTheme, isMuted).onUi {
+    case (Theme.Light, true) => audioIndicator.setImageResource(R.drawable.ic_muted_light_theme)
+    case (Theme.Light, false) => audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
+    case (Theme.Dark, true) => audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
+    case (Theme.Dark, false) => audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
+    case (_, _) =>
+  }
+
+  private val isGuest = Signal(false)
+  private val isPartner = Signal(false)
+
+  Signal(isGuest, isPartner).map { case (v, s) => v || s }.onUi(guestPartnerIndicator.setVisible)
+  Signal(chosenCurrentTheme, isGuest, isPartner).onUi {
+    case (Theme.Light, true, _) => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_light_theme)
+    case (Theme.Light, false, true) => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_light_theme)
+    case (Theme.Dark, true, _) => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_dark_theme)
+    case (Theme.Dark, false, true) => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_dark_theme)
+    case (_, _, _) =>
+  }
 
   def setTitle(text: String, isSelf: Boolean): Unit = {
     nameView.setText(text)
@@ -97,9 +132,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     chathead.loadUser(user.userId)
     setTitle(user.displayName, user.isSelf)
     subtitleView.setVisible(false)
-    setVideoAndScreenShare(user.isVideoEnabled,user.isScreenShareEnabled)
-    setAudio(user.isMuted)
-    setGuestAndPartner(user.isGuest,user.isExternal)
+    videoEnabled ! user.isVideoEnabled
+    screenShareEnabled ! user.isScreenShareEnabled
+    isMuted ! user.isMuted
+    isGuest ! user.isGuest
+    isPartner ! user.isExternal
     setVerified(user.isVerified)
   }
 
@@ -111,7 +148,8 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
     setVerified(userData.isVerified)
     setSubtitle(createSubtitle(userData))
-    setGuestAndPartner(userData.isGuest(teamId) && !userData.isWireBot,userData.isExternal(teamId) && !userData.isWireBot )
+    isGuest ! (userData.isGuest(teamId) && !userData.isWireBot)
+    isPartner ! (userData.isExternal(teamId) && !userData.isWireBot)
   }
 
   def setIntegration(integration: IntegrationData): Unit = {
@@ -120,45 +158,6 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     setAvailability(Availability.None)
     setVerified(false)
     setSubtitle(integration.summary)
-  }
-
-  private def setVideoAndScreenShare(isVideoEnabled: Boolean, isScreenShareEnabled: Boolean): Unit = {
-    videoIndicator.setVisible(isVideoEnabled || isScreenShareEnabled)
-
-    currentTheme.collect { case Some(t) => t }.onUi {
-      case Theme.Light =>
-        if (isVideoEnabled) videoIndicator.setImageResource(R.drawable.ic_video_light_theme)
-        else if (isScreenShareEnabled) videoIndicator.setImageResource(R.drawable.ic_screenshare_light_theme)
-      case Theme.Dark =>
-        if (isVideoEnabled) videoIndicator.setImageResource(R.drawable.ic_video_dark_theme)
-        else if (isScreenShareEnabled) videoIndicator.setImageResource(R.drawable.ic_screenshare_dark_theme)
-    }
-  }
-
-  private def setGuestAndPartner(isGuest: Boolean, isPartner: Boolean): Unit = {
-    guestPartnerIndicator.setVisible(isGuest || isPartner)
-
-    currentTheme.collect { case Some(t) => t }.onUi {
-      case Theme.Light =>
-        if (isGuest) guestPartnerIndicator.setImageResource(R.drawable.ic_guest_light_theme)
-        else if (isPartner) guestPartnerIndicator.setImageResource(R.drawable.ic_guest_light_theme)
-      case Theme.Dark =>
-        if (isGuest) guestPartnerIndicator.setImageResource(R.drawable.ic_guest_dark_theme)
-        else if (isPartner) guestPartnerIndicator.setImageResource(R.drawable.ic_guest_dark_theme)
-    }
-  }
-
-  private def setAudio(isMuted: Boolean): Unit = {
-    audioIndicator.setVisible(true)
-
-    currentTheme.collect { case Some(t) => t }.onUi {
-      case Theme.Light =>
-        if (isMuted) audioIndicator.setImageResource(R.drawable.ic_muted_light_theme)
-        else audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
-      case Theme.Dark =>
-        if (isMuted) audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
-        else audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
-    }
   }
 
   def showCheckbox(show: Boolean): Unit = checkbox.setVisible(show)
