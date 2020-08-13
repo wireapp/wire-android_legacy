@@ -113,7 +113,7 @@ case class CallParticipantViewHolder(view: SingleUserRowView) extends ViewHolder
   def bind(callParticipantInfo: CallParticipantInfo, theme: Theme): Unit = {
     view.setCallParticipantInfo(callParticipantInfo)
     view.setTheme(theme, background = false)
-    view.setSeparatorVisible(false)
+    view.setSeparatorVisible(true)
   }
 }
 

@@ -25,19 +25,19 @@ import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import androidx.appcompat.widget.AppCompatCheckBox
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
-import com.wire.signals.{EventStream, SourceStream}
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
+import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
-import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon, VideoIcon}
+import com.waz.zclient.paintcode.ForwardNavigationIcon
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{GuestUtils, StringUtils}
+import com.waz.zclient.utils.{GuestUtils, StringUtils, _}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
+import com.wire.signals.{EventStream, Signal, SourceStream}
 import org.threeten.bp.Instant
-import com.waz.zclient.utils._
-import com.waz.threading.Threading._
 
 class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   extends RelativeLayout(context, attrs, style) with ViewHelper with ThemedView {
@@ -50,11 +50,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val nameView       = findById[TypefaceTextView](R.id.name_text)
   private lazy val subtitleView   = findById[TypefaceTextView](R.id.username_text)
   private lazy val checkbox       = findById[AppCompatCheckBox](R.id.checkbox)
-  private lazy val verifiedShield = findById[ImageView](R.id.verified_shield)
-  private lazy val guestIndicator = returning(findById[ImageView](R.id.guest_indicator))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
-  private lazy val videoIndicator = returning(findById[ImageView](R.id.video_indicator))(_.setImageDrawable(VideoIcon(R.color.light_graphite)))
+  private lazy val verifiedShield = findById[ImageView](R.id.verified_image_view)
+  private lazy val guestPartnerIndicator = findById[ImageView](R.id.guest_external_image_view)
+  private lazy val videoIndicator = findById[ImageView](R.id.video_status_image_view)
+  private lazy val audioIndicator = findById[ImageView](R.id.audio_status_image_view)
   private lazy val nextIndicator  = returning(findById[ImageView](R.id.next_indicator))(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40)))
-  private lazy val externalIcon   = findById[ImageView](R.id.external_icon)
   private lazy val separator      = findById[View](R.id.separator)
   private lazy val auxContainer   = findById[ViewGroup](R.id.aux_container)
 
@@ -73,7 +73,42 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     override def onClick(v: View): Unit = setChecked(!checkbox.isChecked)
   })
 
-  currentTheme.collect { case Some(t) => t }.onUi { theme => setTheme(theme, solidBackground) }
+  private val chosenCurrentTheme = currentTheme.collect { case Some(t) => t }
+  chosenCurrentTheme.onUi { theme => setTheme(theme, solidBackground) }
+
+  private val videoEnabled = Signal(false)
+  private val screenShareEnabled = Signal(false)
+
+  Signal(videoEnabled, screenShareEnabled).map { case (v, s) => v || s }.onUi(videoIndicator.setVisible)
+  Signal(chosenCurrentTheme, videoEnabled, screenShareEnabled).onUi {
+    case (Theme.Light, true, _) => videoIndicator.setImageResource(R.drawable.ic_video_light_theme)
+    case (Theme.Light, false, true) => videoIndicator.setImageResource(R.drawable.ic_screenshare_light_theme)
+    case (Theme.Dark, true, _) => videoIndicator.setImageResource(R.drawable.ic_video_dark_theme)
+    case (Theme.Dark, false, true) => videoIndicator.setImageResource(R.drawable.ic_screenshare_dark_theme)
+    case _ =>
+  }
+
+  private val isMuted = Signal(false)
+  audioIndicator.setVisible(true)
+  Signal(chosenCurrentTheme, isMuted).onUi {
+    case (Theme.Light, true) => audioIndicator.setImageResource(R.drawable.ic_muted_light_theme)
+    case (Theme.Light, false) => audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
+    case (Theme.Dark, true) => audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
+    case (Theme.Dark, false) => audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
+    case _ =>
+  }
+
+  private val isGuest = Signal(false)
+  private val isPartner = Signal(false)
+
+  Signal(isGuest, isPartner).map { case (v, s) => v || s }.onUi(guestPartnerIndicator.setVisible)
+  Signal(chosenCurrentTheme, isGuest, isPartner).onUi {
+    case (Theme.Light, true, _) => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_light_theme)
+    case (Theme.Light, false, true) => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_light_theme)
+    case (Theme.Dark, true, _) => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_dark_theme)
+    case (Theme.Dark, false, true) => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_dark_theme)
+    case _ =>
+  }
 
   def setTitle(text: String, isSelf: Boolean): Unit = {
     nameView.setText(text)
@@ -96,11 +131,13 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   def setCallParticipantInfo(user: CallParticipantInfo): Unit = {
     chathead.loadUser(user.userId)
     setTitle(user.displayName, user.isSelf)
+    subtitleView.setVisible(false)
+    videoEnabled ! user.isVideoEnabled
+    screenShareEnabled ! user.isScreenShareEnabled
+    isMuted ! user.isMuted
+    isGuest ! user.isGuest
+    isPartner ! user.isExternal
     setVerified(user.isVerified)
-    subtitleView.setVisibility(View.GONE)
-    setIsGuest(user.isGuest)
-    setIsExternal(user.isExternal)
-    videoIndicator.setVisible(user.isVideoEnabled)
   }
 
   def setUserData(userData:       UserData,
@@ -111,8 +148,8 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
     setVerified(userData.isVerified)
     setSubtitle(createSubtitle(userData))
-    setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
-    setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
+    isGuest ! (userData.isGuest(teamId) && !userData.isWireBot)
+    isPartner ! (userData.isExternal(teamId) && !userData.isWireBot)
   }
 
   def setIntegration(integration: IntegrationData): Unit = {
@@ -122,10 +159,6 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     setVerified(false)
     setSubtitle(integration.summary)
   }
-
-  private def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisible(guest)
-
-  private def setIsExternal(external: Boolean): Unit = externalIcon.setVisible(external)
 
   def showCheckbox(show: Boolean): Unit = checkbox.setVisible(show)
 
