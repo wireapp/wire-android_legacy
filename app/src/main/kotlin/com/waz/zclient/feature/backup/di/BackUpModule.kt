@@ -36,6 +36,9 @@ import com.waz.zclient.feature.backup.messages.LikesBackupMapper
 import com.waz.zclient.feature.backup.messages.MessagesBackUpDataSource
 import com.waz.zclient.feature.backup.messages.MessagesBackUpModel
 import com.waz.zclient.feature.backup.messages.MessagesBackUpDataMapper
+import com.waz.zclient.feature.backup.properties.PropertiesBackUpDataSource
+import com.waz.zclient.feature.backup.properties.PropertiesBackUpMapper
+import com.waz.zclient.feature.backup.properties.PropertiesBackUpModel
 import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
 import com.waz.zclient.storage.db.UserDatabase
 import org.koin.core.module.Module
@@ -52,6 +55,7 @@ private const val ASSETS_FILE_NAME = "Assets"
 private const val BUTTONS_FILE_NAME = "Buttons"
 private const val CONVERSATION_MEMBERS_FILE_NAME = "Buttons"
 private const val LIKES_FILE_NAME = "Likes"
+private const val PROPERTIES_FILE_NAME = "Properties"
 
 val backupModules: List<Module>
     get() = listOf(backUpModule)
@@ -131,4 +135,11 @@ val backUpModule = module {
     factory { BackUpFileIOHandler<LikesBackUpModel>(LIKES_FILE_NAME, get(), get()) }
     factory { LikesBackupMapper() }
     factory { LikesBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+
+    // Properties
+    factory { BatchDatabaseIOHandler((get<UserDatabase>()).propertiesDao()) }
+    factory { JsonConverter(PropertiesBackUpModel.serializer()) }
+    factory { BackUpFileIOHandler<PropertiesBackUpModel>(PROPERTIES_FILE_NAME, get(), get()) }
+    factory { PropertiesBackUpMapper() }
+    factory { PropertiesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
 }
