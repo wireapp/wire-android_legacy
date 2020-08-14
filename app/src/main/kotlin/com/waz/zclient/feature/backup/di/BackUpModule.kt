@@ -4,6 +4,7 @@ import android.os.Environment
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.ZipHandler
+import com.waz.zclient.feature.backup.EncryptionHandler
 import com.waz.zclient.feature.backup.assets.AssetsBackUpModel
 import com.waz.zclient.feature.backup.assets.AssetsBackupDataSource
 import com.waz.zclient.feature.backup.assets.AssetsBackupMapper
@@ -71,6 +72,7 @@ val backupModules: List<Module>
 val backUpModule = module {
     single { Environment.getExternalStorageDirectory() }
     single { ZipHandler(get()) }
+    single { EncryptionHandler() }
 
     factory { CreateBackUpUseCase(getAll()) } //this resolves all instances of type BackUpRepository
 
