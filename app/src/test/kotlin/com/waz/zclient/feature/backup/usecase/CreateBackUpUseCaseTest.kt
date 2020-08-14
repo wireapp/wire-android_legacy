@@ -130,6 +130,37 @@ class CreateBackUpUseCaseTest : UnitTest() {
     }
 
     @Test
+    fun `given back up repositories, when they succeed but the zip handler fails, then return a failure`() {
+        runBlocking {
+            val repo1 = mockBackUpRepo(true)
+            val repo2 = mockBackUpRepo(true)
+            val repo3 = mockBackUpRepo(true)
+            val zipHandler = mockZipHandler(false)
+            val encryptionHandler = mockEncryptionHandler(true)
+            val metaDataHandler = mockMetaDataHandler(true)
+
+            createBackUpUseCase = CreateBackUpUseCase(
+                listOf(repo1, repo2, repo3),
+                zipHandler,
+                encryptionHandler,
+                metaDataHandler,
+                testCoroutineScope
+            )
+
+            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
+
+            verify(repo1).saveBackup()
+            verify(repo2).saveBackup()
+            verify(repo3).saveBackup()
+            verify(metaDataHandler).generateMetaDataFile(userId, userHandle) // metadata is generated before zipping
+            verify(zipHandler).zip(anyString(), anyList())
+            verifyNoInteractions(encryptionHandler)
+
+            assertEquals(Either.Left(FakeZipFailure), result)
+        }
+    }
+
+    @Test
     fun `given back up repositories and metadata, when they succeed but the encryption handler fails, then return a failure`() {
         runBlocking {
             val repo1 = mockBackUpRepo(true)
@@ -182,73 +213,12 @@ class CreateBackUpUseCaseTest : UnitTest() {
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
-            // backups are saved asynchronously so there might be some interactions with repo3
             verify(repo3).saveBackup()
             verify(metaDataHandler).generateMetaDataFile(userId, userHandle)
             verifyNoInteractions(zipHandler)
             verifyNoInteractions(encryptionHandler)
 
             assertEquals(Either.Left(FakeMetaDataFailure), result)
-        }
-    }
-
-    @Test
-    fun `given back up repositories, when they succeed but the zip handler fails, then return a failure`() {
-        runBlocking {
-            val repo1 = mockBackUpRepo(true)
-            val repo2 = mockBackUpRepo(true)
-            val repo3 = mockBackUpRepo(true)
-            val zipHandler = mockZipHandler(false)
-            val encryptionHandler = mockEncryptionHandler(true)
-            val metaDataHandler = mockMetaDataHandler(true)
-
-            createBackUpUseCase = CreateBackUpUseCase(
-                listOf(repo1, repo2, repo3),
-                zipHandler,
-                encryptionHandler,
-                metaDataHandler,
-                testCoroutineScope
-            )
-
-            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
-
-            verify(repo1).saveBackup()
-            verify(repo2).saveBackup()
-            verify(repo3).saveBackup()
-            verify(zipHandler).zip(anyString(), anyList())
-            verifyNoInteractions(encryptionHandler)
-
-            assertEquals(Either.Left(FakeZipFailure), result)
-        }
-    }
-
-    @Test
-    fun `given back up repositories, when they succeed but the encryption handler fails, then return a failure`() {
-        runBlocking {
-            val repo1 = mockBackUpRepo(true)
-            val repo2 = mockBackUpRepo(true)
-            val repo3 = mockBackUpRepo(true)
-            val zipHandler = mockZipHandler(true)
-            val encryptionHandler = mockEncryptionHandler(false)
-            val metaDataHandler = mockMetaDataHandler(true)
-
-            createBackUpUseCase = CreateBackUpUseCase(
-                listOf(repo1, repo2, repo3),
-                zipHandler,
-                encryptionHandler,
-                metaDataHandler,
-                testCoroutineScope
-            )
-
-            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
-
-            verify(repo1).saveBackup()
-            verify(repo2).saveBackup()
-            verify(repo3).saveBackup()
-            verify(zipHandler).zip(anyString(), anyList())
-            verify(encryptionHandler).encrypt(any(), any(), anyString())
-
-            assertEquals(Either.Left(FakeEncryptionFailure), result)
         }
     }
 

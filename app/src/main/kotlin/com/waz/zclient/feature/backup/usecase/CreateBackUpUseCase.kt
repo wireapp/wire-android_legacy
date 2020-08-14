@@ -41,9 +41,7 @@ class CreateBackUpUseCase(
     }
 
     private suspend fun backUpOrFail() = extractFiles(
-        backUpRepositories
-            .map { coroutineScope.async(Dispatchers.IO) { it.saveBackup() } }
-            .awaitAll()
+        backUpRepositories.map { coroutineScope.async(Dispatchers.IO) { it.saveBackup() } }.awaitAll()
     )
 
     @SuppressWarnings("MagicNumber")
