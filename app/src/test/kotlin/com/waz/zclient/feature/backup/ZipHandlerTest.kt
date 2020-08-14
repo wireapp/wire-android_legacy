@@ -2,6 +2,8 @@ package com.waz.zclient.feature.backup
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.feature.createTextFile
+import com.waz.zclient.feature.uniqueZipFileName
 import org.amshove.kluent.`should be greater than`
 import org.amshove.kluent.shouldEqual
 import org.junit.Assert.fail
@@ -11,29 +13,6 @@ import java.util.Base64
 import kotlin.random.Random
 
 class ZipHandlerTest : UnitTest() {
-
-    private fun generateText(length: Int): String = Base64.getEncoder().encodeToString(Random.Default.nextBytes(length))
-
-    private fun createTempDir(): File = File.createTempFile("temp", System.currentTimeMillis().toString()).apply {
-        delete()
-        mkdirs()
-        deleteOnExit()
-    }
-
-    private fun uniqueTextFileName(): String {
-        Thread.sleep(1)
-        return "ZipHandlerTest_${System.currentTimeMillis()}.txt"
-    }
-
-    private fun uniqueZipFileName(): String {
-        Thread.sleep(1)
-        return "ZipHandlerTest_${System.currentTimeMillis()}.zip"
-    }
-
-    private fun createTextFile(dir: File, length: Int = 100): File =
-            File(dir, uniqueTextFileName()).apply {
-                bufferedWriter().use { it.write(generateText(length)) }
-            }
 
     @Test
     fun `given a non-empty input text file, when zipped, then return a zipped non-empty file`() {
@@ -114,8 +93,8 @@ class ZipHandlerTest : UnitTest() {
         val originalFile2 = createTextFile(tempDir)
         val originalContents2 = originalFile2.readText()
         val originalContents = mapOf(
-                originalFile1.name to originalContents1,
-                originalFile2.name to originalContents2
+            originalFile1.name to originalContents1,
+            originalFile2.name to originalContents2
         )
 
         val zipHandler = ZipHandler(tempDir)
