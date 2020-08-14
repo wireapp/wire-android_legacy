@@ -2,6 +2,8 @@ package com.waz.zclient.feature.backup
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.feature.backup.zip.ZipHandler
+import com.waz.zclient.feature.backup.zip.ZipHandlerDataSource
 import com.waz.zclient.feature.createTextFile
 import com.waz.zclient.feature.uniqueZipFileName
 import org.amshove.kluent.`should be greater than`
@@ -9,8 +11,6 @@ import org.amshove.kluent.shouldEqual
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.File
-import java.util.Base64
-import kotlin.random.Random
 
 class ZipHandlerTest : UnitTest() {
 
@@ -20,7 +20,7 @@ class ZipHandlerTest : UnitTest() {
         val textFile = createTextFile(tempDir)
         textFile.length() `should be greater than` 0
 
-        val zipHandler = ZipHandler(tempDir)
+        val zipHandler: ZipHandler = ZipHandlerDataSource(tempDir)
 
         when (val res = zipHandler.zip(uniqueZipFileName(), listOf(textFile))) {
             is Either.Left -> fail(res.a.toString())
@@ -35,7 +35,7 @@ class ZipHandlerTest : UnitTest() {
     fun `given no input files, when zipped, then return a zipped file`() {
         val tempDir = createTempDir()
 
-        val zipHandler = ZipHandler(tempDir)
+        val zipHandler: ZipHandler = ZipHandlerDataSource(tempDir)
 
         when (val res = zipHandler.zip(uniqueZipFileName(), emptyList())) {
             is Either.Left -> fail(res.a.toString())
@@ -51,7 +51,7 @@ class ZipHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val fileList = listOf(createTextFile(tempDir), createTextFile(tempDir), createTextFile(tempDir))
 
-        val zipHandler = ZipHandler(tempDir)
+        val zipHandler: ZipHandler = ZipHandlerDataSource(tempDir)
 
         when (val res = zipHandler.zip(uniqueZipFileName(), fileList)) {
             is Either.Left -> fail(res.a.toString())
@@ -68,7 +68,7 @@ class ZipHandlerTest : UnitTest() {
         val originalFile = createTextFile(tempDir)
         val originalContents = originalFile.readText()
 
-        val zipHandler = ZipHandler(tempDir)
+        val zipHandler: ZipHandler = ZipHandlerDataSource(tempDir)
 
         val zipped = zipHandler.zip(uniqueZipFileName(), listOf(originalFile))
         assert(zipped.isRight)
@@ -97,7 +97,7 @@ class ZipHandlerTest : UnitTest() {
             originalFile2.name to originalContents2
         )
 
-        val zipHandler = ZipHandler(tempDir)
+        val zipHandler: ZipHandler = ZipHandlerDataSource(tempDir)
 
         val zipped = zipHandler.zip(uniqueZipFileName(), listOf(originalFile1, originalFile2))
         assert(zipped.isRight)

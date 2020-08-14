@@ -3,8 +3,8 @@ package com.waz.zclient.feature.backup.di
 import android.os.Environment
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpRepository
-import com.waz.zclient.feature.backup.ZipHandler
-import com.waz.zclient.feature.backup.EncryptionHandler
+import com.waz.zclient.feature.backup.zip.ZipHandler
+import com.waz.zclient.feature.backup.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.assets.AssetsBackUpModel
 import com.waz.zclient.feature.backup.assets.AssetsBackupDataSource
 import com.waz.zclient.feature.backup.assets.AssetsBackupMapper
@@ -23,6 +23,7 @@ import com.waz.zclient.feature.backup.conversations.ConversationsBackupMapper
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupMapper
+import com.waz.zclient.feature.backup.encryption.EncryptionHandlerDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackUpModel
 import com.waz.zclient.feature.backup.folders.FoldersBackupDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackupMapper
@@ -47,6 +48,7 @@ import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
 import com.waz.zclient.feature.backup.users.UsersBackUpDataSource
 import com.waz.zclient.feature.backup.users.UsersBackUpDataMapper
 import com.waz.zclient.feature.backup.users.UsersBackUpModel
+import com.waz.zclient.feature.backup.zip.ZipHandlerDataSource
 import com.waz.zclient.storage.db.UserDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.bind
@@ -71,10 +73,10 @@ val backupModules: List<Module>
 
 val backUpModule = module {
     single { Environment.getExternalStorageDirectory() }
-    single { ZipHandler(get()) }
-    single { EncryptionHandler() }
+    single { ZipHandlerDataSource(get()) } bind ZipHandler::class
+    single { EncryptionHandlerDataSource() } bind EncryptionHandler::class
 
-    factory { CreateBackUpUseCase(getAll()) } //this resolves all instances of type BackUpRepository
+    factory { CreateBackUpUseCase(getAll(), get(), get()) } //this resolves all instances of type BackUpRepository
 
     // KeyValues
     factory { BatchDatabaseIOHandler((get<UserDatabase>()).keyValuesDao()) }
