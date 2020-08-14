@@ -38,6 +38,9 @@ import com.waz.zclient.feature.backup.messages.LikesBackupMapper
 import com.waz.zclient.feature.backup.messages.MessagesBackUpDataSource
 import com.waz.zclient.feature.backup.messages.MessagesBackUpModel
 import com.waz.zclient.feature.backup.messages.MessagesBackUpDataMapper
+import com.waz.zclient.feature.backup.metadata.BackupMetaData
+import com.waz.zclient.feature.backup.metadata.MetaDataHandler
+import com.waz.zclient.feature.backup.metadata.MetaDataHandlerDataSource
 import com.waz.zclient.feature.backup.properties.PropertiesBackUpDataSource
 import com.waz.zclient.feature.backup.properties.PropertiesBackUpMapper
 import com.waz.zclient.feature.backup.properties.PropertiesBackUpModel
@@ -68,6 +71,8 @@ private const val PROPERTIES_FILE_NAME = "Properties"
 private const val READ_RECEIPTS_FILE_NAME = "ReadReceipts"
 private const val USERS_FILE_NAME = "Users"
 
+private const val BACKUP_VERSION = 1
+
 val backupModules: List<Module>
     get() = listOf(backUpModule)
 
@@ -76,7 +81,11 @@ val backUpModule = module {
     single { ZipHandlerDataSource(get()) } bind ZipHandler::class
     single { EncryptionHandlerDataSource() } bind EncryptionHandler::class
 
-    factory { CreateBackUpUseCase(getAll(), get(), get()) } //this resolves all instances of type BackUpRepository
+    factory { CreateBackUpUseCase(getAll(), get(), get(), get()) } //this resolves all instances of type BackUpRepository
+
+    // MetaData
+    factory { JsonConverter(BackupMetaData.serializer()) }
+    factory { MetaDataHandlerDataSource(BACKUP_VERSION, get(), get()) } bind MetaDataHandler::class
 
     // KeyValues
     factory { BatchDatabaseIOHandler((get<UserDatabase>()).keyValuesDao()) }
