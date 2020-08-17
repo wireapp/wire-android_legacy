@@ -169,7 +169,8 @@ object Calling {
     //              "userid": "3f49da1d-0d52-4696-9ef3-0dd181383e8a",
     //              "clientid": "24cc758f602fb1f4",
     //              "aestab": 1,
-    //              "vrecv": 0
+    //              "vrecv": 0,
+    //              "muted": 0
     //          }
     //      ]
     //}
