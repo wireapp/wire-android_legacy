@@ -8,10 +8,10 @@ import org.junit.Assert.fail
 import org.mockito.Mockito.`when`
 
 suspend fun <T> BatchReader<T>.mockNextItems(items: List<T>) {
-    val itemsArray = items.map { Either.Right(it) }.plus(Either.Right(null)).toTypedArray()
-    `when`(this.readNext()).thenReturn(itemsArray[0], *itemsArray.sliceArray(1 until itemsArray.size))
-    if (!items.isEmpty()) {
-        `when`(this.hasNext()).thenReturn(itemsArray[0].isRight && itemsArray[0].b != null, *itemsArray.map { it.isRight && it.b != null }.toTypedArray())
+    val itemsOrFailure = items.map { Either.Right(it) }
+    `when`(this.readNext()).thenReturn(itemsOrFailure[0], *itemsOrFailure.drop(1).toTypedArray())
+    if (items.isNotEmpty()) {
+        `when`(this.hasNext()).thenReturn(itemsOrFailure[0].isRight, *itemsOrFailure.drop(1).map { it.isRight }.toTypedArray(), false)
     } else {
         `when`(this.hasNext()).thenReturn(false)
     }
@@ -27,7 +27,6 @@ suspend fun <T> BatchReader<T>.assertItems(expectedItems: List<T>) {
                 val expectedItem = expectedItems.getOrNull(count)
                 expectedItem?.let { assertEquals(it, next) }
             }
-            count == expectedItems.size -> assertEquals(null, next)
             else -> fail("Expected ${expectedItems.size} iterations but got ${count + 1}")
         }
         count++

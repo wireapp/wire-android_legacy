@@ -3,6 +3,8 @@ package com.waz.zclient.feature.backup.io
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
+import com.waz.zclient.core.functional.onFailure
+import com.waz.zclient.core.functional.onSuccess
 
 interface BatchReader<T> {
     /**
@@ -12,7 +14,7 @@ interface BatchReader<T> {
      * Either.Right(t) if next item is read successfully,
      * Either.Right(null) if there are no more items to read.
      */
-    suspend fun readNext(): Either<Failure, T?>
+    suspend fun readNext(): Either<Failure, T>
 
     suspend fun hasNext(): Boolean
 }
@@ -39,14 +41,11 @@ suspend fun <T, R> BatchReader<T>.mapRight(action: suspend (T) -> Either<Failure
     var failure: Failure? = null
 
     suspend fun performAction(value: T) =
-        when (val res = action(value)) {
-            is Either.Right -> rightValues += res.b
-            is Either.Left -> failure = res.a
-        }
+        action(value).onSuccess { rightValues += it }.onFailure { failure = it }
 
     while (hasNext() && failure == null) {
         when (val next = readNext()) {
-            is Either.Right -> next.b?.let { performAction(it) }
+            is Either.Right -> performAction(next.b) // unable to use `onSuccess` because `performAction` is a suspend function
             is Either.Left -> failure = next.a
         }
     }

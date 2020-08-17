@@ -65,6 +65,7 @@ class KoinDependencyMap(map: Map<String, String>) {
     val androidCore: String by map
     val androidScope: String by map
     val androidViewModel: String by map
+    val java: String by map
 }
 
 //Test Dependencies

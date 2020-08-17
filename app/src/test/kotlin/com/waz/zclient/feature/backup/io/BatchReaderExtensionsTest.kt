@@ -34,7 +34,7 @@ class BatchReaderExtensionsTest : UnitTest() {
             }
 
             assertEquals(items, nextItems)
-            assertEquals(Right(null), batchReader.readNext())
+            assertEquals(false, batchReader.hasNext())
             assertEquals(Right(Unit), result)
         }
     }

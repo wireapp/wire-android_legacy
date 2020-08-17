@@ -1,11 +1,11 @@
 package com.waz.zclient.feature.backup.io.file
 
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.exception.IOFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpIOHandler
-import com.waz.zclient.feature.backup.SerializationFailure
 import com.waz.zclient.feature.backup.io.BatchReader
 import com.waz.zclient.feature.backup.io.mapRight
 import kotlinx.coroutines.Dispatchers
@@ -44,14 +44,14 @@ class BackUpFileIOHandler<T>(
     override fun readIterator() = object : BatchReader<List<T>> {
         private var index = 0
 
-        override suspend fun readNext(): Either<Failure, List<T>?> =
+        override suspend fun readNext(): Either<Failure, List<T>> =
             try {
                 val file = getFile(index)
                 if (file.exists()) {
                     val jsonStr = file.bufferedReader().readText()
                     Either.Right(jsonConverter.fromJsonList(jsonStr)).also { ++index }
                 } else {
-                    Either.Right(null)
+                    Either.Right(emptyList())
                 }
             } catch (ex: IOException) {
                 Either.Left(IOFailure(ex))
@@ -66,3 +66,5 @@ class BackUpFileIOHandler<T>(
         if (index == 0) File(targetDir, "$fileNamePrefix.json")
         else File(targetDir, "${fileNamePrefix}_$index.json")
 }
+
+data class SerializationFailure(val ex: SerializationException) : FeatureFailure()

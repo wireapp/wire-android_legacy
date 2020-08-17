@@ -15,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.mockito.Mockito
+import com.waz.zclient.any
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
@@ -54,7 +54,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
+            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
@@ -85,7 +85,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
+            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
@@ -116,7 +116,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                     testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
+            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
@@ -147,7 +147,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
+            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
@@ -209,7 +209,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                     testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
+            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
@@ -227,21 +227,19 @@ class CreateBackUpUseCaseTest : UnitTest() {
          * Returns Mockito.any() as nullable type to avoid java.lang.IllegalStateException when null is returned.
          * Taken from https://stackoverflow.com/a/48091649/2975925
          */
-        fun <T> any(): T = Mockito.any<T>()
-
-        suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository<File> = mock(BackUpRepository::class.java).also {
+        suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository<List<File>> = mock(BackUpRepository::class.java).also {
             `when`(it.saveBackup()).thenReturn(
-                    if (backUpSuccess) Either.Right(createTempFile(suffix = ".json"))
+                    if (backUpSuccess) Either.Right(listOf(createTempFile(suffix = ".json")))
                     else Either.Left(DatabaseError)
             )
-        } as BackUpRepository<File>
+        } as BackUpRepository<List<File>>
 
         fun mockZipHandler(zipSuccess: Boolean = true): ZipHandler = mock(ZipHandler::class.java).also {
             `when`(it.zip(anyString(), anyList())).thenReturn(
                 if (zipSuccess) Either.Right(createTempFile(suffix = ".zip"))
                 else Either.Left(FakeZipFailure)
             )
-        } as ZipHandler
+        }
 
         fun mockEncryptionHandler(encryptionSuccess: Boolean = true): EncryptionHandler = mock(EncryptionHandler::class.java).also {
             `when`(it.encrypt(any(), any(), anyString())).thenReturn(

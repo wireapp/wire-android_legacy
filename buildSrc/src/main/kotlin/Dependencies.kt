@@ -121,7 +121,8 @@ object BuildDependencies {
     val koin = KoinDependencyMap(mapOf(
         "androidCore" to "org.koin:koin-android:${Versions.KOIN}",
         "androidScope" to "org.koin:koin-android-scope:${Versions.KOIN}",
-        "androidViewModel" to "org.koin:koin-android-viewmodel:${Versions.KOIN}"
+        "androidViewModel" to "org.koin:koin-android-viewmodel:${Versions.KOIN}",
+        "java" to "org.koin:koin-java:${Versions.KOIN}"
     ))
     val rxJava = RxJavaDependencyMap(mapOf(
         "rxKotlin" to "io.reactivex.rxjava2:rxkotlin:${Versions.RX_KOTLIN}",
