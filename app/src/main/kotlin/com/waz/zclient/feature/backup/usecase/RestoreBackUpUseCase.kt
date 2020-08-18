@@ -8,7 +8,6 @@ import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.feature.backup.BackUpRepository
-import com.waz.zclient.feature.backup.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +21,6 @@ import java.io.File
 class RestoreBackUpUseCase(
     private val backUpRepositories: List<BackUpRepository<List<File>>>,
     private val zipHandler: ZipHandler,
-    private val encryptionHandler: EncryptionHandler,
     private val metaDataHandler: MetaDataHandler,
     private val backUpVersion: Int,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
