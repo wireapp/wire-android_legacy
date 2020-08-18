@@ -157,9 +157,8 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   private def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisible(guest)
-
+  
   private def setIsExternal(external: Boolean): Unit = externalIndicator.setVisible(external)
-
 
   def setIntegration(integration: IntegrationData): Unit = {
     chathead.setIntegration(integration)
