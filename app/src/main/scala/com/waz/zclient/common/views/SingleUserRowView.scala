@@ -19,7 +19,7 @@ package com.waz.zclient.common.views
 
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
-import android.util.AttributeSet
+import android.util.{AttributeSet}
 import android.view.View.OnClickListener
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
@@ -30,7 +30,7 @@ import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
-import com.waz.zclient.paintcode.ForwardNavigationIcon
+import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{GuestUtils, StringUtils, _}
@@ -59,6 +59,8 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val nextIndicator  = returning(findById[ImageView](R.id.next_indicator))(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40)))
   private lazy val separator      = findById[View](R.id.separator)
   private lazy val auxContainer   = findById[ViewGroup](R.id.aux_container)
+  private lazy val guestIndicator = returning(findById[ImageView](R.id.guest_image_view))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
+  private lazy val externalIndicator   = findById[ImageView](R.id.external_image_view)
 
   private lazy val youTextString = getString(R.string.content__system__you).capitalize
   private lazy val youText        = returning(findById[TypefaceTextView](R.id.you_text))(_.setText(s"($youTextString)"))
@@ -150,9 +152,14 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
     setVerified(userData.isVerified)
     setSubtitle(createSubtitle(userData))
-    isGuest ! (userData.isGuest(teamId) && !userData.isWireBot)
-    isPartner ! (userData.isExternal(teamId) && !userData.isWireBot)
+    setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
+    setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
   }
+
+  private def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisible(guest)
+
+  private def setIsExternal(external: Boolean): Unit = externalIndicator.setVisible(external)
+
 
   def setIntegration(integration: IntegrationData): Unit = {
     chathead.setIntegration(integration)
