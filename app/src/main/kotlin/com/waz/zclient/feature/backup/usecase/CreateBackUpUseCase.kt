@@ -7,7 +7,6 @@ import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.feature.backup.BackUpRepository
-import com.waz.zclient.feature.backup.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +23,6 @@ import java.util.Locale
 class CreateBackUpUseCase(
     private val backUpRepositories: List<BackUpRepository<List<File>>>,
     private val zipHandler: ZipHandler,
-    private val encryptionHandler: EncryptionHandler,
     private val metaDataHandler: MetaDataHandler,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : UseCase<File, CreateBackUpUseCaseParams> {
@@ -36,9 +34,6 @@ class CreateBackUpUseCase(
             }
             .flatMap { files ->
                 zipHandler.zip(backupZipFileName(params.userHandle), files)
-            }
-            .flatMap { file ->
-                encryptionHandler.encrypt(file, params.userId, params.password)
             }
 
     private suspend fun backUpOrFail(): Either<Failure, List<File>> = extractFiles(

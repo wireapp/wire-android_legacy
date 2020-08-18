@@ -4,7 +4,6 @@ import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.BackUpViewModel
 import com.waz.zclient.feature.backup.zip.ZipHandler
-import com.waz.zclient.feature.backup.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.assets.AssetsBackUpModel
 import com.waz.zclient.feature.backup.assets.AssetsBackupDataSource
 import com.waz.zclient.feature.backup.assets.AssetsBackupMapper
@@ -23,7 +22,6 @@ import com.waz.zclient.feature.backup.conversations.ConversationsBackupMapper
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupMapper
-import com.waz.zclient.feature.backup.encryption.EncryptionHandlerDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackUpModel
 import com.waz.zclient.feature.backup.folders.FoldersBackupDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackupMapper
@@ -86,10 +84,10 @@ val backupModules: List<Module>
 
 val backUpModule = module {
     single { androidContext().externalCacheDir }
-    single { ZipHandler(get()) }
-    single { EncryptionHandlerDataSource() } bind EncryptionHandler::class
 
-    factory { CreateBackUpUseCase(getAll(), get(), get(), get()) } //this resolves all instances of type BackUpRepository
+    single { ZipHandler(get()) }
+
+    factory { CreateBackUpUseCase(getAll(), get(), get()) } //this resolves all instances of type BackUpRepository
     viewModel { BackUpViewModel(get()) }
 
     // MetaData
