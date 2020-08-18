@@ -22,6 +22,8 @@ import com.waz.zclient.feature.backup.conversations.ConversationsBackupMapper
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupMapper
+import com.waz.zclient.feature.backup.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.encryption.EncryptionHandlerDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackUpModel
 import com.waz.zclient.feature.backup.folders.FoldersBackupDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackupMapper
@@ -86,8 +88,10 @@ val backUpModule = module {
     single { androidContext().externalCacheDir }
 
     single { ZipHandler(get()) }
+    single { EncryptionHandlerDataSource() } bind EncryptionHandler::class
 
-    factory { CreateBackUpUseCase(getAll(), get(), get()) } //this resolves all instances of type BackUpRepository
+
+    factory { CreateBackUpUseCase(getAll(), get(), get(), get()) } //this resolves all instances of type BackUpRepository
     viewModel { BackUpViewModel(get()) }
 
     // MetaData
