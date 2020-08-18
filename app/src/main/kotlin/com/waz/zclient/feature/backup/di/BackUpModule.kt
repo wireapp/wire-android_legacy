@@ -3,25 +3,29 @@ package com.waz.zclient.feature.backup.di
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.BackUpViewModel
-import com.waz.zclient.feature.backup.zip.ZipHandler
 import com.waz.zclient.feature.backup.assets.AssetsBackUpModel
 import com.waz.zclient.feature.backup.assets.AssetsBackupDataSource
 import com.waz.zclient.feature.backup.assets.AssetsBackupMapper
 import com.waz.zclient.feature.backup.buttons.ButtonsBackUpModel
-import com.waz.zclient.feature.backup.buttons.ButtonsBackupMapper
 import com.waz.zclient.feature.backup.buttons.ButtonsBackupDataSource
+import com.waz.zclient.feature.backup.buttons.ButtonsBackupMapper
 import com.waz.zclient.feature.backup.conversations.ConversationFoldersBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationFoldersBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationFoldersBackupMapper
+import com.waz.zclient.feature.backup.conversations.ConversationMembersBackUpModel
+import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupDataSource
+import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupMapper
 import com.waz.zclient.feature.backup.conversations.ConversationRoleActionBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationRoleBackupMapper
 import com.waz.zclient.feature.backup.conversations.ConversationRolesBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationsBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationsBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationsBackupMapper
-import com.waz.zclient.feature.backup.conversations.ConversationMembersBackUpModel
-import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupDataSource
-import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupMapper
+import com.waz.zclient.feature.backup.crypto.Crypto
+import com.waz.zclient.feature.backup.crypto.decryption.DecryptionHandler
+import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
+import com.waz.zclient.feature.backup.crypto.header.EncryptionHeaderMapper
 import com.waz.zclient.feature.backup.folders.FoldersBackUpModel
 import com.waz.zclient.feature.backup.folders.FoldersBackupDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackupMapper
@@ -33,9 +37,9 @@ import com.waz.zclient.feature.backup.keyvalues.KeyValuesBackUpModel
 import com.waz.zclient.feature.backup.messages.LikesBackUpModel
 import com.waz.zclient.feature.backup.messages.LikesBackupDataSource
 import com.waz.zclient.feature.backup.messages.LikesBackupMapper
+import com.waz.zclient.feature.backup.messages.MessagesBackUpDataMapper
 import com.waz.zclient.feature.backup.messages.MessagesBackUpDataSource
 import com.waz.zclient.feature.backup.messages.MessagesBackUpModel
-import com.waz.zclient.feature.backup.messages.MessagesBackUpDataMapper
 import com.waz.zclient.feature.backup.metadata.BackupMetaData
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.metadata.MetaDataHandlerDataSource
@@ -46,9 +50,10 @@ import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackUpModel
 import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackupDataSource
 import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackupMapper
 import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
-import com.waz.zclient.feature.backup.users.UsersBackUpDataSource
 import com.waz.zclient.feature.backup.users.UsersBackUpDataMapper
+import com.waz.zclient.feature.backup.users.UsersBackUpDataSource
 import com.waz.zclient.feature.backup.users.UsersBackUpModel
+import com.waz.zclient.feature.backup.zip.ZipHandler
 import com.waz.zclient.storage.db.UserDatabase
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.viewmodel.dsl.viewModel
@@ -86,8 +91,14 @@ val backUpModule = module {
     single { androidContext().externalCacheDir }
 
     single { ZipHandler(get()) }
+    single { EncryptionHandler(get(), get()) }
+    single { DecryptionHandler(get(), get()) }
 
-    factory { CreateBackUpUseCase(getAll(), get(), get()) } //this resolves all instances of type BackUpRepository
+    factory { Crypto() }
+    factory { CryptoHeaderMetaData(get(), get()) }
+    factory { EncryptionHeaderMapper() }
+    
+    factory { CreateBackUpUseCase(getAll(), get(), get(), get()) } //this resolves all instances of type BackUpRepository
     viewModel { BackUpViewModel(get()) }
 
     // MetaData
