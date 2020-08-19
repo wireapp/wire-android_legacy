@@ -75,6 +75,27 @@
             android:layout_marginEnd="@dimen/wire__padding__small"
             android:src="@drawable/ic_verified" />
 
+        <ImageView
+            android:id="@+id/guest_image_view"
+            android:layout_width="@dimen/user_row_icon_size"
+            android:layout_height="@dimen/user_row_icon_size"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:tint="@color/graphite_16"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/external_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:src="@drawable/ic_partner_dark_theme"
+            android:tint="@color/graphite_16"
+            android:visibility="gone" />
+
         <androidx.appcompat.widget.AppCompatCheckBox
             android:id="@+id/checkbox"
             android:layout_width="@dimen/share_extension__row__checkbox_size"
@@ -161,5 +182,6 @@
         android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_marginEnd="@dimen/wire__padding__regular"
         android:background="?thinDividerColor" />
+
 
 </merge>
