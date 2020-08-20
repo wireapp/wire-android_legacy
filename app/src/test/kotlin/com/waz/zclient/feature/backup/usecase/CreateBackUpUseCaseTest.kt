@@ -9,7 +9,6 @@ import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
-
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -223,10 +222,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
     }
 
     companion object {
-        /**
-         * Returns Mockito.any() as nullable type to avoid java.lang.IllegalStateException when null is returned.
-         * Taken from https://stackoverflow.com/a/48091649/2975925
-         */
+
         suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository<List<File>> = mock(BackUpRepository::class.java).also {
             `when`(it.saveBackup()).thenReturn(
                     if (backUpSuccess) Either.Right(listOf(createTempFile(suffix = ".json")))
