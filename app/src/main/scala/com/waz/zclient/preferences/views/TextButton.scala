@@ -74,6 +74,9 @@ class TextButton(context: Context, attrs: AttributeSet, style: Int) extends Rela
   def setTitle(text: String): Unit =
     title.foreach(_.setText(text))
 
+  def setTitleMaxLines(maxLines: Int): Unit =
+    title.foreach(_.setMaxLines(maxLines))
+
   def setSubtitle(text: String): Unit =
     subtitle.foreach(subtitle => setOptionText(subtitle, Some(text)))
 
