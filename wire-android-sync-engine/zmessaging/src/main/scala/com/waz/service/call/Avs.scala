@@ -208,9 +208,9 @@ class AvsImpl() extends Avs with DerivedLogTag {
       Calling.wcall_set_network_quality_handler(wCall, networkQualityHandler, intervalInSeconds = 5, arg = null)
 
       val clientsRequestHandler = new ClientsRequestHandler {
-        override def onClientsRequest(inst: Calling.Handle, convId: String, arg: Pointer): Unit =
-          cs.onClientsRequest(ConvId(convId))
-      }
+        override def onClientsRequest(inst: Calling.Handle, convId: String, arg: Pointer): Unit = {
+          cs.onClientsRequest(RConvId(convId))
+      }}
 
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)
 
