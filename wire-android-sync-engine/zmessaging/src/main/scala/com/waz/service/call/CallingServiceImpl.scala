@@ -585,7 +585,6 @@ class CallingServiceImpl(val accountId:       UserId,
     atomicWithConv(convs.convByRemoteId(convId), f, s"Unknown remote convId: $convId")
 
   private def withConv(convId: ConvId)(f: (WCall, ConversationData) => Unit): Future[Unit] = {
-    Log.i("hammadi1",convId.str)
     atomicWithConv(convs.convById(convId), f, s"Could not find conversation: $convId")
   }
 
