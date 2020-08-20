@@ -411,7 +411,7 @@ class CallingServiceImpl(val accountId:       UserId,
   def onNetworkQualityChanged(convId: ConvId, participant: Participant, quality: NetworkQuality): Future[Unit] =
     Future.successful(())
 
-  def onClientsRequest(convId: ConvId): Future[Unit] =
+  def onClientsRequest(convId: RConvId): Future[Unit] =
     withConv(convId) { (wCall, conv) =>
       otrSyncHandler.postClientDiscoveryMessage(convId).map {
         case Right(clients) =>

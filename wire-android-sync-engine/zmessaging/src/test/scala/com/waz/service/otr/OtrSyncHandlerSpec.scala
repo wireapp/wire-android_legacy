@@ -284,8 +284,8 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       UserId("user2") -> Seq(ClientId("client1"), ClientId("client2"))
     )
 
-    (convStorage.get _)
-      .expects(conv.id)
+    (convStorage.getByRemoteId _)
+      .expects(conv.remoteId)
       .returning(Future.successful(Some(conv)))
 
     (msgClient.postMessage _)
@@ -298,7 +298,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       ))))
 
     val sh = getSyncHandler
-    result(sh.postClientDiscoveryMessage(conv.id)) shouldEqual Right(missingClients)
+    result(sh.postClientDiscoveryMessage(conv.remoteId)) shouldEqual Right(missingClients)
   }
 
   def getSyncHandler = {
