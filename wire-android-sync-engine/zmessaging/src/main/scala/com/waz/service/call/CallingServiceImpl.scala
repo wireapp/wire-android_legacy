@@ -628,9 +628,6 @@ class CallingServiceImpl(val accountId:       UserId,
   private def updateActiveCallAsync(f: (WCall, ConversationData, CallInfo) => CallInfo)(caller: String): Future[Unit] =
     Serialized.future(self) {
       currentCall.currentValue.flatten.map(_.convId).fold(Future.successful({})) { convId =>
-
-        Log.i("hammadi2",convId.str)
-
         wCall.flatMap { w =>
           convs.convById(convId).map {
             case Some(conv) => updateCallInfo(convId, f(w, conv, _))(caller)
