@@ -43,7 +43,8 @@ import com.waz.zclient.views.AvailabilityView
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
 
-class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentHelper {
+class ParticipantHeaderFragment extends FragmentHelper {
+  import ParticipantHeaderFragment._
   import Threading.Implicits.Ui
 
   implicit def cxt: Context = getActivity
@@ -134,7 +135,7 @@ class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentH
 
       // This is a workaround: when dismissing the single participant fragment, we should
       // go directly back to the conversation list, not the underlying conversation.
-      if (fromDeepLink) CancellableFuture.delay(750.millis).map { _ =>
+      if (fromDeepLink()) CancellableFuture.delay(750.millis).map { _ =>
         navigationController.setVisiblePage(NavPage.CONVERSATION_LIST, MainPhoneFragment.Tag)
       }
     }
@@ -227,11 +228,19 @@ class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentH
     toolbar.foreach(_.setNavigationOnClickListener(null))
     super.onPause()
   }
+
+  private def fromDeepLink() = getBooleanArg(ARG_FROM_DEEP_LINK)
 }
 
 object ParticipantHeaderFragment {
   val TAG: String = classOf[ParticipantHeaderFragment].getName
 
+  private val ARG_FROM_DEEP_LINK = "ParticipantHeaderFromDeepLink"
+
   def newInstance(fromDeepLink: Boolean = false): ParticipantHeaderFragment =
-    new ParticipantHeaderFragment(fromDeepLink)
+    returning(new ParticipantHeaderFragment) { f =>
+      f.setArguments(returning(new Bundle) { b =>
+        b.putBoolean(ARG_FROM_DEEP_LINK, fromDeepLink)
+      })
+    }
 }

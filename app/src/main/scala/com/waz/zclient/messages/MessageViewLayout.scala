@@ -37,7 +37,7 @@ import com.waz.threading.Threading._
 
 abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: Int)
   extends ViewGroup(context, attrs, style) with DerivedLogTag {
-  
+
   protected val factory: MessageViewFactory
 
   protected var listParts = Seq.empty[MessageViewPart]
@@ -105,8 +105,7 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
         case ex: ArrayIndexOutOfBoundsException =>
           error(l"Measure error, parentWidthMeasureSpec: $parentWidthMeasureSpec, parentHeightMeasureSpec: $parentHeightMeasureSpec", ex)
       }
-    } else
-      measureChildWithMargins(child, parentWidthMeasureSpec, 0, parentHeightMeasureSpec, 0)
+    } else measureChildWithMargins(child, parentWidthMeasureSpec, 0, parentHeightMeasureSpec, 0)
 
   override def onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int): Unit = {
     var h = getPaddingTop + getPaddingBottom

@@ -558,7 +558,14 @@
     <dimen name="calling_profile_margin_side">32dp</dimen>
     <dimen name="calling_participant_info_card_margin">8dp</dimen>
     <dimen name="calling_participant_info_card_corner_radius">12dp</dimen>
-    <dimen name="calling_participant_name_padding">4dp</dimen>
+    <dimen name="calling_participant_info_card_corner_elevation">0dp</dimen>
+    <dimen name="calling_participant_name_padding_start">4dp</dimen>
+    <dimen name="calling_participant_name_padding_end">10dp</dimen>
+    <dimen name="calling_participant_name_padding_top">4dp</dimen>
+    <dimen name="calling_participant_name_padding_bottom">4dp</dimen>
+    <dimen name="calling_participant_audio_status_padding_start">4dp</dimen>
+    <dimen name="calling_participant_audio_status_padding_top">4dp</dimen>
+    <dimen name="calling_participant_audio_status_padding_bottom">4dp</dimen>
     <dimen name="services_warning_icon_width">48dp</dimen>
     <dimen name="services_warning_icon_height">48dp</dimen>
     <dimen name="services_warning_text_width">204dp</dimen>

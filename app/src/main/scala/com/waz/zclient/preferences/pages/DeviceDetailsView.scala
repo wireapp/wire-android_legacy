@@ -114,6 +114,7 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
     this.fingerprint = fingerprint
     fingerprintView.setTitle(DevicesPreferencesUtil.getFormattedFingerprint(context, fingerprint).toString)
     fingerprintView.title.foreach(TextViewUtils.boldText)
+    fingerprintView.setTitleMaxLines(2)
   }
 
   override def setActionsVisible(visible: Boolean) = {

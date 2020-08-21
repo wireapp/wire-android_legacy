@@ -21,15 +21,14 @@ import android.content.res.{Configuration, Resources, TypedArray}
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
-import androidx.core.content.ContextCompat
-import androidx.appcompat.app.AlertDialog
 import android.text.format.Formatter
 import android.util.{AttributeSet, DisplayMetrics, TypedValue}
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.annotation.StyleableRes
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import com.waz.model.{AccentColor, Availability}
 import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason}
 import com.waz.utils.returning
@@ -44,8 +43,7 @@ object ContextUtils {
   def getColor(resId: Int)(implicit context: Context): Int = ContextCompat.getColor(context, resId)
 
   def getColorWithThemeJava(resId: Int, context: Context): Int =
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) getColor(resId)(context)
-    else context.getResources.getColor(resId, context.getTheme)
+    context.getResources.getColor(resId, context.getTheme)
 
   def getColorWithTheme(resId: Int)(implicit context: Context): Int =
     getColorWithThemeJava(resId, context)
@@ -83,13 +81,8 @@ object ContextUtils {
 
   def toPx(dp: Int)(implicit context: Context) = (dp * context.getResources.getDisplayMetrics.density).toInt
 
-  def getLocale(implicit context: Context) = {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-      DeprecationUtils.getDefaultLocale(context)
-    } else {
+  def getLocale(implicit context: Context) =
       context.getResources.getConfiguration.getLocales.get(0)
-    }
-  }
 
   def withStyledAttributes[A](set: AttributeSet, @StyleableRes attrs: Array[Int])(body: TypedArray => A)(implicit context: Context) = {
     val a = context.getTheme.obtainStyledAttributes(set, attrs, 0, 0)

@@ -51,7 +51,7 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
     val websiteUrl = getStringPreference(WEBSITE_URL_PREF)
 
     (environment, baseUrl, websocketUrl, blackListHost, teamsUrl, accountsUrl, websiteUrl) match {
-      case (Some(env), Some(base), Some(web), Some(black), Some(teams), Some(accounts), Some(website)) =>
+      case (Some(env), Some(base), Some(web), black, Some(teams), Some(accounts), Some(website)) =>
         info(l"Retrieved stored backend config for environment: ${redactedString(env)}")
 
         // Staging requires its own firebase options, but all other BEs (prod or custom)

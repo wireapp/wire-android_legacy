@@ -124,7 +124,7 @@ case class CallInfo(convId:             ConvId,
 
 object CallInfo {
 
-  case class Participant(userId: UserId, clientId: ClientId)
+  case class Participant(userId: UserId, clientId: ClientId, muted: Boolean = false)
 
   case class OutstandingMessage(message: GenericMessage, recipients: TargetRecipients, context: Pointer)
 

@@ -18,16 +18,18 @@
 package com.waz.zclient.ui.colorpicker;
 
 import android.content.Context;
-import android.os.Build;
-import androidx.recyclerview.widget.RecyclerView;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.waz.zclient.R;
 import com.waz.zclient.utils.ViewUtils;
+
 import java.util.List;
 
 public class EmojiAdapter extends RecyclerView.Adapter<EmojiAdapter.ViewHolder> {
@@ -51,12 +53,7 @@ public class EmojiAdapter extends RecyclerView.Adapter<EmojiAdapter.ViewHolder> 
         mediumSize = context.getResources().getDimensionPixelSize(R.dimen.sketch__emoji__keyboard__item_size__medium);
         largeSize = context.getResources().getDimensionPixelSize(R.dimen.sketch__emoji__keyboard__item_size__large);
         categorySpacing = context.getResources().getDimensionPixelSize(R.dimen.sketch__emoji__keyboard__category_spacing);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            textColor = context.getResources().getColor(R.color.text__primary_dark);
-        } else {
-            textColor = context.getResources().getColor(R.color.text__primary_dark, context.getTheme());
-        }
+        textColor = context.getResources().getColor(R.color.text__primary_dark, context.getTheme());
     }
 
     @Override
