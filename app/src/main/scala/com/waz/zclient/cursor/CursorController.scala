@@ -18,7 +18,7 @@
 package com.waz.zclient.cursor
 
 import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
-import android.app.Activity
+import android.app.{Activity, AlertDialog}
 import android.content.Context
 import android.text.TextUtils
 import android.view.{MotionEvent, View}
@@ -219,36 +219,50 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
 
   private val msgBeingSendInConv = Signal(Set.empty[ConvId])
 
-  def submit(msg: String, mentions: Seq[Mention] = Nil): Boolean = {
-    if (isEditingMessage.currentValue.contains(true)) {
-      onApproveEditMessage()
-      true
-    }
-    else if (TextUtils.isEmpty(msg.trim)) false
-    else {
-      (for {
-        convId <- conv.map(_.id).head
-        inMBS  =  msgBeingSendInConv.map(_.contains(convId)).currentValue
-        quote  <- replyController.currentReplyContent.map(_.map(_.message.id)).head
-      } yield (convId, quote, inMBS)).foreach {
-        case (convId, quote, Some(false))  =>
-          msgBeingSendInConv.mutate(_ + convId)
-          conversationController.sendMessage(msg, mentions, quote).foreach { m =>
-            m.foreach { msg =>
-              onMessageSent ! msg
-              cursorCallback.foreach(_.onMessageSent(msg))
-              replyController.clearMessage(msg.convId)
+  private def checkMsgLength(msg: String): Boolean = {
+    val MAX_MSG_LENGTH = 9000
+    if (msg.length > MAX_MSG_LENGTH) {
+      new AlertDialog.Builder(activity)
+        .setTitle(getString(R.string.conversation_input_bar_message_too_long_title))
+        .setMessage(getString(R.string.conversation_input_bar_message_too_long_message, MAX_MSG_LENGTH.toString))
+        .setPositiveButton(android.R.string.ok, null)
+        .create
+        .show()
+      false
+    } else true
+  }
 
-              Future {
-                msgBeingSendInConv.mutate(_ - msg.convId)
+  def submit(msg: String, mentions: Seq[Mention] = Nil): Boolean =
+    if(checkMsgLength(msg)) {
+      if (isEditingMessage.currentValue.contains(true)) {
+        onApproveEditMessage()
+        true
+      }
+      else if (TextUtils.isEmpty(msg.trim)) false
+      else {
+        (for {
+          convId <- conv.map(_.id).head
+          inMBS = msgBeingSendInConv.map(_.contains(convId)).currentValue
+          quote <- replyController.currentReplyContent.map(_.map(_.message.id)).head
+        } yield (convId, quote, inMBS)).foreach {
+          case (convId, quote, Some(false)) =>
+            msgBeingSendInConv.mutate(_ + convId)
+            conversationController.sendMessage(msg, mentions, quote).foreach { m =>
+              m.foreach { msg =>
+                onMessageSent ! msg
+                cursorCallback.foreach(_.onMessageSent(msg))
+                replyController.clearMessage(msg.convId)
+
+                Future {
+                  msgBeingSendInConv.mutate(_ - msg.convId)
+                }
               }
             }
-          }
-        case _ =>
+          case _ =>
+        }
+        true
       }
-      true
-    }
-  }
+    } else false
 
   def onApproveEditMessage(): Unit =
     for {
