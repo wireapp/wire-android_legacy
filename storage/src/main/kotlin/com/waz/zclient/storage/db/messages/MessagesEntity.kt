@@ -30,7 +30,7 @@ data class MessagesEntity(
     val protos: ByteArray?,
 
     @ColumnInfo(name = "time", defaultValue = "0")
-    val time: Int,
+    val time: Long,
 
     @ColumnInfo(name = "first_msg", defaultValue = "0")
     val firstMessage: Boolean,
@@ -54,22 +54,22 @@ data class MessagesEntity(
     val contentSize: Int,
 
     @ColumnInfo(name = "local_time", defaultValue = "0")
-    val localTime: Int,
+    val localTime: Long,
 
     @ColumnInfo(name = "edit_time", defaultValue = "0")
-    val editTime: Int,
+    val editTime: Long,
 
     @ColumnInfo(name = "ephemeral")
-    val ephemeral: Int?,
+    val ephemeral: Long?,
 
     @ColumnInfo(name = "expiry_time")
-    val expiryTime: Int?,
+    val expiryTime: Long?,
 
     @ColumnInfo(name = "expired", defaultValue = "0")
     val expired: Boolean,
 
     @ColumnInfo(name = "duration")
-    val duration: Int?,
+    val duration: Long?,
 
     @ColumnInfo(name = "quote")
     val quote: String?,

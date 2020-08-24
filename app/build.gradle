@@ -338,7 +338,6 @@ dependencies {
 
 
     implementation BuildDependencies.kotlin.standardLibrary
-    implementation BuildDependencies.kotlin.coroutinesCore
     implementation BuildDependencies.kotlin.coroutinesAndroid
 
     // TODO uncomment when new dependency system supports avs
@@ -440,7 +439,6 @@ dependencies {
     testImplementation TestDependencies.mockito.core
     testImplementation TestDependencies.mockito.inline
     testImplementation TestDependencies.kluent
-    testImplementation BuildDependencies.kotlin.coroutinesCore
     testImplementation TestDependencies.kotlin.coroutinesTest
     testImplementation TestDependencies.androidX.testCore
     testImplementation TestDependencies.okHttpMockWebServer

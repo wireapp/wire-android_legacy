@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.backup.assets
 
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.feature.backup.BackUpDataMapper
 import com.waz.zclient.feature.backup.BackUpDataSource
 import com.waz.zclient.feature.backup.BackUpIOHandler
@@ -11,14 +12,14 @@ import java.io.File
 data class AssetsBackUpModel(
     val id: String,
     val token: String? = null,
-    val name: String = "",
-    val encryption: String = "",
-    val mime: String = "",
+    val name: String = String.empty(),
+    val encryption: String = String.empty(),
+    val mime: String = String.empty(),
     val sha: ByteArray? = null,
     val size: Int = 0,
     val source: String? = null,
     val preview: String? = null,
-    val details: String = "",
+    val details: String = String.empty(),
     val conversationId: String? = null
 )
 

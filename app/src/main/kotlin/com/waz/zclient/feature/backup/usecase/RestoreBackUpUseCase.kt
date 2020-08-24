@@ -29,10 +29,11 @@ class RestoreBackUpUseCase(
 ) : UseCase<Unit, RestoreBackUpUseCaseParams> {
 
     override suspend fun run(params: RestoreBackUpUseCaseParams): Either<Failure, Unit> =
-        encryptionHandler.decrypt(params.file, params.userId, params.password).flatMap { file ->
+/*        encryptionHandler.decrypt(params.file, params.userId, params.password).flatMap { file ->
             zipHandler.unzip(file)
-        }.flatMap { files ->
-            val metaDataFile = files.find { it.name == MetaDataHandler.FILENAME }
+        }*/
+        zipHandler.unzip(params.file).flatMap { files ->
+            val metaDataFile = files.find { it.name == MetaDataHandler.FILE_NAME }
             if (metaDataFile == null) Either.Left(NoMetaDataFileFailure)
             else checkMetaData(metaDataFile, params.userId)
         }.flatMap {

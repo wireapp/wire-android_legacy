@@ -12,7 +12,7 @@ import java.io.File
 data class ReadReceiptsBackUpModel(
     val messageId: String = String.empty(),
     val userId: String = String.empty(),
-    val timestamp: Int = 0
+    val timestamp: Long = 0
 )
 
 class ReadReceiptsBackupMapper : BackUpDataMapper<ReadReceiptsBackUpModel, ReadReceiptsEntity> {

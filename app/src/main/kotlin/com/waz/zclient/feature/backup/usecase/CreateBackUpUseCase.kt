@@ -40,9 +40,9 @@ class CreateBackUpUseCase(
             .flatMap { files ->
                 zipHandler.zip(backupZipFileName(params.userHandle), files)
             }
-            .flatMap { file ->
+/*            .flatMap { file ->
                 encryptionHandler.encrypt(file, params.userId, params.password)
-            }
+            }*/
 
     private suspend fun backUpOrFail(): Either<Failure, List<File>> = extractFiles(
         backUpRepositories

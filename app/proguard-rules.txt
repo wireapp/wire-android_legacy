@@ -139,3 +139,4 @@
 
 # Coroutines
 -keep class kotlinx.coroutines.experimental.android.AndroidExceptionPreHandler { *; }
+-keep class kotlinx.coroutines.android.** {*;}

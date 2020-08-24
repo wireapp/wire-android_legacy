@@ -65,7 +65,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo3).saveBackup()
             verify(metaDataHandler).generateMetaDataFile(metaData)
             verify(zipHandler).zip(anyString(), anyList())
-            verify(encryptionHandler).encrypt(any(), any(), anyString())
+           // verify(encryptionHandler).encrypt(any(), any(), anyString())
 
             assert(result.isRight)
         }
@@ -167,7 +167,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
         }
     }
 
-    @Test
+/*    @Test
     fun `given back up repositories and metadata, when they succeed but the encryption handler fails, then return a failure`() {
         runBlocking {
             val repo1 = mockBackUpRepo(true)
@@ -197,7 +197,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
 
             assertEquals(Either.Left(FakeEncryptionFailure), result)
         }
-    }
+    }*/
 
     @Test
     fun `given back up repositories and metadata, when metadata fails, then return a failure`() {
@@ -248,10 +248,10 @@ class CreateBackUpUseCaseTest : UnitTest() {
         }
 
         fun mockEncryptionHandler(encryptionSuccess: Boolean = true): EncryptionHandler = mock(EncryptionHandler::class.java).also {
-            `when`(it.encrypt(any(), any(), anyString())).thenReturn(
+/*            `when`(it.encrypt(any(), any(), anyString())).thenReturn(
                 if (encryptionSuccess) Either.Right(createTempFile(suffix = "_encrypted"))
                 else Either.Left(FakeEncryptionFailure)
-            )
+            )*/
         }
 
         fun mockMetaDataHandler(metaDataSuccess: Boolean = true): MetaDataHandler = mock(MetaDataHandler::class.java).also {
