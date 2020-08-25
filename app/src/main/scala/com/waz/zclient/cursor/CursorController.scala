@@ -225,7 +225,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
       new AlertDialog.Builder(activity)
         .setTitle(getString(R.string.conversation_input_bar_message_too_long_title))
         .setMessage(getString(R.string.conversation_input_bar_message_too_long_message, MAX_MSG_LENGTH.toString))
-        .setPositiveButton(android.R.string.ok, null)
+        .setPositiveButton(getString(R.string.conversation_input_bar_dialog_ok), null)
         .create
         .show()
       false
