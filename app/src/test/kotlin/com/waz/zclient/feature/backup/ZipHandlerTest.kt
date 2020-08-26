@@ -4,12 +4,13 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
-import com.waz.zclient.feature.backup.zip.ZipFailure
+import com.waz.zclient.feature.backup.zip.NoFilesToZipFailure
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import com.waz.zclient.feature.createTextFile
 import com.waz.zclient.feature.uniqueZipFileName
 import org.amshove.kluent.`should be greater than`
 import org.amshove.kluent.shouldEqual
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.File
@@ -37,7 +38,7 @@ class ZipHandlerTest : UnitTest() {
 
         zipHandler.zip(uniqueZipFileName(), emptyList())
             .onSuccess { fail("The test should fail with ZipFailure") }
-            .onFailure { assert(it is ZipFailure) }
+            .onFailure { assertTrue(it is NoFilesToZipFailure) }
     }
 
     @Test

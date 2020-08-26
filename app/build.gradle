@@ -412,7 +412,6 @@ dependencies {
     implementation BuildDependencies.koin.androidCore
     implementation BuildDependencies.koin.androidScope
     implementation BuildDependencies.koin.androidViewModel
-    implementation BuildDependencies.koin.java
 
     // RxJava
     implementation BuildDependencies.rxJava.rxKotlin
@@ -420,7 +419,6 @@ dependencies {
 
     //JSON
     implementation BuildDependencies.kotlinXSerialization
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.0.1"
 
     //third party libraries
     implementation BuildDependencies.androidJob

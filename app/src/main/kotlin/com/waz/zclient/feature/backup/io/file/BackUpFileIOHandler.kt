@@ -51,7 +51,7 @@ class BackUpFileIOHandler<T>(
                     val jsonStr = file.bufferedReader().readText()
                     Either.Right(jsonConverter.fromJsonList(jsonStr)).also { ++index }
                 } else {
-                    Either.Right(emptyList())
+                    Either.Left(NoFileToReadFailure)
                 }
             } catch (ex: IOException) {
                 Either.Left(IOFailure(ex))
@@ -68,3 +68,4 @@ class BackUpFileIOHandler<T>(
 }
 
 data class SerializationFailure(val ex: SerializationException) : FeatureFailure()
+object NoFileToReadFailure : FeatureFailure()

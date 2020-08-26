@@ -8,15 +8,16 @@ import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 
 import com.waz.zclient.feature.backup.BackUpViewModel
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
-import org.koin.java.KoinJavaComponent.inject
 import java.io.File
 
-object KotlinServices {
+object KotlinServices : KoinComponent {
 
     lateinit var audioService: AudioService
 
-    private val backUpViewModel: BackUpViewModel by lazy { inject(BackUpViewModel::class.java).value }
+    private val backUpViewModel: BackUpViewModel by lazy { inject<BackUpViewModel>().value }
 
     fun init(context: Context) {
         audioService = AudioServiceImpl(context)

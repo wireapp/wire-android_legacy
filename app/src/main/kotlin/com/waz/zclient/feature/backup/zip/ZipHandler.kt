@@ -17,7 +17,7 @@ import java.util.zip.ZipOutputStream
 class ZipHandler(private val storageDir: File) {
     fun zip(zipFileName: String, files: List<File>): Either<Failure, File> =
             if (files.isEmpty()) {
-                Either.Left(ZipFailure("Nothing to zip, the list of files is empty"))
+                Either.Left(NoFilesToZipFailure)
             } else {
                 try {
                     val zipFile = createFile(zipFileName).apply {
@@ -73,4 +73,4 @@ class ZipHandler(private val storageDir: File) {
             }
 }
 
-data class ZipFailure(val err: String) : FeatureFailure()
+object NoFilesToZipFailure : FeatureFailure()

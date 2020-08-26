@@ -178,7 +178,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
+            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
