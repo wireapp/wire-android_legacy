@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.backup
+package com.waz.zclient.feature.backup.zip
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.IOFailure
@@ -13,9 +13,9 @@ import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
-class ZipHandler(private val storageDir: File) {
+class ZipHandlerDataSource(private val storageDir: File) : ZipHandler {
 
-    fun zip(zipFileName: String, files: List<File>): Either<Failure, File> {
+    override fun zip(zipFileName: String, files: List<File>): Either<Failure, File> {
         try {
             val zipFile = createFile(zipFileName)
 
@@ -29,7 +29,7 @@ class ZipHandler(private val storageDir: File) {
         }
     }
 
-    fun unzip(zipFile: File): Either<Failure, List<File>> {
+    override fun unzip(zipFile: File): Either<Failure, List<File>> {
         val unzippedFiles = mutableListOf<File>()
 
         try {

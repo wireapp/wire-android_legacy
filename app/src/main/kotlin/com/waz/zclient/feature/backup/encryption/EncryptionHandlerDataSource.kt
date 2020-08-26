@@ -1,4 +1,4 @@
-package com.waz.zclient.feature.backup
+package com.waz.zclient.feature.backup.encryption
 
 import com.waz.model.UserId
 import com.waz.zclient.core.exception.Failure
@@ -20,17 +20,17 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.security.SecureRandom
 
-class EncryptionHandler {
-    fun encrypt(backup: File, password: String, userId: UserId): Either<Failure, File> =
+class EncryptionHandlerDataSource : EncryptionHandler {
+    override fun encrypt(backupFile: File, userId: UserId, password: String): Either<Failure, File> =
         try {
             loadLibrary
 
             val salt = generateSalt()
 
             getMetaDataBytes(salt, userId).flatMap { meta ->
-                val backupBytes = backup.readBytes()
+                val backupBytes = backupFile.readBytes()
                 encrypt(backupBytes, password, salt).map { encryptedBytes ->
-                    val encryptedFile = File(backup.parentFile, backup.name + "_encrypted").apply {
+                    val encryptedFile = File(backupFile.parentFile, backupFile.name + "_encrypted").apply {
                         writeBytes(meta)
                         writeBytes(encryptedBytes)
                     }
@@ -41,15 +41,15 @@ class EncryptionHandler {
             Left(IOFailure(ex))
         }
 
-    fun decrypt(file: File, password: String, userId: UserId): Either<Failure, File> {
+    override fun decrypt(backupFile: File, userId: UserId, password: String): Either<Failure, File> {
         loadLibrary
 
-        val metadata = EncryptedBackupHeader.readEncryptedMetadata(file)
+        val metadata = EncryptedBackupHeader.readEncryptedMetadata(backupFile)
         return if (metadata != null) {
             val hash = hash(userId.str(), metadata.salt)
             if (hash != null && hash.contentEquals(metadata.uuidHash)) {
                 val encryptedBackupBytes = ByteArray(EncryptedBackupHeader.totalHeaderLength)
-                file.inputStream().buffered().read(encryptedBackupBytes)
+                backupFile.inputStream().buffered().read(encryptedBackupBytes)
                 decrypt(encryptedBackupBytes, password, metadata.salt).map { decryptedBackupBytes ->
                     File.createTempFile("wire_backup", ".zip").apply { writeBytes(decryptedBackupBytes) }
                 }
