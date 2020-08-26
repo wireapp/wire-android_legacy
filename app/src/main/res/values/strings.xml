@@ -59,6 +59,10 @@
     <string name="phone_budget_exhausted_header">Too many requests</string>
     <string name="phone_budget_exhausted_message">Please try again later.</string>
 
+    <string name="conversation_input_bar_message_too_long_title">Message too long</string>
+    <string name="conversation_input_bar_message_too_long_message">You can send messages up to %1$s characters long.</string>
+    <string name="conversation_input_bar_dialog_ok">OK</string>
+
     <!--*********************************************** ERRORS ***********************************************-->
 
     <string name="permissions_denied_dialog_settings">Settings</string>
