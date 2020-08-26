@@ -4,9 +4,11 @@ import com.waz.model.UserId
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
+import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +25,7 @@ class CreateBackUpUseCase(
     private val backUpRepositories: List<BackUpRepository<File>>,
     private val zipHandler: ZipHandler,
     private val encryptionHandler: EncryptionHandler,
+    private val metaDataHandler: MetaDataHandler,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : UseCase<File, Triple<UserId, String, String>> {
 
@@ -32,14 +35,13 @@ class CreateBackUpUseCase(
         val password = params.third
 
         return backUpOrFail()
+            .flatMap { files -> metaDataHandler.generateMetaDataFile(userId, userHandle).map { files + it } }
             .flatMap { zipHandler.zip(backupZipFileName(userHandle), it) }
             .flatMap { encryptionHandler.encrypt(it, userId, password) }
     }
 
     private suspend fun backUpOrFail() = extractFiles(
-        backUpRepositories
-            .map { coroutineScope.async(Dispatchers.IO) { it.saveBackup() } }
-            .awaitAll()
+        backUpRepositories.map { coroutineScope.async(Dispatchers.IO) { it.saveBackup() } }.awaitAll()
     )
 
     @SuppressWarnings("MagicNumber")

@@ -7,6 +7,7 @@ import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,22 +37,31 @@ class CreateBackUpUseCaseTest : UnitTest() {
     private val password = "password"
 
     @Test
-    fun `given back up repositories, when all of them succeed, then zip, encrypt, and return success`() {
+    fun `given back up repositories and metadata, when all of them succeed, then zip, encrypt, and return success`() {
         runBlocking {
             val repo1 = mockBackUpRepo(true)
             val repo2 = mockBackUpRepo(true)
             val repo3 = mockBackUpRepo(true)
             val zipHandler = mockZipHandler(true)
             val encryptionHandler = mockEncryptionHandler(true)
+            val metaDataHandler = mockMetaDataHandler(true)
 
-            createBackUpUseCase = CreateBackUpUseCase(listOf(repo1, repo2, repo3), zipHandler, encryptionHandler, testCoroutineScope)
+            createBackUpUseCase = CreateBackUpUseCase(
+                listOf(repo1, repo2, repo3),
+                zipHandler,
+                encryptionHandler,
+                metaDataHandler,
+                testCoroutineScope
+            )
 
             val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
+            verify(metaDataHandler).generateMetaDataFile(userId, userHandle)
             verify(zipHandler).zip(anyString(), anyList())
+            verify(encryptionHandler).encrypt(any(), any(), anyString())
 
             assert(result.isRight)
         }
@@ -65,14 +75,22 @@ class CreateBackUpUseCaseTest : UnitTest() {
             val repo3 = mockBackUpRepo(true)
             val zipHandler = mockZipHandler(true)
             val encryptionHandler = mockEncryptionHandler(true)
+            val metaDataHandler = mockMetaDataHandler(true)
 
-            createBackUpUseCase = CreateBackUpUseCase(listOf(repo1, repo2, repo3), zipHandler, encryptionHandler, testCoroutineScope)
+            createBackUpUseCase = CreateBackUpUseCase(
+                listOf(repo1, repo2, repo3),
+                zipHandler,
+                encryptionHandler,
+                metaDataHandler,
+                testCoroutineScope
+            )
 
             val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             // backups are saved asynchronously so there might be some interactions with repo3
+            verifyNoInteractions(metaDataHandler)
             verifyNoInteractions(zipHandler)
             verifyNoInteractions(encryptionHandler)
 
@@ -81,21 +99,29 @@ class CreateBackUpUseCaseTest : UnitTest() {
     }
 
     @Test
-    fun `given back up repositories, when they succeed but the zip handler fails, then return a failure`() {
+    fun `given back up repositories and metadata, when they succeed but the zip handler fails, then return a failure`() {
         runBlocking {
             val repo1 = mockBackUpRepo(true)
             val repo2 = mockBackUpRepo(true)
             val repo3 = mockBackUpRepo(true)
             val zipHandler = mockZipHandler(false)
             val encryptionHandler = mockEncryptionHandler(true)
+            val metaDataHandler = mockMetaDataHandler(true)
 
-            createBackUpUseCase = CreateBackUpUseCase(listOf(repo1, repo2, repo3), zipHandler, encryptionHandler, testCoroutineScope)
+            createBackUpUseCase = CreateBackUpUseCase(
+                    listOf(repo1, repo2, repo3),
+                    zipHandler,
+                    encryptionHandler,
+                    metaDataHandler,
+                    testCoroutineScope
+            )
 
             val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
+            verify(metaDataHandler).generateMetaDataFile(userId, userHandle) // metadata is generated before zipping
             verify(zipHandler).zip(anyString(), anyList())
             verifyNoInteractions(encryptionHandler)
 
@@ -104,25 +130,64 @@ class CreateBackUpUseCaseTest : UnitTest() {
     }
 
     @Test
-    fun `given back up repositories, when they succeed but the encryption handler fails, then return a failure`() {
+    fun `given back up repositories and metadata, when they succeed but the encryption handler fails, then return a failure`() {
         runBlocking {
             val repo1 = mockBackUpRepo(true)
             val repo2 = mockBackUpRepo(true)
             val repo3 = mockBackUpRepo(true)
             val zipHandler = mockZipHandler(true)
             val encryptionHandler = mockEncryptionHandler(false)
+            val metaDataHandler = mockMetaDataHandler(true)
 
-            createBackUpUseCase = CreateBackUpUseCase(listOf(repo1, repo2, repo3), zipHandler, encryptionHandler, testCoroutineScope)
+            createBackUpUseCase = CreateBackUpUseCase(
+                listOf(repo1, repo2, repo3),
+                zipHandler,
+                encryptionHandler,
+                metaDataHandler,
+                testCoroutineScope
+            )
 
             val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
+            verify(metaDataHandler).generateMetaDataFile(userId, userHandle)
             verify(zipHandler).zip(anyString(), anyList())
             verify(encryptionHandler).encrypt(any(), any(), anyString())
 
             assertEquals(Either.Left(FakeEncryptionFailure), result)
+        }
+    }
+
+    @Test
+    fun `given back up repositories and metadata, when metadata fails, then return a failure`() {
+        runBlocking {
+            val repo1 = mockBackUpRepo(true)
+            val repo2 = mockBackUpRepo(true)
+            val repo3 = mockBackUpRepo(true)
+            val zipHandler = mockZipHandler(true)
+            val encryptionHandler = mockEncryptionHandler(true)
+            val metaDataHandler = mockMetaDataHandler(false)
+
+            createBackUpUseCase = CreateBackUpUseCase(
+                    listOf(repo1, repo2, repo3),
+                    zipHandler,
+                    encryptionHandler,
+                    metaDataHandler,
+                    testCoroutineScope
+            )
+
+            val result = createBackUpUseCase.run(Triple(userId, userHandle, password))
+
+            verify(repo1).saveBackup()
+            verify(repo2).saveBackup()
+            verify(repo3).saveBackup()
+            verify(metaDataHandler).generateMetaDataFile(userId, userHandle)
+            verifyNoInteractions(zipHandler)
+            verifyNoInteractions(encryptionHandler)
+
+            assertEquals(Either.Left(FakeMetaDataFailure), result)
         }
     }
 
@@ -154,7 +219,15 @@ class CreateBackUpUseCaseTest : UnitTest() {
             )
         }
 
+        fun mockMetaDataHandler(metaDataSuccess: Boolean = true): MetaDataHandler = mock(MetaDataHandler::class.java).also {
+            `when`(it.generateMetaDataFile(any(), anyString())).thenReturn(
+                if (metaDataSuccess) Either.Right(createTempFile(suffix = ".json"))
+                else Either.Left(FakeMetaDataFailure)
+            )
+        }
+
         object FakeZipFailure : FeatureFailure()
         object FakeEncryptionFailure: FeatureFailure()
+        object FakeMetaDataFailure: FeatureFailure()
     }
 }
