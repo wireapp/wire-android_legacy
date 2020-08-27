@@ -18,6 +18,9 @@
 
 package com.waz.zclient.tracking
 
+import java.util
+
+import android.app.Activity
 import android.content.Context
 import android.renderscript.RSRuntimeException
 import com.waz.api.impl.ErrorResponse
@@ -26,16 +29,20 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
-import com.waz.service.ZMessaging
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.service.tracking._
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{EventContext, SerialDispatchQueue, Signal}
 import com.waz.threading.Threading
-import com.wire.signals.EventContext
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}
 import com.waz.zclient.log.LogUI._
+import com.waz.content.UserPreferences.CountlyTrackingId
+import com.waz.log.LogsService
+import com.waz.utils.MathUtils
+import com.waz.zclient.common.controllers.UserAccountsController
+import ly.count.android.sdk.{Countly, CountlyConfig, DeviceId}
 
 import scala.concurrent.Future
 import scala.concurrent.Future._
@@ -50,17 +57,82 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   //For automation tests
   def getId: String = ""
 
-  val tracking  = inject[TrackingService]
+  private val tracking  = inject[TrackingService]
+  private lazy val am = inject[Signal[AccountManager]]
+
+  def initCountly(): Future[Unit] = {
+    for {
+      ap <- tracking.isTrackingEnabled.head if(ap)
+      trackingId <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
+      logsEnabled <- inject[LogsService].logsEnabled
+    } yield {
+      verbose(l"Using countly Id: ${trackingId.str}")
+
+      val config = new CountlyConfig(cxt, BuildConfig.COUNTLY_APP_KEY, BuildConfig.COUNTLY_SERVER_URL)
+        .setLoggingEnabled(logsEnabled)
+        .setIdMode(DeviceId.Type.DEVELOPER_SUPPLIED)
+        .setDeviceId(trackingId.str)
+        .setEventQueueSizeToSend(1)
+        .setRecordAppStartTime(true)
+
+      Countly.sharedInstance().init(config)
+      setUserDataFields()
+    }
+  }
+
+  def countlyOnStart(cxt: Activity): Future[Unit] = for {
+    ap <- tracking.isTrackingEnabled.head if(ap)
+  } yield Countly.sharedInstance().onStart(cxt)
+
+  def countlyOnStop(): Future[Unit] = for {
+   ap <- tracking.isTrackingEnabled.head if(ap)
+  } yield Countly.sharedInstance().onStop()
 
   def optIn(): Future[Unit] = {
     verbose(l"optIn")
-    sendEvent(OptInEvent)
+    for {
+      _ <- initCountly()
+      _ <- sendEvent(OptInEvent)
+    } yield ()
   }
 
   def optOut(): Unit = dispatcher {
     verbose(l"optOut")
   }
 
+  private def getSelfAccountType: Future[String] = {
+    val accountsController = inject[UserAccountsController]
+    for {
+      isExternal <- accountsController.isExternal.head
+      Some(isWireless) <- accountsController.currentUser.head.map(_.map(_.expiresAt.isDefined))
+    } yield {
+      if(isExternal) "external"
+      else if(isWireless) "wireless"
+      else "member"
+    }
+  }
+
+  private def setUserDataFields(): Future[Unit] = {
+    val accountsService = inject[AccountsService]
+    for {
+      Some(z) <- accountsService.activeZms.head
+      teamMember = z.teamId.isDefined
+      teamSize <- z.teamId.fold(Future.successful(0))(tId => z.usersStorage.getByTeam(Set(tId)).map(_.size))
+      userAccountType <- getSelfAccountType
+      contacts <- z.usersStorage.list().map(_.count(!_.isSelf))
+    } yield {
+      val predefinedFields = new util.HashMap[String, String]()
+      val customFields = new util.HashMap[String, String]()
+      customFields.put("user_contacts", MathUtils.logRound(contacts, 6).toString)
+      customFields.put("team_team_id", teamMember.toString)
+      customFields.put("team_team_size", teamSize.toString)
+      customFields.put("team_user_type", userAccountType)
+      Countly.userData.setUserData(predefinedFields, customFields)
+      Countly.userData.save()
+    }
+  }
+
+  import scala.collection.JavaConverters._
   /**
     * Access tracking events when they become available and start processing
     * Sets super properties and actually performs the tracking of an event. Super properties are user scoped, so for that
@@ -84,7 +156,16 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
           }
         case _ => //no action
       }
+    case (_, event:ContributionEvent) => Countly.sharedInstance().events().recordEvent(event.name, event.segments.asJava)
+    case (_, event:CallingEvent) => Countly.sharedInstance().events().recordEvent(event.name, event.segments.asJava)
+    case (_, event:MessageDecryptionFailed) => Countly.sharedInstance().events().recordEvent(event.name, event.segments.asJava)
+    case (_, event:ScreenShareEvent) => Countly.sharedInstance().events().recordEvent(event.name, event.segments.asJava)
     case (zms, event) => sendEvent(event, zms)
+  }
+
+  private def sendCountlyEvent(eventArg: ContributionEvent, zmsArg: Option[ZMessaging] = None) = {
+    verbose(l"send countly event: $eventArg")
+    Countly.sharedInstance().events().recordEvent(eventArg.name, eventArg.segments.asJava)
   }
 
   /**

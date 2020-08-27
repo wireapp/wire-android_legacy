@@ -26,7 +26,7 @@ import android.graphics.RectF;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import com.waz.zclient.R;
-import com.waz.zclient.ui.utils.MathUtils;
+import com.waz.utils.MathUtils;
 import com.waz.zclient.ui.utils.TypefaceUtils;
 import com.waz.zclient.ui.text.SpannableEditText;
 import com.waz.zclient.utils.ContextUtils;

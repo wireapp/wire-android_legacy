@@ -27,6 +27,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.DeprecationUtils
 import com.waz.threading.Threading._
+import com.waz.zclient.tracking.GlobalTrackingController
 
 class CallingActivity extends BaseActivity {
 
@@ -68,6 +69,16 @@ class CallingActivity extends BaseActivity {
       case f: OnBackPressedListener if f.onBackPressed() => //
       case _ => super.onBackPressed()
     }
+  }
+
+  override def onStart(): Unit = {
+    super.onStart()
+    inject[GlobalTrackingController].countlyOnStart(this)
+  }
+
+  override def onStop(): Unit = {
+    inject[GlobalTrackingController].countlyOnStop()
+    super.onStop()
   }
 
   override def onResume() = {

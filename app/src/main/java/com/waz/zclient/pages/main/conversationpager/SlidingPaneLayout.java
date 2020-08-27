@@ -58,7 +58,7 @@ import android.view.ViewGroup;
 import com.waz.zclient.R;
 import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController;
-import com.waz.zclient.ui.utils.MathUtils;
+import com.waz.utils.MathUtils;
 import com.waz.zclient.utils.ViewUtils;
 
 import java.util.ArrayList;

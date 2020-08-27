@@ -140,6 +140,8 @@ android {
         buildConfigField 'boolean', 'SAFE_LOGGING',                  "$buildtimeConfiguration.configuration.safe_logging"
         buildConfigField 'boolean', 'FILE_RESTRICTION_ENABLED',      "$buildtimeConfiguration.configuration.file_restriction_enabled"
         buildConfigField 'String',  'FILE_RESTRICTION_LIST',         "\"$buildtimeConfiguration.configuration.file_restriction_list\""
+        buildConfigField 'String',  'COUNTLY_SERVER_URL',            "\"$buildtimeConfiguration.configuration.countly_server_url\""
+        buildConfigField 'String',  'COUNTLY_APP_KEY',               "\"$buildtimeConfiguration.configuration.countly_app_key\""
 
         //Kotlin Feature Flags
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
@@ -439,6 +441,7 @@ dependencies {
     implementation BuildDependencies.commonMark
     implementation BuildDependencies.jna
     implementation BuildDependencies.pinEditText
+    implementation BuildDependencies.countly
 
     implementation BuildDependencies.wireSignals
 

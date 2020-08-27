@@ -32,7 +32,6 @@ import com.waz.model.AccountData.Password
 import com.waz.model.UserId
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
-import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.utils.{returning, _}
@@ -73,7 +72,6 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
   private lazy val accountsService    = inject[AccountsService]
   private lazy val permissions        = inject[PermissionsService]
   private lazy val spinnerController  = inject[SpinnerController]
-  private lazy val tracking           = inject[TrackingService]
 
   private lazy val restoreButton = view[ZetaButton](R.id.restore_button)
   private lazy val registerButton = view[ZetaButton](R.id.zb__first_launch__confirm)
@@ -196,12 +194,10 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
     case class BackupError(reason: String) extends Throwable
 
     def onSuccess(): Unit = {
-      tracking.historyRestored(true)
       promise.success(())
     }
 
     def onFailure(reason: String): Unit = {
-      tracking.historyRestored(false)
       promise.failure(BackupError(reason))
     }
 

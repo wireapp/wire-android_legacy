@@ -81,6 +81,8 @@ import com.waz.zclient.utils.ViewUtils;
 import java.util.List;
 import java.util.Locale;
 
+import scala.Option;
+
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
 @SuppressLint("All")
@@ -522,7 +524,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                 }
 
                 getControllerFactory().getLocationController().hideShareLocation(location);
-                ZMessaging.currentGlobal().trackingService().contribution(new ContributionEvent.Action("location")); //TODO use lazy val when in scala
+                ZMessaging.currentGlobal().trackingService().contribution(new ContributionEvent.Action("location"), Option.empty()); //TODO use lazy val when in scala
                 break;
         }
     }

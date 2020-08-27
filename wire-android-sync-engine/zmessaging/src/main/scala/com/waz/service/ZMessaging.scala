@@ -180,6 +180,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def msgDeletions      = storage.msgDeletions
   def msgEdits          = storage.msgEdits
   def propertiesStorage = storage.propertiesStorage
+  def uriHelper = assets2Module.uriHelper
 
   lazy val messagesStorage: MessagesStorage                       = wire[MessagesStorageImpl]
   lazy val msgAndLikes: MessageAndLikesStorageImpl                = wire[MessageAndLikesStorageImpl]

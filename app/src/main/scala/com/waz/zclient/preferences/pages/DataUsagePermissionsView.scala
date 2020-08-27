@@ -23,24 +23,26 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import com.waz.content.GlobalPreferences
+import com.waz.content.UserPreferences.AnalyticsEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.preferences.views.SwitchPreference
-import com.waz.service.tracking.TrackingService.analyticsPrefKey
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.BuildConfig
 import com.waz.threading.Threading._
+import com.waz.zclient.common.controllers.UserAccountsController
 
 class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
     with ViewHelper
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -48,16 +50,28 @@ class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int
   inflate(R.layout.data_usage_permissions_layout)
 
   private val am       = inject[Signal[AccountManager]]
+  private lazy val uac = inject[UserAccountsController]
   private val tracking = inject[GlobalTrackingController]
 
-  val analyticsSwitch = returning(findById[SwitchPreference](R.id.preferences_send_anonymous_data)) { v =>
+  val analyticsSwitch = returning(findById[SwitchPreference](R.id.preferences_send_analytics_data)) { v =>
+
+    uac.isProUser.foreach { isProUser =>
+      v.setPreference(AnalyticsEnabled)
+      if (isProUser) {
+        v.pref.flatMap(_.signal).onChanged {
+          case true  => tracking.optIn()
+          case false => tracking.optOut()
+        }
+      } else {
+        v.setVisibility(View.GONE)
+      }
+    }
+  }
+
+  val anonymousDataSwitch = returning(findById[SwitchPreference](R.id.preferences_send_anonymous_data)) { v =>
 
     if (BuildConfig.SUBMIT_CRASH_REPORTS) {
-      v.setPreference(analyticsPrefKey, global = true)
-      v.pref.flatMap(_.signal).onChanged {
-        case true  => tracking.optIn()
-        case false => tracking.optOut()
-      }
+      v.setPreference(GlobalPreferences.SendAnonymousDataEnabled, global = true)
     } else {
       v.setVisibility(View.GONE)
     }

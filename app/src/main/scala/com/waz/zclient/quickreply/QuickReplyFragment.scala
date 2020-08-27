@@ -25,7 +25,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.model.{ConvId, UserId}
-import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
 import com.waz.service.{AccountsService, ZMessaging}
 import com.wire.signals.Signal
@@ -138,16 +137,11 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
             for {
               z           <- zms.head
               c           <- conv.head
-              withService <- z.conversations.isWithService(c.id)
-              isGroup     <- z.conversations.isGroupConversation(c.id)
               msg         <- z.convsUi.sendTextMessage(c.id, sendText, Nil, Some(None))
             } {
               textView.setEnabled(true)
               if (msg.isDefined) {
-                ZMessaging.globalModule.map(_.trackingService.track(
-                  ContributionEvent(Action.Text, isGroup, c.ephemeralExpiration.map(_.duration), withService, !c.isTeamOnly, c.isMemberFromTeamGuest(z.teamId)),
-                  Some(z.selfUserId)
-                ))
+                ZMessaging.globalModule.map(_.trackingService.contribution(Action.Text, Some(z.selfUserId)))
                 getActivity.finish()
               }
             }
