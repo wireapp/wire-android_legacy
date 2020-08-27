@@ -9,7 +9,6 @@ import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.logging.Logger.Companion.verbose
 import com.waz.zclient.feature.backup.crypto.Crypto
 import com.waz.zclient.feature.backup.crypto.encryption.error.EncryptionFailed
-import com.waz.zclient.feature.backup.crypto.encryption.error.EncryptionInitialisationError
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
 import java.io.File
 import java.io.IOException
@@ -46,12 +45,10 @@ class EncryptionHandler(
         return crypto.initEncryptState(hash, header).flatMap { state ->
             val cipherText = ByteArray(backupBytes.size + crypto.aBytesLength())
             val encrypted = backupBytes + cipherText
-            state?.let {
-                when (val ret: Int = crypto.generatePushMessagePart(state, cipherText, backupBytes)) {
-                    0 -> Either.Right(encrypted)
-                    else -> Either.Left(EncryptionFailed)
-                }
-            } ?: Either.Left(EncryptionInitialisationError)
+            when (val ret: Int = crypto.generatePushMessagePart(state, cipherText, backupBytes)) {
+                0 -> Either.Right(encrypted)
+                else -> Either.Left(EncryptionFailed)
+            }
         }
     }
 

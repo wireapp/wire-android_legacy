@@ -11,7 +11,6 @@ import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionFailed
 import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionInitialisationError
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashesDoNotMatch
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
-import com.waz.zclient.feature.backup.crypto.encryption.error.UnableToReadMetaData
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
 import com.waz.zclient.feature.backup.crypto.header.EncryptedBackupHeader
 import junit.framework.TestCase.assertEquals
@@ -52,7 +51,7 @@ class DecryptionHandlerTest : UnitTest() {
 
         res.onFailure {
             (it as CryptoFailure).apply {
-                assertEquals(this, UnableToReadMetaData)
+                assertEquals(this, HashingFailed)
             }
         }
     }
@@ -157,7 +156,7 @@ class DecryptionHandlerTest : UnitTest() {
         `when`(crypto.streamHeaderLength()).thenReturn(HEADER_STREAM_LENGTH)
         `when`(headerMetaData.readEncryptedMetadata(backupFile)).thenReturn(Either.Right(metaData))
         `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
-        `when`(crypto.initDecryptState(hash, any())).thenReturn(Either.Right(hash))
+        `when`(crypto.initDecryptState(any(), any())).thenReturn(Either.Right(hash))
         `when`(crypto.generatePullMessagePart(any(), any(), any())).thenReturn(1)
 
         val res = decryptionHandler.decryptBackup(backupFile, userId, password)

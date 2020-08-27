@@ -8,7 +8,6 @@ import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.feature.backup.crypto.Crypto
 import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionFailed
-import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionInitialisationError
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashesDoNotMatch
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
 import com.waz.zclient.feature.backup.crypto.header.TOTAL_HEADER_LENGTH
@@ -50,12 +49,10 @@ class DecryptionHandler(
             .flatMap { state ->
                 val cipherText = input.drop(crypto.streamHeaderLength()).toByteArray()
                 val decrypted = ByteArray(cipherText.size + crypto.aBytesLength())
-                state?.let {
-                    when (crypto.generatePullMessagePart(state, decrypted, cipherText)) {
-                        0 -> Either.Right(decrypted)
-                        else -> Either.Left(DecryptionFailed)
-                    }
-                } ?: Either.Left(DecryptionInitialisationError)
+                when (crypto.generatePullMessagePart(state, decrypted, cipherText)) {
+                    0 -> Either.Right(decrypted)
+                    else -> Either.Left(DecryptionFailed)
+                }
             }
     }
 

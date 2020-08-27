@@ -29,7 +29,7 @@ class Crypto {
         }
     }
 
-    private fun initializeState(key: ByteArray, header: ByteArray, init: (ByteArray, ByteArray, ByteArray) -> Int): Either<Failure, ByteArray?> =
+    private fun initializeState(key: ByteArray, header: ByteArray, init: (ByteArray, ByteArray, ByteArray) -> Int): Either<Failure, ByteArray> =
         if (header.size != Sodium.crypto_secretstream_xchacha20poly1305_headerbytes()) {
             Either.Left(InvalidHeaderLength)
         } else if (key.size != decryptExpectedKeyBytes()) {
@@ -56,14 +56,13 @@ class Crypto {
     internal fun generateSalt(): ByteArray {
         val count = Sodium.crypto_pwhash_saltbytes()
         val buffer = ByteArray(count)
-
-        loadLibrary.onSuccess {
-            Sodium.randombytes(buffer, count)
-        }.onFailure {
-            Logger.warn(TAG, "Libsodium failed to generate $count random bytes. Falling back to SecureRandom")
-            secureRandom.nextBytes(buffer)
-        }
-
+        loadLibrary
+            .onSuccess {
+                Sodium.randombytes(buffer, count)
+            }.onFailure {
+                Logger.warn(TAG, "Libsodium failed to generate $count random bytes. Falling back to SecureRandom")
+                secureRandom.nextBytes(buffer)
+            }
         return buffer
     }
 
