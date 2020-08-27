@@ -17,24 +17,25 @@
  */
 package com.waz.service.tracking
 
-import com.waz.content.GlobalPreferences
-import com.waz.content.Preferences.PrefKey
+import com.waz.content.UserPreferences.AnalyticsEnabled
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
+import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState._
-import com.waz.service.tracking.ContributionEvent.fromMime
 import com.waz.service.tracking.TrackingService.ZmsProvider
-import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.service.tracking.TrackingServiceImpl.{CountlyEventProperties, RichHashMap}
+import com.waz.service.{AccountsService, MetaDataService, ZMessaging}
 import com.wire.signals.SerialDispatchQueue
-import com.waz.utils.RichWireInstant
+import com.waz.utils.{MathUtils, RichWireInstant}
 import com.wire.signals.{EventContext, EventStream, Signal}
-import com.waz.zms.BuildConfig
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.concurrent.Future
+import scala.language.implicitConversions
 import scala.util.Try
 
 trait TrackingService {
@@ -48,8 +49,10 @@ trait TrackingService {
   def optIn(): Future[Unit] = track(OptInEvent)
   def optOut(): Future[Unit] = track(OptOutEvent)
 
-  def contribution(action: ContributionEvent.Action): Future[Unit]
-  def assetContribution(assetId: AssetId, userId: UserId): Future[Unit]
+  def contribution(action: ContributionEvent.Action, zms: Option[UserId] = None): Future[Unit]
+
+  def msgDecryptionFailed(convId: RConvId, userId: UserId): Future[Unit]
+  def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit]
 
   def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag): Future[Unit]
   def crash(e: Throwable): Future[Unit]
@@ -59,7 +62,6 @@ trait TrackingService {
   def historyBackedUp(isSuccess: Boolean): Future[Unit]
   def historyRestored(isSuccess: Boolean): Future[Unit]
 
-  def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit]
 
   def isTrackingEnabled: Signal[Boolean]
 }
@@ -67,15 +69,15 @@ trait TrackingService {
 class DummyTrackingService extends TrackingService {
   override def events: EventStream[(Option[ZMessaging], TrackingEvent)] = EventStream()
   override def track(event: TrackingEvent, userId: Option[UserId]): Future[Unit] = Future.successful(())
-  override def contribution(action: ContributionEvent.Action): Future[Unit] = Future.successful(())
-  override def assetContribution(assetId: AssetId, userId: UserId): Future[Unit] = Future.successful(())
+  override def contribution(action: ContributionEvent.Action, zms: Option[UserId] = None): Future[Unit] = Future.successful(())
+  override def msgDecryptionFailed(convId: RConvId, userId: UserId): Future[Unit] = Future.successful(())
+  override def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit] = Future.successful(())
   override def exception(e: Throwable, description: String, userId: Option[UserId])(implicit tag: LogTag): Future[Unit] = Future.successful(())
   override def crash(e: Throwable): Future[Unit] = Future.successful(())
   override def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method): Future[Unit] = Future.successful(())
   override def integrationRemoved(integrationId: IntegrationId): Future[Unit] = Future.successful(())
   override def historyBackedUp(isSuccess: Boolean): Future[Unit] = Future.successful(())
   override def historyRestored(isSuccess: Boolean): Future[Unit] = Future.successful(())
-  override def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit] = Future.successful(())
   override def isTrackingEnabled: Signal[Boolean] = Signal.const(true)
 }
 
@@ -87,21 +89,18 @@ object TrackingService {
   private[waz] implicit val ec: EventContext = EventContext.Global
 
   trait NoReporting { self: Throwable => }
-
-  val analyticsPrefKey = BuildConfig.FLAVOR match {
-    case "prod" | "internal" => GlobalPreferences.AnalyticsEnabled
-    case _                   => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
-  }
-
 }
 
-class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: ZmsProvider)
+class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: ZmsProvider, metaDataService: MetaDataService)
   extends TrackingService with DerivedLogTag {
 
   import TrackingService._
 
   override lazy val isTrackingEnabled: Signal[Boolean] =
-    Signal.from(ZMessaging.globalModule).flatMap(_.prefs(analyticsPrefKey).signal)
+    ZMessaging.currentAccounts.activeZms.flatMap {
+      case Some(z) => z.userPrefs(AnalyticsEnabled).signal
+      case _ => Signal.const(false)
+    }
 
   val events = EventStream[(Option[ZMessaging], TrackingEvent)]()
 
@@ -112,22 +111,130 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
 
   private def current = curAccount.head.flatMap(zmsProvider)
 
-  override def contribution(action: ContributionEvent.Action) = isTrackingEnabled.head.flatMap {
-    case true => current.map {
-      case Some(z) =>
-        for {
-          Some(convId) <- z.selectedConv.selectedConversationId.head
-          Some(conv)   <- z.convsStorage.get(convId)
-          userIds      <- z.membersStorage.activeMembers(convId).head
-          users        <- z.usersStorage.listAll(userIds.toSeq)
-          isGroup      <- z.conversations.isGroupConversation(convId)
-        } {
-          events ! Option(z) -> ContributionEvent(action, isGroup, conv.ephemeralExpiration.map(_.duration), users.exists(_.isWireBot), !conv.isTeamOnly, conv.isMemberFromTeamGuest(z.teamId))
-        }
-      case _ => //
+  private def getZmsOrElseCurrent(userId: Option[UserId]): Future[ZMessaging] =
+    (if(userId.isDefined) zmsProvider(userId) else current)
+      .collect { case Some(s) => s }
+
+  private def getMainSegments(z: ZMessaging, convId: ConvId): Future[CountlyEventProperties] =
+    getCommonSegments(z, convId).map(e => e ++ getUniversalSegments())
+
+  private def getUniversalSegments(): CountlyEventProperties =
+    mutable.Map[String, AnyRef]()
+      .putSegment("app_name", "android")
+      .putSegment("app_version", metaDataService.versionName.split('-').take(1).mkString)
+
+  private def getCommonSegments(z: ZMessaging, convId: ConvId): Future[CountlyEventProperties] = {
+    for {
+      Some(convType) <- z.convsStorage.get(convId).map(_.map(_.convType.name()))
+      userIds        <- z.membersStorage.activeMembers(convId).head
+      users          <- z.usersStorage.listAll(userIds.toSeq)
+      guests         =  users.filter(_.isGuest(z.teamId))
+      proGuestCount  =  guests.count(_.teamId.isDefined)
+      wirelessGuests =  guests.count(_.expiresAt.isDefined)
+      servicesCount  =  users.count(_.isWireBot)
+    } yield {
+      mutable.Map[String, AnyRef]()
+        .putSegment("conversation_type", convType.toLowerCase)
+        .putSegment("conversation_size", MathUtils.logRoundFactor6(userIds.size))
+        .putSegment("conversation_guests", MathUtils.logRoundFactor6(guests.size))
+        .putSegment("conversation_guest_pro", MathUtils.logRoundFactor6(proGuestCount))
+        .putSegment("conversation_guests_wireless", MathUtils.logRoundFactor6(wirelessGuests))
+        .putSegment("conversation_services", MathUtils.logRoundFactor6(servicesCount))
     }
+  }
+
+  private def getCallEndedSegments(info: CallInfo): CountlyEventProperties = {
+    def calcDuration(info: CallInfo): Long =
+      MathUtils.roundToNearest5(
+        info.endTime.map(end => info.estabTime.getOrElse(end).until(end).getSeconds).get)
+
+    mutable.Map[String, AnyRef]()
+      .putSegment("call_duration", calcDuration(info))
+      .putSegment("call_participants", info.maxParticipants)
+      .putSegment("call_AV_switch_toggle", info.wasVideoToggled)
+      .putSegment("call_screen_share", info.wasScreenShareUsed)
+      .putSegment("call_end_reason", info.endReason.get)
+  }
+
+  override def contribution(action: ContributionEvent.Action, userId: Option[UserId] = None): Future[Unit] = isTrackingEnabled.head.flatMap {
+    case true =>
+      for {
+        z <- getZmsOrElseCurrent(userId)
+        Some(convId)   <- z.selectedConv.selectedConversationId.head
+        segments <- getMainSegments(z, convId)
+      } yield {
+        segments += ("message_action" -> action.name)
+
+        events ! Option(z) -> ContributionEvent(action, segments)
+      }
     case false => Future.successful(())
   }
+
+  override def msgDecryptionFailed(rConvId: RConvId, userId: UserId): Future[Unit] = isTrackingEnabled.head.flatMap {
+    case true =>
+      for {
+        Some(z) <- zmsProvider(Some(userId))
+        Some(convId) <- z.convsStorage.getByRemoteId(rConvId).map(_.map(_.id))
+        segments <- getMainSegments(z, convId)
+      } yield events ! Option(z) -> MessageDecryptionFailed(segments)
+    case false => Future.successful(())
+  }
+
+  override def trackCallState(userId: UserId, info: CallInfo): Future[Unit] = isTrackingEnabled.head.flatMap {
+    case true =>
+      ((info.prevState, info.state) match {
+        case (None, SelfCalling)      => Some("initiated")
+        case (None, OtherCalling)     => Some("received")
+        case (Some(_), SelfJoining)   => Some("joined")
+        case (Some(_), SelfConnected) => Some("established")
+        case (Some(_), Ended)         => Some("ended")
+        case _ =>
+          warn(l"Unexpected call state change: ${info.prevState} => ${info.state}, not tracking")
+          None
+      }).fold(Future.successful(())) { eventName =>
+        (for {
+          Some(z)           <- zmsProvider(Some(userId))
+          segments          <- getMainSegments(z, info.convId)
+          callDirection     = if(info.caller != z.selfUserId) "incoming" else "outgoing"
+          callVideo         = info.videoSendState == VideoState.Started || info.videoSendState == VideoState.BadConnection
+          callEndedSegments = if(eventName.equals("ended")) getCallEndedSegments(info) else mutable.Map.empty
+        } yield {
+          segments ++= callEndedSegments += ("call_video" -> callVideo.toString)
+
+          if(!(eventName.equals("initiated") || eventName.equals("received")))
+            segments += ("call_direction" -> callDirection.toString)
+
+          events ! Option(z) -> CallingEvent(eventName, segments)
+          trackScreenShare(userId, info)
+        }).flatMap { _ =>
+          //if we have accepted a call, we need to track this separately as a contribution
+          import ContributionEvent.Action._
+          if(info.prevState.contains(OtherCalling) && info.state == SelfJoining) {
+            val eventType = if (info.isVideoCall) VideoCall else AudioCall
+            contribution(eventType, Some(userId))
+          } else Future.successful(())
+        }
+      }
+    case false => Future.successful(())
+  }
+
+  private def trackScreenShare(userId: UserId, info: CallInfo): Future[Unit] =
+    if(info.screenShareEnded.isDefined)
+      isTrackingEnabled.head.flatMap {
+        case true =>
+          for {
+            Some(z)  <- zmsProvider(Some(userId))
+            segments <- getMainSegments(z, info.convId)
+            (direction, duration) = info.screenShareEnded.get
+          } yield {
+            segments.putSegment("screen_share_direction", direction)
+            segments.putSegment("screen_share_duration", MathUtils.roundToNearest5(duration))
+
+            events ! Option(z) -> ScreenShareEvent(segments)
+          }
+        case false => Future.successful(())
+      }
+    else Future.successful(())
 
   override def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag) = isTrackingEnabled.head.flatMap {
     case true =>
@@ -151,22 +258,6 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
 
   private def details(rootCause: Throwable) =
     Try(rootCause.getStackTrace).toOption.filter(_.nonEmpty).map(_ (0).toString).getOrElse("")
-
-  override def assetContribution(assetId: AssetId, userId: UserId) = isTrackingEnabled.head.flatMap {
-    case true => zmsProvider(Some(userId)).map {
-      case Some(z) =>
-        for {
-          Some(msg)  <- z.messagesStorage.get(MessageId(assetId.str))
-          Some(conv) <- z.convsContent.convById(msg.convId)
-          asset      <- z.assetsStorage.get(assetId)
-          userIds    <- z.membersStorage.activeMembers(conv.id).head
-          users      <- z.usersStorage.listAll(userIds.toSeq)
-          isGroup    <- z.conversations.isGroupConversation(conv.id)
-        } yield track(ContributionEvent(fromMime(asset.mime), isGroup, msg.ephemeral, users.exists(_.isWireBot), !conv.isTeamOnly, conv.isMemberFromTeamGuest(z.teamId)), Some(userId))
-      case _ => //
-    }
-    case false => Future.successful(())
-  }
 
   override def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method) = isTrackingEnabled.head.flatMap {
     case true => current.map {
@@ -198,56 +289,34 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
     case false             => Future.successful(())
   }
 
-  override def trackCallState(userId: UserId, info: CallInfo) = isTrackingEnabled.head.flatMap {
-    case true =>
-      ((info.prevState, info.state) match {
-        case (None, SelfCalling)      => Some("initiated")
-        case (None, OtherCalling)     => Some("received")
-        case (Some(_), SelfJoining)   => Some("joined")
-        case (Some(_), SelfConnected) => Some("established")
-        case (Some(_), Ended)         => Some("ended")
-        case _ =>
-          warn(l"Unexpected call state change: ${info.prevState} => ${info.state}, not tracking")
-          None
-      }).fold(Future.successful(())) { eventName =>
-        for {
-          Some(z)     <- zmsProvider(Some(userId))
-          isGroup     <- z.conversations.isGroupConversation(info.convId)
-          memCount    <- z.membersStorage.activeMembers(info.convId).map(_.size).head
-          withService <- z.conversations.isWithService(info.convId)
-          withGuests  <-
-            if (isGroup)
-              z.convsStorage.get(info.convId).collect { case Some(conv) => !conv.isTeamOnly }.map(Some(_))
-            else Future.successful(None)
-            _ <-
-              track(new CallingEvent(
-                eventName,
-                info.startedAsVideoCall,
-                isGroup,
-                memCount,
-                withService,
-                info.caller != z.selfUserId,
-                withGuests,
-                Option(info.maxParticipants).filter(_ > 0),
-                info.estabTime.map(est => info.joinedTime.getOrElse(est).until(est)),
-                info.endTime.map(end => info.estabTime.getOrElse(end).until(end)),
-                info.endReason,
-                if (info.state == Ended) Some(info.wasVideoToggled) else None
-              ))
-        } yield {}
-      }
-    case false => Future.successful(())
-  }
 }
 
 object TrackingServiceImpl extends DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
-  def apply(accountsService: => AccountsService): TrackingServiceImpl =
+  def apply(accountsService: => AccountsService, metaDataService: MetaDataService): TrackingServiceImpl =
     new TrackingServiceImpl(
       accountsService.activeAccountId,
-      (userId: Option[UserId]) => userId.fold(Future.successful(Option.empty[ZMessaging]))(uId => accountsService.zmsInstances.head.map(_.find(_.selfUserId == uId)))
+      (userId: Option[UserId]) => userId.fold(Future.successful(Option.empty[ZMessaging]))(uId => accountsService.zmsInstances.head.map(_.find(_.selfUserId == uId))),
+      metaDataService
     )
+
+  type CountlyEventProperties = mutable.Map[String, AnyRef]
+
+  implicit class RichHashMap(v: CountlyEventProperties) {
+    def putSegment(key: String, value: String): CountlyEventProperties =
+      v += (key -> value.asInstanceOf[AnyRef])
+
+    def putSegment(key: String, value: Int): CountlyEventProperties =
+      v + (key -> value.asInstanceOf[AnyRef])
+
+    def putSegment(key: String, value: Boolean): CountlyEventProperties =
+      v + (key -> value.asInstanceOf[AnyRef])
+
+    def putSegment(key: String, value: Double): CountlyEventProperties =
+      v + (key -> value.asInstanceOf[AnyRef])
+  }
+
 }
 

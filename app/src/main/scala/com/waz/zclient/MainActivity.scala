@@ -57,7 +57,7 @@ import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.startup.UpdateFragment
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
-import com.waz.zclient.tracking.UiTrackingController
+import com.waz.zclient.tracking.{GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{Emojis, IntentUtils, ResString, ViewUtils}
@@ -240,6 +240,21 @@ class MainActivity extends BaseActivity
       }
     }
 
+    for {
+      prefs            <- userPreferences.head
+      check            <- prefs.preference[Boolean](AnalyticsEnabledCheck).apply()
+      analyticsEnabled <- prefs.preference[Boolean](AnalyticsEnabled).apply()
+      isProUser        <- userAccountsController.isProUser
+      _                <-
+        if(!check) {
+          (prefs(AnalyticsEnabled) := isProUser)
+            .flatMap(_ => prefs(AnalyticsEnabledCheck) := true)
+        } else Future.successful(())
+      _                <-
+        if(analyticsEnabled) {
+          inject[GlobalTrackingController].initCountly()
+        } else Future.successful(())
+    } yield ()
   }
 
   override def onStart(): Unit = {
@@ -250,6 +265,8 @@ class MainActivity extends BaseActivity
 
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
+
+    inject[GlobalTrackingController].countlyOnStart(this)
 
     val intent = getIntent
     deepLinkService.checkDeepLink(intent)
@@ -393,6 +410,7 @@ class MainActivity extends BaseActivity
     super.onStop()
     getControllerFactory.getNavigationController.removeNavigationControllerObserver(this)
     inject[NavigationController].mainActivityActive.mutate(_ - 1)
+    inject[GlobalTrackingController].countlyOnStop()
   }
 
   override def onBackPressed(): Unit =

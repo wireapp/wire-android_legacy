@@ -320,7 +320,7 @@ class UserPreferences(context: Context, storage: ZmsDatabase)
         Future.successful(())
       } {
         case false =>
-          gPrefs.setValue(GlobalPreferences.AnalyticsEnabled, false).map(_ => remove("analytics_enabled"))
+          gPrefs.setValue(GlobalPreferences.SendAnonymousDataEnabled, false).map(_ => remove("analytics_enabled"))
         case _ =>
           remove("analytics_enabled")
       }
@@ -402,7 +402,7 @@ object GlobalPreferences {
 
   lazy val GPSErrorDialogShowCount = PrefKey[Int]("PREF_PLAY_SERVICES_ERROR_SHOW_COUNT")
 
-  lazy val AnalyticsEnabled = PrefKey[Boolean]("PREF_KEY_PRIVACY_ANALYTICS_ENABLED", customDefault = false)
+  lazy val SendAnonymousDataEnabled = PrefKey[Boolean]("PREF_KEY_PRIVACY_ANALYTICS_ENABLED", customDefault = false)
   lazy val ShowMarketingConsentDialog = PrefKey[Boolean]("show_marketing_consent_dialog", customDefault = true) //can be set to false by automation
 
   lazy val LastEphemeralValue = PrefKey[Option[FiniteDuration]]("last_ephemeral_value", customDefault = None)
@@ -434,6 +434,9 @@ object UserPreferences {
 
   lazy val CrashesAndAnalyticsRequestShown = PrefKey[Boolean]("usage_data_permissions_shown", customDefault = true) //true to avoid harassing existing users
   lazy val AskMarketingConsentAgain = PrefKey[Boolean]("ask_marketing_consent_again") //used if the user views privacy policy instead of giving consent
+  lazy val CountlyTrackingId = PrefKey[TrackingId]("tracking_id", customDefault = TrackingId())
+  lazy val AnalyticsEnabled = PrefKey[Boolean]("countly_analytics_enabled", customDefault = false)
+  lazy val AnalyticsEnabledCheck = PrefKey[Boolean]("analytics_enabled_checked", customDefault = false)
 
   lazy val SelfClient = PrefKey[ClientRegistrationState]("self_client")
   lazy val PrivateMode = PrefKey[Boolean]("private_mode")

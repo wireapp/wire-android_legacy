@@ -66,7 +66,7 @@ import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.OverScroller;
-import com.waz.zclient.ui.utils.MathUtils;
+import com.waz.utils.MathUtils;
 
 public class TouchImageView extends ImageView {
 

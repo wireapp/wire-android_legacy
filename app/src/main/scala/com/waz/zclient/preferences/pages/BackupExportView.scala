@@ -28,7 +28,6 @@ import android.view.View
 import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountManager, UiLifeCycle, UserService}
 import com.waz.threading.Threading
 import com.wire.signals.Signal
@@ -55,7 +54,6 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
   private val spinnerController = inject[SpinnerController]
   private val lifecycle         = inject[UiLifeCycle]
   private val sharing           = inject[ExternalFileSharing]
-  private lazy val tracking     = inject[TrackingService]
   private val backupButton      = findById[MenuRowButton](R.id.backup_button)
 
   backupButton.setOnClickProcess(requestPassword())
@@ -95,7 +93,6 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
 
   private def onBackupFailed(err: String): Unit = Future {
     spinnerController.hideSpinner()
-    tracking.historyBackedUp(false)
     ViewUtils.showAlertDialog(
       getContext,
       R.string.export_generic_error_title,
@@ -114,7 +111,6 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
       spinnerController.hideSpinner(Some(ContextUtils.getString(R.string.back_up_progress_complete)))
     } else
       spinnerController.hideSpinner()
-    tracking.historyBackedUp(true)
   }(Threading.Ui)
 }
 

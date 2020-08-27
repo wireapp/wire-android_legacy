@@ -25,7 +25,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
-import com.waz.zclient.ui.utils.MathUtils;
+import com.waz.utils.MathUtils;
 import com.waz.zclient.ui.animation.interpolators.penner.Cubic;
 
 public class ImageDragViewContainer extends FrameLayout {

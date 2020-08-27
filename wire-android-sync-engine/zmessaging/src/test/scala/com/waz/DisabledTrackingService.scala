@@ -17,7 +17,7 @@
  */
 package com.waz
 import com.waz.log.BasicLogging.LogTag
-import com.waz.model.{AssetId, ConvId, IntegrationId, UserId}
+import com.waz.model.{AssetId, ConvId, IntegrationId, RConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.service.call.CallInfo
 import com.waz.service.tracking.{ContributionEvent, IntegrationAdded, TrackingEvent, TrackingService}
@@ -28,8 +28,7 @@ import scala.concurrent.Future
 object DisabledTrackingService extends TrackingService {
   override def events: EventStream[(Option[ZMessaging], TrackingEvent)] = ???
   override def track(event: TrackingEvent, userId: Option[UserId]): Future[Unit] = Future.successful(())
-  override def contribution(action: ContributionEvent.Action): Future[Unit] = Future.successful(())
-  override def assetContribution(assetId: AssetId, userId: UserId): Future[Unit] = Future.successful(())
+  override def contribution(action: ContributionEvent.Action, zms: Option[UserId]): Future[Unit] = Future.successful(())
   override def exception(e: Throwable, description: String, userId: Option[UserId])(implicit tag: LogTag): Future[Unit] = Future.successful(())
   override def crash(e: Throwable): Future[Unit] = Future.successful(())
   override def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method): Future[Unit] = Future.successful(())
@@ -38,4 +37,5 @@ object DisabledTrackingService extends TrackingService {
   override def historyRestored(isSuccess: Boolean): Future[Unit] = Future.successful(())
   override def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit] = Future.successful(())
   override def isTrackingEnabled: Signal[Boolean] = Signal.const(false)
+  override def msgDecryptionFailed(convId: RConvId, userId: UserId): Future[Unit] = Future.successful(())
 }

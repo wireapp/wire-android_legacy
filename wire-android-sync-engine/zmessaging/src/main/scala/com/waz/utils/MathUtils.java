@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.ui.utils;
+package com.waz.utils;
 
 public class MathUtils {
 
@@ -49,4 +49,21 @@ public class MathUtils {
         }
         return original & ~flag;
     }
+
+    public static int log2(int x) {
+        return (int) (Math.log(x) / Math.log(2) + 1e-10);
+    }
+
+    public static int logRoundFactor6(int exactValue) {
+        return logRound(exactValue, 6);
+    }
+
+    public static long roundToNearest5(long value) {
+        return Math.round((double)value/5)*5;
+    }
+
+    public static int logRound(int exactValue, int factor) {
+        return (int) Math.ceil(Math.pow(2, (Math.floor(factor * log2(exactValue))/ factor)));
+    }
+
 }

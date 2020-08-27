@@ -27,7 +27,7 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.animation.LinearInterpolator;
 import com.waz.zclient.ui.text.GlyphTextView;
-import com.waz.zclient.ui.utils.MathUtils;
+import com.waz.utils.MathUtils;
 import com.waz.zclient.utils.ViewUtils;
 
 public class GlyphProgressView extends GlyphTextView {

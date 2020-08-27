@@ -23,9 +23,9 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConversationData, ConversationRole, _}
 import com.waz.service._
-import com.waz.service.assets.AssetService
+import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.push.{NotificationService, PushService, BgEventSource}
+import com.waz.service.push.{BgEventSource, NotificationService, PushService}
 import com.waz.service.teams.{TeamsService, TeamsServiceImpl}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
@@ -61,6 +61,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   private lazy val folders        = mock[FoldersService]
   private lazy val network        = mock[NetworkModeService]
   private lazy val properties     = mock[PropertiesService]
+  private lazy val uriHelper      = mock[UriHelper]
   private lazy val deletions      = mock[MsgDeletionStorage]
   private lazy val buttons        = mock[ButtonsStorage]
   private lazy val rolesService   = mock[ConversationRolesService]
@@ -106,7 +107,8 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     new ConversationsUiServiceImpl(
       selfUserId, teamId, assets, usersStorage, messages, msgStorage,
       msgUpdater, membersStorage, content, convsStorage, network,
-      service, sync, convsClient, accounts, tracking, errors, properties
+      service, sync, convsClient, accounts, tracking, errors, uriHelper,
+      properties
     )
   }
 

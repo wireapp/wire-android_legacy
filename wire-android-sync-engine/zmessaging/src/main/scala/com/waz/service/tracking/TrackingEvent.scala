@@ -17,19 +17,19 @@
  */
 package com.waz.service.tracking
 
-import java.lang.Math.max
+import java.util
 
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.{IntegrationId, Mime}
 import com.waz.service.call.Avs.AvsClosedReason
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
+import com.waz.service.tracking.TrackingServiceImpl.CountlyEventProperties
 import com.waz.utils.returning
 import org.json
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
-import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
 
 trait TrackingEvent {
@@ -51,23 +51,9 @@ trait OptEvent extends TrackingEvent {
 case object OptInEvent  extends OptEvent { override val name = s"settings.opted_in_tracking" }
 case object OptOutEvent extends OptEvent { override val name = s"settings.opted_out_tracking" }
 
-case class ContributionEvent(action:        ContributionEvent.Action,
-                             isGroup:       Boolean,
-                             ephExp:        Option[FiniteDuration],
-                             withService:   Boolean,
-                             guestsAllowed: Boolean,
-                             fromGuest:     Boolean) extends TrackingEvent {
+case class ContributionEvent(action: ContributionEvent.Action,
+                             segments: CountlyEventProperties) extends TrackingEvent {
   override val name = "contributed"
-
-  override val props = Some(returning(new JSONObject()) { o =>
-    o.put("action", action.name)
-    o.put("conversation_type", if (isGroup) "group" else "one_to_one")
-    o.put("with_service", withService)
-    o.put("is_ephemeral", ephExp.isDefined)
-    o.put("ephemeral_expiration", ephExp.map(_.toSeconds.toString))
-    o.put("is_allow_guests", guestsAllowed)
-    o.put("user_type", if (fromGuest) "guest" else "user")
-  })
 }
 
 object ContributionEvent {
@@ -232,35 +218,18 @@ case class AddParticipantsEvent(guestsAllowed: Boolean, userCount: Int, guestCou
   })
 }
 
-class CallingEvent(partName:              String,
-                   video:                 Boolean,
-                   isGroup:               Boolean,
-                   groupMemberCount:      Int,
-                   withService:           Boolean,
-                   incoming:              Boolean,
-                   guestsAllowed:         Option[Boolean]         = None,
-                   callParticipantsCount: Option[Int]             = None,
-                   setupTime:             Option[Duration]        = None,
-                   callDuration:          Option[Duration]        = None,
-                   endReason:             Option[AvsClosedReason] = None,
-                   videoAudioToggled:     Option[Boolean]         = None) extends TrackingEvent {
+case class CallingEvent(partName: String,
+                        segments: CountlyEventProperties) extends TrackingEvent {
 
   override lazy val name = s"calling.${partName}_call"
-  override val props = Some(returning(new JSONObject()) { o =>
-    o.put("conversation_type", if (isGroup) "group" else "one_to_one")
-    o.put("conversation_participants", groupMemberCount)
-    o.put("with_service", withService)
-    o.put("started_as_video", video)
+}
 
-    o.put("direction", if (incoming) "incoming" else "outgoing")
+case class MessageDecryptionFailed(segments: CountlyEventProperties) extends TrackingEvent {
+  override val name = "e2ee.failed_message_decryption"
+}
 
-    guestsAllowed.foreach(v => o.put("is_allow_guests", v))
-    callParticipantsCount.foreach(v => o.put("conversation_participants_in_call_max", v))
-    callDuration.foreach(v => o.put("duration", v.getSeconds))
-    setupTime.foreach(v => o.put("setup_time", v.getSeconds))
-    endReason.foreach(v => o.put("reason", reasonString(v)))
-    videoAudioToggled.foreach(v => o.put("AV_switch_toggled", v))
-  })
+case class ScreenShareEvent(segments: CountlyEventProperties) extends TrackingEvent {
+  override lazy val name = "calling.screen_share"
 }
 
 case object HistoryBackupSucceeded extends TrackingEvent {

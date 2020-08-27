@@ -34,7 +34,7 @@ import com.waz.permissions.PermissionsService
 import com.waz.service.assets.{AssetService, Content, UriHelper}
 import com.waz.threading.Threading
 import com.wire.signals.Signal
-import com.waz.utils.returning
+import com.waz.utils.{MathUtils, returning}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.common.controllers.global.KeyboardController
@@ -45,7 +45,7 @@ import com.waz.zclient.pages.main.conversation.AssetIntentsManager
 import com.waz.zclient.ui.colorpicker.{ColorPickerLayout, EmojiBottomSheetDialog, EmojiSize}
 import com.waz.zclient.ui.sketch.{DrawingCanvasCallback, DrawingCanvasView}
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.ui.utils.{ColorUtils, MathUtils}
+import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.ui.views.{CursorIconButton, SketchEditText}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView

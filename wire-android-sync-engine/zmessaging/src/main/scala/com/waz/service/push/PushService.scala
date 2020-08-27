@@ -150,6 +150,7 @@ class PushServiceImpl(selfUserId:           UserId,
             case Left(error) =>
               val e = OtrErrorEvent(otrEvent.convId, otrEvent.time, otrEvent.from, error)
               verbose(l"Got error when decrypting: $e")
+              tracking.msgDecryptionFailed(otrEvent.convId, this.selfUserId)
               notificationStorage.writeError(row.index, e)
             case Right(_) => Future.successful(())
           }

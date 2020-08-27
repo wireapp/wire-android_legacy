@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.ui.utils
+package com.waz.utils
 
+import com.waz.utils.MathUtilsTest.binary
 import org.junit.Assert._
 import org.junit.Test
 import org.scalatest.junit.JUnitSuite
-import MathUtilsTest.binary
 
 class MathUtilsTest extends JUnitSuite {
 
@@ -52,6 +52,10 @@ class MathUtilsTest extends JUnitSuite {
     assertEquals(MathUtils.removeBinaryFlag(binary("00000"), binary("111")), binary("00000"))
   }
 
+  @Test
+  def testLogRounding(): Unit = {
+    assertEquals(MathUtils.logRound(1, 2), 1)
+  }
 
 
 }

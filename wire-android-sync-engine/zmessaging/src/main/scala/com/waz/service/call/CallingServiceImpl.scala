@@ -386,7 +386,7 @@ class CallingServiceImpl(val accountId:       UserId,
   def onVideoStateChanged(userId: String, clientId: String, videoReceiveState: VideoState): Future[Unit] =
     updateActiveCallAsync { (_, _, call) =>
       verbose(l"video state changed: $videoReceiveState")
-      call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)
+      call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)(tracking)
     }("onVideoStateChanged")
 
   def onParticipantsChanged(rConvId: RConvId, participants: Set[Participant]): Future[Unit] =
@@ -550,7 +550,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }
       verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
       if (state != NoCameraPermission) avs.setVideoSendState(w, conv.remoteId, targetSt)
-      call.updateVideoState(Participant(accountId, clientId), targetSt)
+      call.updateVideoState(Participant(accountId, clientId), targetSt)(tracking)
     }("setVideoSendState")
 
   val callMessagesStage: Stage.Atomic = EventScheduler.Stage[CallMessageEvent] {

@@ -118,7 +118,7 @@ class GlobalModuleImpl(val context:             AContext,
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
   val network:                  DefaultNetworkModeService        = wire[DefaultNetworkModeService]
-  val trackingService:          TrackingService                  = TrackingServiceImpl(accountsService)
+  val trackingService:          TrackingService                  = TrackingServiceImpl(accountsService, metadata)
 
   val tokenService:             GlobalTokenService               = wire[GlobalTokenServiceImpl]
   val storage:                  Database                         = new GlobalDatabase(context, tracking = trackingService)
