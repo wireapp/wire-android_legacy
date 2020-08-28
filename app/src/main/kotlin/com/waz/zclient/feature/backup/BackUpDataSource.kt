@@ -14,8 +14,8 @@ abstract class BackUpDataSource<T, E> : BackUpRepository<List<File>> {
     override suspend fun saveBackup(): Either<Failure, List<File>> {
         val readIterator = databaseLocalDataSource.readIterator()
         val writeIterator: BatchReader<List<T>> = object : BatchReader<List<T>> {
-            override suspend fun readNext(): Either<Failure, List<T>?> = readIterator.readNext().map {
-                it?.map { mapper.fromEntity(it) }
+            override suspend fun readNext(): Either<Failure, List<T>> = readIterator.readNext().map { entities ->
+                entities.map { mapper.fromEntity(it) }
             }
 
             override suspend fun hasNext(): Boolean = readIterator.hasNext()
@@ -26,8 +26,8 @@ abstract class BackUpDataSource<T, E> : BackUpRepository<List<File>> {
     override suspend fun restoreBackup(): Either<Failure, Unit> {
         val readIterator = backUpLocalDataSource.readIterator()
         val writeIterator: BatchReader<List<E>> = object : BatchReader<List<E>> {
-            override suspend fun readNext(): Either<Failure, List<E>?> = readIterator.readNext().map {
-                it?.map { mapper.toEntity(it) }
+            override suspend fun readNext(): Either<Failure, List<E>> = readIterator.readNext().map { models ->
+                models.map { mapper.toEntity(it) }
             }
 
             override suspend fun hasNext(): Boolean = readIterator.hasNext()

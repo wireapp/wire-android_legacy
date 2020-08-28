@@ -5,7 +5,7 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.IOFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.utilities.converters.JsonConverter
-import com.waz.zclient.feature.backup.SerializationFailure
+import com.waz.zclient.feature.backup.io.file.SerializationFailure
 import kotlinx.serialization.SerializationException
 import java.io.File
 import java.io.IOException

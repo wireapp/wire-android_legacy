@@ -3,8 +3,10 @@ package com.waz.zclient.feature.backup.metadata
 import com.waz.model.UserId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.onFailure
+import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.core.utilities.converters.JsonConverter
-import com.waz.zclient.feature.backup.SerializationFailure
+import com.waz.zclient.feature.backup.io.file.SerializationFailure
 import kotlinx.serialization.SerializationException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -39,13 +41,12 @@ class MetaDataHandlerTest : UnitTest() {
 
         `when`(jsonConverter.toJson(metaData)).thenReturn(metaDataJson)
 
-        when (val res = metaDataHandler.generateMetaDataFile(userId, userHandle)) {
-            is Either.Left -> fail(res.a.toString())
-            is Either.Right -> {
-                val contents = res.b.readText()
+        metaDataHandler.generateMetaDataFile(userId, userHandle)
+            .onFailure { fail(it.toString()) }
+            .onSuccess {
+                val contents = it.readText()
                 assertEquals(metaDataJson, contents)
             }
-        }
     }
 
     @Test
@@ -57,14 +58,13 @@ class MetaDataHandlerTest : UnitTest() {
 
         `when`(jsonConverter.fromJson(metaDataJson)).thenReturn(metaData)
 
-        when (val res = metaDataHandler.readMetaData(metadataFile)) {
-            is Either.Left -> fail(res.a.toString())
-            is Either.Right -> {
-                assertEquals(userId.str(), res.b.userId)
-                assertEquals(userHandle, res.b.userHandle)
-                assertEquals(backUpVersion, res.b.backUpVersion)
+        metaDataHandler.readMetaData(metadataFile)
+            .onFailure { fail(it.toString()) }
+            .onSuccess {
+                assertEquals(userId.str(), it.userId)
+                assertEquals(userHandle, it.userHandle)
+                assertEquals(backUpVersion, it.backUpVersion)
             }
-        }
     }
 
     @Test
