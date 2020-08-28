@@ -97,7 +97,7 @@ val backUpModule = module {
     factory { Crypto() }
     factory { CryptoHeaderMetaData(get(), get()) }
     factory { EncryptionHeaderMapper() }
-    
+
     factory { CreateBackUpUseCase(getAll(), get(), get(), get()) } //this resolves all instances of type BackUpRepository
     viewModel { BackUpViewModel(get()) }
 

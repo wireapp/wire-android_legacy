@@ -7,10 +7,8 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.eq
 import com.waz.zclient.feature.backup.crypto.Crypto
-import com.waz.zclient.feature.backup.crypto.encryption.error.CryptoFailure
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
-import com.waz.zclient.feature.backup.crypto.header.EncryptedBackupHeader
 import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -37,44 +35,6 @@ class EncryptionHandlerTest : UnitTest() {
     }
 
     @Test
-    fun `given a backup file, userId, and password, when salt is null, then propagate error`() {
-        val tempDir = createTempDir()
-        val backupFile = createTextFile(tempDir)
-        val password = generateText(8)
-        val userId = UserId.apply()
-
-        `when`(crypto.generateSalt()).thenReturn(null)
-
-        val res = encryptionHandler.encryptBackup(backupFile, userId, password)
-
-        res.onFailure {
-            (it as CryptoFailure).apply {
-                assertEquals(this, HashingFailed)
-            }
-        }
-
-    }
-
-    @Test
-    fun `given a backup file, userId, and password, when hash fails, then propagate error`() {
-        val tempDir = createTempDir()
-        val backupFile = createTextFile(tempDir)
-        val password = generateText(8)
-        val userId = UserId.apply()
-
-        `when`(crypto.generateSalt()).thenReturn(null)
-
-        val res = encryptionHandler.encryptBackup(backupFile, userId, password)
-
-        res.onFailure {
-            (it as CryptoFailure).apply {
-                assertEquals(this, HashingFailed)
-            }
-        }
-
-    }
-
-    @Test
     fun `given a backup file, userId, and password, when salt is valid and hash is valid, then write encrypted meta data`() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
@@ -86,6 +46,9 @@ class EncryptionHandlerTest : UnitTest() {
 
         `when`(crypto.generateSalt()).thenReturn(salt)
         `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
+        `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
+        `when`(crypto.initEncryptState(any(), any())).thenReturn(Either.Right(byteArrayOf()))
+        `when`(headerMetaData.writeEncryptedMetaData(any(), any())).thenReturn(Either.Right(byteArrayOf()))
 
         encryptionHandler.encryptBackup(backupFile, userId, password)
 

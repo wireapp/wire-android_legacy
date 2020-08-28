@@ -59,10 +59,11 @@ class EncryptionHandler(
             cryptoHeaderMetaData.writeEncryptedMetaData(salt, hash)
         }
 
-    private fun checkExpectedKeySize(size: Int, expectedKeySize: Int) =
-        size.takeIf { it != expectedKeySize }?.let {
-            verbose(TAG, "Key length invalid: $it did not match $expectedKeySize")
+    private fun checkExpectedKeySize(size: Int, expectedKeySize: Int) {
+        if (size != expectedKeySize) {
+            verbose(TAG, "Key length invalid: $size did not match $expectedKeySize")
         }
+    }
 
     private fun loadCryptoLibrary() = crypto.loadLibrary
 

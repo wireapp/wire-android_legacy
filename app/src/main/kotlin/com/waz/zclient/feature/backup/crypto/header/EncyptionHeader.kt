@@ -95,6 +95,6 @@ data class EncryptedBackupHeader(
     val memLimit: Int = 0
 ) {
     companion object {
-        val EMPTY = EncryptedBackupHeader(CURRENT_VERSION, byteArrayOf(0), byteArrayOf(0), 0, 0)
+        val EMPTY = EncryptedBackupHeader(CURRENT_VERSION, byteArrayOf(), byteArrayOf(), 0, 0)
     }
 }

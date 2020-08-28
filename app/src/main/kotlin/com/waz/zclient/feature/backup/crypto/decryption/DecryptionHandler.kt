@@ -7,6 +7,7 @@ import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.feature.backup.crypto.Crypto
+import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionFailed
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashesDoNotMatch
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
@@ -56,10 +57,11 @@ class DecryptionHandler(
             }
     }
 
-    private fun checkExpectedKeySize(size: Int, expectedKeySize: Int) =
-        size.takeIf { it != expectedKeySize }?.let {
-            Logger.verbose(TAG, "Key length invalid: $it did not match $expectedKeySize")
+    private fun checkExpectedKeySize(size: Int, expectedKeySize: Int) {
+        if (size != expectedKeySize) {
+            Logger.verbose(EncryptionHandler.TAG, "Key length invalid: $size did not match $expectedKeySize")
         }
+    }
 
     private fun loadCryptoLibrary() = crypto.loadLibrary
 
