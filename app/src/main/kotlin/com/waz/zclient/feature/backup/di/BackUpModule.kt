@@ -1,8 +1,8 @@
 package com.waz.zclient.feature.backup.di
 
-import android.os.Environment
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.BackUpRepository
+import com.waz.zclient.feature.backup.BackUpViewModel
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import com.waz.zclient.feature.backup.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.assets.AssetsBackUpModel
@@ -51,25 +51,33 @@ import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
 import com.waz.zclient.feature.backup.users.UsersBackUpDataSource
 import com.waz.zclient.feature.backup.users.UsersBackUpDataMapper
 import com.waz.zclient.feature.backup.users.UsersBackUpModel
-import com.waz.zclient.feature.backup.zip.ZipHandlerDataSource
 import com.waz.zclient.storage.db.UserDatabase
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-private const val KEY_VALUES_FILE_NAME = "KeyValues"
-private const val MESSAGES_FILE_NAME = "Messages"
-private const val FOLDERS_FILE_NAME = "Folders"
-private const val CONVERSATIONS_FILE_NAME = "Conversations"
-private const val CONVERSATION_FOLDERS_FILE_NAME = "ConversationFolders"
-private const val CONVERSATION_ROLE_ACTION_FILE_NAME = "ConversationRoleAction"
-private const val ASSETS_FILE_NAME = "Assets"
-private const val BUTTONS_FILE_NAME = "Buttons"
-private const val CONVERSATION_MEMBERS_FILE_NAME = "ConversationMembers"
-private const val LIKES_FILE_NAME = "Likes"
-private const val PROPERTIES_FILE_NAME = "Properties"
-private const val READ_RECEIPTS_FILE_NAME = "ReadReceipts"
-private const val USERS_FILE_NAME = "Users"
+private const val METADATA = "Metadata"
+private const val KEY_VALUES = "KeyValues"
+private const val MESSAGES = "Messages"
+private const val FOLDERS = "Folders"
+private const val CONVERSATIONS = "Conversations"
+private const val CONVERSATION_FOLDERS = "ConversationFolders"
+private const val CONVERSATION_ROLE_ACTION = "ConversationRoleAction"
+private const val ASSETS = "Assets"
+private const val BUTTONS = "Buttons"
+private const val CONVERSATION_MEMBERS = "ConversationMembers"
+private const val LIKES = "Likes"
+private const val PROPERTIES = "Properties"
+private const val READ_RECEIPTS = "ReadReceipts"
+private const val USERS = "Users"
+
+private const val JSON = "Json"
+private const val FILE = "File"
+private const val DB = "Db"
+private const val MAPPER = "Mapper"
 
 private const val BACKUP_VERSION = 1
 
@@ -77,104 +85,157 @@ val backupModules: List<Module>
     get() = listOf(backUpModule)
 
 val backUpModule = module {
-    single { Environment.getExternalStorageDirectory() }
-    single { ZipHandlerDataSource(get()) } bind ZipHandler::class
+    single { androidContext().externalCacheDir }
+    single { ZipHandler(get()) }
     single { EncryptionHandlerDataSource() } bind EncryptionHandler::class
 
     factory { CreateBackUpUseCase(getAll(), get(), get(), get()) } //this resolves all instances of type BackUpRepository
+    viewModel { BackUpViewModel(get()) }
 
     // MetaData
-    factory { JsonConverter(BackupMetaData.serializer()) }
-    factory { MetaDataHandlerDataSource(BACKUP_VERSION, get(), get()) } bind MetaDataHandler::class
+    factory(named(METADATA + JSON)) { JsonConverter(BackupMetaData.serializer()) }
+    factory { MetaDataHandlerDataSource(BACKUP_VERSION, get(named(METADATA + JSON)), get()) } bind MetaDataHandler::class
 
     // KeyValues
-    factory { BatchDatabaseIOHandler((get<UserDatabase>()).keyValuesDao()) }
-    factory { JsonConverter(KeyValuesBackUpModel.serializer()) } //TODO check if koin can resolve generics. use named parameters otherwise.
-    factory { BackUpFileIOHandler<KeyValuesBackUpModel>(KEY_VALUES_FILE_NAME, get(), get()) }
-    factory { KeyValuesBackUpMapper() }
-    factory { KeyValuesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(KEY_VALUES + JSON)) { JsonConverter(KeyValuesBackUpModel.serializer()) }
+    factory(named(KEY_VALUES + FILE)) { BackUpFileIOHandler<KeyValuesBackUpModel>(KEY_VALUES, get(named(KEY_VALUES + JSON)), get()) }
+    factory(named(KEY_VALUES + DB)) { BatchDatabaseIOHandler((get<UserDatabase>()).keyValuesDao()) }
+    factory(named(KEY_VALUES + MAPPER)) { KeyValuesBackUpMapper() }
+    factory {
+        KeyValuesBackUpDataSource(get(named(KEY_VALUES + DB)), get(named(KEY_VALUES + FILE)), get(named(KEY_VALUES + MAPPER)))
+    } bind BackUpRepository::class
 
     // Folders
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().foldersDao()) }
-    factory { JsonConverter(FoldersBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<FoldersBackUpModel>(FOLDERS_FILE_NAME, get(), get()) }
-    factory { FoldersBackupMapper() }
-    factory { FoldersBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(FOLDERS + JSON)) { JsonConverter(FoldersBackUpModel.serializer()) }
+    factory(named(FOLDERS + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().foldersDao()) }
+    factory(named(FOLDERS + FILE)) { BackUpFileIOHandler<FoldersBackUpModel>(FOLDERS, get(named(FOLDERS + JSON)), get()) }
+    factory(named(FOLDERS + MAPPER)) { FoldersBackupMapper() }
+    factory {
+        FoldersBackupDataSource(get(named(FOLDERS + DB)), get(named(FOLDERS + FILE)), get(named(FOLDERS + MAPPER)))
+    } bind BackUpRepository::class
 
     // Conversation Roles
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().conversationRoleActionDao()) }
-    factory { JsonConverter(ConversationRoleActionBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<ConversationRoleActionBackUpModel>(CONVERSATION_ROLE_ACTION_FILE_NAME, get(), get()) }
-    factory { ConversationRoleBackupMapper() }
-    factory { ConversationRolesBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(CONVERSATION_ROLE_ACTION + JSON)) { JsonConverter(ConversationRoleActionBackUpModel.serializer()) }
+    factory(named(CONVERSATION_ROLE_ACTION + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().conversationRoleActionDao()) }
+    factory(named(CONVERSATION_ROLE_ACTION + FILE)) {
+        BackUpFileIOHandler<ConversationRoleActionBackUpModel>(CONVERSATION_ROLE_ACTION, get(named(CONVERSATION_ROLE_ACTION + JSON)), get())
+    }
+    factory(named(CONVERSATION_ROLE_ACTION + MAPPER)) { ConversationRoleBackupMapper() }
+    factory {
+        ConversationRolesBackupDataSource(
+            get(named(CONVERSATION_ROLE_ACTION + DB)),
+            get(named(CONVERSATION_ROLE_ACTION + FILE)),
+            get(named(CONVERSATION_ROLE_ACTION + MAPPER))
+        )
+    } bind BackUpRepository::class
 
     // Conversation Folders
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().conversationFoldersDao()) }
-    factory { JsonConverter(ConversationFoldersBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<ConversationFoldersBackUpModel>(CONVERSATION_FOLDERS_FILE_NAME, get(), get()) }
-    factory { ConversationFoldersBackupMapper() }
-    factory { ConversationFoldersBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(CONVERSATION_FOLDERS + JSON)) { JsonConverter(ConversationFoldersBackUpModel.serializer()) }
+    factory(named(CONVERSATION_FOLDERS + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().conversationFoldersDao()) }
+    factory(named(CONVERSATION_FOLDERS + FILE)) {
+        BackUpFileIOHandler<ConversationFoldersBackUpModel>(CONVERSATION_FOLDERS, get(named(CONVERSATION_FOLDERS + JSON)), get())
+    }
+    factory(named(CONVERSATION_FOLDERS + MAPPER)) { ConversationFoldersBackupMapper() }
+    factory {
+        ConversationFoldersBackupDataSource(
+            get(named(CONVERSATION_FOLDERS + DB)),
+            get(named(CONVERSATION_FOLDERS + FILE)),
+            get(named(CONVERSATION_FOLDERS + MAPPER))
+        )
+    } bind BackUpRepository::class
 
     // Conversations
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().conversationsDao()) }
-    factory { JsonConverter(ConversationsBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<ConversationsBackUpModel>(CONVERSATIONS_FILE_NAME, get(), get()) }
-    factory { ConversationsBackupMapper() }
-    factory { ConversationsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(CONVERSATIONS + JSON)) { JsonConverter(ConversationsBackUpModel.serializer()) }
+    factory(named(CONVERSATIONS + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().conversationsDao()) }
+    factory(named(CONVERSATIONS + FILE)) {
+        BackUpFileIOHandler<ConversationsBackUpModel>(CONVERSATIONS, get(named(CONVERSATIONS + JSON)), get())
+    }
+    factory(named(CONVERSATIONS + MAPPER)) { ConversationsBackupMapper() }
+    factory {
+        ConversationsBackupDataSource(
+            get(named(CONVERSATIONS + DB)),
+            get(named(CONVERSATIONS + FILE)),
+            get(named(CONVERSATIONS + MAPPER))
+        )
+    } bind BackUpRepository::class
 
     // Assets
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().assetsDao()) }
-    factory { JsonConverter(AssetsBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<AssetsBackUpModel>(ASSETS_FILE_NAME, get(), get()) }
-    factory { AssetsBackupMapper() }
-    factory { AssetsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(ASSETS + JSON)) { JsonConverter(AssetsBackUpModel.serializer()) }
+    factory(named(ASSETS + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().assetsDao()) }
+    factory(named(ASSETS + FILE)) { BackUpFileIOHandler<AssetsBackUpModel>(ASSETS, get(named(ASSETS + JSON)), get()) }
+    factory(named(ASSETS + MAPPER)) { AssetsBackupMapper() }
+    factory {
+        AssetsBackupDataSource(get(named(ASSETS + DB)), get(named(ASSETS + FILE)), get(named(ASSETS + MAPPER)))
+    } bind BackUpRepository::class
 
     // Messages
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().messagesDao()) }
-    factory { JsonConverter(MessagesBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<MessagesBackUpModel>(MESSAGES_FILE_NAME, get(), get()) }
-    factory { MessagesBackUpDataMapper() }
-    factory { MessagesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(MESSAGES + JSON)) { JsonConverter(MessagesBackUpModel.serializer()) }
+    factory(named(MESSAGES + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().messagesDao()) }
+    factory(named(MESSAGES + FILE)) { BackUpFileIOHandler<MessagesBackUpModel>(MESSAGES, get(named(MESSAGES + JSON)), get()) }
+    factory(named(MESSAGES + MAPPER)) { MessagesBackUpDataMapper() }
+    factory {
+        MessagesBackUpDataSource(get(named(MESSAGES + DB)), get(named(MESSAGES + FILE)), get(named(MESSAGES + MAPPER)))
+    } bind BackUpRepository::class
 
     // Buttons
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().buttonsDao()) }
-    factory { JsonConverter(ButtonsBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<ButtonsBackUpModel>(BUTTONS_FILE_NAME, get(), get()) }
-    factory { ButtonsBackupMapper() }
-    factory { ButtonsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(BUTTONS + JSON)) { JsonConverter(ButtonsBackUpModel.serializer()) }
+    factory(named(BUTTONS + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().buttonsDao()) }
+    factory(named(BUTTONS + FILE)) { BackUpFileIOHandler<ButtonsBackUpModel>(BUTTONS, get(named(BUTTONS + JSON)), get()) }
+    factory(named(BUTTONS + MAPPER)) { ButtonsBackupMapper() }
+    factory {
+        ButtonsBackupDataSource(get(named(BUTTONS + DB)), get(named(BUTTONS + FILE)), get(named(BUTTONS + MAPPER)))
+    } bind BackUpRepository::class
 
     // ConversationMembers
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().conversationMembersDao()) }
-    factory { JsonConverter(ConversationMembersBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<ConversationMembersBackUpModel>(CONVERSATION_MEMBERS_FILE_NAME, get(), get()) }
-    factory { ConversationMembersBackupMapper() }
-    factory { ConversationMembersBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(CONVERSATION_MEMBERS + JSON)) { JsonConverter(ConversationMembersBackUpModel.serializer()) }
+    factory(named(CONVERSATION_MEMBERS + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().conversationMembersDao()) }
+    factory(named(CONVERSATION_MEMBERS + FILE)) {
+        BackUpFileIOHandler<ConversationMembersBackUpModel>(CONVERSATION_MEMBERS, get(named(CONVERSATION_MEMBERS + JSON)), get())
+    }
+    factory(named(CONVERSATION_MEMBERS + MAPPER)) { ConversationMembersBackupMapper() }
+    factory {
+        ConversationMembersBackupDataSource(
+            get(named(CONVERSATION_MEMBERS + DB)),
+            get(named(CONVERSATION_MEMBERS + FILE)),
+            get(named(CONVERSATION_MEMBERS + MAPPER))
+        )
+    } bind BackUpRepository::class
 
     // Likes
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().likesDao()) }
-    factory { JsonConverter(LikesBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<LikesBackUpModel>(LIKES_FILE_NAME, get(), get()) }
-    factory { LikesBackupMapper() }
-    factory { LikesBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(LIKES + JSON)) { JsonConverter(LikesBackUpModel.serializer()) }
+    factory(named(LIKES + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().likesDao()) }
+    factory(named(LIKES + FILE)) { BackUpFileIOHandler<LikesBackUpModel>(LIKES, get(named(LIKES + JSON)), get()) }
+    factory(named(LIKES + MAPPER)) { LikesBackupMapper() }
+    factory {
+        LikesBackupDataSource(get(named(LIKES + DB)), get(named(LIKES + FILE)), get(named(LIKES + MAPPER)))
+    } bind BackUpRepository::class
 
     // Properties
-    factory { BatchDatabaseIOHandler((get<UserDatabase>()).propertiesDao()) }
-    factory { JsonConverter(PropertiesBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<PropertiesBackUpModel>(PROPERTIES_FILE_NAME, get(), get()) }
-    factory { PropertiesBackUpMapper() }
-    factory { PropertiesBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(PROPERTIES + JSON)) { JsonConverter(PropertiesBackUpModel.serializer()) }
+    factory(named(PROPERTIES + DB)) { BatchDatabaseIOHandler((get<UserDatabase>()).propertiesDao()) }
+    factory(named(PROPERTIES + FILE)) { BackUpFileIOHandler<PropertiesBackUpModel>(PROPERTIES, get(named(PROPERTIES + JSON)), get()) }
+    factory(named(PROPERTIES + MAPPER)) { PropertiesBackUpMapper() }
+    factory {
+        PropertiesBackUpDataSource(get(named(PROPERTIES + DB)), get(named(PROPERTIES + FILE)), get(named(PROPERTIES + MAPPER)))
+    } bind BackUpRepository::class
 
     // ReadReceipts
-    factory { BatchDatabaseIOHandler(get<UserDatabase>().readReceiptsDao()) }
-    factory { JsonConverter(ReadReceiptsBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<ReadReceiptsBackUpModel>(READ_RECEIPTS_FILE_NAME, get(), get()) }
-    factory { ReadReceiptsBackupMapper() }
-    factory { ReadReceiptsBackupDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(READ_RECEIPTS + JSON)) { JsonConverter(ReadReceiptsBackUpModel.serializer()) }
+    factory(named(READ_RECEIPTS + DB)) { BatchDatabaseIOHandler(get<UserDatabase>().readReceiptsDao()) }
+    factory(named(READ_RECEIPTS + FILE)) {
+        BackUpFileIOHandler<ReadReceiptsBackUpModel>(READ_RECEIPTS, get(named(READ_RECEIPTS + JSON)), get())
+    }
+    factory(named(READ_RECEIPTS + MAPPER)) { ReadReceiptsBackupMapper() }
+    factory {
+        ReadReceiptsBackupDataSource(get(named(READ_RECEIPTS + DB)), get(named(READ_RECEIPTS + FILE)), get(named(READ_RECEIPTS + MAPPER)))
+    } bind BackUpRepository::class
 
     // Users
-    factory { BatchDatabaseIOHandler((get<UserDatabase>()).usersDao()) }
-    factory { JsonConverter(UsersBackUpModel.serializer()) }
-    factory { BackUpFileIOHandler<UsersBackUpModel>(USERS_FILE_NAME, get(), get()) }
-    factory { UsersBackUpDataMapper() }
-    factory { UsersBackUpDataSource(get(), get(), get()) } bind BackUpRepository::class
+    factory(named(USERS + JSON)) { JsonConverter(UsersBackUpModel.serializer()) }
+    factory(named(USERS + DB)) { BatchDatabaseIOHandler((get<UserDatabase>()).usersDao()) }
+    factory(named(USERS + FILE)) { BackUpFileIOHandler<UsersBackUpModel>(USERS, get(named(USERS + JSON)), get()) }
+    factory(named(USERS + MAPPER)) { UsersBackUpDataMapper() }
+    factory {
+        UsersBackUpDataSource(get(named(USERS + DB)), get(named(USERS + FILE)), get(named(USERS + MAPPER)))
+    } bind BackUpRepository::class
 }

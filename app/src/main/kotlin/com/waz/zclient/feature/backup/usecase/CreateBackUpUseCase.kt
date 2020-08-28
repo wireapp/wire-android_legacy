@@ -22,26 +22,29 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class CreateBackUpUseCase(
-    private val backUpRepositories: List<BackUpRepository<File>>,
+    private val backUpRepositories: List<BackUpRepository<List<File>>>,
     private val zipHandler: ZipHandler,
     private val encryptionHandler: EncryptionHandler,
     private val metaDataHandler: MetaDataHandler,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-) : UseCase<File, Triple<UserId, String, String>> {
+) : UseCase<File, CreateBackUpUseCaseParams> {
 
-    override suspend fun run(params: Triple<UserId, String, String>): Either<Failure, File> {
-        val userId = params.first
-        val userHandle = params.second
-        val password = params.third
+    override suspend fun run(params: CreateBackUpUseCaseParams): Either<Failure, File> =
+        backUpOrFail()
+            .flatMap { files ->
+                metaDataHandler.generateMetaDataFile(params.userId, params.userHandle).map { files + it }
+            }
+            .flatMap { files ->
+                zipHandler.zip(backupZipFileName(params.userHandle), files)
+            }
+            .flatMap { file ->
+                encryptionHandler.encrypt(file, params.userId, params.password)
+            }
 
-        return backUpOrFail()
-            .flatMap { files -> metaDataHandler.generateMetaDataFile(userId, userHandle).map { files + it } }
-            .flatMap { zipHandler.zip(backupZipFileName(userHandle), it) }
-            .flatMap { encryptionHandler.encrypt(it, userId, password) }
-    }
-
-    private suspend fun backUpOrFail() = extractFiles(
-        backUpRepositories.map { coroutineScope.async(Dispatchers.IO) { it.saveBackup() } }.awaitAll()
+    private suspend fun backUpOrFail(): Either<Failure, List<File>> = extractFiles(
+        backUpRepositories
+            .map { coroutineScope.async(Dispatchers.IO) { it.saveBackup() } }
+            .awaitAll()
     )
 
     @SuppressWarnings("MagicNumber")
@@ -50,19 +53,18 @@ class CreateBackUpUseCase(
         return "Wire-$userHandle-Backup_$timestamp.android_wbu"
     }
 
-    private fun extractFiles(list: List<Either<Failure, File>>): Either<Failure, List<File>> {
+    private fun extractFiles(filesOrFailure: List<Either<Failure, List<File>>>): Either<Failure, List<File>> {
         val files = mutableListOf<File>()
 
-        for (value in list)
-            when (value) {
-                is Either.Right -> files += value.b
-                is Either.Left -> return Either.Left(value.a)
+        filesOrFailure.forEach {
+            when (it) {
+                is Either.Right -> files.addAll(it.b)
+                is Either.Left -> return Either.Left(it.a)
             }
+        }
 
         return Either.Right(files.toList())
     }
-
-    companion object {
-        const val TAG = "CreateBackUpUseCase"
-    }
 }
+
+data class CreateBackUpUseCaseParams(val userId: UserId, val userHandle: String, val password: String)
