@@ -1,3 +1,4 @@
+@file:Suppress("TooManyFunctions")
 package com.waz.zclient.feature.backup.crypto
 
 import com.waz.zclient.core.exception.Failure
@@ -29,7 +30,11 @@ class Crypto {
         }
     }
 
-    private fun initializeState(key: ByteArray, header: ByteArray, init: (ByteArray, ByteArray, ByteArray) -> Int): Either<Failure, ByteArray> =
+    private fun initializeState(
+        key: ByteArray,
+        header: ByteArray,
+        init: (ByteArray, ByteArray, ByteArray) -> Int
+    ): Either<Failure, ByteArray> =
         if (header.size != Sodium.crypto_secretstream_xchacha20poly1305_headerbytes()) {
             Either.Left(InvalidHeaderLength)
         } else if (key.size != decryptExpectedKeyBytes()) {
