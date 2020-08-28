@@ -6,13 +6,18 @@ import com.waz.zclient.any
 import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.onFailure
+import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.metadata.BackupMetaData
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
+import org.amshove.kluent.shouldEqual
+import org.junit.Assert.fail
 import org.junit.Test
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
@@ -33,6 +38,10 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     private val metadataFile = File(MetaDataHandler.FILENAME) // a mock file, don't create it
     private val zipFile = File("mocked.zip")
     private val encryptedFile = File("file_encrypted.zip")
+    private val backUpVersion = 0
+    private val userHandle = "user"
+
+    private val metaData = BackupMetaData(userId.str(), userHandle, backUpVersion)
 
     @Test
     fun `given an encrypted and zipped file, when it's unpacked, then call restore on all backup repositories`() {
@@ -49,6 +58,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -56,12 +66,11 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             verify(encryptionHandler).decrypt(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
-            verify(metaDataHandler).checkMetaData(metadataFile, userId)
             verify(repo1).restoreBackup()
             verify(repo2).restoreBackup()
             verify(repo3).restoreBackup()
 
-            assert(result.isRight)
+            result.onFailure { fail(it.toString()) }
         }
     }
 
@@ -80,6 +89,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -92,7 +102,9 @@ class RestoreBackUpUseCaseTest : UnitTest() {
             verifyNoInteractions(repo2)
             verifyNoInteractions(repo3)
 
-            assert(result.isLeft)
+            result
+                .onSuccess { fail("The test should fail with decryption error") }
+                .onFailure { it shouldEqual FakeEncryptionFailure }
         }
     }
 
@@ -111,6 +123,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -123,7 +136,9 @@ class RestoreBackUpUseCaseTest : UnitTest() {
             verifyNoInteractions(repo2)
             verifyNoInteractions(repo3)
 
-            assert(result.isLeft)
+            result
+                .onSuccess { fail("Unzipping should have failed") }
+                .onFailure { it shouldEqual FakeZipFailure }
         }
     }
 
@@ -142,6 +157,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -154,7 +170,9 @@ class RestoreBackUpUseCaseTest : UnitTest() {
             verifyNoInteractions(repo2)
             verifyNoInteractions(repo3)
 
-            assert(result.isLeft)
+            result
+                .onSuccess { fail("There should be no metadata file") }
+                .onFailure { it shouldEqual NoMetaDataFileFailure }
         }
     }
 
@@ -173,6 +191,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -180,12 +199,14 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             verify(encryptionHandler).decrypt(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
-            verify(metaDataHandler).checkMetaData(metadataFile, userId)
+            verify(metaDataHandler).readMetaData(metadataFile)
             verifyNoInteractions(repo1)
             verifyNoInteractions(repo2)
             verifyNoInteractions(repo3)
 
-            assert(result.isLeft)
+            result
+                .onSuccess { fail("Checking metadata should have failed") }
+                .onFailure { it shouldEqual FakeMetaDataFailure }
         }
     }
 
@@ -204,6 +225,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -211,13 +233,78 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             verify(encryptionHandler).decrypt(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
-            verify(metaDataHandler).checkMetaData(metadataFile, userId)
+            verify(metaDataHandler).readMetaData(metadataFile)
             verify(repo1).restoreBackup()
             verify(repo2).restoreBackup()
             verify(repo3).restoreBackup()
 
-            assert(result.isLeft)
+            result
+                .onSuccess { fail("One of the repositories should have failed") }
+                .onFailure { it shouldEqual DatabaseError }
         }
+    }
+
+    @Test
+    fun `given a valid metadata json, when checkMetaData is called, return success`() {
+        val encryptionHandler = mockEncryptionHandler()
+        val zipHandler = mockZipHandler()
+        val metaDataHandler = mockMetaDataHandler()
+
+        restoreBackUpUseCase = RestoreBackUpUseCase(
+                emptyList(),
+                zipHandler,
+                encryptionHandler,
+                metaDataHandler,
+                backUpVersion,
+                testCoroutineScope
+        )
+
+        restoreBackUpUseCase.checkMetaData(metadataFile, userId).onFailure { fail(it.toString()) }
+    }
+
+    @Test
+    fun `given a valid metadata json, when it is checked and the userId is wrong, return a failure`() {
+        val differentUserId = UserId.apply()
+        val encryptionHandler = mockEncryptionHandler()
+        val zipHandler = mockZipHandler()
+        val metaDataHandler = mockMetaDataHandler()
+
+        restoreBackUpUseCase = RestoreBackUpUseCase(
+                emptyList(),
+                zipHandler,
+                encryptionHandler,
+                metaDataHandler,
+                backUpVersion,
+                testCoroutineScope
+        )
+
+        restoreBackUpUseCase.checkMetaData(metadataFile, differentUserId)
+            .onSuccess { fail("UserId should be wrong") }
+            .onFailure { it shouldEqual UserIdInvalid }
+    }
+
+    @Test
+    fun `given a valid metadata json, when it is checked and the backup version is unhandled, return a failure`() {
+        val encryptionHandler = mockEncryptionHandler()
+        val zipHandler = mockZipHandler()
+        val metaDataHandler = mockMetaDataHandler()
+
+        // We should be able to handle all backup versions older (smaller) than the current one,
+        // i.e. the current version should be the newest one.
+        // If the version from the backup file is bigger than the current one, it means something's wrong.
+        val currentBackupVersion = backUpVersion - 1
+        restoreBackUpUseCase = RestoreBackUpUseCase(
+            emptyList(),
+            zipHandler,
+            encryptionHandler,
+            metaDataHandler,
+            currentBackupVersion,
+            testCoroutineScope
+        )
+
+        restoreBackUpUseCase.checkMetaData(metadataFile, userId)
+            .onSuccess { fail("The backup version should be wrong") }
+            .onFailure { it shouldEqual UnknownBackupVersion(backUpVersion) }
     }
 
     private suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository<List<File>> = mock(BackUpRepository::class.java).also {
@@ -246,8 +333,8 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     }
 
     private fun mockMetaDataHandler(metaDataSuccess: Boolean = true): MetaDataHandler = mock(MetaDataHandler::class.java).also {
-        `when`(it.checkMetaData(any(), any())).thenReturn(
-            if (metaDataSuccess) Either.Right(Unit)
+        `when`(it.readMetaData(any())).thenReturn(
+            if (metaDataSuccess) Either.Right(metaData)
             else Either.Left(FakeMetaDataFailure)
         )
     }

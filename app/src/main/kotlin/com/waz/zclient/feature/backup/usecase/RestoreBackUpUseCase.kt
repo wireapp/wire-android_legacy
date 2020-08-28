@@ -24,6 +24,7 @@ class RestoreBackUpUseCase(
     private val zipHandler: ZipHandler,
     private val encryptionHandler: EncryptionHandler,
     private val metaDataHandler: MetaDataHandler,
+    private val backUpVersion: Int,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : UseCase<Unit, RestoreBackUpUseCaseParams> {
 
@@ -33,7 +34,7 @@ class RestoreBackUpUseCase(
         }.flatMap { files ->
             val metaDataFile = files.find { it.name == MetaDataHandler.FILENAME }
             if (metaDataFile == null) Either.Left(NoMetaDataFileFailure)
-            else metaDataHandler.checkMetaData(metaDataFile, params.userId)
+            else checkMetaData(metaDataFile, params.userId)
         }.flatMap {
             restore()
         }
@@ -45,8 +46,21 @@ class RestoreBackUpUseCase(
             .find { it.isLeft }
         res ?: Either.Right(Unit)
     }
+
+    internal fun checkMetaData(metaDataFile: File, userId: UserId): Either<Failure, Unit> =
+        metaDataHandler.readMetaData(metaDataFile).flatMap { metaData ->
+        if (metaData.userId != userId.str()) {
+            Either.Left(UserIdInvalid)
+        } else if (metaData.backUpVersion != backUpVersion) {
+            Either.Left(UnknownBackupVersion(metaData.backUpVersion))
+        } else {
+            Either.Right(Unit)
+        }
+    }
 }
 
 object NoMetaDataFileFailure : FeatureFailure()
+object UserIdInvalid : FeatureFailure()
+data class UnknownBackupVersion(val backUpVersion: Int) : FeatureFailure()
 
 data class RestoreBackUpUseCaseParams(val file: File, val userId: UserId, val password: String)

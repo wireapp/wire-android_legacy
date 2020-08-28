@@ -89,13 +89,13 @@ val backUpModule = module {
     single { ZipHandler(get()) }
     single { EncryptionHandlerDataSource() } bind EncryptionHandler::class
 
-    factory { CreateBackUpUseCase(getAll(), get(), get(), get()) } //this resolves all instances of type BackUpRepository
-    factory { RestoreBackUpUseCase(getAll(), get(), get(), get()) }
+    factory { CreateBackUpUseCase(getAll(), get(), get(), get(), BACKUP_VERSION) } //this resolves all instances of type BackUpRepository
+    factory { RestoreBackUpUseCase(getAll(), get(), get(), get(), BACKUP_VERSION) }
     viewModel { BackUpViewModel(get()) }
 
     // MetaData
     factory(named(METADATA + JSON)) { JsonConverter(BackupMetaData.serializer()) }
-    factory { MetaDataHandler(BACKUP_VERSION, get(named(METADATA + JSON)), get()) } bind MetaDataHandler::class
+    factory { MetaDataHandler(get(named(METADATA + JSON)), get()) }
 
     // KeyValues
     factory(named(KEY_VALUES + JSON)) { JsonConverter(KeyValuesBackUpModel.serializer()) }
