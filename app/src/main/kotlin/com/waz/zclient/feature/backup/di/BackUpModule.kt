@@ -40,7 +40,6 @@ import com.waz.zclient.feature.backup.messages.MessagesBackUpModel
 import com.waz.zclient.feature.backup.messages.MessagesBackUpDataMapper
 import com.waz.zclient.feature.backup.metadata.BackupMetaData
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
-import com.waz.zclient.feature.backup.metadata.MetaDataHandlerDataSource
 import com.waz.zclient.feature.backup.properties.PropertiesBackUpDataSource
 import com.waz.zclient.feature.backup.properties.PropertiesBackUpMapper
 import com.waz.zclient.feature.backup.properties.PropertiesBackUpModel
@@ -48,6 +47,7 @@ import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackUpModel
 import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackupDataSource
 import com.waz.zclient.feature.backup.receipts.ReadReceiptsBackupMapper
 import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
+import com.waz.zclient.feature.backup.usecase.RestoreBackUpUseCase
 import com.waz.zclient.feature.backup.users.UsersBackUpDataSource
 import com.waz.zclient.feature.backup.users.UsersBackUpDataMapper
 import com.waz.zclient.feature.backup.users.UsersBackUpModel
@@ -89,12 +89,13 @@ val backUpModule = module {
     single { ZipHandler(get()) }
     single { EncryptionHandlerDataSource() } bind EncryptionHandler::class
 
-    factory { CreateBackUpUseCase(getAll(), get(), get(), get()) } //this resolves all instances of type BackUpRepository
+    factory { CreateBackUpUseCase(getAll(), get(), get(), get(), BACKUP_VERSION) } //this resolves all instances of type BackUpRepository
+    factory { RestoreBackUpUseCase(getAll(), get(), get(), get(), BACKUP_VERSION) }
     viewModel { BackUpViewModel(get()) }
 
     // MetaData
     factory(named(METADATA + JSON)) { JsonConverter(BackupMetaData.serializer()) }
-    factory { MetaDataHandlerDataSource(BACKUP_VERSION, get(named(METADATA + JSON)), get()) } bind MetaDataHandler::class
+    factory { MetaDataHandler(get(named(METADATA + JSON)), get()) }
 
     // KeyValues
     factory(named(KEY_VALUES + JSON)) { JsonConverter(KeyValuesBackUpModel.serializer()) }
