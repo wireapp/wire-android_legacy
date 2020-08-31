@@ -8,6 +8,7 @@ import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.io.file.SerializationFailure
 import kotlinx.serialization.SerializationException
+import org.amshove.kluent.shouldEqual
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
@@ -37,11 +38,11 @@ class MetaDataHandlerTest : UnitTest() {
     @Test
     fun `given the user's id, the handle, and the backup version, when the metadata json file is created, then it consists of correct json string`() {
         val tempDir = createTempDir()
-        val metaDataHandler = MetaDataHandlerDataSource(backUpVersion, jsonConverter, tempDir)
+        val metaDataHandler = MetaDataHandler(jsonConverter, tempDir)
 
         `when`(jsonConverter.toJson(metaData)).thenReturn(metaDataJson)
 
-        metaDataHandler.generateMetaDataFile(userId, userHandle)
+        metaDataHandler.generateMetaDataFile(metaData)
             .onFailure { fail(it.toString()) }
             .onSuccess {
                 val contents = it.readText()
@@ -54,7 +55,7 @@ class MetaDataHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val metadataFile = createTempFile("metadata", ".json", tempDir)
         metadataFile.writeText(metaDataJson)
-        val metaDataHandler = MetaDataHandlerDataSource(backUpVersion, jsonConverter, tempDir)
+        val metaDataHandler = MetaDataHandler(jsonConverter, tempDir)
 
         `when`(jsonConverter.fromJson(metaDataJson)).thenReturn(metaData)
 
@@ -76,11 +77,12 @@ class MetaDataHandlerTest : UnitTest() {
         val metadataFile = createTempFile("metadata", ".json", tempDir)
         metadataFile.writeText(invalidJson)
 
-        val metaDataHandler = MetaDataHandlerDataSource(backUpVersion, jsonConverter, tempDir)
+        val metaDataHandler = MetaDataHandler(jsonConverter, tempDir)
 
         `when`(jsonConverter.fromJson(invalidJson)).thenThrow(serializationException)
 
         val res = metaDataHandler.readMetaData(metadataFile)
         assertEquals(Either.Left(SerializationFailure(serializationException)), res)
     }
+
 }
