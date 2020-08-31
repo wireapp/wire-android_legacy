@@ -64,21 +64,21 @@ class EncryptionHandlerTest : UnitTest() {
         val userId = UserId.apply()
 
         val salt = ByteArray(TEST_KEY_BYTES)
-        val streamHeader = ByteArray(TEST_KEY_BYTES)
+        val streamHeader = TEST_KEY_BYTES
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)
         val cipherText = ByteArray(backupFile.readBytes().size + 15)
 
         `when`(crypto.generateSalt()).thenReturn(salt)
         `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
-        `when`(crypto.streamHeader()).thenReturn(streamHeader)
+        `when`(crypto.streamHeaderLength()).thenReturn(streamHeader)
         `when`(crypto.aBytesLength()).thenReturn(15)
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
-        `when`(crypto.initEncryptState(hash, streamHeader)).thenReturn(Either.Right(hash))
+        `when`(crypto.initEncryptState(any(), any())).thenReturn(Either.Right(hash))
         `when`(headerMetaData.writeEncryptedMetaData(salt, hash)).thenReturn(Either.Right(hash))
 
         encryptionHandler.encryptBackup(backupFile, userId, password)
 
-        verify(crypto).initEncryptState(hash, streamHeader)
+        verify(crypto).initEncryptState(any(), any())
         verify(crypto).generatePushMessagePart(eq(hash), eq(cipherText), eq(backupFile.readBytes()))
 
     }

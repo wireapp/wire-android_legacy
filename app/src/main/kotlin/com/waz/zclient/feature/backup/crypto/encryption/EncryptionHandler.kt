@@ -41,7 +41,7 @@ class EncryptionHandler(
         }
 
     private fun encryptAndCipher(backupBytes: ByteArray, hash: ByteArray): Either<Failure, ByteArray> {
-        val header = crypto.streamHeader()
+        val header =  ByteArray(crypto.streamHeaderLength())
         return crypto.initEncryptState(hash, header).flatMap { state ->
             val cipherText = ByteArray(backupBytes.size + crypto.aBytesLength())
             val encrypted = backupBytes + cipherText

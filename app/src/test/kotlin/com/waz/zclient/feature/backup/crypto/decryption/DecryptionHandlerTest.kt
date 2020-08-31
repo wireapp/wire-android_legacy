@@ -4,13 +4,13 @@ import com.waz.model.UserId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.feature.backup.crypto.Crypto
 import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionFailed
 import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionInitialisationError
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashesDoNotMatch
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
 import com.waz.zclient.feature.backup.crypto.header.EncryptedBackupHeader
+import com.waz.zclient.framework.functional.assertLeft
 import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -44,12 +44,11 @@ class DecryptionHandlerTest : UnitTest() {
         val userId = UserId.apply()
 
         `when`(headerMetaData.readEncryptedMetadata(backupFile)).thenReturn(Either.Right(EncryptedBackupHeader.EMPTY))
-        `when`(crypto.hash(any(), any())).thenReturn(Either.Right(byteArrayOf()))
-        `when`(crypto.initDecryptState(any(), any())).thenReturn(Either.Right(byteArrayOf()))
+        `when`(crypto.hash(any(), any())).thenReturn(Either.Right(byteArrayOf(2)))
 
         val res = decryptionHandler.decryptBackup(backupFile, userId, password)
 
-        res.onFailure {
+        res.assertLeft {
             assertEquals(it, HashesDoNotMatch)
         }
     }
@@ -67,30 +66,8 @@ class DecryptionHandlerTest : UnitTest() {
 
         val res = decryptionHandler.decryptBackup(backupFile, userId, password)
 
-        res.onFailure {
+        res.assertLeft {
             assertEquals(it, HashesDoNotMatch)
-        }
-    }
-
-    @Test
-    fun `given backup file, userId, password, when decrypt state is null, then propagate error`() {
-        val tempDir = createTempDir()
-        val backupFile = createTextFile(tempDir)
-        val password = generateText(8)
-        val userId = UserId.apply()
-        val hash = ByteArray(DECRYPTION_HASH_BYTES)
-        val salt = ByteArray(TEST_KEY_BYTES)
-        val metaData = EncryptedBackupHeader(salt = salt, uuidHash = hash)
-
-        `when`(headerMetaData.readEncryptedMetadata(backupFile)).thenReturn(Either.Right(metaData))
-        `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
-        `when`(crypto.initDecryptState(any(), any())).thenReturn(Either.Right(byteArrayOf()))
-        `when`(crypto.decryptExpectedKeyBytes()).thenReturn(DECRYPTION_HASH_BYTES)
-
-        val res = decryptionHandler.decryptBackup(backupFile, userId, password)
-
-        res.onFailure {
-            assertEquals(it, DecryptionInitialisationError)
         }
     }
 
@@ -135,7 +112,7 @@ class DecryptionHandlerTest : UnitTest() {
 
         val res = decryptionHandler.decryptBackup(backupFile, userId, password)
 
-        res.onFailure {
+        res.assertLeft {
             assertEquals(it, DecryptionFailed)
         }
 

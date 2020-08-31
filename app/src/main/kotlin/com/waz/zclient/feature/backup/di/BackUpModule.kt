@@ -22,6 +22,7 @@ import com.waz.zclient.feature.backup.conversations.ConversationsBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationsBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationsBackupMapper
 import com.waz.zclient.feature.backup.crypto.Crypto
+import com.waz.zclient.feature.backup.crypto.CryptoWrapper
 import com.waz.zclient.feature.backup.crypto.decryption.DecryptionHandler
 import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
@@ -94,7 +95,8 @@ val backUpModule = module {
     single { EncryptionHandler(get(), get()) }
     single { DecryptionHandler(get(), get()) }
 
-    factory { Crypto() }
+    factory { Crypto(get()) }
+    factory { CryptoWrapper() }
     factory { CryptoHeaderMetaData(get(), get()) }
     factory { EncryptionHeaderMapper() }
 
