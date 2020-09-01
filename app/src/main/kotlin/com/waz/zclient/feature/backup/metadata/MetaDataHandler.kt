@@ -16,7 +16,7 @@ class MetaDataHandler(
     fun generateMetaDataFile(metaData: BackupMetaData): Either<Failure, File> =
         try {
             val jsonStr = jsonConverter.toJson(metaData)
-            val file = File(targetDir, FILENAME).apply {
+            val file = File(targetDir, FILE_NAME).apply {
                 delete()
                 createNewFile()
                 deleteOnExit()
@@ -40,6 +40,6 @@ class MetaDataHandler(
         }
 
     companion object {
-        const val FILENAME: String = "metadata.json"
+        const val FILE_NAME: String = "metadata.json"
     }
 }
