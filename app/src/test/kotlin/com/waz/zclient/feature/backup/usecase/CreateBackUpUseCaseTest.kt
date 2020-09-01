@@ -2,11 +2,13 @@ package com.waz.zclient.feature.backup.usecase
 
 import com.waz.model.UserId
 import com.waz.zclient.UnitTest
+import com.waz.zclient.any
 import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.metadata.BackupMetaData
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,15 +16,12 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import com.waz.zclient.any
-import com.waz.zclient.any
-import com.waz.zclient.feature.backup.metadata.BackupMetaData
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.anyList
+import org.mockito.Mockito.anyString
+import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.anyString
-import org.mockito.Mockito.anyList
-import org.mockito.Mockito.mock
 import java.io.File
 import java.util.UUID
 
