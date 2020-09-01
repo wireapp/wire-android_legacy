@@ -29,7 +29,8 @@ class RestoreBackUpUseCase(
 ) : UseCase<Unit, RestoreBackUpUseCaseParams> {
 
     override suspend fun run(params: RestoreBackUpUseCaseParams): Either<Failure, Unit> =
-/*        encryptionHandler.decrypt(params.file, params.userId, params.password).flatMap { file ->
+        /* TODO: Uncomment when the encryption is ready
+        encryptionHandler.decrypt(params.file, params.userId, params.password).flatMap { file ->
             zipHandler.unzip(file)
         }*/
         zipHandler.unzip(params.file).flatMap { files ->

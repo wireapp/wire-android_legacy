@@ -64,7 +64,8 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(zipFile, userId, password))
 
-            //verify(encryptionHandler).decrypt(encryptedFile, userId, password)
+            // TODO: Uncomment when the encryption is ready
+            // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
             verify(repo1).restoreBackup()
             verify(repo2).restoreBackup()
@@ -74,7 +75,8 @@ class RestoreBackUpUseCaseTest : UnitTest() {
         }
     }
 
-/*    @Test
+/*  TODO: Uncomment when the encryption is ready
+    @Test
     fun `given an encrypted and zipped file, when decryption fails, then do not try next steps and return a failure`() {
         runBlocking {
             val encryptionHandler = mockEncryptionHandler(false)
@@ -197,7 +199,8 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(zipFile, userId, password))
 
-           // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
+            // TODO: Uncomment when the encryption is ready
+            // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
             verify(metaDataHandler).readMetaData(metadataFile)
             verifyNoInteractions(repo1)
@@ -231,7 +234,8 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(zipFile, userId, password))
 
-         //   verify(encryptionHandler).decrypt(encryptedFile, userId, password)
+            // TODO: Uncomment when the encryption is ready
+            // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
             verify(metaDataHandler).readMetaData(metadataFile)
             verify(repo1).restoreBackup()
@@ -326,7 +330,8 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     }
 
     private fun mockEncryptionHandler(decryptionSuccess: Boolean = true): EncryptionHandler = mock(EncryptionHandler::class.java).also {
-/*        `when`(it.decrypt(any(), any(), anyString())).thenReturn(
+    /*  TODO: Uncomment when the encryption is ready
+        `when`(it.decrypt(any(), any(), anyString())).thenReturn(
             if (decryptionSuccess) Either.Right(zipFile)
             else Either.Left(FakeEncryptionFailure)
         )*/

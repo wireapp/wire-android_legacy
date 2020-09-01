@@ -369,12 +369,20 @@ dependencies {
     implementation BuildDependencies.androidX.paging
     implementation BuildDependencies.androidX.exifInterface
     implementation BuildDependencies.androidX.media
-    implementation BuildDependencies.androidX.lifecycleRuntime
-    implementation BuildDependencies.androidX.lifecycleLiveData
-    implementation BuildDependencies.androidX.lifecycleViewModel
+    implementation(BuildDependencies.androidX.lifecycleRuntime) {
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
+    implementation (BuildDependencies.androidX.lifecycleLiveData) {
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
+    implementation (BuildDependencies.androidX.lifecycleViewModel) {
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
     implementation BuildDependencies.androidX.lifecycleExtensions
     implementation BuildDependencies.androidX.roomRuntime
-    implementation BuildDependencies.androidX.roomKtx
+    implementation (BuildDependencies.androidX.roomKtx) {
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
     implementation BuildDependencies.androidX.coreKtx
     implementation BuildDependencies.androidX.biometric
     implementation(BuildDependencies.androidX.workManager) {
@@ -444,7 +452,10 @@ dependencies {
     testImplementation BuildDependencies.kotlin.coroutinesCore
     testImplementation TestDependencies.androidX.testCore
     testImplementation TestDependencies.okHttpMockWebServer
-    testImplementation(LegacyDependencies.scalaTest) { exclude module: 'scala-library' }
+    testImplementation(LegacyDependencies.scalaTest) {
+        exclude module: 'scala-library'
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
     testImplementation project(ModuleDependencies.commonTest)
 
     // Functional Tests
