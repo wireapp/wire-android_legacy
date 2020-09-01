@@ -12,7 +12,7 @@ import java.io.File
 data class LikesBackUpModel(
     val messageId: String = String.empty(),
     val userId: String = String.empty(),
-    val timeStamp: Int = 0,
+    val timeStamp: Long = 0,
     val action: Int = 0
 )
 

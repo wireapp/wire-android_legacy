@@ -55,7 +55,7 @@ class BackUpDataSourceTest : UnitTest() {
     }
 
     @Test
-    fun `given data sources and mapper, when backUp is called, then reads from databaseLocalDataSource, create writeIterator, and write to backUpLocalDataSource`() {
+    fun `given data sources and mapper, when backUp is called, then read from databaseLocalDataSource, create writeIterator, and write to backUpLocalDataSource`() {
         runBlocking {
             databaseBatchReader.mockNextItems(entitiesList)
             `when`(databaseLocalDataSource.readIterator()).thenReturn(databaseBatchReader)

@@ -12,7 +12,7 @@ data class LikesEntity(
     val userId: String,
 
     @ColumnInfo(name = "timestamp", defaultValue = "0")
-    val timeStamp: Int,
+    val timeStamp: Long,
 
     @ColumnInfo(name = "action", defaultValue = "0")
     val action: Int

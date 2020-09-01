@@ -1,6 +1,7 @@
 package com.waz.zclient.storage.db
 
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 
 interface BatchDao<E> {
 
@@ -8,10 +9,10 @@ interface BatchDao<E> {
 
     suspend fun nextBatch(start: Int, batchSize: Int): List<@JvmSuppressWildcards E>?
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: E)
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     @JvmSuppressWildcards
     suspend fun insertAll(items: List<E>)
 }
