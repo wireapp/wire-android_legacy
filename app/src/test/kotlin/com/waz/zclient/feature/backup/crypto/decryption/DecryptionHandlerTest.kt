@@ -5,6 +5,7 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.backup.crypto.Crypto
+import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandlerTest
 import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionFailed
 import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionInitialisationError
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashesDoNotMatch
@@ -43,7 +44,7 @@ class DecryptionHandlerTest : UnitTest() {
         val password = generateText(8)
         val userId = UserId.apply()
 
-        `when`(headerMetaData.readEncryptedMetadata(backupFile)).thenReturn(Either.Right(EncryptedBackupHeader.EMPTY))
+        `when`(headerMetaData.readMetadata(backupFile)).thenReturn(Either.Right(EncryptedBackupHeader.EMPTY))
         `when`(crypto.hash(any(), any())).thenReturn(Either.Right(byteArrayOf(2)))
 
         val res = decryptionHandler.decryptBackup(backupFile, userId, password)
@@ -61,7 +62,7 @@ class DecryptionHandlerTest : UnitTest() {
         val userId = UserId.apply()
         val hash = ByteArray(TEST_KEY_BYTES)
 
-        `when`(headerMetaData.readEncryptedMetadata(backupFile)).thenReturn(Either.Right(EncryptedBackupHeader.EMPTY))
+        `when`(headerMetaData.readMetadata(backupFile)).thenReturn(Either.Right(EncryptedBackupHeader.EMPTY))
         `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
 
         val res = decryptionHandler.decryptBackup(backupFile, userId, password)
@@ -84,8 +85,9 @@ class DecryptionHandlerTest : UnitTest() {
 
         `when`(crypto.decryptExpectedKeyBytes()).thenReturn(DECRYPTION_HASH_BYTES)
         `when`(crypto.streamHeaderLength()).thenReturn(HEADER_STREAM_LENGTH)
-        `when`(headerMetaData.readEncryptedMetadata(backupFile)).thenReturn(Either.Right(metaData))
+        `when`(headerMetaData.readMetadata(backupFile)).thenReturn(Either.Right(metaData))
         `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
+        `when`(crypto.checkExpectedKeySize(DECRYPTION_HASH_BYTES, DECRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
         `when`(crypto.initDecryptState(any(), any())).thenReturn(Either.Left(DecryptionInitialisationError))
 
         decryptionHandler.decryptBackup(backupFile, userId, password)
@@ -105,9 +107,10 @@ class DecryptionHandlerTest : UnitTest() {
 
         `when`(crypto.decryptExpectedKeyBytes()).thenReturn(DECRYPTION_HASH_BYTES)
         `when`(crypto.streamHeaderLength()).thenReturn(HEADER_STREAM_LENGTH)
-        `when`(headerMetaData.readEncryptedMetadata(backupFile)).thenReturn(Either.Right(metaData))
+        `when`(headerMetaData.readMetadata(backupFile)).thenReturn(Either.Right(metaData))
         `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
         `when`(crypto.initDecryptState(any(), any())).thenReturn(Either.Right(hash))
+        `when`(crypto.checkExpectedKeySize(DECRYPTION_HASH_BYTES, DECRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
         `when`(crypto.generatePullMessagePart(any(), any(), any())).thenReturn(1)
 
         val res = decryptionHandler.decryptBackup(backupFile, userId, password)

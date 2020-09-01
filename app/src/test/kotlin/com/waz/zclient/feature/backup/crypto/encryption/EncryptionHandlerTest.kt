@@ -4,12 +4,9 @@ import com.waz.model.UserId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.eq
 import com.waz.zclient.feature.backup.crypto.Crypto
-import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
-import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -44,15 +41,16 @@ class EncryptionHandlerTest : UnitTest() {
         val salt = ByteArray(TEST_KEY_BYTES)
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)
 
-        `when`(crypto.generateSalt()).thenReturn(salt)
+        `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
         `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
         `when`(crypto.initEncryptState(any(), any())).thenReturn(Either.Right(byteArrayOf()))
-        `when`(headerMetaData.writeEncryptedMetaData(any(), any())).thenReturn(Either.Right(byteArrayOf()))
+        `when`(crypto.checkExpectedKeySize(ENCRYPTION_HASH_BYTES, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
+        `when`(headerMetaData.writeMetaData(any(), any())).thenReturn(Either.Right(byteArrayOf()))
 
         encryptionHandler.encryptBackup(backupFile, userId, password)
 
-        verify(headerMetaData).writeEncryptedMetaData(eq(salt), eq(hash))
+        verify(headerMetaData).writeMetaData(eq(salt), eq(hash))
 
     }
 
@@ -68,13 +66,14 @@ class EncryptionHandlerTest : UnitTest() {
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)
         val cipherText = ByteArray(backupFile.readBytes().size + 15)
 
-        `when`(crypto.generateSalt()).thenReturn(salt)
+        `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
         `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
         `when`(crypto.streamHeaderLength()).thenReturn(streamHeader)
         `when`(crypto.aBytesLength()).thenReturn(15)
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
         `when`(crypto.initEncryptState(any(), any())).thenReturn(Either.Right(hash))
-        `when`(headerMetaData.writeEncryptedMetaData(salt, hash)).thenReturn(Either.Right(hash))
+        `when`(crypto.checkExpectedKeySize(ENCRYPTION_HASH_BYTES, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
+        `when`(headerMetaData.writeMetaData(salt, hash)).thenReturn(Either.Right(hash))
 
         encryptionHandler.encryptBackup(backupFile, userId, password)
 
@@ -104,6 +103,5 @@ class EncryptionHandlerTest : UnitTest() {
     companion object {
         private const val TEST_KEY_BYTES = 256
         private const val ENCRYPTION_HASH_BYTES = 52
-        private const val HASH_ERROR_MESSAGE = "Failed to hash account id for backup"
     }
 }

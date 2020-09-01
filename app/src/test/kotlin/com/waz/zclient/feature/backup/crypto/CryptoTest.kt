@@ -4,17 +4,19 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.feature.backup.crypto.encryption.error.EncryptionInitialisationError
+import com.waz.zclient.feature.backup.crypto.encryption.error.HashWrongSize
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
 import com.waz.zclient.feature.backup.crypto.encryption.error.InvalidHeaderLength
 import com.waz.zclient.feature.backup.crypto.encryption.error.InvalidKeyLength
 import com.waz.zclient.feature.backup.crypto.encryption.error.UnsatisfiedLink
 import com.waz.zclient.framework.functional.assertLeft
 import com.waz.zclient.framework.functional.assertRight
-import junit.framework.Assert.assertEquals
+import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
 
 class CryptoTest : UnitTest() {
 
@@ -163,7 +165,11 @@ class CryptoTest : UnitTest() {
 
         val res = crypto.generateSalt()
 
-        assertEquals(res.size, saltSize)
+        verify(cryptoWrapper).randomBytes(any())
+
+        res.assertRight {
+            assertEquals(it.size, saltSize)
+        }
     }
 
     @Test
@@ -278,6 +284,28 @@ class CryptoTest : UnitTest() {
         val pullBytes = crypto.decryptExpectedKeyBytes()
 
         assertEquals(pullBytes, bytes)
+    }
+
+    @Test
+    fun `given hash size is same as expected size, then propagate success`() {
+        val bytes = 64
+        val expectedBytes = 64
+
+        val res = crypto.checkExpectedKeySize(bytes, expectedBytes, false)
+
+        res.assertRight()
+    }
+
+    @Test
+    fun `given hash size is not the same as expected size, then propagate HashWrongSize error`() {
+        val bytes = 64
+        val expectedBytes = 62
+
+        val res = crypto.checkExpectedKeySize(bytes, expectedBytes, false)
+
+        res.assertLeft {
+            assertEquals(it, HashWrongSize)
+        }
     }
 
     companion object {

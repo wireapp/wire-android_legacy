@@ -17,9 +17,9 @@ class CryptoWrapper {
     fun polyABytes() =
         Sodium.crypto_secretstream_xchacha20poly1305_abytes()
 
-    fun generatePushMessagePart(messageBytes: ByteArray, cipherText: ByteArray, msg: ByteArray) =
+    fun generatePushMessagePart(state: ByteArray, cipherText: ByteArray, msg: ByteArray) =
         Sodium.crypto_secretstream_xchacha20poly1305_push(
-            messageBytes,
+            state,
             cipherText,
             intArrayOf(),
             msg,
@@ -48,8 +48,8 @@ class CryptoWrapper {
             passBytes,
             passBytes.size,
             salt,
-            opsLimitInteractive(),
-            memLimitInteractive(),
+            Sodium.crypto_pwhash_opslimit_interactive(),
+            Sodium.crypto_pwhash_memlimit_interactive(),
             Sodium.crypto_pwhash_alg_default()
         )
 

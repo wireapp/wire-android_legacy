@@ -2,19 +2,16 @@ package com.waz.zclient.feature.backup.crypto
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.onFailure
-import com.waz.zclient.core.functional.onSuccess
+import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.feature.backup.crypto.encryption.error.EncryptionInitialisationError
+import com.waz.zclient.feature.backup.crypto.encryption.error.HashWrongSize
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
 import com.waz.zclient.feature.backup.crypto.encryption.error.InvalidHeaderLength
 import com.waz.zclient.feature.backup.crypto.encryption.error.InvalidKeyLength
 import com.waz.zclient.feature.backup.crypto.encryption.error.UnsatisfiedLink
-import java.security.SecureRandom
 
 class Crypto(private val cryptoWrapper: CryptoWrapper) {
-
-    private val secureRandom: SecureRandom by lazy { SecureRandom() }
 
     internal val loadLibrary: Either<Failure, Unit> by lazy {
         try {
@@ -53,17 +50,11 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
             }
         }
 
-    internal fun generateSalt(): ByteArray {
+    internal fun generateSalt(): Either<Failure, ByteArray> {
         val count = cryptoWrapper.pWhashSaltBytes()
         val buffer = ByteArray(count)
-        loadLibrary
-            .onSuccess {
-                cryptoWrapper.randomBytes(buffer)
-            }.onFailure {
-                Logger.warn(TAG, "Libsodium failed to generate $count random bytes. Falling back to SecureRandom")
-                secureRandom.nextBytes(buffer)
-            }
-        return buffer
+        cryptoWrapper.randomBytes(buffer)
+        return loadLibrary.flatMap { Either.Right(buffer) }
     }
 
     internal fun hash(input: String, salt: ByteArray): Either<Failure, ByteArray> {
@@ -101,8 +92,19 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
     internal fun decryptExpectedKeyBytes() =
         cryptoWrapper.secretStreamPolyKeyBytes()
 
+    internal fun checkExpectedKeySize(size: Int, expectedKeySize: Int, shouldLog: Boolean = true): Either<Failure, Unit> =
+        when (size != expectedKeySize) {
+            true -> {
+                if (shouldLog) {
+                    Logger.verbose(TAG, "Key length invalid: $size did not match $expectedKeySize")
+                }
+                Either.Left(HashWrongSize)
+            }
+            false -> Either.Right(Unit)
+        }
+
     companion object {
-        //Got this magic number from https://github.com/joshjdevl/libsodium-jni/blob/master/src/test/java/org/libsodium/jni/crypto/SecretStreamTest.java#L48
+        //Got this magic number from https://github.com/wearezeta/documentation/blob/master/topics/backup/use-cases/001-export-history-v2.md
         private const val STATE_BYTE_ARRAY_SIZE = 52
         private const val TAG = "Crypto"
     }

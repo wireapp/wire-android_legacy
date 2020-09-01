@@ -21,7 +21,7 @@ class CryptoHeaderMetaData(
     private val crypto: Crypto,
     private val encryptionHeaderMapper: EncryptionHeaderMapper
 ) {
-    fun readEncryptedMetadata(encryptedBackup: File): Either<Failure, EncryptedBackupHeader> =
+    fun readMetadata(encryptedBackup: File): Either<Failure, EncryptedBackupHeader> =
         if (encryptedBackup.length() > TOTAL_HEADER_LENGTH) {
             val encryptedMetadataBytes = ByteArray(TOTAL_HEADER_LENGTH)
             encryptedBackup.inputStream().buffered().read(encryptedMetadataBytes)
@@ -33,7 +33,7 @@ class CryptoHeaderMetaData(
             Either.Left(UnableToReadMetaData)
         }
 
-    fun writeEncryptedMetaData(salt: ByteArray, hash: ByteArray): Either<Failure, ByteArray> =
+    fun writeMetaData(salt: ByteArray, hash: ByteArray): Either<Failure, ByteArray> =
         hash.size.takeIf { it == UUID_HASH_LENGTH }?.let {
             val header = EncryptedBackupHeader(CURRENT_VERSION, salt, hash, crypto.opsLimit(), crypto.memLimit())
             Either.Right(encryptionHeaderMapper.toByteArray(header))

@@ -8,6 +8,7 @@ object UnableToReadMetaData : CryptoFailure()
 object HashesDoNotMatch : CryptoFailure()
 
 object HashingFailed : CryptoFailure()
+object HashWrongSize : CryptoFailure()
 object HashInvalid : CryptoFailure()
 object EncryptionFailed : CryptoFailure()
 

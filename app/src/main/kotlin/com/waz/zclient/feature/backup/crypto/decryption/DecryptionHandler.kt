@@ -5,9 +5,7 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.feature.backup.crypto.Crypto
-import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionFailed
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashesDoNotMatch
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
@@ -20,7 +18,7 @@ class DecryptionHandler(
 ) {
     fun decryptBackup(backupFile: File, userId: UserId, password: String): Either<Failure, File> {
         loadCryptoLibrary()
-        return cryptoHeaderMetaData.readEncryptedMetadata(backupFile).flatMap { metaData ->
+        return cryptoHeaderMetaData.readMetadata(backupFile).flatMap { metaData ->
             crypto.hash(userId.str(), metaData.salt).flatMap { hash ->
                 when (hash.contentEquals(metaData.uuidHash)) {
                     true -> decryptBackupFile(password, backupFile, metaData.salt)
@@ -40,11 +38,12 @@ class DecryptionHandler(
 
     private fun decryptWithHash(input: ByteArray, password: String, salt: ByteArray): Either<Failure, ByteArray> =
         crypto.hash(password, salt).flatMap { key ->
-            checkExpectedKeySize(key.size, crypto.decryptExpectedKeyBytes())
-            decryptAndCipher(input, key)
+            crypto.checkExpectedKeySize(key.size, crypto.decryptExpectedKeyBytes()).flatMap {
+                decrypt(input, key)
+            }
         }
 
-    private fun decryptAndCipher(input: ByteArray, key: ByteArray): Either<Failure, ByteArray> {
+    private fun decrypt(input: ByteArray, key: ByteArray): Either<Failure, ByteArray> {
         val header = input.take(crypto.streamHeaderLength()).toByteArray()
         return crypto.initDecryptState(key, header)
             .flatMap { state ->
@@ -57,15 +56,5 @@ class DecryptionHandler(
             }
     }
 
-    private fun checkExpectedKeySize(size: Int, expectedKeySize: Int) {
-        if (size != expectedKeySize) {
-            Logger.verbose(EncryptionHandler.TAG, "Key length invalid: $size did not match $expectedKeySize")
-        }
-    }
-
     private fun loadCryptoLibrary() = crypto.loadLibrary
-
-    companion object {
-        private const val TAG = "DecryptionHandler"
-    }
 }

@@ -37,7 +37,7 @@ class CryptoHeaderMetaDataTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir, INVALID_HEADER_LENGTH)
 
-        val result = cryptoHeaderMetaData.readEncryptedMetadata(backupFile)
+        val result = cryptoHeaderMetaData.readMetadata(backupFile)
 
         result.onFailure {
             assertEquals(it, UnableToReadMetaData)
@@ -51,7 +51,7 @@ class CryptoHeaderMetaDataTest : UnitTest() {
 
         `when`(mapper.fromByteArray(any())).thenReturn(null)
 
-        val result = cryptoHeaderMetaData.readEncryptedMetadata(backupFile)
+        val result = cryptoHeaderMetaData.readMetadata(backupFile)
 
         result.onFailure {
             assertEquals(it, UnableToReadMetaData)
@@ -66,7 +66,7 @@ class CryptoHeaderMetaDataTest : UnitTest() {
 
         `when`(mapper.fromByteArray(any())).thenReturn(encryptedHeader)
 
-        val result = cryptoHeaderMetaData.readEncryptedMetadata(backupFile)
+        val result = cryptoHeaderMetaData.readMetadata(backupFile)
 
         result.onSuccess {
             assertEquals(it, encryptedHeader)
@@ -78,7 +78,7 @@ class CryptoHeaderMetaDataTest : UnitTest() {
         val salt = byteArrayOf()
         val hash = ByteArray(VALID_HASH_LENGTH)
 
-        val result = cryptoHeaderMetaData.writeEncryptedMetaData(salt, hash)
+        val result = cryptoHeaderMetaData.writeMetaData(salt, hash)
 
         assertTrue(result.isRight)
     }
@@ -88,7 +88,7 @@ class CryptoHeaderMetaDataTest : UnitTest() {
         val salt = byteArrayOf()
         val hash = ByteArray(INVALID_HASH_LENGTH)
 
-        val result = cryptoHeaderMetaData.writeEncryptedMetaData(salt, hash)
+        val result = cryptoHeaderMetaData.writeMetaData(salt, hash)
 
         result.onFailure {
             assertEquals(it, HashInvalid)
