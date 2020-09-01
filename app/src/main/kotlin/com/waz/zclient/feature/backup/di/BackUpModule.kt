@@ -22,6 +22,8 @@ import com.waz.zclient.feature.backup.conversations.ConversationsBackupMapper
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackUpModel
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupDataSource
 import com.waz.zclient.feature.backup.conversations.ConversationMembersBackupMapper
+import com.waz.zclient.feature.backup.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.encryption.EncryptionHandlerDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackUpModel
 import com.waz.zclient.feature.backup.folders.FoldersBackupDataSource
 import com.waz.zclient.feature.backup.folders.FoldersBackupMapper
@@ -86,11 +88,12 @@ val backUpModule = module {
     single { androidContext().externalCacheDir }
 
     single { ZipHandler(get()) }
+    single { EncryptionHandlerDataSource() } bind EncryptionHandler::class
 
-    factory { CreateBackUpUseCase(getAll(), get(), get(), BACKUP_VERSION) } //this resolves all instances of type BackUpRepository
-    factory { RestoreBackUpUseCase(getAll(), get(), get(), BACKUP_VERSION) }
+    factory { CreateBackUpUseCase(getAll(), get(), get(), get(), BACKUP_VERSION) } //this resolves all instances of type BackUpRepository
+    factory { RestoreBackUpUseCase(getAll(), get(), get(), get(), BACKUP_VERSION) }
     viewModel { BackUpViewModel(get(), get()) }
-    
+
     // MetaData
     factory(named(METADATA + JSON)) { JsonConverter(BackupMetaData.serializer()) }
     factory { MetaDataHandler(get(named(METADATA + JSON)), get()) }
