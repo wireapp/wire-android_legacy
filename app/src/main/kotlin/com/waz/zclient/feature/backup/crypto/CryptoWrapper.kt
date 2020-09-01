@@ -1,3 +1,4 @@
+@file:Suppress("TooManyFunctions")
 package com.waz.zclient.feature.backup.crypto
 
 import org.libsodium.jni.NaCl
@@ -76,5 +77,4 @@ class CryptoWrapper {
         System.loadLibrary("sodium")
         System.loadLibrary("randombytes")
     }
-
 }

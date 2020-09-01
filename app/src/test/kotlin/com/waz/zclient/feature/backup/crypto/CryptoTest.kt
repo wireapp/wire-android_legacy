@@ -176,7 +176,7 @@ class CryptoTest : UnitTest() {
     fun `given hash is requested, when push message is invalid, then propagate HashingFailed error`() {
         `when`(cryptoWrapper.generatePwhashMessagePart(any(), any(), any())).thenReturn(INVALID_MESSAGE_PART)
 
-        val res = crypto.hash(String.empty(), byteArrayOf())
+        val res = crypto.hashWithMessagePart(String.empty(), byteArrayOf())
 
         res.assertLeft {
             assertEquals(it, HashingFailed)
@@ -190,7 +190,7 @@ class CryptoTest : UnitTest() {
         `when`(cryptoWrapper.aedPolyKeyBytes()).thenReturn(polyKeyBytes)
         `when`(cryptoWrapper.generatePwhashMessagePart(any(), any(), any())).thenReturn(0)
 
-        val res = crypto.hash(String.empty(), byteArrayOf())
+        val res = crypto.hashWithMessagePart(String.empty(), byteArrayOf())
 
         res.assertRight {
             assertEquals(it.size, polyKeyBytes)

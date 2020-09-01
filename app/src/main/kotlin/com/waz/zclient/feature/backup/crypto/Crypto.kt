@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.waz.zclient.feature.backup.crypto
 
 import com.waz.zclient.core.exception.Failure
@@ -57,7 +59,7 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
         return loadLibrary.flatMap { Either.Right(buffer) }
     }
 
-    internal fun hash(input: String, salt: ByteArray): Either<Failure, ByteArray> {
+    internal fun hashWithMessagePart(input: String, salt: ByteArray): Either<Failure, ByteArray> {
         val output = ByteArray(encryptExpectedKeyBytes())
         val passBytes = input.toByteArray()
         val pushMessage = generatePwhashMessagePart(output, passBytes, salt)

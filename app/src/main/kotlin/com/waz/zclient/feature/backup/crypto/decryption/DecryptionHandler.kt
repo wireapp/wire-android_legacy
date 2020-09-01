@@ -19,7 +19,7 @@ class DecryptionHandler(
     fun decryptBackup(backupFile: File, userId: UserId, password: String): Either<Failure, File> {
         loadCryptoLibrary()
         return cryptoHeaderMetaData.readMetadata(backupFile).flatMap { metaData ->
-            crypto.hash(userId.str(), metaData.salt).flatMap { hash ->
+            crypto.hashWithMessagePart(userId.str(), metaData.salt).flatMap { hash ->
                 when (hash.contentEquals(metaData.uuidHash)) {
                     true -> decryptBackupFile(password, backupFile, metaData.salt)
                     false -> Either.Left(HashesDoNotMatch)
@@ -37,7 +37,7 @@ class DecryptionHandler(
     }
 
     private fun decryptWithHash(input: ByteArray, password: String, salt: ByteArray): Either<Failure, ByteArray> =
-        crypto.hash(password, salt).flatMap { key ->
+        crypto.hashWithMessagePart(password, salt).flatMap { key ->
             crypto.checkExpectedKeySize(key.size, crypto.decryptExpectedKeyBytes()).flatMap {
                 decrypt(input, key)
             }

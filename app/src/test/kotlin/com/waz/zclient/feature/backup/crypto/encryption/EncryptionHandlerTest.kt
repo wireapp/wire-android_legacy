@@ -42,7 +42,7 @@ class EncryptionHandlerTest : UnitTest() {
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)
 
         `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
-        `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
+        `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Right(hash))
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
         `when`(crypto.initEncryptState(any(), any())).thenReturn(Either.Right(byteArrayOf()))
         `when`(crypto.checkExpectedKeySize(ENCRYPTION_HASH_BYTES, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
@@ -67,7 +67,7 @@ class EncryptionHandlerTest : UnitTest() {
         val cipherText = ByteArray(backupFile.readBytes().size + 15)
 
         `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
-        `when`(crypto.hash(any(), any())).thenReturn(Either.Right(hash))
+        `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Right(hash))
         `when`(crypto.streamHeaderLength()).thenReturn(streamHeader)
         `when`(crypto.aBytesLength()).thenReturn(15)
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)

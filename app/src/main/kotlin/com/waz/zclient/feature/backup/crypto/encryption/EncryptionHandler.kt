@@ -35,7 +35,7 @@ class EncryptionHandler(
         }
 
     private fun encryptWithHash(backupBytes: ByteArray, password: String, salt: ByteArray): Either<Failure, ByteArray> =
-        crypto.hash(password, salt).flatMap { hash ->
+        crypto.hashWithMessagePart(password, salt).flatMap { hash ->
             crypto.checkExpectedKeySize(hash.size, crypto.encryptExpectedKeyBytes()).flatMap {
                 encrypt(backupBytes, hash)
             }
@@ -56,7 +56,7 @@ class EncryptionHandler(
     //This method returns the metadata in the format described here:
     //https://github.com/wearezeta/documentation/blob/master/topics/backup/use-cases/001-export-history.md
     private fun writeEncryptedMetaData(salt: ByteArray, userId: UserId): Either<Failure, ByteArray> =
-        crypto.hash(userId.str(), salt).flatMap { hash ->
+        crypto.hashWithMessagePart(userId.str(), salt).flatMap { hash ->
             cryptoHeaderMetaData.writeMetaData(salt, hash)
         }
 
