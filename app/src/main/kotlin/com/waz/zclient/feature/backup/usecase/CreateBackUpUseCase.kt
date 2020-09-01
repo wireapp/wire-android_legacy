@@ -8,6 +8,7 @@ import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.metadata.BackupMetaData
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.CoroutineScope
@@ -16,23 +17,24 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import org.threeten.bp.Instant
-
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
 
 class CreateBackUpUseCase(
     private val backUpRepositories: List<BackUpRepository<List<File>>>,
     private val zipHandler: ZipHandler,
     private val encryptionHandler: EncryptionHandler,
     private val metaDataHandler: MetaDataHandler,
+    private val backUpVersion: Int,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : UseCase<File, CreateBackUpUseCaseParams> {
 
     override suspend fun run(params: CreateBackUpUseCaseParams): Either<Failure, File> =
         backUpOrFail()
             .flatMap { files ->
-                metaDataHandler.generateMetaDataFile(params.userId, params.userHandle).map { files + it }
+                val metaData = BackupMetaData(params.userId.str(), params.userHandle, backUpVersion)
+                metaDataHandler.generateMetaDataFile(metaData).map { files + it }
             }
             .flatMap { files ->
                 zipHandler.zip(backupZipFileName(params.userHandle), files)

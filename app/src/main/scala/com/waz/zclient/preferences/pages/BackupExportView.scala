@@ -20,8 +20,7 @@ package com.waz.zclient.preferences.pages
 import java.io.File
 
 import android.app.{Activity, FragmentTransaction}
-import android.content.pm.PackageManager
-import android.content.{Context, Intent}
+import android.content.Context
 import android.os.Bundle
 import androidx.core.app.ShareCompat
 import android.util.AttributeSet
@@ -35,7 +34,6 @@ import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.views.MenuRowButton
 import com.waz.zclient.preferences.dialogs.BackupPasswordDialog
-import com.waz.zclient.preferences.pages.BackupExportView._
 import com.waz.zclient.utils.{BackStackKey, ContextUtils, ExternalFileSharing, ViewUtils}
 import com.waz.zclient._
 
@@ -106,9 +104,6 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
     if (isShown) {
       val fileUri = sharing.getUriForFile(file)
       val intent = ShareCompat.IntentBuilder.from(context.asInstanceOf[Activity]).setType("application/octet-stream").setStream(fileUri).getIntent
-      if (BuildConfig.DEVELOPER_FEATURES_ENABLED && !context.getPackageManager.queryIntentActivities(new Intent(TestingGalleryPackage), PackageManager.MATCH_ALL).isEmpty) {
-        intent.setPackage(TestingGalleryPackage)
-      }
       context.startActivity(intent)
       spinnerController.hideSpinner(Some(ContextUtils.getString(R.string.back_up_progress_complete)))
     } else

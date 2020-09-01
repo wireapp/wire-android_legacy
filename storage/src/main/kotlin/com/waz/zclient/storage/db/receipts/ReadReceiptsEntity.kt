@@ -12,5 +12,5 @@ data class ReadReceiptsEntity(
     val userId: String,
 
     @ColumnInfo(name = "timestamp", defaultValue = "0")
-    val timestamp: Int
+    val timestamp: Long
 )

@@ -6,7 +6,7 @@ import java.util.UUID
 data class ReadReceiptsTestData(
     val messageId: String,
     val userId: String,
-    val timestamp: Int
+    val timestamp: Long
 )
 
 object ReadReceiptsTestDataProvider : TestDataProvider<ReadReceiptsTestData>() {
@@ -14,6 +14,6 @@ object ReadReceiptsTestDataProvider : TestDataProvider<ReadReceiptsTestData>() {
         ReadReceiptsTestData(
             messageId = UUID.randomUUID().toString(),
             userId = UUID.randomUUID().toString(),
-            timestamp = System.currentTimeMillis().toInt()
+            timestamp = System.currentTimeMillis()
         )
 }

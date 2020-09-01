@@ -9,13 +9,14 @@ import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
-
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import com.waz.zclient.any
+import com.waz.zclient.any
+import com.waz.zclient.feature.backup.metadata.BackupMetaData
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
@@ -35,6 +36,9 @@ class CreateBackUpUseCaseTest : UnitTest() {
     private val userId = UserId.apply(UUID.randomUUID().toString())
     private val userHandle = "user"
     private val password = "password"
+    private val backUpVersion = 0
+
+    private val metaData = BackupMetaData(userId.str(), userHandle, backUpVersion)
 
     @Test
     fun `given back up repositories and metadata, when all of them succeed, then zip, encrypt, and return success`() {
@@ -51,6 +55,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -59,9 +64,10 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(userId, userHandle)
+            verify(metaDataHandler).generateMetaDataFile(metaData)
             verify(zipHandler).zip(anyString(), anyList())
-            verify(encryptionHandler).encryptBackup(any(), any(), anyString())
+            // TODO: Uncomment when the encryption is ready
+            // verify(encryptionHandler).encrypt(any(), any(), anyString())
 
             assert(result.isRight)
         }
@@ -82,6 +88,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -109,11 +116,12 @@ class CreateBackUpUseCaseTest : UnitTest() {
             val metaDataHandler = mockMetaDataHandler(true)
 
             createBackUpUseCase = CreateBackUpUseCase(
-                    listOf(repo1, repo2, repo3),
-                    zipHandler,
-                    encryptionHandler,
-                    metaDataHandler,
-                    testCoroutineScope
+                listOf(repo1, repo2, repo3),
+                zipHandler,
+                encryptionHandler,
+                metaDataHandler,
+                backUpVersion,
+                testCoroutineScope
             )
 
             val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
@@ -121,7 +129,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(userId, userHandle) // metadata is generated before zipping
+            verify(metaDataHandler).generateMetaDataFile(metaData) // metadata is generated before zipping
             verify(zipHandler).zip(anyString(), anyList())
             verifyNoInteractions(encryptionHandler)
 
@@ -144,6 +152,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -152,7 +161,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(userId, userHandle) // metadata is generated before zipping
+            verify(metaDataHandler).generateMetaDataFile(metaData) // metadata is generated before zipping
             verify(zipHandler).zip(anyString(), anyList())
             verifyNoInteractions(encryptionHandler)
 
@@ -160,6 +169,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
         }
     }
 
+/*  TODO: Uncomment when the encryption is ready
     @Test
     fun `given back up repositories and metadata, when they succeed but the encryption handler fails, then return a failure`() {
         runBlocking {
@@ -175,6 +185,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 zipHandler,
                 encryptionHandler,
                 metaDataHandler,
+                backUpVersion,
                 testCoroutineScope
             )
 
@@ -183,13 +194,13 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(userId, userHandle)
+            verify(metaDataHandler).generateMetaDataFile(metaData)
             verify(zipHandler).zip(anyString(), anyList())
             verify(encryptionHandler).encryptBackup(any(), any(), anyString())
 
             assertEquals(Either.Left(FakeEncryptionFailure), result)
         }
-    }
+    }*/
 
     @Test
     fun `given back up repositories and metadata, when metadata fails, then return a failure`() {
@@ -206,6 +217,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                     zipHandler,
                     encryptionHandler,
                     metaDataHandler,
+                    backUpVersion,
                     testCoroutineScope
             )
 
@@ -214,7 +226,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(userId, userHandle)
+            verify(metaDataHandler).generateMetaDataFile(metaData)
             verifyNoInteractions(zipHandler)
             verifyNoInteractions(encryptionHandler)
 
@@ -223,10 +235,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
     }
 
     companion object {
-        /**
-         * Returns Mockito.any() as nullable type to avoid java.lang.IllegalStateException when null is returned.
-         * Taken from https://stackoverflow.com/a/48091649/2975925
-         */
+
         suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository<List<File>> = mock(BackUpRepository::class.java).also {
             `when`(it.saveBackup()).thenReturn(
                     if (backUpSuccess) Either.Right(listOf(createTempFile(suffix = ".json")))
@@ -242,14 +251,15 @@ class CreateBackUpUseCaseTest : UnitTest() {
         }
 
         fun mockEncryptionHandler(encryptionSuccess: Boolean = true): EncryptionHandler = mock(EncryptionHandler::class.java).also {
-            `when`(it.encryptBackup(any(), any(), anyString())).thenReturn(
+        /*  TODO: Uncomment when the encryption is ready
+            `when`(it.encrypt(any(), any(), anyString())).thenReturn(
                 if (encryptionSuccess) Either.Right(createTempFile(suffix = "_encrypted"))
                 else Either.Left(FakeEncryptionFailure)
-            )
+            )*/
         }
 
         fun mockMetaDataHandler(metaDataSuccess: Boolean = true): MetaDataHandler = mock(MetaDataHandler::class.java).also {
-            `when`(it.generateMetaDataFile(any(), anyString())).thenReturn(
+            `when`(it.generateMetaDataFile(any())).thenReturn(
                 if (metaDataSuccess) Either.Right(createTempFile(suffix = ".json"))
                 else Either.Left(FakeMetaDataFailure)
             )
