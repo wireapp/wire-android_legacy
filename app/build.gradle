@@ -339,6 +339,7 @@ dependencies {
 
     implementation BuildDependencies.kotlin.standardLibrary
     implementation BuildDependencies.kotlin.coroutinesAndroid
+    implementation BuildDependencies.kotlin.coroutinesCore
 
     // TODO uncomment when new dependency system supports avs
 //    implementation BuildDependencies.wire.avs
@@ -440,6 +441,7 @@ dependencies {
     testImplementation TestDependencies.mockito.inline
     testImplementation TestDependencies.kluent
     testImplementation TestDependencies.kotlin.coroutinesTest
+    testImplementation BuildDependencies.kotlin.coroutinesCore
     testImplementation TestDependencies.androidX.testCore
     testImplementation TestDependencies.okHttpMockWebServer
     testImplementation(LegacyDependencies.scalaTest) { exclude module: 'scala-library' }

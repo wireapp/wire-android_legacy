@@ -69,6 +69,7 @@ object Versions {
 object BuildDependencies {
     val kotlin = KotlinDependencyMap(mapOf(
         "standardLibrary" to "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${Versions.KOTLIN}",
+        "coroutinesCore" to "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.COROUTINES}",
         "coroutinesAndroid" to "org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.COROUTINES}"
     ))
     val wire = WireDependencyMap(mapOf(
