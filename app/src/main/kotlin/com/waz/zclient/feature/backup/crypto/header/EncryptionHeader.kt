@@ -1,6 +1,7 @@
 package com.waz.zclient.feature.backup.crypto.header
 
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.extension.describe
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.feature.backup.crypto.Crypto
@@ -8,6 +9,7 @@ import com.waz.zclient.feature.backup.crypto.encryption.error.HashInvalid
 import com.waz.zclient.feature.backup.crypto.encryption.error.UnableToReadMetaData
 import java.io.File
 import java.nio.ByteBuffer
+import java.nio.charset.Charset
 
 private const val SALT_LENGTH = 16
 private const val ANDROID_MAGIC_NUMBER_LENGTH = 4
@@ -44,21 +46,24 @@ class EncryptionHeaderMapper {
 
     fun toByteArray(header: EncryptedBackupHeader): ByteArray =
         ByteBuffer.allocate(TOTAL_HEADER_LENGTH).apply {
-            put(ANDROID_MAGIC_NUMBER.toByteArray())
+            Logger.verbose(TAG, "android magic number: ${ANDROID_MAGIC_NUMBER.contentToString()}")
+            put(ANDROID_MAGIC_NUMBER)
             put(0.toByte())
             putShort(header.version)
             put(header.salt)
             put(header.uuidHash)
             putInt(header.opsLimit)
             putInt(header.memLimit)
-        }.array()
+        }.array().also {
+            Logger.verbose(TAG, it.describe())
+        }
 
     internal fun fromByteArray(bytes: ByteArray): EncryptedBackupHeader? =
         if (bytes.size == TOTAL_HEADER_LENGTH) {
             val buffer = ByteBuffer.wrap(bytes)
             val magicNumber = ByteArray(ANDROID_MAGIC_NUMBER_LENGTH)
             buffer.get(magicNumber)
-            if (magicNumber.map { it.toChar() }.joinToString() == ANDROID_MAGIC_NUMBER) {
+            if (magicNumber.contentEquals(ANDROID_MAGIC_NUMBER)) {
                 buffer.get() //skip null byte
                 val version = buffer.short
                 if (version == CURRENT_VERSION) {
@@ -70,20 +75,20 @@ class EncryptionHeaderMapper {
                     val memlimit = buffer.int
                     EncryptedBackupHeader(CURRENT_VERSION, salt, uuidHash, opslimit, memlimit)
                 } else {
-                    Logger.error(TAG, "Unsupported backup version")
+                    Logger.error(TAG, "Unsupported backup version: $version (should be $CURRENT_VERSION)")
                     null
                 }
             } else {
-                Logger.error(TAG, "archive has incorrect magic number")
+                Logger.error(TAG, "archive has incorrect magic number: ${magicNumber.contentToString()} (should be: ${ANDROID_MAGIC_NUMBER.contentToString()})")
                 null
             }
         } else {
-            Logger.error(TAG, "Invalid header length")
+            Logger.error(TAG, "Invalid header length: ${bytes.size} (should be: $TOTAL_HEADER_LENGTH)")
             null
         }
 
     companion object {
-        private const val ANDROID_MAGIC_NUMBER: String = "WBUA"
+        private val ANDROID_MAGIC_NUMBER = "WBUA".toCharArray().map { it.toByte() }.toByteArray()
     }
 }
 

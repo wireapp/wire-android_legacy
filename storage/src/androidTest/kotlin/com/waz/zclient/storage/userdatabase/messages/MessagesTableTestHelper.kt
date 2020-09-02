@@ -34,11 +34,11 @@ class MessagesTableTestHelper private constructor() {
         private const val MESSAGES_ASSET_ID_COL = "asset_id"
 
         fun insertMessage(id: String, conversationId: String, messageType: String, userId: String,
-                          content: String?, protos: ByteArray?, time: Int, localTime: Int,
+                          content: String?, protos: ByteArray?, time: Long, localTime: Long,
                           firstMessage: Boolean, members: String?, recipient: String?,
                           email: String?, name: String?, messageState: String, contentSize: Int,
-                          editTime: Int, ephemeral: Int?, expiryTime: Int?, expired: Boolean,
-                          duration: Int?, quote: String?, quoteValidity: Int, forceReadReceipts: Int?,
+                          editTime: Long, ephemeral: Long?, expiryTime: Long?, expired: Boolean,
+                          duration: Long?, quote: String?, quoteValidity: Int, forceReadReceipts: Int?,
                           assetId: String?, openHelper: DbSQLiteOpenHelper) {
 
             val contentValues = ContentValues().also {

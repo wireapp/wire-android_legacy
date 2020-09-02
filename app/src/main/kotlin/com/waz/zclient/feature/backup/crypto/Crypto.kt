@@ -24,34 +24,6 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
         }
     }
 
-    internal fun initEncryptState(initKey: ByteArray, initHeader: ByteArray) =
-        initializeState(initKey, initHeader) { state: ByteArray, header: ByteArray, key: ByteArray ->
-            cryptoWrapper.initPush(state, header, key)
-        }
-
-    internal fun initDecryptState(initKey: ByteArray, initHeader: ByteArray) =
-        initializeState(initKey, initHeader) { state: ByteArray, header: ByteArray, key: ByteArray ->
-            cryptoWrapper.initPull(state, header, key)
-        }
-
-    private fun initializeState(
-        key: ByteArray,
-        header: ByteArray,
-        init: (ByteArray, ByteArray, ByteArray) -> Int
-    ): Either<Failure, ByteArray> =
-        if (header.size != cryptoWrapper.polyHeaderBytes()) {
-            Either.Left(InvalidHeaderLength)
-        } else if (key.size != decryptExpectedKeyBytes()) {
-            Either.Left(InvalidKeyLength)
-        } else {
-            val state = ByteArray(STATE_BYTE_ARRAY_SIZE)
-            if (init(state, header, key) != 0) {
-                Either.Left(EncryptionInitialisationError)
-            } else {
-                Either.Right(state)
-            }
-        }
-
     internal fun generateSalt(): Either<Failure, ByteArray> {
         val count = cryptoWrapper.pWhashSaltBytes()
         val buffer = ByteArray(count)
@@ -76,23 +48,16 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
     internal fun memLimit(): Int =
         cryptoWrapper.memLimitInteractive()
 
-    internal fun streamHeaderLength() =
-        cryptoWrapper.polyHeaderBytes()
-
     internal fun aBytesLength(): Int =
         cryptoWrapper.polyABytes()
 
-    internal fun generatePushMessagePart(messageBytes: ByteArray, cipherText: ByteArray, msg: ByteArray) =
-        cryptoWrapper.generatePushMessagePart(messageBytes, cipherText, msg)
+    internal fun encrypt(cipherText: ByteArray, msg: ByteArray, key: ByteArray) = cryptoWrapper.encrypt(cipherText, msg, key)
 
-    internal fun generatePullMessagePart(state: ByteArray, decrypted: ByteArray, cipherText: ByteArray) =
-        cryptoWrapper.generatePullMessagePart(state, decrypted, cipherText)
+    internal fun decrypt(decrypted: ByteArray, cipherText: ByteArray, key: ByteArray) = cryptoWrapper.decrypt(decrypted, cipherText, key)
 
-    internal fun encryptExpectedKeyBytes() =
-        cryptoWrapper.aedPolyKeyBytes()
+    internal fun encryptExpectedKeyBytes() = cryptoWrapper.aedPolyKeyBytes()
 
-    internal fun decryptExpectedKeyBytes() =
-        cryptoWrapper.secretStreamPolyKeyBytes()
+    internal fun decryptExpectedKeyBytes() = cryptoWrapper.aedPolyKeyBytes()
 
     internal fun checkExpectedKeySize(size: Int, expectedKeySize: Int, shouldLog: Boolean = true): Either<Failure, Unit> =
         when (size != expectedKeySize) {
@@ -106,8 +71,6 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
         }
 
     companion object {
-        //Got this magic number from https://github.com/wearezeta/documentation/blob/master/topics/backup/use-cases/001-export-history-v2.md
-        private const val STATE_BYTE_ARRAY_SIZE = 52
         private const val TAG = "Crypto"
     }
 }
