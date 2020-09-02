@@ -22,7 +22,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences._
 import com.waz.content.{GlobalPreferences, TeamsStorage, UserPreferences}
@@ -102,7 +102,7 @@ class MainActivity extends BaseActivity
     Option(getActionBar).foreach(_.hide())
     super.onCreate(savedInstanceState)
 
-    showDiscontiniuedSupportDialogIfNeeded()
+    showBackUpIncompatibilityDialog()
 
     //Prevent drawing the default background to reduce overdraw
     getWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT))
@@ -544,30 +544,24 @@ class MainActivity extends BaseActivity
 
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
 
-  // TODO: remove after release 3.53
-  private def showDiscontiniuedSupportDialogIfNeeded() =
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-      showDiscontinuedSupportDialog()
-    }
-
-  // TODO: remove after release 3.53
-  def showDiscontinuedSupportDialog() : Future[Unit] = {
+  private def showBackUpIncompatibilityDialog() : Future[Unit] = {
     def showDialog(accentColor: AccentColor): Future[Boolean] = showConfirmationDialog(
-      getString(R.string.discontinued_support_warning_title),
-      getString(R.string.discontinued_support_warning_message),
-      R.string.discontinued_support_warning_action_do_not_show_again,
-      R.string.discontinued_support_warning_action_ok,
+      getString(R.string.back_up_incompatibility_title),
+      getString(R.string.back_up_incompatibility_message),
+      R.string.back_up_incompatibility_action_ok,
+      R.string.back_up_incompatibility_action_do_not_show_again,
       accentColor
     )
 
     val prefs = inject[GlobalPreferences]
 
     for {
-      shouldWarn <- prefs(GlobalPreferences.ShouldWarnAndroid5And6Users).apply()
+      shouldWarn <- if (BuildConfig.SHOW_BACK_UP_INCOMPATIBILITY_DIALOG) prefs(GlobalPreferences.ShouldWarnBackUpIncompatibility).apply()
+                    else Future.successful(false)
       color <- accentColorController.accentColor.head
     } yield {
       if (shouldWarn) {
-        showDialog(color).foreach { doNotShowAgain => prefs(GlobalPreferences.ShouldWarnAndroid5And6Users) := !doNotShowAgain }
+        showDialog(color).foreach { doNotShowAgain => prefs(GlobalPreferences.ShouldWarnBackUpIncompatibility) := !doNotShowAgain }
       }
     }
   }

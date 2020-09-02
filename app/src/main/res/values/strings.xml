@@ -1564,10 +1564,10 @@
     <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
     <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
 
-    <!--TODO: remove after release 3.53-->
-    <string name="discontinued_support_warning_title">Wire 3.53 is the last version that can be installed on Android 5 and 6.</string>
-    <string name="discontinued_support_warning_message">To be able to install later versions, please update to Android 7.0 or higher.</string>
-    <string name="discontinued_support_warning_action_ok">OK</string>
-    <string name="discontinued_support_warning_action_do_not_show_again">Don\'t show again</string>
+    <!--TODO: proper copy-->
+    <string name="back_up_incompatibility_title">We\'re changing our back up mechanism</string>
+    <string name="back_up_incompatibility_message">As of next release, back ups created in older versions of Wire won\'t be supported.</string>
+    <string name="back_up_incompatibility_action_ok">OK</string>
+    <string name="back_up_incompatibility_action_do_not_show_again">Don\'t show again</string>
 </resources>
 
