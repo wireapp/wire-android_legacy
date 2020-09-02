@@ -36,9 +36,9 @@ class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleA
   private val controller = inject[CallController]
   private lazy val accentColor = inject[AccentColorController].accentColor
 
-  private lazy val nameView        = findById[TextView](R.id.ttv__calling__header__name)
-  private lazy val subtitleView    = findById[TextView](R.id.ttv__calling__header__subtitle)
-  private lazy val bitRateModeView = findById[TextView](R.id.ttv__calling__header__bitrate)
+  private lazy val nameView               = findById[TextView](R.id.ttv__calling__header__name)
+  private lazy val subtitleView           = findById[TextView](R.id.ttv__calling__header__subtitle)
+  private lazy val bitRateModeView        = findById[TextView](R.id.ttv__calling__header__bitrate)
   private lazy val conferenceCallingBadge = findById[TextView](R.id.conference_calling_badge)
 
   lazy val closeButton: GlyphButton = findById[GlyphButton](R.id.calling_header_close)
