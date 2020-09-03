@@ -40,17 +40,18 @@ class EncryptionHandlerTest : UnitTest() {
         val userId = UserId.apply()
         val salt = ByteArray(TEST_KEY_BYTES)
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)
+        val nonce = ByteArray(TEST_NONCE_BYTES)
 
         `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
+        `when`(crypto.generateNonce()).thenReturn(Either.Right(nonce))
         `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Right(hash))
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
-        `when`(crypto.initEncryptState(any(), any())).thenReturn(Either.Right(byteArrayOf()))
         `when`(crypto.checkExpectedKeySize(ENCRYPTION_HASH_BYTES, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
-        `when`(headerMetaData.createMetaData(any(), any())).thenReturn(Either.Right(byteArrayOf()))
+        `when`(headerMetaData.createMetaData(any(), any(), any())).thenReturn(Either.Right(byteArrayOf()))
 
-        encryptionHandler.encryptBackup(backupFile, userId, password)
+        encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
 
-        verify(headerMetaData).createMetaData(eq(salt), eq(hash))
+        verify(headerMetaData).createMetaData(eq(salt), eq(hash), eq(nonce))
 
     }
 
@@ -62,23 +63,19 @@ class EncryptionHandlerTest : UnitTest() {
         val userId = UserId.apply()
 
         val salt = ByteArray(TEST_KEY_BYTES)
-        val streamHeader = TEST_KEY_BYTES
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)
-        val cipherText = ByteArray(backupFile.readBytes().size + 15)
+        val nonce = ByteArray(TEST_NONCE_BYTES)
 
         `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
+        `when`(crypto.generateNonce()).thenReturn(Either.Right(nonce))
         `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Right(hash))
-        `when`(crypto.streamHeaderLength()).thenReturn(streamHeader)
         `when`(crypto.aBytesLength()).thenReturn(15)
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
-        `when`(crypto.initEncryptState(any(), any())).thenReturn(Either.Right(hash))
         `when`(crypto.checkExpectedKeySize(ENCRYPTION_HASH_BYTES, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
-        `when`(headerMetaData.createMetaData(salt, hash)).thenReturn(Either.Right(hash))
+        `when`(headerMetaData.createMetaData(salt, hash, nonce)).thenReturn(Either.Right(hash))
 
-        encryptionHandler.encryptBackup(backupFile, userId, password)
+        encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
 
-        verify(crypto).initEncryptState(any(), any())
-        verify(crypto).generatePushMessagePart(eq(hash), eq(cipherText), eq(backupFile.readBytes()))
 
     }
 
@@ -103,5 +100,6 @@ class EncryptionHandlerTest : UnitTest() {
     companion object {
         private const val TEST_KEY_BYTES = 256
         private const val ENCRYPTION_HASH_BYTES = 52
+        private const val TEST_NONCE_BYTES = 24
     }
 }

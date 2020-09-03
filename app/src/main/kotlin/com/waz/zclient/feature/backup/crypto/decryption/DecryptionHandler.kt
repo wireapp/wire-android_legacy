@@ -21,7 +21,6 @@ class DecryptionHandler(
     private val cryptoHeaderMetaData: CryptoHeaderMetaData
 ) {
     fun decryptBackup(backupFile: File, userId: UserId, password: String): Either<Failure, File> {
-        verbose(TAG, "decryptBackup")
         loadCryptoLibrary()
         return cryptoHeaderMetaData.readMetadata(backupFile).flatMap { metaData ->
             crypto.hashWithMessagePart(userId.str(), metaData.salt).flatMap { hash ->
@@ -41,23 +40,15 @@ class DecryptionHandler(
             read(cipherText)
         }
 
-        verbose(TAG, "CRY cipher text: ${cipherText.describe()}")
-
         return decryptWithHash(cipherText, password, salt, nonce).map { decryptedBackupBytes ->
-            verbose(TAG, "CRY decrypted bytes: ${decryptedBackupBytes.describe(32)}")
-            val file = File.createTempFile("wire_backup", ".zip")
-            BufferedOutputStream(FileOutputStream(file)).use {
-                it.write(decryptedBackupBytes)
-                it.close()
+            File.createTempFile("wire_backup", ".zip").apply {
+                writeBytes(decryptedBackupBytes)
             }
-            verbose(TAG, "CRY zip file length: ${file.length()}")
-            file
         }
     }
 
     private fun decryptWithHash(cipherText: ByteArray, password: String, salt: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> =
         crypto.hashWithMessagePart(password, salt).flatMap { key ->
-            verbose(TAG, "CRY key: ${key.describe()}")
             crypto.checkExpectedKeySize(key.size, crypto.decryptExpectedKeyBytes()).flatMap {
                 decrypt(cipherText, key, nonce)
             }

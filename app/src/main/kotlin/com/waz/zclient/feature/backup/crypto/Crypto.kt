@@ -6,6 +6,7 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.logging.Logger
+import com.waz.zclient.core.logging.Logger.Companion.verbose
 import com.waz.zclient.feature.backup.crypto.encryption.error.EncryptionInitialisationError
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashWrongSize
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
