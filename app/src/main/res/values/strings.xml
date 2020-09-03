@@ -506,6 +506,7 @@
     <string name="pref_options_conference_calls_category_title">Conference Calls</string>
     <string name="pref_options_conference_calls_beta_program_title">Beta Program</string>
     <string name="pref_options_conference_calls_beta_program_summary">When this is on, audio and video conference calling is enabled, which allows a higher number of participants.</string>
+    <string name="conference_calling_badge_title">CONFERENCE CALLING</string>
 
     <!-- Devices -->
     <string name="pref_devices_screen_title">Devices</string>
