@@ -12,7 +12,9 @@ import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionFailed
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashesDoNotMatch
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
 import com.waz.zclient.feature.backup.crypto.header.TOTAL_HEADER_LENGTH
+import java.io.BufferedOutputStream
 import java.io.File
+import java.io.FileOutputStream
 
 class DecryptionHandler(
     private val crypto: Crypto,
@@ -42,8 +44,14 @@ class DecryptionHandler(
         verbose(TAG, "CRY cipher text: ${cipherText.describe()}")
 
         return decryptWithHash(cipherText, password, salt, nonce).map { decryptedBackupBytes ->
-            verbose(TAG, "CRY decrypted bytes: ${decryptedBackupBytes.describe()}")
-            File.createTempFile("wire_backup", ".zip").apply { writeBytes(decryptedBackupBytes) }
+            verbose(TAG, "CRY decrypted bytes: ${decryptedBackupBytes.describe(32)}")
+            val file = File.createTempFile("wire_backup", ".zip")
+            BufferedOutputStream(FileOutputStream(file)).use {
+                it.write(decryptedBackupBytes)
+                it.close()
+            }
+            verbose(TAG, "CRY zip file length: ${file.length()}")
+            file
         }
     }
 
@@ -56,7 +64,7 @@ class DecryptionHandler(
         }
 
     private fun decrypt(cipherText: ByteArray, key: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> {
-        val decrypted = ByteArray(cipherText.size + crypto.aBytesLength())
+        val decrypted = ByteArray(cipherText.size - crypto.aBytesLength())
         verbose(TAG, "CRY decrypt, cipherText: ${cipherText.describe()}, nonce: ${nonce.describe()}")
         return when (crypto.decrypt(decrypted, cipherText, key, nonce)) {
             0 -> Either.Right(decrypted)

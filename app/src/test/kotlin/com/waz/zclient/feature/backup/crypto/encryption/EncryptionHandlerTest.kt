@@ -46,11 +46,11 @@ class EncryptionHandlerTest : UnitTest() {
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
         `when`(crypto.initEncryptState(any(), any())).thenReturn(Either.Right(byteArrayOf()))
         `when`(crypto.checkExpectedKeySize(ENCRYPTION_HASH_BYTES, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
-        `when`(headerMetaData.writeMetaData(any(), any())).thenReturn(Either.Right(byteArrayOf()))
+        `when`(headerMetaData.createMetaData(any(), any())).thenReturn(Either.Right(byteArrayOf()))
 
         encryptionHandler.encryptBackup(backupFile, userId, password)
 
-        verify(headerMetaData).writeMetaData(eq(salt), eq(hash))
+        verify(headerMetaData).createMetaData(eq(salt), eq(hash))
 
     }
 
@@ -73,7 +73,7 @@ class EncryptionHandlerTest : UnitTest() {
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
         `when`(crypto.initEncryptState(any(), any())).thenReturn(Either.Right(hash))
         `when`(crypto.checkExpectedKeySize(ENCRYPTION_HASH_BYTES, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
-        `when`(headerMetaData.writeMetaData(salt, hash)).thenReturn(Either.Right(hash))
+        `when`(headerMetaData.createMetaData(salt, hash)).thenReturn(Either.Right(hash))
 
         encryptionHandler.encryptBackup(backupFile, userId, password)
 

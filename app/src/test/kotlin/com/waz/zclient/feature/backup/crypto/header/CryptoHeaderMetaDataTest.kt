@@ -78,7 +78,7 @@ class CryptoHeaderMetaDataTest : UnitTest() {
         val salt = byteArrayOf()
         val hash = ByteArray(VALID_HASH_LENGTH)
 
-        val result = cryptoHeaderMetaData.writeMetaData(salt, hash)
+        val result = cryptoHeaderMetaData.createMetaData(salt, hash)
 
         assertTrue(result.isRight)
     }
@@ -88,7 +88,7 @@ class CryptoHeaderMetaDataTest : UnitTest() {
         val salt = byteArrayOf()
         val hash = ByteArray(INVALID_HASH_LENGTH)
 
-        val result = cryptoHeaderMetaData.writeMetaData(salt, hash)
+        val result = cryptoHeaderMetaData.createMetaData(salt, hash)
 
         result.onFailure {
             assertEquals(it, HashInvalid)

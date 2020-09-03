@@ -36,7 +36,7 @@ class CryptoHeaderMetaData(
             Either.Left(UnableToReadMetaData)
         }
 
-    fun writeMetaData(salt: ByteArray, key: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> =
+    fun createMetaData(salt: ByteArray, key: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> =
         key.size.takeIf { it == UUID_HASH_LENGTH }?.let {
             val header = EncryptedBackupHeader(CURRENT_VERSION, salt, key, crypto.opsLimit(), crypto.memLimit(), nonce)
             Either.Right(encryptionHeaderMapper.toByteArray(header))
