@@ -23,15 +23,17 @@ class EncryptionHandler(
         try {
             loadCryptoLibrary()
             crypto.generateSalt().flatMap { salt ->
-                writeMetaData(salt, userId).flatMap { meta ->
-                    verbose(TAG, "CRY meta: ${meta.describe()}")
-                    val backupBytes = backupFile.readBytes().drop(TOTAL_HEADER_LENGTH).toByteArray()
-                    verbose(TAG, "CRY backup bytes: ${backupBytes.describe()}")
-                    encryptWithHash(backupBytes, password, salt).map { encryptedBytes ->
-                        verbose(TAG, "CRY encrypted bytes: ${encryptedBytes.describe()}")
-                        return@map File(backupFile.parentFile, backupFile.name + "_encrypted").apply {
-                            writeBytes(meta)
-                            appendBytes(encryptedBytes)
+                crypto.generateNonce().flatMap { nonce ->
+                    writeMetaData(salt, nonce, userId).flatMap { meta ->
+                        verbose(TAG, "CRY meta: ${meta.describe()}")
+                        val backupBytes = backupFile.readBytes().drop(TOTAL_HEADER_LENGTH).toByteArray()
+                        verbose(TAG, "CRY backup bytes: ${backupBytes.describe()}")
+                        encryptWithHash(backupBytes, password, salt, nonce).map { encryptedBytes ->
+                            verbose(TAG, "CRY encrypted bytes: ${encryptedBytes.describe()}, nonce: ${nonce.describe()}")
+                            return@map File(backupFile.parentFile, backupFile.name + "_encrypted").apply {
+                                writeBytes(meta)
+                                appendBytes(encryptedBytes)
+                            }
                         }
                     }
                 }
@@ -40,17 +42,17 @@ class EncryptionHandler(
             Either.Left(IOFailure(ex))
         }
 
-    private fun encryptWithHash(backupBytes: ByteArray, password: String, salt: ByteArray): Either<Failure, ByteArray> =
+    private fun encryptWithHash(backupBytes: ByteArray, password: String, salt: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> =
         crypto.hashWithMessagePart(password, salt).flatMap { hash ->
             verbose(TAG, "CRY key: ${hash.describe()}")
             crypto.checkExpectedKeySize(hash.size, crypto.encryptExpectedKeyBytes()).flatMap {
-                encrypt(backupBytes, hash)
+                encrypt(backupBytes, hash, nonce)
             }
         }
 
-    private fun encrypt(backupBytes: ByteArray, hash: ByteArray): Either<Failure, ByteArray> {
+    private fun encrypt(backupBytes: ByteArray, hash: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> {
         val cipherText = ByteArray(backupBytes.size + crypto.aBytesLength())
-        return when (crypto.encrypt(cipherText, backupBytes, hash)) {
+        return when (crypto.encrypt(cipherText, backupBytes, hash, nonce)) {
             0 -> Either.Right(cipherText)
             else -> Either.Left(EncryptionFailed)
         }
@@ -58,9 +60,9 @@ class EncryptionHandler(
 
     //This method returns the metadata in the format described here:
     //https://github.com/wearezeta/documentation/blob/master/topics/backup/use-cases/001-export-history.md
-    private fun writeMetaData(salt: ByteArray, userId: UserId): Either<Failure, ByteArray> =
-        crypto.hashWithMessagePart(userId.str(), salt).flatMap { hash ->
-            cryptoHeaderMetaData.writeMetaData(salt, hash)
+    private fun writeMetaData(salt: ByteArray, nonce: ByteArray, userId: UserId): Either<Failure, ByteArray> =
+        crypto.hashWithMessagePart(userId.str(), salt).flatMap { key ->
+            cryptoHeaderMetaData.writeMetaData(salt, key, nonce)
         }
 
     private fun loadCryptoLibrary() = crypto.loadLibrary

@@ -12,12 +12,13 @@ import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
 private const val SALT_LENGTH = 16
+private const val NONCE_LENGTH = 24
 private const val ANDROID_MAGIC_NUMBER_LENGTH = 4
 private const val TAG = "EncryptionHeader"
-internal const val CURRENT_VERSION: Short = 2
+internal const val CURRENT_VERSION: Short = 1
 
 const val UUID_HASH_LENGTH = 32
-const val TOTAL_HEADER_LENGTH = ANDROID_MAGIC_NUMBER_LENGTH + 1 + 2 + SALT_LENGTH + UUID_HASH_LENGTH + 4 + 4
+const val TOTAL_HEADER_LENGTH = ANDROID_MAGIC_NUMBER_LENGTH + 1 + 2 + SALT_LENGTH + UUID_HASH_LENGTH + 4 + 4 + NONCE_LENGTH
 
 class CryptoHeaderMetaData(
     private val crypto: Crypto,
@@ -35,9 +36,9 @@ class CryptoHeaderMetaData(
             Either.Left(UnableToReadMetaData)
         }
 
-    fun writeMetaData(salt: ByteArray, hash: ByteArray): Either<Failure, ByteArray> =
-        hash.size.takeIf { it == UUID_HASH_LENGTH }?.let {
-            val header = EncryptedBackupHeader(CURRENT_VERSION, salt, hash, crypto.opsLimit(), crypto.memLimit())
+    fun writeMetaData(salt: ByteArray, key: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> =
+        key.size.takeIf { it == UUID_HASH_LENGTH }?.let {
+            val header = EncryptedBackupHeader(CURRENT_VERSION, salt, key, crypto.opsLimit(), crypto.memLimit(), nonce)
             Either.Right(encryptionHeaderMapper.toByteArray(header))
         } ?: Either.Left(HashInvalid)
 }
@@ -46,7 +47,6 @@ class EncryptionHeaderMapper {
 
     fun toByteArray(header: EncryptedBackupHeader): ByteArray =
         ByteBuffer.allocate(TOTAL_HEADER_LENGTH).apply {
-            Logger.verbose(TAG, "android magic number: ${ANDROID_MAGIC_NUMBER.contentToString()}")
             put(ANDROID_MAGIC_NUMBER)
             put(0.toByte())
             putShort(header.version)
@@ -54,6 +54,7 @@ class EncryptionHeaderMapper {
             put(header.uuidHash)
             putInt(header.opsLimit)
             putInt(header.memLimit)
+            put(header.nonce)
         }.array().also {
             Logger.verbose(TAG, it.describe())
         }
@@ -73,7 +74,9 @@ class EncryptionHeaderMapper {
                     buffer.get(uuidHash)
                     val opslimit = buffer.int
                     val memlimit = buffer.int
-                    EncryptedBackupHeader(CURRENT_VERSION, salt, uuidHash, opslimit, memlimit)
+                    val nonce = ByteArray(NONCE_LENGTH)
+                    buffer.get(nonce)
+                    EncryptedBackupHeader(CURRENT_VERSION, salt, uuidHash, opslimit, memlimit, nonce)
                 } else {
                     Logger.error(TAG, "Unsupported backup version: $version (should be $CURRENT_VERSION)")
                     null
@@ -97,9 +100,10 @@ data class EncryptedBackupHeader(
     val salt: ByteArray,
     val uuidHash: ByteArray,
     val opsLimit: Int = 0,
-    val memLimit: Int = 0
+    val memLimit: Int = 0,
+    val nonce: ByteArray
 ) {
     companion object {
-        val EMPTY = EncryptedBackupHeader(CURRENT_VERSION, byteArrayOf(), byteArrayOf(), 0, 0)
+        val EMPTY = EncryptedBackupHeader(CURRENT_VERSION, byteArrayOf(), byteArrayOf(), 0, 0, byteArrayOf())
     }
 }

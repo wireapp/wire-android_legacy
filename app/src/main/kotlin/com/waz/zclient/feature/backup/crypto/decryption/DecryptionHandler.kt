@@ -24,14 +24,14 @@ class DecryptionHandler(
         return cryptoHeaderMetaData.readMetadata(backupFile).flatMap { metaData ->
             crypto.hashWithMessagePart(userId.str(), metaData.salt).flatMap { hash ->
                 when (hash.contentEquals(metaData.uuidHash)) {
-                    true -> decryptBackupFile(password, backupFile, metaData.salt)
+                    true -> decryptBackupFile(password, backupFile, metaData.salt, metaData.nonce)
                     false -> Either.Left(HashesDoNotMatch)
                 }
             }
         }
     }
 
-    private fun decryptBackupFile(password: String, backupFile: File, salt: ByteArray): Either<Failure, File> {
+    private fun decryptBackupFile(password: String, backupFile: File, salt: ByteArray, nonce: ByteArray): Either<Failure, File> {
         val backupLength = backupFile.length() - TOTAL_HEADER_LENGTH
         val cipherText = ByteArray(backupLength.toInt())
         backupFile.inputStream().buffered().apply {
@@ -41,24 +41,24 @@ class DecryptionHandler(
 
         verbose(TAG, "CRY cipher text: ${cipherText.describe()}")
 
-        return decryptWithHash(cipherText, password, salt).map { decryptedBackupBytes ->
+        return decryptWithHash(cipherText, password, salt, nonce).map { decryptedBackupBytes ->
             verbose(TAG, "CRY decrypted bytes: ${decryptedBackupBytes.describe()}")
             File.createTempFile("wire_backup", ".zip").apply { writeBytes(decryptedBackupBytes) }
         }
     }
 
-    private fun decryptWithHash(cipherText: ByteArray, password: String, salt: ByteArray): Either<Failure, ByteArray> =
+    private fun decryptWithHash(cipherText: ByteArray, password: String, salt: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> =
         crypto.hashWithMessagePart(password, salt).flatMap { key ->
             verbose(TAG, "CRY key: ${key.describe()}")
             crypto.checkExpectedKeySize(key.size, crypto.decryptExpectedKeyBytes()).flatMap {
-                decrypt(cipherText, key)
+                decrypt(cipherText, key, nonce)
             }
         }
 
-    private fun decrypt(cipherText: ByteArray, key: ByteArray): Either<Failure, ByteArray> {
-        val decrypted = ByteArray(cipherText.size - crypto.aBytesLength())
-        verbose(TAG, "CRY decrypt, cipherText: ${cipherText.describe()}")
-        return when (crypto.decrypt(decrypted, cipherText, key)) {
+    private fun decrypt(cipherText: ByteArray, key: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> {
+        val decrypted = ByteArray(cipherText.size + crypto.aBytesLength())
+        verbose(TAG, "CRY decrypt, cipherText: ${cipherText.describe()}, nonce: ${nonce.describe()}")
+        return when (crypto.decrypt(decrypted, cipherText, key, nonce)) {
             0 -> Either.Right(decrypted)
             else -> Either.Left(DecryptionFailed)
         }
@@ -67,6 +67,6 @@ class DecryptionHandler(
     private fun loadCryptoLibrary() = crypto.loadLibrary
 
     companion object {
-        private const val TAG = "DescryptionHandler"
+        private const val TAG = "DecryptionHandler"
     }
 }

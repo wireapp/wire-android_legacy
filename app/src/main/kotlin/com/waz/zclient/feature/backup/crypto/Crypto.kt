@@ -31,6 +31,13 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
         return loadLibrary.flatMap { Either.Right(buffer) }
     }
 
+    internal fun generateNonce(): Either<Failure, ByteArray> {
+        val count = cryptoWrapper.polyNpubBytes()
+        val buffer = ByteArray(count)
+        cryptoWrapper.randomBytes(buffer)
+        return loadLibrary.flatMap { Either.Right(buffer) }
+    }
+
     internal fun hashWithMessagePart(input: String, salt: ByteArray): Either<Failure, ByteArray> {
         val output = ByteArray(encryptExpectedKeyBytes())
         val passBytes = input.toByteArray()
@@ -51,9 +58,11 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
     internal fun aBytesLength(): Int =
         cryptoWrapper.polyABytes()
 
-    internal fun encrypt(cipherText: ByteArray, msg: ByteArray, key: ByteArray) = cryptoWrapper.encrypt(cipherText, msg, key)
+    internal fun encrypt(cipherText: ByteArray, msg: ByteArray, key: ByteArray, nonce: ByteArray) =
+        cryptoWrapper.encrypt(cipherText, msg, key, nonce)
 
-    internal fun decrypt(decrypted: ByteArray, cipherText: ByteArray, key: ByteArray) = cryptoWrapper.decrypt(decrypted, cipherText, key)
+    internal fun decrypt(decrypted: ByteArray, cipherText: ByteArray, key: ByteArray, nonce: ByteArray) =
+        cryptoWrapper.decrypt(decrypted, cipherText, key, nonce)
 
     internal fun encryptExpectedKeyBytes() = cryptoWrapper.aedPolyKeyBytes()
 
