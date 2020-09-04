@@ -3,11 +3,9 @@ package com.waz.zclient.feature.backup.crypto.encryption
 import com.waz.model.UserId
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.IOFailure
-import com.waz.zclient.core.extension.describe
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.core.logging.Logger.Companion.verbose
 import com.waz.zclient.feature.backup.crypto.Crypto
 import com.waz.zclient.feature.backup.crypto.encryption.error.EncryptionFailed
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData

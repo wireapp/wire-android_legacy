@@ -32,11 +32,10 @@ class EncryptionHandlerTest : UnitTest() {
     }
 
     @Test
-    fun `given a backup file, userId, and password, when salt is valid and hash is valid, then write encrypted meta data`() {
+    fun `given a backup file, userId, and password, when salt, nonce, and hash is valid, then write encrypted meta data`() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-
         val userId = UserId.apply()
         val salt = ByteArray(TEST_KEY_BYTES)
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)

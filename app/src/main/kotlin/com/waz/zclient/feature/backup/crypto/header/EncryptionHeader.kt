@@ -9,7 +9,6 @@ import com.waz.zclient.feature.backup.crypto.encryption.error.HashInvalid
 import com.waz.zclient.feature.backup.crypto.encryption.error.UnableToReadMetaData
 import java.io.File
 import java.nio.ByteBuffer
-import java.nio.charset.Charset
 
 private const val SALT_LENGTH = 16
 private const val NONCE_LENGTH = 24
@@ -82,7 +81,11 @@ class EncryptionHeaderMapper {
                     null
                 }
             } else {
-                Logger.error(TAG, "archive has incorrect magic number: ${magicNumber.contentToString()} (should be: ${ANDROID_MAGIC_NUMBER.contentToString()})")
+                Logger.error(
+                    TAG,
+                    "archive has incorrect magic number: ${magicNumber.contentToString()} " +
+                    "(should be: ${ANDROID_MAGIC_NUMBER.contentToString()})"
+                )
                 null
             }
         } else {

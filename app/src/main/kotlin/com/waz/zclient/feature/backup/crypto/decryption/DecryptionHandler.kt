@@ -2,19 +2,15 @@ package com.waz.zclient.feature.backup.crypto.decryption
 
 import com.waz.model.UserId
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.extension.describe
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.core.logging.Logger.Companion.verbose
 import com.waz.zclient.feature.backup.crypto.Crypto
 import com.waz.zclient.feature.backup.crypto.encryption.error.DecryptionFailed
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashesDoNotMatch
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
 import com.waz.zclient.feature.backup.crypto.header.TOTAL_HEADER_LENGTH
-import java.io.BufferedOutputStream
 import java.io.File
-import java.io.FileOutputStream
 
 class DecryptionHandler(
     private val crypto: Crypto,
@@ -56,7 +52,6 @@ class DecryptionHandler(
 
     private fun decrypt(cipherText: ByteArray, key: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> {
         val decrypted = ByteArray(cipherText.size - crypto.aBytesLength())
-        verbose(TAG, "CRY decrypt, cipherText: ${cipherText.describe()}, nonce: ${nonce.describe()}")
         return when (crypto.decrypt(decrypted, cipherText, key, nonce)) {
             0 -> Either.Right(decrypted)
             else -> Either.Left(DecryptionFailed)
@@ -64,8 +59,4 @@ class DecryptionHandler(
     }
 
     private fun loadCryptoLibrary() = crypto.loadLibrary
-
-    companion object {
-        private const val TAG = "DecryptionHandler"
-    }
 }

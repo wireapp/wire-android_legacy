@@ -65,7 +65,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo3).saveBackup()
             verify(metaDataHandler).generateMetaDataFile(metaData)
             verify(zipHandler).zip(anyString(), anyList())
-            verify(encryptionHandler).encryptBackup(any(), any(), anyString())
+            verify(encryptionHandler).encryptBackup(any(), any(), anyString(), anyString())
 
             assert(result.isRight)
         }
@@ -193,7 +193,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo3).saveBackup()
             verify(metaDataHandler).generateMetaDataFile(metaData)
             verify(zipHandler).zip(anyString(), anyList())
-            verify(encryptionHandler).encryptBackup(any(), any(), anyString())
+            verify(encryptionHandler).encryptBackup(any(), any(), anyString(), anyString())
 
             assertEquals(Either.Left(FakeEncryptionFailure), result)
         }
@@ -248,7 +248,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
         }
 
         fun mockEncryptionHandler(encryptionSuccess: Boolean = true): EncryptionHandler = mock(EncryptionHandler::class.java).also {
-            `when`(it.encryptBackup(any(), any(), anyString())).thenReturn(
+            `when`(it.encryptBackup(any(), any(), anyString(), anyString())).thenReturn(
                 if (encryptionSuccess) Either.Right(createTempFile(suffix = "_encrypted"))
                 else Either.Left(FakeEncryptionFailure)
             )

@@ -6,12 +6,8 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.logging.Logger
-import com.waz.zclient.core.logging.Logger.Companion.verbose
-import com.waz.zclient.feature.backup.crypto.encryption.error.EncryptionInitialisationError
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashWrongSize
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
-import com.waz.zclient.feature.backup.crypto.encryption.error.InvalidHeaderLength
-import com.waz.zclient.feature.backup.crypto.encryption.error.InvalidKeyLength
 import com.waz.zclient.feature.backup.crypto.encryption.error.UnsatisfiedLink
 
 class Crypto(private val cryptoWrapper: CryptoWrapper) {
@@ -42,13 +38,9 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
     internal fun hashWithMessagePart(input: String, salt: ByteArray): Either<Failure, ByteArray> {
         val output = ByteArray(encryptExpectedKeyBytes())
         val passBytes = input.toByteArray()
-        val pushMessage = generatePwhashMessagePart(output, passBytes, salt)
-        return pushMessage.takeIf { it == 0 }?.let { Either.Right(output) }
-            ?: Either.Left(HashingFailed)
+        val pushMessage = cryptoWrapper.generatePwhashMessagePart(output, passBytes, salt)
+        return pushMessage.takeIf { it == 0 }?.let { Either.Right(output) } ?: Either.Left(HashingFailed)
     }
-
-    private fun generatePwhashMessagePart(output: ByteArray, passBytes: ByteArray, salt: ByteArray) =
-        cryptoWrapper.generatePwhashMessagePart(output, passBytes, salt)
 
     internal fun opsLimit(): Int =
         cryptoWrapper.opsLimitInteractive()
@@ -70,14 +62,13 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
     internal fun decryptExpectedKeyBytes() = cryptoWrapper.aedPolyKeyBytes()
 
     internal fun checkExpectedKeySize(size: Int, expectedKeySize: Int, shouldLog: Boolean = true): Either<Failure, Unit> =
-        when (size != expectedKeySize) {
-            true -> {
-                if (shouldLog) {
-                    Logger.verbose(TAG, "Key length invalid: $size did not match $expectedKeySize")
-                }
-                Either.Left(HashWrongSize)
+        if (size != expectedKeySize) {
+            if (shouldLog) {
+                Logger.verbose(TAG, "Key length invalid: $size did not match $expectedKeySize")
             }
-            false -> Either.Right(Unit)
+            Either.Left(HashWrongSize)
+        } else {
+            Either.Right(Unit)
         }
 
     companion object {
