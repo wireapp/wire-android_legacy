@@ -124,7 +124,7 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
   }
 
   // post some task on this queue, effectively blocking all other processing while this task executes
-  def post[T](f: => Future[T]): Future[T] = Serialized.future(this)(fromTry(f))
+  def post[T](f: => Future[T]): Future[T] = Serialized.future(name)(fromTry(f))
 
   /* just for tests! */
   def clear(): Unit = queue.clear()

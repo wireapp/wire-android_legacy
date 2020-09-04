@@ -170,11 +170,12 @@ class CallingServiceImpl(val accountId:       UserId,
                          permissions:         PermissionsService,
                          userStorage:         UsersStorage,
                          tracking:            TrackingService,
-                         conferenceCallingEnabled: Boolean)(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
+                         conferenceCallingEnabled: Boolean)(implicit accountContext: AccountContext)
+  extends CallingService with DerivedLogTag with SafeToLog {
 
   import CallingService._
 
-  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "CallingService")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = CallingServiceImpl.TAG)
 
   //need to ensure that flow manager and media manager are initialised for v3 (they are lazy values)
   flowManagerService.flowManager
@@ -259,7 +260,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }
     }
 
-    def withConvGroup(convId: RConvId)(f: (ConversationData, Boolean) => Unit) = Serialized.future(self) {
+    def withConvGroup(convId: RConvId)(f: (ConversationData, Boolean) => Unit) = Serialized.future(CallingServiceImpl.TAG) {
       (for {
         _          <- wCall
         Some(conv) <- convs.convByRemoteId(convId)
@@ -411,7 +412,7 @@ class CallingServiceImpl(val accountId:       UserId,
     }
 
   override def startCall(convId: ConvId, isVideo: Boolean = false, forceOption: Boolean = false) =
-    Serialized.future(self) {
+    Serialized.future(CallingServiceImpl.TAG) {
       verbose(l"startCall $convId, isVideo: $isVideo, forceOption: $forceOption")
       (for {
         w          <- wCall
@@ -577,7 +578,7 @@ class CallingServiceImpl(val accountId:       UserId,
     * else other futures posted to the dispatcher can sneak in between.
     */
   private def atomicWithConv(loadConversation: => Future[Option[ConversationData]], f: (WCall, ConversationData) => Unit, convNotFoundMsg: String) = {
-    Serialized.future(self) {
+    Serialized.future(CallingServiceImpl.TAG) {
       wCall.flatMap { w =>
         loadConversation.map {
           case Some(conv) => f(w, conv)
@@ -610,7 +611,7 @@ class CallingServiceImpl(val accountId:       UserId,
   }
 
   private def updateActiveCallAsync(f: (WCall, ConversationData, CallInfo) => CallInfo)(caller: String): Future[Unit] =
-    Serialized.future(self) {
+    Serialized.future(CallingServiceImpl.TAG) {
       currentCall.currentValue.flatten.map(_.convId).fold(Future.successful({})) { convId =>
         wCall.flatMap { w =>
           convs.convById(convId).map {
@@ -660,4 +661,5 @@ object CallingServiceImpl {
     moreThan15MinutesHavePassed
   }
 
+  final val TAG = "CallingService"
 }

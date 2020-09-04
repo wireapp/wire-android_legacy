@@ -31,12 +31,12 @@ import scala.util.control.NonFatal
 object Threading {
 
   implicit class RichSignal[E](val signal: Signal[E]) extends AnyVal {
-    def onUi(subscriber: Events.Subscriber[E])(implicit context: EventContext): Subscription =
+    def onUi(subscriber: Subscription.Subscriber[E])(implicit context: EventContext): Subscription =
       signal.on(Threading.Ui)(subscriber)(context)
   }
 
   implicit class RichEventStream[E](val stream: EventStream[E]) extends AnyVal {
-    def onUi(subscriber: Events.Subscriber[E])(implicit context: EventContext): Subscription =
+    def onUi(subscriber: Subscription.Subscriber[E])(implicit context: EventContext): Subscription =
       stream.on(Threading.Ui)(subscriber)(context)
   }
 

@@ -151,7 +151,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     conv <- conversation
     memberIds <- members
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)):_*)
-    isGroup <- Signal.future(z.conversations.isGroupConversation(conv.id))
+    isGroup <- Signal(z.conversations.isGroupConversation(conv.id))
   } yield {
     val opacity =
       if ((memberIds.isEmpty && isGroup) || conv.convType == ConversationType.WaitForConnection || !conv.isActive)

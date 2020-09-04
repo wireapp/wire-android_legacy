@@ -183,7 +183,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
   def playhead(key: MediaKey): Signal[bp.Duration] = stateSource flatMap {
     case Playing(_, `key`) =>
       ClockSignal(tickInterval).flatMap { i =>
-        Signal.future(duringIdentityTransition { case Playing(player, `key`) => player.playhead })
+        Signal(duringIdentityTransition { case Playing(player, `key`) => player.playhead })
       }
     case Paused(player, `key`, media, _) =>
       Signal.const(media.playhead)
@@ -200,7 +200,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
     stateSource.flatMap {
       case Recording(_, `key`, _, _, _, _) =>
         ClockSignal(tickInterval).flatMap { i =>
-          Signal.future(duringIdentityTransition { case Recording(recorder, `key`, _, _, _, _) => successful((peakLoudness(recorder.maxAmplitudeSinceLastCall), i)) })
+          Signal(duringIdentityTransition { case Recording(recorder, `key`, _, _, _, _) => successful((peakLoudness(recorder.maxAmplitudeSinceLastCall), i)) })
         }
       case other => Signal.empty[(Float, Instant)]
     }.onChanged.map { case (level, _) => level }
@@ -379,7 +379,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
     transitionF(s => Future(f(s)))(errorMessage, errorType)
 
   private def transitionF(f: State => Future[Transition])(errorMessage: String, errorType: Option[ErrorType] = None): Future[State] =
-    Serialized.future(GlobalRecordAndPlayService)(keepStateOnFailure(stateSource.head.flatMap(f))(errorMessage, errorType).map(applyState))
+    Serialized.future("GlobalRecordAndPlayService")(keepStateOnFailure(stateSource.head.flatMap(f))(errorMessage, errorType).map(applyState))
 
   private def duringIdentityTransition[A](pf: PartialFunction[State, Future[A]]): Future[A] = {
     val p = Promise[A]

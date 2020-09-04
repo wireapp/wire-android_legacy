@@ -97,6 +97,7 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 
 case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
+  import Threading.Implicits.Ui
   
   val zms = inject[Signal[Option[ZMessaging]]]
   val accounts = inject[AccountsService]
@@ -105,7 +106,7 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
   val otherClients = for {
     Some(am)      <- accounts.activeAccountManager
     selfClientId  <- am.clientId
-    clients       <- Signal.future(am.storage.otrClientsStorage.get(am.userId))
+    clients       <- Signal(am.storage.otrClientsStorage.get(am.userId))
   } yield clients.fold(Seq[Client]())(_.clients.values.filter(client => !selfClientId.contains(client.id)).toSeq.sortBy(_.regTime).reverse)
 
   val incomingClients = for {

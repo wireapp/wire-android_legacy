@@ -89,7 +89,7 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
   private val bitmap = for {
     bounds <- bounds
     asset <- imageAsset
-    bitmap <- Signal.future(
+    bitmap <- Signal(
       asset.fold(Future.successful(Option.empty[Bitmap])) { p =>
         Threading.ImageDispatcher {
           Option(WireGlide(ctx)
@@ -98,7 +98,7 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
             .submit(bounds.width, bounds.height)
             .get())
         }.future
-      })
+      })(Threading.ImageDispatcher)
   } yield bitmap
 
   bitmap.onUi{ bitmap =>

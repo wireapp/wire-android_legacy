@@ -49,13 +49,13 @@ class TooltipView(context: Context, attrs: AttributeSet, defStyleAttr: Int)
 
   val controller = inject[CursorController]
 
-  val tooltip = Signal.wrap(controller.onShowTooltip.map { case (msg, anchor) => (msg, anchor, Instant.now) })
+  val tooltip = Signal(controller.onShowTooltip.map { case (msg, anchor) => (msg, anchor, Instant.now) })
 
   val visible = tooltip.map(_._3).orElse(Signal const Instant.EPOCH).flatMap {
     case time if time <= Instant.now - TooltipDuration => Signal const false
     case time =>
       val delay = Instant.now.until(time + TooltipDuration).asScala
-      Signal.future(CancellableFuture.delayed(delay) { false }).orElse(Signal const true)
+      Signal(CancellableFuture.delayed(delay) { false }).orElse(Signal const true)
   }
 
   val width = Signal[Int]()
@@ -94,7 +94,7 @@ class TooltipView(context: Context, attrs: AttributeSet, defStyleAttr: Int)
     view.setVisible(false)
     view.setAlpha(0)
 
-    visible.on(Threading.Ui) {
+    visible.onUi {
       case true => fadeAnimator.start()
       case false =>
         if (view.getVisibility == View.VISIBLE) {

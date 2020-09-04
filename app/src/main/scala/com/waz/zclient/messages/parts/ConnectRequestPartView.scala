@@ -66,13 +66,13 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
   val integration = for {
     usr <- user
     intService <- integrations
-    integration <- Signal.future((usr.integrationId, usr.providerId) match {
-    case (Some(i), Some(p)) => intService.getIntegration(p, i).map {
-      case Right(integrationData) => Some(integrationData)
-      case Left(_) => None
-    }
-    case _ => Future.successful(None)
-  })
+    integration <- Signal((usr.integrationId, usr.providerId) match {
+                    case (Some(i), Some(p)) => intService.getIntegration(p, i).map {
+                      case Right(integrationData) => Some(integrationData)
+                      case Left(_) => None
+                    }
+                    case _ => Future.successful(None)
+                  })
   } yield integration
 
   Signal(integration, user.map(_.id)).onUi {

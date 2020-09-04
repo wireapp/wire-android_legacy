@@ -33,6 +33,7 @@ import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.threading.Threading
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Serialized, Signal, SourceSignal}
+import com.wire.signals.Serialized
 import com.waz.utils.{CachedStorageImpl, CirceJSONSupport, JsonDecoder, JsonEncoder, TrimmingLruCache, returning}
 import com.waz.zms.BuildConfig
 import org.json.JSONObject

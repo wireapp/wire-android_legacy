@@ -246,7 +246,7 @@ class OtrServiceImpl(selfUserId:     UserId,
   }
 
   def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
-    if (userId == selfUserId && cId == clientId) Signal.future(cryptoBox { cb => Future successful cb.getLocalFingerprint })
+    if (userId == selfUserId && cId == clientId) Signal(cryptoBox { cb => Future successful cb.getLocalFingerprint })
     else cryptoBox.sessions.remoteFingerprint(SessionId(userId, cId))
 
   def encryptAssetDataCBC(key: AESKey, data: LocalData): Future[(Sha256, LocalData, EncryptionAlgorithm)] = {

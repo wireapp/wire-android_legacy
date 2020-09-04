@@ -60,7 +60,7 @@ trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedL
     z <- civZms
     mId <- messageData.map(_.id)
     message <- z.messagesStorage.signal(mId)
-    msgAndLikes <- Signal.future(z.msgAndLikes.combineWithLikes(message))
+    msgAndLikes <- Signal(z.msgAndLikes.combineWithLikes(message))
   } yield msgAndLikes
 
   messageAndLikesResolver.disableAutowiring()

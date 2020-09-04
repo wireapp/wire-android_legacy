@@ -25,7 +25,7 @@ import com.waz.log.LogSE._
 import com.waz.model.MessageData.{MessageDataDao, isUserContent}
 import com.waz.model._
 import com.waz.service.tracking.TrackingService
-import com.wire.signals.{CancellableFuture, DispatchQueue, EventStream, RefreshingSignal, SerialDispatchQueue, Signal, SourceSignal}
+import com.wire.signals.{CancellableFuture, DispatchQueue, EventContext, EventStream, RefreshingSignal, SerialDispatchQueue, Signal, SourceSignal}
 import com.waz.utils._
 
 import scala.concurrent.Future
@@ -63,10 +63,10 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
     val lastSentMessage: Signal[Option[MessageData]] = returning(sources.lastSentMessage)(_.disableAutowiring())
     val lastMessageFromSelf: Signal[Option[MessageData]] = returning(sources.lastMessageFromSelf)(_.disableAutowiring())
 
-    val unreadCount = for {
+    val unreadCount: Signal[ConversationData.UnreadCount] = for {
       time   <- sources.lastReadTime
-      _      <- Signal.wrap(LocalInstant.Epoch, indexChanged.map(_.time)).throttle(500.millis)
-      unread <- Signal.future(messages.countUnread(convId, time))
+      _      <- Signal.wrap(LocalInstant.Epoch, indexChanged.map(_.time), EventContext.Global).throttle(500.millis)
+      unread <- Signal(messages.countUnread(convId, time))
     } yield unread
 
     val messagesCursor: Signal[MessagesCursor] = new RefreshingSignal(loadCursor, indexChanged.filter(_.orderChanged))
