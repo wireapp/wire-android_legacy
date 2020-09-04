@@ -1564,10 +1564,9 @@
     <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
     <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
 
-    <!--TODO: proper copy-->
-    <string name="back_up_incompatibility_title">We\'re changing our back up mechanism</string>
-    <string name="back_up_incompatibility_message">As of next release, back ups created in older versions of Wire won\'t be supported.</string>
+    <string name="back_up_incompatibility_title">New and improved backups are coming</string>
+    <string name="back_up_incompatibility_message">The next version of Wire (3.55) will contain a redesigned backup system. You will not be able to restore an existing backup file, so make sure to restore any backups before updating.</string>
     <string name="back_up_incompatibility_action_ok">OK</string>
-    <string name="back_up_incompatibility_action_do_not_show_again">Don\'t show again</string>
+    <string name="back_up_incompatibility_action_do_not_show_again">Do not show again</string>
 </resources>
 
