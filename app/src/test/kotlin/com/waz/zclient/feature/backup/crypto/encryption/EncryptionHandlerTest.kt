@@ -3,17 +3,24 @@ package com.waz.zclient.feature.backup.crypto.encryption
 import com.waz.model.UserId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
+import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.onFailure
+import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.eq
 import com.waz.zclient.feature.backup.crypto.Crypto
+import com.waz.zclient.feature.backup.crypto.encryption.error.HashInvalid
+import com.waz.zclient.feature.backup.crypto.encryption.error.HashWrongSize
+import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
+import junit.framework.Assert.fail
+import org.amshove.kluent.shouldEqual
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import java.io.File
-import java.util.*
 import kotlin.random.Random
 
 class EncryptionHandlerTest : UnitTest() {
@@ -38,29 +45,75 @@ class EncryptionHandlerTest : UnitTest() {
         val password = generateText(8)
         val userId = UserId.apply()
         val salt = ByteArray(TEST_KEY_BYTES)
-        val hash = ByteArray(ENCRYPTION_HASH_BYTES)
         val nonce = ByteArray(TEST_NONCE_BYTES)
+        val hash = ByteArray(ENCRYPTION_HASH_BYTES)
 
         `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
         `when`(crypto.generateNonce()).thenReturn(Either.Right(nonce))
         `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Right(hash))
+        `when`(headerMetaData.createMetaData(any(), any(), any())).thenReturn(Either.Right(byteArrayOf()))
         `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
         `when`(crypto.checkExpectedKeySize(ENCRYPTION_HASH_BYTES, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
-        `when`(headerMetaData.createMetaData(any(), any(), any())).thenReturn(Either.Right(byteArrayOf()))
 
         encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
 
         verify(headerMetaData).createMetaData(eq(salt), eq(hash), eq(nonce))
-
     }
 
     @Test
-    fun `given backup file, user id, password and encrypted meta data, when encryption state is initialised, then generated encrypted message`() {
+    fun `given a backup file, userId, and password, when the salt fails to be generated, then fail encryption`() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
         val userId = UserId.apply()
 
+        `when`(crypto.generateSalt()).thenReturn(Either.Left(FakeSodiumLibError))
+
+         encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
+            .onSuccess { fail("If the salt generation fails, the encryption should fail") }
+            .onFailure { it shouldEqual FakeSodiumLibError }
+    }
+
+    @Test
+    fun `given a backup file, userId, and password, when the nonce fails to be generated, then fail encryption`() {
+        val tempDir = createTempDir()
+        val backupFile = createTextFile(tempDir)
+        val password = generateText(8)
+        val userId = UserId.apply()
+        val salt = ByteArray(TEST_KEY_BYTES)
+
+        `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
+        `when`(crypto.generateNonce()).thenReturn(Either.Left(FakeSodiumLibError))
+
+        encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
+            .onSuccess { fail("If the nonce generation fails, the encryption should fail") }
+            .onFailure { it shouldEqual FakeSodiumLibError }
+    }
+
+    @Test
+    fun `given a backup file, userId, and password, when hashing the password fails, then fail encryption`() {
+        val tempDir = createTempDir()
+        val backupFile = createTextFile(tempDir)
+        val password = generateText(8)
+        val userId = UserId.apply()
+        val salt = ByteArray(TEST_KEY_BYTES)
+        val nonce = ByteArray(TEST_NONCE_BYTES)
+
+        `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
+        `when`(crypto.generateNonce()).thenReturn(Either.Right(nonce))
+        `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Left(HashingFailed))
+
+        encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
+            .onSuccess { fail("If the hashing fails, the encryption should fail") }
+            .onFailure { it shouldEqual HashingFailed }
+    }
+
+    @Test
+    fun `given a backup file, userId, and password, when metadata creation fails, then fail encryption`() {
+        val tempDir = createTempDir()
+        val backupFile = createTextFile(tempDir)
+        val password = generateText(8)
+        val userId = UserId.apply()
         val salt = ByteArray(TEST_KEY_BYTES)
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)
         val nonce = ByteArray(TEST_NONCE_BYTES)
@@ -68,17 +121,37 @@ class EncryptionHandlerTest : UnitTest() {
         `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
         `when`(crypto.generateNonce()).thenReturn(Either.Right(nonce))
         `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Right(hash))
-        `when`(crypto.aBytesLength()).thenReturn(15)
-        `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
-        `when`(crypto.checkExpectedKeySize(ENCRYPTION_HASH_BYTES, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
-        `when`(headerMetaData.createMetaData(salt, hash, nonce)).thenReturn(Either.Right(hash))
+        `when`(headerMetaData.createMetaData(salt, hash, nonce)).thenReturn(Either.Left(HashInvalid))
 
         encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
-
-
+            .onSuccess { fail("If metadata creation fails, the encryption should fail") }
+            .onFailure { it shouldEqual HashInvalid }
     }
 
-    private fun generateText(length: Int): String = Base64.getEncoder().encodeToString(Random.Default.nextBytes(length))
+    @Test
+    fun `given a backup file, userId, and password, when the key size check fails, then fail encryption`() {
+        val tempDir = createTempDir()
+        val backupFile = createTextFile(tempDir)
+        val password = generateText(8)
+        val userId = UserId.apply()
+        val salt = ByteArray(TEST_KEY_BYTES)
+        val nonce = ByteArray(TEST_NONCE_BYTES)
+        val wrongHashBytesSize = ENCRYPTION_HASH_BYTES + 1
+        val hash = ByteArray(wrongHashBytesSize)
+
+        `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
+        `when`(crypto.generateNonce()).thenReturn(Either.Right(nonce))
+        `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Right(hash))
+        `when`(headerMetaData.createMetaData(any(), any(), any())).thenReturn(Either.Right(byteArrayOf()))
+        `when`(crypto.encryptExpectedKeyBytes()).thenReturn(ENCRYPTION_HASH_BYTES)
+        `when`(crypto.checkExpectedKeySize(wrongHashBytesSize, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Left(HashWrongSize))
+
+        encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
+            .onSuccess { fail("If the key size check fails, the encryption should fail") }
+            .onFailure { it shouldEqual HashWrongSize }
+    }
+
+    private fun generateText(length: Int): String = java.util.Base64.getEncoder().encodeToString(Random.Default.nextBytes(length))
 
     private fun createTempDir(): File = File.createTempFile("temp", System.currentTimeMillis().toString()).apply {
         delete()
@@ -100,5 +173,7 @@ class EncryptionHandlerTest : UnitTest() {
         private const val TEST_KEY_BYTES = 256
         private const val ENCRYPTION_HASH_BYTES = 52
         private const val TEST_NONCE_BYTES = 24
+
+        object FakeSodiumLibError : FeatureFailure()
     }
 }

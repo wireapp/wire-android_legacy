@@ -3,7 +3,7 @@ package com.waz.zclient.feature.backup.crypto.header
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.describe
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.logging.Logger
+import com.waz.zclient.core.logging.Logger.Companion.error
 import com.waz.zclient.feature.backup.crypto.Crypto
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashInvalid
 import com.waz.zclient.feature.backup.crypto.encryption.error.UnableToReadMetaData
@@ -54,9 +54,7 @@ class EncryptionHeaderMapper {
             putInt(header.opsLimit)
             putInt(header.memLimit)
             put(header.nonce)
-        }.array().also {
-            Logger.verbose(TAG, it.describe())
-        }
+        }.array()
 
     internal fun fromByteArray(bytes: ByteArray): EncryptedBackupHeader? =
         if (bytes.size == TOTAL_HEADER_LENGTH) {
@@ -77,19 +75,15 @@ class EncryptionHeaderMapper {
                     buffer.get(nonce)
                     EncryptedBackupHeader(CURRENT_VERSION, salt, uuidHash, opslimit, memlimit, nonce)
                 } else {
-                    Logger.error(TAG, "Unsupported backup version: $version (should be $CURRENT_VERSION)")
+                    error(TAG, "Unsupported backup version: $version (should be $CURRENT_VERSION)")
                     null
                 }
             } else {
-                Logger.error(
-                    TAG,
-                    "archive has incorrect magic number: ${magicNumber.contentToString()} " +
-                    "(should be: ${ANDROID_MAGIC_NUMBER.contentToString()})"
-                )
+                error(TAG, "archive has incorrect magic number: ${magicNumber.describe()} (should be: ${ANDROID_MAGIC_NUMBER.describe()})")
                 null
             }
         } else {
-            Logger.error(TAG, "Invalid header length: ${bytes.size} (should be: $TOTAL_HEADER_LENGTH)")
+            error(TAG, "Invalid header length: ${bytes.size} (should be: $TOTAL_HEADER_LENGTH)")
             null
         }
 
