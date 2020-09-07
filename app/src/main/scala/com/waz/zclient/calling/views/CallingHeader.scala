@@ -20,11 +20,10 @@ package com.waz.zclient.calling.views
 
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
-import android.util.{AttributeSet}
+import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, TextView}
 import com.waz.content.UserPreferences
-import com.waz.service.ZMessaging
 import com.waz.threading.Threading._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -37,10 +36,9 @@ class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleA
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) =  this(context, null)
 
-  private val controller           = inject[CallController]
-  private lazy val accentColor     = inject[AccentColorController].accentColor
-  private val zms                 = inject[Signal[ZMessaging]]
-  private lazy val vbrSettingsEnabled    = zms.flatMap(_.userPrefs.preference(UserPreferences.VBREnabled).signal)
+  private val controller              = inject[CallController]
+  private lazy val accentColor        = inject[AccentColorController].accentColor
+  private lazy val vbrSettingsEnabled = inject[Signal[UserPreferences]].flatMap(_.preference(UserPreferences.VBREnabled).signal)
 
   private lazy val nameView               = findById[TextView](R.id.ttv__calling__header__name)
   private lazy val subtitleView           = findById[TextView](R.id.ttv__calling__header__subtitle)
