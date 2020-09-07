@@ -545,7 +545,7 @@ class MainActivity extends BaseActivity
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
 
   private def showBackUpIncompatibilityDialog() : Future[Unit] = {
-    def showDialog(accentColor: AccentColor): Future[Boolean] = showConfirmationDialog(
+    def showDialog(accentColor: AccentColor): Future[Option[Boolean]] = showWarningDialog(
       getString(R.string.back_up_incompatibility_title),
       getString(R.string.back_up_incompatibility_message),
       R.string.back_up_incompatibility_action_ok,
@@ -561,7 +561,10 @@ class MainActivity extends BaseActivity
       color <- accentColorController.accentColor.head
     } yield {
       if (shouldWarn) {
-        showDialog(color).foreach { doNotShowAgain => prefs(GlobalPreferences.ShouldWarnBackUpIncompatibility) := !doNotShowAgain }
+        showDialog(color).foreach {
+          case Some(false) => prefs(GlobalPreferences.ShouldWarnBackUpIncompatibility) := false
+          case _ =>
+        }
       }
     }
   }
