@@ -273,7 +273,41 @@ object ContextUtils {
     val dialog = builder.create()
 
     dialog.show()
+    setButtonAccentColors(dialog, color)
 
+    p.future
+  }
+
+  def showWarningDialog(title: String,
+                        msg:   String,
+                        positiveRes: Int,
+                        negativeRes: Int,
+                        color: AccentColor)
+                       (implicit context: Context): Future[Option[Boolean]] = {
+    val p = Promise[Option[Boolean]]()
+
+    val builder = new AlertDialog.Builder(context)
+      .setTitle(title)
+      .setMessage(msg)
+      .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(Some(true)))
+      })
+      .setNegativeButton(negativeRes, new DialogInterface.OnClickListener() {
+        def onClick(dialog: DialogInterface, which: Int): Unit = p.tryComplete(Success(Some(false)))
+      })
+      .setOnCancelListener(new DialogInterface.OnCancelListener {
+        override def onCancel(dialog: DialogInterface) = p.tryComplete(Success(None))
+      })
+
+    val dialog = builder.create()
+
+    dialog.show()
+    setButtonAccentColors(dialog, color)
+
+    p.future
+  }
+
+  private def setButtonAccentColors(dialog: AlertDialog, color : AccentColor): Unit = {
     Option(dialog.getButton(DialogInterface.BUTTON_POSITIVE)).foreach { button =>
       button.setTextColor(color.color)
       button.setTextAlignment(android.view.View.TEXT_ALIGNMENT_TEXT_END)
@@ -286,8 +320,6 @@ object ContextUtils {
       button.setTextColor(color.color)
       button.setTextAlignment(android.view.View.TEXT_ALIGNMENT_TEXT_END)
     }
-
-    p.future
   }
 
   def showStatusNotificationWarning(availability: Availability, color: AccentColor)
