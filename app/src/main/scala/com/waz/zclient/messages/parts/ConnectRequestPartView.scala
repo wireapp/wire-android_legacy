@@ -66,7 +66,7 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
   val integration = for {
     usr <- user
     intService <- integrations
-    integration <- Signal((usr.integrationId, usr.providerId) match {
+    integration <- Signal.fromFuture((usr.integrationId, usr.providerId) match {
                     case (Some(i), Some(p)) => intService.getIntegration(p, i).map {
                       case Right(integrationData) => Some(integrationData)
                       case Left(_) => None

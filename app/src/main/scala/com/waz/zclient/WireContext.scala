@@ -55,7 +55,7 @@ object WireContext extends DerivedLogTag {
 
 trait WireContext extends Context {
 
-  def eventContext: EventContext
+  implicit val eventContext: EventContext = EventContext()
 
   private lazy val _injector =
     WireApplication.APP_INSTANCE.contextModule(this) :: getApplicationContext.asInstanceOf[WireApplication].module
@@ -68,16 +68,16 @@ trait ViewFinder {
   def stub[V <: View](id: Int) : V = findById[ViewStub](id).inflate().asInstanceOf[V]
 }
 
-trait ViewEventContext extends View with EventContext {
-  implicit def eventContext: EventContext = this
+trait ViewEventContext extends View {
+  implicit protected val eventContext: EventContext = EventContext()
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
-    start()
+    eventContext.start()
   }
 
   override def onDetachedFromWindow(): Unit = {
-    stop()
+    eventContext.stop()
     super.onDetachedFromWindow()
   }
 }
@@ -114,19 +114,17 @@ object ViewHelper {
   }
 }
 
-trait ServiceHelper extends Service with Injectable with WireContext with EventContext {
-
-  override implicit def eventContext: EventContext = this
+trait ServiceHelper extends Service with Injectable with WireContext {
 
   override def onCreate(): Unit = {
-    start()
+    eventContext.start()
     super.onCreate()
   }
 
   override def onDestroy(): Unit = {
     super.onDestroy()
-    stop()
-    destroy()
+    eventContext.stop()
+    eventContext.destroy()
   }
 }
 
@@ -135,11 +133,10 @@ trait FragmentHelper
   extends Fragment
     with OnBackPressedListener
     with ViewFinder
-    with EventContext
     with Injectable
     with DerivedLogTag {
 
-  implicit def eventContext: EventContext = this
+  implicit protected val eventContext: EventContext = EventContext()
   implicit def currentAndroidContext: Context = getContext
   lazy implicit val injector: Injector = getActivity.asInstanceOf[WireContext].injector
 
@@ -265,18 +262,18 @@ trait FragmentHelper
   }
 
   override def onStart(): Unit = {
-    start()
+    eventContext.start()
     super.onStart()
   }
 
   override def onStop(): Unit = {
     super.onStop()
-    stop()
+    eventContext.stop()
   }
 
   override def onDestroy(): Unit = {
     super.onDestroy()
-    destroy()
+    eventContext.destroy()
   }
 }
 
@@ -327,28 +324,28 @@ object ManagerFragment {
   case class Page(tag: String, firstPage: Boolean)
 }
 
-trait DialogHelper extends Dialog with Injectable with EventContext {
+trait DialogHelper extends Dialog with Injectable {
   val context: Context
   lazy implicit val injector = context.asInstanceOf[WireContext].injector
-  implicit def eventContext: EventContext = this
+  implicit val eventContext: EventContext = EventContext()
 
   private var dismissListener = Option.empty[DialogInterface.OnDismissListener]
 
   super.setOnDismissListener(new DialogInterface.OnDismissListener {
     override def onDismiss(dialogInterface: DialogInterface): Unit = {
       dismissListener.foreach(_.onDismiss(dialogInterface))
-      destroy()
+      eventContext.destroy()
     }
   })
 
   override def onStart(): Unit = {
-    start()
+    eventContext.start()
     super.onStart()
   }
 
   override def onStop(): Unit = {
     super.onStop()
-    stop()
+    eventContext.stop()
   }
 
   override def setOnDismissListener(listener: DialogInterface.OnDismissListener): Unit = {
@@ -356,9 +353,7 @@ trait DialogHelper extends Dialog with Injectable with EventContext {
   }
 }
 
-trait ActivityHelper extends AppCompatActivity with ViewFinder with Injectable with WireContext with EventContext {
-
-  override implicit def eventContext: EventContext = this
+trait ActivityHelper extends AppCompatActivity with ViewFinder with Injectable with WireContext {
 
   @SuppressLint(Array("com.waz.ViewUtils"))
   def findById[V <: View](id: Int) = findViewById(id).asInstanceOf[V]
@@ -371,18 +366,18 @@ trait ActivityHelper extends AppCompatActivity with ViewFinder with Injectable w
     f(Option(this.asInstanceOf[FragmentActivity].getSupportFragmentManager.findFragmentByTag(tag)))
 
   override def onStart(): Unit = {
-    start()
+    eventContext.start()
     super.onStart()
   }
 
   override def onStop(): Unit = {
     super.onStop()
-    stop()
+    eventContext.stop()
   }
 
   override def onDestroy(): Unit = {
     super.onDestroy()
-    destroy()
+    eventContext.destroy()
   }
 }
 
@@ -455,17 +450,19 @@ class ViewHolder[T <: View](id: Int, finder: ViewFinder) {
   }
 }
 
-trait PreferenceHelper extends Preference with Injectable with EventContext {
+trait PreferenceHelper extends Preference with Injectable {
+  implicit protected val eventContext = EventContext()
+
   lazy implicit val wContext = WireContext(getContext)
   lazy implicit val injector = wContext.injector
 
   override def onAttached(): Unit = {
     super.onAttached()
-    start()
+    eventContext.start()
   }
 
   override def onDetached(): Unit = {
-    stop()
+    eventContext.stop()
     super.onDetached()
   }
 }

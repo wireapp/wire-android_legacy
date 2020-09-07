@@ -109,7 +109,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
 
   // a utility method for using `filterForExternal` with signals more easily
   private def filterForExternal(query: SearchQuery, searchResults: Signal[IndexedSeq[UserData]]): Signal[IndexedSeq[UserData]] =
-    searchResults.flatMap(res => Signal(filterForExternal(query, res)))
+    searchResults.flatMap(res => Signal.fromFuture(filterForExternal(query, res)))
 
   override def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults] =
     for {
@@ -218,7 +218,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
 
     val conversations: Signal[IndexedSeq[ConversationData]] =
       if (!query.isEmpty)
-        Signal(convsStorage.findGroupConversations(SearchKey(query.str), selfUserId, Int.MaxValue, handleOnly = query.handleOnly))
+        Signal.fromFuture(convsStorage.findGroupConversations(SearchKey(query.str), selfUserId, Int.MaxValue, handleOnly = query.handleOnly))
           .map(_.filter(conv => teamId.forall(conv.team.contains)).distinct.toIndexedSeq)
           .flatMap { convs =>
             val gConvs = convs.map { c =>
@@ -230,7 +230,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
                 case false => None
               }
             }
-            Signal(Future.sequence(gConvs).map(_.flatten)) //TODO avoid using Signal.future - will not update...
+            Signal.fromFuture(Future.sequence(gConvs).map(_.flatten)) //TODO avoid using Signal.fromFuture - will not update...
           }
       else Signal.const(IndexedSeq.empty)
 
@@ -240,7 +240,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       top        <- topUsers
       local      <- filterForExternal(query, searchLocal(query, showBlockedUsers = true))
       convs      <- conversations
-      isExternal <- Signal(isExternal)
+      isExternal <- Signal.fromFuture(isExternal)
       dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearch)
     } yield SearchResults(top, local, convs, dir)
   }
@@ -307,7 +307,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       counts.filter(_._2 > 0).sortBy(_._2)(Ordering[Long].reverse).take(MaxTopPeople).map(_._1)
     }
 
-    Signal(loadTopUsers).map(_.toIndexedSeq)
+    Signal.fromFuture(loadTopUsers).map(_.toIndexedSeq)
   }
 
   private val topPeoplePredicate: UserData => Boolean = u => ! u.deleted && u.connection == ConnectionStatus.Accepted

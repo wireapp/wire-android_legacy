@@ -162,7 +162,7 @@ case class DeviceDetailsBackStackKey(args: Bundle) extends BackStackKey(args) {
   override def layoutId = R.layout.preferences_device_details
 
   override def onViewAttached(v: View) =
-    controller = Option(v.asInstanceOf[DeviceDetailsViewImpl]).map(view => DeviceDetailsViewController(view, deviceId)(view.injector, view, v.getContext))
+    controller = Option(v.asInstanceOf[DeviceDetailsViewImpl]).map(view => DeviceDetailsViewController(view, deviceId)(view.injector, v.getContext))
 
   override def onViewDetached() = {
     controller = None
@@ -178,7 +178,7 @@ object DeviceDetailsBackStackKey {
   }
 }
 
-case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)(implicit inj: Injector, ec: EventContext, context: Context)
+case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)(implicit inj: Injector, context: Context, ec: EventContext = EventContext())
   extends Injectable with DerivedLogTag {
   
   import Threading.Implicits.Background

@@ -226,7 +226,7 @@ case class OptionsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   var controller = Option.empty[OptionsViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[OptionsViewImpl]).map(ov => new OptionsViewController(ov)(ov.injector, ov))
+    controller = Option(v.asInstanceOf[OptionsViewImpl]).map(ov => new OptionsViewController(ov)(ov.injector))
   }
 
   override def onViewDetached() = {
@@ -234,7 +234,7 @@ case class OptionsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   }
 }
 
-class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: EventContext) extends Injectable {
+class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: EventContext = EventContext()) extends Injectable {
   val zms = inject[Signal[ZMessaging]]
   val userPrefs = zms.map(_.userPrefs)
   val team = zms.flatMap(_.teams.selfTeam)

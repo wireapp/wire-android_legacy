@@ -85,7 +85,7 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
   lazy val pagedListData: Signal[(MessageAdapterData, PagedListWrapper[MessageAndLikes], Option[MessageId])] = for {
     z                       <- zms
     (cId, cTeam, teamOnly)  <- convController.currentConv.map(c => (c.id, c.team, c.isTeamOnly))
-    isGroup                 <- Signal(z.conversations.isGroupConversation(cId))
+    isGroup                 <- Signal.fromFuture(z.conversations.isGroupConversation(cId))
     canHaveLink             = isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
     cursor                  <- RefreshingSignal(loadCursor(cId), cursorRefreshEvent(z, cId))
     _ = verbose(l"cursor changed")

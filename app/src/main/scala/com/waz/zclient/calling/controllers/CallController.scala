@@ -63,7 +63,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val callingZmsOpt =
     for {
       acc <- inject[GlobalModule].calling.activeAccount
-      zms <- acc.fold(Signal.const(Option.empty[ZMessaging]))(id => Signal(ZMessaging.currentAccounts.getZms(id)))
+      zms <- acc.fold(Signal.const(Option.empty[ZMessaging]))(id => Signal.fromFuture(ZMessaging.currentAccounts.getZms(id)))
     } yield zms
 
   val callingZms = callingZmsOpt.collect { case Some(z) => z }
@@ -80,7 +80,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   val isCallActive      = currentCallOpt.map(_.isDefined)
   val isCallActiveDelay = isCallActive.flatMap {
-    case true  => Signal(CancellableFuture.delay(300.millis).future.map(_ => true)).orElse(Signal.const(false))
+    case true  => Signal.fromFuture(CancellableFuture.delay(300.millis).future.map(_ => true)).orElse(Signal.const(false))
     case false => Signal.const(false)
   }
 
@@ -156,7 +156,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     case (cs, _) => cs.continueDegradedCall()
   }
 
-  val captureDevices = flowManager.flatMap(fm => Signal(fm.getVideoCaptureDevices))
+  val captureDevices = flowManager.flatMap(fm => Signal.fromFuture(fm.getVideoCaptureDevices))
 
   //TODO when I have a proper field for front camera, make sure it's always set as the first one
   val currentCaptureDeviceIndex = Signal(0)

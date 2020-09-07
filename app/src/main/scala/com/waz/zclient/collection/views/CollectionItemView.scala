@@ -57,10 +57,10 @@ trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedL
   val messageData: SourceSignal[MessageData] = Signal()
 
   val messageAndLikesResolver = for {
-    z <- civZms
-    mId <- messageData.map(_.id)
-    message <- z.messagesStorage.signal(mId)
-    msgAndLikes <- Signal(z.msgAndLikes.combineWithLikes(message))
+    z           <- civZms
+    mId         <- messageData.map(_.id)
+    message     <- z.messagesStorage.signal(mId)
+    msgAndLikes <- Signal.fromFuture(z.msgAndLikes.combineWithLikes(message))(Threading.Background)
   } yield msgAndLikes
 
   messageAndLikesResolver.disableAutowiring()

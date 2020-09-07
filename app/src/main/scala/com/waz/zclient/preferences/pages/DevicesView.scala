@@ -86,7 +86,7 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   private var controller = Option.empty[DevicesViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[DevicesViewImpl]).map(view => DevicesViewController(view)(view.injector, view))
+    controller = Option(v.asInstanceOf[DevicesViewImpl]).map(view => DevicesViewController(view)(view.injector))
   }
 
   override def onViewDetached() = {
@@ -95,9 +95,8 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   }
 }
 
-case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: EventContext)
+case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: EventContext = EventContext())
   extends Injectable with DerivedLogTag {
-  import Threading.Implicits.Ui
   
   val zms = inject[Signal[Option[ZMessaging]]]
   val accounts = inject[AccountsService]
@@ -106,7 +105,7 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
   val otherClients = for {
     Some(am)      <- accounts.activeAccountManager
     selfClientId  <- am.clientId
-    clients       <- Signal(am.storage.otrClientsStorage.get(am.userId))
+    clients       <- Signal.fromFuture(am.storage.otrClientsStorage.get(am.userId))(Threading.Background)
   } yield clients.fold(Seq[Client]())(_.clients.values.filter(client => !selfClientId.contains(client.id)).toSeq.sortBy(_.regTime).reverse)
 
   val incomingClients = for {

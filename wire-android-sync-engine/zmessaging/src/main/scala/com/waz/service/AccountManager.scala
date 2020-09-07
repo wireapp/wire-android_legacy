@@ -75,7 +75,7 @@ class AccountManager(val userId:   UserId,
   lazy val userPrefs = storage.userPrefs
 
   lazy val clientState = for {
-    _ <- if (startedJustAfterBackup) Signal(doAfterBackupCleanup()) else Signal.const(())
+    _ <- if (startedJustAfterBackup) Signal.fromFuture(doAfterBackupCleanup()) else Signal.const(())
     state <- userPrefs(SelfClient).signal
   } yield state
 
@@ -148,7 +148,7 @@ class AccountManager(val userId:   UserId,
       selfClientId <- clientId
       fingerprint  <-
         if (userId == uId && selfClientId.contains(cId))
-          Signal(cryptoBox(Future successful _.getLocalFingerprint))
+          Signal.fromFuture(cryptoBox(Future successful _.getLocalFingerprint))
         else
           cryptoBox.sessions.remoteFingerprint(SessionId(uId, cId))
     } yield fingerprint

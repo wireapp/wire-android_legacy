@@ -201,9 +201,9 @@ class MessagesStorageImpl(context:     Context,
 
   def getLastSentMessage(conv: ConvId) = msgsIndex(conv).flatMap(_.getLastSentMessage)
 
-  def unreadCount(conv: ConvId): Signal[Int] = Signal(msgsIndex(conv)).flatMap(_.signals.unreadCount).map(_.messages)
+  def unreadCount(conv: ConvId): Signal[Int] = Signal.fromFuture(msgsIndex(conv)).flatMap(_.signals.unreadCount).map(_.messages)
 
-  def lastRead(conv: ConvId) = Signal(msgsIndex(conv)).flatMap(_.signals.lastReadTime)
+  def lastRead(conv: ConvId) = Signal.fromFuture(msgsIndex(conv)).flatMap(_.signals.lastReadTime)
 
   //TODO: use local instant?
   override def findLocalFrom(conv: ConvId, time: RemoteInstant) =

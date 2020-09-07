@@ -136,7 +136,7 @@ object WireApplication extends DerivedLogTag {
     //SE Services
     bind [GlobalModule]                   to ZMessaging.currentGlobal
     bind [AccountsService]                to ZMessaging.currentAccounts
-    bind [Signal[AccountsService]]        to Signal(ZMessaging.accountsService) //use for early-initialised classes
+    bind [Signal[AccountsService]]        to Signal.fromFuture(ZMessaging.accountsService)(Threading.Background) //use for early-initialised classes
     bind [BackendConfig]                  to inject[GlobalModule].backend
     bind [AccountStorage]                 to inject[GlobalModule].accountsStorage
     bind [TeamsStorage]                   to inject[GlobalModule].teamsStorage
@@ -287,7 +287,7 @@ object WireApplication extends DerivedLogTag {
 
   def controllers(implicit ctx: WireContext) = new Module {
 
-    private implicit val eventContext = ctx.eventContext
+    private implicit val eventContext: EventContext = ctx.eventContext
 
     bind [Activity] to {
       def getActivity(ctx: Context): Activity = ctx match {
@@ -353,7 +353,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   WireApplication.APP_INSTANCE = this
 
-  override def eventContext: EventContext = EventContext.Global
+  override val eventContext: EventContext = EventContext.Global
 
   lazy val module: Injector = Global
 

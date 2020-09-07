@@ -122,12 +122,12 @@ class WSPushServiceImpl(userId:              UserId,
   private def webSocketProcessEngine(initialDelay: FiniteDuration): Subscription = {
     verbose(l"Constructing websocket engine subscription.")
     val events: EventStream[Either[ErrorResponse, SocketEvent]] = for {
-      _                 <- EventStream.wrap(Signal(CancellableFuture.delay(initialDelay)))
+      _                 <- EventStream.fromSignal(Signal.fromFuture(CancellableFuture.delay(initialDelay)))
       _                 =  info(l"Opening WebSocket... ${showString({if (retryCount.get() == 0) "" else s"Retry count: ${retryCount.get()}"})}")
-      accessTokenResult <- EventStream.wrap(Signal(accessTokenProvider.currentToken()))
+      accessTokenResult <- EventStream.fromSignal(Signal.fromFuture(accessTokenProvider.currentToken()))
       event             <- accessTokenResult match {
         case Right(token)        => webSocketFactory.openWebSocket(requestCreator(token)).map(Right.apply)
-        case Left(errorResponse) => EventStream.wrap(Signal.const(Left(errorResponse)))
+        case Left(errorResponse) => EventStream.fromSignal(Signal.const(Left(errorResponse)))
       }
     } yield event
 

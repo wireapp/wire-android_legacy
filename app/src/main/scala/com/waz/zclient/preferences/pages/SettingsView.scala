@@ -112,7 +112,7 @@ case class SettingsBackStackKey(args: Bundle = new Bundle()) extends BackStackKe
   var controller = Option.empty[SettingsViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[SettingsViewImpl]).map(sv => new SettingsViewController(sv)(sv.injector, sv))
+    controller = Option(v.asInstanceOf[SettingsViewImpl]).map(sv => new SettingsViewController(sv)(sv.injector))
   }
 
   override def onViewDetached() = {
@@ -120,7 +120,7 @@ case class SettingsBackStackKey(args: Bundle = new Bundle()) extends BackStackKe
   }
 }
 
-class SettingsViewController(view: SettingsView)(implicit inj: Injector, ec: EventContext)
+class SettingsViewController(view: SettingsView)(implicit inj: Injector, ec: EventContext = EventContext())
   extends Injectable with DerivedLogTag {
 
   val zms = inject[Signal[ZMessaging]]

@@ -78,7 +78,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   private lazy val giphySearchResults = for {
     giphyService <- giphyService
     term <- searchTerm
-    searchResults <- Signal(
+    searchResults <- Signal.fromFuture(
       if (TextUtils.isEmpty(term)) giphyService.trending()
       else giphyService.search(term)
     )

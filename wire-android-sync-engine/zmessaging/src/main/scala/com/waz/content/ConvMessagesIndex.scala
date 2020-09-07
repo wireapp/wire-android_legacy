@@ -65,8 +65,8 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
 
     val unreadCount: Signal[ConversationData.UnreadCount] = for {
       time   <- sources.lastReadTime
-      _      <- Signal.wrap(LocalInstant.Epoch, indexChanged.map(_.time), EventContext.Global).throttle(500.millis)
-      unread <- Signal(messages.countUnread(convId, time))
+      _      <- Signal.fromStream(LocalInstant.Epoch, indexChanged.map(_.time))(EventContext.Global).throttle(500.millis)
+      unread <- Signal.fromFuture(messages.countUnread(convId, time))
     } yield unread
 
     val messagesCursor: Signal[MessagesCursor] = new RefreshingSignal(loadCursor, indexChanged.filter(_.orderChanged))

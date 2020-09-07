@@ -75,7 +75,7 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
     color    <- accentColorController.accentColor
     m        <- message
     q        <- searchedQuery if q.toString().nonEmpty
-    nContent <- Signal(mis.getNormalizedContentForMessage(m.id))
+    nContent <- Signal.fromFuture(mis.getNormalizedContentForMessage(m.id))
   } yield (m, q, color, nContent)).onUi {
     case (msg, query, color, Some(normalizedContent)) =>
       val spannableString = CollectionUtils.getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.color), StartEllipsisThreshold)

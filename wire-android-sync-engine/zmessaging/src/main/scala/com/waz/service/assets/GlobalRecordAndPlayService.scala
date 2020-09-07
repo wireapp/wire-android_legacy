@@ -182,10 +182,10 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
 
   def playhead(key: MediaKey): Signal[bp.Duration] = stateSource flatMap {
     case Playing(_, `key`) =>
-      ClockSignal(tickInterval).flatMap { i =>
-        Signal(duringIdentityTransition { case Playing(player, `key`) => player.playhead })
+      ClockSignal(tickInterval).flatMap { _ =>
+        Signal.fromFuture(duringIdentityTransition { case Playing(player, `key`) => player.playhead })
       }
-    case Paused(player, `key`, media, _) =>
+    case Paused(_, `key`, media, _) =>
       Signal.const(media.playhead)
     case other =>
       Signal.const(bp.Duration.ZERO)
@@ -193,16 +193,16 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
 
   def isPlaying(key: MediaKey): Signal[Boolean] = stateSource.map {
     case Playing(_, `key`) => true
-    case other => false
+    case _ => false
   }
 
   def recordingLevel(key: AssetMediaKey): EventStream[Float] =
     stateSource.flatMap {
       case Recording(_, `key`, _, _, _, _) =>
         ClockSignal(tickInterval).flatMap { i =>
-          Signal(duringIdentityTransition { case Recording(recorder, `key`, _, _, _, _) => successful((peakLoudness(recorder.maxAmplitudeSinceLastCall), i)) })
+          Signal.fromFuture(duringIdentityTransition { case Recording(recorder, `key`, _, _, _, _) => successful((peakLoudness(recorder.maxAmplitudeSinceLastCall), i)) })
         }
-      case other => Signal.empty[(Float, Instant)]
+      case _ => Signal.empty[(Float, Instant)]
     }.onChanged.map { case (level, _) => level }
 
   def record(key: AssetMediaKey, maxAllowedDuration: FiniteDuration): Future[(Instant, Future[RecordingResult])] = {

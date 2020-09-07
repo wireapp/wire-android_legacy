@@ -21,6 +21,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.IntegrationData
 import com.waz.service.{IntegrationsService, SearchQuery, SearchResults, UserSearchService}
+import com.waz.threading.Threading
 import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.log.LogUI._
@@ -63,7 +64,7 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
         case Tab.Services =>
           servicesService.flatMap { svc =>
             Signal
-              .future(svc.searchIntegrations(Option(filter).filter(_.nonEmpty)))
+              .fromFuture(svc.searchIntegrations(Option(filter).filter(_.nonEmpty)))(Threading.Background)
               .map(_.fold[AddUserListState](Error, ss =>
                 if (ss.isEmpty)
                   if (filter.isEmpty) NoServices else NoServicesFound
@@ -92,7 +93,7 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
         case Tab.Services =>
           servicesService.flatMap { svc =>
             Signal
-              .future(svc.searchIntegrations(Option(filter).filter(_.nonEmpty)))
+              .fromFuture(svc.searchIntegrations(Option(filter).filter(_.nonEmpty)))(Threading.Background)
               .map(_.fold[SearchUserListState](Error, ss =>
                 if (ss.isEmpty)
                   if (filter.isEmpty) NoServices else NoServicesFound

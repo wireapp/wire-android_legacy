@@ -30,7 +30,7 @@ import ContextUtils._
 import android.view.View
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.wire.signals.CancellableFuture
-import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.wire.signals.Signal
 import org.threeten.bp.Instant
 
@@ -49,13 +49,13 @@ class TooltipView(context: Context, attrs: AttributeSet, defStyleAttr: Int)
 
   val controller = inject[CursorController]
 
-  val tooltip = Signal(controller.onShowTooltip.map { case (msg, anchor) => (msg, anchor, Instant.now) })
+  val tooltip = Signal.fromStream(controller.onShowTooltip.map { case (msg, anchor) => (msg, anchor, Instant.now) })
 
   val visible = tooltip.map(_._3).orElse(Signal const Instant.EPOCH).flatMap {
     case time if time <= Instant.now - TooltipDuration => Signal const false
     case time =>
       val delay = Instant.now.until(time + TooltipDuration).asScala
-      Signal(CancellableFuture.delayed(delay) { false }).orElse(Signal const true)
+      Signal.fromFuture(CancellableFuture.delayed(delay) { false }).orElse(Signal const true)
   }
 
   val width = Signal[Int]()
@@ -102,9 +102,9 @@ class TooltipView(context: Context, attrs: AttributeSet, defStyleAttr: Int)
         }
     }
 
-    offset.on(Threading.Ui) { view.setTranslationX }
+    offset.onUi { view.setTranslationX }
 
-    text.on(Threading.Ui) { view.setText }
+    text.onUi { view.setText }
   }
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
