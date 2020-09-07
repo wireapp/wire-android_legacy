@@ -32,6 +32,7 @@ class DecryptionHandlerTest : UnitTest() {
 
     @Before
     fun setup() {
+        `when`(crypto.loadLibrary).thenReturn(Either.Right(Unit))
         decryptionHandler = DecryptionHandler(crypto, headerMetaData)
     }
 
@@ -69,29 +70,6 @@ class DecryptionHandlerTest : UnitTest() {
             assertEquals(it, HashesDoNotMatch)
         }
     }
-
-/*    @Test
-    fun `given backup file, userId, password, when meta data and hash do match, then init decryption`() {
-        val tempDir = createTempDir()
-        val backupFile = createTextFile(tempDir)
-        val password = generateText(8)
-        val userId = UserId.apply()
-        val hash = ByteArray(DECRYPTION_HASH_BYTES)
-        val salt = ByteArray(TEST_KEY_BYTES)
-        val metaData = EncryptedBackupHeader(salt = salt, uuidHash = hash)
-        val header = backupFile.readBytes().take(HEADER_STREAM_LENGTH).toByteArray()
-
-        `when`(crypto.decryptExpectedKeyBytes()).thenReturn(DECRYPTION_HASH_BYTES)
-        `when`(crypto.streamHeaderLength()).thenReturn(HEADER_STREAM_LENGTH)
-        `when`(headerMetaData.readMetadata(backupFile)).thenReturn(Either.Right(metaData))
-        `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Right(hash))
-        `when`(crypto.checkExpectedKeySize(DECRYPTION_HASH_BYTES, DECRYPTION_HASH_BYTES)).thenReturn(Either.Right(Unit))
-        `when`(crypto.initDecryptState(any(), any())).thenReturn(Either.Left(DecryptionInitialisationError))
-
-        decryptionHandler.decryptBackup(backupFile, userId, password)
-
-        verify(crypto).initDecryptState(hash, header)
-    }*/
 
     @Test
     fun `given backup file, userId, password, when decrypted message part is invalid, then propagate error`() {

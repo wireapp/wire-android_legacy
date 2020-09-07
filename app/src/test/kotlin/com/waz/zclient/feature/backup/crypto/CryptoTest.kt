@@ -5,7 +5,6 @@ import com.waz.zclient.any
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashWrongSize
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
-import com.waz.zclient.feature.backup.crypto.encryption.error.InvalidHeaderLength
 import com.waz.zclient.feature.backup.crypto.encryption.error.UnsatisfiedLink
 import com.waz.zclient.framework.functional.assertLeft
 import com.waz.zclient.framework.functional.assertRight
@@ -57,7 +56,7 @@ class CryptoTest : UnitTest() {
         verify(cryptoWrapper).randomBytes(any())
 
         res.assertRight {
-            assertEquals(it.size, saltSize)
+            assertEquals(saltSize, it.size)
         }
     }
 
@@ -65,14 +64,14 @@ class CryptoTest : UnitTest() {
     fun `given generateNonce is called, then return correct size ByteArray`() {
         val nonceSize = NONCE_SIZE
 
-        `when`(cryptoWrapper.pWhashSaltBytes()).thenReturn(nonceSize)
+        `when`(cryptoWrapper.polyNpubBytes()).thenReturn(nonceSize)
 
         val res = crypto.generateNonce()
 
         verify(cryptoWrapper).randomBytes(any())
 
         res.assertRight {
-            assertEquals(it.size, nonceSize)
+            assertEquals(nonceSize, it.size)
         }
     }
 
