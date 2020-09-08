@@ -6,9 +6,6 @@ import org.libsodium.jni.Sodium
 
 class CryptoWrapper {
 
-    fun polyHeaderBytes() =
-        Sodium.crypto_secretstream_xchacha20poly1305_headerbytes()
-
     fun opsLimitInteractive() =
         Sodium.crypto_pwhash_opslimit_interactive()
 
@@ -16,30 +13,35 @@ class CryptoWrapper {
         Sodium.crypto_pwhash_memlimit_interactive()
 
     fun polyABytes() =
-        Sodium.crypto_secretstream_xchacha20poly1305_abytes()
+        Sodium.crypto_aead_xchacha20poly1305_ietf_abytes()
 
-    fun generatePushMessagePart(state: ByteArray, cipherText: ByteArray, msg: ByteArray) =
-        Sodium.crypto_secretstream_xchacha20poly1305_push(
-            state,
+    fun polyNpubBytes() =
+        Sodium.crypto_aead_xchacha20poly1305_ietf_npubbytes()
+
+    fun encrypt(cipherText: ByteArray, msg: ByteArray, key: ByteArray, nonce: ByteArray): Int =
+        Sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
             cipherText,
-            intArrayOf(),
+            intArrayOf(1),
             msg,
             msg.size,
             byteArrayOf(),
             0,
-            Sodium.crypto_secretstream_xchacha20poly1305_tag_final().toShort()
+            byteArrayOf(),
+            nonce,
+            key
         )
 
-    fun generatePullMessagePart(state: ByteArray, decrypted: ByteArray, cipherText: ByteArray) =
-        Sodium.crypto_secretstream_xchacha20poly1305_pull(
-            state,
+    fun decrypt(decrypted: ByteArray, cipherText: ByteArray, key: ByteArray, nonce: ByteArray): Int =
+        Sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
             decrypted,
-            intArrayOf(),
-            byteArrayOf(1),
+            intArrayOf(1),
+            byteArrayOf(),
             cipherText,
             cipherText.size,
             byteArrayOf(),
-            0
+            0,
+            nonce,
+            key
         )
 
     fun generatePwhashMessagePart(output: ByteArray, passBytes: ByteArray, salt: ByteArray) =
@@ -57,20 +59,11 @@ class CryptoWrapper {
     fun aedPolyKeyBytes() =
         Sodium.crypto_aead_chacha20poly1305_keybytes()
 
-    fun secretStreamPolyKeyBytes() =
-        Sodium.crypto_secretstream_xchacha20poly1305_keybytes()
-
     fun pWhashSaltBytes() =
         Sodium.crypto_pwhash_saltbytes()
 
-    fun initPush(state: ByteArray, header: ByteArray, key: ByteArray) =
-        Sodium.crypto_secretstream_xchacha20poly1305_init_push(state, header, key)
-
-    fun initPull(state: ByteArray, header: ByteArray, key: ByteArray) =
-        Sodium.crypto_secretstream_xchacha20poly1305_init_pull(state, header, key)
-
     fun randomBytes(buffer: ByteArray) =
-        Sodium.randombytes(buffer, pWhashSaltBytes())
+        Sodium.randombytes(buffer, buffer.size)
 
     fun loadLibrary() {
         NaCl.sodium() // dynamically load the libsodium library

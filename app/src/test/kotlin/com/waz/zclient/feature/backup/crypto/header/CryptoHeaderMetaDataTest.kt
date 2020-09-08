@@ -77,8 +77,9 @@ class CryptoHeaderMetaDataTest : UnitTest() {
     fun `given writeEncryptedMetaData is called, when hash is valid, then return success`() {
         val salt = byteArrayOf()
         val hash = ByteArray(VALID_HASH_LENGTH)
+        val nonce = ByteArray(NONCE_LENGTH)
 
-        val result = cryptoHeaderMetaData.writeMetaData(salt, hash)
+        val result = cryptoHeaderMetaData.createMetaData(salt, hash, nonce)
 
         assertTrue(result.isRight)
     }
@@ -87,8 +88,9 @@ class CryptoHeaderMetaDataTest : UnitTest() {
     fun `given writeEncryptedMetaData is called, when hash is invalid, then return HashInvalid error`() {
         val salt = byteArrayOf()
         val hash = ByteArray(INVALID_HASH_LENGTH)
+        val nonce = ByteArray(NONCE_LENGTH)
 
-        val result = cryptoHeaderMetaData.writeMetaData(salt, hash)
+        val result = cryptoHeaderMetaData.createMetaData(salt, hash, nonce)
 
         result.onFailure {
             assertEquals(it, HashInvalid)
@@ -120,5 +122,6 @@ class CryptoHeaderMetaDataTest : UnitTest() {
         private const val VALID_HASH_LENGTH = 32
         private const val INVALID_HASH_LENGTH = 21
 
+        private const val NONCE_LENGTH = 24
     }
 }

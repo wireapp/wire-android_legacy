@@ -16,48 +16,51 @@ class EncryptionHandler(
     private val crypto: Crypto,
     private val cryptoHeaderMetaData: CryptoHeaderMetaData
 ) {
-    fun encryptBackup(backupFile: File, userId: UserId, password: String): Either<Failure, File> =
+    fun encryptBackup(backupFile: File, userId: UserId, password: String, targetFileName: String): Either<Failure, File> =
         try {
             loadCryptoLibrary()
-            crypto.generateSalt().flatMap { salt ->
-                writeEncryptedMetaData(salt, userId).flatMap { meta ->
-                    val backupBytes = backupFile.readBytes()
-                    encryptWithHash(backupBytes, password, salt).map { encryptedBytes ->
-                        return@map File(backupFile.parentFile, backupFile.name + "_encrypted").apply {
-                            writeBytes(meta)
-                            writeBytes(encryptedBytes)
-                        }
-                    }
+            encryptBackupFile(backupFile, userId, password).map {
+                val meta = it.first
+                val encryptedBytes = it.second
+                File(backupFile.parentFile, targetFileName).apply {
+                    writeBytes(meta)
+                    appendBytes(encryptedBytes)
                 }
             }
         } catch (ex: IOException) {
             Either.Left(IOFailure(ex))
         }
 
-    private fun encryptWithHash(backupBytes: ByteArray, password: String, salt: ByteArray): Either<Failure, ByteArray> =
-        crypto.hashWithMessagePart(password, salt).flatMap { hash ->
-            crypto.checkExpectedKeySize(hash.size, crypto.encryptExpectedKeyBytes()).flatMap {
-                encrypt(backupBytes, hash)
+    private fun encryptBackupFile(backupFile: File, userId: UserId, password: String) =
+        crypto.generateSalt().flatMap { salt ->
+            crypto.generateNonce().flatMap { nonce ->
+                createMetaData(salt, nonce, userId).flatMap { meta ->
+                    val backupBytes = backupFile.readBytes()
+                    encryptWithHash(backupBytes, password, salt, nonce).map { encryptedBytes -> Pair(meta, encryptedBytes) }
+                }
             }
         }
 
-    private fun encrypt(backupBytes: ByteArray, hash: ByteArray): Either<Failure, ByteArray> {
-        val header = ByteArray(crypto.streamHeaderLength())
-        return crypto.initEncryptState(hash, header).flatMap { state ->
-            val cipherText = ByteArray(backupBytes.size + crypto.aBytesLength())
-            val encrypted = backupBytes + cipherText
-            when (crypto.generatePushMessagePart(state, cipherText, backupBytes)) {
-                0 -> Either.Right(encrypted)
-                else -> Either.Left(EncryptionFailed)
+    private fun encryptWithHash(backupBytes: ByteArray, password: String, salt: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> =
+        crypto.hashWithMessagePart(password, salt).flatMap { hash ->
+            crypto.checkExpectedKeySize(hash.size, crypto.encryptExpectedKeyBytes()).flatMap {
+                encrypt(backupBytes, hash, nonce)
             }
+        }
+
+    private fun encrypt(backupBytes: ByteArray, hash: ByteArray, nonce: ByteArray): Either<Failure, ByteArray> {
+        val cipherText = ByteArray(backupBytes.size + crypto.aBytesLength())
+        return when (crypto.encrypt(cipherText, backupBytes, hash, nonce)) {
+            0 -> Either.Right(cipherText)
+            else -> Either.Left(EncryptionFailed)
         }
     }
 
-    //This method returns the metadata in the format described here:
-    //https://github.com/wearezeta/documentation/blob/master/topics/backup/use-cases/001-export-history.md
-    private fun writeEncryptedMetaData(salt: ByteArray, userId: UserId): Either<Failure, ByteArray> =
-        crypto.hashWithMessagePart(userId.str(), salt).flatMap { hash ->
-            cryptoHeaderMetaData.writeMetaData(salt, hash)
+    // This method returns the metadata in the format described here:
+    // https://wearezeta.atlassian.net/wiki/spaces/PROD/pages/59965445/Exporting+history+v1
+    private fun createMetaData(salt: ByteArray, nonce: ByteArray, userId: UserId): Either<Failure, ByteArray> =
+        crypto.hashWithMessagePart(userId.str(), salt).flatMap { key ->
+            cryptoHeaderMetaData.createMetaData(salt, key, nonce)
         }
 
     private fun loadCryptoLibrary() = crypto.loadLibrary

@@ -15,6 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyList
@@ -65,10 +66,9 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo3).saveBackup()
             verify(metaDataHandler).generateMetaDataFile(metaData)
             verify(zipHandler).zip(anyString(), anyList())
-            // TODO: Uncomment when the encryption is ready
-            // verify(encryptionHandler).encrypt(any(), any(), anyString())
+            verify(encryptionHandler).encryptBackup(any(), any(), anyString(), anyString())
 
-            assert(result.isRight)
+            assertTrue(result.isRight)
         }
     }
 
@@ -168,7 +168,6 @@ class CreateBackUpUseCaseTest : UnitTest() {
         }
     }
 
-/*  TODO: Uncomment when the encryption is ready
     @Test
     fun `given back up repositories and metadata, when they succeed but the encryption handler fails, then return a failure`() {
         runBlocking {
@@ -195,11 +194,11 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(repo3).saveBackup()
             verify(metaDataHandler).generateMetaDataFile(metaData)
             verify(zipHandler).zip(anyString(), anyList())
-            verify(encryptionHandler).encryptBackup(any(), any(), anyString())
+            verify(encryptionHandler).encryptBackup(any(), any(), anyString(), anyString())
 
             assertEquals(Either.Left(FakeEncryptionFailure), result)
         }
-    }*/
+    }
 
     @Test
     fun `given back up repositories and metadata, when metadata fails, then return a failure`() {
@@ -250,11 +249,10 @@ class CreateBackUpUseCaseTest : UnitTest() {
         }
 
         fun mockEncryptionHandler(encryptionSuccess: Boolean = true): EncryptionHandler = mock(EncryptionHandler::class.java).also {
-        /*  TODO: Uncomment when the encryption is ready
-            `when`(it.encrypt(any(), any(), anyString())).thenReturn(
+            `when`(it.encryptBackup(any(), any(), anyString(), anyString())).thenReturn(
                 if (encryptionSuccess) Either.Right(createTempFile(suffix = "_encrypted"))
                 else Either.Left(FakeEncryptionFailure)
-            )*/
+            )
         }
 
         fun mockMetaDataHandler(metaDataSuccess: Boolean = true): MetaDataHandler = mock(MetaDataHandler::class.java).also {

@@ -8,7 +8,7 @@ import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.feature.backup.BackUpRepository
-import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.crypto.decryption.DecryptionHandler
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.CoroutineScope
@@ -22,18 +22,16 @@ import java.io.File
 class RestoreBackUpUseCase(
     private val backUpRepositories: List<BackUpRepository<List<File>>>,
     private val zipHandler: ZipHandler,
-    private val encryptionHandler: EncryptionHandler,
+    private val decryptionHandler: DecryptionHandler,
     private val metaDataHandler: MetaDataHandler,
     private val backUpVersion: Int,
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : UseCase<Unit, RestoreBackUpUseCaseParams> {
 
     override suspend fun run(params: RestoreBackUpUseCaseParams): Either<Failure, Unit> =
-        /* TODO: Uncomment when the encryption is ready
-        encryptionHandler.decrypt(params.file, params.userId, params.password).flatMap { file ->
+        decryptionHandler.decryptBackup(params.file, params.userId, params.password).flatMap { file ->
             zipHandler.unzip(file)
-        }*/
-        zipHandler.unzip(params.file).flatMap { files ->
+        }.flatMap { files ->
             val metaDataFile = files.find { it.name == MetaDataHandler.FILE_NAME }
             if (metaDataFile == null) Either.Left(NoMetaDataFileFailure)
             else checkMetaData(metaDataFile, params.userId)
