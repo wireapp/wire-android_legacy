@@ -84,7 +84,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
       Some(clientId) <- inject[Signal[AccountManager]].flatMap(_.clientId).head
       _              <- lifecycle.uiActive.collect { case true => () }.head
       _              <- Future {
-                          KotlinServices.INSTANCE.createBackup(self.id, clientId, userHandle, password.str, copyBackupFile _, onBackupFailed _)
+                          KotlinServices.INSTANCE.createBackup(self.id.str, clientId.str, userHandle, password.str, copyBackupFile _, onBackupFailed _)
                         }(Threading.Background)
     } yield ()
   }

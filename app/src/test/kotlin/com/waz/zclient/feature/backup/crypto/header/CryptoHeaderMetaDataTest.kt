@@ -14,7 +14,7 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import java.io.File
-import java.util.*
+import java.util.Base64
 import kotlin.random.Random
 
 class CryptoHeaderMetaDataTest : UnitTest() {

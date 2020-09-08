@@ -1,6 +1,5 @@
 package com.waz.zclient.feature.backup.crypto.decryption
 
-import com.waz.model.UserId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.functional.Either
@@ -15,9 +14,9 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.verify
 import java.io.File
-import java.util.*
+import java.util.UUID
+import java.util.Base64
 import kotlin.random.Random
 
 class DecryptionHandlerTest : UnitTest() {
@@ -41,7 +40,7 @@ class DecryptionHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-        val userId = UserId.apply()
+        val userId = UUID.randomUUID().toString()
 
         `when`(headerMetaData.readMetadata(backupFile)).thenReturn(Either.Right(EncryptedBackupHeader.EMPTY))
         `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Right(byteArrayOf(2)))
@@ -58,7 +57,7 @@ class DecryptionHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-        val userId = UserId.apply()
+        val userId = UUID.randomUUID().toString()
         val hash = ByteArray(TEST_KEY_BYTES)
 
         `when`(headerMetaData.readMetadata(backupFile)).thenReturn(Either.Right(EncryptedBackupHeader.EMPTY))
@@ -76,7 +75,7 @@ class DecryptionHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-        val userId = UserId.apply()
+        val userId = UUID.randomUUID().toString()
         val hash = ByteArray(DECRYPTION_HASH_BYTES)
         val salt = ByteArray(TEST_KEY_BYTES)
         val nonce = ByteArray(NONCE_BYTES)
@@ -116,7 +115,6 @@ class DecryptionHandlerTest : UnitTest() {
     }
 
     companion object {
-        private const val HEADER_STREAM_LENGTH = 32
         private const val TEST_KEY_BYTES = 256
         private const val DECRYPTION_HASH_BYTES = 52
         private const val NONCE_BYTES = 24

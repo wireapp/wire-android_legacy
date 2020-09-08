@@ -1,7 +1,5 @@
 package com.waz.zclient.feature.backup.usecase
 
-import com.waz.model.UserId
-import com.waz.model.otr.ClientId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.DatabaseError
@@ -9,7 +7,6 @@ import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
-import com.waz.zclient.feature.backup.metadata.BackupMetaData
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,27 +30,6 @@ class CreateBackUpUseCaseTest : UnitTest() {
     private lateinit var createBackUpUseCase: CreateBackUpUseCase
 
     private val testCoroutineScope = TestCoroutineScope()
-
-    private val userId = UserId.apply(UUID.randomUUID().toString())
-    private val userHandle = "user"
-    private val password = "password"
-    private val backUpVersion = 0
-    private val platform = "Android"
-    private val clientId = ClientId.apply(UUID.randomUUID().toString())
-    private val version = "3.54"
-    private val creationTime = "2020-09-08T10:00:00.000Z"
-
-    private val metaData = BackupMetaData(
-        platform = platform,
-        userId = userId.str(),
-        version = version,
-        creationTime = creationTime,
-        clientId = clientId.str(),
-        userHandle = userHandle,
-        backUpVersion = backUpVersion
-    )
-
-    private val params = CreateBackUpUseCaseParams(userId, clientId, userHandle, password)
 
     @Test
     fun `given back up repositories and metadata, when all of them succeed, then zip, encrypt, and return success`() {
@@ -248,6 +224,17 @@ class CreateBackUpUseCaseTest : UnitTest() {
     }
 
     companion object {
+
+        private val userId = UUID.randomUUID().toString()
+        private const val userHandle = "user"
+        private const val password = "password"
+        private const val backUpVersion = 0
+        private const val platform = "Android"
+        private val clientId = UUID.randomUUID().toString()
+        private const val version = "3.54"
+        private const val creationTime = "2020-09-08T10:00:00.000Z"
+
+        private val params = CreateBackUpUseCaseParams(userId, clientId, userHandle, password)
 
         suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository<List<File>> = mock(BackUpRepository::class.java).also {
             `when`(it.saveBackup()).thenReturn(

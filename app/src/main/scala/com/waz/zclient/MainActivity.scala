@@ -557,7 +557,7 @@ class MainActivity extends BaseActivity
 
     for {
       shouldWarn <- if (BuildConfig.SHOW_BACK_UP_INCOMPATIBILITY_DIALOG) prefs(GlobalPreferences.ShouldWarnBackUpIncompatibility).apply()
-                    else Future.successful(false)
+      else Future.successful(false)
       color <- accentColorController.accentColor.head
     } yield {
       if (shouldWarn) {
@@ -568,6 +568,7 @@ class MainActivity extends BaseActivity
       }
     }
   }
+
 }
 
 object MainActivity {

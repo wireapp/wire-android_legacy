@@ -1,12 +1,9 @@
 package com.waz.zclient.feature.backup.crypto.encryption
 
-import com.waz.model.UserId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.onFailure
-import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.eq
 import com.waz.zclient.feature.backup.crypto.Crypto
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashInvalid
@@ -14,7 +11,6 @@ import com.waz.zclient.feature.backup.crypto.encryption.error.HashWrongSize
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
 import com.waz.zclient.framework.functional.assertLeft
-import junit.framework.Assert.fail
 import org.amshove.kluent.shouldEqual
 import org.junit.Before
 import org.junit.Test
@@ -22,6 +18,7 @@ import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import java.io.File
+import java.util.*
 import kotlin.random.Random
 
 class EncryptionHandlerTest : UnitTest() {
@@ -44,7 +41,7 @@ class EncryptionHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-        val userId = UserId.apply()
+        val userId = UUID.randomUUID().toString()
         val salt = ByteArray(TEST_KEY_BYTES)
         val nonce = ByteArray(TEST_NONCE_BYTES)
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)
@@ -66,7 +63,7 @@ class EncryptionHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-        val userId = UserId.apply()
+        val userId = UUID.randomUUID().toString()
 
         `when`(crypto.generateSalt()).thenReturn(Either.Left(FakeSodiumLibError))
 
@@ -79,7 +76,7 @@ class EncryptionHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-        val userId = UserId.apply()
+        val userId = UUID.randomUUID().toString()
         val salt = ByteArray(TEST_KEY_BYTES)
 
         `when`(crypto.generateSalt()).thenReturn(Either.Right(salt))
@@ -94,7 +91,7 @@ class EncryptionHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-        val userId = UserId.apply()
+        val userId = UUID.randomUUID().toString()
         val salt = ByteArray(TEST_KEY_BYTES)
         val nonce = ByteArray(TEST_NONCE_BYTES)
 
@@ -111,7 +108,7 @@ class EncryptionHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-        val userId = UserId.apply()
+        val userId = UUID.randomUUID().toString()
         val salt = ByteArray(TEST_KEY_BYTES)
         val hash = ByteArray(ENCRYPTION_HASH_BYTES)
         val nonce = ByteArray(TEST_NONCE_BYTES)
@@ -130,7 +127,7 @@ class EncryptionHandlerTest : UnitTest() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
         val password = generateText(8)
-        val userId = UserId.apply()
+        val userId = UUID.randomUUID().toString()
         val salt = ByteArray(TEST_KEY_BYTES)
         val nonce = ByteArray(TEST_NONCE_BYTES)
         val wrongHashBytesSize = ENCRYPTION_HASH_BYTES + 1

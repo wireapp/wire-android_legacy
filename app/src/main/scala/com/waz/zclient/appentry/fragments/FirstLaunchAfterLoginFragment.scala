@@ -202,7 +202,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       _                    =  accountManager.addUnsplashPicture()
       _                    <- accountsService.setAccount(Some(userId))
       _                    <- Future {
-                                KotlinServices.INSTANCE.restoreBackup(backupFile, userId, backupPassword.str, onSuccess _, onFailure _)
+                                KotlinServices.INSTANCE.restoreBackup(backupFile, userId.str, backupPassword.str, onSuccess _, onFailure _)
                               }(Threading.Background)
       _                    <- promise.future
       _                    =  backupFile.delete()
