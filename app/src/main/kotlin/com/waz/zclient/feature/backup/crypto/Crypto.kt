@@ -39,7 +39,7 @@ class Crypto(private val cryptoWrapper: CryptoWrapper) {
         val output = ByteArray(encryptExpectedKeyBytes())
         val passBytes = input.toByteArray()
         val pushMessage = cryptoWrapper.generatePwhashMessagePart(output, passBytes, salt)
-        return pushMessage.takeIf { it == 0 }?.let { Either.Right(output) } ?: Either.Left(HashingFailed)
+        return if (pushMessage == 0) Either.Right(output) else Either.Left(HashingFailed)
     }
 
     internal fun opsLimit(): Int =

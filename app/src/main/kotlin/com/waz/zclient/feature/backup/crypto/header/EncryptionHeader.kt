@@ -17,6 +17,7 @@ private const val TAG = "EncryptionHeader"
 internal const val CURRENT_VERSION: Short = 1
 
 const val UUID_HASH_LENGTH = 32
+// TODO: Discuss with iOS one common format for the header
 const val TOTAL_HEADER_LENGTH = ANDROID_MAGIC_NUMBER_LENGTH + 1 + 2 + SALT_LENGTH + UUID_HASH_LENGTH + 4 + 4 + NONCE_LENGTH
 
 class CryptoHeaderMetaData(

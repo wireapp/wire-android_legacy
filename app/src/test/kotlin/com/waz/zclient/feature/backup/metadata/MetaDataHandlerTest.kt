@@ -7,6 +7,7 @@ import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.io.file.SerializationFailure
+import com.waz.zclient.framework.functional.assertRight
 import kotlinx.serialization.SerializationException
 import org.amshove.kluent.shouldEqual
 import org.junit.Assert.assertEquals
@@ -43,8 +44,7 @@ class MetaDataHandlerTest : UnitTest() {
         `when`(jsonConverter.toJson(metaData)).thenReturn(metaDataJson)
 
         metaDataHandler.generateMetaDataFile(metaData)
-            .onFailure { fail(it.toString()) }
-            .onSuccess {
+            .assertRight {
                 val contents = it.readText()
                 assertEquals(metaDataJson, contents)
             }
@@ -60,8 +60,7 @@ class MetaDataHandlerTest : UnitTest() {
         `when`(jsonConverter.fromJson(metaDataJson)).thenReturn(metaData)
 
         metaDataHandler.readMetaData(metadataFile)
-            .onFailure { fail(it.toString()) }
-            .onSuccess {
+            .assertRight {
                 assertEquals(userId.str(), it.userId)
                 assertEquals(userHandle, it.userHandle)
                 assertEquals(backUpVersion, it.backUpVersion)

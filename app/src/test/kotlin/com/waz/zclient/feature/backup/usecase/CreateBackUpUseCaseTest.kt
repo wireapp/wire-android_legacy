@@ -15,6 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScope
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyList
@@ -67,7 +68,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
             verify(zipHandler).zip(anyString(), anyList())
             verify(encryptionHandler).encryptBackup(any(), any(), anyString(), anyString())
 
-            assert(result.isRight)
+            assertTrue(result.isRight)
         }
     }
 

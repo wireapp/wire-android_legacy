@@ -5,7 +5,7 @@ import org.amshove.kluent.shouldContain
 import org.amshove.kluent.shouldEqual
 import org.junit.Test
 
-class StringTest : UnitTest() {
+class ByteArrayExtensionsTest : UnitTest() {
 
     @Test
     fun `given a byte array of size below 2x split size, when describe() is called, the result should be the same as in contentToString + the size`() {

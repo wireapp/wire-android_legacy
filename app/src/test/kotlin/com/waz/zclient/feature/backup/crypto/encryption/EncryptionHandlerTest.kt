@@ -13,6 +13,7 @@ import com.waz.zclient.feature.backup.crypto.encryption.error.HashInvalid
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashWrongSize
 import com.waz.zclient.feature.backup.crypto.encryption.error.HashingFailed
 import com.waz.zclient.feature.backup.crypto.header.CryptoHeaderMetaData
+import com.waz.zclient.framework.functional.assertLeft
 import junit.framework.Assert.fail
 import org.amshove.kluent.shouldEqual
 import org.junit.Before
@@ -70,8 +71,7 @@ class EncryptionHandlerTest : UnitTest() {
         `when`(crypto.generateSalt()).thenReturn(Either.Left(FakeSodiumLibError))
 
          encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
-            .onSuccess { fail("If the salt generation fails, the encryption should fail") }
-            .onFailure { it shouldEqual FakeSodiumLibError }
+             .assertLeft { it shouldEqual FakeSodiumLibError }
     }
 
     @Test
@@ -86,8 +86,7 @@ class EncryptionHandlerTest : UnitTest() {
         `when`(crypto.generateNonce()).thenReturn(Either.Left(FakeSodiumLibError))
 
         encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
-            .onSuccess { fail("If the nonce generation fails, the encryption should fail") }
-            .onFailure { it shouldEqual FakeSodiumLibError }
+            .assertLeft { it shouldEqual FakeSodiumLibError }
     }
 
     @Test
@@ -104,8 +103,7 @@ class EncryptionHandlerTest : UnitTest() {
         `when`(crypto.hashWithMessagePart(any(), any())).thenReturn(Either.Left(HashingFailed))
 
         encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
-            .onSuccess { fail("If the hashing fails, the encryption should fail") }
-            .onFailure { it shouldEqual HashingFailed }
+            .assertLeft { it shouldEqual HashingFailed }
     }
 
     @Test
@@ -124,8 +122,7 @@ class EncryptionHandlerTest : UnitTest() {
         `when`(headerMetaData.createMetaData(salt, hash, nonce)).thenReturn(Either.Left(HashInvalid))
 
         encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
-            .onSuccess { fail("If metadata creation fails, the encryption should fail") }
-            .onFailure { it shouldEqual HashInvalid }
+            .assertLeft { it shouldEqual HashInvalid }
     }
 
     @Test
@@ -147,8 +144,7 @@ class EncryptionHandlerTest : UnitTest() {
         `when`(crypto.checkExpectedKeySize(wrongHashBytesSize, ENCRYPTION_HASH_BYTES)).thenReturn(Either.Left(HashWrongSize))
 
         encryptionHandler.encryptBackup(backupFile, userId, password, backupFile.name + "_encrypted")
-            .onSuccess { fail("If the key size check fails, the encryption should fail") }
-            .onFailure { it shouldEqual HashWrongSize }
+            .assertLeft { it shouldEqual HashWrongSize }
     }
 
     private fun generateText(length: Int): String = java.util.Base64.getEncoder().encodeToString(Random.Default.nextBytes(length))

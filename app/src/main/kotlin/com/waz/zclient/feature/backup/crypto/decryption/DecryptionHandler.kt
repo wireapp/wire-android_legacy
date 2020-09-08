@@ -35,7 +35,7 @@ class DecryptionHandler(
         readCipherText(backupFile).flatMap { cipherText ->
             decryptWithHash(cipherText, password, salt, nonce)
         }.map { decryptedBackupBytes ->
-            File.createTempFile("wire_backup", ".zip").apply {
+            File.createTempFile(TMP_FILE_NAME, TMP_FILE_EXTENSION).apply {
                 writeBytes(decryptedBackupBytes)
             }
         }
@@ -77,6 +77,8 @@ class DecryptionHandler(
     private fun loadCryptoLibrary() = crypto.loadLibrary
 
     companion object {
-        const val TAG = "DecryptionHandler"
+        private const val TAG = "DecryptionHandler"
+        private const val TMP_FILE_NAME = "wire_backup"
+        private const val TMP_FILE_EXTENSION = ".zip"
     }
 }

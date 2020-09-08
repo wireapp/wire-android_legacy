@@ -29,6 +29,10 @@ import java.util.UUID
 
 @ExperimentalCoroutinesApi
 class RestoreBackUpUseCaseTest : UnitTest() {
+
+    private val FILE_NAME_ZIPPED = "file_zipped.zip"
+    private val FILE_NAME_ENCRYPTED = "file_encrypted.zip"
+
     private lateinit var restoreBackUpUseCase: RestoreBackUpUseCase
 
     private val testCoroutineScope = TestCoroutineScope()
@@ -36,8 +40,8 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     private val userId = UserId.apply(UUID.randomUUID().toString())
     private val password = "password"
     private val metadataFile = File(MetaDataHandler.FILE_NAME) // a mock file, don't create it
-    private val zipFile = File("file_zipped.zip")
-    private val encryptedFile = File("file_encrypted.zip")
+    private val zipFile = File(FILE_NAME_ZIPPED)
+    private val encryptedFile = File(FILE_NAME_ENCRYPTED)
     private val backUpVersion = 0
     private val userHandle = "user"
 

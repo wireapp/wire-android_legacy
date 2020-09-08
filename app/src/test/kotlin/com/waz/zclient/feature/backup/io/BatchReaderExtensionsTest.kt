@@ -8,6 +8,7 @@ import com.waz.zclient.core.functional.Either.Right
 import com.waz.zclient.feature.backup.mockNextItems
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Ignore
 import org.junit.Test
 import org.mockito.Mock
@@ -136,7 +137,7 @@ class BatchReaderExtensionsTest : UnitTest() {
                 convert(it)
             }
             assertEquals(Left(NumberConversionFailure), result)
-            assert(!is3Accessed)
+            assertFalse(is3Accessed)
         }
     }
 }

@@ -146,7 +146,7 @@ class CryptoTest : UnitTest() {
     }
 
     @Test
-    fun `given hash size is same as expected size, then propagate success`() {
+    fun `given hash size is same as expected size, when checkExpectedKeySize is called, then propagate success`() {
         val bytes = EXPECTED_HASH_SIZE
         val expectedBytes = EXPECTED_HASH_SIZE
 
@@ -156,7 +156,7 @@ class CryptoTest : UnitTest() {
     }
 
     @Test
-    fun `given hash size is not the same as expected size, then propagate HashWrongSize error`() {
+    fun `given hash size is not the same as expected size, when checkExpectedKeySize is called, then propagate HashWrongSize error`() {
         val bytes = 62
         val expectedBytes = EXPECTED_HASH_SIZE
 
