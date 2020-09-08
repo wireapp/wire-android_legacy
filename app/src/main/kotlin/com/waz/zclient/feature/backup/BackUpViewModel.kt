@@ -6,6 +6,7 @@ import com.waz.zclient.core.usecase.UseCaseExecutor
 import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCase
 import androidx.lifecycle.viewModelScope
 import com.waz.model.UserId
+import com.waz.model.otr.ClientId
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.backup.usecase.CreateBackUpUseCaseParams
@@ -18,8 +19,14 @@ class BackUpViewModel(
     private val restoreBackUpUseCase: RestoreBackUpUseCase
 ) : ViewModel(), UseCaseExecutor by DefaultUseCaseExecutor() {
 
-    fun createBackup(userId: UserId, handle: String, password: String, onFinish: (Either<Failure, File>) -> Unit): Unit =
-        createBackUpUseCase(viewModelScope, CreateBackUpUseCaseParams(userId, handle, password)) {
+    fun createBackup(
+        userId: UserId,
+        clientId: ClientId,
+        handle: String,
+        password: String,
+        onFinish: (Either<Failure, File>) -> Unit
+    ): Unit =
+        createBackUpUseCase(viewModelScope, CreateBackUpUseCaseParams(userId, clientId, handle, password)) {
             onFinish(it)
         }
 

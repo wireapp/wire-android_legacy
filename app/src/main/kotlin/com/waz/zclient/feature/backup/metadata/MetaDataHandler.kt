@@ -40,6 +40,6 @@ class MetaDataHandler(
         }
 
     companion object {
-        const val FILE_NAME: String = "metadata.json"
+        const val FILE_NAME: String = "export.json"
     }
 }

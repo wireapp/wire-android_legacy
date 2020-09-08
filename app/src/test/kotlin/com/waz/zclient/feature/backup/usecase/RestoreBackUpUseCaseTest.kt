@@ -1,6 +1,7 @@
 package com.waz.zclient.feature.backup.usecase
 
 import com.waz.model.UserId
+import com.waz.model.otr.ClientId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.DatabaseError
@@ -38,6 +39,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     private val testCoroutineScope = TestCoroutineScope()
 
     private val userId = UserId.apply(UUID.randomUUID().toString())
+    private val clientId = ClientId.apply(UUID.randomUUID().toString())
     private val password = "password"
     private val metadataFile = File(MetaDataHandler.FILE_NAME) // a mock file, don't create it
     private val zipFile = File(FILE_NAME_ZIPPED)
@@ -45,7 +47,12 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     private val backUpVersion = 0
     private val userHandle = "user"
 
-    private val metaData = BackupMetaData(userId.str(), userHandle, backUpVersion)
+    private val metaData = BackupMetaData(
+        userId = userId.str(),
+        clientId = clientId.str(),
+        userHandle = userHandle,
+        backUpVersion = backUpVersion
+    )
 
     @Test
     fun `given an encrypted and zipped file, when it's unpacked, then call restore on all backup repositories`() {

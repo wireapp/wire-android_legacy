@@ -1,6 +1,7 @@
 package com.waz.zclient.feature.backup.usecase
 
 import com.waz.model.UserId
+import com.waz.model.otr.ClientId
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
@@ -33,7 +34,12 @@ class CreateBackUpUseCase(
     override suspend fun run(params: CreateBackUpUseCaseParams): Either<Failure, File> =
         backUpOrFail()
             .flatMap { files ->
-                val metaData = BackupMetaData(params.userId.str(), params.userHandle, backUpVersion)
+                val metaData = BackupMetaData(
+                    userId = params.userId.str(),
+                    clientId = params.clientId.str(),
+                    userHandle = params.userHandle,
+                    backUpVersion = backUpVersion
+                )
                 metaDataHandler.generateMetaDataFile(metaData).map { files + it }
             }
             .flatMap { files ->
@@ -69,4 +75,4 @@ class CreateBackUpUseCase(
     }
 }
 
-data class CreateBackUpUseCaseParams(val userId: UserId, val userHandle: String, val password: String)
+data class CreateBackUpUseCaseParams(val userId: UserId, val clientId: ClientId, val userHandle: String, val password: String)

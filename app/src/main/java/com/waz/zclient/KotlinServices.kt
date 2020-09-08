@@ -2,6 +2,7 @@ package com.waz.zclient
 
 import android.content.Context
 import com.waz.model.UserId
+import com.waz.model.otr.ClientId
 import com.waz.zclient.audio.AudioService
 import com.waz.zclient.audio.AudioServiceImpl
 import com.waz.zclient.core.functional.onFailure
@@ -22,8 +23,15 @@ object KotlinServices : KoinComponent {
         audioService = AudioServiceImpl(context)
     }
 
-    fun createBackup(userId: UserId, handle: String, password: String, onSuccess: (File) -> Unit, onFailure: (String) -> Unit): Unit =
-        backUpViewModel.createBackup(userId, handle, password) { result ->
+    fun createBackup(
+        userId: UserId,
+        clientId: ClientId,
+        handle: String,
+        password: String,
+        onSuccess: (File) -> Unit,
+        onFailure: (String) -> Unit
+    ): Unit =
+        backUpViewModel.createBackup(userId, clientId, handle, password) { result ->
             result.onSuccess(onSuccess).onFailure { onFailure(it.toString()) }
         }
 

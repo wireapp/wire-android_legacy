@@ -28,7 +28,7 @@ import android.view.View
 import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.service.{UiLifeCycle, UserService}
+import com.waz.service.{AccountManager, UiLifeCycle, UserService}
 import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.utils.returning
@@ -78,13 +78,14 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
     spinnerController.showDimmedSpinner(show = true, ContextUtils.getString(R.string.back_up_progress))
 
     for {
-      users      <- inject[Signal[UserService]].head
-      self       <- users.selfUser.head
-      userHandle =  self.handle.fold("")(_.string)
-      _          <- lifecycle.uiActive.collect { case true => () }.head
-      _          <- Future {
-                      KotlinServices.INSTANCE.createBackup(self.id, userHandle, password.str, copyBackupFile _, onBackupFailed _)
-                    }(Threading.Background)
+      users          <- inject[Signal[UserService]].head
+      self           <- users.selfUser.head
+      userHandle     =  self.handle.fold("")(_.string)
+      Some(clientId) <- inject[Signal[AccountManager]].flatMap(_.clientId).head
+      _              <- lifecycle.uiActive.collect { case true => () }.head
+      _              <- Future {
+                          KotlinServices.INSTANCE.createBackup(self.id, clientId, userHandle, password.str, copyBackupFile _, onBackupFailed _)
+                        }(Threading.Background)
     } yield ()
   }
 
