@@ -9,7 +9,7 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.feature.backup.BackUpRepository
-import com.waz.zclient.feature.backup.encryption.EncryptionHandler
+import com.waz.zclient.feature.backup.crypto.decryption.DecryptionHandler
 import com.waz.zclient.feature.backup.metadata.BackupMetaData
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
@@ -19,16 +19,20 @@ import kotlinx.coroutines.test.TestCoroutineScope
 import org.amshove.kluent.shouldEqual
 import org.junit.Assert.fail
 import org.junit.Test
-import org.mockito.Mockito.anyString
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.anyString
 import java.io.File
 import java.util.UUID
 
 @ExperimentalCoroutinesApi
 class RestoreBackUpUseCaseTest : UnitTest() {
+
+    private val FILE_NAME_ZIPPED = "file_zipped.zip"
+    private val FILE_NAME_ENCRYPTED = "file_encrypted.zip"
+
     private lateinit var restoreBackUpUseCase: RestoreBackUpUseCase
 
     private val testCoroutineScope = TestCoroutineScope()
@@ -36,8 +40,8 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     private val userId = UserId.apply(UUID.randomUUID().toString())
     private val password = "password"
     private val metadataFile = File(MetaDataHandler.FILE_NAME) // a mock file, don't create it
-    private val zipFile = File("mocked.zip")
-    private val encryptedFile = File("file_encrypted.zip")
+    private val zipFile = File(FILE_NAME_ZIPPED)
+    private val encryptedFile = File(FILE_NAME_ENCRYPTED)
     private val backUpVersion = 0
     private val userHandle = "user"
 
@@ -46,7 +50,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     @Test
     fun `given an encrypted and zipped file, when it's unpacked, then call restore on all backup repositories`() {
         runBlocking {
-            val encryptionHandler = mockEncryptionHandler(true)
+            val decryptionHandler = mockDecryptionHandler(true)
             val zipHandler = mockZipHandler(true)
             val metaDataHandler = mockMetaDataHandler(true)
             val repo1 = mockBackUpRepo(true)
@@ -56,7 +60,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
             restoreBackUpUseCase = RestoreBackUpUseCase(
                 listOf(repo1, repo2, repo3),
                 zipHandler,
-                encryptionHandler,
+                decryptionHandler,
                 metaDataHandler,
                 backUpVersion,
                 testCoroutineScope
@@ -75,11 +79,10 @@ class RestoreBackUpUseCaseTest : UnitTest() {
         }
     }
 
-/*  TODO: Uncomment when the encryption is ready
     @Test
     fun `given an encrypted and zipped file, when decryption fails, then do not try next steps and return a failure`() {
         runBlocking {
-            val encryptionHandler = mockEncryptionHandler(false)
+            val decryptionHandler = mockDecryptionHandler(false)
             val zipHandler = mockZipHandler()
             val metaDataHandler = mockMetaDataHandler()
             val repo1 = mockBackUpRepo()
@@ -89,7 +92,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
             restoreBackUpUseCase = RestoreBackUpUseCase(
                 listOf(repo1, repo2, repo3),
                 zipHandler,
-                encryptionHandler,
+                decryptionHandler,
                 metaDataHandler,
                 backUpVersion,
                 testCoroutineScope
@@ -97,7 +100,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(encryptedFile, userId, password))
 
-            verify(encryptionHandler).decrypt(encryptedFile, userId, password)
+            verify(decryptionHandler).decryptBackup(encryptedFile, userId, password)
             verifyNoInteractions(zipHandler)
             verifyNoInteractions(metaDataHandler)
             verifyNoInteractions(repo1)
@@ -106,14 +109,14 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             result
                 .onSuccess { fail("The test should fail with decryption error") }
-                .onFailure { it shouldEqual FakeEncryptionFailure }
+                .onFailure { it shouldEqual FakeDecryptionFailure }
         }
-    }*/
+    }
 
     @Test
     fun `given an encrypted and zipped file, when unzipping fails, then do not try next steps and return a failure`() {
         runBlocking {
-            val encryptionHandler = mockEncryptionHandler()
+            val decryptionHandler = mockDecryptionHandler()
             val zipHandler = mockZipHandler(unzipSuccess = false)
             val metaDataHandler = mockMetaDataHandler()
             val repo1 = mockBackUpRepo()
@@ -123,7 +126,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
             restoreBackUpUseCase = RestoreBackUpUseCase(
                 listOf(repo1, repo2, repo3),
                 zipHandler,
-                encryptionHandler,
+                decryptionHandler,
                 metaDataHandler,
                 backUpVersion,
                 testCoroutineScope
@@ -131,7 +134,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(zipFile, userId, password))
 
-           // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
+            // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
             verifyNoInteractions(metaDataHandler)
             verifyNoInteractions(repo1)
@@ -147,7 +150,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     @Test
     fun `given an encrypted and zipped file, when there's no metadata file, then do not try next steps and return a failure`() {
         runBlocking {
-            val encryptionHandler = mockEncryptionHandler()
+            val decryptionHandler = mockDecryptionHandler()
             val zipHandler = mockZipHandler(unzipSuccess = true, hasMetadata = false)
             val metaDataHandler = mockMetaDataHandler()
             val repo1 = mockBackUpRepo()
@@ -157,7 +160,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
             restoreBackUpUseCase = RestoreBackUpUseCase(
                 listOf(repo1, repo2, repo3),
                 zipHandler,
-                encryptionHandler,
+                decryptionHandler,
                 metaDataHandler,
                 backUpVersion,
                 testCoroutineScope
@@ -165,7 +168,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
             val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(zipFile, userId, password))
 
-           // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
+            // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
             verifyNoInteractions(metaDataHandler)
             verifyNoInteractions(repo1)
@@ -181,7 +184,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     @Test
     fun `given an encrypted and zipped file, when metadata is wrong, then do not try next steps and return a failure`() {
         runBlocking {
-            val encryptionHandler = mockEncryptionHandler()
+            val decryptionHandler = mockDecryptionHandler()
             val zipHandler = mockZipHandler()
             val metaDataHandler = mockMetaDataHandler(false)
             val repo1 = mockBackUpRepo()
@@ -191,16 +194,15 @@ class RestoreBackUpUseCaseTest : UnitTest() {
             restoreBackUpUseCase = RestoreBackUpUseCase(
                 listOf(repo1, repo2, repo3),
                 zipHandler,
-                encryptionHandler,
+                decryptionHandler,
                 metaDataHandler,
                 backUpVersion,
                 testCoroutineScope
             )
 
-            val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(zipFile, userId, password))
+            val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(encryptedFile, userId, password))
 
-            // TODO: Uncomment when the encryption is ready
-            // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
+            verify(decryptionHandler).decryptBackup(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
             verify(metaDataHandler).readMetaData(metadataFile)
             verifyNoInteractions(repo1)
@@ -216,7 +218,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     @Test
     fun `given an encrypted and zipped file, when one of the repositories fails at restoration, then return a failure`() {
         runBlocking {
-            val encryptionHandler = mockEncryptionHandler()
+            val decryptionHandler = mockDecryptionHandler()
             val zipHandler = mockZipHandler()
             val metaDataHandler = mockMetaDataHandler()
             val repo1 = mockBackUpRepo()
@@ -226,16 +228,15 @@ class RestoreBackUpUseCaseTest : UnitTest() {
             restoreBackUpUseCase = RestoreBackUpUseCase(
                 listOf(repo1, repo2, repo3),
                 zipHandler,
-                encryptionHandler,
+                decryptionHandler,
                 metaDataHandler,
                 backUpVersion,
                 testCoroutineScope
             )
 
-            val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(zipFile, userId, password))
+            val result = restoreBackUpUseCase.run(RestoreBackUpUseCaseParams(encryptedFile, userId, password))
 
-            // TODO: Uncomment when the encryption is ready
-            // verify(encryptionHandler).decrypt(encryptedFile, userId, password)
+            verify(decryptionHandler).decryptBackup(encryptedFile, userId, password)
             verify(zipHandler).unzip(zipFile)
             verify(metaDataHandler).readMetaData(metadataFile)
             verify(repo1).restoreBackup()
@@ -250,17 +251,17 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
     @Test
     fun `given a valid metadata json, when checkMetaData is called, return success`() {
-        val encryptionHandler = mockEncryptionHandler()
+        val decryptionHandler = mockDecryptionHandler()
         val zipHandler = mockZipHandler()
         val metaDataHandler = mockMetaDataHandler()
 
         restoreBackUpUseCase = RestoreBackUpUseCase(
-                emptyList(),
-                zipHandler,
-                encryptionHandler,
-                metaDataHandler,
-                backUpVersion,
-                testCoroutineScope
+            emptyList(),
+            zipHandler,
+            decryptionHandler,
+            metaDataHandler,
+            backUpVersion,
+            testCoroutineScope
         )
 
         restoreBackUpUseCase.checkMetaData(metadataFile, userId).onFailure { fail(it.toString()) }
@@ -269,17 +270,17 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     @Test
     fun `given a valid metadata json, when it is checked and the userId is wrong, return a failure`() {
         val differentUserId = UserId.apply()
-        val encryptionHandler = mockEncryptionHandler()
+        val decryptionHandler = mockDecryptionHandler()
         val zipHandler = mockZipHandler()
         val metaDataHandler = mockMetaDataHandler()
 
         restoreBackUpUseCase = RestoreBackUpUseCase(
-                emptyList(),
-                zipHandler,
-                encryptionHandler,
-                metaDataHandler,
-                backUpVersion,
-                testCoroutineScope
+            emptyList(),
+            zipHandler,
+            decryptionHandler,
+            metaDataHandler,
+            backUpVersion,
+            testCoroutineScope
         )
 
         restoreBackUpUseCase.checkMetaData(metadataFile, differentUserId)
@@ -289,7 +290,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
 
     @Test
     fun `given a valid metadata json, when it is checked and the backup version is unhandled, return a failure`() {
-        val encryptionHandler = mockEncryptionHandler()
+        val decryptionHandler = mockDecryptionHandler()
         val zipHandler = mockZipHandler()
         val metaDataHandler = mockMetaDataHandler()
 
@@ -300,7 +301,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
         restoreBackUpUseCase = RestoreBackUpUseCase(
             emptyList(),
             zipHandler,
-            encryptionHandler,
+            decryptionHandler,
             metaDataHandler,
             currentBackupVersion,
             testCoroutineScope
@@ -321,7 +322,7 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     private fun mockZipHandler(unzipSuccess: Boolean = true, hasMetadata: Boolean = true): ZipHandler = mock(ZipHandler::class.java).also {
         `when`(it.unzip(any())).thenReturn(
             if (unzipSuccess) {
-                val files = (1 .. 3).map { createTempFile(suffix = ".json") }
+                val files = (1..3).map { createTempFile(suffix = ".json") }
                 Either.Right(if (hasMetadata) files + File(MetaDataHandler.FILE_NAME) else files)
             } else {
                 Either.Left(FakeZipFailure)
@@ -329,12 +330,11 @@ class RestoreBackUpUseCaseTest : UnitTest() {
         )
     }
 
-    private fun mockEncryptionHandler(decryptionSuccess: Boolean = true): EncryptionHandler = mock(EncryptionHandler::class.java).also {
-    /*  TODO: Uncomment when the encryption is ready
-        `when`(it.decrypt(any(), any(), anyString())).thenReturn(
+    private fun mockDecryptionHandler(decryptionSuccess: Boolean = true): DecryptionHandler = mock(DecryptionHandler::class.java).also {
+        `when`(it.decryptBackup(any(), any(), anyString())).thenReturn(
             if (decryptionSuccess) Either.Right(zipFile)
-            else Either.Left(FakeEncryptionFailure)
-        )*/
+            else Either.Left(FakeDecryptionFailure)
+        )
     }
 
     private fun mockMetaDataHandler(metaDataSuccess: Boolean = true): MetaDataHandler = mock(MetaDataHandler::class.java).also {
@@ -345,6 +345,6 @@ class RestoreBackUpUseCaseTest : UnitTest() {
     }
 
     object FakeZipFailure : FeatureFailure()
-    object FakeEncryptionFailure: FeatureFailure()
-    object FakeMetaDataFailure: FeatureFailure()
+    object FakeDecryptionFailure : FeatureFailure()
+    object FakeMetaDataFailure : FeatureFailure()
 }

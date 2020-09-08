@@ -52,8 +52,7 @@ class LibSodiumUtilsImpl() extends LibSodiumUtils with DerivedLogTag {
         initPush(key, header) match {
           case Some(s) =>
             val tag = Sodium.crypto_secretstream_xchacha20poly1305_tag_final().toShort
-            val ret = Sodium.crypto_secretstream_xchacha20poly1305_push(s, cipherText, Array.emptyIntArray,
-              msg, msg.length, Array.emptyByteArray, 0, tag)
+            val ret = Sodium.crypto_secretstream_xchacha20poly1305_push(s, cipherText, Array.emptyIntArray, msg, msg.length, Array.emptyByteArray, 0, tag)
 
             if (ret == 0) Some(header ++ cipherText)
             else {
@@ -83,9 +82,7 @@ class LibSodiumUtilsImpl() extends LibSodiumUtils with DerivedLogTag {
 
         initPull(key, header) match {
           case Some(s) =>
-            val ret: Int = Sodium.crypto_secretstream_xchacha20poly1305_pull(
-              s, decrypted, Array.emptyIntArray, tag, cipherText, cipherText.length,
-              Array.emptyByteArray, 0)
+            val ret: Int = Sodium.crypto_secretstream_xchacha20poly1305_pull(s, decrypted, Array.emptyIntArray, tag, cipherText, cipherText.length, Array.emptyByteArray, 0)
 
             if (ret == 0) Some(decrypted)
             else {

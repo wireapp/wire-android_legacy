@@ -7,8 +7,8 @@ import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.feature.backup.BackUpRepository
+import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.metadata.BackupMetaData
-import com.waz.zclient.feature.backup.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.CoroutineScope
@@ -17,7 +17,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import org.threeten.bp.Instant
-
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -38,10 +37,10 @@ class CreateBackUpUseCase(
                 metaDataHandler.generateMetaDataFile(metaData).map { files + it }
             }
             .flatMap { files ->
-                zipHandler.zip(backupZipFileName(params.userHandle), files)
+                zipHandler.zip(backupFileName(params.userHandle) + ".zip", files)
             }
             .flatMap { file ->
-                encryptionHandler.encrypt(file, params.userId, params.password)
+                encryptionHandler.encryptBackup(file, params.userId, params.password, backupFileName(params.userHandle))
             }
 
     private suspend fun backUpOrFail(): Either<Failure, List<File>> = extractFiles(
@@ -51,7 +50,7 @@ class CreateBackUpUseCase(
     )
 
     @SuppressWarnings("MagicNumber")
-    private fun backupZipFileName(userHandle: String): String {
+    private fun backupFileName(userHandle: String): String {
         val timestamp = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Instant.now().epochSecond * 1000)
         return "Wire-$userHandle-Backup_$timestamp.android_wbu"
     }
