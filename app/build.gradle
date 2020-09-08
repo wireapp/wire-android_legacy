@@ -4,6 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'jp.leafytree.android-scala'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
+apply plugin: 'kotlinx-serialization'
 
 //region avs
 //TODO: Migrate this configuration to new dependency system
@@ -342,8 +343,8 @@ dependencies {
 
 
     implementation BuildDependencies.kotlin.standardLibrary
-    implementation BuildDependencies.kotlin.coroutinesCore
     implementation BuildDependencies.kotlin.coroutinesAndroid
+    implementation BuildDependencies.kotlin.coroutinesCore
 
     // TODO uncomment when new dependency system supports avs
 //    implementation BuildDependencies.wire.avs
@@ -373,12 +374,20 @@ dependencies {
     implementation BuildDependencies.androidX.paging
     implementation BuildDependencies.androidX.exifInterface
     implementation BuildDependencies.androidX.media
-    implementation BuildDependencies.androidX.lifecycleRuntime
-    implementation BuildDependencies.androidX.lifecycleLiveData
-    implementation BuildDependencies.androidX.lifecycleViewModel
+    implementation(BuildDependencies.androidX.lifecycleRuntime) {
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
+    implementation (BuildDependencies.androidX.lifecycleLiveData) {
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
+    implementation (BuildDependencies.androidX.lifecycleViewModel) {
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
     implementation BuildDependencies.androidX.lifecycleExtensions
     implementation BuildDependencies.androidX.roomRuntime
-    implementation BuildDependencies.androidX.roomKtx
+    implementation (BuildDependencies.androidX.roomKtx) {
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
     implementation BuildDependencies.androidX.coreKtx
     implementation BuildDependencies.androidX.biometric
     implementation(BuildDependencies.androidX.workManager) {
@@ -421,6 +430,9 @@ dependencies {
     implementation BuildDependencies.rxJava.rxKotlin
     implementation BuildDependencies.rxJava.rxAndroid
 
+    //JSON
+    implementation BuildDependencies.kotlinXSerialization
+
     //third party libraries
     implementation BuildDependencies.androidJob
     implementation(BuildDependencies.threetenbpAndroid) {
@@ -434,16 +446,22 @@ dependencies {
 
     implementation BuildDependencies.wireSignals
 
+    implementation BuildDependencies.libSodium
+
     // Unit Tests
     testImplementation TestDependencies.jUnit
     testImplementation TestDependencies.mockito.core
     testImplementation TestDependencies.mockito.inline
     testImplementation TestDependencies.kluent
-    testImplementation BuildDependencies.kotlin.coroutinesCore
     testImplementation TestDependencies.kotlin.coroutinesTest
+    testImplementation BuildDependencies.kotlin.coroutinesCore
     testImplementation TestDependencies.androidX.testCore
     testImplementation TestDependencies.okHttpMockWebServer
-    testImplementation(LegacyDependencies.scalaTest) { exclude module: 'scala-library' }
+    testImplementation(LegacyDependencies.scalaTest) {
+        exclude module: 'scala-library'
+        exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
+    }
+    testImplementation project(ModuleDependencies.commonTest)
 
     // Functional Tests
     androidTestImplementation TestDependencies.jUnit

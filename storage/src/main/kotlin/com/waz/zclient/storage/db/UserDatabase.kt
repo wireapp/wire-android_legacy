@@ -10,6 +10,8 @@ import com.waz.zclient.storage.db.assets.DownloadAssetsDao
 import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
 import com.waz.zclient.storage.db.assets.UploadAssetsDao
 import com.waz.zclient.storage.db.assets.UploadAssetsEntity
+import com.waz.zclient.storage.db.buttons.ButtonsDao
+import com.waz.zclient.storage.db.buttons.ButtonsEntity
 import com.waz.zclient.storage.db.conversations.ConversationFoldersDao
 import com.waz.zclient.storage.db.conversations.ConversationFoldersEntity
 import com.waz.zclient.storage.db.conversations.ConversationMembersDao
@@ -53,11 +55,11 @@ import com.waz.zclient.storage.db.userclients.UserClientsEntity
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_128_TO_129
-import com.waz.zclient.storage.db.users.model.UserEntity
-import com.waz.zclient.storage.db.users.service.UserDao
+import com.waz.zclient.storage.db.users.model.UsersEntity
+import com.waz.zclient.storage.db.users.service.UsersDao
 
 @Database(
-    entities = [UserEntity::class, AssetsV1Entity::class, ConversationsEntity::class,
+    entities = [UsersEntity::class, AssetsV1Entity::class, ConversationsEntity::class,
         ConversationMembersEntity::class, MessagesEntity::class, KeyValuesEntity::class,
         SyncJobsEntity::class, ErrorsEntity::class, NotificationDataEntity::class,
         UserClientsEntity::class,
@@ -66,7 +68,7 @@ import com.waz.zclient.storage.db.users.service.UserDao
         ConversationFoldersEntity::class, FoldersEntity::class, CloudNotificationStatsEntity::class,
         CloudNotificationsEntity::class, AssetsEntity::class, DownloadAssetsEntity::class,
         UploadAssetsEntity::class, PropertiesEntity::class, ReadReceiptsEntity::class,
-        PushNotificationEventEntity::class, EditHistoryEntity::class, ButtonEntity::class,
+        PushNotificationEventEntity::class, EditHistoryEntity::class, ButtonsEntity::class,
         MessageContentIndexEntity::class],
     version = UserDatabase.VERSION
 )
@@ -74,7 +76,7 @@ import com.waz.zclient.storage.db.users.service.UserDao
 @Suppress("TooManyFunctions")
 abstract class UserDatabase : RoomDatabase() {
 
-    abstract fun userDao(): UserDao
+    abstract fun usersDao(): UsersDao
     abstract fun userClientDao(): UserClientDao
     abstract fun assetsV1Dao(): AssetsV1Dao
     abstract fun assetsDao(): AssetsDao
@@ -99,6 +101,7 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun readReceiptsDao(): ReadReceiptsDao
     abstract fun editHistoryDao(): EditHistoryDao
     abstract fun messageContentIndexDao(): MessageContentIndexDao
+    abstract fun buttonsDao(): ButtonsDao
 
     companion object {
         const val VERSION = 129

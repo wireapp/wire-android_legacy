@@ -4,7 +4,7 @@ import com.waz.db.migration.KotlinMigrationHelper
 import com.waz.model.UserData
 import com.waz.model.UserData.UserDataDao
 import com.waz.utils.wrappers.{DB, SQLiteDBWrapper}
-import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UsersEntity
 
 class UsersMigrationTest extends UserDatabaseMigrationTest {
 
@@ -16,7 +16,7 @@ class UsersMigrationTest extends UserDatabaseMigrationTest {
       UserDataDao.insertOrReplace(Seq(userData))
       closeDB()
       withRoomDB({
-        KotlinMigrationHelper.assertUserEntity(_, new UserEntity(
+        KotlinMigrationHelper.assertUsersEntity(_, new UsersEntity(
           userData.id.str,
           null,
           userName,

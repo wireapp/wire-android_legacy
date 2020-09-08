@@ -3,7 +3,7 @@ package com.waz.zclient.shared.user.mapper
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.datasources.remote.UserResponse
-import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UsersEntity
 
 class UserMapper {
 
@@ -20,7 +20,7 @@ class UserMapper {
         )
     }
 
-    fun toUser(userEntity: UserEntity) = with(userEntity) {
+    fun toUser(usersEntity: UsersEntity) = with(usersEntity) {
         User(
             id = id,
             teamId = teamId,
@@ -52,7 +52,7 @@ class UserMapper {
     }
 
     fun toUserEntity(user: User) = with(user) {
-        UserEntity(
+        UsersEntity(
             id = id,
             teamId = teamId,
             name = name,
@@ -86,7 +86,7 @@ class UserMapper {
         private const val DEFAULT_ACCENT_ID_VALUE = 0
         private val DEFAULT_SKEY_VALUE = String.empty()
         private const val DEFAULT_CONNECTION_VALUE = "unconnected"
-        private const val DEFAULT_CONNECTION_TIMESTAMP_VALUE: Int = 0
+        private const val DEFAULT_CONNECTION_TIMESTAMP_VALUE: Long = 0
         private const val DEFAULT_RELATION_VALUE = "Other"
         private const val DEFAULT_VERIFIED_VALUE = "UNKNOWN"
         private const val DEFAULT_DELETED_VALUE = false

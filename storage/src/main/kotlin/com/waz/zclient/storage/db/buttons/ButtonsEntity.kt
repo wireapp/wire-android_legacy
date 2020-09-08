@@ -1,11 +1,10 @@
-package com.waz.zclient.storage.db
+package com.waz.zclient.storage.db.buttons
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 
-// must be the same as ButtonDataDao in Scala
 @Entity(tableName = "Buttons", primaryKeys = ["message_id", "button_id"])
-data class ButtonEntity(
+data class ButtonsEntity(
     @ColumnInfo(name = "message_id", defaultValue = "")
     val messageId: String,
 

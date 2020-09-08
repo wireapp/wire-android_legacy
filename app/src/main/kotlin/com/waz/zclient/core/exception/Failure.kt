@@ -29,5 +29,7 @@ object DatabaseError : DatabaseFailure()
 //TODO: Improve to a more sufficient error propagation for Flow "data flows"
 data class GenericUseCaseError(val throwable: Throwable) : Failure()
 
+data class IOFailure(val reason: Exception) : Failure()
+
 /** * Extend this class for UseCase specific failures.*/
 abstract class FeatureFailure : Failure()

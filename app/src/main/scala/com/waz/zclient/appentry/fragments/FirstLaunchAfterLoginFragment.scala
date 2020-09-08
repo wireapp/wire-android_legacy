@@ -27,12 +27,10 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.core.content.ContextCompat
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.api.impl.ErrorResponse
 import com.waz.model.AccountData.Password
 import com.waz.model.UserId
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
-import com.waz.service.backup.BackupManager.InvalidMetadata
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
@@ -47,10 +45,14 @@ import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{BaseActivity, FragmentHelper, R, SpinnerController}
 
-import scala.async.Async.{async, await}
 import scala.collection.immutable.ListSet
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import scala.concurrent.duration._
+import com.waz.zclient.KotlinServices
+
+import com.waz.zclient.log.LogUI._
+
+import scala.util.Try
 
 object FirstLaunchAfterLoginFragment {
   val Tag: String = classOf[FirstLaunchAfterLoginFragment].getName
@@ -78,9 +80,11 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
   private lazy val infoTitle = view[TypefaceTextView](R.id.info_title)
   private lazy val infoText = view[TypefaceTextView](R.id.info_text)
 
+  private lazy val userIdArg = getStringArg(UserIdArg).map(UserId(_))
+
   private val assetIntentsManagerCallback = new AssetIntentsManager.Callback {
     override def onDataReceived(`type`: AssetIntentsManager.IntentType, uri: URI): Unit = {
-      requestPassword(Some(uri))
+      userIdArg.map(enter(_, Some(uri)))
     }
     override def onCanceled(`type`: AssetIntentsManager.IntentType): Unit = {}
     override def onFailed(`type`: AssetIntentsManager.IntentType): Unit = {}
@@ -113,14 +117,14 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
     }
   }
 
-  private def databaseExists = getStringArg(UserIdArg).exists(userId => getContext.getDatabasePath(userId).exists())
+  private def databaseExists = userIdArg.exists(userId => getContext.getDatabasePath(userId.str).exists())
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_login_first_launch, viewGroup, false)
 
   def onClick(view: View): Unit = {
     view.getId match {
-      case R.id.zb__first_launch__confirm => enter(None, None)
+      case R.id.zb__first_launch__confirm => userIdArg.map(enterWithoutBackup)
       case R.id.restore_button => importBackup()
     }
   }
@@ -153,11 +157,11 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
   private def displayError(title: Int, text: Int) =
     ViewUtils.showAlertDialog(getContext, title, text, android.R.string.ok, null, true)
 
-  private def requestPassword(backup: Option[URI]): Future[Unit] = {
-    backup match {
-      case Some(_) =>
+  private def enter(userId: UserId, backup: Option[URI]) = backup match {
+    case Some(backupUri) =>
+      getBackupFile(backupUri).map { backupFile =>
         val fragment = returning(BackupPasswordDialog.newInstance(InputPasswordMode)) {
-          _.onPasswordEntered(p => enter(backup, Some(p)))
+          _.onPasswordEntered(password => enterWithBackup(userId, backupFile, password))
         }
         getActivity.asInstanceOf[BaseActivity]
           .getSupportFragmentManager
@@ -166,51 +170,72 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
           .add(fragment, BackupPasswordDialog.FragmentTag)
           .addToBackStack(BackupPasswordDialog.FragmentTag)
           .commit
-        Future.successful(())
-      case _ =>
-        enter(backup, None)
-    }
+      }.recover {
+        case ex =>
+          error(l"Unable to find backup file $backupUri", ex)
+          displayError(R.string.backup_import_error_unknown_title, R.string.backup_import_error_unknown)
+      }
+    case _ =>
+      enterWithoutBackup(userId)
   }
 
-  private def enter(backup: Option[URI], backupPassword: Option[Password]): Future[Unit] = {
-    spinnerController.showDimmedSpinner(show = true, if (backup.isDefined) getString(R.string.restore_progress) else "")
-    async {
-      val userId = getStringArg(UserIdArg).map(UserId(_))
-      if (userId.nonEmpty) {
+  private def getBackupFile(backupUri: URI) = Try {
+    val inputStream = getContext.getContentResolver.openInputStream(AndroidURIUtil.unwrap(backupUri))
+    val file = File.createTempFile("wire", null)
+    val outputStream = new FileOutputStream(file)
+    IoUtils.copy(inputStream, outputStream)
+    file
+  }
 
-        val backupFile = backup.map { uri =>
-          val inputStream = getContext.getContentResolver.openInputStream(AndroidURIUtil.unwrap(uri))
-          val file = File.createTempFile("wire", null)
-          val outputStream = new FileOutputStream(file)
-          IoUtils.copy(inputStream, outputStream)
-          file
-        }
+  private def enterWithBackup(userId: UserId, backupFile: File, backupPassword: Password): Future[Unit] = {
+    import com.waz.zclient.utils.ScalaToKotlin._
 
-        val accountManager = await(accountsService.createAccountManager(userId.get, backupFile, isLogin = Some(true), backupPassword = backupPassword))
-        accountManager.foreach(_.addUnsplashPicture())
-        backupFile.foreach(_.delete())
-        await { accountsService.setAccount(userId) }
-        val registrationState = await { accountManager.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient()) }
-        if (backup.isDefined) {
-          spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
-          await { CancellableFuture.delay(750.millis).future }
-        }
-        registrationState match {
-          case Right(regState) => activity.onEnterApplication(openSettings = false, Some(regState))
-          case _ => activity.onEnterApplication(openSettings = false)
-        }
-      }
-    }.recover {
-      case InvalidMetadata.UserId =>
+    spinnerController.showDimmedSpinner(show = true, getString(R.string.restore_progress))
+
+    val promise = Promise[Unit]
+    case class BackupError(reason: String) extends Throwable
+    def onSuccess(): Unit = promise.success(())
+    def onFailure(reason: String): Unit = promise.failure(BackupError(reason))
+
+    (for {
+      Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true), dbFile = None)
+      _                    =  accountManager.addUnsplashPicture()
+      _                    <- accountsService.setAccount(Some(userId))
+      _                    <- Future {
+                                KotlinServices.INSTANCE.restoreBackup(backupFile, userId.str, backupPassword.str, onSuccess _, onFailure _)
+                              }(Threading.Background)
+      _                    <- promise.future
+      _                    =  backupFile.delete()
+      registrationState    <- accountManager.getOrRegisterClient()
+      _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
+      _                    <- CancellableFuture.delay(750.millis).future
+    } yield registrationState match {
+      case Right(regState) => activity.onEnterApplication(openSettings = false, Some(regState))
+      case _               => activity.onEnterApplication(openSettings = false)
+    }).recover {
+      case BackupError(reason) =>
+        error(l"Unable to restore backup: $reason")
         spinnerController.showSpinner(false)
-        displayError(R.string.backup_import_error_wrong_account_title, R.string.backup_import_error_wrong_account)
-      case _: InvalidMetadata =>
-        spinnerController.showSpinner(false)
-        displayError(R.string.backup_import_error_unsupported_version_title, R.string.backup_import_error_unsupported_version)
+        displayError(R.string.backup_import_error_unknown_title, R.string.backup_import_error_unknown)
       case e =>
         println(s"Got error: ${e.getMessage}")
         spinnerController.showSpinner(false)
         displayError(R.string.backup_import_error_unknown_title, R.string.backup_import_error_unknown)
+    }
+  }
+
+  private def enterWithoutBackup(userId: UserId): Future[Unit] = {
+    spinnerController.showDimmedSpinner(show = true, "")
+    for {
+      Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true), dbFile = None)
+      _                    =  accountManager.addUnsplashPicture()
+      _                    <- accountsService.setAccount(Some(userId))
+      registrationState    <- accountManager.getOrRegisterClient()
+      _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
+      _                    <- CancellableFuture.delay(750.millis).future
+    } yield registrationState match {
+      case Right(regState) => activity.onEnterApplication(openSettings = false, Some(regState))
+      case _               => activity.onEnterApplication(openSettings = false)
     }
   }
 

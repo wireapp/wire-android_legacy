@@ -8,8 +8,8 @@
 //Build Dependencies
 class KotlinDependencyMap(map: Map<String, String>) {
     val standardLibrary: String by map
-    val coroutinesCore: String by map
     val coroutinesAndroid: String by map
+    val coroutinesCore: String by map
 }
 
 class WireDependencyMap(map: Map<String, String>) {

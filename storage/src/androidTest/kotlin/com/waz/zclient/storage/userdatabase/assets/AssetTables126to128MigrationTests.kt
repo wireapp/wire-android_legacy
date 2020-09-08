@@ -1,5 +1,6 @@
 package com.waz.zclient.storage.userdatabase.assets
 
+import com.waz.zclient.framework.data.assets.AssetsTestDataProvider
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
@@ -36,30 +37,19 @@ class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
 
     @Test
     fun givenV2AssetInsertedIntoAssetsV2TableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
-        val assetId = "i747749kk-77"
-        val assetToken = "084782999838_Aa--4777277_"
-        val assetName = "IMAGE"
-        val encryption = "AES256"
-        val mime = "png"
-        val sha = byteArrayOf(16)
-        val size = 1024
-        val source = "message"
-        val preview = "none"
-        val details = "This is a test image"
-        val conversationId = "1100"
-
+        val data = AssetsTestDataProvider.provideDummyTestData()
         AssetsV2TableTestHelper.insertV2Asset(
-            assetId,
-            assetToken,
-            assetName,
-            encryption,
-            mime,
-            sha,
-            size,
-            source,
-            preview,
-            details,
-            conversationId,
+            data.id,
+            data.token,
+            data.name,
+            data.encryption,
+            data.mime,
+            data.sha,
+            data.size,
+            data.source,
+            data.preview,
+            data.details,
+            data.conversationId,
             testOpenHelper
         )
 
@@ -67,17 +57,17 @@ class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(getV2Assets()[0]) {
-                assertEquals(this.id, assetId)
-                assertEquals(this.token, assetToken)
-                assertEquals(this.name, assetName)
-                assertEquals(this.encryption, encryption)
-                assertEquals(this.mime, mime)
-                assertTrue(this.sha?.contentEquals(sha) ?: false)
-                assertEquals(this.size, size)
-                assertEquals(this.source, source)
-                assertEquals(this.preview, preview)
-                assertEquals(this.details, details)
-                assertEquals(this.conversationId, conversationId)
+                assertEquals(this.id, data.id)
+                assertEquals(this.token, data.token)
+                assertEquals(this.name, data.name)
+                assertEquals(this.encryption, data.encryption)
+                assertEquals(this.mime, data.mime)
+                assertTrue(data.sha?.let { this.sha?.contentEquals(it) } ?: false)
+                assertEquals(this.size, data.size)
+                assertEquals(this.source, data.source)
+                assertEquals(this.preview, data.preview)
+                assertEquals(this.details, data.details)
+                assertEquals(this.conversationId, data.conversationId)
             }
         }
     }

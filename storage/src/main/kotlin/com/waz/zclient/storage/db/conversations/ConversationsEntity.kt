@@ -35,28 +35,28 @@ data class ConversationsEntity(
     val managed: Boolean?,
 
     @ColumnInfo(name = "last_event_time", defaultValue = "0")
-    val lastEventTime: Int,
+    val lastEventTime: Long,
 
     @ColumnInfo(name = "is_active", defaultValue = "0")
     val active: Boolean,
 
     @ColumnInfo(name = "last_read", defaultValue = "0")
-    val lastRead: Int,
+    val lastRead: Long,
 
     @ColumnInfo(name = "muted_status", defaultValue = "0")
     val mutedStatus: Int,
 
     @ColumnInfo(name = "mute_time", defaultValue = "0")
-    val muteTime: Int,
+    val muteTime: Long,
 
     @ColumnInfo(name = "archived", defaultValue = "0")
     val archived: Boolean,
 
     @ColumnInfo(name = "archive_time", defaultValue = "0")
-    val archiveTime: Int,
+    val archiveTime: Long,
 
     @ColumnInfo(name = "cleared")
-    val cleared: Int?,
+    val cleared: Long?,
 
     @ColumnInfo(name = "generated_name", defaultValue = "")
     val generatedName: String,
@@ -83,10 +83,10 @@ data class ConversationsEntity(
     val verified: String?,
 
     @ColumnInfo(name = "ephemeral")
-    val ephemeral: Int?,
+    val ephemeral: Long?,
 
     @ColumnInfo(name = "global_ephemeral")
-    val globalEphemeral: Int?,
+    val globalEphemeral: Long?,
 
     @ColumnInfo(name = "unread_call_count", defaultValue = "0")
     val unreadCallCount: Int,

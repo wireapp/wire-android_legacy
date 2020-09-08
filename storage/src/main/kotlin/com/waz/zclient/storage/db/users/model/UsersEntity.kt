@@ -12,7 +12,7 @@ import androidx.room.PrimaryKey
         Index(name = "UserData_search_key", value = ["skey"])
     ]
 )
-data class UserEntity(
+data class UsersEntity(
 
     @ColumnInfo(name = "_id")
     @PrimaryKey
@@ -46,7 +46,7 @@ data class UserEntity(
     val connection: String,
 
     @ColumnInfo(name = "conn_timestamp", defaultValue = "0")
-    val connectionTimestamp: Int,
+    val connectionTimestamp: Long,
 
     @ColumnInfo(name = "conn_msg")
     val connectionMessage: String?,
@@ -58,7 +58,7 @@ data class UserEntity(
     val relation: String,
 
     @ColumnInfo(name = "timestamp")
-    val timestamp: Int?,
+    val timestamp: Long?,
 
     @ColumnInfo(name = "verified")
     val verified: String?,
@@ -79,7 +79,7 @@ data class UserEntity(
     val integrationId: String?,
 
     @ColumnInfo(name = "expires_at")
-    val expiresAt: Int?,
+    val expiresAt: Long?,
 
     @ColumnInfo(name = "managed_by")
     val managedBy: String?,
