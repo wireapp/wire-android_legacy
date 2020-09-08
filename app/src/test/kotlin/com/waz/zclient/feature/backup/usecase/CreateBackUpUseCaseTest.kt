@@ -1,6 +1,5 @@
 package com.waz.zclient.feature.backup.usecase
 
-import com.waz.model.UserId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.DatabaseError
@@ -8,7 +7,6 @@ import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
-import com.waz.zclient.feature.backup.metadata.BackupMetaData
 import com.waz.zclient.feature.backup.metadata.MetaDataHandler
 import com.waz.zclient.feature.backup.zip.ZipHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,13 +31,6 @@ class CreateBackUpUseCaseTest : UnitTest() {
 
     private val testCoroutineScope = TestCoroutineScope()
 
-    private val userId = UserId.apply(UUID.randomUUID().toString())
-    private val userHandle = "user"
-    private val password = "password"
-    private val backUpVersion = 0
-
-    private val metaData = BackupMetaData(userId.str(), userHandle, backUpVersion)
-
     @Test
     fun `given back up repositories and metadata, when all of them succeed, then zip, encrypt, and return success`() {
         runBlocking {
@@ -59,12 +50,12 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
+            val result = createBackUpUseCase.run(params)
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(metaData)
+            verify(metaDataHandler).generateMetaDataFile(any())
             verify(zipHandler).zip(anyString(), anyList())
             verify(encryptionHandler).encryptBackup(any(), any(), anyString(), anyString())
 
@@ -91,7 +82,7 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
+            val result = createBackUpUseCase.run(params)
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
@@ -123,12 +114,12 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
+            val result = createBackUpUseCase.run(params)
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(metaData) // metadata is generated before zipping
+            verify(metaDataHandler).generateMetaDataFile(any()) // metadata is generated before zipping
             verify(zipHandler).zip(anyString(), anyList())
             verifyNoInteractions(encryptionHandler)
 
@@ -155,12 +146,12 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
+            val result = createBackUpUseCase.run(params)
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(metaData) // metadata is generated before zipping
+            verify(metaDataHandler).generateMetaDataFile(any()) // metadata is generated before zipping
             verify(zipHandler).zip(anyString(), anyList())
             verifyNoInteractions(encryptionHandler)
 
@@ -187,12 +178,12 @@ class CreateBackUpUseCaseTest : UnitTest() {
                 testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
+            val result = createBackUpUseCase.run(params)
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(metaData)
+            verify(metaDataHandler).generateMetaDataFile(any())
             verify(zipHandler).zip(anyString(), anyList())
             verify(encryptionHandler).encryptBackup(any(), any(), anyString(), anyString())
 
@@ -219,12 +210,12 @@ class CreateBackUpUseCaseTest : UnitTest() {
                     testCoroutineScope
             )
 
-            val result = createBackUpUseCase.run(CreateBackUpUseCaseParams(userId, userHandle, password))
+            val result = createBackUpUseCase.run(params)
 
             verify(repo1).saveBackup()
             verify(repo2).saveBackup()
             verify(repo3).saveBackup()
-            verify(metaDataHandler).generateMetaDataFile(metaData)
+            verify(metaDataHandler).generateMetaDataFile(any())
             verifyNoInteractions(zipHandler)
             verifyNoInteractions(encryptionHandler)
 
@@ -233,6 +224,17 @@ class CreateBackUpUseCaseTest : UnitTest() {
     }
 
     companion object {
+
+        private val userId = UUID.randomUUID().toString()
+        private const val userHandle = "user"
+        private const val password = "password"
+        private const val backUpVersion = 0
+        private const val platform = "Android"
+        private val clientId = UUID.randomUUID().toString()
+        private const val version = "3.54"
+        private const val creationTime = "2020-09-08T10:00:00.000Z"
+
+        private val params = CreateBackUpUseCaseParams(userId, clientId, userHandle, password)
 
         suspend fun mockBackUpRepo(backUpSuccess: Boolean = true): BackUpRepository<List<File>> = mock(BackUpRepository::class.java).also {
             `when`(it.saveBackup()).thenReturn(

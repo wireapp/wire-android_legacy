@@ -1,6 +1,5 @@
 package com.waz.zclient.feature.backup.usecase
 
-import com.waz.model.UserId
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
@@ -47,10 +46,10 @@ class RestoreBackUpUseCase(
         res ?: Either.Right(Unit)
     }
 
-    internal fun checkMetaData(metaDataFile: File, userId: UserId): Either<Failure, Unit> =
+    internal fun checkMetaData(metaDataFile: File, userId: String): Either<Failure, Unit> =
         metaDataHandler.readMetaData(metaDataFile).flatMap { metaData ->
             when {
-                metaData.userId != userId.str() -> {
+                metaData.userId != userId -> {
                     Either.Left(UserIdInvalid)
                 }
                 metaData.backUpVersion != backUpVersion -> {
@@ -65,4 +64,4 @@ object NoMetaDataFileFailure : FeatureFailure()
 object UserIdInvalid : FeatureFailure()
 data class UnknownBackupVersion(val backUpVersion: Int) : FeatureFailure()
 
-data class RestoreBackUpUseCaseParams(val file: File, val userId: UserId, val password: String)
+data class RestoreBackUpUseCaseParams(val file: File, val userId: String, val password: String)

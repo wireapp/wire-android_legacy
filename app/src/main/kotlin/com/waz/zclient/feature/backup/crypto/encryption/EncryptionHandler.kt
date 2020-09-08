@@ -1,6 +1,5 @@
 package com.waz.zclient.feature.backup.crypto.encryption
 
-import com.waz.model.UserId
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.IOFailure
 import com.waz.zclient.core.functional.Either
@@ -16,7 +15,7 @@ class EncryptionHandler(
     private val crypto: Crypto,
     private val cryptoHeaderMetaData: CryptoHeaderMetaData
 ) {
-    fun encryptBackup(backupFile: File, userId: UserId, password: String, targetFileName: String): Either<Failure, File> =
+    fun encryptBackup(backupFile: File, userId: String, password: String, targetFileName: String): Either<Failure, File> =
         try {
             loadCryptoLibrary()
             encryptBackupFile(backupFile, userId, password).map {
@@ -31,7 +30,7 @@ class EncryptionHandler(
             Either.Left(IOFailure(ex))
         }
 
-    private fun encryptBackupFile(backupFile: File, userId: UserId, password: String) =
+    private fun encryptBackupFile(backupFile: File, userId: String, password: String) =
         crypto.generateSalt().flatMap { salt ->
             crypto.generateNonce().flatMap { nonce ->
                 createMetaData(salt, nonce, userId).flatMap { meta ->
@@ -58,8 +57,8 @@ class EncryptionHandler(
 
     // This method returns the metadata in the format described here:
     // https://wearezeta.atlassian.net/wiki/spaces/PROD/pages/59965445/Exporting+history+v1
-    private fun createMetaData(salt: ByteArray, nonce: ByteArray, userId: UserId): Either<Failure, ByteArray> =
-        crypto.hashWithMessagePart(userId.str(), salt).flatMap { key ->
+    private fun createMetaData(salt: ByteArray, nonce: ByteArray, userId: String): Either<Failure, ByteArray> =
+        crypto.hashWithMessagePart(userId, salt).flatMap { key ->
             cryptoHeaderMetaData.createMetaData(salt, key, nonce)
         }
 

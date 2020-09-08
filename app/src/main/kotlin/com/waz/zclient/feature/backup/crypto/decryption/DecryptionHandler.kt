@@ -1,6 +1,5 @@
 package com.waz.zclient.feature.backup.crypto.decryption
 
-import com.waz.model.UserId
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.IOFailure
 import com.waz.zclient.core.functional.Either
@@ -19,11 +18,11 @@ class DecryptionHandler(
     private val crypto: Crypto,
     private val cryptoHeaderMetaData: CryptoHeaderMetaData
 ) {
-    fun decryptBackup(backupFile: File, userId: UserId, password: String): Either<Failure, File> =
+    fun decryptBackup(backupFile: File, userId: String, password: String): Either<Failure, File> =
         loadCryptoLibrary().flatMap {
             cryptoHeaderMetaData.readMetadata(backupFile)
         }.flatMap { metaData ->
-            crypto.hashWithMessagePart(userId.str(), metaData.salt).flatMap { hash ->
+            crypto.hashWithMessagePart(userId, metaData.salt).flatMap { hash ->
                 when (hash.contentEquals(metaData.uuidHash)) {
                     true -> decryptBackupFile(password, backupFile, metaData.salt, metaData.nonce)
                     false -> Either.Left(HashesDoNotMatch)

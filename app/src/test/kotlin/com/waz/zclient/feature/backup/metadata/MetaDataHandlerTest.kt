@@ -1,15 +1,11 @@
 package com.waz.zclient.feature.backup.metadata
 
-import com.waz.model.UserId
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.onFailure
-import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.core.utilities.converters.JsonConverter
 import com.waz.zclient.feature.backup.io.file.SerializationFailure
 import com.waz.zclient.framework.functional.assertRight
 import kotlinx.serialization.SerializationException
-import org.amshove.kluent.shouldEqual
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
@@ -22,22 +18,8 @@ class MetaDataHandlerTest : UnitTest() {
     @Mock
     private lateinit var jsonConverter: JsonConverter<BackupMetaData>
 
-    private val backUpVersion = 0
-    private val userId = UserId.apply(UUID.randomUUID().toString())
-    private val userHandle = "user"
-
-    private val metaData = BackupMetaData(userId.str(), userHandle, backUpVersion)
-    private val metaDataJson =
-        """
-            {
-                "userId": "${userId.str()}",
-                "userHandle": "$userHandle",
-                "backUpVersion": $backUpVersion
-            }
-        """.trimIndent()
-
     @Test
-    fun `given the user's id, the handle, and the backup version, when the metadata json file is created, then it consists of correct json string`() {
+    fun `given the user's and app's data, when the metadata json file is created, then it consists of correct json string`() {
         val tempDir = createTempDir()
         val metaDataHandler = MetaDataHandler(jsonConverter, tempDir)
 
@@ -61,9 +43,12 @@ class MetaDataHandlerTest : UnitTest() {
 
         metaDataHandler.readMetaData(metadataFile)
             .assertRight {
-                assertEquals(userId.str(), it.userId)
+                assertEquals(platform, it.platform)
+                assertEquals(userId, it.userId)
                 assertEquals(userHandle, it.userHandle)
                 assertEquals(backUpVersion, it.backUpVersion)
+                assertEquals(clientId, it.clientId)
+                assertEquals(version, it.version)
             }
     }
 
@@ -84,4 +69,36 @@ class MetaDataHandlerTest : UnitTest() {
         assertEquals(Either.Left(SerializationFailure(serializationException)), res)
     }
 
+    companion object {
+        private const val platform = "Android"
+        private val userId = UUID.randomUUID().toString()
+        private val clientId = UUID.randomUUID().toString()
+        private const val version = "3.54"
+        private const val creationTime = "2020-09-08T10:00:00.000Z"
+        private const val userHandle = "user"
+        private const val backUpVersion = 0
+
+        private val metaData = BackupMetaData(
+                platform = platform,
+                userId = userId,
+                version = version,
+                creationTime = creationTime,
+                clientId = clientId,
+                userHandle = userHandle,
+                backUpVersion = backUpVersion
+        )
+
+        private val metaDataJson =
+                """
+            {
+                "platform": "$platform",
+                "user_id": "$userId",
+                "version": "$version",
+                "creation_time": "$creationTime",
+                "client_id": "$clientId",
+                "userHandle": "$userHandle",
+                "backUpVersion": $backUpVersion
+            }
+        """.trimIndent()
+    }
 }
