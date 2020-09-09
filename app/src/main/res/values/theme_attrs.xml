@@ -122,6 +122,8 @@
     <attr name="callIconDisabledColor" format="color" />
     <attr name="callTextDisabledColor" format="color" />
     <attr name="callIconDisabledActivatedColor" format="color" />
+    <attr name="callMutedIcon" format="reference"/>
+    <attr name="callUnmutedIcon" format="reference"/>
 
     <!-- OTR -->
     <attr name="otrClientLink" format="reference" />

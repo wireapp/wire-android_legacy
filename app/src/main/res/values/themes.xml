@@ -143,6 +143,8 @@
         <item name="callIconDisabledColor">@color/white_24</item>
         <item name="callTextDisabledColor">@color/white_24</item>
         <item name="callIconDisabledActivatedColor">@color/graphite_40</item>
+        <item name="callMutedIcon">@drawable/ic_muted_overlay_dark_theme</item>
+        <item name="callUnmutedIcon">@drawable/ic_unmuted_overlay_dark_theme</item>
 
         <!-- OTR -->
         <item name="otrClientLink">@style/otr_client__link__dark</item>
@@ -315,6 +317,8 @@
         <item name="callIconDisabledColor">@color/graphite_24</item>
         <item name="callTextDisabledColor">@color/graphite_24</item>
         <item name="callIconDisabledActivatedColor">@color/graphite_40</item>
+        <item name="callMutedIcon">@drawable/ic_muted_overlay_light_theme</item>
+        <item name="callUnmutedIcon">@drawable/ic_unmuted_overlay_light_theme</item>
 
         <!-- OTR -->
         <item name="otrClientLink">@style/otr_client__link__light</item>

@@ -28,16 +28,18 @@ import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.CallInfo.CallState.{SelfCalling, SelfConnected, SelfJoining}
 import com.waz.service.call.{CallInfo, CallingService}
-import com.wire.signals.{EventStream, Signal, SourceStream}
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.CallControlButtonView.ButtonColor
+import com.waz.zclient.common.controllers.ThemeController
+import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.threading.Threading._
+import com.wire.signals.{EventStream, Signal, SourceStream}
 
 import scala.async.Async._
 import scala.collection.immutable.ListSet
@@ -58,6 +60,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   private lazy val controller  = inject[CallController]
   private lazy val permissions = inject[PermissionsService]
   private lazy val preferences = inject[Signal[UserPreferences]]
+  private val themeController  = inject[ThemeController]
 
   val onButtonClick: SourceStream[Unit] = EventStream[Unit]
 
@@ -69,9 +72,17 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   // first row
   returning(findById[CallControlButtonView](R.id.mute_call)) { button =>
-    button.set(WireStyleKit.drawMute, R.string.incoming__controls__ongoing__mute, mute)
     button.setEnabled(true)
     controller.isMuted.onUi(button.setActivated)
+    Signal(controller.isVideoCall, controller.isMuted, themeController.currentTheme).onUi {
+      case (true, true, _) => button.set(WireStyleKit.drawMuteDark, R.string.incoming__controls__ongoing__mute, mute)
+      case (true, false, _) => button.set(WireStyleKit.drawUnmuteDark, R.string.incoming__controls__ongoing__mute, mute)
+      case (false, true, Theme.Dark) => button.set(WireStyleKit.drawMuteDark, R.string.incoming__controls__ongoing__mute, mute)
+      case (false, true, Theme.Light) => button.set(WireStyleKit.drawMuteLight, R.string.incoming__controls__ongoing__mute, mute)
+      case (false, false, Theme.Dark) => button.set(WireStyleKit.drawUnmuteDark, R.string.incoming__controls__ongoing__mute, mute)
+      case (false, false, Theme.Light) => button.set(WireStyleKit.drawUnmuteLight, R.string.incoming__controls__ongoing__mute, mute)
+      case _ =>
+    }
   }
 
   returning(findById[CallControlButtonView](R.id.video_call)) { button =>
