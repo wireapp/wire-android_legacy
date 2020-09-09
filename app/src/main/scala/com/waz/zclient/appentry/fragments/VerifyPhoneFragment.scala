@@ -189,7 +189,7 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
         case Right(userId) =>
           activity.enableProgress(false)
           for {
-            am       <- accountService.createAccountManager(userId, None, isLogin = Some(true))
+            am       <- accountService.createAccountManager(userId, isLogin = Some(true))
             _        =  am.foreach { accManager =>
                           accManager.initZMessaging()
                           accManager.addUnsplashPicture()

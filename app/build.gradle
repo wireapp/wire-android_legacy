@@ -227,7 +227,7 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
             buildConfigField 'boolean', 'SAFE_LOGGING', 'false'
-            buildConfigField 'boolean', 'SHOW_BACK_UP_INCOMPATIBILITY_DIALOG', 'true'
+
         }
 
         candidate {
@@ -240,7 +240,6 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.loggingEnabled"
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
-            buildConfigField 'boolean', 'SHOW_BACK_UP_INCOMPATIBILITY_DIALOG', 'true'
         }
 
         prod {
@@ -252,7 +251,6 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
             buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.loggingEnabled"
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
-            buildConfigField 'boolean', 'SHOW_BACK_UP_INCOMPATIBILITY_DIALOG', 'true'
         }
 
         internal {
@@ -265,7 +263,6 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
-            buildConfigField 'boolean', 'SHOW_BACK_UP_INCOMPATIBILITY_DIALOG', 'false'
         }
 
         experimental {
@@ -278,7 +275,6 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
-            buildConfigField 'boolean', 'SHOW_BACK_UP_INCOMPATIBILITY_DIALOG', 'false'
         }
     }
 

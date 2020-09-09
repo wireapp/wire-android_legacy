@@ -24,34 +24,33 @@ import android.Manifest.permission._
 import android.app.FragmentTransaction
 import android.content.{DialogInterface, Intent}
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.core.content.ContextCompat
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import com.waz.content.UserPreferences.{apply => _, _}
 import com.waz.model.AccountData.Password
 import com.waz.model.UserId
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
-import com.wire.signals.CancellableFuture
+import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.utils.{returning, _}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.fragments.FirstLaunchAfterLoginFragment._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversation.AssetIntentsManager
 import com.waz.zclient.preferences.dialogs.BackupPasswordDialog
 import com.waz.zclient.preferences.dialogs.BackupPasswordDialog.InputPasswordMode
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.{BaseActivity, FragmentHelper, R, SpinnerController}
+import com.waz.zclient._
+import com.wire.signals.CancellableFuture
 
 import scala.collection.immutable.ListSet
-import scala.concurrent.{Future, Promise}
 import scala.concurrent.duration._
-import com.waz.zclient.KotlinServices
-
-import com.waz.zclient.log.LogUI._
-
+import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
 object FirstLaunchAfterLoginFragment {
@@ -74,6 +73,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
   private lazy val accountsService    = inject[AccountsService]
   private lazy val permissions        = inject[PermissionsService]
   private lazy val spinnerController  = inject[SpinnerController]
+  private lazy val tracking           = inject[TrackingService]
 
   private lazy val restoreButton = view[ZetaButton](R.id.restore_button)
   private lazy val registerButton = view[ZetaButton](R.id.zb__first_launch__confirm)
@@ -194,11 +194,19 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
 
     val promise = Promise[Unit]
     case class BackupError(reason: String) extends Throwable
-    def onSuccess(): Unit = promise.success(())
-    def onFailure(reason: String): Unit = promise.failure(BackupError(reason))
+
+    def onSuccess(): Unit = {
+      tracking.historyRestored(true)
+      promise.success(())
+    }
+
+    def onFailure(reason: String): Unit = {
+      tracking.historyRestored(false)
+      promise.failure(BackupError(reason))
+    }
 
     (for {
-      Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true), dbFile = None)
+      Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true))
       _                    =  accountManager.addUnsplashPicture()
       _                    <- accountsService.setAccount(Some(userId))
       _                    <- Future {
@@ -207,6 +215,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       _                    <- promise.future
       _                    =  backupFile.delete()
       registrationState    <- accountManager.getOrRegisterClient()
+      _                    <- Future.traverse(List(SelfClient, OtrLastPrekey, LastSelfClientsSyncRequestedTime, LastStableNotification, ShouldSyncInitial))(p => accountManager.userPrefs.remove(p.str))
       _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
       _                    <- CancellableFuture.delay(750.millis).future
     } yield registrationState match {
@@ -227,7 +236,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
   private def enterWithoutBackup(userId: UserId): Future[Unit] = {
     spinnerController.showDimmedSpinner(show = true, "")
     for {
-      Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true), dbFile = None)
+      Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true))
       _                    =  accountManager.addUnsplashPicture()
       _                    <- accountsService.setAccount(Some(userId))
       registrationState    <- accountManager.getOrRegisterClient()

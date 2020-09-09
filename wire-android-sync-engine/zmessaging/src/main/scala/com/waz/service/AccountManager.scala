@@ -17,7 +17,6 @@
  */
 package com.waz.service
 
-import java.io._
 import java.util.Locale
 
 import com.waz.api.impl.ErrorResponse
@@ -32,7 +31,6 @@ import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, Pas
 import com.waz.service.UserService.UnsplashUrl
 import com.waz.service.AccountsService.ClientDeleted
 import com.waz.service.assets.Content
-import com.waz.service.backup.BackupManager
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse, InvitationClientImpl, OtrClientImpl}
@@ -46,48 +44,31 @@ import com.waz.znet2.{AuthRequestInterceptor, AuthRequestInterceptorImpl}
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Right, Success}
+import scala.util.Right
 
-class AccountManager(val userId:   UserId,
-                     val teamId:   Option[TeamId],
-                     val global:   GlobalModule,
-                     val accounts: AccountsService,
-                     val backupManager: BackupManager,
-                     val startedJustAfterBackup: Boolean,
+class AccountManager(val userId:  UserId,
+                     val teamId:  Option[TeamId],
+                     val global:  GlobalModule,
+                     accounts:    AccountsService,
                      initialSelf: Option[UserInfo],
                      isLogin:     Option[Boolean]) extends DerivedLogTag {
   import AccountManager._
 
   implicit val dispatcher = new SerialDispatchQueue()
   implicit val accountContext: AccountContext = new AccountContext(userId, accounts)
-  verbose(l"Creating for: $userId, team: $teamId, initialSelf: $initialSelf, startJustAfterBackup: $startedJustAfterBackup, isLogin: $isLogin")
-
-  private def doAfterBackupCleanup() =
-    Future.traverse(List(
-      SelfClient.str,
-      OtrLastPrekey.str,
-      LastSelfClientsSyncRequestedTime.str,
-      LastStableNotification.str,
-      ShouldSyncInitial.str
-    ))(userPrefs.remove).map(_ => ())
+  verbose(l"Creating for: $userId, team: $teamId, initialSelf: $initialSelf, isLogin: $isLogin")
 
   lazy val storage   = global.factory.baseStorage(userId)
   lazy val userPrefs = storage.userPrefs
 
-  lazy val clientState = for {
-    _ <- if (startedJustAfterBackup) Signal.future(doAfterBackupCleanup()) else Signal.const(())
-    state <- userPrefs(SelfClient).signal
-  } yield state
+  lazy val clientState = userPrefs(SelfClient).signal
 
-  lazy val clientId = clientState.map(_.clientId)
-
-  private lazy val context = global.context
-
-  private lazy val cryptoBox         = global.factory.cryptobox(userId, storage)
-  lazy val auth              = global.factory.auth(userId)
+  lazy val clientId                                       = clientState.map(_.clientId)
+  private lazy val cryptoBox                              = global.factory.cryptobox(userId, storage)
+  lazy val auth                                           = global.factory.auth(userId)
   lazy val authRequestInterceptor: AuthRequestInterceptor = new AuthRequestInterceptorImpl(auth, global.httpClient)
-  lazy val otrClient         = new OtrClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
-  lazy val credentialsClient = global.factory.credentialsClient(global.urlCreator, global.httpClient, authRequestInterceptor)
+  lazy val otrClient                                      = new OtrClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
+  lazy val credentialsClient                              = global.factory.credentialsClient(global.urlCreator, global.httpClient, authRequestInterceptor)
 
   private lazy val clientsStorage = storage.otrClientsStorage
 
@@ -248,33 +229,6 @@ class AccountManager(val userId:   UserId,
       case Right(info) => storage.usersStorage.update(userId, _.updated(info)).map(_ => Right(info))
       case Left(err) => Future.successful(Left(err))
     }
-  }
-
-  def exportDatabase(password: Password): Future[File] = {
-    verbose(l"exportDatabase")
-    val backup = for {
-      zms    <- zmessaging
-      user   <- zms.users.selfUser.head
-      _      <- storage.db.flushWALToDatabase()
-      _      =  storage.db2.beginTransaction()
-      backup =  backupManager.exportDatabase(
-        userId,
-        userHandle     = user.handle.map(_.string).getOrElse(""),
-        databaseDir    = context.getDatabasePath(userId.str).getParentFile,
-        targetDir      = context.getExternalCacheDir,
-        backupPassword = password
-      )
-      _      =  global.trackingService.historyBackedUp(backup.isSuccess)
-    } yield backup.get
-
-    backup.onComplete {
-      case Success(_) =>
-        storage.db2.setTransactionSuccessful()
-        storage.db2.endTransaction()
-      case Failure(ex) =>
-        if (storage.db2.inTransaction) storage.db2.endTransaction()
-    }
-    backup
   }
 
   private def checkCryptoBox() =

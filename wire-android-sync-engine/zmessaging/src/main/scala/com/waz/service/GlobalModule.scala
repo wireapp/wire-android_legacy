@@ -31,7 +31,6 @@ import com.waz.content._
 import com.waz.log.{LogsService, LogsServiceImpl}
 import com.waz.permissions.PermissionsService
 import com.waz.service.assets.{AudioTranscoder, FileRestrictionList, GeneralFileCacheImpl, GlobalRecordAndPlayService}
-import com.waz.service.backup.{BackupManager, BackupManagerImpl}
 import com.waz.service.call._
 import com.waz.service.push._
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
@@ -40,7 +39,6 @@ import com.waz.sync.{AccountSyncHandler, SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.{Entry, Key}
-import com.waz.utils.crypto.{LibSodiumUtils, LibSodiumUtilsImpl}
 import com.waz.utils.wrappers.{Context, GoogleApi}
 import com.waz.utils.{Cache, IoUtils}
 import com.waz.zms.BuildConfig
@@ -126,11 +124,8 @@ class GlobalModuleImpl(val context:             AContext,
   val storage:                  Database                         = new GlobalDatabase(context, tracking = trackingService)
   val accountsStorageOld:       AccountsStorageOld               = wire[AccountsStorageOldImpl]
 
-  lazy val libSodiumUtils:      LibSodiumUtils                   = wire[LibSodiumUtilsImpl]
-  lazy val backupManager:       BackupManager                    = wire[BackupManagerImpl]
-
   lazy val ssoService:          SSOService                       = wire[SSOService]
-  lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this, backupManager, BuildConfig.KOTLIN_SETTINGS)
+  lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this, BuildConfig.KOTLIN_SETTINGS)
   lazy val syncHandler:         SyncHandler                      = new AccountSyncHandler(accountsService)
   lazy val calling:             GlobalCallingService             = new GlobalCallingService
 
