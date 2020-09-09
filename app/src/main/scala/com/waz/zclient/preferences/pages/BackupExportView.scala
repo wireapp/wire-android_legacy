@@ -28,6 +28,7 @@ import android.view.View
 import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
+import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountManager, UiLifeCycle, UserService}
 import com.waz.threading.Threading
 import com.wire.signals.Signal
@@ -53,6 +54,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
   private val spinnerController = inject[SpinnerController]
   private val lifecycle         = inject[UiLifeCycle]
   private val sharing           = inject[ExternalFileSharing]
+  private lazy val tracking     = inject[TrackingService]
   private val backupButton      = findById[MenuRowButton](R.id.backup_button)
 
   backupButton.setOnClickProcess(requestPassword())
@@ -84,13 +86,14 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
       Some(clientId) <- inject[Signal[AccountManager]].flatMap(_.clientId).head
       _              <- lifecycle.uiActive.collect { case true => () }.head
       _              <- Future {
-                          KotlinServices.INSTANCE.createBackup(self.id.str, clientId.str, userHandle, password.str, copyBackupFile _, onBackupFailed _)
+                          KotlinServices.INSTANCE.createBackup(self.id.str, clientId.str, userHandle, password.str, onBackupSuccess _, onBackupFailed _)
                         }(Threading.Background)
     } yield ()
   }
 
   private def onBackupFailed(err: String): Unit = Future {
     spinnerController.hideSpinner()
+    tracking.historyBackedUp(false)
     ViewUtils.showAlertDialog(
       getContext,
       R.string.export_generic_error_title,
@@ -101,7 +104,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
     )
   }(Threading.Ui)
 
-  private def copyBackupFile(file: File): Unit = Future {
+  private def onBackupSuccess(file: File): Unit = Future {
     if (isShown) {
       val fileUri = sharing.getUriForFile(file)
       val intent = ShareCompat.IntentBuilder.from(context.asInstanceOf[Activity]).setType("application/octet-stream").setStream(fileUri).getIntent
@@ -109,11 +112,8 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
       spinnerController.hideSpinner(Some(ContextUtils.getString(R.string.back_up_progress_complete)))
     } else
       spinnerController.hideSpinner()
+    tracking.historyBackedUp(true)
   }(Threading.Ui)
-}
-
-object BackupExportView {
-  val TestingGalleryPackage = "com.wire.testinggallery"
 }
 
 case class BackupExportKey(args: Bundle = new Bundle()) extends BackStackKey(args) {

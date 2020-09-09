@@ -384,8 +384,6 @@ object GlobalPreferences {
 
   lazy val BackendDrift = PrefKey[Duration]("backend_drift")
 
-  lazy val ShouldWarnBackUpIncompatibility = PrefKey[Boolean]( "should_warn_back_up_incompatibility", customDefault = true)
-
   //TODO think of a nicer way of ensuring that these key values are used in UI - right now, we need to manually check they're correct
   lazy val AutoAnswerCallPrefKey = PrefKey[Boolean]("PREF_KEY_AUTO_ANSWER_ENABLED")
   lazy val V31AssetsEnabledKey = PrefKey[Boolean]("PREF_V31_ASSETS_ENABLED")

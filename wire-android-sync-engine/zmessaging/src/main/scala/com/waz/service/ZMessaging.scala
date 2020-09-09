@@ -31,7 +31,6 @@ import com.waz.model.otr.ClientId
 import com.waz.repository.{FCMNotificationStatsRepositoryImpl, FCMNotificationsRepositoryImpl}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.assets._
-import com.waz.service.backup.BackupManagerImpl
 import com.waz.service.call._
 import com.waz.service.conversation._
 import com.waz.service.media._
@@ -249,8 +248,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val receipts                                   = wire[ReceiptService]
   lazy val ephemeral                                  = wire[EphemeralMessagesService]
   lazy val replyHashing                               = wire[ReplyHashingImpl]
-  lazy val libSodiumUtils                             = wire[LibSodiumUtilsImpl]
-  lazy val backupManager                              = wire[BackupManagerImpl]
   lazy val foldersService: FoldersService             = wire[FoldersServiceImpl]
   lazy val rolesService: ConversationRolesService     = wire[ConversationRolesServiceImpl]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]

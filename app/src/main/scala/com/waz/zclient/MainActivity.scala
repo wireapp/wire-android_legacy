@@ -25,7 +25,7 @@ import android.graphics.{Color, Paint, PixelFormat}
 import android.os.Bundle
 import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences._
-import com.waz.content.{GlobalPreferences, TeamsStorage, UserPreferences}
+import com.waz.content.{TeamsStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus.{apply => _}
 import com.waz.model._
@@ -101,8 +101,6 @@ class MainActivity extends BaseActivity
   override def onCreate(savedInstanceState: Bundle) = {
     Option(getActionBar).foreach(_.hide())
     super.onCreate(savedInstanceState)
-
-    showBackUpIncompatibilityDialog()
 
     //Prevent drawing the default background to reduce overdraw
     getWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT))
@@ -543,32 +541,6 @@ class MainActivity extends BaseActivity
       .commit
 
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
-
-  private def showBackUpIncompatibilityDialog() : Future[Unit] = {
-    def showDialog(accentColor: AccentColor): Future[Option[Boolean]] = showWarningDialog(
-      getString(R.string.back_up_incompatibility_title),
-      getString(R.string.back_up_incompatibility_message),
-      R.string.back_up_incompatibility_action_ok,
-      R.string.back_up_incompatibility_action_do_not_show_again,
-      accentColor
-    )
-
-    val prefs = inject[GlobalPreferences]
-
-    for {
-      shouldWarn <- if (BuildConfig.SHOW_BACK_UP_INCOMPATIBILITY_DIALOG) prefs(GlobalPreferences.ShouldWarnBackUpIncompatibility).apply()
-      else Future.successful(false)
-      color <- accentColorController.accentColor.head
-    } yield {
-      if (shouldWarn) {
-        showDialog(color).foreach {
-          case Some(false) => prefs(GlobalPreferences.ShouldWarnBackUpIncompatibility) := false
-          case _ =>
-        }
-      }
-    }
-  }
-
 }
 
 object MainActivity {

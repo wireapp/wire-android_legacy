@@ -29,7 +29,6 @@ import com.waz.log.LogSE._
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model.AccountData.Password
 import com.waz.model._
-import com.waz.service.backup.BackupManager
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.LoginClient.LoginResult
 import com.waz.sync.client.{ErrorOr, LoginClient}
@@ -80,10 +79,8 @@ trait AccountsService {
   def register(registerCredentials: Credentials, name: Name, teamName: Option[Name] = None): ErrorOr[Option[AccountManager]]
 
   def createAccountManager(userId: UserId,
-                           dbFile: Option[File],
                            isLogin: Option[Boolean],
-                           initialUser: Option[UserInfo] = None,
-                           backupPassword: Option[Password] = None): Future[Option[AccountManager]] //TODO return error codes on failure?
+                           initialUser: Option[UserInfo] = None): Future[Option[AccountManager]] //TODO return error codes on failure?
 
   //Set to None in order to go to the login screen without logging out the current users
   def setAccount(userId: Option[UserId]): Future[Unit]
@@ -132,7 +129,7 @@ object AccountsService {
 
 }
 
-class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupManager, val kotlinLogoutEnabled: Boolean = false)
+class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = false)
   extends AccountsService with DerivedLogTag {
   import AccountsService._
   import Threading.Implicits.Background
@@ -290,48 +287,24 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
          Future.failed(e)
      }
 
-  override def createAccountManager(userId:         UserId,
-                                    importDbFile:   Option[File],
-                                    isLogin:        Option[Boolean],
-                                    initialUser:    Option[UserInfo] = None,
-                                    backupPassword: Option[Password] = None) = Serialized.future(AccountManagersKey) {
+  override def createAccountManager(userId:      UserId,
+                                    isLogin:     Option[Boolean],
+                                    initialUser: Option[UserInfo] = None) = Serialized.future(AccountManagersKey) {
     for {
       managers <- accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head
       manager  <- managers.find(_.userId == userId)
-                          .fold(createManager(userId, initialUser, isLogin, importDbFile.nonEmpty))(m => Future.successful(Some(m)))
-      _        = (manager, importDbFile, backupPassword) match {
-                   case (Some(mgr), Some(file), Some(password)) => restoreFromBackup(mgr, userId, file, password)
-                   case _ =>
-                 }
+                          .fold(createManager(userId, isLogin, initialUser))(m => Future.successful(Some(m)))
     } yield manager
   }
 
-  private def restoreFromBackup(accountManager: AccountManager, userId: UserId, importDbFile: File, password: Password) = {
-    verbose(l"restore from backup")
-    val db = accountManager.storage.db2
-    db.beginTransaction()
-    try {
-      returning(backupManager.importDatabase(userId, importDbFile, context.getDatabasePath(userId.toString).getParentFile, backupPassword = password)) { restore =>
-        if (restore.isFailure) {
-          error(l"restore failed")
-          global.trackingService.historyRestored(false)
-        } // HistoryRestoreSucceeded is sent from the new AccountManager
-      }.get // if the import failed this will rethrow the exception
-      verbose(l"restore successful")
-      db.setTransactionSuccessful()
-    } finally {
-      db.endTransaction()
-    }
-  }
-
-  private def createManager(userId: UserId, initialUser: Option[UserInfo], isLogin: Option[Boolean], fromBackup: Boolean): Future[Option[AccountManager]] =
+  private def createManager(userId: UserId, isLogin: Option[Boolean], initialUser: Option[UserInfo]): Future[Option[AccountManager]] =
     for {
       account <- storage.flatMap(_.get(userId))
       _       =  if (account.isEmpty) warn(l"No logged in account for user: $userId, not creating account manager")
       user    <- if (account.isDefined) prefs(LoggingInUser).apply().map(_.orElse(initialUser)) else Future.successful(None)
       _       <- if (account.isDefined) prefs(LoggingInUser) := None else Future.successful(())
     } yield account.map { acc =>
-      val newManager = new AccountManager(userId, acc.teamId, global, this, backupManager, startedJustAfterBackup = fromBackup, user, isLogin)
+      val newManager = new AccountManager(userId, acc.teamId, global, this, user, isLogin)
       if (isLogin.isDefined) accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
       newManager
     }
@@ -470,7 +443,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
       case Right((user, Some((cookie, _)))) =>
         for {
           _  <- addAccountEntry(user, cookie, None, Some(registerCredentials))
-          am <- createAccountManager(user.id, None, Some(false), Some(user))
+          am <- createAccountManager(user.id, isLogin = Some(false), initialUser = Some(user))
           _  <- am.fold(Future.successful({}))(_.getOrRegisterClient().map(_ => ()))
           _  <- setAccount(Some(user.id))
         } yield Right(am)
@@ -505,7 +478,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
             for {
               _     <- addAccountEntry(userInfo, cookie, Some(loginResult.accessToken), None)
               hadDb =  context.getDatabasePath(userId.str).exists
-              am    <- createAccountManager(userId, None, isLogin = Some(true), initialUser = Some(userInfo))
+              am    <- createAccountManager(userId, isLogin = Some(true), initialUser = Some(userInfo))
               r     <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.otrClient.loadClients().future.mapRight(cs => (cs.nonEmpty, hadDb)))
               _     =  r.fold(_ => (), res => if (!res._1) am.foreach(_.addUnsplashPicture()))
             } yield r
