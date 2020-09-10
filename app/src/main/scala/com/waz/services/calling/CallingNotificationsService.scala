@@ -20,7 +20,6 @@ package com.waz.services.calling
 import android.app.Service
 import android.content.{Context, Intent}
 import android.os.IBinder
-import android.util.Log
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.zclient.ServiceHelper
