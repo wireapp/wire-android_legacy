@@ -5,6 +5,8 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.usecase.UseCase
+import com.waz.zclient.core.utilities.DateAndTimeUtils.instantToString
+import com.waz.zclient.core.utilities.DatePattern
 import com.waz.zclient.feature.backup.BackUpRepository
 import com.waz.zclient.feature.backup.crypto.encryption.EncryptionHandler
 import com.waz.zclient.feature.backup.metadata.BackupMetaData
@@ -15,10 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import org.threeten.bp.Instant
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class CreateBackUpUseCase(
     private val backUpRepositories: List<BackUpRepository<List<File>>>,
@@ -53,9 +52,8 @@ class CreateBackUpUseCase(
             .awaitAll()
     )
 
-    @SuppressWarnings("MagicNumber")
     private fun backupFileName(userHandle: String): String {
-        val timestamp = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Instant.now().epochSecond * 1000)
+        val timestamp = instantToString(pattern = DatePattern.DATE_SHORT)
         return "Wire-$userHandle-Backup_$timestamp.android_wbu"
     }
 
