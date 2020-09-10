@@ -41,6 +41,6 @@ object DateAndTimeUtils {
         pattern: DatePattern = DatePattern.DATE_TIME,
         locale: Locale = Locale.getDefault(),
         zoneId: ZoneId = ZoneId.systemDefault()
-    ): String
-        = ZonedDateTime.ofInstant(instant, zoneId).format(DateTimeFormatter.ofPattern(pattern.pattern, locale))
+    ): String =
+        ZonedDateTime.ofInstant(instant, zoneId).format(DateTimeFormatter.ofPattern(pattern.pattern, locale))
 }
