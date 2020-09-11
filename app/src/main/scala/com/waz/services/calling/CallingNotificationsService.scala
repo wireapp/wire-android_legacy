@@ -22,9 +22,10 @@ import android.content.{Context, Intent}
 import android.os.IBinder
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
+import com.waz.threading.Threading._
 import com.waz.zclient.ServiceHelper
 import com.waz.zclient.notifications.controllers.CallingNotificationsController
-import com.waz.threading.Threading._
+import com.wire.signals.Signal
 
 class CallingNotificationsService extends ServiceHelper with DerivedLogTag {
 
@@ -34,8 +35,11 @@ class CallingNotificationsService extends ServiceHelper with DerivedLogTag {
 
   implicit lazy val cxt: Context = getApplicationContext
 
-  private lazy val sub = callNCtrl.notifications.map(_.find(_.isMainCall)).onUi {
-    case Some(not) if shouldShowNotification(not) =>
+  private lazy val sub = Signal(
+    callNCtrl.notifications.map(_.find(_.isMainCall)),
+    ZMessaging.currentGlobal.lifecycle.uiActive
+  ).onUi {
+    case (Some(not), false) =>
       val builder = androidNotificationBuilder(not, treatAsIncomingCall = isAndroid10OrAbove)
       startForeground(not.convId.str.hashCode, builder.build())
     case _ =>
@@ -48,14 +52,5 @@ class CallingNotificationsService extends ServiceHelper with DerivedLogTag {
     super.onStartCommand(intent, flags, startId)
     sub
     Service.START_STICKY
-  }
-
-  // Since Android 10 we can't start the calling activity from the background, so instead we
-  // show a calling notification.
-  private def isUiActive: Boolean = ZMessaging.currentGlobal.lifecycle.uiActive.currentValue.getOrElse(false)
-
-  private def shouldShowNotification(notification: CallNotification): Boolean = {
-    val notificationHasAction = notification.action != NotificationAction.Nothing
-    notificationHasAction && (isAndroid10OrAbove && !isUiActive)
   }
 }
