@@ -37,6 +37,7 @@ import com.waz.zclient.common.views.MenuRowButton
 import com.waz.zclient.preferences.dialogs.BackupPasswordDialog
 import com.waz.zclient.utils.{BackStackKey, ContextUtils, ExternalFileSharing, ViewUtils}
 import com.waz.zclient._
+import com.waz.zclient.preferences.dialogs.BackupPasswordDialog.SetPasswordMode
 
 import scala.concurrent.Future
 
@@ -60,9 +61,10 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
   backupButton.setOnClickProcess(requestPassword())
 
   def requestPassword(): Future[Unit] = {
-    val fragment = returning(new BackupPasswordDialog) { dialog =>
-      dialog.onPasswordEntered(backupData)
+    val fragment = returning(BackupPasswordDialog.newInstance(SetPasswordMode)) {
+      _.onPasswordEntered(backupData)
     }
+
     context.asInstanceOf[BaseActivity]
       .getSupportFragmentManager
       .beginTransaction
