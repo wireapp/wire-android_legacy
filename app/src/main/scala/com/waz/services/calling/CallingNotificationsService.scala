@@ -22,9 +22,9 @@ import android.content.{Context, Intent}
 import android.os.IBinder
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
+import com.waz.threading.Threading._
 import com.waz.zclient.ServiceHelper
 import com.waz.zclient.notifications.controllers.CallingNotificationsController
-import com.waz.threading.Threading._
 import com.wire.signals.Signal
 
 class CallingNotificationsService extends ServiceHelper with DerivedLogTag {
@@ -39,7 +39,7 @@ class CallingNotificationsService extends ServiceHelper with DerivedLogTag {
     callNCtrl.notifications.map(_.find(_.isMainCall)),
     ZMessaging.currentGlobal.lifecycle.uiActive
   ).onUi {
-    case (Some(not),false) =>
+    case (Some(not), false) =>
       val builder = androidNotificationBuilder(not, treatAsIncomingCall = isAndroid10OrAbove)
       startForeground(not.convId.str.hashCode, builder.build())
     case _ =>
