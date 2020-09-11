@@ -93,7 +93,7 @@ class ParticipantHeaderFragment extends FragmentHelper {
     import com.waz.zclient.messages.UsersController
     val usersController = inject[UsersController]
 
-    val availabilityVisible = Signal(participantsController.otherParticipant.map(_.expiresAt.isDefined), usersController.availabilityVisible).map {
+    val availabilityVisible = Signal.zip(participantsController.otherParticipant.map(_.expiresAt.isDefined), usersController.availabilityVisible).map {
       case (true, _)         => false
       case (_, isTeamMember) => isTeamMember
     }
@@ -103,7 +103,7 @@ class ParticipantHeaderFragment extends FragmentHelper {
       av        <- usersController.availability(uId)
     } yield av
 
-    Signal(availabilityVisible, availabilityStatus).map {
+    Signal.zip(availabilityVisible, availabilityStatus).map {
       case (true, status) => Some(status)
       case (false, _)     => None
     }
@@ -111,7 +111,7 @@ class ParticipantHeaderFragment extends FragmentHelper {
 
   private lazy val confButton = returning(view[TextView](R.id.confirmation_button)) { vh =>
 
-    val confButtonEnabled = Signal(newConvController.users.map(_.size), newConvController.integrations.map(_.size), potentialMemberCount).map {
+    val confButtonEnabled = Signal.zip(newConvController.users.map(_.size), newConvController.integrations.map(_.size), potentialMemberCount).map {
       case (newUsers, newIntegrations, potential) => (newUsers > 0 || newIntegrations > 0) && potential <= ConversationController.MaxParticipants
     }
     confButtonEnabled.onUi(e => vh.foreach(_.setEnabled(e)))
@@ -148,7 +148,7 @@ class ParticipantHeaderFragment extends FragmentHelper {
       case Some(EphemeralOptionsFragment.Tag) =>
         Signal.const(getString(R.string.ephemeral_message__options_header))
       case Some(AddParticipantsFragment.Tag) =>
-        Signal(newConvController.users, newConvController.integrations).map {
+        Signal.zip(newConvController.users, newConvController.integrations).map {
           case (u, i) if u.isEmpty && i.isEmpty => getString(R.string.add_participants_empty_header)
           case (u, i) => getString(R.string.add_participants_count_header, (u.size + i.size).toString)
         }

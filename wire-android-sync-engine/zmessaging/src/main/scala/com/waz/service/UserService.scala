@@ -136,7 +136,7 @@ class UserServiceImpl(selfUserId:        UserId,
     def initialLoad = usersStorage.list().map(_.map(user => user.id -> user.name).toMap)
 
     new AggregatingSignal[Map[UserId, Name], Map[UserId, Name]](
-      EventStream.union(added, updated),
+      EventStream.zip(added, updated),
       initialLoad,
       { (values, changes) => values ++ changes }
     )

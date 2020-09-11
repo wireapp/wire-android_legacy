@@ -103,10 +103,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     teamMember           <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
     isBot                <- otherUser.map(_.exists(_.isWireBot))
     selfRole             <- convController.selfRoleInConv(convId)
-    isCurrentUserCreator <- Signal.future(convController.isCurrentUserCreator(convId))
+    isCurrentUserCreator <- Signal.from(convController.isCurrentUserCreator(convId))
     selectedParticipant  <- participantsController.selectedParticipant
     favoriteConvIds      <- convListController.favoriteConversations.map(_.map(_.conv.id).toSet)
-    customFolderId       <- Signal.future(convListController.getCustomFolderId(convId))
+    customFolderId       <- Signal.from(convListController.getCustomFolderId(convId))
     customFolderData     <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
   } yield {
     import com.waz.api.ConnectionStatus._

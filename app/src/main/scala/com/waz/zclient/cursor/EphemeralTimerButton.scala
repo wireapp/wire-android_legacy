@@ -91,7 +91,7 @@ class EphemeralTimerButton(context: Context, attrs: AttributeSet, defStyleAttr: 
     drawable.onUi(setBackgroundDrawable)
     contentDescription.onUi(setContentDescription)
 
-    Signal(color, iconSize).onUi {
+    Signal.zip(color, iconSize).onUi {
       case (c, s) =>
         setTextColor(c)
         this.setWidthAndHeight(Some(s), Some(s))

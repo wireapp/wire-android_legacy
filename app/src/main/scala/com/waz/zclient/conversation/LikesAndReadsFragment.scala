@@ -58,12 +58,12 @@ class LikesAndReadsFragment extends FragmentHelper {
   private val visibleTab = Signal[Tab](ReadsTab)
 
   private lazy val likes: Signal[Set[UserId]] =
-    Signal(reactionsStorage, screenController.showMessageDetails)
+    Signal.zip(reactionsStorage, screenController.showMessageDetails)
       .collect { case (storage, Some(msgId)) => (storage, msgId) }
       .flatMap { case (storage, MessageDetailsParams(msgId, _)) => storage.likes(msgId).map(_.likers.keySet) }
 
   private lazy val reads: Signal[Set[UserId]] =
-    Signal(readReceiptsStorage, screenController.showMessageDetails)
+    Signal.zip(readReceiptsStorage, screenController.showMessageDetails)
       .collect { case (storage, Some(MessageDetailsParams(msgId, _))) => (storage, msgId) }
       .flatMap { case (storage, msgId) => storage.receipts(msgId).map(_.map(_.user).toSet) }
 
@@ -91,21 +91,21 @@ class LikesAndReadsFragment extends FragmentHelper {
     msg         <- message
   } yield selfUserId == msg.userId
 
-  private lazy val detailsCombination = Signal(message, isOwnMessage, convController.currentConv.map(_.team.isDefined)).map {
+  private lazy val detailsCombination = Signal.zip(message, isOwnMessage, convController.currentConv.map(_.team.isDefined)).map {
     case (msg, isOwn, isTeam) => LikesAndReadsFragment.detailsCombination(msg, isOwn, isTeam)
   }
 
   private lazy val closeButton = view[GlyphTextView](R.id.likes_close_button)
 
   private lazy val readsView = returning(view[RecyclerView](R.id.reads_recycler_view)) { vh =>
-    Signal(viewToDisplay, detailsCombination).onUi {
+    Signal.zip(viewToDisplay, detailsCombination).onUi {
       case (ReadsTab, JustReads | ReadsAndLikes) => vh.foreach(_.setVisible(true))
       case _ => vh.foreach(_.setVisible(false))
     }
   }
 
   private lazy val likesView = returning(view[RecyclerView](R.id.likes_recycler_view)) { vh =>
-    Signal(viewToDisplay, detailsCombination).onUi {
+    Signal.zip(viewToDisplay, detailsCombination).onUi {
       case (LikesTab, JustLikes | ReadsAndLikes) => vh.foreach(_.setVisible(true))
       case _ => vh.foreach(_.setVisible(false))
     }
@@ -116,7 +116,7 @@ class LikesAndReadsFragment extends FragmentHelper {
     emptyListIcon.setColor(getColor(R.color.light_graphite_16))
     val emptyListText = findById[TypefaceTextView](R.id.empty_list_text)
 
-    Signal(viewToDisplay, detailsCombination).onUi {
+    Signal.zip(viewToDisplay, detailsCombination).onUi {
       case (NoReads, JustReads | ReadsAndLikes) =>
         vh.foreach(_.setVisible(true))
         emptyListIcon.setOnDraw(WireStyleKit.drawView)
@@ -159,7 +159,7 @@ class LikesAndReadsFragment extends FragmentHelper {
   }
 
   private lazy val tabs = returning(view[TabLayout](R.id.likes_and_reads_tabs)) { vh =>
-    Signal(reads.map(_.size), likes.map(_.size)).map {
+    Signal.zip(reads.map(_.size), likes.map(_.size)).map {
       case (r, l) =>
         val rCountString = if (r == 0) "" else s" ($r)"
         val lCountString = if (l == 0) "" else s" ($l)"

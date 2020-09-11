@@ -63,7 +63,7 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
         case Tab.Services =>
           servicesService.flatMap { svc =>
             Signal
-              .future(svc.searchIntegrations(Option(filter).filter(_.nonEmpty)))
+              .from(svc.searchIntegrations(Option(filter).filter(_.nonEmpty)))
               .map(_.fold[AddUserListState](Error, ss =>
                 if (ss.isEmpty)
                   if (filter.isEmpty) NoServices else NoServicesFound
@@ -92,7 +92,7 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
         case Tab.Services =>
           servicesService.flatMap { svc =>
             Signal
-              .future(svc.searchIntegrations(Option(filter).filter(_.nonEmpty)))
+              .from(svc.searchIntegrations(Option(filter).filter(_.nonEmpty)))
               .map(_.fold[SearchUserListState](Error, ss =>
                 if (ss.isEmpty)
                   if (filter.isEmpty) NoServices else NoServicesFound

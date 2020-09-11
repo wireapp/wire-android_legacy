@@ -82,7 +82,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   private val notificationManager = inject[NotificationManager]
   private val ZenModeKey          = "zen_mode"
 
-  private val mediaManager   = zms.flatMap(z => Signal.future(z.mediamanager.mediaManager))
+  private val mediaManager   = zms.flatMap(z => Signal.from(z.mediamanager.mediaManager))
   private val soundIntensity = zms.flatMap(_.mediamanager.soundIntensity)
 
   private var _mediaManager = Option.empty[MediaManager]
@@ -136,7 +136,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
 
   override def isVibrationEnabled(userId: UserId): Boolean = {
     (for {
-      zms <- Signal.future(accountsService.getZms(userId)).collect { case Some(v) => v }
+      zms <- Signal.from(accountsService.getZms(userId)).collect { case Some(v) => v }
       isEnabled <- zms.userPrefs.preference(UserPreferences.VibrateEnabled).signal
     } yield isEnabled).headSync().getOrElse(false)
   }

@@ -105,7 +105,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
       case false =>
         button.set(WireStyleKit.drawSpeaker, R.string.incoming__controls__ongoing__speaker, speaker)
     }
-    Signal(controller.speakerButton.buttonState, isVideoBeingSent).onUi {
+    Signal.zip(controller.speakerButton.buttonState, isVideoBeingSent).onUi {
       case (buttonState, false) => button.setActivated(buttonState)
       case _                    => button.setActivated(false)
     }

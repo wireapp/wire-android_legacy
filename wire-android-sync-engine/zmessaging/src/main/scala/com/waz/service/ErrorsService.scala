@@ -74,7 +74,7 @@ class ErrorsServiceImpl(userId:    UserId,
     errors
   }
 
-   private val onChanged = errorsStorage.onChanged.map(_ => System.currentTimeMillis()).union(errorsStorage.onDeleted.map(_ => System.currentTimeMillis()))
+   private val onChanged = errorsStorage.onChanged.map(_ => System.currentTimeMillis()).zip(errorsStorage.onDeleted.map(_ => System.currentTimeMillis()))
 
   def onErrorDismissed(handler: PartialFunction[ErrorData, Future[_]]): CancellableFuture[Unit] = dispatcher {
     dismissHandler = dismissHandler.orElse(handler)

@@ -62,7 +62,7 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
   override def activeMembers(conv: ConvId): Signal[Set[UserId]] = {
     def onConvMemberChanged(conv: ConvId) =
       onAdded.map(_.filter(_.convId == conv).map(_.userId -> true))
-        .union(onDeleted.map(_.filter(_._2 == conv).map(_._1 -> false)))
+        .zip(onDeleted.map(_.filter(_._2 == conv).map(_._1 -> false)))
 
     new AggregatingSignal[Seq[(UserId, Boolean)], Set[UserId]](
       onConvMemberChanged(conv),

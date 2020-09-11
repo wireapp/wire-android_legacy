@@ -403,7 +403,7 @@ trait CallingBannerActivity extends ActivityHelper {
       callBanner.setVisibility(if (est) View.VISIBLE else View.GONE)
     }
 
-    Signal(callController.isMuted, callController.isCallEstablished).onUi {
+    Signal.zip(callController.isMuted, callController.isCallEstablished).onUi {
       case (true, true) =>
         mutedGlyph.setVisibility(View.VISIBLE)
         spacerGlyph.setVisibility(View.INVISIBLE)

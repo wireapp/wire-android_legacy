@@ -184,7 +184,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
   def playhead(key: MediaKey): Signal[bp.Duration] = stateSource flatMap {
     case Playing(_, `key`) =>
       ClockSignal(tickInterval).flatMap { i =>
-        Signal.future(duringIdentityTransition { case Playing(player, `key`) => player.playhead })
+        Signal.from(duringIdentityTransition { case Playing(player, `key`) => player.playhead })
       }
     case Paused(player, `key`, media, _) =>
       Signal.const(media.playhead)
@@ -201,7 +201,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
     stateSource.flatMap {
       case Recording(_, `key`, _, _, _, _) =>
         ClockSignal(tickInterval).flatMap { i =>
-          Signal.future(duringIdentityTransition { case Recording(recorder, `key`, _, _, _, _) => successful((peakLoudness(recorder.maxAmplitudeSinceLastCall), i)) })
+          Signal.from(duringIdentityTransition { case Recording(recorder, `key`, _, _, _, _) => successful((peakLoudness(recorder.maxAmplitudeSinceLastCall), i)) })
         }
       case other => Signal.empty[(Float, Instant)]
     }.onChanged.map { case (level, _) => level }

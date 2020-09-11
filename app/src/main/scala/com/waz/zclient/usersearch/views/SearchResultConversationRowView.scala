@@ -54,7 +54,7 @@ class SearchResultConversationRowView(val context: Context, val attrs: Attribute
     conv      <- conversationSignal
     memberIds <- ConversationMembersSignal(conv.id)
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)).toSeq:_*)
-    isGroup   <- Signal.future(z.conversations.isGroupConversation(conv.id))
+    isGroup   <- Signal.from(z.conversations.isGroupConversation(conv.id))
   } yield (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), z.teamId)).onUi {
     case (convId, isGroup, members, selfTeamId) =>
       avatar.setMembers(members, convId, isGroup, selfTeamId)

@@ -172,11 +172,11 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     case _         => None
   }.map(_.map(getString)).onUi(_.foreach(hintTextView.setText))
 
-  Signal(slideControlState, playbackControls.flatMap(_.isPlaying).orElse(Signal.const(false))).map {
-    case (Recording, _) => Some(R.string.glyph__microphone_on)
-    case (Preview, false)   => Some(R.string.glyph__play)
-    case (Preview, true)   => Some(R.string.glyph__pause)
-    case _         => None
+  Signal.zip(slideControlState, playbackControls.flatMap(_.isPlaying).orElse(Signal.const(false))).map {
+    case (Recording, _)   => Some(R.string.glyph__microphone_on)
+    case (Preview, false) => Some(R.string.glyph__play)
+    case (Preview, true)  => Some(R.string.glyph__pause)
+    case _                => None
   }.map(_.map(getString)).onUi(_.foreach(bottomButtonTextView.setText))
 
   slideControlState.map {

@@ -68,7 +68,7 @@ class WebSocketController(implicit inj: Injector) extends Injectable {
     )
 
   lazy val notificationTitleRes: Signal[Option[Int]] =
-    Signal(serviceInForeground, global.network.isOnline, anyPushServiceConnected).map {
+    Signal.zip(serviceInForeground, global.network.isOnline, anyPushServiceConnected).map {
       case (true, true, true)  => Option(R.string.ws_foreground_notification_connecting_title)
       case (true, true, false) => Option(R.string.ws_foreground_notification_connected_title)
       case (true, false, _)    => Option(R.string.ws_foreground_notification_no_internet_title)
@@ -141,7 +141,7 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
   private lazy val notificationManager = inject[NotificationManager]
 
   private lazy val webSocketActiveSubscription =
-    Signal(controller.accountWebsocketStates, global.network.networkMode) {
+    Signal.zip(controller.accountWebsocketStates, global.network.networkMode) {
       case ((zmsWithWSActive, zmsWithWSInactive), networkMode) if NetworkModeService.isOnlineMode(networkMode) =>
         toggleWSPushServices(zmsWithWSActive, zmsWithWSInactive, stopIfNeeded = true)
       case ((zmsWithWSActive, zmsWithWSInactive), _) =>

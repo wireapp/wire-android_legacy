@@ -24,7 +24,6 @@ import androidx.annotation.Nullable
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.api.NetworkMode
-import com.waz.model.{UserData, UserId}
 import com.waz.service.{IntegrationsService, NetworkModeService}
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -76,7 +75,7 @@ class GroupParticipantsFragment extends FragmentHelper {
   }
 
   private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.participants, Some(7))) { adapter =>
-    new FutureEventStream[UserId, Option[UserData]](adapter.onClick, participantsController.getUser).onUi {
+    adapter.onClick.mapAsync(participantsController.getUser).onUi {
       case Some(user) => (user.providerId, user.integrationId) match {
         case (Some(pId), Some(iId)) =>
           for {

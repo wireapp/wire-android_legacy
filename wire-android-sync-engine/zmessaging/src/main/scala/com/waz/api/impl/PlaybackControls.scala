@@ -29,7 +29,7 @@ class PlaybackControls(key: MediaKey, content: Content, durationSource: ZMessagi
   private var playhead = Duration.ZERO
   private var duration = Duration.ZERO
 
-  addLoader(zms => Signal(zms.global.recordingAndPlayback.isPlaying(key), zms.global.recordingAndPlayback.playhead(key), durationSource(zms))) {
+  addLoader(zms => Signal.zip(zms.global.recordingAndPlayback.isPlaying(key), zms.global.recordingAndPlayback.playhead(key), durationSource(zms))) {
     case (nextPlaying, nextPlayhead, nextDuration) =>
       if (nextPlaying != playing || nextPlayhead != playhead || nextDuration != duration) {
         playing = nextPlaying

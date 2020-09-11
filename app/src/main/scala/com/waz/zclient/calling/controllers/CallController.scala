@@ -63,7 +63,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val callingZmsOpt =
     for {
       acc <- inject[GlobalModule].calling.activeAccount
-      zms <- acc.fold(Signal.const(Option.empty[ZMessaging]))(id => Signal.future(ZMessaging.currentAccounts.getZms(id)))
+      zms <- acc.fold(Signal.const(Option.empty[ZMessaging]))(id => Signal.from(ZMessaging.currentAccounts.getZms(id)))
     } yield zms
 
   val callingZms = callingZmsOpt.collect { case Some(z) => z }
@@ -80,7 +80,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   val isCallActive      = currentCallOpt.map(_.isDefined)
   val isCallActiveDelay = isCallActive.flatMap {
-    case true  => Signal.future(CancellableFuture.delay(300.millis).future.map(_ => true)).orElse(Signal.const(false))
+    case true  => Signal.from(CancellableFuture.delay(300.millis).future.map(_ => true)).orElse(Signal.const(false))
     case false => Signal.const(false)
   }
 
@@ -155,7 +155,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     case (cs, _) => cs.continueDegradedCall()
   }
 
-  val captureDevices = flowManager.flatMap(fm => Signal.future(fm.getVideoCaptureDevices))
+  val captureDevices = flowManager.flatMap(fm => Signal.from(fm.getVideoCaptureDevices))
 
   //TODO when I have a proper field for front camera, make sure it's always set as the first one
   val currentCaptureDeviceIndex = Signal(0)
@@ -191,7 +191,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val conversationName: Signal[Name] = zmsConvId.flatMap { case (z, cId) => z.conversations.conversationName(cId) }
   val conversationMembers: Signal[Map[UserId, ConversationRole]] = zmsConvId.flatMap { case (z, cId) => z.conversations.convMembers(cId) }
 
-  private lazy val otherUser = Signal(isGroupCall, userStorage, otherParticipants.map(_.toSeq.headOption)).flatMap {
+  private lazy val otherUser = Signal.zip(isGroupCall, userStorage, otherParticipants.map(_.toSeq.headOption)).flatMap {
     case (false, usersStorage, Some(participant)) =>
       // 1:1 conversation has the same id as the other user, so we can access it directly
       usersStorage.optSignal(participant.userId)
@@ -408,7 +408,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
 
   def stateMessageText(participant: Participant): Signal[Option[String]] = {
-    Signal(callState, cameraFailed, videoReceiveStates.map(_.getOrElse(participant, Unknown))).map { vs =>
+    Signal.zip(callState, cameraFailed, videoReceiveStates.map(_.getOrElse(participant, Unknown))).map { vs =>
       verbose(l"Message Text: (callstate: ${vs._1}, cameraFailed: ${vs._2}, videoState: ${vs._3}")
       (vs match {
         case (SelfCalling,   true, _)                  => Some(R.string.calling__self_preview_unavailable_long)

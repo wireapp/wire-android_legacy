@@ -117,7 +117,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     case None => Signal.empty
     case Some(tId) =>
 
-      val changesStream = EventStream.union[Seq[ContentChange[UserId, UserData]]](
+      val changesStream = EventStream.zip[Seq[ContentChange[UserId, UserData]]](
         userStorage.onAdded.map(_.map(d => Added(d.id, d))),
         userStorage.onUpdated.map(_.map { case (prv, curr) => Updated(prv.id, prv, curr) }),
         userStorage.onDeleted.map(_.map(Removed(_)))
@@ -163,7 +163,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     lazy val allChanges = {
       val ev1 = convMemberStorage.onUpdated.map(_.map(_._2.userId))
       val ev2 = convMemberStorage.onDeleted.map(_.map(_._1))
-      EventStream.union(ev1, ev2)
+      EventStream.zip(ev1, ev2)
     }
 
     teamId match {

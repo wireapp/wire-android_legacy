@@ -133,7 +133,7 @@ object WireApplication extends DerivedLogTag {
     //SE Services
     bind [GlobalModule]                   to ZMessaging.currentGlobal
     bind [AccountsService]                to ZMessaging.currentAccounts
-    bind [Signal[AccountsService]]        to Signal.future(ZMessaging.accountsService) //use for early-initialised classes
+    bind [Signal[AccountsService]]        to Signal.from(ZMessaging.accountsService) //use for early-initialised classes
     bind [BackendConfig]                  to inject[GlobalModule].backend
     bind [AccountStorage]                 to inject[GlobalModule].accountsStorage
     bind [TeamsStorage]                   to inject[GlobalModule].teamsStorage

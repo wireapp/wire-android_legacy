@@ -215,7 +215,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
 
     controller.conversationName.onUi(name.setText(_))
 
-    Signal(collectionAdapter.adapterState, controller.focusedItem, controller.contentSearchQuery).on(Threading.Ui) {
+    Signal.zip(collectionAdapter.adapterState, controller.focusedItem, controller.contentSearchQuery).on(Threading.Ui) {
       case (AdapterState(_, _, _), Some(messageData), _) if messageData.msgType == Message.Type.IMAGE_ASSET =>
         setNavigationIconVisibility(true)
         timestamp.setVisibility(View.VISIBLE)
@@ -242,7 +242,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
       case _ =>
     }
 
-    Signal(searchAdapter.cursor.flatMap(_.countSignal).orElse(Signal(-1)), controller.contentSearchQuery).on(Threading.Ui) {
+    Signal.zip(searchAdapter.cursor.flatMap(_.countSignal).orElse(Signal(-1)), controller.contentSearchQuery).onUi {
       case (0, query) if query.originalString.nonEmpty =>
         noSearchResultsText.setVisibility(View.VISIBLE)
       case _ =>

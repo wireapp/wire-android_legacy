@@ -78,7 +78,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   private lazy val giphySearchResults = for {
     giphyService <- giphyService
     term <- searchTerm
-    searchResults <- Signal.future(
+    searchResults <- Signal.from(
       if (TextUtils.isEmpty(term)) giphyService.trending()
       else giphyService.search(term)
     )
@@ -214,13 +214,13 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       })
     }
 
-    EventStream.union(
+    EventStream.zip(
       searchTerm.onChanged.map(_ => true),
       selectedGif.onChanged.filter(_.isDefined).map(_ => true),
       giphySearchResults.onChanged.map(_ => false),
       isPreviewShown.onChanged.filter(_ == false),
       isGifShowing.onChanged.map(!_)
-    ) onUi {
+    ).onUi {
       case true  => spinnerController.showSpinner(LoadingIndicatorView.InfiniteLoadingBar)
       case false => spinnerController.hideSpinner()
     }

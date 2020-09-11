@@ -60,7 +60,7 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
               Signal.const(Option.empty[ConversationRole])
 
           val adapter = new UnconnectedParticipantAdapter(user.id, isGuest, isExternal, isDarkTheme, isGroup, isWireless, user.name, formattedHandle)
-          subs += Signal(timerText, participantRole, selfRole).onUi {
+          subs += Signal.zip(timerText, participantRole, selfRole).onUi {
             case (tt, pRole, sRole) => adapter.set(tt, pRole, sRole)
           }
           subs += adapter.onParticipantRoleChange.on(Threading.Background)(participantsController.setRole(user.id, _))

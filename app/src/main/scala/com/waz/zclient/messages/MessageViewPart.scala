@@ -208,7 +208,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
   private val zms = inject[Signal[ZMessaging]]
   private val userId = Signal[UserId]()
 
-  private val user = Signal(zms, userId).flatMap {
+  private val user = Signal.zip(zms, userId).flatMap {
     case (z, id) => z.usersStorage.signal(id)
   }
 

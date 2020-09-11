@@ -241,7 +241,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   phone.onUi(view.setPhone)
   email.onUi(view.setEmail)
 
-  Signal(isTeam, accounts.isActiveAccountSSO)
+  Signal.zip(isTeam, accounts.isActiveAccountSSO)
     .map { case (team, sso) => team || sso }
     .onUi(t => view.setDeleteAccountEnabled(!t))
 
@@ -365,7 +365,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   }
 
   view.onBackupClick.onUi { _ =>
-    Signal(accounts.isActiveAccountSSO, email).head.map {
+    Signal.zip(accounts.isActiveAccountSSO, email).head.map {
       case (true, _)        => navigator.goTo(BackupExportKey())
       case (false, Some(_)) => navigator.goTo(BackupExportKey())
       case _ =>

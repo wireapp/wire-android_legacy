@@ -125,10 +125,10 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
     }
 
   val enteredTextEmpty = enteredText.map(_._1.isEmpty).orElse(Signal const true)
-  val sendButtonVisible = Signal(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage) map {
+  val sendButtonVisible = Signal.zip(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage).map {
     case (emoji, empty, enabled, editing) => enabled && (emoji || !empty) && !editing
   }
-  val ephemeralBtnVisible = Signal(isEditingMessage, convIsActive).flatMap {
+  val ephemeralBtnVisible = Signal.zip(isEditingMessage, convIsActive).flatMap {
     case (false, true) =>
       isEphemeral.flatMap {
         case true => Signal.const(true)

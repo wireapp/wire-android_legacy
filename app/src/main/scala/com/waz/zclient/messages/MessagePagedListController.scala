@@ -70,22 +70,22 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
   }
 
   private def cursorRefreshEvent(zms: ZMessaging, convId: ConvId): EventStream[_] = {
-    EventStream.union(
+    EventStream.zip(
       zms.messagesStorage.onMessagesDeletedInConversation.map(_.contains(convId)),
       zms.messagesStorage.onAdded.map(_.exists(_.convId == convId)),
       zms.messagesStorage.onUpdated.map(_.exists { case (prev, updated) =>
         updated.convId == convId &&  !MessagesPagedListAdapter.areMessageContentsTheSame(prev, updated)
       }),
-      new FutureEventStream(zms.reactionsStorage.onChanged.map(_.map(_.message)), { msgs: Seq[MessageId] =>
+      zms.reactionsStorage.onChanged.map(_.map(_.message)).mapAsync { msgs: Seq[MessageId] =>
         zms.messagesStorage.getMessages(msgs: _*).map(_.flatten.exists(_.convId == convId))
-      })
+      }
     ).filter(identity)
   }
 
   lazy val pagedListData: Signal[(MessageAdapterData, PagedListWrapper[MessageAndLikes], Option[MessageId])] = for {
     z                       <- zms
     (cId, cTeam, teamOnly)  <- convController.currentConv.map(c => (c.id, c.team, c.isTeamOnly))
-    isGroup                 <- Signal.future(z.conversations.isGroupConversation(cId))
+    isGroup                 <- Signal.from(z.conversations.isGroupConversation(cId))
     canHaveLink             = isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
     cursor                  <- RefreshingSignal(loadCursor(cId), cursorRefreshEvent(z, cId))
     _ = verbose(l"cursor changed")

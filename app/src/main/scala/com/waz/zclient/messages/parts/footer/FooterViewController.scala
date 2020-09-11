@@ -82,7 +82,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
       untilTimeout = Instant.now.until(time.plus(selection.ActivityTimeout)).asScala
       active <-
         if (msgId != activeId || lTime.isAfter(time) || untilTimeout <= Duration.Zero) Signal.const(false)
-        else Signal.future(CancellableFuture.delayed(untilTimeout)(false)).orElse(Signal const true) // signal `true` switching to `false` on timeout
+        else Signal.from(CancellableFuture.delayed(untilTimeout)(false)).orElse(Signal.const(true)) // signal `true` switching to `false` on timeout
     } yield active
 
   val showTimestamp: Signal[Boolean] = for {

@@ -69,7 +69,7 @@ class SyncSchedulerImpl(accountId:   UserId,
 
   private val waitEntries  = new mutable.HashMap[SyncId, WaitEntry]
   private val waiting      = Signal(Map.empty[SyncId, Long])
-  private val runningCount = Signal(executionsCount, waiting.map(_.size)) map { case (r, w) => r - w }
+  private val runningCount = Signal.zip(executionsCount, waiting.map(_.size)).map { case (r, w) => r - w }
 
   content.syncStorage { storage =>
     storage.getJobs.toSeq.sortBy(_.timestamp) foreach execute

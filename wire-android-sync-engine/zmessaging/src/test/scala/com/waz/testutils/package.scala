@@ -94,7 +94,7 @@ package object testutils {
         override def onUnwire(): Unit = a.removeUpdateListener(this)
       }
 
-      def flatSignal[B](f: A => Signal[B]): Signal[B] = new FlatMapSignal(signal(identity), f)
+      def flatSignal[B](f: A => Signal[B]): Signal[B] = signal(identity).flatMap(f)
     }
 
     implicit class SignalToSink[A](val signal: Signal[A]) extends AnyVal {

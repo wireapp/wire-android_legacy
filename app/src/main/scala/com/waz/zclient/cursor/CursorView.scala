@@ -112,7 +112,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   val lineCount = Signal(getInt(R.integer.cursor_starting_lines))
 
-  Signal(controller.typingIndicatorVisible, replyController.currentReplyContent)
+  Signal.zip(controller.typingIndicatorVisible, replyController.currentReplyContent)
     .map { case (typing, currentReply) => !typing && currentReply.isEmpty  }
     .onUi(topBorder.setVisible)
 
@@ -120,10 +120,10 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   private val cursorText: SourceSignal[String] = Signal(cursorEditText.getEditableText.toString)
   private val cursorSelection: SourceSignal[(Int, Int)] = Signal((cursorEditText.getSelectionStart, cursorEditText.getSelectionEnd))
 
-  val mentionQuery = Signal(cursorText, cursorSelection).collect {
+  val mentionQuery = Signal.zip(cursorText, cursorSelection).collect {
     case (text, (_, sEnd)) if sEnd <= text.length => MentionUtils.mentionQuery(text, sEnd)
   }
-  val selectionHasMention = Signal(cursorText, cursorSelection).collect {
+  val selectionHasMention = Signal.zip(cursorText, cursorSelection).collect {
     case (text, (_, sEnd)) if sEnd <= text.length =>
       MentionUtils.mentionMatch(text, sEnd).exists { m =>
         CursorMentionSpan.hasMentionSpan(cursorEditText.getEditableText, m.start, sEnd)

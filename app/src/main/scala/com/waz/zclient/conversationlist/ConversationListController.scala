@@ -318,14 +318,14 @@ object ConversationListController {
         convId -> otherUsers.sortBy(_.str).take(4)
       }
 
-    val updatedEntries = EventStream.union(
+    val updatedEntries = EventStream.zip(
       zms.membersStorage.onAdded.map(_.map(_.convId).toSet),
       zms.membersStorage.onDeleted.map(_.map(_._2).toSet)
-    ) mapAsync { convs =>
-      zms.membersStorage.getByConvs(convs) map entries
+    ).mapAsync { convs =>
+      zms.membersStorage.getByConvs(convs).map(entries)
     }
 
-    val members = new AggregatingSignal[Map[ConvId, Seq[UserId]], Map[ConvId, Seq[UserId]]](updatedEntries, zms.membersStorage.list() map entries, _ ++ _)
+    val members = new AggregatingSignal[Map[ConvId, Seq[UserId]], Map[ConvId, Seq[UserId]]](updatedEntries, zms.membersStorage.list().map(entries), _ ++ _)
 
     def apply(conv: ConvId) : Signal[Seq[UserId]] = members.map(_.getOrElse(conv, Seq.empty[UserId]))
   }
@@ -371,7 +371,8 @@ object ConversationListController {
       } yield missed
 
     def apply(conv: ConvId): Signal[LastMsgs] =
-      Signal(lastMessageSignal(conv), lastMissedCallSignal(conv)).map(LastMsgs.tupled)
+      Signal.zip(lastMessageSignal(conv), lastMissedCallSignal(conv))
+            .map(LastMsgs.tupled)
 
     private def lastMessageSignal(conv: ConvId): Signal[Option[MessageData]] = cache.getOrElseUpdate(conv,
       new AggregatingSignal[MessageData, Option[MessageData]](messageUpdateEvents(conv), lastMessage(conv), {

@@ -91,7 +91,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
       CustomBackendLoginFragment.TAG
     )
 
-    Signal(accountsService.zmsInstances.map(_.nonEmpty), attachedFragment).map {
+    Signal.zip(accountsService.zmsInstances.map(_.nonEmpty), attachedFragment).map {
       case (false, _)                                          => View.GONE
       case (true, fragment) if fragmentTags.contains(fragment) => View.GONE
       case _                                                   => View.VISIBLE

@@ -89,7 +89,7 @@ class SingleParticipantFragment extends FragmentHelper {
   }
 
   protected lazy val readReceipts: Signal[Option[String]] =
-    Signal(participantsController.isGroup, userAccountsController.isTeam, userAccountsController.readReceiptsEnabled).map {
+    Signal.zip(participantsController.isGroup, userAccountsController.isTeam, userAccountsController.readReceiptsEnabled).map {
       case (false, true, true)  => Some(getString(R.string.read_receipts_info_title_enabled))
       case (false, true, false) => Some(getString(R.string.read_receipts_info_title_disabled))
       case _                    => None
@@ -155,7 +155,7 @@ class SingleParticipantFragment extends FragmentHelper {
           case None        => Seq.empty
         }
 
-        subs += Signal(
+        subs += Signal.zip(
           participantsController.otherParticipant.map(_.fields),
           timerText,
           readReceipts,

@@ -40,7 +40,7 @@ class VersionBlacklistService(metadata: MetaDataService, prefs: GlobalPreference
   val lastCheckedVersion = prefs.preference[Int](LastCheckedVersion)
   val upToDatePref       = prefs.preference[Boolean](VersionUpToDate)
 
-  val upToDate = Signal(lastCheckedVersion.signal, upToDatePref.signal) map {
+  val upToDate = Signal.zip(lastCheckedVersion.signal, upToDatePref.signal) map {
     case (lastVersion, isUpToDate) => lastVersion != metadata.appVersion || isUpToDate
   }
 

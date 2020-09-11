@@ -86,7 +86,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  Signal(
+  Signal.zip(
     controller.isGroupCall,
     controller.controlsVisible
   ).onUi {
@@ -113,7 +113,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  Signal(controller.controlsVisible, shouldShowInfo, controller.isCallIncoming).onUi {
+  Signal.zip(controller.controlsVisible, shouldShowInfo, controller.isCallIncoming).onUi {
     case (_, true, true) |
          (false, true, _) => videoCallInfo.fadeIn()
     case _                => videoCallInfo.fadeOut()
@@ -138,7 +138,7 @@ class SelfVideoView(context: Context, participant: Participant)
     })
   }(Threading.Ui)
 
-  override lazy val shouldShowInfo = Signal(pausedTextVisible, controller.isMuted).map {
+  override lazy val shouldShowInfo = Signal.zip(pausedTextVisible, controller.isMuted).map {
     case (paused, muted) => paused || muted
   }
 }
@@ -170,14 +170,13 @@ class CallingFragment extends FragmentHelper {
   private var viewMap = Map[Participant, UserVideoView]()
 
   private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
-    Signal(
+    Signal.zip(
       controller.allVideoReceiveStates,
       controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)),
       controller.isVideoCall,
       controller.isCallIncoming,
       controller.participantInfos()
-    )
-      .onUi { case (vrs, selfParticipant, videoCall, incoming, infos) =>
+    ).onUi { case (vrs, selfParticipant, videoCall, incoming, infos) =>
 
         def createView(participant: Participant): UserVideoView = returning {
           if (participant == selfParticipant) new SelfVideoView(getContext, participant)

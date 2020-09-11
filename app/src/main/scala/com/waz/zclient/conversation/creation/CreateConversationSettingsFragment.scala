@@ -66,7 +66,7 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
       if (flag) getString(R.string.create_conv_options_subtitle_on)
       else getString(R.string.create_conv_options_subtitle_off)
 
-    Signal(createConversationController.teamOnly, createConversationController.readReceipts).onUi {
+    Signal.zip(createConversationController.teamOnly, createConversationController.readReceipts).onUi {
       case (teamOnly, readReceipts) =>
         vh.foreach(
           _.setText(s"${getString(R.string.create_conv_options_subtitle_allow_guests)}: ${onOffStr(!teamOnly)}, ${getString(R.string.create_conv_options_subtitle_read_receipts)}: ${onOffStr(readReceipts)}")
@@ -79,19 +79,19 @@ class CreateConversationSettingsFragment extends Fragment with FragmentHelper {
 
 
   private lazy val guestsToggleRow = returning(view[View](R.id.guest_toggle_row)) { vh =>
-    Signal(optionsVisible, userAccountsController.isTeam).onUi { case (opt, vis) => vh.foreach(_.setVisible(opt && vis)) }
+    Signal.zip(optionsVisible, userAccountsController.isTeam).onUi { case (opt, vis) => vh.foreach(_.setVisible(opt && vis)) }
   }
 
   private lazy val guestsToggleDesc = returning(view[View](R.id.guest_toggle_description)) { vh =>
-    Signal(optionsVisible, userAccountsController.isTeam).onUi { case (opt, vis) => vh.foreach(_.setVisible(opt && vis)) }
+    Signal.zip(optionsVisible, userAccountsController.isTeam).onUi { case (opt, vis) => vh.foreach(_.setVisible(opt && vis)) }
   }
 
   private lazy val readReceiptsToggleRow = returning(view[View](R.id.read_receipts_toggle_row)) { vh =>
-    Signal(optionsVisible, userAccountsController.isTeam).onUi { case (opt, vis) => vh.foreach(_.setVisible(opt && vis)) }
+    Signal.zip(optionsVisible, userAccountsController.isTeam).onUi { case (opt, vis) => vh.foreach(_.setVisible(opt && vis)) }
   }
 
   private lazy val readReceiptsToggleDesc = returning(view[View](R.id.read_receipts_toggle_description)) { vh =>
-    Signal(optionsVisible, userAccountsController.isTeam).onUi { case (opt, vis) => vh.foreach(_.setVisible(opt && vis)) }
+    Signal.zip(optionsVisible, userAccountsController.isTeam).onUi { case (opt, vis) => vh.foreach(_.setVisible(opt && vis)) }
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =

@@ -77,7 +77,7 @@ trait ActionableAssetPart extends AssetPart {
 
   val isPlaying = Signal(false)
 
-  Signal(assetStatus.map(_._1), isPlaying).onUi { case (s, p) =>
+  Signal.zip(assetStatus.map(_._1), isPlaying).onUi { case (s, p) =>
     assetActionButton.setStatus(s, "", playing = p)
   }
 

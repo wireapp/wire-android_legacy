@@ -261,12 +261,12 @@ class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: Event
   userPrefs.flatMap(_.preference(Sounds).signal).onUi{ view.setSounds }
   userPrefs.flatMap(_.preference(RingTone).signal).onUi{ view.setRingtone }
 
-  Signal(userPrefs.flatMap(_.preference(TextTone).signal), channelTextTone).map {
+  Signal.zip(userPrefs.flatMap(_.preference(TextTone).signal), channelTextTone).map {
     case (_, Some(uri)) if Build.VERSION.SDK_INT >= Build.VERSION_CODES.O => uri.toString
     case (uri, _) => uri
   }.onUi(view.setTextTone)
 
-  Signal(userPrefs.flatMap(_.preference(PingTone).signal), channelPingTone).map {
+  Signal.zip(userPrefs.flatMap(_.preference(PingTone).signal), channelPingTone).map {
     case (_, Some(uri)) if Build.VERSION.SDK_INT >= Build.VERSION_CODES.O => uri.toString
     case (uri, _) => uri
   }.onUi(view.setPingTone)
