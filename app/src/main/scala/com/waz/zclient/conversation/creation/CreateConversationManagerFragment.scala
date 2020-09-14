@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.conversation.creation
 
-import android.app.FragmentManager
+import androidx.fragment.app.FragmentManager
 import android.os.Bundle
 import androidx.fragment.app.FragmentManager.OnBackStackChangedListener
 import android.view.{LayoutInflater, View, ViewGroup}

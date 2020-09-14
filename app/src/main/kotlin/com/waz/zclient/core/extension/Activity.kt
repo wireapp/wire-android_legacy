@@ -24,8 +24,11 @@ fun Activity.getDeviceLocale() =
     resources.configuration.locales.get(0)
 
 fun Activity.hideKeyboard() {
-    val inputMethodManager = this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-    inputMethodManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
+    val cf = currentFocus
+    if (cf != null) {
+        val inputMethodManager = this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(cf.windowToken, 0)
+    }
 }
 
 fun Activity.showKeyboard() {

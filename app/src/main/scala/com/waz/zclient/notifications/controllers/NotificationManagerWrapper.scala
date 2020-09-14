@@ -403,7 +403,7 @@ object NotificationManagerWrapper {
 
     private def createTone(rawId: Int, name: String, toneFile: File) = {
       val uri   = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
-      val query = s"${MediaStore.MediaColumns.DATA} LIKE '%$name%'"
+      val query = s"_data LIKE '%$name%'"
       (for {
         _      <- Try(IoUtils.copy(cxt.getResources.openRawResource(rawId), toneFile))
         cursor <- getCursor(uri, query)
@@ -420,7 +420,7 @@ object NotificationManagerWrapper {
     }
 
     private def createContentValues(name: String, toneFile: File) = returning(new ContentValues) { values =>
-      values.put(MediaStore.MediaColumns.DATA, toneFile.getAbsolutePath)
+      values.put("_data", toneFile.getAbsolutePath)
       values.put(MediaStore.MediaColumns.TITLE, name)
       values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg")
       values.put(MediaStore.MediaColumns.SIZE, toneFile.length.toInt.asInstanceOf[Integer])

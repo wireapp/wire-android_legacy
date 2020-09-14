@@ -29,13 +29,13 @@ import com.waz.zclient.BuildConfig
  */
 class MarkdownLinkSpan(url: String, val onClick: (String) -> Unit): URLSpan(url) {
 
-    override fun onClick(widget: View?) {
+    override fun onClick(widget: View) {
         if (url.startsWith(BuildConfig.CUSTOM_URL_SCHEME)) onClick(url)
         else onClick(URLUtil.guessUrl(url))
     }
 
-    override fun updateDrawState(ds: TextPaint?) {
+    override fun updateDrawState(ds: TextPaint) {
         super.updateDrawState(ds)
-        ds?.isUnderlineText = false
+        ds.isUnderlineText = false
     }
 }

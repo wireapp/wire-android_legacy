@@ -34,14 +34,12 @@ class ListPrefixSpan(
     val color: Int
 ) : ReplacementSpan(), ParagraphStyle {
 
-    override fun getSize(paint: Paint?, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
-        if (fm == null || paint == null) return (end - start) * digitWidth
+    override fun getSize(paint: Paint, text: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
+        if (fm == null) return (end - start) * digitWidth
         return paint.getFontMetricsInt(fm)
     }
 
-    override fun draw(canvas: Canvas?, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint?) {
-        if (canvas == null || text == null || paint == null) return
-
+    override fun draw(canvas: Canvas, text: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
         // ensure this span is attached to the text
         val spanned = text as Spanned
         if (!(spanned.getSpanStart(this) == start && spanned.getSpanEnd(this) == end)) return
@@ -61,7 +59,7 @@ class ListPrefixSpan(
         val oldColor = paint.color
         paint.color = color
 
-        for (i in 0 until prefix.length) {
+        for (i in prefix.indices) {
             val charWidth = paint.measureText(prefix, i, i + 1)
             val halfFreeSpace = (digitWidth - charWidth) / 2f
             val charOffset = (i * digitWidth) + halfFreeSpace
