@@ -17,20 +17,14 @@
  */
 package com.waz.zclient.paintcode;
 
-import android.content.res.Resources;
+import android.graphics.Paint;
+import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.RectF;
-import android.graphics.drawable.Drawable;
-
-import com.waz.zclient.R;
-import com.waz.zclient.WireApplication;
-import com.waz.zclient.utils.ContextUtils;
-
 import java.util.Stack;
+
 
 
 /**
@@ -43,6 +37,7 @@ import java.util.Stack;
  * @author Wire Design Team
  */
 public class WireStyleKit {
+
 
     // Resizing Behavior
     public enum ResizingBehavior {
@@ -837,6 +832,80 @@ public class WireStyleKit {
         paint.reset();
         paint.setFlags(Paint.ANTI_ALIAS_FLAG);
         bezierPath.setFillType(Path.FillType.EVEN_ODD);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(color);
+        canvas.drawPath(bezierPath, paint);
+
+        canvas.restore();
+    }
+
+    private static class CacheForMute {
+        private static Paint paint = new Paint();
+        private static RectF originalFrame = new RectF(0f, 0f, 64f, 64f);
+        private static RectF resizedFrame = new RectF();
+        private static RectF bezierRect = new RectF();
+        private static Path bezierPath = new Path();
+    }
+
+    public static void drawMute(Canvas canvas, int color) {
+        WireStyleKit.drawMute(canvas, new RectF(0f, 0f, 64f, 64f), ResizingBehavior.AspectFit, color);
+    }
+
+    public static void drawMute(Canvas canvas, RectF targetFrame, ResizingBehavior resizing, int color) {
+        // General Declarations
+        Paint paint = CacheForMute.paint;
+
+        // Resize to Target Frame
+        canvas.save();
+        RectF resizedFrame = CacheForMute.resizedFrame;
+        WireStyleKit.resizingBehaviorApply(resizing, CacheForMute.originalFrame, targetFrame, resizedFrame);
+        canvas.translate(resizedFrame.left, resizedFrame.top);
+        canvas.scale(resizedFrame.width() / 64f, resizedFrame.height() / 64f);
+
+        // Bezier
+        RectF bezierRect = CacheForMute.bezierRect;
+        bezierRect.set(0f, 0f, 63f, 64f);
+        Path bezierPath = CacheForMute.bezierPath;
+        bezierPath.reset();
+        bezierPath.moveTo(12.66f, 57.93f);
+        bezierPath.cubicTo(17.94f, 61.74f, 24.45f, 64f, 31.5f, 64f);
+        bezierPath.cubicTo(40.97f, 64f, 49.45f, 59.94f, 55.3f, 53.5f);
+        bezierPath.lineTo(49.64f, 47.84f);
+        bezierPath.lineTo(49.64f, 47.84f);
+        bezierPath.cubicTo(45.25f, 52.83f, 38.76f, 56f, 31.5f, 56f);
+        bezierPath.cubicTo(27.24f, 56f, 23.24f, 54.91f, 19.78f, 53f);
+        bezierPath.lineTo(12.66f, 57.93f);
+        bezierPath.lineTo(12.66f, 57.93f);
+        bezierPath.lineTo(12.66f, 57.93f);
+        bezierPath.close();
+        bezierPath.moveTo(47.39f, 33.84f);
+        bezierPath.cubicTo(46.58f, 41.76f, 39.79f, 48f, 31.5f, 48f);
+        bezierPath.cubicTo(30.17f, 48f, 28.88f, 47.84f, 27.65f, 47.54f);
+        bezierPath.lineTo(47.39f, 33.84f);
+        bezierPath.lineTo(47.39f, 33.84f);
+        bezierPath.lineTo(47.39f, 33.84f);
+        bezierPath.close();
+        bezierPath.moveTo(47.47f, 16.06f);
+        bezierPath.lineTo(47.47f, 15.74f);
+        bezierPath.cubicTo(47.47f, 7.08f, 40.33f, 0f, 31.5f, 0f);
+        bezierPath.cubicTo(22.67f, 0f, 15.53f, 7.08f, 15.53f, 15.74f);
+        bezierPath.lineTo(15.53f, 32.27f);
+        bezierPath.cubicTo(15.53f, 34.12f, 15.86f, 35.91f, 16.47f, 37.57f);
+        bezierPath.lineTo(3.28f, 46.71f);
+        bezierPath.lineTo(0f, 48.99f);
+        bezierPath.lineTo(4.54f, 55.57f);
+        bezierPath.lineTo(7.83f, 53.29f);
+        bezierPath.lineTo(59.72f, 17.29f);
+        bezierPath.lineTo(63f, 15.01f);
+        bezierPath.lineTo(58.46f, 8.43f);
+        bezierPath.lineTo(55.17f, 10.71f);
+        bezierPath.lineTo(47.47f, 16.06f);
+        bezierPath.lineTo(47.47f, 16.06f);
+        bezierPath.lineTo(47.47f, 16.06f);
+        bezierPath.close();
+
+        paint.reset();
+        paint.setFlags(Paint.ANTI_ALIAS_FLAG);
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(color);
         canvas.drawPath(bezierPath, paint);
@@ -6454,6 +6523,14 @@ public class WireStyleKit {
         return imageOfSpeaker;
     }
 
+    public static Bitmap imageOfMute(int color) {
+        Bitmap imageOfMute = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(imageOfMute);
+        WireStyleKit.drawMute(canvas, color);
+
+        return imageOfMute;
+    }
+
     public static Bitmap imageOfMissedCall(int color) {
         Bitmap imageOfMissedCall = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(imageOfMissedCall);
@@ -6867,9 +6944,9 @@ public class WireStyleKit {
         float newWidth = Math.abs(rect.width() * scale);
         float newHeight = Math.abs(rect.height() * scale);
         result.set(target.centerX() - newWidth / 2,
-            target.centerY() - newHeight / 2,
-            target.centerX() + newWidth / 2,
-            target.centerY() + newHeight / 2);
+                target.centerY() - newHeight / 2,
+                target.centerX() + newWidth / 2,
+                target.centerY() + newHeight / 2);
     }
 
 
