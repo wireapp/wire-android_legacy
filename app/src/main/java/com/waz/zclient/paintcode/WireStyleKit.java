@@ -844,51 +844,6 @@ public class WireStyleKit {
         canvas.restore();
     }
 
-    public static void drawMuteLight(Canvas canvas, RectF targetFrame, ResizingBehavior resizing, int color) {
-        drawBitmap(canvas, targetFrame, color, R.attr.callMutedIcon, lightTheme());
-    }
-
-    public static void drawMuteDark(Canvas canvas, RectF targetFrame, ResizingBehavior resizing, int color) {
-        drawBitmap(canvas, targetFrame, color, R.attr.callMutedIcon, darkTheme());
-    }
-
-    public static void drawUnmuteLight(Canvas canvas, RectF targetFrame, ResizingBehavior resizing, int color) {
-        drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, lightTheme());
-    }
-
-    public static void drawUnmuteDark(Canvas canvas, RectF targetFrame, ResizingBehavior resizing, int color) {
-        drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, darkTheme());
-    }
-
-    private static void drawBitmap(Canvas canvas, RectF targetFrame, int color, int resourceId, Resources.Theme theme) {
-        Paint paint = new Paint();
-
-        Drawable drawable = ContextUtils.getStyledDrawable(resourceId, theme, WireApplication.APP_INSTANCE()).get();
-
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bitmap);
-        drawable.setBounds(0, 0, c.getWidth(), c.getHeight());
-        drawable.draw(c);
-
-        paint.reset();
-        paint.setFlags(Paint.ANTI_ALIAS_FLAG);
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(color);
-        canvas.drawBitmap(bitmap, targetFrame.left, targetFrame.top, paint);
-    }
-
-    public static Resources.Theme lightTheme() {
-        Resources.Theme lightTheme = WireApplication.APP_INSTANCE().getResources().newTheme();
-        lightTheme.applyStyle(R.style.Theme_Light, true);
-        return lightTheme;
-    }
-
-    public static Resources.Theme darkTheme() {
-        Resources.Theme darkTheme = WireApplication.APP_INSTANCE().getResources().newTheme();
-        darkTheme.applyStyle(R.style.Theme_Dark, true);
-        return darkTheme;
-    }
-
     private static class CacheForMissedCall {
         private static Paint paint = new Paint();
         private static RectF originalFrame = new RectF(0f, 0f, 64f, 64f);
