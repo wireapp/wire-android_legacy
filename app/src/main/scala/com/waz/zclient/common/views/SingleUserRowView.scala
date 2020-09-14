@@ -83,34 +83,34 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private val videoEnabled = Signal(false)
   private val screenShareEnabled = Signal(false)
 
-  Signal(videoEnabled, screenShareEnabled).map { case (v, s) => v || s }.onUi(videoIndicator.setVisible)
-  Signal(chosenCurrentTheme, videoEnabled, screenShareEnabled).onUi {
-    case (Theme.Light, true, _) => videoIndicator.setImageResource(R.drawable.ic_video_light_theme)
+  Signal.zip(videoEnabled, screenShareEnabled).map { case (v, s) => v || s }.onUi(videoIndicator.setVisible)
+  Signal.zip(chosenCurrentTheme, videoEnabled, screenShareEnabled).onUi {
+    case (Theme.Light, true, _)     => videoIndicator.setImageResource(R.drawable.ic_video_light_theme)
     case (Theme.Light, false, true) => videoIndicator.setImageResource(R.drawable.ic_screenshare_light_theme)
-    case (Theme.Dark, true, _) => videoIndicator.setImageResource(R.drawable.ic_video_dark_theme)
-    case (Theme.Dark, false, true) => videoIndicator.setImageResource(R.drawable.ic_screenshare_dark_theme)
+    case (Theme.Dark, true, _)      => videoIndicator.setImageResource(R.drawable.ic_video_dark_theme)
+    case (Theme.Dark, false, true)  => videoIndicator.setImageResource(R.drawable.ic_screenshare_dark_theme)
     case _ =>
   }
 
   private val isMuted = Signal(false)
   audioIndicator.setVisible(true)
-  Signal(chosenCurrentTheme, isMuted).onUi {
-    case (Theme.Light, true) => audioIndicator.setImageResource(R.drawable.ic_muted_light_theme)
+  Signal.zip(chosenCurrentTheme, isMuted).onUi {
+    case (Theme.Light, true)  => audioIndicator.setImageResource(R.drawable.ic_muted_light_theme)
     case (Theme.Light, false) => audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
-    case (Theme.Dark, true) => audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
-    case (Theme.Dark, false) => audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
+    case (Theme.Dark, true)   => audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
+    case (Theme.Dark, false)  => audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
     case _ =>
   }
 
   private val isGuest = Signal(false)
   private val isPartner = Signal(false)
 
-  Signal(isGuest, isPartner).map { case (v, s) => v || s }.onUi(guestPartnerIndicator.setVisible)
-  Signal(chosenCurrentTheme, isGuest, isPartner).onUi {
-    case (Theme.Light, true, _) => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_light_theme)
+  Signal.zip(isGuest, isPartner).map { case (v, s) => v || s }.onUi(guestPartnerIndicator.setVisible)
+  Signal.zip(chosenCurrentTheme, isGuest, isPartner).onUi {
+    case (Theme.Light, true, _)     => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_light_theme)
     case (Theme.Light, false, true) => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_light_theme)
-    case (Theme.Dark, true, _) => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_dark_theme)
-    case (Theme.Dark, false, true) => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_dark_theme)
+    case (Theme.Dark, true, _)      => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_dark_theme)
+    case (Theme.Dark, false, true)  => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_dark_theme)
     case _ =>
   }
 

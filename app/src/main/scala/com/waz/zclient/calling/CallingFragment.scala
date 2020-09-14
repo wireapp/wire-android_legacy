@@ -86,13 +86,10 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  Signal.zip(
-    controller.isGroupCall,
-    controller.controlsVisible
-  ).onUi {
-    case (true, false) => participantInfoCardView.setVisibility(View.VISIBLE)
-    case _ => participantInfoCardView.setVisibility(View.GONE)
-  }
+  Signal.zip(controller.isGroupCall, controller.controlsVisible).map {
+    case (true, false) => View.VISIBLE
+    case _             => View.GONE
+  }.onUi(participantInfoCardView.setVisibility)
 
   protected def registerHandler(view: View) = {
     controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
