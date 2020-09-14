@@ -32,6 +32,6 @@ trait DbLoader {
     val file = File.createTempFile("temp", ".db")
     file.deleteOnExit()
     IoUtils.copy(input, file)
-    new DaoDB(Robolectric.application, file.getName, 1, Seq.empty[BaseDao[_]], Seq.empty[Migration], null).getWritableDatabase
+    new DaoDB(Robolectric.application, file.getName, 1, Seq.empty[BaseDao[_]], Seq.empty[Migration]).getWritableDatabase
   }
 }

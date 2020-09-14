@@ -53,10 +53,9 @@ class MathUtilsTest extends JUnitSuite {
   }
 
   @Test
-  def testLogRounding(): Unit = {
-    assertEquals(MathUtils.logRound(1, 2), 1)
+  def testRounding(): Unit = {
+    assertEquals(MathUtils.logRoundFactor6(1), 1)
   }
-
 
 }
 

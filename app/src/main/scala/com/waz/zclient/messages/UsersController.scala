@@ -23,13 +23,11 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model._
 import com.waz.service.{ConnectionService, UserService, ZMessaging}
-import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.UsersController._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
-import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.zclient.log.LogUI._
@@ -40,7 +38,6 @@ class UsersController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
 
   private lazy val zms               = inject[Signal[ZMessaging]]
-  private lazy val tracking          = inject[TrackingService]
   private lazy val membersStorage    = inject[Signal[MembersStorage]]
   private lazy val connectionService = inject[Signal[ConnectionService]]
   private lazy val selfUserId        = inject[Signal[UserId]]
@@ -90,9 +87,6 @@ class UsersController(implicit injector: Injector, context: Context)
   } yield {
     otherUser.fold[Availability](Availability.None)(_.availability)
   }
-
-  def trackAvailability(availability: Availability, method: AvailabilityChanged.Method): Unit =
-    tracking.track(AvailabilityChanged(availability, method))
 
   def updateAvailability(availability: Availability): Future[Unit] = {
     verbose(l"updateAvailability $availability")

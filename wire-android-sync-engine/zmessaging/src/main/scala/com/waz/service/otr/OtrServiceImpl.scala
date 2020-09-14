@@ -154,22 +154,14 @@ class OtrServiceImpl(selfUserId:     UserId,
                 Future successful Left(Duplicate)
               case OUTDATED_MESSAGE =>
                 error(l"detected outdated message for event: $ev")
-                reportOtrError(e, ev)
                 Future successful Left(Duplicate)
               case REMOTE_IDENTITY_CHANGED =>
-                reportOtrError(e, ev)
                 Future successful Left(IdentityChangedError(ev.from, ev.sender))
               case _ =>
-                reportOtrError(e, ev)
                 Future successful Left(DecryptionError(e.getMessage, ev.from, ev.sender))
             }
         }
     }
-
-  // update client info and send error report, we want client info to somehow track originating platform
-  private def reportOtrError(e: CryptoException, ev: OtrEvent) = sync.syncClients(ev.from) map { _ =>
-    clients.getClient(ev.from, ev.sender) foreach { _ => tracking.exception(e, "otr error") }
-  }
 
   def resetSession(conv: ConvId, user: UserId, client: ClientId): Future[SyncId] =
     for {
@@ -270,7 +262,6 @@ class OtrServiceImpl(selfUserId:     UserId,
           verbose(l"encrypt for client: $clientId")
           sessions.withSession(SessionId(user, clientId)) { session => clientId -> session.encrypt(msgData) }.recover {
             case e: Throwable =>
-              tracking.exception(e, s"encryption failed")
               if (useFakeOnError) Some(clientId -> EncryptionFailedMsg) else None
           }
       }

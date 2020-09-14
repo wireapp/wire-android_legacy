@@ -49,7 +49,6 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
 
   lazy val pushSenderId = ZMessaging.currentGlobal.backend.pushSenderId
   lazy val accounts = ZMessaging.currentAccounts
-  lazy val tracking = ZMessaging.currentGlobal.trackingService
 
   override def onNewToken(s: String): Unit = {
     ZMessaging.globalModule.map {
@@ -82,7 +81,6 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
             getTargetAccount(data) match {
               case None =>
                 warn(l"User key missing msg: ${redactedString(UserKeyMissingMsg)}")
-                tracking.exception(new Exception(UserKeyMissingMsg), UserKeyMissingMsg)
               case Some(account) =>
                 targetAccountExists(account).foreach {
                   case false =>

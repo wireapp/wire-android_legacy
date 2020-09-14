@@ -371,7 +371,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         InternalLog.add(new BufferedLogOutput(
           baseDir = getApplicationContext.getApplicationInfo.dataDir,
           showSafeOnly = BuildConfig.SAFE_LOGGING))
-        g.trackingService.isTrackingEnabled.head.foreach{_ => verbose(l"Countly on create");Countly.applicationOnCreate()}
+        g.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())
     }
 
     verbose(l"onCreate")

@@ -92,7 +92,6 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     msgUpdater,
     userPrefs,
     eventScheduler,
-    tracking,
     convsClient,
     selectedConv,
     requests,

@@ -29,7 +29,6 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model
 import com.waz.model._
 import com.waz.service.IntegrationsService
-import com.waz.service.tracking.{IntegrationAdded, TrackingService}
 import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
@@ -58,7 +57,6 @@ class IntegrationDetailsFragment extends FragmentHelper {
   private lazy val integrationsService    = inject[Signal[IntegrationsService]]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val themeController        = inject[ThemeController]
-  private lazy val tracking               = inject[TrackingService]
   private lazy val convController         = inject[ConversationController]
   private lazy val spinner                = inject[SpinnerController]
 
@@ -136,7 +134,6 @@ class IntegrationDetailsFragment extends FragmentHelper {
                     case Left(err) => showToast(errorMessage(err))
                     case Right(convId) =>
                       close()
-                      tracking.integrationAdded(sId, convId, IntegrationAdded.StartUi)
                       convController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST)
                   }
                 }
@@ -148,7 +145,6 @@ class IntegrationDetailsFragment extends FragmentHelper {
                   res match {
                     case Right(_) =>
                       getParentFragment.getFragmentManager.popBackStack()
-                      tracking.integrationRemoved(sId)
                     case Left(e) => Future.successful(showToast(errorMessage(e)))
                   }
                 }

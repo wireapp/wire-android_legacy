@@ -20,9 +20,7 @@ package com.waz.specs
 import java.util.concurrent.{Executors, ThreadFactory, TimeoutException}
 
 import com.waz.SystemLogOutput
-import com.waz.log.BasicLogging.LogTag
-import com.waz.log.LogSE._
-import com.waz.log.{InternalLog, LogSE, LogsService}
+import com.waz.log.{InternalLog, LogsService}
 import com.waz.model.UserId
 import com.waz.model.otr.ClientId
 import com.waz.service.AccountsService.{AccountState, InForeground, LoggedOut}
@@ -90,15 +88,6 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
   val client1Id   = ClientId("client1")
   val accounts    = mock[AccountsService]
   val tracking    = mock[TrackingService]
-
-  (tracking.exception(_: Throwable, _: String, _: Option[UserId])(_: LogTag)).expects(*, *, *, *).anyNumberOfTimes().onCall { (t, description, _, tag) =>
-    Future {
-      t match {
-        case e: exceptions.TestFailedException => swallowedFailure = Some(e)
-        case _ => LogSE.error(l"Exception sent: ${showString(description)}", t)(tag)
-      }
-    } (Threading.Background)
-  }
 
   ZMessaging.currentGlobal = new EmptyGlobalModule {
     override def trackingService = tracking

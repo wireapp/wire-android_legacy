@@ -44,7 +44,7 @@ trait AuthenticationConfig {
 
   implicit lazy val urlCreator: UrlCreator = UrlCreator.simpleAppender(() => BackendUrl)
 
-  private val LoginClient: LoginClient = new LoginClientImpl(DisabledTrackingService)
+  private val LoginClient: LoginClient = new LoginClientImpl()
 
   val accountsService: AccountsService
   val accountStorage: AccountStorage
@@ -69,7 +69,7 @@ trait AuthenticationConfig {
 
     setUpAccountData(testAccountData)
 
-    new AuthenticationManager(userInfo.id, accountsService, accountStorage, LoginClient, DisabledTrackingService)
+    new AuthenticationManager(userInfo.id, accountsService, accountStorage, LoginClient)
   }
 
   implicit lazy val authRequestInterceptor: AuthRequestInterceptorImpl = new AuthRequestInterceptorImpl(AuthenticationManager, HttpClient)

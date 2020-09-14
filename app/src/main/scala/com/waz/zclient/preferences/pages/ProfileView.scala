@@ -29,7 +29,6 @@ import com.waz.content.UserPreferences
 import com.waz.model.otr.Client
 import com.waz.model.{AccentColor, Availability, Picture, TeamData, UserPermissions}
 import com.waz.service.teams.TeamsService
-import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, EventStream, Signal}
@@ -42,7 +41,6 @@ import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.preferences.pages.ProfileViewController.MaxAccountsCount
 import com.waz.zclient.preferences.views.TextButton
-import com.waz.zclient.tracking.OpenedManageTeam
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Time.TimeStamp
@@ -245,7 +243,6 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   lazy val accounts        = inject[AccountsService]
   lazy val zms             = inject[Signal[ZMessaging]]
-  lazy val tracking        = inject[TrackingService]
   lazy val usersController = inject[UsersController]
   lazy val usersAccounts   = inject[UserAccountsController]
   private lazy val userPrefs = zms.map(_.userPrefs)
@@ -324,8 +321,6 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   if (ACCOUNT_CREATION_ENABLED) {
     ZMessaging.currentAccounts.accountsWithManagers.map(_.size < MaxAccountsCount).onUi(view.setAddAccountEnabled)
   }
-
-  view.onManageTeamClick { _ => tracking.track(OpenedManageTeam(), currentUser.currentValue) }
 }
 
 object ProfileViewController {

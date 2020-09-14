@@ -24,7 +24,6 @@ import android.view.{Gravity, View}
 import com.waz.api.EmailCredentials
 import com.waz.model.AccountData.Password
 import com.waz.model.{ConfirmationCode, EmailAddress}
-import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.PasswordValidator
 import com.waz.zclient._
@@ -33,7 +32,6 @@ import com.waz.zclient.appentry.{AppEntryDialogs, CreateTeamFragment}
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.SimpleValidator
-import com.waz.zclient.tracking.TeamAcceptedTerms
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils._
 
@@ -44,7 +42,6 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
   import Threading.Implicits.Ui
 
   override val layoutId: Int = R.layout.set_password_scene
-  private lazy val tracking = inject[TrackingService]
 
   private lazy val inputField = view[InputBox](R.id.input_field)
 
@@ -86,7 +83,6 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
         } else {
           AppEntryDialogs.showTermsAndConditions(context, inject[BrowserController]).flatMap {
             case true =>
-              tracking.track(TeamAcceptedTerms(TeamAcceptedTerms.AfterPassword))
               val credentials = EmailCredentials(EmailAddress(createTeamController.teamEmail), Password(text), Some(ConfirmationCode(createTeamController.code)))
 
               accountsService.register(credentials, createTeamController.teamUserName, Some(createTeamController.teamName)).flatMap {

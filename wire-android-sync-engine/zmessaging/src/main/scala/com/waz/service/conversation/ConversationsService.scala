@@ -30,7 +30,6 @@ import com.waz.service._
 import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.{NotificationService, PushService}
-import com.waz.service.tracking.{GuestsAllowedToggled, TrackingService}
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
@@ -89,7 +88,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                msgContent:      MessagesContentUpdater,
                                userPrefs:       UserPreferences,
                                eventScheduler:  => EventScheduler,
-                               tracking:        TrackingService,
                                client:          ConversationsClient,
                                selectedConv:    SelectedConversationService,
                                syncReqService:  SyncRequestService,
@@ -169,9 +167,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case ConversationEvent(rConvId, _, _) =>
       content.convByRemoteId(rConvId).flatMap {
         case Some(conv) => processUpdateEvent(conv, ev)
-        case None if retryCount > 3 =>
-          tracking.exception(new Exception("No conversation data found for event") with NoStackTrace, "No conversation data found for event")
-          successful(())
+        case None if retryCount > 3 => successful(())
         case None =>
           ev match {
             case MemberJoinEvent(_, time, from, ids, us, _) if from != selfUserId =>
@@ -580,7 +576,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       case Some(_) =>
         (for {
           true <- isGroupConversation(convId)
-          _ = tracking.track(GuestsAllowedToggled(!teamOnly))
           (ac, ar) = getAccessAndRoleForGroupConv(teamOnly, teamId)
           Some((old, upd)) <- content.updateAccessMode(convId, ac, Some(ar))
           resp <-

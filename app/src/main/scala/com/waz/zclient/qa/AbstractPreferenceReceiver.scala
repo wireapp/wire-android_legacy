@@ -63,10 +63,6 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
         setGlobalPref(PushEnabledKey, true)
       case DISABLE_GCM_INTENT =>
         setGlobalPref(PushEnabledKey, false)
-      case DISABLE_TRACKING_INTENT =>
-        setGlobalPref(DeveloperAnalyticsEnabled, false)
-      case ENABLE_TRACKING_INTENT =>
-        setGlobalPref(DeveloperAnalyticsEnabled, true)
       case HIDE_GDPR_POPUPS =>
         setGlobalPref(ShowMarketingConsentDialog, false)
       case FULL_CONVERSATION_INTENT =>
@@ -112,8 +108,6 @@ object AbstractPreferenceReceiver {
   private val AUTO_ANSWER_CALL_INTENT  = packageName + ".intent.action.AUTO_ANSWER_CALL"
   private val ENABLE_GCM_INTENT        = packageName + ".intent.action.ENABLE_GCM"
   private val DISABLE_GCM_INTENT       = packageName + ".intent.action.DISABLE_GCM"
-  private val ENABLE_TRACKING_INTENT   = packageName + ".intent.action.ENABLE_TRACKING"
-  private val DISABLE_TRACKING_INTENT  = packageName + ".intent.action.DISABLE_TRACKING"
   private val SILENT_MODE              = packageName + ".intent.action.SILENT_MODE"
   private val TRACKING_ID_INTENT       = packageName + ".intent.action.TRACKING_ID"
   private val FULL_CONVERSATION_INTENT = packageName + ".intent.action.FULL_CONVERSATION_INTENT"
@@ -121,6 +115,4 @@ object AbstractPreferenceReceiver {
   private val SELECT_STAGING_BE        = packageName + ".intent.action.SELECT_STAGING_BE"
   private val SELECT_QA_BE             = packageName + ".intent.action.SELECT_QA_BE"
   private val SELECT_PROD_BE           = packageName + ".intent.action.SELECT_PROD_BE"
-
-  private lazy val DeveloperAnalyticsEnabled = PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
 }

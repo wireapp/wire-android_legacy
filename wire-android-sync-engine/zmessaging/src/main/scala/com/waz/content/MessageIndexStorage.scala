@@ -25,7 +25,6 @@ import com.waz.db.{CursorIterator, Reader}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.tracking.TrackingService
 import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.wrappers.DBCursor
@@ -35,7 +34,7 @@ import com.waz.utils._
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-class MessageIndexStorage(context: Context, storage: ZmsDatabase, messagesStorage: MessagesStorage, loader: MessageAndLikesStorage, tracking: TrackingService, conversationStorage: ConversationStorage)
+class MessageIndexStorage(context: Context, storage: ZmsDatabase, messagesStorage: MessagesStorage, loader: MessageAndLikesStorage, conversationStorage: ConversationStorage)
   extends CachedStorageImpl[MessageId, MessageContentIndexEntry](new TrimmingLruCache(context, Fixed(MessageContentIndex.MaxSearchResults)), storage)(MessageContentIndexDao, LogTag("MessageIndexStorage_Cached"))
     with DerivedLogTag {
 
@@ -68,7 +67,7 @@ class MessageIndexStorage(context: Context, storage: ZmsDatabase, messagesStorag
       cursor <- storage.read(MessageContentIndexDao.findContent(contentSearchQuery, convId)(_)) // find messages
       _ <- getAll(CursorIterator.list[MessageId](cursor, close = false)(MsgIdReader)) // prefetch index entries to ensure following get calls are fast
       lastRead <- convId.fold2(Future.successful(None), conversationStorage.get(_).map(_.map(_.lastRead)))
-    } yield new MessagesCursor(cursor, 0, lastRead.getOrElse(RemoteInstant.Epoch), loader, tracking)(MessagesCursor.Descending)
+    } yield new MessagesCursor(cursor, 0, lastRead.getOrElse(RemoteInstant.Epoch), loader)(MessagesCursor.Descending)
 
   def matchingMessages(contentSearchQuery: ContentSearchQuery, convId: Option[ConvId]): Future[Set[MessageId]] =
     storage.read { implicit db =>

@@ -26,20 +26,16 @@ import com.waz.api.EmailCredentials
 import com.waz.content.GlobalPreferences
 import com.waz.model.AccountData.Password
 import com.waz.model.{ConfirmationCode, EmailAddress}
-import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, GlobalModule}
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
-import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignInMethod}
 import com.waz.zclient.appentry.fragments.VerifyEmailWithCodeFragment._
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
-import com.waz.zclient.tracking.GlobalTrackingController._
-import com.waz.zclient.tracking.{EnteredCodeEvent, RegistrationSuccessfulEvent}
 import com.waz.zclient.ui.text.TypefaceEditText
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
@@ -76,7 +72,6 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
   implicit lazy val ctx = getContext
 
   private lazy val accountService = inject[AccountsService]
-  private lazy val tracking = inject[TrackingService]
 
   private lazy val resendCodeButton = findById[TextView](getView, R.id.ttv__resend_button)
   private lazy val resendCodeTimer = findById[TextView](getView, R.id.ttv__resend_timer)
@@ -196,7 +191,6 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
         case _ => Future.successful({})
       }
     } yield {
-      tracking.track(EnteredCodeEvent(SignInMethod(Register, Email), responseToErrorPair(resp)))
       resp match {
         case Left(error) =>
           activity.enableProgress(false)
@@ -206,7 +200,6 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
             phoneConfirmationButton.setState(PhoneConfirmationButton.State.INVALID)
           }
         case _ =>
-          tracking.track(RegistrationSuccessfulEvent(SignInFragment.Email))
           activity.enableProgress(false)
           activity.onEnterApplication(openSettings = false)
       }

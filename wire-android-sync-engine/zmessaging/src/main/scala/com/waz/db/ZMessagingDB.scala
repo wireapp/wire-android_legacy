@@ -51,11 +51,10 @@ import com.waz.service.assets
 import com.waz.service.assets.AssetStorageImpl.AssetDao
 import com.waz.service.assets.DownloadAssetStorage.DownloadAssetDao
 import com.waz.service.assets.UploadAssetStorage.UploadAssetDao
-import com.waz.service.tracking.TrackingService
 
 import scala.util.{Success, Try}
 
-class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) extends DaoDB(context.getApplicationContext, dbName, DbVersion, daos, migrations, tracking) {
+class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getApplicationContext, dbName, DbVersion, daos, migrations) {
 
   override def onUpgrade(db: SupportSQLiteDatabase, from: Int, to: Int): Unit = {
     if (from < 60) {

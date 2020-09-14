@@ -132,7 +132,7 @@ class GlobalModuleImpl(val context:             AContext,
   lazy val contextWrapper:      Context                          = Context.wrap(context)
 
   lazy val metadata:            MetaDataService                  = wire[MetaDataService]
-  lazy val cache:               CacheService                     = CacheService(context, storage, trackingService)
+  lazy val cache:               CacheService                     = CacheService(context, storage)
   lazy val bitmapDecoder:       BitmapDecoder                    = wire[BitmapDecoder]
 
   lazy val trimmingLruCache:    Cache[Key, Entry]                = MemoryImageCache.newTrimmingLru(context)
@@ -145,7 +145,7 @@ class GlobalModuleImpl(val context:             AContext,
 
   lazy val reporting                                             = wire[GlobalReportingService]
 
-  lazy val loginClient:         LoginClient                      = new LoginClientImpl(trackingService)(urlCreator, httpClient)
+  lazy val loginClient:         LoginClient                      = new LoginClientImpl()(urlCreator, httpClient)
   lazy val regClient:           RegistrationClient               = new RegistrationClientImpl()(urlCreator, httpClient)
 
   lazy val urlCreator:          UrlCreator                       = UrlCreator.simpleAppender(() => backend.baseUrl.toString)

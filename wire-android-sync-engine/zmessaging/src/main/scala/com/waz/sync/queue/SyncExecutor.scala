@@ -25,7 +25,6 @@ import com.waz.model.UserId
 import com.waz.model.sync.SyncJob
 import com.waz.model.sync.SyncRequest.Serialized
 import com.waz.service.NetworkModeService
-import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult._
 import com.waz.sync.{SyncHandler, SyncResult}
@@ -36,14 +35,12 @@ import org.threeten.bp.Instant
 import scala.concurrent.duration._
 import scala.concurrent.{Future, TimeoutException}
 import scala.util.Failure
-import scala.util.control.NoStackTrace
 
 class SyncExecutor(account:     UserId,
                    scheduler:   SyncScheduler,
                    content:     SyncContentUpdater,
                    network:     NetworkModeService,
-                   handler: =>  SyncHandler,
-                   tracking:    TrackingService) extends DerivedLogTag {
+                   handler: =>  SyncHandler) extends DerivedLogTag {
 
   import SyncExecutor._
   private implicit val dispatcher = new SerialDispatchQueue(name = "SyncExecutorQueue")
@@ -87,7 +84,6 @@ class SyncExecutor(account:     UserId,
     // this is only to check for any long running sync requests, which could mean very serious problem
     CancellableFuture.lift(future).withTimeout(10.minutes).onComplete {
       case Failure(e: TimeoutException) =>
-        tracking.exception(new RuntimeException(s"SyncRequest: ${job.request.cmd} runs for over 10 minutes", e), s"SyncRequest taking too long: $job")
         // TODO: Think about removing the sync job at this point
       case _ =>
     }
@@ -102,14 +98,10 @@ class SyncExecutor(account:     UserId,
         content.removeSyncJob(job.id).map(_ => result)
       case res @ SyncResult.Failure(error) =>
         warn(l"SyncRequest: $job, failed permanently with error: $error")
-        if (error.shouldReportError) {
-          tracking.exception(new RuntimeException(s"Request ${job.request.cmd} failed permanently with error: ${error.code}") with NoStackTrace, s"Got fatal error, dropping request: $job\n error: $error")
-        }
         content.removeSyncJob(job.id).map(_ => res)
       case Retry(error) =>
         warn(l"SyncRequest: $job, failed with error: $error")
         if (job.attempts > MaxSyncAttempts) {
-          tracking.exception(new RuntimeException(s"Request ${job.request.cmd} failed with error: ${error.code}") with NoStackTrace, s"MaxSyncAttempts exceeded, dropping request: $job\n error: $error")
           content.removeSyncJob(job.id).map(_ => SyncResult.Failure(error))
         } else {
           verbose(l"will schedule retry for: $job")

@@ -107,7 +107,6 @@ class AvailabilityMenu(override val context: Context, method: AvailabilityChange
 
     def changeAvailabilityAndDismiss(newAvailability: Availability) = {
       usersController.updateAvailability(newAvailability)
-      usersController.trackAvailability(newAvailability, method)
       dismiss()
     }
 

@@ -26,14 +26,14 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout}
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.{EmailAddress, PhoneNumber}
-import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.service.AccountsService
 import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.utils.{returning, PasswordValidator => StrongValidator}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.{EmailError, PhoneError}
 import com.waz.zclient.appentry.fragments.SignInFragment._
-import com.waz.zclient.appentry.{AppEntryActivity}
+import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.TabPages
@@ -41,7 +41,6 @@ import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.pages.main.profile.validator.{EmailValidator, NameValidator, PasswordValidator}
 import com.waz.zclient.pages.main.profile.views.GuidedEditText
-import com.waz.zclient.tracking.{GlobalTrackingController, SignUpScreenEvent}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.ui.utils.{KeyboardUtils, TextViewUtils}
 import com.waz.zclient.ui.views.tab.TabIndicatorLayout
@@ -58,7 +57,6 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
 
   private lazy val accountsService    = inject[AccountsService]
   private lazy val browserController  = inject[BrowserController]
-  private lazy val tracking           = inject[GlobalTrackingController]
 
   private lazy val isAddingAccount = accountsService.zmsInstances.map(_.nonEmpty)
 
@@ -278,10 +276,6 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
       phoneCountry.currentValue.foreach(onCountryHasChanged)
     }
 
-    uiSignInState.map(s => SignInMethod(s.signType, Phone)).onUi { method =>
-      ZMessaging.globalModule.map(_.trackingService.track(SignUpScreenEvent(method)))(Threading.Ui)
-    }
-
     isValid.onUi(setConfirmationButtonActive)
     phoneCountry.onUi(onCountryHasChanged)
     isAddingAccount.onUi(isAdding => closeButton.foreach(_.setVisible(isAdding)))
@@ -347,7 +341,6 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
         implicit val ec = Threading.Ui
 
         def onResponse[A](req: Either[ErrorResponse, A], method: SignInMethod) = {
-          tracking.onEnteredCredentials(req, method)
           appEntryActivity().enableProgress(false)
           req match {
             case Left(error) =>
