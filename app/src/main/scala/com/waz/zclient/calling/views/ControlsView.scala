@@ -197,21 +197,17 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
     controller.toggleMuted()
   }
 
-  private def drawMuteLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit = {
+  private def drawMuteLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
     drawBitmap(canvas, targetFrame, color, R.attr.callMutedIcon, lightTheme)
-  }
 
-  private def drawMuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit = {
+  private def drawMuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
     drawBitmap(canvas, targetFrame, color, R.attr.callMutedIcon, darkTheme)
-  }
 
-  private def drawUnmuteLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit = {
+  private def drawUnmuteLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
     drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, lightTheme)
-  }
 
-  private def drawUnmuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit = {
+  private def drawUnmuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit = 
     drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, darkTheme)
-  }
 
   private def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int, theme: Resources#Theme): Unit = {
     val paint = new Paint
