@@ -18,7 +18,6 @@
 package com.waz.service.tracking
 
 import com.waz.content.UserPreferences.AnalyticsEnabled
-import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
@@ -32,52 +31,25 @@ import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.{MathUtils, RichWireInstant}
 import com.wire.signals.{EventContext, EventStream, Signal}
 
-import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.language.implicitConversions
-import scala.util.Try
 
 trait TrackingService {
   def events: EventStream[(Option[ZMessaging], TrackingEvent)]
 
-  def track(event: TrackingEvent, userId: Option[UserId] = None): Future[Unit]
-
-  def loggedOut(reason: String, userId: UserId): Future[Unit] =
-    track(LoggedOutEvent(reason), Some(userId))
-
-  def optIn(): Future[Unit] = track(OptInEvent)
-  def optOut(): Future[Unit] = track(OptOutEvent)
-
   def contribution(action: ContributionEvent.Action, zms: Option[UserId] = None): Future[Unit]
-
   def msgDecryptionFailed(convId: RConvId, userId: UserId): Future[Unit]
   def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit]
-
-  def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag): Future[Unit]
-  def crash(e: Throwable): Future[Unit]
-
-  def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method): Future[Unit]
-  def integrationRemoved(integrationId: IntegrationId): Future[Unit]
-  def historyBackedUp(isSuccess: Boolean): Future[Unit]
-  def historyRestored(isSuccess: Boolean): Future[Unit]
-
 
   def isTrackingEnabled: Signal[Boolean]
 }
 
 class DummyTrackingService extends TrackingService {
   override def events: EventStream[(Option[ZMessaging], TrackingEvent)] = EventStream()
-  override def track(event: TrackingEvent, userId: Option[UserId]): Future[Unit] = Future.successful(())
   override def contribution(action: ContributionEvent.Action, zms: Option[UserId] = None): Future[Unit] = Future.successful(())
   override def msgDecryptionFailed(convId: RConvId, userId: UserId): Future[Unit] = Future.successful(())
   override def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit] = Future.successful(())
-  override def exception(e: Throwable, description: String, userId: Option[UserId])(implicit tag: LogTag): Future[Unit] = Future.successful(())
-  override def crash(e: Throwable): Future[Unit] = Future.successful(())
-  override def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method): Future[Unit] = Future.successful(())
-  override def integrationRemoved(integrationId: IntegrationId): Future[Unit] = Future.successful(())
-  override def historyBackedUp(isSuccess: Boolean): Future[Unit] = Future.successful(())
-  override def historyRestored(isSuccess: Boolean): Future[Unit] = Future.successful(())
   override def isTrackingEnabled: Signal[Boolean] = Signal.const(true)
 }
 
@@ -103,11 +75,6 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
     }
 
   val events = EventStream[(Option[ZMessaging], TrackingEvent)]()
-
-  override def track(event: TrackingEvent, userId: Option[UserId] = None): Future[Unit] = isTrackingEnabled.head.flatMap {
-    case true  => zmsProvider(userId).map(events ! _ -> event)
-    case false => Future.successful(())
-  }
 
   private def current = curAccount.head.flatMap(zmsProvider)
 
@@ -235,59 +202,6 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
         case false => Future.successful(())
       }
     else Future.successful(())
-
-  override def exception(e: Throwable, description: String, userId: Option[UserId] = None)(implicit tag: LogTag) = isTrackingEnabled.head.flatMap {
-    case true =>
-      val cause = rootCause(e)
-      track(ExceptionEvent(cause.getClass.getSimpleName, details(cause), description, throwable = Some(e))(tag), userId)
-    case false => Future.successful(())
-  }
-
-  override def crash(e: Throwable) = isTrackingEnabled.head.flatMap {
-    case true =>
-      val cause = rootCause(e)
-      track(CrashEvent(cause.getClass.getSimpleName, details(cause), throwable = Some(e)))
-    case false => Future.successful(())
-  }
-
-  @tailrec
-  private def rootCause(e: Throwable): Throwable = Option(e.getCause) match {
-    case Some(cause) => rootCause(cause)
-    case None        => e
-  }
-
-  private def details(rootCause: Throwable) =
-    Try(rootCause.getStackTrace).toOption.filter(_.nonEmpty).map(_ (0).toString).getOrElse("")
-
-  override def integrationAdded(integrationId: IntegrationId, convId: ConvId, method: IntegrationAdded.Method) = isTrackingEnabled.head.flatMap {
-    case true => current.map {
-      case Some(z) =>
-        for {
-          userIds        <- z.membersStorage.activeMembers(convId).head
-          users          <- z.usersStorage.listAll(userIds.toSeq)
-          (bots, people) =  users.partition(_.isWireBot)
-        } yield track(IntegrationAdded(integrationId, people.size, bots.filterNot(_.integrationId.contains(integrationId)).size + 1, method))
-      case None =>
-    }
-    case false => Future.successful(())
-  }
-
-  def integrationRemoved(integrationId: IntegrationId) = isTrackingEnabled.head.flatMap {
-    case true  => track(IntegrationRemoved(integrationId))
-    case false => Future.successful(())
-  }
-
-  override def historyBackedUp(isSuccess: Boolean) = isTrackingEnabled.head.flatMap {
-    case true if isSuccess => track(HistoryBackupSucceeded)
-    case true              => track(HistoryBackupFailed)
-    case false             => Future.successful(())
-  }
-
-  override def historyRestored(isSuccess: Boolean) = isTrackingEnabled.head.flatMap {
-    case true if isSuccess => track(HistoryRestoreSucceeded)
-    case true              => track(HistoryRestoreFailed)
-    case false             => Future.successful(())
-  }
 
 }
 

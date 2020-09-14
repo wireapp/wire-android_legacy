@@ -30,7 +30,6 @@ import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.service.tracking.{OpenSelectParticipants, TrackingService}
 import com.waz.threading.Threading
 import com.wire.signals._
 import com.waz.utils.returning
@@ -63,7 +62,6 @@ class AddParticipantsFragment extends FragmentHelper {
   private lazy val zms                = inject[Signal[ZMessaging]]
   private lazy val newConvController  = inject[CreateConversationController]
   private lazy val keyboard           = inject[KeyboardController]
-  private lazy val tracking           = inject[TrackingService]
   private lazy val themeController    = inject[ThemeController]
   private lazy val userAccounts       = inject[UserAccountsController]
   private lazy val browserController  = inject[BrowserController]
@@ -167,10 +165,6 @@ class AddParticipantsFragment extends FragmentHelper {
     recyclerView.setLayoutManager(new LinearLayoutManager(getContext))
     recyclerView.setAdapter(adapter)
 
-    newConvController.fromScreen.head.map { f =>
-      tracking.track(OpenSelectParticipants(f))
-    }
-
     searchBox.foreach { v =>
       v.applyDarkTheme(themeController.isDarkTheme)
       v.setCallback(new PickerSpannableEditText.Callback{
@@ -230,7 +224,7 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   extends RecyclerView.Adapter[SelectableRowViewHolder]
     with Injectable
     with DerivedLogTag {
-  
+
   import AddParticipantsAdapter._
 
   private implicit val ctx = context

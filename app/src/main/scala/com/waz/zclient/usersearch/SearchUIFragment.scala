@@ -32,7 +32,7 @@ import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.content.UsersStorage
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
-import com.waz.service.tracking.{GroupConversationEvent, TrackingEvent, TrackingService}
+import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{SearchQuery, ZMessaging}
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
@@ -65,7 +65,6 @@ import com.waz.zclient.views._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
 import com.waz.zclient.usersearch.SearchUIFragment._
 import com.waz.threading.Threading._
 
@@ -89,7 +88,6 @@ class SearchUIFragment extends BaseFragment[Container]
   private lazy val browser                = inject[BrowserController]
   private lazy val conversationListController     = inject[ConversationListController]
   private lazy val keyboard               = inject[KeyboardController]
-  private lazy val tracking               = inject[TrackingService]
   private lazy val spinner                = inject[SpinnerController]
   private lazy val pickUserController     = inject[IPickUserController]
   private lazy val conversationScreenController   = inject[IConversationScreenController]
@@ -408,7 +406,6 @@ class SearchUIFragment extends BaseFragment[Container]
     case false =>
       conversationCreationInProgress ! true
       spinner.showSpinner(true)
-      tracking.track(TrackingEvent("guest_rooms.guest_room_creation"))
       keyboard.hideKeyboardIfVisible()
       conversationController.createGuestRoom().flatMap { conv =>
         spinner.hideSpinner()

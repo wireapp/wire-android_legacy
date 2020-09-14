@@ -23,12 +23,10 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
 import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
-import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState}
 import com.waz.service.call.CallInfo.{CallState, OutstandingMessage, Participant}
 import com.waz.service.call.CallInfo.CallState._
-import com.waz.service.tracking.TrackingService
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.utils.returning
 import com.wire.signals.{ClockSignal, Signal}
@@ -70,12 +68,12 @@ case class CallInfo(convId:             ConvId,
                     videoReceiveStates: Map[Participant, VideoState]    = Map.empty,
                     wasVideoToggled:    Boolean                         = false, //for tracking
                     wasScreenShareUsed: Boolean                         = false, //for tracking
+                    screenShareStart:   Map[Participant, LocalInstant]  = Map.empty, //for tracking
+                    screenShareEnded:   Option[(String, Long)]          = None, //for tracking
                     startTime:          LocalInstant                    = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
                     joinedTime:         Option[LocalInstant]            = None, //the time the call was joined, if any
                     estabTime:          Option[LocalInstant]            = None, //the time that a joined call was established, if any
                     endTime:            Option[LocalInstant]            = None,
-                    screenShareStart:   Map[Participant, LocalInstant]  = Map.empty,
-                    screenShareEnded:   Option[(String, Long)]          = None,
                     endReason:          Option[AvsClosedReason]         = None,
                     outstandingMsg:     Option[OutstandingMessage]      = None, //Any messages we were unable to send due to conv degradation
                     shouldRing:         Boolean                         = true) extends DerivedLogTag {
@@ -130,7 +128,7 @@ case class CallInfo(convId:             ConvId,
     }
   }
 
-  def updateVideoState(participant: Participant, videoState: VideoState)(implicit tracking: TrackingService): CallInfo = {
+  def updateVideoState(participant: Participant, videoState: VideoState): CallInfo = {
 
     import com.waz.utils.RichWireInstant
     def updateScreenShareTracking(i: CallInfo): CallInfo = {

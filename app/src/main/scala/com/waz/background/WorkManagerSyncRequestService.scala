@@ -31,7 +31,6 @@ import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync.{SyncCommand, SyncRequest}
 import com.waz.model.{SyncId, UserId}
 import com.waz.service.NetworkModeService
-import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.{SyncHandler, SyncRequestService, SyncResult}
 import com.waz.threading.Threading
@@ -45,7 +44,7 @@ import org.threeten.bp.{Clock, Instant}
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.control.{NoStackTrace, NonFatal}
+import scala.util.control.NonFatal
 
 class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, eventContext: EventContext)
   extends SyncRequestService with Injectable {
@@ -193,7 +192,6 @@ object WorkManagerSyncRequestService {
     implicit val wireContext = WireContext(context)
     implicit val injector    = wireContext.injector
 
-    lazy val tracking = inject[TrackingService]
     lazy val clock    = inject[Clock]
     lazy val network  = inject[NetworkModeService].networkMode
 
@@ -233,14 +231,10 @@ object WorkManagerSyncRequestService {
 
             case SyncResult.Failure(error) =>
               warn(l"${showString(commandTag)} failed permanently with error: $error")
-              if (error.shouldReportError) {
-                tracking.exception(new RuntimeException(s"$commandTag failed permanently with error: $error") with NoStackTrace, s"Got fatal error, dropping request: ${request.cmd}\n error: $error")
-              }
               onFailure(error)
 
             case SyncResult.Retry(error) if getRunAttemptCount > MaxSyncAttempts =>
               warn(l"${showString(commandTag)} failed more than the maximum $MaxSyncAttempts times, final time was with error: $error")
-              tracking.exception(new RuntimeException(s"$commandTag failed more than the maximum $MaxSyncAttempts times, final time was with error: $error") with NoStackTrace, s"$MaxSyncAttempts attempts exceeded, dropping request: ${request.cmd}\n error: $error")
               onFailure(error)
 
             case SyncResult.Retry(error) =>
@@ -250,12 +244,10 @@ object WorkManagerSyncRequestService {
         } catch {
           case e: TimeoutException =>
             error(l"${showString(commandTag)} doWork timed out after $SyncJobTimeout, the job seems to be blocked", e)
-            tracking.exception(e, s"$commandTag timed out after $SyncJobTimeout")
             onFailure(ErrorResponse.timeout(s"$logTag $commandTag timed out after $SyncJobTimeout, aborting"))
 
           case NonFatal(e) =>
             error(l"${showString(commandTag)} failed unexpectedly", e)
-            tracking.exception(e, s"$commandTag failed unexpectedly")
             onFailure(internalError(e.getMessage))
         }
       }

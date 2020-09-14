@@ -30,10 +30,8 @@ import com.waz.utils.{returning, _}
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.DialogErrorMessage.PhoneError
-import com.waz.zclient.appentry.fragments.SignInFragment.{Login, Phone, Register, SignInMethod}
 import com.waz.zclient.appentry.fragments.VerifyPhoneFragment._
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
-import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.ui.text.TypefaceEditText
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
@@ -61,7 +59,6 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
 
   import Threading.Implicits.Ui
   private lazy val accountService = inject[AccountsService]
-  private lazy val tracking       = inject[GlobalTrackingController]
 
   private lazy val resendCodeButton = view[TextView](R.id.ttv__resend_button)
   private lazy val resendCodeTimer = view[TextView](R.id.ttv__resend_timer)
@@ -151,7 +148,6 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
     val isLoggingIn = getBooleanArg(LoggingInArg, default = true)
     val phone = getStringArg(PhoneArg).getOrElse("")
     accountService.requestPhoneCode(PhoneNumber(phone), login = isLoggingIn, call = shouldCall).map { result =>
-      tracking.onRequestResendCode(result, SignInMethod(if (isLoggingIn) Login else Register, Phone), isCall = shouldCall)
       result match {
         case Left(err) =>
           showErrorDialog(PhoneError(err))

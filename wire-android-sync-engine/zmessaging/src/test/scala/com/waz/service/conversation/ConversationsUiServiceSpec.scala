@@ -19,7 +19,7 @@ package com.waz.service.conversation
 
 import com.waz.content._
 import com.waz.model._
-import com.waz.service.assets.AssetService
+import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService}
@@ -41,6 +41,7 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
   val convsService =    mock[ConversationsService]
   val sync =            mock[SyncServiceHandle]
   val errors =          mock[ErrorsService]
+  val uriHelper =       mock[UriHelper]
   val messages =        mock[MessagesService]
   val client =          mock[ConversationsClient]
   val messagesStorage = mock[MessagesStorage]
@@ -58,7 +59,7 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs)
     new ConversationsUiServiceImpl(selfUserId, teamId, assetService, usersStorage, messages, messagesStorage,
       msgContent, members, content, convsStorage, network, convsService, sync, client,
-      accounts, tracking, errors, properties)
+      accounts, tracking, errors, uriHelper, properties)
   }
 
   feature("Read receipts should match the spec") {

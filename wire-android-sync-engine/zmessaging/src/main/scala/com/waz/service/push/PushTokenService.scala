@@ -29,7 +29,6 @@ import com.waz.model.{PushToken, PushTokenRemoveEvent, UserId}
 import com.waz.service.AccountsService.Active
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
-import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{ErrorOr, PushTokenClient}
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
@@ -39,7 +38,6 @@ import com.waz.utils.{Backoff, ExponentialBackoff, RichEither, returning}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.control.NoStackTrace
 
 /**
   * Responsible for deciding when to generate and register push tokens and whether they should be active at all.
@@ -129,8 +127,7 @@ trait GlobalTokenService {
 
 class GlobalTokenServiceImpl(googleApi: GoogleApi,
                              prefs:     GlobalPreferences,
-                             network:   NetworkModeService,
-                             tracking:  TrackingService) extends GlobalTokenService with DerivedLogTag {
+                             network:   NetworkModeService) extends GlobalTokenService with DerivedLogTag {
   import PushTokenService._
 
   implicit val dispatcher = new SerialDispatchQueue(name = "GlobalTokenService")
@@ -181,7 +178,6 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
       case ex: IOException =>
         error(l"Failed action on google APIs, probably due to server connectivity error, will retry again", ex)
         for {
-          _ <- if (attempts % logAfterAttempts == 0) tracking.exception(new Exception("Too many push token registration attempts") with NoStackTrace, s"Failed to register an FCM push token after $logAfterAttempts attempts") else Future.successful({})
           _ <- CancellableFuture.delay(ResetBackoff.delay(attempts)).future
           _ <- network.networkMode.filter(_ != NetworkMode.OFFLINE).head
           t <- retry(f, attempts + 1)

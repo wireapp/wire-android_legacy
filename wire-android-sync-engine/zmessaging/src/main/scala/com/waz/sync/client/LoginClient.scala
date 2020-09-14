@@ -28,7 +28,6 @@ import com.waz.model.{TeamId, UserInfo}
 import com.waz.model2.transport.Team
 import com.waz.model2.transport.responses.{DomainVerificationResponse, FetchSsoResponse, TeamsResponse}
 import com.waz.service.ZMessaging.clock
-import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.LoginClient.LoginResult
 import com.waz.sync.client.TeamsClient.{TeamsPageSize, TeamsPath}
@@ -57,7 +56,7 @@ trait LoginClient {
   def fetchSSO(): ErrorOr[FetchSsoResponse]
 }
 
-class LoginClientImpl(tracking: TrackingService)
+class LoginClientImpl()
                      (implicit
                       urlCreator: UrlCreator,
                       client: HttpClient) extends LoginClient with DerivedLogTag {
@@ -86,7 +85,6 @@ class LoginClientImpl(tracking: TrackingService)
   def throttled(request: => ErrorOr[LoginResult]): ErrorOr[LoginResult] = dispatcher {
     loginFuture = loginFuture.recover {
       case ex: Throwable =>
-        tracking.exception(ex, "Unexpected error when trying to log in.")
         Left(ErrorResponse.internalError("Unexpected error when trying to log in: " + ex.getMessage))
     } flatMap { _ =>
       verbose(l"throttling, delay: $requestDelay")

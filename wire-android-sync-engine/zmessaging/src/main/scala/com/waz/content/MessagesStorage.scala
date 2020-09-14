@@ -109,14 +109,14 @@ class MessagesStorageImpl(context:     Context,
 
   def msgsIndex(conv: ConvId): Future[ConvMessagesIndex] =
     Option(indexes.get(conv)).fold {
-      Future(returning(new ConvMessagesIndex(conv, this, selfUserId, users, convs, msgAndLikes, storage, tracking))(indexes.put(conv, _)))
+      Future(returning(new ConvMessagesIndex(conv, this, selfUserId, users, convs, msgAndLikes, storage))(indexes.put(conv, _)))
     } {
       Future.successful
     }
 
   def msgsFilteredIndex(conv: ConvId, messageFilter: MessageFilter): Future[ConvMessagesIndex] =
     filteredIndexes.get(conv, messageFilter).fold {
-      Future(returning(new ConvMessagesIndex(conv, this, selfUserId, users, convs, msgAndLikes, storage, tracking, filter = Some(messageFilter)))(filteredIndexes.put(conv, messageFilter, _)))
+      Future(returning(new ConvMessagesIndex(conv, this, selfUserId, users, convs, msgAndLikes, storage, filter = Some(messageFilter)))(filteredIndexes.put(conv, messageFilter, _)))
     } {
       Future.successful
     }

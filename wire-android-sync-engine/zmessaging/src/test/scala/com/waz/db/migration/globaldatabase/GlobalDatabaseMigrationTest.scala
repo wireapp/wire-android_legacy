@@ -1,6 +1,5 @@
 package com.waz.db.migration.globaldatabase
 
-import com.waz.DisabledTrackingService
 import com.waz.db.ZGlobalDB
 import com.waz.zclient.storage.db.GlobalDatabase
 import com.waz.zclient.storage.di.StorageModule
@@ -16,7 +15,7 @@ class GlobalDatabaseMigrationTest extends FeatureSpec with Matchers with BeforeA
   private lazy val dbName = zGlobalDb.getDatabaseName
 
   before {
-    zGlobalDb = new ZGlobalDB(Robolectric.application, tracking = DisabledTrackingService)
+    zGlobalDb = new ZGlobalDB(Robolectric.application)
   }
 
   after {

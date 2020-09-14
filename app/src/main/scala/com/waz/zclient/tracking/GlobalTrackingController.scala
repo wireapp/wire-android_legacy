@@ -30,13 +30,10 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
-import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.service.tracking._
 import com.wire.signals.{EventContext, SerialDispatchQueue, Signal}
 import com.waz.threading.Threading
 import com.waz.zclient._
-import com.waz.zclient.appentry.fragments.SignInFragment
-import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}
 import com.waz.zclient.log.LogUI._
 import com.waz.content.UserPreferences.CountlyTrackingId
 import com.waz.log.LogsService
@@ -44,13 +41,13 @@ import com.waz.utils.MathUtils
 import com.waz.zclient.common.controllers.UserAccountsController
 import ly.count.android.sdk.{Countly, CountlyConfig, DeviceId}
 
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.Future._
 import scala.util.Try
 
 class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {
-  import GlobalTrackingController._
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "Tracking")
 
@@ -59,6 +56,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
   private val tracking  = inject[TrackingService]
   private lazy val am = inject[Signal[AccountManager]]
+  private lazy val accountsService = inject[AccountsService]
 
   def initCountly(): Future[Unit] = {
     for {
@@ -72,7 +70,6 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
         .setLoggingEnabled(logsEnabled)
         .setIdMode(DeviceId.Type.DEVELOPER_SUPPLIED)
         .setDeviceId(trackingId.str)
-        .setEventQueueSizeToSend(1)
         .setRecordAppStartTime(true)
 
       Countly.sharedInstance().init(config)
@@ -92,7 +89,6 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     verbose(l"optIn")
     for {
       _ <- initCountly()
-      _ <- sendEvent(OptInEvent)
     } yield ()
   }
 
@@ -113,7 +109,6 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   }
 
   private def setUserDataFields(): Future[Unit] = {
-    val accountsService = inject[AccountsService]
     for {
       Some(z) <- accountsService.activeZms.head
       teamMember = z.teamId.isDefined
@@ -132,71 +127,17 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     }
   }
 
-  import scala.collection.JavaConverters._
   /**
     * Access tracking events when they become available and start processing
     * Sets super properties and actually performs the tracking of an event. Super properties are user scoped, so for that
     * reason, we need to ensure they're correctly set based on whatever account (zms) they were fired within.
     */
-  tracking.events.foreach {
-    case (zms, event: OpenedTeamRegistration) =>
-      ZMessaging.currentAccounts.accountManagers.head.map {
-        case managers if managers.isEmpty => sendEvent(event, zms)
-        case _                            => sendEvent(OpenedTeamRegistrationFromProfile(), zms)
-      }
-    case (_, event: LoggedOutEvent) if event.reason == LoggedOutEvent.InvalidCredentials =>
-      //This event type is trigged a lot, so disable for now
-    case (_, event@ExceptionEvent(_, _, description, Some(throwable))) =>
-      error(l"description: ${redactedString(description)}", throwable)(event.tag)
-      tracking.isTrackingEnabled.head.map {
-        case true =>
-          throwable match {
-            case _: NoReporting =>
-            case _              => saveException(throwable, description)(event.tag)
-          }
-        case _ => //no action
-      }
-    case (_, event:ContributionEvent) => Countly.sharedInstance().events().recordEvent(event.name, event.segments.asJava)
-    case (_, event:CallingEvent) => Countly.sharedInstance().events().recordEvent(event.name, event.segments.asJava)
-    case (_, event:MessageDecryptionFailed) => Countly.sharedInstance().events().recordEvent(event.name, event.segments.asJava)
-    case (_, event:ScreenShareEvent) => Countly.sharedInstance().events().recordEvent(event.name, event.segments.asJava)
-    case (zms, event) => sendEvent(event, zms)
-  }
+  tracking.events.foreach { case (z, event) => sendEvent(event, z) }
 
-  private def sendCountlyEvent(eventArg: ContributionEvent, zmsArg: Option[ZMessaging] = None) = {
+  private def sendEvent(eventArg: TrackingEvent, zmsArg: Option[ZMessaging] = None) = {
     verbose(l"send countly event: $eventArg")
     Countly.sharedInstance().events().recordEvent(eventArg.name, eventArg.segments.asJava)
   }
-
-  /**
-    * @param eventArg the event to track
-    * @param zmsArg a specific zms (account) to associate the event to. If none, we will try and use the current active one
-    *
-    * Right now it does nothing. The functionality stays here to be used when we implement a new tracking system
-    */
-  private def sendEvent(eventArg: TrackingEvent, zmsArg: Option[ZMessaging] = None) =
-    Future.successful(verbose(l"send event: $eventArg"))
-
-  def onEnteredCredentials(response: Either[ErrorResponse, _], method: SignInMethod): Unit =
-    tracking.track(EnteredCredentialsEvent(method, responseToErrorPair(response)), None)
-
-  def onEnterCode(response: Either[ErrorResponse, Unit], method: SignInMethod): Unit =
-    tracking.track(EnteredCodeEvent(method, responseToErrorPair(response)))
-
-  def onRequestResendCode(response: Either[ErrorResponse, Unit], method: SignInMethod, isCall: Boolean): Unit =
-    tracking.track(ResendVerificationEvent(method, isCall, responseToErrorPair(response)))
-
-  def onAddNameOnRegistration(response: Either[ErrorResponse, Unit], inputType: InputType): Unit =
-    for {
-    //Should wait until a ZMS instance exists before firing the event
-      _   <- ZMessaging.currentAccounts.activeZms.collect { case Some(z) => z }.head
-      acc <- ZMessaging.currentAccounts.activeAccount.collect { case Some(acc) => acc }.head
-    } yield {
-      tracking.track(EnteredNameOnRegistrationEvent(inputType, responseToErrorPair(response)), Some(acc.id))
-      tracking.track(RegistrationSuccessfulEvent(SignInFragment.Phone), Some(acc.id))
-    }
-
-  def flushEvents(): Unit = {}
 }
 
 object GlobalTrackingController {

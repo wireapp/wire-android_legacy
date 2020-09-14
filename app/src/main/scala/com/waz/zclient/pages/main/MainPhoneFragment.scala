@@ -24,7 +24,7 @@ import android.os.{Build, Bundle}
 import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.FragmentManager
-import com.waz.content.UserPreferences.{CrashesAndAnalyticsRequestShown, AnalyticsEnabled}
+import com.waz.content.UserPreferences.{AnalyticsEnabled, CrashesAndAnalyticsRequestShown}
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
 import com.waz.permissions.PermissionsService

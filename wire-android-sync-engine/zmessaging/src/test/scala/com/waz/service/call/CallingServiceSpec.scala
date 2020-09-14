@@ -46,7 +46,7 @@ import com.waz.utils.jna.Uint32_t
 import com.waz.utils.wrappers.Context
 import org.threeten.bp.{Duration, Instant}
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
@@ -75,7 +75,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val selfUserData    = UserData(selfUserId, "")
 
   // For one to one
-  val otherUserId       = UserId("otherUser") 
+  val otherUserId       = UserId("otherUser")
   val otherUserClientId = ClientId("otherUserClient")
   val otherUser         = Participant(otherUserId, otherUserClientId)
 
@@ -1197,7 +1197,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val s = new CallingServiceImpl(
       selfUserId, selfClientId, null, context, avs, convs, convsService, members, otrSyncHandler,
-      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking, httpProxy = None
+      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, httpProxy = None
     )
     result(s.wCall)
     s

@@ -43,7 +43,6 @@ import com.waz.service.call.CallingService.GlobalCallProfile
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
-import com.waz.service.tracking.{AVSMetricsEvent, TrackingService}
 import com.waz.sync.client.CallingClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
@@ -168,7 +167,6 @@ class CallingServiceImpl(val accountId:       UserId,
                          globalPrefs:         GlobalPreferences,
                          permissions:         PermissionsService,
                          userStorage:         UsersStorage,
-                         tracking:            TrackingService,
                          httpProxy:           Option[Proxy])(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
 
   import CallingService._
@@ -366,8 +364,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }
     }
 
-  def onMetricsReady(convId: RConvId, metricsJson: String): Unit =
-    tracking.track(AVSMetricsEvent(metricsJson), Some(accountId))
+  def onMetricsReady(convId: RConvId, metricsJson: String): Unit = ()
 
   def onConfigRequest(wcall: WCall): Int = {
     verbose(l"onConfigRequest")
@@ -386,7 +383,7 @@ class CallingServiceImpl(val accountId:       UserId,
   def onVideoStateChanged(userId: String, clientId: String, videoReceiveState: VideoState): Future[Unit] =
     updateActiveCallAsync { (_, _, call) =>
       verbose(l"video state changed: $videoReceiveState")
-      call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)(tracking)
+      call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)
     }("onVideoStateChanged")
 
   def onParticipantsChanged(rConvId: RConvId, participants: Set[Participant]): Future[Unit] =
@@ -550,7 +547,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }
       verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
       if (state != NoCameraPermission) avs.setVideoSendState(w, conv.remoteId, targetSt)
-      call.updateVideoState(Participant(accountId, clientId), targetSt)(tracking)
+      call.updateVideoState(Participant(accountId, clientId), targetSt)
     }("setVideoSendState")
 
   val callMessagesStage: Stage.Atomic = EventScheduler.Stage[CallMessageEvent] {

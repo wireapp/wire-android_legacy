@@ -25,7 +25,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.sync.ReceiptType
 import com.waz.model.{UserId, _}
-import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
@@ -74,7 +73,6 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                       userPrefs:       UserPreferences,
                                       membersStorage:  MembersStorage,
                                       messagesStorage: => MessagesStorage,
-                                      tracking:        TrackingService,
                                       syncHandler:     SyncServiceHandle) extends ConversationsContentUpdater with DerivedLogTag {
   import com.wire.signals.EventContext.Implicits.global
 
@@ -226,7 +224,6 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
       case Some(conv) => processor(conv)
       case None if retryCount > 3 =>
         val ex = new NoSuchElementException("No conversation data found") with NoStackTrace
-        tracking.exception(ex, "No conversation data found")(tag)
         Future.failed(ex)
       case None =>
         warn(l"No conversation data found for remote id: $remoteId on try: $retryCount")(tag)
@@ -278,7 +275,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
       })
     } yield ()
   }
-  
+
   private def checkMutedStatus(): Future[Unit] =
     if (teamId.nonEmpty) {
       Future.successful({})

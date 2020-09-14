@@ -1,6 +1,5 @@
 package com.waz.db.migration.userdatabase
 
-import com.waz.DisabledTrackingService
 import com.waz.content.ZmsDatabase
 import com.waz.db.{BaseDaoDB, ZMessagingDB}
 import com.waz.model.KeyValueData.KeyValueDataDao
@@ -17,11 +16,11 @@ class RoomDaoDBMigrationTest extends FeatureSpec with Matchers with BeforeAndAft
   val user_id = "12371289371298731827312371273981283"
 
   //Reference: Checkout tag 3.46. See ZmsDatabase.dbHelper
-  def createLegacyDB() = new ZMessagingDB(Robolectric.application, user_id, DisabledTrackingService)
+  def createLegacyDB() = new ZMessagingDB(Robolectric.application, user_id)
 
   def createNewDaoDB(): BaseDaoDB = {
     val userId = UserId(user_id)
-    val zms = new ZmsDatabase(userId, Robolectric.application, DisabledTrackingService)
+    val zms = new ZmsDatabase(userId, Robolectric.application)
     zms.dbHelper
   }
 

@@ -19,7 +19,6 @@ package com.waz.db
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
-import com.waz.DisabledTrackingService
 import com.waz.api.Message
 import com.waz.model.AssetData.AssetDataDao
 import com.waz.model.AssetMetaData.Image.Tag.Medium
@@ -40,7 +39,7 @@ import org.threeten.bp.Instant
 
 @RunWith(classOf[JUnitRunner])
 @Ignore class ZMessagingDBSpec extends FeatureSpec with Matchers with Inspectors with GeneratorDrivenPropertyChecks with BeforeAndAfter with RobolectricTests with DbLoader {
-  lazy val dbHelper = new ZMessagingDB(Robolectric.application, "test_db", DisabledTrackingService)
+  lazy val dbHelper = new ZMessagingDB(Robolectric.application, "test_db")
 
   after {
     dbHelper.close()
