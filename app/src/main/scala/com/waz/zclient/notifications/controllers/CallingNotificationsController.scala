@@ -78,14 +78,14 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
                                   zs.find(_.selfUserId == account)
                                     .fold2(
                                       Signal.const(conv -> Option.empty[Bitmap]),
-                                      z => Signal.const(conv -> Option.empty[Bitmap]) // //TODO: Use new assets engine to fetch the bitmap
+                                      _ => Signal.const(conv -> Option.empty[Bitmap]) // TODO: Use new assets engine to fetch the bitmap
                                     )
                                 }: _*).map(_.toMap)
       notInfo                <- Signal.sequence(allCallsF.map { case (conv, (caller, account)) =>
                                   zs.find(_.selfUserId == account)
                                     .fold2(
                                       Signal.const(None, Name.Empty, None, false, Availability.None),
-                                      z => Signal(
+                                      z => Signal.zip(
                                         z.calling.joinableCallsNotMuted.map(_.get(conv)),
                                         z.usersStorage.optSignal(caller).map(_.map(_.name).getOrElse(Name.Empty)),
                                         z.convsStorage.optSignal(conv),

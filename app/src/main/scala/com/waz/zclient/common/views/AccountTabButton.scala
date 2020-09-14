@@ -118,7 +118,7 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
       drawable.setPicture(team.picture)
   }
 
-  Signal(unreadCount, selected).onUi {
+  Signal.zip(unreadCount, selected).onUi {
     case (c, false) if c > 0 =>
       unreadIndicatorIcon.setVisible(true)
       unreadIndicatorName.setVisible(true)

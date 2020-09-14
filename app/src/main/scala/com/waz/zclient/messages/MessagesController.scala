@@ -50,7 +50,7 @@ import scala.concurrent.Future
   val currentConvIndex = for {
     z       <- zms
     convId  <- currentConvId
-    index   <- Signal.future(z.messagesStorage.msgsIndex(convId))
+    index   <- Signal.from(z.messagesStorage.msgsIndex(convId))
   } yield
     index
 

@@ -30,6 +30,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
+import com.waz.threading.Threading.RichSignal
 import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.adapters.CollectionAdapter._
@@ -63,7 +64,7 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
 
   val adapterState = Signal[AdapterState](AdapterState(contentMode.currentValue.get, 0, loading = true))
 
-  Signal(convController.currentConv, adapterState).on(Threading.Ui){
+  Signal.zip(convController.currentConv, adapterState).onUi{
     case (c, AdapterState(AllContent, 0, false)) => collectionController.openedCollection ! Some(CollectionInfo(c, empty = true))
     case (c, AdapterState(AllContent, count, false)) => collectionController.openedCollection ! Some(CollectionInfo(c, empty = false))
     case _ =>
@@ -99,7 +100,7 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
 
   def messages = contentMode.currentValue.fold(Option.empty[RecyclerCursor])(collectionCursors(_))
 
-  Signal(contentMode, viewDim) .on(Threading.Ui){ _ =>
+  Signal.zip(contentMode, viewDim).onUi{ _ =>
     notifyDataSetChanged()
   }
 

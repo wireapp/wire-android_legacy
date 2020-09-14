@@ -482,7 +482,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
 
   override def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]] = RefreshingSignal[Seq[ButtonData]](
     loader       = CancellableFuture.lift(buttonsStorage.findByMessage(msgId).map(_.sortBy(_.ordinal))),
-    refreshEvent = EventStream.union(buttonsStorage.onChanged.map(_.map(_.id)), buttonsStorage.onDeleted)
+    refreshEvent = EventStream.zip(buttonsStorage.onChanged.map(_.map(_.id)), buttonsStorage.onDeleted)
   )
 
   override def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit] =

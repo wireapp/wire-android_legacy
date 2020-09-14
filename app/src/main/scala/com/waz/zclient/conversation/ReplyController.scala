@@ -52,7 +52,7 @@ class ReplyController(implicit injector: Injector, context: Context, ec: EventCo
     asset       <- assetsController.assetSignal(msg.assetId)
   } yield Option(ReplyContent(msg, asset, sender.name))).orElse(Signal.const(None))
 
-  messagesService.flatMap(ms => Signal.wrap(ms.msgEdited)) { case (from, to) =>
+  messagesService.flatMap(ms => Signal.from(ms.msgEdited)) { case (from, to) =>
     replyData.mutate { data =>
       data.find(_._2 == from).map(_._1).fold(data) { conv =>
         data + (conv -> to)
@@ -60,7 +60,7 @@ class ReplyController(implicit injector: Injector, context: Context, ec: EventCo
     }
   }
 
-  messagesStorage.flatMap(ms => Signal.wrap(ms.onDeleted)) { deletedIds =>
+  messagesStorage.flatMap(ms => Signal.from(ms.onDeleted)) { deletedIds =>
     replyData.mutate(_.filterNot(c => deletedIds.contains(c._2)))
   }
 

@@ -99,9 +99,9 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private val menuIndicatorView = ViewUtils.getView(this, R.id.conversation_menu_indicator).asInstanceOf[MenuIndicatorView]
 
   private val userTyping = for {
-    z <- zms
-    convId <- conversation.map(_.id)
-    typing <- Signal.wrap(z.typing.onTypingChanged.filter(_._1 == convId).map(_._2.headOption)).orElse(Signal.const(None))
+    z          <- zms
+    convId     <- conversation.map(_.id)
+    typing     <- Signal.from(z.typing.onTypingChanged.filter(_._1 == convId).map(_._2.headOption)).orElse(Signal.const(None))
     typingUser <- userData(typing.map(_.id))
   } yield typingUser
 
@@ -151,7 +151,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     conv <- conversation
     memberIds <- members
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)):_*)
-    isGroup <- Signal.future(z.conversations.isGroupConversation(conv.id))
+    isGroup <- Signal.from(z.conversations.isGroupConversation(conv.id))
   } yield {
     val opacity =
       if ((memberIds.isEmpty && isGroup) || conv.convType == ConversationType.WaitForConnection || !conv.isActive)

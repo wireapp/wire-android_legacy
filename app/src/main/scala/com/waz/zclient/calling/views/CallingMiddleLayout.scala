@@ -44,11 +44,11 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
 
   lazy val onShowAllClicked: EventStream[Unit] = participants.onShowAllClicked
 
-  Signal(controller.callStateCollapseJoin, controller.isVideoCall, controller.isGroupCall).map {
-    case (_,                   false, false) => CallDisplay.Chathead
+  Signal.zip(controller.callStateCollapseJoin, controller.isVideoCall, controller.isGroupCall).map {
+    case (_,             false, false) => CallDisplay.Chathead
     case (OtherCalling,  false, true)  => CallDisplay.Chathead
     case (SelfConnected, _,     true)  => CallDisplay.Participants
-    case _                                   => CallDisplay.Empty
+    case _                             => CallDisplay.Empty
   }.onUi { display =>
     chathead.setVisible(display == CallDisplay.Chathead)
     participants.setVisible(display == CallDisplay.Participants)

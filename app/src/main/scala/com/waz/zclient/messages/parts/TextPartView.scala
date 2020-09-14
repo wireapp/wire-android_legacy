@@ -75,7 +75,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int)
       TextPartView.this.getParent.asInstanceOf[View].performLongClick()
   })
 
-  var messagePart = Signal[Option[MessageContent]]()
+  val messagePart = Signal[Option[MessageContent]]()
 
   val searchResultText = for {
     color         <- accentColorController.accentColor

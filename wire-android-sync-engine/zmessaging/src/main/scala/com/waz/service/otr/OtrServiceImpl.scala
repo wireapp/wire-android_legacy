@@ -97,7 +97,7 @@ class OtrServiceImpl(selfUserId:     UserId,
     // request self clients sync to update prekeys on backend
     // we've just created a session from message, this means that some user had to obtain our prekey from backend (so we can upload it)
     // using signal and sync interval parameter to limit requests to one an hour
-    Signal.wrap(sessions.onCreateFromMessage).throttle(15.seconds) { _ => clients.requestSyncIfNeeded(1.hour) }
+    Signal.from(sessions.onCreateFromMessage).throttle(15.seconds) { _ => clients.requestSyncIfNeeded(1.hour) }
   }
 
   override def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent] = {
@@ -289,7 +289,7 @@ class OtrServiceImpl(selfUserId:     UserId,
   }
 
   def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
-    if (userId == selfUserId && cId == clientId) Signal.future(cryptoBox { cb => Future successful cb.getLocalFingerprint })
+    if (userId == selfUserId && cId == clientId) Signal.from(cryptoBox(cb => Future.successful(cb.getLocalFingerprint)))
     else cryptoBox.sessions.remoteFingerprint(SessionId(userId, cId))
 
   def encryptAssetDataCBC(key: AESKey, data: LocalData): Future[(Sha256, LocalData, EncryptionAlgorithm)] = {

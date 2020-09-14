@@ -72,7 +72,7 @@ class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int)
     downloadButton.getParent.asInstanceOf[View].setVisible(visible)
   }
 
-  val likedBySelf = Signal(collectionController.focusedItem, selfUserId, reactionsStorage) flatMap {
+  val likedBySelf = Signal.zip(collectionController.focusedItem, selfUserId, reactionsStorage) flatMap {
     case (Some(m), self, reactions) =>
       reactions.signal((m.id, self)).map(_.action == Liking.like).orElse(Signal const false)
     case _ => Signal.const(false)
@@ -87,7 +87,7 @@ class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int)
   Seq(likeButton, downloadButton, shareButton, deleteButton, viewButton)
     .foreach(_.setPressedBackgroundColor(getColor(R.color.light_graphite)))
 
-  likeButton.onClick( Signal(message, likedBySelf).head.foreach{
+  likeButton.onClick(Signal.zip(message, likedBySelf).head.foreach{
     case (msg, true) => messageActionsController.onMessageAction ! (Unlike, msg)
     case (msg, false) => messageActionsController.onMessageAction ! (Like, msg)
   })

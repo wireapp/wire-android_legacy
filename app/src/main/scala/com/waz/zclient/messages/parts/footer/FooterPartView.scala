@@ -187,7 +187,7 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     lastMsgId = msgId
   }
 
-  Signal(controller.expiring, likeButtonVisible).map { case (e, v) => e || !v }.onUi(likeButton.setGone)
+  Signal.zip(controller.expiring, likeButtonVisible).map { case (e, v) => e || !v }.onUi(likeButton.setGone)
 
   override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
     super.onLayout(changed, left, top, right, bottom)

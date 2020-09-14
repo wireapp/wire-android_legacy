@@ -273,7 +273,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     val onConvMemberDataChanged =
       membersStorage
         .onChanged.map(_.filter(_.convId == conv).map(m => m.userId -> (Option(m), true)))
-        .union(membersStorage.onDeleted.map(_.filter(_._2 == conv).map(_._1 -> (None, false)))).map(_.toMap)
+        .zip(membersStorage.onDeleted.map(_.filter(_._2 == conv).map(_._1 -> (None, false)))).map(_.toMap)
 
     new AggregatingSignal[Map[UserId, (Option[ConversationMemberData], Boolean)], Seq[ConversationMemberData]](
       onConvMemberDataChanged,

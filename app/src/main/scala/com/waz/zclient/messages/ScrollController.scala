@@ -46,25 +46,13 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
 
   val reachedQueuedScroll: SourceStream[Scroll] = EventStream[Scroll]
 
-  val onScroll: EventStream[Scroll] = EventStream.union(
-    onListLoaded.map { pos =>
-      Scroll(pos, smooth = false, force = true)
-    },
-    onScrollToBottomRequested.filter(_ => queuedScroll.isEmpty).map { _ =>
-      BottomScroll(smooth = false)
-    },
-    onListHeightChanged.filter(_ => shouldScrollToBottom && lastVisiblePosition == LastMessageIndex).map { _ =>
-      BottomScroll(smooth = false)
-    },
-    onListHeightChanged.filter(_ => !shouldScrollToBottom && queuedScroll.nonEmpty).map { _ =>
-      queuedScroll.get
-    },
-    onMessageAdded.filter(_ => !dragging && queuedScroll.isEmpty && lastVisiblePosition == LastMessageIndex).map { _ =>
-      BottomScroll(smooth = false)
-    },
-    scrollToPositionRequested.map { pos =>
-      Scroll(pos, smooth = false, force = true)
-    }
+  val onScroll: EventStream[Scroll] = EventStream.zip(
+    onListLoaded.map { pos => Scroll(pos, smooth = false, force = true) },
+    onScrollToBottomRequested.filter(_ => queuedScroll.isEmpty).map { _ => BottomScroll(smooth = false) },
+    onListHeightChanged.filter(_ => shouldScrollToBottom && lastVisiblePosition == LastMessageIndex).map { _ => BottomScroll(smooth = false) },
+    onListHeightChanged.filter(_ => !shouldScrollToBottom && queuedScroll.nonEmpty).map { _ => queuedScroll.get },
+    onMessageAdded.filter(_ => !dragging && queuedScroll.isEmpty && lastVisiblePosition == LastMessageIndex).map { _ => BottomScroll(smooth = false) },
+    scrollToPositionRequested.map { pos => Scroll(pos, smooth = false, force = true) }
   )
 
   adapter.onScrollRequested(scrollToPositionRequested ! _._2)

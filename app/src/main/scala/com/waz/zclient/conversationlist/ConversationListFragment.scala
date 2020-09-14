@@ -210,7 +210,7 @@ class NormalConversationFragment extends ConversationListFragment {
 
   override lazy val topToolbar = returning(view[NormalTopToolbar](R.id.conversation_list_top_toolbar)) { vh =>
     subs += accentColor.map(_.color).onUi(color => vh.foreach(_.setIndicatorColor(color)))
-    subs += Signal(unreadCount, incomingClients, readReceiptsChanged).onUi {
+    subs += Signal.zip(unreadCount, incomingClients, readReceiptsChanged).onUi {
       case (count, clients, rrChanged) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0 || rrChanged))
     }
   }

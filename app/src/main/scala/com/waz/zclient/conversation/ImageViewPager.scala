@@ -138,7 +138,7 @@ class ImageSwipeAdapter(context: Context)(implicit injector: Injector, ev: Event
   def positionForMessage(msg: MessageData): Signal[Int] =
     for {
     c <- cursor
-    pos <- Signal.future(c.positionForMessage(msg))
+    pos <- Signal.from(c.positionForMessage(msg))
   } yield pos
 
   cursor.on(Threading.Ui) { c =>

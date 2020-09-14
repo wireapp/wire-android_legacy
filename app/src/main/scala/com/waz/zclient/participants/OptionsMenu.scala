@@ -55,8 +55,7 @@ case class OptionsMenu(context: Context, controller: OptionsMenuController) exte
         title.setVisible(false)
     }
 
-    Signal(controller.optionItems, controller.selectedItems).onUi { case (items, selected) =>
-
+    Signal.zip(controller.optionItems, controller.selectedItems).onUi { case (items, selected) =>
       container.removeAllViews()
 
       items.foreach { item =>

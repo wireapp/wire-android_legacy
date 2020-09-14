@@ -68,7 +68,7 @@ class ImageFragment extends FragmentHelper {
   lazy val singleImageController    = inject[ISingleImageController]
   lazy val replyController          = inject[ReplyController]
 
-  lazy val likedBySelf = Signal(collectionController.focusedItem, selfUserId, reactionsStorage).flatMap {
+  lazy val likedBySelf = Signal.zip(collectionController.focusedItem, selfUserId, reactionsStorage).flatMap {
     case (Some(m), self, reactions) =>
       reactions.signal((m.id, self)).map(_.action == Liking.like).orElse(Signal.const(false))
     case _ => Signal.const(false)
@@ -131,7 +131,7 @@ class ImageFragment extends FragmentHelper {
 
     imageInput
 
-    EventStream.union(bottomToolbar.topToolbar.onCursorButtonClicked, bottomToolbar.bottomToolbar.onCursorButtonClicked) {
+    EventStream.zip(bottomToolbar.topToolbar.onCursorButtonClicked, bottomToolbar.bottomToolbar.onCursorButtonClicked) {
       case item: CursorActionToolbarItem =>
         import IDrawingController.DrawingMethod._
 

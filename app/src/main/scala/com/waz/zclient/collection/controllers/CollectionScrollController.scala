@@ -56,12 +56,12 @@ class CollectionScrollController(adapter: RecyclerView.Adapter[ViewHolder], list
     }
   })
 
-  val onScroll = EventStream.union(
+  val onScroll = EventStream.zip(
     onListLoaded map { case UnreadIndex(pos) => Scroll(pos, smooth = false) },
     onScrollToBottomRequested.map(_ => Scroll(lastPosition, smooth = true)),
     listHeight.onChanged.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = false)),
     onMessageAdded.filter(_ => shouldScrollToBottom).map(_ => Scroll(lastPosition, smooth = true))
-  ) .filter(_.position >= 0)
+  ).filter(_.position >= 0)
 }
 
 object CollectionScrollController {

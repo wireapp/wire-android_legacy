@@ -131,7 +131,7 @@ class CreateConversationManagerFragment extends DefaultToolbarFragment[NoOpConta
       R.id.fragment_create_conversation_manager_layout_container,
       new CreateConversationSettingsFragment, CreateConversationSettingsFragment.Tag)
 
-    Signal(currentPage, themeController.darkThemeSet).map {
+    Signal.zip(currentPage, themeController.darkThemeSet).map {
       case (PickerPage, true) => R.drawable.action_back_light
       case (PickerPage, false) => R.drawable.action_back_dark
       case (SettingsPage, false) => R.drawable.ic_action_close_dark

@@ -101,7 +101,7 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
   import TrackingService._
 
   override lazy val isTrackingEnabled: Signal[Boolean] =
-    Signal.future(ZMessaging.globalModule).flatMap(_.prefs(analyticsPrefKey).signal)
+    Signal.from(ZMessaging.globalModule).flatMap(_.prefs(analyticsPrefKey).signal)
 
   val events = EventStream[(Option[ZMessaging], TrackingEvent)]()
 

@@ -57,7 +57,7 @@ class ReadReceiptsStorageImpl(context: Context, storage: Database, msgStorage: M
     find(_.message == message, ReadReceiptDao.findForMessage(message)(_), identity)
 
   override def receipts(message: MessageId): Signal[Seq[ReadReceipt]] = {
-    val changed = onChanged.map(_.filter(_.message == message).map(_.id)).union(onDeleted.map(_.filter(_._1 == message)))
+    val changed = onChanged.map(_.filter(_.message == message).map(_.id)).zip(onDeleted.map(_.filter(_._1 == message)))
     RefreshingSignal[Seq[ReadReceipt]](getReceipts(message), changed)
   }
 

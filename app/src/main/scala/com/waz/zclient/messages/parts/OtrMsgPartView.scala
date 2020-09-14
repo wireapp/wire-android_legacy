@@ -107,7 +107,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
     case OTR_MEMBER_ADDED =>
       Signal.const(getString(R.string.content__otr__new_member__message))
     case RESTRICTED_FILE =>
-      Signal(affectedUserName, message.map(_.name)).map {
+      Signal.zip(affectedUserName, message.map(_.name)).map {
         case (Other(name), _)     => getString(R.string.file_restrictions__receiver_error, name)
         case (_, Some(Name(ext))) => getString(R.string.file_restrictions__sender_error, ext)
         case _                    => getString(R.string.file_restrictions__sender_error, "")
@@ -116,7 +116,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
       Signal.const("")
   }
 
-  Signal(message, msgString, accentColor.accentColor, memberIsJustSelf).onUi { case (msg, text, color, isMe) =>
+  Signal.zip(message, msgString, accentColor.accentColor, memberIsJustSelf).onUi { case (msg, text, color, isMe) =>
     setTextWithLink(text, color.color) {
       (msg.msgType, isMe) match {
         case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, true)  =>

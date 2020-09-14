@@ -416,13 +416,13 @@ class ConversationFragment extends FragmentHelper {
 
     cursorView.foreach { v =>
 
-      subs += Signal(v.mentionSearchResults, accountsController.teamId, inject[ThemeController].currentTheme).onUi {
+      subs += Signal.zip(v.mentionSearchResults, accountsController.teamId, inject[ThemeController].currentTheme).onUi {
         case (data, teamId, theme) =>
           mentionCandidatesAdapter.setData(data, teamId, theme)
           mentionsList.foreach(_.scrollToPosition(data.size - 1))
       }
 
-      val mentionsListShouldShow = Signal(v.mentionQuery.map(_.nonEmpty), v.mentionSearchResults.map(_.nonEmpty), v.selectionHasMention).map {
+      val mentionsListShouldShow = Signal.zip(v.mentionQuery.map(_.nonEmpty), v.mentionSearchResults.map(_.nonEmpty), v.selectionHasMention).map {
         case (true, true, false) => true
         case _ => false
       }

@@ -79,7 +79,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
 
   private val schedulePushNotificationsToUi = Signal(false)
 
-  Signal(schedulePushNotificationsToUi, pushService.processing).onChanged {
+  Signal.zip(schedulePushNotificationsToUi, pushService.processing).onChanged {
     case (true, false) =>
       pushNotificationsToUi().map { _ => schedulePushNotificationsToUi ! false }
     case _ =>

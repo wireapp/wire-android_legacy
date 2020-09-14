@@ -61,16 +61,20 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
 
     val lastReadTime: Signal[RemoteInstant] = sources.lastReadTime
     val failedCount: Signal[Int] = sources.failedCount
-    val lastMissedCall: Signal[Option[MessageId]] = Signal(sources.lastReadTime, sources.missedCall).map { case (time, msg) => msg.filter(_.time.isAfter(time)).map(_.id) }
-    val incomingKnock: Signal[Option[MessageId]] = Signal(sources.lastReadTime, sources.incomingKnock).map { case (time, msg) => msg.filter(_.time.isAfter(time)).map(_.id) }
+    val lastMissedCall: Signal[Option[MessageId]] = Signal.zip(sources.lastReadTime, sources.missedCall).map {
+      case (time, msg) => msg.filter(_.time.isAfter(time)).map(_.id)
+    }
+    val incomingKnock: Signal[Option[MessageId]] = Signal.zip(sources.lastReadTime, sources.incomingKnock).map {
+      case (time, msg) => msg.filter(_.time.isAfter(time)).map(_.id)
+    }
     val lastMessage: Signal[Option[MessageData]] = returning(sources.lastMessage)(_.disableAutowiring())
     val lastSentMessage: Signal[Option[MessageData]] = returning(sources.lastSentMessage)(_.disableAutowiring())
     val lastMessageFromSelf: Signal[Option[MessageData]] = returning(sources.lastMessageFromSelf)(_.disableAutowiring())
 
     val unreadCount = for {
       time   <- sources.lastReadTime
-      _      <- Signal.wrap(LocalInstant.Epoch, indexChanged.map(_.time)).throttle(500.millis)
-      unread <- Signal.future(messages.countUnread(convId, time))
+      _      <- Signal.from(LocalInstant.Epoch, indexChanged.map(_.time)).throttle(500.millis)
+      unread <- Signal.from(messages.countUnread(convId, time))
     } yield unread
 
     val messagesCursor: Signal[MessagesCursor] = new RefreshingSignal(loadCursor, indexChanged.filter(_.orderChanged))
@@ -92,8 +96,9 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
         lastMessageFromSelf ! MessageDataDao.lastFromSelf(convId, selfUserId)
       }
     }.map { _ =>
-      Signal(signals.unreadCount, signals.failedCount, signals.lastMissedCall, signals.incomingKnock).throttle(500.millis) { case (unread, failed, missed, knock) =>
-        convs.update(convId, _.copy(incomingKnockMessage = knock, missedCallMessage = missed, unreadCount = unread, failedCount = failed))
+      Signal.zip(signals.unreadCount, signals.failedCount, signals.lastMissedCall, signals.incomingKnock).throttle(500.millis) {
+        case (unread, failed, missed, knock) =>
+          convs.update(convId, _.copy(incomingKnockMessage = knock, missedCallMessage = missed, unreadCount = unread, failedCount = failed))
       }
     }.recoverWith { case exception =>
       error(l"Error while reading conversation messages from storage: $exception")

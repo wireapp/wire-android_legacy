@@ -55,7 +55,7 @@ class ReadReceiptsPartView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val firstMessage = message.map(_.firstMessage)
   private lazy val msgType      = message.map(_.msgType)
 
-  Signal(senderName, msgType, firstMessage).map {
+  Signal.zip(senderName, msgType, firstMessage).map {
     case (_,           READ_RECEIPTS_ON,  true)  => getString(R.string.content__system__read_receipts_on)
     case (_,           READ_RECEIPTS_OFF, true)  => getString(R.string.content__system__read_receipts_off)
     case (Me,          READ_RECEIPTS_ON,  false) => getString(R.string.content__system__read_receipts_you_turned_on)

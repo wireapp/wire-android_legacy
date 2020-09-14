@@ -43,7 +43,7 @@ class ConnectivityFragment extends Fragment with FragmentHelper with Connectivit
   private lazy val network     = Option(ZMessaging.currentGlobal).map(_.network.networkMode).getOrElse(Signal.const(NetworkMode.UNKNOWN))
   private lazy val accentColor = inject[AccentColorController].accentColor
   private lazy val longProcess = inject[Signal[ZMessaging]].flatMap(_.push.processing).flatMap {
-    case true => Signal.future(CancellableFuture.delay(LongProcessingDelay)).map(_ => true).orElse(Signal.const(false))
+    case true => Signal.from(CancellableFuture.delay(LongProcessingDelay)).map(_ => true).orElse(Signal.const(false))
     case _ => Signal.const(false)
   }
 

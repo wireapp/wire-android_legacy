@@ -334,20 +334,20 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
   }
 
   override lazy val activeAccount = activeAccountManager.flatMap[Option[AccountData]] {
-    case Some(am) => Signal.future(storage).flatMap(_.optSignal(am.userId))
+    case Some(am) => Signal.from(storage).flatMap(_.optSignal(am.userId))
     case None     => Signal.const(None)
   }
 
   override lazy val activeAccountId = activeAccount.map(_.map(_.id))
 
   override lazy val activeZms = activeAccountManager.flatMap[Option[ZMessaging]] {
-    case Some(am) => Signal.future(am.zmessaging.map(Some(_)))
+    case Some(am) => Signal.from(am.zmessaging.map(Some(_)))
     case None     => Signal.const(None)
   }
 
   override lazy val zmsInstances = (for {
     ams <- accountManagers
-    zs  <- Signal.sequence(ams.map(am => Signal.future(am.zmessaging)).toSeq: _*)
+    zs  <- Signal.sequence(ams.map(am => Signal.from(am.zmessaging)).toSeq: _*)
   } yield
     returning(zs.toSet) { v =>
       verbose(l"Loaded: ${v.size} zms instances for ${ams.size} accounts")

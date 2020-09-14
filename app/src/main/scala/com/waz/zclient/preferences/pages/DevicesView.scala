@@ -105,7 +105,7 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
   val otherClients = for {
     Some(am)      <- accounts.activeAccountManager
     selfClientId  <- am.clientId
-    clients       <- Signal.future(am.storage.otrClientsStorage.get(am.userId))
+    clients       <- Signal.from(am.storage.otrClientsStorage.get(am.userId))
   } yield clients.fold(Seq[Client]())(_.clients.values.filter(client => !selfClientId.contains(client.id)).toSeq.sortBy(_.regTime).reverse)
 
   val incomingClients = for {

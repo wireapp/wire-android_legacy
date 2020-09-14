@@ -766,7 +766,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(convSignal)
       (membersStorage.getActiveUsers _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head.map(_.map(_.userId)) }
       (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head }
-      (membersStorage.onChanged _).expects().anyNumberOfTimes().onCall(_ => EventStream.wrap(membersOnChanged))
+      (membersStorage.onChanged _).expects().anyNumberOfTimes().onCall(_ => EventStream.from(membersOnChanged))
       (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
       (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
       (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes().returning(convSignal.head)
@@ -840,7 +840,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(convSignal)
       (membersStorage.getActiveUsers _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head.map(_.map(_.userId)) }
       (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head }
-      (membersStorage.onChanged _).expects().anyNumberOfTimes().onCall(_ => EventStream.wrap(membersOnChanged))
+      (membersStorage.onChanged _).expects().anyNumberOfTimes().onCall(_ => EventStream.from(membersOnChanged))
       (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
       (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes().returning(convSignal.head)
       (membersStorage.remove(_: ConvId, _:Iterable[UserId])).expects(convId, *).anyNumberOfTimes().onCall { (_: ConvId, userIds: Iterable[UserId]) =>

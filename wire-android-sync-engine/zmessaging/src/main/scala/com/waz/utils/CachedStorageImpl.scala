@@ -93,7 +93,7 @@ trait ReactiveStorage2[K, V <: Identifiable[K]] extends Storage2[K, V] {
     onDeleted.map(_.view.find(_ == key)).collect { case Some(k) => k }
 
   def optSignal(key: K): Signal[Option[V]] = {
-    val changeOrDelete = onChanged(key).map(Option(_)).union(onRemoved(key).map(_ => Option.empty[V]))
+    val changeOrDelete = onChanged(key).map(Option(_)).zip(onRemoved(key).map(_ => Option.empty[V]))
     new AggregatingSignal[Option[V], Option[V]](changeOrDelete, find(key), { (_, v) => v })
   }
 
@@ -290,7 +290,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   private def tellDeleted(events: Seq[K]): Unit =
     if (!streamsBlocked) onDeleted ! events else onDeletedQueue.put(events)
 
-  val onChanged = onAdded.union(onUpdated.map(_.map(_._2)))
+  val onChanged = onAdded.zip(onUpdated.map(_.map(_._2)))
 
   protected def load(key: K)(implicit db: DB): Option[V] = dao.getById(key)
 
@@ -363,7 +363,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   def onRemoved(key: K): EventStream[K] = onDeleted.map(_.view.filter(_ == key).lastOption).collect { case Some(k) => k }
 
   def optSignal(key: K): Signal[Option[V]] = {
-    val changeOrDelete = onChanged(key).map(Option(_)).union(onRemoved(key).map(_ => Option.empty[V]))
+    val changeOrDelete = onChanged(key).map(Option(_)).zip(onRemoved(key).map(_ => Option.empty[V]))
     new AggregatingSignal[Option[V], Option[V]](changeOrDelete, get(key), { (_, v) => v })
   }
 
@@ -521,7 +521,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
 
   // signal with all data
   override lazy val contents: Signal[Map[K, V]] = {
-    val changesStream = EventStream.union[Seq[ContentChange[K, V]]](
+    val changesStream = EventStream.zip[Seq[ContentChange[K, V]]](
       onAdded.map(_.map(d => Added(d.id, d))),
       onUpdated.map(_.map { case (prv, curr) => Updated(prv.id, prv, curr) }),
       onDeleted.map(_.map(Removed(_)))

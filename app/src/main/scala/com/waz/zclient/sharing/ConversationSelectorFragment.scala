@@ -107,7 +107,7 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
     ZMessaging.currentAccounts.activeAccount.onChanged.onUi(_ => vh.foreach(v => v.getElements.foreach(v.removeElement)))
 
     (for {
-      selected <- Signal.wrap(adapter.conversationSelectEvent)
+      selected <- Signal.from(adapter.conversationSelectEvent)
       name     <- convController.conversationName(selected._1)
     } yield (PickableConversation(selected._1.str, name.str), selected._2)).onUi {
       case (convData, true) if multiPicker  => vh.foreach(_.addElement(convData))

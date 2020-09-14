@@ -57,10 +57,10 @@ trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedL
   val messageData: SourceSignal[MessageData] = Signal()
 
   val messageAndLikesResolver = for {
-    z <- civZms
-    mId <- messageData.map(_.id)
-    message <- z.messagesStorage.signal(mId)
-    msgAndLikes <- Signal.future(z.msgAndLikes.combineWithLikes(message))
+    z           <- civZms
+    mId         <- messageData.map(_.id)
+    message     <- z.messagesStorage.signal(mId)
+    msgAndLikes <- Signal.from(z.msgAndLikes.combineWithLikes(message))
   } yield msgAndLikes
 
   messageAndLikesResolver.disableAutowiring()
@@ -124,7 +124,7 @@ class CollectionImageView(context: Context) extends ImageView(context) with Coll
 
   private val target = new CustomImageViewTarget(this)
 
-  Signal(messageData.map(_.assetId), ephemeralColorDrawable).onUi {
+  Signal.zip(messageData.map(_.assetId), ephemeralColorDrawable).onUi {
     case (Some(id: AssetId), None) =>
       verbose(l"Set image asset $id")
       WireGlide(context)

@@ -155,7 +155,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     (a.details, a) match {
       case (_: Audio, audioAsset: Asset) =>
         val file = new File(context.getCacheDir, s"${audioAsset.id.str}.m4a")
-        Signal.future((if (!file.exists()) {
+        Signal.from((if (!file.exists()) {
           file.createNewFile()
           assets.head.flatMap(_.loadContent(audioAsset).future).flatMap(ai => Future.fromTry(ai.toInputStream)).map { is =>
             IoUtils.copy(is, file)

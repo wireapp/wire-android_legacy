@@ -107,7 +107,7 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
     drawable.setBorderColor(color)
   }
 
-  Signal(initials, drawableCorners, selected).onUi {
+  Signal.zip(initials, drawableCorners, selected).onUi {
     case (i, c, s) => drawable.setInfo(i, c, s)
   }
 

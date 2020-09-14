@@ -71,7 +71,7 @@ class AddParticipantsFragment extends FragmentHelper {
   private lazy val adapter = AddParticipantsAdapter(newConvController.users, newConvController.integrations)
 
   private lazy val searchBox = returning(view[SearchEditText](R.id.search_box)) { vh =>
-    new FutureEventStream[(Either[UserId, (ProviderId, IntegrationId)], Boolean), (Pickable, Boolean)](adapter.onSelectionChanged, {
+    adapter.onSelectionChanged.mapAsync {
       case (Left(userId), selected) =>
         zms.head.flatMap(_.usersStorage.get(userId).collect {
           case Some(u) => (Pickable(userId.str, u.name), selected)
@@ -80,7 +80,7 @@ class AddParticipantsFragment extends FragmentHelper {
         zms.head.flatMap(_.integrations.getIntegration(pId, iId).collect {
           case Right(service) => (Pickable(iId.str, service.name), selected)
         })
-    }).onUi {
+    }.onUi {
       case (pu, selected) =>
         vh.foreach { v =>
           if (selected) v.addElement(pu) else v.removeElement(pu)
