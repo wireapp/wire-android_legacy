@@ -63,6 +63,12 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   private lazy val permissions = inject[PermissionsService]
   private lazy val preferences = inject[Signal[UserPreferences]]
   private val themeController  = inject[ThemeController]
+  private lazy val lightTheme = returning (WireApplication.APP_INSTANCE.getResources.newTheme){
+    _.applyStyle(R.style.Theme_Light, true)
+  }
+  private lazy val darkTheme = returning (WireApplication.APP_INSTANCE.getResources.newTheme){
+    _.applyStyle(R.style.Theme_Dark, true)
+  }
 
   val onButtonClick: SourceStream[Unit] = EventStream[Unit]
 
@@ -76,7 +82,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   returning(findById[CallControlButtonView](R.id.mute_call)) { button =>
     button.setEnabled(true)
     controller.isMuted.onUi(button.setActivated)
-    Signal(controller.isVideoCall, controller.isMuted, themeController.currentTheme).map {
+    Signal.zip(controller.isVideoCall, controller.isMuted, themeController.currentTheme).map {
       case (true, true, _)             => Some(drawMuteDark _)
       case (true, false, _)            => Some(drawUnmuteDark _)
       case (false, true, Theme.Dark)   => Some(drawMuteDark _)
@@ -210,29 +216,17 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
     drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, darkTheme)
 
   private def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int, theme: Resources#Theme): Unit = {
-    val paint = new Paint
+    val paint = returning(new Paint){ p =>
+      p.reset()
+      p.setFlags(Paint.ANTI_ALIAS_FLAG)
+      p.setStyle(Paint.Style.FILL)
+      p.setColor(color)
+    }
     val drawable = ContextUtils.getStyledDrawable(resourceId, theme).get
     val bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth, drawable.getIntrinsicHeight, Bitmap.Config.ARGB_8888)
     val c = new Canvas(bitmap)
     drawable.setBounds(0, 0, c.getWidth, c.getHeight)
     drawable.draw(c)
-    paint.reset()
-    paint.setFlags(Paint.ANTI_ALIAS_FLAG)
-    paint.setStyle(Paint.Style.FILL)
-    paint.setColor(color)
     canvas.drawBitmap(bitmap, targetFrame.left, targetFrame.top, paint)
   }
-
-  def lightTheme: Resources#Theme = {
-    val lightTheme = WireApplication.APP_INSTANCE.getResources.newTheme
-    lightTheme.applyStyle(R.style.Theme_Light, true)
-    lightTheme
-  }
-
-  def darkTheme: Resources#Theme = {
-    val darkTheme = WireApplication.APP_INSTANCE.getResources.newTheme
-    darkTheme.applyStyle(R.style.Theme_Dark, true)
-    darkTheme
-  }
-
 }
