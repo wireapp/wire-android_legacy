@@ -19,6 +19,8 @@ package com.waz.zclient.calling.views
 
 import android.Manifest.permission.{CAMERA, RECORD_AUDIO}
 import android.content.Context
+import android.content.res.Resources
+import android.graphics.{Bitmap, Canvas, Paint, RectF}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.GridLayout
@@ -28,16 +30,18 @@ import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.CallInfo.CallState.{SelfCalling, SelfConnected, SelfJoining}
 import com.waz.service.call.{CallInfo, CallingService}
-import com.wire.signals.{EventStream, Signal, SourceStream}
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.CallControlButtonView.ButtonColor
+import com.waz.zclient.common.controllers.ThemeController
+import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode._
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.RichView
-import com.waz.zclient.{R, ViewHelper}
-import com.waz.threading.Threading._
+import com.waz.zclient.utils.{ContextUtils, RichView}
+import com.waz.zclient.{R, ViewHelper, WireApplication}
+import com.wire.signals.{EventStream, Signal, SourceStream}
 
 import scala.async.Async._
 import scala.collection.immutable.ListSet
@@ -58,6 +62,13 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   private lazy val controller  = inject[CallController]
   private lazy val permissions = inject[PermissionsService]
   private lazy val preferences = inject[Signal[UserPreferences]]
+  private val themeController  = inject[ThemeController]
+  private lazy val lightTheme = returning (WireApplication.APP_INSTANCE.getResources.newTheme){
+    _.applyStyle(R.style.Theme_Light, true)
+  }
+  private lazy val darkTheme = returning (WireApplication.APP_INSTANCE.getResources.newTheme){
+    _.applyStyle(R.style.Theme_Dark, true)
+  }
 
   val onButtonClick: SourceStream[Unit] = EventStream[Unit]
 
@@ -69,9 +80,20 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   // first row
   returning(findById[CallControlButtonView](R.id.mute_call)) { button =>
-    button.set(WireStyleKit.drawMute, R.string.incoming__controls__ongoing__mute, mute)
     button.setEnabled(true)
     controller.isMuted.onUi(button.setActivated)
+    Signal.zip(controller.isVideoCall, controller.isMuted, themeController.currentTheme).map {
+      case (true, true, _)             => Some(drawMuteDark _)
+      case (true, false, _)            => Some(drawUnmuteDark _)
+      case (false, true, Theme.Dark)   => Some(drawMuteDark _)
+      case (false, true, Theme.Light)  => Some(drawMuteLight _)
+      case (false, false, Theme.Dark)  => Some(drawUnmuteDark _)
+      case (false, false, Theme.Light) => Some(drawUnmuteLight _)
+      case _                           => None
+    }.onUi {
+      case Some(drawFunction)          => button.set(drawFunction, R.string.incoming__controls__ongoing__mute, mute)
+      case _ =>
+    }
   }
 
   returning(findById[CallControlButtonView](R.id.video_call)) { button =>
@@ -180,4 +202,31 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
     onButtonClick ! {}
     controller.toggleMuted()
   }
+
+  private def drawMuteLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame, color, R.attr.callMutedIcon, lightTheme)
+
+  private def drawMuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame, color, R.attr.callMutedIcon, darkTheme)
+
+  private def drawUnmuteLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, lightTheme)
+
+  private def drawUnmuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit = 
+    drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, darkTheme)
+
+  private def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int, theme: Resources#Theme): Unit =
+    ContextUtils.getStyledDrawable(resourceId, theme).foreach { drawable =>
+      val paint = returning(new Paint) { p =>
+        p.reset()
+        p.setFlags(Paint.ANTI_ALIAS_FLAG)
+        p.setStyle(Paint.Style.FILL)
+        p.setColor(color)
+      }
+      val bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth, drawable.getIntrinsicHeight, Bitmap.Config.ARGB_8888)
+      val c = new Canvas(bitmap)
+      drawable.setBounds(0, 0, c.getWidth, c.getHeight)
+      drawable.draw(c)
+      canvas.drawBitmap(bitmap, targetFrame.left, targetFrame.top, paint)
+    }
 }

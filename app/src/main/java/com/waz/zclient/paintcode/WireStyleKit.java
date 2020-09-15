@@ -6944,9 +6944,9 @@ public class WireStyleKit {
         float newWidth = Math.abs(rect.width() * scale);
         float newHeight = Math.abs(rect.height() * scale);
         result.set(target.centerX() - newWidth / 2,
-            target.centerY() - newHeight / 2,
-            target.centerX() + newWidth / 2,
-            target.centerY() + newHeight / 2);
+                target.centerY() - newHeight / 2,
+                target.centerX() + newWidth / 2,
+                target.centerY() + newHeight / 2);
     }
 
 
