@@ -17,24 +17,33 @@
  */
 package com.waz.zclient.calling.views
 
+
 import android.content.Context
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
+import com.waz.content.UserPreferences
+import com.waz.threading.Threading._
 import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.GlyphButton
 import com.waz.zclient.utils.ContextUtils.getString
+import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.threading.Threading._
+import com.wire.signals.Signal
 
 class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends LinearLayout(context, attrs, defStyleAttr) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) =  this(context, null)
 
-  private val controller = inject[CallController]
+  private val controller              = inject[CallController]
+  private lazy val accentColor        = inject[AccentColorController].accentColor
+  private lazy val vbrSettingsEnabled = inject[Signal[UserPreferences]].flatMap(_.preference(UserPreferences.VBREnabled).signal)
 
-  private lazy val nameView        = findById[TextView](R.id.ttv__calling__header__name)
-  private lazy val subtitleView    = findById[TextView](R.id.ttv__calling__header__subtitle)
-  private lazy val bitRateModeView = findById[TextView](R.id.ttv__calling__header__bitrate)
+  private lazy val nameView               = findById[TextView](R.id.ttv__calling__header__name)
+  private lazy val subtitleView           = findById[TextView](R.id.ttv__calling__header__subtitle)
+  private lazy val bitRateModeView        = findById[TextView](R.id.ttv__calling__header__bitrate)
+  private lazy val conferenceCallingBadge = findById[TextView](R.id.conference_calling_badge)
 
   lazy val closeButton: GlyphButton = findById[GlyphButton](R.id.calling_header_close)
 
@@ -43,10 +52,16 @@ class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleA
   controller.subtitleText.onUi(subtitleView.setText)
   controller.conversationName.onUi(nameView.setText(_))
 
-  controller.cbrEnabled.map {
-    case true  => getString(R.string.audio_message__constant_bit_rate)
-    case false => ""
-  }.onUi(bitRateModeView.setText)
+  controller.isConferenceCall.onUi(conferenceCallingBadge.setVisible)
 
+  accentColor.map(_.color).onUi { color =>
+    conferenceCallingBadge.getBackground.asInstanceOf[GradientDrawable].setColor(color)
+  }
+
+  Signal.zip(vbrSettingsEnabled, controller.isGroupCall, controller.cbrEnabled).map {
+    case (false, false, true) => getString(R.string.audio_message_constant_bit_rate)
+    case (false, false, false) => getString(R.string.audio_message_variable_bit_rate)
+    case _ => ""
+  }.onUi(bitRateModeView.setText)
 
 }

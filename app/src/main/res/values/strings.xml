@@ -506,6 +506,7 @@
     <string name="pref_options_conference_calls_category_title">Conference Calls</string>
     <string name="pref_options_conference_calls_beta_program_title">Beta Program</string>
     <string name="pref_options_conference_calls_beta_program_summary">When this is on, audio and video conference calling is enabled, which allows a higher number of participants.</string>
+    <string name="conference_calling_badge_title">CONFERENCE CALLING</string>
 
     <!-- Devices -->
     <string name="pref_devices_screen_title">Devices</string>
@@ -899,7 +900,8 @@
     <string name="audio_message_error__missing_audio_permissions">To send audio messages, grant permission to record audio.</string>
 
     <!-- Audio bit rate mode -->
-    <string name="audio_message__constant_bit_rate">CONSTANT BIT RATE</string>
+    <string name="audio_message_constant_bit_rate">CONSTANT BIT RATE</string>
+    <string name="audio_message_variable_bit_rate">VARIABLE BIT RATE</string>
 
     <!-- no contacts -->
     <string name="no_conversation_in_list__header">No conversations yet</string>
