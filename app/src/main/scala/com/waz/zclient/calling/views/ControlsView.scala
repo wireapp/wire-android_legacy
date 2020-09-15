@@ -217,7 +217,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   private def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int, theme: Resources#Theme): Unit =
     ContextUtils.getStyledDrawable(resourceId, theme).foreach { drawable =>
-      val paint = returning(new Paint){ p =>
+      val paint = returning(new Paint) { p =>
         p.reset()
         p.setFlags(Paint.ANTI_ALIAS_FLAG)
         p.setStyle(Paint.Style.FILL)
