@@ -215,19 +215,18 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   private def drawUnmuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit = 
     drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, darkTheme)
 
-  private def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int, theme: Resources#Theme): Unit = {
-    val paint = returning(new Paint){ p =>
-      p.reset()
-      p.setFlags(Paint.ANTI_ALIAS_FLAG)
-      p.setStyle(Paint.Style.FILL)
-      p.setColor(color)
-    }
-    val drawable = ContextUtils.getStyledDrawable(resourceId, theme).map { d =>
-      val bitmap = Bitmap.createBitmap(d.getIntrinsicWidth, d.getIntrinsicHeight, Bitmap.Config.ARGB_8888)
+  private def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int, theme: Resources#Theme): Unit =
+    ContextUtils.getStyledDrawable(resourceId, theme).foreach { drawable =>
+      val paint = returning(new Paint){ p =>
+        p.reset()
+        p.setFlags(Paint.ANTI_ALIAS_FLAG)
+        p.setStyle(Paint.Style.FILL)
+        p.setColor(color)
+      }
+      val bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth, drawable.getIntrinsicHeight, Bitmap.Config.ARGB_8888)
       val c = new Canvas(bitmap)
-      d.setBounds(0, 0, c.getWidth, c.getHeight)
-      d.draw(c)
+      drawable.setBounds(0, 0, c.getWidth, c.getHeight)
+      drawable.draw(c)
       canvas.drawBitmap(bitmap, targetFrame.left, targetFrame.top, paint)
     }
-  }
 }
