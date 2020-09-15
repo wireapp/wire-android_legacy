@@ -35,7 +35,7 @@ class CallingNotificationsService extends ServiceHelper with DerivedLogTag {
 
   implicit lazy val cxt: Context = getApplicationContext
 
-  private lazy val sub = Signal(
+  private lazy val sub = Signal.zip(
     callNCtrl.notifications.map(_.find(_.isMainCall)),
     ZMessaging.currentGlobal.lifecycle.uiActive
   ).onUi {

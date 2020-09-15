@@ -21,7 +21,6 @@ package com.waz.zclient.calling.views
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
-import android.view.View
 import android.widget.{LinearLayout, TextView}
 import com.waz.content.UserPreferences
 import com.waz.threading.Threading._
@@ -29,6 +28,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.GlyphButton
 import com.waz.zclient.utils.ContextUtils.getString
+import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 import com.wire.signals.Signal
 
@@ -52,17 +52,16 @@ class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleA
   controller.subtitleText.onUi(subtitleView.setText)
   controller.conversationName.onUi(nameView.setText(_))
 
-  controller.isConferenceCall.onUi { visible =>
-    conferenceCallingBadge.setVisibility(if (visible) View.VISIBLE else View.GONE)
-  }
+  controller.isConferenceCall.onUi(conferenceCallingBadge.setVisible)
 
   accentColor.map(_.color).onUi { color =>
     conferenceCallingBadge.getBackground.asInstanceOf[GradientDrawable].setColor(color)
   }
 
-  Signal(vbrSettingsEnabled ,controller.isGroupCall, controller.cbrEnabled).onUi {
-    case (false,false,true) => bitRateModeView.setText(getString(R.string.audio_message_constant_bit_rate))
-    case (false,false, false) => bitRateModeView.setText(getString(R.string.audio_message_variable_bit_rate))
-    case _ => bitRateModeView.setText("")
-  }
+  Signal.zip(vbrSettingsEnabled, controller.isGroupCall, controller.cbrEnabled).map {
+    case (false, false, true) => getString(R.string.audio_message_constant_bit_rate)
+    case (false, false, false) => getString(R.string.audio_message_variable_bit_rate)
+    case _ => ""
+  }.onUi(bitRateModeView.setText)
+
 }
