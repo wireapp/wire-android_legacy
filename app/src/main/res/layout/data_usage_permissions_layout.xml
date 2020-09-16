@@ -45,6 +45,7 @@
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_send_analytics_data"
+                android:layout_marginTop="@dimen/wire__padding__20"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:title="@string/pref_advanced_send_analytics_data_title"
