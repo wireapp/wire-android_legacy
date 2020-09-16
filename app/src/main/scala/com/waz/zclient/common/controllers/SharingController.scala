@@ -43,7 +43,10 @@ class SharingController(implicit injector: Injector, wContext: WireContext)
 
   def onContentShared(activity: Activity, convs: Seq[ConvId]): Unit = {
     targetConvs ! convs
-    Option(activity).foreach(_.startActivity(SharingIntent(wContext)))
+    val intent = SharingIntent(wContext)
+    intent.setAction(android.content.Intent.ACTION_OPEN_DOCUMENT)
+    intent.addCategory(android.content.Intent.CATEGORY_OPENABLE)
+    Option(activity).foreach(_.startActivity(intent))
   }
 
   def sendContent(activity: Activity): Future[Seq[ConvId]] = {

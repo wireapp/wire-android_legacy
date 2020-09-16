@@ -43,7 +43,7 @@ import com.waz.zclient.Intents.CallIntent
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{MessageNotificationsChannelId, PingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
-import com.waz.zclient.utils.{ResString, RingtoneUtils, format}
+import com.waz.zclient.utils.{DeprecationUtils, ResString, RingtoneUtils, format}
 import com.waz.zclient.{Injectable, Injector, Intents, R}
 import com.wire.signals.Signal
 
@@ -403,7 +403,7 @@ object NotificationManagerWrapper {
 
     private def createTone(rawId: Int, name: String, toneFile: File) = {
       val uri   = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
-      val query = s"_data LIKE '%$name%'"
+      val query = s"${DeprecationUtils.MEDIA_COLUMN_DATA} LIKE '%$name%'"
       (for {
         _      <- Try(IoUtils.copy(cxt.getResources.openRawResource(rawId), toneFile))
         cursor <- getCursor(uri, query)
@@ -420,7 +420,7 @@ object NotificationManagerWrapper {
     }
 
     private def createContentValues(name: String, toneFile: File) = returning(new ContentValues) { values =>
-      values.put("_data", toneFile.getAbsolutePath)
+      values.put(DeprecationUtils.MEDIA_COLUMN_DATA, toneFile.getAbsolutePath)
       values.put(MediaStore.MediaColumns.TITLE, name)
       values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg")
       values.put(MediaStore.MediaColumns.SIZE, toneFile.length.toInt.asInstanceOf[Integer])

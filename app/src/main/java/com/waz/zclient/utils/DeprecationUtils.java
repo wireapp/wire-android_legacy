@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.utils;
 
+import android.app.DownloadManager;
 import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -129,6 +130,13 @@ public class DeprecationUtils {
             }
         };
     }
+
+    public static void addCompletedDownload(Context context, String name, String mime, String path, long size) {
+        DownloadManager manager = (DownloadManager)context.getSystemService(Context.DOWNLOAD_SERVICE);
+        manager.addCompletedDownload(name, name, false, mime, path, size, true);
+    }
+
+    public static String MEDIA_COLUMN_DATA = "_data";
 
     /**
      * This function is taken from this Stackoverflow answer:
