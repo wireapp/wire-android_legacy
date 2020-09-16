@@ -17,7 +17,7 @@
  */
 package com.waz.service.tracking
 
-import com.waz.content.UserPreferences.AnalyticsEnabled
+import com.waz.content.UserPreferences.TrackingEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
@@ -26,7 +26,7 @@ import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.tracking.TrackingService.ZmsProvider
 import com.waz.service.tracking.TrackingServiceImpl.{CountlyEventProperties, RichHashMap}
-import com.waz.service.{AccountsService, MetaDataService, ZMessaging}
+import com.waz.service.{AccountsService, ZMessaging}
 import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.{MathUtils, RichWireInstant}
 import com.wire.signals.{EventContext, EventStream, Signal}
@@ -60,17 +60,16 @@ object TrackingService {
   implicit val dispatcher = new SerialDispatchQueue(name = "TrackingService")
   private[waz] implicit val ec: EventContext = EventContext.Global
 
-  trait NoReporting { self: Throwable => }
 }
 
-class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: ZmsProvider, metaDataService: MetaDataService)
+class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: ZmsProvider, versionName: String)
   extends TrackingService with DerivedLogTag {
 
   import TrackingService._
 
   override lazy val isTrackingEnabled: Signal[Boolean] =
     ZMessaging.currentAccounts.activeZms.flatMap {
-      case Some(z) => z.userPrefs(AnalyticsEnabled).signal
+      case Some(z) => z.userPrefs(TrackingEnabled).signal
       case _ => Signal.const(false)
     }
 
@@ -85,10 +84,11 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
   private def getMainSegments(z: ZMessaging, convId: ConvId): Future[CountlyEventProperties] =
     getCommonSegments(z, convId).map(e => e ++ getUniversalSegments())
 
-  private def getUniversalSegments(): CountlyEventProperties =
+  private def getUniversalSegments(): CountlyEventProperties = {
     mutable.Map[String, AnyRef]()
       .putSegment("app_name", "android")
-      .putSegment("app_version", metaDataService.versionName.split('-').take(1).mkString)
+      .putSegment("app_version", versionName.split('-').take(1).mkString)
+  }
 
   private def getCommonSegments(z: ZMessaging, convId: ConvId): Future[CountlyEventProperties] = {
     for {
@@ -209,11 +209,11 @@ object TrackingServiceImpl extends DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
-  def apply(accountsService: => AccountsService, metaDataService: MetaDataService): TrackingServiceImpl =
+  def apply(accountsService: => AccountsService, versionName: String): TrackingServiceImpl =
     new TrackingServiceImpl(
       accountsService.activeAccountId,
       (userId: Option[UserId]) => userId.fold(Future.successful(Option.empty[ZMessaging]))(uId => accountsService.zmsInstances.head.map(_.find(_.selfUserId == uId))),
-      metaDataService
+      versionName
     )
 
   type CountlyEventProperties = mutable.Map[String, AnyRef]

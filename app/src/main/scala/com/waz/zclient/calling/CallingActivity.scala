@@ -73,11 +73,11 @@ class CallingActivity extends BaseActivity {
 
   override def onStart(): Unit = {
     super.onStart()
-    inject[GlobalTrackingController].countlyOnStart(this)
+    inject[GlobalTrackingController].start(this)
   }
 
   override def onStop(): Unit = {
-    inject[GlobalTrackingController].countlyOnStop()
+    inject[GlobalTrackingController].stop()
     super.onStop()
   }
 

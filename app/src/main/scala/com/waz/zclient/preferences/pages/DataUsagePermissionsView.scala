@@ -24,7 +24,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.content.GlobalPreferences
-import com.waz.content.UserPreferences.AnalyticsEnabled
+import com.waz.content.UserPreferences.TrackingEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
@@ -56,7 +56,7 @@ class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int
   val analyticsSwitch = returning(findById[SwitchPreference](R.id.preferences_send_analytics_data)) { v =>
 
     uac.isProUser.foreach { isProUser =>
-      v.setPreference(AnalyticsEnabled)
+      v.setPreference(TrackingEnabled)
       if (isProUser) {
         v.pref.flatMap(_.signal).onChanged {
           case true  => tracking.optIn()
