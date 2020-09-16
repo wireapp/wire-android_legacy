@@ -24,7 +24,7 @@ import android.os.{Build, Bundle}
 import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.FragmentManager
-import com.waz.content.UserPreferences.{AnalyticsEnabled, CrashesAndAnalyticsRequestShown}
+import com.waz.content.UserPreferences.{TrackingEnabled, CrashesAndAnalyticsRequestShown}
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
 import com.waz.permissions.PermissionsService
@@ -121,7 +121,7 @@ class MainPhoneFragment extends FragmentHelper
                                zms.head.flatMap { zms =>
                                  for {
                                    _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
-                                   _ <- zms.prefs(AnalyticsEnabled) := resp //we override whatever the global value is on asking the user again
+                                   _ <- zms.userPrefs(TrackingEnabled) := resp
                                    _ <- if (resp) inject[GlobalTrackingController].optIn() else Future.successful(())
                                  } yield {}
                                }

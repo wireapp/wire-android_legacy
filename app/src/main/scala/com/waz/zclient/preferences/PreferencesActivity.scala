@@ -124,14 +124,14 @@ class PreferencesActivity extends BaseActivity
   override def onStart(): Unit = {
     super.onStart()
 
-    inject[GlobalTrackingController].countlyOnStart(this)
+    inject[GlobalTrackingController].start(this)
     cameraController.addCameraActionObserver(this)
   }
 
   override def onStop(): Unit = {
     cameraController.removeCameraActionObserver(this)
 
-    inject[GlobalTrackingController].countlyOnStop()
+    inject[GlobalTrackingController].stop()
     super.onStop()
   }
 

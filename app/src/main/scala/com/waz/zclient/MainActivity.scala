@@ -242,17 +242,17 @@ class MainActivity extends BaseActivity
 
     for {
       prefs            <- userPreferences.head
-      check            <- prefs.preference[Boolean](AnalyticsEnabledCheck).apply()
-      analyticsEnabled <- prefs.preference[Boolean](AnalyticsEnabled).apply()
+      check            <- prefs.preference[Boolean](TrackingEnabledOneTimeCheckPerformed).apply()
+      analyticsEnabled <- prefs.preference[Boolean](TrackingEnabled).apply()
       isProUser        <- userAccountsController.isProUser
       _                <-
         if(!check) {
-          (prefs(AnalyticsEnabled) := isProUser)
-            .flatMap(_ => prefs(AnalyticsEnabledCheck) := true)
+          (prefs(TrackingEnabled) := isProUser)
+            .flatMap(_ => prefs(TrackingEnabledOneTimeCheckPerformed) := true)
         } else Future.successful(())
       _                <-
         if(analyticsEnabled) {
-          inject[GlobalTrackingController].initCountly()
+          inject[GlobalTrackingController].init()
         } else Future.successful(())
     } yield ()
   }
@@ -266,7 +266,7 @@ class MainActivity extends BaseActivity
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
-    inject[GlobalTrackingController].countlyOnStart(this)
+    inject[GlobalTrackingController].start(this)
 
     val intent = getIntent
     deepLinkService.checkDeepLink(intent)
@@ -410,7 +410,7 @@ class MainActivity extends BaseActivity
     super.onStop()
     getControllerFactory.getNavigationController.removeNavigationControllerObserver(this)
     inject[NavigationController].mainActivityActive.mutate(_ - 1)
-    inject[GlobalTrackingController].countlyOnStop()
+    inject[GlobalTrackingController].stop()
   }
 
   override def onBackPressed(): Unit =

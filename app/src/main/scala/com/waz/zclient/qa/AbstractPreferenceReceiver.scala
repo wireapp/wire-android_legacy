@@ -69,18 +69,6 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
         setGlobalPref(ShouldCreateFullConversation, intent.getBooleanExtra(FULL_CONVERSATION_VALUE, true))
       case SILENT_MODE =>
         Seq(RingTone, PingTone, TextTone).foreach(setUserPref(_, "silent"))
-      case TRACKING_ID_INTENT =>
-        try {
-          val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
-          implicit val injector = wireApplication.module
-          val id = wireApplication.inject[GlobalTrackingController].getId
-          setResultData(id.toString)
-          setResultCode(Activity.RESULT_OK)
-        } catch {
-          case _: Throwable =>
-            setResultData("")
-            setResultCode(Activity.RESULT_CANCELED)
-        }
       case SELECT_STAGING_BE => updateStoredBackendConfig(context: Context, Backend.StagingBackend)
       case SELECT_QA_BE => updateStoredBackendConfig(context: Context, Backend.QaBackend)
       case SELECT_PROD_BE => updateStoredBackendConfig(context: Context, Backend.ProdBackend)
@@ -109,7 +97,6 @@ object AbstractPreferenceReceiver {
   private val ENABLE_GCM_INTENT        = packageName + ".intent.action.ENABLE_GCM"
   private val DISABLE_GCM_INTENT       = packageName + ".intent.action.DISABLE_GCM"
   private val SILENT_MODE              = packageName + ".intent.action.SILENT_MODE"
-  private val TRACKING_ID_INTENT       = packageName + ".intent.action.TRACKING_ID"
   private val FULL_CONVERSATION_INTENT = packageName + ".intent.action.FULL_CONVERSATION_INTENT"
   private val HIDE_GDPR_POPUPS         = packageName + ".intent.action.HIDE_GDPR_POPUPS"
   private val SELECT_STAGING_BE        = packageName + ".intent.action.SELECT_STAGING_BE"

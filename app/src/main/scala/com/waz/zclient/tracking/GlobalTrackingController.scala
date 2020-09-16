@@ -21,18 +21,10 @@ package com.waz.zclient.tracking
 import java.util
 
 import android.app.Activity
-import android.content.Context
-import android.renderscript.RSRuntimeException
-import com.waz.api.impl.ErrorResponse
-import com.waz.content.UsersStorage
-import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{UserId, _}
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.service.tracking._
 import com.wire.signals.{EventContext, SerialDispatchQueue, Signal}
-import com.waz.threading.Threading
 import com.waz.zclient._
 import com.waz.zclient.log.LogUI._
 import com.waz.content.UserPreferences.CountlyTrackingId
@@ -43,25 +35,20 @@ import ly.count.android.sdk.{Countly, CountlyConfig, DeviceId}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
-import scala.concurrent.Future._
-import scala.util.Try
 
 class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "Tracking")
 
-  //For automation tests
-  def getId: String = ""
-
   private val tracking  = inject[TrackingService]
   private lazy val am = inject[Signal[AccountManager]]
   private lazy val accountsService = inject[AccountsService]
 
-  def initCountly(): Future[Unit] = {
+  def init(): Future[Unit] = {
     for {
-      ap <- tracking.isTrackingEnabled.head if(ap)
-      trackingId <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
+      ap          <- tracking.isTrackingEnabled.head if(ap)
+      trackingId  <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
       logsEnabled <- inject[LogsService].logsEnabled
     } yield {
       verbose(l"Using countly Id: ${trackingId.str}")
@@ -77,18 +64,18 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     }
   }
 
-  def countlyOnStart(cxt: Activity): Future[Unit] = for {
+  def start(cxt: Activity): Future[Unit] = for {
     ap <- tracking.isTrackingEnabled.head if(ap)
   } yield Countly.sharedInstance().onStart(cxt)
 
-  def countlyOnStop(): Future[Unit] = for {
+  def stop(): Future[Unit] = for {
    ap <- tracking.isTrackingEnabled.head if(ap)
   } yield Countly.sharedInstance().onStop()
 
   def optIn(): Future[Unit] = {
     verbose(l"optIn")
     for {
-      _ <- initCountly()
+      _ <- init()
     } yield ()
   }
 
@@ -110,11 +97,11 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
   private def setUserDataFields(): Future[Unit] = {
     for {
-      Some(z) <- accountsService.activeZms.head
-      teamMember = z.teamId.isDefined
-      teamSize <- z.teamId.fold(Future.successful(0))(tId => z.usersStorage.getByTeam(Set(tId)).map(_.size))
+      Some(z)         <- accountsService.activeZms.head
+      teamMember      = z.teamId.isDefined
+      teamSize        <- z.teamId.fold(Future.successful(0))(tId => z.usersStorage.getByTeam(Set(tId)).map(_.size))
       userAccountType <- getSelfAccountType
-      contacts <- z.usersStorage.list().map(_.count(!_.isSelf))
+      contacts        <- z.usersStorage.list().map(_.count(!_.isSelf))
     } yield {
       val predefinedFields = new util.HashMap[String, String]()
       val customFields = new util.HashMap[String, String]()
@@ -138,23 +125,4 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     verbose(l"send countly event: $eventArg")
     Countly.sharedInstance().events().recordEvent(eventArg.name, eventArg.segments.asJava)
   }
-}
-
-object GlobalTrackingController {
-
-  private def saveException(t: Throwable, description: String)(implicit tag: LogTag) = {
-    t match {
-      case _: RSRuntimeException => //
-      case _ =>
-        val userId = Try(ZMessaging.context.getSharedPreferences("zprefs", Context.MODE_PRIVATE).getString("com.waz.device.id", "???")).getOrElse("????")
-        error(l"userId: ${redactedString(userId)}", t)(tag)
-    }
-  }
-
-  def isBot(conv: ConversationData, users: UsersStorage): Future[Boolean] =
-    if (conv.convType == ConversationType.OneToOne) users.get(UserId(conv.id.str)).map(_.exists(_.isWireBot))(Threading.Background)
-    else successful(false)
-
-  def responseToErrorPair(response: Either[ErrorResponse, _]) = response.fold({ e => Option((e.code, e.label))}, _ => Option.empty[(Int, String)])
-
 }
