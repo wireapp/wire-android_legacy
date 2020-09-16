@@ -463,10 +463,10 @@
 
     <!-- Data Usage Permissions -->
 
-    <string name="pref_advanced_send_anonymous_data_title">Send anonymous usage data</string>
-    <string name="pref_advanced_send_anonymous_data_summary">Usage data allows Wire to understand how the app is being used and how it can be improved. The data is anonymous and does not include the content of your communications (such as messages, files or calls).</string>
-    <string name="pref_advanced_send_analytics_data_title">Telemetry sharing</string>
-    <string name="pref_advanced_send_analytics_data_summary">Share anonymous telemetry data with Wire to help make wire better</string>
+    <string name="pref_advanced_send_anonymous_data_title">Send anonymous crash reports</string>
+    <string name="pref_advanced_send_anonymous_data_summary">Send anonymous crash reports and basic data like version number and operating system to help Wire identify and solve issues in the app.</string>
+    <string name="pref_advanced_send_analytics_data_title">Send anonymous usage data</string>
+    <string name="pref_advanced_send_analytics_data_summary">Usage data allows Wire to understand how the app is being used and how it can be improved. The data is anonymous and does not include the content of your communications (such as messages, files or calls).</string>
     <string name="pref_advanced_receive_news_and_offers_title">Receive Newsletter</string>
     <string name="pref_advanced_receive_news_and_offers_summary">Receive news and product updates from Wire via email.</string>
 
