@@ -216,11 +216,12 @@ class CallingFragment extends FragmentHelper {
         }
 
         val gridViews = views.filter {
-          case _:SelfVideoView if views.size == 2 && isVideoBeingSent => false
-          case _:SelfVideoView if views.size > 1 && !isVideoBeingSent => false
+          case _: SelfVideoView if views.size == 2 && isVideoBeingSent => false
+          case _: SelfVideoView if views.size > 1 && !isVideoBeingSent => false
           case _ => true
         }.sortWith {
-          case (_:SelfVideoView, _) => true
+          case (_: SelfVideoView, _) => true
+          case (_, _: SelfVideoView) => false
           case (v1, v2) => findParticipantNameById(v1.participant.userId).toLowerCase <
             findParticipantNameById(v2.participant.userId).toLowerCase
         }.take(maxVideoPreviews)
