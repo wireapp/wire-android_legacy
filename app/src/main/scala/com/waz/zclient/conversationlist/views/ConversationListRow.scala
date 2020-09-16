@@ -484,7 +484,7 @@ object ConversationListRow {
             if (conv.unreadCount.total > 1 || conv.isAllMuted || conv.onlyMentionsAllowed)
               getQuantityString(R.plurals.conversation_list__missed_calls_plural, missedCallCount, missedCallCount.toString)
             else
-              getString(R.string.conversation_list__missed_calls_count_group, userName.get)
+              getString(R.string.conversation_list__missed_calls_count_group, userName.getOrElse(Name.Empty))
           } else {
             if (conv.unreadCount.total > 1 || conv.isAllMuted || conv.onlyMentionsAllowed)
               getQuantityString(R.plurals.conversation_list__missed_calls_plural, missedCallCount, missedCallCount.toString)
