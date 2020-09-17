@@ -27,7 +27,6 @@ import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{BackendConfig, ZMessaging}
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.BackendController
 import com.waz.zclient.{Backend, BuildConfig, WireApplication}
 
