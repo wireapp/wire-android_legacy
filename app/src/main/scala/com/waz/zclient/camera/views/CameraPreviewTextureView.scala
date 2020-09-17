@@ -101,7 +101,7 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
       case Success((previewSize, flashModes)) =>
         updateTextureMatrix((getWidth, getHeight), previewSize)
         observer.foreach(_.onCameraLoaded(flashModes.asJava))
-      case Failure(ex : CancelException) =>
+      case Failure(CancelException) =>
       case Failure(ex) =>
         Logger.warn("CameraPreviewTextureView", "Failed to open camera - camera is likely unavailable", ex)
         observer.foreach(_.onCameraLoadingFailed())

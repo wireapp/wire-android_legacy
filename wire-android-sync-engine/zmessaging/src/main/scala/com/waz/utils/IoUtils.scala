@@ -20,11 +20,11 @@ package com.waz.utils
 import java.io._
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.zip.{GZIPOutputStream, ZipEntry, ZipInputStream, ZipOutputStream}
+import java.util.zip.{GZIPOutputStream, ZipEntry, ZipOutputStream}
 
-import com.waz.log.BasicLogging.LogTag
 import com.waz.model.errors.FileSystemError
 import com.wire.signals.CancellableFuture
+import com.wire.signals.CancellableFuture.CancelException
 
 import scala.annotation.tailrec
 import scala.collection.Iterator.continually
@@ -208,12 +208,12 @@ object IoUtils {
 
 class CancellableStream(stream: InputStream, cancelled: AtomicBoolean) extends FilterInputStream(stream) {
   override def read(buffer: Array[Byte], byteOffset: Int, byteCount: Int): Int = {
-    if (cancelled.get) throw CancellableFuture.DefaultCancelException
+    if (cancelled.get) throw CancelException
     else super.read(buffer, byteOffset, byteCount)
   }
 
   override def read(): Int = {
-    if (cancelled.get) throw CancellableFuture.DefaultCancelException
+    if (cancelled.get) throw CancelException
     else super.read()
   }
 }

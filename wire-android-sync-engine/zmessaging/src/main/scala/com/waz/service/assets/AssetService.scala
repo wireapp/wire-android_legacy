@@ -118,7 +118,7 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
     import scala.concurrent.duration._
     for {
       _ <- Cancellable.cancel(UploadTaskKey(id))
-      _ <- CancellableFuture.timeout(3.seconds).future
+      _ <- CancellableFuture.delay(3.seconds).future
       _ <- uploadAssetStorage.update(id, asset => {
         if (asset.status == AssetStatus.Done) asset
         else asset.copy(status = UploadAssetStatus.Cancelled)
