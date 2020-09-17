@@ -40,20 +40,6 @@
             android:textSize="@dimen/wire__text_size__regular"
             app:themedColor="Primary" />
 
-        <TextView
-            android:id="@+id/conference_calling_badge"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginEnd="@dimen/wire__margin_huge"
-            android:background="@drawable/rounded_rectangle"
-            android:fontFamily="sans-serif-medium"
-            android:paddingTop="@dimen/wire__padding__1"
-            android:paddingBottom="@dimen/wire__padding__1"
-            android:text="@string/conference_calling_badge_title"
-            android:textAlignment="center"
-            android:textColor="@color/white"
-            android:textSize="@dimen/wire__text_size__small" />
     </LinearLayout>
 
     <com.waz.zclient.ui.text.TypefaceTextView
