@@ -240,6 +240,9 @@ class MainActivity extends BaseActivity
       }
     }
 
+  }
+
+  private def checkTracking: Future[Unit] =
     for {
       prefs            <- userPreferences.head
       check            <- prefs.preference[Boolean](TrackingEnabledOneTimeCheckPerformed).apply()
@@ -255,7 +258,6 @@ class MainActivity extends BaseActivity
           inject[GlobalTrackingController].init()
         } else Future.successful(())
     } yield ()
-  }
 
   override def onStart(): Unit = {
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
@@ -266,7 +268,7 @@ class MainActivity extends BaseActivity
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
 
-    inject[GlobalTrackingController].start(this)
+    checkTracking.andThen { case _ => inject[GlobalTrackingController].start(this) }
 
     val intent = getIntent
     deepLinkService.checkDeepLink(intent)
