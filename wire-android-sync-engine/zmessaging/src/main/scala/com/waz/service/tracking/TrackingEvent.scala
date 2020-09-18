@@ -63,12 +63,16 @@ case class CallingEvent(partName: String,
   override lazy val name = s"calling.${partName}_call"
 }
 
-case class MessageDecryptionFailed(segments: CountlyEventProperties) extends TrackingEvent {
+case class MessageDecryptionFailedEvent(segments: CountlyEventProperties) extends TrackingEvent {
   override val name = "e2ee.failed_message_decryption"
 }
 
 case class ScreenShareEvent(segments: CountlyEventProperties) extends TrackingEvent {
   override lazy val name = "calling.screen_share"
+}
+
+case class AppOpenEvent(segments: CountlyEventProperties) extends TrackingEvent {
+  override lazy val name = "app.open"
 }
 
 object GroupConversationEvent {

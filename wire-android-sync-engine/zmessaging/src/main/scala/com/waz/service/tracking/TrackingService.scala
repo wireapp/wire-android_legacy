@@ -41,6 +41,7 @@ trait TrackingService {
   def contribution(action: ContributionEvent.Action, zms: Option[UserId] = None): Future[Unit]
   def msgDecryptionFailed(convId: RConvId, userId: UserId): Future[Unit]
   def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit]
+  def appOpen(userId: UserId): Future[Unit]
 
   def isTrackingEnabled: Signal[Boolean]
 }
@@ -50,6 +51,7 @@ class DummyTrackingService extends TrackingService {
   override def contribution(action: ContributionEvent.Action, zms: Option[UserId] = None): Future[Unit] = Future.successful(())
   override def msgDecryptionFailed(convId: RConvId, userId: UserId): Future[Unit] = Future.successful(())
   override def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit] = Future.successful(())
+  override def appOpen(userId: UserId): Future[Unit] = Future.successful(())
   override def isTrackingEnabled: Signal[Boolean] = Signal.const(true)
 }
 
@@ -123,7 +125,8 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
       .putSegment("call_end_reason", info.endReason.get)
   }
 
-  override def contribution(action: ContributionEvent.Action, userId: Option[UserId] = None): Future[Unit] = isTrackingEnabled.head.flatMap {
+  override def contribution(action: ContributionEvent.Action,
+                            userId: Option[UserId] = None): Future[Unit] = isTrackingEnabled.head.collect {
     case true =>
       for {
         z <- getZmsOrElseCurrent(userId)
@@ -134,20 +137,18 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
 
         events ! Option(z) -> ContributionEvent(action, segments)
       }
-    case false => Future.successful(())
   }
 
-  override def msgDecryptionFailed(rConvId: RConvId, userId: UserId): Future[Unit] = isTrackingEnabled.head.flatMap {
+  override def msgDecryptionFailed(rConvId: RConvId, userId: UserId): Future[Unit] = isTrackingEnabled.head.collect {
     case true =>
       for {
         Some(z) <- zmsProvider(Some(userId))
         Some(convId) <- z.convsStorage.getByRemoteId(rConvId).map(_.map(_.id))
         segments <- getMainSegments(z, convId)
-      } yield events ! Option(z) -> MessageDecryptionFailed(segments)
-    case false => Future.successful(())
+      } yield events ! Option(z) -> MessageDecryptionFailedEvent(segments)
   }
 
-  override def trackCallState(userId: UserId, info: CallInfo): Future[Unit] = isTrackingEnabled.head.flatMap {
+  override def trackCallState(userId: UserId, info: CallInfo): Future[Unit] = isTrackingEnabled.head.collect {
     case true =>
       ((info.prevState, info.state) match {
         case (None, SelfCalling)      => Some("initiated")
@@ -182,12 +183,11 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
           } else Future.successful(())
         }
       }
-    case false => Future.successful(())
   }
 
   private def trackScreenShare(userId: UserId, info: CallInfo): Future[Unit] =
     if(info.screenShareEnded.isDefined)
-      isTrackingEnabled.head.flatMap {
+      isTrackingEnabled.head.collect {
         case true =>
           for {
             Some(z)  <- zmsProvider(Some(userId))
@@ -199,10 +199,16 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
 
             events ! Option(z) -> ScreenShareEvent(segments)
           }
-        case false => Future.successful(())
       }
     else Future.successful(())
 
+  override def appOpen(userId: UserId): Future[Unit] =
+    isTrackingEnabled.head.collect {
+      case true =>
+        for {
+          Some(z)  <- zmsProvider(Some(userId))
+        } yield events ! Option(z) -> AppOpenEvent(getUniversalSegments())
+    }
 }
 
 object TrackingServiceImpl extends DerivedLogTag {
