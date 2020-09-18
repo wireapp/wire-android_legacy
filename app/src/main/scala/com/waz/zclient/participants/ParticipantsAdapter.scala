@@ -33,7 +33,6 @@ import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.SearchQuery
-import com.waz.service.call.CallingService
 import com.wire.signals._
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
@@ -449,7 +448,7 @@ object ParticipantsAdapter {
         Selection.removeSelection(editText.getText)
       }
 
-      callInfo.setText(if (isTeam) getString(R.string.call_info_text, ConversationController.MaxParticipants.toString, CallingService.videoCallMaxMembersExcludingSelf.toString) else getString(R.string.empty_string))
+      callInfo.setText(if (isTeam) getString(R.string.call_info, ConversationController.MaxParticipants.toString) else getString(R.string.empty_string))
       callInfo.setMarginTop(getDimenPx(if (isTeam) R.dimen.wire__padding__16 else R.dimen.wire__padding__8)(view.getContext))
       callInfo.setMarginBottom(getDimenPx(if (isTeam) R.dimen.wire__padding__16 else R.dimen.wire__padding__8)(view.getContext))
 

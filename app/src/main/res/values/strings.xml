@@ -503,10 +503,6 @@
     <string name="pref_options_incognito_keyboard">Incognito keyboard</string>
     <string name="pref_options_incognito_keyboard_summary">The keyboard will not show suggestions when typing messages</string>
 
-    <string name="pref_options_conference_calls_category_title">Conference Calls</string>
-    <string name="pref_options_conference_calls_beta_program_title">Beta Program</string>
-    <string name="pref_options_conference_calls_beta_program_summary">When this is on, audio and video conference calling is enabled, which allows a higher number of participants.</string>
-
     <!-- Devices -->
     <string name="pref_devices_screen_title">Devices</string>
     <string name="pref_devices_current_device_category_title">Current Device</string>
@@ -1350,7 +1346,7 @@
     <string name="backup_import_error_wrong_account">You cannot restore history from a different account.</string>
     <string name="video_paused">Video paused</string>
     <string name="calling_degraded_title">New device</string>
-    <string name="call_info_text">Up to %1$s people can join a group conversation. Video calls work with up to %2$s other people and you.</string>
+    <string name="call_info">Up to %1$s people can join a group conversation.</string>
 
     <string name="markdown_link_dialog_title">Visit Link</string>
     <string name="markdown_link_dialog_message">This will take you to\n%1$s</string>

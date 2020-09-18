@@ -37,7 +37,6 @@ import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
-import com.waz.service.call.CallingService
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.wire.signals.{EventStreamWithAuxSignal, Signal}
@@ -218,15 +217,9 @@ class ConversationFragment extends FragmentHelper {
       call                     <- callController.currentCallOpt
       isCallActive              = call.exists(_.convId == convId) && call.exists(_.selfParticipant.userId == selfUserId)
       isTeam                   <- accountsController.isTeam
-      prefs                    <- userPrefs
-      conferenceCallingEnabled <- prefs(UserPreferences.ConferenceCallingEnabled).signal
     } yield {
-      if (isCallActive || !isConvActive || participantsNumber <= 1)
-        Option.empty[Int]
-      else if (!isGroup || conferenceCallingEnabled || (isTeam && participantsNumber <= CallingService.LegacyVideoCallMaxMembers))
-        Some(R.menu.conversation_header_menu_video)
-      else
-        Some(R.menu.conversation_header_menu_audio)
+      if (isCallActive || !isConvActive || participantsNumber <= 1) Option.empty[Int]
+      else Some(R.menu.conversation_header_menu_video)
     }).onUi { id =>
       toolbar.getMenu.clear()
       id.foreach(toolbar.inflateMenu)
