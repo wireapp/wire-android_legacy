@@ -383,7 +383,7 @@ class CallingServiceImpl(val accountId:       UserId,
   def onBitRateStateChanged(enabled: Boolean): Unit =
     updateActiveCallAsync { (_, _, call) =>
       verbose(l"onBitRateStateChanged enabled=$enabled")
-      call.copy(isCbrEnabled = enabled)
+      call.copy(isCbrEnabled = Some(enabled))
     }("onBitRateStateChanged")
 
   def onVideoStateChanged(userId: String, clientId: String, videoReceiveState: VideoState): Future[Unit] =
