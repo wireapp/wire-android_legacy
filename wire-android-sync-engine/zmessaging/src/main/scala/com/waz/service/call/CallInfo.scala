@@ -45,7 +45,7 @@ case class CallInfo(convId:             ConvId,
                     otherParticipants:  Set[Participant]             = Set.empty,
                     maxParticipants:    Int                          = 0, //maintains the largest number of users that were ever in the call (for tracking)
                     muted:              Boolean                      = false,
-                    isCbrEnabled:       Boolean                      = false,
+                    isCbrEnabled:       Option[Boolean]              = None,
                     startedAsVideoCall: Boolean                      = false,
                     videoSendState:     VideoState                   = VideoState.Stopped,
                     videoReceiveStates: Map[Participant, VideoState] = Map.empty,
