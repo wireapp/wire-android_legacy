@@ -60,25 +60,15 @@ public class CameraTopControl extends FrameLayout {
     private void init() {
         LayoutInflater.from(getContext()).inflate(R.layout.camera_top_control, this, true);
         cameraDirectionButton = ViewUtils.getView(this, R.id.gtv__camera__top_control__change_camera);
-        cameraDirectionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                nextCamera();
-            }
-
-
-        });
+        cameraDirectionButton.setOnClickListener(v -> nextCamera());
 
         cameraFlashButton = ViewUtils.getView(this, R.id.gtv__camera__top_control__flash_setting);
-        cameraFlashButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FlashMode nextFlashMode = getNextFlashState(cameraTopControlCallback.getFlashMode());
-                if (cameraTopControlCallback != null) {
-                    cameraTopControlCallback.setFlashMode(nextFlashMode);
-                }
-                setFlashModeButton(nextFlashMode);
+        cameraFlashButton.setOnClickListener(v -> {
+            FlashMode nextFlashMode = getNextFlashState(cameraTopControlCallback.getFlashMode());
+            if (cameraTopControlCallback != null) {
+                cameraTopControlCallback.setFlashMode(nextFlashMode);
             }
+            setFlashModeButton(nextFlashMode);
         });
 
         cameraFlashButton.setVisibility(View.GONE);
@@ -97,9 +87,6 @@ public class CameraTopControl extends FrameLayout {
                 break;
             case TORCH:
                 cameraFlashButton.setText(getResources().getString(R.string.glyph__plus));
-                break;
-            case RED_EYE:
-                cameraFlashButton.setText(getResources().getString(R.string.glyph__redo));
                 break;
         }
 
@@ -121,8 +108,6 @@ public class CameraTopControl extends FrameLayout {
             case AUTO:
                 return FlashMode.OFF;
             case TORCH:
-                break;
-            case RED_EYE:
                 break;
         }
         return FlashMode.OFF;

@@ -68,9 +68,9 @@ class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
 
         @Override
-        public void onPictureTaken(byte[] imageData, boolean isMirrored) {
+        public void onPictureTaken(byte[] imageData) {
             if (callback != null) {
-                callback.onPictureTaken(imageData, isMirrored);
+                callback.onPictureTaken(imageData);
             }
         }
     };

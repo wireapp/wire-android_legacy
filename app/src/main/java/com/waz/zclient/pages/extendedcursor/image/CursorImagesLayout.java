@@ -164,6 +164,6 @@ public class CursorImagesLayout extends FrameLayout implements View.OnClickListe
 
         void openGallery();
 
-        void onPictureTaken(byte[] imageData, boolean isMirrored);
+        void onPictureTaken(byte[] imageData);
     }
 }
