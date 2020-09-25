@@ -110,7 +110,7 @@ class MainPhoneFragment extends FragmentHelper
                                 }
     color                    <- accentColorController.accentColor.head
                              // Show "Help make wire better" popup
-    _                        <- if (!showAnalyticsPopup) Future.successful({}) else
+    _                        <- if (!showAnalyticsPopup || am.teamId.isDefined) Future.successful({}) else
                              showConfirmationDialog(
                                getString(R.string.crashes_and_analytics_request_title),
                                getString(R.string.crashes_and_analytics_request_body),
