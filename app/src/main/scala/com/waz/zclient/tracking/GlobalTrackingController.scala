@@ -48,9 +48,9 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
   def init(): Future[Unit] = {
     for {
-      ap          <- tracking.isTrackingEnabled.head if(ap)
-      trackingId  <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
-      logsEnabled <- inject[LogsService].logsEnabled
+      ap               <- tracking.isTrackingEnabled.head if(ap)
+      Some(trackingId) <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
+      logsEnabled      <- inject[LogsService].logsEnabled
     } yield {
       verbose(l"Using countly Id: ${trackingId.str}")
 
