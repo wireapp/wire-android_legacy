@@ -54,7 +54,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     } yield {
       verbose(l"Using countly Id: ${trackingId.str}")
 
-      val config = new CountlyConfig(cxt, BuildConfig.COUNTLY_APP_KEY, BuildConfig.COUNTLY_SERVER_URL)
+      val config = new CountlyConfig(cxt, GlobalTrackingController.countlyAppKey, BuildConfig.COUNTLY_SERVER_URL)
         .setLoggingEnabled(logsEnabled)
         .setIdMode(DeviceId.Type.DEVELOPER_SUPPLIED)
         .setDeviceId(trackingId.str)
@@ -126,4 +126,16 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     verbose(l"send countly event: $eventArg")
     Countly.sharedInstance().events().recordEvent(eventArg.name, eventArg.segments.asJava)
   }
+}
+
+object GlobalTrackingController {
+  val internalCountlyAppKey = "18bfffddd3a2a89b6a70bbe6569cc041b17a52d2"
+  val demoCountlyAppKey = "af153753b54e3e8365cd928d30f86b88c164a666"
+
+  val countlyAppKey: String = BuildConfig.FLAVOR match {
+    case "internal" => internalCountlyAppKey
+    case "dev" => demoCountlyAppKey
+    case _ => BuildConfig.COUNTLY_APP_KEY
+  }
+
 }
