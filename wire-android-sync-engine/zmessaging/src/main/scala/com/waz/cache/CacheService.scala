@@ -129,8 +129,8 @@ class CacheServiceImpl(context: Context, storage: Database, cacheStorage: CacheS
         case Success((fileId, path, encKey, len)) =>
           verbose(l"added stream to storage: $path, with key: $encKey")
           add(CacheEntryData(key, timeout = timeout.timeout, path = Some(path), fileId = fileId, encKey = encKey, fileName = name, mimeType = mime, length = Some(len)))
-        case Failure(c: CancelException) =>
-          Future.failed(c)
+        case Failure(CancelException) =>
+          Future.failed(CancelException)
         case Failure(e) =>
           tracking.exception(e, s"addStream failed")
           Future.failed(e)
@@ -153,7 +153,7 @@ class CacheServiceImpl(context: Context, storage: Database, cacheStorage: CacheS
       def entry(d: File) = returning(entryFile(d, id))(_.getParentFile.mkdirs())
 
       Try(writer(outputStream(enc, new FileOutputStream(entry(dir))))).recoverWith {
-        case c: CancelException => Failure(c)
+        case CancelException => Failure(CancelException)
         case t: Throwable =>
           if (enc.isDefined) Try(writer(outputStream(None, new FileOutputStream(entry(intCacheDir)))))
           else Failure(t)

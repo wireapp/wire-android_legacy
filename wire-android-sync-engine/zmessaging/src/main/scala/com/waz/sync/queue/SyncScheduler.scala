@@ -157,7 +157,7 @@ class SyncSchedulerImpl(accountId:   UserId,
       val d = math.max(0, startJob - t).millis
       val delay = CancellableFuture.delay(d)
       for {
-        _ <- delay.recover { case _: CancelException => () } .future
+        _ <- delay.recover { case CancelException => () } .future
         _ <- Future.traverse(job.dependsOn)(await)
         _ <- queue.acquire(job.priority)
       } yield {
