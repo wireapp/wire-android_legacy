@@ -29,6 +29,7 @@ import com.waz.zclient._
 import com.waz.zclient.log.LogUI._
 import com.waz.content.UserPreferences.CountlyTrackingId
 import com.waz.log.LogsService
+import com.waz.model.TeamId
 import com.waz.utils.MathUtils
 import com.waz.zclient.common.controllers.UserAccountsController
 import ly.count.android.sdk.{Countly, CountlyConfig, DeviceId}
@@ -98,16 +99,16 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   private def setUserDataFields(): Future[Unit] = {
     for {
       Some(z)         <- accountsService.activeZms.head
-      teamMember      = z.teamId.isDefined
+      teamId          =  z.teamId.getOrElse(TeamId("n/a"))
       teamSize        <- z.teamId.fold(Future.successful(0))(tId => z.usersStorage.getByTeam(Set(tId)).map(_.size))
       userAccountType <- getSelfAccountType
       contacts        <- z.usersStorage.list().map(_.count(!_.isSelf))
     } yield {
       val predefinedFields = new util.HashMap[String, String]()
       val customFields = new util.HashMap[String, String]()
-      customFields.put("user_contacts", MathUtils.logRound(contacts, 6).toString)
-      customFields.put("team_team_id", teamMember.toString)
-      customFields.put("team_team_size", teamSize.toString)
+      customFields.put("user_contacts", MathUtils.logRoundFactor6(contacts).toString)
+      customFields.put("team_team_id", teamId.toString)
+      customFields.put("team_team_size", MathUtils.logRoundFactor6(teamSize).toString)
       customFields.put("team_user_type", userAccountType)
       Countly.userData.setUserData(predefinedFields, customFields)
       Countly.userData.save()
