@@ -46,9 +46,17 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   private lazy val am = inject[Signal[AccountManager]]
   private lazy val accountsService = inject[AccountsService]
 
+  //helps us fire the "app.open" event at the right time.
+  private val initialized = Signal(false)
+
+  initialized.onChanged { _ =>
+    accountsService.activeAccount.foreach(_.foreach(user => tracking.appOpen(user.id)))
+  }
+
   def init(): Future[Unit] = {
     for {
       ap               <- tracking.isTrackingEnabled.head if(ap)
+      inited           <- initialized.head if(!inited)
       Some(trackingId) <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
       logsEnabled      <- inject[LogsService].logsEnabled
     } yield {
@@ -62,6 +70,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
       Countly.sharedInstance().init(config)
       setUserDataFields()
+      initialized ! true
     }
   }
 

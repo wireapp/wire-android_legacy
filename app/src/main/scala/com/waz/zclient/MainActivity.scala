@@ -32,7 +32,6 @@ import com.waz.model._
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.ZMessaging.clock
-import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
@@ -275,8 +274,6 @@ class MainActivity extends BaseActivity
     for {
       _      <- initTracking
       _      <- inject[GlobalTrackingController].start(this)
-      userId <- inject[Signal[ZMessaging]].head.map(_.selfUserId)
-      _      <- inject[TrackingService].appOpen(userId)
     } yield ()
 
     val intent = getIntent
