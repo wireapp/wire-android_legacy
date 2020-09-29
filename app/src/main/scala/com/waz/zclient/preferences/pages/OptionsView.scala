@@ -70,7 +70,6 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   inflate(R.layout.preferences_options_layout)
 
   val vbrSwitch               = findById[SwitchPreference](R.id.preferences_vbr)
-  val conferenceCallingSwitch = findById[SwitchPreference](R.id.preferences_conference_calling)
   val vibrationSwitch         = findById[SwitchPreference](R.id.preferences_vibration)
   val darkThemeSwitch         = findById[SwitchPreference](R.id.preferences_dark_theme)
   val sendButtonSwitch        = findById[SwitchPreference](R.id.preferences_send_button)
@@ -99,7 +98,6 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   downloadImagesSwitch.setPreference(DownloadImagesAlways)
   hideScreenContentSwitch.setPreference(HideScreenContent)
   vbrSwitch.setPreference(VBREnabled)
-  conferenceCallingSwitch.setPreference(ConferenceCallingEnabled)
   messagePreviewSwitch.setPreference(MessagePreview)
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)

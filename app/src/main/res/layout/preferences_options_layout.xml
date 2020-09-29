@@ -54,23 +54,6 @@
                 android:gravity="center_vertical"
                 android:paddingStart="@dimen/wire__padding__16"
                 android:paddingEnd="@dimen/wire__padding__16"
-                android:text="@string/pref_options_conference_calls_category_title"
-                android:textColor="@color/accent_blue" />
-
-            <com.waz.zclient.preferences.views.SwitchPreference
-                android:id="@+id/preferences_conference_calling"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/pref_options_conference_calls_beta_program_title"
-                app:subtitle="@string/pref_options_conference_calls_beta_program_summary"
-                app:title="@string/pref_options_conference_calls_beta_program_title" />
-
-            <com.waz.zclient.ui.text.TypefaceTextView
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                android:gravity="center_vertical"
-                android:paddingStart="@dimen/wire__padding__16"
-                android:paddingEnd="@dimen/wire__padding__16"
                 android:text="@string/pref_options_alerts_category_title"
                 android:textColor="@color/accent_blue" />
 

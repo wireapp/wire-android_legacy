@@ -111,9 +111,6 @@ trait CallingService {
 
 object CallingService {
 
-  var LegacyVideoCallMaxMembers: Int = 4
-  def videoCallMaxMembersExcludingSelf: Int = LegacyVideoCallMaxMembers - 1
-
   trait AbstractCallProfile[A] {
 
     val calls: Map[A, CallInfo]
@@ -430,15 +427,12 @@ class CallingServiceImpl(val accountId:       UserId,
         profile                  <- callProfile.head
         isGroup                  <- convsService.isGroupConversation(convId)
         vbr                      <- userPrefs.preference(UserPreferences.VBREnabled).apply()
-        conferenceCallingEnabled <- userPrefs.preference(UserPreferences.ConferenceCallingEnabled).apply()
         convSize                 <- convsService.activeMembersData(conv.id).map(_.size).head
         callType =
-          if (!conferenceCallingEnabled && convSize > LegacyVideoCallMaxMembers) Avs.WCallType.ForcedAudio
-          else if (isVideo) Avs.WCallType.Video
+          if (isVideo) Avs.WCallType.Video
           else Avs.WCallType.Normal
         convType =
-          if (isGroup && conferenceCallingEnabled) Avs.WCallConvType.Conference
-          else if (isGroup && !conferenceCallingEnabled) Avs.WCallConvType.Group
+          if (isGroup) Avs.WCallConvType.Conference
           else Avs.WCallConvType.OneOnOne
         _ <- permissions.ensurePermissions(ListSet(android.Manifest.permission.RECORD_AUDIO) ++ (if(forceOption && isVideo) ListSet(android.Manifest.permission.CAMERA) else ListSet()))
         _ <-
