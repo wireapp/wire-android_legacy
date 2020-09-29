@@ -136,6 +136,19 @@ object ShareActivity extends DerivedLogTag {
   val TextIntentType = "text/plain"
   val ImageIntentType = "image/"
 
+  val PrimaryPrefix = "primary"
+  val RawPrefix = "raw"
+
+  val ExternalStorageAuth = "com.android.externalstorage.documents"
+  val DownloadsAuth = "com.android.providers.downloads.documents"
+  val MediaAuth = "com.android.providers.media.documents"
+
+  val PublicDownloadsPath = "content://downloads/public_downloads"
+
+  val ImageMedia = "image"
+  val VideoMedia = "video"
+  val AudioMedia = "audio"
+
   /*
    * This part (the methods getPath and getDataColumn) of the Wire software are based heavily off of code posted in this
    * Stack Overflow answer.
@@ -159,36 +172,36 @@ object ShareActivity extends DerivedLogTag {
     val default = Some(new AndroidURI(uri)) // to be returned in most cases if we fail to resolve the path
     if (isDocumentUri(context, uri)) {
       (uri.getAuthority match {
-        case "com.android.externalstorage.documents" =>
+        case ExternalStorageAuth =>
           val split = getDocumentId(uri).split(":")
           // TODO handle non-primary volumes
-          if ("primary".equalsIgnoreCase(split(0))) {
+          if (PrimaryPrefix.equalsIgnoreCase(split(0))) {
             val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
             Some(parse(dir + "/" + split(1)))
           }
           else None
 
-        case "com.android.providers.downloads.documents" =>
+        case DownloadsAuth =>
           val docId = getDocumentId(uri)
           Try(docId.toLong) match {
             case Success(id) =>
-              val contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), id)
+              val contentUri = ContentUris.withAppendedId(Uri.parse(PublicDownloadsPath), id)
               getDocumentPath(context, contentUri)
             case _ =>
               val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
               val split = docId.split(":")
-              if ("primary".equalsIgnoreCase(split(0))) Some(parse(dir + "/" + split(1)))
-              else if ("raw".equalsIgnoreCase(split(0))) Some(parse(dir + "/" + split(1)))
+              if (PrimaryPrefix.equalsIgnoreCase(split(0))) Some(parse(dir + "/" + split(1)))
+              else if (RawPrefix.equalsIgnoreCase(split(0))) Some(parse(dir + "/" + split(1)))
               else None
           }
-        case "com.android.providers.media.documents" =>
+        case MediaAuth =>
           val docId = getDocumentId(uri)
           val split = docId.split(":")
           val contentUri = split(0) match {
-            case "image" => Some(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            case "video" => Some(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-            case "audio" => Some(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-            case _       => None
+            case ImageMedia => Some(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            case VideoMedia => Some(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            case AudioMedia => Some(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
+            case _          => None
           }
           contentUri.flatMap(uri => getDocumentPath(context, uri, Some("_id=?"), Seq(split(1))))
         case _ if isDocumentUri(context, uri) =>
