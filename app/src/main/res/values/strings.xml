@@ -351,6 +351,8 @@
     <string name="content__message__connect_request__footer">CONNECTED</string>
     <string name="content__message__connect_request__auto_connect__footer">AUTO-CONNECTED. _LEARN MORE_</string>
 
+    <string name="conversation_degraded_message">The call was disconnected because %1$s is no longer a verified contact.</string>
+
     <!-- Otr-->
     <plurals name="conversation__degraded_confirmation__header__single_user">
         <item quantity="one">%1$s started using a new device.</item>

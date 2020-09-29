@@ -339,13 +339,8 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
           zms.usersStorage.listSignal(ids)
         }.map(_.filter(_.verified != Verification.VERIFIED).toList)
       }).flatten.map {
-        case u1 :: u2 :: Nil =>
-         Some(getString(R.string.conversation__degraded_confirmation__header__multiple_user, u1.name, u2.name))
-        case l if l.size > 2 =>
-          Some(getString(R.string.conversation__degraded_confirmation__header__someone))
         case List(u) =>
-          //TODO handle string for case where user adds multiple clients
-          Some(getQuantityString(R.plurals.conversation__degraded_confirmation__header__single_user, 1, u.name))
+          Some(getString(R.string.conversation_degraded_message, u.name))
         case _ => None
       }
   }
