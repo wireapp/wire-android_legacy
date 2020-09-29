@@ -21,19 +21,18 @@ import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.Color
 import android.os.Bundle
+import android.view._
 import androidx.annotation.Nullable
 import androidx.fragment.app.Fragment
-import android.view._
 import com.waz.service.call.Avs.VideoState
-import com.waz.service.call.CallInfo.CallState
-import com.wire.signals.Subscription
+import com.waz.threading.Threading._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, MainActivity, R}
-import com.waz.threading.Threading._
+import com.wire.signals.Subscription
 
 class ControlsFragment extends FragmentHelper {
 
@@ -65,29 +64,22 @@ class ControlsFragment extends FragmentHelper {
     callingControls
     callingMiddle // initializing it later than the header and controls to reduce the number of height recalculations
 
-    (for {
-      state                 <- controller.callState
-      incoming              =  state == CallState.SelfJoining || state == CallState.OtherCalling
-      Some(degradationText) <- controller.degradationWarningText
-    } yield (incoming, degradationText)).onUi { case (incoming, degradationText) =>
-      new AlertDialog.Builder(getActivity)
-        .setTitle(R.string.calling_degraded_title)
-        .setMessage(degradationText)
-        .setCancelable(false)
-        .setPositiveButton(
-          if (incoming) android.R.string.ok else R.string.calling_ongoing_call_start_anyway,
-          new DialogInterface.OnClickListener {
-            override def onClick(dialog: DialogInterface, which: Int): Unit = controller.continueDegradedCall()
-          }
-        )
-        .setNegativeButton(
-          android.R.string.cancel,
-          new DialogInterface.OnClickListener {
-            override def onClick(dialog: DialogInterface, which: Int): Unit = controller.leaveCall()
-          }
-        )
-        .create()
-        .show()
+    controller.degradationWarningText.onUi { degradationText =>
+      if (degradationText.isDefined) {
+
+        new AlertDialog.Builder(getActivity)
+          .setTitle(R.string.call_dropped_title)
+          .setMessage(degradationText.get)
+          .setCancelable(false)
+          .setNeutralButton(
+            android.R.string.ok,
+            new DialogInterface.OnClickListener {
+              override def onClick(dialog: DialogInterface, which: Int): Unit = controller.leaveCall()
+            }
+          )
+          .create()
+          .show()
+      }
     }
 
     callingHeader.foreach {

@@ -1347,6 +1347,7 @@
     <string name="backup_import_error_wrong_account_title">Wrong backup</string>
     <string name="backup_import_error_wrong_account">You cannot restore history from a different account.</string>
     <string name="video_paused">Video paused</string>
+    <string name="call_dropped_title">Call ended</string>
     <string name="calling_degraded_title">New device</string>
     <string name="call_info">Up to %1$s people can join a group conversation.</string>
 

@@ -328,7 +328,8 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     .disableAutowiring()
 
   val degradationWarningText = convDegraded.flatMap {
-    case false => Signal(Option.empty[String])
+    case false =>
+      Signal(Option.empty[String])
     case true  =>
       (for {
         zms <- callingZms
@@ -339,7 +340,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
         }.map(_.filter(_.verified != Verification.VERIFIED).toList)
       }).flatten.map {
         case u1 :: u2 :: Nil =>
-          Some(getString(R.string.conversation__degraded_confirmation__header__multiple_user, u1.name, u2.name))
+         Some(getString(R.string.conversation__degraded_confirmation__header__multiple_user, u1.name, u2.name))
         case l if l.size > 2 =>
           Some(getString(R.string.conversation__degraded_confirmation__header__someone))
         case List(u) =>
