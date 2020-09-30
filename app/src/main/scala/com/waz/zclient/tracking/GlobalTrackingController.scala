@@ -29,6 +29,7 @@ import com.waz.zclient._
 import com.waz.zclient.log.LogUI._
 import com.waz.content.UserPreferences.CountlyTrackingId
 import com.waz.log.LogsService
+import com.waz.model.TeamId
 import com.waz.utils.MathUtils
 import com.waz.zclient.common.controllers.UserAccountsController
 import ly.count.android.sdk.{Countly, CountlyConfig, DeviceId}
@@ -45,15 +46,23 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   private lazy val am = inject[Signal[AccountManager]]
   private lazy val accountsService = inject[AccountsService]
 
+  //helps us fire the "app.open" event at the right time.
+  private val initialized = Signal(false)
+
+  initialized.onChanged { _ =>
+    accountsService.activeAccount.foreach(_.foreach(user => tracking.appOpen(user.id)))
+  }
+
   def init(): Future[Unit] = {
     for {
-      ap          <- tracking.isTrackingEnabled.head if(ap)
-      trackingId  <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
-      logsEnabled <- inject[LogsService].logsEnabled
+      ap               <- tracking.isTrackingEnabled.head if(ap)
+      inited           <- initialized.head if(!inited)
+      Some(trackingId) <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
+      logsEnabled      <- inject[LogsService].logsEnabled
     } yield {
       verbose(l"Using countly Id: ${trackingId.str}")
 
-      val config = new CountlyConfig(cxt, BuildConfig.COUNTLY_APP_KEY, BuildConfig.COUNTLY_SERVER_URL)
+      val config = new CountlyConfig(cxt, GlobalTrackingController.countlyAppKey, BuildConfig.COUNTLY_SERVER_URL)
         .setLoggingEnabled(logsEnabled)
         .setIdMode(DeviceId.Type.DEVELOPER_SUPPLIED)
         .setDeviceId(trackingId.str)
@@ -61,6 +70,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
       Countly.sharedInstance().init(config)
       setUserDataFields()
+      initialized ! true
     }
   }
 
@@ -98,16 +108,16 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   private def setUserDataFields(): Future[Unit] = {
     for {
       Some(z)         <- accountsService.activeZms.head
-      teamMember      = z.teamId.isDefined
+      teamId          =  z.teamId.getOrElse(TeamId("n/a"))
       teamSize        <- z.teamId.fold(Future.successful(0))(tId => z.usersStorage.getByTeam(Set(tId)).map(_.size))
       userAccountType <- getSelfAccountType
       contacts        <- z.usersStorage.list().map(_.count(!_.isSelf))
     } yield {
       val predefinedFields = new util.HashMap[String, String]()
       val customFields = new util.HashMap[String, String]()
-      customFields.put("user_contacts", MathUtils.logRound(contacts, 6).toString)
-      customFields.put("team_team_id", teamMember.toString)
-      customFields.put("team_team_size", teamSize.toString)
+      customFields.put("user_contacts", MathUtils.logRoundFactor6(contacts).toString)
+      customFields.put("team_team_id", teamId.toString)
+      customFields.put("team_team_size", MathUtils.logRoundFactor6(teamSize).toString)
       customFields.put("team_user_type", userAccountType)
       Countly.userData.setUserData(predefinedFields, customFields)
       Countly.userData.save()
@@ -125,4 +135,16 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     verbose(l"send countly event: $eventArg")
     Countly.sharedInstance().events().recordEvent(eventArg.name, eventArg.segments.asJava)
   }
+}
+
+object GlobalTrackingController {
+  val internalCountlyAppKey = "18bfffddd3a2a89b6a70bbe6569cc041b17a52d2"
+  val demoCountlyAppKey = "af153753b54e3e8365cd928d30f86b88c164a666"
+
+  val countlyAppKey: String = BuildConfig.FLAVOR match {
+    case "internal" => internalCountlyAppKey
+    case "dev" => demoCountlyAppKey
+    case _ => BuildConfig.COUNTLY_APP_KEY
+  }
+
 }
