@@ -13,7 +13,7 @@ class HttpProxyFactoryTest : UnitTest() {
         val validPort = "8080"
         val proxyDetails = ProxyDetails(validHostUrl, validPort)
 
-        val proxy = HttpProxyFactory.create(proxyDetails)
+        val proxy = HttpProxy(proxyDetails = proxyDetails).proxy
         val socketAddress = (proxy?.address() as InetSocketAddress)
         assert(proxy.type() == Proxy.Type.HTTP)
         assert(socketAddress.hostName == validHostUrl)
@@ -37,7 +37,7 @@ class HttpProxyFactoryTest : UnitTest() {
     }
 
     @Test
-    fun `Given HttpProxy instance, when proxy host url is valid" and port is not valid, then return default proxy`() {
+    fun `Given HttpProxy instance, when proxy host url is valid and port is not valid, then return default proxy`() {
         val validHostUrl = "www.wire.com"
         val invalidPort = "Wire"
         val proxyDetails = ProxyDetails(validHostUrl, invalidPort)
@@ -45,7 +45,7 @@ class HttpProxyFactoryTest : UnitTest() {
     }
 
     private fun proxyFailure(proxyDetails: ProxyDetails) {
-        val proxy = HttpProxyFactory.create(proxyDetails)
+        val proxy = HttpProxy(proxyDetails = proxyDetails).proxy
         assert(proxy == null)
     }
 }

@@ -391,6 +391,9 @@
             android:exported="false"
             />
 
+        <!-- Here you can put customized HTTP Proxy details -->
+        <meta-data android:name="http_proxy_url" android:value=""/>
+        <meta-data android:name="http_proxy_port" android:value=""/>
     </application>
 
 </manifest>

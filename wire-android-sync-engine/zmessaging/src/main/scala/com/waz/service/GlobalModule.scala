@@ -18,9 +18,10 @@
 package com.waz.service
 
 import java.io.File
-import java.net.Proxy
+import java.net.{InetSocketAddress, Proxy}
 import java.util.concurrent.Executors
 
+import android.content.pm.PackageManager
 import android.content.{Context => AContext}
 import com.softwaremill.macwire._
 import com.waz.bitmap.BitmapDecoder
@@ -28,6 +29,7 @@ import com.waz.bitmap.video.VideoTranscoder
 import com.waz.cache.CacheService
 import com.waz.client.{RegistrationClient, RegistrationClientImpl}
 import com.waz.content._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.{LogsService, LogsServiceImpl}
 import com.waz.permissions.PermissionsService
 import com.waz.service.assets.{AudioTranscoder, FileRestrictionList, GeneralFileCacheImpl, GlobalRecordAndPlayService}
@@ -46,9 +48,11 @@ import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 import com.waz.znet2.{HttpClientOkHttpImpl, OkHttpUserAgentInterceptor}
 import okhttp3.Interceptor
+import com.waz.log.LogSE._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 trait GlobalModule {
   def context:                  AContext
@@ -108,12 +112,13 @@ trait GlobalModule {
 
 class GlobalModuleImpl(val context:             AContext,
                        val backend:             BackendConfig,
-                       val httpProxy:           Option[Proxy],
                        val prefs:               GlobalPreferences,
                        val googleApi:           GoogleApi,
                        val syncRequests:        SyncRequestService,
                        val notificationsUi:     NotificationUiController,
-                       val fileRestrictionList: FileRestrictionList) extends GlobalModule { global =>
+                       val fileRestrictionList: FileRestrictionList,
+                       val defaultProxyDetails: ProxyDetails
+                      ) extends GlobalModule with DerivedLogTag { global =>
 
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
@@ -182,7 +187,8 @@ class GlobalModuleImpl(val context:             AContext,
 
   lazy val logsService:         LogsService                      = new LogsServiceImpl(prefs)
   lazy val customBackendClient: CustomBackendClient              = new CustomBackendClientImpl()
-  lazy val proxy:               Option[Proxy]                    = httpProxy
+
+  lazy val httpProxy:           Option[Proxy]                    = HttpProxy(context, defaultProxyDetails).proxy
 }
 
 class EmptyGlobalModule extends GlobalModule {

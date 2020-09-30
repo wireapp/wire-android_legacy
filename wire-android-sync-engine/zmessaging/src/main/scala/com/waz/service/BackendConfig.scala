@@ -22,7 +22,6 @@ import com.waz.utils.wrappers.URI
 import com.waz.znet.ServerTrust
 import com.waz.znet2.http.Request.UrlCreator
 
-
 class BackendConfig(private var _environment: String,
                     private var _baseUrl: URI,
                     private var _websocketUrl: URI,
