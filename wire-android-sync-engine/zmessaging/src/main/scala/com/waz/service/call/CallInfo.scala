@@ -40,29 +40,12 @@ case class CallInfo(convId:             ConvId,
                     isGroup:            Boolean,
                     caller:             UserId,
                     state:              CallState,
-                    isConferenceCall:   Boolean                      = false,
-                    prevState:          Option[CallState]            = None,
-                    otherParticipants:  Set[Participant]             = Set.empty,
-                    maxParticipants:    Int                          = 0, //maintains the largest number of users that were ever in the call (for tracking)
-                    muted:              Boolean                      = false,
-                    isCbrEnabled:       Option[Boolean]              = None,
-                    startedAsVideoCall: Boolean                      = false,
-                    videoSendState:     VideoState                   = VideoState.Stopped,
-                    videoReceiveStates: Map[Participant, VideoState] = Map.empty,
-                    wasVideoToggled:    Boolean                      = false, //for tracking
-                    startTime:          LocalInstant                 = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
-                    joinedTime:         Option[LocalInstant]         = None, //the time the call was joined, if any
-                    estabTime:          Option[LocalInstant]         = None, //the time that a joined call was established, if any
-                    endTime:            Option[LocalInstant]         = None,
-                    endReason:          Option[AvsClosedReason]      = None,
-                    outstandingMsg:     Option[OutstandingMessage]   = None, //Any messages we were unable to send due to conv degradation
-                    shouldRing:         Boolean                      = true) extends DerivedLogTag {
                     isConferenceCall:   Boolean                         = false,
                     prevState:          Option[CallState]               = None,
                     otherParticipants:  Set[Participant]                = Set.empty,
                     maxParticipants:    Int                             = 0, //maintains the largest number of users that were ever in the call (for tracking)
                     muted:              Boolean                         = false,
-                    isCbrEnabled:       Boolean                         = false,
+                    isCbrEnabled:       Option[Boolean]                 = None,
                     startedAsVideoCall: Boolean                         = false,
                     videoSendState:     VideoState                      = VideoState.Stopped,
                     videoReceiveStates: Map[Participant, VideoState]    = Map.empty,
@@ -76,7 +59,8 @@ case class CallInfo(convId:             ConvId,
                     endTime:            Option[LocalInstant]            = None,
                     endReason:          Option[AvsClosedReason]         = None,
                     outstandingMsg:     Option[OutstandingMessage]      = None, //Any messages we were unable to send due to conv degradation
-                    shouldRing:         Boolean                         = true) extends DerivedLogTag {
+                    shouldRing:         Boolean                         = true
+                   ) extends DerivedLogTag {
 
   val duration = estabTime match {
     case Some(est) => ClockSignal(1.second).map(_ => Option(between(est.instant, LocalInstant.Now.instant)))
