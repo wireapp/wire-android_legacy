@@ -30,8 +30,8 @@ import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.{GlobalModule, ZMessaging}
-import com.wire.signals.{ButtonSignal, CancellableFuture, ClockSignal, EventContext, Signal, SourceSignal}
 import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.waz.utils._
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
@@ -41,10 +41,10 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
+import com.wire.signals._
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
-import com.waz.threading.Threading._
 
 class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {
@@ -323,26 +323,23 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     soundController.setIncomingRingTonePlaying(uid, !isMuted && isIncoming && isAllowed)
   }
 
-  private lazy val convDegraded = conversation.map(_.verified == Verification.UNVERIFIED)
-    .orElse(Signal(false))
-    .disableAutowiring()
+  var convDegraded = Signal(false)
+  var degradationWarningText = Signal(Option.empty[String])
 
-  val degradationWarningText = convDegraded.flatMap {
-    case false =>
-      Signal(Option.empty[String])
-    case true  =>
-      (for {
-        zms <- callingZms
-        convId <- callConvId
-      } yield {
-        zms.membersStorage.activeMembers(convId).flatMap { ids =>
-          zms.usersStorage.listSignal(ids)
-        }.map(_.filter(_.verified != Verification.VERIFIED).toList)
-      }).flatten.map {
-        case List(u) =>
-          Some(getString(R.string.conversation_degraded_message, u.name))
-        case _ => None
+  for {
+    zms <- callingZms
+    convId <- callConvId
+  } yield {
+    zms.membersStorage.activeMembers(convId).flatMap { ids =>
+      zms.usersStorage.listSignal(ids)
+    }.map(_.filter(_.verified == Verification.VERIFIED).toList).onUi { l =>
+      l.foreach { user =>
+        if (user.isVerified == false) {
+          convDegraded = Signal(true)
+          degradationWarningText = Signal(Some(getString(R.string.conversation_degraded_message, user.name)))
+        }
       }
+    }
   }
 
   (for {

@@ -66,6 +66,7 @@ class ControlsFragment extends FragmentHelper {
 
     controller.degradationWarningText.onUi { degradationText =>
       if (degradationText.isDefined) {
+        controller.leaveCall()
         showConversationDegragatedDialog(degradationText.get)
       }
     }
@@ -137,18 +138,17 @@ class ControlsFragment extends FragmentHelper {
 
   def showConversationDegragatedDialog(message: String): Unit =
     new AlertDialog.Builder(getActivity)
-      .setTitle(R.string.call_dropped_title)
+      .setTitle(R.string.call_degraded_title)
       .setMessage(message)
       .setCancelable(false)
       .setNeutralButton(
         android.R.string.ok,
         new DialogInterface.OnClickListener {
-          override def onClick(dialog: DialogInterface, which: Int): Unit = controller.leaveCall()
+          override def onClick(dialog: DialogInterface, which: Int): Unit = getActivity.finish()
         }
       )
       .create()
       .show()
-
 }
 
 object ControlsFragment {
