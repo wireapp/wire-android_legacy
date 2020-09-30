@@ -18,12 +18,8 @@
 package com.waz.zclient.tracking
 
 import com.waz.log.InternalLog
-import com.waz.service.ZMessaging
-import com.waz.threading.Threading
 import com.wire.signals.EventContext
 import com.waz.zclient.{Injectable, Injector, WireContext}
-
-import scala.util.control.NonFatal
 
 class CrashController (implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable with Thread.UncaughtExceptionHandler {
 
@@ -31,12 +27,6 @@ class CrashController (implicit inj: Injector, cxt: WireContext, eventContext: E
   Thread.setDefaultUncaughtExceptionHandler(this) //override with this
 
   override def uncaughtException(t: Thread, e: Throwable) = {
-    try {
-      ZMessaging.globalModule.map(_.trackingService.crash(e))(Threading.Ui)
-    }
-    catch {
-      case NonFatal(_) =>
-    }
     defaultHandler.foreach(_.uncaughtException(t, e))
     InternalLog.flush()
   }

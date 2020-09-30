@@ -33,10 +33,9 @@ import androidx.preference.Preference.{OnPreferenceChangeListener, OnPreferenceC
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.otr.Client
 import com.wire.signals.Signal
-import com.waz.utils.returning
+import com.waz.utils.{MathUtils, returning}
 import com.waz.zclient.paintcode.WireDrawable
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
-import com.waz.zclient.ui.utils.MathUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.utils.ContextUtils._
 import io.reactivex.functions.Consumer

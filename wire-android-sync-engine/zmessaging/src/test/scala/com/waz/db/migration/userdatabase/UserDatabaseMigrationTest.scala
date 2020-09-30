@@ -1,6 +1,5 @@
 package com.waz.db.migration.userdatabase
 
-import com.waz.DisabledTrackingService
 import com.waz.db.ZMessagingDB
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.di.StorageModule
@@ -15,7 +14,7 @@ class UserDatabaseMigrationTest extends FeatureSpec with Matchers with BeforeAnd
   protected var zMessagingDB: ZMessagingDB = _
 
   before {
-    zMessagingDB = new ZMessagingDB(Robolectric.application, "test_db", DisabledTrackingService)
+    zMessagingDB = new ZMessagingDB(Robolectric.application, "test_db")
   }
 
   after {

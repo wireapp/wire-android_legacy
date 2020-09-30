@@ -32,7 +32,7 @@ import android.view.View;
 import android.view.animation.LinearInterpolator;
 import com.waz.zclient.R;
 import com.waz.zclient.ui.utils.ColorUtils;
-import com.waz.zclient.ui.utils.MathUtils;
+import com.waz.utils.MathUtils;
 import com.waz.zclient.utils.ViewUtils;
 
 public class SendingAnimationView extends View implements ValueAnimator.AnimatorUpdateListener {

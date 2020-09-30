@@ -53,7 +53,7 @@ package com.waz.zclient.ui.animation.interpolators.penner;
 
 import android.view.animation.Interpolator;
 
-import com.waz.zclient.ui.utils.MathUtils;
+import com.waz.utils.MathUtils;
 
 public final class Expo {
 

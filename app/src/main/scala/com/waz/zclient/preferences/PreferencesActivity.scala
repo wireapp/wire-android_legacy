@@ -46,6 +46,7 @@ import com.waz.zclient.utils.{BackStackNavigator, RingtoneUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{BaseActivity, R, _}
 import com.waz.threading.Threading._
+import com.waz.zclient.tracking.GlobalTrackingController
 
 class PreferencesActivity extends BaseActivity
   with CallingBannerActivity with CameraActionObserver {
@@ -123,12 +124,14 @@ class PreferencesActivity extends BaseActivity
   override def onStart(): Unit = {
     super.onStart()
 
+    inject[GlobalTrackingController].start(this)
     cameraController.addCameraActionObserver(this)
   }
 
   override def onStop(): Unit = {
     cameraController.removeCameraActionObserver(this)
 
+    inject[GlobalTrackingController].stop()
     super.onStop()
   }
 

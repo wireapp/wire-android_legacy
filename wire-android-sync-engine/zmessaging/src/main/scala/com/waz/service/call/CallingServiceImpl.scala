@@ -43,7 +43,6 @@ import com.waz.service.call.CallingService.GlobalCallProfile
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
-import com.waz.service.tracking.{AVSMetricsEvent, TrackingService}
 import com.waz.sync.client.CallingClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
@@ -168,7 +167,6 @@ class CallingServiceImpl(val accountId:       UserId,
                          globalPrefs:         GlobalPreferences,
                          permissions:         PermissionsService,
                          userStorage:         UsersStorage,
-                         tracking:            TrackingService,
                          httpProxy:           Option[Proxy])(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
 
   import CallingService._
@@ -366,8 +364,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }
     }
 
-  def onMetricsReady(convId: RConvId, metricsJson: String): Unit =
-    tracking.track(AVSMetricsEvent(metricsJson), Some(accountId))
+  def onMetricsReady(convId: RConvId, metricsJson: String): Unit = ()
 
   def onConfigRequest(wcall: WCall): Int = {
     verbose(l"onConfigRequest")

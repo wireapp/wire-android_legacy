@@ -21,7 +21,7 @@ import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.ShouldCreateFullConversation
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.tracking._
+import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{IntegrationsService, ZMessaging}
 import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.conversation.ConversationController
@@ -43,7 +43,6 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext)
   private lazy val zms = inject[Signal[ZMessaging]]
 
   private implicit lazy val uiStorage = inject[UiStorage]
-  private lazy val tracking = inject[TrackingService]
 
   val convId   = Signal(Option.empty[ConvId])
   val name     = Signal("")
@@ -70,7 +69,6 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext)
     convId ! None
     fromScreen ! from
     teamOnly ! false
-    tracking.track(CreateGroupConversation(from))
   }
 
   def setAddToConversation(convId: ConvId): Unit = {
@@ -102,10 +100,7 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext)
       conv           <- conversationController.createGroupConversation(Name(name.trim), userIds, teamOnly, readReceipts)
       _              <- Future.sequence(integrationIds.map { case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId)) })
       from           <- fromScreen.head
-    } yield {
-      tracking.track(GroupConversationSuccessful(userIds.nonEmpty, !teamOnly, from))
-      conv.id
-    }
+    } yield conv.id
 
   def addUsersToConversation(): Future[Unit] = {
     for {

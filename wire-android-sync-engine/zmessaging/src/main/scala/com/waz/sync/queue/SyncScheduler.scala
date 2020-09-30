@@ -63,7 +63,7 @@ class SyncSchedulerImpl(accountId:   UserId,
   private implicit val dispatcher = new SerialDispatchQueue(name = "SyncSchedulerQueue")
 
   private val queue                 = new SyncSerializer
-  private[sync] val executor        = new SyncExecutor(accountId, this, content, network, handler, tracking)
+  private[sync] val executor        = new SyncExecutor(accountId, this, content, network, handler)
   private[sync] val executions      = new mutable.HashMap[SyncId, Future[SyncResult]]()
   private[sync] val executionsCount = Signal(0)
 

@@ -17,9 +17,7 @@
  */
 package com.waz.db
 
-import android.database.sqlite.SQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.waz.DisabledTrackingService
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.scalatest.junit.JUnitRunner
@@ -30,13 +28,12 @@ import scala.collection.mutable.ListBuffer
 @RunWith(classOf[JUnitRunner])
 class MigrationsSpec extends FeatureSpec with Matchers with BeforeAndAfter with RobolectricTests {
 
-  implicit val tracking = DisabledTrackingService
   var appliedMigrations = new ListBuffer[(Int, Int)]
   var dropAllCalled = false
 
   def testMigration(from: Int, to: Int) = Migration(from, to) { _ => appliedMigrations.append(from -> to) }
 
-  lazy val testDaoDb = new DaoDB(Robolectric.application, "test", 1, Seq.empty[BaseDao[_]], Seq.empty[Migration], tracking) {
+  lazy val testDaoDb = new DaoDB(Robolectric.application, "test", 1, Seq.empty[BaseDao[_]], Seq.empty[Migration]) {
 
     override def dropAllTables(db: SupportSQLiteDatabase): Unit = dropAllCalled = true
   }

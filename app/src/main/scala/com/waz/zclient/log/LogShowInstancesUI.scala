@@ -101,7 +101,6 @@ trait LogShowInstancesUI {
       l"""
          |TrackingEvent(
          |  name: ${redactedString(e.name)},
-         |  properties: ${e.props})
        """.stripMargin
     }
 

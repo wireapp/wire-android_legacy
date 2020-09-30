@@ -28,9 +28,9 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.participants.fragments.{ConnectRequestFragment, PendingConnectRequestFragment}
-import com.waz.zclient.ui.utils.MathUtils
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 import com.waz.threading.Threading._
+import com.waz.utils.MathUtils
 
 class SecondPageFragment extends FragmentHelper
   with OnBackPressedListener

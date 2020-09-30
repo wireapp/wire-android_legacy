@@ -66,7 +66,7 @@ class ZMessagingFactory(global: GlobalModule) {
 
   def baseStorage(userId: UserId) = new StorageModule(global.context, userId, global.prefs, global.trackingService)
 
-  def auth(userId: UserId) = new AuthenticationManager(userId, global.accountsService, global.accountsStorage, global.loginClient, tracking)
+  def auth(userId: UserId) = new AuthenticationManager(userId, global.accountsService, global.accountsStorage, global.loginClient)
 
   def credentialsClient(urlCreator: UrlCreator, httpClient: HttpClient, authRequestInterceptor: AuthRequestInterceptor) =
     new CredentialsUpdateClientImpl()(urlCreator, httpClient, authRequestInterceptor)
@@ -85,7 +85,7 @@ trait Assets2Module {
 }
 
 class StorageModule(context: Context, val userId: UserId, globalPreferences: GlobalPreferences, tracking: TrackingService) {
-  lazy val db                                         = new ZmsDatabase(userId, context, tracking)
+  lazy val db                                         = new ZmsDatabase(userId, context)
   lazy val userPrefs                                  = UserPreferences.apply(context, db, globalPreferences)
   lazy val usersStorage:      UsersStorage            = wire[UsersStorageImpl]
   lazy val otrClientsStorage: OtrClientsStorage       = wire[OtrClientsStorageImpl]
@@ -180,6 +180,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def msgDeletions      = storage.msgDeletions
   def msgEdits          = storage.msgEdits
   def propertiesStorage = storage.propertiesStorage
+  def uriHelper         = assets2Module.uriHelper
 
   lazy val messagesStorage: MessagesStorage                       = wire[MessagesStorageImpl]
   lazy val msgAndLikes: MessageAndLikesStorageImpl                = wire[MessageAndLikesStorageImpl]

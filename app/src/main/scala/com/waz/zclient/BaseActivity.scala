@@ -42,7 +42,6 @@ import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.ActivityLifecycleCallback
-import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 
 import scala.collection.JavaConverters._
@@ -139,7 +138,6 @@ class BaseActivity extends AppCompatActivity
     verbose(l"onDestroy")
     subs.foreach(_.unsubscribe())
     subs.clear()
-    inject[GlobalTrackingController].flushEvents()
     permissions.unregisterProvider(this)
     super.onDestroy()
   }

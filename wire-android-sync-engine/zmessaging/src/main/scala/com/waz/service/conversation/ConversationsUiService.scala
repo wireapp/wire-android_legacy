@@ -33,11 +33,11 @@ import com.waz.model.sync.ReceiptType
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.currentBeDrift
 import com.waz.service._
-import com.waz.service.assets.{AES_CBC_Encryption, AssetService, ContentForUpload, UploadAsset}
+import com.waz.service.assets.{AES_CBC_Encryption, AssetService, ContentForUpload, UploadAsset, UriHelper}
 import com.waz.service.assets.Asset.Video
 import com.waz.service.conversation.ConversationsService.generateTempConversationId
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.tracking.TrackingService
+import com.waz.service.tracking.{ContributionEvent, TrackingService}
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.wire.signals.CancellableFuture
@@ -132,6 +132,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                  accounts:          AccountsService,
                                  tracking:          TrackingService,
                                  errors:            ErrorsService,
+                                 uriHelper:         UriHelper,
                                  propertiesService: PropertiesService) extends ConversationsUiService with DerivedLogTag {
   import ConversationsUiService._
   import Threading.Implicits.Background
@@ -169,6 +170,10 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                 content: ContentForUpload,
                                 confirmation: WifiWarningConfirmation = DefaultConfirmation,
                                 exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]] = {
+
+    def trackAsset(mime: Option[Mime]): Future[Unit] =
+      mime.fold(Future.successful(()))(m => tracking.contribution(ContributionEvent.fromMime(m), Some(selfUserId)))
+
     val messageId = MessageId()
     for {
       retention  <- messages.retentionPolicy2ById(convId)
@@ -176,7 +181,8 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       rawAsset   <- assets.createAndSaveUploadAsset(content, AES_CBC_Encryption.random, public = false, retention, Some(messageId))
       message    <- messages.addAssetMessage(convId, messageId, rawAsset, rr, exp)
       _          <- updateLastRead(message)
-      _          <- Future.successful(tracking.assetContribution(AssetId(rawAsset.id.str), selfUserId)) //TODO Maybe we can track raw assets contribution separately?
+      assetMime  =  content.content.getMime(uriHelper).toOption
+      _          <- trackAsset(assetMime)
       shouldSend <- checkSize(convId, rawAsset, message, confirmation)
       _          <- if (shouldSend) sync.postMessage(message.id, convId, message.editTime) else Future.successful(())
     } yield Some(message)

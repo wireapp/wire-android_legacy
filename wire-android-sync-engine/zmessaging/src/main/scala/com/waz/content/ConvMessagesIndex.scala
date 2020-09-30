@@ -24,7 +24,6 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.model.MessageData.{MessageDataDao, isUserContent}
 import com.waz.model._
-import com.waz.service.tracking.TrackingService
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import com.wire.signals.{EventStream, RefreshingSignal, Signal, SourceSignal}
@@ -35,7 +34,7 @@ import scala.concurrent.duration._
 class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserId: UserId,
                         users: UsersStorage, convs: ConversationStorage,
                         msgAndLikes: MessageAndLikesStorage, storage: ZmsDatabase,
-                        tracking: TrackingService, filter: Option[MessageFilter] = None) {
+                        filter: Option[MessageFilter] = None) {
   self =>
 
   private implicit val tag: LogTag = LogTag(s"ConvMessagesIndex_$convId")
@@ -121,7 +120,7 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
       verbose(l"index of $time = $readMessagesCount")
       (cursor, order, time, math.max(0, readMessagesCount - 1))
     }.map { case (cursor, order, time, lastReadIndex) =>
-      new MessagesCursor(cursor, lastReadIndex, time, msgAndLikes, tracking)(order)
+      new MessagesCursor(cursor, lastReadIndex, time, msgAndLikes)(order)
     }
   })
 

@@ -57,7 +57,7 @@ import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.startup.UpdateFragment
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
-import com.waz.zclient.tracking.UiTrackingController
+import com.waz.zclient.tracking.{GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils.TextDrawing
 import com.waz.zclient.utils.{Emojis, IntentUtils, ResString, ViewUtils}
@@ -242,6 +242,25 @@ class MainActivity extends BaseActivity
 
   }
 
+  private def initTracking: Future[Unit] =
+    for {
+      prefs            <- userPreferences.head
+      id               <- prefs.preference(CountlyTrackingId).apply()
+      _                <- if (id.isEmpty) prefs.preference(CountlyTrackingId) := Some(TrackingId()) else Future.successful(())
+      check            <- prefs.preference[Boolean](TrackingEnabledOneTimeCheckPerformed).apply()
+      analyticsEnabled <- prefs.preference[Boolean](TrackingEnabled).apply()
+      isProUser        <- userAccountsController.isProUser
+      _                <-
+        if(!check) {
+          (prefs(TrackingEnabled) := isProUser)
+            .flatMap(_ => prefs(TrackingEnabledOneTimeCheckPerformed) := true)
+        } else Future.successful(())
+      _                <-
+        if(analyticsEnabled) {
+          inject[GlobalTrackingController].init()
+        } else Future.successful(())
+    } yield ()
+
   override def onStart(): Unit = {
     getControllerFactory.getNavigationController.addNavigationControllerObserver(this)
     inject[NavigationController].mainActivityActive.mutate(_ + 1)
@@ -250,6 +269,11 @@ class MainActivity extends BaseActivity
 
     if (!getControllerFactory.getUserPreferencesController.hasCheckedForUnsupportedEmojis(Emojis.VERSION))
       Future(checkForUnsupportedEmojis())(Threading.Background)
+
+    for {
+      _      <- initTracking
+      _      <- inject[GlobalTrackingController].start(this)
+    } yield ()
 
     val intent = getIntent
     deepLinkService.checkDeepLink(intent)
@@ -393,6 +417,7 @@ class MainActivity extends BaseActivity
     super.onStop()
     getControllerFactory.getNavigationController.removeNavigationControllerObserver(this)
     inject[NavigationController].mainActivityActive.mutate(_ - 1)
+    inject[GlobalTrackingController].stop()
   }
 
   override def onBackPressed(): Unit =

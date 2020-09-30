@@ -23,7 +23,6 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.sqlite.db.{SupportSQLiteDatabase, SupportSQLiteOpenHelper}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.service.tracking.TrackingService
 
 import scala.util.Try
 
@@ -52,8 +51,7 @@ class DaoDB(context:    Context,
             name:       String,
             version:    Int,
             daos:       Seq[BaseDao[_]],
-            migrations: Seq[Migration],
-            tracking:   TrackingService)
+            migrations: Seq[Migration])
   extends SupportSQLiteOpenHelper.Callback(version)
     with BaseDaoDB {
 
@@ -85,7 +83,7 @@ class DaoDB(context:    Context,
   }
 
   override def onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int): Unit = {
-    new Migrations(migrations: _*)(tracking).migrate(DaoDB.this, oldVersion, newVersion)(db)
+    new Migrations(migrations: _*).migrate(DaoDB.this, oldVersion, newVersion)(db)
   }
 
   private val supportHelper: SupportSQLiteOpenHelper = new FrameworkSQLiteOpenHelperFactory()

@@ -21,7 +21,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.log.LogShow
-import com.waz.service.tracking.TrackingService
 import com.waz.utils.wrappers.DB
 import androidx.room.migration.{Migration => RoomMigration}
 
@@ -30,7 +29,7 @@ import scala.util.control.NonFatal
 trait Migration { self =>
   val fromVersion: Int
   val toVersion: Int
-  
+
   def apply(db: DB): Unit
 
   def toRoomMigration: RoomMigration = new RoomMigration(fromVersion, toVersion) {
@@ -61,7 +60,7 @@ object Migration {
  * Uses given list of migrations to migrate database from one version to another.
  * Finds shortest migration path and applies it.
  */
-class Migrations(migrations: Migration*)(implicit val tracking: TrackingService) extends DerivedLogTag {
+class Migrations(migrations: Migration*) extends DerivedLogTag {
 
   val toVersionMap = migrations.groupBy(_.toVersion)
 
@@ -111,7 +110,6 @@ class Migrations(migrations: Migration*)(implicit val tracking: TrackingService)
           } catch {
             case NonFatal(e) =>
               error(l"Migration failed for from: $fromVersion to: $toVersion", e)
-              tracking.exception(e, s"Migration failed for $storage, from: $fromVersion to: $toVersion")
               fallback(storage, db)
           }
       }

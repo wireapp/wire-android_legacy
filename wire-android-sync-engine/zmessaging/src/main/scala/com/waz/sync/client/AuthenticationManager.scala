@@ -27,7 +27,6 @@ import com.waz.model.{AccountData, UserId}
 import com.waz.service.AccountsService
 import com.waz.service.AccountsService.{InvalidCookie, InvalidCredentials, LogoutReason}
 import com.waz.service.ZMessaging.{accountTag, clock}
-import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client.LoginClient.LoginResult
 import com.wire.signals.SerialDispatchQueue
@@ -55,8 +54,7 @@ trait AccessTokenProvider {
 class AuthenticationManager(id: UserId,
                             accountsService: AccountsService,
                             accountStorage: AccountStorage,
-                            client: LoginClient,
-                            tracking: TrackingService) extends AccessTokenProvider {
+                            client: LoginClient) extends AccessTokenProvider {
 
   implicit val tag: LogTag = accountTag[AuthenticationManager](id)
 
@@ -105,7 +103,6 @@ class AuthenticationManager(id: UserId,
         dispatchRequest(client.access(cookie, token)) {
           case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, message, label)) =>
             verbose(l"access request failed (label: ${showString(label)}, message: ${showString(message)}), will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
-            tracking.exception(new RuntimeException(s"Access request failed: msg: $message, label: $label, cookie expired at: ${cookie.expiry} (is valid: ${cookie.isValid}), currToken expired at: ${token.map(_.expiresAt)} (is valid: ${token.exists(_.isValid)})"), null)
             logout(reason = InvalidCookie).map(_ => Left(resp))
         }
       }

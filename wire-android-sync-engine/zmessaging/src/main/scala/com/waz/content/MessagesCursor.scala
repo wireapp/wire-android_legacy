@@ -24,7 +24,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
-import com.waz.service.tracking.TrackingService
 import com.wire.signals.SerialDispatchQueue
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -47,8 +46,7 @@ trait MsgCursor {
 class MessagesCursor(cursor: DBCursor,
                      override val lastReadIndex: Int,
                      val lastReadTime: RemoteInstant,
-                     loader: MessageAndLikesStorage,
-                     tracking: TrackingService)(implicit ordering: Ordering[RemoteInstant]) extends MsgCursor with DerivedLogTag { self =>
+                     loader: MessageAndLikesStorage)(implicit ordering: Ordering[RemoteInstant]) extends MsgCursor with DerivedLogTag { self =>
   import MessagesCursor._
   import com.wire.signals.EventContext.Implicits.global
 
@@ -162,7 +160,6 @@ class MessagesCursor(cursor: DBCursor,
     val window = loadWindow(index)
 
     if (! window.contains(index)) {
-      tracking.exception(new RuntimeException(s"cursor window loading failed, requested index: $index, got window with offset: ${window.offset} and size: ${window.msgs.size}"), "")
       MessageAndLikes.Empty
     } else {
       val fetching = if (prevWindow != window) {
@@ -190,9 +187,6 @@ class MessagesCursor(cursor: DBCursor,
   def getEntries(offset: Int, count: Int): Seq[Entry] = {
     val end = math.min(size, offset + count)
     val window = loadWindow(offset, math.min(count, WindowSize))
-
-    if (! window.contains(offset) || !window.contains(end - 1))
-      tracking.exception(new RuntimeException(s"cursor window loading failed, requested [$offset, $end), got window with offset: ${window.offset} and size: ${window.msgs.size}"), "")
 
     window.msgs.slice(offset - window.offset, end - window.offset)
   }

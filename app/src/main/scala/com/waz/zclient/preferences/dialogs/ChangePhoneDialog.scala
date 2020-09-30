@@ -40,11 +40,11 @@ import com.waz.model.PhoneNumber
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.wire.signals.{EventStream, Signal}
-import com.waz.utils.returning
+import com.waz.utils.{MathUtils, returning}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.PhoneError
 import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
-import com.waz.zclient.ui.utils.{DrawableUtils, MathUtils}
+import com.waz.zclient.ui.utils.DrawableUtils
 import com.waz.zclient.utils.{DeprecationUtils, RichView, ViewUtils}
 
 import scala.util.Try

@@ -23,12 +23,12 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
 import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
-import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState}
 import com.waz.service.call.CallInfo.{CallState, OutstandingMessage, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
+import com.waz.utils.returning
 import com.wire.signals.{ClockSignal, Signal}
 import org.threeten.bp.Duration
 import org.threeten.bp.Duration.between
@@ -40,23 +40,27 @@ case class CallInfo(convId:             ConvId,
                     isGroup:            Boolean,
                     caller:             UserId,
                     state:              CallState,
-                    isConferenceCall:   Boolean                      = false,
-                    prevState:          Option[CallState]            = None,
-                    otherParticipants:  Set[Participant]             = Set.empty,
-                    maxParticipants:    Int                          = 0, //maintains the largest number of users that were ever in the call (for tracking)
-                    muted:              Boolean                      = false,
-                    isCbrEnabled:       Option[Boolean]              = None,
-                    startedAsVideoCall: Boolean                      = false,
-                    videoSendState:     VideoState                   = VideoState.Stopped,
-                    videoReceiveStates: Map[Participant, VideoState] = Map.empty,
-                    wasVideoToggled:    Boolean                      = false, //for tracking
-                    startTime:          LocalInstant                 = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
-                    joinedTime:         Option[LocalInstant]         = None, //the time the call was joined, if any
-                    estabTime:          Option[LocalInstant]         = None, //the time that a joined call was established, if any
-                    endTime:            Option[LocalInstant]         = None,
-                    endReason:          Option[AvsClosedReason]      = None,
-                    outstandingMsg:     Option[OutstandingMessage]   = None, //Any messages we were unable to send due to conv degradation
-                    shouldRing:         Boolean                      = true) extends DerivedLogTag {
+                    isConferenceCall:   Boolean                         = false,
+                    prevState:          Option[CallState]               = None,
+                    otherParticipants:  Set[Participant]                = Set.empty,
+                    maxParticipants:    Int                             = 0, //maintains the largest number of users that were ever in the call (for tracking)
+                    muted:              Boolean                         = false,
+                    isCbrEnabled:       Option[Boolean]                 = None,
+                    startedAsVideoCall: Boolean                         = false,
+                    videoSendState:     VideoState                      = VideoState.Stopped,
+                    videoReceiveStates: Map[Participant, VideoState]    = Map.empty,
+                    wasVideoToggled:    Boolean                         = false, //for tracking
+                    wasScreenShareUsed: Boolean                         = false, //for tracking
+                    screenShareStart:   Map[Participant, LocalInstant]  = Map.empty, //for tracking
+                    screenShareEnded:   Option[(String, Long)]          = None, //for tracking
+                    startTime:          LocalInstant                    = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
+                    joinedTime:         Option[LocalInstant]            = None, //the time the call was joined, if any
+                    estabTime:          Option[LocalInstant]            = None, //the time that a joined call was established, if any
+                    endTime:            Option[LocalInstant]            = None,
+                    endReason:          Option[AvsClosedReason]         = None,
+                    outstandingMsg:     Option[OutstandingMessage]      = None, //Any messages we were unable to send due to conv degradation
+                    shouldRing:         Boolean                         = true
+                   ) extends DerivedLogTag {
 
   val duration = estabTime match {
     case Some(est) => ClockSignal(1.second).map(_ => Option(between(est.instant, LocalInstant.Now.instant)))
@@ -110,14 +114,29 @@ case class CallInfo(convId:             ConvId,
 
   def updateVideoState(participant: Participant, videoState: VideoState): CallInfo = {
 
-    val newCall: CallInfo =
-      if (participant == selfParticipant) this.copy(videoSendState = videoState)
-      else this.copy(videoReceiveStates = this.videoReceiveStates + (participant -> videoState))
+    import com.waz.utils.RichWireInstant
+    def updateScreenShareTracking(i: CallInfo): CallInfo = {
+      if (i.screenShareStart.contains(participant) && videoState != ScreenShare) {
+        val duration = i.screenShareStart(participant).until(LocalInstant.Now).getSeconds
+        val direction = if(participant == selfParticipant) "outgoing" else "incoming"
+        i.copy(screenShareStart = i.screenShareStart - participant, screenShareEnded = Some(direction, duration))
+      } else if(videoState == ScreenShare && !i.screenShareStart.contains(participant)) {
+        i.copy(screenShareStart = i.screenShareStart + (participant -> LocalInstant.Now))
+      } else i
+    }
 
-    verbose(l"updateVideoSendState: $participant, $videoState, newCall: $newCall")
+    def updateVideoFields(info: CallInfo): CallInfo =
+      if (participant == selfParticipant) info.copy(videoSendState = videoState)
+      else info.copy(videoReceiveStates = info.videoReceiveStates + (participant -> videoState))
 
-    val wasVideoToggled = newCall.wasVideoToggled || (newCall.isVideoCall != this.isVideoCall)
-    newCall.copy(wasVideoToggled = wasVideoToggled)
+    val updatedCallInfo: CallInfo = updateScreenShareTracking(updateVideoFields(this))
+
+    val wasVideoToggled = updatedCallInfo.wasVideoToggled || (updatedCallInfo.isVideoCall != this.isVideoCall)
+    val wasScreenShareUsed = updatedCallInfo.videoReceiveStates.values.count(_ == VideoState.ScreenShare) > 0
+
+    returning(updatedCallInfo.copy(wasVideoToggled = wasVideoToggled, wasScreenShareUsed = wasScreenShareUsed)){ newCall =>
+      verbose(l"updateVideoSendState: $participant, $videoState, newCall: $newCall")
+    }
   }
 
 }

@@ -91,6 +91,7 @@ import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTr
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import com.wire.signals.{EventContext, Signal}
+import ly.count.android.sdk.Countly
 import org.threeten.bp.Clock
 
 import scala.concurrent.Future
@@ -364,12 +365,13 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     SafeBase64.setDelegate(new AndroidBase64Delegate)
 
     ZMessaging.globalReady.future.onSuccess {
-      case _ =>
+      case g =>
         InternalLog.setLogsService(inject[LogsService])
         InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
         InternalLog.add(new BufferedLogOutput(
           baseDir = getApplicationContext.getApplicationInfo.dataDir,
           showSafeOnly = BuildConfig.SAFE_LOGGING))
+        g.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())
     }
 
     verbose(l"onCreate")

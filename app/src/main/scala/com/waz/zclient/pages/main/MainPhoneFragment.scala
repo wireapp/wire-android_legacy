@@ -24,7 +24,7 @@ import android.os.{Build, Bundle}
 import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.FragmentManager
-import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
+import com.waz.content.UserPreferences.{TrackingEnabled, CrashesAndAnalyticsRequestShown}
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
 import com.waz.permissions.PermissionsService
@@ -59,7 +59,6 @@ import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.feature.shortcuts.Shortcuts
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.service.tracking.TrackingService.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
 
@@ -111,7 +110,7 @@ class MainPhoneFragment extends FragmentHelper
                                 }
     color                    <- accentColorController.accentColor.head
                              // Show "Help make wire better" popup
-    _                        <- if (!showAnalyticsPopup) Future.successful({}) else
+    _                        <- if (!showAnalyticsPopup || am.teamId.isDefined) Future.successful({}) else
                              showConfirmationDialog(
                                getString(R.string.crashes_and_analytics_request_title),
                                getString(R.string.crashes_and_analytics_request_body),
@@ -122,7 +121,7 @@ class MainPhoneFragment extends FragmentHelper
                                zms.head.flatMap { zms =>
                                  for {
                                    _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
-                                   _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
+                                   _ <- zms.userPrefs(TrackingEnabled) := resp
                                    _ <- if (resp) inject[GlobalTrackingController].optIn() else Future.successful(())
                                  } yield {}
                                }

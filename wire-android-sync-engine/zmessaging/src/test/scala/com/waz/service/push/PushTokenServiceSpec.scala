@@ -56,7 +56,7 @@ class PushTokenServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       (google.isGooglePlayServicesAvailable _).expects().anyNumberOfTimes().returning(googlePlayAvailable)
       (networkService.networkMode _).expects.anyNumberOfTimes().returning(networkMode)
 
-      new GlobalTokenServiceImpl(google, prefs, networkService, tracking)
+      new GlobalTokenServiceImpl(google, prefs, networkService)
     }
 
     scenario("Fetches token on init if GCM available") {
