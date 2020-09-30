@@ -246,8 +246,7 @@ class MainActivity extends BaseActivity
     for {
       prefs            <- userPreferences.head
       id               <- prefs.preference(CountlyTrackingId).apply()
-      _                <-
-        if(id.isEmpty) prefs.preference(CountlyTrackingId) := Some(TrackingId()) else Future.successful(())
+      _                <- if (id.isEmpty) prefs.preference(CountlyTrackingId) := Some(TrackingId()) else Future.successful(())
       check            <- prefs.preference[Boolean](TrackingEnabledOneTimeCheckPerformed).apply()
       analyticsEnabled <- prefs.preference[Boolean](TrackingEnabled).apply()
       isProUser        <- userAccountsController.isProUser

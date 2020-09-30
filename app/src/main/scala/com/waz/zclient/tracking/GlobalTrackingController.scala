@@ -55,8 +55,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
 
   def init(): Future[Unit] = {
     for {
-      ap               <- tracking.isTrackingEnabled.head if(ap)
-      inited           <- initialized.head if(!inited)
+      ap               <- tracking.isTrackingEnabled.head if (ap)
+      inited           <- initialized.head if (!inited)
       Some(trackingId) <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
       logsEnabled      <- inject[LogsService].logsEnabled
     } yield {
