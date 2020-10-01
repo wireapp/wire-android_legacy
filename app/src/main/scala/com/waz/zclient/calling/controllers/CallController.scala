@@ -19,7 +19,6 @@ package com.waz.zclient.calling.controllers
 
 import android.os.{Build, PowerManager}
 import android.telephony.{PhoneStateListener, TelephonyManager}
-import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -44,6 +43,7 @@ import com.waz.zclient.{Injectable, Injector, R, WireContext}
 import com.wire.signals._
 import org.threeten.bp.Instant
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
@@ -323,30 +323,47 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     soundController.setIncomingRingTonePlaying(uid, !isMuted && isIncoming && isAllowed)
   }
 
-  var convDegraded = Signal(false)
-  var degradationWarningText = Signal(Option.empty[String])
+  val onCallDegraded = EventStream[Unit]()
+  val shouldHideCallingUi = EventStream[Unit]()
+  var isCallDegraded = false
 
-  for {
-    zms <- callingZms
-    convId <- callConvId
-  } yield {
-    zms.membersStorage.activeMembers(convId).flatMap { ids =>
-      zms.usersStorage.listSignal(ids)
-    }.map(_.filter(_.verified == Verification.VERIFIED).toList).onUi { l =>
-      l.foreach { user =>
-        if (user.isVerified == false) {
-          convDegraded = Signal(true)
-          degradationWarningText = Signal(Some(getString(R.string.conversation_degraded_message, user.name)))
-        }
-      }
+  private var currentUV = Map.empty[UserId, Boolean]
+  private lazy val usersVerifications = for {
+    zms     <- callingZms
+    convId  <- callConvId
+    members <- zms.membersStorage.activeMembers(convId)
+    users   <- zms.usersStorage.listSignal(members.filterNot(_ == zms.selfUserId))
+  } yield users.map(u => u.id -> u.isVerified).toMap
+
+  usersVerifications { newUV =>
+    isCallDegraded = currentUV.exists {
+      case (id, verified) => verified && newUV.get(id).contains(false)
     }
+    if (isCallDegraded) {
+      currentUV = Map.empty
+      Future {
+        onCallDegraded !
+          leaveCall()
+      }(Threading.Ui)
+    } else {
+      currentUV = newUV
+    }
+  }
+
+  isCallActive {
+    case false => {
+      currentUV = Map.empty
+      if (!isCallDegraded) Future {
+        shouldHideCallingUi ! {}
+      }(Threading.Ui)
+    }
+    case _ =>
   }
 
   (for {
     v <- isVideoCall
     o <- isCallOutgoing
-    d <- convDegraded
-  } yield (v, o & !d)) { case (v, play) =>
+  } yield (v, o & !isCallDegraded)) { case (v, play) =>
     soundController.setOutgoingRingTonePlaying(play, v)
   }
 

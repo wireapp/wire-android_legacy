@@ -64,11 +64,8 @@ class ControlsFragment extends FragmentHelper {
     callingControls
     callingMiddle // initializing it later than the header and controls to reduce the number of height recalculations
 
-    controller.degradationWarningText.onUi { degradationText =>
-      if (degradationText.isDefined) {
-        controller.leaveCall()
-        showConversationDegragatedDialog(degradationText.get)
-      }
+    controller.onCallDegraded.onUi { _ =>
+      showConversationDegragatedDialog(getString(R.string.conversation_degraded_message))
     }
 
     callingHeader.foreach {

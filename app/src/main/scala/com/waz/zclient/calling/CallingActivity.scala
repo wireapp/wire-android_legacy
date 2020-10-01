@@ -19,7 +19,7 @@ package com.waz.zclient.calling
 
 import android.content.{Context, Intent}
 import android.os.{Build, Bundle}
-import android.view.{ WindowManager}
+import android.view.WindowManager
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.zclient._
@@ -28,7 +28,6 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.DeprecationUtils
 import com.waz.threading.Threading._
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.wire.signals.Signal
 
 class CallingActivity extends BaseActivity {
 
@@ -44,10 +43,7 @@ class CallingActivity extends BaseActivity {
       .replace(R.id.calling_layout, CallingFragment(), CallingFragment.Tag)
       .commit
 
-    controller.isCallActive.filter(_ == false).onUi { _ =>
-      verbose(l"call no longer exists, finishing activity")
-      finish()
-    }
+    controller.shouldHideCallingUi.onUi { _ => finish()}
   }
 
   override def onAttachedToWindow(): Unit = {
