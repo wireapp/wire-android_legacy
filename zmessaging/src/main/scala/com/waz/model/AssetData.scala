@@ -25,7 +25,8 @@ import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetStatus.{UploadCancelled, UploadDone}
 import com.waz.model.GenericContent.EncryptionAlgorithm
 import com.waz.model.otr.SignalingKey
-import com.waz.service.{UserService, ZMessaging}
+import com.waz.service.ZMessaging
+import com.waz.sync.client.AssetClient
 import com.waz.utils.JsonDecoder.{apply => _, opt => _}
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
@@ -74,9 +75,9 @@ case class AssetData(override val id: AssetId               = AssetId(),
 
   lazy val cacheKey = {
     val key = (proxyPath, source) match {
-      case (Some(proxy), _)                            => CacheKey(proxy)
-      case (_, Some(uri)) if !NonKeyURIs.contains(uri) => CacheKey.fromUri(uri)
-      case _                                           => CacheKey.fromAssetId(id)
+      case (Some(proxy), _)                                                 => CacheKey(proxy)
+      case (_, Some(uri)) if uri.getPath != AssetClient.UnsplashUrl.getPath => CacheKey.fromUri(uri)
+      case _                                                                => CacheKey.fromAssetId(id)
     }
     //verbose(s"created cache key: $key for asset: $id")
     key
@@ -121,11 +122,6 @@ case class AssetData(override val id: AssetId               = AssetId(),
 }
 
 object AssetData {
-
-  /**
-    * Do not use these URIs as cache keys, as they do not provide a unique identifier to the asset downloaded from them
-    */
-  val NonKeyURIs: Set[URI] = Set(UserService.UnsplashUrl)
 
   def decodeData(data64: String): Array[Byte] = AESUtils.base64(data64)
 

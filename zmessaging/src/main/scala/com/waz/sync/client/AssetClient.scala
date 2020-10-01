@@ -18,6 +18,7 @@
 package com.waz.sync.client
 
 import java.io.{BufferedOutputStream, File, FileOutputStream, InputStream}
+import java.net.URL
 import java.security.{DigestOutputStream, MessageDigest}
 
 import com.waz.api.impl.ErrorResponse
@@ -49,6 +50,7 @@ trait AssetClient {
     * Usually reserved for profile pictures.
     */
   def loadPublicAssetContent(assetId: AssetId, convId: Option[ConvId], callback: Option[ProgressCallback]): ErrorOrResponse[InputStream]
+  def loadUnsplashProfilePicture(): ErrorOrResponse[InputStream]
 }
 
 class AssetClientImpl(implicit
@@ -105,6 +107,12 @@ class AssetClientImpl(implicit
       .executeSafe
   }
 
+  override def loadUnsplashProfilePicture(): ErrorOrResponse[InputStream] =
+    Request.create(method = Method.Get, url = AssetClient.UnsplashUrl)
+      .withResultType[InputStream]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+
   private implicit def RawAssetRawBodySerializer: RawBodySerializer[AssetContent] =
     RawBodySerializer.create { asset =>
       val data = () => Await.result(asset.data(), Duration.Inf) //TODO RawBody should take () => Future[_] as data
@@ -142,6 +150,7 @@ object AssetClient {
   implicit val DefaultExpiryTime: Expiration = 1.hour
 
   val AssetsV3Path = "/assets/v3"
+  val UnsplashUrl: URL = new URL("https://source.unsplash.com/800x800/?landscape")
 
   sealed trait Retention
   object Retention {

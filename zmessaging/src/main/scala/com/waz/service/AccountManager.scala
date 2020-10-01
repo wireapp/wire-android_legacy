@@ -28,7 +28,6 @@ import com.waz.model.AccountData.Password
 import com.waz.model._
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
-import com.waz.service.UserService.UnsplashUrl
 import com.waz.service.AccountsService.ClientDeleted
 import com.waz.service.assets.Content
 import com.waz.service.otr.OtrService.SessionId
@@ -37,14 +36,13 @@ import com.waz.sync.client.{ErrorOr, ErrorOrResponse, InvitationClientImpl, OtrC
 import com.wire.signals.CancellableFuture
 import com.waz.utils._
 import com.wire.signals._
-import com.waz.utils.wrappers.URI
 import com.waz.znet2.http.ResponseCode
 import com.waz.znet2.{AuthRequestInterceptor, AuthRequestInterceptorImpl}
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Right
+import scala.util.{Failure, Right, Success}
 
 class AccountManager(val userId:  UserId,
                      val teamId:  Option[TeamId],
@@ -122,7 +120,15 @@ class AccountManager(val userId:  UserId,
     zmessaging
   }
 
-  def addUnsplashPicture(): Future[Unit] = zmessaging.flatMap(_.users.updateSelfPicture(Content.Uri(URI.toJava(UnsplashUrl))))
+  def addUnsplashPicture(): Future[Unit] = for {
+    zms      <- zmessaging
+    unsplash <- zms.assetService.loadUnsplashProfilePicture().future
+    content  <- unsplash.toByteArray match {
+                  case Success(bytes) => Future.successful(Content.Bytes(Mime.Image.Jpg, bytes))
+                  case Failure(err)   => Future.failed(err)
+                }
+    _        <- zms.users.updateSelfPicture(content)
+  } yield ()
 
   def fingerprintSignal(uId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
     for {
