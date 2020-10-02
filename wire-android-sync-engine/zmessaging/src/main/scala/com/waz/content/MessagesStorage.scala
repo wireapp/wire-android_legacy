@@ -96,7 +96,7 @@ class MessagesStorageImpl(context:     Context,
 
   import com.wire.signals.EventContext.Implicits.global
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "MessagesStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "MessagesStorage")
 
   //For tracking on UI
   val onMessageSent = EventStream[MessageData]()

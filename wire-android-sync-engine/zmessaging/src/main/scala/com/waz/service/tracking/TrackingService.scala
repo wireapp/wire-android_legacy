@@ -56,18 +56,12 @@ class DummyTrackingService extends TrackingService {
 }
 
 object TrackingService {
-
   type ZmsProvider = Option[UserId] => Future[Option[ZMessaging]]
-
-  implicit val dispatcher = new SerialDispatchQueue(name = "TrackingService")
-  private[waz] implicit val ec: EventContext = EventContext.Global
-
 }
 
 class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: ZmsProvider, versionName: String)
   extends TrackingService with DerivedLogTag {
-
-  import TrackingService._
+  private implicit val dispatcher = SerialDispatchQueue(name = "TrackingService")
 
   override lazy val isTrackingEnabled: Signal[Boolean] =
     ZMessaging.currentAccounts.activeZms.flatMap {

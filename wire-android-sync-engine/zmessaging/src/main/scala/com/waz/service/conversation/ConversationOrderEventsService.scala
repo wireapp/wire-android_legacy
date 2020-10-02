@@ -40,7 +40,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
                                      sync:       SyncServiceHandle,
                                      pipeline:   EventPipeline) extends DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationEventsDispatcher")
+  private implicit val dispatcher = SerialDispatchQueue(name = "ConversationEventsDispatcher")
 
   private[service] def shouldChangeOrder(event: ConversationEvent): Boolean =
     event match {

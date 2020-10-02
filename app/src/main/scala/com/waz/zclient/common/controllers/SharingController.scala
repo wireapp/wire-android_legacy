@@ -35,7 +35,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
 
   import SharingController._
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SharingController")
+  private implicit val dispatcher = SerialDispatchQueue(name = "SharingController")
 
   val sharableContent     = Signal(Option.empty[SharableContent])
   val ephemeralExpiration = Signal(Option.empty[FiniteDuration])

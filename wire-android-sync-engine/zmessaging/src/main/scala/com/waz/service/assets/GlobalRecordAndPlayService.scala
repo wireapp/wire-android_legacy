@@ -380,7 +380,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
     transitionF(s => Future(f(s)))(errorMessage, errorType)
 
   private def transitionF(f: State => Future[Transition])(errorMessage: String, errorType: Option[ErrorType] = None): Future[State] =
-    Serialized.future(GlobalRecordAndPlayService)(keepStateOnFailure(stateSource.head.flatMap(f))(errorMessage, errorType).map(applyState))
+    Serialized.future("GlobalRecordAndPlayService")(keepStateOnFailure(stateSource.head.flatMap(f))(errorMessage, errorType).map(applyState))
 
   private def duringIdentityTransition[A](pf: PartialFunction[State, Future[A]]): Future[A] = {
     val p = Promise[A]

@@ -54,7 +54,7 @@ class ErrorsServiceImpl(userId:    UserId,
                         messages:  MessagesStorage) extends ErrorsService with DerivedLogTag {
   import com.wire.signals.EventContext.Implicits.global
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ErrorsService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "ErrorsService")
 
   private var dismissHandler: PartialFunction[ErrorData, Future[_]] = PartialFunction.empty
 

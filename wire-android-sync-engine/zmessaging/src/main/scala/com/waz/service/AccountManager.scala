@@ -54,7 +54,7 @@ class AccountManager(val userId:  UserId,
                      isLogin:     Option[Boolean]) extends DerivedLogTag {
   import AccountManager._
 
-  implicit val dispatcher = new SerialDispatchQueue()
+  private implicit val dispatcher = SerialDispatchQueue(name = "AccountManager")
   implicit val accountContext: AccountContext = new AccountContext(userId, accounts)
   verbose(l"Creating for: $userId, team: $teamId, initialSelf: $initialSelf, isLogin: $isLogin")
 
@@ -144,7 +144,7 @@ class AccountManager(val userId:  UserId,
       } yield resp.fold(err => Left(err), _ => Right({}))
     }
 
-    Serialized.future("register-client", this) {
+    Serialized.future(s"register-client $userId") {
       clientState.head.flatMap {
         case st@Registered(_) =>
           verbose(l"Client already registered, returning")

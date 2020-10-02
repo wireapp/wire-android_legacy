@@ -107,7 +107,7 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
 
 class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: AccountManager, val storage: StorageModule, val cryptoBox: CryptoBoxService) extends DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ZMessaging")
+  private implicit val dispatcher = SerialDispatchQueue(name = "ZMessaging")
 
   val httpProxy: Option[Proxy] = ZMessaging.httpProxy
 

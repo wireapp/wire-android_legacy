@@ -52,7 +52,7 @@ class PushTokenService(userId:       UserId,
 
   implicit lazy val logTag: LogTag = accountTag[PushTokenService](userId)
 
-  implicit val dispatcher = new SerialDispatchQueue(name = "PushTokenService")
+  implicit val dispatcher = SerialDispatchQueue(name = "PushTokenService")
 
   private val isLoggedIn = accounts.accountState(userId).map {
     case _: Active => true
@@ -130,7 +130,7 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
                              network:   NetworkModeService) extends GlobalTokenService with DerivedLogTag {
   import PushTokenService._
 
-  implicit val dispatcher = new SerialDispatchQueue(name = "GlobalTokenService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "GlobalTokenService")
   implicit val ev = EventContext.Global
 
 //  val pushEnabled  = prefs.preference(PushEnabledKey) //TODO delete the push token if the PushEnabledKey is false

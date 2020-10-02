@@ -53,7 +53,7 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
   extends CachedStorageImpl[(UserId, ConvId), ConversationMemberData](new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationMemberDataDao, LogTag("MembersStorage_Cached"))
     with MembersStorage with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "MembersStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "MembersStorage")
 
   def getByConv(conv: ConvId) = find(_.convId == conv, ConversationMemberDataDao.findForConv(conv)(_), identity)
 

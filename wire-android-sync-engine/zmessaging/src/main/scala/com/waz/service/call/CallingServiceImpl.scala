@@ -171,7 +171,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
   import CallingService._
 
-  private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "CallingService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "CallingService")
 
   //need to ensure that flow manager and media manager are initialised for v3 (they are lazy values)
   flowManagerService.flowManager
@@ -269,7 +269,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }
     }
 
-    def withConvGroup(convId: RConvId)(f: (ConversationData, Boolean) => Unit) = Serialized.future(self) {
+    def withConvGroup(convId: RConvId)(f: (ConversationData, Boolean) => Unit) = Serialized.future(self.accountId.str) {
       (for {
         _          <- wCall
         Some(conv) <- convs.convByRemoteId(convId)
@@ -416,7 +416,7 @@ class CallingServiceImpl(val accountId:       UserId,
     }
 
   override def startCall(convId: ConvId, isVideo: Boolean = false, forceOption: Boolean = false) =
-    Serialized.future(self) {
+    Serialized.future(self.accountId.str) {
       verbose(l"startCall $convId, isVideo: $isVideo, forceOption: $forceOption")
       (for {
         w                        <- wCall
@@ -584,7 +584,7 @@ class CallingServiceImpl(val accountId:       UserId,
     * else other futures posted to the dispatcher can sneak in between.
     */
   private def atomicWithConv(loadConversation: => Future[Option[ConversationData]], f: (WCall, ConversationData) => Unit, convNotFoundMsg: String) = {
-    Serialized.future(self) {
+    Serialized.future(self.accountId.str) {
       wCall.flatMap { w =>
         loadConversation.map {
           case Some(conv) => f(w, conv)
@@ -617,7 +617,7 @@ class CallingServiceImpl(val accountId:       UserId,
   }
 
   private def updateActiveCallAsync(f: (WCall, ConversationData, CallInfo) => CallInfo)(caller: String): Future[Unit] =
-    Serialized.future(self) {
+    Serialized.future(self.accountId.str) {
       currentCall.currentValue.flatten.map(_.convId).fold(Future.successful({})) { convId =>
         wCall.flatMap { w =>
           convs.convById(convId).map {

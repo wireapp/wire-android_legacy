@@ -36,7 +36,7 @@ abstract class Player {
   def repositionPlayhead(pos: bp.Duration): Future[Unit]
 
   private lazy val token = UUID.randomUUID
-  protected def serialized[A](f: => Future[A]): Future[A] = Serialized.future(token)(f)
+  protected def serialized[A](f: => Future[A]): Future[A] = Serialized.future(token.toString)(f)
 }
 
 object Player {

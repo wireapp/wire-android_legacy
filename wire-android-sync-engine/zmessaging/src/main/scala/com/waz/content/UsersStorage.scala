@@ -44,7 +44,7 @@ trait UsersStorage extends CachedStorage[UserId, UserData] {
 class UsersStorageImpl(context: Context, storage: ZmsDatabase)
   extends CachedStorageImpl[UserId, UserData](new TrimmingLruCache(context, Fixed(2000)), storage)(UserDataDao, LogTag("UsersStorage_Cached"))
     with UsersStorage {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "UsersStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "UsersStorage")
 
   override def listAll(ids: Traversable[UserId]) = getAll(ids).map(_.collect { case Some(x) => x }(breakOut))
 

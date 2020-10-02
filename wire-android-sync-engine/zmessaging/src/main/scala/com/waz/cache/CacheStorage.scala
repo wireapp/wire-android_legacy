@@ -45,7 +45,7 @@ class CacheStorageImpl(storage: Database, context: Context)
   import com.waz.cache.CacheStorage._
   import com.wire.signals.EventContext.Implicits.global
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "CacheStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "CacheStorage")
 
   onUpdated { _ foreach {
     case (prev, updated) if prev.fileId != updated.fileId => cleanup(prev)

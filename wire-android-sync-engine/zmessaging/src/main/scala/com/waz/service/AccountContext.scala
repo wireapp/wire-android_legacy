@@ -29,7 +29,7 @@ class AccountContext(userId: UserId, accounts: AccountsService) extends EventCon
 
   implicit val logTag: LogTag = accountTag[AccountContext](userId)
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "AccountContext")
+  private implicit val dispatcher = SerialDispatchQueue(name = "AccountContext")
 
   accounts.accountState(userId).on(dispatcher) {
     case LoggedOut =>

@@ -72,13 +72,13 @@ class VerificationStateUpdater(selfUserId:     UserId,
   }
 
   membersStorage.onAdded{ members =>
-    Serialized.future(SerializationKey) {
+    Serialized.future(SerializationKey.toString()) {
       updateConversations(members.map(_.convId).distinct, members.map { member => member.userId -> MemberAdded } (breakOut))
     }
   }
 
   membersStorage.onDeleted{ members =>
-    Serialized.future(SerializationKey) {
+    Serialized.future(SerializationKey.toString()) {
       updateConversations(members.map(_._2).distinct, members.map { _._1 -> Other } (breakOut))
     }
   }
@@ -106,7 +106,7 @@ class VerificationStateUpdater(selfUserId:     UserId,
         Future.successful(())
     }
 
-  private[service] def onClientsChanged(changes: Map[UserId, (UserClients, VerificationChange)]) = Serialized.future(SerializationKey) {
+  private[service] def onClientsChanged(changes: Map[UserId, (UserClients, VerificationChange)]) = Serialized.future(SerializationKey.toString()) {
 
     def updateUserVerified(user: UserData) = {
       val clients = changes(user.id)._1.clients.values
@@ -178,7 +178,7 @@ object VerificationStateUpdater extends DerivedLogTag {
 
   // XXX: small hack to synchronize other operations with verification state updating,
   // we sometimes need to make sure that this state is up to date before proceeding
-  def awaitUpdated(userId: UserId) = Serialized.future(serializationKey(userId)) { Future.successful(()) }
+  def awaitUpdated(userId: UserId) = Serialized.future(serializationKey(userId).toString()) { Future.successful(()) }
 
   case class VerificationStateUpdate(convUpdates: Seq[(ConversationData, ConversationData)], convUsers: Map[ConvId, Seq[UserData]], changes: Map[UserId, VerificationChange])
 

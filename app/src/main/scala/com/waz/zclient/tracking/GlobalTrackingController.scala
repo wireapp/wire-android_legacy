@@ -40,7 +40,7 @@ import scala.concurrent.Future
 class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "Tracking")
+  private implicit val dispatcher =SerialDispatchQueue(name = "Tracking")
 
   private val tracking  = inject[TrackingService]
   private lazy val am = inject[Signal[AccountManager]]

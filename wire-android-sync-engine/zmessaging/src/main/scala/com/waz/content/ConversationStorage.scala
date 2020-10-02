@@ -53,7 +53,7 @@ class ConversationStorageImpl(storage: ZmsDatabase)
     with ConversationStorage with DerivedLogTag {
 
   import EventContext.Implicits.global
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "ConversationStorage")
 
   onAdded.on(dispatcher) { cs => updateSearchKey(cs)}
 

@@ -56,7 +56,7 @@ import scala.util.{Success, Try}
 class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
   extends Injectable with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
+  private implicit val dispatcher = SerialDispatchQueue(name = "ConversationController")
 
   private lazy val selectedConv          = inject[Signal[SelectedConversationService]]
   private lazy val convsUi               = inject[Signal[ConversationsUiService]]
@@ -352,7 +352,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     } yield {}
 
   def leave(convId: ConvId): CancellableFuture[Unit] =
-    returning (Serialized("Conversations", convId)(CancellableFuture.lift(convsUi.head.flatMap(_.leaveConversation(convId))))) { _ =>
+    returning(Serialized(s"Conversations $convId")(CancellableFuture.lift(convsUi.head.flatMap(_.leaveConversation(convId))))) { _ =>
       currentConvId.head.map { id => if (id == convId) setCurrentConversationToNext(ConversationChangeRequester.LEAVE_CONVERSATION) }
     }
 
@@ -382,7 +382,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     convsUi.head.flatMap(_.setConversationMuted(id, muted)).map(_ => {})
 
   def delete(id: ConvId, alsoLeave: Boolean): CancellableFuture[Option[ConversationData]] = {
-    def clear(id: ConvId) = Serialized("Conversations", id)(CancellableFuture.lift(convsUi.head.flatMap(_.clearConversation(id))))
+    def clear(id: ConvId) = Serialized(s"Conversations $id")(CancellableFuture.lift(convsUi.head.flatMap(_.clearConversation(id))))
     if (alsoLeave) leave(id).flatMap(_ => clear(id)) else clear(id)
   }
 

@@ -40,7 +40,7 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
   private implicit val tag: LogTag = LogTag(s"ConvMessagesIndex_$convId")
 
   import com.wire.signals.EventContext.Implicits.global
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConvMessagesIndex")
+  private implicit val dispatcher = SerialDispatchQueue(name = "ConvMessagesIndex")
 
   private val indexChanged = EventStream[Change]()
   private var firstMessage = Option.empty[MessageData]

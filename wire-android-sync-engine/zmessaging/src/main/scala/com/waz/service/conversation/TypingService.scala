@@ -44,7 +44,7 @@ class TypingService(userId:        UserId,
   import timeouts.typing._
 
   private implicit val ev = EventContext.Global
-  private implicit val dispatcher = new SerialDispatchQueue(name = "TypingService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "TypingService")
   private val beDriftPref = prefs.preference(BackendDrift)
 
   private var typing: ConvId Map IndexedSeq[TypingUser] = Map().withDefaultValue(Vector.empty)

@@ -43,7 +43,7 @@ class SyncExecutor(account:     UserId,
                    handler: =>  SyncHandler) extends DerivedLogTag {
 
   import SyncExecutor._
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SyncExecutorQueue")
+  private implicit val dispatcher = SerialDispatchQueue(name = "SyncExecutorQueue")
 
   def apply(job: SyncJob): Future[SyncResult] = {
     def withJob(f: SyncJob => Future[SyncResult]) =

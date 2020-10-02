@@ -46,7 +46,7 @@ class ReactionsStorageImpl(context: Context, storage: Database)
   import ReactionsStorageImpl._
   import EventContext.Implicits.global
 
-  private implicit val dispatcher = new SerialDispatchQueue()
+  private implicit val dispatcher = SerialDispatchQueue(name = "ReactionsStorage")
 
   private val likesCache = new TrimmingLruCache[MessageId, Map[UserId, RemoteInstant]](context, Fixed(1024))
   private val maxTime = returning(new AggregatingSignal[RemoteInstant, RemoteInstant](onChanged.map(_.maxBy(_.timestamp).timestamp), storage.read(LikingDao.findMaxTime(_)), _ max _))(_.disableAutowiring())

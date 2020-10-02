@@ -52,7 +52,7 @@ import scala.util.control.NonFatal
 
 class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
-  implicit val executionContext = new SerialDispatchQueue(name = "CallingServiceSpec")
+  implicit val executionContext = SerialDispatchQueue(name = "CallingServiceSpec")
 
   val context        = mock[Context]
   val avs            = mock[Avs]

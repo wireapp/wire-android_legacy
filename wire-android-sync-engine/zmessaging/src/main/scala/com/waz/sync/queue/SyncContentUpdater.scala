@@ -55,7 +55,7 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
   import EventContext.Implicits.global
   import SyncContentUpdater._
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SyncContentUpdaterQueue")
+  private implicit val dispatcher = SerialDispatchQueue(name = "SyncContentUpdaterQueue")
 
   private val mergers = new mutable.HashMap[Any, SyncJobMerger]
 

@@ -38,7 +38,7 @@ class ReadReceiptsStorageImpl(context: Context, storage: Database, msgStorage: M
   extends CachedStorageImpl[ReadReceipt.Id, ReadReceipt](new TrimmingLruCache(context, Fixed(ReadReceiptsStorage.cacheSize)), storage)(ReadReceiptDao, LogTag("ReadReceiptsStorage"))
   with ReadReceiptsStorage {
   import com.wire.signals.EventContext.Implicits.global
-  private implicit val dispatcher: ExecutionContext = new SerialDispatchQueue()
+  private implicit val dispatcher = SerialDispatchQueue(name = "ReadReceiptsStorage")
 
   msgStorage.onDeleted { ids => removeAllForMessages(ids.toSet) }
 

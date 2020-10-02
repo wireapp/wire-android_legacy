@@ -41,7 +41,7 @@ import scala.concurrent.duration._
 
 trait ReportingService {
   import ReportingService._
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ReportingService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "ReportingService")
   private[service] var reporters = Seq.empty[Reporter]
 
   def addStateReporter(report: PrintWriter => Future[Unit])(implicit tag: LogTag): Unit = Future {
@@ -66,7 +66,7 @@ object ReportingService {
 }
 
 class ZmsReportingService(user: UserId, global: ReportingService) extends ReportingService {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ZmsReportingService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "ZmsReportingService")
 
   global.addStateReporter(generateStateReport)(LogTag(s"ZMessaging[$user]"))
 }

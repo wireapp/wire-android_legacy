@@ -35,7 +35,7 @@ import com.waz.zclient.{Injectable, Injector}
 class CollectionController(implicit injector: Injector)
   extends Injectable with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "CollectionController")
+  private implicit val dispatcher = SerialDispatchQueue(name = "CollectionController")
 
   val zms = inject[Signal[ZMessaging]]
 

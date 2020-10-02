@@ -28,7 +28,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.model.otr.{Client, ClientId, SignalingKey}
 import com.waz.service.MetaDataService
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.wire.cryptobox.{CryptoBox, PreKey}
@@ -39,7 +39,7 @@ import scala.util.Try
 
 class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataService, userPrefs: UserPreferences) extends DerivedLogTag {
   import CryptoBoxService._
-  private implicit val dispatcher = new SerialDispatchQueue(Threading.IO)
+  private implicit val dispatcher = DispatchQueue(DispatchQueue.SERIAL, Threading.IO, None)
 
   private[service] lazy val cryptoBoxDir = returning(new File(new File(context.getFilesDir, metadata.cryptoBoxDirName), userId.str))(_.mkdirs())
 

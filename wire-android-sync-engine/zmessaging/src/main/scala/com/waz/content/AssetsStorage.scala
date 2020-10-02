@@ -40,7 +40,7 @@ class AssetsStorageImpl(context: Context, storage: Database)
   extends CachedStorageImpl[AssetId, AssetData](new TrimmingLruCache(context, Fixed(100)), storage)(AssetDataDao, LogTag("AssetsStorage"))
     with AssetsStorage {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "AssetsStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "AssetsStorage")
 
   //allows overwriting of asset data
   override def updateAsset(id: AssetId, updater: AssetData => AssetData): Future[Option[AssetData]] = update(id, updater).mapOpt {

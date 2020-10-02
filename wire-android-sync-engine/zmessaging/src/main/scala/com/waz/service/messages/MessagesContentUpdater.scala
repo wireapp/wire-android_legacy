@@ -94,7 +94,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     * @param exp ConvExpiry takes precedence over one-time expiry (exp), which takes precedence over the MessageExpiry
     */
   def addLocalMessage(msg: MessageData, state: Status = Status.PENDING, exp: Option[Option[FiniteDuration]] = None, localTime: LocalInstant = LocalInstant.Now) =
-    Serialized.future("add local message", msg.convId) {
+    Serialized.future(s"add local message ${msg.convId}") {
 
       def expiration =
         if (MessageData.EphemeralMessageTypes(msg.msgType))
@@ -119,7 +119,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       }
     }
 
-  def addLocalSentMessage(msg: MessageData, time: Option[RemoteInstant] = None) = Serialized.future("add local message", msg.convId) {
+  def addLocalSentMessage(msg: MessageData, time: Option[RemoteInstant] = None) = Serialized.future(s"add local message ${msg.convId}") {
     verbose(l"addLocalSentMessage: $msg")
     time.fold(lastSentEventTime(msg.convId))(Future.successful).flatMap { t =>
       verbose(l"adding local sent message to storage, $t")
@@ -145,7 +145,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
    * Updates last local message or creates new one.
    */
   def updateOrCreateLocalMessage(convId: ConvId, msgType: Message.Type, update: MessageData => MessageData, create: => MessageData) =
-    Serialized.future("update-or-create-local-msg", convId, msgType) {
+    Serialized.future(s"update-or-create-local-msg $convId $msgType") {
       lastSentEventTime(convId).flatMap { time =>
         messagesStorage.getLastSystemMessage(convId, msgType, time).flatMap {
           case Some(msg) if msg.isLocal => // got local message, try updating

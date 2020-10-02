@@ -103,7 +103,7 @@ class PushServiceImpl(selfUserId:           UserId,
   import PushService._
 
   implicit val logTag: LogTag = accountTag[PushServiceImpl](selfUserId)
-  private implicit val dispatcher = new SerialDispatchQueue(name = "PushService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "PushService")
 
   override val onHistoryLost = new SourceSignal[Instant] with BgEventSource[Instant]
   override val processing = Signal(false)

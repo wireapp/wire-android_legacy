@@ -60,7 +60,7 @@ class SyncSchedulerImpl(accountId:   UserId,
                         tracking:    TrackingService)
                        (implicit accountContext: AccountContext) extends SyncScheduler with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SyncSchedulerQueue")
+  private implicit val dispatcher = SerialDispatchQueue(name = "SyncSchedulerQueue")
 
   private val queue                 = new SyncSerializer
   private[sync] val executor        = new SyncExecutor(accountId, this, content, network, handler)

@@ -34,7 +34,7 @@ import scala.concurrent.Future
 class InvitationsController(implicit inj: Injector, eventContext: EventContext, context: Context)
   extends Injectable with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "InvitationsController")
+  private implicit val dispatcher = SerialDispatchQueue(name = "InvitationsController")
 
   private lazy val accountsService      = inject[AccountsService]
   private lazy val createTeamController = inject[CreateTeamController]

@@ -31,7 +31,7 @@ import scala.concurrent.{Future, Promise}
 
 class SyncSerializer extends DerivedLogTag {
   import SyncSerializer._
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SyncSerializer")
+  private implicit val dispatcher = SerialDispatchQueue(name = "SyncSerializer")
 
   private var runningJobs = 0
   private val convs = new mutable.HashSet[ConvId]

@@ -63,7 +63,7 @@ class LoginClientImpl()
 
   import LoginClient._
 
-  private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "LoginClient")
+  private implicit val dispatcher = SerialDispatchQueue(name = "LoginClient")
 
   private var lastRequestTime = 0L
   private var failedAttempts = 0

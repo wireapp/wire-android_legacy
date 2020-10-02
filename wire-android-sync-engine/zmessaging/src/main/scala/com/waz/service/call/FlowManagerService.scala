@@ -51,7 +51,7 @@ class DefaultFlowManagerService(context:      Context,
   import FlowManagerService._
 
   private implicit val ev = EventContext.Global
-  private implicit val dispatcher = new SerialDispatchQueue(name = "FlowManagerService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "FlowManagerService")
 
   override val cameraFailedSig = Signal[Boolean](false)
 

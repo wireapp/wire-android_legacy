@@ -19,7 +19,7 @@ trait ButtonsStorage extends CachedStorage[(MessageId, ButtonId), ButtonData] {
 class ButtonsStorageImpl(context: Context, storage: Database)
   extends CachedStorageImpl[ButtonDataDaoId, ButtonData](new TrimmingLruCache(context, Fixed(MessagesStorage.cacheSize)), storage)(ButtonDataDao, LogTag("ButtonsStorage"))
     with ButtonsStorage with DerivedLogTag {
-  private implicit val dispatcher = new SerialDispatchQueue()
+  private implicit val dispatcher = SerialDispatchQueue(name = "ButtonsStorage")
 
   override def findByMessage(messageId: MessageId): Future[Seq[ButtonData]] =
     find(_.messageId == messageId, ButtonDataDao.findForMessage(messageId)(_), identity)

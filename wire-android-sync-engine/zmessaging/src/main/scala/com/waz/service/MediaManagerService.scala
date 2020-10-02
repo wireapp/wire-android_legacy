@@ -46,7 +46,7 @@ trait MediaManagerService {
 class DefaultMediaManagerService(context: Context) extends MediaManagerService with DerivedLogTag { self =>
   import com.waz.service.MediaManagerService._
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "MediaManagerService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "MediaManagerService")
   private implicit val ev = EventContext.Global
 
   private val onPlaybackRouteChanged = EventStream[PlaybackRoute]()

@@ -78,7 +78,7 @@ class TeamsServiceImpl(selfUser:           UserId,
                        rolesService:       ConversationRolesService
                       ) extends TeamsService with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "TeamsService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "TeamsService")
 
   private val shouldSyncTeam = userPrefs.preference(UserPreferences.ShouldSyncTeam)
   private val lastTeamUpdate = userPrefs.preference(UserPreferences.LastTeamUpdate)

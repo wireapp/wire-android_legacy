@@ -43,7 +43,7 @@ import com.wire.signals.{SerialDispatchQueue, Signal}
 
 abstract class UserVideoView(context: Context, val participant: Participant) extends FrameLayout(context, null, 0) with ViewHelper {
   protected lazy val controller: CallController = inject[CallController]
-  private implicit val dispatcher = new SerialDispatchQueue(name = s"UserVideoView-$participant")
+  private implicit val dispatcher = SerialDispatchQueue(name = s"UserVideoView-$participant")
 
   inflate(R.layout.video_call_info_view)
 

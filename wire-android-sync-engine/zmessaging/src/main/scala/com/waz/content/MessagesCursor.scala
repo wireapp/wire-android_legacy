@@ -24,10 +24,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, EventStream, SerialDispatchQueue}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.wire.signals.EventStream
 import com.waz.utils.wrappers.DBCursor
 
 import scala.collection.Searching.{Found, InsertionPoint}
@@ -52,7 +51,7 @@ class MessagesCursor(cursor: DBCursor,
 
   import scala.concurrent.duration._
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "MessagesCursor")
+  private implicit val dispatcher = SerialDispatchQueue(name = "MessagesCursor")
 
   private val messages = new LruCache[MessageId, MessageAndLikes](WindowSize * 2)
   private val quotes = new LruCache[MessageId, Seq[MessageId]](WindowSize * 2)
@@ -260,7 +259,7 @@ object MessagesCursor {
   }
 }
 
-class WindowLoader(cursor: DBCursor)(implicit dispatcher: SerialDispatchQueue) extends DerivedLogTag {
+class WindowLoader(cursor: DBCursor)(implicit dispatcher: DispatchQueue) extends DerivedLogTag {
   import MessagesCursor._
 
   @volatile private[this] var window = IndexWindow.Empty

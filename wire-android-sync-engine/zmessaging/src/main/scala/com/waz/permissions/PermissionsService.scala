@@ -32,7 +32,7 @@ import scala.util.Try
 class PermissionsService extends DerivedLogTag {
 
   import PermissionsService._
-  private implicit val ec = new SerialDispatchQueue(name = "PermissionsService")
+  private implicit val ec = SerialDispatchQueue(name = "PermissionsService")
 
   protected[permissions] val providers      = Signal(Vector.empty[PermissionProvider])
   protected[permissions] val providerSignal = providers.map(_.lastOption)

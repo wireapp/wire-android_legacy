@@ -58,7 +58,7 @@ trait Avs {
   */
 class AvsImpl() extends Avs with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "AvsWrapper")
+  private implicit val dispatcher = SerialDispatchQueue(name = "AvsWrapper")
 
   import Avs._
 

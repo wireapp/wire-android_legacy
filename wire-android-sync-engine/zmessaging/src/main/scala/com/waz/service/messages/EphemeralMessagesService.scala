@@ -73,7 +73,7 @@ class EphemeralMessagesService(selfUserId: UserId,
     nextExpiryTime.mutate(_ min time)
   }
 
-  private def removeExpired() = Serialized.future(this, "removeExpired") {
+  private def removeExpired() = Serialized.future(s"removeExpired $selfUserId") {
     verbose(l"removeExpired")
     nextExpiryTime ! LocalInstant.Max
     db.read { implicit db =>

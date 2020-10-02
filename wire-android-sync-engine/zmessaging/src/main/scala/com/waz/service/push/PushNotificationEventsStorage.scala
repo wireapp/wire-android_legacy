@@ -59,7 +59,7 @@ class PushNotificationEventsStorageImpl(context: Context, storage: Database, cli
     with PushNotificationEventsStorage
     with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "PushNotificationEventsStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "PushNotificationEventsStorage")
 
   override def setAsDecrypted(index: EventIndex): Future[Unit] = {
     update(index, u => u.copy(decrypted = true)).map {

@@ -21,7 +21,7 @@ import java.io.{BufferedWriter, File, FileWriter, IOException}
 
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.InternalLog.{LogLevel, dateTag, stackTrace}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.returning
@@ -40,7 +40,7 @@ class BufferedLogOutput(baseDir: String,
 
   override val id: String = "BufferedLogOutput" + ZSecureRandom.nextInt().toHexString
 
-  private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(Threading.IO, id)
+  private implicit val dispatcher = DispatchQueue(DispatchQueue.SERIAL, Threading.IO, Some(id))
 
   private val buffer = StringBuilder.newBuilder
   private val pathRegex = s"$baseDir/${BufferedLogOutput.DefFileName}([0-9]+).log".r

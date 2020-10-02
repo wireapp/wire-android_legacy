@@ -261,7 +261,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
                                                  tag: LogTag = LogTag("CachedStorage")
                                                 ) extends CachedStorage[K, V] {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = tag + "_Dispatcher")
+  private implicit val dispatcher = SerialDispatchQueue(name = tag + "_Dispatcher")
 
   val onAdded = EventStream[Seq[V]]()
   val onUpdated = EventStream[Seq[(V, V)]]()

@@ -17,15 +17,15 @@
  */
 package com.waz.threading
 
-import java.util.concurrent.Executors
+import java.util.concurrent.{ExecutorService, Executors}
 
 import android.os.{Handler, HandlerThread, Looper}
 import com.waz.utils.returning
 import com.waz.zms.BuildConfig
-import com.wire.signals.Threading.{Cpus, executionContext}
-import com.wire.signals.{DispatchQueue, EventContext, EventStream, Events, LimitedDispatchQueue, Signal, Subscription}
+import com.wire.signals.Threading.Cpus
+import com.wire.signals.{DispatchQueue, EventContext, EventStream, Events, Signal, Subscription}
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.control.NonFatal
 
 object Threading {
@@ -58,20 +58,21 @@ object Threading {
   /**
    * Thread pool for IO tasks.
    */
-  val IOThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool()), "IoThreadPool")
+  val IOThreadPool: DispatchQueue = DispatchQueue(Cpus, Executors.newCachedThreadPool(), Option("IoThreadPool"))
 
   /**
    * Thread pool for non-blocking background tasks.
    */
-  val Background: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool()), "CpuThreadPool")
-  com.wire.signals.Threading.set(Background)
+  val Background: DispatchQueue = DispatchQueue(Cpus, Executors.newCachedThreadPool(), Option("CpuThreadPool"))
+
+  com.wire.signals.Threading.setAsDefault(Background)
 
   val IO: DispatchQueue = IOThreadPool
 
   /**
     * Image decoding/encoding dispatch queue. This operations are quite cpu intensive, we don't want them to use all cores (leaving one spare core for other tasks).
     */
-  val ImageDispatcher: DispatchQueue = new LimitedDispatchQueue(Cpus - 1, Background, "ImageDispatcher")
+  val ImageDispatcher: DispatchQueue = DispatchQueue(Cpus - 1, Background.asInstanceOf[ExecutionContext], Option("ImageDispatcher"))
 
   // var for tests
   private var _ui: Option[DispatchQueue] = None

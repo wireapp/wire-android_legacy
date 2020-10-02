@@ -42,7 +42,7 @@ class MessageIndexStorage(context: Context, storage: ZmsDatabase, messagesStorag
   import MessageContentIndex.TextMessageTypes
   import com.wire.signals.EventContext.Implicits.global
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "MessageIndexStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "MessageIndexStorage")
 
   private def entry(m: MessageData) =
     MessageContentIndexEntry(m.id, m.convId, ContentSearchQuery.transliterated(m.contentString), m.time)

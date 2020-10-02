@@ -30,7 +30,7 @@ import scala.concurrent.Future
   * Global registry of cancellable tasks.
   */
 object Cancellable {
-  private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "Cancellable")
+  private implicit val dispatcher = SerialDispatchQueue(name = "Cancellable")
 
   private val tasks = new mutable.HashMap[Any, CancellableFuture[_]]
 
@@ -49,7 +49,7 @@ object Cancellable {
 }
 
 object AssetProcessing extends DerivedLogTag {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "AssetProcessing")
+  private implicit val dispatcher = SerialDispatchQueue(name = "AssetProcessing")
 
   private val tasks = new mutable.HashMap[ProcessingTaskKey, CancellableFuture[Option[AssetData]]]
 

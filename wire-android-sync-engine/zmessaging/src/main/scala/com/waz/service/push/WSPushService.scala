@@ -95,7 +95,7 @@ class WSPushServiceImpl(userId:              UserId,
                        (implicit ev: EventContext) extends WSPushService {
 
   private implicit val logTag: LogTag = accountTag[WSPushServiceImpl](userId)
-  private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "WSPushServiceImpl")
+  private implicit val dispatcher = SerialDispatchQueue(name = "WSPushServiceImpl")
 
   override val notifications: SourceStream[Seq[PushNotificationEncoded]] = EventStream()
   override val connected: SourceSignal[Boolean] = Signal(false)

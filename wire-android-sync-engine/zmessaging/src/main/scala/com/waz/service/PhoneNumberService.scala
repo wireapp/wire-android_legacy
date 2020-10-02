@@ -35,7 +35,7 @@ trait PhoneNumberService {
 }
 
 class PhoneNumberServiceImpl(context: Context) extends PhoneNumberService with DerivedLogTag {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "PhoneNumberService")
+  private implicit val dispatcher = SerialDispatchQueue(name = "PhoneNumberService")
 
   private lazy val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE).asInstanceOf[TelephonyManager]
   private lazy val phoneNumberUtil = PhoneNumberUtil.getInstance()

@@ -58,7 +58,7 @@ class SyncRequestServiceImpl(accountId: UserId,
                              tracking:  TrackingService
                             )(implicit accountContext: AccountContext) extends SyncRequestService with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SyncDispatcher")
+  private implicit val dispatcher = SerialDispatchQueue(name = "SyncDispatcher")
 
   private val scheduler: SyncScheduler = new SyncSchedulerImpl(accountId, content, network, this, sync, accounts, tracking)
 

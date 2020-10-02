@@ -60,7 +60,7 @@ class AuthenticationManager(id: UserId,
 
   import AuthenticationManager._
 
-  implicit val dispatcher = new SerialDispatchQueue(name = "AuthenticationManager")
+  private implicit val dispatcher = SerialDispatchQueue(name = "AuthenticationManager")
 
   private def token  = withAccount(_.accessToken)
   private def cookie = withAccount(_.cookie)

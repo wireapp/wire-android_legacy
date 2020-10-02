@@ -35,7 +35,7 @@ trait FoldersStorage extends CachedStorage[FolderId, FolderData] {
 class FoldersStorageImpl(context: Context, storage: Database)
   extends CachedStorageImpl[FolderId, FolderData](new TrimmingLruCache(context, Fixed(1024)), storage)(FolderDataDao, LogTag("FolderStorage_Cached"))
     with FoldersStorage {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "FoldersStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "FoldersStorage")
 
   override def getByType(folderType: Int): Future[Seq[FolderData]] = find(_.folderType == folderType, FolderDataDao.findForType(folderType)(_), identity)
 }
@@ -50,7 +50,7 @@ trait ConversationFoldersStorage extends CachedStorage[(ConvId, FolderId), Conve
 class ConversationFoldersStorageImpl(context: Context, storage: Database)
   extends CachedStorageImpl[(ConvId, FolderId), ConversationFolderData](new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationFolderDataDao, LogTag("ConversationFoldersStorage"))
     with ConversationFoldersStorage {
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationFoldersStorage")
+  private implicit val dispatcher = SerialDispatchQueue(name = "ConversationFoldersStorage")
 
   override def findForConv(convId: ConvId): Future[Set[FolderId]] =
     find(_.convId == convId, ConversationFolderDataDao.findForConv(convId)(_), identity).map(_.map(_.folderId).toSet)
