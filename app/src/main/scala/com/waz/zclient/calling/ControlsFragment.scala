@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.calling
 
-import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.Color
 import android.os.Bundle
@@ -30,7 +29,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, MainActivity, R}
 import com.wire.signals.Subscription
 
@@ -65,7 +64,7 @@ class ControlsFragment extends FragmentHelper {
     callingMiddle // initializing it later than the header and controls to reduce the number of height recalculations
 
     controller.onCallDegraded.onUi { _ =>
-      showConversationDegragatedDialog(getString(R.string.conversation_degraded_message))
+      showConversationDegragatedDialog()
     }
 
     callingHeader.foreach {
@@ -133,19 +132,16 @@ class ControlsFragment extends FragmentHelper {
     super.onStop()
   }
 
-  def showConversationDegragatedDialog(message: String): Unit =
-    new AlertDialog.Builder(getActivity)
-      .setTitle(R.string.call_degraded_title)
-      .setMessage(message)
-      .setCancelable(false)
-      .setNeutralButton(
-        android.R.string.ok,
-        new DialogInterface.OnClickListener {
-          override def onClick(dialog: DialogInterface, which: Int): Unit = getActivity.finish()
-        }
-      )
-      .create()
-      .show()
+  def showConversationDegragatedDialog(): Unit = ViewUtils.showAlertDialog(
+    getContext,
+    R.string.call_degraded_title,
+    R.string.conversation_degraded_message,
+    android.R.string.ok,
+    new DialogInterface.OnClickListener {
+      override def onClick(dialog: DialogInterface, which: Int): Unit = getActivity.finish()
+    },
+    false)
+
 }
 
 object ControlsFragment {

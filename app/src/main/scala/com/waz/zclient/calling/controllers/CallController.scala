@@ -325,7 +325,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   val onCallDegraded = EventStream[Unit]()
   val shouldHideCallingUi = EventStream[Unit]()
-  var isCallDegraded = false
+  private var isCallDegraded = false
 
   private var currentUV = Map.empty[UserId, Boolean]
   private lazy val usersVerifications = for {
@@ -341,10 +341,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
     if (isCallDegraded) {
       currentUV = Map.empty
-      Future {
-        onCallDegraded !
-          leaveCall()
-      }(Threading.Ui)
+      Future { onCallDegraded ! leaveCall()}(Threading.Ui)
     } else {
       currentUV = newUV
     }
