@@ -19,7 +19,6 @@ package com.waz.zclient.calling.controllers
 
 import android.os.{Build, PowerManager}
 import android.telephony.{PhoneStateListener, TelephonyManager}
-import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -30,8 +29,8 @@ import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.{GlobalModule, ZMessaging}
-import com.wire.signals.{ButtonSignal, CancellableFuture, ClockSignal, EventContext, Signal, SourceSignal}
 import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.waz.utils._
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
@@ -41,10 +40,11 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
 import com.waz.zclient.{Injectable, Injector, R, WireContext}
+import com.wire.signals._
 import org.threeten.bp.Instant
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import com.waz.threading.Threading._
 
 class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {
@@ -323,37 +323,44 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     soundController.setIncomingRingTonePlaying(uid, !isMuted && isIncoming && isAllowed)
   }
 
-  private lazy val convDegraded = conversation.map(_.verified == Verification.UNVERIFIED)
-    .orElse(Signal(false))
-    .disableAutowiring()
+  val onCallDegraded = EventStream[Unit]()
+  val shouldHideCallingUi = EventStream[Unit]()
+  private var isCallDegraded = false
 
-  val degradationWarningText = convDegraded.flatMap {
-    case false => Signal(Option.empty[String])
-    case true  =>
-      (for {
-        zms <- callingZms
-        convId <- callConvId
-      } yield {
-        zms.membersStorage.activeMembers(convId).flatMap { ids =>
-          zms.usersStorage.listSignal(ids)
-        }.map(_.filter(_.verified != Verification.VERIFIED).toList)
-      }).flatten.map {
-        case u1 :: u2 :: Nil =>
-          Some(getString(R.string.conversation__degraded_confirmation__header__multiple_user, u1.name, u2.name))
-        case l if l.size > 2 =>
-          Some(getString(R.string.conversation__degraded_confirmation__header__someone))
-        case List(u) =>
-          //TODO handle string for case where user adds multiple clients
-          Some(getQuantityString(R.plurals.conversation__degraded_confirmation__header__single_user, 1, u.name))
-        case _ => None
-      }
+  private var currentUV = Map.empty[UserId, Boolean]
+  private lazy val usersVerifications = for {
+    zms     <- callingZms
+    convId  <- callConvId
+    members <- zms.membersStorage.activeMembers(convId)
+    users   <- zms.usersStorage.listSignal(members.filterNot(_ == zms.selfUserId))
+  } yield users.map(u => u.id -> u.isVerified).toMap
+
+  usersVerifications { newUV =>
+    isCallDegraded = currentUV.exists {
+      case (id, verified) => verified && newUV.get(id).contains(false)
+    }
+    if (isCallDegraded) {
+      currentUV = Map.empty
+      Future { onCallDegraded ! leaveCall()}(Threading.Ui)
+    } else {
+      currentUV = newUV
+    }
+  }
+
+  isCallActive {
+    case false => {
+      currentUV = Map.empty
+      if (!isCallDegraded) Future {
+        shouldHideCallingUi ! {}
+      }(Threading.Ui)
+    }
+    case _ =>
   }
 
   (for {
     v <- isVideoCall
     o <- isCallOutgoing
-    d <- convDegraded
-  } yield (v, o & !d)) { case (v, play) =>
+  } yield (v, o & !isCallDegraded)) { case (v, play) =>
     soundController.setOutgoingRingTonePlaying(play, v)
   }
 
