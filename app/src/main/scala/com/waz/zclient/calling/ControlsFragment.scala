@@ -132,7 +132,7 @@ class ControlsFragment extends FragmentHelper {
     super.onStop()
   }
 
-  def showConversationDegragatedDialog(): Unit = ViewUtils.showAlertDialog(
+  private def showConversationDegragatedDialog(): Unit = ViewUtils.showAlertDialog(
     getContext,
     R.string.call_degraded_title,
     R.string.conversation_degraded_message,
