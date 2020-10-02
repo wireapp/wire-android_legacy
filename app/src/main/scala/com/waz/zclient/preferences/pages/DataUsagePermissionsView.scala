@@ -50,11 +50,11 @@ class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int
   inflate(R.layout.data_usage_permissions_layout)
 
   private val am       = inject[Signal[AccountManager]]
-  private lazy val uac = inject[UserAccountsController]
+  private lazy val uac      = inject[UserAccountsController]
   private val tracking = inject[GlobalTrackingController]
 
   val sendAnonymousUsageDataButton = returning(findById[SwitchPreference](R.id.preferences_send_anonymous_usage_data)) { v =>
-    uac.isTeam.foreach { isProUser =>
+    uac.isProUser.head.foreach { isProUser =>
       v.setPreference(TrackingEnabled)
       if (isProUser) {
         v.pref.flatMap(_.signal).onUi {
