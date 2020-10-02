@@ -144,8 +144,9 @@ class ImageFragment extends FragmentHelper {
 
         method.foreach { m =>
           getFragmentManager.popBackStack()
-          imageInput.head.collect { case Some(id: AssetId) => id }.foreach {
-            screenController.showSketch ! Sketch.asset(_, m)
+          imageInput.head.foreach {
+            case Some(id: AssetId) => screenController.showSketch ! Sketch.asset(id, m)
+            case _ =>
           }
         }
       case item: MessageActionToolbarItem =>
