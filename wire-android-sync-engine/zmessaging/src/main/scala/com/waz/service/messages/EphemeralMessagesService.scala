@@ -38,7 +38,6 @@ import com.waz.utils._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-// TODO: obfuscate sent messages when they expire
 class EphemeralMessagesService(selfUserId: UserId,
                                clientId:   ClientId,
                                messages:   MessagesContentUpdater,
@@ -49,7 +48,6 @@ class EphemeralMessagesService(selfUserId: UserId,
                                assets:     AssetService) extends DerivedLogTag {
   import EphemeralMessagesService._
   import com.waz.threading.Threading.Implicits.Background
-  import com.wire.signals.EventContext.Implicits.global
   
   private val nextExpiryTime = Signal[LocalInstant](LocalInstant.Max)
 

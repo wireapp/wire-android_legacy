@@ -27,12 +27,11 @@ import com.waz.model.sync._
 import com.waz.sync.queue.SyncJobMerger.{Merged, Unchanged, Updated}
 import com.wire.signals.SerialDispatchQueue
 import com.waz.utils._
-import com.wire.signals.{AggregatingSignal, EventContext, EventStream, Signal}
+import com.wire.signals.{AggregatingSignal, EventStream, Signal}
 
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
 
 /**
  * Keeps actual SyncJobs in memory, and persists all changes to db.
@@ -52,7 +51,6 @@ trait SyncContentUpdater {
 }
 
 class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with DerivedLogTag {
-  import EventContext.Implicits.global
   import SyncContentUpdater._
 
   private implicit val dispatcher = SerialDispatchQueue(name = "SyncContentUpdaterQueue")

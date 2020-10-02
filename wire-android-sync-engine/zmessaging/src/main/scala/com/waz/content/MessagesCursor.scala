@@ -47,8 +47,6 @@ class MessagesCursor(cursor: DBCursor,
                      val lastReadTime: RemoteInstant,
                      loader: MessageAndLikesStorage)(implicit ordering: Ordering[RemoteInstant]) extends MsgCursor with DerivedLogTag { self =>
   import MessagesCursor._
-  import com.wire.signals.EventContext.Implicits.global
-
   import scala.concurrent.duration._
 
   private implicit val dispatcher = SerialDispatchQueue(name = "MessagesCursor")

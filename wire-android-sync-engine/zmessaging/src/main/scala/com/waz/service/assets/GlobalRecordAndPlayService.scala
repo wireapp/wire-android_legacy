@@ -52,14 +52,13 @@ class RecordAndPlayService(userId:        UserId,
                            globalService: GlobalRecordAndPlayService,
                            errors:        ErrorsService,
                            accounts:      AccountsService) {
-  import EventContext.Implicits.global
   import Threading.Implicits.Background
 
   globalService.onError { err =>
     err.tpe.foreach { tpe => errors.addErrorWhenActive(ErrorData(Uid(), tpe, responseMessage = err.message)) }
   }
 
-  accounts.accountState(userId).map(_ == InForeground).onChanged.on(Background) {
+  accounts.accountState(userId).map(_ == InForeground).onChanged {
     case false => globalService.AudioFocusListener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
     case true =>
   }

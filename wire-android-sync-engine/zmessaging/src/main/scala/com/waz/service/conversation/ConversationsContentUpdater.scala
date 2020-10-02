@@ -74,8 +74,6 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                       membersStorage:  MembersStorage,
                                       messagesStorage: => MessagesStorage,
                                       syncHandler:     SyncServiceHandle) extends ConversationsContentUpdater with DerivedLogTag {
-  import com.wire.signals.EventContext.Implicits.global
-
   private implicit val dispatcher = SerialDispatchQueue(name = "ConversationContentUpdater")
 
   val conversationsFuture = Future successful storage

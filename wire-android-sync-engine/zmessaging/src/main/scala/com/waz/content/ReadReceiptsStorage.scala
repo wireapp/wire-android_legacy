@@ -26,7 +26,7 @@ import com.waz.utils.TrimmingLruCache.Fixed
 import com.wire.signals.{RefreshingSignal, Signal}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait ReadReceiptsStorage extends CachedStorage[ReadReceipt.Id, ReadReceipt] {
   def getReceipts(message: MessageId): Future[Seq[ReadReceipt]]
@@ -37,7 +37,6 @@ trait ReadReceiptsStorage extends CachedStorage[ReadReceipt.Id, ReadReceipt] {
 class ReadReceiptsStorageImpl(context: Context, storage: Database, msgStorage: MessagesStorage, msgService: MessagesService)
   extends CachedStorageImpl[ReadReceipt.Id, ReadReceipt](new TrimmingLruCache(context, Fixed(ReadReceiptsStorage.cacheSize)), storage)(ReadReceiptDao, LogTag("ReadReceiptsStorage"))
   with ReadReceiptsStorage {
-  import com.wire.signals.EventContext.Implicits.global
   private implicit val dispatcher = SerialDispatchQueue(name = "ReadReceiptsStorage")
 
   msgStorage.onDeleted { ids => removeAllForMessages(ids.toSet) }

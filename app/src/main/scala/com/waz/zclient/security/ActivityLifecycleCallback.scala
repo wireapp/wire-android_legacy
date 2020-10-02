@@ -35,8 +35,6 @@ class ActivityLifecycleCallback(implicit injector: Injector)
     with DerivedLogTag
     with DecorateAsScala {
 
-  import com.wire.signals.EventContext.Implicits.global
-
   private lazy val shouldHideScreenContent = for {
     prefs <- userPreferences
     hideScreenContent <- prefs.preference(UserPreferences.HideScreenContent).signal

@@ -71,10 +71,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
                               uiController:    NotificationUiController,
                               userService:     UserService,
                               clock:           Clock) extends NotificationService {
-
   import Threading.Implicits.Background
-  import EventContext.Implicits.global
-
   implicit lazy val logTag: LogTag = accountTag[NotificationService](selfUserId)
 
   private val schedulePushNotificationsToUi = Signal(false)

@@ -29,7 +29,6 @@ import com.waz.service.SearchKey
 import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils._
-import com.wire.signals._
 
 import scala.collection.GenMap
 import scala.concurrent.Future
@@ -52,7 +51,6 @@ class ConversationStorageImpl(storage: ZmsDatabase)
   extends CachedStorageImpl[ConvId, ConversationData](new UnlimitedLruCache(), storage)(ConversationDataDao, LogTag("ConversationStorage_Cached"))
     with ConversationStorage with DerivedLogTag {
 
-  import EventContext.Implicits.global
   private implicit val dispatcher = SerialDispatchQueue(name = "ConversationStorage")
 
   onAdded.on(dispatcher) { cs => updateSearchKey(cs)}

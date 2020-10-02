@@ -43,7 +43,6 @@ class CacheStorageImpl(storage: Database, context: Context)
     with DerivedLogTag {
 
   import com.waz.cache.CacheStorage._
-  import com.wire.signals.EventContext.Implicits.global
 
   private implicit val dispatcher = SerialDispatchQueue(name = "CacheStorage")
 

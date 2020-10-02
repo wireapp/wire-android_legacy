@@ -31,7 +31,7 @@ import com.waz.model._
 import com.waz.service.Timeouts
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils._
 import com.wire.signals.{EventStream, Signal, SourceStream}
@@ -93,8 +93,6 @@ class MessagesStorageImpl(context:     Context,
     new TrimmingLruCache[MessageId, Option[MessageData]](context, Fixed(MessagesStorage.cacheSize)),
     storage
   )(MessageDataDao, LogTag("MessagesStorage_Cached")) with MessagesStorage with DerivedLogTag {
-
-  import com.wire.signals.EventContext.Implicits.global
 
   private implicit val dispatcher = SerialDispatchQueue(name = "MessagesStorage")
 
@@ -325,7 +323,6 @@ trait MessageAndLikesStorage {
 
 class MessageAndLikesStorageImpl(selfUserId: UserId, messages: => MessagesStorage, likings: ReactionsStorage) extends MessageAndLikesStorage {
   import com.waz.threading.Threading.Implicits.Background
-  import com.wire.signals.EventContext.Implicits.global
 
   val onUpdate = EventStream[MessageId]() // TODO: use batching, maybe report new message data instead of just id
 

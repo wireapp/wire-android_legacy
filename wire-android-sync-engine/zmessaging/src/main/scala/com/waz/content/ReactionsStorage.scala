@@ -44,7 +44,6 @@ class ReactionsStorageImpl(context: Context, storage: Database)
     with DerivedLogTag {
 
   import ReactionsStorageImpl._
-  import EventContext.Implicits.global
 
   private implicit val dispatcher = SerialDispatchQueue(name = "ReactionsStorage")
 
