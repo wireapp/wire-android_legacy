@@ -456,19 +456,18 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   }
 
-  private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi): Unit = {
-    val gps = prefs(GlobalPreferences.CheckedForPlayServices)
-    gps.signal.head.collect {
+  private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi) =
+    prefs(GlobalPreferences.CheckedForPlayServices).apply().foreach {
       case false =>
         verbose(l"never checked for play services")
         googleApi.isGooglePlayServicesAvailable.head.foreach { gpsAvailable =>
           for {
             _ <- prefs(GlobalPreferences.WsForegroundKey) := !gpsAvailable
-            _ <- gps := true
+            _ <- prefs(GlobalPreferences.CheckedForPlayServices) := true
           } yield ()
         }
+      case true =>
     }
-  }
 
   override def onTerminate(): Unit = {
     controllerFactory.tearDown()

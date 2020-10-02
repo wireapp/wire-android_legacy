@@ -788,10 +788,12 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(convSignal.head)
       (content.updateConversationName _).expects(convId, *).once().onCall { (_: ConvId, name: Name) =>
-        convSignal.head.collect { case Some(conv) =>
-          val newConv = conv.copy(name = Some(name))
-          convSignal ! Some(newConv)
-          Some((conv, newConv))
+        convSignal.head.map {
+          case Some(conv) =>
+            val newConv = conv.copy(name = Some(name))
+            convSignal ! Some(newConv)
+            Some((conv, newConv))
+          case _ => None
         }
       }
       (messages.addMemberLeaveMessage _).expects(convId, *, *).anyNumberOfTimes().returning(Future.successful(()))
@@ -862,10 +864,12 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(convSignal.head)
       (content.updateConversationName _).expects(convId, *).once().onCall { (_: ConvId, name: Name) =>
-        convSignal.head.collect { case Some(conv) =>
-          val newConv = conv.copy(name = Some(name))
-          convSignal ! Some(newConv)
-          Some((conv, newConv))
+        convSignal.head.map {
+          case Some(conv) =>
+            val newConv = conv.copy(name = Some(name))
+            convSignal ! Some(newConv)
+            Some((conv, newConv))
+          case _ => None
         }
       }
       (messages.addMemberLeaveMessage _).expects(convId, *, *).anyNumberOfTimes().returning(Future.successful(()))

@@ -72,16 +72,19 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
   override lazy val isTrackingEnabled: Signal[Boolean] =
     ZMessaging.currentAccounts.activeZms.flatMap {
       case Some(z) => z.userPrefs(TrackingEnabled).signal
-      case _ => Signal.const(false)
+      case _       => Signal.const(false)
     }
+
+  private def withTracking(action: => Future[Unit]): Future[Unit] = isTrackingEnabled.head.flatMap {
+    case true  => action.recover { case _ => Future.successful(()) }
+    case false => Future.successful(())
+  }
 
   val events = EventStream[(Option[ZMessaging], TrackingEvent)]()
 
-  private def current = curAccount.head.flatMap(zmsProvider)
-
-  private def getZmsOrElseCurrent(userId: Option[UserId]): Future[ZMessaging] =
-    (if(userId.isDefined) zmsProvider(userId) else current)
-      .collect { case Some(s) => s }
+  private def getZmsOrElseCurrent(userId: Option[UserId]): Future[Option[ZMessaging]] =
+    if(userId.isDefined) zmsProvider(userId)
+    else curAccount.head.flatMap(zmsProvider)
 
   private def getMainSegments(z: ZMessaging, convId: ConvId): Future[CountlyEventProperties] =
     getCommonSegments(z, convId).map(e => e ++ getUniversalSegments())
@@ -125,90 +128,81 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
       .putSegment("call_end_reason", info.endReason.get)
   }
 
-  override def contribution(action: ContributionEvent.Action,
-                            userId: Option[UserId] = None): Future[Unit] = isTrackingEnabled.head.collect {
-    case true =>
-      for {
-        z <- getZmsOrElseCurrent(userId)
-        Some(convId)   <- z.selectedConv.selectedConversationId.head
-        segments <- getMainSegments(z, convId)
+  override def contribution(action: ContributionEvent.Action, userId: Option[UserId] = None): Future[Unit] = withTracking {
+    for {
+      Some(z)      <- getZmsOrElseCurrent(userId)
+      Some(convId) <- z.selectedConv.selectedConversationId.head
+      segments     <- getMainSegments(z, convId)
+    } yield {
+      segments += ("message_action" -> action.name)
+      events ! Option(z) -> ContributionEvent(action, segments)
+    }
+  }
+
+  override def msgDecryptionFailed(rConvId: RConvId, userId: UserId): Future[Unit] = withTracking {
+    for {
+      Some(z)      <- zmsProvider(Some(userId))
+      Some(convId) <- z.convsStorage.getByRemoteId(rConvId).map(_.map(_.id))
+      segments     <- getMainSegments(z, convId)
+    } yield events ! Option(z) -> MessageDecryptionFailedEvent(segments)
+  }
+
+  override def trackCallState(userId: UserId, info: CallInfo): Future[Unit] = withTracking {
+    ((info.prevState, info.state) match {
+      case (None, SelfCalling)      => Some("initiated")
+      case (None, OtherCalling)     => Some("received")
+      case (Some(_), SelfJoining)   => Some("joined")
+      case (Some(_), SelfConnected) => Some("established")
+      case (Some(_), Ended)         => Some("ended")
+      case _ =>
+        warn(l"Unexpected call state change: ${info.prevState} => ${info.state}, not tracking")
+        None
+    }).fold(Future.successful(())) { eventName =>
+      (for {
+        Some(z)           <- zmsProvider(Some(userId))
+        segments          <- getMainSegments(z, info.convId)
+        callDirection     = if(info.caller != z.selfUserId) "incoming" else "outgoing"
+        callVideo         = info.videoSendState == VideoState.Started || info.videoSendState == VideoState.BadConnection
+        callEndedSegments = if(eventName.equals("ended")) getCallEndedSegments(info) else mutable.Map.empty
       } yield {
-        segments += ("message_action" -> action.name)
+        segments ++= callEndedSegments += ("call_video" -> callVideo.toString)
 
-        events ! Option(z) -> ContributionEvent(action, segments)
+        if(!(eventName.equals("initiated") || eventName.equals("received")))
+          segments += ("call_direction" -> callDirection.toString)
+
+        events ! Option(z) -> CallingEvent(eventName, segments)
+        trackScreenShare(userId, info)
+      }).flatMap { _ =>
+        //if we have accepted a call, we need to track this separately as a contribution
+        import ContributionEvent.Action._
+        if(info.prevState.contains(OtherCalling) && info.state == SelfJoining) {
+          val eventType = if (info.isVideoCall) VideoCall else AudioCall
+          contribution(eventType, Some(userId))
+        } else Future.successful(())
       }
-  }
-
-  override def msgDecryptionFailed(rConvId: RConvId, userId: UserId): Future[Unit] = isTrackingEnabled.head.collect {
-    case true =>
-      for {
-        Some(z) <- zmsProvider(Some(userId))
-        Some(convId) <- z.convsStorage.getByRemoteId(rConvId).map(_.map(_.id))
-        segments <- getMainSegments(z, convId)
-      } yield events ! Option(z) -> MessageDecryptionFailedEvent(segments)
-  }
-
-  override def trackCallState(userId: UserId, info: CallInfo): Future[Unit] = isTrackingEnabled.head.collect {
-    case true =>
-      ((info.prevState, info.state) match {
-        case (None, SelfCalling)      => Some("initiated")
-        case (None, OtherCalling)     => Some("received")
-        case (Some(_), SelfJoining)   => Some("joined")
-        case (Some(_), SelfConnected) => Some("established")
-        case (Some(_), Ended)         => Some("ended")
-        case _ =>
-          warn(l"Unexpected call state change: ${info.prevState} => ${info.state}, not tracking")
-          None
-      }).fold(Future.successful(())) { eventName =>
-        (for {
-          Some(z)           <- zmsProvider(Some(userId))
-          segments          <- getMainSegments(z, info.convId)
-          callDirection     = if(info.caller != z.selfUserId) "incoming" else "outgoing"
-          callVideo         = info.videoSendState == VideoState.Started || info.videoSendState == VideoState.BadConnection
-          callEndedSegments = if(eventName.equals("ended")) getCallEndedSegments(info) else mutable.Map.empty
-        } yield {
-          segments ++= callEndedSegments += ("call_video" -> callVideo.toString)
-
-          if(!(eventName.equals("initiated") || eventName.equals("received")))
-            segments += ("call_direction" -> callDirection.toString)
-
-          events ! Option(z) -> CallingEvent(eventName, segments)
-          trackScreenShare(userId, info)
-        }).flatMap { _ =>
-          //if we have accepted a call, we need to track this separately as a contribution
-          import ContributionEvent.Action._
-          if(info.prevState.contains(OtherCalling) && info.state == SelfJoining) {
-            val eventType = if (info.isVideoCall) VideoCall else AudioCall
-            contribution(eventType, Some(userId))
-          } else Future.successful(())
-        }
-      }
+    }
   }
 
   private def trackScreenShare(userId: UserId, info: CallInfo): Future[Unit] =
-    if(info.screenShareEnded.isDefined)
-      isTrackingEnabled.head.collect {
-        case true =>
-          for {
-            Some(z)  <- zmsProvider(Some(userId))
-            segments <- getMainSegments(z, info.convId)
-            (direction, duration) = info.screenShareEnded.get
-          } yield {
-            segments.putSegment("screen_share_direction", direction)
-            segments.putSegment("screen_share_duration", MathUtils.roundToNearest5(duration))
+    if(info.screenShareEnded.isDefined) withTracking {
+      for {
+        Some(z)  <- zmsProvider(Some(userId))
+        segments <- getMainSegments(z, info.convId)
+        (direction, duration) = info.screenShareEnded.get
+      } yield {
+        segments.putSegment("screen_share_direction", direction)
+        segments.putSegment("screen_share_duration", MathUtils.roundToNearest5(duration))
 
-            events ! Option(z) -> ScreenShareEvent(segments)
-          }
+        events ! Option(z) -> ScreenShareEvent(segments)
       }
+    }
     else Future.successful(())
 
-  override def appOpen(userId: UserId): Future[Unit] =
-    isTrackingEnabled.head.collect {
-      case true =>
-        for {
-          Some(z)  <- zmsProvider(Some(userId))
-        } yield events ! Option(z) -> AppOpenEvent(getUniversalSegments())
-    }
+  override def appOpen(userId: UserId): Future[Unit] = withTracking {
+    for {
+      Some(z)  <- zmsProvider(Some(userId))
+    } yield events ! Option(z) -> AppOpenEvent(getUniversalSegments())
+  }
 }
 
 object TrackingServiceImpl extends DerivedLogTag {
