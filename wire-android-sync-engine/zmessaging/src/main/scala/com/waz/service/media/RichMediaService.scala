@@ -40,8 +40,6 @@ class RichMediaService(msgsStorage: MessagesStorage,
   import com.waz.api.Message.Part.Type._
   import Threading.Implicits.Background
 
-  private implicit val ec = EventContext.Global
-
   private def isSyncableMsg(msg: MessageData) = msg.msgType == Message.Type.RICH_MEDIA && msg.content.exists(isSyncable)
 
   private def isSyncable(c: MessageContent) = c.tpe match {

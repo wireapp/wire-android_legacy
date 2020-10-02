@@ -32,11 +32,11 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
-import com.wire.signals.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 
 import scala.concurrent.Future
 
-class UserAccountsController(implicit injector: Injector, context: Context, ec: EventContext)
+class UserAccountsController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
 
   import Threading.Implicits.Ui
@@ -137,7 +137,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     } yield conv.id
 
   def getOrCreateAndOpenConvFor(user: UserId) =
-    getConversationId(user).flatMap(convCtrl.selectConv(_, ConversationChangeRequester.START_CONVERSATION))
+    getConversationId(user).flatMap(convCtrl.selectConv(_, ConversationChangeRequester.START_CONVERSATION))(Threading.Background)
 
   private def observeLogoutEvents(): Unit = {
     accounts.map(_.size).onUi { numberOfAccounts =>

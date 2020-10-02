@@ -17,11 +17,11 @@
  */
 package com.waz.zclient
 
-import com.wire.signals.{EventContext, Signal, SourceSignal}
+import com.wire.signals.{Signal, SourceSignal}
 import com.waz.zclient.SpinnerController.{Hide, Show, SpinnerParameters}
 import com.waz.zclient.views.LoadingIndicatorView._
 
-class SpinnerController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable {
+class SpinnerController(implicit inj: Injector, cxt: WireContext) extends Injectable {
 
   val spinnerShowing: SourceSignal[SpinnerParameters] = Signal(Hide())
 

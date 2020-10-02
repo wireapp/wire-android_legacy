@@ -30,8 +30,6 @@ import io.circe.generic.auto._
 import scala.concurrent.Future
 
 class FoldersSyncHandler(prefsClient: PropertiesClient, foldersService: FoldersService) {
-  private implicit val ec = EventContext.Global
-
   import Threading.Implicits.Background
   import com.waz.znet2.http.HttpClient.AutoDerivation._
 

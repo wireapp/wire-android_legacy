@@ -26,7 +26,7 @@ import com.waz.content.UserPreferences.DarkTheme
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal, SourceSignal}
+import com.wire.signals.{Signal, SourceSignal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.ui.theme.{OptionsDarkTheme, OptionsLightTheme, OptionsTheme}
@@ -35,7 +35,7 @@ import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class ThemeController(implicit injector: Injector, context: Context, ec: EventContext)
+class ThemeController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
   
   import Threading.Implicits.Background

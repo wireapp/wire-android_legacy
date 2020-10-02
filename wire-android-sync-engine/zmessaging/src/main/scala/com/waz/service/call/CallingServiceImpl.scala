@@ -205,7 +205,7 @@ class CallingServiceImpl(val accountId:       UserId,
         verbose(l"Account $accountId logged out, unregistering from AVS")
         wCall.map(avs.unregisterAccount)
       case true =>
-    }(EventContext.Global)
+    }
   )
 
   def onSend(ctx: Pointer, msg: String, convId: RConvId, targetRecipients: Option[AvsClientList]): Future[Unit] =

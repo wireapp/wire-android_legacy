@@ -24,7 +24,7 @@ import com.waz.log.LogSE._
 import com.waz.model.VersionBlacklist
 import com.waz.sync.client.VersionBlacklistClient
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -33,7 +33,6 @@ class VersionBlacklistService(metadata: MetaDataService, prefs: GlobalPreference
   extends DerivedLogTag {
 
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
   import metadata._
 
   val lastUpToDateSync   = prefs.preference[Long](LastUpToDateSyncTime)
@@ -53,7 +52,6 @@ class VersionBlacklistService(metadata: MetaDataService, prefs: GlobalPreference
   def shouldSync = for {
     lastSyncTime <- lastUpToDateSync()
     lastVersion <- lastCheckedVersion()
-    isUpToDate <- upToDatePref()
   } yield {
     lastVersion != metadata.appVersion || (System.currentTimeMillis - lastSyncTime).millis > 1.day
   }

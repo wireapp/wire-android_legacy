@@ -63,7 +63,6 @@ class ConnectionServiceImpl(selfUserId:      UserId,
                             sync:            SyncServiceHandle) extends ConnectionService with DerivedLogTag {
 
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((c, e) => handleUserConnectionEvents(e))
 

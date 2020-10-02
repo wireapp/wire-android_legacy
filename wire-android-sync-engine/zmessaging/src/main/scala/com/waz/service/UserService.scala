@@ -106,7 +106,6 @@ class UserServiceImpl(selfUserId:        UserId,
                      ) extends UserService with DerivedLogTag {
 
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   private val shouldSyncUsers = userPrefs.preference(UserPreferences.ShouldSyncUsers)
 

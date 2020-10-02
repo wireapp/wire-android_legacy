@@ -38,5 +38,5 @@ class AccountContext(userId: UserId, accounts: AccountsService) extends EventCon
     case _ =>
       verbose(l"Account context started")
       onContextStart()
-  } (EventContext.Global)
+  }
 }

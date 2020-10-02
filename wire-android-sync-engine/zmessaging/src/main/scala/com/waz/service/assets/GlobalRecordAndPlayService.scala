@@ -62,7 +62,7 @@ class RecordAndPlayService(userId:        UserId,
   accounts.accountState(userId).map(_ == InForeground).onChanged.on(Background) {
     case false => globalService.AudioFocusListener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
     case true =>
-  }(EventContext.Global)
+  }
 }
 
 // invariant: only do side effects and/or access player/recorder during a transition

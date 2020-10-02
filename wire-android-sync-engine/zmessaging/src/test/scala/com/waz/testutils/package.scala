@@ -98,7 +98,7 @@ package object testutils {
     }
 
     implicit class SignalToSink[A](val signal: Signal[A]) extends AnyVal {
-      def sink: SignalSink[A] = returning(new SignalSink[A])(_.subscribe(signal)(EventContext.Global))
+      def sink: SignalSink[A] = returning(new SignalSink[A])(_.subscribe(signal))
     }
 
     class SignalSink[A] {

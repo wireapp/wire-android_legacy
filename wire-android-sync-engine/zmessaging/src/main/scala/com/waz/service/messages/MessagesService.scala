@@ -111,7 +111,6 @@ class MessagesServiceImpl(selfUserId:      UserId,
                           buttonsStorage:  ButtonsStorage,
                           sync:            SyncServiceHandle) extends MessagesService with DerivedLogTag {
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   override val msgEdited = EventStream[(MessageId, MessageId)]()
 

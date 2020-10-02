@@ -32,7 +32,7 @@ import com.waz.services.calling.CallWakeService._
 import com.waz.services.calling.CallingNotificationsService
 import com.waz.threading.Threading.Implicits.Background
 import com.waz.utils._
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 import com.waz.utils.wrappers.{Context, Intent}
 import com.waz.zclient.Intents.{CallIntent, OpenCallingScreen}
 import com.waz.zclient._
@@ -49,7 +49,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import com.waz.threading.Threading._
 
-class CallingNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable with DerivedLogTag {
+class CallingNotificationsController(implicit cxt: WireContext, inj: Injector) extends Injectable with DerivedLogTag {
 
   import CallingNotificationsController._
 

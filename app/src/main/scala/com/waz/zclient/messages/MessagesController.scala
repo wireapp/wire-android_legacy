@@ -22,7 +22,7 @@ import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.wire.signals.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.controllers.navigation._
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneController, SlidingPaneObserver}
@@ -32,7 +32,7 @@ import com.waz.utils.RichWireInstant
 
 import scala.concurrent.duration._
 
-class MessagesController()(implicit injector: Injector, cxt: WireContext, ev: EventContext)
+class MessagesController()(implicit injector: Injector, cxt: WireContext)
   extends Injectable with DerivedLogTag {
   
 import com.waz.threading.Threading.Implicits.Background

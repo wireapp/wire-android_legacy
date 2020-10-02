@@ -47,7 +47,6 @@ class MessageEventProcessor(selfUserId:           UserId,
                            ) extends DerivedLogTag {
   import MessageEventProcessor._
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   val messageEventProcessingStage = EventScheduler.Stage[MessageEvent] { (convId, events) =>
     convs.processConvWithRemoteId(convId, retryAsync = true) { conv =>

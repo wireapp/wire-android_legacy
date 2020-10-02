@@ -38,8 +38,6 @@ trait NetworkModeService {
 class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extends NetworkModeService with DerivedLogTag {
   import NetworkModeService._
 
-  private implicit val ev = EventContext.Global
-
   private lazy val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE).asInstanceOf[ConnectivityManager]
   private lazy val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE).asInstanceOf[TelephonyManager]
 

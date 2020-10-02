@@ -35,7 +35,7 @@ import com.waz.service.conversation.{ConversationsService, ConversationsUiServic
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
-import com.wire.signals.{Serialized, EventContext, EventStream, Signal, SourceStream}
+import com.wire.signals.{Serialized, EventStream, Signal, SourceStream}
 import com.waz.utils.{returning, _}
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -53,7 +53,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Success, Try}
 
-class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
+class ConversationController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
 
   private implicit val dispatcher = SerialDispatchQueue(name = "ConversationController")

@@ -47,7 +47,6 @@ class DefaultMediaManagerService(context: Context) extends MediaManagerService w
   import com.waz.service.MediaManagerService._
 
   private implicit val dispatcher = SerialDispatchQueue(name = "MediaManagerService")
-  private implicit val ev = EventContext.Global
 
   private val onPlaybackRouteChanged = EventStream[PlaybackRoute]()
   private val audioConfig = Try(new JSONObject(IoUtils.asString(context.getAssets.open(AudioConfigAsset)))).toOption

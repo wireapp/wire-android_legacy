@@ -98,7 +98,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                rolesService:    ConversationRolesService
                               ) extends ConversationsService with DerivedLogTag {
 
-  private implicit val ev = EventContext.Global
   import Threading.Implicits.Background
 
   //On conversation changed, update the state of the access roles as part of migration, then check for a link if necessary

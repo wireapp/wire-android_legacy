@@ -43,7 +43,6 @@ class TypingService(userId:        UserId,
 
   import timeouts.typing._
 
-  private implicit val ev = EventContext.Global
   private implicit val dispatcher = SerialDispatchQueue(name = "TypingService")
   private val beDriftPref = prefs.preference(BackendDrift)
 

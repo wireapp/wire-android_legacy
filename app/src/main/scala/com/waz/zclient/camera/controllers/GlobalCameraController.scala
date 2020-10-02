@@ -32,7 +32,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.waz.utils.RichFuture
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 import com.waz.zclient.WireContext
 import com.waz.zclient.camera.{CameraFacing, FlashMode}
 import com.waz.zclient.core.logging.Logger
@@ -42,7 +42,7 @@ import com.waz.zclient.utils.{AutoFocusCallbackDeprecation, Callback, CameraPara
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireContext, eventContext: EventContext)
+class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireContext)
   extends DerivedLogTag {
   
   implicit val cameraExecutionContext = new ExecutionContext {

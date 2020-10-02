@@ -50,7 +50,6 @@ class DefaultFlowManagerService(context:      Context,
                                 network:      NetworkModeService) extends FlowManagerService with DerivedLogTag {
   import FlowManagerService._
 
-  private implicit val ev = EventContext.Global
   private implicit val dispatcher = SerialDispatchQueue(name = "FlowManagerService")
 
   override val cameraFailedSig = Signal[Boolean](false)

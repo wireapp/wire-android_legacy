@@ -45,7 +45,7 @@ import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{Mes
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.{ResString, RingtoneUtils, format}
 import com.waz.zclient.{Injectable, Injector, Intents, R}
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -287,7 +287,7 @@ object NotificationManagerWrapper {
     def apply(id: String, name: Int, description: Int, sound: Uri, vibration: Boolean)(implicit cxt: Context): ChannelInfo = ChannelInfo(id, getString(name), getString(description), sound, vibration)
   }
 
-  class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context, eventContext: EventContext)
+  class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
     extends NotificationManagerWrapper with Injectable with DerivedLogTag {
 
     val accountChannels = inject[AccountsService].accountManagers.flatMap(ams => Signal.sequence(ams.map { am =>

@@ -33,9 +33,11 @@ import scala.concurrent.duration.FiniteDuration
 trait AssetContentCache extends FileCache[AssetId]
 
 class AssetContentCacheImpl(val cacheDirectory: File, val directorySizeThreshold: Long, val sizeCheckingInterval: FiniteDuration)
-                           (implicit val ec: ExecutionContext, val ev: EventContext) extends LruFileCache[AssetId] with AssetContentCache {
+                           (implicit val ec: ExecutionContext) extends LruFileCache[AssetId] with AssetContentCache {
 
   override protected def createFileName(key: AssetId): String = key.str
+
+  override protected implicit def ev: EventContext = EventContext.Global
 }
 
 /**

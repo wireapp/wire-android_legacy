@@ -131,7 +131,6 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
   import PushTokenService._
 
   private implicit val dispatcher = SerialDispatchQueue(name = "GlobalTokenService")
-  implicit val ev = EventContext.Global
 
 //  val pushEnabled  = prefs.preference(PushEnabledKey) //TODO delete the push token if the PushEnabledKey is false
   val _currentToken = prefs.preference(GlobalPreferences.PushToken)
