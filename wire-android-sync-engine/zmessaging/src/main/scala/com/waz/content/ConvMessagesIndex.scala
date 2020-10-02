@@ -24,7 +24,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.model.MessageData.{MessageDataDao, isUserContent}
 import com.waz.model._
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.CancellableFuture
 import com.waz.utils._
 import com.wire.signals.{EventStream, RefreshingSignal, Signal, SourceSignal}
 
@@ -34,11 +34,9 @@ import scala.concurrent.duration._
 class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserId: UserId,
                         users: UsersStorage, convs: ConversationStorage,
                         msgAndLikes: MessageAndLikesStorage, storage: ZmsDatabase,
-                        filter: Option[MessageFilter] = None) {
-  self =>
-
+                        filter: Option[MessageFilter] = None) { self =>
+  import com.waz.threading.Threading.Implicits.Background
   private implicit val tag: LogTag = LogTag(s"ConvMessagesIndex_$convId")
-  private implicit val dispatcher = SerialDispatchQueue(name = "ConvMessagesIndex")
 
   private val indexChanged = EventStream[Change]()
   private var firstMessage = Option.empty[MessageData]

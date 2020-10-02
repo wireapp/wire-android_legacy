@@ -29,7 +29,6 @@ import com.waz.service.AccountsService.{InvalidCookie, InvalidCredentials, Logou
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client.LoginClient.LoginResult
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.JsonEncoder.encodeInstant
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
 import com.wire.signals.Serialized
@@ -55,12 +54,9 @@ class AuthenticationManager(id: UserId,
                             accountsService: AccountsService,
                             accountStorage: AccountStorage,
                             client: LoginClient) extends AccessTokenProvider {
-
   implicit val tag: LogTag = accountTag[AuthenticationManager](id)
-
   import AuthenticationManager._
-
-  private implicit val dispatcher = SerialDispatchQueue(name = "AuthenticationManager")
+  import com.waz.threading.Threading.Implicits.Background
 
   private def token  = withAccount(_.accessToken)
   private def cookie = withAccount(_.cookie)

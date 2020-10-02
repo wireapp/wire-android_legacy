@@ -74,8 +74,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                       membersStorage:  MembersStorage,
                                       messagesStorage: => MessagesStorage,
                                       syncHandler:     SyncServiceHandle) extends ConversationsContentUpdater with DerivedLogTag {
-  private implicit val dispatcher = SerialDispatchQueue(name = "ConversationContentUpdater")
-
+  import com.waz.threading.Threading.Implicits.Background
   val conversationsFuture = Future successful storage
 
   storage.onUpdated(_.foreach {

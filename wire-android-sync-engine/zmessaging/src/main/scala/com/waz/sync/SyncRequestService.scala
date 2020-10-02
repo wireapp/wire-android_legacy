@@ -26,13 +26,11 @@ import com.waz.model.{SyncId, UserId}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountContext, AccountsService, NetworkModeService, ReportingService}
 import com.waz.sync.queue.{SyncContentUpdater, SyncScheduler, SyncSchedulerImpl}
-import com.wire.signals.SerialDispatchQueue
 import com.wire.signals.Signal
 
 import scala.concurrent.Future
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import com.waz.log.LogSE._
-import com.waz.utils.returning
 
 trait SyncRequestService {
 
@@ -57,9 +55,7 @@ class SyncRequestServiceImpl(accountId: UserId,
                              accounts:  AccountsService,
                              tracking:  TrackingService
                             )(implicit accountContext: AccountContext) extends SyncRequestService with DerivedLogTag {
-
-  private implicit val dispatcher = SerialDispatchQueue(name = "SyncDispatcher")
-
+  import com.waz.threading.Threading.Implicits.Background
   private val scheduler: SyncScheduler = new SyncSchedulerImpl(accountId, content, network, this, sync, accounts, tracking)
 
   reporting.addStateReporter { pw =>

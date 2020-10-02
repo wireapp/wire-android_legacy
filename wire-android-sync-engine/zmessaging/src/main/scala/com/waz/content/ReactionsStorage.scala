@@ -22,9 +22,9 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Liking.{Action, LikingDao}
 import com.waz.model._
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.CancellableFuture
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.wire.signals.{AggregatingSignal, EventContext, RefreshingSignal, Signal}
+import com.wire.signals.{AggregatingSignal, RefreshingSignal, Signal}
 import com.waz.utils._
 
 import scala.collection.{breakOut, mutable}
@@ -45,12 +45,12 @@ class ReactionsStorageImpl(context: Context, storage: Database)
 
   import ReactionsStorageImpl._
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "ReactionsStorage")
+  import com.waz.threading.Threading.Implicits.Background
 
   private val likesCache = new TrimmingLruCache[MessageId, Map[UserId, RemoteInstant]](context, Fixed(1024))
   private val maxTime = returning(new AggregatingSignal[RemoteInstant, RemoteInstant](onChanged.map(_.maxBy(_.timestamp).timestamp), storage.read(LikingDao.findMaxTime(_)), _ max _))(_.disableAutowiring())
 
-  onChanged.on(dispatcher) { likes =>
+  onChanged { likes =>
     likes.groupBy(_.message) foreach { case (msg, ls) =>
       Option(likesCache.get(msg)) foreach { current =>
         val (toAdd, toRemove) = ls.partition(_.action == Action.Like)

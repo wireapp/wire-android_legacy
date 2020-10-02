@@ -26,6 +26,7 @@ import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.sync.SyncServiceHandle
+import com.waz.threading.Threading
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.RichFuture.traverseSequential
 import com.wire.signals.{AggregatingSignal, EventContext, EventStream}
@@ -43,7 +44,7 @@ class TypingService(userId:        UserId,
 
   import timeouts.typing._
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "TypingService")
+  import Threading.Implicits.Background
   private val beDriftPref = prefs.preference(BackendDrift)
 
   private var typing: ConvId Map IndexedSeq[TypingUser] = Map().withDefaultValue(Vector.empty)
@@ -57,7 +58,7 @@ class TypingService(userId:        UserId,
 
   val typingEventStage = EventScheduler.Stage[TypingEvent]((c, es) => traverseSequential(es)(handleTypingEvent))
 
-  accounts.accountState(userId).on(dispatcher) {
+  accounts.accountState(userId).on(Threading.Background) {
     case InForeground => // fine
     case _            => stopTyping()
   }
@@ -109,9 +110,9 @@ class TypingService(userId:        UserId,
     refreshIsTyping = CancellableFuture.delayed(refreshDelay) { postIsTyping(conv) }
   }
 
-  def getTypingUsers(conv: ConvId): CancellableFuture[IndexedSeq[UserId]] = dispatcher { typing(conv) map (_.id) }
+  def getTypingUsers(conv: ConvId): CancellableFuture[IndexedSeq[UserId]] = Threading.Background { typing(conv) map (_.id) }
 
-  def isSelfTyping(conv: ConvId): CancellableFuture[Boolean] = dispatcher { selfIsTyping.exists(_._1 == conv) }
+  def isSelfTyping(conv: ConvId): CancellableFuture[Boolean] = Threading.Background { selfIsTyping.exists(_._1 == conv) }
 
   private def setUserTyping(conv: ConvId, user: UserId, time: LocalInstant, isTyping: Boolean): Unit = {
     val current = typing(conv)

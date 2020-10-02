@@ -32,7 +32,7 @@ import com.waz.model.otr.Client
 import com.waz.service.AccountManager
 import com.waz.service.assets.{AssetInput, Content, ContentForUpload, FileRestrictionList, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.wire.signals.{Serialized, EventStream, Signal, SourceStream}
@@ -56,7 +56,7 @@ import scala.util.{Success, Try}
 class ConversationController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "ConversationController")
+  import com.waz.threading.Threading.Implicits.Background
 
   private lazy val selectedConv          = inject[Signal[SelectedConversationService]]
   private lazy val convsUi               = inject[Signal[ConversationsUiService]]

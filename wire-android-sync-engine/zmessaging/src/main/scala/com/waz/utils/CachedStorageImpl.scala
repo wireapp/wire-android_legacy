@@ -24,7 +24,6 @@ import com.waz.content.Database
 import com.waz.db.DaoIdOps
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.errors.NotFoundLocal
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.ContentChange.{Added, Removed, Updated}
 import com.wire.signals._
 import com.waz.utils.wrappers.DB
@@ -260,8 +259,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
                                                  val dao: StorageDao[K, V],
                                                  tag: LogTag = LogTag("CachedStorage")
                                                 ) extends CachedStorage[K, V] {
-
-  private implicit val dispatcher = SerialDispatchQueue(name = tag + "_Dispatcher")
+  import com.waz.threading.Threading.Implicits.Background
 
   val onAdded = EventStream[Seq[V]]()
   val onUpdated = EventStream[Seq[(V, V)]]()

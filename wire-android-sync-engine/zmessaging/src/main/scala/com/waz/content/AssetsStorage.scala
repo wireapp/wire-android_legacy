@@ -22,7 +22,6 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.model.AssetData.AssetDataDao
 import com.waz.model.AssetStatus.UploadDone
 import com.waz.model._
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.{CachedStorageImpl, TrimmingLruCache, _}
 
@@ -40,7 +39,7 @@ class AssetsStorageImpl(context: Context, storage: Database)
   extends CachedStorageImpl[AssetId, AssetData](new TrimmingLruCache(context, Fixed(100)), storage)(AssetDataDao, LogTag("AssetsStorage"))
     with AssetsStorage {
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "AssetsStorage")
+  import com.waz.threading.Threading.Implicits.Background
 
   //allows overwriting of asset data
   override def updateAsset(id: AssetId, updater: AssetData => AssetData): Future[Option[AssetData]] = update(id, updater).mapOpt {

@@ -29,15 +29,13 @@ import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.returning
 import org.scalatest.Inside
 
 import scala.concurrent.Future
 
 class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
-
-  implicit val executionContext = SerialDispatchQueue(name = "ConnectionServiceAndroidFreeSpec")
+  import com.waz.threading.Threading.Implicits.Background
 
   val push            = mock[PushService]
   val teamId          = Option.empty[TeamId]

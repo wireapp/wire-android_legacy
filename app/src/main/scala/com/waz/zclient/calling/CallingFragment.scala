@@ -39,11 +39,10 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R, ViewHelper}
-import com.wire.signals.{SerialDispatchQueue, Signal}
+import com.wire.signals.Signal
 
 abstract class UserVideoView(context: Context, val participant: Participant) extends FrameLayout(context, null, 0) with ViewHelper {
   protected lazy val controller: CallController = inject[CallController]
-  private implicit val dispatcher = SerialDispatchQueue(name = s"UserVideoView-$participant")
 
   inflate(R.layout.video_call_info_view)
 

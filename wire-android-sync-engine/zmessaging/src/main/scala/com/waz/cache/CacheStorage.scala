@@ -44,7 +44,7 @@ class CacheStorageImpl(storage: Database, context: Context)
 
   import com.waz.cache.CacheStorage._
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "CacheStorage")
+  import com.waz.threading.Threading.Implicits.Background
 
   onUpdated { _ foreach {
     case (prev, updated) if prev.fileId != updated.fileId => cleanup(prev)

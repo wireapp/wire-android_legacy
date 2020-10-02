@@ -39,7 +39,6 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.RichInstant
 import com.wire.signals.Signal
 import com.waz.utils.jna.Uint32_t
@@ -51,8 +50,7 @@ import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
 class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
-
-  implicit val executionContext = SerialDispatchQueue(name = "CallingServiceSpec")
+  import com.waz.threading.Threading.Implicits.Background
 
   val context        = mock[Context]
   val avs            = mock[Avs]

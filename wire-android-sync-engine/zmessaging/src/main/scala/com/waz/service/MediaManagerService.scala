@@ -26,7 +26,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.media.manager.config.Configuration
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.media.manager.{MediaManager, MediaManagerListener}
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils._
 import com.wire.signals._
 import org.json.JSONObject
@@ -46,7 +45,7 @@ trait MediaManagerService {
 class DefaultMediaManagerService(context: Context) extends MediaManagerService with DerivedLogTag { self =>
   import com.waz.service.MediaManagerService._
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "MediaManagerService")
+  import com.waz.threading.Threading.Implicits.Background
 
   private val onPlaybackRouteChanged = EventStream[PlaybackRoute]()
   private val audioConfig = Try(new JSONObject(IoUtils.asString(context.getAssets.open(AudioConfigAsset)))).toOption

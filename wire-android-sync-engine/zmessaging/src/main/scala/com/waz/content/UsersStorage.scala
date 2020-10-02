@@ -22,7 +22,6 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
 import com.waz.model._
 import com.waz.service.SearchKey
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils._
 import com.wire.signals._
@@ -44,7 +43,7 @@ trait UsersStorage extends CachedStorage[UserId, UserData] {
 class UsersStorageImpl(context: Context, storage: ZmsDatabase)
   extends CachedStorageImpl[UserId, UserData](new TrimmingLruCache(context, Fixed(2000)), storage)(UserDataDao, LogTag("UsersStorage_Cached"))
     with UsersStorage {
-  private implicit val dispatcher = SerialDispatchQueue(name = "UsersStorage")
+  import com.waz.threading.Threading.Implicits.Background
 
   override def listAll(ids: Traversable[UserId]) = getAll(ids).map(_.collect { case Some(x) => x }(breakOut))
 

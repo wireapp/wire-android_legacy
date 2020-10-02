@@ -26,7 +26,6 @@ import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model.ConversationData.ConversationType.Group
 import com.waz.model._
 import com.waz.service.SearchKey
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.Locales.currentLocaleOrdering
 import com.waz.utils._
 
@@ -51,14 +50,14 @@ class ConversationStorageImpl(storage: ZmsDatabase)
   extends CachedStorageImpl[ConvId, ConversationData](new UnlimitedLruCache(), storage)(ConversationDataDao, LogTag("ConversationStorage_Cached"))
     with ConversationStorage with DerivedLogTag {
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "ConversationStorage")
+  import com.waz.threading.Threading.Implicits.Background
 
-  onAdded.on(dispatcher) { cs => updateSearchKey(cs)}
+  onAdded { cs => updateSearchKey(cs)}
 
   def setUnknownVerification(convId: ConvId) =
     update(convId, { c => c.copy(verified = if (c.verified == Verification.UNVERIFIED) UNKNOWN else c.verified) })
 
-  onUpdated.on(dispatcher) { cs =>
+  onUpdated { cs =>
     updateSearchKey(cs.collect {
       case (p, c) if p.name != c.name || (p.convType == Group) != (c.convType == Group) || (c.name.nonEmpty && c.searchKey.isEmpty) => c
     })

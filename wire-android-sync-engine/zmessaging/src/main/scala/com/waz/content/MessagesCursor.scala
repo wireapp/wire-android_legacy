@@ -24,7 +24,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
-import com.wire.signals.{DispatchQueue, EventStream, SerialDispatchQueue}
+import com.wire.signals.{DispatchQueue, EventStream}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.wrappers.DBCursor
@@ -48,8 +48,7 @@ class MessagesCursor(cursor: DBCursor,
                      loader: MessageAndLikesStorage)(implicit ordering: Ordering[RemoteInstant]) extends MsgCursor with DerivedLogTag { self =>
   import MessagesCursor._
   import scala.concurrent.duration._
-
-  private implicit val dispatcher = SerialDispatchQueue(name = "MessagesCursor")
+  import com.waz.threading.Threading.Implicits.Background
 
   private val messages = new LruCache[MessageId, MessageAndLikes](WindowSize * 2)
   private val quotes = new LruCache[MessageId, Seq[MessageId]](WindowSize * 2)

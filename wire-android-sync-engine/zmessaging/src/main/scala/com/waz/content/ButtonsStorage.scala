@@ -5,7 +5,6 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ButtonData.{ButtonDataDao, ButtonDataDaoId}
 import com.waz.model.{ButtonData, ButtonId, MessageId}
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
@@ -19,7 +18,7 @@ trait ButtonsStorage extends CachedStorage[(MessageId, ButtonId), ButtonData] {
 class ButtonsStorageImpl(context: Context, storage: Database)
   extends CachedStorageImpl[ButtonDataDaoId, ButtonData](new TrimmingLruCache(context, Fixed(MessagesStorage.cacheSize)), storage)(ButtonDataDao, LogTag("ButtonsStorage"))
     with ButtonsStorage with DerivedLogTag {
-  private implicit val dispatcher = SerialDispatchQueue(name = "ButtonsStorage")
+  import com.waz.threading.Threading.Implicits.Background
 
   override def findByMessage(messageId: MessageId): Future[Seq[ButtonData]] =
     find(_.messageId == messageId, ButtonDataDao.findForMessage(messageId)(_), identity)

@@ -25,25 +25,17 @@ import com.waz.api.{ContentSearchQuery, Message, TypeFilter}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.wire.signals.SerialDispatchQueue
+
 import com.wire.signals.{EventStream, Signal, SourceSignal}
 import com.waz.zclient.collection.controllers.CollectionController.CollectionInfo
 import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.{Injectable, Injector}
 
-class CollectionController(implicit injector: Injector)
-  extends Injectable with DerivedLogTag {
+class CollectionController(implicit injector: Injector) extends Injectable with DerivedLogTag {
+  private val zms = inject[Signal[ZMessaging]]
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "CollectionController")
-
-  val zms = inject[Signal[ZMessaging]]
-
-  lazy val convController = inject[ConversationController]
-
-  val msgStorage = zms.map(_.messagesStorage)
-
-  val assetStorage = zms.map(_.assetsStorage)
+  private lazy val convController = inject[ConversationController]
 
   private var observers = Set.empty[CollectionsObserver]
 

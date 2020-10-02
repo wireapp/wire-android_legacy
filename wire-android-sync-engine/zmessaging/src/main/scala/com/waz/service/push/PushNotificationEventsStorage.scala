@@ -27,14 +27,12 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.push.PushNotificationEventsStorage.{EventHandler, EventIndex, PlainWriter}
 import com.waz.sync.client.PushNotificationEncoded
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.wire.signals.EventContext
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 import org.json.JSONObject
 
 import scala.concurrent.Future
-
 
 object PushNotificationEventsStorage {
   type PlainWriter = Array[Byte] => Future[Unit]
@@ -58,8 +56,7 @@ class PushNotificationEventsStorageImpl(context: Context, storage: Database, cli
   extends CachedStorageImpl[EventIndex, PushNotificationEvent](new TrimmingLruCache(context, Fixed(1024*1024)), storage)(PushNotificationEventsDao, LogTag("PushNotificationEvents_Cached"))
     with PushNotificationEventsStorage
     with DerivedLogTag {
-
-  private implicit val dispatcher = SerialDispatchQueue(name = "PushNotificationEventsStorage")
+  import com.waz.threading.Threading.Implicits.Background
 
   override def setAsDecrypted(index: EventIndex): Future[Unit] = {
     update(index, u => u.copy(decrypted = true)).map {

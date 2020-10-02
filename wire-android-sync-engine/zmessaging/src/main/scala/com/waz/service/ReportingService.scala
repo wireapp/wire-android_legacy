@@ -30,7 +30,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.log.{BufferedLogOutput, InternalLog}
 import com.waz.model.{Mime, UserId}
-import com.wire.signals.SerialDispatchQueue
 import com.waz.threading.Threading
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{IoUtils, RichFuture}
@@ -41,7 +40,7 @@ import scala.concurrent.duration._
 
 trait ReportingService {
   import ReportingService._
-  private implicit val dispatcher = SerialDispatchQueue(name = "ReportingService")
+  import com.waz.threading.Threading.Implicits.Background
   private[service] var reporters = Seq.empty[Reporter]
 
   def addStateReporter(report: PrintWriter => Future[Unit])(implicit tag: LogTag): Unit = Future {
@@ -66,8 +65,6 @@ object ReportingService {
 }
 
 class ZmsReportingService(user: UserId, global: ReportingService) extends ReportingService {
-  private implicit val dispatcher = SerialDispatchQueue(name = "ZmsReportingService")
-
   global.addStateReporter(generateStateReport)(LogTag(s"ZMessaging[$user]"))
 }
 

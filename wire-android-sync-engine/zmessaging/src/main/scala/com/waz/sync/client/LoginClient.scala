@@ -31,7 +31,8 @@ import com.waz.service.ZMessaging.clock
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.LoginClient.LoginResult
 import com.waz.sync.client.TeamsClient.{TeamsPageSize, TeamsPath}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.CancellableFuture
+import com.waz.threading.Threading
 import com.waz.utils.{ExponentialBackoff, JsonEncoder, _}
 import com.waz.znet2.http
 import com.waz.znet2.http.HttpClient.dsl._
@@ -62,8 +63,7 @@ class LoginClientImpl()
                       client: HttpClient) extends LoginClient with DerivedLogTag {
 
   import LoginClient._
-
-  private implicit val dispatcher = SerialDispatchQueue(name = "LoginClient")
+  import Threading.Implicits.Background
 
   private var lastRequestTime = 0L
   private var failedAttempts = 0
@@ -82,7 +82,7 @@ class LoginClientImpl()
 
   override def access(cookie: Cookie, token: Option[AccessToken]) = throttled(accessNow(cookie, token))
 
-  def throttled(request: => ErrorOr[LoginResult]): ErrorOr[LoginResult] = dispatcher {
+  def throttled(request: => ErrorOr[LoginResult]): ErrorOr[LoginResult] = Threading.Background {
     loginFuture = loginFuture.recover {
       case ex: Throwable =>
         Left(ErrorResponse.internalError("Unexpected error when trying to log in: " + ex.getMessage))

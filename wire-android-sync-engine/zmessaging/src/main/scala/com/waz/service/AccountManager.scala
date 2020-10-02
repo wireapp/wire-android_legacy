@@ -34,7 +34,7 @@ import com.waz.service.assets.Content
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse, InvitationClientImpl, OtrClientImpl}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.CancellableFuture
 import com.waz.utils._
 import com.wire.signals._
 import com.waz.utils.wrappers.URI
@@ -54,7 +54,7 @@ class AccountManager(val userId:  UserId,
                      isLogin:     Option[Boolean]) extends DerivedLogTag {
   import AccountManager._
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "AccountManager")
+  import com.waz.threading.Threading.Implicits.Background
   implicit val accountContext: AccountContext = new AccountContext(userId, accounts)
   verbose(l"Creating for: $userId, team: $teamId, initialSelf: $initialSelf, isLogin: $isLogin")
 

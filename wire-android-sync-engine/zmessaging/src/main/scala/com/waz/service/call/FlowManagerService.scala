@@ -27,7 +27,6 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service._
 import com.waz.service.call.FlowManagerService.VideoCaptureDevice
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils._
 import com.wire.signals._
 
@@ -49,8 +48,7 @@ class DefaultFlowManagerService(context:      Context,
                                 globalPrefs:  GlobalPreferences,
                                 network:      NetworkModeService) extends FlowManagerService with DerivedLogTag {
   import FlowManagerService._
-
-  private implicit val dispatcher = SerialDispatchQueue(name = "FlowManagerService")
+  import com.waz.threading.Threading.Implicits.Background
 
   override val cameraFailedSig = Signal[Boolean](false)
 

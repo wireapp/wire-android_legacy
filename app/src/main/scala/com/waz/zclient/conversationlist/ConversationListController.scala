@@ -26,7 +26,6 @@ import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService, FoldersService}
 import com.waz.service.teams.TeamsService
-import com.wire.signals.SerialDispatchQueue
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.wire.signals.{AggregatingSignal, EventContext, EventStream, Signal}
@@ -310,7 +309,7 @@ object ConversationListController {
   // Only keeps up to 4 users other than self user, this list is to be used for avatar in conv list.
   // We keep this always in memory to avoid reloading members list for every list row view (caused performance issues)
   class MembersCache(zms: ZMessaging)(implicit inj: Injector, ec: EventContext) extends Injectable {
-    private implicit val dispatcher = SerialDispatchQueue(name = "MembersCache")
+    import com.waz.threading.Threading.Implicits.Background
 
     private def entries(convMembers: Seq[ConversationMemberData]) =
       convMembers.groupBy(_.convId).map { case (convId, ms) =>

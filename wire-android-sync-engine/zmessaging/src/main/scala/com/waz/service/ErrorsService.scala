@@ -27,6 +27,7 @@ import com.waz.content.ZmsDatabase
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountsService.InForeground
+import com.waz.threading.Threading
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.wire.signals.{RefreshingSignal, Signal}
@@ -52,7 +53,7 @@ class ErrorsServiceImpl(userId:    UserId,
                         storage:   ZmsDatabase,
                         accounts:  AccountsService,
                         messages:  MessagesStorage) extends ErrorsService with DerivedLogTag {
-  private implicit val dispatcher = SerialDispatchQueue(name = "ErrorsService")
+  import Threading.Implicits.Background
 
   private var dismissHandler: PartialFunction[ErrorData, Future[_]] = PartialFunction.empty
 
@@ -63,18 +64,18 @@ class ErrorsServiceImpl(userId:    UserId,
   private val init = errorsStorage.list() map { es =>
     errors ++= es.map(e => e.id -> e)(breakOut)
 
-    errorsStorage.onChanged.on(dispatcher) { es =>
+    errorsStorage.onChanged.on(Threading.Background) { es =>
       errors ++= es.map(e => e.id -> e)(breakOut)
     }
 
-    errorsStorage.onDeleted.on(dispatcher) { errors --= _ }
+    errorsStorage.onDeleted.on(Threading.Background) { errors --= _ }
 
     errors
   }
 
    private val onChanged = errorsStorage.onChanged.map(_ => System.currentTimeMillis()).zip(errorsStorage.onDeleted.map(_ => System.currentTimeMillis()))
 
-  def onErrorDismissed(handler: PartialFunction[ErrorData, Future[_]]): CancellableFuture[Unit] = dispatcher {
+  def onErrorDismissed(handler: PartialFunction[ErrorData, Future[_]]): CancellableFuture[Unit] = Threading.Background {
     dismissHandler = dismissHandler.orElse(handler)
   }
 

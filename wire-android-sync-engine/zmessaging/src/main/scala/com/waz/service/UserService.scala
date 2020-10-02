@@ -384,8 +384,7 @@ class ExpiredUsersService(push:         PushService,
                           users:        UserService,
                           usersStorage: UsersStorage,
                           sync:         SyncServiceHandle)(implicit ev: AccountContext) extends DerivedLogTag {
-
-  private implicit val ec = SerialDispatchQueue(name = "ExpiringUsers")
+  import com.waz.threading.Threading.Implicits.Background
 
   private var timers = Map[UserId, CancellableFuture[Unit]]()
 

@@ -31,7 +31,6 @@ import com.waz.model._
 import com.waz.service.Timeouts
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils._
 import com.wire.signals.{EventStream, Signal, SourceStream}
@@ -94,7 +93,7 @@ class MessagesStorageImpl(context:     Context,
     storage
   )(MessageDataDao, LogTag("MessagesStorage_Cached")) with MessagesStorage with DerivedLogTag {
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "MessagesStorage")
+  import com.waz.threading.Threading.Implicits.Background
 
   //For tracking on UI
   val onMessageSent = EventStream[MessageData]()
@@ -149,7 +148,7 @@ class MessagesStorageImpl(context:     Context,
     }
   }
 
-  convs.onUpdated.on(dispatcher) { _.foreach {
+  convs.onUpdated { _.foreach {
     case (prev, updated) if updated.lastRead != prev.lastRead =>
       msgsIndex(updated.id).map(_.updateLastRead(updated)).recoverWithLog()
     case _ => // ignore
