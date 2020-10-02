@@ -91,14 +91,14 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
 
   lazy val isWireless: Future[Boolean] = for {
     z <- zms.head
-    Some(userData) <- z.usersStorage.get(z.selfUserId)
-  } yield userData.expiresAt.isDefined
+    isWireless <- z.usersStorage.get(z.selfUserId).map(_.isDefined)
+  } yield isWireless
 
   lazy val isProUser: Future[Boolean] =
     for {
       isWireless <- isWireless
-      teamId <- zms.head.map(_.teamId)
-    } yield teamId.isDefined || isWireless
+      isTeam     <- zms.head.map(_.teamId).map(_.isDefined)
+    } yield isTeam || isWireless
 
   lazy val hasCreateConvPermission: Signal[Boolean] = teamId.flatMap {
     case Some(_) => selfPermissions.map(_.contains(CreateConversation))

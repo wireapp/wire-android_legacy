@@ -53,12 +53,11 @@ class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int
   private lazy val uac = inject[UserAccountsController]
   private val tracking = inject[GlobalTrackingController]
 
-  val analyticsSwitch = returning(findById[SwitchPreference](R.id.preferences_send_analytics_data)) { v =>
-
-    uac.isProUser.foreach { isProUser =>
+  val sendAnonymousUsageDataButton = returning(findById[SwitchPreference](R.id.preferences_send_anonymous_usage_data)) { v =>
+    uac.isTeam.foreach { isProUser =>
       v.setPreference(TrackingEnabled)
       if (isProUser) {
-        v.pref.flatMap(_.signal).onChanged {
+        v.pref.flatMap(_.signal).onUi {
           case true  => tracking.optIn()
           case false => tracking.optOut()
         }
@@ -68,8 +67,7 @@ class DataUsagePermissionsView(context: Context, attrs: AttributeSet, style: Int
     }
   }
 
-  val anonymousDataSwitch = returning(findById[SwitchPreference](R.id.preferences_send_anonymous_data)) { v =>
-
+  val submitCrashReportsButton = returning(findById[SwitchPreference](R.id.preferences_send_anonymous_crash_report_data)) { v =>
     if (BuildConfig.SUBMIT_CRASH_REPORTS) {
       v.setPreference(GlobalPreferences.SendAnonymousDataEnabled, global = true)
     } else {

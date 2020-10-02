@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -19,50 +18,44 @@
 
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-       xmlns:app="http://schemas.android.com/apk/res-auto"
-       android:orientation="vertical"
-       android:layout_width="match_parent"
-       android:layout_height="match_parent">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-    >
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-        >
+            android:orientation="vertical">
 
             <com.waz.zclient.preferences.views.SwitchPreference
-                android:id="@+id/preferences_send_anonymous_data"
+                android:id="@+id/preferences_send_anonymous_crash_report_data"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:title="@string/pref_advanced_send_anonymous_data_title"
-                app:subtitle="@string/pref_advanced_send_anonymous_data_summary"
-            />
+                app:subtitle="@string/pref_advanced_send_anonymous_crash_reports_summary"
+                app:title="@string/pref_advanced_send_anonymous_crash_reports_title" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
-                android:id="@+id/preferences_send_analytics_data"
+                android:id="@+id/preferences_send_anonymous_usage_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/wire__padding__20"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:title="@string/pref_advanced_send_analytics_data_title"
-                app:subtitle="@string/pref_advanced_send_analytics_data_summary"
-                />
+                app:subtitle="@string/pref_advanced_send_anonymous_usage_data_summary"
+                app:title="@string/pref_advanced_send_anonymous_usage_data_title" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_receive_news_and_offers"
-                android:layout_marginTop="@dimen/wire__padding__20"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:title="@string/pref_advanced_receive_news_and_offers_title"
+                android:layout_marginTop="@dimen/wire__padding__20"
                 app:subtitle="@string/pref_advanced_receive_news_and_offers_summary"
-            />
+                app:title="@string/pref_advanced_receive_news_and_offers_title" />
 
         </LinearLayout>
-
     </ScrollView>
-
+    ]
 </merge>
