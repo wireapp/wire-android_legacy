@@ -27,12 +27,12 @@ import com.waz.model._
 import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason, UserInitiated}
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, EventStream, Signal}
+import com.waz.threading.Threading._
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
-import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
-import com.waz.threading.Threading._
+import com.waz.zclient.{BuildConfig, Injectable, Injector}
+import com.wire.signals.{EventContext, EventStream, Signal}
 
 import scala.concurrent.Future
 
@@ -89,16 +89,14 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
       .map(ps => ExternalPermissions.subsetOf(ps) && ExternalPermissions.size == ps.size)
       .orElse(Signal.const(false))
 
-  lazy val isWireless: Future[Boolean] = for {
-    z <- zms.head
-    Some(userData) <- z.usersStorage.get(z.selfUserId)
-  } yield userData.expiresAt.isDefined
+  lazy val isWireless = zms
+    .flatMap(_.users.selfUser)
+    .map(_.expiresAt.isDefined)
 
-  lazy val isProUser: Future[Boolean] =
-    for {
-      isWireless <- isWireless
-      teamId <- zms.head.map(_.teamId)
-    } yield teamId.isDefined || isWireless
+  lazy val isProUser = isTeam.flatMap {
+    case true => Signal.const(true)
+    case false => isWireless
+  }
 
   lazy val hasCreateConvPermission: Signal[Boolean] = teamId.flatMap {
     case Some(_) => selfPermissions.map(_.contains(CreateConversation))
