@@ -332,7 +332,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     zms     <- callingZms
     convId  <- callConvId
     members <- zms.membersStorage.activeMembers(convId)
-    users   <- zms.usersStorage.listSignal(members.filterNot(_ == zms.selfUserId))
+    users   <- zms.usersStorage.listSignal(members)
   } yield users.map(u => u.id -> u.isVerified).toMap
 
   usersVerifications { newUV =>
