@@ -50,7 +50,7 @@ class ReactionsStorageImpl(context: Context, storage: Database)
   private val likesCache = new TrimmingLruCache[MessageId, Map[UserId, RemoteInstant]](context, Fixed(1024))
   private val maxTime = returning(new AggregatingSignal[RemoteInstant, RemoteInstant](onChanged.map(_.maxBy(_.timestamp).timestamp), storage.read(LikingDao.findMaxTime(_)), _ max _))(_.disableAutowiring())
 
-  onChanged { likes =>
+  onChanged.on(Background) { likes =>
     likes.groupBy(_.message) foreach { case (msg, ls) =>
       Option(likesCache.get(msg)) foreach { current =>
         val (toAdd, toRemove) = ls.partition(_.action == Action.Like)

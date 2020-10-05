@@ -148,7 +148,7 @@ class MessagesStorageImpl(context:     Context,
     }
   }
 
-  convs.onUpdated { _.foreach {
+  convs.onUpdated.on(Background) { _.foreach {
     case (prev, updated) if updated.lastRead != prev.lastRead =>
       msgsIndex(updated.id).map(_.updateLastRead(updated)).recoverWithLog()
     case _ => // ignore

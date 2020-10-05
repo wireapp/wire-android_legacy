@@ -26,7 +26,7 @@ import com.waz.model.UserId
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service.push.WSPushServiceImpl.RequestCreator
-import com.waz.service.{AccountContext, BackendConfig}
+import com.waz.service.BackendConfig
 import com.waz.sync.client.{AccessTokenProvider, PushNotificationEncoded}
 import com.waz.sync.client.PushNotificationsClient.NotificationsResponseEncoded
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
@@ -57,8 +57,7 @@ object WSPushServiceImpl {
             clientId: ClientId,
             backend: BackendConfig,
             webSocketFactory: WebSocketFactory,
-            accessTokenProvider: AccessTokenProvider,
-            ev: AccountContext): WSPushServiceImpl = {
+            accessTokenProvider: AccessTokenProvider): WSPushServiceImpl = {
 
     val requestCreator = (token: AccessToken) => {
       val webSocketUri = if(backend.websocketUrl.getPath.startsWith("/await")) backend.websocketUrl
@@ -83,7 +82,7 @@ object WSPushServiceImpl {
       requestCreator,
       webSocketFactory,
       ExponentialBackoff.standardBackoff
-    )(ev)
+    )
   }
 }
 
@@ -91,8 +90,7 @@ class WSPushServiceImpl(userId:              UserId,
                         accessTokenProvider: AccessTokenProvider,
                         requestCreator:      RequestCreator,
                         webSocketFactory:    WebSocketFactory,
-                        backoff:             Backoff = ExponentialBackoff.standardBackoff)
-                       (implicit ev: EventContext) extends WSPushService {
+                        backoff:             Backoff = ExponentialBackoff.standardBackoff) extends WSPushService {
 
   private implicit val logTag: LogTag = accountTag[WSPushServiceImpl](userId)
   private implicit val dispatcher = SerialDispatchQueue(name = "WSPushServiceImpl")
@@ -127,7 +125,7 @@ class WSPushServiceImpl(userId:              UserId,
       accessTokenProvider.currentToken()
     }.flatMap {
       case Left(errorResponse) => Future.failed(errorResponse)
-      case Right(token) => Future.successful(requestCreator(token))
+      case Right(token)        => Future.successful(requestCreator(token))
     }
 
     request.onFailure { case errorResponse =>
@@ -136,7 +134,7 @@ class WSPushServiceImpl(userId:              UserId,
       activate(initialDelay = backoff.delay(retryCount.incrementAndGet()))
     }
 
-    EventStream.from(request).flatMap(webSocketFactory.openWebSocket).on(dispatcher) {
+    EventStream.from(request, dispatcher).flatMap(webSocketFactory.openWebSocket).on(dispatcher) {
       case SocketEvent.Opened(_) =>
         verbose(l"WebSocket opened")
         connected ! true
@@ -158,8 +156,8 @@ class WSPushServiceImpl(userId:              UserId,
       case SocketEvent.Message(_, NotificationsResponseEncoded(notifs @ _*)) =>
         verbose(l"WebSocket notifications received (${notifs.length})")
         notifications ! notifs
-      case SocketEvent.Message(_, _) =>
-        error(l"Unknown WebSocket message received")
+      case event =>
+        error(l"Unknown WebSocket event received: $event")
     }
   }
 

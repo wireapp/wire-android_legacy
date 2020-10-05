@@ -254,6 +254,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       //WHEN
       result(service.deleteGroupConversation(teamId, rConvId))
+
+      awaitAllTasks
     }
 
     scenario("When delete group conversation request returns error, post error to ui") {
@@ -271,6 +273,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val errorResponse = ErrorResponse(404, message = "not found", label = "")
 
       (sync.deleteGroupConversation _).expects(teamId, rConvId).anyNumberOfTimes().onCall { (_, rId) =>
+        println("here")
         service.onGroupConversationDeleteError(errorResponse, rId)
         Future.successful(SyncId())
       }
@@ -282,6 +285,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       //WHEN
       result(service.deleteGroupConversation(teamId, rConvId))
+
+      awaitAllTasks
     }
   }
 
