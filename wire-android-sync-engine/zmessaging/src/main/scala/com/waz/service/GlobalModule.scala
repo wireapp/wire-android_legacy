@@ -18,10 +18,9 @@
 package com.waz.service
 
 import java.io.File
-import java.net.{InetSocketAddress, Proxy}
+import java.net.Proxy
 import java.util.concurrent.Executors
 
-import android.content.pm.PackageManager
 import android.content.{Context => AContext}
 import com.softwaremill.macwire._
 import com.waz.bitmap.BitmapDecoder
@@ -48,11 +47,9 @@ import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 import com.waz.znet2.{HttpClientOkHttpImpl, OkHttpUserAgentInterceptor}
 import okhttp3.Interceptor
-import com.waz.log.LogSE._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
 
 trait GlobalModule {
   def context:                  AContext

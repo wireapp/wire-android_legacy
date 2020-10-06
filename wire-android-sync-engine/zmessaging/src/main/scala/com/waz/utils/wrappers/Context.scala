@@ -17,10 +17,7 @@
  */
 package com.waz.utils.wrappers
 
-import android.content.pm.PackageManager
 import android.content.{Context => AContext}
-import android.os.Bundle
-
 import scala.language.implicitConversions
 
 //TODO break up the context into smaller wrappers and also wrap other objects used here.
@@ -28,16 +25,12 @@ trait Context {
   def startService(intent: Intent): Boolean
   def getSystemService[A](name: String): A
   def sendBroadcast(intent: Intent): Unit
-
-  def metaData: Bundle
 }
 
 class AndroidContext(val context: AContext) extends Context {
   override def startService(intent: Intent) = Option(context.startService(intent)).isDefined
   override def getSystemService[A](name: String) = context.getSystemService(name).asInstanceOf[A]
   override def sendBroadcast(intent: Intent) = context.sendBroadcast(intent)
-
-  override def metaData: Bundle = context.getPackageManager.getApplicationInfo(context.getPackageName, PackageManager.GET_META_DATA).metaData
 }
 
 object Context {

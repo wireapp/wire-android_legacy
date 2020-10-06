@@ -64,8 +64,3 @@ class MetaDataService(context: Context) {
 
   val cryptoBoxDirName: String = "otr"
 }
-
-object MetaDataService {
-  val HTTP_PROXY_URL_KEY = "http_proxy_url"
-  val HTTP_PROXY_PORT_KEY = "http_proxy_port"
-}

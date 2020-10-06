@@ -96,7 +96,6 @@ import org.threeten.bp.Clock
 import scala.concurrent.Future
 
 object WireApplication extends DerivedLogTag {
-
   var APP_INSTANCE: WireApplication = _
 
   def ensureInitialized(): Boolean =
