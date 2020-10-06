@@ -370,7 +370,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         baseDir = getApplicationContext.getApplicationInfo.dataDir,
         showSafeOnly = BuildConfig.SAFE_LOGGING)
       )
-      global.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())
+      global.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())(Threading.Background)
       global.httpProxy.foreach(KotlinServices.INSTANCE.setProxy)
     }
 
