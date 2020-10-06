@@ -3,51 +3,79 @@ package com.waz.service
 import java.net.InetSocketAddress
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.HttpProxy.{HTTP_PROXY_PORT_KEY, HTTP_PROXY_URL_KEY}
 import com.waz.specs.AndroidFreeSpec
 
 class HttpProxySpec extends AndroidFreeSpec with DerivedLogTag {
 
-  private val DefaultProxyDetails: ProxyDetails = ProxyDetails(HttpProxy.INVALID_PROXY_HOST, "8080")
+  // default proxy settings with an invalid proxy host result in no proxy being returned if proxy is not specified
+  private val defaultProxyDetails: ProxyDetails = ProxyDetails(HttpProxy.INVALID_PROXY_HOST, 8080)
+  private val metaDataService = mock[MetaDataService]
+
+  private val validHostUrl = "www.wire.com"
+  private val invalidHostUrl = "none"
+  private val validPort = 8080
+  private val invalidPort = "Wire"
+
+  private val customProxyDetails: ProxyDetails = ProxyDetails(validHostUrl, validPort)
+
+  private def setMetaData(host: String, port: Int): Unit = setMetaData(host, port.toString)
+  private def setMetaData(host: String, port: String): Unit =
+    (metaDataService.metaData _).expects().atLeastOnce().returning(
+      Map(HTTP_PROXY_URL_KEY -> host, HTTP_PROXY_PORT_KEY -> port)
+    )
+
+  private def checkProxy(proxy: java.net.Proxy, host: String, port: Int) = {
+    val socketAddress = proxy.address().asInstanceOf[InetSocketAddress]
+    proxy.`type`() shouldEqual java.net.Proxy.Type.HTTP
+    socketAddress.getHostName shouldEqual host
+    socketAddress.getPort shouldEqual port
+  }
 
   scenario("Given HttpProxy instance, when proxy host url is valid and port is valid, then return correct proxy instance") {
-    val validHostUrl = "www.wire.com"
-    val validPort = "8080"
+    setMetaData(validHostUrl, validPort)
 
-    val customProxyDetails = ProxyDetails(validHostUrl, validPort)
-
-    val proxy = HttpProxy(DefaultProxyDetails, customProxyDetails).proxy
+    val proxy = HttpProxy(metaDataService, defaultProxyDetails).proxy
     proxy.nonEmpty shouldEqual true
-    proxy.foreach { p =>
-      val socketAddress = p.address().asInstanceOf[InetSocketAddress]
-      assert(p.`type`() == java.net.Proxy.Type.HTTP)
-      assert(socketAddress.getHostName == validHostUrl)
-      assert(socketAddress.getPort == validPort.toInt)
-    }
+    proxy.foreach(checkProxy(_, validHostUrl, validPort))
   }
 
-  scenario("Given HttpProxy instance, when proxy host url is 'none' and port is valid, then return default proxy") {
-    val invalidHostUrl = "none"
-    val validPort = "8080"
-    val proxyDetails = ProxyDetails(invalidHostUrl, validPort)
-    proxyFailure(proxyDetails)
+  scenario("Given HttpProxy instance, when proxy host url is 'none' and port is valid, then return none") {
+    setMetaData(invalidHostUrl, validPort)
+    val proxy = HttpProxy(metaDataService, defaultProxyDetails).proxy
+    proxy.isEmpty shouldEqual true
   }
 
-  scenario("Given HttpProxy instance, when proxy host url is 'none' and port is not valid, then return default proxy") {
-    val invalidHostUrl = "none"
-    val invalidPort = "Wire"
-    val proxyDetails = ProxyDetails(invalidHostUrl, invalidPort)
-    proxyFailure(proxyDetails)
+  scenario("Given HttpProxy instance and custom defaults, when proxy host url is 'none' and port is valid, then return valid proxy") {
+    setMetaData(invalidHostUrl, validPort)
+    val proxy = HttpProxy(metaDataService, customProxyDetails).proxy
+    proxy.nonEmpty shouldEqual true
+    proxy.foreach(checkProxy(_, validHostUrl, validPort))
   }
 
-  scenario("Given HttpProxy instance, when proxy host url is valid and port is not valid, then return default proxy") {
-    val validHostUrl = "www.wire.com"
-    val invalidPort = "Wire"
-    val proxyDetails = ProxyDetails(validHostUrl, invalidPort)
-    proxyFailure(proxyDetails)
+  scenario("Given HttpProxy instance, when proxy host url is 'none' and port is not valid, then return none") {
+    setMetaData(invalidHostUrl, invalidPort)
+    val proxy = HttpProxy(metaDataService, defaultProxyDetails).proxy
+    proxy.isEmpty shouldEqual true
   }
 
-  private def proxyFailure(proxyDetails: ProxyDetails) {
-    val proxy = HttpProxy(DefaultProxyDetails, proxyDetails).proxy
-    proxy shouldEqual None
+  scenario("Given HttpProxy instance and custom defaults, when proxy host url is 'none' and port is not valid, then return valid proxy") {
+    setMetaData(invalidHostUrl, invalidPort)
+    val proxy = HttpProxy(metaDataService, customProxyDetails).proxy
+    proxy.nonEmpty shouldEqual true
+    proxy.foreach(checkProxy(_, validHostUrl, validPort))
+  }
+
+  scenario("Given HttpProxy instance, when proxy host url is valid and port is not valid, then return none") {
+    setMetaData(validHostUrl, invalidPort)
+    val proxy = HttpProxy(metaDataService, defaultProxyDetails).proxy
+    proxy.isEmpty shouldEqual true
+  }
+
+  scenario("Given HttpProxy instance and custom defaults, when proxy host url is valid and port is not valid, then return valid proxy") {
+    setMetaData(validHostUrl, invalidPort)
+    val proxy = HttpProxy(metaDataService, customProxyDetails).proxy
+    proxy.nonEmpty shouldEqual true
+    proxy.foreach(checkProxy(_, validHostUrl, validPort))
   }
 }

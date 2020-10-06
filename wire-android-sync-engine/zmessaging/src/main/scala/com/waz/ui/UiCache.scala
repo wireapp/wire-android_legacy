@@ -20,6 +20,7 @@ package com.waz.ui
 import androidx.collection.LruCache
 import com.waz.CacheLike
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
@@ -98,7 +99,7 @@ class UiCache[Key, A <: AnyRef](lruSize: Int = 0)(implicit ui: UiModule)
       remove(ref)
       dropQueue()
     case Some(ref) =>
-      error(s"unexpected ref: $ref")
+      error(l"unexpected ref: $ref")
       dropQueue()
     case _ =>
   }

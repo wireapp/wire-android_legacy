@@ -20,49 +20,52 @@ package com.waz.service
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Bundle
 import com.waz.api.OtrClientType
-import com.waz.utils.returning
+import scala.collection.JavaConverters._
 
 import scala.util.Try
 
 class MetaDataService(context: Context) {
+  def metaData: Map[String, String] =
+    Try(context.getPackageManager.getApplicationInfo(context.getPackageName, PackageManager.GET_META_DATA).metaData)
+      .toOption
+      .map { bundle => bundle.keySet.asScala.map(key => key -> bundle.get(key).toString).toMap }
+      .getOrElse(Map.empty)
 
-  lazy val metaData = Try {
+  lazy val appVersion: Int =
+    Try(context.getPackageManager.getPackageInfo(context.getPackageName, 0).versionCode).getOrElse(0)
 
-    val ai = context.getPackageManager.getApplicationInfo(context.getPackageName, PackageManager.GET_META_DATA)
-    returning(Option(ai.metaData).getOrElse(new Bundle)) { meta =>
-    }
-  } .getOrElse(new Bundle)
+  lazy val versionName: String =
+    Try(context.getPackageManager.getPackageInfo(context.getPackageName, 0).versionName).getOrElse("X.XX")
 
-  lazy val appVersion = Try(context.getPackageManager.getPackageInfo(context.getPackageName, 0).versionCode).getOrElse(0)
-
-  lazy val versionName = Try(context.getPackageManager.getPackageInfo(context.getPackageName, 0).versionName).getOrElse("X.XX")
-
-  lazy val (majorVersion, minorVersion) = Try {
+  lazy val (majorVersion, minorVersion): (String, String) = Try {
     val vs = versionName.split('.').take(2)
     (vs(0), vs(1))
   }.getOrElse(("X", "XX"))
 
-
-  lazy val internalBuild = metaData.getBoolean("INTERNAL", false)
+  lazy val internalBuild: Boolean = metaData.get("INTERNAL").exists(_.toBoolean)
 
   // rough check for device type, used in otr client info
-  lazy val deviceClass = {
+  lazy val deviceClass: OtrClientType = {
     val dm = context.getResources.getDisplayMetrics
     val minSize = 600 * dm.density
     if (dm.heightPixels >= minSize && dm.widthPixels >= minSize) OtrClientType.TABLET else OtrClientType.PHONE
   }
 
-  lazy val deviceModel = {
+  lazy val deviceModel: String = {
     import android.os.Build._
     s"$MANUFACTURER $MODEL"
   }
 
-  lazy val androidVersion = android.os.Build.VERSION.RELEASE
+  lazy val androidVersion: String = android.os.Build.VERSION.RELEASE
 
-  lazy val localBluetoothName =
+  lazy val localBluetoothName: String =
     Try(Option(BluetoothAdapter.getDefaultAdapter.getName).getOrElse("")).getOrElse("")
 
-  val cryptoBoxDirName = "otr"
+  val cryptoBoxDirName: String = "otr"
+}
+
+object MetaDataService {
+  val HTTP_PROXY_URL_KEY = "http_proxy_url"
+  val HTTP_PROXY_PORT_KEY = "http_proxy_port"
 }

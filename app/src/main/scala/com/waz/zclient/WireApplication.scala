@@ -363,14 +363,15 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     SafeBase64.setDelegate(new AndroidBase64Delegate)
 
-    ZMessaging.globalReady.future.onSuccess {
-      case g =>
-        InternalLog.setLogsService(inject[LogsService])
-        InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
-        InternalLog.add(new BufferedLogOutput(
-          baseDir = getApplicationContext.getApplicationInfo.dataDir,
-          showSafeOnly = BuildConfig.SAFE_LOGGING))
-        g.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())
+    ZMessaging.globalReady.future.foreach { global =>
+      InternalLog.setLogsService(inject[LogsService])
+      InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
+      InternalLog.add(new BufferedLogOutput(
+        baseDir = getApplicationContext.getApplicationInfo.dataDir,
+        showSafeOnly = BuildConfig.SAFE_LOGGING)
+      )
+      global.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())
+      global.httpProxy.foreach(KotlinServices.INSTANCE.setProxy)
     }
 
     verbose(l"onCreate")
@@ -422,7 +423,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       inject[MessageNotificationsController],
       assets2Module,
       inject[FileRestrictionList],
-      ProxyDetails(BuildConfig.HTTP_PROXY_URL, BuildConfig.HTTP_PROXY_PORT)
+      ProxyDetails(BuildConfig.HTTP_PROXY_URL, BuildConfig.HTTP_PROXY_PORT.toInt)
     )
 
     val activityLifecycleCallback = inject[ActivityLifecycleCallback]

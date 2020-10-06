@@ -81,7 +81,7 @@ object NetworkDependencyProvider {
             .certificatePinner(CertificatePinnerFactory.create(backendItem.certificatePin()))
             .connectionSpecs(ConnectionSpecsFactory.create())
             .addInterceptor(userAgentInterceptor)
-            .proxy(httpProxy.proxy)
+            .proxy(httpProxy.proxy())
             .addLoggingInterceptor()
 
     private fun OkHttpClient.Builder.addLoggingInterceptor() = this.apply {
@@ -93,7 +93,7 @@ object NetworkDependencyProvider {
 
 val networkModule: Module = module {
     single { NetworkHandler(androidContext()) }
-    single { HttpProxy(androidContext()) }
+    single { HttpProxy() }
     single { createHttpClient(get(), get(), get(), get(), get(), get()) }
     single { retrofit(get(), get()) }
     single { AccessTokenRemoteDataSource(get()) }

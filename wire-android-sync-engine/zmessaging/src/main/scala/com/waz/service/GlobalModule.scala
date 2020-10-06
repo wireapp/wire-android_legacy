@@ -188,7 +188,7 @@ class GlobalModuleImpl(val context:             AContext,
   lazy val logsService:         LogsService                      = new LogsServiceImpl(prefs)
   lazy val customBackendClient: CustomBackendClient              = new CustomBackendClientImpl()
 
-  lazy val httpProxy:           Option[Proxy]                    = HttpProxy(context, defaultProxyDetails).proxy
+  lazy val httpProxy:           Option[Proxy]                    = HttpProxy(metadata, defaultProxyDetails).proxy
 }
 
 class EmptyGlobalModule extends GlobalModule {

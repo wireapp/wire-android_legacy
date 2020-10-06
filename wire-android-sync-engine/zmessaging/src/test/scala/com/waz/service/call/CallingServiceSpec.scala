@@ -54,7 +54,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   implicit val executionContext = new SerialDispatchQueue(name = "CallingServiceSpec")
 
-  val context        = mock[Context]
   val avs            = mock[Avs]
   val flows          = mock[FlowManagerService]
   val members        = mock[MembersStorage]
@@ -1183,7 +1182,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
-    (context.startService _).expects(*).anyNumberOfTimes().returning(true)
     (flows.flowManager _).expects().once().returning(None)
     (messages.addMissedCallMessage(_:RConvId, _:UserId, _:RemoteInstant)).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
     (messages.addMissedCallMessage(_:ConvId, _:UserId, _:RemoteInstant)).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
@@ -1196,7 +1194,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (usersStorage.get _).expects(selfUserId).anyNumberOfTimes().returning(Future.successful(Some(selfUserData)))
 
     val s = new CallingServiceImpl(
-      selfUserId, selfClientId, null, context, avs, convs, convsService, members, otrSyncHandler,
+      selfUserId, selfClientId, null, avs, convs, convsService, members, otrSyncHandler,
       flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, httpProxy = None
     )
     result(s.wCall)
