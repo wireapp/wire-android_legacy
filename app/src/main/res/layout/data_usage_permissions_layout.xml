@@ -36,6 +36,7 @@
                 android:id="@+id/preferences_send_anonymous_crash_report_data"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:contentDescription="@string/pref_advanced_send_anonymous_crash_reports_title"
                 app:subtitle="@string/pref_advanced_send_anonymous_crash_reports_summary"
                 app:title="@string/pref_advanced_send_anonymous_crash_reports_title" />
 
@@ -44,6 +45,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/wire__padding__20"
+                android:contentDescription="@string/pref_advanced_send_anonymous_usage_data_title"
                 app:subtitle="@string/pref_advanced_send_anonymous_usage_data_summary"
                 app:title="@string/pref_advanced_send_anonymous_usage_data_title" />
 
@@ -52,6 +54,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/wire__padding__20"
+                android:contentDescription="@string/pref_advanced_receive_news_and_offers_title"
                 app:subtitle="@string/pref_advanced_receive_news_and_offers_summary"
                 app:title="@string/pref_advanced_receive_news_and_offers_title" />
 
