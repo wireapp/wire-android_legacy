@@ -28,7 +28,7 @@ import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
-import com.waz.service.{GlobalModule, ZMessaging}
+import com.waz.service.{GlobalModule, MediaManagerService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.utils._
@@ -427,7 +427,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     }
   }
 
-  lazy val speakerButton = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
+  lazy val speakerButton: ButtonSignal[MediaManagerService] = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
     case (mm, isSpeakerSet) => mm.setSpeaker(!isSpeakerSet)
   }.disableAutowiring()
 }

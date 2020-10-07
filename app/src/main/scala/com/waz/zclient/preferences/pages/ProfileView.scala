@@ -226,7 +226,7 @@ case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   var controller = Option.empty[ProfileViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[ProfileViewImpl]).map(view => new ProfileViewController(view)(view.wContext.injector, view))
+    controller = Option(v.asInstanceOf[ProfileViewImpl]).map(view => new ProfileViewController(view)(view.wContext.injector, view.eventContext))
   }
 
   override def onViewDetached() = {

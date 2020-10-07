@@ -22,19 +22,19 @@ import com.waz.log.LogSE._
 import com.waz.model.UserId
 import com.waz.service.AccountsService.LoggedOut
 import com.waz.service.ZMessaging.accountTag
-import com.wire.signals.{EventContext, SerialDispatchQueue}
+import com.wire.signals.{BaseEventContext, SerialDispatchQueue}
 
-class AccountContext(userId: UserId, accounts: AccountsService) extends EventContext {
+class AccountContext(userId: UserId, accounts: AccountsService) extends BaseEventContext {
 
   implicit val logTag: LogTag = accountTag[AccountContext](userId)
   private implicit val dispatcher = SerialDispatchQueue(name = "AccountContext")
 
   accounts.accountState(userId).on(dispatcher) {
     case LoggedOut =>
+      stop()
       verbose(l"Account context stopped")
-      onContextStop()
     case _ =>
+      start()
       verbose(l"Account context started")
-      onContextStart()
   }
 }

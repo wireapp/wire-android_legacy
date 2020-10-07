@@ -178,7 +178,7 @@ case class AccountBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   private var controller = Option.empty[AccountViewController]
 
   override def onViewAttached(v: View) =
-    controller = Option(v.asInstanceOf[AccountViewImpl]).map(view => new AccountViewController(view)(view.wContext.injector, view, view.getContext))
+    controller = Option(v.asInstanceOf[AccountViewImpl]).map(view => new AccountViewController(view)(view.wContext.injector, view.eventContext, view.getContext))
 
   override def onViewDetached() =
     controller = None

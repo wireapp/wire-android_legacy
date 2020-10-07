@@ -226,7 +226,7 @@ case class OptionsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   var controller = Option.empty[OptionsViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[OptionsViewImpl]).map(ov => new OptionsViewController(ov)(ov.injector, ov))
+    controller = Option(v.asInstanceOf[OptionsViewImpl]).map(ov => new OptionsViewController(ov)(ov.injector, ov.eventContext))
   }
 
   override def onViewDetached() = {

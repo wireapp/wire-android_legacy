@@ -86,7 +86,7 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   private var controller = Option.empty[DevicesViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[DevicesViewImpl]).map(view => DevicesViewController(view)(view.injector, view))
+    controller = Option(v.asInstanceOf[DevicesViewImpl]).map(view => DevicesViewController(view)(view.injector, view.eventContext))
   }
 
   override def onViewDetached() = {

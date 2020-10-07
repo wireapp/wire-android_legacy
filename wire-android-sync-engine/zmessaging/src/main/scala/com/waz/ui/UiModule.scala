@@ -37,7 +37,7 @@ class ZMessagingResolver(ui: UiModule) {
 }
 
 trait UiEventContext {
-  implicit val eventContext = new EventContext() {}
+  implicit lazy val eventContext: EventContext = EventContext()
 
   private[ui] var createCount = 0
   private[ui] var startCount = 0
@@ -50,7 +50,7 @@ trait UiEventContext {
     startCount += 1
 
     if (startCount == 1) {
-      eventContext.onContextStart()
+      eventContext.start()
       onStarted ! true
     }
   }
@@ -62,13 +62,13 @@ trait UiEventContext {
 
     if (startCount == 0) {
       onStarted ! false
-      eventContext.onContextStop()
+      eventContext.stop()
     }
   }
 
   def onDestroy(): Unit = {
     Threading.assertUiThread()
-    eventContext.onContextDestroy()
+    eventContext.destroy()
   }
 }
 
@@ -86,8 +86,6 @@ class UiModule(val global: GlobalModule) extends UiEventContext with ZMessagingR
   currentZms.onChanged { _ => onReset ! true }
 
   def getCurrent: Future[Option[ZMessaging]] = accounts.activeZms.head
-  
-
 }
 
 object UiModule {
