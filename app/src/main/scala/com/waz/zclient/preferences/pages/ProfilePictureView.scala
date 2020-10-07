@@ -64,7 +64,7 @@ case class ProfilePictureBackStackKey(args: Bundle = new Bundle()) extends BackS
   var controller = Option.empty[ProfilePictureViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[ProfilePictureViewImpl]).map(v => new ProfilePictureViewController(v)(v.wContext.injector, v))
+    controller = Option(v.asInstanceOf[ProfilePictureViewImpl]).map(v => new ProfilePictureViewController(v)(v.wContext.injector, v.eventContext))
   }
 
   override def onViewDetached() = {

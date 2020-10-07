@@ -27,9 +27,8 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.{AggregatingSignal, CancellableFuture, EventStream, Signal}
 import com.waz.utils.RichFuture.traverseSequential
-import com.wire.signals.{AggregatingSignal, EventContext, EventStream}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -63,7 +62,11 @@ class TypingService(userId:        UserId,
     case _            => stopTyping()
   }
 
-  def typingUsers(conv: ConvId) = new AggregatingSignal[IndexedSeq[TypingUser], IndexedSeq[UserId]](onTypingChanged.filter(_._1 == conv).map(_._2), Future { typing(conv).map(_.id) }, { (_, updated) => updated.map(_.id) })
+  def typingUsers(conv: ConvId): Signal[IndexedSeq[UserId]] = new AggregatingSignal[IndexedSeq[TypingUser], IndexedSeq[UserId]] (
+    source  = onTypingChanged.filter(_._1 == conv).map(_._2),
+    loader  = Future { typing(conv).map(_.id) },
+    updater = (_, updated) => updated.map(_.id)
+  )
 
   def handleTypingEvent(e: TypingEvent): Future[Unit] = beDriftPref.apply().map { beDrift =>
     if (isRecent(e, beDrift)) {
@@ -75,7 +78,6 @@ class TypingService(userId:        UserId,
       Future.successful(())
     }
   }
-
 
   def selfChangedInput(conv: ConvId): Future[Unit] = Future {
     stopTypingTimeout.cancel()

@@ -17,13 +17,14 @@
  */
 package com.waz.threading
 
-import java.util.concurrent.{ExecutorService, Executors}
+import java.util.concurrent.Executors
 
 import android.os.{Handler, HandlerThread, Looper}
 import com.waz.utils.returning
 import com.waz.zms.BuildConfig
+import com.wire.signals.Subscription.Subscriber
 import com.wire.signals.Threading.Cpus
-import com.wire.signals.{DispatchQueue, EventContext, EventStream, Events, Signal, Subscription}
+import com.wire.signals.{DispatchQueue, EventContext, EventStream, Signal, Subscription}
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.control.NonFatal
@@ -31,12 +32,12 @@ import scala.util.control.NonFatal
 object Threading {
 
   implicit class RichSignal[E](val signal: Signal[E]) extends AnyVal {
-    def onUi(subscriber: Events.Subscriber[E])(implicit context: EventContext = EventContext.Global): Subscription =
+    def onUi(subscriber: Subscriber[E])(implicit context: EventContext = EventContext.Global): Subscription =
       signal.on(Threading.Ui)(subscriber)(context)
   }
 
   implicit class RichEventStream[E](val stream: EventStream[E]) extends AnyVal {
-    def onUi(subscriber: Events.Subscriber[E])(implicit context: EventContext = EventContext.Global): Subscription =
+    def onUi(subscriber: Subscriber[E])(implicit context: EventContext = EventContext.Global): Subscription =
       stream.on(Threading.Ui)(subscriber)(context)
   }
 

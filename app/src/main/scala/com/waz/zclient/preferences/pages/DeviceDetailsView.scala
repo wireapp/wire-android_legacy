@@ -163,7 +163,7 @@ case class DeviceDetailsBackStackKey(args: Bundle) extends BackStackKey(args) {
   override def layoutId = R.layout.preferences_device_details
 
   override def onViewAttached(v: View) =
-    controller = Option(v.asInstanceOf[DeviceDetailsViewImpl]).map(view => DeviceDetailsViewController(view, deviceId)(view.injector, view, v.getContext))
+    controller = Option(v.asInstanceOf[DeviceDetailsViewImpl]).map(view => DeviceDetailsViewController(view, deviceId)(view.injector, view.eventContext, v.getContext))
 
   override def onViewDetached() = {
     controller = None
