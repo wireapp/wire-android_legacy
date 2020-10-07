@@ -370,7 +370,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         showSafeOnly = BuildConfig.SAFE_LOGGING)
       )
       global.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())(Threading.Background)
-      global.httpProxy.foreach(KotlinServices.INSTANCE.setProxy)
+      global.httpProxy.foreach(KotlinServices.INSTANCE.setHttpProxy)
     }
 
     verbose(l"onCreate")

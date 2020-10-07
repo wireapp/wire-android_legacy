@@ -23,10 +23,6 @@ object KotlinServices : KoinComponent {
         audioService = AudioServiceImpl(context)
     }
 
-    fun setProxy(proxy: Proxy) {
-        httpProxy = proxy
-    }
-
     fun createBackup(
         userId: String,
         clientId: String,
