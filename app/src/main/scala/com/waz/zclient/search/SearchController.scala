@@ -21,12 +21,12 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.IntegrationData
 import com.waz.service.{IntegrationsService, SearchQuery, SearchResults, UserSearchService}
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{Injectable, Injector}
 
-class SearchController(implicit inj: Injector, eventContext: EventContext) extends Injectable with DerivedLogTag {
+class SearchController(implicit inj: Injector) extends Injectable with DerivedLogTag {
 
   import SearchController._
 

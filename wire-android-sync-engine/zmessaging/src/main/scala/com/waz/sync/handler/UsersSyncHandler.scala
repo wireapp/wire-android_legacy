@@ -57,7 +57,6 @@ class UsersSyncHandlerImpl(userService:      UserService,
   extends UsersSyncHandler with DerivedLogTag {
   import UsersSyncHandler._
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   override def syncUsers(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.flatMap {
     case Right(users) =>

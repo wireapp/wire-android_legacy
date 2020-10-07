@@ -37,10 +37,10 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) extends DerivedLogTag {
   val onCreateFromMessage = EventStream[SessionId]()
 
   private def dispatch[A](id: SessionId)(f: Option[CryptoBox] => A) =
-    Serialized.future(id){cryptoBox.cryptoBox.map(f)}
+    Serialized.future(id.toString){cryptoBox.cryptoBox.map(f)}
 
   private def dispatchFut[A](id: SessionId)(f: Option[CryptoBox] => Future[A]) =
-    Serialized.future(id){cryptoBox.cryptoBox.flatMap(f)}
+    Serialized.future(id.toString){cryptoBox.cryptoBox.flatMap(f)}
 
   def getOrCreateSession(id: SessionId, key: PreKey) = dispatch(id) {
     case None => None

@@ -37,7 +37,7 @@ class UiCache[Key, A <: AnyRef](lruSize: Int = 0)(implicit ui: UiModule)
   val lru = new LruCache[Key, A](lruSize max 1)
   val items = new mutable.HashMap[Key, WeakReference[A]]
 
-  ui.onReset.onUi(_ => clear())(EventContext.Global)
+  ui.onReset.onUi(_ => clear())
 
   def get(k: Key): Option[A] = {
     Threading.assertUiThread()

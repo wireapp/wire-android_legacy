@@ -28,7 +28,7 @@ import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 
 class AsyncFileWriter(file: File) {
-  private val serialDispatcher = new SerialDispatchQueue()
+  private val serialDispatcher = SerialDispatchQueue()
   private val promisedCompletion = Promise[Unit]
   @volatile private var finishCalled = false
   @volatile private var activeStream = Option.empty[FileOutputStream]

@@ -43,9 +43,8 @@ class CacheStorageImpl(storage: Database, context: Context)
     with DerivedLogTag {
 
   import com.waz.cache.CacheStorage._
-  import com.wire.signals.EventContext.Implicits.global
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "CacheStorage")
+  import com.waz.threading.Threading.Implicits.Background
 
   onUpdated { _ foreach {
     case (prev, updated) if prev.fileId != updated.fileId => cleanup(prev)

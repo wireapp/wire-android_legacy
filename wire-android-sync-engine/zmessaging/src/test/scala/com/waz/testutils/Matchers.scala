@@ -76,8 +76,6 @@ object Matchers {
   }
 
   def withEvent[A, B](p: EventStream[A])(f: PartialFunction[A, Boolean])(body: => B)(implicit timeout: FiniteDuration = 15.seconds): B = {
-    import com.wire.signals.EventContext.Implicits.global
-
     var gotNotification = false
     p {
       f.andThen(if (_) gotNotification = true)

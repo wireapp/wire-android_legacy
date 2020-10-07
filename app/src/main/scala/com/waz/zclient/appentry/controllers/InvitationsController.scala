@@ -23,7 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.EmailAddress
 import com.waz.service.AccountsService
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
-import com.wire.signals.{CancellableFuture, EventContext, SerialDispatchQueue, Signal}
+import com.wire.signals.{CancellableFuture, Signal}
 import com.waz.utils._
 import com.waz.zclient.appentry.controllers.InvitationsController._
 import com.waz.zclient.{Injectable, Injector}
@@ -31,10 +31,9 @@ import com.waz.zclient.{Injectable, Injector}
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 
-class InvitationsController(implicit inj: Injector, eventContext: EventContext, context: Context)
+class InvitationsController(implicit inj: Injector, context: Context)
   extends Injectable with DerivedLogTag {
-
-  private implicit val dispatcher = new SerialDispatchQueue(name = "InvitationsController")
+  import com.waz.threading.Threading.Implicits.Background
 
   private lazy val accountsService      = inject[AccountsService]
   private lazy val createTeamController = inject[CreateTeamController]

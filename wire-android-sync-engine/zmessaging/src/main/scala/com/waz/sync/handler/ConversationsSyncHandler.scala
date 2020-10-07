@@ -61,7 +61,6 @@ class ConversationsSyncHandler(selfUserId:          UserId,
 
   import Threading.Implicits.Background
   import com.waz.sync.handler.ConversationsSyncHandler._
-  private implicit val ec = EventContext.Global
 
   // optimization: same team conversations use default roles so we don't have to ask the backend
   private def loadConversationRoles(resps: Seq[ConversationResponse]) = {

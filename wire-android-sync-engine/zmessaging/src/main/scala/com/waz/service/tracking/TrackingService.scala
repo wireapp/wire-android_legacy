@@ -27,7 +27,6 @@ import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.tracking.TrackingService.ZmsProvider
 import com.waz.service.tracking.TrackingServiceImpl.{CountlyEventProperties, RichHashMap}
 import com.waz.service.{AccountsService, ZMessaging}
-import com.wire.signals.SerialDispatchQueue
 import com.waz.utils.{MathUtils, RichWireInstant}
 import com.wire.signals.{EventContext, EventStream, Signal}
 
@@ -56,18 +55,12 @@ class DummyTrackingService extends TrackingService {
 }
 
 object TrackingService {
-
   type ZmsProvider = Option[UserId] => Future[Option[ZMessaging]]
-
-  implicit val dispatcher = new SerialDispatchQueue(name = "TrackingService")
-  private[waz] implicit val ec: EventContext = EventContext.Global
-
 }
 
 class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: ZmsProvider, versionName: String)
   extends TrackingService with DerivedLogTag {
-
-  import TrackingService._
+  import com.waz.threading.Threading.Implicits.Background
 
   override lazy val isTrackingEnabled: Signal[Boolean] =
     ZMessaging.currentAccounts.activeZms.flatMap {

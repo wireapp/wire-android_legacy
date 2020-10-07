@@ -254,6 +254,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       //WHEN
       result(service.deleteGroupConversation(teamId, rConvId))
+
+      awaitAllTasks
     }
 
     scenario("When delete group conversation request returns error, post error to ui") {
@@ -282,6 +284,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       //WHEN
       result(service.deleteGroupConversation(teamId, rConvId))
+
+      awaitAllTasks
     }
   }
 

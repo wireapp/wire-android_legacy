@@ -34,7 +34,6 @@ import scala.concurrent.duration._
 class CacheCleaningService(cache: CacheService, prefs: GlobalPreferences) extends DerivedLogTag {
   import CacheCleaningService._
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   CancellableFuture.delayed(1.minute) { requestDeletionOfExpiredCacheEntries() }
 

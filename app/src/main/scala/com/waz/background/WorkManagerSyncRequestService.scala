@@ -34,7 +34,7 @@ import com.waz.service.NetworkModeService
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.{SyncHandler, SyncRequestService, SyncResult}
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.{Injectable, Injector, WireApplication, WireContext}
 import com.waz.zclient.log.LogUI._
@@ -46,7 +46,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context, eventContext: EventContext)
+class WorkManagerSyncRequestService (implicit inj: Injector, cxt: Context)
   extends SyncRequestService with Injectable {
 
   import WorkManagerSyncRequestService._

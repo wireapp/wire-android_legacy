@@ -22,7 +22,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.services.{FutureService, ZMessagingService}
-import com.wire.signals.EventContext
 import com.waz.utils.returning
 import com.waz.utils.wrappers.Intent
 import com.waz.zclient.log.LogUI._
@@ -36,7 +35,6 @@ class CallWakeService extends FutureService with ZMessagingService with DerivedL
 
   import CallWakeService._
   import com.waz.zclient.Intents.RichIntent
-  implicit val ec: EventContext.Global.type = EventContext.Global
 
   override protected def onIntent(intent: AIntent, id: Int): Future[Any] = onZmsIntent(intent) { implicit zms =>
     debug(l"onIntent ${RichIntent(intent)}")

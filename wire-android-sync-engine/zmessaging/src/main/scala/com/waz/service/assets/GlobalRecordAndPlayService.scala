@@ -52,17 +52,16 @@ class RecordAndPlayService(userId:        UserId,
                            globalService: GlobalRecordAndPlayService,
                            errors:        ErrorsService,
                            accounts:      AccountsService) {
-  import EventContext.Implicits.global
   import Threading.Implicits.Background
 
   globalService.onError { err =>
     err.tpe.foreach { tpe => errors.addErrorWhenActive(ErrorData(Uid(), tpe, responseMessage = err.message)) }
   }
 
-  accounts.accountState(userId).map(_ == InForeground).onChanged.on(Background) {
+  accounts.accountState(userId).map(_ == InForeground).onChanged {
     case false => globalService.AudioFocusListener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
     case true =>
-  }(EventContext.Global)
+  }
 }
 
 // invariant: only do side effects and/or access player/recorder during a transition
@@ -380,7 +379,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
     transitionF(s => Future(f(s)))(errorMessage, errorType)
 
   private def transitionF(f: State => Future[Transition])(errorMessage: String, errorType: Option[ErrorType] = None): Future[State] =
-    Serialized.future(GlobalRecordAndPlayService)(keepStateOnFailure(stateSource.head.flatMap(f))(errorMessage, errorType).map(applyState))
+    Serialized.future("GlobalRecordAndPlayService")(keepStateOnFailure(stateSource.head.flatMap(f))(errorMessage, errorType).map(applyState))
 
   private def duringIdentityTransition[A](pf: PartialFunction[State, Future[A]]): Future[A] = {
     val p = Promise[A]

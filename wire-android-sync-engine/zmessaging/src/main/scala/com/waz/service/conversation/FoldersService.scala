@@ -64,7 +64,6 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
                          sync: SyncServiceHandle
                         ) extends FoldersService with DerivedLogTag  {
   import Threading.Implicits.Background
-  private implicit val ev: EventContext = EventContext.Global
 
   private val shouldSyncFolders = userPrefs.preference(UserPreferences.ShouldSyncFolders)
 

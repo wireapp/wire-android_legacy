@@ -69,7 +69,7 @@ class GroupedEventProcessingQueue[A <: Event, Key]
   (groupBy: A => Key, processor: (Key, Seq[A]) => Future[Any], name: String = "")(implicit val evClassTag: ClassTag[A])
   extends EventProcessingQueue[A] {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = s"GroupedEventProcessingQueue[${evClassTag.runtimeClass.getSimpleName}]")
+  private implicit val dispatcher = SerialDispatchQueue(name = s"GroupedEventProcessingQueue[${evClassTag.runtimeClass.getSimpleName}]")
 
   private val queues = new mutable.HashMap[Key, SerialProcessingQueue[A]]
 
@@ -124,14 +124,14 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
   }
 
   // post some task on this queue, effectively blocking all other processing while this task executes
-  def post[T](f: => Future[T]): Future[T] = Serialized.future(this)(fromTry(f))
+  def post[T](f: => Future[T]): Future[T] = Serialized.future(name)(fromTry(f))
 
   /* just for tests! */
   def clear(): Unit = queue.clear()
 }
 
 class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Future[Any], name: String = "") extends SerialProcessingQueue[A](processor, name)  {
-  private implicit val dispatcher = new SerialDispatchQueue(name = if (name.isEmpty) "ThrottledProcessingQueue_" + hashCode() else name)
+  private implicit val dispatcher = SerialDispatchQueue(name = if (name.isEmpty) "ThrottledProcessingQueue_" + hashCode() else name)
   private val waiting = new AtomicBoolean(false)
   @volatile private var waitFuture: CancellableFuture[Any] = CancellableFuture.successful(())
   private var lastDispatched = 0L

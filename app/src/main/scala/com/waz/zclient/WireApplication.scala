@@ -115,7 +115,6 @@ object WireApplication extends DerivedLogTag {
 
     implicit lazy val ctx:          WireApplication = WireApplication.APP_INSTANCE
     implicit lazy val wContext:     WireContext     = ctx
-    implicit lazy val eventContext: EventContext    = EventContext.Global
 
     //Android services
     bind [ActivityManager]      to ctx.getSystemService(Context.ACTIVITY_SERVICE).asInstanceOf[ActivityManager]

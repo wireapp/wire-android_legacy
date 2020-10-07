@@ -28,7 +28,7 @@ import android.media.AudioTrack.{MODE_STREAM, OnPlaybackPositionUpdateListener, 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.service.assets.GlobalRecordAndPlayService.{MediaPointer, PCMContent}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.DispatchQueue
 import com.waz.threading.Threading
 import PCM.SizeOfShort
 import org.threeten.bp
@@ -41,7 +41,7 @@ import scala.util.Try
 class PCMPlayer private (content: PCMContent, track: AudioTrack, totalSamples: Long, stream: FileInputStream, observer: Player.Observer) extends Player {
   import PCMPlayer._
 
-  private implicit val dispatcher = new SerialDispatchQueue(Threading.IO)
+  private implicit val dispatcher = DispatchQueue(DispatchQueue.SERIAL, Threading.IO, None)
   private val buffer = ByteBuffer.allocateDirect(bufferSizeInShorts * SizeOfShort).order(LITTLE_ENDIAN)
   private def channel = stream.getChannel
 

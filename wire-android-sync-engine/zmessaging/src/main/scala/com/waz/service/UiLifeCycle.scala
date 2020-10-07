@@ -30,7 +30,7 @@ trait UiLifeCycle {
 
 class UiLifeCycleImpl extends UiLifeCycle {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "LifeCycleDispatcher")
+  private implicit val dispatcher = SerialDispatchQueue(name = "LifeCycleDispatcher")
 
   private val uiCount = Signal(0)
 

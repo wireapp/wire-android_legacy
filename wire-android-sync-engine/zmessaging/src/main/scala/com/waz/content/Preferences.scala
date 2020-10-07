@@ -200,7 +200,7 @@ object Preferences {
   */
 class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Preferences {
 
-  override protected implicit val dispatcher = new SerialDispatchQueue(name = "GlobalPreferencesDispatcher")
+  override protected implicit val dispatcher = SerialDispatchQueue(name = "GlobalPreferencesDispatcher")
   override protected implicit val logTag = LogTag[GlobalPreferences]
 
   def v31AssetsEnabled = false

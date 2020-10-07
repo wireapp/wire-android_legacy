@@ -35,7 +35,7 @@ import com.waz.model._
 import com.waz.service.push.NotificationUiController
 import com.waz.service.{AccountsService, UiLifeCycle}
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 import com.waz.utils.wrappers.Bitmap
 import com.waz.zclient.WireApplication._
 import com.waz.zclient.common.controllers.SoundController
@@ -54,7 +54,7 @@ import scala.concurrent.Future
 import com.waz.threading.Threading._
 
 class MessageNotificationsController(applicationId: String = BuildConfig.APPLICATION_ID)
-                                    (implicit inj: Injector, cxt: Context, eventContext: EventContext)
+                                    (implicit inj: Injector, cxt: Context)
   extends Injectable
     with NotificationUiController
     with DerivedLogTag {

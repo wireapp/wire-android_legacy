@@ -111,7 +111,6 @@ class MessagesServiceImpl(selfUserId:      UserId,
                           buttonsStorage:  ButtonsStorage,
                           sync:            SyncServiceHandle) extends MessagesService with DerivedLogTag {
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   override val msgEdited = EventStream[(MessageId, MessageId)]()
 
@@ -134,7 +133,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
         Future successful None
     }
 
-  override def applyMessageEdit(convId: ConvId, userId: UserId, time: RemoteInstant, gm: GenericMessage) = Serialized.future("applyMessageEdit", convId) {
+  override def applyMessageEdit(convId: ConvId, userId: UserId, time: RemoteInstant, gm: GenericMessage) = Serialized.future(s"applyMessageEdit $convId") {
 
     def findLatestUpdate(id: MessageId): Future[Option[MessageData]] =
       updater.getMessage(id) flatMap {
@@ -311,7 +310,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
   }
 
   override def addDeviceStartMessages(convs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]] =
-    Serialized.future('addDeviceStartMessages)(traverse(convs filter isGroupOrOneToOne) { conv =>
+    Serialized.future("addDeviceStartMessages")(traverse(convs filter isGroupOrOneToOne) { conv =>
       storage.getLastMessage(conv.id) map {
         case None =>    Some(MessageData(MessageId(), conv.id, Message.Type.STARTED_USING_DEVICE, selfUserId, time = RemoteInstant.Epoch))
         case Some(_) => None

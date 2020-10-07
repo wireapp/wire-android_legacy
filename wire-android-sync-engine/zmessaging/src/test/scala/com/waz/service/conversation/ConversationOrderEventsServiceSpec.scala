@@ -36,7 +36,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ConversationOrderEventsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
-  implicit val outputDispatcher = new SerialDispatchQueue(name = "OutputWriter")
+  implicit val outputDispatcher = SerialDispatchQueue(name = "OutputWriter")
 
   scenario("All batched conversation events go to the order event service before any other conv-related service") {
 

@@ -36,7 +36,6 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
                              connectionsClient: ConnectionsClient) extends DerivedLogTag {
 
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   def syncConnections(): Future[SyncResult] = {
     connectionsClient.loadConnections().future flatMap {

@@ -178,7 +178,7 @@ object LegacyDependencies {
     const val SCALA_MAJOR_VERSION = "2.11"
     const val SCALA_VERSION = SCALA_MAJOR_VERSION.plus(".12")
     // signals
-    const val WIRE_SIGNALS = "0.2.2"
+    const val WIRE_SIGNALS = "0.2.3"
 
     //build
     val scalaLibrary = "org.scala-lang:scala-library:$SCALA_VERSION"

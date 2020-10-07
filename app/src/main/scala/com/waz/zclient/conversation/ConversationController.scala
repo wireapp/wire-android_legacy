@@ -32,10 +32,10 @@ import com.waz.model.otr.Client
 import com.waz.service.AccountManager
 import com.waz.service.assets.{AssetInput, Content, ContentForUpload, FileRestrictionList, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
-import com.wire.signals.{Serialized, EventContext, EventStream, Signal, SourceStream}
+import com.wire.signals.{Serialized, EventStream, Signal, SourceStream}
 import com.waz.utils.{returning, _}
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -53,10 +53,10 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Success, Try}
 
-class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
+class ConversationController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
+  import com.waz.threading.Threading.Implicits.Background
 
   private lazy val selectedConv          = inject[Signal[SelectedConversationService]]
   private lazy val convsUi               = inject[Signal[ConversationsUiService]]
@@ -352,7 +352,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     } yield {}
 
   def leave(convId: ConvId): CancellableFuture[Unit] =
-    returning (Serialized("Conversations", convId)(CancellableFuture.lift(convsUi.head.flatMap(_.leaveConversation(convId))))) { _ =>
+    returning(Serialized(s"Conversations $convId")(CancellableFuture.lift(convsUi.head.flatMap(_.leaveConversation(convId))))) { _ =>
       currentConvId.head.map { id => if (id == convId) setCurrentConversationToNext(ConversationChangeRequester.LEAVE_CONVERSATION) }
     }
 
@@ -382,7 +382,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     convsUi.head.flatMap(_.setConversationMuted(id, muted)).map(_ => {})
 
   def delete(id: ConvId, alsoLeave: Boolean): CancellableFuture[Option[ConversationData]] = {
-    def clear(id: ConvId) = Serialized("Conversations", id)(CancellableFuture.lift(convsUi.head.flatMap(_.clearConversation(id))))
+    def clear(id: ConvId) = Serialized(s"Conversations $id")(CancellableFuture.lift(convsUi.head.flatMap(_.clearConversation(id))))
     if (alsoLeave) leave(id).flatMap(_ => clear(id)) else clear(id)
   }
 

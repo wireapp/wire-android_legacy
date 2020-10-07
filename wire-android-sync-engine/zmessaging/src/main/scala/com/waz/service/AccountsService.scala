@@ -134,8 +134,6 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
   import AccountsService._
   import Threading.Implicits.Background
 
-  implicit val ec: EventContext = EventContext.Global
-
   //needed immediately for migration, don't make lazy or we risk deadlocks
   val storageOld    = global.accountsStorageOld
   val prefs         = global.prefs

@@ -45,7 +45,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Try
 
-
 trait OtrService {
   def sessions: CryptoSessionService // only for tests
 
@@ -89,7 +88,6 @@ class OtrServiceImpl(selfUserId:     UserId,
                      clientsStorage: OtrClientsStorage,
                      prefs:          GlobalPreferences,
                      tracking:       TrackingService) extends OtrService with DerivedLogTag {
-  import EventContext.Implicits.global
   import OtrService._
   import Threading.Implicits.Background
 

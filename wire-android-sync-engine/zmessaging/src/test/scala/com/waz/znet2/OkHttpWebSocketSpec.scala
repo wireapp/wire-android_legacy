@@ -35,16 +35,12 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{ Flow, Source, Sink, Keep }
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.ws.{ TextMessage, Message, BinaryMessage }
-import akka.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import akka.http.scaladsl.server.Directives
 import scala.concurrent.{ Future, Promise, Await }
 import scala.concurrent.duration._
 
 class OkHttpWebSocketSpec extends WordSpec with MustMatchers with Inside with BeforeAndAfterEach {
-
-  import EventContext.Implicits.global
   import com.waz.BlockingSyntax.toBlocking
 
   private var wsPort: Int = _

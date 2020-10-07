@@ -24,7 +24,7 @@ import android.app.Activity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.service.tracking._
-import com.wire.signals.{EventContext, SerialDispatchQueue, Signal}
+import com.wire.signals.Signal
 import com.waz.zclient._
 import com.waz.zclient.log.LogUI._
 import com.waz.content.UserPreferences.CountlyTrackingId
@@ -37,10 +37,9 @@ import ly.count.android.sdk.{Countly, CountlyConfig, DeviceId}
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
-class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
+class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
   extends Injectable with DerivedLogTag {
-
-  private implicit val dispatcher = new SerialDispatchQueue(name = "Tracking")
+  import com.waz.threading.Threading.Implicits.Background
 
   private val tracking  = inject[TrackingService]
   private lazy val am = inject[Signal[AccountManager]]
@@ -89,7 +88,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     } yield ()
   }
 
-  def optOut(): Unit = dispatcher {
+  def optOut(): Unit = {
     verbose(l"optOut")
   }
 

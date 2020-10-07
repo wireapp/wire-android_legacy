@@ -106,7 +106,6 @@ class UserServiceImpl(selfUserId:        UserId,
                      ) extends UserService with DerivedLogTag {
 
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   private val shouldSyncUsers = userPrefs.preference(UserPreferences.ShouldSyncUsers)
 
@@ -215,7 +214,7 @@ class UserServiceImpl(selfUserId:        UserId,
     usersStorage.updateOrCreateAll(entries.map(entry => entry.id -> updateOrAdd(entry)).toMap)
   }
 
-  override def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]] = Serialized.future("syncRichInfoNow", id) {
+  override def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]] = Serialized.future(s"syncRichInfoNow $id") {
     usersClient.loadRichInfo(id).future.flatMap {
       case Right(f) =>
           updateUserData(id, u => u.copy(fields = f))
@@ -234,7 +233,7 @@ class UserServiceImpl(selfUserId:        UserId,
         deleteUsers(Set(userId)).map(_ => None)
     }
 
-  def syncSelfNow: Future[Option[UserData]] = Serialized.future("syncSelfNow", selfUserId) {
+  def syncSelfNow: Future[Option[UserData]] = Serialized.future(s"syncSelfNow $selfUserId") {
     usersClient.loadSelf().future.flatMap {
       case Right(info) =>
         updateSyncedUsers(Seq(info)) map { _.headOption }
@@ -385,8 +384,7 @@ class ExpiredUsersService(push:         PushService,
                           users:        UserService,
                           usersStorage: UsersStorage,
                           sync:         SyncServiceHandle)(implicit ev: AccountContext) extends DerivedLogTag {
-
-  private implicit val ec = new SerialDispatchQueue(name = "ExpiringUsers")
+  import com.waz.threading.Threading.Implicits.Background
 
   private var timers = Map[UserId, CancellableFuture[Unit]]()
 

@@ -17,10 +17,9 @@
  */
 package com.waz.zclient.appentry.controllers
 
-import com.wire.signals.EventContext
 import com.waz.zclient.{Injectable, Injector}
 
-class CreateTeamController(implicit inj: Injector, eventContext: EventContext) extends Injectable {
+class CreateTeamController(implicit inj: Injector) extends Injectable {
 
   var teamName = ""
   var teamEmail = ""

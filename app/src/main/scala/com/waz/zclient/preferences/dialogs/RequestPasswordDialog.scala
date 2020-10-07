@@ -32,7 +32,7 @@ import com.google.android.material.textfield.{TextInputEditText, TextInputLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, EventStream}
+import com.wire.signals.EventStream
 import com.waz.utils.returning
 import com.waz.zclient.messages.ExecutorWrapper
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -172,7 +172,7 @@ object RequestPasswordDialog {
             biometricDesc: Option[String] = None,
             isCancellable: Boolean        = true,
             useBiometric:  Boolean        = false
-           )(implicit evContext: EventContext): RequestPasswordDialog =
+           ): RequestPasswordDialog =
     returning(new RequestPasswordDialog) { dialog =>
       dialog.setArguments(returning(new Bundle()) { b =>
         b.putString(TitleArg, title)

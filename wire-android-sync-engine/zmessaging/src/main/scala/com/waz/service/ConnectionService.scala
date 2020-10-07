@@ -63,7 +63,6 @@ class ConnectionServiceImpl(selfUserId:      UserId,
                             sync:            SyncServiceHandle) extends ConnectionService with DerivedLogTag {
 
   import Threading.Implicits.Background
-  private implicit val ec = EventContext.Global
 
   override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((c, e) => handleUserConnectionEvents(e))
 
@@ -247,7 +246,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     getOrCreateOneToOneConversations(Seq(OneToOneConvData(toUser, remoteId, convType))).map(_.values.head)
 
   private def getOrCreateOneToOneConversations(convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]] =
-    Serialized.future('getOrCreateOneToOneConversations) {
+    Serialized.future("getOrCreateOneToOneConversations") {
       verbose(l"getOrCreateOneToOneConversations(self: $selfUserId, convs:${convsInfo.size})")
 
       def convIdForUser(userId: UserId) = ConvId(userId.str)

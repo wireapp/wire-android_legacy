@@ -23,7 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{IntegrationsService, ZMessaging}
-import com.wire.signals.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.UiStorage
@@ -31,7 +31,7 @@ import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.Future
 
-class CreateConversationController(implicit inj: Injector, ev: EventContext)
+class CreateConversationController(implicit inj: Injector)
   extends Injectable with DerivedLogTag  {
 
   import com.waz.threading.Threading.Implicits.Background
