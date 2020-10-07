@@ -273,7 +273,6 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val errorResponse = ErrorResponse(404, message = "not found", label = "")
 
       (sync.deleteGroupConversation _).expects(teamId, rConvId).anyNumberOfTimes().onCall { (_, rId) =>
-        println("here")
         service.onGroupConversationDeleteError(errorResponse, rId)
         Future.successful(SyncId())
       }
