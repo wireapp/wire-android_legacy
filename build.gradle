@@ -74,11 +74,11 @@ apply from: "./jacoco/coverage.gradle"
 
 
 ext {
-    compileSdkVersion = 29
+    compileSdkVersion = 30
     // When upgrading minimum sdk you might want to search for occurrences of Build.VERSION_CODES.
     // There are some classes with possibility of being simplified.
     minSdkVersion = 24
-    targetSdkVersion = 29
+    targetSdkVersion = 30
 
     buildToolsVersion = '29.0.3'
     sourceCompatibilityVersion = JavaVersion.VERSION_1_8

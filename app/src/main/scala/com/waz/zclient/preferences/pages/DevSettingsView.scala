@@ -159,7 +159,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     new AlertDialog.Builder(context)
       .setTitle("Random new value for LastStableNotification")
       .setMessage(s"Sets LastStableNotification to $randomUid")
-      .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+      .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
         override def onClick(dialog: DialogInterface, which: Int): Unit = {
           val zms = inject[Signal[ZMessaging]]
           zms.map(_.userPrefs.preference(LastStableNotification)).onUi {
@@ -167,7 +167,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
           }
         }
       })
-      .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+      .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
         override def onClick(dialog: DialogInterface, which: Int): Unit = {}
       })
       .setIcon(android.R.drawable.ic_dialog_alert).show
