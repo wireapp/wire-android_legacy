@@ -28,6 +28,7 @@ import com.waz.bitmap.video.VideoTranscoder
 import com.waz.cache.CacheService
 import com.waz.client.{RegistrationClient, RegistrationClientImpl}
 import com.waz.content._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.{LogsService, LogsServiceImpl}
 import com.waz.permissions.PermissionsService
 import com.waz.service.assets.{AudioTranscoder, FileRestrictionList, GeneralFileCacheImpl, GlobalRecordAndPlayService}
@@ -108,12 +109,13 @@ trait GlobalModule {
 
 class GlobalModuleImpl(val context:             AContext,
                        val backend:             BackendConfig,
-                       val httpProxy:           Option[Proxy],
                        val prefs:               GlobalPreferences,
                        val googleApi:           GoogleApi,
                        val syncRequests:        SyncRequestService,
                        val notificationsUi:     NotificationUiController,
-                       val fileRestrictionList: FileRestrictionList) extends GlobalModule { global =>
+                       val fileRestrictionList: FileRestrictionList,
+                       val defaultProxyDetails: ProxyDetails
+                      ) extends GlobalModule with DerivedLogTag { global =>
 
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
@@ -182,7 +184,8 @@ class GlobalModuleImpl(val context:             AContext,
 
   lazy val logsService:         LogsService                      = new LogsServiceImpl(prefs)
   lazy val customBackendClient: CustomBackendClient              = new CustomBackendClientImpl()
-  lazy val proxy:               Option[Proxy]                    = httpProxy
+
+  lazy val httpProxy:           Option[Proxy]                    = HttpProxy(metadata, defaultProxyDetails).proxy
 }
 
 class EmptyGlobalModule extends GlobalModule {

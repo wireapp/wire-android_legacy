@@ -3,6 +3,7 @@
 package com.waz.zclient.core.network.di
 
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.KotlinServices
 import com.waz.zclient.core.backend.BackendItem
 import com.waz.zclient.core.backend.datasources.remote.BackendApi
 import com.waz.zclient.core.network.NetworkClient
@@ -23,7 +24,6 @@ import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClien
 import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClientForToken
 import com.waz.zclient.core.network.di.NetworkDependencyProvider.retrofit
 import com.waz.zclient.core.network.pinning.CertificatePinnerFactory
-import com.waz.zclient.core.network.proxy.HttpProxyFactory
 import com.waz.zclient.core.network.useragent.UserAgentConfig
 import com.waz.zclient.core.network.useragent.UserAgentInterceptor
 import com.waz.zclient.storage.db.GlobalDatabase
@@ -49,6 +49,7 @@ object NetworkDependencyProvider {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
+    @Suppress("LongParameterList")
     fun createHttpClient(
         accessTokenInterceptor: AccessTokenInterceptor,
         accessTokenAuthenticator: AccessTokenAuthenticator,
@@ -77,7 +78,7 @@ object NetworkDependencyProvider {
             .certificatePinner(CertificatePinnerFactory.create(backendItem.certificatePin()))
             .connectionSpecs(ConnectionSpecsFactory.create())
             .addInterceptor(userAgentInterceptor)
-            .proxy(HttpProxyFactory.create())
+            .proxy(KotlinServices.httpProxy)
             .addLoggingInterceptor()
 
     private fun OkHttpClient.Builder.addLoggingInterceptor() = this.apply {

@@ -18,7 +18,6 @@
 package com.waz.zclient
 
 import java.io.File
-import java.net.{InetSocketAddress, Proxy}
 import java.util.Calendar
 
 import android.app.{Activity, ActivityManager, NotificationManager}
@@ -95,7 +94,6 @@ import ly.count.android.sdk.Countly
 import org.threeten.bp.Clock
 
 import scala.concurrent.Future
-import scala.util.Try
 
 object WireApplication extends DerivedLogTag {
   var APP_INSTANCE: WireApplication = _
@@ -363,14 +361,15 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     SafeBase64.setDelegate(new AndroidBase64Delegate)
 
-    ZMessaging.globalReady.future.onSuccess {
-      case g =>
-        InternalLog.setLogsService(inject[LogsService])
-        InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
-        InternalLog.add(new BufferedLogOutput(
-          baseDir = getApplicationContext.getApplicationInfo.dataDir,
-          showSafeOnly = BuildConfig.SAFE_LOGGING))
-        g.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())
+    ZMessaging.globalReady.future.foreach { global =>
+      InternalLog.setLogsService(inject[LogsService])
+      InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
+      InternalLog.add(new BufferedLogOutput(
+        baseDir = getApplicationContext.getApplicationInfo.dataDir,
+        showSafeOnly = BuildConfig.SAFE_LOGGING)
+      )
+      global.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())(Threading.Background)
+      global.httpProxy.foreach(KotlinServices.INSTANCE.setHttpProxy)
     }
 
     verbose(l"onCreate")
@@ -416,13 +415,13 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     ZMessaging.onCreate(
       this,
       backend,
-      parseProxy(BuildConfig.HTTP_PROXY_URL, BuildConfig.HTTP_PROXY_PORT),
       prefs,
       googleApi,
       null, //TODO: Use sync engine's version for now
       inject[MessageNotificationsController],
       assets2Module,
-      inject[FileRestrictionList]
+      inject[FileRestrictionList],
+      ProxyDetails(BuildConfig.HTTP_PROXY_URL, BuildConfig.HTTP_PROXY_PORT.toInt)
     )
 
     val activityLifecycleCallback = inject[ActivityLifecycleCallback]
@@ -445,17 +444,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[SecurityPolicyChecker]
   }
 
-  private def parseProxy(url: String, port: String): Option[Proxy] = {
-    val proxyHost = if(!url.equalsIgnoreCase("none")) Some(url) else None
-    val proxyPort = Try(Integer.parseInt(port)).toOption
-    (proxyHost, proxyPort) match {
-      case (Some(h), Some(p)) => Some(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(h, p)))
-      case proxyInfo => None
-    }
-
-  }
-
-  private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi) =
+  private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi): Unit =
     prefs(GlobalPreferences.CheckedForPlayServices).apply().foreach {
       case false =>
         verbose(l"never checked for play services")

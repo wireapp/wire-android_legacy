@@ -151,7 +151,6 @@ object CallingService {
 class CallingServiceImpl(val accountId:       UserId,
                          val clientId:        ClientId,
                          callingClient:       CallingClient,
-                         context:             Context,
                          avs:                 Avs,
                          convs:               ConversationsContentUpdater,
                          convsService:        ConversationsService,
