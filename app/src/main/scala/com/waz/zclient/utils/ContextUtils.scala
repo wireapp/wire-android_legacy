@@ -23,8 +23,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.provider.Settings
 import android.text.format.Formatter
-import android.util.{AttributeSet, DisplayMetrics, TypedValue}
-import android.view.WindowManager
+import android.util.{AttributeSet, TypedValue}
 import android.widget.Toast
 import androidx.annotation.StyleableRes
 import androidx.appcompat.app.AlertDialog
@@ -143,12 +142,6 @@ object ContextUtils {
   private def getDimensionPixelSize(name: String)(implicit context: Context): Int = {
     val resourceId = context.getResources.getIdentifier(name, "dimen", "android")
     if (resourceId > 0) context.getResources.getDimensionPixelSize(resourceId) else 0
-  }
-
-  def getRealDisplayWidth(implicit context: Context): Int = {
-    val realMetrics = new DisplayMetrics
-    context.getSystemService(Context.WINDOW_SERVICE).asInstanceOf[WindowManager].getDefaultDisplay.getRealMetrics(realMetrics)
-    realMetrics.widthPixels
   }
 
   def isInLandscape(implicit context: Context): Boolean = isInLandscape(context.getResources.getConfiguration)
