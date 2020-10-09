@@ -20,8 +20,7 @@ package com.waz.zclient
 import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.drawable.ColorDrawable
-import android.graphics.{Color, Paint, PixelFormat}
+import android.graphics.{Paint, PixelFormat}
 import android.os.Bundle
 import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences._
@@ -77,7 +76,7 @@ class MainActivity extends BaseActivity
   with SetHandleFragment.Container
   with DerivedLogTag {
 
-  implicit val cxt: MainActivity = this
+  private implicit val cxt: MainActivity = this
 
   import Threading.Implicits.Ui
 
@@ -101,9 +100,6 @@ class MainActivity extends BaseActivity
   override def onCreate(savedInstanceState: Bundle) = {
     Option(getActionBar).foreach(_.hide())
     super.onCreate(savedInstanceState)
-
-    //Prevent drawing the default background to reduce overdraw
-    getWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT))
     setContentView(R.layout.main)
 
     ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
@@ -124,8 +120,7 @@ class MainActivity extends BaseActivity
     themeController.darkThemeSet.onUi {
       case theme if theme != currentlyDarkTheme =>
         info(l"restartActivity")
-        finish()
-        startActivity(getIntent)
+        recreate()
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
       case _ =>
     }

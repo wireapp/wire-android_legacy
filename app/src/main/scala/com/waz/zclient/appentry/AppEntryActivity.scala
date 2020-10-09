@@ -62,7 +62,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
   import Threading.Implicits.Ui
 
-  implicit def ctx: Context = this
+  private implicit val ctx: Context = this
 
   private lazy val progressView = ViewUtils.getView(this, R.id.liv__progress).asInstanceOf[LoadingIndicatorView]
   private lazy val countryController: CountryController = new CountryController(this)

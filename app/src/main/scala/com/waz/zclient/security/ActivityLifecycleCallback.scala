@@ -1,21 +1,23 @@
 /**
-  * Wire
-  * Copyright (C) 2019 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.waz.zclient.security
+
+import java.lang.ref.WeakReference
 
 import android.app.{Activity, Application}
 import android.os.Bundle
@@ -28,6 +30,7 @@ import com.waz.zclient.{BuildConfig, Injectable, Injector, LaunchActivity}
 import com.wire.signals._
 
 import scala.collection.convert.DecorateAsScala
+import scala.util.Try
 
 class ActivityLifecycleCallback(implicit injector: Injector)
   extends Application.ActivityLifecycleCallbacks
@@ -70,12 +73,15 @@ class ActivityLifecycleCallback(implicit injector: Injector)
   override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {}
 
   override def onActivityResumed(activity: Activity): Unit = {
+    val activityRef = new WeakReference[Activity](activity)
     if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
-      activity.getWindow.addFlags(FLAG_SECURE)
+      Option(activityRef.get()).foreach(_.getWindow.addFlags(FLAG_SECURE))
     } else {
-      shouldHideScreenContent.onUi {
-        case true  => activity.getWindow.addFlags(FLAG_SECURE)
-        case false => activity.getWindow.clearFlags(FLAG_SECURE)
+      shouldHideScreenContent.onUi { hide =>
+        Try(activityRef.get().getWindow).foreach { window =>
+          if (hide) window.addFlags(FLAG_SECURE)
+          else window.clearFlags(FLAG_SECURE)
+        }
       }
     }
   }
