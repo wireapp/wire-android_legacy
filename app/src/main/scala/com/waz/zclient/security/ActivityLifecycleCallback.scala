@@ -30,6 +30,7 @@ import com.waz.zclient.{BuildConfig, Injectable, Injector, LaunchActivity}
 import com.wire.signals._
 
 import scala.collection.convert.DecorateAsScala
+import scala.util.Try
 
 class ActivityLifecycleCallback(implicit injector: Injector)
   extends Application.ActivityLifecycleCallbacks
@@ -76,9 +77,11 @@ class ActivityLifecycleCallback(implicit injector: Injector)
     if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
       Option(activityRef.get()).foreach(_.getWindow.addFlags(FLAG_SECURE))
     } else {
-      shouldHideScreenContent.onUi {
-        case true => Option(activityRef.get()).foreach(_.getWindow.addFlags(FLAG_SECURE))
-        case false => Option(activityRef.get()).foreach(_.getWindow.clearFlags(FLAG_SECURE))
+      shouldHideScreenContent.onUi { hide =>
+        Try(activityRef.get().getWindow).foreach { window =>
+          if (hide) window.addFlags(FLAG_SECURE)
+          else window.clearFlags(FLAG_SECURE)
+        }
       }
     }
   }
