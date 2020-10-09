@@ -18,7 +18,7 @@
 
 package com.waz.zclient.usersearch
 
-import android.content.{Context, Intent}
+import android.content.Intent
 import android.os.Bundle
 import android.view._
 import android.view.animation.Animation
@@ -75,8 +75,6 @@ class SearchUIFragment extends BaseFragment[Container]
   import Threading.Implicits.Ui
 
   private implicit lazy val uiStorage: UiStorage = inject[UiStorage]
-
-  private implicit def context: Context = getContext
 
   private lazy val zms                    = inject[Signal[ZMessaging]]
   private lazy val usersStorage           = inject[Signal[UsersStorage]]

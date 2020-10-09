@@ -399,7 +399,7 @@ trait CallingBannerActivity extends ActivityHelper {
     super.onCreate(savedInstanceState)
 
     callController.isCallActiveDelay.onUi { est =>
-      getWindow.setStatusBarColor(ContextUtils.getColor(if (est) R.color.accent_green else android.R.color.transparent)(this))
+      getWindow.setStatusBarColor(ContextUtils.getColor(if (est) R.color.accent_green else R.color.black)(this))
       callBanner.setVisibility(if (est) View.VISIBLE else View.GONE)
     }
 
