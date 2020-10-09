@@ -17,6 +17,8 @@
   */
 package com.waz.zclient.security
 
+import java.lang.ref.WeakReference
+
 import android.app.{Activity, Application}
 import android.os.Bundle
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
@@ -70,12 +72,13 @@ class ActivityLifecycleCallback(implicit injector: Injector)
   override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {}
 
   override def onActivityResumed(activity: Activity): Unit = {
+    val activityRef = new WeakReference[Activity](activity)
     if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
-      activity.getWindow.addFlags(FLAG_SECURE)
+      activityRef.get().getWindow.addFlags(FLAG_SECURE)
     } else {
       shouldHideScreenContent.onUi {
-        case true  => activity.getWindow.addFlags(FLAG_SECURE)
-        case false => activity.getWindow.clearFlags(FLAG_SECURE)
+        case true  => activityRef.get().getWindow.addFlags(FLAG_SECURE)
+        case false => activityRef.get().getWindow.clearFlags(FLAG_SECURE)
       }
     }
   }

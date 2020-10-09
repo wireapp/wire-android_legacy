@@ -102,6 +102,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
   override def onDestroyView() = {
     conversationListView.foreach(_.removeOnScrollListener(conversationsListScrollListener))
+    conversationListView.foreach(_.setAdapter(null))
     super.onDestroyView()
   }
 
@@ -127,7 +128,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
   private def configureAdapter(adapter: ConversationListAdapter): Unit = {
     adapter.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
-    
+
     subs += userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
     subs += adapter.onConversationClick { conv =>
