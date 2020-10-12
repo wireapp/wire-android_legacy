@@ -44,6 +44,7 @@ class AndroidCamera2(cameraData: CameraData,
   import ExifInterface._
   import WireCamera._
   import com.waz.zclient.log.LogUI._
+  import AndroidCamera2._
 
   private lazy val cameraThread = returning(new HandlerThread("CameraThread")) {
     _.start()
@@ -52,11 +53,11 @@ class AndroidCamera2(cameraData: CameraData,
     _.start()
   }
 
-  private val cameraHandler = new Handler(cameraThread.getLooper)
-  private val imageReaderHandler = new Handler(imageReaderThread.getLooper)
+  private lazy val cameraHandler = new Handler(cameraThread.getLooper)
+  private lazy val imageReaderHandler = new Handler(imageReaderThread.getLooper)
 
-  private val cameraManager = cxt.getApplicationContext.getSystemService(Context.CAMERA_SERVICE).asInstanceOf[CameraManager]
-  private val cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraData.cameraId)
+  private lazy val cameraManager = cxt.getApplicationContext.getSystemService(Context.CAMERA_SERVICE).asInstanceOf[CameraManager]
+  private lazy val cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraData.cameraId)
 
   private lazy val largestSize = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
     .getOutputSizes(ImageFormat.JPEG)
@@ -75,7 +76,7 @@ class AndroidCamera2(cameraData: CameraData,
   private var cameraRequest: Option[CaptureRequest.Builder] = None
   private var cameraSession: Option[CameraCaptureSession] = None
   private var camera: Option[CameraDevice] = None
-  private var orientation: Orientation = AndroidCamera2.DEFAULT_ORIENTATION
+  private var orientation: Orientation = DEFAULT_ORIENTATION
 
   private def getSupportedFlashMode(mode: FlashMode): Int =
     if (getSupportedFlashModes(mode)) mode.mode else FlashMode.OFF.mode
@@ -167,7 +168,7 @@ class AndroidCamera2(cameraData: CameraData,
 
     // We filter out sizes with the ratio too different from the largest one.
     val targetRatio = largest.getWidth.toDouble / largest.getHeight.toDouble
-    val validSizes = allSizes.filterNot(s => Math.abs(s.getWidth.toDouble / s.getHeight.toDouble - targetRatio) > AndroidCamera2.ASPECT_TOLERANCE)
+    val validSizes = allSizes.filterNot(s => Math.abs(s.getWidth.toDouble / s.getHeight.toDouble - targetRatio) > ASPECT_TOLERANCE)
 
     // We look for the size with the height most similar to the size of the view,
     // assuming the height is always the smaller one of the two dimensions.
@@ -240,7 +241,7 @@ class AndroidCamera2(cameraData: CameraData,
 
         private def computeRelativeOrientation(orientation: Int, mirrored: Boolean): Int =
           if (orientation != android.view.OrientationEventListener.ORIENTATION_UNKNOWN) {
-            val sensorOrientation = cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
+            val sensorOrientation = Option(cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)).map(_.intValue()).getOrElse(0)
 
             //Round the orientation to the nearest 90
             var deviceOrientation = (orientation + 45) / 90 * 90
@@ -297,33 +298,32 @@ class AndroidCamera2(cameraData: CameraData,
   override def setFocusArea(touchRect: Rect, w: Int, h: Int): Future[Unit] = {
     val promise = Promise[Unit]
     try {
-      val touchRect = new Rect(w - 100, h - 100, w + 100, h + 100)
-      (cameraSession, cameraRequest) match {
-        case (Some(session), Some(requestBuilder)) =>
-          session.stopRepeating()
-          requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), CameraMetadata.CONTROL_AF_TRIGGER_CANCEL)
-          requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_OFF)
-          session.capture(requestBuilder.build(), null, cameraHandler)
+      withSessionAndReqBuilder { (session, requestBuilder) =>
+        session.stopRepeating()
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), CameraMetadata.CONTROL_AF_TRIGGER_CANCEL)
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_OFF)
+        session.capture(requestBuilder.build(), null, cameraHandler)
 
-          val focusAreas = Array(new MeteringRectangle(touchRect, MeteringRectangle.METERING_WEIGHT_DONT_CARE))
+        if (isMeteringAreaAFSupported) {
+          val focusAreas = Array(new MeteringRectangle(touchRect, MeteringRectangle.METERING_WEIGHT_MAX - 1))
           requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_REGIONS), focusAreas)
-          requestBuilder.set(requestKey(CaptureRequest.CONTROL_MODE), CameraMetadata.CONTROL_MODE_AUTO)
-          requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_AUTO)
-          requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), CameraMetadata.CONTROL_AF_TRIGGER_START)
+        }
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_MODE), CameraMetadata.CONTROL_MODE_AUTO)
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_AUTO)
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), CameraMetadata.CONTROL_AF_TRIGGER_START)
 
-          val callback = new CameraCaptureSession.CaptureCallback {
-            override def onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult): Unit = {
-              super.onCaptureCompleted(session, request, result)
-              if (request.getTag == "FOCUS_TAG") {
-                requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), null)
-                session.setRepeatingRequest(requestBuilder.build(), null, cameraHandler)
-              }
+        val callback = new CameraCaptureSession.CaptureCallback {
+          override def onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult): Unit = {
+            super.onCaptureCompleted(session, request, result)
+            verbose(l"capture completed, tag: ${request.getTag}")
+            if (request.getTag == FOCUS_TAG) {
+              requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), null)
+              session.setRepeatingRequest(requestBuilder.build(), null, cameraHandler)
             }
           }
-          requestBuilder.setTag("FOCUS_TAG")
-          session.capture(requestBuilder.build(), callback, cameraHandler)
-          promise.success(Unit)
-        case _ =>
+        }
+        requestBuilder.setTag(FOCUS_TAG)
+        session.capture(requestBuilder.build(), callback, cameraHandler)
       }
     } catch {
       case ex: CameraAccessException => error(l"Camera access error when creating camera session", ex); promise.failure(ex)
@@ -332,22 +332,18 @@ class AndroidCamera2(cameraData: CameraData,
     promise.future
   }
 
-  override def setFlashMode(fm: FlashMode): Unit = {
-    cameraSession.foreach { session =>
-      cameraRequest.foreach { request =>
-        fm match {
-          case FlashMode.AUTO =>
-            request.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH)
-          case FlashMode.OFF =>
-            request.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON)
-            request.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_OFF)
-          case FlashMode.ON | FlashMode.TORCH =>
-            request.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON)
-            request.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_TORCH)
-        }
-        session.setRepeatingRequest(request.build(), null, cameraHandler)
-      }
+  override def setFlashMode(fm: FlashMode): Unit = withSessionAndReqBuilder { (session, requestBuilder) =>
+    fm match {
+      case FlashMode.AUTO =>
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH)
+      case FlashMode.OFF =>
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON)
+        requestBuilder.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_OFF)
+      case FlashMode.ON | FlashMode.TORCH =>
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON)
+        requestBuilder.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_TORCH)
     }
+    session.setRepeatingRequest(requestBuilder.build(), null, cameraHandler)
   }
 
   override def getSupportedFlashModes: Set[FlashMode] =
@@ -358,14 +354,22 @@ class AndroidCamera2(cameraData: CameraData,
     orientation = o
   }
 
-  override def getCurrentCameraFacing: Int = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
+  override def getCurrentCameraFacing: Int = Option(cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)).map(_.intValue()).getOrElse(0)
 
   private def requestKey[T](key: CaptureRequest.Key[T]): CaptureRequest.Key[Any] =
     key.asInstanceOf[CaptureRequest.Key[Any]]
+
+  private def withSessionAndReqBuilder(f: (CameraCaptureSession, CaptureRequest.Builder) => Unit): Unit = (cameraSession, cameraRequest) match {
+    case (Some(session), Some(requestBuilder)) => f(session, requestBuilder)
+    case _ =>
+  }
+
+  private def isMeteringAreaAFSupported = Option(cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF)).exists(_ >= 1)
 }
 
 object AndroidCamera2 {
   final val DEFAULT_ORIENTATION: Orientation = Orientation(0)
   final val ASPECT_TOLERANCE: Double = 0.1
+  final val FOCUS_TAG: String = "FOCUS_TAG"
 }
 
