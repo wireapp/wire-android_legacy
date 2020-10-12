@@ -6,6 +6,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import android.content.Context
 import android.graphics._
 import android.hardware.camera2._
+import android.hardware.camera2.params.MeteringRectangle
 import android.media.ImageReader.OnImageAvailableListener
 import android.media.{ExifInterface, Image, ImageReader}
 import android.os.{Handler, HandlerThread}
@@ -280,9 +281,6 @@ class AndroidCamera2(cameraData: CameraData,
   }
 
   override def release(): Unit = {
-    cameraRequest = None
-    imageReaderThread.quitSafely()
-    cameraThread.quitSafely()
     imageReader.discardFreeBuffers()
     imageReader.close()
     cameraSession.foreach { session =>
@@ -290,9 +288,49 @@ class AndroidCamera2(cameraData: CameraData,
       session.close()
     }
     camera.foreach(_.close())
+    cameraRequest = None
+
+    imageReaderThread.quitSafely()
+    cameraThread.quitSafely()
   }
 
-  override def setFocusArea(touchRect: Rect, w: Int, h: Int): Future[Unit] = Future.successful(Unit) //TODO set the control regions for the focus
+  override def setFocusArea(touchRect: Rect, w: Int, h: Int): Future[Unit] = {
+    val promise = Promise[Unit]
+    try {
+      val touchRect = new Rect(w - 100, h - 100, w + 100, h + 100)
+      (cameraSession, cameraRequest) match {
+        case (Some(session), Some(requestBuilder)) =>
+          session.stopRepeating()
+          requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), CameraMetadata.CONTROL_AF_TRIGGER_CANCEL)
+          requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_OFF)
+          session.capture(requestBuilder.build(), null, cameraHandler)
+
+          val focusAreas = Array(new MeteringRectangle(touchRect, MeteringRectangle.METERING_WEIGHT_DONT_CARE))
+          requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_REGIONS), focusAreas)
+          requestBuilder.set(requestKey(CaptureRequest.CONTROL_MODE), CameraMetadata.CONTROL_MODE_AUTO)
+          requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_AUTO)
+          requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), CameraMetadata.CONTROL_AF_TRIGGER_START)
+
+          val callback = new CameraCaptureSession.CaptureCallback {
+            override def onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult): Unit = {
+              super.onCaptureCompleted(session, request, result)
+              if (request.getTag == "FOCUS_TAG") {
+                requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), null)
+                session.setRepeatingRequest(requestBuilder.build(), null, cameraHandler)
+              }
+            }
+          }
+          requestBuilder.setTag("FOCUS_TAG")
+          session.capture(requestBuilder.build(), callback, cameraHandler)
+          promise.success(Unit)
+        case _ =>
+      }
+    } catch {
+      case ex: CameraAccessException => error(l"Camera access error when creating camera session", ex); promise.failure(ex)
+      case ex: IllegalStateException => error(l"The session appears to longer be active", ex); promise.failure(ex)
+    }
+    promise.future
+  }
 
   override def setFlashMode(fm: FlashMode): Unit = {
     cameraSession.foreach { session =>
@@ -322,7 +360,7 @@ class AndroidCamera2(cameraData: CameraData,
 
   override def getCurrentCameraFacing: Int = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
 
-  private def requestKey(key: CaptureRequest.Key[Integer]): CaptureRequest.Key[Any] =
+  private def requestKey[T](key: CaptureRequest.Key[T]): CaptureRequest.Key[Any] =
     key.asInstanceOf[CaptureRequest.Key[Any]]
 }
 
