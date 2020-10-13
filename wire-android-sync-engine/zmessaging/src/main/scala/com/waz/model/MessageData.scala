@@ -555,14 +555,22 @@ object MessageData extends
   private val UTF_16_CHARSET  = Charset.forName("UTF-16")
 
   private def encode(text: String) = {
-    val bytes = UTF_16_CHARSET.encode(text).array
-
-    if (bytes.length < 3 || bytes.slice(2, bytes.length).forall(_ == 0))
+    if (text == null) {
       Array.empty[Byte]
-    else if (bytes(2) == 0)
-      bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
-    else
-      Array[Byte](0) ++ bytes.slice(2, bytes.lastIndexWhere(_ > 0) + 1)
+    }
+    else {
+      val bytes = UTF_16_CHARSET.encode(text).array
+      /**
+       * UTF-16BE,first two bytes with 0xFEFF
+       * UTF-16LE,first two bytes with 0xFFFE
+       */
+      if (bytes.length < 3 || bytes.slice(2, bytes.length).forall(_ == 0))
+        Array.empty[Byte]
+      else {
+        val index = (text.length + 1) * 2
+        bytes.slice(2, index)
+      }
+    }
   }
 
   def adjustMentions(text: String, mentions: Seq[Mention], forSending: Boolean, offset: Int = 0): Seq[Mention] = {
