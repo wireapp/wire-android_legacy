@@ -38,6 +38,7 @@ import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.ListSet
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val defStyleAttr: Int)
@@ -45,7 +46,7 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
     with ViewHelper
     with TextureView.SurfaceTextureListener
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
 
   def this(context: Context) = this(context, null)
@@ -75,24 +76,23 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
     soundController.playCameraShutterSound()
   }.onComplete {
     case Success(data) => observer.foreach {
-      _.onPictureTaken(data, controller.getCurrentCameraFacing.getOrElse(CameraFacing.BACK) == CameraFacing.FRONT)
+      _.onPictureTaken(data)
     }
     case Failure(_) =>
       observer.foreach(_.onCameraLoadingFailed())
   } (Threading.Ui)
 
-  def getNumberOfCameras = controller.camInfos.size
+  def getNumberOfCameras: Int = controller.availableCameraData.size
 
-  def nextCamera() = {
+  def nextCamera(): Unit = {
     currentTexture.foreach {
       case (t, w, h) =>
-        controller.releaseCamera()
-        controller.setNextCamera()
+        controller.goToNextCamera()
         startLoading(t, w, h)
     }
   }
 
-  def closeCamera() = controller.releaseCamera().andThen {
+  def closeCamera(): Future[Unit] = controller.releaseCamera().andThen {
     case _ => observer.foreach(_.onCameraReleased())
   }(Threading.Ui)
 
@@ -143,17 +143,15 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
 
   override def onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean = {
     currentTexture = None
-    closeCamera().onComplete {
-      case _ => texture.release()
-    } (Threading.Ui)
+    closeCamera().onComplete(_ => texture.release())(Threading.Ui)
     false
   }
 
   override def onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) = {}
 
-  def setFlashMode(fm: FlashMode) = controller.currentFlashMode ! fm
+  def setFlashMode(fm: FlashMode): Unit = controller.currentFlashMode ! fm
 
-  def getCurrentFlashMode = controller.currentFlashMode.currentValue.get
+  def getCurrentFlashMode: FlashMode = controller.currentFlashMode.currentValue.get
 
   override def onTouchEvent(event: MotionEvent): Boolean = {
     if (event.getAction == MotionEvent.ACTION_UP) {
@@ -181,9 +179,7 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
       currentTexture.foreach {
         case (_, w, h) =>
           observer.foreach(_.onFocusBegin(touchRect))
-          controller.setFocusArea(touchRect, w, h).onComplete {
-            case _ => observer.foreach(_.onFocusComplete())
-          }(Threading.Ui)
+          controller.setFocusArea(touchRect, w, h).onComplete(_ => observer.foreach(_.onFocusComplete()))(Threading.Ui)
       }
     }
     true

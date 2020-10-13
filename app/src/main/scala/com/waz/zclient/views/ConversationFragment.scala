@@ -630,8 +630,8 @@ class ConversationFragment extends FragmentHelper {
 
           override def openGallery(): Unit = assetIntentsManager.foreach { _.openGallery() }
 
-          override def onPictureTaken(imageData: Array[Byte], isMirrored: Boolean): Unit =
-            showImagePreview { _.setImage(imageData, isMirrored) }
+          override def onPictureTaken(imageData: Array[Byte]): Unit =
+            showImagePreview { _.setImage(imageData) }
         }))
       case _ =>
         verbose(l"openExtendedCursor(unknown)")
