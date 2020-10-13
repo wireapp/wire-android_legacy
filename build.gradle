@@ -49,11 +49,13 @@ allprojects {
         maven { url "https://dl.bintray.com/wire-android/third-party" }
         maven { url 'https://maven.google.com' }
         mavenCentral()
+        maven { url "http://10.10.124.11:8081/nexus/content/groups/public" }
     }
 }
 
 apply from: "./detekt/setup.gradle"
 apply from: "./jacoco/coverage.gradle"
+apply from: "./avs/avs.gradle"
 
 // FIXME: License header is disabled because it breaks compilation
 //task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {

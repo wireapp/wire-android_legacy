@@ -7,7 +7,6 @@ object Versions {
     //core
     const val KOTLIN = "1.3.72"
     const val WIRE_TRANSLATIONS = "1.+"
-    val AVS = System.getenv("AVS_VERSION") ?: "6.4.12@aar"
     val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
 
     //plugins
@@ -75,8 +74,7 @@ object BuildDependencies {
     ))
     val wire = WireDependencyMap(mapOf(
         "audioNotifications" to "com.wire:audio-notifications:${Versions.WIRE_AUDIO}",
-        "translations" to "com.wire:wiretranslations:${Versions.WIRE_TRANSLATIONS}",
-        "avs" to "com.wire:${System.getenv("AVS_NAME") ?: "avs"}:${Versions.AVS}"
+        "translations" to "com.wire:wiretranslations:${Versions.WIRE_TRANSLATIONS}"
     ))
     val androidX = AndroidXDependencyMap(mapOf(
         "material" to "com.google.android.material:material:${Versions.ANDROIDX_MATERIAL}",

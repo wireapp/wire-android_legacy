@@ -1,0 +1,25 @@
+String avsPublicVersion = "6.4.228@aar"
+String avsCustomVersion = "6.4.9@aar"
+String avsPublicGroup = "com.wire"
+String avsCustomGroup = "com.wearezeta.avs"
+
+// Set shouldUseCustomAvs value to true if want to test with an AVS custom version in dev, internal or experimental builds
+boolean shouldUseCustomAvs = false
+
+for (String taskName : gradle.startParameter.taskNames) {
+    if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
+        shouldUseCustomAvs = true
+        break
+    }
+}
+
+ext {
+    avsName = System.getenv("AVS_NAME") ?: "avs"
+    if (shouldUseCustomAvs) {
+        avsVersion = System.getenv("AVS_VERSION") ?: avsCustomVersion
+        avsGroup = System.getenv("AVS_GROUP") ?: avsCustomGroup
+    } else {
+        avsVersion = System.getenv("AVS_VERSION") ?: avsPublicVersion
+        avsGroup = System.getenv("AVS_GROUP") ?: avsPublicGroup
+    }
+}

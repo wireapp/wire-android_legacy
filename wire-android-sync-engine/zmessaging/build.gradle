@@ -96,13 +96,14 @@ dependencies {
     implementation "com.googlecode.mp4parser:isoparser:1.1.7"
     implementation BuildDependencies.wireSignals
     implementation BuildDependencies.libSodium
+    implementation "${rootProject.ext.avsGroup}:${rootProject.ext.avsName}:${rootProject.ext.avsVersion}"
 
     //Provided dependencies
     compileOnly "com.softwaremill.macwire:macros_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
     compileOnly "com.softwaremill.macwire:macrosakka_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
     compileOnly "com.softwaremill.macwire:util_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
     compileOnly "com.softwaremill.macwire:proxy_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
-    compileOnly "com.wire:avs:3.4.100"
+
     compileOnly "androidx.legacy:legacy-support-v4:1.0.0"
     compileOnly BuildDependencies.threetenbpJava
     compileOnly "net.java.dev.jna:jna:4.4.0@aar"
@@ -127,7 +128,7 @@ dependencies {
     testImplementation "com.typesafe.akka:akka-http_${LegacyDependencies.SCALA_MAJOR_VERSION}:10.1.8"
     testImplementation "com.typesafe.akka:akka-actor_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.5.22"
     testImplementation "com.typesafe.akka:akka-stream_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.5.22"
-    testImplementation "com.wire:avs:3.4.100"
+    testImplementation  "${rootProject.ext.avsGroup}:${rootProject.ext.avsName}:${rootProject.ext.avsVersion}"
     testImplementation "androidx.legacy:legacy-support-v4:1.0.0"
     testImplementation BuildDependencies.threetenbpJava
     testImplementation "net.java.dev.jna:jna:4.4.0@aar"
