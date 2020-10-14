@@ -41,7 +41,7 @@ class SwitchPreference(context: Context, attrs: AttributeSet, style: Int)
     with Switchable
     with ViewHelper
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -78,8 +78,11 @@ class SwitchPreference(context: Context, attrs: AttributeSet, style: Int)
   }
 
   val checkChangeListener = new OnCheckedChangeListener {
+
+    import SwitchPreference._
+
     override def onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) = {
-      pref.head.map(_.update(isChecked))(Threading.Ui)
+      switch.setContentDescription(if (isChecked) On else Off)
       onCheckedChange ! isChecked
     }
   }
@@ -102,6 +105,11 @@ class SwitchPreference(context: Context, attrs: AttributeSet, style: Int)
   def setPreference(prefKey: PrefKey[Boolean], global: Boolean = false): Unit = {
     this.prefInfo ! PrefInfo(prefKey, global)
   }
+}
+
+object SwitchPreference {
+  val On = "ON"
+  val Off = "OFF"
 }
 
 case class PrefInfo(key: PrefKey[Boolean], global: Boolean)
