@@ -198,7 +198,7 @@ object Preferences {
   * type in SharedPreferences, as the Android system uses these types by default (e.g., a CheckBoxPreference defined in XML
   * will store a boolean preference in the shared prefs document
   */
-class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Preferences {
+class GlobalPreferences(context: Context, val prefs: SharedPreferences) extends Preferences {
 
   override protected implicit val dispatcher = SerialDispatchQueue(name = "GlobalPreferencesDispatcher")
   override protected implicit val logTag = LogTag[GlobalPreferences]
@@ -369,9 +369,10 @@ class UserPreferences(context: Context, storage: ZmsDatabase)
 object GlobalPreferences {
 
   val MigrationKey = "PreferenceMigration"
+  val PreferencesName = "com.wire.preferences"
 
   def apply(context: Context): GlobalPreferences = {
-    returning(new GlobalPreferences(context, context.getSharedPreferences("com.wire.preferences", Context.MODE_PRIVATE)))(_.migrate())
+    returning(new GlobalPreferences(context, context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)))(_.migrate())
   }
 
   lazy val LoggingInUser = PrefKey[Option[UserInfo]]("logging_in_user") //only to be used during DB import

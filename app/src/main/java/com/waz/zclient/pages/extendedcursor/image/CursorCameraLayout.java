@@ -197,11 +197,10 @@ public class CursorCameraLayout extends FrameLayout implements View.OnClickListe
     }
 
     @Override
-    public void onPictureTaken(byte[] imageData, boolean isMirrored) {
+    public void onPictureTaken(byte[] imageData) {
         if (callback != null) {
-            callback.onPictureTaken(imageData, isMirrored);
+            callback.onPictureTaken(imageData);
         }
-
         pendingPhotoTaking = false;
         showProgress(false);
     }
@@ -223,6 +222,6 @@ public class CursorCameraLayout extends FrameLayout implements View.OnClickListe
 
         void onCameraPreviewDetached();
 
-        void onPictureTaken(byte[] imageData, boolean isMirrored);
+        void onPictureTaken(byte[] imageData);
     }
 }

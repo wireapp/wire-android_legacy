@@ -281,7 +281,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     (for {
       incoming <- isCallIncoming.head
       allowed  <- allowedByStatus.head
-      shouldDisplayOverlay = activeUi || Build.VERSION.SDK_INT < 29
+      shouldDisplayOverlay = activeUi || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
     } yield (!incoming || allowed) && shouldDisplayOverlay).foreach {
       case true => CallingActivity.start(cxt)
       case false =>

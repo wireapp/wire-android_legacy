@@ -41,8 +41,8 @@ class CustomQuoteSpan(
     }
 
     override fun drawLeadingMargin(
-        c: Canvas?, p: Paint?, x: Int, dir: Int, top: Int, baseline: Int, bottom: Int,
-        text: CharSequence?, start: Int, end: Int, first: Boolean, layout: Layout?
+        c: Canvas, p: Paint, x: Int, dir: Int, top: Int, baseline: Int, bottom: Int,
+        text: CharSequence, start: Int, end: Int, first: Boolean, layout: Layout
     ) {
         val spanned = text as Spanned
         val spanStart = spanned.getSpanStart(this)
@@ -50,7 +50,6 @@ class CustomQuoteSpan(
 
         // ensure this span is attached to the text
         if (!(spanStart <= start && spanEnd >= end)) return
-        if (c == null || p == null) return
 
         // we want to top and bottom of the stripe to align with the top and bottom of the text.
         // if there is before and after spacing applied, then we must counter it by offsetting

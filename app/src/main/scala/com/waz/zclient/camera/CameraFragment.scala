@@ -183,8 +183,8 @@ class CameraFragment extends FragmentHelper
     //no need to override since we don't exit the app
   }
 
-  override def onPictureTaken(imageData: Array[Byte], isMirrored: Boolean): Unit =
-   showPreview { _.setImage(imageData, isMirrored) }
+  override def onPictureTaken(imageData: Array[Byte]): Unit =
+   showPreview { _.setImage(imageData) }
 
   override def onFocusBegin(focusArea: Rect): Unit = focusView.foreach { view =>
     view.setX(focusArea.centerX - view.getWidth / 2)

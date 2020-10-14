@@ -18,14 +18,14 @@
 package com.waz.zclient.preferences
 
 import android.annotation.SuppressLint
-import android.app.{Activity, FragmentManager, FragmentTransaction}
+import android.app.Activity
+import androidx.fragment.app.{Fragment, FragmentManager, FragmentTransaction}
 import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import androidx.annotation.Nullable
-import androidx.fragment.app.Fragment
 import androidx.appcompat.widget.Toolbar
 import android.view.{MenuItem, View, ViewGroup}
 import android.widget.{FrameLayout, Toast}

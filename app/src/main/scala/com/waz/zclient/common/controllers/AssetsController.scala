@@ -19,11 +19,12 @@ package com.waz.zclient.common.controllers
 
 import java.io.File
 
-import android.app.DownloadManager
 import android.content.pm.PackageManager
-import android.content.{Context, Intent}
+import android.content.{ContentValues, Context, Intent}
+import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.Environment
+import android.os.{Build, Environment}
+import android.provider.MediaStore.{Downloads, MediaColumns}
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.{Gravity, View}
@@ -51,7 +52,7 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.notifications.controllers.ImageNotificationsController
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.ExternalFileSharing
+import com.waz.zclient.utils.{DeprecationUtils, ExternalFileSharing}
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.znet2.http.HttpClient.Progress
 import org.threeten.bp.Duration
@@ -266,31 +267,39 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
         showToast(R.string.message_bottom_menu_action_save_ok)
-        context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(Uri.fromFile(file))))
+        MediaScannerConnection.scanFile(context, Array(file.toString), Array(file.getName), null)
       case _             =>
         showToast(R.string.content__file__action__save_error)
     }
 
   private def createWireImageDirectory() =
-    returning(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/Wire Images/")) {
+    returning(new File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Wire Images")) {
       IoUtils.createDirectory
     }
 
   def saveToDownloads(asset: Asset): Unit =
-    saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
+    saveAssetContentToFile(asset, context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).onComplete {
       case Success(file) if inject[FileRestrictionList].isAllowed(file.getName) =>
-        val uri = URIWrapper.fromFile(file)
-        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
-        downloadManager.addCompletedDownload(
-          asset.name,
-          asset.name,
-          false,
-          asset.mime.orDefault.str,
-          uri.getPath,
-          asset.size,
-          true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+          context.getContentResolver.insert(
+            Downloads.EXTERNAL_CONTENT_URI,
+            returning(new ContentValues) { cv =>
+              cv.put(MediaColumns.TITLE, asset.name)
+              cv.put(MediaColumns.DISPLAY_NAME, asset.name)
+              cv.put(MediaColumns.MIME_TYPE, asset.mime.orDefault.str)
+              cv.put(MediaColumns.SIZE, asset.size.toDouble)
+            }
+          )
+        else
+          DeprecationUtils.addCompletedDownload(
+            context,
+            asset.name,
+            asset.mime.orDefault.str,
+            URIWrapper.fromFile(file).getPath,
+            asset.size
+          )
         showToast(R.string.content__file__action__save_completed)
-        context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(URIWrapper.unwrap(uri))))
+        MediaScannerConnection.scanFile(context, Array(file.toString), Array(file.getName), null)
       case _ =>
         showToast(R.string.content__file__action__save_error)
     }

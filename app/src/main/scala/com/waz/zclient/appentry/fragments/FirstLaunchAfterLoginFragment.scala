@@ -21,12 +21,11 @@ package com.waz.zclient.appentry.fragments
 import java.io.{File, FileOutputStream}
 
 import android.Manifest.permission._
-import android.app.FragmentTransaction
 import android.content.{DialogInterface, Intent}
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences.{apply => _, _}
 import com.waz.model.AccountData.Password
 import com.waz.model.UserId

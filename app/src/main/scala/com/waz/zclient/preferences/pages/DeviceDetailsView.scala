@@ -17,7 +17,8 @@
  */
 package com.waz.zclient.preferences.pages
 
-import android.app.{Activity, FragmentTransaction}
+import android.app.Activity
+import androidx.fragment.app.FragmentTransaction
 import android.content.DialogInterface.OnClickListener
 import android.content.{ClipData, Context, DialogInterface}
 import android.os.Bundle

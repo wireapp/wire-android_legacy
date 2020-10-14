@@ -188,7 +188,7 @@ object CallingNotificationsController {
 
   val CallNotificationTag = "call_notification"
 
-  val isAndroid10OrAbove: Boolean = Build.VERSION.SDK_INT >= 29
+  val isAndroid10OrAbove: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
   def androidNotificationBuilder(not: CallNotification, treatAsIncomingCall: Boolean = false)(implicit cxt: content.Context): NotificationCompat.Builder = {
     val title = if (not.isGroup) not.convName else not.caller

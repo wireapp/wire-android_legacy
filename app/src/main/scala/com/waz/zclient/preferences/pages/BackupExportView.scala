@@ -19,7 +19,8 @@ package com.waz.zclient.preferences.pages
 
 import java.io.File
 
-import android.app.{Activity, FragmentTransaction}
+import android.app.Activity
+import androidx.fragment.app.FragmentTransaction
 import android.content.Context
 import android.os.Bundle
 import androidx.core.app.ShareCompat

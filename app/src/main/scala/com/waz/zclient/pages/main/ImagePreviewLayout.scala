@@ -28,19 +28,18 @@ import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Mime, Name}
 import com.waz.service.assets.Content
-import com.wire.signals.{EventStream, Signal}
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.images.transformations.ScaleTransformation
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationMenuListener}
 import com.waz.zclient.ui.theme.OptionsDarkTheme
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.threading.Threading._
+import com.wire.signals.{EventStream, Signal}
 
 class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
@@ -136,10 +135,9 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
     callback.foreach(_.onCancelPreview())
   }
 
-  def setImage(imageData: Array[Byte], isMirrored: Boolean): Unit = {
+  def setImage(imageData: Array[Byte]): Unit = {
     this.imageInput = Some(Content.Bytes(Mime.Image.Jpg, imageData))
     val request = WireGlide(context).load(imageData)
-    if (isMirrored) request.apply(new RequestOptions().transform(new ScaleTransformation(-1f, 1f)))
     request.into(imageView)
   }
 
