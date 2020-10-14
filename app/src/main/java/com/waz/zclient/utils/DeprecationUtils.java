@@ -73,7 +73,7 @@ public class DeprecationUtils {
     }
 
     public static void addCompletedDownload(Context context, String name, String mime, String path, long size) {
-        DownloadManager manager = (DownloadManager)context.getSystemService(Context.DOWNLOAD_SERVICE);
+        DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         manager.addCompletedDownload(name, name, false, mime, path, size, true);
     }
 
