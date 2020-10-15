@@ -7,7 +7,7 @@ object Versions {
     //core
     const val KOTLIN = "1.3.72"
     const val WIRE_TRANSLATIONS = "1.+"
-    val AVS = System.getenv("AVS_VERSION") ?: "6.4.9@aar"
+    val AVS = System.getenv("AVS_VERSION") ?: "6.4.12@aar"
     val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
 
     //plugins
