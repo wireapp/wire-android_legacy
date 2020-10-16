@@ -24,6 +24,8 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 
@@ -44,6 +46,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -98,6 +101,7 @@ public class AssetIntentsManager {
         if (allowMultiple) {
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
+
         callback.openIntent(intent, tpe);
     }
 
@@ -178,9 +182,11 @@ public class AssetIntentsManager {
         }
 
         URI uri = new AndroidURI(data.getData());
-        Logger.debug(TAG, "uri is" + uri.toString());
+        Logger.debug(TAG, "uri is " + uri.toString());
         if (type == IntentType.VIDEO) {
             uri = copyVideoToCache(uri);
+        } else {
+            grantUriPermissions(context, data, data.getData());
         }
 
         if (uri != null) {
@@ -280,5 +286,22 @@ public class AssetIntentsManager {
         void onFailed(IntentType type);
 
         void openIntent(Intent intent, AssetIntentsManager.IntentType intentType);
+    }
+
+    public static void grantUriPermissions(Context context, Intent intent, Uri uri) {
+        grantUrisPermissions(context, intent, Collections.singletonList(uri));
+    }
+
+    public static void grantUrisPermissions(Context context, Intent intent, List<Uri> uris) {
+        // A possible fix to the problems with sharing files on new Androids, taken from https://github.com/lubritto/flutter_share/pull/20
+        PackageManager packageManager = context.getPackageManager();
+        List<ResolveInfo> resInfoList = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+
+        for (ResolveInfo resolveInfo : resInfoList) {
+            String packageName = resolveInfo.activityInfo.packageName;
+            for (Uri uri: uris) {
+                context.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+        }
     }
 }

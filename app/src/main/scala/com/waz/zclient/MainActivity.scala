@@ -496,7 +496,7 @@ class MainActivity extends BaseActivity
 
       case SharingIntent() =>
         for {
-          convs <- sharingController.sendContent(this)
+          convs <- sharingController.sendContent(intent, this)
           _     <- if (convs.size == 1) conversationController.switchConversation(convs.head) else Future.successful({})
           _     =  clearIntent()
         } yield true

@@ -19,7 +19,6 @@ package com.waz.zclient.conversation
 
 import java.net.URI
 
-import android.app.Activity
 import android.content.Context
 import android.graphics.{Bitmap, BitmapFactory}
 import com.waz.api
@@ -179,7 +178,8 @@ class ConversationController(implicit injector: Injector, context: Context)
         selectedConv <- selectedConv.head
         convsUi      <- convsUi.head
         conv         <- getConversation(id)
-        _            <- if (conv.exists(_.archived)) convsUi.setConversationArchived(id, archived = false) else Future.successful(Option.empty[ConversationData])
+        _            <- if (conv.exists(_.archived)) convsUi.setConversationArchived(id, archived = false)
+                        else Future.successful(Option.empty[ConversationData])
         _            <- selectedConv.selectConversation(convId)
       } yield { // catches changes coming from UI
         verbose(l"changing conversation from $oldId to $convId, requester: $requester")
@@ -190,7 +190,7 @@ class ConversationController(implicit injector: Injector, context: Context)
   def selectConv(id: ConvId, requester: ConversationChangeRequester): Future[Unit] =
     selectConv(Some(id), requester)
 
-  def switchConversation(convId: ConvId, call: Boolean = false, delayMs: FiniteDuration = 750.millis) =
+  def switchConversation(convId: ConvId, call: Boolean = false, delayMs: FiniteDuration = 750.millis): Future[Unit] =
     CancellableFuture.delay(delayMs).map { _ =>
       selectConv(convId, ConversationChangeRequester.INTENT).foreach { _ =>
         if (call)
@@ -236,7 +236,6 @@ class ConversationController(implicit injector: Injector, context: Context)
     convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
 
   def sendAssetMessage(content:  ContentForUpload,
-                       activity: Activity,
                        exp:      Option[Option[FiniteDuration]]): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) =>
       accentColorController.accentColor.head.flatMap(color =>
@@ -264,7 +263,6 @@ class ConversationController(implicit injector: Injector, context: Context)
 
   private def sendAssetMessage(convs:    Seq[ConvId],
                                content:  ContentForUpload,
-                               activity: Activity,
                                exp:      Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] =
     for {
       ui    <- convsUi.head
@@ -282,14 +280,13 @@ class ConversationController(implicit injector: Injector, context: Context)
     } yield data
 
   def sendAssetMessage(uri:      URI,
-                       activity: Activity,
                        exp:      Option[Option[FiniteDuration]],
                        convs:    Seq[ConvId] = Seq()): Future[Unit] =
     Future.fromTry(uriHelper.extractFileName(uri)).flatMap {
       case fileName if fileRestrictions.isAllowed(fileName) =>
         val content = ContentForUpload(fileName,  Content.Uri(uri))
-        if (convs.isEmpty) sendAssetMessage(content, activity, exp).map(_ => ())
-        else sendAssetMessage(convs, content, activity, exp).map(_ => ())
+        if (convs.isEmpty) sendAssetMessage(content, exp).map(_ => ())
+        else sendAssetMessage(convs, content, exp).map(_ => ())
       case fileName =>
         convsUiwithCurrentConv((ui, id) =>
           ui.addRestrictedFileMessage(id, None, Some(fileName.split('.').last))
@@ -297,7 +294,6 @@ class ConversationController(implicit injector: Injector, context: Context)
     }
 
   def sendAssetMessages(uris:     Seq[URI],
-                        activity: Activity,
                         exp:      Option[Option[FiniteDuration]],
                         convs:    Seq[ConvId]): Future[Unit] =
     for {
