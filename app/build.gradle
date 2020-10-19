@@ -306,7 +306,7 @@ dependencies {
     implementation BuildDependencies.kotlin.coroutinesAndroid
     implementation BuildDependencies.kotlin.coroutinesCore
 
-    implementation "${rootProject.ext.avsGroup}:${rootProject.ext.avsName}:${rootProject.ext.avsVersion}"
+    implementation "${rootProject.ext.avsDependency}"
 
     implementation BuildDependencies.wire.audioNotifications
     //don't include wire translations for custom builds

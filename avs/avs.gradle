@@ -1,5 +1,5 @@
-String avsPublicVersion = "6.4.228@aar"
-String avsCustomVersion = "6.4.9@aar"
+String avsPublicVersion = "6.4.233@aar"
+String avsCustomVersion = "6.4.12@aar"
 String avsPublicGroup = "com.wire"
 String avsCustomGroup = "com.wearezeta.avs"
 
@@ -13,13 +13,18 @@ for (String taskName : gradle.startParameter.taskNames) {
     }
 }
 
+String avsName = System.getenv("AVS_NAME") ?: "avs"
+String avsVersion
+String avsGroup
+
+if (shouldUseCustomAvs) {
+    avsVersion = System.getenv("AVS_VERSION") ?: avsCustomVersion
+    avsGroup = System.getenv("AVS_GROUP") ?: avsCustomGroup
+} else {
+    avsVersion = System.getenv("AVS_VERSION") ?: avsPublicVersion
+    avsGroup = System.getenv("AVS_GROUP") ?: avsPublicGroup
+}
+
 ext {
-    avsName = System.getenv("AVS_NAME") ?: "avs"
-    if (shouldUseCustomAvs) {
-        avsVersion = System.getenv("AVS_VERSION") ?: avsCustomVersion
-        avsGroup = System.getenv("AVS_GROUP") ?: avsCustomGroup
-    } else {
-        avsVersion = System.getenv("AVS_VERSION") ?: avsPublicVersion
-        avsGroup = System.getenv("AVS_GROUP") ?: avsPublicGroup
-    }
+    avsDependency = "${avsGroup}:${avsName}:${avsVersion}"
 }
