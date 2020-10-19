@@ -263,7 +263,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   }
 
   private def sendAudioAsset(content: ContentForUpload): Future[Unit] =
-    convController.sendAssetMessage(content, getContext.asInstanceOf[Activity], None).map(_ => hide())(Threading.Ui)
+    convController.sendAssetMessage(content, None).map(_ => hide())(Threading.Ui)
 
   def onMotionEventFromAudioMessageButton(motionEvent: MotionEvent): Unit = {
     def stopRecording(): Unit = {

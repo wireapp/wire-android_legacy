@@ -19,7 +19,6 @@ package com.waz.zclient.common.controllers
 
 import java.io.File
 
-import android.content.pm.PackageManager
 import android.content.{ContentValues, Context, Intent}
 import android.media.MediaScannerConnection
 import android.net.Uri
@@ -37,12 +36,11 @@ import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service
 import com.waz.service.ZMessaging
-import com.waz.service.assets.{Asset, AssetService, DownloadAsset, FileRestrictionList, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
-import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
 import com.waz.service.assets.Asset.{Audio, Video}
+import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
+import com.waz.service.assets._
 import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{IoUtils, returning, sha2}
 import com.waz.zclient.controllers.singleimage.ISingleImageController
@@ -50,11 +48,13 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.notifications.controllers.ImageNotificationsController
+import com.waz.zclient.pages.main.conversation.AssetIntentsManager
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{DeprecationUtils, ExternalFileSharing}
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.znet2.http.HttpClient.Progress
+import com.wire.signals.{EventContext, Signal}
 import org.threeten.bp.Duration
 
 import scala.collection.immutable.ListSet
@@ -186,7 +186,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
         case AssetForShare(asset, file) if inject[FileRestrictionList].isAllowed(file.getName) =>
           asset.details match {
             case _: Video =>
-              context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
+              context.startActivity(getOpenFileIntent(context.getApplicationContext, externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
               openVideoProgress ! false
             case _ =>
               showOpenFileDialog(externalFileSharing.getUriForFile(file), asset)
@@ -204,8 +204,8 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   }
 
   private def showOpenFileDialog(uri: Uri, asset: Asset): Unit = {
-    val intent = getOpenFileIntent(uri, asset.mime.orDefault.str)
-    val fileCanBeOpened = fileTypeCanBeOpened(context.getPackageManager, intent)
+    val intent = getOpenFileIntent(context.getApplicationContext, uri, asset.mime.orDefault.str)
+    val fileCanBeOpened = fileTypeCanBeOpened(context.getApplicationContext, intent)
 
     //TODO tidy up
     //TODO there is also a weird flash or double-dialog issue when you click outside of the dialog
@@ -305,7 +305,6 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     }
 
   def assetForSharing(id: AssetId): Future[AssetForShare] = {
-
     def getSharedFilename(asset: Asset): String =
       if (asset.name.isEmpty) s"${sha2(asset.id.str.take(6))}.${asset.mime.extension}"
       else if (!asset.name.endsWith(asset.mime.extension)) s"${asset.name}.${asset.mime.extension}"
@@ -363,14 +362,15 @@ object AssetsController {
     def setPlayHead(duration: Duration) = rPAction { case (rP, key, content, _) => rP.setPlayhead(key, content, duration) }
   }
 
-  def getOpenFileIntent(uri: Uri, mimeType: String): Intent = {
-    returning(new Intent) { i =>
-      i.setAction(Intent.ACTION_VIEW)
-      i.setDataAndType(uri, mimeType)
-      i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-  }
+  def getOpenFileIntent(context: Context, uri: Uri, mimeType: String): Intent =
+    returning(new Intent) { intent =>
+      AssetIntentsManager.grantUriPermissions(context, intent, uri)
 
-  def fileTypeCanBeOpened(manager: PackageManager, intent: Intent): Boolean =
-    manager.queryIntentActivities(intent, 0).size > 0
+      intent.setAction(Intent.ACTION_VIEW)
+      intent.setDataAndType(uri, mimeType)
+      intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+  def fileTypeCanBeOpened(context: Context, intent: Intent): Boolean =
+    context.getPackageManager.queryIntentActivities(intent, 0).size > 0
 }

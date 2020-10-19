@@ -258,7 +258,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       gifContent <- Future { WireGlide(getContext).as(classOf[Array[Byte]]).load(gif.get.original.source.toString).submit().get() }(Threading.Background)
       contentForUpload = ContentForUpload(s"${gif.get.id}.${Mime.extensionsMap(Mime.Image.Gif)}", Content.Bytes(Mime.Image.Gif, gifContent))
       _  <- conversationController.sendMessage(msg)
-      _  <- conversationController.sendAssetMessage(contentForUpload, getActivity, None)
+      _  <- conversationController.sendAssetMessage(contentForUpload, None)
     } yield ()
     screenController.hideGiphy ! true
   }
