@@ -18,13 +18,15 @@
 package com.waz.zclient.conversation
 
 import android.content.Context
-import android.os.{Handler, Looper}
+import android.os.Handler
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, TextView}
 import com.waz.service.ZMessaging
 import com.wire.signals.Signal
 import com.waz.zclient.utils.ContextUtils._
+
+
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
 
@@ -44,7 +46,7 @@ class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val def
   private val topBackground = findById[View](R.id.top_background)
 
   private var animationRunning: Boolean = false
-  private val handler = new Handler(Looper.myLooper())
+  private val handler = new Handler
 
   lazy val typingUsers = for {
     z <- zms

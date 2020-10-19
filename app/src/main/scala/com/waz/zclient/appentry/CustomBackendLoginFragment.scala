@@ -1,16 +1,16 @@
 package com.waz.zclient.appentry
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import android.widget.{Button, TextView}
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.model2.transport.responses.SSOFound
 import com.waz.threading.Threading
+import com.wire.signals.EventStream
 import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
-import com.waz.zclient.utils.{BackendController, DeprecationUtils}
+import com.waz.zclient.utils.BackendController
 import com.waz.zclient.utils.ContextUtils.{showErrorDialog, showInfoDialog}
-import com.wire.signals.EventStream
 
 class CustomBackendLoginFragment extends SSOFragment {
 
@@ -59,9 +59,7 @@ class CustomBackendLoginFragment extends SSOFragment {
 
   override def onPause(): Unit = {
     super.onPause()
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-      activity.getWindow.setDecorFitsSystemWindows(false)
-    DeprecationUtils.setSoftInputMode(activity.getWindow, true, false)
+    activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
   }
 
   private def fetchSsoToken(): Unit =
