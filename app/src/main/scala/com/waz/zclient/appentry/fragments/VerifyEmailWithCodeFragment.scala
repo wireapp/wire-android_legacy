@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.appentry.fragments
 
-import android.os.{Bundle, Handler, Looper}
+import android.os.{Bundle, Handler}
 import androidx.core.content.ContextCompat
 import android.text.{Editable, TextWatcher}
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -82,7 +82,7 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
   private lazy val phoneVerificationCodeMinLength = getResources.getInteger(R.integer.new_reg__phone_verification_code__min_length)
 
   private var milliSecondsToShowResendButton = 0
-  private lazy val resendCodeTimerHandler = new Handler(Looper.myLooper())
+  private lazy val resendCodeTimerHandler = new Handler
   private lazy val resendCodeTimerRunnable: Runnable = new Runnable() {
     def run(): Unit = {
       milliSecondsToShowResendButton = milliSecondsToShowResendButton - VerifyEmailWithCodeFragment.RESEND_CODE_TIMER_INTERVAL

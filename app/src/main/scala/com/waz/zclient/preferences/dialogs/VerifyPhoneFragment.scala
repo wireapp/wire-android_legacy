@@ -17,12 +17,13 @@
  */
 package com.waz.zclient.preferences.dialogs
 
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import com.google.android.material.textfield.TextInputLayout
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.DialogFragment.STYLE_NO_FRAME
 import android.text.{Editable, TextUtils}
 import android.view.View.OnKeyListener
+import android.view.WindowManager.LayoutParams.{SOFT_INPUT_ADJUST_RESIZE, SOFT_INPUT_STATE_ALWAYS_HIDDEN}
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.{EditText, TextView}
 import com.waz.model.{ConfirmationCode, PhoneNumber}
@@ -49,9 +50,8 @@ class VerifyPhoneFragment extends DialogFragment with FragmentHelper {
     setStyle(STYLE_NO_FRAME, R.style.Theme_Dark_Preferences)
   }
 
-  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) getDialog.getWindow.setDecorFitsSystemWindows(false)
-    DeprecationUtils.setSoftInputMode(getDialog.getWindow, true, true)
+  override def onViewCreated(view: View, savedInstanceState: Bundle) = {
+    getDialog.getWindow.setSoftInputMode(SOFT_INPUT_ADJUST_RESIZE | SOFT_INPUT_STATE_ALWAYS_HIDDEN)
     super.onViewCreated(view, savedInstanceState)
   }
 

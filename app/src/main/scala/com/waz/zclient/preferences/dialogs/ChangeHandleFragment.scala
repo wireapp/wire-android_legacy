@@ -19,11 +19,11 @@ package com.waz.zclient.preferences.dialogs
 
 import java.util.Locale
 
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import android.text.{Editable, TextWatcher}
 import android.view.View.OnClickListener
 import android.view.animation.AnimationUtils
-import android.view.{LayoutInflater, View, ViewGroup}
+import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.textfield.TextInputLayout
@@ -35,7 +35,6 @@ import com.waz.utils.returning
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{FragmentHelper, HandleLength, R}
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.utils.DeprecationUtils
 
 import scala.util.Try
 
@@ -191,10 +190,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
-    Try(getDialog.getWindow).foreach { window =>
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) window.setDecorFitsSystemWindows(false)
-      DeprecationUtils.setSoftInputMode(window, true, false)
-    }
+    Try(getDialog.getWindow).toOption.foreach(_.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE))
     super.onViewCreated(view, savedInstanceState)
   }
 
