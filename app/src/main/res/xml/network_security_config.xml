@@ -19,6 +19,10 @@
 
 -->
 <network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">wire.com</domain>
+        <domain includeSubdomains="true">zinfra.io</domain>
+    </domain-config>
     <debug-overrides>
         <trust-anchors>
             <!-- Trust user added CAs while debuggable only -->
