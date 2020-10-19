@@ -89,8 +89,8 @@ public class DeprecationUtils {
 
     public static void setSoftInputMode(Window window, boolean adjustResize, boolean stateAlwaysHidden) {
         int mode = 0;
-        if (adjustResize) mode |= WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
-        if (stateAlwaysHidden) mode |= WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
+        if (adjustResize) { mode |= WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE; }
+        if (stateAlwaysHidden) { mode |= WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN; }
         window.setSoftInputMode(mode);
     }
 }
