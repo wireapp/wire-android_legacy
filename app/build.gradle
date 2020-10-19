@@ -9,7 +9,7 @@ apply plugin: 'kotlinx-serialization'
 //region avs
 //TODO: Migrate this configuration to new dependency system
 ext {
-    avsVersion = '6.4.12@aar'
+    avsVersion = '6.4.233@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
     avsName = 'avs'
     avsGroup = 'com.wire'
