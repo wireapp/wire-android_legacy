@@ -17,8 +17,9 @@ class SettingsDeviceDetailActivity : AppCompatActivity(R.layout.activity_setting
     }
 
     private fun startDeviceDetailsFragment() {
-        val deviceId = intent.getStringExtra(DEVICE_ID_BUNDLE_KEY)
-        replaceFragment(R.id.deviceDetailsLayoutContainer, SettingsDeviceDetailFragment.newInstance(deviceId), false)
+        intent.getStringExtra(DEVICE_ID_BUNDLE_KEY)?.let {
+            replaceFragment(R.id.deviceDetailsLayoutContainer, SettingsDeviceDetailFragment.newInstance(it), false)
+        }
     }
 
     private fun initToolbar() {

@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.appentry
 
-import android.os.Bundle
+import android.os.{Build, Bundle}
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import android.widget.Button
 import com.waz.utils.returning
@@ -25,6 +25,7 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
 import com.waz.zclient.feature.auth.registration.CreateAccountActivity
+import com.waz.zclient.utils.DeprecationUtils
 
 class WelcomeFragment extends SSOFragment {
 
@@ -50,7 +51,7 @@ class WelcomeFragment extends SSOFragment {
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_welcome, container, false)
 
-  override def onViewCreated(view: View, savedInstanceState: Bundle) = {
+  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
     initViews()
   }
@@ -62,7 +63,9 @@ class WelcomeFragment extends SSOFragment {
 
   override def onPause(): Unit = {
     super.onPause()
-    activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+      activity.getWindow.setDecorFitsSystemWindows(false)
+    DeprecationUtils.setSoftInputMode(activity.getWindow, true, false)
   }
 
   private def initViews() = {
