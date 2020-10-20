@@ -72,9 +72,11 @@
         android:required="false"
         />
 
+    <!-- TODO: Remove requestLegacyExternalStorage when you bump to sdk 30 and migrate the legacy data-->
     <application
         android:name=".ZApplication"
         android:allowBackup="false"
+        android:requestLegacyExternalStorage="true"
         android:hardwareAccelerated="true"
         android:icon="${applicationIcon}"
         android:label="${applicationLabel}"
