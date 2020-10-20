@@ -7,8 +7,9 @@ String nexusUrl = "http://10.10.124.11:8081/nexus/content/groups/public"
 // Set shouldUseCustomAvs value to true if want to test with a custom AVS version in dev, internal or experimental builds
 boolean shouldUseCustomAvs = false
 
-def proc = "curl -i -m 3 $nexusUrl".execute()
-if (!proc.err.text.contains("timed out")) {
+def isConnected = !"curl -i -m 3 $nexusUrl".execute().err.text.contains("timed out")
+
+if (isConnected) {
     for (String taskName : gradle.startParameter.taskNames) {
         if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
             shouldUseCustomAvs = true
