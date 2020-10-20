@@ -1,21 +1,27 @@
-String avsPublicVersion = "6.4.233@aar"
-String avsCustomVersion = "6.4.12@aar"
+String avsPublicVersion = "6.4.233"
+String avsCustomVersion = "6.4.12"
 String avsPublicGroup = "com.wire"
 String avsCustomGroup = "com.wearezeta.avs"
 
-// Set shouldUseCustomAvs value to true if want to test with an AVS custom version in dev, internal or experimental builds
-boolean shouldUseCustomAvs = false
+boolean shouldUseCustomAvs
 
-for (String taskName : gradle.startParameter.taskNames) {
-    if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
-        shouldUseCustomAvs = true
-        break
+def proc = "curl -i -m 3 http://10.10.124.11:8081/nexus/content/groups/public".execute()
+if (proc.err.text.contains("timed out")) shouldUseCustomAvs = false
+else {
+    // Set shouldUseCustomAvs value to true if want to test with an AVS custom version in dev, internal or experimental builds
+    shouldUseCustomAvs = false
+    for (String taskName : gradle.startParameter.taskNames) {
+        if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
+            shouldUseCustomAvs = true
+            break
+        }
     }
 }
 
+
+String avsGroup
 String avsName = System.getenv("AVS_NAME") ?: "avs"
 String avsVersion
-String avsGroup
 
 if (shouldUseCustomAvs) {
     avsVersion = System.getenv("AVS_VERSION") ?: avsCustomVersion

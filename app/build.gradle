@@ -319,6 +319,7 @@ dependencies {
     api project(ModuleDependencies.storage)
     api(project(ModuleDependencies.syncEngine)) {
         exclude group: 'com.wire', module: 'avs'
+        exclude group: 'com.wearezeta.avs', module: 'avs'
     }
 
     //Android
