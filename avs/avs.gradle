@@ -2,14 +2,13 @@ String avsPublicVersion = "6.4.233"
 String avsCustomVersion = "6.4.12"
 String avsPublicGroup = "com.wire"
 String avsCustomGroup = "com.wearezeta.avs"
+String nexusUrl = "http://10.10.124.11:8081/nexus/content/groups/public"
 
-boolean shouldUseCustomAvs
+// Set shouldUseCustomAvs value to true if want to test with a custom AVS version in dev, internal or experimental builds
+boolean shouldUseCustomAvs = false
 
-def proc = "curl -i -m 3 http://10.10.124.11:8081/nexus/content/groups/public".execute()
-if (proc.err.text.contains("timed out")) shouldUseCustomAvs = false
-else {
-    // Set shouldUseCustomAvs value to true if want to test with an AVS custom version in dev, internal or experimental builds
-    shouldUseCustomAvs = false
+def proc = "curl -i -m 3 $nexusUrl".execute()
+if (!proc.err.text.contains("timed out")) {
     for (String taskName : gradle.startParameter.taskNames) {
         if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
             shouldUseCustomAvs = true
@@ -18,7 +17,6 @@ else {
     }
 }
 
-
 String avsGroup
 String avsName = System.getenv("AVS_NAME") ?: "avs"
 String avsVersion
@@ -26,6 +24,11 @@ String avsVersion
 if (shouldUseCustomAvs) {
     avsVersion = System.getenv("AVS_VERSION") ?: avsCustomVersion
     avsGroup = System.getenv("AVS_GROUP") ?: avsCustomGroup
+    allprojects {
+        repositories {
+            maven { url nexusUrl }
+        }
+    }
 } else {
     avsVersion = System.getenv("AVS_VERSION") ?: avsPublicVersion
     avsGroup = System.getenv("AVS_GROUP") ?: avsPublicGroup

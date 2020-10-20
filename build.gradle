@@ -49,7 +49,6 @@ allprojects {
         maven { url "https://dl.bintray.com/wire-android/third-party" }
         maven { url 'https://maven.google.com' }
         mavenCentral()
-        maven { url "http://10.10.124.11:8081/nexus/content/groups/public" }
     }
 }
 
