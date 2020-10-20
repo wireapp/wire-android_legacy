@@ -75,6 +75,7 @@
     <application
         android:name=".ZApplication"
         android:allowBackup="false"
+        android:requestLegacyExternalStorage="true"
         android:hardwareAccelerated="true"
         android:icon="${applicationIcon}"
         android:label="${applicationLabel}"
