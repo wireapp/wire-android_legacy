@@ -306,7 +306,7 @@ dependencies {
     implementation BuildDependencies.kotlin.coroutinesAndroid
     implementation BuildDependencies.kotlin.coroutinesCore
 
-    implementation "${rootProject.ext.avsDependency}"
+    implementation avsDependency
 
     implementation BuildDependencies.wire.audioNotifications
     //don't include wire translations for custom builds
@@ -318,8 +318,7 @@ dependencies {
 
     api project(ModuleDependencies.storage)
     api(project(ModuleDependencies.syncEngine)) {
-        exclude group: 'com.wire', module: 'avs'
-        exclude group: 'com.wearezeta.avs', module: 'avs'
+        exclude group: avsGroup, module: avsName
     }
 
     //Android

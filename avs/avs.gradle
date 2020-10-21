@@ -1,40 +1,49 @@
+final String AVS_GROUP_ENV_VAR = "AVS_GROUP"
+final String AVS_NAME_ENV_VAR = "AVS_NAME"
+final String AVS_VERSION_ENV_VAR = "AVS_VERSION"
+final String NEXUS_URL_ENV_VAR = "NEXUS_URL"
+final String NEXUS_URL_LOCAL_VAR = "nexus.url"
+final String LOCAL_PROPERTIES_FILE_NAME = "local.properties"
+final String AVS_PUBLIC_GROUP = "com.wire"
+final String AVS_PRIVATE_GROUP = "com.wearezeta.avs"
+final String AVS_NAME = "avs"
+
 String avsPublicVersion = "6.4.233"
-String avsCustomVersion = "6.4.12"
-String avsPublicGroup = "com.wire"
-String avsCustomGroup = "com.wearezeta.avs"
-String nexusUrl = "http://10.10.124.11:8081/nexus/content/groups/public"
+String avsPrivateVersion = "6.4.12"
+String nexusUrl = ""
 
-// Set shouldUseCustomAvs value to true if want to test with a custom AVS version in dev, internal or experimental builds
-boolean shouldUseCustomAvs = false
-
-def isConnected = !"curl -i -m 3 $nexusUrl".execute().err.text.contains("timed out")
-
-if (isConnected) {
-    for (String taskName : gradle.startParameter.taskNames) {
-        if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
-            shouldUseCustomAvs = true
-            break
-        }
+if (System.hasProperty(NEXUS_URL_ENV_VAR)) {
+    nexusUrl = System.getenv(NEXUS_URL_ENV_VAR)
+} else {
+    Properties properties = new Properties()
+    def propertiesFile = project.rootProject.file(LOCAL_PROPERTIES_FILE_NAME)
+    if (propertiesFile.exists()) {
+        properties.load(propertiesFile.newDataInputStream())
+        nexusUrl = properties.getProperty(NEXUS_URL_LOCAL_VAR) ?: ""
     }
 }
 
-String avsGroup
-String avsName = System.getenv("AVS_NAME") ?: "avs"
-String avsVersion
+println("nexus " + nexusUrl)
 
-if (shouldUseCustomAvs) {
-    avsVersion = System.getenv("AVS_VERSION") ?: avsCustomVersion
-    avsGroup = System.getenv("AVS_GROUP") ?: avsCustomGroup
+if (!nexusUrl.isEmpty()) {
     allprojects {
         repositories {
             maven { url nexusUrl }
         }
     }
+    ext {
+        avsGroup = System.getenv(AVS_GROUP_ENV_VAR) ?: AVS_PRIVATE_GROUP
+        avsName = System.getenv(AVS_NAME_ENV_VAR) ?: AVS_NAME
+        avsVersion = System.getenv(AVS_VERSION_ENV_VAR) ?: avsPrivateVersion
+        avsDependency = "${avsGroup}:${avsName}:${avsVersion}"
+    }
+
 } else {
-    avsVersion = System.getenv("AVS_VERSION") ?: avsPublicVersion
-    avsGroup = System.getenv("AVS_GROUP") ?: avsPublicGroup
+    ext {
+        avsGroup = System.getenv(AVS_GROUP_ENV_VAR) ?: AVS_PUBLIC_GROUP
+        avsName = System.getenv(AVS_NAME_ENV_VAR) ?: AVS_NAME
+        avsVersion = System.getenv(AVS_VERSION_ENV_VAR) ?: avsPublicVersion
+        avsDependency = "${avsGroup}:${avsName}:${avsVersion}"
+    }
 }
 
-ext {
-    avsDependency = "${avsGroup}:${avsName}:${avsVersion}"
-}
