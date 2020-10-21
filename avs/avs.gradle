@@ -23,8 +23,6 @@ if (System.hasProperty(NEXUS_URL_ENV_VAR)) {
     }
 }
 
-println("nexus " + nexusUrl)
-
 if (!nexusUrl.isEmpty()) {
     allprojects {
         repositories {
