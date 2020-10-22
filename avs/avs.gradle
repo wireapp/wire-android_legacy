@@ -10,18 +10,12 @@ final String AVS_NAME = "avs"
 
 String avsPublicVersion = "6.4.233"
 String avsPrivateVersion = "6.4.12"
-String nexusUrl = ""
 
-if (System.hasProperty(NEXUS_URL_ENV_VAR)) {
-    nexusUrl = System.getenv(NEXUS_URL_ENV_VAR)
-} else {
-    Properties properties = new Properties()
-    def propertiesFile = project.rootProject.file(LOCAL_PROPERTIES_FILE_NAME)
-    if (propertiesFile.exists()) {
-        properties.load(propertiesFile.newDataInputStream())
-        nexusUrl = properties.getProperty(NEXUS_URL_LOCAL_VAR) ?: ""
-    }
-}
+Properties properties = new Properties()
+def propertiesFile = project.rootProject.file(LOCAL_PROPERTIES_FILE_NAME)
+properties.load(propertiesFile.newDataInputStream())
+
+String nexusUrl = System.getenv(NEXUS_URL_ENV_VAR) ?: properties.getProperty(NEXUS_URL_LOCAL_VAR) ?: ""
 
 if (!nexusUrl.isEmpty()) {
     allprojects {
