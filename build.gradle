@@ -52,9 +52,9 @@ allprojects {
     }
 }
 
-apply from: "./detekt/setup.gradle"
-apply from: "./jacoco/coverage.gradle"
-apply from: "./avs/avs.gradle"
+apply from: "./scripts/detekt.gradle"
+apply from: "./scripts/jacoco.gradle"
+apply from: "./scripts/avs.gradle"
 
 // FIXME: License header is disabled because it breaks compilation
 //task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
