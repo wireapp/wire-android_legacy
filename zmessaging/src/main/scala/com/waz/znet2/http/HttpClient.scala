@@ -80,9 +80,9 @@ object HttpClient {
   object dsl {
 
     /**
-     * Just convenient method for the case when query parameter is optional
-     * This can be refactored after dotty will be released http://dotty.epfl.ch/docs/reference/union-types.html
-     */
+      * Just convenient method for the case when query parameter is optional
+      * This can be refactored after dotty will be released http://dotty.epfl.ch/docs/reference/union-types.html
+      */
     def queryParameters(params: (String, Any)*): List[QueryParameter] =
       params.toList.flatMap {
         case (name, value) =>
@@ -115,12 +115,12 @@ object HttpClient {
     }
 
     class PreparingRequest[T](
-                               private[http] val request: Request[T],
-                               private[http] val uploadCallback: Option[ProgressCallback] = None,
-                               private[http] val downloadCallback: Option[ProgressCallback] = None,
-                               private[http] val resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
-                             )(implicit
-                               requestSerializer: RequestSerializer[T]) {
+        private[http] val request: Request[T],
+        private[http] val uploadCallback: Option[ProgressCallback] = None,
+        private[http] val downloadCallback: Option[ProgressCallback] = None,
+        private[http] val resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
+    )(implicit
+      requestSerializer: RequestSerializer[T]) {
 
       def withUploadCallback(callback: ProgressCallback): PreparingRequest[T] =
         new PreparingRequest[T](request, Some(callback), downloadCallback)
@@ -143,13 +143,13 @@ object HttpClient {
     }
 
     class PreparedRequest[T, R](
-                                 private[http] val request: Request[T],
-                                 private[http] val uploadCallback: Option[ProgressCallback] = None,
-                                 private[http] val downloadCallback: Option[ProgressCallback] = None,
-                                 private[http] val resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
-                               )(implicit
-                                 rs: RequestSerializer[T],
-                                 rd: ResponseDeserializer[R]) {
+        private[http] val request: Request[T],
+        private[http] val uploadCallback: Option[ProgressCallback] = None,
+        private[http] val downloadCallback: Option[ProgressCallback] = None,
+        private[http] val resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
+    )(implicit
+      rs: RequestSerializer[T],
+      rd: ResponseDeserializer[R]) {
 
       def execute(implicit client: HttpClient): CancellableFuture[R] =
         client.result(request, uploadCallback, downloadCallback)
@@ -160,23 +160,23 @@ object HttpClient {
     }
 
     class PreparedRequestWithErrorType[T, R, E](
-                                                 private[http] val request: Request[T],
-                                                 private[http] val uploadCallback: Option[ProgressCallback] = None,
-                                                 private[http] val downloadCallback: Option[ProgressCallback] = None,
-                                                 private[http] val resultResponseCodes: Set[Int]
-                                               )(implicit
-                                                 rs: RequestSerializer[T],
-                                                 rd: ResponseDeserializer[R],
-                                                 erd: ResponseDeserializer[E]) {
+        private[http] val request: Request[T],
+        private[http] val uploadCallback: Option[ProgressCallback] = None,
+        private[http] val downloadCallback: Option[ProgressCallback] = None,
+        private[http] val resultResponseCodes: Set[Int]
+    )(implicit
+      rs: RequestSerializer[T],
+      rd: ResponseDeserializer[R],
+      erd: ResponseDeserializer[E]) {
 
       def executeSafe(implicit client: HttpClient, c: CustomErrorConstructor[E]): CancellableFuture[Either[E, R]] =
         client.resultWithDecodedErrorSafe[T, E, R](request, uploadCallback, downloadCallback, resultResponseCodes)
 
       def executeSafe[TR](resultTransformer: R => TR)(
-        implicit
-        client: HttpClient,
-        c: CustomErrorConstructor[E],
-        ex: ExecutionContext
+          implicit
+          client: HttpClient,
+          c: CustomErrorConstructor[E],
+          ex: ExecutionContext
       ): CancellableFuture[Either[E, TR]] =
         client
           .resultWithDecodedErrorSafe[T, E, R](request, uploadCallback, downloadCallback, resultResponseCodes)
@@ -201,24 +201,24 @@ trait HttpClient extends DerivedLogTag {
   protected implicit val ec: ExecutionContext
 
   protected def executeIgnoreInterceptor(
-                                          request: Request[Body],
-                                          uploadCallback: Option[ProgressCallback],
-                                          downloadCallback: Option[ProgressCallback]
-                                        ): CancellableFuture[Response[Body]]
+      request: Request[Body],
+      uploadCallback: Option[ProgressCallback],
+      downloadCallback: Option[ProgressCallback]
+  ): CancellableFuture[Response[Body]]
 
   def execute(
-               request: Request[Body],
-               uploadCallback: Option[ProgressCallback],
-               downloadCallback: Option[ProgressCallback]
-             ): CancellableFuture[Response[Body]] = {
+      request: Request[Body],
+      uploadCallback: Option[ProgressCallback],
+      downloadCallback: Option[ProgressCallback]
+  ): CancellableFuture[Response[Body]] = {
     request.interceptor.intercept(request)
       .flatMap(executeIgnoreInterceptor(_, uploadCallback, downloadCallback))
       .flatMap(request.interceptor.intercept(request, uploadCallback, downloadCallback, _))
   }
 
   private def serializeRequest[T](
-                                   request: Request[T]
-                                 )(implicit rs: RequestSerializer[T]): CancellableFuture[Request[Body]] =
+      request: Request[T]
+  )(implicit rs: RequestSerializer[T]): CancellableFuture[Request[Body]] =
     CancellableFuture(rs.serialize(request)).recoverWith {
       case err =>
         error(l"Error while serializing request.", err)
@@ -226,8 +226,8 @@ trait HttpClient extends DerivedLogTag {
     }
 
   private def deserializeResponse[T](
-                                      response: Response[Body]
-                                    )(implicit rd: ResponseDeserializer[T]): CancellableFuture[T] =
+      response: Response[Body]
+  )(implicit rd: ResponseDeserializer[T]): CancellableFuture[T] =
     CancellableFuture(rd.deserialize(response)).recoverWith {
       case err =>
         error(l"Error while deserializing response: $response", err)
@@ -236,11 +236,11 @@ trait HttpClient extends DerivedLogTag {
     }
 
   def result[T: RequestSerializer, R: ResponseDeserializer](
-                                                             request: Request[T],
-                                                             uploadCallback: Option[ProgressCallback] = None,
-                                                             downloadCallback: Option[ProgressCallback] = None,
-                                                             resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
-                                                           ): CancellableFuture[R] =
+      request: Request[T],
+      uploadCallback: Option[ProgressCallback] = None,
+      downloadCallback: Option[ProgressCallback] = None,
+      resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
+  ): CancellableFuture[R] =
     serializeRequest(request)
       .flatMap(execute(_, uploadCallback, downloadCallback))
       .flatMap { response =>
@@ -255,15 +255,15 @@ trait HttpClient extends DerivedLogTag {
       }
 
   def resultWithDecodedError[T, E, R](
-                                       request: Request[T],
-                                       uploadCallback: Option[ProgressCallback] = None,
-                                       downloadCallback: Option[ProgressCallback] = None,
-                                       resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
-                                     )(implicit
-                                       rs: RequestSerializer[T],
-                                       erd: ResponseDeserializer[E],
-                                       ev: E <:< Throwable,
-                                       rd: ResponseDeserializer[R]): CancellableFuture[R] =
+      request: Request[T],
+      uploadCallback: Option[ProgressCallback] = None,
+      downloadCallback: Option[ProgressCallback] = None,
+      resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
+  )(implicit
+    rs: RequestSerializer[T],
+    erd: ResponseDeserializer[E],
+    ev: E <:< Throwable,
+    rd: ResponseDeserializer[R]): CancellableFuture[R] =
     serializeRequest(request)
       .flatMap(execute(_, uploadCallback, downloadCallback))
       .flatMap { response =>
@@ -278,13 +278,13 @@ trait HttpClient extends DerivedLogTag {
       }
 
   def resultWithDecodedErrorSafe[T: RequestSerializer,
-    E: ResponseDeserializer: CustomErrorConstructor,
-    R: ResponseDeserializer](
-                              request: Request[T],
-                              uploadCallback: Option[ProgressCallback] = None,
-                              downloadCallback: Option[ProgressCallback] = None,
-                              resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
-                            ): CancellableFuture[Either[E, R]] =
+                                 E: ResponseDeserializer: CustomErrorConstructor,
+                                 R: ResponseDeserializer](
+      request: Request[T],
+      uploadCallback: Option[ProgressCallback] = None,
+      downloadCallback: Option[ProgressCallback] = None,
+      resultResponseCodes: Set[Int] = ResponseCode.SuccessCodes
+  ): CancellableFuture[Either[E, R]] =
     serializeRequest(request)
       .flatMap(execute(_, uploadCallback, downloadCallback))
       .flatMap { response =>
