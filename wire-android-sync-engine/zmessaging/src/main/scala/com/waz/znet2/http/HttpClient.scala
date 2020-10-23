@@ -21,11 +21,12 @@ import java.net.UnknownServiceException
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.wire.signals.CancellableFuture
 import com.waz.znet2.http.HttpClient._
 import com.waz.znet2.http.Request.QueryParameter
+import com.wire.signals.CancellableFuture
 
 import scala.concurrent.ExecutionContext
+import scala.math.max
 
 object HttpClient {
 
@@ -40,10 +41,10 @@ object HttpClient {
   object ProgressFilter {
 
     def steps(n: Long, totalBytes: Long): ProgressFilter = new ProgressFilter {
-      private val stepSize: Long = totalBytes / n
+      private val bytesPerStep: Long = max(totalBytes / n, 1)
       @volatile var lastStep: Long = 0
       override def needPublishProgress(progress: Long, total: Option[Long]): Boolean = {
-        val step = progress / stepSize
+        val step = progress / bytesPerStep
         if (step - lastStep >= 1) {
           lastStep = step
           true
