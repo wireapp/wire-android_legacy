@@ -4,7 +4,7 @@ subprojects {
     detekt {
         version = "${Versions.DETEKT}"
         input = files("$projectDir/src/main/kotlin")
-        config = files("$rootProject.projectDir/detekt/config.yml")
+        config = files("$rootProject.projectDir/config/detekt.yml")
         filters = ".*build.*,.*/resources/.*,.*/tmp/.*"
         reports {
             xml.enabled = true
