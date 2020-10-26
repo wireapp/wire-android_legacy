@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.common.controllers
 
-import java.io.File
+import java.io.{File, FileInputStream}
 
 import android.content.{ContentValues, Context, Intent}
 import android.media.MediaScannerConnection
@@ -280,8 +280,9 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def saveToDownloads(asset: Asset): Unit =
     saveAssetContentToFile(asset, context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).onComplete {
       case Success(file) if inject[FileRestrictionList].isAllowed(file.getName) =>
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-          context.getContentResolver.insert(
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          val contentResolver = context.getContentResolver
+          val insertUri = contentResolver.insert(
             Downloads.EXTERNAL_CONTENT_URI,
             returning(new ContentValues) { cv =>
               cv.put(MediaColumns.TITLE, asset.name)
@@ -290,7 +291,8 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
               cv.put(MediaColumns.SIZE, asset.size.toDouble)
             }
           )
-        else
+          IoUtils.copy(new FileInputStream(file), contentResolver.openOutputStream(insertUri))
+        } else {
           DeprecationUtils.addCompletedDownload(
             context,
             asset.name,
@@ -298,6 +300,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
             URIWrapper.fromFile(file).getPath,
             asset.size
           )
+        }
         showToast(R.string.content__file__action__save_completed)
         MediaScannerConnection.scanFile(context, Array(file.toString), Array(file.getName), null)
       case _ =>
