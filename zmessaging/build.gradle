@@ -75,7 +75,7 @@ def versions = [
 
 dependencies {
 
-    api project(':wire-android-sync-engine:macrosupport')
+    api project(':macrosupport')
 
     implementation project(ModuleDependencies.storage)
 

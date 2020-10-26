@@ -143,7 +143,7 @@ object BuildDependencies {
 
 object ModuleDependencies {
     val storage = ":storage"
-    val syncEngine = ":wire-android-sync-engine:zmessaging"
+    val syncEngine = ":zmessaging"
     val commonTest = ":common-test"
 }
 
