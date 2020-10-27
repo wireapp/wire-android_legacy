@@ -307,12 +307,17 @@ class AndroidCamera2(cameraData: CameraData,
     try {
       withSessionAndReqBuilder { (session, requestBuilder) =>
         session.stopRepeating()
-        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), CameraMetadata.CONTROL_AF_TRIGGER_CANCEL)
-        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_OFF)
-        session.capture(requestBuilder.build(), null, cameraHandler)
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), CameraMetadata.CONTROL_AF_TRIGGER_IDLE)
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_TRIGGER), CameraMetadata.CONTROL_AF_TRIGGER_START)
+        session.capture(requestBuilder.build, null, cameraHandler)
+
+        val focusAreas = Array(new MeteringRectangle(touchRect, MeteringRectangle.METERING_WEIGHT_MAX - 1))
+
+        if (isMeteringAreaAESupported) {
+          requestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, focusAreas)
+        }
 
         if (isMeteringAreaAFSupported) {
-          val focusAreas = Array(new MeteringRectangle(touchRect, MeteringRectangle.METERING_WEIGHT_MAX - 1))
           requestBuilder.set(requestKey(CaptureRequest.CONTROL_AF_REGIONS), focusAreas)
         }
         requestBuilder.set(requestKey(CaptureRequest.CONTROL_MODE), CameraMetadata.CONTROL_MODE_AUTO)
@@ -388,6 +393,7 @@ class AndroidCamera2(cameraData: CameraData,
   }
 
   private def isMeteringAreaAFSupported = Option(cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF)).exists(_ >= 1)
+  private def isMeteringAreaAESupported = Option(cameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE)).exists(_ >= 1)
 }
 
 object AndroidCamera2 {
