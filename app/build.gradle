@@ -66,7 +66,7 @@ android {
     preBuild.dependsOn(copyCustomResources)
 
     compileSdkVersion = Versions.COMPILE_SDK_VERSION
-    buildToolsVersion = '29.0.3'
+    buildToolsVersion = Versions.BUILD_TOOLS_VERSION
 
     defaultConfig {
         minSdkVersion Versions.MIN_SDK_VERSION
