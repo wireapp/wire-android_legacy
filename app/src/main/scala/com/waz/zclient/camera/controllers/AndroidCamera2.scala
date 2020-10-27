@@ -125,7 +125,6 @@ class AndroidCamera2(cameraData: CameraData,
     } catch {
       case ex: SecurityException          => error(l"The app has no permission to access the camera", ex)
       case ex: CameraAccessException      => error(l"Camera access error when opening camera: ", ex)
-      case ex: SecurityException          => error(l"The app has no permission to access the camera", ex)
       case ex: IllegalArgumentException   => error(l"Opening the camera failed", ex)
     }
   }
