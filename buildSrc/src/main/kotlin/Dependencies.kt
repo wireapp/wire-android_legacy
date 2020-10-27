@@ -1,17 +1,32 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection")
 
+import org.gradle.api.JavaVersion
+
+
 object Versions {
     //wire android client
     const val ANDROID_CLIENT_MAJOR_VERSION = "3.57."
+    const val COMPILE_SDK_VERSION = 29
+    const val TARGET_SDK_VERSION = 29
+    const val MIN_SDK_VERSION = 24
+    const val BUILD_TOOLS_VERSION = "29.0.3"
+    val SOURCE_COMPATIBILITY_VERSION = JavaVersion.VERSION_1_8
+    val TARGET_COMPATIBILITY_VERSION = JavaVersion.VERSION_1_8
 
     //core
     const val KOTLIN = "1.3.72"
+
     const val WIRE_TRANSLATIONS = "1.+"
     val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
 
     //plugins
+    const val GRADLE = "3.2.1"
+    const val SCALA = "1.6"
+    const val GMS = "3.1.1"
     const val DETEKT = "1.2.2"
     const val JACOCO = "0.8.5"
+    const val DEX_INFO = "0.1.2"
+    const val GRGIT = "3.0.0"
 
     //build
     const val COROUTINES = "1.3.7"
