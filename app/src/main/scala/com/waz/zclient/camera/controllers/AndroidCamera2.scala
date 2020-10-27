@@ -9,7 +9,7 @@ import android.hardware.camera2._
 import android.hardware.camera2.params.MeteringRectangle
 import android.media.ImageReader.OnImageAvailableListener
 import android.media.{ExifInterface, Image, ImageReader}
-import android.os.{Handler, HandlerThread}
+import android.os.{Build, Handler, HandlerThread}
 import android.view.Surface
 import com.waz.bitmap.BitmapUtils
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -282,7 +282,9 @@ class AndroidCamera2(cameraData: CameraData,
   }
 
   override def release(): Unit = {
-    imageReader.discardFreeBuffers()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      imageReader.discardFreeBuffers()
+    }
     imageReader.close()
     cameraSession.foreach { session =>
       session.stopRepeating()
