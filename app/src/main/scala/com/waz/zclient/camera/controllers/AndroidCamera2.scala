@@ -41,10 +41,12 @@ class AndroidCamera2(cameraData: CameraData,
                      texture: SurfaceTexture)
   extends WireCamera with DerivedLogTag {
 
+  import AndroidCamera2._
   import ExifInterface._
   import WireCamera._
   import com.waz.zclient.log.LogUI._
-  import AndroidCamera2._
+
+  private var updatedFlash: FlashMode = flashMode
 
   private lazy val cameraThread = returning(new HandlerThread("CameraThread")) {
     _.start()
@@ -78,9 +80,6 @@ class AndroidCamera2(cameraData: CameraData,
   private var camera: Option[CameraDevice] = None
   private var orientation: Orientation = DEFAULT_ORIENTATION
 
-  private def getSupportedFlashMode(mode: FlashMode): Int =
-    if (getSupportedFlashModes(mode)) mode.mode else FlashMode.OFF.mode
-
   def initCamera(): Unit = {
     openCamera(cameraManager, cameraData.cameraId, cameraHandler)
 
@@ -90,12 +89,11 @@ class AndroidCamera2(cameraData: CameraData,
     val targets = List(surface, imageReader.getSurface)
 
     camera.foreach { device: CameraDevice =>
-      cameraRequest = returning(Option(device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW))) { _.foreach { request =>
-        request.set(requestKey(CaptureRequest.CONTROL_MODE), CameraMetadata.CONTROL_MODE_AUTO)
-        request.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-        request.set(requestKey(CaptureRequest.FLASH_MODE), getSupportedFlashMode(flashMode))
-        request.addTarget(surface)
-      } }
+      cameraRequest = returning(Option(device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW))) {
+        _.foreach { request =>
+          request.addTarget(surface)
+        }
+      }
       createCameraSession(targets, device)
     }
   }
@@ -125,9 +123,9 @@ class AndroidCamera2(cameraData: CameraData,
         }
       }, cameraHandler)
     } catch {
-      case ex: CameraAccessException    => error(l"Camera access error when opening camera: ", ex)
-      case ex: SecurityException        => error(l"The app has no permission to access the camera", ex)
-      case ex: IllegalArgumentException => error(l"Opening the camera failed", ex)
+      case ex: SecurityException          => error(l"The app has no permission to access the camera", ex)
+      case ex: CameraAccessException      => error(l"Camera access error when opening camera: ", ex)
+      case ex: IllegalArgumentException   => error(l"Opening the camera failed", ex)
     }
   }
 
@@ -136,11 +134,7 @@ class AndroidCamera2(cameraData: CameraData,
       camera.createCaptureSession(targets.asJava, new CameraCaptureSession.StateCallback {
         override def onConfigured(session: CameraCaptureSession): Unit = {
           cameraSession = Some(session)
-          cameraRequest.foreach { request =>
-            request.set(requestKey(CaptureRequest.CONTROL_MODE), CameraMetadata.CONTROL_MODE_AUTO)
-            request.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-            session.setRepeatingRequest(request.build(), null, cameraHandler)
-          }
+          updatePreview()
         }
 
         override def onConfigureFailed(session: CameraCaptureSession): Unit = {
@@ -217,15 +211,16 @@ class AndroidCamera2(cameraData: CameraData,
     val imageQueue = new ArrayBlockingQueue[Image](ImageBufferSize)
     imageReader.setOnImageAvailableListener(new OnImageAvailableListener {
       override def onImageAvailable(reader: ImageReader): Unit = {
-        val image = reader.acquireNextImage()
+        val image = reader.acquireLatestImage()
         imageQueue.add(image)
       }
     }, imageReaderHandler)
 
     cameraSession.foreach { session: CameraCaptureSession =>
-      val captureRequest = returning(session.getDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)) {
-        _.addTarget(imageReader.getSurface)
+      val captureRequest = returning(session.getDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)) { request =>
+        request.addTarget(imageReader.getSurface)
       }
+      determineFlash(captureRequest)
       session.capture(captureRequest.build(), new CameraCaptureSession.CaptureCallback {
         private def computeExifOrientation(rotationDegrees: Int, mirrored: Boolean) = (rotationDegrees, mirrored) match {
           case (0, false)    => ORIENTATION_NORMAL
@@ -274,11 +269,23 @@ class AndroidCamera2(cameraData: CameraData,
           val mirrored = getCurrentCameraFacing == CameraMetadata.LENS_FACING_FRONT
           val relativeOrientation = computeRelativeOrientation(orientation.orientation, mirrored)
           val exifOrientation = computeExifOrientation(relativeOrientation, mirrored)
+
+          updatePreview()
+
           promise.success(CombinedCaptureResult(image, result, exifOrientation, imageReader.getImageFormat))
         }
       }, cameraHandler)
     }
     promise.future
+  }
+
+  def updatePreview() = {
+    withSessionAndReqBuilder { (session, request) =>
+      request.set(requestKey(CaptureRequest.CONTROL_MODE), CameraMetadata.CONTROL_MODE_AUTO)
+      request.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+      determineFlash(request)
+      session.setRepeatingRequest(request.build(), null, cameraHandler)
+    }
   }
 
   override def release(): Unit = {
@@ -334,23 +341,39 @@ class AndroidCamera2(cameraData: CameraData,
     promise.future
   }
 
-  override def setFlashMode(fm: FlashMode): Unit = withSessionAndReqBuilder { (session, requestBuilder) =>
-    fm match {
+  def determineFlash(requestBuilder: CaptureRequest.Builder) = {
+    updatedFlash match {
       case FlashMode.AUTO =>
         requestBuilder.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH)
+        requestBuilder.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_OFF)
       case FlashMode.OFF =>
         requestBuilder.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON)
         requestBuilder.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_OFF)
-      case FlashMode.ON | FlashMode.TORCH =>
+      case FlashMode.ON =>
         requestBuilder.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON)
-        requestBuilder.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_TORCH)
+        requestBuilder.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_SINGLE)
+     case FlashMode.TORCH =>
+       requestBuilder.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON)
+       requestBuilder.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_TORCH)
+      case FlashMode.RED_EYE =>
+        requestBuilder.set(requestKey(CaptureRequest.CONTROL_AE_MODE), CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE)
+        requestBuilder.set(requestKey(CaptureRequest.FLASH_MODE), CameraMetadata.FLASH_MODE_OFF)
     }
-    session.setRepeatingRequest(requestBuilder.build(), null, cameraHandler)
+    requestBuilder.set(requestKey(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER),
+      CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START)
+  }
+
+  override def setFlashMode(fm: FlashMode): Unit = {
+    updatedFlash = fm
   }
 
   override def getSupportedFlashModes: Set[FlashMode] =
-    Option(cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES))
-      .fold(Set.empty[FlashMode])(_.map(FlashMode.get).toSet)
+    if (getCurrentCameraFacing == CameraMetadata.LENS_FACING_BACK && cameraCharacteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE)) {
+      Option(cameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES))
+        .fold(Set.empty[FlashMode])(_.map(FlashMode.get).toSet)
+    } else {
+      Set.empty[FlashMode]
+    }
 
   override def setOrientation(o: Orientation): Unit = {
     orientation = o

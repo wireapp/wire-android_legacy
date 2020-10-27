@@ -164,7 +164,7 @@ class CameraFragment extends FragmentHelper
     cameraPreview.foreach { preview =>
       cameraTopControl.foreach { control =>
         control.setFlashStates(flashModes, preview.getCurrentFlashMode)
-        control.enableCameraSwitchButtion(preview.getNumberOfCameras > 1)
+        control.enableCameraSwitchButton(preview.getNumberOfCameras > 1)
       }
     }
 

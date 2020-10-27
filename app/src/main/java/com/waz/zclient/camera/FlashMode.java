@@ -17,14 +17,21 @@
  */
 package com.waz.zclient.camera;
 
-import android.hardware.camera2.CaptureRequest;
+class FlashModeConstants {
+    static final int FLASH_OFF = 0;
+    static final int FLASH_ON = 1;
+    static final int FLASH_TORCH = 2;
+    static final int FLASH_AUTO = 3;
+    static final int FLASH_RED_EYE = 4;
+}
 
 public enum FlashMode {
 
-    OFF(CaptureRequest.FLASH_MODE_OFF),
-    AUTO(CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH),
-    ON(CaptureRequest.FLASH_MODE_SINGLE),
-    TORCH(CaptureRequest.FLASH_MODE_TORCH);
+    OFF(FlashModeConstants.FLASH_OFF),
+    ON(FlashModeConstants.FLASH_ON),
+    TORCH(FlashModeConstants.FLASH_TORCH),
+    AUTO(FlashModeConstants.FLASH_AUTO),
+    RED_EYE(FlashModeConstants.FLASH_RED_EYE);
 
     public int mode;
 
@@ -33,7 +40,7 @@ public enum FlashMode {
     }
 
     public static FlashMode get(int mode) {
-        for (FlashMode state: FlashMode.values()) {
+        for (FlashMode state : FlashMode.values()) {
             if (mode == state.mode) {
                 return state;
             }
