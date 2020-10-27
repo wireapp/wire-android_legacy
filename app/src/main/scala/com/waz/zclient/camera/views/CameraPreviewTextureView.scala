@@ -26,15 +26,14 @@ import android.util.AttributeSet
 import android.view._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
-import com.wire.signals.CancellableFuture.CancelException
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.camera._
 import com.waz.zclient.camera.controllers.{GlobalCameraController, Orientation, PreviewSize}
 import com.waz.zclient.common.controllers.SoundController
-import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
+import com.wire.signals.CancellableFuture.CancelException
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.ListSet
@@ -103,7 +102,6 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
         observer.foreach(_.onCameraLoaded(flashModes.asJava))
       case Failure(CancelException) =>
       case Failure(ex) =>
-        Logger.warn("CameraPreviewTextureView", "Failed to open camera - camera is likely unavailable", ex)
         observer.foreach(_.onCameraLoadingFailed())
     } (Threading.Ui)
   }
@@ -174,14 +172,19 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
           rect.bottom = rect.bottom + 1
         }
       }
-      ensureNonEmptyRect(touchRect)
 
-      currentTexture.foreach {
-        case (_, w, h) =>
-          observer.foreach(_.onFocusBegin(touchRect))
-          controller.setFocusArea(touchRect, w, h).onComplete(_ => observer.foreach(_.onFocusComplete()))(Threading.Ui)
+      //AndroidFocus metering doesn't allow negative values
+      def rectIsNonNegative(rect: Rect): Boolean = rect.left >= 0 && rect.right >= 0 && rect.top >= 0 && rect.bottom >= 0
+
+      ensureNonEmptyRect(touchRect)
+      if (rectIsNonNegative(touchRect)){
+        currentTexture.foreach {
+          case (_, w, h) =>
+            observer.foreach(_.onFocusBegin(touchRect))
+            controller.setFocusArea(touchRect, w, h).onComplete(_ => observer.foreach(_.onFocusComplete()))(Threading.Ui)
+        }
       }
-    }
+      }
     true
   }
 
