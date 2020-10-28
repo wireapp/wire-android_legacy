@@ -2,7 +2,7 @@
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.57."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.58."
 
     //core
     const val KOTLIN = "1.3.72"
