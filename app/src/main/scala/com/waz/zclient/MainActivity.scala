@@ -251,7 +251,7 @@ class MainActivity extends BaseActivity
             .flatMap(_ => prefs(TrackingEnabledOneTimeCheckPerformed) := true)
         } else Future.successful(())
       _                <-
-        if(analyticsEnabled) {
+        if(analyticsEnabled && isProUser) {
           inject[GlobalTrackingController].init()
         } else Future.successful(())
     } yield ()
