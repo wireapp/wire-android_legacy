@@ -10,8 +10,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:${Versions.GRADLE}"
-        classpath "com.wire.gradle:gradle-android-scala-plugin:${Versions.SCALA}"
+        classpath "com.android.tools.build:gradle:${Versions.ANDROID_GRADLE_PLUGIN}"
+        classpath "com.wire.gradle:gradle-android-scala-plugin:${Versions.SCALA_BUILD_PLUGIN}"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}"
         classpath "org.jetbrains.kotlin:kotlin-serialization:${Versions.KOTLIN}"
         classpath "com.google.gms:google-services:${Versions.GMS}"
@@ -34,8 +34,6 @@ allprojects {
         maven { url "https://dl.bintray.com/wire-android/releases" }
         maven { url "https://dl.bintray.com/wire-android/snapshots" }
         maven { url "https://dl.bintray.com/wire-android/third-party" }
-        maven {url "https://oss.sonatype.org/content/repositories/releases"}
-        maven {url "https://oss.sonatype.org/content/repositories/snapshots"}
     }
 }
 
@@ -49,6 +47,6 @@ ext {
 apply from: "./scripts/avs.gradle"
 apply from: "./scripts/detekt.gradle"
 apply from: "./scripts/jacoco.gradle"
-apply from: "./scripts/license.gradle"
+apply from: "./scripts/licensing.gradle"
 apply from: "./scripts/customization.gradle"
 apply from: "./scripts/ci.gradle"
