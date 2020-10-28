@@ -190,6 +190,7 @@ class AndroidCamera2(cameraData: CameraData,
               val corrected = BitmapUtils.fixOrientation(BitmapFactory.decodeByteArray(data, 0, data.length), photoResult.orientation)
               generateOutputByteArray(corrected)
           }
+          photoResult.close()
           promise.success(result)
         case Failure(exception) => promise.failure(exception)
       }(Threading.Ui)
@@ -211,7 +212,7 @@ class AndroidCamera2(cameraData: CameraData,
     val imageQueue = new ArrayBlockingQueue[Image](ImageBufferSize)
     imageReader.setOnImageAvailableListener(new OnImageAvailableListener {
       override def onImageAvailable(reader: ImageReader): Unit = {
-        val image = reader.acquireLatestImage()
+        val image = reader.acquireNextImage()
         imageQueue.add(image)
       }
     }, imageReaderHandler)
