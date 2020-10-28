@@ -18,10 +18,9 @@
 package com.waz.zclient.tracking
 
 import com.waz.log.InternalLog
-import com.wire.signals.EventContext
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
-class CrashController (implicit inj: Injector, cxt: WireContext, eventContext: EventContext) extends Injectable with Thread.UncaughtExceptionHandler {
+class CrashController (implicit inj: Injector, cxt: WireContext) extends Injectable with Thread.UncaughtExceptionHandler {
 
   val defaultHandler = Option(Thread.getDefaultUncaughtExceptionHandler) //reference to previously set handler
   Thread.setDefaultUncaughtExceptionHandler(this) //override with this

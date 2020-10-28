@@ -10,10 +10,12 @@ import com.waz.zclient.feature.backup.BackUpViewModel
 import org.koin.core.KoinComponent
 import org.koin.core.get
 import java.io.File
+import java.net.Proxy
 
 object KotlinServices : KoinComponent {
 
     lateinit var audioService: AudioService
+    var httpProxy: Proxy? = null
 
     private val backUpViewModel: BackUpViewModel by lazy { get<BackUpViewModel>() }
 

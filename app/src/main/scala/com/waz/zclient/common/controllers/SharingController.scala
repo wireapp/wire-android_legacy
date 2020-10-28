@@ -20,22 +20,23 @@ package com.waz.zclient.common.controllers
 import android.app.Activity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConvId
-import com.wire.signals.SerialDispatchQueue
-import com.wire.signals.{EventContext, Signal}
-import com.waz.utils.wrappers.{URI => URIWrapper}
+import com.wire.signals.Signal
+import com.waz.utils.wrappers.{AndroidURIUtil, Intent, URI => URIWrapper}
 import com.waz.zclient.Intents._
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
+import scala.collection.JavaConverters._
+import com.waz.zclient.pages.main.conversation.AssetIntentsManager
 
-class SharingController(implicit injector: Injector, wContext: WireContext, eventContext: EventContext)
+class SharingController(implicit injector: Injector, wContext: WireContext)
   extends Injectable with DerivedLogTag {
 
   import SharingController._
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "SharingController")
+  import com.waz.threading.Threading.Implicits.Background
 
   val sharableContent     = Signal(Option.empty[SharableContent])
   val ephemeralExpiration = Signal(Option.empty[FiniteDuration])
@@ -44,10 +45,13 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
 
   def onContentShared(activity: Activity, convs: Seq[ConvId]): Unit = {
     targetConvs ! convs
-    Option(activity).foreach(_.startActivity(SharingIntent(wContext)))
+    val intent = SharingIntent(wContext)
+    intent.setAction(android.content.Intent.ACTION_OPEN_DOCUMENT)
+    intent.addCategory(android.content.Intent.CATEGORY_OPENABLE)
+    Option(activity).foreach(_.startActivity(intent))
   }
 
-  def sendContent(activity: Activity): Future[Seq[ConvId]] = {
+  def sendContent(intent: Intent, activity: Activity): Future[Seq[ConvId]] = {
     val convController = inject[ConversationController]
 
     def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]): Future[Unit] =
@@ -57,7 +61,10 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
         case TextContent(t) =>
           convController.sendTextMessage(convs, t, Nil, None, Some(expiration)).map(_ => ())
         case uriContent if uriContent.uris.nonEmpty =>
-          convController.sendAssetMessages(uriContent.uris.map(URIWrapper.toJava), activity, Some(expiration), convs)
+          val uris = uriContent.uris.map(AndroidURIUtil.unwrap)
+          intent.setAction(android.content.Intent.ACTION_OPEN_DOCUMENT)
+          AssetIntentsManager.grantUrisPermissions(activity, intent, uris.asJava)
+          convController.sendAssetMessages(uriContent.uris.map(URIWrapper.toJava), Some(expiration), convs)
         case _ =>
             Future.successful(Nil)
       }

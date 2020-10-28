@@ -23,8 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service.{AccountManager, AccountsService, UserService}
-import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.deeplinks.DeepLink.{Conversation, UserTokenInfo}
 import com.waz.zclient.log.LogUI._
@@ -40,9 +39,9 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
 
   val deepLink = Signal(Option.empty[CheckingResult])
 
-  deepLink.on(Threading.Background) { result =>
+  deepLink { result =>
     verbose(l"DeepLink checking result: $result")
-  } (EventContext.Global)
+  }
 
   private lazy val accountsService     = inject[AccountsService]
   private lazy val account             = inject[Signal[Option[AccountManager]]]

@@ -35,16 +35,16 @@ import com.waz.zclient.{FragmentHelper, R}
 
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
+import com.waz.zclient.views.LoadingIndicatorView.InfiniteLoadingBar
 
 class ConnectivityFragment extends Fragment with FragmentHelper with ConnectivityIndicatorView.OnExpandListener {
-
   import ConnectivityFragment._
 
   private lazy val network     = Option(ZMessaging.currentGlobal).map(_.network.networkMode).getOrElse(Signal.const(NetworkMode.UNKNOWN))
   private lazy val accentColor = inject[AccentColorController].accentColor
   private lazy val longProcess = inject[Signal[ZMessaging]].flatMap(_.push.processing).flatMap {
     case true => Signal.from(CancellableFuture.delay(LongProcessingDelay)).map(_ => true).orElse(Signal.const(false))
-    case _ => Signal.const(false)
+    case _    => Signal.const(false)
   }
 
   private var root: View = _
@@ -78,12 +78,9 @@ class ConnectivityFragment extends Fragment with FragmentHelper with Connectivit
       mode       <- network
       processing <- longProcess
     } yield (mode, processing)).onUi {
-      case (NetworkMode.OFFLINE | NetworkMode.UNKNOWN, _) =>
-        loadingIndicatorView.hide()
-      case (_, true) =>
-        loadingIndicatorView.show(LoadingIndicatorView.InfiniteLoadingBar)
-      case _ =>
-        loadingIndicatorView.hide()
+      case (NetworkMode.OFFLINE | NetworkMode.UNKNOWN, _) => loadingIndicatorView.hide()
+      case (_, true)                                      => loadingIndicatorView.show(InfiniteLoadingBar)
+      case _                                              => loadingIndicatorView.hide()
     }
     root
   }

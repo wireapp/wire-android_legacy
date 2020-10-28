@@ -23,7 +23,6 @@ import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.threading.Threading
-import com.wire.signals.EventContext
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.security.SecurityChecklist
@@ -33,7 +32,7 @@ import com.waz.zclient.preferences.dialogs.RequestPasswordDialog.{BiometricCance
 
 import scala.concurrent.{Future, Promise}
 
-class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(implicit context: Context, evContext: EventContext)
+class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(implicit context: Context)
   extends SecurityChecklist.Check with DerivedLogTag {
   import RequestPasswordCheck._
 
@@ -106,7 +105,7 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
 }
 
 object RequestPasswordCheck {
-  def apply(pwdCtrl: PasswordController, prefs: UserPreferences)(implicit context: Context, evContext: EventContext): RequestPasswordCheck =
+  def apply(pwdCtrl: PasswordController, prefs: UserPreferences)(implicit context: Context): RequestPasswordCheck =
     new RequestPasswordCheck(pwdCtrl, prefs)
 
   val MaxAttempts = BuildConfig.PASSWORD_MAX_ATTEMPTS

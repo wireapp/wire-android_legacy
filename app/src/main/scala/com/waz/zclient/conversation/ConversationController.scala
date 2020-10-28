@@ -19,7 +19,6 @@ package com.waz.zclient.conversation
 
 import java.net.URI
 
-import android.app.Activity
 import android.content.Context
 import android.graphics.{Bitmap, BitmapFactory}
 import com.waz.api
@@ -32,10 +31,10 @@ import com.waz.model.otr.Client
 import com.waz.service.AccountManager
 import com.waz.service.assets.{AssetInput, Content, ContentForUpload, FileRestrictionList, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
+import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
-import com.wire.signals.{Serialized, EventContext, EventStream, Signal, SourceStream}
+import com.wire.signals.{Serialized, EventStream, Signal, SourceStream}
 import com.waz.utils.{returning, _}
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -53,10 +52,10 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Success, Try}
 
-class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
+class ConversationController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
+  import com.waz.threading.Threading.Implicits.Background
 
   private lazy val selectedConv          = inject[Signal[SelectedConversationService]]
   private lazy val convsUi               = inject[Signal[ConversationsUiService]]
@@ -179,7 +178,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
         selectedConv <- selectedConv.head
         convsUi      <- convsUi.head
         conv         <- getConversation(id)
-        _            <- if (conv.exists(_.archived)) convsUi.setConversationArchived(id, archived = false) else Future.successful(Option.empty[ConversationData])
+        _            <- if (conv.exists(_.archived)) convsUi.setConversationArchived(id, archived = false)
+                        else Future.successful(Option.empty[ConversationData])
         _            <- selectedConv.selectConversation(convId)
       } yield { // catches changes coming from UI
         verbose(l"changing conversation from $oldId to $convId, requester: $requester")
@@ -190,7 +190,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def selectConv(id: ConvId, requester: ConversationChangeRequester): Future[Unit] =
     selectConv(Some(id), requester)
 
-  def switchConversation(convId: ConvId, call: Boolean = false, delayMs: FiniteDuration = 750.millis) =
+  def switchConversation(convId: ConvId, call: Boolean = false, delayMs: FiniteDuration = 750.millis): Future[Unit] =
     CancellableFuture.delay(delayMs).map { _ =>
       selectConv(convId, ConversationChangeRequester.INTENT).foreach { _ =>
         if (call)
@@ -236,7 +236,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
 
   def sendAssetMessage(content:  ContentForUpload,
-                       activity: Activity,
                        exp:      Option[Option[FiniteDuration]]): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) =>
       accentColorController.accentColor.head.flatMap(color =>
@@ -264,7 +263,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   private def sendAssetMessage(convs:    Seq[ConvId],
                                content:  ContentForUpload,
-                               activity: Activity,
                                exp:      Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] =
     for {
       ui    <- convsUi.head
@@ -282,14 +280,13 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     } yield data
 
   def sendAssetMessage(uri:      URI,
-                       activity: Activity,
                        exp:      Option[Option[FiniteDuration]],
                        convs:    Seq[ConvId] = Seq()): Future[Unit] =
     Future.fromTry(uriHelper.extractFileName(uri)).flatMap {
       case fileName if fileRestrictions.isAllowed(fileName) =>
         val content = ContentForUpload(fileName,  Content.Uri(uri))
-        if (convs.isEmpty) sendAssetMessage(content, activity, exp).map(_ => ())
-        else sendAssetMessage(convs, content, activity, exp).map(_ => ())
+        if (convs.isEmpty) sendAssetMessage(content, exp).map(_ => ())
+        else sendAssetMessage(convs, content, exp).map(_ => ())
       case fileName =>
         convsUiwithCurrentConv((ui, id) =>
           ui.addRestrictedFileMessage(id, None, Some(fileName.split('.').last))
@@ -297,7 +294,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     }
 
   def sendAssetMessages(uris:     Seq[URI],
-                        activity: Activity,
                         exp:      Option[Option[FiniteDuration]],
                         convs:    Seq[ConvId]): Future[Unit] =
     for {
@@ -352,7 +348,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     } yield {}
 
   def leave(convId: ConvId): CancellableFuture[Unit] =
-    returning (Serialized("Conversations", convId)(CancellableFuture.lift(convsUi.head.flatMap(_.leaveConversation(convId))))) { _ =>
+    returning(Serialized(s"Conversations $convId")(CancellableFuture.lift(convsUi.head.flatMap(_.leaveConversation(convId))))) { _ =>
       currentConvId.head.map { id => if (id == convId) setCurrentConversationToNext(ConversationChangeRequester.LEAVE_CONVERSATION) }
     }
 
@@ -382,7 +378,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     convsUi.head.flatMap(_.setConversationMuted(id, muted)).map(_ => {})
 
   def delete(id: ConvId, alsoLeave: Boolean): CancellableFuture[Option[ConversationData]] = {
-    def clear(id: ConvId) = Serialized("Conversations", id)(CancellableFuture.lift(convsUi.head.flatMap(_.clearConversation(id))))
+    def clear(id: ConvId) = Serialized(s"Conversations $id")(CancellableFuture.lift(convsUi.head.flatMap(_.clearConversation(id))))
     if (alsoLeave) leave(id).flatMap(_ => clear(id)) else clear(id)
   }
 

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2020 Wire Swiss GmbH
@@ -118,5 +117,32 @@
         <item>0</item>
         <item>113</item>
     </integer-array>
+    <array name="settings_titles">
+        <item>@string/pref_account_screen_title</item>
+        <item>@string/pref_devices_screen_title</item>
+        <item>@string/pref_options_screen_title</item>
+        <item>@string/pref_advanced_screen_title</item>
+        <item>@string/pref_support_screen_title</item>
+        <item>@string/pref_about_screen_title</item>
+    </array>
+
+    <array name="settings_developer_titles">
+        <item>@string/pref_developer_screen_title</item>
+        <item>@string/pref_dev_avs_screen_title</item>
+    </array>
+
+    <array name="settings_icons">
+        <item>@string/glyph__addressbook</item>
+        <item>@string/glyph__devices</item>
+        <item>@string/glyph__settings</item>
+        <item>@string/glyph__tools</item>
+        <item>@string/glyph__info</item>
+        <item>@string/glyph__wire</item>
+    </array>
+
+    <array name="settings_developer_icons">
+        <item>@string/glyph__filter_robot</item>
+        <item>@string/glyph__speaker_loud</item>
+    </array>
 </resources>
 

@@ -6,26 +6,6 @@ apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 apply plugin: 'kotlinx-serialization'
 
-//region avs
-//TODO: Migrate this configuration to new dependency system
-ext {
-    avsVersion = '6.4.4@aar'
-    avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
-    avsName = 'avs'
-    avsGroup = 'com.wire'
-
-    // proprietary avs artifact configuration
-    customAvsVersion = '6.4.4@aar'
-    customAvsInternalVersion = customAvsVersion
-    customAvsName = 'avs'
-    customAvsGroup = 'com.wearezeta.avs'
-}
-
-if (project.file('user.gradle').exists()) {
-    apply from: "user.gradle"
-}
-//endregion avs
-
 task copyCustomResources(type: Copy) {
     if (buildtimeConfiguration.customResourcesPath == null) {
         return
@@ -86,7 +66,7 @@ android {
     preBuild.dependsOn(copyCustomResources)
 
     compileSdkVersion = rootProject.ext.compileSdkVersion
-    buildToolsVersion = '28.0.3'
+    buildToolsVersion = '29.0.3'
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
@@ -284,7 +264,6 @@ android {
     sourceSets {
 
         main.java.srcDirs += ['src/main/java', 'src/main/kotlin']
-        main.res.srcDirs += 'src/main/res-migration'
 
         androidTest {
             java.srcDirs += ['build/generated/source/apt/androidTest/dev/debug']
@@ -317,24 +296,6 @@ dexinfo {
 
 dependencies {
 
-    //region avs
-    // TODO Migrate this configuration to new dependency system
-    boolean internal = true
-    for (String taskName : gradle.startParameter.taskNames) {
-        if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
-            internal = false
-            break
-        }
-    }
-
-    // For using local files in app/libs
-    //implementation (name:'avs', ext:'aar')
-    //implementation (name:'audio-notifications', ext:'aar')
-    //implementation (name:'zmessaging-android', ext:'aar')
-
-    implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
-    //endregion avs
-
     implementation LegacyDependencies.scalaLibrary
     implementation LegacyDependencies.scalaReflect
     implementation LegacyDependencies.scalaShapeless
@@ -344,8 +305,8 @@ dependencies {
     implementation BuildDependencies.kotlin.coroutinesAndroid
     implementation BuildDependencies.kotlin.coroutinesCore
 
-    // TODO uncomment when new dependency system supports avs
-//    implementation BuildDependencies.wire.avs
+    implementation avsDependency
+
     implementation BuildDependencies.wire.audioNotifications
     //don't include wire translations for custom builds
     if (buildtimeConfiguration.customResourcesPath == null) {
@@ -356,7 +317,7 @@ dependencies {
 
     api project(ModuleDependencies.storage)
     api(project(ModuleDependencies.syncEngine)) {
-        exclude group: 'com.wire', module: 'avs'
+        exclude group: avsGroup, module: avsName
     }
 
     //Android

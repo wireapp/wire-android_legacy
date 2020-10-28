@@ -112,7 +112,7 @@ case class SettingsBackStackKey(args: Bundle = new Bundle()) extends BackStackKe
   var controller = Option.empty[SettingsViewController]
 
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[SettingsViewImpl]).map(sv => new SettingsViewController(sv)(sv.injector, sv))
+    controller = Option(v.asInstanceOf[SettingsViewImpl]).map(sv => new SettingsViewController(sv)(sv.injector, sv.eventContext))
   }
 
   override def onViewDetached() = {

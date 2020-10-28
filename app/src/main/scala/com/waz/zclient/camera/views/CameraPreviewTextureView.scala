@@ -26,18 +26,18 @@ import android.util.AttributeSet
 import android.view._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
-import com.wire.signals.CancellableFuture.CancelException
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.camera._
 import com.waz.zclient.camera.controllers.{GlobalCameraController, Orientation, PreviewSize}
 import com.waz.zclient.common.controllers.SoundController
-import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
+import com.wire.signals.CancellableFuture.CancelException
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.ListSet
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val defStyleAttr: Int)
@@ -45,7 +45,7 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
     with ViewHelper
     with TextureView.SurfaceTextureListener
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
 
   def this(context: Context) = this(context, null)
@@ -75,24 +75,23 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
     soundController.playCameraShutterSound()
   }.onComplete {
     case Success(data) => observer.foreach {
-      _.onPictureTaken(data, controller.getCurrentCameraFacing.getOrElse(CameraFacing.BACK) == CameraFacing.FRONT)
+      _.onPictureTaken(data)
     }
     case Failure(_) =>
       observer.foreach(_.onCameraLoadingFailed())
   } (Threading.Ui)
 
-  def getNumberOfCameras = controller.camInfos.size
+  def getNumberOfCameras: Int = controller.availableCameraData.size
 
-  def nextCamera() = {
+  def nextCamera(): Unit = {
     currentTexture.foreach {
       case (t, w, h) =>
-        controller.releaseCamera()
-        controller.setNextCamera()
+        controller.goToNextCamera()
         startLoading(t, w, h)
     }
   }
 
-  def closeCamera() = controller.releaseCamera().andThen {
+  def closeCamera(): Future[Unit] = controller.releaseCamera().andThen {
     case _ => observer.foreach(_.onCameraReleased())
   }(Threading.Ui)
 
@@ -103,7 +102,6 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
         observer.foreach(_.onCameraLoaded(flashModes.asJava))
       case Failure(CancelException) =>
       case Failure(ex) =>
-        Logger.warn("CameraPreviewTextureView", "Failed to open camera - camera is likely unavailable", ex)
         observer.foreach(_.onCameraLoadingFailed())
     } (Threading.Ui)
   }
@@ -143,17 +141,15 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
 
   override def onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean = {
     currentTexture = None
-    closeCamera().onComplete {
-      case _ => texture.release()
-    } (Threading.Ui)
+    closeCamera().onComplete(_ => texture.release())(Threading.Ui)
     false
   }
 
   override def onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) = {}
 
-  def setFlashMode(fm: FlashMode) = controller.currentFlashMode ! fm
+  def setFlashMode(fm: FlashMode): Unit = controller.currentFlashMode ! fm
 
-  def getCurrentFlashMode = controller.currentFlashMode.currentValue.get
+  def getCurrentFlashMode: FlashMode = controller.currentFlashMode.currentValue.get
 
   override def onTouchEvent(event: MotionEvent): Boolean = {
     if (event.getAction == MotionEvent.ACTION_UP) {
@@ -176,16 +172,19 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
           rect.bottom = rect.bottom + 1
         }
       }
-      ensureNonEmptyRect(touchRect)
 
-      currentTexture.foreach {
-        case (_, w, h) =>
-          observer.foreach(_.onFocusBegin(touchRect))
-          controller.setFocusArea(touchRect, w, h).onComplete {
-            case _ => observer.foreach(_.onFocusComplete())
-          }(Threading.Ui)
+      //AndroidFocus metering doesn't allow negative values
+      def rectIsNonNegative(rect: Rect): Boolean = rect.left >= 0 && rect.right >= 0 && rect.top >= 0 && rect.bottom >= 0
+
+      ensureNonEmptyRect(touchRect)
+      if (rectIsNonNegative(touchRect)){
+        currentTexture.foreach {
+          case (_, w, h) =>
+            observer.foreach(_.onFocusBegin(touchRect))
+            controller.setFocusArea(touchRect, w, h).onComplete(_ => observer.foreach(_.onFocusComplete()))(Threading.Ui)
+        }
       }
-    }
+      }
     true
   }
 

@@ -28,7 +28,7 @@ import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
-import com.waz.service.{GlobalModule, ZMessaging}
+import com.waz.service.{GlobalModule, MediaManagerService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.utils._
@@ -46,7 +46,7 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class CallController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
+class CallController(implicit inj: Injector, cxt: WireContext)
   extends Injectable with DerivedLogTag {
 
   import Threading.Implicits.Background
@@ -281,12 +281,12 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     (for {
       incoming <- isCallIncoming.head
       allowed  <- allowedByStatus.head
-      shouldDisplayOverlay = activeUi || Build.VERSION.SDK_INT < 29
+      shouldDisplayOverlay = activeUi || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
     } yield (!incoming || allowed) && shouldDisplayOverlay).foreach {
       case true => CallingActivity.start(cxt)
       case false =>
     }
-  }(EventContext.Global)
+  }
 
   (lastCallAccountId zip isCallEstablished).onChanged.filter(_._2 == true) { case (userId, _) =>
     soundController.playCallEstablishedSound(userId)
@@ -298,7 +298,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   isCallActive.onChanged.filter(_ == false).on(Threading.Ui) { _ =>
     screenManager.releaseWakeLock()
-  }(EventContext.Global)
+  }
 
   (for {
     v            <- isVideoCall
@@ -427,7 +427,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
   }
 
-  lazy val speakerButton = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
+  lazy val speakerButton: ButtonSignal[MediaManagerService] = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
     case (mm, isSpeakerSet) => mm.setSpeaker(!isSpeakerSet)
   }.disableAutowiring()
 }
@@ -479,7 +479,7 @@ private class ScreenManager(implicit injector: Injector) extends Injectable with
   }
 }
 
-private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector, ec: EventContext)
+private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector)
   extends Injectable with DerivedLogTag {
 
   private lazy val telephonyManager = inject[TelephonyManager]

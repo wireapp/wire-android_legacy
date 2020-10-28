@@ -27,7 +27,7 @@ public interface CameraPreviewObserver {
 
     void onCameraLoadingFailed();
 
-    void onPictureTaken(byte[] imageData, boolean mirrored);
+    void onPictureTaken(byte[] imageData);
 
     void onFocusBegin(Rect focusArea);
 

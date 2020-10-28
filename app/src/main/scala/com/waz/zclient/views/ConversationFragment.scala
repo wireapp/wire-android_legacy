@@ -525,7 +525,7 @@ class ConversationFragment extends FragmentHelper {
       case AssetIntentsManager.IntentType.FILE_SHARING =>
         permissions.requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>
-            convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
+            convController.sendAssetMessage(URIWrapper.toJava(uri), None)
           case _ =>
             ViewUtils.showAlertDialog(
               getActivity,
@@ -539,7 +539,7 @@ class ConversationFragment extends FragmentHelper {
       case AssetIntentsManager.IntentType.GALLERY =>
         showImagePreview { _.setImage(uri) }
       case _ =>
-        convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
+        convController.sendAssetMessage(URIWrapper.toJava(uri), None)
         navigationController.setRightPage(Page.MESSAGE_STREAM, TAG)
         extendedCursorContainer.foreach(_.close(true))
     }
@@ -613,7 +613,7 @@ class ConversationFragment extends FragmentHelper {
 
           override def sendRecording(mime: String, audioFile: File): Unit = {
             val content = ContentForUpload(s"audio_record_${System.currentTimeMillis()}.m4a", Content.File(Mime.Audio.M4A, audioFile))
-            convController.sendAssetMessage(content, getActivity, None)
+            convController.sendAssetMessage(content, None)
             extendedCursorContainer.foreach(_.close(true))
           }
         }))
@@ -630,8 +630,8 @@ class ConversationFragment extends FragmentHelper {
 
           override def openGallery(): Unit = assetIntentsManager.foreach { _.openGallery() }
 
-          override def onPictureTaken(imageData: Array[Byte], isMirrored: Boolean): Unit =
-            showImagePreview { _.setImage(imageData, isMirrored) }
+          override def onPictureTaken(imageData: Array[Byte]): Unit =
+            showImagePreview { _.setImage(imageData) }
         }))
       case _ =>
         verbose(l"openExtendedCursor(unknown)")

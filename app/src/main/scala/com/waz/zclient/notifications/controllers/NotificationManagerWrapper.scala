@@ -43,9 +43,9 @@ import com.waz.zclient.Intents.CallIntent
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{MessageNotificationsChannelId, PingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
-import com.waz.zclient.utils.{ResString, RingtoneUtils, format}
+import com.waz.zclient.utils.{DeprecationUtils, ResString, RingtoneUtils, format}
 import com.waz.zclient.{Injectable, Injector, Intents, R}
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -287,7 +287,7 @@ object NotificationManagerWrapper {
     def apply(id: String, name: Int, description: Int, sound: Uri, vibration: Boolean)(implicit cxt: Context): ChannelInfo = ChannelInfo(id, getString(name), getString(description), sound, vibration)
   }
 
-  class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context, eventContext: EventContext)
+  class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
     extends NotificationManagerWrapper with Injectable with DerivedLogTag {
 
     val accountChannels = inject[AccountsService].accountManagers.flatMap(ams => Signal.sequence(ams.map { am =>
@@ -403,7 +403,7 @@ object NotificationManagerWrapper {
 
     private def createTone(rawId: Int, name: String, toneFile: File) = {
       val uri   = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
-      val query = s"${MediaStore.MediaColumns.DATA} LIKE '%$name%'"
+      val query = s"${DeprecationUtils.MEDIA_COLUMN_DATA} LIKE '%$name%'"
       (for {
         _      <- Try(IoUtils.copy(cxt.getResources.openRawResource(rawId), toneFile))
         cursor <- getCursor(uri, query)
@@ -420,7 +420,7 @@ object NotificationManagerWrapper {
     }
 
     private def createContentValues(name: String, toneFile: File) = returning(new ContentValues) { values =>
-      values.put(MediaStore.MediaColumns.DATA, toneFile.getAbsolutePath)
+      values.put(DeprecationUtils.MEDIA_COLUMN_DATA, toneFile.getAbsolutePath)
       values.put(MediaStore.MediaColumns.TITLE, name)
       values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg")
       values.put(MediaStore.MediaColumns.SIZE, toneFile.length.toInt.asInstanceOf[Integer])

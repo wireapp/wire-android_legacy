@@ -7,7 +7,6 @@ object Versions {
     //core
     const val KOTLIN = "1.3.72"
     const val WIRE_TRANSLATIONS = "1.+"
-    val AVS = System.getenv("AVS_VERSION") ?: "6.4.4@aar"
     val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
 
     //plugins
@@ -75,8 +74,7 @@ object BuildDependencies {
     ))
     val wire = WireDependencyMap(mapOf(
         "audioNotifications" to "com.wire:audio-notifications:${Versions.WIRE_AUDIO}",
-        "translations" to "com.wire:wiretranslations:${Versions.WIRE_TRANSLATIONS}",
-        "avs" to "com.wire:${System.getenv("AVS_NAME") ?: "avs"}:${Versions.AVS}"
+        "translations" to "com.wire:wiretranslations:${Versions.WIRE_TRANSLATIONS}"
     ))
     val androidX = AndroidXDependencyMap(mapOf(
         "material" to "com.google.android.material:material:${Versions.ANDROIDX_MATERIAL}",
@@ -145,7 +143,7 @@ object BuildDependencies {
 
 object ModuleDependencies {
     val storage = ":storage"
-    val syncEngine = ":wire-android-sync-engine:zmessaging"
+    val syncEngine = ":zmessaging"
     val commonTest = ":common-test"
 }
 
@@ -178,7 +176,7 @@ object LegacyDependencies {
     const val SCALA_MAJOR_VERSION = "2.11"
     const val SCALA_VERSION = SCALA_MAJOR_VERSION.plus(".12")
     // signals
-    const val WIRE_SIGNALS = "0.2.2"
+    const val WIRE_SIGNALS = "0.2.4"
 
     //build
     val scalaLibrary = "org.scala-lang:scala-library:$SCALA_VERSION"

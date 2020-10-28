@@ -1,17 +1,17 @@
 /**
  * Wire
  * Copyright (C) 2018 Wire Swiss GmbH
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -24,6 +24,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
 import com.waz.zclient.R;
 import com.waz.zclient.camera.FlashMode;
 import com.waz.zclient.utils.SquareOrientation;
@@ -60,25 +61,15 @@ public class CameraTopControl extends FrameLayout {
     private void init() {
         LayoutInflater.from(getContext()).inflate(R.layout.camera_top_control, this, true);
         cameraDirectionButton = ViewUtils.getView(this, R.id.gtv__camera__top_control__change_camera);
-        cameraDirectionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                nextCamera();
-            }
-
-
-        });
+        cameraDirectionButton.setOnClickListener(v -> nextCamera());
 
         cameraFlashButton = ViewUtils.getView(this, R.id.gtv__camera__top_control__flash_setting);
-        cameraFlashButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FlashMode nextFlashMode = getNextFlashState(cameraTopControlCallback.getFlashMode());
-                if (cameraTopControlCallback != null) {
-                    cameraTopControlCallback.setFlashMode(nextFlashMode);
-                }
-                setFlashModeButton(nextFlashMode);
+        cameraFlashButton.setOnClickListener(v -> {
+            FlashMode nextFlashMode = getNextFlashState(cameraTopControlCallback.getFlashMode());
+            if (cameraTopControlCallback != null) {
+                cameraTopControlCallback.setFlashMode(nextFlashMode);
             }
+            setFlashModeButton(nextFlashMode);
         });
 
         cameraFlashButton.setVisibility(View.GONE);
@@ -122,8 +113,6 @@ public class CameraTopControl extends FrameLayout {
                 return FlashMode.OFF;
             case TORCH:
                 break;
-            case RED_EYE:
-                break;
         }
         return FlashMode.OFF;
     }
@@ -144,7 +133,7 @@ public class CameraTopControl extends FrameLayout {
         setFlashModeButton(currentFlashMode);
     }
 
-    public void enableCameraSwitchButtion(boolean enableCameraSwitch) {
+    public void enableCameraSwitchButton(boolean enableCameraSwitch) {
         if (cameraDirectionButton == null) {
             return;
         }
@@ -195,7 +184,9 @@ public class CameraTopControl extends FrameLayout {
 
     public interface CameraTopControlCallback {
         void nextCamera();
+
         void setFlashMode(FlashMode mode);
+
         FlashMode getFlashMode();
     }
 

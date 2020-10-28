@@ -26,7 +26,7 @@ import com.waz.model.AssetId
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
@@ -35,7 +35,7 @@ import com.waz.zclient.{Injectable, Injector, R, WireContext}
 
 import scala.util.Try
 
-class ImageNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector)
+class ImageNotificationsController(implicit cxt: WireContext, inj: Injector)
   extends Injectable with DerivedLogTag {
 
   import ImageNotificationsController._

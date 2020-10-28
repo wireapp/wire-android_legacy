@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.messages.controllers
 
-import android.app.{Activity, ProgressDialog}
+import android.app.Activity
 import android.content.DialogInterface.OnDismissListener
 import android.content._
 import androidx.core.app.ShareCompat
@@ -172,7 +172,6 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       .create()
       .show()
 
-
   private def forwardMessage(message: MessageData): Unit = message.assetId match {
     case Some(id: AssetId) => forwardAssetMessage(id)
     case None => forwardOtherMessage(message)
@@ -182,9 +181,13 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   private def forwardAssetMessage(id: AssetId): Unit = {
     val intentBuilder = ShareCompat.IntentBuilder.from(context)
     intentBuilder.setChooserTitle(R.string.conversation__action_mode__fwd__chooser__title)
-    val dialog = ProgressDialog.show(context,
-      getString(R.string.conversation__action_mode__fwd__dialog__title),
-      getString(R.string.conversation__action_mode__fwd__dialog__message), true, true, null)
+    val dialog = new AlertDialog.Builder(context)
+      .setTitle(R.string.conversation__action_mode__fwd__dialog__title)
+      .setMessage(R.string.conversation__action_mode__fwd__dialog__message)
+      .setCancelable(true)
+      .create()
+
+    dialog.show()
 
     assetsController.assetForSharing(id).onComplete {
 

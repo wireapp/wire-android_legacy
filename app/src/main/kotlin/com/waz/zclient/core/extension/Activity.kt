@@ -23,10 +23,10 @@ fun AppCompatActivity.removeFragment(fragment: Fragment) =
 fun Activity.getDeviceLocale() =
     resources.configuration.locales.get(0)
 
-fun Activity.hideKeyboard() {
+fun Activity.hideKeyboard() = currentFocus?.let {
     val inputMethodManager = this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-    inputMethodManager.hideSoftInputFromWindow(currentFocus.windowToken, 0)
-}
+    inputMethodManager.hideSoftInputFromWindow(it.windowToken, 0)
+} ?: false
 
 fun Activity.showKeyboard() {
     val inputMethodManager = this.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager

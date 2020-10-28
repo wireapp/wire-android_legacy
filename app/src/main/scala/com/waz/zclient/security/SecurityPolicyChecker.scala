@@ -23,7 +23,7 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountManager, ZMessaging}
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
@@ -36,7 +36,7 @@ import org.threeten.bp.temporal.ChronoUnit
 import scala.concurrent.Future
 import com.waz.threading.Threading._
 
-class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) extends Injectable with DerivedLogTag {
+class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with DerivedLogTag {
   import SecurityPolicyChecker._
   import com.waz.threading.Threading.Implicits.Ui
 
@@ -124,7 +124,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
   private def requestPassword(passwordController: PasswordController,
                               userPreferences: UserPreferences,
                               accountManager: AccountManager,
-                              authNeeded: Boolean)(implicit context: Context, eventContext: EventContext) =
+                              authNeeded: Boolean)(implicit context: Context) =
     if (authNeeded) {
       verbose(l"check request password, force app lock: ${BuildConfig.FORCE_APP_LOCK}")
       val check = RequestPasswordCheck(passwordController, userPreferences)
@@ -141,7 +141,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
                                    accountManager    : Option[AccountManager],
                                    isForeground      : Boolean,
                                    authNeeded        : Boolean
-                                  )(implicit context: Context, eventContext: EventContext): Future[Boolean] = {
+                                  )(implicit context: Context): Future[Boolean] = {
     def unpack[A, B, C](a: Option[A], b: Option[B], c: Option[C]): Option[(A, B, C)] = (a, b, c) match {
       case (Some(aa), Some(bb), Some(cc)) => Some((aa, bb, cc))
       case _ => None
@@ -162,7 +162,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
     * Security checklist for background activities (e.g. receiving notifications). This is
     * static so that it can be accessible from `FCMHandlerService`.
     */
-  def runBackgroundSecurityChecklist()(implicit context: Context, eventContext: EventContext): Future[Boolean] =
+  def runBackgroundSecurityChecklist()(implicit context: Context): Future[Boolean] =
     ZMessaging.currentAccounts.activeAccountManager.head.flatMap(am =>
       runSecurityChecklist(
         passwordController = None,

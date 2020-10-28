@@ -19,11 +19,12 @@ package com.waz.zclient.common.controllers
 
 import java.io.File
 
-import android.app.DownloadManager
-import android.content.pm.PackageManager
-import android.content.{Context, Intent}
+import android.content.{ContentValues, Context, Intent}
+import android.media.MediaScannerConnection
 import android.net.Uri
-import android.os.Environment
+import android.os.{Build, Environment}
+import android.provider.MediaStore
+import android.provider.MediaStore.{Downloads, MediaColumns}
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.{Gravity, View}
@@ -36,12 +37,11 @@ import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service
 import com.waz.service.ZMessaging
-import com.waz.service.assets.{Asset, AssetService, DownloadAsset, FileRestrictionList, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
-import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
 import com.waz.service.assets.Asset.{Audio, Video}
+import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
+import com.waz.service.assets._
 import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{IoUtils, returning, sha2}
 import com.waz.zclient.controllers.singleimage.ISingleImageController
@@ -49,11 +49,13 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.notifications.controllers.ImageNotificationsController
+import com.waz.zclient.pages.main.conversation.AssetIntentsManager
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.ExternalFileSharing
+import com.waz.zclient.utils.{DeprecationUtils, ExternalFileSharing}
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.znet2.http.HttpClient.Progress
+import com.wire.signals.{EventContext, Signal}
 import org.threeten.bp.Duration
 
 import scala.collection.immutable.ListSet
@@ -185,7 +187,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
         case AssetForShare(asset, file) if inject[FileRestrictionList].isAllowed(file.getName) =>
           asset.details match {
             case _: Video =>
-              context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
+              context.startActivity(getOpenFileIntent(context.getApplicationContext, externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
               openVideoProgress ! false
             case _ =>
               showOpenFileDialog(externalFileSharing.getUriForFile(file), asset)
@@ -203,8 +205,8 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   }
 
   private def showOpenFileDialog(uri: Uri, asset: Asset): Unit = {
-    val intent = getOpenFileIntent(uri, asset.mime.orDefault.str)
-    val fileCanBeOpened = fileTypeCanBeOpened(context.getPackageManager, intent)
+    val intent = getOpenFileIntent(context.getApplicationContext, uri, asset.mime.orDefault.str)
+    val fileCanBeOpened = fileTypeCanBeOpened(context.getApplicationContext, intent)
 
     //TODO tidy up
     //TODO there is also a weird flash or double-dialog issue when you click outside of the dialog
@@ -248,7 +250,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     dialog.show()
   }
 
-  private def saveAssetContentToFile(asset: Asset, targetDir: File): Future[File] =
+  private def prepareAssetContentForFile(asset: Asset, targetDir: File): Future[(File, Array[Byte])] =
     for {
       permissions <- permissions.head
       _           <- permissions.ensurePermissions(ListSet(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE))
@@ -257,46 +259,72 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       bytes       <- Future.fromTry(assetInput.toByteArray)
       // even if the asset input is a file it has to be copied to the "target file", visible from the outside
       targetFile  =  getTargetFile(asset, targetDir)
-      _           =  IoUtils.writeBytesToFile(targetFile, bytes)
-    } yield targetFile
+    } yield (targetFile, bytes)
 
-  def saveImageToGallery(asset: Asset): Unit =
-    saveAssetContentToFile(asset, createWireImageDirectory()).onComplete {
-      case Success(file) if inject[FileRestrictionList].isAllowed(file.getName) =>
+  def saveImageToGallery(asset: Asset): Unit = {
+    prepareAssetContentForFile(asset, createWireImageDirectory()).onComplete {
+      case Success((file, bytes)) if inject[FileRestrictionList].isAllowed(file.getName) =>
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          val contentResolver = context.getContentResolver
+          val contentValues = returning(contentValuesForAsset(asset)) {
+            _.put(MediaStore.MediaColumns.RELATIVE_PATH, wireImageRelativePath())
+          }
+          val insertUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+          IoUtils.withResource(contentResolver.openOutputStream(insertUri)) { _.write(bytes) }
+        } else {
+          IoUtils.writeBytesToFile(file, bytes)
+        }
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
         showToast(R.string.message_bottom_menu_action_save_ok)
-        context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(Uri.fromFile(file))))
+        MediaScannerConnection.scanFile(context, Array(file.toString), Array(file.getName), null)
       case _             =>
         showToast(R.string.content__file__action__save_error)
     }
+  }
 
-  private def createWireImageDirectory() =
-    returning(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/Wire Images/")) {
-      IoUtils.createDirectory
-    }
+  private def createWireImageDirectory() = returning(wireImageDirectory()) { IoUtils.createDirectory }
+
+  private def wireImageDirectory() =
+    new File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Wire Images")
+
+  private def wireImageRelativePath(): String = {
+    val externalStorageRootDir = context.getExternalFilesDir(null).getPath
+    wireImageDirectory().getPath.stripPrefix(externalStorageRootDir).drop(1)
+  }
 
   def saveToDownloads(asset: Asset): Unit =
-    saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
-      case Success(file) if inject[FileRestrictionList].isAllowed(file.getName) =>
-        val uri = URIWrapper.fromFile(file)
-        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
-        downloadManager.addCompletedDownload(
-          asset.name,
-          asset.name,
-          false,
-          asset.mime.orDefault.str,
-          uri.getPath,
-          asset.size,
-          true)
+    prepareAssetContentForFile(asset, context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).onComplete {
+      case Success((file, bytes)) if inject[FileRestrictionList].isAllowed(file.getName) =>
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          val contentResolver = context.getContentResolver
+          val insertUri = contentResolver.insert(Downloads.EXTERNAL_CONTENT_URI, contentValuesForAsset(asset))
+          IoUtils.withResource(contentResolver.openOutputStream(insertUri)) { _.write(bytes) }
+        } else {
+          IoUtils.writeBytesToFile(file, bytes)
+          DeprecationUtils.addCompletedDownload(
+            context,
+            asset.name,
+            asset.mime.orDefault.str,
+            URIWrapper.fromFile(file).getPath,
+            asset.size
+          )
+        }
         showToast(R.string.content__file__action__save_completed)
-        context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(URIWrapper.unwrap(uri))))
+        MediaScannerConnection.scanFile(context, Array(file.toString), Array(file.getName), null)
       case _ =>
         showToast(R.string.content__file__action__save_error)
     }
 
-  def assetForSharing(id: AssetId): Future[AssetForShare] = {
+  private def contentValuesForAsset(asset: Asset) =
+    returning(new ContentValues) { cv =>
+      cv.put(MediaColumns.TITLE, asset.name)
+      cv.put(MediaColumns.DISPLAY_NAME, asset.name)
+      cv.put(MediaColumns.MIME_TYPE, asset.mime.orDefault.str)
+      cv.put(MediaColumns.SIZE, asset.size.toDouble)
+    }
 
+  def assetForSharing(id: AssetId): Future[AssetForShare] = {
     def getSharedFilename(asset: Asset): String =
       if (asset.name.isEmpty) s"${sha2(asset.id.str.take(6))}.${asset.mime.extension}"
       else if (!asset.name.endsWith(asset.mime.extension)) s"${asset.name}.${asset.mime.extension}"
@@ -354,14 +382,15 @@ object AssetsController {
     def setPlayHead(duration: Duration) = rPAction { case (rP, key, content, _) => rP.setPlayhead(key, content, duration) }
   }
 
-  def getOpenFileIntent(uri: Uri, mimeType: String): Intent = {
-    returning(new Intent) { i =>
-      i.setAction(Intent.ACTION_VIEW)
-      i.setDataAndType(uri, mimeType)
-      i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-  }
+  def getOpenFileIntent(context: Context, uri: Uri, mimeType: String): Intent =
+    returning(new Intent) { intent =>
+      AssetIntentsManager.grantUriPermissions(context, intent, uri)
 
-  def fileTypeCanBeOpened(manager: PackageManager, intent: Intent): Boolean =
-    manager.queryIntentActivities(intent, 0).size > 0
+      intent.setAction(Intent.ACTION_VIEW)
+      intent.setDataAndType(uri, mimeType)
+      intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+  def fileTypeCanBeOpened(context: Context, intent: Intent): Boolean =
+    context.getPackageManager.queryIntentActivities(intent, 0).size > 0
 }

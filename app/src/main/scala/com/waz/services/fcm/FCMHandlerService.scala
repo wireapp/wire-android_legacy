@@ -29,7 +29,7 @@ import com.waz.service.push._
 import com.waz.services.ZMessagingService
 import com.waz.services.fcm.FCMHandlerService._
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Serialized}
+import com.wire.signals.Serialized
 import com.waz.utils.{JsonDecoder, RichInstant}
 import com.waz.zclient.WireApplication
 import com.waz.zclient.log.LogUI._
@@ -69,7 +69,6 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
     getData(remoteMessage).foreach { data =>
       verbose(l"processing remote message with data: ${redactedString(data.toString())}")
       implicit val context: Context = this
-      implicit val ec: EventContext = EventContext.Global
 
       Option(ZMessaging.currentGlobal) match {
         case None =>
