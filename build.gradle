@@ -1,8 +1,3 @@
-import groovy.json.JsonSlurper
-import org.ajoberstar.grgit.Grgit
-import org.ajoberstar.grgit.Credentials
-import groovy.json.JsonOutput
-
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
@@ -14,17 +9,15 @@ buildscript {
         jcenter()
         mavenCentral()
     }
-
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.1'
-        classpath 'com.mutualmobile.gradle.plugins:dexinfo:0.1.2'
-        classpath 'com.wire.gradle:gradle-android-scala-plugin:1.6'
-        classpath 'com.google.gms:google-services:3.1.1'
-        classpath 'org.ajoberstar.grgit:grgit-core:3.0.0'
+        classpath "com.android.tools.build:gradle:${Versions.ANDROID_GRADLE_PLUGIN}"
+        classpath "com.wire.gradle:gradle-android-scala-plugin:${Versions.SCALA_BUILD_PLUGIN}"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:${Versions.KOTLIN}"
+        classpath "com.google.gms:google-services:${Versions.GMS}"
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.DETEKT}"
         classpath "org.jacoco:org.jacoco.core:${Versions.JACOCO}"
-        classpath "org.jetbrains.kotlin:kotlin-serialization:${Versions.KOTLIN}"
+        classpath "com.mutualmobile.gradle.plugins:dexinfo:${Versions.DEX_INFO}"
     }
 }
 
@@ -33,258 +26,27 @@ plugins {
     id "io.gitlab.arturbosch.detekt" version "1.2.2"
 }
 
-license {
-    header = file('LICENSE_HEADER')
-    ext.year = Calendar.getInstance().get(Calendar.YEAR)
-    ext.name = 'Wire Swiss GmbH'
-    skipExistingHeaders = true
-}
-
 allprojects {
     repositories {
-        google()
         jcenter()
+        google()
+        mavenCentral()
         maven { url "https://dl.bintray.com/wire-android/releases" }
         maven { url "https://dl.bintray.com/wire-android/snapshots" }
         maven { url "https://dl.bintray.com/wire-android/third-party" }
-        maven { url 'https://maven.google.com' }
-        mavenCentral()
     }
 }
 
-apply from: "./scripts/detekt.gradle"
-apply from: "./scripts/jacoco.gradle"
-apply from: "./scripts/avs.gradle"
-
-// FIXME: License header is disabled because it breaks compilation
-//task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
-//    source = fileTree(dir: getRootDir()).include([
-//        "**/*.java",
-//        "**/*.scala",
-//        "**/*.gradle",
-//        "**/*.xml",
-//    ]).exclude([
-//        "**/*build*",
-//        "**/*target*",
-//        "**/*gen*",
-//        "**/*generated*",
-//        ".idea/**"
-//    ])
-//}
-//licenseFormat.dependsOn licenseFormatAndroid
-
-
 ext {
-    compileSdkVersion = 29
-    // When upgrading minimum sdk you might want to search for occurrences of Build.VERSION_CODES.
-    // There are some classes with possibility of being simplified.
-    minSdkVersion = 24
-    targetSdkVersion = 29
-
-    buildToolsVersion = '29.0.3'
-    sourceCompatibilityVersion = JavaVersion.VERSION_1_8
-    targetCompatibilityVersion = JavaVersion.VERSION_1_8
-
-    // configuration and external config
-    customCheckoutDir = "$rootDir/custom"
-    buildtimeConfiguration = prepareCustomizationEnvironment()
-
-    project.logger.quiet("Build time configuration is: ${JsonOutput.prettyPrint(JsonOutput.toJson(buildtimeConfiguration.configuration))}")
-
     //Update kotlinCore flag as well when adding new kotlin features
     kotlinSettings = false
     kotlinRegistration = false
     kotlinCore = kotlinSettings || kotlinRegistration
 }
 
-class BuildtimeConfiguration {
-    String customResourcesPath
-    Object configuration
-
-    BuildtimeConfiguration(Object configuration, String customResourcesPath) {
-        this.configuration = configuration
-        this.customResourcesPath = customResourcesPath
-    }
-
-    def isCustomBuild() {
-        return customResourcesPath != null
-    }
-}
-
-// Will check out custom repo, if any, and load its configuration, merging it on top of the default configuration
-def prepareCustomizationEnvironment() {
-    def properties = new Properties()
-    def localProperties = project.rootProject.file("local.properties")
-
-    if (localProperties.exists()) {
-        properties.load(localProperties.newDataInputStream())
-    }
-
-    def jsonReader = new JsonSlurper()
-    def wireConfigFile = new File("$rootDir/default.json")
-    def defaultConfig = jsonReader.parseText(wireConfigFile.text)
-
-    def customRepository = System.getenv("CUSTOM_REPOSITORY") ?: properties.getProperty("CUSTOM_REPOSITORY") ?: ''
-    if (customRepository.isEmpty()) {
-        project.logger.quiet("This is not a custom build (no custom repo)")
-        return new BuildtimeConfiguration(defaultConfig, null)
-    }
-
-    def customFolder = System.getenv("CUSTOM_FOLDER") ?: properties.getProperty("CUSTOM_FOLDER") ?: ''
-    if (customFolder.isEmpty()) {
-        throw new GradleException('Custom repo specified, but not custom folder')
-    }
-
-    def gitHubToken = System.getenv("GITHUB_API_TOKEN") ?: properties.getProperty("GITHUB_API_TOKEN") ?: ''
-    if (gitHubToken.isEmpty()) {
-        throw new GradleException('Custom repo specified, but no GitHub API token provided')
-    }
-
-    def customDirPath = customCheckoutDir + '/' + customFolder
-    def customConfigFile = new File("$customDirPath/custom.json")
-
-    // clean up
-    if (file(customCheckoutDir).exists()) {
-        delete file(customCheckoutDir)
-    }
-
-    def credentials = new Credentials(gitHubToken, '')
-    Grgit.clone(dir: customCheckoutDir, uri: customRepository, credentials: credentials)
-    project.logger.quiet("Using custom repository $customRepository -> folder $customFolder")
-
-    def customConfig = jsonReader.parseText(customConfigFile.text)
-    project.logger.quiet("Loaded custom build configuration for keys: ${customConfig.keySet()}")
-
-    customConfig.keySet().forEach { key ->
-        defaultConfig[key] = customConfig[key]
-    }
-
-    return new BuildtimeConfiguration(defaultConfig, customDirPath)
-}
-
-task ci(dependsOn: [
-    ':app:assembleDevDebug',
-    ':app:lintDevDebug',
-    ':app:pmd',
-    ':detektAll'
-]) {
-
-    doLast {
-        def lintReportsPattern = /\/?(.*)\/build\/outputs\/lint-results\-(devDebug|debug)\.xml/
-        def pmdReportsPattern = /\/?(.*)\/build\/reports\/pmd\/pmd\.xml/
-        def checkstyleReportsPattern = /\/?(.*)\/reports\/checkstyle\/checkstyle\.xml/
-
-        def results = new HashMap<String, Map<String, List<Issue>>>()
-        def totalIssues = 0
-
-        def findFilenameClosure = {
-            if (it.isDirectory()) {
-                return;
-            }
-            def absolutePath = it.getAbsolutePath()
-            def foundIssues = new ArrayList<Issue>()
-            def type = ''
-            if (absolutePath.matches(lintReportsPattern)) {
-                def issues = new XmlParser().parse(it)
-                type = 'Lint'
-                issues.issue.each {
-                    def id = it.'@summary'
-                    it.location.each { foundIssues.add(new LintIssue(id, it)) }
-                }
-            } else if (absolutePath.matches(pmdReportsPattern)) {
-                def issues = new XmlParser().parse(it)
-                type = 'PMD'
-                issues.file.each {
-                    def file = new File(it.'@name')
-                    it.violation.each { foundIssues.add(new PmdIssue(file, it)) }
-                }
-            } else if (absolutePath.matches(checkstyleReportsPattern)) {
-                def files = new XmlParser().parse(it)
-                type = 'Checkstyle'
-                files.file.findAll { it.children().size() > 0 }.each {
-                    def file = new File(it.'@name')
-                    it.error.each { foundIssues.add(new CheckstyleIssue(file, it)) }
-                }
-            }
-            if (foundIssues.size() > 0) {
-                if (!results.containsKey(type)) {
-                    results.put(type, new HashMap<String, List<Issue>>())
-                }
-                results.get(type).put(it, foundIssues)
-                totalIssues += foundIssues.size()
-            }
-        }
-
-        rootProject.rootDir.eachFileRecurse(findFilenameClosure)
-
-        if (totalIssues > 0) {
-            def message = new StringBuilder()
-            message.append("Found ${totalIssues} issue${totalIssues == 1 ? '' : 's'}\n\n")
-            for (def entry : results.entrySet()) {
-                def issues = new StringBuilder()
-                def count = 0;
-                for (def file : entry.value.entrySet()) {
-                    issues.append("> ${file.value.size()} in ${file.key}\n")
-                    file.value.each { issues.append("\t${it}\n") }
-                    count += file.value.size()
-                }
-                message.append("${entry.key}: ${count} issue${count == 1 ? '' : 's'}\n")
-                    .append(issues.toString())
-                    .append('\n')
-            }
-            throw new Exception(message.toString())
-        } else {
-            println 'No issues found'
-        }
-    }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
-    def repo = file(customCheckoutDir)
-    if (repo.exists()) {
-        delete repo
-    }
-}
-
-
-class Issue {
-    File file
-    String line
-    String column
-    String error
-
-    @Override
-    public String toString() {
-        return "${file}:${line}:${column}: ${error}";
-    }
-}
-
-class LintIssue extends Issue {
-    def LintIssue(String error, Node location) {
-        file = new File(location.'@file')
-        line = location.'@line'
-        column = location.'@column'
-        this.error = error
-    }
-}
-
-class PmdIssue extends Issue {
-    def PmdIssue(File file, Node violation) {
-        this.file = file
-        def beginline = violation.'@beginline'
-        def endline = violation.'@endline'
-        line = beginline == endline ? beginline : "${beginline}-${endline}"
-        column = violation.'@begincolumn'
-        error = violation.text().replaceAll(/\n/, '')
-    }
-}
-
-class CheckstyleIssue extends Issue {
-    def CheckstyleIssue(File file, Node node) {
-        this.file = file
-        line = node.'@line'
-        column = node.'@column'
-        error = node.'@message'
-    }
-}
+apply from: "./scripts/avs.gradle"
+apply from: "./scripts/detekt.gradle"
+apply from: "./scripts/jacoco.gradle"
+apply from: "./scripts/licensing.gradle"
+apply from: "./scripts/customization.gradle"
+apply from: "./scripts/ci.gradle"
