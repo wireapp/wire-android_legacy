@@ -21,17 +21,17 @@ package com.waz.zclient.tracking
 import java.util
 
 import android.app.Activity
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.{AccountManager, AccountsService, ZMessaging}
-import com.waz.service.tracking._
-import com.wire.signals.Signal
-import com.waz.zclient._
-import com.waz.zclient.log.LogUI._
 import com.waz.content.UserPreferences.CountlyTrackingId
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogsService
 import com.waz.model.TeamId
+import com.waz.service.tracking._
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.utils.MathUtils
+import com.waz.zclient._
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.log.LogUI._
+import com.wire.signals.Signal
 import ly.count.android.sdk.{Countly, CountlyConfig, DeviceId}
 
 import scala.collection.JavaConverters._
@@ -44,6 +44,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
   private val tracking  = inject[TrackingService]
   private lazy val am = inject[Signal[AccountManager]]
   private lazy val accountsService = inject[AccountsService]
+  private lazy val userAccountsController = inject[UserAccountsController]
 
   //helps us fire the "app.open" event at the right time.
   private val initialized = Signal(false)
@@ -54,32 +55,38 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
 
   def init(): Future[Unit] = {
     for {
+      isProUser        <- userAccountsController.isProUser.head if (isProUser)
       ap               <- tracking.isTrackingEnabled.head if (ap)
       inited           <- initialized.head if (!inited)
       Some(trackingId) <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
       logsEnabled      <- inject[LogsService].logsEnabled
     } yield {
-      verbose(l"Using countly Id: ${trackingId.str}")
+        verbose(l"Using countly Id: ${trackingId.str}")
+        val config = new CountlyConfig(cxt, GlobalTrackingController.countlyAppKey, BuildConfig.COUNTLY_SERVER_URL)
+          .setLoggingEnabled(logsEnabled)
+          .setIdMode(DeviceId.Type.DEVELOPER_SUPPLIED)
+          .setDeviceId(trackingId.str)
+          .setRecordAppStartTime(true)
 
-      val config = new CountlyConfig(cxt, GlobalTrackingController.countlyAppKey, BuildConfig.COUNTLY_SERVER_URL)
-        .setLoggingEnabled(logsEnabled)
-        .setIdMode(DeviceId.Type.DEVELOPER_SUPPLIED)
-        .setDeviceId(trackingId.str)
-        .setRecordAppStartTime(true)
-
-      Countly.sharedInstance().init(config)
-      setUserDataFields()
-      initialized ! true
+        Countly.sharedInstance().init(config)
+        setUserDataFields()
+        initialized ! true
     }
   }
 
   def start(cxt: Activity): Future[Unit] = for {
-    ap <- tracking.isTrackingEnabled.head if(ap)
-  } yield Countly.sharedInstance().onStart(cxt)
+    isProUser         <- userAccountsController.isProUser.head
+    isTrackingEnabled <- tracking.isTrackingEnabled.head
+  } yield {
+    if (isProUser && isTrackingEnabled) Countly.sharedInstance().onStart(cxt)
+  }
 
   def stop(): Future[Unit] = for {
-   ap <- tracking.isTrackingEnabled.head if(ap)
-  } yield Countly.sharedInstance().onStop()
+    isProUser         <- userAccountsController.isProUser.head
+    isTrackingEnabled <- tracking.isTrackingEnabled.head
+  } yield {
+    if (isProUser && isTrackingEnabled) Countly.sharedInstance().onStop()
+  }
 
   def optIn(): Future[Unit] = {
     verbose(l"optIn")
