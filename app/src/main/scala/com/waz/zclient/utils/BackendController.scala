@@ -20,7 +20,7 @@ package com.waz.zclient.utils
 import java.net.URL
 
 import android.content.{Context, SharedPreferences}
-import com.waz.content.GlobalPreferences
+import androidx.preference.PreferenceManager
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{BackendConfig, GlobalModule}
 import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
@@ -32,7 +32,7 @@ import com.waz.zclient.{Backend, BuildConfig}
 class BackendController(implicit context: Context) extends DerivedLogTag {
   import BackendController._
 
-  private lazy val prefs: SharedPreferences = context.getSharedPreferences(GlobalPreferences.PreferencesName, Context.MODE_PRIVATE)
+  private lazy val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
   /// A custom backend is one that is loaded by a config url via deep link.
   def hasCustomBackend: Boolean = customBackendConfigUrl.isDefined
