@@ -86,3 +86,55 @@ ext {
     customCheckoutDir = "$rootDir/custom"
     buildtimeConfiguration = prepareCustomizationEnvironment()
 }
+
+
+task copyCustomResources(type: Copy) {
+    if (buildtimeConfiguration.customResourcesPath == null) {
+        return
+    }
+
+    def iconFolder = (buildtimeConfiguration.configuration.iconFolder ?: 'icons')
+    def targetResFolder = "$rootDir/app/src/main/res"
+    def iconSubFolders = [
+            'ldpi': 'mipmap-ldpi',
+            'mdpi': 'mipmap-mdpi',
+            'hdpi': 'mipmap-hdpi',
+            'xhdpi': 'mipmap-xhdpi',
+            'xxhdpi': 'mipmap-xxhdpi',
+            'xxxhdpi': 'mipmap-xxxhdpi'
+    ]
+
+    def resources = [
+            "ic_launcher_wire.png" : (buildtimeConfiguration.configuration.launcherIcon ?: '')
+    ]
+    def customDir = buildtimeConfiguration.customResourcesPath
+    resources.findAll { targetFileName, sourceFileName -> !sourceFileName.empty }
+            .collectEntries { targetFileName, sourceFileName ->
+                iconSubFolders.collectEntries { sourceSub, targetSub ->
+                    [(customDir + '/' + iconFolder + '/' + sourceSub + '/' + sourceFileName) : [(targetResFolder + '/' + targetSub),  targetFileName]]
+                }
+            }
+            .each { sourcePath, targetPath ->
+                def source = file(sourcePath)
+                assert source.exists()
+                copy {
+                    from source
+                    rename { String filename -> return targetPath[1] }
+                    into file(targetPath[0])
+                }
+                project.logger.info("Copied $sourcePath to ${targetPath[0]}/${targetPath[1]}")
+            }
+
+    copy {
+        from file(customDir + '/strings/strings.xml') into file(targetResFolder + '/values')
+        from file(customDir + '/strings/strings_no_translate.xml') into file(targetResFolder + '/values')
+    }
+
+    buildtimeConfiguration.configuration.languages.each { code ->
+        def targetStringDir = "$targetResFolder/values-$code"
+        copy {
+            mkdir targetStringDir
+            from file("$customDir/strings/$code/strings.xml") into file(targetStringDir)
+        }
+    }
+}
