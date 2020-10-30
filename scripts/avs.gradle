@@ -1,3 +1,21 @@
+/**
+ * Wire
+ * Copyright (C) 2020 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 final String AVS_GROUP_ENV_VAR = "AVS_GROUP"
 final String AVS_NAME_ENV_VAR = "AVS_NAME"
 final String AVS_VERSION_ENV_VAR = "AVS_VERSION"
@@ -7,9 +25,6 @@ final String LOCAL_PROPERTIES_FILE_NAME = "local.properties"
 final String AVS_PUBLIC_GROUP = "com.wire"
 final String AVS_PRIVATE_GROUP = "com.wearezeta.avs"
 final String AVS_NAME = "avs"
-
-String avsPublicVersion = "6.4.233"
-String avsPrivateVersion = "6.4.12"
 
 String nexusUrl = ""
 
@@ -31,7 +46,7 @@ if (!nexusUrl.isEmpty()) {
     ext {
         avsGroup = System.getenv(AVS_GROUP_ENV_VAR) ?: AVS_PRIVATE_GROUP
         avsName = System.getenv(AVS_NAME_ENV_VAR) ?: AVS_NAME
-        avsVersion = System.getenv(AVS_VERSION_ENV_VAR) ?: avsPrivateVersion
+        avsVersion = System.getenv(AVS_VERSION_ENV_VAR) ?: Versions.AVS_PRIVATE
         avsDependency = "${avsGroup}:${avsName}:${avsVersion}"
     }
 
@@ -39,7 +54,7 @@ if (!nexusUrl.isEmpty()) {
     ext {
         avsGroup = System.getenv(AVS_GROUP_ENV_VAR) ?: AVS_PUBLIC_GROUP
         avsName = System.getenv(AVS_NAME_ENV_VAR) ?: AVS_NAME
-        avsVersion = System.getenv(AVS_VERSION_ENV_VAR) ?: avsPublicVersion
+        avsVersion = System.getenv(AVS_VERSION_ENV_VAR) ?: Versions.AVS_PUBLIC
         avsDependency = "${avsGroup}:${avsName}:${avsVersion}"
     }
 }

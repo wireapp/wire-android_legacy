@@ -16,6 +16,9 @@ object Versions {
     //core
     const val KOTLIN = "1.3.72"
 
+    //Wire Libs
+    const val AVS_PUBLIC = "6.4.233"
+    const val AVS_PRIVATE = "6.4.12"
     const val WIRE_TRANSLATIONS = "1.+"
     val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
 

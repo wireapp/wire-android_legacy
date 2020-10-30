@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<module name="Checker">
+    <module name="SuppressionFilter">
+        <property name="file" value="${checkstyleSuppressionsPath}" />
+    </module>
+    <!--<module name="SuppressWarningsFilter" />-->
+    <module name="SuppressionCommentFilter" />
+
+    <module name="FileTabCharacter">
+        <property name="eachLine" value="true" />
+        <property name="fileExtensions" value="java, xml, gradle" />
+    </module>
+
+    <module name="NewlineAtEndOfFile">
+        <property name="lineSeparator" value="lf" />
+        <property name="fileExtensions" value="java, xml, gradle" />
+    </module>
+
+    <!-- TODO: <module name="FileLength"/>-->
+
+    <module name="TreeWalker">
+        <module name="SuppressWarningsHolder" />
+        <module name="FileContentsHolder" />
+        <module name="com.waz.checkstyle.NamingConventionCheck" />
+
+        <!-- Checks for Javadoc comments.                     -->
+        <!-- See http://checkstyle.sf.net/config_javadoc.html -->
+        <!--module name="JavadocMethod"/-->
+        <!--module name="JavadocType"/-->
+        <!--module name="JavadocVariable"/-->
+        <!--<module name="JavadocStyle"/>-->
+
+
+        <!-- Checks for Naming Conventions.                  -->
+        <!-- See http://checkstyle.sf.net/config_naming.html -->
+        <!--<module name="ConstantName"/>-->
+        <!--<module name="LocalFinalVariableName"/>-->
+        <!--<module name="LocalVariableName"/>-->
+        <!--<module name="MemberName"/>-->
+        <!--<module name="MethodName"/>-->
+        <!--<module name="PackageName"/>-->
+        <!--<module name="ParameterName"/>-->
+        <!--<module name="StaticVariableName"/>-->
+        <!--<module name="TypeName"/>-->
+
+
+        <!-- Checks for imports                              -->
+        <!-- See http://checkstyle.sf.net/config_import.html -->
+        <module name="AvoidStarImport" />
+        <module name="IllegalImport" />
+        <!--<module name="RedundantImport" /> COVERED BY PMD -->
+        <!--<module name="UnusedImports" /> COVERED BY PMD -->
+
+
+        <!-- Checks for Size Violations.                    -->
+        <!-- See http://checkstyle.sf.net/config_sizes.html -->
+        <!--<module name="LineLength">-->
+        <!--<property name="max" value="140"/>-->
+        <!--<property name="severity" value="warning"/>-->
+        <!--</module>-->
+        <!-- TODO: <module name="MethodLength"/>-->
+        <module name="ParameterNumber">
+            <property name="max" value="10" />
+            <property name="tokens" value="METHOD_DEF" />
+        </module>
+
+
+        <!-- Checks for whitespace                               -->
+        <!-- See http://checkstyle.sf.net/config_whitespace.html -->
+        <module name="EmptyForInitializerPad" />
+        <module name="EmptyForIteratorPad" />
+        <module name="MethodParamPad" />
+        <module name="GenericWhitespace" />
+        <module name="NoWhitespaceAfter" />
+        <module name="NoWhitespaceBefore">
+            <!-- Allow line breaks before simicolons -->
+            <property name="tokens" value="SEMI"/>
+            <property name="allowLineBreaks" value="true"/>
+        </module>
+        <module name="OperatorWrap">
+            <property name="tokens"
+                      value="BAND, BOR, BSR, BXOR, EQUAL, GE, GT, LAND, LE, LITERAL_INSTANCEOF, LOR, LT, NOT_EQUAL, SL, SR" />
+            <property name="option" value="eol" />
+        </module>
+        <module name="ParenPad" />
+        <module name="TypecastParenPad" />
+        <module name="WhitespaceAfter" />
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true" />
+            <property name="allowEmptyMethods" value="true" />
+        </module>
+
+
+        <!-- Modifier Checks                                    -->
+        <!-- See http://checkstyle.sf.net/config_modifier.html -->
+        <!--<module name="ModifierOrder"/>-->
+        <module name="RedundantModifier" />
+
+
+        <!-- Checks for blocks. You know, those {}'s         -->
+        <!-- See http://checkstyle.sf.net/config_blocks.html -->
+        <module name="AvoidNestedBlocks" />
+        <module name="EmptyBlock">
+            <property name="option" value="text" />
+        </module>
+        <module name="LeftCurly">
+            <property name="option" value="eol" />
+        </module>
+        <module name="NeedBraces" />
+        <module name="RightCurly">
+            <property name="option" value="same" />
+            <property name="tokens" value="LITERAL_ELSE" />
+        </module>
+        <module name="EmptyCatchBlock">
+            <property name="exceptionVariableName" value="expected|ignore" />
+        </module>
+
+
+        <!-- Checks for common coding problems               -->
+        <!-- See http://checkstyle.sf.net/config_coding.html -->
+        <!--module name="AvoidInlineConditionals"/-->
+        <module name="CovariantEquals" />
+        <!--<module name="EmptyStatement" />-->
+        <module name="EqualsAvoidNull" />
+        <module name="EqualsHashCode" />
+        <!--<module name="MagicNumber">-->
+        <!--<property name="severity" value="warning"/>-->
+        <!--</module>-->
+        <!--<module name="MissingSwitchDefault"/>-->
+        <!--<module name="ModifiedControlVariable"/>-->
+        <module name="SimplifyBooleanExpression" />
+        <module name="SimplifyBooleanReturn" />
+        <module name="MultipleVariableDeclarations" />
+        <module name="OneStatementPerLine" />
+        <module name="StringLiteralEquality" />
+        <module name="DefaultComesLast" />
+        <!--<module name="UnnecessaryParentheses" />-->
+        <!--<module name="OverloadMethodsDeclarationOrder" />-->
+
+        <!-- Checks for class design                         -->
+        <!-- See http://checkstyle.sf.net/config_design.html -->
+        <!-- TODO: <module name="FinalClass"/>-->
+        <!--<module name="HideUtilityClassConstructor"/>-->
+        <module name="InterfaceIsType" />
+
+
+        <!-- Checks for annotations                          -->
+        <!-- See http://checkstyle.sf.net/config_annotation.html -->
+        <module name="MissingOverride" />
+        <module name="AnnotationUseStyle" />
+        <module name="MissingDeprecated" />
+        <module name="AnnotationLocation">
+            <property name="allowSamelineMultipleAnnotations" value="false" />
+            <property name="allowSamelineSingleParameterlessAnnotation" value="true" />
+            <property name="allowSamelineParameterizedAnnotation" value="false" />
+        </module>
+
+        <!-- Miscellaneous other checks.                   -->
+        <!-- See http://checkstyle.sf.net/config_misc.html -->
+        <module name="ArrayTypeStyle" />
+        <module name="UpperEll" />
+
+    </module>
+</module>

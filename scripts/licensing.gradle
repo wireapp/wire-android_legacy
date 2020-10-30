@@ -1,23 +1,59 @@
-license {
-    header = file('LICENSE_HEADER')
-    ext.year = Calendar.getInstance().get(Calendar.YEAR)
-    ext.name = 'Wire Swiss GmbH'
-    skipExistingHeaders = true
+import com.sun.xml.internal.bind.v2.TODO
+
+/**
+ * Wire
+ * Copyright (C) 2020 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.13.1"
+    }
 }
 
-//TODO fix compilation issue for the license plugin
-//task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
-//    source = fileTree(dir: getRootDir()).include([
-//            "**/*.java",
-//            "**/*.scala",
-//            "**/*.gradle",
-//            "**/*.xml",
-//    ]).exclude([
-//            "**/*build*",
-//            "**/*target*",
-//            "**/*gen*",
-//            "**/*generated*",
-//            ".idea/**"
-//    ])
-//}*/
-//licenseFormat.dependsOn licenseFormatAndroid
+subprojects {
+
+    apply plugin : "com.github.hierynomus.license"
+
+    license {
+        header = file('LICENSE_HEADER')
+        ext.year = Calendar.getInstance().get(Calendar.YEAR)
+        ext.name = 'Wire Swiss GmbH'
+        skipExistingHeaders = true
+    }
+
+
+    task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
+        source = fileTree(dir: getRootDir()).include([
+                "**/*.java",
+                "**/*.scala",
+                "**/*.gradle",
+                "**/*.xml",
+        ]).exclude([
+                "**/*build*",
+                "**/*target*",
+                "**/*gen*",
+                "**/*generated*",
+                ".idea/**"
+        ])
+    }
+    licenseFormat.dependsOn licenseFormatAndroid
+}
