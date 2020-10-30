@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<lint>
+    <ignore path="**/androidTest/**" />
+
+    <!-- Ignored checks -->
+    <issue id="SpUsage" severity="ignore" />
+    <issue id="StringFormatCount" severity="ignore"/>
+    <issue id="RtlEnabled" severity="ignore" />
+    <issue id="RtlSymmetry" severity="ignore"/>
+    <issue id="RtlHardcoded" severity="ignore"/>
+    <issue id="RelativeOverlap" severity="ignore"/>
+    <issue id="ContentDescription" severity="ignore"/>
+    <issue id="ButtonCase" severity="ignore"/>
+    <issue id="ClickableViewAccessibility" severity="ignore"/>
+    <issue id="ViewConstructor" severity="ignore"/>
+    <issue id="GradleDependency" severity="ignore"/>
+    <issue id="LintError" severity="ignore"/>
+    <issue id="OldTargetApi" severity="ignore" />
+    <issue id="UnusedResources" severity="ignore" />
+    <issue id="UnusedIds" severity="ignore" />
+    <issue id="IconColors" severity="ignore" />
+
+    <!-- TODO: we should check that! -->
+    <issue id="NestedWeights" severity="ignore"/>
+    <issue id="Overdraw" severity="ignore"/>
+    <issue id="IconDipSize" severity="ignore"/>
+    <issue id="IconDuplicatesConfig" severity="ignore"/>
+    <issue id="IconLocation" severity="ignore"/>
+    <issue id="IconDensities" severity="ignore"/>
+    <issue id="IconExpectedSize" severity="ignore"/>
+    <issue id="NegativeMargin" severity="ignore"/>
+    <issue id="InvalidPackage" severity="ignore" />
+    <issue id="AllowBackup" severity="ignore" />
+    <issue id="GoogleAppIndexingWarning" severity="ignore" />
+    <issue id="GoogleAppIndexingApiWarning" severity="ignore" />
+
+    <!-- Increase severity for following checks -->
+    <issue id="AddJavascriptInterface" severity="error" />
+    <issue id="AlwaysShowAction" severity="error" />
+    <issue id="LocalSuppress" severity="error" />
+    <issue id="InlinedApi" severity="error" />
+    <issue id="Override" severity="error" />
+    <issue id="NewApi" severity="error" />
+    <issue id="UnusedAttribute" severity="error" />
+    <issue id="AppCompatMethod" severity="error" />
+    <issue id="AppCompatResource" severity="error" />
+    <issue id="InconsistentArrays" severity="error" />
+    <issue id="Assert" severity="error" />
+    <issue id="BackButton" severity="error" />
+    <issue id="ButtonOrder" severity="error" />
+    <issue id="ButtonStyle" severity="error" />
+    <issue id="ByteOrderMark" severity="error" />
+    <issue id="MissingSuperCall" severity="error" />
+    <issue id="UseCheckPermission" severity="error" />
+    <issue id="AdapterViewChildren" severity="error" />
+    <issue id="ScrollViewCount" severity="error" />
+    <issue id="GetInstance" severity="error" />
+    <issue id="CommitTransaction" severity="error" />
+    <issue id="Recycle" severity="error" />
+    <issue id="ResourceAsColor" severity="error" />
+    <issue id="EasterEgg" severity="error" />
+    <issue id="StopShip" severity="error" />
+    <issue id="CustomViewStyleable" severity="error" />
+    <issue id="CutPasteId" severity="error" />
+    <issue id="Deprecated" severity="error" />
+    <issue id="MissingPrefix" severity="error" />
+    <issue id="MangledCRLF" severity="error" />
+    <issue id="DuplicateIncludedIds" severity="error" />
+    <issue id="DuplicateIds" severity="error" />
+    <issue id="DuplicateDefinition" severity="error" />
+    <issue id="ReferenceType" severity="error" />
+    <issue id="ExtraText" severity="error" />
+    <issue id="FieldGetter" severity="error" />
+    <issue id="ValidFragment" severity="error" />
+    <issue id="GradleCompatible" severity="error" />
+    <issue id="AndroidGradlePluginVersion" severity="error" />
+    <issue id="GradleDeprecated" severity="error" />
+    <issue id="GradleGetter" severity="error" />
+    <issue id="GradleIdeError" severity="error" />
+    <issue id="GradlePath" severity="error" />
+    <issue id="GradleDynamicVersion" severity="error" />
+    <issue id="StringShouldBeInt" severity="error" />
+    <issue id="NewerVersionAvailable" severity="error" />
+    <issue id="AccidentalOctal" severity="error" />
+    <issue id="GridLayout" severity="error" />
+    <issue id="HandlerLeak" severity="error" />
+    <issue id="HardcodedDebugMode" severity="error" />
+    <issue id="HardcodedText" severity="error" />
+    <issue id="IconDuplicates" severity="error" />
+    <issue id="GifUsage" severity="error" />
+    <issue id="IconExtension" severity="error" />
+    <issue id="IconLauncherShape" severity="error" />
+    <issue id="IconMissingDensityFolder" severity="error" />
+    <issue id="IconMixedNinePatch" severity="error" />
+    <issue id="IconNoDpi" severity="error" />
+    <issue id="IconXmlAndPng" severity="error" />
+    <issue id="IncludeLayoutParam" severity="error" />
+    <issue id="DisableBaselineAlignment" severity="error" />
+    <issue id="InefficientWeight" severity="error" />
+    <issue id="Orientation" severity="error" />
+    <issue id="Suspicious0dp" severity="error" />
+    <issue id="DrawAllocation" severity="error" />
+    <issue id="UseSparseArrays" severity="error" />
+    <issue id="UseValueOf" severity="error" />
+    <issue id="JavascriptInterface" severity="error" />
+    <issue id="LabelFor" severity="error" />
+    <issue id="InconsistentLayout" severity="error" />
+    <issue id="InflateParams" severity="error" />
+    <issue id="SimpleDateFormat" severity="error" />
+    <issue id="DefaultLocale" severity="error" />
+    <issue id="LocaleFolder" severity="error" />
+    <issue id="MissingApplicationIcon" severity="error" />
+    <issue id="DeviceAdmin" severity="error" />
+    <issue id="DuplicateActivity" severity="error" />
+    <issue id="DuplicateUsesFeature" severity="error" />
+    <issue id="GradleOverrides" severity="error" />
+    <issue id="IllegalResourceRef" severity="error" />
+    <issue id="MockLocation" severity="error" />
+    <issue id="MultipleUsesSdk" severity="error" />
+    <issue id="ManifestOrder" severity="error" />
+    <issue id="MissingVersion" severity="error" />
+    <issue id="UniquePermission" severity="error" />
+    <issue id="UsesMinSdkAttributes" severity="error" />
+    <issue id="WrongManifestParent" severity="error" />
+    <issue id="ManifestTypo" severity="error" />
+    <issue id="FloatMath" severity="error" />
+    <issue id="MergeRootFrame" severity="error" />
+    <issue id="InnerclassSeparator" severity="error" />
+    <issue id="Instantiatable" severity="error" />
+    <issue id="MissingRegistered" severity="error" />
+    <issue id="MissingId" severity="error" />
+    <issue id="LibraryCustomView" severity="error" />
+    <issue id="ResAuto" severity="error" />
+    <issue id="NamespaceTypo" severity="error" />
+    <issue id="UnusedNamespace" severity="error" />
+    <issue id="NestedScrolling" severity="error" />
+    <issue id="NfcTechWhitespace" severity="error" />
+    <issue id="UnlocalizedSms" severity="error" />
+    <issue id="ObsoleteLayoutParam" severity="error" />
+    <issue id="OnClick" severity="error" />
+    <issue id="DalvikOverride" severity="error" />
+    <issue id="OverrideAbstract" severity="error" />
+    <issue id="ParcelCreator" severity="error" />
+    <issue id="UnusedQuantity" severity="error" />
+    <issue id="MissingQuantity" severity="error" />
+    <issue id="ImpliedQuantity" severity="error" />
+    <issue id="ExportedPreferenceActivity" severity="error" />
+    <issue id="PackagedPrivateKey" severity="error" />
+    <issue id="PrivateResource" severity="error" />
+    <issue id="ProguardSplit" severity="error" />
+    <issue id="Proguard" severity="error" />
+    <issue id="PropertyEscape" severity="error" />
+    <issue id="UsingHttp" severity="error" />
+    <issue id="InOrMmUsage" severity="error" />
+    <issue id="PxUsage" severity="error" />
+    <issue id="SmallSp" severity="error" />
+    <issue id="Registered" severity="error" />
+    <issue id="RequiredSize" severity="error" />
+    <issue id="AaptCrash" severity="error" />
+    <issue id="ResourceCycle" severity="error" />
+    <issue id="ResourceName" severity="error" />
+    <issue id="RtlCompat" severity="error" />
+    <issue id="ScrollViewSize" severity="error" />
+    <issue id="SdCardPath" severity="error" />
+    <issue id="SecureRandom" severity="error" />
+    <issue id="TrulyRandom" severity="error" />
+    <issue id="ExportedContentProvider" severity="error" />
+    <issue id="ExportedReceiver" severity="error" />
+    <issue id="ExportedService" severity="error" />
+    <issue id="GrantAllUris" severity="error" />
+    <issue id="WorldReadableFiles" severity="error" />
+    <issue id="WorldWriteableFiles" severity="error" />
+    <issue id="ServiceCast" severity="error" />
+    <issue id="SetJavaScriptEnabled" severity="error" />
+    <issue id="CommitPrefEdits" severity="error" />
+    <issue id="SignatureOrSystemPermissions" severity="error" />
+    <issue id="StateListReachable" severity="error" />
+    <issue id="StringFormatMatches" severity="error" />
+    <issue id="StringFormatInvalid" severity="error" />
+    <issue id="ProtectedPermissions" severity="error" />
+    <issue id="TextFields" severity="error" />
+    <issue id="TextViewEdits" severity="error" />
+    <issue id="SelectableText" severity="ignore" />
+    <issue id="MenuTitle" severity="error" />
+    <issue id="ShowToast" severity="error" />
+    <issue id="TooDeepLayout" severity="error" />
+    <issue id="TooManyViews" severity="error" />
+    <issue id="ExtraTranslation" severity="error" />
+    <issue id="MissingTranslation" severity="error" />
+    <issue id="Typos" severity="error" />
+    <issue id="TypographyDashes" severity="error" />
+    <issue id="TypographyEllipsis" severity="error" />
+    <issue id="TypographyFractions" severity="error" />
+    <issue id="TypographyOther" severity="error" />
+    <issue id="TypographyQuotes" severity="error" />
+    <issue id="UseCompoundDrawables" severity="error" />
+    <issue id="UselessLeaf" severity="error" />
+    <issue id="UselessParent" severity="error" />
+    <issue id="EnforceUTF8" severity="error" />
+    <issue id="ViewHolder" severity="error" />
+    <issue id="ViewTag" severity="error" />
+    <issue id="WrongViewCast" severity="error" />
+    <issue id="Wakelock" severity="error" />
+    <issue id="WebViewLayout" severity="error" />
+    <issue id="WrongCall" severity="error" />
+    <issue id="WrongCase" severity="error" />
+    <issue id="InvalidId" severity="error" />
+    <issue id="NotSibling" severity="error" />
+    <issue id="UnknownId" severity="error" />
+    <issue id="UnknownIdInLayout" severity="error" />
+    <issue id="SuspiciousImport" severity="error" />
+    <issue id="WrongFolder" severity="error" />
+</lint>

@@ -4,9 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'jp.leafytree.android-scala'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply plugin: 'kotlinx-serialization'
-apply from: 'config/quality.gradle'
-apply from: "../scripts/customization.gradle"
-
+apply from: "../scripts/whitelabel.gradle"
 
 android {
     //Trigger the licenseFormat task at least once in any compile phase
@@ -75,9 +73,9 @@ android {
         buildConfigField 'String',  'COUNTLY_APP_KEY',               "\"$buildtimeConfiguration.configuration.countly_app_key\""
 
         //Kotlin Feature Flags
-        buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$kotlinSettings"
-        buildConfigField 'boolean', 'KOTLIN_REGISTRATION', "$kotlinRegistration"
-        buildConfigField 'boolean', 'KOTLIN_CORE', "$kotlinCore"
+        buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$FeatureFlags.SETTINGS"
+        buildConfigField 'boolean', 'KOTLIN_REGISTRATION', "$FeatureFlags.REGITRATION"
+        buildConfigField 'boolean', 'KOTLIN_CORE', "$FeatureFlags.CORE"
     }
 
     packagingOptions {

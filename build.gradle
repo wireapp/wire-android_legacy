@@ -37,16 +37,8 @@ allprojects {
     }
 }
 
-ext {
-    //Update kotlinCore flag as well when adding new kotlin features
-    kotlinSettings = false
-    kotlinRegistration = false
-    kotlinCore = kotlinSettings || kotlinRegistration
-}
-
 apply from: "./scripts/avs.gradle"
-apply from: "./scripts/detekt.gradle"
-apply from: "./scripts/jacoco.gradle"
+apply from: "./scripts/quality.gradle"
 apply from: "./scripts/licensing.gradle"
-apply from: "./scripts/customization.gradle"
+apply from: "./scripts/whitelabel.gradle"
 apply from: "./scripts/ci.gradle"

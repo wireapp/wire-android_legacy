@@ -1,0 +1,59 @@
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://pmd.sf.net/ruleset/1.0.0"
+         xsi:noNamespaceSchemaLocation="http://pmd.sf.net/ruleset_xml_schema.xsd"
+         xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0 http://pmd.sf.net/ruleset_xml_schema.xsd">
+
+    <!-- exclude auto-generated classes -->
+    <exclude-pattern>.*/build/.*</exclude-pattern>
+
+    <rule ref="rulesets/java/basic.xml" />
+    <rule ref="rulesets/java/android.xml" />
+    <rule ref="rulesets/java/braces.xml" />
+    <rule ref="rulesets/java/clone.xml" />
+    <!--<rule ref="rulesets/java/controversial.xml" />-->
+    <rule ref="rulesets/java/empty.xml">
+        <exclude name="EmptyCatchBlock" />
+        <exclude name="EmptyStatementNotInLoop" />
+    </rule>
+    <rule ref="rulesets/java/finalizers.xml" />
+    <rule ref="rulesets/java/imports.xml">
+        <!-- Espresso is designed this way !-->
+        <exclude name="TooManyStaticImports" />
+        <exclude name="DontImportJavaLang" />
+    </rule>
+    <rule ref="rulesets/java/optimizations.xml">
+        <exclude name="AvoidInstantiatingObjectsInLoops" />
+        <exclude name="LocalVariableCouldBeFinal" />
+        <exclude name="MethodArgumentCouldBeFinal" />
+        <exclude name="RedundantFieldInitializer" />
+    </rule>
+    <!--<rule ref="rulesets/java/strictexception.xml" />-->
+    <rule ref="rulesets/java/strings.xml">
+        <exclude name="InsufficientStringBufferDeclaration" />
+    </rule>
+    <rule ref="rulesets/java/typeresolution.xml" />
+    <rule ref="rulesets/java/unnecessary.xml">
+        <exclude name="UselessParentheses" />
+    </rule>
+    <!--<rule ref="rulesets/java/unusedcode.xml" />-->
+
+</ruleset>
