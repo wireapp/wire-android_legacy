@@ -164,7 +164,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   private def speaker(): Unit = {
     onButtonClick ! {}
-    controller.speakerButton.press()
+    controller.speakerButton.click()
   }
 
   private def video(): Future[Unit] = async {

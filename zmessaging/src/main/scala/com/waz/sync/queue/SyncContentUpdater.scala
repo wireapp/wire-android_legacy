@@ -93,21 +93,23 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
     }
   }
 
-  override lazy val syncJobs = {
+  override lazy val syncJobs: Signal[Map[SyncId, SyncJob]] = {
     val onChange = EventStream[Cmd]()
     syncStorageFuture.map { syncStorage =>
-      syncStorage.onUpdated { case (prev, updated) => onChange ! Update(updated) }
+      syncStorage.onUpdated { case (_, updated) => onChange ! Update(updated) }
       syncStorage.onAdded   { job => onChange ! Add(job) }
       syncStorage.onRemoved { job => onChange ! Del(job) }
     }
 
-    new AggregatingSignal[Cmd, Map[SyncId, SyncJob]](onChange, listSyncJobs.map(_.toIdMap), { (jobs, cmd) =>
-      cmd match {
-        case Add(job) => jobs + (job.id -> job)
-        case Del(job) => jobs - job.id
-        case Update(job) => jobs + (job.id -> job)
+    new AggregatingSignal[Cmd, Map[SyncId, SyncJob]](
+      listSyncJobs.map(_.toIdMap),
+      onChange,
+      {
+        case (jobs, Add(job))    => jobs + (job.id -> job)
+        case (jobs, Del(job))    => jobs - job.id
+        case (jobs, Update(job)) => jobs + (job.id -> job)
       }
-    })
+    )
   }
 
   // XXX: this exposes internal SyncStorage instance which should never be used outside of our dispatch queue (as it is not thread safe)

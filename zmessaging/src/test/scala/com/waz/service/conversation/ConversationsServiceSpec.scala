@@ -25,7 +25,7 @@ import com.waz.model.{ConversationData, ConversationRole, _}
 import com.waz.service._
 import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.push.{BgEventSource, NotificationService, PushService}
+import com.waz.service.push.{NotificationService, PushService}
 import com.waz.service.teams.{TeamsService, TeamsServiceImpl}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
@@ -123,7 +123,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   (membersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream())
   (membersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream())
   (selectedConv.selectedConversationId _).expects().anyNumberOfTimes().returning(Signal.const(None))
-  (push.onHistoryLost _).expects().anyNumberOfTimes().returning(new SourceSignal[Instant] with BgEventSource[Instant])
+  (push.onHistoryLost _).expects().anyNumberOfTimes().returning(new SourceSignal[Instant])
   (errors.onErrorDismissed _).expects(*).anyNumberOfTimes().returning(CancellableFuture.successful(()))
 
   (sync.syncTeam _).expects(*).anyNumberOfTimes().returning(Future.successful(SyncId()))

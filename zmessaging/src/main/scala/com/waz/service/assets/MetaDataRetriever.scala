@@ -30,9 +30,9 @@ import scala.concurrent.Future
 
 object MetaDataRetriever {
 
-  private implicit val dispatcher = DispatchQueue(DispatchQueue.SERIAL, Threading.IO, Option("MetaDataRetriever"))
+  private implicit val dispatcher: DispatchQueue = DispatchQueue(DispatchQueue.Serial, Threading.IO, "MetaDataRetriever")
 
-  implicit lazy val RetrieverCleanup = new Cleanup[MediaMetadataRetriever] {
+  implicit lazy val retrieverCleanup: Cleanup[MediaMetadataRetriever] = new Cleanup[MediaMetadataRetriever] {
     override def apply(a: MediaMetadataRetriever): Unit = a.release()
   }
 
