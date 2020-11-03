@@ -20,18 +20,18 @@ package com.waz.service.otr
 import java.io.File
 
 import android.content.Context
-import com.waz.log.LogSE._
 import com.waz.api.Verification
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.OtrLastPrekey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.UserId
 import com.waz.model.otr.{Client, ClientId, SignalingKey}
 import com.waz.service.MetaDataService
-import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.wire.cryptobox.{CryptoBox, PreKey}
+import com.wire.signals.DispatchQueue
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -39,7 +39,7 @@ import scala.util.Try
 
 class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataService, userPrefs: UserPreferences) extends DerivedLogTag {
   import CryptoBoxService._
-  private implicit val dispatcher = DispatchQueue(DispatchQueue.SERIAL, Threading.IO, None)
+  private implicit val dispatcher: DispatchQueue = DispatchQueue(DispatchQueue.Serial, Threading.IO)
 
   private[service] lazy val cryptoBoxDir = returning(new File(new File(context.getFilesDir, metadata.cryptoBoxDirName), userId.str))(_.mkdirs())
 
@@ -82,7 +82,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
 
   def createClient(id: ClientId = ClientId()) = apply { cb =>
     val (lastKey, keys) = (cb.newLastPreKey(), cb.newPreKeys(0, PreKeysCount))
-    (lastPreKeyId := keys.last.id) map { _ =>
+    (lastPreKeyId := keys.last.id).map { _ =>
       (Client(id, clientLabel, metadata.deviceModel, Some(Instant.now), signalingKey = Some(SignalingKey()), verified = Verification.VERIFIED, devType = metadata.deviceClass), lastKey, keys.toSeq)
     }
   }

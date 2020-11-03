@@ -31,7 +31,7 @@ trait Database {
   val dbHelper: BaseDaoDB
 
   protected lazy val readExecutionContext: DispatchQueue =
-    DispatchQueue(DispatchQueue.UNLIMITED, Threading.IO, name = Some("Database_readQueue_" + hashCode().toHexString))
+    DispatchQueue(DispatchQueue.Unlimited, Threading.IO, name = "Database_readQueue_" + hashCode().toHexString)
 
   def apply[A](f: DB => A)(implicit logTag: LogTag = LogTag("")): CancellableFuture[A] = dispatcher {
     implicit val db:DB = dbHelper.getWritableDatabase

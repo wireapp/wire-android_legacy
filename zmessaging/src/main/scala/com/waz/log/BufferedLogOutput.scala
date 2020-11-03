@@ -40,7 +40,7 @@ class BufferedLogOutput(baseDir: String,
 
   override val id: String = "BufferedLogOutput" + ZSecureRandom.nextInt().toHexString
 
-  private implicit val dispatcher = DispatchQueue(DispatchQueue.SERIAL, Threading.IO, Some(id))
+  private implicit val dispatcher: DispatchQueue = DispatchQueue(DispatchQueue.Serial, Threading.IO, id)
 
   private val buffer = StringBuilder.newBuilder
   private val pathRegex = s"$baseDir/${BufferedLogOutput.DefFileName}([0-9]+).log".r

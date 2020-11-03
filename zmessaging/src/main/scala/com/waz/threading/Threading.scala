@@ -59,12 +59,12 @@ object Threading {
   /**
    * Thread pool for IO tasks.
    */
-  val IOThreadPool: DispatchQueue = DispatchQueue(Cpus, Executors.newCachedThreadPool(), Option("IoThreadPool"))
+  val IOThreadPool: DispatchQueue = DispatchQueue(Cpus, Executors.newCachedThreadPool(), "IoThreadPool")
 
   /**
    * Thread pool for non-blocking background tasks.
    */
-  val Background: DispatchQueue = DispatchQueue(Cpus, Executors.newCachedThreadPool(), Option("CpuThreadPool"))
+  val Background: DispatchQueue = DispatchQueue(Cpus, Executors.newCachedThreadPool(), "CpuThreadPool")
 
   com.wire.signals.Threading.setAsDefault(Background)
 
@@ -73,7 +73,7 @@ object Threading {
   /**
     * Image decoding/encoding dispatch queue. This operations are quite cpu intensive, we don't want them to use all cores (leaving one spare core for other tasks).
     */
-  val ImageDispatcher: DispatchQueue = DispatchQueue(Cpus - 1, Background.asInstanceOf[ExecutionContext], Option("ImageDispatcher"))
+  val ImageDispatcher: DispatchQueue = DispatchQueue(Cpus - 1, Background.asInstanceOf[ExecutionContext], "ImageDispatcher")
 
   // var for tests
   private var _ui: Option[DispatchQueue] = None

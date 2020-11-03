@@ -86,9 +86,9 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
     z                       <- zms
     (cId, cTeam, teamOnly)  <- convController.currentConv.map(c => (c.id, c.team, c.isTeamOnly))
     isGroup                 <- Signal.from(z.conversations.isGroupConversation(cId))
-    canHaveLink             = isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
-    cursor                  <- RefreshingSignal(loadCursor(cId), cursorRefreshEvent(z, cId))
-    _ = verbose(l"cursor changed")
+    canHaveLink             =  isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
+    cursor                  <- RefreshingSignal.from(loadCursor(cId), cursorRefreshEvent(z, cId))
+    _                       =  verbose(l"cursor changed")
     list                    =  PagedListWrapper(getPagedList(cursor))
     lastRead                <- convController.currentConv.map(_.lastRead)
     messageToReveal         <- messageActionsController.messageToReveal.map(_.map(_.id))

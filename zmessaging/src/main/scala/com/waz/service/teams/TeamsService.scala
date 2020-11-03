@@ -128,19 +128,23 @@ class TeamsServiceImpl(selfUser:           UserId,
 
       def userMatches(data: UserData) = data.isInTeam(teamId) && data.matchesQuery(query)
 
-      new AggregatingSignal[Seq[ContentChange[UserId, UserData]], Set[UserData]](changesStream, load, { (current, changes) =>
-        val added = changes.collect {
-          case Added(_, data) if userMatches(data) => data
-          case Updated(_, _, data) if userMatches(data) => data
-        }.toSet
+      new AggregatingSignal[Seq[ContentChange[UserId, UserData]], Set[UserData]](
+        load,
+        changesStream,
+        { (current, changes) =>
+          val added = changes.collect {
+            case Added(_, data) if userMatches(data) => data
+            case Updated(_, _, data) if userMatches(data) => data
+          }.toSet
 
-        val removed = changes.collect {
-          case Removed(id) => id
-          case Updated(id, _, data) if !userMatches(data) => id
-        }.toSet
+          val removed = changes.collect {
+            case Removed(id) => id
+            case Updated(id, _, data) if !userMatches(data) => id
+          }.toSet
 
-        current.filterNot(d => removed.contains(d.id) || added.exists(_.id == d.id)) ++ added
-      })
+          current.filterNot(d => removed.contains(d.id) || added.exists(_.id == d.id)) ++ added
+        }
+      )
 
   }
 

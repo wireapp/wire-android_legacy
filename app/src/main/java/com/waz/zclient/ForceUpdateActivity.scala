@@ -40,8 +40,7 @@ class ForceUpdateActivity extends BaseActivity {
 object ForceUpdateActivity {
   def checkBlacklist(activity: Activity)(implicit ecxt: EventContext): Unit =
     ZMessaging.currentGlobal.blacklist.upToDate
-        .ifFalse
-        .filter(_ => BuildConfig.ENABLE_BLACKLIST)
+        .collect { case false if BuildConfig.ENABLE_BLACKLIST => () }
         .onUi { _ =>
           activity.startActivity(
               new Intent(activity.getApplicationContext, classOf[ForceUpdateActivity]))

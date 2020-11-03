@@ -41,7 +41,7 @@ import scala.util.Try
 class PCMPlayer private (content: PCMContent, track: AudioTrack, totalSamples: Long, stream: FileInputStream, observer: Player.Observer) extends Player {
   import PCMPlayer._
 
-  private implicit val dispatcher = DispatchQueue(DispatchQueue.SERIAL, Threading.IO, None)
+  private implicit val dispatcher: DispatchQueue = DispatchQueue(DispatchQueue.Serial, Threading.IO)
   private val buffer = ByteBuffer.allocateDirect(bufferSizeInShorts * SizeOfShort).order(LITTLE_ENDIAN)
   private def channel = stream.getChannel
 

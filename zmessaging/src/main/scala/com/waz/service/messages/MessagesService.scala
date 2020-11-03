@@ -480,8 +480,8 @@ class MessagesServiceImpl(selfUserId:      UserId,
   override def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]] = storage.getAssetIds(messageIds)
 
   override def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]] = RefreshingSignal[Seq[ButtonData]](
-    loader       = CancellableFuture.lift(buttonsStorage.findByMessage(msgId).map(_.sortBy(_.ordinal))),
-    refreshEvent = EventStream.zip(buttonsStorage.onChanged.map(_.map(_.id)), buttonsStorage.onDeleted)
+    loader        = CancellableFuture.lift(buttonsStorage.findByMessage(msgId).map(_.sortBy(_.ordinal))),
+    refreshStream = EventStream.zip(buttonsStorage.onChanged.map(_.map(_.id)), buttonsStorage.onDeleted)
   )
 
   override def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
