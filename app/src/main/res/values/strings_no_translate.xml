@@ -169,6 +169,9 @@
     <string translatable="false" name="pref_dev_check_check_rooted_device_title">Check If The Device Is Rooted</string>
     <string translatable="false" name="pref_dev_check_check_rooted_device_summary">Calls a method performing a list of checks in order to figure out if the current device is rooted</string>
 
+    <string translatable="false" name="pref_dev_new_unsplash_profile_pic_title">Change the Profile Picture to a New Unsplash Pic</string>
+    <string translatable="false" name="pref_dev_new_unsplash_profile_pic_summary">Changes your profile picture to a new one, downloaded from Unsplash</string>
+
     <!--Account preferences-->
     <string translatable="false" name="pref_dev_category_sign_in_account_key">PREF_ACCOUNTS_SIGN_IN</string>
     <string translatable="false" name="pref_dev_category_sign_in_account_title">Sign into account</string>
