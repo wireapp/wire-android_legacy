@@ -150,7 +150,8 @@ object AssetClient {
   implicit val DefaultExpiryTime: Expiration = 1.hour
 
   val AssetsV3Path = "/assets/v3"
-  val UnsplashUrl: URL = new URL("https://source.unsplash.com/800x800/?landscape")
+  val UnsplashPath: String = "https://source.unsplash.com/800x800/?landscape"
+  val UnsplashUrl: URL = new URL(UnsplashPath)
 
   sealed trait Retention
   object Retention {

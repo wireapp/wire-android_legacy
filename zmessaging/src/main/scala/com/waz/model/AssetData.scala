@@ -73,16 +73,12 @@ case class AssetData(override val id: AssetId               = AssetId(),
     case _ => Some(RemoteData(remoteId, token, otrKey, sha, encryption))
   }
 
-  lazy val cacheKey = {
-    val key = (proxyPath, source) match {
-      case (Some(proxy), _)                                                 => CacheKey(proxy)
-      case (_, Some(uri)) if uri.getPath != AssetClient.UnsplashUrl.getPath => CacheKey.fromUri(uri)
-      case _                                                                => CacheKey.fromAssetId(id)
-    }
-    //verbose(s"created cache key: $key for asset: $id")
-    key
+  lazy val cacheKey: CacheKey = (proxyPath, source) match {
+    case (Some(proxy), _)                                          => CacheKey(proxy)
+    case (_, Some(uri)) if uri.getPath != AssetClient.UnsplashPath => CacheKey.fromUri(uri)
+    case _                                                         => CacheKey.fromAssetId(id)
   }
-
+  
   lazy val isDownloadable = this match {
     case WithRemoteData(_)  => true
     case WithExternalUri(_) => true
