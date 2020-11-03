@@ -348,7 +348,7 @@ class UserServiceImpl(selfUserId:        UserId,
     usersStorage.updateAll2(availabilities.keySet, u => availabilities.get(u.id).fold(u)(av => u.copy(availability = av)))
   }
 
-  override def updateSelfPicture(content: Content) = {
+  override def updateSelfPicture(content: Content): Future[Unit] = {
     val contentForUpload = ContentForUpload("profile-picture", content)
     for {
       asset <- assets.createAndSaveUploadAsset(contentForUpload, NoEncryption, public = true, Retention.Eternal, None)
@@ -366,8 +366,6 @@ class UserServiceImpl(selfUserId:        UserId,
 object UserService {
 
   val SyncIfOlderThan = 24.hours
-
-  val UnsplashUrl = AndroidURIUtil.parse("https://source.unsplash.com/800x800/?landscape")
 
   lazy val AcceptedOrBlocked = Set(ConnectionStatus.Accepted, ConnectionStatus.Blocked)
 

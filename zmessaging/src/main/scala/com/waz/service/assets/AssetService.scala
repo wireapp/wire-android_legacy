@@ -68,6 +68,7 @@ trait AssetService {
   def loadContent(asset: Asset, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
   def loadContentById(assetId: AssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
   def loadPublicContentById(assetId: AssetId, convId: Option[ConvId], callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
+  def loadUnsplashProfilePicture(): CancellableFuture[AssetInput]
   def loadUploadContentById(uploadAssetId: UploadAssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
 }
 
@@ -198,9 +199,15 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
     uriHelper.assetInput(localSource.uri).validate(localSource.sha)
 
   override def loadPublicContentById(assetId: AssetId, convId: Option[ConvId], callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
-    assetClient.loadPublicAssetContent(assetId, convId, callback).flatMap{
-      case Left(err) => CancellableFuture.successful(AssetInput(err))
-      case Right(i)  => CancellableFuture.successful(AssetInput(i))
+    assetClient.loadPublicAssetContent(assetId, convId, callback).map {
+      case Left(err) => AssetInput(err)
+      case Right(i)  => AssetInput(i)
+    }
+
+  override def loadUnsplashProfilePicture(): CancellableFuture[AssetInput] =
+    assetClient.loadUnsplashProfilePicture().map {
+      case Left(err) => AssetInput(err)
+      case Right(i)  => AssetInput(i)
     }
 
   override def loadUploadContentById(uploadAssetId: UploadAssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
@@ -396,8 +403,8 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
     }
 
     for {
-      initialContent                                            <- prepareContent(contentForUpload.content)
-      (initialDetails, initialMime)                             =  assetDetailsService.extract(initialContent)
+      initialContent                                              <- prepareContent(contentForUpload.content)
+      (initialDetails, initialMime)                               =  assetDetailsService.extract(initialContent)
       (transformedContent, (transformedDetails, transformedMime)) <- initialDetails match {
         case ImageDetails(dimensions) =>
           recode(assetId, dimensions, initialMime, initialContent).map { c => (c, assetDetailsService.extract(c)) }
@@ -433,7 +440,7 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
     }
     for {
       cacheFile <- uploadContentCache.getOrCreateEmpty(assetId)
-      _ = IoUtils.withResource(new FileOutputStream(cacheFile)) { out => bitmap.compress(compressFormat, 75, out) }
+      _         =  IoUtils.withResource(new FileOutputStream(cacheFile)) { out => bitmap.compress(compressFormat, 75, out) }
     } yield Content.File(targetMime, cacheFile)
   }
 

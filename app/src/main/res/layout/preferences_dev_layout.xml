@@ -125,6 +125,16 @@
                 app:title="@string/pref_dev_check_check_rooted_device_title"
                 app:subtitle="@string/pref_dev_check_check_rooted_device_summary"
                 />
+
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_dev_new_unsplash_profile_pic"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                android:layout_marginBottom="@dimen/wire__padding__20"
+                app:title="@string/pref_dev_new_unsplash_profile_pic_title"
+                app:subtitle="@string/pref_dev_new_unsplash_profile_pic_summary"
+                />
         </LinearLayout>
 
     </ScrollView>
