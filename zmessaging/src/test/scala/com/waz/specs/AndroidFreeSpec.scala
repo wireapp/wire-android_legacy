@@ -126,11 +126,11 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
     Intent.setUtil(JVMIntentUtil)
 
     Threading.setUi(DispatchQueue(
-      DispatchQueue.SERIAL,
+      DispatchQueue.Serial,
       Executors.newSingleThreadExecutor(new ThreadFactory {
         override def newThread(r: Runnable) = new Thread(r, Threading.testUiThreadName)
       }),
-      Option(Threading.testUiThreadName)
+      Threading.testUiThreadName
     ))
   }
 
