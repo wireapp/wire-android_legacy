@@ -30,7 +30,7 @@ import com.waz.zclient.storage.di.StorageModule
   */
 class ZmsDatabase(user: UserId, context: Context) extends Database {
   override implicit val dispatcher: DispatchQueue =
-    DispatchQueue(DispatchQueue.SERIAL, Threading.IOThreadPool, name = Option("ZmsDatabase_" + user.str.substring(24)))
+    DispatchQueue(DispatchQueue.Serial, Threading.IOThreadPool, name = "ZmsDatabase_" + user.str.substring(24))
 
   override val dbHelper: BaseDaoDB =
     new RoomDaoDB(StorageModule.getUserDatabase(

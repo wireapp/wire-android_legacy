@@ -48,9 +48,15 @@ class ReactionsStorageImpl(context: Context, storage: Database)
   import com.waz.threading.Threading.Implicits.Background
 
   private val likesCache = new TrimmingLruCache[MessageId, Map[UserId, RemoteInstant]](context, Fixed(1024))
-  private val maxTime = returning(new AggregatingSignal[RemoteInstant, RemoteInstant](onChanged.map(_.maxBy(_.timestamp).timestamp), storage.read(LikingDao.findMaxTime(_)), _ max _))(_.disableAutowiring())
+  private val maxTime = returning(
+    new AggregatingSignal[RemoteInstant, RemoteInstant](
+      storage.read(LikingDao.findMaxTime(_)),
+      onChanged.map(_.maxBy(_.timestamp).timestamp),
+      _ max _
+    )
+  )(_.disableAutowiring())
 
-  onChanged.on(Background) { likes =>
+  onChanged.foreach { likes =>
     likes.groupBy(_.message) foreach { case (msg, ls) =>
       Option(likesCache.get(msg)) foreach { current =>
         val (toAdd, toRemove) = ls.partition(_.action == Action.Like)

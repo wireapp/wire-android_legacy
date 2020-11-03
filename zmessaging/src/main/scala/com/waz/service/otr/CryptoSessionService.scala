@@ -22,7 +22,7 @@ import com.waz.log.LogSE._
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.threading.Threading
-import com.wire.signals.{AggregatingSignal, EventStream, Serialized}
+import com.wire.signals.{AggregatingSignal, DispatchQueue, EventStream, Serialized}
 import com.waz.utils.returning
 import com.wire.cryptobox.{CryptoBox, CryptoSession, PreKey}
 
@@ -31,9 +31,9 @@ import scala.util.Try
 
 class CryptoSessionService(cryptoBox: CryptoBoxService) extends DerivedLogTag {
 
-  implicit val dis = Threading.Background
+  private implicit val dis: DispatchQueue = Threading.Background
 
-  val onCreate = EventStream[SessionId]()
+  private val onCreate = EventStream[SessionId]()
   val onCreateFromMessage = EventStream[SessionId]()
 
   private def dispatch[A](id: SessionId)(f: Option[CryptoBox] => A) =
@@ -42,13 +42,13 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) extends DerivedLogTag {
   private def dispatchFut[A](id: SessionId)(f: Option[CryptoBox] => Future[A]) =
     Serialized.future(id.toString){cryptoBox.cryptoBox.flatMap(f)}
 
-  def getOrCreateSession(id: SessionId, key: PreKey) = dispatch(id) {
+  def getOrCreateSession(id: SessionId, key: PreKey): Future[Option[CryptoSession]] = dispatch(id) {
     case None => None
     case Some(cb) =>
       verbose(l"getOrCreateSession($id)")
       def createSession() = returning(cb.initSessionFromPreKey(id.toString, key))(_ => onCreate ! id)
 
-      loadSession(cb, id).getOrElse(createSession())
+      loadSession(cb, id).orElse(Option(createSession()))
   }
 
   private def loadSession(cb: CryptoBox, id: SessionId): Option[CryptoSession] =
@@ -102,6 +102,10 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) extends DerivedLogTag {
     def fingerprint = withSession(sid)(_.getRemoteFingerprint)
     val stream = onCreate.filter(_ == sid).mapAsync(_ => fingerprint)
 
-    new AggregatingSignal[Option[Array[Byte]], Option[Array[Byte]]](stream, fingerprint, (prev, next) => next)
+    new AggregatingSignal[Option[Array[Byte]], Option[Array[Byte]]](
+      fingerprint,
+      stream,
+      (_, next) => next
+    )
   }
 }

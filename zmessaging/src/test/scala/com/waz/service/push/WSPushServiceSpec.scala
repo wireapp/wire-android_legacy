@@ -69,7 +69,7 @@ import scala.concurrent.duration._
       Thread.sleep(500)
       fakeWebSocketEvents ! SocketEvent.Opened(webSocket)
 
-      noException shouldBe thrownBy { result(service.connected.ifTrue.head) }
+      noException shouldBe thrownBy { result(service.connected.onTrue) }
       service.deactivate()
 
       Thread.sleep(500)
@@ -88,7 +88,7 @@ import scala.concurrent.duration._
       Thread.sleep(1000)
       fakeWebSocketEvents ! SocketEvent.Opened(webSocket)
 
-      noException shouldBe thrownBy { result(service.connected.ifTrue.head) }
+      noException shouldBe thrownBy { result(service.connected.onTrue) }
     }
 
     scenario("When web socket closed should become unconnected and retry to connect.") {
@@ -104,12 +104,12 @@ import scala.concurrent.duration._
       Thread.sleep(500)
       fakeWebSocketEvents ! SocketEvent.Closed(webSocket, Some(new InterruptedException))
 
-      noException shouldBe thrownBy { await(service.connected.ifFalse.head) }
+      noException shouldBe thrownBy { await(service.connected.onFalse) }
 
       Thread.sleep(500)
       fakeWebSocketEvents ! SocketEvent.Opened(webSocket)
 
-      noException shouldBe thrownBy { await(service.connected.ifTrue.head) }
+      noException shouldBe thrownBy { await(service.connected.onTrue) }
     }
 
     scenario("When web socket is going to be closed by other side should close web socket with normal closure code.") {
@@ -155,7 +155,7 @@ import scala.concurrent.duration._
 
       gotNotification shouldBe true
 
-      noException shouldBe thrownBy { await(service.connected.ifTrue.head) }
+      noException shouldBe thrownBy { await(service.connected.onTrue) }
     }
 
     scenario("When web socket emmit unknown message, should ignore it and stay connected.") {
@@ -179,7 +179,7 @@ import scala.concurrent.duration._
 
       gotNotification shouldBe false
 
-      noException shouldBe thrownBy { await(service.connected.ifTrue.head) }
+      noException shouldBe thrownBy { await(service.connected.onTrue) }
     }
 
     scenario("When connect and disconnect called to often, should stay in the correct state.") {
@@ -193,7 +193,7 @@ import scala.concurrent.duration._
         if (i%2 == 0) service.deactivate() else service.activate()
       }
 
-      noException shouldBe thrownBy { await(service.connected.ifFalse.head) }
+      noException shouldBe thrownBy { await(service.connected.onFalse) }
     }
 
   }

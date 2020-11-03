@@ -80,7 +80,7 @@ class SingleImageViewToolbar(context: Context, attrs: AttributeSet, style: Int)
 
   likedBySelf.map(if (_) R.string.glyph__liked else R.string.glyph__like).on(Threading.Ui)(likeButton.setText)
 
-  messageActionsController.onDeleteConfirmed.on(Threading.Background){
+  messageActionsController.onDeleteConfirmed.on(Threading.Background) {
     _ => collectionController.focusedItem ! None
   }
 

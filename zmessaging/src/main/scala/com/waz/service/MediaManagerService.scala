@@ -70,9 +70,9 @@ class DefaultMediaManagerService(context: Context) extends MediaManagerService w
       error(l"MediaManager was not instantiated properly", e)
   }
 
-  val isSpeakerOn = RefreshingSignal(mediaManager.map(_.isLoudSpeakerOn), onPlaybackRouteChanged)
+  override val isSpeakerOn: Signal[Boolean] = RefreshingSignal.from(mediaManager.map(_.isLoudSpeakerOn), onPlaybackRouteChanged)
 
-  val soundIntensity = Option(ZMessaging.currentAccounts).map(_.activeZms.flatMap {
+  override val soundIntensity: Signal[IntensityLevel] = Option(ZMessaging.currentAccounts).map(_.activeZms.flatMap {
     case None => Signal.const(IntensityLevelCodec.default)
     case Some(z) => z.userPrefs.preference(Sounds).signal
   }).getOrElse {
@@ -85,15 +85,15 @@ class DefaultMediaManagerService(context: Context) extends MediaManagerService w
   }
 
   //TODO these are not used - what were/are they for?
-  lazy val audioConfigUris =
-    audioConfig.map(new Configuration(_).getSoundMap.asScala.mapValues { value =>
+  lazy val audioConfigUris: Map[String, Uri] =
+    audioConfig.fold(Map.empty[String, Uri])(new Configuration(_).getSoundMap.asScala.map { case (key, value) =>
       val packageName = context.getPackageName
-      Uri.parse(s"android.resource://$packageName/${context.getResources.getIdentifier(value.getPath, "raw", packageName)}")
-    }).getOrElse(Map.empty[String, Uri])
+      key -> Uri.parse(s"android.resource://$packageName/${context.getResources.getIdentifier(value.getPath, "raw", packageName)}")
+    }.toMap)
 
   def getSoundUri(name: String): Option[Uri] = audioConfigUris.get(name)
 
-  def setSpeaker(speaker: Boolean) = mediaManager.map { mm => if (speaker) mm.turnLoudSpeakerOn() else mm.turnLoudSpeakerOff() }
+  def setSpeaker(speaker: Boolean): Future[Unit] = mediaManager.map { mm => if (speaker) mm.turnLoudSpeakerOn() else mm.turnLoudSpeakerOff() }
 
 }
 

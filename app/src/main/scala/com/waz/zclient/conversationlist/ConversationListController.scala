@@ -324,7 +324,11 @@ object ConversationListController {
       zms.membersStorage.getByConvs(convs).map(entries)
     }
 
-    val members = new AggregatingSignal[Map[ConvId, Seq[UserId]], Map[ConvId, Seq[UserId]]](updatedEntries, zms.membersStorage.list().map(entries), _ ++ _)
+    val members = new AggregatingSignal[Map[ConvId, Seq[UserId]], Map[ConvId, Seq[UserId]]](
+      zms.membersStorage.list().map(entries),
+      updatedEntries,
+      _ ++ _
+    )
 
     def apply(conv: ConvId) : Signal[Seq[UserId]] = members.map(_.getOrElse(conv, Seq.empty[UserId]))
   }
@@ -374,19 +378,19 @@ object ConversationListController {
             .map(LastMsgs.tupled)
 
     private def lastMessageSignal(conv: ConvId): Signal[Option[MessageData]] = cache.getOrElseUpdate(conv,
-      new AggregatingSignal[MessageData, Option[MessageData]](messageUpdateEvents(conv), lastMessage(conv), {
+      new AggregatingSignal[MessageData, Option[MessageData]](lastMessage(conv), messageUpdateEvents(conv), {
         case (res @ Some(last), update) if last.time.isAfter(update.time) => res
         case (_, update) => Some(update)
       }))
 
     private def lastReadSignal(conv: ConvId): Signal[Option[RemoteInstant]] = lastReadCache.getOrElseUpdate(conv,
-      new AggregatingSignal[RemoteInstant, Option[RemoteInstant]](lastReadUpdateEvents(conv), lastRead(conv), {
+      new AggregatingSignal[RemoteInstant, Option[RemoteInstant]](lastRead(conv), lastReadUpdateEvents(conv), {
         case (res @ Some(last), update) if last.isAfter(update) => res
         case (_, update) => Some(update)
       }))
 
     private def lastMissedCallSignal(conv: ConvId): Signal[Option[MessageData]] =
-      new AggregatingSignal[MessageData, Option[MessageData]](missedCallUpdateEvents(conv), lastUnreadMissedCall(conv), {
+      new AggregatingSignal[MessageData, Option[MessageData]](lastUnreadMissedCall(conv), missedCallUpdateEvents(conv), {
         case (res @ Some(last), update) if last.time.isAfter(update.time) => res
         case (_, update) => Some(update)
       })

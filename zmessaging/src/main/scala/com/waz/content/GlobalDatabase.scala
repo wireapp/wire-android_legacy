@@ -27,7 +27,7 @@ import com.waz.zclient.storage.di.StorageModule
 
 class GlobalDatabase(context: Context, dbNameSuffix: String = "", tracking: TrackingService) extends Database {
 
-  override implicit val dispatcher = DispatchQueue(DispatchQueue.SERIAL, Threading.IOThreadPool, Option("GlobalDatabase"))
+  override implicit val dispatcher = DispatchQueue(DispatchQueue.Serial, Threading.IOThreadPool, "GlobalDatabase")
   override          val dbHelper  : BaseDaoDB           =
     new RoomDaoDB(StorageModule.getGlobalDatabase(
       context,

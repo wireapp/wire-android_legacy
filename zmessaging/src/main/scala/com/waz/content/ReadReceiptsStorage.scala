@@ -56,7 +56,7 @@ class ReadReceiptsStorageImpl(context: Context, storage: Database, msgStorage: M
 
   override def receipts(message: MessageId): Signal[Seq[ReadReceipt]] = {
     val changed = onChanged.map(_.filter(_.message == message).map(_.id)).zip(onDeleted.map(_.filter(_._1 == message)))
-    RefreshingSignal[Seq[ReadReceipt]](getReceipts(message), changed)
+    RefreshingSignal.from[Seq[ReadReceipt]](getReceipts(message), changed)
   }
 
   override def removeAllForMessages(messages: Set[MessageId]): Future[Unit] =

@@ -38,8 +38,9 @@ class LogsServiceImpl(globalPreferences: GlobalPreferences)
   override lazy val logsEnabledGlobally: Signal[Boolean] =
     globalPreferences(GlobalPreferences.LogsEnabled).signal
 
-  logsEnabledGlobally.ifFalse.apply { _ =>
-    InternalLog.clearAll()
+  logsEnabledGlobally.foreach {
+    case false => InternalLog.clearAll()
+    case _ =>
   }
 
   override def logsEnabled: Future[Boolean] =
