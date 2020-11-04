@@ -45,7 +45,7 @@ subprojects {
 
     pmd {
         toolVersion = '5.4.1'
-        ruleSetFiles = files("${project.rootDir}/config/pmd-config.xml")
+        ruleSetFiles = files("${project.rootDir}/config/pmd/pmd-config.xml")
         ignoreFailures = true
         ruleSets = []
 
@@ -108,7 +108,7 @@ subprojects {
                 checkReleaseBuilds false
 
 
-                lintConfig file("${project.rootDir}/config/lint-config.xml")
+                lintConfig file("${project.rootDir}/config/lint/lint-config.xml")
 
             }
         }
