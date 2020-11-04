@@ -74,7 +74,7 @@ android {
 
         //Kotlin Feature Flags
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$FeatureFlags.SETTINGS"
-        buildConfigField 'boolean', 'KOTLIN_REGISTRATION', "$FeatureFlags.REGITRATION"
+        buildConfigField 'boolean', 'KOTLIN_REGISTRATION', "$FeatureFlags.REGISTRATION"
         buildConfigField 'boolean', 'KOTLIN_CORE', "$FeatureFlags.CORE"
     }
 
