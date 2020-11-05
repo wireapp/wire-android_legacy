@@ -29,7 +29,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.biometric.{BiometricConstants, BiometricManager, BiometricPrompt}
 import androidx.fragment.app.{DialogFragment, FragmentActivity}
 import com.google.android.material.textfield.{TextInputEditText, TextInputLayout}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.threading.Threading
 import com.wire.signals.EventStream
@@ -39,7 +38,7 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{FragmentHelper, R}
 import com.waz.threading.Threading._
 
-class RequestPasswordDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
+class RequestPasswordDialog extends DialogFragment with FragmentHelper {
   import RequestPasswordDialog._
 
   private val onAnswer = EventStream[PromptAnswer]()
@@ -50,21 +49,20 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
   private lazy val message              = getStringArg(MessageArg).getOrElse("")
   private lazy val biometricDescription = getStringArg(BiometricDescriptionArg).getOrElse(message)
 
-  private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.remove_otr_device_dialog, null)
+  private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.password_dialog, null)
 
-  private lazy val passwordEditText = returning(findById[TextInputEditText](root, R.id.acet__remove_otr__password)) { v =>
+  private lazy val passwordEditText = returning(findById[TextInputEditText](root, R.id.password_dialog_edit_text)) { v =>
     v.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-      def onEditorAction(v: TextView, actionId: Int, event: KeyEvent) =
-        actionId match {
-          case EditorInfo.IME_ACTION_DONE =>
-            onAnswer ! PasswordAnswer(Password(v.getText.toString))
-            true
-          case _ => false
-        }
+      def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean = actionId match {
+        case EditorInfo.IME_ACTION_DONE =>
+          onAnswer ! PasswordAnswer(Password(v.getText.toString))
+          true
+        case _ => false
+      }
     })
   }
 
-  private lazy val errorLayout = findById[TextInputLayout](root, R.id.til__remove_otr_device)
+  private lazy val errorLayout = findById[TextInputLayout](root, R.id.password_dialog_error_layout)
 
   private lazy val promptInfo: BiometricPrompt.PromptInfo = new BiometricPrompt.PromptInfo.Builder()
     .setTitle(title)
@@ -138,19 +136,14 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     dialog
   }
 
-  override def onStart() = {
+  override def onStart(): Unit = {
     super.onStart()
     dialog.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-      def onClick(v: View) = onAnswer ! PasswordAnswer(Password(passwordEditText.getText.toString))
+      def onClick(v: View): Unit = onAnswer ! PasswordAnswer(Password(passwordEditText.getText.toString))
     })
   }
 
-  override def onStop() = {
-    dialog.dismiss()
-    super.onStop()
-  }
-
-  override def onActivityCreated(savedInstanceState: Bundle) = {
+  override def onActivityCreated(savedInstanceState: Bundle): Unit = {
     super.onActivityCreated(savedInstanceState)
 
     if (!useBiometric) getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
@@ -158,7 +151,7 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
 }
 
 object RequestPasswordDialog {
-  val Tag = RequestPasswordDialog.getClass.getSimpleName
+  val Tag: String = RequestPasswordDialog.getClass.getSimpleName
 
   private val IsCancellable           = "IS_CANCELLABLE"
   private val UseBiometric            = "USE_BIOMETRIC"

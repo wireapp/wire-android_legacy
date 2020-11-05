@@ -20,24 +20,23 @@ package com.waz.zclient.calling
 import android.content.{Context, Intent}
 import android.os.{Build, Bundle}
 import android.view.WindowManager
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.utils.DeprecationUtils
-import com.waz.threading.Threading._
+import com.waz.zclient.security.SecurityPolicyChecker
 import com.waz.zclient.tracking.GlobalTrackingController
+import com.waz.zclient.utils.DeprecationUtils
 
 class CallingActivity extends BaseActivity {
-
-  lazy val controller = inject[CallController]
+  private lazy val controller = inject[CallController]
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    verbose(l"Creating CallingActivity")
 
     setContentView(R.layout.calling_layout)
+
     getSupportFragmentManager
       .beginTransaction()
       .replace(R.id.calling_layout, CallingFragment(), CallingFragment.Tag)
@@ -59,11 +58,11 @@ class CallingActivity extends BaseActivity {
     }
   }
 
-  override def onBackPressed() = {
+  override def onBackPressed(): Unit = {
     verbose(l"onBackPressed")
 
     Option(getSupportFragmentManager.findFragmentById(R.id.calling_layout)).foreach {
-      case f: OnBackPressedListener if f.onBackPressed() => //
+      case f: OnBackPressedListener if f.onBackPressed() =>
       case _ => super.onBackPressed()
     }
   }
@@ -78,12 +77,14 @@ class CallingActivity extends BaseActivity {
     super.onStop()
   }
 
-  override def onResume() = {
+  override def onResume(): Unit = {
     super.onResume()
     controller.setVideoPause(pause = false)
+
+    inject[SecurityPolicyChecker].run()(this)
   }
 
-  override def onPause() = {
+  override def onPause(): Unit = {
     controller.setVideoPause(pause = true)
     super.onPause()
   }
@@ -91,7 +92,7 @@ class CallingActivity extends BaseActivity {
   override def getBaseTheme: Int = R.style.Theme_Calling
 }
 
-object CallingActivity extends Injectable with DerivedLogTag {
+object CallingActivity extends Injectable {
 
   def start(context: Context): Unit = {
     val intent = new Intent(context, classOf[CallingActivity])
@@ -99,7 +100,7 @@ object CallingActivity extends Injectable with DerivedLogTag {
     context.startActivity(intent)
   }
 
-  def startIfCallIsActive(context: WireContext) = {
+  def startIfCallIsActive(context: WireContext): Unit = {
     import context.injector
     inject[CallController].isCallActive.head.foreach {
       case true => start(context)
