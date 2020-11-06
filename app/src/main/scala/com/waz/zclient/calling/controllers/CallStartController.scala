@@ -54,7 +54,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
     autoAnswer <- prefs.flatMap(_.preference(AutoAnswerCallPrefKey).signal)
   } if (call.state == CallState.OtherCalling && autoAnswer) startCall(call.selfParticipant.userId, call.convId)
 
-  def startCallInCurrentConv(withVideo: Boolean, forceOption: Boolean = false) = {
+  def startCallInCurrentConv(withVideo: Boolean, forceOption: Boolean = false): Future[Unit] = {
     (for {
       Some(zms)  <- inject[Signal[Option[ZMessaging]]].head
       Some(conv) <- inject[Signal[Option[ConvId]]].head
@@ -64,12 +64,6 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
         case NonFatal(e) => warn(l"Failed to start call", e)
       }
   }
-
-  def acceptCall(): Future[Unit] =
-    currentCallOpt.head.flatMap {
-      case Some(call) => startCall(call.selfParticipant.userId, call.convId)
-      case None => Future.successful(warn(l"No active call to accept..."))
-    }
 
   def startCall(account: UserId, conv: ConvId, withVideo: Boolean = false, forceOption: Boolean = false): Future[Unit] = {
     verbose(l"startCall: account: $account, conv: $conv")

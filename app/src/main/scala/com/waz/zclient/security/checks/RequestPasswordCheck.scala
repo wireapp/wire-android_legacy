@@ -29,6 +29,7 @@ import com.waz.zclient.security.SecurityChecklist
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog.{BiometricCancelled, BiometricError, BiometricFailure, BiometricSuccess, PasswordAnswer, PasswordCancelled, PromptAnswer}
+import com.waz.zclient.ui.utils.KeyboardUtils
 
 import scala.concurrent.{Future, Promise}
 
@@ -54,7 +55,13 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
     passwordCheckSatisfied.future
   }
 
-  private def checkPassword(password: Password): Future[PasswordCheck] = {
+  def finish(result: Boolean): Unit = {
+    KeyboardUtils.closeKeyboardIfShown(context.asInstanceOf[BaseActivity])
+    dialog.close()
+    passwordCheckSatisfied.success(result)
+  }
+
+  private def checkPassword(password: Password): Unit = {
     import Threading.Implicits.Background
 
     if (MaxAttempts == 0 || !BuildConfig.FORCE_APP_LOCK) { // don't count attempts
@@ -75,29 +82,27 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
         case _         => PasswordCheckFailed
       }
     }
-  }
+  }.foreach {
+    case PasswordCheckSuccessful  =>
+      finish(true)
+    case PasswordCheckFailed =>
+      dialog.showError(Some(ContextUtils.getString(R.string.request_password_error)))
+      dialog.clearText()
+    case PasswordCheckError(err) =>
+      dialog.showError(Some(err))
+      dialog.clearText()
+    case MaxAttemptsReached =>
+      finish(false)
+  }(Threading.Ui)
 
   private def onAnswer(answer: PromptAnswer): Unit = answer match {
-    case PasswordAnswer(password) => checkPassword(password).foreach {
-                                       case PasswordCheckSuccessful  =>
-                                         dialog.close()
-                                         passwordCheckSatisfied.success(true)
-                                       case PasswordCheckFailed =>
-                                         dialog.showError(Some(ContextUtils.getString(R.string.request_password_error)))
-                                         dialog.clearText()
-                                       case PasswordCheckError(err) =>
-                                         dialog.showError(Some(err))
-                                         dialog.clearText()
-                                       case MaxAttemptsReached =>
-                                         dialog.close()
-                                         passwordCheckSatisfied.success(false)
-                                     }(Threading.Ui)
+    case PasswordAnswer(password) =>
+      checkPassword(password)
     case PasswordCancelled =>
     case BiometricError(err) =>
       verbose(l"biometric error $err")
     case BiometricSuccess =>
-      dialog.close()
-      passwordCheckSatisfied.success(true)
+      finish(true)
     case BiometricFailure =>
     case BiometricCancelled =>
       dialog.cancelBiometric()
