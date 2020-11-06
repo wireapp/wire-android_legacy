@@ -175,7 +175,7 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
       _                   <- resp match {
         case Right(Some(am)) =>
           am.initZMessaging()
-          am.addUnsplashPicture()
+          am.addUnsplashIfProfilePictureMissing()
           (if (!askMarketingConsent) Future.successful(Some(false)) else
             showConfirmationDialog(
               getString(R.string.receive_news_and_offers_request_title),

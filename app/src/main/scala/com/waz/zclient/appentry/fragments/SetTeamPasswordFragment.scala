@@ -90,7 +90,7 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
                   Future.successful(Some(getString(EmailError(error).bodyResource)))
                 case Right(Some(am)) =>
                   am.initZMessaging()
-                  am.addUnsplashPicture()
+                  am.addUnsplashIfProfilePictureMissing()
                   am.setMarketingConsent(createTeamController.receiveNewsAndOffers).map { _ =>
                     showFragment(InviteToTeamFragment(), InviteToTeamFragment.Tag)
                     None
