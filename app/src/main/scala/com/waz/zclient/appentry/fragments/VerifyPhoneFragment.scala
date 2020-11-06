@@ -188,7 +188,7 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
             am       <- accountService.createAccountManager(userId, isLogin = Some(true))
             _        =  am.foreach { accManager =>
                           accManager.initZMessaging()
-                          accManager.addUnsplashPicture()
+                          accManager.addUnsplashIfProfilePictureMissing()
                         }
             _        <- accountService.setAccount(Some(userId))
             regState <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient())

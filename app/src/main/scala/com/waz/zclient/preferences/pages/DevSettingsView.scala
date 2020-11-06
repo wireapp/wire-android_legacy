@@ -176,7 +176,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   }
 
   newPicturePicButton.onClickEvent { _ =>
-    am.head.flatMap(_.addUnsplashPicture()).foreach { _ =>
+    am.head.flatMap(_.addUnsplashIfProfilePictureMissing()).foreach { _ =>
       showToast("The profile picture changed")
     }
   }

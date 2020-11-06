@@ -202,7 +202,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
 
     (for {
       Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true))
-      _                    =  accountManager.addUnsplashPicture()
+      _                    =  accountManager.addUnsplashIfProfilePictureMissing()
       _                    <- accountsService.setAccount(Some(userId))
       _                    <- Future {
                                 KotlinServices.INSTANCE.restoreBackup(backupFile, userId.str, backupPassword.str, onSuccess _, onFailure _)
@@ -232,7 +232,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
     spinnerController.showDimmedSpinner(show = true, "")
     for {
       Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true))
-      _                    =  accountManager.addUnsplashPicture()
+      _                    =  accountManager.addUnsplashIfProfilePictureMissing()
       _                    <- accountsService.setAccount(Some(userId))
       registrationState    <- accountManager.getOrRegisterClient()
       _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))

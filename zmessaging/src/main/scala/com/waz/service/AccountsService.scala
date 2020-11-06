@@ -478,7 +478,7 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
               hadDb =  context.getDatabasePath(userId.str).exists
               am    <- createAccountManager(userId, isLogin = Some(true), initialUser = Some(userInfo))
               r     <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.otrClient.loadClients().future.mapRight(cs => (cs.nonEmpty, hadDb)))
-              _     =  r.fold(_ => (), res => if (!res._1) am.foreach(_.addUnsplashPicture()))
+              _     =  r.fold(_ => (), res => if (!res._1) am.foreach(_.addUnsplashIfProfilePictureMissing()))
             } yield r
           case Left(error) =>
             verbose(l"login - Get self error: $error")

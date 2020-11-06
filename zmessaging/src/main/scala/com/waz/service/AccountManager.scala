@@ -120,8 +120,9 @@ class AccountManager(val userId:  UserId,
     zmessaging
   }
 
-  def addUnsplashPicture(): Future[Unit] = for {
+  def addUnsplashIfProfilePictureMissing(): Future[Unit] = for {
     zms      <- zmessaging
+    true     <- zms.users.selfUser.map(_.picture.isEmpty).head
     unsplash <- zms.assetService.loadUnsplashProfilePicture().future
     content  <- unsplash.toByteArray match {
                   case Success(bytes) => Future.successful(Content.Bytes(Mime.Image.Jpg, bytes))
