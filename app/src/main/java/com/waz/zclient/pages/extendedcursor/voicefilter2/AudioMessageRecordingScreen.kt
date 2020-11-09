@@ -11,6 +11,7 @@ import com.waz.api.AudioEffect
 import com.waz.zclient.KotlinServices
 import com.waz.zclient.R
 import com.waz.zclient.audio.AudioService
+import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.utils.StringUtils
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -31,6 +32,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     ViewAnimator(context, attrs), View.OnClickListener {
 
     companion object {
+        val TAG = "AudioMessageRecordingScreen"
         var GLYPH_PLACEHOLDER = "_GLYPH_"
 
         enum class CenterButton {
@@ -62,6 +64,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         voice_filter_none.setOnClickListener(this)
         voice_filter_balloon.setOnClickListener(this)
         voice_filter_jelly_fish.setOnClickListener(this)
+        voice_filter_jelly_fish
         voice_filter_rabbit.setOnClickListener(this)
         voice_filter_church.setOnClickListener(this)
         voice_filter_alien.setOnClickListener(this)
@@ -225,19 +228,20 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     private fun applyAudioEffectAndPlay(effect: AudioEffect) {
         val avsEffects = com.waz.audioeffect.AudioEffect()
         try {
+            if (recordWithEffectFile.exists()) recordWithEffectFile.delete()
+
             val res = avsEffects.applyEffectPCM(
                 recordFile.absolutePath,
                 recordWithEffectFile.absolutePath,
                 AudioService.Companion.Pcm.sampleRate,
                 effect.avsOrdinal,
-                true)
+                true
+            )
 
-            if (res < 0) throw RuntimeException("applyEffectWav returned error code: $res")
-            playAudio()
-        } catch (ex: Exception) {
-            println("Exception while applying audio effect. $ex")
-        } finally {
-            avsEffects.destroy()
+            if (res < 0) Logger.error(TAG,"applyEffectWav returned error code: $res")
+            else if(recordWithEffectFile.exists()) playAudio()
+        } catch (ex: java.lang.Exception) {
+            Logger.error(TAG, "Exception while applying audio effect. $ex")
         }
     }
 
@@ -254,6 +258,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     }
 
     private fun playAudio() {
+        Logger.verbose(TAG, "playAudio")
         stopPlaying()
 
         audio_filters_hint.visibility = View.GONE
@@ -324,5 +329,4 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
             }
         }
     }
-
 }
