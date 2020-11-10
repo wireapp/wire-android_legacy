@@ -9,7 +9,7 @@ final String AVS_PRIVATE_GROUP = "com.wearezeta.avs"
 final String AVS_NAME = "avs"
 
 String avsPublicVersion = "6.4.233"
-String avsPrivateVersion = "6.4.16"
+String avsPrivateVersion = "6.4.14"
 
 String nexusUrl = ""
 
