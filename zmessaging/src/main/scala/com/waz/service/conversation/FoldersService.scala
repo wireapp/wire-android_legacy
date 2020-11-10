@@ -203,28 +203,28 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
       folderConvs <- Future.sequence(folders.map(folder => conversationFoldersStorage.findForFolder(folder.id).map(convIds => folder.id -> convIds)))
     } yield folderConvs.toMap
 
-    new AggregatingSignal[
-      (Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]]),
-      Map[FolderId, Set[ConvId]]
-      ](changesStream, loadAll, { case (current, (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)) =>
+    new AggregatingSignal[(Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]]), Map[FolderId, Set[ConvId]]](
+      loadAll,
+      changesStream,
+      { case (current, (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)) =>
+        // Step 1: remove deleted folders and add new ones
+        val step1 = current -- deletedFolderIds ++ addedFolderIds.map(_ -> Set.empty[ConvId]).toMap
 
-      // Step 1: remove deleted folders and add new ones
-      val step1 = current -- deletedFolderIds ++ addedFolderIds.map(_ -> Set.empty[ConvId]).toMap
+        // Step 2: remove conversations from folders
+        val step2 = step1.map {
+          case (folderId, convIds) if removedConvIds.contains(folderId) =>
+            (folderId, convIds -- removedConvIds(folderId))
+          case other => other
+        }
 
-      // Step 2: remove conversations from folders
-      val step2 = step1.map {
-        case (folderId, convIds) if removedConvIds.contains(folderId) =>
-          (folderId, convIds -- removedConvIds(folderId))
-        case other => other
+        // Step 3: add conversations to folders
+        step2.map {
+          case (folderId, convIds) if addedConvIds.contains(folderId) =>
+            (folderId, convIds ++ addedConvIds(folderId))
+          case other => other
+        }
       }
-
-      // Step 3: add conversations to folders
-      step2.map {
-        case (folderId, convIds) if addedConvIds.contains(folderId) =>
-          (folderId, convIds ++ addedConvIds(folderId))
-        case other => other
-      }
-    }).disableAutowiring()
+    ).disableAutowiring()
   }
 
   override def foldersToSynchronize(): Future[Seq[RemoteFolderData]] = for {

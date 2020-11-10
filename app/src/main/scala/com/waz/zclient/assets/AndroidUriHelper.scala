@@ -39,7 +39,7 @@ class AndroidUriHelper(context: Context) extends UriHelper with DerivedLogTag {
   private def cursor(uri: URI): Managed[Cursor] =
     Managed.create(
       context.getContentResolver.query(androidUri(uri), null, null, null, null)
-    )(_.close())
+    ) { c => Option(c).foreach(_.close()) }
 
   override def openInputStream(uri: URI): Try[InputStream] = Try {
     context.getContentResolver.openInputStream(androidUri(uri))
@@ -55,8 +55,7 @@ class AndroidUriHelper(context: Context) extends UriHelper with DerivedLogTag {
   }
 
   override def extractSize(uri: URI): Try[Long] = Try {
-    debug(l"Extracting size for $uri")
-
+    debug(l"Extracting size for $uri, scheme: ${uri.getScheme}")
     if (uri.getScheme == ContentResolver.SCHEME_FILE) {
       val file = new File(uri.getPath)
       file.length()

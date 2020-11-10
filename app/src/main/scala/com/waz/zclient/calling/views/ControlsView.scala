@@ -78,7 +78,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   // first row
   returning(findById[CallControlButtonView](R.id.mute_call)) { button =>
-    button.setEnabled(true)
+    controller.isCallEstablished.onUi(button.setEnabled)
     controller.isMuted.onUi(button.setActivated)
     Signal.zip(controller.isVideoCall, controller.isMuted, themeController.currentTheme).map {
       case (true, true, _)             => Some(drawMuteDark _)
@@ -101,7 +101,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   }
 
   returning(findById[CallControlButtonView](R.id.speaker_flip_call)) { button =>
-    button.setEnabled(true)
+    controller.isCallEstablished.onUi(button.setEnabled)
     isVideoBeingSent.onUi {
       case true =>
         button.set(WireStyleKit.drawFlip, R.string.incoming__controls__ongoing__flip, flip)
@@ -164,7 +164,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   private def speaker(): Unit = {
     onButtonClick ! {}
-    controller.speakerButton.press()
+    controller.speakerButton.click()
   }
 
   private def video(): Future[Unit] = async {

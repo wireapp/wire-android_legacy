@@ -63,8 +63,8 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
         .zip(onDeleted.map(_.filter(_._2 == conv).map(_._1 -> false)))
 
     new AggregatingSignal[Seq[(UserId, Boolean)], Set[UserId]](
-      onConvMemberChanged(conv),
       getActiveUsers(conv).map(_.toSet),
+      onConvMemberChanged(conv),
       { (current, changes) =>
         val (active, inactive) = changes.partition(_._2)
         current -- inactive.map(_._1) ++ active.map(_._1)

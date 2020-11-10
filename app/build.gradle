@@ -65,12 +65,12 @@ android {
 
     preBuild.dependsOn(copyCustomResources)
 
-    compileSdkVersion = rootProject.ext.compileSdkVersion
-    buildToolsVersion = '29.0.3'
+    compileSdkVersion = Versions.COMPILE_SDK_VERSION
+    buildToolsVersion = Versions.BUILD_TOOLS_VERSION
 
     defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdkVersion Versions.MIN_SDK_VERSION
+        targetSdkVersion Versions.TARGET_SDK_VERSION
         versionCode System.getenv("BUILD_NUMBER") as Integer ?: 99999
         versionName = (System.getenv("CLIENT_VERSION") ?: Versions.ANDROID_CLIENT_MAJOR_VERSION) + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
@@ -156,11 +156,11 @@ android {
     }
 
     compileOptions {
-        compileSdkVersion rootProject.ext.compileSdkVersion
-        buildToolsVersion rootProject.ext.buildToolsVersion
+        compileSdkVersion Versions.COMPILE_SDK_VERSION
+        buildToolsVersion Versions.BUILD_TOOLS_VERSION
 
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility Versions.SOURCE_COMPATIBILITY_VERSION
+        targetCompatibility Versions.TARGET_COMPATIBILITY_VERSION
     }
 
     kotlinOptions {

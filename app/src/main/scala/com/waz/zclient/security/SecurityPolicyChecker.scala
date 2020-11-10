@@ -54,26 +54,39 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
       updateBackgroundEntryTimer()
     case false =>
       currentActivity.head.foreach {
-        case Some(activity) => run()(activity)
+        case Some(activity) => run(activity)
         case None =>
           warn(l"The app is coming to the foreground, but the information about the activity is missing")
       }
   }
 
-  def run()(implicit activity: Activity): Unit =
+  def run(activity: Activity): Unit = {
+    verbose(l"check run, activity: ${activity.getLocalClassName}")
     for {
       authNeeded      <- isAuthenticationNeeded()
       accManager      <- accountManager.head
       userPrefs       <- userPreferences.head
-      allChecksPassed <- runSecurityChecklist(Some(passwordController), globalPreferences, Some(userPrefs), Some(accManager), isForeground = true, authNeeded = authNeeded)
+      allChecksPassed <- runSecurityChecklist(
+                           Some(passwordController),
+                           globalPreferences,
+                           Some(userPrefs),
+                           Some(accManager),
+                           isForeground = true,
+                           authNeeded = authNeeded
+                         )(activity)
     } yield {
       verbose(l"all checks passed: $allChecksPassed")
-      if (allChecksPassed && authNeeded) authenticationNeeded ! false
+      if (allChecksPassed && authNeeded) {
+        authenticationNeeded ! false
+        timerEnabled ! false
+      }
     }
+  }
 
   //  This ensures asking for password when the app is first opened / restarted.
   private var timeEnteredBackground: Option[Instant] = None
-  val authenticationNeeded = Signal(false)
+  private val authenticationNeeded = Signal(false)
+  private val timerEnabled = Signal(true)
 
   private def timerExpired: Boolean = {
     val secondsSinceEnteredBackground = timeEnteredBackground.fold(Long.MaxValue)(_.until(Instant.now(), ChronoUnit.SECONDS))
@@ -83,18 +96,24 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
 
   private def updateBackgroundEntryTimer(): Unit = {
     verbose(l"updateBackgroundEntryTimer")
+    timerEnabled ! true
     timeEnteredBackground = Some(Instant.now())
   }
 
   private def isAuthenticationNeeded(): Future[Boolean] =
-    (if (BuildConfig.FORCE_APP_LOCK) Future.successful(true) else globalPreferences.preference(AppLockEnabled).apply()).flatMap {
+    timerEnabled.head.flatMap {
       case false => Future.successful(false)
       case true =>
-        authenticationNeeded.mutate {
-          case false if timerExpired => true
-          case b => b
-        }
-        authenticationNeeded.head
+        if (BuildConfig.FORCE_APP_LOCK) Future.successful(true)
+        else globalPreferences.preference(AppLockEnabled).apply().flatMap {
+          case false => Future.successful(false)
+          case true =>
+            authenticationNeeded.mutate {
+              case false if timerExpired => true
+              case b => b
+            }
+            authenticationNeeded.head
+      }
     }
 }
 

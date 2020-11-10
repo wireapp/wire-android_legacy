@@ -1,17 +1,17 @@
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: 'jp.leafytree.android-scala'
 apply from: 'deflake.gradle'
 
 // Android
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdkVersion Versions.COMPILE_SDK_VERSION
+    buildToolsVersion Versions.BUILD_TOOLS_VERSION
 
     defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdkVersion Versions.MIN_SDK_VERSION
+        targetSdkVersion Versions.TARGET_SDK_VERSION
 
         ndk {
             abiFilters "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
@@ -43,22 +43,6 @@ android {
     }
 }
 
-repositories {
-    mavenCentral()
-    jcenter()
-    google()
-    maven {
-        url "https://oss.sonatype.org/content/repositories/releases"
-    }
-    maven {
-        url "https://oss.sonatype.org/content/repositories/snapshots"
-    }
-    maven { url "https://dl.bintray.com/wire-android/releases/" }
-    maven { url "https://dl.bintray.com/wire-android/snapshots/" }
-    maven { url "https://dl.bintray.com/wire-android/third-party/" }
-}
-
-
 tasks.withType(JavaCompile) {
     options.compilerArgs += ["-source", "1.7", "-target", "1.7", "-encoding", "UTF-8"]
 }
@@ -72,6 +56,11 @@ def versions = [
         okHttp : "3.10.0",
         circe : "0.9.3",
 ]
+
+repositories {
+    maven { url "https://oss.sonatype.org/content/repositories/releases" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+}
 
 dependencies {
 

@@ -2,8 +2,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'jp.leafytree.android-scala'
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdkVersion Versions.COMPILE_SDK_VERSION
+    buildToolsVersion Versions.BUILD_TOOLS_VERSION
 }
 
 dependencies {

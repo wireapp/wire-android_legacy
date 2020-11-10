@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -19,13 +18,6 @@
 
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <item android:state_pressed="true">
-        <shape android:shape="oval">
-            <solid android:color="@color/white_80" />
-        </shape>
-    </item>
-
     <item android:state_activated="true">
         <shape android:shape="oval">
             <solid android:color="@color/white" />
@@ -34,7 +26,7 @@
 
     <item>
         <shape android:shape="oval">
-            <solid android:color="@color/white_32"/>
+            <solid android:color="@color/white_32" />
         </shape>
     </item>
 </selector>

@@ -32,7 +32,7 @@ import com.waz.model.AccountData.Password
 import com.waz.model.Uid
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.{AccountManager, ZMessaging}
-import com.wire.signals.Signal
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.PasswordController
@@ -43,9 +43,9 @@ import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.security.checks.RootDetectionCheck
 import com.waz.zclient.utils.ContextUtils.showToast
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
-import com.waz.threading.Threading._
 
 trait DevSettingsView
 
@@ -93,6 +93,8 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   val checkDeviceRootedButton = returning(findById[TextButton](R.id.preferences_dev_check_rooted_device)) { v =>
     v.onClickEvent(_ => checkIfDeviceIsRooted())
   }
+
+  val newPicturePicButton = findById[TextButton](R.id.preferences_dev_new_unsplash_profile_pic)
 
   private def checkIfDeviceIsRooted(): Unit = {
     val preferences = inject[GlobalPreferences]
@@ -171,6 +173,12 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
         override def onClick(dialog: DialogInterface, which: Int): Unit = {}
       })
       .setIcon(android.R.drawable.ic_dialog_alert).show
+  }
+
+  newPicturePicButton.onClickEvent { _ =>
+    am.head.flatMap(_.addUnsplashIfProfilePictureMissing()).foreach { _ =>
+      showToast("The profile picture changed")
+    }
   }
 }
 

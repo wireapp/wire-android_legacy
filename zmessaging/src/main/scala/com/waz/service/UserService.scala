@@ -135,8 +135,8 @@ class UserServiceImpl(selfUserId:        UserId,
     def initialLoad = usersStorage.list().map(_.map(user => user.id -> user.name).toMap)
 
     new AggregatingSignal[Map[UserId, Name], Map[UserId, Name]](
-      EventStream.zip(added, updated),
       initialLoad,
+      EventStream.zip(added, updated),
       { (values, changes) => values ++ changes }
     )
   }
@@ -187,7 +187,8 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override lazy val acceptedOrBlockedUsers: Signal[Map[UserId, UserData]] =
     new AggregatingSignal[Seq[UserData], Map[UserId, UserData]](
-      usersStorage.onChanged, usersStorage.listUsersByConnectionStatus(AcceptedOrBlocked),
+      usersStorage.listUsersByConnectionStatus(AcceptedOrBlocked),
+      usersStorage.onChanged,
       { (accu, us) =>
         val (toAdd, toRemove) = us.partition(u => AcceptedOrBlocked(u.connection))
         accu -- toRemove.map(_.id) ++ toAdd.map(u => u.id -> u)
@@ -347,7 +348,7 @@ class UserServiceImpl(selfUserId:        UserId,
     usersStorage.updateAll2(availabilities.keySet, u => availabilities.get(u.id).fold(u)(av => u.copy(availability = av)))
   }
 
-  override def updateSelfPicture(content: Content) = {
+  override def updateSelfPicture(content: Content): Future[Unit] = {
     val contentForUpload = ContentForUpload("profile-picture", content)
     for {
       asset <- assets.createAndSaveUploadAsset(contentForUpload, NoEncryption, public = true, Retention.Eternal, None)
@@ -365,8 +366,6 @@ class UserServiceImpl(selfUserId:        UserId,
 object UserService {
 
   val SyncIfOlderThan = 24.hours
-
-  val UnsplashUrl = AndroidURIUtil.parse("https://source.unsplash.com/800x800/?landscape")
 
   lazy val AcceptedOrBlocked = Set(ConnectionStatus.Accepted, ConnectionStatus.Blocked)
 

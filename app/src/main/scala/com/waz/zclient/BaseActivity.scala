@@ -41,7 +41,6 @@ import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.security.ActivityLifecycleCallback
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 
 import scala.collection.JavaConverters._
@@ -60,7 +59,6 @@ class BaseActivity extends AppCompatActivity
   protected lazy val themeController = inject[ThemeController]
   protected lazy val userPreferences = inject[Signal[UserPreferences]]
   private lazy val permissions       = inject[PermissionsService]
-  private lazy val activityLifecycle = inject[ActivityLifecycleCallback]
   private lazy val uiLifeCycle       = inject[UiLifeCycle]
   private lazy val secPolicy         = new ComponentName(this, classOf[SecurityPolicyService])
   private lazy val dpm               = getSystemService(Context.DEVICE_POLICY_SERVICE).asInstanceOf[DevicePolicyManager]

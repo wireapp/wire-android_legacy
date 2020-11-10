@@ -1,0 +1,125 @@
+task ci(dependsOn: [
+        ':app:assembleDevDebug',
+        ':app:lintDevDebug',
+        ':app:pmd',
+        ':detektAll'
+]) {
+
+    doLast {
+        def lintReportsPattern = /\/?(.*)\/build\/outputs\/lint-results\-(devDebug|debug)\.xml/
+        def pmdReportsPattern = /\/?(.*)\/build\/reports\/pmd\/pmd\.xml/
+        def checkstyleReportsPattern = /\/?(.*)\/reports\/checkstyle\/checkstyle\.xml/
+
+        def results = new HashMap<String, Map<String, List<Issue>>>()
+        def totalIssues = 0
+
+        def findFilenameClosure = {
+            if (it.isDirectory()) {
+                return;
+            }
+            def absolutePath = it.getAbsolutePath()
+            def foundIssues = new ArrayList<Issue>()
+            def type = ''
+            if (absolutePath.matches(lintReportsPattern)) {
+                def issues = new XmlParser().parse(it)
+                type = 'Lint'
+                issues.issue.each {
+                    def id = it.'@summary'
+                    it.location.each { foundIssues.add(new LintIssue(id, it)) }
+                }
+            } else if (absolutePath.matches(pmdReportsPattern)) {
+                def issues = new XmlParser().parse(it)
+                type = 'PMD'
+                issues.file.each {
+                    def file = new File(it.'@name')
+                    it.violation.each { foundIssues.add(new PmdIssue(file, it)) }
+                }
+            } else if (absolutePath.matches(checkstyleReportsPattern)) {
+                def files = new XmlParser().parse(it)
+                type = 'Checkstyle'
+                files.file.findAll { it.children().size() > 0 }.each {
+                    def file = new File(it.'@name')
+                    it.error.each { foundIssues.add(new CheckstyleIssue(file, it)) }
+                }
+            }
+            if (foundIssues.size() > 0) {
+                if (!results.containsKey(type)) {
+                    results.put(type, new HashMap<String, List<Issue>>())
+                }
+                results.get(type).put(it, foundIssues)
+                totalIssues += foundIssues.size()
+            }
+        }
+
+        rootProject.rootDir.eachFileRecurse(findFilenameClosure)
+
+        if (totalIssues > 0) {
+            def message = new StringBuilder()
+            message.append("Found ${totalIssues} issue${totalIssues == 1 ? '' : 's'}\n\n")
+            for (def entry : results.entrySet()) {
+                def issues = new StringBuilder()
+                def count = 0;
+                for (def file : entry.value.entrySet()) {
+                    issues.append("> ${file.value.size()} in ${file.key}\n")
+                    file.value.each { issues.append("\t${it}\n") }
+                    count += file.value.size()
+                }
+                message.append("${entry.key}: ${count} issue${count == 1 ? '' : 's'}\n")
+                        .append(issues.toString())
+                        .append('\n')
+            }
+            throw new Exception(message.toString())
+        } else {
+            println 'No issues found'
+        }
+    }
+}
+
+class Issue {
+    File file
+    String line
+    String column
+    String error
+
+    @Override
+    String toString() {
+        return "${file}:${line}:${column}: ${error}";
+    }
+}
+
+class LintIssue extends Issue {
+     LintIssue(String error, Node location) {
+        file = new File(location.'@file')
+        line = location.'@line'
+        column = location.'@column'
+        this.error = error
+    }
+}
+
+class PmdIssue extends Issue {
+    PmdIssue(File file, Node violation) {
+        this.file = file
+        def beginline = violation.'@beginline'
+        def endline = violation.'@endline'
+        line = beginline == endline ? beginline : "${beginline}-${endline}"
+        column = violation.'@begincolumn'
+        error = violation.text().replaceAll(/\n/, '')
+    }
+}
+
+class CheckstyleIssue extends Issue {
+    CheckstyleIssue(File file, Node node) {
+        this.file = file
+        line = node.'@line'
+        column = node.'@column'
+        error = node.'@message'
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+    def repo = file(customCheckoutDir)
+    if (repo.exists()) {
+        delete repo
+    }
+}

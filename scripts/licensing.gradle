@@ -1,0 +1,23 @@
+license {
+    header = file('LICENSE_HEADER')
+    ext.year = Calendar.getInstance().get(Calendar.YEAR)
+    ext.name = 'Wire Swiss GmbH'
+    skipExistingHeaders = true
+}
+
+//TODO fix compilation issue for the license plugin
+//task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
+//    source = fileTree(dir: getRootDir()).include([
+//            "**/*.java",
+//            "**/*.scala",
+//            "**/*.gradle",
+//            "**/*.xml",
+//    ]).exclude([
+//            "**/*build*",
+//            "**/*target*",
+//            "**/*gen*",
+//            "**/*generated*",
+//            ".idea/**"
+//    ])
+//}*/
+//licenseFormat.dependsOn licenseFormatAndroid

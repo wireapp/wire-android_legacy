@@ -47,10 +47,10 @@ class CallControlButtonView(val context: Context, val attrs: AttributeSet, val d
   private val otherColor       = Signal(Option.empty[ButtonColor])
 
   private val enabledChanged   = EventStream[Boolean]()
-  private val enabledSignal    = RefreshingSignal(Future{ isEnabled }(Threading.Ui), enabledChanged)
+  private val enabledSignal    = RefreshingSignal.from(Future { isEnabled }(Threading.Ui), enabledChanged)
 
   private val activatedChanged = EventStream[Boolean]()
-  private val activatedSignal  = RefreshingSignal(Future{ isActivated }(Threading.Ui), activatedChanged)
+  private val activatedSignal  = RefreshingSignal.from(Future { isActivated }(Threading.Ui), activatedChanged)
 
   inflate(R.layout.call_button_view)
 
@@ -81,7 +81,7 @@ class CallControlButtonView(val context: Context, val attrs: AttributeSet, val d
         getStyledDrawable(R.attr.callButtonBackground, themeController.getTheme(theme))
           .getOrElse(getDrawable(R.drawable.selector__icon_button__background__calling))
     }
-  ).onUi(buttonBackground.setBackground(_))
+  ).onUi(buttonBackground.setBackground)
 
   (for {
     otherColor <- otherColor
