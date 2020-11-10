@@ -36,6 +36,7 @@ import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}
 import com.waz.zclient.glide.BackgroundRequest
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.security.SecurityPolicyChecker
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R, ViewHelper}
@@ -270,12 +271,12 @@ class CallingFragment extends FragmentHelper {
     controller.theme.map(themeController.getTheme).onUi(theme => videoGrid.foreach(_.setBackgroundColor(getStyledColor(R.attr.wireBackgroundColor, theme))))
   }
 
-  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
+  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_calling, container, false)) { v =>
       controller.theme(t => v.asInstanceOf[ThemeControllingFrameLayout].theme ! Some(t))
     }
 
-  override def onViewCreated(view: View, savedInstanceState: Bundle) = {
+  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
 
     videoGrid
@@ -284,15 +285,18 @@ class CallingFragment extends FragmentHelper {
       .beginTransaction
       .replace(R.id.controls_layout, controlsFragment, ControlsFragment.Tag)
       .commit
+
+    controller.isCallIncoming.head.foreach {
+      if (_) inject[SecurityPolicyChecker].run(getActivity)
+    }(Threading.Ui)
   }
 
-  override def onBackPressed() = {
+  override def onBackPressed(): Boolean =
     withChildFragmentOpt(R.id.controls_layout) {
       case Some(f: FragmentHelper) if f.onBackPressed()               => true
       case Some(_) if getChildFragmentManager.popBackStackImmediate() => true
       case _ => super.onBackPressed()
     }
-  }
 
   override def onDestroyView(): Unit = {
     super.onDestroyView()

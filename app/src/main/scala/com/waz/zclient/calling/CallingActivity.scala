@@ -25,7 +25,6 @@ import com.waz.threading.Threading._
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.security.SecurityPolicyChecker
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.DeprecationUtils
 
@@ -80,8 +79,6 @@ class CallingActivity extends BaseActivity {
   override def onResume(): Unit = {
     super.onResume()
     controller.setVideoPause(pause = false)
-
-    inject[SecurityPolicyChecker].run()(this)
   }
 
   override def onPause(): Unit = {
