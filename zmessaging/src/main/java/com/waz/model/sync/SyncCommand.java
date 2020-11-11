@@ -78,6 +78,7 @@ public enum SyncCommand {
     PostFolders("post-folders-favorites"),
     SyncFolders("sync-folders"),
     DeleteGroupConv("delete-group-conv"),
+    PostTrackingId("post-tracking-id"),
 
     Unknown("unknown");
 
