@@ -21,7 +21,7 @@ package com.waz.zclient.tracking
 import java.util
 
 import android.app.Activity
-import com.waz.content.UserPreferences.CountlyTrackingId
+import com.waz.content.UserPreferences.CurrentTrackingId
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogsService
 import com.waz.model.{TeamId, TrackingId}
@@ -59,9 +59,9 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
     for {
       am            <- am.head
       inited        <- initialized.head
-      curTrackingId <- am.storage.userPrefs(CountlyTrackingId).apply()
+      curTrackingId <- am.storage.userPrefs(CurrentTrackingId).apply()
       isNew         =  !curTrackingId.contains(id)
-      _             =  if (isNew) am.storage.userPrefs(CountlyTrackingId) := Some(id)
+      _             =  if (isNew) am.storage.userPrefs(CurrentTrackingId) := Some(id)
       _             =  if (inited && isNew) Countly.sharedInstance().changeDeviceIdWithMerge(id.str)
       _             =  verbose(l"tracking id set to $id (new: $isNew)")
     } yield ()
@@ -80,7 +80,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
       isProUser        <- userAccountsController.isProUser.head if (isProUser)
       ap               <- tracking.isTrackingEnabled.head if (ap)
       inited           <- initialized.head if (!inited)
-      Some(trackingId) <- am.head.flatMap(_.storage.userPrefs(CountlyTrackingId).apply())
+      Some(trackingId) <- am.head.flatMap(_.storage.userPrefs(CurrentTrackingId).apply())
       logsEnabled      <- inject[LogsService].logsEnabled
     } yield {
         verbose(l"Using countly Id: ${trackingId.str}")

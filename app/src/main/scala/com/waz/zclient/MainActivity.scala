@@ -240,7 +240,7 @@ class MainActivity extends BaseActivity
   private def initTracking: Future[Unit] =
     for {
       prefs            <- userPreferences.head
-      id               <- prefs.preference(CountlyTrackingId).apply()
+      id               <- prefs.preference(CurrentTrackingId).apply()
       shouldShare      <- prefs.preference(ShouldShareTrackingId).apply()
       trackingCtrl     =  inject[GlobalTrackingController]
       _                =  verbose(l"trackingId: $id, shouldShare: $shouldShare")
@@ -249,10 +249,10 @@ class MainActivity extends BaseActivity
       check            <- prefs.preference[Boolean](TrackingEnabledOneTimeCheckPerformed).apply()
       analyticsEnabled <- prefs.preference[Boolean](TrackingEnabled).apply()
       isProUser        <- userAccountsController.isProUser.head
-      _                <- if(!check)
+      _                <- if (!check)
                             (prefs(TrackingEnabled) := isProUser).flatMap(_ => prefs(TrackingEnabledOneTimeCheckPerformed) := true)
                           else Future.successful(())
-      _                <- if(analyticsEnabled && isProUser) trackingCtrl.init() else Future.successful(())
+      _                <- if (analyticsEnabled && isProUser) trackingCtrl.init() else Future.successful(())
     } yield ()
 
   override def onStart(): Unit = {
