@@ -40,8 +40,7 @@ allprojects {
 ext {
     //Update kotlinCore flag as well when adding new kotlin features
     kotlinSettings = false
-    kotlinRegistration = false
-    kotlinCore = kotlinSettings || kotlinRegistration
+    kotlinCore = kotlinSettings
 }
 
 apply from: "./scripts/avs.gradle"

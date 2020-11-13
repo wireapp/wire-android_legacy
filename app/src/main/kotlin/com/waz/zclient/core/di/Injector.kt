@@ -4,11 +4,9 @@ import android.content.Context
 import com.waz.zclient.core.backend.di.backendModule
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.core.network.di.networkModule
-import com.waz.zclient.feature.auth.registration.di.registrationModules
 import com.waz.zclient.feature.backup.di.backupModules
 import com.waz.zclient.feature.settings.di.settingsModules
 import com.waz.zclient.shared.accounts.di.accountsModule
-import com.waz.zclient.shared.activation.di.activationModule
 import com.waz.zclient.shared.assets.di.assetsModule
 import com.waz.zclient.shared.clients.di.clientsModule
 import com.waz.zclient.shared.countrycode.di.countryCodePickerModule
@@ -40,7 +38,6 @@ object Injector {
         clientsModule,
         accountsModule,
         assetsModule,
-        activationModule,
         countryCodePickerModule
     )
 
@@ -49,7 +46,6 @@ object Injector {
      * features and don't tend to live outside of that feature
      */
     private val featureModules: List<Module> = listOf(
-        registrationModules,
         settingsModules,
         backupModules
     ).flatten()
