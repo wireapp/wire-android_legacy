@@ -435,9 +435,10 @@ object UserPreferences {
 
   lazy val CrashesAndAnalyticsRequestShown = PrefKey[Boolean]("usage_data_permissions_shown", customDefault = true) //true to avoid harassing existing users
   lazy val AskMarketingConsentAgain = PrefKey[Boolean]("ask_marketing_consent_again") //used if the user views privacy policy instead of giving consent
-  lazy val CountlyTrackingId = PrefKey[Option[TrackingId]]("tracking_id", customDefault = None)
+  lazy val CurrentTrackingId = PrefKey[Option[TrackingId]]("tracking_id", customDefault = None)
   lazy val TrackingEnabled = PrefKey[Boolean]("countly_analytics_enabled", customDefault = false)
   lazy val TrackingEnabledOneTimeCheckPerformed = PrefKey[Boolean]("analytics_enabled_one_time_check", customDefault = false)
+  lazy val ShouldShareTrackingId = PrefKey[Boolean]("should_share_tracking_id_1", customDefault = true)
 
   lazy val SelfClient = PrefKey[ClientRegistrationState]("self_client")
   lazy val PrivateMode = PrefKey[Boolean]("private_mode")

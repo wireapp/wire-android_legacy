@@ -28,7 +28,7 @@ import com.waz.service.tracking.TrackingService.ZmsProvider
 import com.waz.service.tracking.TrackingServiceImpl.{CountlyEventProperties, RichHashMap}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.utils.{MathUtils, RichWireInstant}
-import com.wire.signals.{EventContext, EventStream, Signal}
+import com.wire.signals.{EventStream, Signal, SourceStream}
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -43,6 +43,8 @@ trait TrackingService {
   def appOpen(userId: UserId): Future[Unit]
 
   def isTrackingEnabled: Signal[Boolean]
+
+  def onTrackingIdChange: SourceStream[TrackingId]
 }
 
 class DummyTrackingService extends TrackingService {
@@ -52,6 +54,7 @@ class DummyTrackingService extends TrackingService {
   override def trackCallState(userId: UserId, callInfo: CallInfo): Future[Unit] = Future.successful(())
   override def appOpen(userId: UserId): Future[Unit] = Future.successful(())
   override def isTrackingEnabled: Signal[Boolean] = Signal.const(true)
+  override def onTrackingIdChange: SourceStream[TrackingId] = EventStream()
 }
 
 object TrackingService {
@@ -196,6 +199,8 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
       Some(z)  <- zmsProvider(Some(userId))
     } yield events ! Option(z) -> AppOpenEvent(getUniversalSegments())
   }
+
+  override val onTrackingIdChange: SourceStream[TrackingId] = EventStream()
 }
 
 object TrackingServiceImpl extends DerivedLogTag {

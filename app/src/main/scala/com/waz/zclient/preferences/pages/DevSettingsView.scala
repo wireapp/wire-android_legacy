@@ -41,6 +41,7 @@ import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog.{PasswordAnswer, PasswordCancelled, PromptAnswer}
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.security.checks.RootDetectionCheck
+import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ContextUtils.showToast
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 import com.wire.signals.Signal
@@ -74,6 +75,8 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   }
 
   val randomLastIdButton = findById[TextButton](R.id.preferences_dev_generate_random_lastid)
+
+  private val randomTrackingIdButton = findById[TextButton](R.id.preferences_dev_generate_random_trackingid)
 
   val registerAnotherClient = returning(findById[TextButton](R.id.register_another_client)) {
     _.onClickEvent(_ => registerClient().foreach {
@@ -173,6 +176,10 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
         override def onClick(dialog: DialogInterface, which: Int): Unit = {}
       })
       .setIcon(android.R.drawable.ic_dialog_alert).show
+  }
+
+  randomTrackingIdButton.onClickEvent { _ =>
+    inject[GlobalTrackingController].setAndSendNewTrackingId()
   }
 
   newPicturePicButton.onClickEvent { _ =>

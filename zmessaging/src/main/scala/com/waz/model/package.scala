@@ -77,7 +77,7 @@ package object model {
 
     def unapply(msg: GenericMessage): Option[(Uid, Any)] = Some((Uid(msg.messageId), content(msg)))
 
-    def toByteArray(msg: GenericMessage) = MessageNano.toByteArray(msg)
+    def toByteArray(msg: GenericMessage): Array[Byte] = MessageNano.toByteArray(msg)
 
     import Messages.{GenericMessage => GM}
 
@@ -86,7 +86,7 @@ package object model {
       case _ => false
     }
 
-    def content(msg: GenericMessage) = msg.getContentCase match {
+    def content(msg: GenericMessage): Any = msg.getContentCase match {
       case GM.ASSET_FIELD_NUMBER                    => msg.getAsset
       case GM.CALLING_FIELD_NUMBER                  => msg.getCalling
       case GM.CLEARED_FIELD_NUMBER                  => msg.getCleared
@@ -107,6 +107,7 @@ package object model {
       case GM.COMPOSITE_FIELD_NUMBER                => msg.getComposite
       case GM.BUTTONACTION_FIELD_NUMBER             => msg.getButtonAction
       case GM.BUTTONACTIONCONFIRMATION_FIELD_NUMBER => msg.getButtonActionConfirmation
+      case GM.DATATRANSFER_FIELD_NUMBER             => msg.getDataTransfer
       case _                                        => Unknown
     }
 

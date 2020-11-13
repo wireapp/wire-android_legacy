@@ -193,6 +193,11 @@ object SyncRequest {
     override def merge(req: SyncRequest) = mergeHelper[PostLastRead](req)(Merged(_))
   }
 
+  case class PostTrackingId(trackingId: TrackingId) extends BaseRequest(Cmd.PostTrackingId) {
+    override val mergeKey: Any = trackingId
+    override def merge(req: SyncRequest): MergeResult[PostTrackingId] = mergeHelper[PostTrackingId](req)(Merged(_))
+  }
+
   case class PostCleared(convId: ConvId, time: RemoteInstant) extends RequestForConversation(Cmd.PostCleared) with Serialized {
     override val mergeKey: Any = (cmd, convId)
     override def merge(req: SyncRequest) = mergeHelper[PostCleared](req) { other =>
@@ -366,6 +371,7 @@ object SyncRequest {
       def messageId = decodeId[MessageId]('message)
       def teamId = decodeId[TeamId]('teamId)
       def users = decodeUserIdSeq('users).toSet
+      def trackingId = decodeId[TrackingId]('trackingId)
       val cmd = js.getString("cmd")
 
       try {
@@ -427,6 +433,7 @@ object SyncRequest {
           case Cmd.PostFolders               => PostFolders
           case Cmd.SyncFolders               => SyncFolders
           case Cmd.DeleteGroupConv           => DeleteGroupConversation(teamId, rConvId)
+          case Cmd.PostTrackingId            => PostTrackingId(trackingId)
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -556,6 +563,8 @@ object SyncRequest {
         case DeleteGroupConversation(teamId, rConvId)  =>
           o.put("teamId", teamId.str)
           o.put("rConv", rConvId.str)
+        case PostTrackingId(trackingId) =>
+          o.put("trackingId", trackingId.str)
       }
     }
   }
