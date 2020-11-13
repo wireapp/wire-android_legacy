@@ -7,11 +7,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import kotlinx.android.synthetic.main.activity_edit_phone.*
+import com.waz.zclient.core.extension.empty
 
 class EditPhoneNumberActivity : AppCompatActivity(R.layout.activity_edit_phone) {
 
     private val phoneNumber: String by lazy {
-        intent.getStringExtra(CURRENT_PHONE_NUMBER_KEY)
+        intent.getStringExtra(CURRENT_PHONE_NUMBER_KEY) ?: String.empty()
     }
 
     private val hasEmail: Boolean by lazy {

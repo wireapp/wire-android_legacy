@@ -73,12 +73,12 @@ class VerifyEmailPreferencesFragment extends DialogFragment with FragmentHelper 
     setStyle(STYLE_NO_FRAME, R.style.Theme_Dark_Preferences)
   }
 
-  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
+  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_preference_email_verification, container, false)
 
-  override def onViewCreated(view: View, savedInstanceState: Bundle) = {
-    getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
-                                        WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
+  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) getDialog.getWindow.setDecorFitsSystemWindows(false)
+    DeprecationUtils.setSoftInputMode(getDialog.getWindow, true, true)
     super.onViewCreated(view, savedInstanceState)
 
     resendButton.foreach(_.setText(DeprecationUtils.fromHtml(getString(R.string.pref__account_action__email_verification__resend, email))))

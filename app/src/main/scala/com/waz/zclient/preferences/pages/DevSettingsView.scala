@@ -61,43 +61,42 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  val am  = inject[Signal[AccountManager]]
-  val zms = inject[Signal[ZMessaging]]
+  private lazy val am  = inject[Signal[AccountManager]]
 
   inflate(R.layout.preferences_dev_layout)
 
-  val autoAnswerSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_auto_answer)) { v =>
+  private val autoAnswerSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_auto_answer)) { v =>
     v.setPreference(AutoAnswerCallPrefKey, global = true)
   }
 
-  val cloudMessagingSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_gcm)) { v =>
+  private val cloudMessagingSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_gcm)) { v =>
     v.setPreference(PushEnabledKey, global = true)
   }
 
-  val randomLastIdButton = findById[TextButton](R.id.preferences_dev_generate_random_lastid)
+  private val randomLastIdButton = findById[TextButton](R.id.preferences_dev_generate_random_lastid)
 
   private val randomTrackingIdButton = findById[TextButton](R.id.preferences_dev_generate_random_trackingid)
 
-  val registerAnotherClient = returning(findById[TextButton](R.id.register_another_client)) {
+  private val registerAnotherClient = returning(findById[TextButton](R.id.register_another_client)) {
     _.onClickEvent(_ => registerClient().foreach {
       case Right(registered) => if(!registered) dialog.show(context.asInstanceOf[PreferencesActivity])
       case Left(err) => dialog.showError(Some(err))
     })
   }
 
-  val createFullConversationSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_full_conv)) { v =>
+  private val createFullConversationSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_full_conv)) { v =>
     v.setPreference(ShouldCreateFullConversation, global = true)
   }
 
-  val checkPushTokenButton = returning(findById[TextButton](R.id.preferences_dev_check_push_tokens)) { v =>
+  private val checkPushTokenButton = returning(findById[TextButton](R.id.preferences_dev_check_push_tokens)) { v =>
     v.onClickEvent(_ => PushTokenCheckJob())
   }
 
-  val checkDeviceRootedButton = returning(findById[TextButton](R.id.preferences_dev_check_rooted_device)) { v =>
+  private val checkDeviceRootedButton = returning(findById[TextButton](R.id.preferences_dev_check_rooted_device)) { v =>
     v.onClickEvent(_ => checkIfDeviceIsRooted())
   }
 
-  val newPicturePicButton = findById[TextButton](R.id.preferences_dev_new_unsplash_profile_pic)
+  private val newPicturePicButton = findById[TextButton](R.id.preferences_dev_new_unsplash_profile_pic)
 
   private def checkIfDeviceIsRooted(): Unit = {
     val preferences = inject[GlobalPreferences]
@@ -164,7 +163,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     new AlertDialog.Builder(context)
       .setTitle("Random new value for LastStableNotification")
       .setMessage(s"Sets LastStableNotification to $randomUid")
-      .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+      .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
         override def onClick(dialog: DialogInterface, which: Int): Unit = {
           val zms = inject[Signal[ZMessaging]]
           zms.map(_.userPrefs.preference(LastStableNotification)).onUi {
@@ -172,7 +171,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
           }
         }
       })
-      .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+      .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
         override def onClick(dialog: DialogInterface, which: Int): Unit = {}
       })
       .setIcon(android.R.drawable.ic_dialog_alert).show
@@ -192,9 +191,9 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
 case class DevSettingsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
   override def nameId: Int = R.string.pref_developer_screen_title
 
-  override def layoutId = R.layout.preferences_dev
+  override def layoutId: Int = R.layout.preferences_dev
 
-  override def onViewAttached(v: View) = {}
+  override def onViewAttached(v: View): Unit = {}
 
-  override def onViewDetached() = {}
+  override def onViewDetached(): Unit = {}
 }

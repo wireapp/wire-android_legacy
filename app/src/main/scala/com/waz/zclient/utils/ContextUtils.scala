@@ -17,14 +17,15 @@
  */
 package com.waz.zclient.utils
 
-import android.content.res.{Configuration, Resources, TypedArray}
+import java.util.Locale
+
+import android.content.res.{ColorStateList, Configuration, Resources, TypedArray}
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.provider.Settings
 import android.text.format.Formatter
-import android.util.{AttributeSet, DisplayMetrics, TypedValue}
-import android.view.WindowManager
+import android.util.{AttributeSet, TypedValue}
 import android.widget.Toast
 import androidx.annotation.StyleableRes
 import androidx.appcompat.app.AlertDialog
@@ -32,7 +33,6 @@ import androidx.core.content.ContextCompat
 import com.waz.model.{AccentColor, Availability}
 import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason}
 import com.waz.utils.returning
-import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage
 import com.waz.zclient.ui.utils.ResourceUtils
 
@@ -48,9 +48,9 @@ object ContextUtils {
   def getColorWithTheme(resId: Int)(implicit context: Context): Int =
     getColorWithThemeJava(resId, context)
 
-  def getColorStateList(resId: Int)(implicit context: Context) = ContextCompat.getColorStateList(context, resId)
+  def getColorStateList(resId: Int)(implicit context: Context): ColorStateList = ContextCompat.getColorStateList(context, resId)
 
-  def getInt(resId: Int)(implicit context: Context) = context.getResources.getInteger(resId)
+  def getInt(resId: Int)(implicit context: Context): Int = context.getResources.getInteger(resId)
 
   def getString(resId: Int)(implicit context: Context): String = context.getResources.getString(resId)
   def getString(resId: Int, args: String*)(implicit context: Context): String = context.getResources.getString(resId, args:_*)
@@ -66,25 +66,24 @@ object ContextUtils {
 
   def getQuantityString(resId: Int, quantity: Int, args: AnyRef*)(implicit context: Context): String = context.getResources.getQuantityString(resId, quantity, args:_*)
 
-  def getDimenPx(resId: Int)(implicit context: Context) = context.getResources.getDimensionPixelSize(resId)
-  def getDimen(resId: Int)(implicit context: Context) = context.getResources.getDimension(resId)
+  def getDimenPx(resId: Int)(implicit context: Context): Int = context.getResources.getDimensionPixelSize(resId)
+  def getDimen(resId: Int)(implicit context: Context): Float = context.getResources.getDimension(resId)
 
   def getDrawable(resId: Int, theme: Option[Resources#Theme] = None)(implicit context: Context): Drawable = {
     context.getResources.getDrawable(resId, theme.orNull)
   }
 
-  def getIntArray(resId: Int)(implicit context: Context) = context.getResources.getIntArray(resId)
-  def getStringArray(resId: Int)(implicit context: Context) = context.getResources.getStringArray(resId)
-  def getResEntryName(resId: Int)(implicit context: Context) = context.getResources.getResourceEntryName(resId)
+  def getIntArray(resId: Int)(implicit context: Context): Array[Int] = context.getResources.getIntArray(resId)
+  def getStringArray(resId: Int)(implicit context: Context): Array[String] = context.getResources.getStringArray(resId)
+  def getResEntryName(resId: Int)(implicit context: Context): String = context.getResources.getResourceEntryName(resId)
 
-  def getResourceFloat(resId: Int)(implicit context: Context) = ResourceUtils.getResourceFloat(context.getResources, resId)
+  def getResourceFloat(resId: Int)(implicit context: Context): Float = ResourceUtils.getResourceFloat(context.getResources, resId)
 
-  def toPx(dp: Int)(implicit context: Context) = (dp * context.getResources.getDisplayMetrics.density).toInt
+  def toPx(dp: Int)(implicit context: Context): Int = (dp * context.getResources.getDisplayMetrics.density).toInt
 
-  def getLocale(implicit context: Context) =
-      context.getResources.getConfiguration.getLocales.get(0)
+  def getLocale(implicit context: Context): Locale = context.getResources.getConfiguration.getLocales.get(0)
 
-  def withStyledAttributes[A](set: AttributeSet, @StyleableRes attrs: Array[Int])(body: TypedArray => A)(implicit context: Context) = {
+  def withStyledAttributes[A](set: AttributeSet, @StyleableRes attrs: Array[Int])(body: TypedArray => A)(implicit context: Context): A = {
     val a = context.getTheme.obtainStyledAttributes(set, attrs, 0, 0)
     try body(a) finally a.recycle()
   }
@@ -145,12 +144,6 @@ object ContextUtils {
     if (resourceId > 0) context.getResources.getDimensionPixelSize(resourceId) else 0
   }
 
-  def getRealDisplayWidth(implicit context: Context): Int = {
-    val realMetrics = new DisplayMetrics
-    context.getSystemService(Context.WINDOW_SERVICE).asInstanceOf[WindowManager].getDefaultDisplay.getRealMetrics(realMetrics)
-    realMetrics.widthPixels
-  }
-
   def isInLandscape(implicit context: Context): Boolean = isInLandscape(context.getResources.getConfiguration)
   def isInLandscape(configuration: Configuration): Boolean = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
   def isInPortrait(implicit context: Context): Boolean = isInPortrait(context.getResources.getConfiguration)
@@ -192,7 +185,7 @@ object ContextUtils {
       .setTitle(title)
       .setMessage(msg)
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(true))
+        override def onClick(dialog: DialogInterface, which: Int): Unit = p.tryComplete(Success(true))
       })
       .setCancelable(false)
       .create
@@ -223,7 +216,7 @@ object ContextUtils {
           cxt.startActivity(returning(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", cxt.getPackageName, null)))(_.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)))
       })
       .setOnDismissListener(new DialogInterface.OnDismissListener { //From the docs: The system calls onDismiss() upon each event that invokes the onCancel() callback
-        override def onDismiss(dialog: DialogInterface) = p.tryComplete(Success({}))
+        override def onDismiss(dialog: DialogInterface): Unit = p.tryComplete(Success({}))
       })
       .create
       .show()
@@ -255,18 +248,18 @@ object ContextUtils {
       .setTitle(title)
       .setMessage(msg)
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(Some(true)))
+        override def onClick(dialog: DialogInterface, which: Int): Unit = p.tryComplete(Success(Some(true)))
       })
       .setNegativeButton(negativeRes, new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int): Unit = dialog.cancel()
       })
       .setOnCancelListener(new DialogInterface.OnCancelListener {
-        override def onCancel(dialog: DialogInterface) = p.tryComplete(Success(Some(false)))
+        override def onCancel(dialog: DialogInterface): Unit = p.tryComplete(Success(Some(false)))
       })
 
     neutralRes.foreach(res =>
       builder.setNeutralButton(res, new DialogInterface.OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int) = p.trySuccess(None)
+        override def onClick(dialog: DialogInterface, which: Int): Unit = p.trySuccess(None)
       })
     )
 
@@ -290,13 +283,13 @@ object ContextUtils {
       .setTitle(title)
       .setMessage(msg)
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(Some(true)))
+        override def onClick(dialog: DialogInterface, which: Int): Unit = p.tryComplete(Success(Some(true)))
       })
       .setNegativeButton(negativeRes, new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int): Unit = p.tryComplete(Success(Some(false)))
       })
       .setOnCancelListener(new DialogInterface.OnCancelListener {
-        override def onCancel(dialog: DialogInterface) = p.tryComplete(Success(None))
+        override def onCancel(dialog: DialogInterface): Unit = p.tryComplete(Success(None))
       })
 
     val dialog = builder.create()

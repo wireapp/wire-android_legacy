@@ -1,12 +1,12 @@
 package com.waz.zclient.camera.controllers
 
 import java.io.{ByteArrayOutputStream, Closeable}
-import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.{ArrayBlockingQueue, Executor}
 
 import android.content.Context
 import android.graphics._
 import android.hardware.camera2._
-import android.hardware.camera2.params.MeteringRectangle
+import android.hardware.camera2.params.{MeteringRectangle, OutputConfiguration, SessionConfiguration}
 import android.media.ImageReader.OnImageAvailableListener
 import android.media.{ExifInterface, Image, ImageReader}
 import android.os.{Build, Handler, HandlerThread}
@@ -129,30 +129,36 @@ class AndroidCamera2(cameraData: CameraData,
     }
   }
 
-  private def createCameraSession(targets: List[Surface], camera: CameraDevice): Unit = {
+  private def createCameraSession(targets: List[Surface], camera: CameraDevice): Unit =
     try {
-      camera.createCaptureSession(targets.asJava, new CameraCaptureSession.StateCallback {
-        override def onConfigured(session: CameraCaptureSession): Unit = {
-          cameraSession = Some(session)
-          updatePreview()
-        }
-
-        override def onConfigureFailed(session: CameraCaptureSession): Unit = {
-          verbose(l"onConfigureFailed($session)")
-          //Release open session
-          Try(session.abortCaptures()).recover {
-            case ex: CameraAccessException => error(l"Camera access error when creating camera session", ex)
-            case ex: IllegalStateException => error(l"The session appears to longer be active", ex)
+      camera.createCaptureSession(new SessionConfiguration(
+        SessionConfiguration.SESSION_REGULAR,
+        targets.map(new OutputConfiguration(_)).asJava,
+        new Executor { // TODO: maybe this executor should be somehow better tied to cameraHandler?
+          override def execute(command: Runnable): Unit = Threading.Background.execute(command)
+        },
+        new CameraCaptureSession.StateCallback {
+          override def onConfigured(session: CameraCaptureSession): Unit = {
+            cameraSession = Some(session)
+            updatePreview()
           }
-          session.close()
-          cameraSession = None
+
+          override def onConfigureFailed(session: CameraCaptureSession): Unit = {
+            verbose(l"onConfigureFailed($session)")
+            //Release open session
+            Try(session.abortCaptures()).recover {
+              case ex: CameraAccessException => error(l"Camera access error when creating camera session", ex)
+              case ex: IllegalStateException => error(l"The session appears to longer be active", ex)
+            }
+            session.close()
+            cameraSession = None
+          }
         }
-      }, cameraHandler)
+      ))
     } catch {
       case ex: CameraAccessException => error(l"Camera access error when creating camera session", ex)
       case ex: IllegalStateException => error(l"The session appears to longer be active", ex)
     }
-  }
 
   override def getPreviewSize: PreviewSize = {
     val map = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)

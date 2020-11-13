@@ -17,35 +17,30 @@
  */
 package com.waz.zclient.preferences.dialogs
 
-import android.annotation.TargetApi
+import android.R
 import android.app.Dialog
 import android.content.DialogInterface
 import android.content.DialogInterface.BUTTON_POSITIVE
 import android.graphics.PorterDuff
-import android.graphics.drawable.{Drawable, DrawableContainer, InsetDrawable}
-import android.os.Build.VERSION_CODES._
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
-import androidx.annotation.NonNull
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.graphics.drawable.DrawableWrapper
 import androidx.appcompat.widget.{AppCompatDrawableManager, DrawableUtils => AxDrawableUtils}
 import androidx.core.view.{ViewCompat, ViewPropertyAnimatorListenerAdapter}
 import androidx.fragment.app.DialogFragment
 import androidx.interpolator.view.animation.{FastOutLinearInInterpolator, LinearOutSlowInInterpolator}
 import com.waz.model.PhoneNumber
-import com.waz.service.ZMessaging
+import com.waz.service.UserService
 import com.waz.threading.Threading
-import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.{MathUtils, returning}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.PhoneError
 import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
-import com.waz.zclient.ui.utils.DrawableUtils
 import com.waz.zclient.utils.{DeprecationUtils, RichView, ViewUtils}
+import com.wire.signals.{EventStream, Signal}
 
 import scala.util.Try
 
@@ -57,8 +52,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
 
   val onPhoneChanged = EventStream[Option[PhoneNumber]]()
 
-  lazy val zms = inject[Signal[ZMessaging]]
-  lazy val users = zms.map(_.users)
+  private lazy val users = inject[Signal[UserService]]
 
   private lazy val countryController = new CountryController(getActivity)
   private lazy val currentPhone      = Option(getArguments.getString(CurrentPhoneArg))
@@ -74,14 +68,14 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   private lazy val containerView = findById[View](root, R.id.ll__preferences__container)
   private lazy val errorView     = returning(findById[TextView](root, R.id.tv__preferences__error))(_.setVisible(false))
 
-  lazy val countryEditText = returning(findById[EditText](root, R.id.acet__preferences__country)) { v =>
+  private lazy val countryEditText = returning(findById[EditText](root, R.id.acet__preferences__country)) { v =>
     countryCode.foreach { cc =>
       v.setText(s"+$cc")
       v.requestFocus()
     }
   }
 
-  lazy val phoneEditText = returning(findById[EditText](root, R.id.acet__preferences__phone)) { v =>
+  private lazy val phoneEditText = returning(findById[EditText](root, R.id.acet__preferences__phone)) { v =>
     if (countryCode.isEmpty) v.requestFocus()
     v.setOnEditorActionListener(new TextView.OnEditorActionListener() {
       def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean =
@@ -115,22 +109,22 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
     alertDialog
   }
 
-  override def onStart() = {
+  override def onStart(): Unit = {
     super.onStart()
     Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { dialog =>
       dialog.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-        def onClick(v: View) = handleInput()
+        def onClick(v: View): Unit = handleInput()
       })
       Option(dialog.getButton(DialogInterface.BUTTON_NEUTRAL)).foreach {
         _.setOnClickListener(new View.OnClickListener() {
-          def onClick(v: View) = clearPhoneNumber()
+          def onClick(v: View): Unit = clearPhoneNumber()
         })
       }
     }
     countryController.addObserver(this)
   }
 
-  override def onStop() = {
+  override def onStop(): Unit = {
     countryController.removeObserver(this)
     super.onStop()
   }
@@ -172,7 +166,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
           getString(android.R.string.ok),
           getString(android.R.string.cancel),
           new DialogInterface.OnClickListener() {
-            def onClick(dialog: DialogInterface, which: Int) =
+            def onClick(dialog: DialogInterface, which: Int): Unit =
               users.head.flatMap(_.updatePhone(n)).map { //TODO what if the number is already set?
                 case Right(_) =>
                   onPhoneChanged ! Some(n)
@@ -187,7 +181,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   }
 
   // from TextInputLayout
-  private def showError(error: String) = if (!TextUtils.equals(errorView.getText, error)) {
+  private def showError(error: String): Unit = if (!TextUtils.equals(errorView.getText, error)) {
     val animate = ViewCompat.isLaidOut(containerView)
     ViewCompat.animate(errorView).cancel()
 
@@ -197,7 +191,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
       if (animate) {
         if (MathUtils.floatEqual(DeprecationUtils.getAlpha(errorView), 1f)) DeprecationUtils.setAlpha(errorView, 0f)
         ViewCompat.animate(errorView).alpha(1f).setDuration(AnimationDuration).setInterpolator(LINEAR_OUT_SLOW_IN_INTERPOLATOR).setListener(new ViewPropertyAnimatorListenerAdapter() {
-          override def onAnimationStart(view: View) = view.setVisible(true)
+          override def onAnimationStart(view: View): Unit = view.setVisible(true)
         }).start()
       }
     }
@@ -208,7 +202,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
           .setDuration(AnimationDuration)
           .setInterpolator(FAST_OUT_LINEAR_IN_INTERPOLATOR)
           .setListener(new ViewPropertyAnimatorListenerAdapter() {
-            override def onAnimationEnd(view: View) = {
+            override def onAnimationEnd(view: View): Unit = {
               errorView.setText(error)
               view.setVisible(false)
               updateEditTextBackground(countryEditText)
@@ -221,8 +215,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   }
 
   // from TextInputLayout
-  private def updateEditTextBackground(editText: EditText) = {
-    ensureBackgroundDrawableStateWorkaround(editText)
+  private def updateEditTextBackground(editText: EditText): Unit = {
     Option(editText.getBackground).map { bg =>
       if (AxDrawableUtils.canSafelyMutateDrawable(bg)) bg.mutate else bg
     }.foreach { bg =>
@@ -231,69 +224,13 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
         bg.setColorFilter(AppCompatDrawableManager.getPorterDuffColorFilter(errorView.getCurrentTextColor, PorterDuff.Mode.SRC_IN))
       }
       else {
-        // Else reset the color filter and refresh the drawable state so that the
-        // normal tint is used
-        clearColorFilter(bg)
+        // Else  refresh the drawable state so that the normal tint is used
         editText.refreshDrawableState()
       }
     }
   }
 
-  // from TextInputLayout
-  @TargetApi(Build.VERSION_CODES.KITKAT)
-  private def clearColorFilter(@NonNull drawable: Drawable): Unit = {
-    drawable.clearColorFilter()
-    if (Build.VERSION.SDK_INT == LOLLIPOP || Build.VERSION.SDK_INT == LOLLIPOP_MR1) {
-      // API 21 + 22 have an issue where clearing a color filter on a DrawableContainer
-      // will not propagate to all of its children. To workaround this we unwrap the drawable
-      // to find any DrawableContainers, and then unwrap those to clear the filter on its
-      // children manually
-
-      drawable match {
-        case _: InsetDrawable     => clearColorFilter(drawable.asInstanceOf[InsetDrawable].getDrawable)
-        case _: DrawableWrapper   => clearColorFilter(drawable.asInstanceOf[DrawableWrapper].getWrappedDrawable)
-        case _: DrawableContainer =>
-          Option(drawable.asInstanceOf[DrawableContainer].getConstantState.asInstanceOf[DrawableContainer.DrawableContainerState]).foreach { st =>
-            (0 until st.getChildCount).foreach { i =>
-              clearColorFilter(st.getChild(i));
-            }
-          }
-        case _ => //
-      }
-    }
-  }
-
-  // from TextInputLayout
-  private def ensureBackgroundDrawableStateWorkaround(editText: EditText) = {
-    // The workaround is only required on API 21-22
-    if (Build.VERSION.SDK_INT == LOLLIPOP || Build.VERSION.SDK_INT == LOLLIPOP_MR1) {
-      Option(editText.getBackground).foreach { bg =>
-        // There is an issue in the platform which affects container Drawables
-        // where the first drawable retrieved from resources will propogate any changes
-        // (like color filter) to all instances from the cache. We'll try to workaround it...
-        val newBg = bg.getConstantState.newDrawable
-        var hasReconstructedEditTextBackground = false
-
-        bg match {
-          case _: DrawableContainer =>
-            // If we have a Drawable container, we can try and set it's constant state via
-            // reflection from the new Drawable
-            hasReconstructedEditTextBackground = DrawableUtils.setContainerConstantState(bg.asInstanceOf[DrawableContainer], newBg.getConstantState)
-          case _ => //
-        }
-
-        if (!hasReconstructedEditTextBackground) {
-          // If we reach here then we just need to set a brand new instance of the Drawable
-          // as the background. This has the unfortunate side-effect of wiping out any
-          // user set padding, but I'd hope that use of custom padding on an EditText
-          // is limited.
-          editText.setBackground(newBg)
-        }
-      }
-    }
-  }
-
-  override def onCountryHasChanged(country: Country) =
+  override def onCountryHasChanged(country: Country): Unit =
     if(countryEditText.getText.toString.trim.isEmpty) countryEditText.setText(s"+${country.getCountryCode}")
 }
 
@@ -303,9 +240,9 @@ object ChangePhoneDialog {
   private val FAST_OUT_LINEAR_IN_INTERPOLATOR = new FastOutLinearInInterpolator
   private val LINEAR_OUT_SLOW_IN_INTERPOLATOR = new LinearOutSlowInInterpolator
 
-  val FragmentTag     = ChangePhoneDialog.getClass.getSimpleName
-  val CurrentPhoneArg = "ARG_CURRENT_PHONE"
-  val HasEmailArg     = "ARG_HAS_EMAIL"
+  val FragmentTag: String = ChangePhoneDialog.getClass.getSimpleName
+  val CurrentPhoneArg: String = "ARG_CURRENT_PHONE"
+  val HasEmailArg: String = "ARG_HAS_EMAIL"
 
   def apply(currentPhone: Option[String], hasEmail: Boolean): ChangePhoneDialog =
     returning(new ChangePhoneDialog()) {
