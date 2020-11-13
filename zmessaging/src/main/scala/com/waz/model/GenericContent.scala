@@ -551,15 +551,28 @@ object GenericContent {
   type LastRead = Messages.LastRead
 
   implicit object LastRead extends GenericContent[LastRead] {
-    override def set(msg: GenericMessage) = msg.setLastRead
+    override def set(msg: GenericMessage): LastRead => GenericMessage = msg.setLastRead
 
-    def apply(conv: RConvId, time: RemoteInstant) = returning(new Messages.LastRead) { l =>
+    def apply(conv: RConvId, time: RemoteInstant): Messages.LastRead = returning(new Messages.LastRead) { l =>
       l.conversationId = conv.str
       l.lastReadTimestamp = time.toEpochMilli
     }
 
     def unapply(arg: LastRead): Option[(RConvId, RemoteInstant)] =
       Some((RConvId(arg.conversationId), RemoteInstant.ofEpochMilli(arg.lastReadTimestamp)))
+  }
+
+  type DataTransfer = Messages.DataTransfer
+
+  implicit object DataTransfer extends GenericContent[DataTransfer] {
+    override def set(msg: GenericMessage): DataTransfer => GenericMessage = msg.setDataTransfer
+
+    def apply(trackingId: TrackingId): Messages.DataTransfer = returning(new Messages.DataTransfer) { d =>
+      d.trackingIdentifier = returning(new Messages.TrackingIdentifier){ _.identifier = trackingId.str }
+    }
+
+    def unapply(arg: DataTransfer): Option[TrackingId] =
+      Some(TrackingId(arg.trackingIdentifier.identifier))
   }
 
   type MsgDeleted = Messages.MessageHide

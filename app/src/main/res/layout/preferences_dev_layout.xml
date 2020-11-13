@@ -60,6 +60,15 @@
             />
 
             <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_dev_generate_random_trackingid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                app:title="@string/pref_dev_random_tracking_id_title"
+                app:subtitle="@string/pref_dev_random_tracking_id_summary"
+                />
+
+            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/register_another_client"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

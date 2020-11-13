@@ -69,6 +69,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
           case _: MsgDeleted          => false
           case _: Reaction            => false
           case _: Text                => true
+          case _: DataTransfer        => false
           case _                      => false
         }
       case _ => false

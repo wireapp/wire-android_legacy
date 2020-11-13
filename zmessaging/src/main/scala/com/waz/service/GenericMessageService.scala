@@ -18,12 +18,12 @@
 package com.waz.service
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
 import com.waz.model
 import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl}
 import com.waz.service.messages.{MessagesContentUpdater, ReactionsService, ReceiptService}
+import com.waz.service.tracking.TrackingService
 
 import scala.concurrent.Future.traverse
 
@@ -33,27 +33,30 @@ class GenericMessageService(selfUserId: UserId,
                             convEvents: ConversationOrderEventsService,
                             reactions:  ReactionsService,
                             receipts:   ReceiptService,
-                            users:      UserService) extends DerivedLogTag {
+                            users:      UserService,
+                            tracking:   TrackingService
+                           ) extends DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
   val eventProcessingStage = EventScheduler.Stage[GenericMessageEvent] { (_, events) =>
 
-    def lastForConv(items: Seq[(RConvId, RemoteInstant)]) = items.groupBy(_._1).map { case (conv, times) => times.maxBy(_._2.toEpochMilli) }
+    def lastForConv(items: Seq[(RConvId, RemoteInstant)]) =
+      items.groupBy(_._1).map { case (_, times) => times.maxBy(_._2.toEpochMilli) }
 
-    val incomingReactions = events collect {
+    val incomingReactions = events.collect {
       case GenericMessageEvent(_, time, from, GenericMessage(_, Reaction(msg, action))) => Liking(msg, from, time, action)
     }
 
-    val lastRead = lastForConv(events collect {
+    val lastRead = lastForConv(events.collect {
       case GenericMessageEvent(_, _, _, GenericMessage(_, LastRead(conv, time))) => (conv, time)
     })
 
-    val cleared = lastForConv(events collect {
+    val cleared = lastForConv(events.collect {
       case GenericMessageEvent(_, _, userId, GenericMessage(_, Cleared(conv, time))) if userId == selfUserId => (conv, time)
     })
 
-    val deleted = events collect {
+    val deleted = events.collect {
       case GenericMessageEvent(_, _, _, GenericMessage(_, MsgDeleted(_, msg))) => msg
     }
 
@@ -61,9 +64,9 @@ class GenericMessageService(selfUserId: UserId,
       case GenericMessageEvent(_, _, _, GenericMessage(_, DeliveryReceipt(msgs))) => msgs
     }.flatten
 
-    val availabilities = (events collect {
+    val availabilities = events.collect {
       case GenericMessageEvent(_, _, userId, GenericMessage(_, AvailabilityStatus(available))) => userId -> available
-    }).toMap
+    }.toMap
 
     val read = events.collect {
       case GenericMessageEvent(_, time, from, GenericMessage(_, Proto.ReadReceipt(msgs))) => msgs.map { msg =>
@@ -71,23 +74,28 @@ class GenericMessageService(selfUserId: UserId,
       }
     }.flatten
 
-    val buttonConfirmations = (events collect {
+    val buttonConfirmations = events.collect {
       case GenericMessageEvent(_, _, _, GenericMessage(_, ButtonActionConfirmation(msgId, buttonId))) => msgId -> buttonId
-    }).toMap
+    }.toMap
+
+    val newTrackingId = events.collect {
+      case GenericMessageEvent(_, _, userId, GenericMessage(_, DataTransfer(trackingId))) if userId == selfUserId => trackingId
+    }.lastOption
 
     for {
       _ <- messages.deleteOnUserRequest(deleted)
       _ <- traverse(lastRead) { case (remoteId, timestamp) =>
-        convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationLastRead(conv.id, timestamp) }
-      }
+             convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationLastRead(conv.id, timestamp) }
+           }
       _ <- reactions.processReactions(incomingReactions)
       _ <- traverse(cleared) { case (remoteId, timestamp) =>
-        convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationCleared(conv.id, timestamp) }
-      }
+             convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationCleared(conv.id, timestamp) }
+           }
       _ <- receipts.processDeliveryReceipts(confirmed)
       _ <- receipts.processReadReceipts(read)
       _ <- users.storeAvailabilities(availabilities)
       _ <- messages.updateButtonConfirmations(buttonConfirmations)
+      _ =  newTrackingId.foreach { tracking.onTrackingIdChange ! _ }
     } yield ()
   }
 }
