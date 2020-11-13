@@ -250,13 +250,6 @@
             android:name=".feature.settings.support.SettingsSupportActivity"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Dark.Preferences" />
-        <activity
-            android:name="com.waz.zclient.feature.auth.registration.CreateAccountActivity"
-            android:launchMode="singleTask"
-            android:theme="@style/Theme.Light"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="stateVisible"
-            />
 
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"

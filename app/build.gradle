@@ -125,7 +125,6 @@ android {
 
         //Kotlin Feature Flags
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
-        buildConfigField 'boolean', 'KOTLIN_REGISTRATION', "$rootProject.ext.kotlinRegistration"
         buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
     }
 

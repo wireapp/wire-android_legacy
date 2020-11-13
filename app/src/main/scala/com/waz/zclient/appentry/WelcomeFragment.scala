@@ -24,7 +24,6 @@ import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
-import com.waz.zclient.feature.auth.registration.CreateAccountActivity
 
 class WelcomeFragment extends SSOFragment {
 
@@ -72,11 +71,7 @@ class WelcomeFragment extends SSOFragment {
   }
 
   private def startCreateAccountFlow(): Unit =
-    if (BuildConfig.KOTLIN_REGISTRATION) {
-      startActivity(CreateAccountActivity.newIntent(getActivity))
-    } else {
-      activity.showFragment(CreateAccountFragment(), CreateAccountFragment.Tag)
-    }
+    activity.showFragment(CreateAccountFragment(), CreateAccountFragment.Tag)
 
   private def startLoginFlow(): Unit =
     activity.showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
