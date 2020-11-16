@@ -230,7 +230,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         try {
             if (recordWithEffectFile.exists()) recordWithEffectFile.delete()
 
-            val res = avsEffects.applyEffectPCM(
+            val errCode = avsEffects.applyEffectPCM(
                 recordFile.absolutePath,
                 recordWithEffectFile.absolutePath,
                 AudioService.Companion.Pcm.sampleRate,
@@ -238,9 +238,9 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
                 true
             )
 
-            if (res < 0) Logger.error(TAG,"applyEffectWav returned error code: $res")
+            if (errCode < 0) Logger.error(TAG,"applyEffectWav returned error code: $errCode")
             else if(recordWithEffectFile.exists()) playAudio()
-        } catch (ex: java.lang.Exception) {
+        } catch (ex: Exception) {
             Logger.error(TAG, "Exception while applying audio effect. $ex")
         }
     }
