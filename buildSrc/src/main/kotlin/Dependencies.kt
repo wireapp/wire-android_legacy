@@ -53,7 +53,7 @@ object Versions {
     const val FIREBASE_MESSAGING = "20.1.0"
     const val GLIDE = "4.11.0"
     const val RETROFIT = "2.6.2"
-    const val OKHTTP = "3.14.6"
+    const val OKHTTP = "3.14.9"
     const val KOIN = "2.0.1"
     const val RX_KOTLIN = "2.3.0"
     const val RX_ANDROID = "2.1.1"
