@@ -26,20 +26,20 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE.{debug, _}
 import com.waz.log.LogShow
 import com.waz.model.errors.NotFoundLocal
-import com.waz.model.{AccountData, AssetId, Mime, Sha256, UploadAssetId}
+import com.waz.model._
 import com.waz.service.AccountsService
 import com.waz.service.assets._
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.AssetClient.{FileWithSha, Retention}
-import com.waz.sync.client.{AssetClient, AssetClientImpl}
-import com.wire.signals.CancellableFuture
+import com.waz.sync.client.AssetClient
+import com.waz.sync.client.AssetClient.{FileWithSha, Retention, UploadResponse2}
 import com.waz.utils.{IoUtils, ReactiveStorageImpl2, UnlimitedInMemoryStorage, returning}
 import com.waz.{AuthenticationConfig, FilesystemUtils, ZIntegrationMockSpec}
+import com.wire.signals.CancellableFuture
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 import scala.concurrent.Future
-import scala.util.{Failure, Random, Success}
+import scala.util.{Random, Success}
 
 @RunWith(classOf[JUnitRunner])
 class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with AuthenticationConfig {
@@ -234,8 +234,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
     }
 
     scenario("upload asset to backend and download it back. check sha") {
-
-      val encryption = AES_CBC_Encryption.random
+      val encryption = NoEncryption
 
       val fakeUri = new URI("https://www.youtube.com")
       val contentForUpload = ContentForUpload("test_uri_content", Content.Uri(fakeUri))
@@ -252,19 +251,28 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
       (rawCache.remove _).expects(*).anyNumberOfTimes().returns(Future.successful(()))
       (restrictionsService.validate _).expects(*).anyNumberOfTimes().returns(Success(()))
 
+      lazy val testDir = FilesystemUtils.createDirectoryForTest()
+      lazy val downloadAssetResult = {
+        val file = new File(testDir, "asset_content")
+        IoUtils.write(new ByteArrayInputStream(testAssetContent), new FileOutputStream(file))
+        FileWithSha(file, Sha256.calculate(testAssetContent))
+      }
+
+      lazy val client = mock[AssetClient]
+      (client.uploadAsset _).expects(*, *, *).anyNumberOfTimes().returns(
+        CancellableFuture.successful(Right(UploadResponse2(testAsset.id, None, None)))
+      )
+      (client.loadAssetContent _).expects(*, *).returns(CancellableFuture.successful(Right(downloadAssetResult)))
+
+      lazy val rawAssetStorage = new ReactiveStorageImpl2(new UnlimitedInMemoryStorage[UploadAssetId, UploadAsset]()) with UploadAssetStorage
+      lazy val assetService = service(rawAssetStorage, client)
       for {
-        _ <- Future.successful(())
-        client = new AssetClientImpl
-        rawAssetStorage = new ReactiveStorageImpl2(new UnlimitedInMemoryStorage[UploadAssetId, UploadAsset]()) with UploadAssetStorage
-        assetService = service(rawAssetStorage, client)
-
-        rawAsset <- assetService.createAndSaveUploadAsset(contentForUpload, encryption, public = false, Retention.Persistent, None)
-        asset <- assetService.uploadAsset(rawAsset.id)
-        assetContent <- client.loadAssetContent(asset, None)
-
-        encryptedContent = IoUtils.toByteArray(rawAsset.encryption.encrypt(new ByteArrayInputStream(testAssetContent), rawAsset.encryptionSalt))
-        encryptedSha = Sha256.calculate(new ByteArrayInputStream(encryptedContent)).get
+        rawAsset      <- assetService.createAndSaveUploadAsset(contentForUpload, encryption, public = false, Retention.Persistent, None)
+        asset         <- assetService.uploadAsset(rawAsset.id)
+        assetContent  <- client.loadAssetContent(asset, None)
       } yield {
+        val encryptedContent = IoUtils.toByteArray(rawAsset.encryption.encrypt(new ByteArrayInputStream(testAssetContent), rawAsset.encryptionSalt))
+        val encryptedSha = Sha256.calculate(new ByteArrayInputStream(encryptedContent)).get
 
         implicit val AssetResponseShow: LogShow[Either[ErrorResponse, FileWithSha]] = LogShow.create(_.toString)
         implicit val StringShow: LogShow[String] = LogShow.create(_.toString)
@@ -282,9 +290,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
         asset.sha shouldBe rawAsset.sha
         fileWithSha.sha256 shouldBe asset.sha
       }
-
     }
-
   }
 
   override def setUpAccountData(accountData: AccountData): Unit = {
