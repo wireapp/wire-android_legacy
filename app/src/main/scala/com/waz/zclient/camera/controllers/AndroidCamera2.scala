@@ -291,13 +291,12 @@ class AndroidCamera2(cameraData: CameraData,
     promise.future
   }
 
-  def updatePreview() = {
-    withSessionAndReqBuilder { (session, request) =>
-      request.set(requestKey(CaptureRequest.CONTROL_MODE), CameraMetadata.CONTROL_MODE_AUTO)
-      request.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-      determineFlash(request)
+  def updatePreview(): Unit = withSessionAndReqBuilder { (session, request) =>
+    request.set(requestKey(CaptureRequest.CONTROL_MODE), CameraMetadata.CONTROL_MODE_AUTO)
+    request.set(requestKey(CaptureRequest.CONTROL_AF_MODE), CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+    determineFlash(request)
+    if (session.isReprocessable)
       session.setRepeatingRequest(request.build(), null, cameraHandler)
-    }
   }
 
   override def release(): Unit = {
