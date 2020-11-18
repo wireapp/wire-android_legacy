@@ -123,9 +123,10 @@ android {
         buildConfigField 'String',  'COUNTLY_SERVER_URL',            "\"$buildtimeConfiguration.configuration.countly_server_url\""
         buildConfigField 'String',  'COUNTLY_APP_KEY',               "\"$buildtimeConfiguration.configuration.countly_app_key\""
 
-        //Kotlin Feature Flags
+        //Feature Flags
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
         buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
+        buildConfigField 'boolean', 'CALLING_VVM_MAXIMIZE_MINIMIZE_VIDEO', "$rootProject.ext.callingVvmMaximizeMinimizeVideo"
     }
 
     packagingOptions {

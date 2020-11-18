@@ -30,7 +30,7 @@ import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, Contro
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{FragmentHelper, MainActivity, R}
+import com.waz.zclient.{BuildConfig, FragmentHelper, MainActivity, R}
 import com.wire.signals.Subscription
 
 class ControlsFragment extends FragmentHelper {
@@ -92,9 +92,11 @@ class ControlsFragment extends FragmentHelper {
       }
     )
 
-    //we need to listen to clicks on the outer layout, so that we can set this.getView to gone.
-    getView.getParent.asInstanceOf[View].onClick {
-      Option(getView).map(!_.isVisible).foreach(controller.controlsClick)
+    if (!BuildConfig.CALLING_VVM_MAXIMIZE_MINIMIZE_VIDEO) {
+      //we need to listen to clicks on the outer layout, so that we can set this.getView to gone.
+      getView.getParent.asInstanceOf[View].onClick {
+        Option(getView).map(!_.isVisible).foreach(controller.controlsClick)
+      }
     }
 
     callingMiddle.foreach(vh => subs += vh.onShowAllClicked.onUi { _ =>
