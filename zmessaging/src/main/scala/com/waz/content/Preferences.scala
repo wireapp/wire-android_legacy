@@ -505,4 +505,6 @@ object UserPreferences {
   lazy val FailedPasswordAttempts = PrefKey[Int]("failed_password_attempts", customDefault = 0)
 
   lazy val ShouldWarnAVSUpgrade = PrefKey[Boolean]("should_warn_avs_upgrade", customDefault = false)
+
+  lazy val SSOPassword = PrefKey[Option[String]]("sso_password", customDefault = None)
 }

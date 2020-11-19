@@ -105,6 +105,13 @@
                 android:text="@string/pref_options_requested_category_title"
                 android:textColor="@color/accent_blue" />
 
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_app_lock_button"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:subtitle="@string/pref_options_app_lock_summary"
+                app:title="@string/pref_options_app_lock_title" />
+
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_dark_theme"
                 android:layout_width="match_parent"
@@ -117,13 +124,6 @@
                 android:layout_height="@dimen/preference_button_height"
                 app:subtitle="@string/pref_options_cursor_send_button_summary"
                 app:title="@string/pref_options_cursor_send_button_title" />
-
-            <com.waz.zclient.preferences.views.SwitchPreference
-                android:id="@+id/preferences_app_lock"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
-                app:subtitle="@string/pref_options_app_lock_summary"
-                app:title="@string/pref_options_app_lock_title" />
 
             <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_incognito_keyboard"

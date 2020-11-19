@@ -30,19 +30,19 @@ import com.waz.content.UserPreferences._
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient._
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.SoundLevelDialog
-import com.waz.zclient.utils.{BackStackKey, RichView, RingtoneUtils}
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, RingtoneUtils}
 import OptionsView._
 import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.model.UserId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
 import com.waz.zclient.utils.ContextUtils.getString
-import com.waz.content.GlobalPreferences.{AppLockEnabled, IncognitoKeyboardEnabled}
+import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.threading.Threading._
 
 trait OptionsView {
@@ -52,6 +52,8 @@ trait OptionsView {
   def setPingTone(string: String): Unit
   def setDownloadPictures(wifiOnly: Boolean): Unit
   def setAccountId(userId: UserId): Unit
+
+  def appLock: EventStream[Unit]
 }
 
 object OptionsView {
@@ -64,25 +66,24 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  implicit val ec = Threading.Ui
-  protected lazy val zms = inject[Signal[ZMessaging]]
+  import Threading.Implicits.Ui
 
   inflate(R.layout.preferences_options_layout)
 
-  val vbrSwitch               = findById[SwitchPreference](R.id.preferences_vbr)
-  val vibrationSwitch         = findById[SwitchPreference](R.id.preferences_vibration)
-  val darkThemeSwitch         = findById[SwitchPreference](R.id.preferences_dark_theme)
-  val sendButtonSwitch        = findById[SwitchPreference](R.id.preferences_send_button)
-  val appLockSwitch           = findById[SwitchPreference](R.id.preferences_app_lock)
-  val soundsButton            = findById[TextButton](R.id.preferences_sounds)
-  val downloadImagesSwitch    = findById[SwitchPreference](R.id.preferences_options_image_download)
-  val hideScreenContentSwitch = findById[SwitchPreference](R.id.preferences_hide_screen)
-  val messagePreviewSwitch    = findById[SwitchPreference](R.id.preferences_message_previews)
-  val incognitoKeyboardSwitch = findById[SwitchPreference](R.id.preferences_incognito_keyboard)
+  private val vbrSwitch               = findById[SwitchPreference](R.id.preferences_vbr)
+  private val vibrationSwitch         = findById[SwitchPreference](R.id.preferences_vibration)
+  private val darkThemeSwitch         = findById[SwitchPreference](R.id.preferences_dark_theme)
+  private val sendButtonSwitch        = findById[SwitchPreference](R.id.preferences_send_button)
+  private val appLockButton           = findById[TextButton](R.id.preferences_app_lock_button)
+  private val soundsButton            = findById[TextButton](R.id.preferences_sounds)
+  private val downloadImagesSwitch    = findById[SwitchPreference](R.id.preferences_options_image_download)
+  private val hideScreenContentSwitch = findById[SwitchPreference](R.id.preferences_hide_screen)
+  private val messagePreviewSwitch    = findById[SwitchPreference](R.id.preferences_message_previews)
+  private val incognitoKeyboardSwitch = findById[SwitchPreference](R.id.preferences_incognito_keyboard)
 
-  val ringToneButton         = findById[TextButton](R.id.preference_sounds_ringtone)
-  val textToneButton         = findById[TextButton](R.id.preference_sounds_text)
-  val pingToneButton         = findById[TextButton](R.id.preference_sounds_ping)
+  private val ringToneButton         = findById[TextButton](R.id.preference_sounds_ringtone)
+  private val textToneButton         = findById[TextButton](R.id.preference_sounds_text)
+  private val pingToneButton         = findById[TextButton](R.id.preference_sounds_ping)
 
   private lazy val defaultRingToneUri = RingtoneUtils.getUriForRawId(context, R.raw.ringing_from_them)
   private lazy val defaultTextToneUri = RingtoneUtils.getUriForRawId(context, R.raw.new_message)
@@ -102,13 +103,9 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)
 
-  if (BuildConfig.FORCE_APP_LOCK) {
-    appLockSwitch.setVisible(false)
-  } else {
-    appLockSwitch.setPreference(AppLockEnabled, global = true)
-    appLockSwitch.setSubtitle(getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString))
-    appLockSwitch.setVisible(true)
-  }
+  appLockButton.setSubtitle(getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString))
+
+  override val appLock: EventStream[Unit] = appLockButton.onClickEvent.map(_ => ())
 
   incognitoKeyboardSwitch.setPreference(IncognitoKeyboardEnabled, global = true)
   if (BuildConfig.FORCE_PRIVATE_KEYBOARD) {
@@ -125,7 +122,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     hideScreenContentSwitch.pref.foreach(_ := true)
   }
 
-  private def openNotificationSettings(channelId: String) = {
+  private def openNotificationSettings(channelId: String): Unit = {
     val intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
     intent.putExtra(Settings.EXTRA_APP_PACKAGE, getContext.getPackageName)
     intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
@@ -149,7 +146,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   }
   soundsButton.onClickEvent{ _ => showPrefDialog(SoundLevelDialog(soundLevel), SoundLevelDialog.Tag)}
 
-  override def setSounds(level: IntensityLevel) = {
+  override def setSounds(level: IntensityLevel): Unit = {
     soundLevel = level
     val string = soundLevel match {
       case IntensityLevel.NONE => context.getString(R.string.pref_options_sounds_none)
@@ -159,17 +156,17 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     soundsButton.setSubtitle(string)
   }
 
-  override def setRingtone(uri: String) = {
+  override def setRingtone(uri: String): Unit = {
     ringToneUri = uri
     setToneSubtitle(ringToneButton, defaultRingToneUri, uri)
   }
 
-  override def setTextTone(uri: String) = {
+  override def setTextTone(uri: String): Unit = {
     textToneUri = uri
     setToneSubtitle(textToneButton, defaultTextToneUri, uri)
   }
 
-  override def setPingTone(uri: String) = {
+  override def setPingTone(uri: String): Unit = {
     pingToneUri = uri
     setToneSubtitle(pingToneButton, defaultPingToneUri, uri)
   }
@@ -221,27 +218,29 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 case class OptionsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
   override def nameId: Int = R.string.pref_options_screen_title
 
-  override def layoutId = R.layout.preferences_options
+  override def layoutId: Int = R.layout.preferences_options
 
   var controller = Option.empty[OptionsViewController]
 
-  override def onViewAttached(v: View) = {
+  override def onViewAttached(v: View): Unit = {
     controller = Option(v.asInstanceOf[OptionsViewImpl]).map(ov => new OptionsViewController(ov)(ov.injector, ov.eventContext))
   }
 
-  override def onViewDetached() = {
+  override def onViewDetached(): Unit = {
     controller = None
   }
 }
 
 class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: EventContext) extends Injectable {
-  val zms = inject[Signal[ZMessaging]]
-  val userPrefs = zms.map(_.userPrefs)
-  val team = zms.flatMap(_.teams.selfTeam)
-  val notificationManagerWrapper = inject[NotificationManagerWrapper] match {
+  private val zms = inject[Signal[ZMessaging]]
+  private val userPrefs = zms.map(_.userPrefs)
+  private val notificationManagerWrapper = inject[NotificationManagerWrapper] match {
     case nmw: AndroidNotificationsManager => Some(nmw)
     case _ => None
   }
+  private val navigator = inject[BackStackNavigator]
+
+  view.appLock.onUi(_ => navigator.goTo(AppLockKey()))
 
   private def getChannelTone(channelId: UserId => String) =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -24,7 +24,7 @@ import android.os.{Build, Bundle}
 import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.FragmentManager
-import com.waz.content.UserPreferences.{TrackingEnabled, CrashesAndAnalyticsRequestShown}
+import com.waz.content.UserPreferences.{CrashesAndAnalyticsRequestShown, TrackingEnabled}
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
 import com.waz.permissions.PermissionsService
@@ -37,7 +37,7 @@ import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.fragments.CollectionFragment
-import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
+import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
 import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.controllers.confirmation.{ConfirmationObserver, ConfirmationRequest, IConfirmationController}
@@ -153,6 +153,8 @@ class MainPhoneFragment extends FragmentHelper
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
+    inject[PasswordController].setSSOPasswordIfNeeded()
+
     confirmationMenu.foreach(_.setVisibility(View.GONE))
     zms.flatMap(_.errors.getErrors).onUi {
       _.foreach(handleSyncError)

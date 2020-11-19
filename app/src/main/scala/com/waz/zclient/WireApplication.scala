@@ -60,7 +60,7 @@ import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers._
-import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController, KeyboardController, PasswordController}
+import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController, KeyboardController, PasswordController, SodiumHandler}
 import com.waz.zclient.controllers._
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation.IConfirmationController
@@ -216,6 +216,7 @@ object WireApplication extends DerivedLogTag {
     bind [CrashController]         to new CrashController
     bind [AccentColorController]   to new AccentColorController()
     bind [PasswordController]      to new PasswordController()
+    bind [SodiumHandler]           to new SodiumHandler()
     bind [CallController]          to new CallController()
     bind [GlobalCameraController]  to new GlobalCameraController(new AndroidCameraFactory)
     bind [SoundController]         to new SoundControllerImpl()
