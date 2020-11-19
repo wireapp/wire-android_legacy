@@ -35,7 +35,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityPolicyChecker
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{BuildConfig, FragmentHelper, R}
-import com.wire.signals.Signal
+import com.wire.signals.{Signal, Subscription}
 
 class CallingFragment extends FragmentHelper {
 
@@ -44,11 +44,49 @@ class CallingFragment extends FragmentHelper {
   private lazy val themeController = inject[ThemeController]
   private lazy val controlsFragment = ControlsFragment.newInstance
   private lazy val previewCardView = view[CardView](R.id.preview_card_view)
-  private lazy val fullScreenVideoContainer = view[FrameLayout](R.id.full_screen_video_layout)
   private var viewMap = Map[Participant, UserVideoView]()
+  private lazy val videoGrid = view[GridLayout](R.id.video_grid)
+  private var videoGridSubscription = Option.empty[Subscription]
 
-  private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
-    Signal.zip(
+  override def onCreate(savedInstanceState: Bundle): Unit = {
+    super.onCreate(savedInstanceState)
+    controller.theme.map(themeController.getTheme).onUi(theme => videoGrid.foreach(_.setBackgroundColor(getStyledColor(R.attr.wireBackgroundColor, theme))))
+  }
+
+  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
+    returning(inflater.inflate(R.layout.fragment_calling, container, false)) { v =>
+      controller.theme(t => v.asInstanceOf[ThemeControllingFrameLayout].theme ! Some(t))
+    }
+
+  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
+    super.onViewCreated(view, savedInstanceState)
+
+    initVideoGrid()
+
+    getChildFragmentManager
+      .beginTransaction
+      .replace(R.id.controls_layout, controlsFragment, ControlsFragment.Tag)
+      .commit
+
+    controller.isCallIncoming.head.foreach {
+      if (_) inject[SecurityPolicyChecker].run(getActivity)
+    }(Threading.Ui)
+  }
+
+  override def onBackPressed(): Boolean =
+    withChildFragmentOpt(R.id.controls_layout) {
+      case Some(f: FragmentHelper) if f.onBackPressed()               => true
+      case Some(_) if getChildFragmentManager.popBackStackImmediate() => true
+      case _ => super.onBackPressed()
+    }
+
+  override def onDestroyView(): Unit = {
+    super.onDestroyView()
+    clearVideoGrid()
+  }
+
+  def initVideoGrid(): Unit = {
+    videoGridSubscription = Option(Signal.zip(
       controller.allVideoReceiveStates,
       controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)),
       controller.isVideoCall,
@@ -64,7 +102,10 @@ class CallingFragment extends FragmentHelper {
         viewMap = viewMap.updated(participant, v)
         if (BuildConfig.CALLING_VVM_MAXIMIZE_MINIMIZE_VIDEO) {
           v.onDoubleClick.onUi { _ =>
-            showFullScreenVideo(v, selfParticipant, participant)
+            if (participants.size > 2) {
+              showFullScreenVideo(participant)
+              clearVideoGrid()
+            }
           }
         }
       }
@@ -73,7 +114,7 @@ class CallingFragment extends FragmentHelper {
 
       val isVideoBeingSent = !vrs.get(selfParticipant).contains(VideoState.Stopped)
 
-      vh.foreach { v =>
+      videoGrid.foreach { v =>
         val videoUsers = vrs.toSeq.collect {
           case (participant, _) if participant == selfParticipant && videoCall && incoming => participant
           case (participant, VideoState.Started | VideoState.Paused | VideoState.BadConnection | VideoState.NoCameraPermission | VideoState.ScreenShare) => participant
@@ -145,77 +186,24 @@ class CallingFragment extends FragmentHelper {
 
         val viewsToRemove = viewMap.filter {
           case (participant, selfView) if participant == selfParticipant => !gridViews.contains(selfView)
-          case (participant, _)                                          => !videoUsers.contains(participant)
+          case (participant, _) => !videoUsers.contains(participant)
         }
         viewsToRemove.foreach { case (_, view) => v.removeView(view) }
         viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) }
       }
-    }
+    })
   }
 
-  override def onCreate(savedInstanceState: Bundle): Unit = {
-    super.onCreate(savedInstanceState)
-    controller.theme.map(themeController.getTheme).onUi(theme => videoGrid.foreach(_.setBackgroundColor(getStyledColor(R.attr.wireBackgroundColor, theme))))
-  }
-
-  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
-    returning(inflater.inflate(R.layout.fragment_calling, container, false)) { v =>
-      controller.theme(t => v.asInstanceOf[ThemeControllingFrameLayout].theme ! Some(t))
-    }
-
-  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    super.onViewCreated(view, savedInstanceState)
-
-    videoGrid
-
-    getChildFragmentManager
-      .beginTransaction
-      .replace(R.id.controls_layout, controlsFragment, ControlsFragment.Tag)
-      .commit
-
-    controller.isCallIncoming.head.foreach {
-      if (_) inject[SecurityPolicyChecker].run(getActivity)
-    }(Threading.Ui)
-  }
-
-  override def onBackPressed(): Boolean =
-    withChildFragmentOpt(R.id.controls_layout) {
-      case Some(f: FragmentHelper) if f.onBackPressed()               => true
-      case Some(_) if getChildFragmentManager.popBackStackImmediate() => true
-      case _ => super.onBackPressed()
-    }
-
-  override def onDestroyView(): Unit = {
-    super.onDestroyView()
+  def clearVideoGrid(): Unit = {
+    videoGrid.foreach(_.removeAllViews())
     viewMap = Map()
+    videoGridSubscription.foreach(_.unsubscribe())
   }
 
-  def showFullScreenVideo(userVideoView: UserVideoView, selfParticipant: Participant,
-                          participant: Participant): Unit =
-    fullScreenVideoContainer.foreach { container =>
-
-      val nbParticipants = controller.otherParticipants.map(_.size).currentValue.getOrElse(0)
-
-      if (nbParticipants > 2) {
-        var newVideoView: UserVideoView = null
-        if (participant == selfParticipant) newVideoView = new SelfVideoView(getContext, participant)
-        else newVideoView = new OtherVideoView(getContext, participant)
-
-        newVideoView.onDoubleClick.onUi { _ =>
-          videoGrid.foreach(_.addView(userVideoView))
-          container.removeView(newVideoView)
-        }
-
-        videoGrid.foreach(_.removeView(userVideoView))
-        container.addView(newVideoView)
-
-        controller.allVideoReceiveStates
-          .map(_.getOrElse(participant, VideoState.Unknown)).onUi {
-          case VideoState.Started | VideoState.ScreenShare =>
-          case _ => container.removeView(newVideoView)
-        }
-      }
-    }
+  def showFullScreenVideo(participant: Participant): Unit = getChildFragmentManager
+    .beginTransaction
+    .replace(R.id.full_screen_video_layout, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
+    .commit
 }
 
 object CallingFragment {
