@@ -6,10 +6,10 @@ import org.gradle.api.JavaVersion
 object Versions {
     //wire android client
     const val ANDROID_CLIENT_MAJOR_VERSION = "3.59."
-    const val COMPILE_SDK_VERSION = 29
-    const val TARGET_SDK_VERSION = 29
+    const val COMPILE_SDK_VERSION = 30
+    const val TARGET_SDK_VERSION = 30
     const val MIN_SDK_VERSION = 24
-    const val BUILD_TOOLS_VERSION = "29.0.3"
+    const val BUILD_TOOLS_VERSION = "30.0.2"
     val SOURCE_COMPATIBILITY_VERSION = JavaVersion.VERSION_1_8
     val TARGET_COMPATIBILITY_VERSION = JavaVersion.VERSION_1_8
 
@@ -53,7 +53,7 @@ object Versions {
     const val FIREBASE_MESSAGING = "20.1.0"
     const val GLIDE = "4.11.0"
     const val RETROFIT = "2.6.2"
-    const val OKHTTP = "3.14.6"
+    const val OKHTTP = "3.14.9"
     const val KOIN = "2.0.1"
     const val RX_KOTLIN = "2.3.0"
     const val RX_ANDROID = "2.1.1"
