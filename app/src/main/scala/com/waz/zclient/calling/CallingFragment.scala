@@ -45,12 +45,11 @@ class CallingFragment extends FragmentHelper {
   private lazy val controlsFragment   = ControlsFragment.newInstance
   private lazy val previewCardView    = view[CardView](R.id.preview_card_view)
   private var viewMap                 = Map[Participant, UserVideoView]()
-  private lazy val videoGrid          = view[GridLayout](R.id.video_grid)
   private var videoGridSubscription   = Option.empty[Subscription]
-
-  override def onCreate(savedInstanceState: Bundle): Unit = {
-    super.onCreate(savedInstanceState)
-    controller.theme.map(themeController.getTheme).onUi(theme => videoGrid.foreach(_.setBackgroundColor(getStyledColor(R.attr.wireBackgroundColor, theme))))
+  private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
+    controller.theme.map(themeController.getTheme).onUi { theme =>
+      vh.foreach { _.setBackgroundColor(getStyledColor(R.attr.wireBackgroundColor, theme)) }
+    }
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
