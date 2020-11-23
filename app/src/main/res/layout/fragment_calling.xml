@@ -42,7 +42,7 @@
         android:layout_marginEnd="@dimen/wire__padding__regular"
         app:cardCornerRadius="@dimen/calling_preview_card_radius"
         android:visibility="gone"
-        app:cardElevation="0dp"/>
+        />
 
     <FrameLayout
         android:id="@+id/controls_layout"
