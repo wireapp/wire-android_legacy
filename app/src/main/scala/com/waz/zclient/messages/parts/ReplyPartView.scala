@@ -46,6 +46,7 @@ import com.waz.zclient.utils.{RichTextView, RichView}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 import com.waz.threading.Threading._
+import com.waz.utils.returning
 
 abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
@@ -83,7 +84,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
   container.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
   container.setBackground(new ReplyBackgroundDrawable(getStyledColor(R.attr.replyBorderColor), getStyledColor(R.attr.wireBackgroundCollection)))
 
-  protected val quotedMessage: SourceSignal[MessageData] with NoAutowiring = Signal[MessageData]()
+  protected val quotedMessage: SourceSignal[MessageData] = returning(Signal[MessageData]()){ _.disableAutowiring() }
   protected val quotedAsset: Signal[Option[Asset]] =
     quotedMessage.map(_.assetId).flatMap(assetsController.assetSignal).map {
       case Some(x: Asset) => Some(x)
