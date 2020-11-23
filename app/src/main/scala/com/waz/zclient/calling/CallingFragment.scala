@@ -36,17 +36,17 @@ import com.waz.zclient.security.SecurityPolicyChecker
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 import com.wire.signals.{Signal, Subscription}
+import com.waz.zclient.calling.CallingFragment.MaxVideoPreviews
 
 class CallingFragment extends FragmentHelper {
 
-  private val maxVideoPreviews = 12
-  private lazy val controller = inject[CallController]
-  private lazy val themeController = inject[ThemeController]
-  private lazy val controlsFragment = ControlsFragment.newInstance
-  private lazy val previewCardView = view[CardView](R.id.preview_card_view)
-  private var viewMap = Map[Participant, UserVideoView]()
-  private lazy val videoGrid = view[GridLayout](R.id.video_grid)
-  private var videoGridSubscription = Option.empty[Subscription]
+  private lazy val controller         = inject[CallController]
+  private lazy val themeController    = inject[ThemeController]
+  private lazy val controlsFragment   = ControlsFragment.newInstance
+  private lazy val previewCardView    = view[CardView](R.id.preview_card_view)
+  private var viewMap                 = Map[Participant, UserVideoView]()
+  private lazy val videoGrid          = view[GridLayout](R.id.video_grid)
+  private var videoGridSubscription   = Option.empty[Subscription]
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
@@ -100,7 +100,7 @@ class CallingFragment extends FragmentHelper {
         else new OtherVideoView(getContext, participant)
       } { v =>
         viewMap = viewMap.updated(participant, v)
-        if (BuildConfig.CALLING_VVM_MAXIMIZE_MINIMIZE_VIDEO) {
+        if (BuildConfig.MAXIMIZE_MINIMIZE_VIDEO) {
           v.onDoubleClick.onUi { _ =>
             if (participants.size > 2) {
               showFullScreenVideo(participant)
@@ -152,7 +152,7 @@ class CallingFragment extends FragmentHelper {
           case (_, _: SelfVideoView) => false
           case (v1, v2) => findParticipantNameById(v1.participant.userId).toLowerCase <
             findParticipantNameById(v2.participant.userId).toLowerCase
-        }.take(maxVideoPreviews)
+        }.take(MaxVideoPreviews)
 
         gridViews.zipWithIndex.foreach { case (userVideoView, index) =>
           val (row, col, span, width) = index match {
@@ -202,11 +202,12 @@ class CallingFragment extends FragmentHelper {
 
   def showFullScreenVideo(participant: Participant): Unit = getChildFragmentManager
     .beginTransaction
-    .replace(R.id.full_screen_video_layout, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
+    .replace(R.id.full_screen_video_container, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
     .commit
 }
 
 object CallingFragment {
   val Tag: String = getClass.getSimpleName
+  val MaxVideoPreviews = 12
   def apply(): CallingFragment = new CallingFragment()
 }

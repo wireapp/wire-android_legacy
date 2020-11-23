@@ -38,7 +38,7 @@ allprojects {
 }
 
 ext {
-    callingVvmMaximizeMinimizeVideo = true
+    maximizeMinimizeVideo = true
     //Update kotlinCore flag as well when adding new kotlin features
     kotlinSettings = false
     kotlinCore = kotlinSettings

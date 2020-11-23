@@ -126,7 +126,7 @@ android {
         //Feature Flags
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
         buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
-        buildConfigField 'boolean', 'CALLING_VVM_MAXIMIZE_MINIMIZE_VIDEO', "$rootProject.ext.callingVvmMaximizeMinimizeVideo"
+        buildConfigField 'boolean', 'MAXIMIZE_MINIMIZE_VIDEO', "$rootProject.ext.maximizeMinimizeVideo"
     }
 
     packagingOptions {

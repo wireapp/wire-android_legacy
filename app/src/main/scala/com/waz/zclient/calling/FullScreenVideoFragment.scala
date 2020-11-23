@@ -24,6 +24,7 @@ import androidx.fragment.app.Fragment
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading._
+import com.waz.utils.returning
 import com.waz.zclient.FragmentHelper
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.FullScreenVideoFragment.PARTICIPANT_BUNDLE_KEY
@@ -66,8 +67,7 @@ class FullScreenVideoFragment extends FragmentHelper {
 
       container.addView(userVideoView)
 
-      controller.allVideoReceiveStates
-        .map(_.getOrElse(participant, VideoState.Unknown)).onUi {
+      controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
         case VideoState.Started | VideoState.ScreenShare =>
         case _ => minimizeVideo(container, userVideoView)
       }
@@ -84,11 +84,9 @@ object FullScreenVideoFragment {
   val Tag = classOf[FullScreenVideoFragment].getName
   val PARTICIPANT_BUNDLE_KEY = "participant"
 
-  def newInstance(participant: Participant): Fragment = {
-    val fragment = new FullScreenVideoFragment
-    val bundle = new Bundle()
-    bundle.putSerializable(PARTICIPANT_BUNDLE_KEY, participant)
-    fragment.setArguments(bundle)
-    fragment
+  def newInstance(participant: Participant): Fragment = returning(new FullScreenVideoFragment) {
+    _.setArguments(returning(new Bundle) { bundle =>
+      bundle.putSerializable(PARTICIPANT_BUNDLE_KEY, participant)
+    })
   }
 }

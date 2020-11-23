@@ -50,7 +50,7 @@
         android:layout_height="match_parent"/>
 
     <FrameLayout
-        android:id="@+id/full_screen_video_layout"
+        android:id="@+id/full_screen_video_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

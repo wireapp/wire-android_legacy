@@ -88,18 +88,20 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  Signal.zip(controller.isGroupCall, controller.controlsVisible,
+  Signal.zip(
+    controller.isGroupCall,
+    controller.controlsVisible,
     controller.otherParticipants.map(_.size)
   ).map {
     case (true, false, 0 | 1 | 2) => View.GONE
-    case (true, false, _)     => View.VISIBLE
-    case _                    => View.GONE
+    case (true, false, _)         => View.VISIBLE
+    case _                        => View.GONE
   }.onUi(participantInfoCardView.setVisibility)
 
   protected def registerHandler(view: View) = {
     controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
       case VideoState.Paused | VideoState.Stopped => view.fadeOut()
-      case _                 => view.fadeIn()
+      case _                                      => view.fadeIn()
     }
     view match {
       case vr: VideoRenderer =>

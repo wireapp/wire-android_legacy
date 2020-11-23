@@ -92,7 +92,7 @@ class ControlsFragment extends FragmentHelper {
       }
     )
 
-    if (!BuildConfig.CALLING_VVM_MAXIMIZE_MINIMIZE_VIDEO) {
+    if (!BuildConfig.MAXIMIZE_MINIMIZE_VIDEO) {
       //we need to listen to clicks on the outer layout, so that we can set this.getView to gone.
       getView.getParent.asInstanceOf[View].onClick {
         Option(getView).map(!_.isVisible).foreach(controller.controlsClick)
