@@ -57,9 +57,8 @@ class FullScreenVideoFragment extends FragmentHelper {
 
       val selfParticipant = controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)).currentValue.get
 
-      var userVideoView: UserVideoView = null
-      if (participant == selfParticipant) userVideoView = new SelfVideoView(getContext, participant)
-      else userVideoView = new OtherVideoView(getContext, participant)
+      val userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
+      else new OtherVideoView(getContext, participant)
 
       userVideoView.onDoubleClick.onUi { _ =>
         minimizeVideo(container, userVideoView)
@@ -76,7 +75,7 @@ class FullScreenVideoFragment extends FragmentHelper {
   def minimizeVideo(container: FrameLayout, userVideoView: UserVideoView): Unit = {
     container.removeView(userVideoView)
     getFragmentManager.popBackStack()
-    getParentFragment.asInstanceOf[CallingFragment].initVideoGrid()
+    controller.initVideo ! (())
   }
 }
 

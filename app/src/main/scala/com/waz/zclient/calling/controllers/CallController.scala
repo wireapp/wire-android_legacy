@@ -52,6 +52,8 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   import Threading.Implicits.Background
   import VideoState._
 
+  val initVideo = EventStream[Unit]()
+
   private lazy val screenManager  = new ScreenManager
   private lazy val soundController = inject[SoundController]
 

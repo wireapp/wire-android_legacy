@@ -71,6 +71,10 @@ class CallingFragment extends FragmentHelper {
     controller.isCallIncoming.head.foreach {
       if (_) inject[SecurityPolicyChecker].run(getActivity)
     }(Threading.Ui)
+
+    controller.initVideo.foreach { _ =>
+      initVideoGrid()
+    }
   }
 
   override def onBackPressed(): Boolean =
