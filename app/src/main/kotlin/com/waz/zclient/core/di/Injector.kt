@@ -5,7 +5,6 @@ import com.waz.zclient.core.backend.di.backendModule
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.core.network.di.networkModule
 import com.waz.zclient.feature.backup.di.backupModules
-import com.waz.zclient.shared.assets.di.assetsModule
 import com.waz.zclient.storage.di.storageModule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -28,17 +27,13 @@ object Injector {
      * Shared modules should contain dependencies that can
      * build up multiple features
      */
-    private val sharedModules: List<Module> = listOf(
-        assetsModule
-    )
+    private val sharedModules: List<Module> = listOf()
 
     /**
      * Feature modules should contain dependencies that build up specific
      * features and don't tend to live outside of that feature
      */
-    private val featureModules: List<Module> = listOf(
-        backupModules
-    ).flatten()
+    private val featureModules: List<Module> = listOf(backupModules).flatten()
 
     @JvmStatic
     fun start(context: Context) {
