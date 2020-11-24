@@ -17,116 +17,126 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/teams_background">
+    android:background="@color/teams_background"
+    android:orientation="vertical">
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/centerGuideline"
-        android:layout_width="wrap_content"
+    <ImageView
+        android:id="@+id/app_entry_logo_image"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/app_entry_logo_height"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/wire__margin_top__big"
+        android:src="@drawable/wire"
+        android:tint="@color/teams_headline_text" />
+
+    <!-- Wrapper with: Personal - Pro -->
+    <LinearLayout
+        android:id="@+id/app_entry_personal_pro_wrapper"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.5" />
+        android:layout_centerInParent="true"
+        android:orientation="vertical">
 
-    <View
-        android:id="@+id/createPersonalAccountLayoutContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="@dimen/create_account_layout_container_margin"
-        android:background="@drawable/create_account_layout_container_background"
-        android:clickable="true"
-        android:focusable="true"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toTopOf="@+id/centerGuideline"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/createPersonalAccountTitleTextView"
-        app:layout_constraintVertical_bias="0.9"
-        app:layout_constraintWidth_percent="0.71" />
+        <!-- Wrapper with: Personal -->
+        <LinearLayout
+            android:id="@+id/create_account_button"
+            android:layout_width="@dimen/app_entry_button_width"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/create_account_layout_container_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__regular">
 
-    <View
-        android:id="@+id/createProAccountLayoutContainer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="@dimen/create_account_layout_container_margin"
-        android:background="@drawable/create_account_layout_container_background"
-        android:clickable="true"
-        android:focusable="true"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="@+id/createProAccountDescriptionTextView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/centerGuideline"
-        app:layout_constraintVertical_bias="0.1"
-        app:layout_constraintWidth_percent="0.71" />
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:layout_width="@dimen/app_entry_button_size_small"
+                android:layout_height="@dimen/app_entry_button_size_small"
+                android:layout_gravity="center"
+                android:background="@drawable/create_account_personal_image_background"
+                android:gravity="center"
+                android:text="@string/glyph__profile"
+                android:textColor="@color/white"
+                android:textSize="@dimen/app_entry_button_glyph_size" />
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createPersonalAccountTitleTextView"
-        style="@style/TextView.RobotoBold"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:drawableTop="@drawable/ic_personal"
-        android:drawablePadding="@dimen/create_account_title_drawable_padding"
-        android:gravity="center"
-        android:text="@string/app_entry_create_account"
-        android:textColor="@color/teams_headline_text"
-        android:textSize="@dimen/create_account_title_text_size"
-        app:layout_constraintBottom_toTopOf="@id/createPersonalAccountDescriptionTextView"
-        app:layout_constraintEnd_toEndOf="@id/createPersonalAccountLayoutContainer"
-        app:layout_constraintStart_toStartOf="@id/createPersonalAccountLayoutContainer" />
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/create_account_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/wire__padding__small"
+                android:gravity="center"
+                android:text="@string/app_entry_create_account"
+                android:textColor="@color/teams_headline_text"
+                android:textSize="@dimen/wire__text_size__medium"
+                app:w_font="@string/wire__typeface__bold" />
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createPersonalAccountDescriptionTextView"
-        style="@style/TextView.RobotoRegular"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:paddingStart="@dimen/create_account_description_padding"
-        android:paddingEnd="@dimen/create_account_description_padding"
-        android:text="@string/app_entry_create_account_sub"
-        android:textColor="@color/teams_headline_text"
-        android:textSize="@dimen/create_account_description_text_size"
-        app:layout_constraintBottom_toBottomOf="@id/createPersonalAccountLayoutContainer"
-        app:layout_constraintEnd_toEndOf="@id/createPersonalAccountLayoutContainer"
-        app:layout_constraintStart_toStartOf="@id/createPersonalAccountLayoutContainer" />
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/app_entry_create_account_sub"
+                android:textColor="@color/teams_headline_text"
+                android:textSize="@dimen/wire__text_size__regular"
+                app:w_font="@string/wire__typeface__regular" />
 
+        </LinearLayout>
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createProAccountTitleTextView"
-        style="@style/TextView.RobotoBold"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:drawableTop="@drawable/ic_pro"
-        android:drawablePadding="@dimen/create_account_title_drawable_padding"
-        android:gravity="center"
-        android:text="@string/app_entry_create_team"
-        android:textColor="@color/teams_headline_text"
-        android:textSize="@dimen/create_account_title_text_size"
-        app:layout_constraintEnd_toEndOf="@id/createProAccountLayoutContainer"
-        app:layout_constraintStart_toStartOf="@id/createProAccountLayoutContainer"
-        app:layout_constraintTop_toTopOf="@id/createProAccountLayoutContainer" />
+        <!-- Wrapper with: Pro -->
+        <LinearLayout
+            android:id="@+id/create_team_button"
+            android:layout_width="@dimen/app_entry_button_width"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/wire__padding__32"
+            android:background="@drawable/create_account_layout_container_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__regular">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createProAccountDescriptionTextView"
-        style="@style/TextView.RobotoRegular"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:paddingStart="@dimen/create_account_description_padding"
-        android:paddingEnd="@dimen/create_account_description_padding"
-        android:text="@string/app_entry_create_team_sub"
-        android:textColor="@color/teams_headline_text"
-        android:textSize="@dimen/create_account_description_text_size"
-        app:layout_constraintEnd_toEndOf="@id/createProAccountLayoutContainer"
-        app:layout_constraintStart_toStartOf="@id/createProAccountLayoutContainer"
-        app:layout_constraintTop_toBottomOf="@id/createProAccountTitleTextView" />
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:layout_width="@dimen/app_entry_button_size_small"
+                android:layout_height="@dimen/app_entry_button_size_small"
+                android:layout_gravity="center"
+                android:background="@drawable/create_account_pro_image_background"
+                android:gravity="center"
+                android:text="@string/glyph__manage_team"
+                android:textColor="@color/white"
+                android:textSize="@dimen/app_entry_button_glyph_size" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/create_team_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/wire__padding__small"
+                android:gravity="center"
+                android:text="@string/app_entry_create_team"
+                android:textColor="@color/teams_headline_text"
+                android:textSize="@dimen/wire__text_size__medium"
+                app:w_font="@string/wire__typeface__bold" />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/app_entry_create_team_sub"
+                android:textColor="@color/teams_headline_text"
+                android:textSize="@dimen/wire__text_size__regular"
+                app:w_font="@string/wire__typeface__regular" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

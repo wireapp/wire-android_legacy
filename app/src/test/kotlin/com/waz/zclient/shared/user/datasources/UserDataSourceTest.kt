@@ -80,44 +80,6 @@ class UserDataSourceTest : UnitTest() {
 
     }
 
-    @Test
-    fun `Given changeName() is called and remote request fails, then don't update database`() = runBlockingTest {
-        `when`(usersRemoteDataSource.changeName(TEST_NAME)).thenReturn(Either.Left(ServerError))
-
-        usersRepository.changeName(TEST_NAME)
-
-        verify(usersRemoteDataSource).changeName(eq(TEST_NAME))
-        verifyNoInteractions(usersLocalDataSource)
-    }
-
-    @Test
-    fun `Given changeName() is called and remote request is success, then update database`() = runBlockingTest {
-        `when`(usersRemoteDataSource.changeName(TEST_NAME)).thenReturn(Either.Right(Unit))
-
-        usersRepository.changeName(TEST_NAME)
-
-        verify(usersLocalDataSource).changeName(eq(TEST_NAME))
-    }
-
-    @Test
-    fun `Given changeEmail() is called and remote request fails, then don't update database`() = runBlockingTest {
-        `when`(usersRemoteDataSource.changeEmail(TEST_EMAIL)).thenReturn(Either.Left(ServerError))
-
-        usersRepository.changeEmail(TEST_EMAIL)
-
-        verify(usersRemoteDataSource).changeEmail(eq(TEST_EMAIL))
-        verifyNoInteractions(usersLocalDataSource)
-    }
-
-    @Test
-    fun `Given changeEmail() is called and remote request is success, then update database`() = runBlockingTest {
-        `when`(usersRemoteDataSource.changeEmail(TEST_EMAIL)).thenReturn(Either.Right(Unit))
-
-        usersRepository.changeEmail(TEST_EMAIL)
-
-        verify(usersLocalDataSource).changeEmail(eq(TEST_EMAIL))
-    }
-
     companion object {
         private const val TEST_NAME = "testName"
         private const val TEST_EMAIL = "email@wire.com"
