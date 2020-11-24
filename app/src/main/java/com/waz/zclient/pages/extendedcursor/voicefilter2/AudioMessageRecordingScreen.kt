@@ -11,6 +11,7 @@ import com.waz.api.AudioEffect
 import com.waz.zclient.KotlinServices
 import com.waz.zclient.R
 import com.waz.zclient.audio.AudioService
+import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.utils.StringUtils
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -31,6 +32,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     ViewAnimator(context, attrs), View.OnClickListener {
 
     companion object {
+        val TAG = "AudioMessageRecordingScreen"
         var GLYPH_PLACEHOLDER = "_GLYPH_"
 
         enum class CenterButton {
@@ -225,19 +227,20 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     private fun applyAudioEffectAndPlay(effect: AudioEffect) {
         val avsEffects = com.waz.audioeffect.AudioEffect()
         try {
-            val res = avsEffects.applyEffectPCM(
+            if (recordWithEffectFile.exists()) recordWithEffectFile.delete()
+
+            val errCode = avsEffects.applyEffectPCM(
                 recordFile.absolutePath,
                 recordWithEffectFile.absolutePath,
                 AudioService.Companion.Pcm.sampleRate,
                 effect.avsOrdinal,
-                true)
+                true
+            )
 
-            if (res < 0) throw RuntimeException("applyEffectWav returned error code: $res")
-            playAudio()
+            if (errCode < 0) Logger.error(TAG,"applyEffectWav returned error code: $errCode")
+            else if(recordWithEffectFile.exists()) playAudio()
         } catch (ex: Exception) {
-            println("Exception while applying audio effect. $ex")
-        } finally {
-            avsEffects.destroy()
+            Logger.error(TAG, "Exception while applying audio effect. $ex")
         }
     }
 
@@ -254,6 +257,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     }
 
     private fun playAudio() {
+        Logger.verbose(TAG, "playAudio")
         stopPlaying()
 
         audio_filters_hint.visibility = View.GONE
@@ -324,5 +328,4 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
             }
         }
     }
-
 }
