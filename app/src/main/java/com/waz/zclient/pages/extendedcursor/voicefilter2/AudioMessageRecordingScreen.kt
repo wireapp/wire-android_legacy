@@ -64,7 +64,6 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         voice_filter_none.setOnClickListener(this)
         voice_filter_balloon.setOnClickListener(this)
         voice_filter_jelly_fish.setOnClickListener(this)
-        voice_filter_jelly_fish
         voice_filter_rabbit.setOnClickListener(this)
         voice_filter_church.setOnClickListener(this)
         voice_filter_alien.setOnClickListener(this)
