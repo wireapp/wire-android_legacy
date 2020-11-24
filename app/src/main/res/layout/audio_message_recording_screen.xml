@@ -150,6 +150,7 @@
                 android:layout_gravity="center"
                 android:layout_columnWeight="1"
                 android:paddingVertical="@dimen/wire__padding__regular"
+                android:enabled="false"
                 />
 
             <com.waz.zclient.ui.text.GlyphTextViewSimple
@@ -160,6 +161,7 @@
                 android:layout_gravity="center"
                 android:layout_columnWeight="1"
                 android:paddingVertical="@dimen/wire__padding__regular"
+                android:enabled="false"
                 />
 
             <com.waz.zclient.ui.text.GlyphTextViewSimple
