@@ -68,7 +68,7 @@ class PreferencesActivity extends BaseActivity
   @SuppressLint(Array("PrivateResource"))
   override def onCreate(@Nullable savedInstanceState: Bundle) = {
     super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_settings_legacy)
+    setContentView(R.layout.activity_settings)
     setSupportActionBar(toolbar)
     getSupportActionBar.setDisplayHomeAsUpEnabled(true)
     getSupportActionBar.setDisplayShowHomeEnabled(true)

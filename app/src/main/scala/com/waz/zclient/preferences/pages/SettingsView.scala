@@ -28,8 +28,6 @@ import com.waz.threading.Threading
 import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient._
 import com.waz.zclient.common.views.FlatWireButton
-import com.waz.zclient.feature.settings.about.SettingsAboutActivity
-import com.waz.zclient.feature.settings.support.SettingsSupportActivity
 import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.threading.Threading._
@@ -66,18 +64,10 @@ class SettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
   optionsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(OptionsBackStackKey()) }
   advancedButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AdvancedBackStackKey()) }
   supportButton.onClickEvent.on(Threading.Ui) { _ =>
-    if (BuildConfig.KOTLIN_SETTINGS) {
-      context.startActivity(SettingsSupportActivity.newIntent(context))
-    } else {
       navigator.goTo(SupportBackStackKey())
-    }
   }
   aboutButton.onClickEvent.on(Threading.Ui) { _ =>
-    if (BuildConfig.KOTLIN_SETTINGS) {
-      context.startActivity(SettingsAboutActivity.newIntent(context))
-    } else {
       navigator.goTo(AboutBackStackKey())
-    }
   }
   devButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevSettingsBackStackKey()) }
   avsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AvsBackStackKey()) }
