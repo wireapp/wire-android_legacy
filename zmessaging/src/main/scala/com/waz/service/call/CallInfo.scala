@@ -25,7 +25,7 @@ import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState}
-import com.waz.service.call.CallInfo.{CallState, OutstandingMessage, Participant}
+import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessage, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.utils.returning
@@ -59,7 +59,8 @@ case class CallInfo(convId:             ConvId,
                     endTime:            Option[LocalInstant]            = None,
                     endReason:          Option[AvsClosedReason]         = None,
                     outstandingMsg:     Option[OutstandingMessage]      = None, //Any messages we were unable to send due to conv degradation
-                    shouldRing:         Boolean                         = true
+                    shouldRing:         Boolean                         = true,
+                    activeSpeakers:     Set[ActiveSpeaker]              = Set.empty
                    ) extends DerivedLogTag {
 
   val duration = estabTime match {
@@ -142,6 +143,8 @@ case class CallInfo(convId:             ConvId,
 }
 
 object CallInfo {
+
+  case class ActiveSpeaker(userId: UserId, clientId: ClientId, audioLevel: Int)
 
   case class Participant(userId: UserId, clientId: ClientId, muted: Boolean = false)
 

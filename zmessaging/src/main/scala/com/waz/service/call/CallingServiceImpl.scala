@@ -38,7 +38,7 @@ import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsCallError, AvsClient, AvsClientList, AvsClosedReason, NetworkQuality, VideoState, WCall, WCallConvType}
 import com.waz.service.call.CallInfo.CallState._
-import com.waz.service.call.CallInfo.{CallState, OutstandingMessage, Participant}
+import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessage, Participant}
 import com.waz.service.call.CallingService.GlobalCallProfile
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
@@ -390,6 +390,12 @@ class CallingServiceImpl(val accountId:       UserId,
       verbose(l"group participants changed, convId: ${conv.id}, other participants: $participants")
       call.copy(otherParticipants = participants, maxParticipants = math.max(call.maxParticipants, participants.size + 1))
     } ("onParticipantsChanged")
+
+  def onActiveSpeakersChanged(rConvId: RConvId, activeSpeakers: Set[ActiveSpeaker]): Future[Unit] =
+    updateCallIfActive(rConvId) { (_, conv, call) =>
+      verbose(l"active speakers changed, convId: ${conv.id}, speakers: $activeSpeakers")
+      call.copy(activeSpeakers = activeSpeakers)
+    } ("onActiveSpeakersChanged")
 
   network.networkMode.onChanged { _ =>
     currentCall.head.flatMap {

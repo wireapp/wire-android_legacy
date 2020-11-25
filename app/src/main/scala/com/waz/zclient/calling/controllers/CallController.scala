@@ -110,6 +110,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   private lazy val duration           = currentCall.flatMap(_.durationFormatted)
   lazy val selfParticipant            = currentCall.map(_.selfParticipant)
   lazy val otherParticipants          = currentCall.map(_.otherParticipants)
+  val activeSpeakers                  = currentCall.map(_.activeSpeakers)
 
   private val lastCallAccountId: SourceSignal[UserId] = Signal()
   currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
