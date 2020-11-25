@@ -46,7 +46,7 @@ class SelfVideoView(context: Context, participant: Participant)
     })
   }(Threading.Ui)
 
-  override lazy val shouldShowInfo = Signal.zip(pausedTextVisible, controller.isMuted).map {
+  override lazy val shouldShowInfo: Signal[Boolean] = Signal.zip(pausedTextVisible, controller.isMuted).map {
     case (paused, muted) => paused || muted
   }
 }

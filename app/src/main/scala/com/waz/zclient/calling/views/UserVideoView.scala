@@ -41,6 +41,8 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   inflate(R.layout.video_call_info_view)
 
+  def shouldShowInfo: Signal[Boolean]
+
   val onDoubleClick = EventStream[Unit]()
 
   this.onClick({
@@ -77,8 +79,8 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   protected val participantInfo: Signal[Option[CallParticipantInfo]] =
     for {
       isGroup <- controller.isGroupCall
-      infos   <- if (isGroup) controller.participantInfos() else Signal.const(Vector.empty)
-    } yield infos.find(_.userId == participant.userId)
+      infos   <- if (isGroup) controller.participantInfos else Signal.const(Vector.empty)
+    } yield infos.find(_.id == participant.userId)
 
   protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
     participantInfo.onUi {
@@ -98,14 +100,16 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     case _                        => View.GONE
   }.onUi(participantInfoCardView.setVisibility)
 
-  protected def registerHandler(view: View) = {
-    controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
+  private lazy val allVideoStates =  controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown))
+
+  protected def registerHandler(view: View): Unit = {
+    allVideoStates.onUi {
       case VideoState.Paused | VideoState.Stopped => view.fadeOut()
       case _                                      => view.fadeIn()
     }
     view match {
       case vr: VideoRenderer =>
-        controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
+        allVideoStates.onUi {
           case VideoState.ScreenShare =>
             vr.setShouldFill(false)
             vr.setFillRatio(1.5f)
@@ -122,6 +126,4 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
          (false, true, _) => videoCallInfo.fadeIn()
     case _                => videoCallInfo.fadeOut()
   }
-
-  val shouldShowInfo: Signal[Boolean]
 }

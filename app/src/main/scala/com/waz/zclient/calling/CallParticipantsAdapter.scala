@@ -62,7 +62,7 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
     notifyDataSetChanged()
   }
 
-  callController.orderedParticipantInfos().onUi { v =>
+  callController.orderedParticipantInfos.onUi { v =>
     numOfParticipants = v.size
     items = maxRows.filter(_ < numOfParticipants).fold(v)(m => v.take(m - 1))
     notifyDataSetChanged()
@@ -84,7 +84,7 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
 
   override def getItemId(position: Int): Long =
     if (maxRows.contains(position) && maxRows.exists(_ < numOfParticipants)) 0
-    else items.lift(position).map(_.userId.hashCode().toLong).getOrElse(0)
+    else items.lift(position).map(_.id.hashCode().toLong).getOrElse(0)
 
   setHasStableIds(true)
 

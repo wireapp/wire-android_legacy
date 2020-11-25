@@ -133,7 +133,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   def showArrow(show: Boolean): Unit = nextIndicator.setVisible(show)
 
   def setCallParticipantInfo(user: CallParticipantInfo): Unit = {
-    chathead.loadUser(user.userId)
+    chathead.loadUser(user.id)
     setTitle(user.displayName, user.isSelf)
     subtitleView.setVisible(false)
     videoEnabled ! user.isVideoEnabled
@@ -157,7 +157,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   private def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisible(guest)
-  
+
   private def setIsExternal(external: Boolean): Unit = externalIndicator.setVisible(external)
 
   def setIntegration(integration: IntegrationData): Unit = {
