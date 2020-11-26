@@ -21,7 +21,7 @@ import android.content.Context
 import android.view.View
 import android.widget.{FrameLayout, ImageView, TextView}
 import androidx.cardview.widget.CardView
-import com.waz.avs.VideoRenderer
+import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.model.Picture
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
@@ -107,21 +107,36 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
       case VideoState.Paused | VideoState.Stopped => view.fadeOut()
       case _                                      => view.fadeIn()
     }
-    view match {
-      case vr: VideoRenderer =>
-        allVideoStates.onUi {
-          case VideoState.ScreenShare =>
-            vr.setShouldFill(false)
-            vr.setFillRatio(1.5f)
-          case _ =>
-            vr.setShouldFill(true)
-            vr.setFillRatio(1.0f)
-        }
-      case _ =>
+
+    Signal.zip(controller.isFullScreenEnabled, allVideoStates).onUi {
+      case (true, _)                       => videoShouldFit(view)
+      case (false, VideoState.ScreenShare) => videoShouldFit(view)
+      case (false, VideoState.Started)     => videoShouldFill(view)
+      case _                               =>
     }
   }
 
-  Signal.zip(controller.controlsVisible, shouldShowInfo, controller.isCallIncoming).onUi {
+  def videoShouldFill(view: View) = view match {
+    case videoRenderer: VideoRenderer =>
+      videoRenderer.setShouldFill(true)
+      videoRenderer.setFillRatio(1.0f)
+    case videoPreview: VideoPreview =>
+      videoPreview.setShouldFill(true)
+      videoPreview.setAspectRatio(1.0f)
+    case _ =>
+  }
+
+  def videoShouldFit(view: View) = view match {
+    case videoRenderer: VideoRenderer =>
+      videoRenderer.setShouldFill(false)
+      videoRenderer.setFillRatio(1.5f)
+    case videoPreview: VideoPreview =>
+      videoPreview.setShouldFill(false)
+      videoPreview.setAspectRatio(1.5f)
+    case _ =>
+  }
+
+    Signal.zip(controller.controlsVisible, shouldShowInfo, controller.isCallIncoming).onUi {
     case (_, true, true) |
          (false, true, _) => videoCallInfo.fadeIn()
     case _                => videoCallInfo.fadeOut()
