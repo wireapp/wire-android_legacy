@@ -26,6 +26,7 @@ import com.waz.model.AccountData.Password
 import com.waz.service.{AccountsService, GlobalModule, UserService}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
+import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.dialogs.NewPasswordDialog
 import com.waz.zclient.security.ActivityLifecycleCallback
@@ -77,7 +78,8 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
     } yield ()
 
   private def openNewPasswordDialog(mode: NewPasswordDialog.Mode)(implicit ctx: Context) = Future {
-    val fragment = NewPasswordDialog.newInstance(mode)
+    val isDarkTheme = inject[ThemeController].isDarkTheme
+    val fragment = NewPasswordDialog.newInstance(mode, isDarkTheme)
     ctx.asInstanceOf[BaseActivity]
       .getSupportFragmentManager
       .beginTransaction
