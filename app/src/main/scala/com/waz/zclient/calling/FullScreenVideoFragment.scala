@@ -49,6 +49,7 @@ class FullScreenVideoFragment extends FragmentHelper {
     if (bundle != null) {
       val participant = bundle.getSerializable(PARTICIPANT_BUNDLE_KEY).asInstanceOf[Participant]
       showMaximizedVideo(participant)
+      controller.isFullScreenEnabled ! true
     }
   }
 
@@ -76,6 +77,7 @@ class FullScreenVideoFragment extends FragmentHelper {
     container.removeView(userVideoView)
     getFragmentManager.popBackStack()
     controller.initVideo ! (())
+    controller.isFullScreenEnabled ! false
   }
 }
 

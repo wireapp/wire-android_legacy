@@ -34,7 +34,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityPolicyChecker
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{BuildConfig, FragmentHelper, R}
-import com.wire.signals.{Signal, Subscription}
+import com.wire.signals.Signal
 import com.waz.zclient.calling.CallingFragment.MaxVideoPreviews
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 
@@ -45,10 +45,25 @@ class CallingFragment extends FragmentHelper {
   private lazy val themeController    = inject[ThemeController]
   private lazy val controlsFragment   = ControlsFragment.newInstance
   private lazy val previewCardView    = view[CardView](R.id.preview_card_view)
-  private var  videoGridSubscription  = Option.empty[Subscription]
   private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
     controller.theme.map(themeController.getTheme).foreach { theme =>
-      vh.foreach { _.setBackgroundColor(getStyledColor(R.attr.wireBackgroundColor, theme)) }
+      vh.foreach {
+        _.setBackgroundColor(getStyledColor(R.attr.wireBackgroundColor, theme))
+      }
+
+      initGridLayout()
+
+      controller.initVideo.foreach { _ =>
+        initGridLayout()
+      }
+    }
+
+    def initGridLayout() =  videoGridInfo.foreach {
+      case (selfParticipant, videoUsers, infos, participants, isVideoBeingSent) =>
+        vh.foreach { grid =>
+          val isFullScreenEnabled = controller.isFullScreenEnabled.currentValue.getOrElse(false)
+          if (!isFullScreenEnabled) refreshVideoGrid(grid, selfParticipant, videoUsers, infos, participants, isVideoBeingSent)
+        }
     }
   }
 
@@ -69,11 +84,7 @@ class CallingFragment extends FragmentHelper {
       if (_) inject[SecurityPolicyChecker].run(getActivity)
     }
 
-    initVideoGrid()
-
-    controller.initVideo.foreach { _ =>
-      initVideoGrid()
-    }
+    videoGrid
   }
 
   override def onBackPressed(): Boolean =
@@ -133,14 +144,6 @@ class CallingFragment extends FragmentHelper {
 
     videoUsers.map { participant => viewMap.getOrElse(participant, createView(participant)) }
   }
-
-  private def initVideoGrid(): Unit =
-    videoGridSubscription = Option(videoGridInfo.foreach {
-      case (selfParticipant, videoUsers, infos, participants, isVideoBeingSent) =>
-        videoGrid.foreach { grid =>
-          refreshVideoGrid(grid, selfParticipant, videoUsers, infos, participants, isVideoBeingSent)
-        }
-    })
 
   private def refreshVideoGrid(grid            : GridLayout,
                                selfParticipant : Participant,
@@ -227,7 +230,6 @@ class CallingFragment extends FragmentHelper {
   def clearVideoGrid(): Unit = {
     videoGrid.foreach(_.removeAllViews())
     viewMap = Map.empty
-    videoGridSubscription.foreach(_.unsubscribe())
   }
 
   def showFullScreenVideo(participant: Participant): Unit = getChildFragmentManager

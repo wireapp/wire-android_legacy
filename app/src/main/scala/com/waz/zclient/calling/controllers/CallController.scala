@@ -53,6 +53,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   import VideoState._
 
   val initVideo = EventStream[Unit]()
+  val isFullScreenEnabled = Signal(false)
 
   private lazy val screenManager  = new ScreenManager
   private lazy val soundController = inject[SoundController]
