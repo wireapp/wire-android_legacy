@@ -218,7 +218,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       val activeSpeakersHandler = new ActiveSpeakersHandler {
         override def onActiveSpeakersChanged(inst: Handle, convId: String, data: String, arg: Pointer): Unit =
           ActiveSpeakerChangeDecoder.decode(data).fold(()) { activeSpeakersChange =>
-            val activeSpeakers = activeSpeakersChange.speakers.map(m => ActiveSpeaker(m.userid, m.clientid, m.audio_level)).toSet
+            val activeSpeakers = activeSpeakersChange.audio_levels.map(m => ActiveSpeaker(m.userid, m.clientid, m.audio_level)).toSet
             cs.onActiveSpeakersChanged(RConvId(convId), activeSpeakers)
           }
       }
@@ -443,7 +443,7 @@ object Avs extends DerivedLogTag {
   object ActiveSpeakerChangeDecoder extends CirceJSONSupport {
     import io.circe.{Decoder, parser}
 
-    case class ActiveSpeakerChange(speakers: Seq[Speaker])
+    case class ActiveSpeakerChange(audio_levels: Seq[Speaker])
 
     case class Speaker(userid: UserId, clientid: ClientId, audio_level: Int)
 
