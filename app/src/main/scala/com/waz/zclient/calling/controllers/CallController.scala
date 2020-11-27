@@ -23,6 +23,7 @@ import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
+import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
@@ -145,9 +146,15 @@ class CallController(implicit inj: Injector, cxt: WireContext)
         isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started)).nonEmpty),
         isScreenShareEnabled = videoStates.get(user.id).exists(_.intersect(Set(ScreenShare)).nonEmpty),
         isSelf         = cZms.selfUserId == user.id,
-        isMuted        = participants.find(_.userId == user.id).map(_.muted).getOrElse(false)
+        isMuted        = participants.find(_.userId == user.id).map(_.muted).getOrElse(false),
+        clientId       = participants.find(_.userId == user.id).map(_.clientId).get
       )
     }
+
+  def isActiveSpeaker(userId: UserId, clientId: ClientId): Signal[Boolean] =
+    activeSpeakers.map(_.find { activeSpeaker =>
+      activeSpeaker.clientId == clientId && activeSpeaker.userId == userId && activeSpeaker.audioLevel > 0
+    }.isDefined)
 
   val flowManager = callingZms.map(_.flowmanager)
 
@@ -535,6 +542,7 @@ object CallController {
                                  isVideoEnabled: Boolean,
                                  isScreenShareEnabled: Boolean,
                                  isSelf:         Boolean,
-                                 isMuted:        Boolean
+                                 isMuted:        Boolean,
+                                 clientId:       ClientId
                                 ) extends Identifiable[UserId]
 }
