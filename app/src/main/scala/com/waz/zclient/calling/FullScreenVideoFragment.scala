@@ -34,49 +34,44 @@ import com.waz.zclient.R
 class FullScreenVideoFragment extends FragmentHelper {
 
   private lazy val controller = inject[CallController]
-  private lazy val fullScreenVideoContainer = view[FrameLayout](R.id.full_screen_video_container)
+  private lazy val fullScreenVideoContainer = returning(view[FrameLayout](R.id.full_screen_video_container)){ vh =>
+    val bundle = this.getArguments
+    if (bundle != null) {
+      val participant = bundle.getSerializable(PARTICIPANT_BUNDLE_KEY).asInstanceOf[Participant]
+      controller.isFullScreenEnabled ! true
+
+      vh.foreach { container =>
+
+        val selfParticipant = controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)).currentValue.get
+
+        val userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
+        else new OtherVideoView(getContext, participant)
+
+        userVideoView.onDoubleClick.onUi { _ =>
+          minimizeVideo(container, userVideoView)
+        }
+
+        container.addView(userVideoView)
+
+        controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
+          case VideoState.Started | VideoState.ScreenShare =>
+          case _ => minimizeVideo(container, userVideoView)
+        }
+      }
+    }
+  }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_full_screen_video, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
-    initParticipant()
+    fullScreenVideoContainer
   }
-
-  def initParticipant(): Unit = {
-    val bundle = this.getArguments
-    if (bundle != null) {
-      val participant = bundle.getSerializable(PARTICIPANT_BUNDLE_KEY).asInstanceOf[Participant]
-      showMaximizedVideo(participant)
-      controller.isFullScreenEnabled ! true
-    }
-  }
-
-  def showMaximizedVideo(participant: Participant): Unit =
-    fullScreenVideoContainer.foreach { container =>
-
-      val selfParticipant = controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)).currentValue.get
-
-      val userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
-      else new OtherVideoView(getContext, participant)
-
-      userVideoView.onDoubleClick.onUi { _ =>
-        minimizeVideo(container, userVideoView)
-      }
-
-      container.addView(userVideoView)
-
-      controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
-        case VideoState.Started | VideoState.ScreenShare =>
-        case _ => minimizeVideo(container, userVideoView)
-      }
-    }
 
   def minimizeVideo(container: FrameLayout, userVideoView: UserVideoView): Unit = {
     container.removeView(userVideoView)
     getFragmentManager.popBackStack()
-    controller.initVideo ! (())
     controller.isFullScreenEnabled ! false
   }
 }

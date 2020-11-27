@@ -46,26 +46,22 @@ class CallingFragment extends FragmentHelper {
   private lazy val controlsFragment   = ControlsFragment.newInstance
   private lazy val previewCardView    = view[CardView](R.id.preview_card_view)
   private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
+
     controller.theme.map(themeController.getTheme).foreach { theme =>
       vh.foreach {
         _.setBackgroundColor(getStyledColor(R.attr.wireBackgroundColor, theme))
       }
+    }
 
-      initGridLayout()
-
-      controller.initVideo.foreach { _ =>
-        initGridLayout()
+    vh.foreach { grid =>
+      Signal.zip(videoGridInfo, controller.isFullScreenEnabled).foreach {
+        case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false) =>
+          refreshVideoGrid(grid, selfParticipant, videoUsers, infos, participants, isVideoBeingSent)
+        case _ =>
       }
     }
-
-    def initGridLayout() =  videoGridInfo.foreach {
-      case (selfParticipant, videoUsers, infos, participants, isVideoBeingSent) =>
-        vh.foreach { grid =>
-          val isFullScreenEnabled = controller.isFullScreenEnabled.currentValue.getOrElse(false)
-          if (!isFullScreenEnabled) refreshVideoGrid(grid, selfParticipant, videoUsers, infos, participants, isVideoBeingSent)
-        }
-    }
   }
+
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_calling, container, false)) { v =>
