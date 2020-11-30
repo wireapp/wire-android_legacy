@@ -19,7 +19,7 @@ package com.waz.zclient.common.views
 
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
-import android.util.{AttributeSet}
+import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
@@ -27,8 +27,10 @@ import androidx.appcompat.widget.AppCompatCheckBox
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.threading.Threading._
 import com.waz.utils.returning
+import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon}
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -48,6 +50,8 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   inflate(R.layout.single_user_row_view)
 
+  protected lazy val callController: CallController = inject[CallController]
+  protected lazy val accentColorController = inject[AccentColorController]
   private lazy val chathead       = findById[ChatHeadView](R.id.chathead)
   private lazy val nameView       = findById[TypefaceTextView](R.id.name_text)
   private lazy val subtitleView   = findById[TypefaceTextView](R.id.username_text)
@@ -93,12 +97,28 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   private val isMuted = Signal(false)
+  private val isActiveSpeaker = Signal(false)
   audioIndicator.setVisible(true)
-  Signal.zip(chosenCurrentTheme, isMuted).onUi {
-    case (Theme.Light, true)  => audioIndicator.setImageResource(R.drawable.ic_muted_light_theme)
-    case (Theme.Light, false) => audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
-    case (Theme.Dark, true)   => audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
-    case (Theme.Dark, false)  => audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
+  Signal.zip(chosenCurrentTheme, isMuted, isActiveSpeaker, accentColorController.accentColor.map(_.color)
+  ).onUi {
+    case (Theme.Light, true, _, _) =>
+      audioIndicator.setImageResource(R.drawable.ic_muted_light_theme)
+      audioIndicator.setColorFilter(getColor(R.color.graphite))
+    case (Theme.Light, false, false, _) =>
+      audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
+      audioIndicator.setColorFilter(getColor(R.color.graphite))
+    case (Theme.Light, false, true, color) =>
+      audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
+      audioIndicator.setColorFilter(color)
+    case (Theme.Dark, true, _, _) =>
+      audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
+      audioIndicator.setColorFilter(getColor(R.color.white))
+    case (Theme.Dark, false, false, _) =>
+      audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
+      audioIndicator.setColorFilter(getColor(R.color.white))
+    case (Theme.Dark, false, true, color) =>
+      audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
+      audioIndicator.setColorFilter(color)
     case _ =>
   }
 
@@ -142,6 +162,9 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     isGuest ! user.isGuest
     isPartner ! user.isExternal
     setVerified(user.isVerified)
+    callController.isActiveSpeaker(user.userId, user.clientId).foreach { isActive =>
+      isActiveSpeaker ! isActive
+    }
   }
 
   def setUserData(userData:       UserData,
