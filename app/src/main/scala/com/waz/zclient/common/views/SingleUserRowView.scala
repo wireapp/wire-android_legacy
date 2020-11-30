@@ -21,6 +21,7 @@ import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.view.View.OnClickListener
+import android.view.animation.AnimationUtils
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import androidx.appcompat.widget.AppCompatCheckBox
@@ -38,8 +39,6 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{GuestUtils, StringUtils, _}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
-import com.wire.signals.{EventStream, Signal, SourceStream}
-import com.wire.signals.{EventStream, SourceStream}
 import com.wire.signals.{EventStream, Signal, SourceStream}
 import org.threeten.bp.Instant
 
@@ -99,26 +98,33 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private val isMuted = Signal(false)
   private val isActiveSpeaker = Signal(false)
   audioIndicator.setVisible(true)
+
   Signal.zip(chosenCurrentTheme, isMuted, isActiveSpeaker, accentColorController.accentColor.map(_.color)
   ).onUi {
     case (Theme.Light, true, _, _) =>
       audioIndicator.setImageResource(R.drawable.ic_muted_light_theme)
       audioIndicator.setColorFilter(getColor(R.color.graphite))
+      audioIndicator.clearAnimation()
     case (Theme.Light, false, false, _) =>
       audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
       audioIndicator.setColorFilter(getColor(R.color.graphite))
+      audioIndicator.clearAnimation()
     case (Theme.Light, false, true, color) =>
       audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
       audioIndicator.setColorFilter(color)
+      audioIndicator.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out))
     case (Theme.Dark, true, _, _) =>
       audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
       audioIndicator.setColorFilter(getColor(R.color.white))
+      audioIndicator.clearAnimation()
     case (Theme.Dark, false, false, _) =>
       audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
       audioIndicator.setColorFilter(getColor(R.color.white))
+      audioIndicator.clearAnimation()
     case (Theme.Dark, false, true, color) =>
       audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
       audioIndicator.setColorFilter(color)
+      audioIndicator.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out))
     case _ =>
   }
 
