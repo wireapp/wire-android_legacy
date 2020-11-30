@@ -31,6 +31,7 @@ import android.view.WindowManager;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.view.ViewCompat;
+import android.os.Build;
 
 @SuppressWarnings("Deprecation")
 /*
@@ -89,12 +90,18 @@ public class DeprecationUtils {
 
     public static void setSoftInputMode(Window window, boolean adjustResize, boolean stateAlwaysHidden) {
         int mode = 0;
+
         if (adjustResize) {
             mode |= WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
         }
         if (stateAlwaysHidden) {
             mode |= WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(true);
+        }
+
         window.setSoftInputMode(mode);
     }
 }

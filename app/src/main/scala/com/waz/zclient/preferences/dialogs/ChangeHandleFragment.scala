@@ -19,7 +19,7 @@ package com.waz.zclient.preferences.dialogs
 
 import java.util.Locale
 
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import android.text.{Editable, TextWatcher}
 import android.view.View.OnClickListener
 import android.view.animation.AnimationUtils
@@ -190,15 +190,14 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
     }
   }
 
-  override def onViewCreated(view: View, savedInstanceState: Bundle) = {
-    Try(getDialog.getWindow).foreach { window =>
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) window.setDecorFitsSystemWindows(false)
-      DeprecationUtils.setSoftInputMode(window, true, false)
+  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
+    Try(getDialog.getWindow).foreach {
+      DeprecationUtils.setSoftInputMode(_, true, false)
     }
     super.onViewCreated(view, savedInstanceState)
   }
 
-  override def onStart() = {
+  override def onStart(): Unit = {
     super.onStart()
     handleEditText.addTextChangedListener(handleTextWatcher)
     backButton.setOnClickListener(backButtonClickListener)

@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.preferences.dialogs
 
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.DialogFragment.STYLE_NO_FRAME
 import android.text.TextUtils
@@ -77,7 +77,6 @@ class VerifyEmailPreferencesFragment extends DialogFragment with FragmentHelper 
     inflater.inflate(R.layout.fragment_preference_email_verification, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) getDialog.getWindow.setDecorFitsSystemWindows(false)
     DeprecationUtils.setSoftInputMode(getDialog.getWindow, true, true)
     super.onViewCreated(view, savedInstanceState)
 
