@@ -52,6 +52,8 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   import Threading.Implicits.Background
   import VideoState._
 
+  val isFullScreenEnabled = Signal(false)
+
   private lazy val screenManager  = new ScreenManager
   private lazy val soundController = inject[SoundController]
 
@@ -90,29 +92,26 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     lastCallZms = zms
   }
 
-  val callStateOpt          = currentCallOpt.map(_.map(_.state))
-  val callState             = callStateOpt.collect { case Some(s) => s }
-  val callStateCollapseJoin = currentCall.map(_.stateCollapseJoin)
+  lazy val callStateOpt               = currentCallOpt.map(_.map(_.state))
+  private lazy val callState          = callStateOpt.collect { case Some(s) => s }
+  lazy val callStateCollapseJoin      = currentCall.map(_.stateCollapseJoin)
+  lazy val isCallEstablished          = callStateOpt.map(_.contains(SelfConnected))
+  lazy val isCallOutgoing             = callStateOpt.map(_.contains(SelfCalling))
+  lazy val isCallIncoming             = callStateOpt.map(_.contains(OtherCalling))
+  lazy val callConvId                 = currentCall.map(_.convId)
+  lazy val isMuted                    = currentCall.map(_.muted)
+  private lazy val callerId           = currentCall.map(_.caller)
+  lazy val isVideoCall                = currentCall.map(_.isVideoCall)
+  lazy val videoSendState             = currentCall.map(_.videoSendState)
+  private lazy val videoReceiveStates = currentCall.map(_.videoReceiveStates)
+  lazy val allVideoReceiveStates      = currentCall.map(_.allVideoReceiveStates)
+  lazy val isGroupCall                = currentCall.map(_.isGroup)
+  lazy val cbrEnabled                 = currentCall.map(_.isCbrEnabled)
+  private lazy val duration           = currentCall.flatMap(_.durationFormatted)
+  lazy val selfParticipant            = currentCall.map(_.selfParticipant)
+  lazy val otherParticipants          = currentCall.map(_.otherParticipants)
 
-  val isCallEstablished     = callStateOpt.map(_.contains(SelfConnected))
-  val isCallOutgoing        = callStateOpt.map(_.contains(SelfCalling))
-  val isCallIncoming        = callStateOpt.map(_.contains(OtherCalling))
-
-  val callConvId            = currentCall.map(_.convId)
-  val isMuted               = currentCall.map(_.muted)
-  val callerId              = currentCall.map(_.caller)
-  val startedAsVideo        = currentCall.map(_.startedAsVideoCall)
-  val isVideoCall           = currentCall.map(_.isVideoCall)
-  val videoSendState        = currentCall.map(_.videoSendState)
-  val videoReceiveStates    = currentCall.map(_.videoReceiveStates)
-  val allVideoReceiveStates = currentCall.map(_.allVideoReceiveStates)
-  val isGroupCall           = currentCall.map(_.isGroup)
-  val cbrEnabled            = currentCall.map(_.isCbrEnabled)
-  val duration              = currentCall.flatMap(_.durationFormatted)
-  val otherParticipants     = currentCall.map(_.otherParticipants)
-  val isConferenceCall      = currentCall.map(_.isConferenceCall)
-
-  val lastCallAccountId: SourceSignal[UserId] = Signal()
+  private val lastCallAccountId: SourceSignal[UserId] = Signal()
   currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
 
   val theme: Signal[Theme] = isVideoCall.flatMap {
@@ -124,10 +123,10 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     allVideoReceiveStates.map(_.groupBy(_._1.userId).mapValues(_.values.toSet))
   }
 
-  def orderedParticipantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
-    participantInfos(take).map(_.sortBy(_.displayName.toLowerCase))
+  lazy val orderedParticipantInfos: Signal[Vector[CallParticipantInfo]] =
+    participantInfos.map(_.sortBy(_.displayName.toLowerCase))
 
-  def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
+  lazy val participantInfos: Signal[Vector[CallParticipantInfo]] =
     for {
       cZms         <- callingZms
       participants <- otherParticipants.map(_.toSeq)
@@ -136,7 +135,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
       videoStates  <- mergedVideoStates
     } yield users.map { user =>
       CallParticipantInfo(
-        userId         = user.id,
+        id         = user.id,
         picture        = user.picture,
         displayName    = user.name,
         isGuest        = user.isGuest(cZms.teamId),
@@ -526,7 +525,7 @@ private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector)
 }
 
 object CallController {
-  case class CallParticipantInfo(userId:         UserId,
+  case class CallParticipantInfo(override val id: UserId,
                                  picture:        Option[Picture],
                                  displayName:    String,
                                  isGuest:        Boolean,
@@ -536,5 +535,5 @@ object CallController {
                                  isScreenShareEnabled: Boolean,
                                  isSelf:         Boolean,
                                  isMuted:        Boolean
-                                )
+                                ) extends Identifiable[UserId]
 }
