@@ -50,23 +50,25 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   inflate(R.layout.single_user_row_view)
 
   protected lazy val callController: CallController = inject[CallController]
-  protected lazy val accentColorController = inject[AccentColorController]
-  private lazy val chathead       = findById[ChatHeadView](R.id.chathead)
-  private lazy val nameView       = findById[TypefaceTextView](R.id.name_text)
-  private lazy val subtitleView   = findById[TypefaceTextView](R.id.username_text)
-  private lazy val checkbox       = findById[AppCompatCheckBox](R.id.checkbox)
-  private lazy val verifiedShield = findById[ImageView](R.id.verified_image_view)
-  private lazy val guestPartnerIndicator = findById[ImageView](R.id.guest_external_image_view)
-  private lazy val videoIndicator = findById[ImageView](R.id.video_status_image_view)
-  private lazy val audioIndicator = findById[ImageView](R.id.audio_status_image_view)
-  private lazy val nextIndicator  = returning(findById[ImageView](R.id.next_indicator))(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40)))
-  private lazy val separator      = findById[View](R.id.separator)
-  private lazy val auxContainer   = findById[ViewGroup](R.id.aux_container)
-  private lazy val guestIndicator = returning(findById[ImageView](R.id.guest_image_view))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
-  private lazy val externalIndicator   = findById[ImageView](R.id.external_image_view)
+  protected lazy val accentColorController          = inject[AccentColorController]
+  private lazy val chathead                         = findById[ChatHeadView](R.id.chathead)
+  private lazy val nameView                         = findById[TypefaceTextView](R.id.name_text)
+  private lazy val subtitleView                     = findById[TypefaceTextView](R.id.username_text)
+  private lazy val checkbox                         = findById[AppCompatCheckBox](R.id.checkbox)
+  private lazy val verifiedShield                   = findById[ImageView](R.id.verified_image_view)
+  private lazy val guestPartnerIndicator            = findById[ImageView](R.id.guest_external_image_view)
+  private lazy val videoIndicator                   = findById[ImageView](R.id.video_status_image_view)
+  private lazy val audioIndicator                   = findById[ImageView](R.id.audio_status_image_view)
+  private lazy val nextIndicator                    = returning(
+    findById[ImageView](R.id.next_indicator))(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
+  )
+  private lazy val separator                        = findById[View](R.id.separator)
+  private lazy val auxContainer                     = findById[ViewGroup](R.id.aux_container)
+  private lazy val guestIndicator                   = returning(findById[ImageView](R.id.guest_image_view))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
+  private lazy val externalIndicator                = findById[ImageView](R.id.external_image_view)
 
-  private lazy val youTextString = getString(R.string.content__system__you).capitalize
-  private lazy val youText        = returning(findById[TypefaceTextView](R.id.you_text))(_.setText(s"($youTextString)"))
+  private lazy val youTextString                    = getString(R.string.content__system__you).capitalize
+  private lazy val youText                          = returning(findById[TypefaceTextView](R.id.you_text))(_.setText(s"($youTextString)"))
 
   val onSelectionChanged: SourceStream[Boolean] = EventStream()
   private var solidBackground = false
@@ -101,7 +103,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   Signal.zip(chosenCurrentTheme, isMuted, isActiveSpeaker, accentColorController.accentColor.map(_.color)
   ).onUi {
-    case (Theme.Light, true, _, _) =>
+    case (Theme.Light, true, _, _)        =>
       updateAudioIndicator(R.drawable.ic_muted_light_theme, getColor(R.color.graphite), false)
     case (Theme.Light, false, false, _) =>
       updateAudioIndicator(R.drawable.ic_unmuted_light_theme, getColor(R.color.graphite), false)
@@ -109,7 +111,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
       updateAudioIndicator(R.drawable.ic_unmuted_light_theme, color, true)
     case (Theme.Dark, true, _, _) =>
       updateAudioIndicator(R.drawable.ic_muted_dark_theme, getColor(R.color.white), false)
-    case (Theme.Dark, false, false, _) =>
+    case (Theme.Dark, false, false, _)    =>
       updateAudioIndicator(R.drawable.ic_unmuted_dark_theme, getColor(R.color.white), false)
     case (Theme.Dark, false, true, color) =>
       updateAudioIndicator(R.drawable.ic_unmuted_dark_theme, color, true)
