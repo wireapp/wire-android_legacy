@@ -4,4 +4,4 @@
     android:fromAlpha="1.0"
     android:repeatCount="infinite"
     android:repeatMode="reverse"
-    android:toAlpha="0.0" />
+    android:toAlpha="0.1" />

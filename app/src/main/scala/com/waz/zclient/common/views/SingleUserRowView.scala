@@ -102,30 +102,25 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   Signal.zip(chosenCurrentTheme, isMuted, isActiveSpeaker, accentColorController.accentColor.map(_.color)
   ).onUi {
     case (Theme.Light, true, _, _) =>
-      audioIndicator.setImageResource(R.drawable.ic_muted_light_theme)
-      audioIndicator.setColorFilter(getColor(R.color.graphite))
-      audioIndicator.clearAnimation()
+      updateAudioIndicator(R.drawable.ic_muted_light_theme, getColor(R.color.graphite), false)
     case (Theme.Light, false, false, _) =>
-      audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
-      audioIndicator.setColorFilter(getColor(R.color.graphite))
-      audioIndicator.clearAnimation()
+      updateAudioIndicator(R.drawable.ic_unmuted_light_theme, getColor(R.color.graphite), false)
     case (Theme.Light, false, true, color) =>
-      audioIndicator.setImageResource(R.drawable.ic_unmuted_light_theme)
-      audioIndicator.setColorFilter(color)
-      audioIndicator.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out))
+      updateAudioIndicator(R.drawable.ic_unmuted_light_theme, color, true)
     case (Theme.Dark, true, _, _) =>
-      audioIndicator.setImageResource(R.drawable.ic_muted_dark_theme)
-      audioIndicator.setColorFilter(getColor(R.color.white))
-      audioIndicator.clearAnimation()
+      updateAudioIndicator(R.drawable.ic_muted_dark_theme, getColor(R.color.white), false)
     case (Theme.Dark, false, false, _) =>
-      audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
-      audioIndicator.setColorFilter(getColor(R.color.white))
-      audioIndicator.clearAnimation()
+      updateAudioIndicator(R.drawable.ic_unmuted_dark_theme, getColor(R.color.white), false)
     case (Theme.Dark, false, true, color) =>
-      audioIndicator.setImageResource(R.drawable.ic_unmuted_dark_theme)
-      audioIndicator.setColorFilter(color)
-      audioIndicator.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out))
+      updateAudioIndicator(R.drawable.ic_unmuted_dark_theme, color, true)
     case _ =>
+  }
+
+  def updateAudioIndicator(imageResource: Int, color: Int, isAnimated: Boolean): Unit = {
+    audioIndicator.setImageResource(imageResource)
+    audioIndicator.setColorFilter(color)
+    if (isAnimated) audioIndicator.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out))
+    else audioIndicator.clearAnimation()
   }
 
   private val isGuest = Signal(false)
