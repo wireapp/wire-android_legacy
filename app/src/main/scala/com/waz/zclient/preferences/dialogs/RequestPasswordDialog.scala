@@ -37,6 +37,7 @@ import com.waz.zclient.messages.ExecutorWrapper
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{FragmentHelper, R}
 import com.waz.threading.Threading._
+import com.waz.zclient.utils.ViewUtils
 
 class RequestPasswordDialog extends DialogFragment with FragmentHelper {
   import RequestPasswordDialog._
@@ -88,22 +89,28 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper {
   })
 
   private lazy val dialog: AlertDialog = {
-    val builder = new AlertDialog.Builder(getActivity)
-      .setView(root)
-      .setTitle(title)
-      .setMessage(message)
-      .setPositiveButton(R.string.request_password_ok, new OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int): Unit = onAnswer ! PasswordAnswer(Password(passwordEditText.getText.toString))
-      })
+    if (useBiometric) prompt.authenticate(promptInfo)
 
-    Option(getBooleanArg(IsCancellable)).foreach(
-      if (_) builder.setNegativeButton(R.string.request_password_cancel, new OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int): Unit = onAnswer ! PasswordCancelled
-      })
+    val dialog = ViewUtils.showAlertDialog(
+      getActivity,
+      root,
+      title,
+      message,
+      getString(R.string.request_password_ok),
+      getString(R.string.request_password_cancel),
+      new OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int): Unit =
+          onAnswer ! PasswordAnswer(Password(passwordEditText.getText.toString))
+      },
+      new OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int): Unit =
+          onAnswer ! PasswordCancelled
+      },
+      Option(getBooleanArg(IsCancellable)).contains(true)
     )
 
-    if (useBiometric) prompt.authenticate(promptInfo)
-    returning(builder.create)(_.getWindow.setDimAmount(1.0f))
+    dialog.getWindow.setDimAmount(1.0f)
+    dialog
   }
 
   def show(activity: FragmentActivity): Unit =

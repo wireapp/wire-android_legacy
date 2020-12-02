@@ -181,13 +181,62 @@ public class ViewUtils {
                                               @StringRes int negativeButton,
                                               DialogInterface.OnClickListener positiveAction,
                                               DialogInterface.OnClickListener negativeAction) {
-        AlertDialog dialog = new AlertDialog.Builder(context)
+        return showAlertDialog(
+            context,
+            view,
+            title,
+            message,
+            positiveButton,
+            negativeButton,
+            positiveAction,
+            negativeAction,
+            true
+        );
+    }
+
+    public static AlertDialog showAlertDialog(Context context,
+                                              View view,
+                                              @StringRes int title,
+                                              @StringRes int message,
+                                              @StringRes int positiveButton,
+                                              @StringRes int negativeButton,
+                                              DialogInterface.OnClickListener positiveAction,
+                                              DialogInterface.OnClickListener negativeAction,
+                                              boolean shouldUseNegativeButton) {
+        Resources res = context.getResources();
+        return showAlertDialog(
+            context,
+            view,
+            res.getString(title),
+            res.getString(message),
+            res.getString(positiveButton),
+            res.getString(negativeButton),
+            positiveAction,
+            negativeAction,
+            shouldUseNegativeButton
+        );
+    }
+
+    public static AlertDialog showAlertDialog(Context context,
+                                              View view,
+                                              String title,
+                                              String message,
+                                              String positiveButton,
+                                              String negativeButton,
+                                              DialogInterface.OnClickListener positiveAction,
+                                              DialogInterface.OnClickListener negativeAction,
+                                              boolean shouldUseNegativeButton) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context)
             .setView(view)
             .setTitle(title)
             .setMessage(message)
-            .setPositiveButton(positiveButton, positiveAction)
-            .setNegativeButton(negativeButton, negativeAction)
-            .create();
+            .setPositiveButton(positiveButton, positiveAction);
+
+        if (shouldUseNegativeButton) {
+            builder.setNegativeButton(negativeButton, negativeAction);
+        }
+
+        AlertDialog dialog = builder.create();
         dialog.show();
         return dialog;
     }

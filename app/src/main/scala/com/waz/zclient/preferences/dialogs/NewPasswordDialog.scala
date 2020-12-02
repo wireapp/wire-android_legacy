@@ -47,9 +47,9 @@ class NewPasswordDialog extends DialogFragment with FragmentHelper {
       clicked = ! clicked
       showOrHide()
       if (clicked) {
-        passwordEditText.setTransformationMethod(HideReturnsTransformationMethod.getInstance())
+        passwordEditText.setTransformationMethod(HideReturnsTransformationMethod.getInstance)
       } else {
-        passwordEditText.setTransformationMethod(PasswordTransformationMethod.getInstance())
+        passwordEditText.setTransformationMethod(PasswordTransformationMethod.getInstance)
       }
       passwordEditText.setSelection(passwordEditText.getText.length);
     }
@@ -59,17 +59,18 @@ class NewPasswordDialog extends DialogFragment with FragmentHelper {
   private lazy val isDarkTheme = getBooleanArg(IsDarkTheme)
   private lazy val keyboard = inject[KeyboardController]
 
-  override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
-    val builder = new AlertDialog.Builder(getActivity)
-      .setView(root)
-      .setTitle(getString(mode.dialogTitleId))
-      .setMessage(getString(R.string.new_password_dialog_message))
-      .setPositiveButton(mode.dialogButtonId, null)
-
-    if (mode == ChangeMode) builder.setNegativeButton(android.R.string.cancel, null)
-
-    builder.create()
-  }
+  override def onCreateDialog(savedInstanceState: Bundle): Dialog =
+    ViewUtils.showAlertDialog(
+      getActivity,
+      root,
+      mode.dialogTitleId,
+      R.string.new_password_dialog_message,
+      mode.dialogButtonId,
+      android.R.string.cancel,
+      null,
+      null,
+      mode == ChangeMode
+    )
 
   override def onStart(): Unit = {
     super.onStart()
