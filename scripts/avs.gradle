@@ -8,8 +8,8 @@ final String AVS_PUBLIC_GROUP = "com.wire"
 final String AVS_PRIVATE_GROUP = "com.wearezeta.avs"
 final String AVS_NAME = "avs"
 
-String avsPublicVersion = "6.4.236"
-String avsPrivateVersion = "6.6.6"
+String avsPublicVersion = "6.6.239"
+String avsPrivateVersion = "6.6.9"
 
 String nexusUrl = ""
 
