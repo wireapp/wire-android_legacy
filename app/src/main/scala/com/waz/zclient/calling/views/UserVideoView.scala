@@ -18,7 +18,9 @@
 package com.waz.zclient.calling.views
 
 import android.content.Context
+import android.graphics.drawable.GradientDrawable
 import android.view.View
+import android.view.animation.AnimationUtils
 import android.widget.{FrameLayout, ImageView, TextView}
 import androidx.cardview.widget.CardView
 import com.waz.avs.{VideoPreview, VideoRenderer}
@@ -29,15 +31,16 @@ import com.waz.utils.returning
 import com.waz.zclient.ViewHelper
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
-import com.waz.zclient.glide.BackgroundRequest
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.R
 import com.waz.zclient.utils.RichView
 import com.waz.threading.Threading._
+import com.waz.zclient.common.controllers.global.AccentColorController
 
 abstract class UserVideoView(context: Context, val participant: Participant) extends FrameLayout(context, null, 0) with ViewHelper {
-  protected lazy val controller: CallController = inject[CallController]
+  protected lazy val callController: CallController = inject[CallController]
+  protected lazy val accentColorController = inject[AccentColorController]
 
   inflate(R.layout.video_call_info_view)
 
@@ -46,27 +49,27 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   val onDoubleClick = EventStream[Unit]()
 
   this.onClick({
-    controller.controlsClick(true)
+    callController.controlsClick(true)
   }, {
     onDoubleClick ! {}
   })
 
   private val pictureId: Signal[Picture] = for {
-    z             <- controller.callingZms
+    z             <- callController.callingZms
     Some(picture) <- z.usersStorage.signal(participant.userId).map(_.picture)
   } yield picture
 
   protected val audioStatusImageView = findById[ImageView](R.id.audio_status_image_view)
 
-  protected val imageView = returning(findById[ImageView](R.id.image_view)) { view =>
+  /*protected val imageView = returning(findById[ImageView](R.id.image_view)) { view =>
     pictureId.onUi(BackgroundRequest(_).into(view))
-  }
+  }*/
 
   protected val pausedText = findById[TextView](R.id.paused_text_view)
 
   private val participantInfoCardView = findById[CardView](R.id.participant_info_card_view)
 
-  protected val stateMessageText = controller.stateMessageText(participant)
+  protected val stateMessageText = callController.stateMessageText(participant)
   stateMessageText.onUi(msg => pausedText.setText(msg.getOrElse("")))
 
   protected val pausedTextVisible = stateMessageText.map(_.exists(_.nonEmpty))
@@ -78,8 +81,8 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   protected val participantInfo: Signal[Option[CallParticipantInfo]] =
     for {
-      isGroup <- controller.isGroupCall
-      infos   <- if (isGroup) controller.participantInfos else Signal.const(Vector.empty)
+      isGroup <- callController.isGroupCall
+      infos   <- if (isGroup) callController.participantInfos else Signal.const(Vector.empty)
     } yield infos.find(_.id == participant.userId)
 
   protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
@@ -91,16 +94,16 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   }
 
   Signal.zip(
-    controller.isGroupCall,
-    controller.controlsVisible,
-    controller.otherParticipants.map(_.size)
+    callController.isGroupCall,
+    callController.controlsVisible,
+    callController.otherParticipants.map(_.size)
   ).map {
     case (true, false, 0 | 1 | 2) => View.GONE
     case (true, false, _)         => View.VISIBLE
     case _                        => View.GONE
   }.onUi(participantInfoCardView.setVisibility)
 
-  private lazy val allVideoStates =  controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown))
+  private lazy val allVideoStates =  callController.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown))
 
   protected def registerHandler(view: View): Unit = {
     allVideoStates.onUi {
@@ -108,7 +111,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
       case _                                      => view.fadeIn()
     }
 
-    Signal.zip(controller.isFullScreenEnabled, allVideoStates).onUi {
+    Signal.zip(callController.isFullScreenEnabled, allVideoStates).onUi {
       case (true, _)                       => videoShouldFit(view)
       case (false, VideoState.ScreenShare) => videoShouldFit(view)
       case (false, VideoState.Started)     => videoShouldFill(view)
@@ -136,9 +139,30 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     case _ =>
   }
 
-    Signal.zip(controller.controlsVisible, shouldShowInfo, controller.isCallIncoming).onUi {
+    Signal.zip(callController.controlsVisible, shouldShowInfo, callController.isCallIncoming).onUi {
     case (_, true, true) |
          (false, true, _) => videoCallInfo.fadeIn()
     case _                => videoCallInfo.fadeOut()
   }
+
+  def updateAudioIndicator(imageResource: Int, color: Int, isAnimated: Boolean): Unit = {
+    audioStatusImageView.setImageResource(imageResource)
+    audioStatusImageView.setColorFilter(color)
+    if (isAnimated) audioStatusImageView.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out))
+    else audioStatusImageView.clearAnimation()
+  }
+
+  def showActiveSpeakerFrame(color: Int): Unit = {
+    val border = new GradientDrawable()
+    border.setColor(getColor(R.color.black))
+    border.setStroke(3, color)
+    setBackground(border)
+    getChildAt(1).setMargin(3,3,3,3)
+  }
+
+  def hideActiveSpeakerFrame(): Unit = {
+    setBackgroundColor(getColor(R.color.black))
+    getChildAt(1).setMargin(0,0,0,0)
+  }
+
 }

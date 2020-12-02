@@ -165,7 +165,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     isGuest ! user.isGuest
     isPartner ! user.isExternal
     setVerified(user.isVerified)
-    callController.isActiveSpeaker(user.userId, user.clientId).foreach { isActive =>
+    callController.isActiveSpeaker(user.id, user.clientId).foreach { isActive =>
       isActiveSpeaker ! isActive
     }
   }

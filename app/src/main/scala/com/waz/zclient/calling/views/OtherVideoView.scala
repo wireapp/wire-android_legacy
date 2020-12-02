@@ -29,11 +29,24 @@ import com.wire.signals.Signal
 
 class OtherVideoView(context: Context, participant: Participant) extends UserVideoView(context, participant) {
 
-  participantInfo.onUi {
-    case Some(info) =>
-      if (info.isMuted) audioStatusImageView.setImageResource(R.drawable.ic_muted_video_grid)
-      else audioStatusImageView.setImageResource(R.drawable.ic_unmuted_video_grid)
-    case _ =>
+  Signal.zip(
+    participantInfo.map(_.map(_.isMuted)),
+    callController.isActiveSpeaker(participant.userId, participant.clientId),
+    accentColorController.accentColor.map(_.color)
+  ).onUi {
+    case (Some(false), true, color) => {
+      updateAudioIndicator(R.drawable.ic_unmuted_video_grid, color, true)
+      showActiveSpeakerFrame(color)
+    }
+    case (Some(false), false, _)    => {
+      updateAudioIndicator(R.drawable.ic_unmuted_video_grid, context.getColor(R.color.white), false)
+      hideActiveSpeakerFrame()
+    }
+    case (Some(true), _, _)         => {
+      updateAudioIndicator(R.drawable.ic_muted_video_grid, context.getColor(R.color.white), false)
+      hideActiveSpeakerFrame()
+    }
+    case _                          =>
   }
 
   override lazy val shouldShowInfo: Signal[Boolean] = pausedTextVisible

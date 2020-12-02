@@ -33,20 +33,35 @@ import com.waz.zclient.R
 class SelfVideoView(context: Context, participant: Participant)
   extends UserVideoView(context, participant) with DerivedLogTag {
 
-  controller.isMuted.onUi {
-    case true => audioStatusImageView.setImageResource(R.drawable.ic_muted_video_grid)
-    case false => audioStatusImageView.setImageResource(R.drawable.ic_unmuted_video_grid)
+  Signal.zip(
+    callController.isMuted,
+    callController.isActiveSpeaker(participant.userId, participant.clientId),
+    accentColorController.accentColor.map(_.color)
+  ).onUi {
+    case (false, true, color) => {
+      updateAudioIndicator(R.drawable.ic_unmuted_video_grid, color, true)
+      showActiveSpeakerFrame(color)
+    }
+    case (false, false, _)    => {
+      updateAudioIndicator(R.drawable.ic_unmuted_video_grid, context.getColor(R.color.white), false)
+      hideActiveSpeakerFrame()
+    }
+    case (true, _, _)         => {
+      updateAudioIndicator(R.drawable.ic_muted_video_grid, context.getColor(R.color.white), false)
+      hideActiveSpeakerFrame()
+    }
+    case _ =>
   }
 
-  controller.videoSendState.filter(_ == VideoState.Started).head.foreach { _ =>
+  callController.videoSendState.filter(_ == VideoState.Started).head.foreach { _ =>
     registerHandler(returning(new VideoPreview(getContext)) { v =>
-      controller.setVideoPreview(Some(v))
+      callController.setVideoPreview(Some(v))
       v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
       addView(v, 1)
     })
   }(Threading.Ui)
 
-  override lazy val shouldShowInfo: Signal[Boolean] = Signal.zip(pausedTextVisible, controller.isMuted).map {
+  override lazy val shouldShowInfo: Signal[Boolean] = Signal.zip(pausedTextVisible, callController.isMuted).map {
     case (paused, muted) => paused || muted
   }
 }
