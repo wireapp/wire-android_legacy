@@ -18,13 +18,13 @@
 package com.waz.utils.crypto
 
 import java.io._
-import java.security.{DigestInputStream, DigestOutputStream, MessageDigest}
+import java.security.{DigestOutputStream, KeyStore, MessageDigest}
 
-import javax.crypto.{BadPaddingException, Cipher, CipherInputStream, CipherOutputStream}
-import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
+import android.security.keystore.{KeyGenParameterSpec, KeyProperties}
 import com.waz.model.{AESKey, Sha256}
-import com.waz.service.assets.AESKeyBytes
 import com.waz.utils.{IoUtils, SafeBase64, returning}
+import javax.crypto.spec.{GCMParameterSpec, IvParameterSpec, SecretKeySpec}
+import javax.crypto.{BadPaddingException, Cipher, CipherInputStream, CipherOutputStream, KeyGenerator}
 
 /**
   * Utils for symmetric encryption.
@@ -41,17 +41,18 @@ object AESUtils {
   def randomKey(): AESKey = AESKey(randomBytes(32))
   def randomKey128(): AESKey = AESKey(randomBytes(16))
 
-  def cipher(key: AESKey, iv: Array[Byte], mode: Int) =
-    returning(Cipher.getInstance("AES/CBC/PKCS5Padding")) { _.init(mode, new SecretKeySpec(key.bytes, "AES"), new IvParameterSpec(iv)) }
+  def cipher(key: AESKey, iv: Array[Byte], mode: Int): Cipher =
+    returning(Cipher.getInstance("AES/CBC/PKCS5Padding")) {
+      _.init(mode, new SecretKeySpec(key.bytes, "AES"), new IvParameterSpec(iv))
+    }
 
-  def cipher(key: Array[Byte], iv: Array[Byte], mode: Int) =
-    returning(Cipher.getInstance("AES/CBC/PKCS5Padding")) { _.init(mode, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv)) }
+  private def cipher(key: Array[Byte], iv: Array[Byte], mode: Int): Cipher =
+    returning(Cipher.getInstance("AES/CBC/PKCS5Padding")) {
+      _.init(mode, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv))
+    }
 
   def decrypt(key: AESKey, input: Array[Byte]): Array[Byte] =
     cipher(key, input.take(16), Cipher.DECRYPT_MODE).doFinal(input.drop(16))
-
-  def decrypt(key: AESKeyBytes, input: Array[Byte]): Array[Byte] =
-    cipher(key.bytes, input.take(16), Cipher.DECRYPT_MODE).doFinal(input.drop(16))
 
   def encrypt(key: AESKey, bytes: Array[Byte]): (Sha256, Array[Byte]) = {
     val os = new ByteArrayOutputStream()
@@ -63,12 +64,6 @@ object AESUtils {
     val out = new DigestOutputStream(os, MessageDigest.getInstance("SHA-256"))
     IoUtils.copy(is, outputStream(key, out))
     Sha256(out.getMessageDigest.digest())
-  }
-
-  def decrypt(key: AESKey, is: InputStream, os: OutputStream): Sha256 = {
-    val shaStream = new DigestInputStream(is, MessageDigest.getInstance("SHA-256"))
-    IoUtils.copy(inputStream(key, shaStream), os)
-    Sha256(shaStream.getMessageDigest.digest())
   }
 
   def outputStream(key: AESKey, os: OutputStream): CipherOutputStream = {
@@ -102,7 +97,6 @@ object AESUtils {
     }
   }
 
-
   private val InitializingVectorLength = 16
 
   def generateIV: Array[Byte] = randomBytes(InitializingVectorLength)
@@ -118,9 +112,39 @@ object AESUtils {
   def decryptInputStream(key: Array[Byte], is: InputStream): InputStream =
     inputStream(key, None, is, Cipher.DECRYPT_MODE)
 
+  final case class EncryptedText(text: String, iv: String)
+
+  def encryptTextWithAlias(textToEncrypt: String, alias: String): EncryptedText = {
+    val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+    val keyGenParameterSpec = new KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+      .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+      .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+      .build()
+    keyGenerator.init(keyGenParameterSpec)
+    val secretKey = keyGenerator.generateKey
+    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+
+    val iv = cipher.getIV
+    val encrypted = cipher.doFinal(AESUtils.base64(textToEncrypt))
+    EncryptedText(AESUtils.base64(encrypted), AESUtils.base64(iv))
+  }
+
+  def decryptTextWithAlias(encryptedText: EncryptedText, alias: String): String = {
+    val keyStore = KeyStore.getInstance("AndroidKeyStore")
+    keyStore.load(null)
+    val secretKeyEntry = keyStore.getEntry(alias, null).asInstanceOf[KeyStore.SecretKeyEntry]
+    val secretKey = secretKeyEntry.getSecretKey
+
+    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    val spec = new GCMParameterSpec(128, AESUtils.base64(encryptedText.iv))
+    cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
+
+    val text = cipher.doFinal(AESUtils.base64(encryptedText.text))
+    AESUtils.base64(text)
+  }
+
   private def inputStream(key: Array[Byte], initVect: Option[Array[Byte]], is: InputStream, mode: Int): InputStream = {
-
-
     val iv = mode match {
       case Cipher.ENCRYPT_MODE => initVect.get
       case Cipher.DECRYPT_MODE => returning(new Array[Byte](InitializingVectorLength))(IoUtils.readFully(is, _, 0, InitializingVectorLength))
@@ -150,5 +174,4 @@ object AESUtils {
     if (mode == Cipher.ENCRYPT_MODE) new SequenceInputStream(new ByteArrayInputStream(iv), cipherInputStream)
     else cipherInputStream
   }
-
 }

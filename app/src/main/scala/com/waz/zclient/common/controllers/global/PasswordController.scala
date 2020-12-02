@@ -26,6 +26,7 @@ import com.waz.model.AccountData.Password
 import com.waz.service.{AccountsService, GlobalModule, UserService}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
+import com.waz.utils.crypto.AESUtils.{encryptTextWithAlias, decryptTextWithAlias, EncryptedText}
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.dialogs.NewPasswordDialog
@@ -39,7 +40,9 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
   import Threading.Implicits.Background
 
   private val accounts = inject[AccountsService]
-  private val ssoPassword = inject[Signal[UserPreferences]].map(_.preference(UserPreferences.SSOPassword))
+  private val prefs = inject[Signal[UserPreferences]]
+  private val ssoPassword = prefs.map(_.preference(UserPreferences.SSOPassword))
+  private val ssoPasswordIv = prefs.map(_.preference(UserPreferences.SSOPasswordIv))
 
   private lazy val sodiumHandler = inject[SodiumHandler]
 
@@ -53,12 +56,6 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
   def setPassword(p: Password): Future[Unit] = setPassword(Some(p))
   def clearPassword(): Future[Unit] = setPassword(None)
 
-  private def hash(password: String) =
-    accounts.activeAccountId.head.collect {
-      case Some(id) =>
-        sodiumHandler.hash(password, id.str.replace("-", ""))
-    }(Threading.Background)
-
   def changeSSOPassword()(implicit ctx: Context): Future[Unit] =
     for {
       true <- appLockEnabled.head
@@ -71,13 +68,31 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       true        <- appLockEnabled.head
       true        <- ssoEnabled.head
       pwd         <- password.head
-      pref        <- ssoPassword.head
-      ssoPassword <- pref()
+      ssoPref     <- ssoPassword.head
+      ssoPassword <- ssoPref()
       _           <- if (pwd.isEmpty && ssoPassword.isEmpty) openNewPasswordDialog(NewPasswordDialog.SetMode)
                      else Future.successful(())
     } yield ()
 
-  private def openNewPasswordDialog(mode: NewPasswordDialog.Mode)(implicit ctx: Context) = Future {
+  def checkPassword(password: Password): Future[Boolean] =
+    for {
+      isSSO <- ssoEnabled.head
+      users <- inject[Signal[UserService]].head
+      res   <- if (isSSO)
+                 checkSSOPassword(password).map {
+                   case true  => Right(())
+                   case false => Left("")
+                 }
+               else
+                 users.checkPassword(password)
+    } yield res match {
+      case Right(_)  => true
+      case Left(err) =>
+        verbose(l"Check password error: $err")
+        false
+    }
+
+  private def openNewPasswordDialog(mode: NewPasswordDialog.Mode)(implicit ctx: Context): Future[Int] = Future {
     val isDarkTheme = inject[ThemeController].isDarkTheme
     val fragment = NewPasswordDialog.newInstance(mode, isDarkTheme)
     ctx.asInstanceOf[BaseActivity]
@@ -98,36 +113,42 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
                              case Some(p) if isSSO => setSSOPassword(p)
                              case _                => Future.successful(())
                            }
-    } yield {}
+    } yield ()
 
   private def setSSOPassword(pwd: Password): Future[Unit] =
     for {
-      encryptedPwd <- hash(pwd.str)
-      pref         <- ssoPassword.head
-      _            <- pref := Some(encryptedPwd)
-    } yield {}
+      Some(userId) <- accounts.activeAccountId.head
+      hashedPwd    <- hash(pwd.str)
+      encryptedPwd =  encryptTextWithAlias(hashedPwd, userId.str)
+      ssoPref      <- ssoPassword.head
+      _            <- ssoPref := Some(encryptedPwd.text)
+      ssoIvPref    <- ssoPasswordIv.head
+      _            <- ssoIvPref := Some(encryptedPwd.iv)
+    } yield ()
 
   inject[ActivityLifecycleCallback].appInBackground.onUi {
     case (true, _) => clearPassword()
     case _ =>
   }
 
-  def checkPassword(password: Password): Future[Boolean] =
+  private def checkSSOPassword(pwdToCheck: Password): Future[Boolean] =
     for {
-      isSSO <- ssoEnabled.head
-      users <- inject[Signal[UserService]].head
-      res   <- if (isSSO) checkSSOPassword(password).map(_ => Right(())) else users.checkPassword(password)
-    } yield res match {
-      case Right(_)  => true
-      case Left(err) =>
-        verbose(l"Check password error: $err")
+      Some(userId) <- accounts.activeAccountId.head
+      hashToCheck  <- hash(pwdToCheck.str)
+      ssoPref      <- ssoPassword.head
+      ssoPwd       <- ssoPref()
+      ssoIvPref    <- ssoPasswordIv.head
+      ssoIv        <- ssoIvPref()
+    } yield (ssoPwd, ssoIv) match {
+      case (Some(encryptedPwd), Some(iv)) =>
+        hashToCheck == decryptTextWithAlias(EncryptedText(encryptedPwd, iv), userId.str)
+      case _ =>
         false
     }
 
-  private def checkSSOPassword(password: Password): Future[Boolean] =
-    for {
-      pref         <- ssoPassword.head
-      ssoPwd       <- pref()
-      encryptedPwd <- hash(password.str)
-    } yield ssoPwd.contains(encryptedPwd)
+  private def hash(password: String): Future[String] =
+    accounts.activeAccountId.head.collect {
+      case Some(id) =>
+        sodiumHandler.hash(password, id.str.replace("-", ""))
+    }(Threading.Background)
 }
