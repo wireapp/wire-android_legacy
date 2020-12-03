@@ -17,13 +17,13 @@
  */
 package com.waz.zclient.common.controllers.global
 
-import com.waz.utils.crypto.{AESUtils, LibSodium}
+import com.waz.utils.crypto. LibSodium
 import com.waz.zclient.{Injectable, Injector}
 import org.libsodium.jni.Sodium
 
 class SodiumHandler(implicit inj: Injector) extends Injectable {
 
-  def hash(input: String, salt: String): String = {
+  def hash(input: String, salt: String): Array[Byte] = {
     LibSodium.loadLibrary
     val outputSize = Sodium.crypto_aead_chacha20poly1305_keybytes()
     val output = Array.fill[Byte](outputSize)(0)
@@ -39,7 +39,7 @@ class SodiumHandler(implicit inj: Injector) extends Injectable {
       Sodium.crypto_pwhash_memlimit_interactive(),
       Sodium.crypto_pwhash_alg_default()
     )
-    AESUtils.base64(output)
+    output
   }
 
 }

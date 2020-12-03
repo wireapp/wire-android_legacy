@@ -112,9 +112,16 @@ object AESUtils {
   def decryptInputStream(key: Array[Byte], is: InputStream): InputStream =
     inputStream(key, None, is, Cipher.DECRYPT_MODE)
 
-  final case class EncryptedText(text: String, iv: String)
+  final case class EncryptedBytes(bytes: Array[Byte], iv: Array[Byte]) {
+    def asStrings: (String, String) = (base64(bytes), base64(iv))
+  }
 
-  def encryptTextWithAlias(textToEncrypt: String, alias: String): EncryptedText = {
+  object EncryptedBytes {
+    def apply(bytes: String, iv: String): EncryptedBytes =
+      EncryptedBytes(base64(bytes), base64(iv))
+  }
+
+  def encryptWithAlias(bytesToEncrypt: Array[Byte], alias: String): EncryptedBytes = {
     val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
     val keyGenParameterSpec = new KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
       .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
@@ -126,22 +133,21 @@ object AESUtils {
     cipher.init(Cipher.ENCRYPT_MODE, secretKey)
 
     val iv = cipher.getIV
-    val encrypted = cipher.doFinal(AESUtils.base64(textToEncrypt))
-    EncryptedText(AESUtils.base64(encrypted), AESUtils.base64(iv))
+    val encrypted = cipher.doFinal(bytesToEncrypt)
+    EncryptedBytes(encrypted, iv)
   }
 
-  def decryptTextWithAlias(encryptedText: EncryptedText, alias: String): String = {
+  def decryptWithAlias(encryptedBytes: EncryptedBytes, alias: String): Array[Byte] = {
     val keyStore = KeyStore.getInstance("AndroidKeyStore")
     keyStore.load(null)
     val secretKeyEntry = keyStore.getEntry(alias, null).asInstanceOf[KeyStore.SecretKeyEntry]
     val secretKey = secretKeyEntry.getSecretKey
 
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    val spec = new GCMParameterSpec(128, AESUtils.base64(encryptedText.iv))
-    cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
+    val spec = new GCMParameterSpec(128, encryptedBytes.iv)
+    cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
 
-    val text = cipher.doFinal(AESUtils.base64(encryptedText.text))
-    AESUtils.base64(text)
+    cipher.doFinal(encryptedBytes.bytes)
   }
 
   private def inputStream(key: Array[Byte], initVect: Option[Array[Byte]], is: InputStream, mode: Int): InputStream = {

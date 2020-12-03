@@ -26,7 +26,7 @@ import com.waz.model.AccountData.Password
 import com.waz.service.{AccountsService, GlobalModule, UserService}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
-import com.waz.utils.crypto.AESUtils.{encryptTextWithAlias, decryptTextWithAlias, EncryptedText}
+import com.waz.utils.crypto.AESUtils.{encryptWithAlias, decryptWithAlias, EncryptedBytes}
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.dialogs.NewPasswordDialog
@@ -117,13 +117,13 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
 
   private def setSSOPassword(pwd: Password): Future[Unit] =
     for {
-      Some(userId) <- accounts.activeAccountId.head
-      hashedPwd    <- hash(pwd.str)
-      encryptedPwd =  encryptTextWithAlias(hashedPwd, userId.str)
-      ssoPref      <- ssoPassword.head
-      _            <- ssoPref := Some(encryptedPwd.text)
-      ssoIvPref    <- ssoPasswordIv.head
-      _            <- ssoIvPref := Some(encryptedPwd.iv)
+      Some(userId)       <- accounts.activeAccountId.head
+      hashedPwd          <- hash(pwd.str)
+      (encryptedPwd, iv) =  encryptWithAlias(hashedPwd, userId.str).asStrings
+      ssoPref            <- ssoPassword.head
+      _                  <- ssoPref := Some(encryptedPwd)
+      ssoIvPref          <- ssoPasswordIv.head
+      _                  <- ssoIvPref := Some(iv)
     } yield ()
 
   inject[ActivityLifecycleCallback].appInBackground.onUi {
@@ -141,12 +141,12 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       ssoIv        <- ssoIvPref()
     } yield (ssoPwd, ssoIv) match {
       case (Some(encryptedPwd), Some(iv)) =>
-        hashToCheck == decryptTextWithAlias(EncryptedText(encryptedPwd, iv), userId.str)
+        hashToCheck sameElements decryptWithAlias(EncryptedBytes(encryptedPwd, iv), userId.str)
       case _ =>
         false
     }
 
-  private def hash(password: String): Future[String] =
+  private def hash(password: String): Future[Array[Byte]] =
     accounts.activeAccountId.head.collect {
       case Some(id) =>
         sodiumHandler.hash(password, id.str.replace("-", ""))

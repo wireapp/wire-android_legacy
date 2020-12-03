@@ -97,7 +97,7 @@ trait AccountsService {
 
   def activeAccountId:      Signal[Option[UserId]]
   def activeAccount:        Signal[Option[AccountData]]
-  def isActiveAccountSSO:   Signal[Boolean] = activeAccount.map(_.exists(_.ssoId.isDefined))
+  def isActiveAccountSSO:   Signal[Boolean] = Signal.const(true) // activeAccount.map(_.exists(_.ssoId.isDefined))
   def activeAccountManager: Signal[Option[AccountManager]]
   def activeZms:            Signal[Option[ZMessaging]]
 
