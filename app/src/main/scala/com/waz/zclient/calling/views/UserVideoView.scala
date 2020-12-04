@@ -61,9 +61,6 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   protected val audioStatusImageView = findById[ImageView](R.id.audio_status_image_view)
 
-  /*protected val imageView = returning(findById[ImageView](R.id.image_view)) { view =>
-    pictureId.onUi(BackgroundRequest(_).into(view))
-  }*/
 
   protected val pausedText = findById[TextView](R.id.paused_text_view)
 
