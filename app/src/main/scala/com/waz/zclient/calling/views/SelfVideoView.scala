@@ -36,21 +36,26 @@ class SelfVideoView(context: Context, participant: Participant)
   Signal.zip(
     callController.isMuted,
     callController.isActiveSpeaker(participant.userId, participant.clientId),
-    accentColorController.accentColor.map(_.color)
+    accentColorController.accentColor.map(_.color),
+    callController.isFullScreenEnabled
   ).onUi {
-    case (false, true, color) => {
+    case (false, true, color, false) => {
       updateAudioIndicator(R.drawable.ic_unmuted_video_grid, color, true)
       showActiveSpeakerFrame(color)
     }
-    case (false, false, _)    => {
+    case (false, true, color, true)  => {
+      updateAudioIndicator(R.drawable.ic_unmuted_video_grid, color, true)
+      hideActiveSpeakerFrame()
+    }
+    case (false, false, _, _)        => {
       updateAudioIndicator(R.drawable.ic_unmuted_video_grid, context.getColor(R.color.white), false)
       hideActiveSpeakerFrame()
     }
-    case (true, _, _)         => {
+    case (true, _, _, _)             => {
       updateAudioIndicator(R.drawable.ic_muted_video_grid, context.getColor(R.color.white), false)
       hideActiveSpeakerFrame()
     }
-    case _ =>
+    case _                           =>
   }
 
   callController.videoSendState.filter(_ == VideoState.Started).head.foreach { _ =>
