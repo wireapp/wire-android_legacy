@@ -29,21 +29,10 @@ class NewPasswordDialog extends DialogFragment with FragmentHelper {
   }
 
   private lazy val showHideButton = returning(findById[CheckBox](root, R.id.new_password_showhide)) { checkbox =>
-    def showOrHide(isClicked: Boolean): Unit =
-      checkbox.setButtonDrawable(getDrawable(
-        (isDarkTheme, isClicked) match {
-          case (true, true)   => R.drawable.ic_visibility_off_white_18dp
-          case (true, false)  => R.drawable.ic_visibility_white_18dp
-          case (false, true)  => R.drawable.ic_visibility_off_black_18dp
-          case (false, false) => R.drawable.ic_visibility_black_18dp
-        }
-      ))
-
-    showOrHide(false)
+    checkbox.setButtonDrawable(getDrawable(if (isDarkTheme) R.drawable.visibility_white else R.drawable.visibility_black))
 
     checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener {
       override def onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean): Unit = {
-        showOrHide(isChecked)
         if (isChecked)
           passwordEditText.setTransformationMethod(HideReturnsTransformationMethod.getInstance)
         else
