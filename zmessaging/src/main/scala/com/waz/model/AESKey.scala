@@ -23,19 +23,19 @@ import java.security.MessageDigest
 
 import com.waz.utils.IoUtils
 import com.waz.utils.crypto.AESUtils
-import javax.crypto.KeyGenerator
+import javax.crypto.{Cipher, KeyGenerator}
 
 import scala.util.Try
 
 //TODO Do we have any reasons to store key as String? Why not just an Array[Byte]?
 case class AESKey(str: String) {
-  lazy val bytes = AESUtils.base64(str)
+  lazy val bytes: Array[Byte] = AESUtils.base64(str)
 
-  def symmetricCipher(mode: Int, iv: Array[Byte]) = AESUtils.cipher(this, iv, mode)
+  def symmetricCipher(mode: Int, iv: Array[Byte]): Cipher = AESUtils.cipher(this, iv, mode)
 }
 
 object AESKey extends (String => AESKey) {
-  val Empty = AESKey("")
+  val Empty: AESKey = AESKey("")
 
   def apply(): AESKey = AESUtils.randomKey()
   def random: AESKey = {
@@ -48,15 +48,15 @@ object AESKey extends (String => AESKey) {
 }
 
 case class Sha256(str: String) {
-  def bytes = AESUtils.base64(str)
+  def bytes: Array[Byte] = AESUtils.base64(str)
 
-  def matches(bytes: Array[Byte]) = str == com.waz.utils.sha2(bytes)
+  def matches(bytes: Array[Byte]): Boolean = str == com.waz.utils.sha2(bytes)
 
-  def hexString = String.format("%02X", new BigInteger(1, bytes)).toLowerCase
+  def hexString: String = String.format("%02X", new BigInteger(1, bytes)).toLowerCase
 }
 
 object Sha256 {
-  val Empty = Sha256("")
+  val Empty: Sha256 = Sha256("")
 
   def apply(bytes: Array[Byte]) = new Sha256(AESUtils.base64(bytes))
 

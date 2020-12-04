@@ -173,25 +173,6 @@ public class ViewUtils {
         return dialog;
     }
 
-    public static AlertDialog showAlertDialog(Context context,
-                                              View view,
-                                              @StringRes int title,
-                                              @StringRes int message,
-                                              @StringRes int positiveButton,
-                                              @StringRes int negativeButton,
-                                              DialogInterface.OnClickListener positiveAction,
-                                              DialogInterface.OnClickListener negativeAction) {
-        AlertDialog dialog = new AlertDialog.Builder(context)
-            .setView(view)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(positiveButton, positiveAction)
-            .setNegativeButton(negativeButton, negativeAction)
-            .create();
-        dialog.show();
-        return dialog;
-    }
-
     @SuppressLint("com.waz.ViewUtils")
     public static <T extends View> T getView(@NonNull View v, @IdRes int resId) {
         return (T) v.findViewById(resId);

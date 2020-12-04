@@ -170,7 +170,11 @@ object SecurityPolicyChecker extends DerivedLogTag {
       blockOnJailbreak    <- blockOnJailbreak(globalPreferences, isForeground)
       wipeOnCookieInvalid <- accountManager.fold(EmptyCheck)(wipeOnCookieInvalid)
       requestPassword     <- unpack(passwordController, userPreferences, accountManager).fold(EmptyCheck) {
-                               case (ctrl, prefs, am) => requestPassword(ctrl, prefs, am, authNeeded)
+                               case (ctrl, prefs, am) =>
+                                 Signal.zip(ctrl.ssoEnabled, ctrl.ssoPasswordEmpty).head.flatMap {
+                                   case (true, true) => EmptyCheck // the user must set the password first
+                                   case _            => requestPassword(ctrl, prefs, am, authNeeded)
+                                 }
                              }
       list                =  new SecurityChecklist(List(blockOnJailbreak, wipeOnCookieInvalid, requestPassword).flatten)
       allChecksPassed     <- list.run()

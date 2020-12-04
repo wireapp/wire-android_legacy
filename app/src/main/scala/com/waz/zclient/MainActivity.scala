@@ -300,7 +300,7 @@ class MainActivity extends BaseActivity
         am.getOrRegisterClient().map {
           case Right(Registered(_)) =>
             for {
-              _ <- passwordController.setPassword(None)
+              _ <- passwordController.clearPassword()
               z <- zms.head
               self <- z.users.selfUser.head
               isLogin <- z.userPrefs(IsLogin).apply()

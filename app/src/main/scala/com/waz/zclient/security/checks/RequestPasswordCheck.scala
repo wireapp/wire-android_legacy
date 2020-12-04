@@ -18,24 +18,27 @@
 package com.waz.zclient.security.checks
 
 import android.content.Context
-import com.waz.zclient.{BaseActivity, BuildConfig, R}
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.threading.Threading
 import com.waz.zclient.common.controllers.global.PasswordController
-import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
-import com.waz.zclient.security.SecurityChecklist
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.utils.ContextUtils
-import com.waz.zclient.preferences.dialogs.RequestPasswordDialog.{BiometricCancelled, BiometricError, BiometricFailure, BiometricSuccess, PasswordAnswer, PasswordCancelled, PromptAnswer}
+import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
+import com.waz.zclient.preferences.dialogs.RequestPasswordDialog._
+import com.waz.zclient.security.SecurityChecklist
 import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.utils.ContextUtils
+import com.waz.zclient.{BaseActivity, R, BuildConfig}
+import com.wire.signals.EventContext
 
 import scala.concurrent.{Future, Promise}
 
 class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(implicit context: Context)
   extends SecurityChecklist.Check with DerivedLogTag {
   import RequestPasswordCheck._
+  import Threading.Implicits.Ui
+  implicit private val eventContext: EventContext = EventContext()
 
   private lazy val failedAttempts = prefs(UserPreferences.FailedPasswordAttempts)
 
@@ -56,14 +59,23 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
   }
 
   def finish(result: Boolean): Unit = {
-    KeyboardUtils.closeKeyboardIfShown(context.asInstanceOf[BaseActivity])
+    passwordCheckSatisfied.trySuccess(result)
+    close()
+    if (result) pwdCtrl.passwordCheckSuccessful ! (())
+  }
+
+  private def close(): Unit = {
     dialog.close()
-    passwordCheckSatisfied.success(result)
+    KeyboardUtils.closeKeyboardIfShown(context.asInstanceOf[BaseActivity])
+    eventContext.destroy()
+  }
+
+  pwdCtrl.passwordCheckSuccessful.foreach { _ =>
+    passwordCheckSatisfied.trySuccess(true)
+    close()
   }
 
   private def checkPassword(password: Password): Unit = {
-    import Threading.Implicits.Background
-
     if (MaxAttempts == 0 || !BuildConfig.FORCE_APP_LOCK) { // don't count attempts
       pwdCtrl.checkPassword(password).map {
         case true  => PasswordCheckSuccessful
@@ -80,7 +92,7 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
         case (true, _) => MaxAttemptsReached
         case (_, true) => PasswordCheckSuccessful
         case _         => PasswordCheckFailed
-      }
+      }(Threading.Background)
     }
   }.foreach {
     case PasswordCheckSuccessful  =>
@@ -93,7 +105,7 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
       dialog.clearText()
     case MaxAttemptsReached =>
       finish(false)
-  }(Threading.Ui)
+  }
 
   private def onAnswer(answer: PromptAnswer): Unit = answer match {
     case PasswordAnswer(password) =>
@@ -113,7 +125,7 @@ object RequestPasswordCheck {
   def apply(pwdCtrl: PasswordController, prefs: UserPreferences)(implicit context: Context): RequestPasswordCheck =
     new RequestPasswordCheck(pwdCtrl, prefs)
 
-  val MaxAttempts = BuildConfig.PASSWORD_MAX_ATTEMPTS
+  val MaxAttempts: Int = BuildConfig.PASSWORD_MAX_ATTEMPTS
 
   sealed trait PasswordCheck
   case object PasswordCheckSuccessful extends PasswordCheck

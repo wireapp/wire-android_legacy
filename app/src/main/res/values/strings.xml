@@ -471,6 +471,19 @@
     <string name="pref_advanced_receive_news_and_offers_title">Receive Newsletter</string>
     <string name="pref_advanced_receive_news_and_offers_summary">Receive news and product updates from Wire via email.</string>
 
+    <!-- App Lock -->
+    <string name="pref_options_app_lock">Passcode</string>
+    <string name="pref_options_app_lock_change">Change passcode</string>
+    <string name="app_lock_locked_title">Wire is locked due to inactivity</string>
+    <string name="app_lock_locked_message">Please enter your account password.</string>
+    <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passphrase in your device settings.</string>
+    <string name="new_password_dialog_title">Create a Passcode</string>
+    <string name="new_password_dialog_button">Create Passcode</string>
+    <string name="new_password_dialog_title_change">Change Passcode</string>
+    <string name="new_password_dialog_button_change">Change Passcode</string>
+    <string name="new_password_dialog_message">Your organization needs to lock your app when Wire is not in use to keep the Team safe.\nCreate a memorable passcode, as it cannot be recovered.</string>
+    <string name="new_password_dialog_showhide_cd">Show/hide the password</string>
+
     <!-- Options -->
     <string name="pref_options_screen_title">Options</string>
     <string name="pref_options_vbr_title">Variable Bit Rate Encoding</string>
@@ -1441,11 +1454,6 @@
     <string name="read_receipts_remotely_enabled_title">You have enabled read receipts</string>
     <string name="read_receipts_remotely_disabled_title">You have disabled read receipts</string>
     <string name="read_receipts_remotely_changed_message">You can change this option in your account settings.</string>
-
-    <string name="app_lock_locked_title">Wire is locked due to inactivity</string>
-    <string name="app_lock_locked_message">Please enter your account password.</string>
-    <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passphrase in your device settings.</string>
-    <string name="app_lock_setup_dialog_button">Open settings</string>
 
     <string name="security_policy_title">Wire Security Policy</string>
     <string name="security_policy_description">Allow Wire to make your device more secure.</string>

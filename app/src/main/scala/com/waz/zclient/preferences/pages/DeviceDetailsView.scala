@@ -18,23 +18,23 @@
 package com.waz.zclient.preferences.pages
 
 import android.app.Activity
-import androidx.fragment.app.FragmentTransaction
 import android.content.DialogInterface.OnClickListener
 import android.content.{ClipData, Context, DialogInterface}
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, ScrollView, Toast}
+import androidx.fragment.app.FragmentTransaction
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.ConvId
 import com.waz.model.otr.ClientId
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
-import com.waz.service.{AccountManager, AccountsService, ZMessaging}
+import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.sync.SyncResult
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, EventStream, Signal}
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.{ClientsController, PasswordController}
 import com.waz.zclient.log.LogUI._
@@ -45,13 +45,13 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Time.TimeStamp
-import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichClient, RichView, ViewUtils}
+import com.waz.zclient.utils.{BackStackKey, RichClient, RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper, _}
+import com.wire.signals.{EventContext, EventStream, Signal}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.util.Try
-import com.waz.threading.Threading._
 
 trait DeviceDetailsView {
   val onVerifiedChecked: EventStream[Boolean]
@@ -182,30 +182,25 @@ object DeviceDetailsBackStackKey {
 
 case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)(implicit inj: Injector, ec: EventContext, context: Context)
   extends Injectable with DerivedLogTag {
-  
+
   import Threading.Implicits.Background
 
-  val zms                = inject[Signal[ZMessaging]]
-  val passwordController = inject[PasswordController]
-  val backStackNavigator = inject[BackStackNavigator]
-  val clientsController  = inject[ClientsController]
-  val spinnerController  = inject[SpinnerController]
+  private lazy val zms                = inject[Signal[ZMessaging]]
+  private lazy val passwordController = inject[PasswordController]
+  private lazy val clientsController  = inject[ClientsController]
+  private lazy val spinnerController  = inject[SpinnerController]
 
-  val accounts       = inject[AccountsService]
-  val accountManager = inject[Signal[AccountManager]]
+  private lazy val accountManager = inject[Signal[AccountManager]]
 
-  val client = clientsController.selfClient(clientId).collect { case Some(c) => c }
-  val isCurrentClient = clientsController.isCurrentClient(clientId)
-  val fingerPrint = clientsController.selfFingerprint(clientId)
-  val model = client.map(_.model)
+  private lazy val client = clientsController.selfClient(clientId).collect { case Some(c) => c }
 
   client.map(_.model).onUi(view.setName)
   client.map(_.displayId).onUi(view.setId)
   client.map(_.regTime.getOrElse(Instant.EPOCH)).onUi(view.setActivated)
 
-  isCurrentClient.map(!_).onUi(view.setActionsVisible)
+  clientsController.isCurrentClient(clientId).map(!_).onUi(view.setActionsVisible)
   client.map(_.isVerified).onUi(view.setVerified)
-  fingerPrint.onUi{ _.foreach(view.setFingerPrint) }
+  clientsController.selfFingerprint(clientId).onUi{ _.foreach(view.setFingerPrint) }
   clientsController.selfClientId.map(_.isEmpty).onUi(view.setRemoveOnly)
 
   view.onVerifiedChecked { checked =>
@@ -238,8 +233,8 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
 
   view.onDeviceRemoved { _ =>
     passwordController.password.head.map {
-      case Some(p)       => removeDevice(Some(p))
-      case _                => showRemoveDeviceDialog()
+      case Some(p) => removeDevice(Some(p))
+      case _       => showRemoveDeviceDialog()
     }
   }
 
@@ -271,7 +266,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   }
 
   private def showRemoveDeviceDialog(error: Option[String] = None): Unit =
-    Signal.zip(accounts.isActiveAccountSSO, model).head.foreach { case (isSSO, name) =>
+    Signal.zip(passwordController.ssoEnabled, client.map(_.model)).head.foreach { case (isSSO, name) =>
       val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onDelete(removeDevice))
       context.asInstanceOf[BaseActivity]
         .getSupportFragmentManager

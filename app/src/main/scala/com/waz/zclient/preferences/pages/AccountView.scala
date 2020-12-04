@@ -38,7 +38,6 @@ import com.waz.threading.Threading
 import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.appentry.{AppEntryActivity, DialogErrorMessage}
-import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.preferences.dialogs._
@@ -199,7 +198,6 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   val accounts           = inject[AccountsService]
   implicit val uiStorage = inject[UiStorage]
   val navigator          = inject[BackStackNavigator]
-  val password           = inject[PasswordController].password
 
   val isTeam = zms.map(_.teamId.isDefined)
 

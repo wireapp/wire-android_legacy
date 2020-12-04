@@ -92,7 +92,9 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper {
       .setView(root)
       .setTitle(title)
       .setMessage(message)
-      .setPositiveButton(R.string.request_password_ok, null)
+      .setPositiveButton(R.string.request_password_ok, new OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int): Unit = onAnswer ! PasswordAnswer(Password(passwordEditText.getText.toString))
+      })
 
     Option(getBooleanArg(IsCancellable)).foreach(
       if (_) builder.setNegativeButton(R.string.request_password_cancel, new OnClickListener {

@@ -97,7 +97,7 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 
 case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
-  
+
   val zms = inject[Signal[Option[ZMessaging]]]
   val accounts = inject[AccountsService]
   val passwordController = inject[PasswordController]
@@ -125,7 +125,7 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
   def onViewClose(): Unit = {
     implicit val ec = Threading.Background
     for {
-      _         <- passwordController.setPassword(None)
+      _         <- passwordController.clearPassword()
       Some(zms) <- zms.head
       _         <- zms.otrClientsService.updateUnknownToUnverified(zms.selfUserId)
     } ()
