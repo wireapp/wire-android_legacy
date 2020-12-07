@@ -48,6 +48,7 @@ import com.waz.threading.Threading._
 
 import scala.concurrent.duration._
 
+
 class CameraFragment extends FragmentHelper
   with CameraPreviewObserver
   with ImagePreviewCallback
@@ -118,7 +119,7 @@ class CameraFragment extends FragmentHelper
       override def onCanceled(t: AssetIntentsManager.IntentType): Unit = showCameraFeed()
       override def onFailed(t: AssetIntentsManager.IntentType): Unit = showCameraFeed()
       override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Unit =
-        startActivityForResult(intent, intentType.requestCode)
+        safeStartActivityForResult(intent, intentType.requestCode)
     })
   }
 
@@ -242,7 +243,7 @@ class CameraFragment extends FragmentHelper
   override def onSendPictureFromPreview(image: Content): Unit =
     cameraController.onBitmapSelected(image, cameraContext)
 
-  private def showPreview(setImage: (ImagePreviewLayout) => Unit) = {
+  private def showPreview(setImage: (ImagePreviewLayout) => Unit): Unit = {
     hideCameraFeed()
 
     previewProgressBar.foreach(_.setVisible(false))

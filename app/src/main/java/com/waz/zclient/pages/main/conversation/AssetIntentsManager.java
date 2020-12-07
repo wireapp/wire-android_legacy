@@ -85,12 +85,10 @@ public class AssetIntentsManager {
                 intent.setType(INTENT_ALL_TYPES);
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toArray());
             }
-            if (!context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL).isEmpty()) {
-                callback.openIntent(intent, tpe);
-                return;
-            }
-            Logger.info(TAG, "Did not resolve testing gallery for intent:" + intent.toString());
+
+            callback.openIntent(intent, tpe);
         }
+
         final Intent intent = new Intent(openDocumentAction()).addCategory(Intent.CATEGORY_OPENABLE);
         if (mimeTypes.size() == 1) {
             intent.setType(mimeTypes.iterator().next());
@@ -137,9 +135,7 @@ public class AssetIntentsManager {
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 
-        if (intent.resolveActivity(this.context.getPackageManager()) != null) {
-            callback.openIntent(intent, IntentType.VIDEO);
-        }
+        callback.openIntent(intent, IntentType.VIDEO);
     }
 
     public void openGallery() {

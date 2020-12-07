@@ -512,12 +512,11 @@ class ConversationListManagerFragment extends Fragment
       convListType
     }
 
-  override def onMoveToFolder(convId: ConvId): Unit = {
-    startActivityForResult(
+  override def onMoveToFolder(convId: ConvId): Unit =
+    safeStartActivityForResult(
       MoveToFolderActivity.newIntent(requireContext(), convId),
       MoveToFolderActivity.REQUEST_CODE_MOVE_CREATE
     )
-  }
 
   private def handleGroupConvError(errorData: ErrorData) = {
     errorsController.dismissSyncError(errorData.id)
