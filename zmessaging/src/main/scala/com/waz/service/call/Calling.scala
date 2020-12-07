@@ -108,6 +108,8 @@ object Calling {
 
   @native def wcall_sft_resp(inst: Handle, error: Int, data: Array[Byte], length: Int, ctx: Pointer): Unit
 
+  @native def wcall_set_active_speaker_handler(inst: Handle, wcall_active_speaker_h: ActiveSpeakersHandler): Unit
+
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use
      * for calling.
@@ -206,6 +208,10 @@ object Calling {
 
   trait SFTRequestHandler extends Callback {
     def onSFTRequest(ctx: Pointer, url: String, data: Pointer, length: Size_t, arg: Pointer): Int
+  }
+
+  trait ActiveSpeakersHandler extends Callback {
+    def onActiveSpeakersChanged(inst: Handle, convId: String, data: String, arg: Pointer): Unit
   }
 
 }

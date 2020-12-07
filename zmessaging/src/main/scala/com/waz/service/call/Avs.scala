@@ -17,14 +17,15 @@
  */
 package com.waz.service.call
 
+import android.util.Log
 import com.sun.jna.Pointer
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.service.call.CallInfo.Participant
-import com.waz.service.call.Calling._
+import com.waz.service.call.CallInfo.{ActiveSpeaker, Participant}
+import com.waz.service.call.Calling.{ActiveSpeakersHandler, Handle, _}
 import com.waz.utils.jna.{Size_t, Uint32_t}
 import com.waz.utils.{CirceJSONSupport, returning}
 import com.wire.signals.SerialDispatchQueue
@@ -213,6 +214,16 @@ class AvsImpl() extends Avs with DerivedLogTag {
       }}
 
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)
+
+      val activeSpeakersHandler = new ActiveSpeakersHandler {
+        override def onActiveSpeakersChanged(inst: Handle, convId: String, data: String, arg: Pointer): Unit =
+          ActiveSpeakerChangeDecoder.decode(data).foreach { activeSpeakersChange =>
+            val activeSpeakers = activeSpeakersChange.audio_levels.map(m => ActiveSpeaker(m.userid, m.clientid, m.audio_level)).toSet
+            cs.onActiveSpeakersChanged(RConvId(convId), activeSpeakers)
+          }
+      }
+
+      Calling.wcall_set_active_speaker_handler(wCall, activeSpeakersHandler)
 
       wCall
     }
@@ -426,6 +437,19 @@ object Avs extends DerivedLogTag {
     private lazy val decoder: Decoder[AvsParticipantsChange] = Decoder.apply
 
     def decode(json: String): Option[AvsParticipantsChange] =
+      parser.decode(json)(decoder).right.toOption
+  }
+
+  object ActiveSpeakerChangeDecoder extends CirceJSONSupport {
+    import io.circe.{Decoder, parser}
+
+    case class ActiveSpeakerChange(audio_levels: Seq[Speaker])
+
+    case class Speaker(userid: UserId, clientid: ClientId, audio_level: Int)
+
+    private lazy val decoder: Decoder[ActiveSpeakerChange] = Decoder.apply
+
+    def decode(json: String): Option[ActiveSpeakerChange] =
       parser.decode(json)(decoder).right.toOption
   }
 
