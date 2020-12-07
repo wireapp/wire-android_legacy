@@ -152,9 +152,9 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     }
 
   def isActiveSpeaker(userId: UserId, clientId: ClientId): Signal[Boolean] =
-    activeSpeakers.map(_.find { activeSpeaker =>
+    activeSpeakers.map(_.exists { activeSpeaker =>
       activeSpeaker.clientId == clientId && activeSpeaker.userId == userId && activeSpeaker.audioLevel > 0
-    }.isDefined)
+    })
 
   val flowManager = callingZms.map(_.flowmanager)
 

@@ -25,7 +25,8 @@ import android.view.animation.AnimationUtils
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import androidx.appcompat.widget.AppCompatCheckBox
-import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
+import com.waz.model.otr.ClientId
+import com.waz.model.{Availability, IntegrationData, TeamId, UserData, UserId}
 import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
@@ -98,7 +99,13 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   private val isMuted = Signal(false)
-  private val isActiveSpeaker = Signal(false)
+
+  private val activeSpeakerData = Signal(Option.empty[(UserId, ClientId)])
+  private val isActiveSpeaker = for {
+    Some((userId, clientId)) <- activeSpeakerData
+    isActive                 <- callController.isActiveSpeaker(userId, clientId)
+  } yield isActive
+
   audioIndicator.setVisible(true)
 
   Signal.zip(chosenCurrentTheme, isMuted, isActiveSpeaker, accentColorController.accentColor.map(_.color)
@@ -165,9 +172,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     isGuest ! user.isGuest
     isPartner ! user.isExternal
     setVerified(user.isVerified)
-    callController.isActiveSpeaker(user.id, user.clientId).foreach { isActive =>
-      isActiveSpeaker ! isActive
-    }
+    activeSpeakerData ! Some((user.id, user.clientId))
   }
 
   def setUserData(userData:       UserData,
