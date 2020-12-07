@@ -93,7 +93,9 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
     }
 
   private def openNewPasswordDialog(mode: NewPasswordDialog.Mode)(implicit ctx: Context): Future[Int] = Future {
-    val isDarkTheme = inject[ThemeController].isDarkTheme
+    // The "Change Passcode" version of the dialog is always presented on the dark theme
+    // even if the controller says otherwise
+    val isDarkTheme = mode == NewPasswordDialog.ChangeMode || inject[ThemeController].isDarkTheme
     val fragment = NewPasswordDialog.newInstance(mode, isDarkTheme)
     ctx.asInstanceOf[BaseActivity]
       .getSupportFragmentManager
