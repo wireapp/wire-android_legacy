@@ -554,8 +554,8 @@ class ConversationFragment extends FragmentHelper {
         }
       }
 
-      startActivityForResult(intent, intentType.requestCode)
-      getActivity.overridePendingTransition(R.anim.camera_in, R.anim.camera_out)
+      if (safeStartActivityForResult(intent, intentType.requestCode))
+        getActivity.overridePendingTransition(R.anim.camera_in, R.anim.camera_out)
     }
 
     override def onFailed(tpe: AssetIntentsManager.IntentType): Unit = {}
@@ -638,13 +638,17 @@ class ConversationFragment extends FragmentHelper {
     }
 
 
-  private def captureVideoAskPermissions() = for {
-    _ <- inject[GlobalCameraController].releaseCamera() //release camera so the camera app can use it
-    _ <- permissions.requestAllPermissions(ListSet(CAMERA, WRITE_EXTERNAL_STORAGE)).map {
-      case true  => assetIntentsManager.foreach(_.captureVideo())
-      case false =>
-    }(Threading.Ui)
-  } yield {}
+  private def captureVideoAskPermissions() = {
+    for {
+      _ <- inject[GlobalCameraController].releaseCamera() //release camera so the camera app can use it
+      _ <- permissions.requestAllPermissions(ListSet(CAMERA, WRITE_EXTERNAL_STORAGE)).map {
+        case true  =>
+          assetIntentsManager.foreach(_.captureVideo())
+        case false =>
+          verbose(l"Camera and/or write external storage permissions denied")
+      }(Threading.Ui)
+    } yield {}
+  }
 
   private val requiredAudioPermissions =
     CursorController.keyboardPermissions(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING) ++

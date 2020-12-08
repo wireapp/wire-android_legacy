@@ -85,9 +85,8 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
     }
     override def onCanceled(`type`: AssetIntentsManager.IntentType): Unit = {}
     override def onFailed(`type`: AssetIntentsManager.IntentType): Unit = {}
-    override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Unit = {
-      startActivityForResult(intent, intentType.requestCode)
-    }
+    override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Unit =
+      safeStartActivityForResult(intent, intentType.requestCode)
   }
 
   private var assetIntentsManager = Option.empty[AssetIntentsManager]

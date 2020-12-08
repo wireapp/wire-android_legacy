@@ -264,7 +264,7 @@ class MainPhoneFragment extends FragmentHelper
     inject[PermissionsService].requestAllPermissions(ListSet(android.Manifest.permission.READ_EXTERNAL_STORAGE)).map {
       case true =>
         val galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        startActivityForResult(galleryIntent, Shortcuts.SHARE_PHOTO_REQUEST_CODE)
+        safeStartActivityForResult(galleryIntent, Shortcuts.SHARE_PHOTO_REQUEST_CODE)
         resetAction()
       case _    =>
     }(Threading.Ui)

@@ -27,7 +27,6 @@ import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
 import com.waz.api.NetworkMode
 import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.{NetworkModeService, ZMessaging}
@@ -57,9 +56,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
 
-class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
-  extends Injectable with DerivedLogTag {
-
+class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) extends Injectable {
   import CursorController._
   import Threading.Implicits.Ui
 
@@ -294,7 +291,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
       if (lastExpiration.isDefined && (eph.isEmpty || !eph.get.isInstanceOf[ConvExpiry])) {
         val current = if (eph.isEmpty) lastExpiration else None
         z.convsUi.setEphemeral(c.id, current)
-        if (eph != lastExpiration) onEphemeralExpirationSelected ! current
+        if (eph.map(_.duration) != lastExpiration) onEphemeralExpirationSelected ! current
         keyboard mutate {
           case KeyboardState.ExtendedCursor(_) => KeyboardState.Hidden
           case state => state

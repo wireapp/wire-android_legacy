@@ -20,12 +20,12 @@ package com.waz.zclient
 import android.annotation.SuppressLint
 import android.app.{Dialog, Service}
 import android.content.res.Resources
-import android.content.{Context, ContextWrapper, DialogInterface}
+import android.content.{ActivityNotFoundException, Context, ContextWrapper, DialogInterface, Intent}
 import android.os.Bundle
 import android.view.View.OnClickListener
 import android.view.animation.{AlphaAnimation, Animation, AnimationUtils}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
-import android.widget.TextView
+import android.widget.{TextView, Toast}
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.{Fragment, FragmentActivity, FragmentManager}
@@ -151,6 +151,16 @@ trait FragmentHelper
     else getActivity.findViewById(id).asInstanceOf[V]
   }
 
+  def safeStartActivityForResult(intent: Intent, requestCode: Int): Boolean =
+    try {
+      startActivityForResult(intent, requestCode)
+      true
+    } catch {
+      case ex: ActivityNotFoundException =>
+        error(l"No application found to handle this request", ex)
+        Toast.makeText(getContext, s"No application found to handle this request", Toast.LENGTH_SHORT).show()
+        false
+    }
 
   /*
    * This part (the methods onCreateAnimation and the accompanying util method, getNextAnimationDuration) of the Wire
