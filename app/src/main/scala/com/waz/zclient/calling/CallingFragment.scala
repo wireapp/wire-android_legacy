@@ -127,10 +127,8 @@ class CallingFragment extends FragmentHelper {
       viewMap = viewMap.updated(participant, userView)
       if (BuildConfig.MAXIMIZE_MINIMIZE_VIDEO) {
 
-        val isMultiParticipant: Signal[Boolean] = controller.otherParticipants.map(_.size > 2)
-
         userView.onDoubleClick.onUi { _ =>
-          isMultiParticipant.head.foreach {
+          controller.otherParticipants.map(_.size > 2).head.foreach {
             case true =>
               showFullScreenVideo(participant)
               clearVideoGrid()
