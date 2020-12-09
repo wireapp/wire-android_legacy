@@ -119,20 +119,20 @@ class CallingFragment extends FragmentHelper {
 
   private var viewMap = Map[Participant, UserVideoView]()
 
-  private def refreshViews(videoUsers        : Seq[Participant],
-                           selfParticipant   : Participant,
-                           isMultiParticipant: Boolean
-                          ): Seq[UserVideoView] = {
+  private def refreshViews(videoUsers: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
     def createView(participant: Participant): UserVideoView = returning {
       if (participant == selfParticipant) new SelfVideoView(getContext, participant)
       else new OtherVideoView(getContext, participant)
     } { userView =>
       viewMap = viewMap.updated(participant, userView)
       if (BuildConfig.MAXIMIZE_MINIMIZE_VIDEO) {
+
         userView.onDoubleClick.onUi { _ =>
-          if (isMultiParticipant) {
-            showFullScreenVideo(participant)
-            clearVideoGrid()
+          controller.otherParticipants.map(_.size > 2).head.foreach {
+            case true =>
+              showFullScreenVideo(participant)
+              clearVideoGrid()
+            case false =>
           }
         }
       }
@@ -148,7 +148,8 @@ class CallingFragment extends FragmentHelper {
                                participants    : Set[Participant],
                                isVideoBeingSent: Boolean
                               ): Unit = {
-    val views = refreshViews(videoUsers, selfParticipant, isMultiParticipant = participants.size > 2)
+
+    val views = refreshViews(videoUsers, selfParticipant)
 
     viewMap.get(selfParticipant).foreach { selfView =>
       previewCardView.foreach { cardView =>
