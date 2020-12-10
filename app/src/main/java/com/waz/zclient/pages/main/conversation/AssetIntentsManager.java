@@ -85,8 +85,11 @@ public class AssetIntentsManager {
                 intent.setType(INTENT_ALL_TYPES);
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toArray());
             }
-
-            callback.openIntent(intent, tpe);
+            if (!context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL).isEmpty()) {
+                callback.openIntent(intent, tpe);
+                return;
+            }
+            Logger.info(TAG, "Did not resolve testing gallery for intent:" + intent.toString());
         }
 
         final Intent intent = new Intent(openDocumentAction()).addCategory(Intent.CATEGORY_OPENABLE);
