@@ -25,6 +25,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
+import com.waz.model.otr.ClientId
 import com.waz.model.{Mention, MessageId, _}
 import com.waz.service._
 import com.waz.service.assets.UploadAsset
@@ -96,6 +97,8 @@ trait MessagesService {
   def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]]
   def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit]
   def setButtonError(messageId: MessageId, buttonId: ButtonId): Future[Unit]
+
+  def fixErrorMessages(userId: UserId, clientId: ClientId): Future[Unit]
 }
 
 class MessagesServiceImpl(selfUserId:      UserId,
@@ -195,17 +198,24 @@ class MessagesServiceImpl(selfUserId:      UserId,
     }
   }
 
-  override def addTextMessage(convId: ConvId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None) = {
-    verbose(l"addTextMessage($convId, ${content.size}, $mentions, $exp")
+  override def addTextMessage(convId: ConvId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[MessageData] = {
+    verbose(l"addTextMessage($convId, ${content.length}, $mentions, $exp")
     val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
-    verbose(l"parsed content: $ct")
     val id = MessageId()
-    updater.addLocalMessage(MessageData(id, convId, tpe, selfUserId, ct, protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, expectsReadReceipt.selfSettings))), forceReadReceipts = expectsReadReceipt.convSetting), exp = exp) // FIXME: links
+    updater.addLocalMessage(
+      MessageData(
+        id, convId, tpe, selfUserId,
+        content = ct,
+        protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, expectsReadReceipt.selfSettings))),
+        forceReadReceipts = expectsReadReceipt.convSetting
+      ),
+      exp = exp
+    ) // FIXME: links
   }
 
   override def addReplyMessage(quote: MessageId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
 
-    verbose(l"addReplyMessage($quote, ${content.size}, $mentions, $exp)")
+    verbose(l"addReplyMessage($quote, ${content.length}, $mentions, $exp)")
     updater.getMessage(quote).flatMap {
       case Some(original) =>
         val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
@@ -216,7 +226,8 @@ class MessagesServiceImpl(selfUserId:      UserId,
           verbose(l"hash before sending: $hash, original time: ${original.time}")
           updater.addLocalMessage(
             MessageData(
-              id, original.convId, tpe, selfUserId, ct,
+              id, original.convId, tpe, selfUserId,
+              content = ct,
               protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash))), expectsReadReceipt.selfSettings))),
               quote = Some(QuoteContent(quote, validity = true, hash = Some(hash))),
               forceReadReceipts = expectsReadReceipt.convSetting
@@ -498,4 +509,13 @@ class MessagesServiceImpl(selfUserId:      UserId,
   override def setButtonError(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
     buttonsStorage.update((messageId, buttonId), _.copy(state = ButtonData.ButtonError))
       .flatMap(_ => Future.successful(()))
+
+  override def fixErrorMessages(userId: UserId, clientId: ClientId): Future[Unit] =
+    for {
+      msgs               <- storage.findErrorMessages(userId, clientId)
+      onlyFromThisClient =  msgs.filter(_.error.exists(_.clientId == clientId))
+      _                  <- Future.sequence(onlyFromThisClient.map(msg =>
+                              updater.updateMessage(msg.id)(_.copy(msgType = Message.Type.OTR_ERROR_FIXED))
+                            ))
+    } yield ()
 }

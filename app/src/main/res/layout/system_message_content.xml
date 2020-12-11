@@ -59,4 +59,10 @@
         android:visibility="gone"
         />
 
+    <com.waz.zclient.views.LoadingIndicatorView
+        android:id="@+id/system_message_loading_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        />
 </merge>

@@ -21,6 +21,7 @@ class MessagesTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
             conversationId = data.conversationId,
             messageType = data.messageType,
             userId = data.userId,
+            clientId = data.clientId,
             content = data.content,
             protos = data.protos,
             time = data.time,

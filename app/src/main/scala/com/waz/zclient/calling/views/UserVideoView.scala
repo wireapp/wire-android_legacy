@@ -24,14 +24,13 @@ import android.view.animation.AnimationUtils
 import android.widget.{FrameLayout, ImageView, TextView}
 import androidx.cardview.widget.CardView
 import com.waz.avs.{VideoPreview, VideoRenderer}
-import com.waz.model.Picture
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.utils.returning
 import com.waz.zclient.ViewHelper
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
-import com.waz.zclient.utils.ContextUtils.{getColor, getString}
+import com.waz.zclient.utils.ContextUtils.getColor
 import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.R
 import com.waz.zclient.BuildConfig
@@ -49,31 +48,19 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   val onDoubleClick = EventStream[Unit]()
 
-  this.onClick({
-    callController.controlsClick(true)
-  }, {
-    onDoubleClick ! {}
-  })
+  this.onClick(() => callController.controlsClick(true), () => onDoubleClick ! {})
 
-  private val pictureId: Signal[Picture] = for {
-    z             <- callController.callingZms
-    Some(picture) <- z.usersStorage.signal(participant.userId).map(_.picture)
-  } yield picture
-
-  protected val audioStatusImageView = findById[ImageView](R.id.audio_status_image_view)
-
-
-  protected val pausedText = findById[TextView](R.id.paused_text_view)
-
+  private val audioStatusImageView    = findById[ImageView](R.id.audio_status_image_view)
+  private val pausedText              = findById[TextView](R.id.paused_text_view)
   private val participantInfoCardView = findById[CardView](R.id.participant_info_card_view)
+  private val stateMessageText        = callController.stateMessageText(participant)
 
-  protected val stateMessageText = callController.stateMessageText(participant)
   stateMessageText.onUi(msg => pausedText.setText(msg.getOrElse("")))
 
-  protected val pausedTextVisible = stateMessageText.map(_.exists(_.nonEmpty))
+  protected val pausedTextVisible: Signal[Boolean] = stateMessageText.map(_.exists(_.nonEmpty))
   pausedTextVisible.onUi(pausedText.setVisible)
 
-  protected val videoCallInfo = returning(findById[View](R.id.video_call_info)) {
+  private val videoCallInfo = returning(findById[View](R.id.video_call_info)) {
     _.setBackgroundColor(getColor(R.color.black_16))
   }
 
@@ -82,14 +69,6 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
       isGroup <- callController.isGroupCall
       infos   <- if (isGroup) callController.participantInfos else Signal.const(Vector.empty)
     } yield infos.find(_.id == participant.userId)
-
-  protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
-    participantInfo.onUi {
-      case Some(p) if p.isSelf => view.setText(getString(R.string.calling_self, p.displayName))
-      case Some(p)             => view.setText(p.displayName)
-      case _                   =>
-    }
-  }
 
   Signal.zip(
     callController.isGroupCall,
@@ -118,7 +97,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  def videoShouldFill(view: View) = view match {
+  private def videoShouldFill(view: View): Unit = view match {
     case videoRenderer: VideoRenderer =>
       videoRenderer.setShouldFill(true)
       videoRenderer.setFillRatio(1.0f)
@@ -128,7 +107,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     case _ =>
   }
 
-  def videoShouldFit(view: View) = view match {
+  private def videoShouldFit(view: View): Unit = view match {
     case videoRenderer: VideoRenderer =>
       videoRenderer.setShouldFill(false)
       videoRenderer.setFillRatio(1.5f)
@@ -153,7 +132,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  def showActiveSpeakerFrame(color: Int): Unit = {
+  def showActiveSpeakerFrame(color: Int): Unit =
     if (BuildConfig.ACTIVE_SPEAKERS) {
       val border = new GradientDrawable()
       border.setColor(getColor(R.color.black))
@@ -161,13 +140,11 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
       setBackground(border)
       getChildAt(1).setMargin(3, 3, 3, 3)
     }
-  }
 
-  def hideActiveSpeakerFrame(): Unit = {
+  def hideActiveSpeakerFrame(): Unit =
     if (BuildConfig.ACTIVE_SPEAKERS) {
       setBackgroundColor(getColor(R.color.black))
       getChildAt(1).setMargin(0, 0, 0, 0)
     }
-  }
 
 }

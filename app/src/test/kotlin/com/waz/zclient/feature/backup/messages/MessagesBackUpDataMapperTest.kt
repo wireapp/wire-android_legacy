@@ -24,6 +24,8 @@ class MessagesBackUpDataMapperTest : UnitTest() {
             conversationId = data.conversationId,
             messageType = data.messageType,
             userId = data.userId,
+            clientId = data.clientId,
+            errorCode = data.errorCode,
             content = data.content,
             protos = data.protos,
             time = data.time,
@@ -52,6 +54,8 @@ class MessagesBackUpDataMapperTest : UnitTest() {
         assertEquals(data.conversationId, model.conversationId)
         assertEquals(data.messageType, model.messageType)
         assertEquals(data.userId, model.userId)
+        assertEquals(data.clientId, model.clientId)
+        assertEquals(data.errorCode, model.errorCode)
         assertEquals(data.content, model.content)
         assertEquals(data.protos, model.protos)
         assertEquals(data.time, model.time)
@@ -81,6 +85,8 @@ class MessagesBackUpDataMapperTest : UnitTest() {
             conversationId = data.conversationId,
             messageType = data.messageType,
             userId = data.userId,
+            clientId = data.clientId,
+            errorCode = data.errorCode,
             content = data.content,
             protos = data.protos,
             time = data.time,
@@ -109,6 +115,8 @@ class MessagesBackUpDataMapperTest : UnitTest() {
         assertEquals(data.conversationId, entity.conversationId)
         assertEquals(data.messageType, entity.messageType)
         assertEquals(data.userId, entity.userId)
+        assertEquals(data.clientId, model.clientId)
+        assertEquals(data.errorCode, model.errorCode)
         assertEquals(data.content, entity.content)
         assertEquals(data.protos, entity.protos)
         assertEquals(data.time, entity.time)

@@ -37,7 +37,7 @@ class MessageTimerPartView (context: Context, attrs: AttributeSet, style: Int) e
 
   inflate(R.layout.message_msg_timer_changed_content)
 
-  val msgView = returning(findById[SystemMessageView](R.id.message_view))(_.setHasDivider(false))
+  private val msgView = returning(findById[SystemMessageView](R.id.message_view))(_.setHasDivider(false))
 
   msgView.setIcon(HourGlassIcon(getColor(R.color.light_graphite)))
 

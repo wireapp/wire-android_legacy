@@ -12,6 +12,7 @@ class MessagesTableTestHelper private constructor() {
         private const val MESSAGES_CONV_ID_COL = "conv_id"
         private const val MESSAGES_TYPE_COL = "msg_type"
         private const val MESSAGES_USER_ID_COL = "user_id"
+        private const val MESSAGES_CLIENT_ID_COL = "client_id"
         private const val MESSAGES_CONTENT_COL = "content"
         private const val MESSAGES_PROTOS_COL = "protos"
         private const val MESSAGES_TIME_COL = "time"
@@ -33,7 +34,7 @@ class MessagesTableTestHelper private constructor() {
         private const val MESSAGES_FORCE_READ_RECEIPTS_COL = "force_read_receipts"
         private const val MESSAGES_ASSET_ID_COL = "asset_id"
 
-        fun insertMessage(id: String, conversationId: String, messageType: String, userId: String,
+        fun insertMessage(id: String, conversationId: String, messageType: String, userId: String, clientId: String?,
                           content: String?, protos: ByteArray?, time: Long, localTime: Long,
                           firstMessage: Boolean, members: String?, recipient: String?,
                           email: String?, name: String?, messageState: String, contentSize: Int,
@@ -46,6 +47,7 @@ class MessagesTableTestHelper private constructor() {
                 it.put(MESSAGES_CONV_ID_COL, conversationId)
                 it.put(MESSAGES_TYPE_COL, messageType)
                 it.put(MESSAGES_USER_ID_COL, userId)
+                it.put(MESSAGES_CLIENT_ID_COL, clientId)
                 it.put(MESSAGES_CONTENT_COL, content)
                 it.put(MESSAGES_PROTOS_COL, protos)
                 it.put(MESSAGES_TIME_COL, time)

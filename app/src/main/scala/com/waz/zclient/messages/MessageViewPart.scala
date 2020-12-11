@@ -26,12 +26,13 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, RelativeLayout}
 import com.waz.api.Message
+import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.wire.signals.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal, SourceSignal}
 import com.waz.utils.returning
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -47,11 +48,21 @@ import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
 
-trait MessageViewPart extends View {
+import scala.concurrent.Future
+
+trait MessageViewPart extends ViewHelper {
   def tpe: MsgPart
-  protected val messageAndLikes = Signal[MessageAndLikes]()
-  protected val message = messageAndLikes.map(_.message)
-  message.disableAutowiring() //important to ensure the signal keeps updating itself in the absence of any listeners
+
+  // `messageAndLikes` keeps a copy of the original message - no further updates to the message data
+  protected val messageAndLikes: SourceSignal[MessageAndLikes] = Signal[MessageAndLikes]()
+
+  // `message` reacts to changes to the message data
+  protected val message: Signal[MessageData] = for {
+    storage <- inject[Signal[MessagesStorage]]
+    mAL     <- messageAndLikes
+    msg     <- storage.signal(mAL.message.id)
+  } yield msg
+  message.disableAutowiring()
 
   final def set(msg: MessageAndLikes, part: Option[MessageContent], opts: MsgBindOptions): Unit =
     set(msg, part, Some(opts))
@@ -66,7 +77,7 @@ trait MessageViewPart extends View {
 }
 
 /**
-  * Marker for views that should pass up the click event either when clicked/double cicked OR when long clicked
+  * Marker for views that should pass up the click event either when clicked/double clicked OR when long clicked
   * This prevents some of the more distant parts of a single message view (like the timestamp or chathead view) from
   * passing up the click event, which can feel a bit confusing.
   *
@@ -74,23 +85,22 @@ trait MessageViewPart extends View {
   */
 trait ClickableViewPart extends MessageViewPart with ViewHelper with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Ui
-  val zms = inject[Signal[ZMessaging]]
-  val likes = inject[LikesController]
+
   val onClicked = EventStream[Unit]()
 
-  def onSingleClick() = {
+  def onSingleClick(): Unit = {
     onClicked ! ({})
     Option(getParent.asInstanceOf[View]).foreach(_.performClick())
   }
 
-  def onDoubleClick() = messageAndLikes.head.map { mAndL =>
+  def onDoubleClick(): Future[Unit] = messageAndLikes.head.map { mAndL =>
     if (MessageView.clickableTypes.contains(mAndL.message.msgType)) {
-      likes.onViewDoubleClicked ! mAndL
+      inject[LikesController].onViewDoubleClicked ! mAndL
       Option(getParent.asInstanceOf[View]).foreach(_.performClick()) //perform click to change focus
     }
   }
 
-  this.onClick ({ onSingleClick }, { onDoubleClick })
+  this.onClick(onSingleClick, onDoubleClick)
 
   this.onLongClick(getParent.asInstanceOf[View].performLongClick())
 }
@@ -171,7 +181,7 @@ class UnreadDot(context: Context, attrs: AttributeSet, style: Int)
   extends View(context, attrs, style)
     with ViewHelper
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

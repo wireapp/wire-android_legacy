@@ -114,7 +114,7 @@ class OtrServiceImpl(selfUserId:     UserId,
           decodeExternal(key, Some(sha), extData) match {
             case None =>
               error(l"External message could not be decoded External($key, $sha), data: $extData")
-              Some(OtrErrorEvent(conv, time, from, DecryptionError("symmetric decryption failed", from, sender)))
+              Some(OtrErrorEvent(conv, time, from, DecryptionError("symmetric decryption failed", Some(OtrError.ERROR_CODE_SYMMETRIC_DECRYPTION_FAILED), from, sender)))
             case Some(GenericMessage(_, Calling(content))) =>
               Some(CallMessageEvent(conv, time, from, sender, content)) //call messages need sender client id
             case Some(msg) =>
@@ -156,7 +156,7 @@ class OtrServiceImpl(selfUserId:     UserId,
               case REMOTE_IDENTITY_CHANGED =>
                 Future successful Left(IdentityChangedError(ev.from, ev.sender))
               case _ =>
-                Future successful Left(DecryptionError(e.getMessage, ev.from, ev.sender))
+                Future successful Left(DecryptionError(e.getMessage, Some(e.code.ordinal()), ev.from, ev.sender))
             }
         }
     }

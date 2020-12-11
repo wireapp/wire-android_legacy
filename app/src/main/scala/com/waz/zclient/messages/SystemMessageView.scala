@@ -24,81 +24,76 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.RelativeLayout
 import com.waz.utils.returning
+import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.views.LinkTextView
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.RichView
+import com.waz.zclient.views.LoadingIndicatorView
 
 /**
-  * View implementing system message layout: row containing icon, text and expandable line.
-  * By hard-coding layout logic in this class we can avoid using complicated view hierarchies.
-  */
+ * View implementing system message layout: row containing icon, text and expandable line.
+ * By hard-coding layout logic in this class we can avoid using complicated view hierarchies.
+ */
 class SystemMessageView(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   inflate(R.layout.system_message_content)
 
-  val start = getDimenPx(R.dimen.content__padding_left)
+  private val start      = getDimenPx(R.dimen.content__padding_left)
+  private val textMargin = getDimenPx(R.dimen.wire__padding__12)
+  private val paddingTop = getDimenPx(R.dimen.wire__padding__small)
+  private val stroke     = getDimenPx(R.dimen.wire__divider__height)
 
-  val textMargin = getDimenPx(R.dimen.wire__padding__12)
-  val paddingTop = getDimenPx(R.dimen.wire__padding__small)
-  val stroke     = getDimenPx(R.dimen.wire__divider__height)
-
-  val dividerColor = {
+  private val paint = returning(new Paint()) { p =>
     val a = context.obtainStyledAttributes(Array(R.attr.wireDividerColor))
-    returning(a.getColor(0, getColor(R.color.separator_dark))) { _ => a.recycle() }
-  }
-
-  val paint = returning(new Paint()) { p =>
+    val dividerColor = returning(a.getColor(0, getColor(R.color.separator_dark))) { _ => a.recycle() }
     p.setColor(dividerColor)
     p.setStrokeWidth(stroke)
   }
 
-  val iconView: GlyphTextView = findById(R.id.gtv__system_message__icon)
-  val textView: LinkTextView = findById(R.id.ttv__system_message__text)
-
+  private val iconView         = findById[GlyphTextView](R.id.gtv__system_message__icon)
+  private val textView         = findById[LinkTextView](R.id.ttv__system_message__text)
+  private val loadingIndicator = findById[LoadingIndicatorView](R.id.system_message_loading_indicator)
 
   private var hasDivider = true
   setHasDivider(true)
 
-  def setHasDivider(hasDivider: Boolean) = {
+  def setHasDivider(hasDivider: Boolean): Unit = {
     this.hasDivider = hasDivider
     textView.setMarginRight(getDimenPx(if (hasDivider) R.dimen.content__padding_left else R.dimen.wire__padding__24))
     setWillNotDraw(!hasDivider)
   }
 
-  def setText(text: String) = {
+  def setText(text: String): Unit = {
     textView.setText(text)
     TextViewUtils.boldText(textView)
   }
 
-  def setTextWithLink(text: String, color: Int, bold: Boolean = false, underline: Boolean = false)(onClick: => Unit) =
+  def setTextWithLink(text: String, color: Int, bold: Boolean = false, underline: Boolean = false)(onClick: => Unit): Unit =
     textView.setTextWithLink(text, color, bold, underline)(onClick)
 
-  def setIcon(drawable: Drawable) = {
+  def setIcon(drawable: Drawable): Unit = {
     iconView.setText("")
     iconView.setBackground(drawable)
   }
 
-  def setIcon(resId: Int) = {
+  def setIcon(resId: Int): Unit = {
     iconView.setText("")
     iconView.setBackgroundResource(resId)
   }
 
-  def setIconGlyph(glyph: String) = {
-    iconView.setBackground(null)
-    iconView.setText(glyph)
-    iconView.setTextColor(getColor(R.color.light_graphite))
-  }
-
-  def setIconGlyph(resId: Int) = {
+  def setIconGlyph(resId: Int): Unit = {
     iconView.setBackground(null)
     iconView.setText(resId)
     iconView.setTextColor(getColor(R.color.light_graphite))
   }
+
+  def showLoadingIndicator(): Unit = loadingIndicator.show(LoadingIndicatorView.Spinner, inject[ThemeController].isDarkTheme)
+  def hideLoadingIndicator(): Unit = loadingIndicator.hide()
 
   override def onDraw(canvas: Canvas): Unit = {
     super.onDraw(canvas)

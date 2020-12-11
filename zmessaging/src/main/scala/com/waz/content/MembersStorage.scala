@@ -18,6 +18,7 @@
 package com.waz.content
 
 import android.content.Context
+import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao

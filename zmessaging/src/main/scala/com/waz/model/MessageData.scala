@@ -32,6 +32,7 @@ import com.waz.model.GenericContent.{Asset, Composite, ImageAsset, Knock, LinkPr
 import com.waz.model.GenericMessage.{GenericMessageContent, TextMessage}
 import com.waz.model.MessageData.MessageState
 import com.waz.model.messages.media.{MediaAssetData, MediaAssetDataProtocol}
+import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.clock
 import com.waz.service.assets.StorageCodecs
 import com.waz.service.media.{MessageContentBuilder, RichMediaContentParser}
@@ -49,6 +50,7 @@ case class MessageData(override val id:   MessageId              = MessageId(),
                        convId:            ConvId                 = ConvId(),
                        msgType:           Message.Type           = Message.Type.TEXT,
                        userId:            UserId                 = UserId(),
+                       error:             Option[ErrorContent]   = None,
                        content:           Seq[MessageContent]    = Seq.empty,
                        protos:            Seq[GenericMessage]    = Seq.empty,
                        firstMessage:      Boolean                = false,
@@ -68,7 +70,7 @@ case class MessageData(override val id:   MessageId              = MessageId(),
                        quote:             Option[QuoteContent]   = None,
                        forceReadReceipts: Option[Int]            = None
                       ) extends Identifiable[MessageId] with DerivedLogTag {
-  lazy val contentString = protos.lastOption match {
+  lazy val contentString: String = protos.lastOption match {
     case Some(TextMessage(ct, _, _, _, _)) => ct
     case _ if msgType == api.Message.Type.RICH_MEDIA => content.map(_.content).mkString(" ")
     case _ if msgType == api.Message.Type.COMPOSITE => content.map(_.content).mkString("\n")
@@ -123,7 +125,7 @@ case class MessageData(override val id:   MessageId              = MessageId(),
       case MessageContent(_, _, _, _, Some(_), w, h, _, _) => Dim2(w, h)
     }
 
-  lazy val location =
+  lazy val location: Option[api.MessageContent.Location] =
     protos.collectFirst {
       case GenericMessageContent(Location(lon, lat, descr, zoom)) => new api.MessageContent.Location(lon, lat, descr.getOrElse(""), zoom.getOrElse(14))
     }
@@ -139,14 +141,14 @@ case class MessageData(override val id:   MessageId              = MessageId(),
     case _ => false
   }
 
-  def canRecall(convId: ConvId, userId: UserId) =
+  def canRecall(convId: ConvId, userId: UserId): Boolean =
     msgType != RECALLED && this.convId == convId && this.userId == userId && !isSystemMessage
 
-  def isAssetMessage = MessageData.IsAsset(msgType)
+  lazy val isAssetMessage: Boolean = MessageData.IsAsset(msgType)
 
-  def isEphemeral = ephemeral.isDefined
+  lazy val isEphemeral: Boolean = ephemeral.isDefined
 
-  def hasSameContentType(m: MessageData) = {
+  def hasSameContentType(m: MessageData): Boolean = {
     msgType == m.msgType && content.zip(m.content).forall { case (c, c1) => c.tpe == c1.tpe && c.openGraph.isDefined == c1.openGraph.isDefined } // openGraph may affect message type
   }
 
@@ -185,21 +187,21 @@ case class MessageData(override val id:   MessageId              = MessageId(),
     }
 }
 
-case class MessageContent(tpe:        Message.Part.Type,
-                          content:    String,
-                          richMedia:  Option[MediaAssetData],
-                          openGraph:  Option[OpenGraphData],
-                          asset:      Option[AssetId],
-                          width:      Int,
-                          height:     Int,
-                          syncNeeded: Boolean,
-                          mentions:   Seq[Mention]
-                         ) {
+final case class ErrorContent(clientId: ClientId, code: Int)
 
+final case class MessageContent(tpe:        Message.Part.Type,
+                                content:    String,
+                                richMedia:  Option[MediaAssetData],
+                                openGraph:  Option[OpenGraphData],
+                                asset:      Option[AssetId],
+                                width:      Int,
+                                height:     Int,
+                                syncNeeded: Boolean,
+                                mentions:   Seq[Mention]) {
   def contentAsUri: URI = RichMediaContentParser.parseUriWithScheme(content)
 }
 
-case class QuoteContent(message: MessageId, validity: Boolean, hash: Option[Sha256] = None)
+final case class QuoteContent(message: MessageId, validity: Boolean, hash: Option[Sha256] = None)
 
 object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData], Option[OpenGraphData], Option[AssetId], Int, Int, Boolean, Seq[Mention]) => MessageContent) {
 
@@ -279,11 +281,7 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
   }
 }
 
-object MessageData extends
-  ((MessageId, ConvId, Message.Type, UserId, Seq[MessageContent], Seq[GenericMessage], Boolean,
-  Set[UserId], Option[UserId], Option[String], Option[Name], Message.Status, RemoteInstant, LocalInstant, RemoteInstant,
-  Option[FiniteDuration], Option[LocalInstant], Boolean, Option[FiniteDuration], Option[GeneralAssetId], Option[QuoteContent],
-  Option[Int]) => MessageData) with DerivedLogTag {
+object MessageData extends DerivedLogTag {
 
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
@@ -318,6 +316,7 @@ object MessageData extends
     case Message.Type.SUCCESSFUL_CALL      => "SuccessfulCall"
     case Message.Type.RICH_MEDIA           => "RichMedia"
     case Message.Type.OTR_ERROR            => "OtrFailed"
+    case Message.Type.OTR_ERROR_FIXED      => "OtrFixed"
     case Message.Type.OTR_IDENTITY_CHANGED => "OtrIdentityChanged"
     case Message.Type.OTR_VERIFIED         => "OtrVerified"
     case Message.Type.OTR_UNVERIFIED       => "OtrUnverified"
@@ -340,6 +339,8 @@ object MessageData extends
     val Conv = id[ConvId]('conv_id).apply(_.convId)
     val Type = text[Message.Type]('msg_type, MessageTypeCodec.encode, MessageTypeCodec.decode)(_.msgType)
     val User = id[UserId]('user_id).apply(_.userId)
+    val Client = opt(id[ClientId]('client_id))(_.error.map(_.clientId))
+    val ErrorCode = opt(int('error_code))(_.error.map(_.code))
     val Content = jsonArray[MessageContent, Seq, Vector]('content).apply(_.content)
     val Protos = protoSeq[GenericMessage, Seq, Vector]('protos).apply(_.protos)
     val ContentSize = int('content_size)(_.content.size)
@@ -365,7 +366,7 @@ object MessageData extends
 
     override val idCol = Id
 
-    override val table = Table("Messages", Id, Conv, Type, User, Content, Protos, Time, LocalTime, FirstMessage, Members, Recipient, Email, Name, State, ContentSize, EditTime, Ephemeral, ExpiryTime, Expired, Duration, Quote, QuoteValidity, ForceReadReceipts, AssetId)
+    override val table = Table("Messages", Id, Conv, Type, User, Client, ErrorCode, Content, Protos, Time, LocalTime, FirstMessage, Members, Recipient, Email, Name, State, ContentSize, EditTime, Ephemeral, ExpiryTime, Expired, Duration, Quote, QuoteValidity, ForceReadReceipts, AssetId)
 
     object MessageIdReader extends Reader[MessageId] {
       override def apply(implicit c: DBCursor): MessageId = Id.load(c, 0)
@@ -380,8 +381,10 @@ object MessageData extends
       db.execSQL(s"CREATE INDEX IF NOT EXISTS Messages_conv_time on Messages ( conv_id, time)")
     }
 
-    override def apply(implicit cursor: DBCursor): MessageData =
-      MessageData(Id, Conv, Type, User, Content, Protos, FirstMessage, Members, Recipient, Email, Name, State, Time, LocalTime, EditTime, Ephemeral, ExpiryTime, Expired, Duration, AssetId, Quote.map(QuoteContent(_, QuoteValidity, None)), ForceReadReceipts)
+    override def apply(implicit cursor: DBCursor): MessageData = {
+      val error = Client.flatMap(cId => ErrorCode.map(ErrorContent(cId, _)))
+      MessageData(Id, Conv, Type, User, error, Content, Protos, FirstMessage, Members, Recipient, Email, Name, State, Time, LocalTime, EditTime, Ephemeral, ExpiryTime, Expired, Duration, AssetId, Quote.map(QuoteContent(_, QuoteValidity, None)), ForceReadReceipts)
+    }
 
     def listUnsentMsgs(id: ConvId)(implicit db: DB) = {
       import Message.Status._
@@ -477,7 +480,10 @@ object MessageData extends
     def countSentByType(selfUserId: UserId, tpe: Message.Type)(implicit db: DB) = db.query(s"SELECT * FROM ${table.name} WHERE ${User.name} = '${User(selfUserId)}' AND ${Type.name} = '${Type(tpe)}'").getCount.toLong
 
     def findByType(conv: ConvId, tpe: Message.Type)(implicit db: DB) =
-      iterating(db.query(table.name, null, s"${Conv.name} = '$conv' AND ${Type.name} = '${Type(tpe)}'", null, null, null, s"${Time.name} ASC"))
+      iterating(db.query(table.name, null, s"${Conv.name} = '${Conv(conv)}' AND ${Type.name} = '${Type(tpe)}'", null, null, null, s"${Time.name} ASC"))
+
+    def findErrors(userId: UserId, clientId: ClientId)(implicit db: DB) =
+      iterating(db.query(table.name, null, s"${Client.name} IS NOT NULL AND ${Client.name} = '${clientId.str}' AND ${User.name} = '${User(userId)}' AND ${Type.name} = '${Type(Message.Type.OTR_ERROR)}'", null, null, null, s"${Time.name} ASC"))
 
     def findByTypes(types: Set[Message.Type])(implicit db: DB) = {
       val typesString = types.map(t => s"'${Type(t)}'").mkString("(", "," , ")")

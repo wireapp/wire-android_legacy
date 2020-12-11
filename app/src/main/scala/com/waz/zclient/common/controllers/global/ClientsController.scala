@@ -24,14 +24,15 @@ import com.waz.api.OtrClientType
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.model.otr.{Client, ClientId, UserClients}
+import com.waz.service.messages.MessagesService
 import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.sync.SyncResult
 import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 
@@ -39,15 +40,14 @@ class ClientsController(implicit inj: Injector) extends Injectable with DerivedL
 
   import com.waz.threading.Threading.Implicits.Background
 
-  val accountManager = inject[Signal[AccountManager]]
+  private val accountManager: Signal[AccountManager] = inject[Signal[AccountManager]]
+  private val self: Signal[UserId] = accountManager.map(_.userId)
 
-  val zms            = inject[Signal[ZMessaging]]
-  val convController = inject[ConversationController]
-  val userAccounts   = inject[UserAccountsController]
+  val selfClientId: Signal[Option[ClientId]] = accountManager.flatMap(_.clientId)
 
-  val self = accountManager.map(_.userId)
+  selfClientId.foreach { clientId => verbose(l"self client id: $clientId") }
 
-  val selfClientId = accountManager.flatMap(_.clientId)
+  private lazy val messagesService = inject[Signal[MessagesService]]
 
   def client(userId: UserId, clientId: ClientId): Signal[Option[Client]] = for {
     manager <- accountManager
@@ -84,13 +84,9 @@ class ClientsController(implicit inj: Injector) extends Injectable with DerivedL
   def updateVerified(userId: UserId, clientId: ClientId, trusted: Boolean): Future[Option[(UserClients, UserClients)]] =
     accountManager.head.flatMap(_.storage.otrClientsStorage.updateVerified(userId, clientId, trusted))
 
-  def resetSession(userId: UserId, clientId: ClientId): Future[SyncResult] = {
+  private def resetSession(convId: ConvId, userId: UserId, clientId: ClientId): Future[SyncResult] = {
     (for {
-      z      <- zms.head
-      convId <- inject[Signal[Option[ConvId]]].head.flatMap {
-        case Some(id) => Future.successful(id)
-        case _ => userAccounts.getConversationId(userId)
-      }
+      z      <- inject[Signal[ZMessaging]].head
       syncId <- z.otrService.resetSession(convId, userId, clientId)
       resp   <- z.syncRequests.await(syncId)
     } yield resp)
@@ -99,6 +95,27 @@ class ClientsController(implicit inj: Injector) extends Injectable with DerivedL
       }
   }
 
+  def resetSession(userId: UserId, clientId: ClientId, convIdOpt: Option[ConvId] = None): Future[SyncResult] = {
+    // The call might be from a conversation and give the convId, but it can also come from the other
+    // user's profile. In such case, we first check if we have a current conversation (most probably)
+    // and if not, if we have a 1:1 conversation with that user.
+    val convId = convIdOpt match {
+      case Some(convId) => Future.successful(convId)
+      case None =>
+        inject[Signal[Option[ConvId]]].head.flatMap {
+          case Some(convId) => Future.successful(convId)
+          case None         => inject[UserAccountsController].getConversationId(userId)
+        }
+    }
+
+    for {
+      convId    <- convId
+      result    <- resetSession(convId, userId, clientId)
+      service   <- messagesService.head
+      _         <- if (result == SyncResult.Success) service.fixErrorMessages(userId, clientId)
+                   else Future.successful(())
+    } yield result
+  }
 }
 
 object ClientsController {
@@ -136,10 +153,11 @@ object ClientsController {
     sb.toString
   }
 
-  def getDisplayId(id: ClientId) = f"${id.str.toUpperCase(Locale.ENGLISH)}%16s" replace (' ', '0') grouped 4 map { group =>
-    val (bold, normal) = group.splitAt(2)
-    s"[[$bold]] $normal"
-  } mkString " "
+  def getDisplayId(id: ClientId): String =
+    f"${id.str.toUpperCase(Locale.ENGLISH)}%16s".replace(' ', '0').grouped(4).map { group =>
+      val (bold, normal) = group.splitAt(2)
+      s"[[$bold]] $normal"
+    } mkString " "
 
   def getFormattedDisplayId(clientId: ClientId, color: Int)(implicit cxt: Context): CharSequence = {
     val text = getString(R.string.otr__device_id, getDisplayId(clientId))

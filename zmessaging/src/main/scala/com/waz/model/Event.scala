@@ -115,7 +115,7 @@ case class CallMessageEvent(convId: RConvId, time: RemoteInstant, from: UserId, 
 
 sealed trait OtrError
 case object Duplicate extends OtrError
-case class DecryptionError(msg: String, from: UserId, sender: ClientId) extends OtrError
+case class DecryptionError(msg: String, code: Option[Int], from: UserId, sender: ClientId) extends OtrError
 case class IdentityChangedError(from: UserId, sender: ClientId) extends OtrError
 case class UnknownOtrErrorEvent(json: JSONObject) extends OtrError
 
@@ -300,10 +300,12 @@ object OtrErrorEvent extends DerivedLogTag {
 
   implicit lazy val OtrErrorDecoder: JsonDecoder[OtrError] = new JsonDecoder[OtrError] {
     override def apply(implicit js: JSONObject): OtrError = Try {
-      decodeString('type) match {
-        case "otr-error.decryption-error" => DecryptionError('msg, 'from, 'sender)
-        case "otr-error.identity-changed-error" => IdentityChangedError('from, 'sender)
-        case "otr-error.duplicate" => Duplicate
+      (decodeString('type), decodeOptInt('code)) match {
+        case ("otr-error.decryption-error", code) =>
+          DecryptionError('msg, code, 'from, 'sender)
+        case ("otr-error.identity-changed-error", _) =>
+          IdentityChangedError('from, 'sender)
+        case ("otr-error.duplicate", _) => Duplicate
         case _ =>
           error(l"unhandled event: $js")
           UnknownOtrErrorEvent(js)
@@ -349,12 +351,22 @@ object MessageEvent {
 object OtrError {
   import com.waz.utils._
 
+  // artificial error codes; see CryptoException.Code for real ones
+  val ERROR_CODE_SYMMETRIC_DECRYPTION_FAILED = 101
+  val ERROR_CODE_DECRYPTION_OTHER = 102
+  val ERROR_CODE_IDENTITY_CHANGED = 103
+
   implicit lazy val OtrErrorEncoder: JsonEncoder[OtrError] = new JsonEncoder[OtrError] {
     override def apply(error: OtrError): JSONObject = JsonEncoder { json =>
       error match {
-        case DecryptionError(msg, from, sender) =>
-          json
-            .put("msg", msg)
+        case DecryptionError(msg, Some(code), from, sender) =>
+          json.put("msg", msg)
+              .put("code", code)
+              .put("from", from.str)
+              .put("sender", sender.str)
+              .setType("otr-error.decryption-error")
+        case DecryptionError(msg, None, from, sender) =>
+          json.put("msg", msg)
             .put("from", from.str)
             .put("sender", sender.str)
             .setType("otr-error.decryption-error")

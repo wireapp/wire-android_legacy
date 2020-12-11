@@ -29,7 +29,7 @@ import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
 import androidx.core.view.ViewCompat
 import com.waz.zclient.messages.LikesController._
-import com.waz.model.{MessageContent, MessageId}
+import com.waz.model.{MessageContent, MessageId, UserId}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, Signal}
@@ -213,11 +213,11 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   def slideContentOut(): Unit = hideAnim.start()
 
-  def showDetails(fromLikes: Boolean) = {
+  def showDetails(fromLikes: Boolean): Unit = {
     import Threading.Implicits.Ui
 
     val messageToShow = for {
-      selfId  <- zms.map(_.selfUserId).head
+      selfId  <- inject[Signal[UserId]].head
       isTeam  <- convController.currentConv.map(_.team.isDefined).head
       isGroup <- convController.currentConvIsGroup.head
       message <- controller.message.head
