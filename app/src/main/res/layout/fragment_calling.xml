@@ -30,7 +30,6 @@
         android:layout_height="match_parent"
         app:columnCount="2"
         app:orientation="horizontal"
-        android:background="@color/accent_blue"
         />
 
     <androidx.cardview.widget.CardView

@@ -18,6 +18,7 @@
 package com.waz.zclient.calling
 
 import android.os.Bundle
+import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.FrameLayout
 import androidx.cardview.widget.CardView
@@ -35,7 +36,8 @@ import com.waz.zclient.security.SecurityPolicyChecker
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.Signal
-import com.waz.zclient.calling.CallingFragment.MaxVideoPreviews
+import com.waz.zclient.calling.CallingFragment.MaxAllVideoPreviews
+import com.waz.zclient.calling.CallingFragment.MaxTopSpeakerVideoPreviews
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 
 class CallingFragment extends FragmentHelper {
@@ -54,14 +56,20 @@ class CallingFragment extends FragmentHelper {
     }
 
     vh.foreach { grid =>
-      Signal.zip(videoGridInfo, controller.isFullScreenEnabled).foreach {
-        case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false) =>
-          refreshVideoGrid(grid, selfParticipant, videoUsers, infos, participants, isVideoBeingSent)
+
+      grid.setOnClickListener(new OnClickListener {
+        override def onClick(view: View): Unit = controller.controlsClick(true)
+      })
+
+      Signal.zip(videoGridInfo, controller.isFullScreenEnabled, controller.showTopSpeakers, controller.activeParticipantsWithVideo()).foreach {
+        case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false, true, activeParticipantsWithVideo) =>
+          refreshVideoGrid(grid, selfParticipant, activeParticipantsWithVideo, infos, participants, isVideoBeingSent, true)
+        case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false, false, _) =>
+          refreshVideoGrid(grid, selfParticipant, videoUsers, infos, participants, isVideoBeingSent, false)
         case _ =>
       }
     }
   }
-
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_calling, container, false)) { v =>
@@ -92,17 +100,8 @@ class CallingFragment extends FragmentHelper {
 
   override def onDestroyView(): Unit = {
     super.onDestroyView()
-    clearVideoGrid()
+    clearVideoGrids()
   }
-
-  private lazy val videoUsers =
-    Signal.zip(controller.allVideoReceiveStates, controller.selfParticipant, controller.isVideoCall, controller.isCallIncoming).map {
-      case (videoStates, self, videoCall, incoming) =>
-        videoStates.toSeq.collect {
-          case (participant, _) if participant == self && videoCall && incoming => participant
-          case (participant, VideoState.Started | VideoState.Paused | VideoState.BadConnection | VideoState.NoCameraPermission | VideoState.ScreenShare) => participant
-        }
-    }
 
   private lazy val isVideoBeingSent =
     Signal.zip(controller.allVideoReceiveStates, controller.selfParticipant).map {
@@ -111,7 +110,7 @@ class CallingFragment extends FragmentHelper {
 
   private lazy val videoGridInfo = Signal.zip(
     controller.selfParticipant,
-    videoUsers,
+    controller.videoUsers,
     controller.participantInfos,
     controller.otherParticipants,
     isVideoBeingSent
@@ -126,10 +125,11 @@ class CallingFragment extends FragmentHelper {
     } { userView =>
       viewMap = viewMap.updated(participant, userView)
         userView.onDoubleClick.onUi { _ =>
+
           controller.otherParticipants.map(_.size > 2).head.foreach {
             case true =>
               showFullScreenVideo(participant)
-              clearVideoGrid()
+              clearVideoGrids()
             case false =>
           }
         }
@@ -138,50 +138,61 @@ class CallingFragment extends FragmentHelper {
     videoUsers.map { participant => viewMap.getOrElse(participant, createView(participant)) }
   }
 
-  private def refreshVideoGrid(grid            : GridLayout,
-                               selfParticipant : Participant,
-                               videoUsers      : Seq[Participant],
-                               infos           : Seq[CallParticipantInfo],
-                               participants    : Set[Participant],
-                               isVideoBeingSent: Boolean
+  private def refreshVideoGrid(grid: GridLayout,
+                               selfParticipant: Participant,
+                               videoUsers: Seq[Participant],
+                               infos: Seq[CallParticipantInfo],
+                               participants: Set[Participant],
+                               isVideoBeingSent: Boolean,
+                               showTopSpeakers: Boolean
                               ): Unit = {
 
     val views = refreshViews(videoUsers, selfParticipant)
 
-    viewMap.get(selfParticipant).foreach { selfView =>
-      previewCardView.foreach { cardView =>
-        if (views.size == 2 && participants.size == 2 && isVideoBeingSent) {
-          verbose(l"Showing card preview")
-          cardView.removeAllViews()
-          grid.removeView(selfView)
-          selfView.setLayoutParams(
-            new FrameLayout.LayoutParams(
-              ViewGroup.LayoutParams.MATCH_PARENT,
-              ViewGroup.LayoutParams.MATCH_PARENT
+      viewMap.get(selfParticipant).foreach { selfView =>
+        previewCardView.foreach { cardView =>
+          if (!showTopSpeakers && views.size == 2 && participants.size == 2 && isVideoBeingSent) {
+            verbose(l"Showing card preview")
+            cardView.removeAllViews()
+            grid.removeView(selfView)
+            selfView.setLayoutParams(
+              new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+              )
             )
-          )
-          cardView.addView(selfView)
-          cardView.setVisibility(View.VISIBLE)
-        } else {
-          verbose(l"Hiding card preview")
-          cardView.removeAllViews()
-          cardView.setVisibility(View.GONE)
+            cardView.addView(selfView)
+            cardView.setVisibility(View.VISIBLE)
+          } else {
+            verbose(l"Hiding card preview")
+            cardView.removeAllViews()
+            cardView.setVisibility(View.GONE)
+          }
         }
       }
-    }
 
     val infoMap = infos.toIdMap
 
-    val gridViews = views.filter {
-      case _: SelfVideoView if views.size == 2 && participants.size == 2 && isVideoBeingSent => false
-      case _: SelfVideoView if views.size > 1 && !isVideoBeingSent => false
-      case _ => true
-    }.sortWith {
-      case (_: SelfVideoView, _) => true
-      case (_, _: SelfVideoView) => false
-      case (v1, v2) =>
-        infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
-    }.take(MaxVideoPreviews)
+    var gridViews: Seq[UserVideoView] = Seq.empty
+
+    if (showTopSpeakers) {
+       gridViews = views.sortWith {
+        case (v1, v2) =>
+          infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
+      }.take(MaxTopSpeakerVideoPreviews)
+    }
+    else {
+       gridViews = views.filter {
+        case _: SelfVideoView if views.size == 2 && participants.size == 2 && isVideoBeingSent => false
+        case _: SelfVideoView if views.size > 1 && !isVideoBeingSent => false
+        case _ => true
+      }.sortWith {
+        case (_: SelfVideoView, _) => true
+        case (_, _: SelfVideoView) => false
+        case (v1, v2) =>
+          infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
+      }.take(MaxAllVideoPreviews)
+    }
 
     gridViews.zipWithIndex.foreach { case (userVideoView, index) =>
       val (row, col, span, width) = index match {
@@ -221,8 +232,8 @@ class CallingFragment extends FragmentHelper {
     viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) }
   }
 
-  def clearVideoGrid(): Unit = {
-    videoGrid.foreach(_.removeAllViews())
+  def clearVideoGrids(): Unit = {
+    videoGrid.foreach (_.removeAllViews())
     viewMap = Map.empty
   }
 
@@ -234,6 +245,7 @@ class CallingFragment extends FragmentHelper {
 
 object CallingFragment {
   val Tag: String = getClass.getSimpleName
-  val MaxVideoPreviews = 12
+  val MaxAllVideoPreviews = 12
+  val MaxTopSpeakerVideoPreviews = 4
   def apply(): CallingFragment = new CallingFragment()
 }
