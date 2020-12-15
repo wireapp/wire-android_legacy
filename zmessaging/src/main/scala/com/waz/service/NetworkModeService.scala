@@ -72,7 +72,7 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle, permis
         networkMode ! mode
       }
       case false =>
-    }(Threading.Ui)
+    }(Threading.Background)
 
   }
 
