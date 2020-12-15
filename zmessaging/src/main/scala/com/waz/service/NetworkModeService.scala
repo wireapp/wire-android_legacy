@@ -17,6 +17,7 @@
  */
 package com.waz.service
 
+import android.Manifest.permission._
 import android.annotation.TargetApi
 import android.content.{BroadcastReceiver, Context, Intent, IntentFilter}
 import android.net.{ConnectivityManager, NetworkInfo}
@@ -24,8 +25,12 @@ import android.telephony.TelephonyManager
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.wire.signals.{EventContext, Signal}
+import com.waz.permissions.PermissionsService
+import com.waz.threading.Threading
+import com.wire.signals.Signal
 import com.waz.utils.returning
+import scala.collection.immutable.ListSet
+
 
 trait NetworkModeService {
   def networkMode: Signal[NetworkMode]
@@ -35,7 +40,8 @@ trait NetworkModeService {
   lazy val isOnline: Signal[Boolean] = networkMode.map(NetworkModeService.isOnlineMode)
 }
 
-class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extends NetworkModeService with DerivedLogTag {
+class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle, permissionService: PermissionsService) extends NetworkModeService with DerivedLogTag {
+
   import NetworkModeService._
 
   private lazy val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE).asInstanceOf[ConnectivityManager]
@@ -45,7 +51,7 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
 
   lifeCycle.uiActive {
     case true => updateNetworkMode()
-    case _    => //
+    case _ =>
   }
 
   val receiver = new BroadcastReceiver {
@@ -55,13 +61,19 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
   updateNetworkMode()
 
   def updateNetworkMode(): Unit = {
-    val mode = Option(connectivityManager.getActiveNetworkInfo) match {
-      case Some(info) if info.isConnected => computeMode(info, telephonyManager)
-      case _                              => NetworkMode.OFFLINE
-    }
-    verbose(l"updateNetworkMode: $mode")
+    permissionService.requestAllPermissions(ListSet(READ_PHONE_STATE)).map {
+      case true => {
+        val mode = Option(connectivityManager.getActiveNetworkInfo) match {
+          case Some(info) if info.isConnected => computeMode(info, telephonyManager)
+          case _                              => NetworkMode.OFFLINE
+        }
+        verbose(l"updateNetworkMode: $mode")
 
-    networkMode ! mode
+        networkMode ! mode
+      }
+      case false =>
+    }(Threading.Background)
+
   }
 
   override def getNetworkOperatorName = Option(telephonyManager.getNetworkOperatorName).filter(_.nonEmpty).getOrElse("unknown")
