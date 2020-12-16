@@ -17,118 +17,83 @@
  */
 package com.waz.service
 
-import android.Manifest.permission._
-import android.annotation.TargetApi
-import android.content.{BroadcastReceiver, Context, Intent, IntentFilter}
-import android.net.{ConnectivityManager, NetworkInfo}
-import android.telephony.TelephonyManager
+import android.content.Context
+import android.net.{ConnectivityManager, Network, NetworkCapabilities, NetworkRequest}
+import android.provider.Settings
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.permissions.PermissionsService
 import com.waz.threading.Threading
-import com.wire.signals.Signal
 import com.waz.utils.returning
-import scala.collection.immutable.ListSet
+import com.wire.signals.Signal
 
+import scala.collection.immutable.ListSet
+import scala.concurrent.Future
 
 trait NetworkModeService {
   def networkMode: Signal[NetworkMode]
-  def getNetworkOperatorName: String
+
+  def registerNetworkCallback(): Future[Unit]
   def isDeviceIdleMode: Boolean
 
   lazy val isOnline: Signal[Boolean] = networkMode.map(NetworkModeService.isOnlineMode)
 }
 
-class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle, permissionService: PermissionsService) extends NetworkModeService with DerivedLogTag {
-
-  import NetworkModeService._
+class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle, permissionService: PermissionsService)
+  extends NetworkModeService with DerivedLogTag {
+  import Threading.Implicits.Background
 
   private lazy val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE).asInstanceOf[ConnectivityManager]
-  private lazy val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE).asInstanceOf[TelephonyManager]
 
   override val networkMode = returning(Signal[NetworkMode](NetworkMode.UNKNOWN)) { _.disableAutowiring() }
 
-  lifeCycle.uiActive {
-    case true => updateNetworkMode()
-    case _ =>
-  }
+  override def registerNetworkCallback(): Future[Unit] =
+    permissionService.requestAllPermissions(ListSet(android.Manifest.permission.ACCESS_NETWORK_STATE)).map {
+      case true =>
+        connectivityManager.registerNetworkCallback(new NetworkRequest.Builder().build(), new ConnectivityManager.NetworkCallback() {
 
-  val receiver = new BroadcastReceiver {
-    override def onReceive(context: Context, intent: Intent): Unit = updateNetworkMode()
-  }
-  context.registerReceiver(receiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
-  updateNetworkMode()
+          override def onAvailable(network: Network): Unit = {
+            val mode = computeMode(network)
 
-  def updateNetworkMode(): Unit = {
-    permissionService.requestAllPermissions(ListSet(READ_PHONE_STATE)).map {
-      case true => {
-        val mode = Option(connectivityManager.getActiveNetworkInfo) match {
-          case Some(info) if info.isConnected => computeMode(info, telephonyManager)
-          case _                              => NetworkMode.OFFLINE
-        }
-        verbose(l"updateNetworkMode: $mode")
+            info(l"new network mode: $mode")
+            networkMode ! mode
+          }
 
-        networkMode ! mode
-      }
+          override def onLost(network: Network): Unit =
+            if (Settings.Global.getInt(context.getContentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0) {
+              info(l"new network mode: OFFLINE (the airplane mode is on)")
+              networkMode ! NetworkMode.OFFLINE
+            } else {
+              val mode = computeMode(network)
+              networkMode.mutate {
+                case currentMode if currentMode == mode =>
+                  info(l"new network mode: OFFLINE (network $mode lost)")
+                  NetworkMode.OFFLINE
+                case currentMode => currentMode
+              }
+            }
+
+          override def onUnavailable(): Unit = {
+            info(l"new network mode: OFFLINE (no network available)")
+            networkMode ! NetworkMode.OFFLINE
+          }
+        })
       case false =>
-    }(Threading.Background)
+    }
 
-  }
+  def computeMode(network: Network): NetworkMode =
+    Option(connectivityManager.getNetworkCapabilities(network)).map { networkCapabilities =>
+      if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) NetworkMode.WIFI
+      else if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) NetworkMode.CELLULAR
+      else NetworkMode.OFFLINE
+    }.getOrElse(NetworkMode.OFFLINE)
 
-  override def getNetworkOperatorName = Option(telephonyManager.getNetworkOperatorName).filter(_.nonEmpty).getOrElse("unknown")
+  override def isDeviceIdleMode: Boolean = false
 
-  //this method doesn't really belong here, but it's only used for tracking - just tells us if the device was in doze mode or not
-  //fixme get the version code from android sdk
-  @TargetApi(23)
-  override def isDeviceIdleMode = false
-  //    if (android.os.Build.VERSION.SDK_INT >= M)
-  //      Option(context.getSystemService(Context.POWER_SERVICE)).map(_.asInstanceOf[PowerManager]).exists(_.isDeviceIdleMode)
-  //    else false
 }
 
 object NetworkModeService extends DerivedLogTag {
-
   def isOnlineMode(mode: NetworkMode): Boolean =
     mode != NetworkMode.OFFLINE && mode != NetworkMode.UNKNOWN
-
-  /*
-   * This part (the mapping of mobile data network types to the networkMode enum) of the Wire software
-   * uses source coded posted on the StackOverflow site.
-   * (http://stackoverflow.com/a/18583089/1751834)
-   *
-   * That work is licensed under a Creative Commons Attribution-ShareAlike 2.5 Generic License.
-   * (http://creativecommons.org/licenses/by-sa/2.5)
-   *
-   * Contributors on StackOverflow:
-   *  - Anonsage (http://stackoverflow.com/users/887894/anonsage)
-   */
-  def computeMode(ni: NetworkInfo, tm: => TelephonyManager): NetworkMode = Option(ni.getType).map {
-    case ConnectivityManager.TYPE_WIFI | ConnectivityManager.TYPE_ETHERNET => NetworkMode.WIFI
-    case _ =>
-      tm.getNetworkType match {
-        case TelephonyManager.NETWORK_TYPE_GPRS |
-             TelephonyManager.NETWORK_TYPE_1xRTT |
-             TelephonyManager.NETWORK_TYPE_IDEN |
-             TelephonyManager.NETWORK_TYPE_CDMA =>
-          NetworkMode._2G
-        case TelephonyManager.NETWORK_TYPE_EDGE =>
-          NetworkMode.EDGE
-        case TelephonyManager.NETWORK_TYPE_EVDO_0 |
-             TelephonyManager.NETWORK_TYPE_EVDO_A |
-             TelephonyManager.NETWORK_TYPE_HSDPA |
-             TelephonyManager.NETWORK_TYPE_HSPA |
-             TelephonyManager.NETWORK_TYPE_HSUPA |
-             TelephonyManager.NETWORK_TYPE_UMTS |
-             TelephonyManager.NETWORK_TYPE_EHRPD |
-             TelephonyManager.NETWORK_TYPE_EVDO_B |
-             TelephonyManager.NETWORK_TYPE_HSPAP =>
-          NetworkMode._3G
-        case TelephonyManager.NETWORK_TYPE_LTE =>
-          NetworkMode._4G
-        case _ =>
-          info(l"Unknown network type, defaulting to Wifi")
-          NetworkMode.WIFI
-      }
-  }.getOrElse(NetworkMode.OFFLINE)
 }
