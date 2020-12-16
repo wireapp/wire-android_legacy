@@ -48,6 +48,10 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle)
           networkMode ! mode
         }
 
+        /** FIXME: Trying to figure out if we are offline inside `onLost` may suffer from a race condition
+         *    and the app may end up thinking it's offline when it's not or vice versa. Try to find
+         *    a better solution.
+        */
         override def onLost(network: Network): Unit =
           if (Settings.Global.getInt(context.getContentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0) {
             info(l"new network mode: OFFLINE (the airplane mode is on)")
