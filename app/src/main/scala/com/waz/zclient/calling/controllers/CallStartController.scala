@@ -101,13 +101,6 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
         true              <-
           inject[NetworkModeService].networkMode.head.flatMap {        //check network state, proceed if okay
             case NetworkMode.OFFLINE              => showErrorDialog(R.string.alert_dialog__no_network__header, R.string.calling__call_drop__message).map(_ => false)
-            case NetworkMode._2G                  => showErrorDialog(R.string.calling__slow_connection__title, R.string.calling__slow_connection__message).map(_ => false)
-            case NetworkMode.EDGE if curWithVideo =>
-              showConfirmationDialog(
-                getString(R.string.calling__slow_connection__title),
-                getString(R.string.calling__video_call__slow_connection__message),
-                color = color
-              )
             case _                                => Future.successful(true)
           }
         members           <- newCallZms.conversations.convMembers(newCallConv.id).head

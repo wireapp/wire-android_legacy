@@ -100,7 +100,7 @@ class PushTokenServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       awaitAllTasks
       calls shouldEqual 1
-      networkMode ! NetworkMode._4G
+      networkMode ! NetworkMode.CELLULAR
       result(currentToken.signal.filter(_.contains(newToken)).head)
 
     }

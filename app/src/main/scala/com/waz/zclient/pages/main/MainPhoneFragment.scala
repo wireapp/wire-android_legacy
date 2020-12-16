@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.pages.main
 
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ShortcutManager
@@ -29,7 +30,7 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
 import com.waz.permissions.PermissionsService
 import com.waz.service.tracking.GroupConversationEvent
-import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
+import com.waz.service.{AccountManager, GlobalModule, NetworkModeService, ZMessaging}
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.wire.signals.Signal
@@ -261,7 +262,7 @@ class MainPhoneFragment extends FragmentHelper
   }
 
   private def openGalleryPicker() =
-    inject[PermissionsService].requestAllPermissions(ListSet(android.Manifest.permission.READ_EXTERNAL_STORAGE)).map {
+    inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
       case true =>
         val galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         safeStartActivityForResult(galleryIntent, Shortcuts.SHARE_PHOTO_REQUEST_CODE)
@@ -287,6 +288,7 @@ class MainPhoneFragment extends FragmentHelper
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
     initShortcutDestinations()
+    inject[NetworkModeService].registerNetworkCallback()
     consentDialog
   }
 

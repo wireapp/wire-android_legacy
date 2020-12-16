@@ -286,8 +286,6 @@
     <!-- Conversation: Profile Popover -->
 
     <!-- Calling/voice -->
-    <string name="calling__slow_connection__title">Slow Internet</string>
-    <string name="calling__slow_connection__message">Your Internet connection is too slow to call right now. Please try again later.</string>
     <string name="calling__cannot_start__title">Microphone required</string>
     <string name="calling__cannot_start__message">To call, hang up your current call.</string>
     <string name="calling__cannot_start__no_permission__message">Go to Settings and allow Wire to access the microphone.</string>
