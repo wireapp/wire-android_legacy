@@ -20,7 +20,7 @@ package com.waz.zclient.calling
 import android.os.Bundle
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.FrameLayout
+import android.widget.{FrameLayout, LinearLayout}
 import androidx.cardview.widget.CardView
 import androidx.gridlayout.widget.GridLayout
 import com.waz.service.call.Avs.VideoState
@@ -43,10 +43,12 @@ import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 class CallingFragment extends FragmentHelper {
   import Threading.Implicits.Ui
 
-  private lazy val controller         = inject[CallController]
-  private lazy val themeController    = inject[ThemeController]
-  private lazy val controlsFragment   = ControlsFragment.newInstance
-  private lazy val previewCardView    = view[CardView](R.id.preview_card_view)
+  private lazy val controller             = inject[CallController]
+  private lazy val themeController        = inject[ThemeController]
+  private lazy val controlsFragment       = ControlsFragment.newInstance
+  private lazy val previewCardView        = view[CardView](R.id.preview_card_view)
+  private lazy val noActiveSpeakersLayout = view[LinearLayout](R.id.no_active_speakers_layout)
+
   private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
 
     controller.theme.map(themeController.getTheme).foreach { theme =>
@@ -89,6 +91,13 @@ class CallingFragment extends FragmentHelper {
     }
 
     videoGrid
+
+    Signal.zip(controller.showTopSpeakers,
+      controller.activeParticipantsWithVideo().map(_.size > 0)
+    ).onUi {
+      case (true, false) => noActiveSpeakersLayout.foreach(_.setVisibility(View.VISIBLE))
+      case _                    => noActiveSpeakersLayout.foreach(_.setVisibility(View.GONE))
+    }
   }
 
   override def onBackPressed(): Boolean =

@@ -32,6 +32,31 @@
         app:orientation="horizontal"
         />
 
+    <LinearLayout
+        android:id="@+id/no_active_speakers_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/white"
+            android:layout_marginBottom="@dimen/wire__margin__20"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="sans-serif"
+            android:textColor="@color/white"
+            android:text="@string/calling_no_active_speaker" />
+    </LinearLayout>
+
     <androidx.cardview.widget.CardView
         android:id="@+id/preview_card_view"
         android:layout_width="@dimen/calling_preview_card_width"
