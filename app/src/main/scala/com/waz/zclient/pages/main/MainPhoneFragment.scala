@@ -288,7 +288,8 @@ class MainPhoneFragment extends FragmentHelper
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
     initShortcutDestinations()
-    inject[NetworkModeService].registerNetworkCallback().foreach(_ => consentDialog)
+    inject[NetworkModeService].registerNetworkCallback()
+    consentDialog
   }
 
   override def onResume(): Unit = {

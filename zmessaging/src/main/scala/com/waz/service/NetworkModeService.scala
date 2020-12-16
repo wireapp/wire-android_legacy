@@ -23,64 +23,55 @@ import android.provider.Settings
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.permissions.PermissionsService
-import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.wire.signals.Signal
-
-import scala.collection.immutable.ListSet
-import scala.concurrent.Future
 
 trait NetworkModeService {
   def networkMode: Signal[NetworkMode]
 
-  def registerNetworkCallback(): Future[Unit]
+  def registerNetworkCallback(): Unit
   def isDeviceIdleMode: Boolean
 
   lazy val isOnline: Signal[Boolean] = networkMode.map(NetworkModeService.isOnlineMode)
 }
 
-class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle, permissionService: PermissionsService)
+class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle)
   extends NetworkModeService with DerivedLogTag {
-  import Threading.Implicits.Background
+  private lazy val connectivityManager =
+    returning(context.getSystemService(Context.CONNECTIVITY_SERVICE).asInstanceOf[ConnectivityManager]) { connectivityManager =>
+      connectivityManager.registerNetworkCallback(new NetworkRequest.Builder().build(), new ConnectivityManager.NetworkCallback() {
 
-  private lazy val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE).asInstanceOf[ConnectivityManager]
+        override def onAvailable(network: Network): Unit = {
+          val mode = computeMode(network)
+
+          info(l"new network mode: $mode")
+          networkMode ! mode
+        }
+
+        override def onLost(network: Network): Unit =
+          if (Settings.Global.getInt(context.getContentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0) {
+            info(l"new network mode: OFFLINE (the airplane mode is on)")
+            networkMode ! NetworkMode.OFFLINE
+          } else {
+            val mode = computeMode(network)
+            networkMode.mutate {
+              case currentMode if currentMode == mode =>
+                info(l"new network mode: OFFLINE (network $mode lost)")
+                NetworkMode.OFFLINE
+              case currentMode => currentMode
+            }
+          }
+
+        override def onUnavailable(): Unit = {
+          info(l"new network mode: OFFLINE (no network available)")
+          networkMode ! NetworkMode.OFFLINE
+        }
+      })
+    }
 
   override val networkMode = returning(Signal[NetworkMode](NetworkMode.UNKNOWN)) { _.disableAutowiring() }
 
-  override def registerNetworkCallback(): Future[Unit] =
-    permissionService.requestAllPermissions(ListSet(android.Manifest.permission.ACCESS_NETWORK_STATE)).map {
-      case true =>
-        connectivityManager.registerNetworkCallback(new NetworkRequest.Builder().build(), new ConnectivityManager.NetworkCallback() {
-
-          override def onAvailable(network: Network): Unit = {
-            val mode = computeMode(network)
-
-            info(l"new network mode: $mode")
-            networkMode ! mode
-          }
-
-          override def onLost(network: Network): Unit =
-            if (Settings.Global.getInt(context.getContentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0) {
-              info(l"new network mode: OFFLINE (the airplane mode is on)")
-              networkMode ! NetworkMode.OFFLINE
-            } else {
-              val mode = computeMode(network)
-              networkMode.mutate {
-                case currentMode if currentMode == mode =>
-                  info(l"new network mode: OFFLINE (network $mode lost)")
-                  NetworkMode.OFFLINE
-                case currentMode => currentMode
-              }
-            }
-
-          override def onUnavailable(): Unit = {
-            info(l"new network mode: OFFLINE (no network available)")
-            networkMode ! NetworkMode.OFFLINE
-          }
-        })
-      case false =>
-    }
+  override def registerNetworkCallback(): Unit = connectivityManager
 
   def computeMode(network: Network): NetworkMode =
     Option(connectivityManager.getNetworkCapabilities(network)).map { networkCapabilities =>
@@ -90,7 +81,6 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle, permis
     }.getOrElse(NetworkMode.OFFLINE)
 
   override def isDeviceIdleMode: Boolean = false
-
 }
 
 object NetworkModeService extends DerivedLogTag {
