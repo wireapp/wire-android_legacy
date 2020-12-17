@@ -110,7 +110,7 @@ class CallingFragment extends FragmentHelper {
 
   override def onDestroyView(): Unit = {
     super.onDestroyView()
-    clearVideoGrids()
+    clearVideoGrid()
   }
 
   private lazy val isVideoBeingSent =
@@ -139,7 +139,7 @@ class CallingFragment extends FragmentHelper {
           controller.otherParticipants.map(_.size > 2).head.foreach {
             case true =>
               showFullScreenVideo(participant)
-              clearVideoGrids()
+              clearVideoGrid()
             case false =>
           }
         }
@@ -183,26 +183,24 @@ class CallingFragment extends FragmentHelper {
 
     val infoMap = infos.toIdMap
 
-    var gridViews: Seq[UserVideoView] = Seq.empty
+    val gridViews =
+      if (showTopSpeakers)
+        views.sortWith {
+          case (v1, v2) =>
+            infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
+        }.take(MaxTopSpeakerVideoPreviews)
+      else
+        views.filter {
+          case _: SelfVideoView if views.size == 2 && participants.size == 2 && isVideoBeingSent => false
+          case _: SelfVideoView if views.size > 1 && !isVideoBeingSent => false
+          case _ => true
+        }.sortWith {
+          case (_: SelfVideoView, _) => true
+          case (_, _: SelfVideoView) => false
+          case (v1, v2) =>
+            infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
+        }.take(MaxAllVideoPreviews)
 
-    if (showTopSpeakers) {
-       gridViews = views.sortWith {
-        case (v1, v2) =>
-          infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
-      }.take(MaxTopSpeakerVideoPreviews)
-    }
-    else {
-       gridViews = views.filter {
-        case _: SelfVideoView if views.size == 2 && participants.size == 2 && isVideoBeingSent => false
-        case _: SelfVideoView if views.size > 1 && !isVideoBeingSent => false
-        case _ => true
-      }.sortWith {
-        case (_: SelfVideoView, _) => true
-        case (_, _: SelfVideoView) => false
-        case (v1, v2) =>
-          infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
-      }.take(MaxAllVideoPreviews)
-    }
 
     gridViews.zipWithIndex.foreach { case (userVideoView, index) =>
       val (row, col, span, width) = index match {
@@ -242,8 +240,8 @@ class CallingFragment extends FragmentHelper {
     viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) }
   }
 
-  def clearVideoGrids(): Unit = {
-    videoGrid.foreach (_.removeAllViews())
+  def clearVideoGrid(): Unit = {
+    videoGrid.foreach(_.removeAllViews())
     viewMap = Map.empty
   }
 

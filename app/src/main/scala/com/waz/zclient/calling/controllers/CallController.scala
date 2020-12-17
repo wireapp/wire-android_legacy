@@ -118,16 +118,11 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   def activeParticipantsWithVideo(): Signal[Seq[Participant]] =
     Signal.zip(activeSpeakers, videoUsers).map {
       case (activeSpeakers, videoUsers) =>
-
-        var activeParticipantsWithVideo: Set[Participant] = Set.empty
-
-        activeSpeakers.foreach { speaker =>
-          videoUsers.foreach { participant =>
-            if (participant.clientId == speaker.clientId && participant.userId == speaker.userId)
-              activeParticipantsWithVideo = activeParticipantsWithVideo + participant
+        videoUsers.filter { participant =>
+          activeSpeakers.exists { speaker =>
+            participant.clientId == speaker.clientId && participant.userId == speaker.userId
           }
         }
-        activeParticipantsWithVideo.toSeq
     }
 
   lazy val videoUsers =
