@@ -88,7 +88,7 @@ class ControlsFragment extends FragmentHelper {
     if (BuildConfig.ACTIVE_SPEAKERS) {
       Signal.zip(controller.isCallEstablished, controller.isGroupCall, controller.isVideoCall).onUi {
         case (true, true, true) => allSpeakersToggle.foreach(_.setVisibility(View.VISIBLE))
-        case _ => allSpeakersToggle.foreach(_.setVisibility(View.GONE))
+        case _                  => allSpeakersToggle.foreach(_.setVisibility(View.GONE))
       }
     }
     else {
