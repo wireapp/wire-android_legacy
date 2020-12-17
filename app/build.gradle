@@ -126,7 +126,6 @@ android {
         //Feature Flags
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
         buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
-        buildConfigField 'boolean', 'MAXIMIZE_MINIMIZE_VIDEO', "$maximizeMinimizeVideo"
         buildConfigField 'boolean', 'ACTIVE_SPEAKERS', "$activeSpeakers"
     }
 

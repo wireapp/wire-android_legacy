@@ -38,7 +38,6 @@ allprojects {
 }
 
 ext {
-    maximizeMinimizeVideo = true
     activeSpeakers = false
     //Update kotlinCore flag as well when adding new kotlin features
     kotlinSettings = false
