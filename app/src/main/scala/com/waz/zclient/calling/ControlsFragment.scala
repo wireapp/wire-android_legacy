@@ -35,6 +35,8 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, MainActivity, R}
 import com.wire.signals.Subscription
+import com.waz.zclient.{BuildConfig, FragmentHelper, MainActivity, R}
+import com.wire.signals.{Signal, Subscription}
 
 class ControlsFragment extends FragmentHelper {
 
@@ -84,6 +86,12 @@ class ControlsFragment extends FragmentHelper {
         getContext.startActivity(new Intent(getContext, classOf[MainActivity]))
       }
     }
+
+    Signal.zip(controller.isCallEstablished, controller.isGroupCall){
+      case (true,true) => allSpeakersToggle.foreach(_.setVisibility(View.VISIBLE))
+      case _           => allSpeakersToggle.foreach(_.setVisibility(View.GONE))
+    }
+
   }
 
   override def onStart(): Unit = {
