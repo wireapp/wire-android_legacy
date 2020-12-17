@@ -33,7 +33,7 @@ import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFram
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityPolicyChecker
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{BuildConfig, FragmentHelper, R}
+import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.Signal
 import com.waz.zclient.calling.CallingFragment.MaxVideoPreviews
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
@@ -125,8 +125,6 @@ class CallingFragment extends FragmentHelper {
       else new OtherVideoView(getContext, participant)
     } { userView =>
       viewMap = viewMap.updated(participant, userView)
-      if (BuildConfig.MAXIMIZE_MINIMIZE_VIDEO) {
-
         userView.onDoubleClick.onUi { _ =>
           controller.otherParticipants.map(_.size > 2).head.foreach {
             case true =>
@@ -135,7 +133,6 @@ class CallingFragment extends FragmentHelper {
             case false =>
           }
         }
-      }
     }
 
     videoUsers.map { participant => viewMap.getOrElse(participant, createView(participant)) }
