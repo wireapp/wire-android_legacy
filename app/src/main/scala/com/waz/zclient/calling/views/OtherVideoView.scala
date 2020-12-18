@@ -33,25 +33,31 @@ class OtherVideoView(context: Context, participant: Participant) extends UserVid
     participantInfo.map(_.map(_.isMuted)),
     callController.isActiveSpeaker(participant.userId, participant.clientId),
     accentColorController.accentColor.map(_.color),
-    callController.isFullScreenEnabled
+    callController.isFullScreenEnabled,
+    callController.showTopSpeakers,
+    callController.videoUsers.map(_.size > 2)
   ).onUi {
-    case (Some(false), true, color, false) => {
+    case (Some(false), true, color, false, false, true) => {
       updateAudioIndicator(R.drawable.ic_unmuted_video_grid, color, true)
       showActiveSpeakerFrame(color)
     }
-    case (Some(false), true, color, true)  => {
+    case (Some(false), true, color, false, false, false) => {
       updateAudioIndicator(R.drawable.ic_unmuted_video_grid, color, true)
       hideActiveSpeakerFrame()
     }
-    case (Some(false), false, _, _)        => {
+    case (Some(false), true, color, _, _, _)            => {
+      updateAudioIndicator(R.drawable.ic_unmuted_video_grid, color, true)
+      hideActiveSpeakerFrame()
+    }
+    case (Some(false), false, _, _, _, _)               => {
       updateAudioIndicator(R.drawable.ic_unmuted_video_grid, context.getColor(R.color.white), false)
       hideActiveSpeakerFrame()
     }
-    case (Some(true), _, _, _)             => {
+    case (Some(true), _, _, _, _, _)                    => {
       updateAudioIndicator(R.drawable.ic_muted_video_grid, context.getColor(R.color.white), false)
       hideActiveSpeakerFrame()
     }
-    case _                                 =>
+    case _                                              =>
   }
 
   override lazy val shouldShowInfo: Signal[Boolean] = pausedTextVisible

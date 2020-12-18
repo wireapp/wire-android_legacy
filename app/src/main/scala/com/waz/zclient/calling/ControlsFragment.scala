@@ -21,17 +21,20 @@ import android.content.{Context, DialogInterface, Intent}
 import android.graphics.Color
 import android.os.Bundle
 import android.view._
+import android.widget.CompoundButton.OnCheckedChangeListener
+import android.widget.{CompoundButton, ToggleButton}
 import androidx.annotation.Nullable
 import androidx.fragment.app.Fragment
 import com.waz.service.call.Avs.VideoState
 import com.waz.threading.Threading._
+import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{FragmentHelper, MainActivity, R}
-import com.wire.signals.Subscription
+import com.waz.zclient.{BuildConfig, FragmentHelper, MainActivity, R}
+import com.wire.signals.{Signal, Subscription}
 
 class ControlsFragment extends FragmentHelper {
 
@@ -43,6 +46,13 @@ class ControlsFragment extends FragmentHelper {
 
   private lazy val callingMiddle   = view[CallingMiddleLayout](R.id.calling_middle)
   private lazy val callingControls = view[ControlsView](R.id.controls_grid)
+  private lazy val allSpeakersToggle = returning(view[ToggleButton](R.id.all_speakers_toggle)) { vh =>
+    vh.foreach{ toggle =>
+      toggle.setOnCheckedChangeListener(new OnCheckedChangeListener(){
+        override def onCheckedChanged(compoundButton: CompoundButton, checked: Boolean): Unit = controller.showTopSpeakers ! checked
+      })
+    }
+  }
 
   private var subs = Set[Subscription]()
 
@@ -59,6 +69,7 @@ class ControlsFragment extends FragmentHelper {
 
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
+    allSpeakersToggle
 
     callingControls
     callingMiddle // initializing it later than the header and controls to reduce the number of height recalculations
@@ -73,6 +84,17 @@ class ControlsFragment extends FragmentHelper {
         getContext.startActivity(new Intent(getContext, classOf[MainActivity]))
       }
     }
+
+    if (BuildConfig.ACTIVE_SPEAKERS) {
+      Signal.zip(controller.isCallEstablished, controller.isGroupCall, controller.isVideoCall).onUi {
+        case (true, true, true) => allSpeakersToggle.foreach(_.setVisibility(View.VISIBLE))
+        case _ => allSpeakersToggle.foreach(_.setVisibility(View.GONE))
+      }
+    }
+    else {
+      allSpeakersToggle.foreach(_.setVisibility(View.GONE))
+    }
+
   }
 
   override def onStart(): Unit = {

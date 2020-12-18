@@ -54,6 +54,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   import VideoState._
 
   val isFullScreenEnabled = Signal(false)
+  val showTopSpeakers = Signal(false)
 
   private lazy val screenManager  = new ScreenManager
   private lazy val soundController = inject[SoundController]
@@ -112,6 +113,26 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   lazy val selfParticipant            = currentCall.map(_.selfParticipant)
   lazy val otherParticipants          = currentCall.map(_.otherParticipants)
   lazy val activeSpeakers             = currentCall.map(_.activeSpeakers)
+
+
+  def activeParticipantsWithVideo(): Signal[Seq[Participant]] =
+    Signal.zip(activeSpeakers, videoUsers).map {
+      case (activeSpeakers, videoUsers) =>
+        videoUsers.filter { participant =>
+          activeSpeakers.exists { speaker =>
+            participant.clientId == speaker.clientId && participant.userId == speaker.userId
+          }
+        }
+    }
+
+  lazy val videoUsers =
+    Signal.zip(allVideoReceiveStates, selfParticipant, isVideoCall, isCallIncoming).map {
+      case (videoStates, self, videoCall, incoming) =>
+        videoStates.toSeq.collect {
+          case (participant, _) if participant == self && videoCall && incoming => participant
+          case (participant, VideoState.Started | VideoState.Paused | VideoState.BadConnection | VideoState.NoCameraPermission | VideoState.ScreenShare) => participant
+        }
+    }
 
   private val lastCallAccountId: SourceSignal[UserId] = Signal()
   currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }

@@ -94,11 +94,12 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   Signal.zip(
     callController.isGroupCall,
     callController.controlsVisible,
-    callController.otherParticipants.map(_.size)
+    callController.showTopSpeakers,
+    callController.otherParticipants.map(_.size > 2)
   ).map {
-    case (true, false, 0 | 1 | 2) => View.GONE
-    case (true, false, _)         => View.VISIBLE
-    case _                        => View.GONE
+    case (true, false, true, _)     => View.VISIBLE
+    case (true, false, false, true) => View.VISIBLE
+    case _                          => View.GONE
   }.onUi(participantInfoCardView.setVisibility)
 
   private lazy val allVideoStates =  callController.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown))
