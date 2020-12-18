@@ -42,7 +42,7 @@ case class CallInfo(convId:             ConvId,
                     state:              CallState,
                     isConferenceCall:   Boolean                         = false,
                     prevState:          Option[CallState]               = None,
-                    otherParticipants:  Set[Participant]                = Set.empty,
+                    allParticipants:    Set[Participant]                = Set.empty,
                     maxParticipants:    Int                             = 0, //maintains the largest number of users that were ever in the call (for tracking)
                     muted:              Boolean                         = false,
                     isCbrEnabled:       Option[Boolean]                 = None,
@@ -93,7 +93,7 @@ case class CallInfo(convId:             ConvId,
     case (s,             _)                  => s
   }
 
-  def canOthersDialogue: Boolean = otherParticipants.size > 1
+  def canOthersDialogue: Boolean = allParticipants.size > 1
 
   def updateCallState(newState: CallState): CallInfo = {
     val changedState = newState != this.state

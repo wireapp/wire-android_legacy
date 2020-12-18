@@ -388,7 +388,7 @@ class CallingServiceImpl(val accountId:       UserId,
   def onParticipantsChanged(rConvId: RConvId, participants: Set[Participant]): Future[Unit] =
     updateCallIfActive(rConvId) { (_, conv, call) =>
       verbose(l"group participants changed, convId: ${conv.id}, other participants: $participants")
-      call.copy(otherParticipants = participants, maxParticipants = math.max(call.maxParticipants, participants.size + 1))
+      call.copy(allParticipants = participants, maxParticipants = math.max(call.maxParticipants, participants.size + 1))
     } ("onParticipantsChanged")
 
   def onActiveSpeakersChanged(rConvId: RConvId, activeSpeakers: Set[ActiveSpeaker]): Future[Unit] =

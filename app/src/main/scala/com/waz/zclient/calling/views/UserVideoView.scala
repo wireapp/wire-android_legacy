@@ -95,7 +95,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     callController.isGroupCall,
     callController.controlsVisible,
     callController.showTopSpeakers,
-    callController.otherParticipants.map(_.size > 2)
+    callController.allParticipants.map(_.size > 2)
   ).map {
     case (true, false, true, _)     => View.VISIBLE
     case (true, false, false, true) => View.VISIBLE
