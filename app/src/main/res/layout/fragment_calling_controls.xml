@@ -46,8 +46,8 @@
         android:id="@+id/all_speakers_toggle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textOff="ALL"
-        android:textOn="SPEAKERS"
+        android:textOff="@string/calling_toggle_all"
+        android:textOn="@string/calling_toggle_speakers"
         android:layout_marginTop="@dimen/wire__padding__16"
         android:layout_marginBottom="@dimen/wire__padding__16"
         android:layout_gravity="center"/>

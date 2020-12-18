@@ -335,6 +335,8 @@
     <string name="group_calling_confirm">Call</string>
     <string name="calling_self">%s (You)</string>
     <string name="calling_no_active_speaker">No active speakers...</string>
+    <string name="calling_toggle_all">ALL</string>
+    <string name="calling_toggle_speakers">SPEAKERS</string>
 
     <!-- Connect request -->
     <string name="connect__message">Hi %1$s,\nLet\'s connect on Wire.\n%2$s</string>
