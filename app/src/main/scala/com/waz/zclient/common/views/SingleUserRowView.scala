@@ -104,8 +104,8 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private val topSpeakerData = Signal(Option.empty[(UserId, ClientId)])
   private val isTopSpeaker = for {
     Some((userId, clientId)) <- topSpeakerData
-    isActive                 <- callController.isTopSpeaker(userId, clientId)
-  } yield isActive
+    topSpeaker                 <- callController.isTopSpeaker(userId, clientId)
+  } yield topSpeaker
 
   audioIndicator.setVisible(true)
 
