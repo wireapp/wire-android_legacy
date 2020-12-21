@@ -111,7 +111,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   lazy val cbrEnabled                 = currentCall.map(_.isCbrEnabled)
   private lazy val duration           = currentCall.flatMap(_.durationFormatted)
   lazy val selfParticipant            = currentCall.map(_.selfParticipant)
-  lazy val allParticipants          = currentCall.map(_.allParticipants)
+  lazy val allParticipants            = currentCall.map(_.allParticipants)
   lazy val activeSpeakers             = currentCall.map(_.activeSpeakers)
 
 
