@@ -178,10 +178,11 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     })
 
   def isTopSpeaker(userId: UserId, clientId: ClientId): Signal[Boolean] = activeSpeakers.map { speakers =>
-    val topSpeaker = speakers.maxBy(_.audioLevel)
-    topSpeaker.clientId == clientId && topSpeaker.userId == userId
+    if (speakers.nonEmpty) {
+      val topSpeaker = speakers.maxBy(_.audioLevel)
+      topSpeaker.clientId == clientId && topSpeaker.userId == userId
+    } else false
   }
-
 
   val flowManager = callingZms.map(_.flowmanager)
 
