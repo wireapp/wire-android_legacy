@@ -25,12 +25,11 @@ import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.otr.ClientId
 import com.waz.model.{GenericContent, _}
-import com.waz.service.{EventScheduler, GlobalModule, ZMessaging}
+import com.waz.service.{EventScheduler, GlobalModule}
 import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
-import com.wire.signals.EventContext
 import com.waz.utils.{RichFuture, _}
 
 import scala.concurrent.Future
@@ -126,7 +125,7 @@ class MessageEventProcessor(selfUserId:           UserId,
       case GenericMessageEvent(_, time, from, proto) =>
         verbose(l"generic message event")
         if (Random.nextBoolean()) {
-          RichMessage(MessageData(id, conv.id, OTR_ERROR, from, error = Some(ErrorContent(ClientId("d8cf57533c909685"), 111)), time = time, localTime = event.localTime))
+          RichMessage(MessageData(id, conv.id, OTR_ERROR, from, error = Some(ErrorContent(ClientId("d8f55bde3c8e3e1"), 111)), time = time, localTime = event.localTime))
         } else {
           val GenericMessage(uid, msgContent) = proto
           content(acc, MessageId(uid.str), conv.id, msgContent, from, event.localTime, time, conv.receiptMode.filter(_ => isGroup), downloadAsset, proto)

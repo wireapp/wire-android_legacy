@@ -166,7 +166,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   private def systemMessage(m: MessageData) = {
     import Message.Type._
     m.isSystemMessage || (m.msgType match {
-      case OTR_DEVICE_ADDED | OTR_UNVERIFIED | OTR_VERIFIED | STARTED_USING_DEVICE | OTR_MEMBER_ADDED | MESSAGE_TIMER=> true
+      case OTR_DEVICE_ADDED | OTR_UNVERIFIED | OTR_VERIFIED | STARTED_USING_DEVICE | OTR_MEMBER_ADDED | MESSAGE_TIMER => true
       case _ => false
     })
   }
@@ -176,8 +176,11 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     val recalled = msg.msgType == Message.Type.RECALLED
     val edited = msg.isEdited
     val knock = msg.msgType == Message.Type.KNOCK
+    val otrError = msg.msgType == Message.Type.OTR_ERROR ||
+                   msg.msgType == Message.Type.OTR_ERROR_FIXED ||
+                   msg.msgType == Message.Type.OTR_IDENTITY_CHANGED
 
-    !knock && !systemMessage(msg) && (recalled || edited || userChanged)
+    !knock && !systemMessage(msg) && !otrError && (recalled || edited || userChanged)
   }
 
   private def shouldShowFooter(mAndL: MessageAndLikes, opts: MsgBindOptions): Boolean = {

@@ -510,12 +510,17 @@ class MessagesServiceImpl(selfUserId:      UserId,
     buttonsStorage.update((messageId, buttonId), _.copy(state = ButtonData.ButtonError))
       .flatMap(_ => Future.successful(()))
 
-  override def fixErrorMessages(userId: UserId, clientId: ClientId): Future[Unit] =
+  override def fixErrorMessages(userId: UserId, clientId: ClientId): Future[Unit] = {
+    verbose(l"FIX fixErrorMessages($userId, $clientId)")
     for {
       msgs               <- storage.findErrorMessages(userId, clientId)
+      _ = verbose(l"FIX error messages found: ${msgs.length}")
       onlyFromThisClient =  msgs.filter(_.error.exists(_.clientId == clientId))
+      _ = verbose(l"FIX error msgs only form client $clientId: ${onlyFromThisClient.length}")
       _                  <- Future.sequence(onlyFromThisClient.map(msg =>
                               updater.updateMessage(msg.id)(_.copy(msgType = Message.Type.OTR_ERROR_FIXED))
                             ))
+      _ = verbose(l"FIX done")
     } yield ()
+  }
 }

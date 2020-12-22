@@ -163,7 +163,7 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   def resetSession(conv: ConvId, user: UserId, client: ClientId): Future[SyncId] =
     for {
-      _ <- sessions.deleteSession(SessionId(user, client))
+      _ <- sessions.deleteSession(SessionId(user, client)).recover { case _ => () }
       _ <- clientsStorage.updateVerified(user, client, verified = false)
       _ <- sync.syncPreKeys(user, Set(client))
       syncId <- sync.postSessionReset(conv, user, client)

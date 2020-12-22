@@ -33,6 +33,7 @@ import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.zclient.utils._
 
 class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
   extends SystemMessageView(context, attrs, style)
@@ -80,10 +81,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
 
   private lazy val errorCodeAndFingerprint = Signal.zip(message.map(_.userId), message.map(_.error)).flatMap {
     case (sender, Some(error)) =>
-      clientsController.fingerprint(sender, error.clientId).map {
-        case Some(fprint) => (error.code.toString, ClientsController.getFormattedFingerprint(fprint).take(40).trim.toUpperCase)
-        case None         => (error.code.toString, "")
-      }
+      clientsController.client(sender, error.clientId).map(c => (error.code.toString, c.fold("")(_.displayId)))
     case _ => Signal.const(("", ""))
   }
 
@@ -95,13 +93,9 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
     case OTR_VERIFIED  =>
       Signal.const(getString(R.string.content__otr__all_fingerprints_verified))
     case OTR_ERROR =>
-      affectedUserName.flatMap {
-        case Me =>
-          Signal.const(getString(R.string.content__otr__message_error_you))
-        case Other(name) =>
-          errorCodeAndFingerprint.map {
-            case (code, fprint) => getString(R.string.content__otr__message_error, name, code, fprint)
-          }
+      affectedUserName.map {
+        case Me          => getString(R.string.content__otr__message_error_you)
+        case Other(name) => getString(R.string.content__otr__message_error, name)
       }
     case OTR_ERROR_FIXED =>
       affectedUserName.flatMap {
