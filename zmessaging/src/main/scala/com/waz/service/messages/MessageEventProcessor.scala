@@ -122,14 +122,12 @@ class MessageEventProcessor(selfUserId:           UserId,
         RichMessage(MessageData(id, conv.id, OTR_ERROR, from, error = Some(ErrorContent(sender, code.getOrElse(OtrError.ERROR_CODE_DECRYPTION_OTHER))), time = time, localTime = event.localTime))
       case OtrErrorEvent(_, time, from, _) =>
         RichMessage(MessageData(id, conv.id, OTR_ERROR, from, time = time, localTime = event.localTime))
+      case SessionReset(_, time, from, _) =>
+        RichMessage(MessageData(id, conv.id, SESSION_RESET, from, time = time, localTime = event.localTime))
       case GenericMessageEvent(_, time, from, proto) =>
         verbose(l"generic message event")
-        if (Random.nextBoolean()) {
-          RichMessage(MessageData(id, conv.id, OTR_ERROR, from, error = Some(ErrorContent(ClientId("d8f55bde3c8e3e1"), 111)), time = time, localTime = event.localTime))
-        } else {
-          val GenericMessage(uid, msgContent) = proto
-          content(acc, MessageId(uid.str), conv.id, msgContent, from, event.localTime, time, conv.receiptMode.filter(_ => isGroup), downloadAsset, proto)
-        }
+        val GenericMessage(uid, msgContent) = proto
+        content(acc, MessageId(uid.str), conv.id, msgContent, from, event.localTime, time, conv.receiptMode.filter(_ => isGroup), downloadAsset, proto)
       case _: CallMessageEvent =>
         RichMessage.Empty
       case _ =>

@@ -71,6 +71,7 @@ class MessagesDaoTest : IntegrationTest() {
             messageType = data.messageType,
             userId = data.userId,
             clientId = data.clientId,
+            errorCode = data.errorCode,
             content = data.content,
             protos = data.protos,
             time = data.time,

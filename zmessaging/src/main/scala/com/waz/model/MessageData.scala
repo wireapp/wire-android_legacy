@@ -318,6 +318,7 @@ object MessageData extends DerivedLogTag {
     case Message.Type.OTR_ERROR            => "OtrFailed"
     case Message.Type.OTR_ERROR_FIXED      => "OtrFixed"
     case Message.Type.OTR_IDENTITY_CHANGED => "OtrIdentityChanged"
+    case Message.Type.SESSION_RESET        => "SessionReset"
     case Message.Type.OTR_VERIFIED         => "OtrVerified"
     case Message.Type.OTR_UNVERIFIED       => "OtrUnverified"
     case Message.Type.OTR_DEVICE_ADDED     => "OtrDeviceAdded"

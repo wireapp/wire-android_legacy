@@ -20,10 +20,10 @@ package com.waz.service.otr
 import java.io._
 
 import com.waz.cache.{CacheService, LocalData}
-import com.waz.content.{GlobalPreferences, MembersStorage, MembersStorageImpl, OtrClientsStorage}
+import com.waz.content.{GlobalPreferences, MembersStorage, OtrClientsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.ClientAction.SessionReset
+import com.waz.model.GenericContent.ClientAction
 import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.model.otr._
@@ -120,9 +120,9 @@ class OtrServiceImpl(selfUserId:     UserId,
             case Some(msg) =>
               Some(GenericMessageEvent(conv, time, from, msg).withLocalTime(localTime))
           }
-        case GenericMessage(mId, SessionReset) if metadata.internalBuild => // display session reset notifications in internal build
-          Some(GenericMessageEvent(conv, time, from, GenericMessage(mId, Text("System msg: session reset", Nil, Nil, expectsReadConfirmation = false))))
-        case GenericMessage(_, SessionReset) => None // ignore session reset notifications
+        case GenericMessage(_, ClientAction.SessionReset) =>
+          verbose(l"FIX session reset notification")
+          Some(SessionReset(conv, time, from, sender))
         case GenericMessage(_, Calling(content)) =>
           Some(CallMessageEvent(conv, time, from, sender, content)) //call messages need sender client id
         case msg =>

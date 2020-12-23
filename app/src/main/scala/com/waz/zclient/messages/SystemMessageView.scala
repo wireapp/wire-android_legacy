@@ -24,14 +24,12 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.RelativeLayout
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.views.LinkTextView
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.views.LoadingIndicatorView
 
 /**
  * View implementing system message layout: row containing icon, text and expandable line.
@@ -57,7 +55,6 @@ class SystemMessageView(context: Context, attrs: AttributeSet, style: Int) exten
 
   private val iconView         = findById[GlyphTextView](R.id.gtv__system_message__icon)
   private val textView         = findById[LinkTextView](R.id.ttv__system_message__text)
-  private val loadingIndicator = findById[LoadingIndicatorView](R.id.system_message_loading_indicator)
 
   private var hasDivider = true
   setHasDivider(true)
@@ -91,9 +88,6 @@ class SystemMessageView(context: Context, attrs: AttributeSet, style: Int) exten
     iconView.setText(resId)
     iconView.setTextColor(getColor(R.color.light_graphite))
   }
-
-  def showLoadingIndicator(): Unit = loadingIndicator.show(LoadingIndicatorView.Spinner, inject[ThemeController].isDarkTheme)
-  def hideLoadingIndicator(): Unit = loadingIndicator.hide()
 
   override def onDraw(canvas: Canvas): Unit = {
     super.onDraw(canvas)

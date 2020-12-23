@@ -331,6 +331,12 @@ trait LogShowInstancesSE {
       l"OtrErrorEvent(convId: $convId | time: $time | from: $from | error: ${e.error})"
     }
 
+  implicit val SessionResetLogShow: LogShow[SessionReset] =
+    LogShow.createFrom { sr =>
+      import sr._
+      l"SessionReset(convId: $convId | time: $time | from: $from | sender: $sender)"
+    }
+
   //Protos
   implicit val GenericMessageLogShow: LogShow[GenericMessage] = LogShow.create { m =>
     m.getContentCase

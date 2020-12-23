@@ -31,7 +31,7 @@ import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, Us
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.{R, SpinnerController, ViewHelper}
 import com.waz.threading.Threading._
 import com.waz.zclient.utils._
 
@@ -53,6 +53,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val browserController      = inject[BrowserController]
   private lazy val selfUserId             = inject[Signal[UserId]]
   private lazy val clientsController      = inject[ClientsController]
+  private lazy val spinnerController      = inject[SpinnerController]
   private lazy val memberIsJustSelf       = users.memberIsJustSelf(message)
   private lazy val affectedUserName       = message.map(_.userId).flatMap(users.displayName)
 
@@ -72,6 +73,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
     case OTR_ERROR_FIXED                                                   => Some(R.drawable.ic_check)
     case OTR_VERIFIED                                                      => Some(R.drawable.shield_full)
     case OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED              => Some(R.drawable.shield_half)
+    case SESSION_RESET                                                     => Some(R.drawable.ic_iconographyemail)
     case STARTED_USING_DEVICE                                              => None
     case _                                                                 => None
   }).onUi {
@@ -107,10 +109,15 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
           }
       }
     case OTR_IDENTITY_CHANGED =>
-      affectedUserName.map({
+      affectedUserName.map {
         case Me          => getString(R.string.content__otr__identity_changed_error_you)
         case Other(name) => getString(R.string.content__otr__identity_changed_error, name.toUpperCase)
-      })
+      }
+    case SESSION_RESET =>
+      affectedUserName.map {
+        case Other(name) => getString(R.string.content__session_reset, name)
+        case _ => ""
+      }
     case OTR_UNVERIFIED =>
       memberIsJustSelf.flatMap {
         case true  => Signal.const(getString(R.string.content__otr__your_unverified_device__message))
@@ -145,10 +152,10 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
         case (STARTED_USING_DEVICE, _, _) =>
           screenController.openOtrDevicePreferences()
         case (OTR_ERROR, false, Some(error)) =>
-          showLoadingIndicator()
+          spinnerController.showDimmedSpinner(show = true)
           clientsController
             .resetSession(msg.userId, error.clientId, Some(msg.convId))
-            .foreach(_ => hideLoadingIndicator())(Threading.Ui)
+            .foreach(_ => spinnerController.hideSpinner())(Threading.Ui)
         case (OTR_IDENTITY_CHANGED, _, _) =>
           browserController.openDecryptionError2()
         case _ =>

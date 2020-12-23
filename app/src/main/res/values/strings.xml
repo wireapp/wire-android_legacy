@@ -207,6 +207,7 @@
     <string name="content__otr__message_error_you">A MESSAGE FROM YOU WAS NOT RECEIVED. _WHY?_</string>
     <string name="content__otr__identity_changed_error">[[%1$s]]\'S DEVICE IDENTITY CHANGED. UNDELIVERED MESSAGE. _LEARN MORE_</string>
     <string name="content__otr__identity_changed_error_you">YOUR DEVICE IDENTITY CHANGED. UNDELIVERED MESSAGE. _LEARN MORE_</string>
+    <string name="content__session_reset">[[%1$s was unable to decrypt some of your messages but has solved the issue.]] This affected all conversations you share together.</string>
 
     <string name="content__otr__someone_added_new_device__message">%1$s started using a _new device_</string>
     <string name="content__otr__someone_and_you_added_new_device__message">%1$s and you started using a _new device_</string>

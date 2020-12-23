@@ -186,7 +186,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode OtrErrorEvent(DecryptionError)") {
-      val msg = OtrErrorEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), DecryptionError("error", UserId(), ClientId()))
+      val msg = OtrErrorEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), DecryptionError("error", Some(100), UserId(), ClientId()))
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId
@@ -208,6 +208,19 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
         case e => fail(s"unexpected event: $e")
       }
     }
+
+    scenario("encode/decode SessionReset") {
+      val msg = SessionReset(RConvId(), RemoteInstant(Instant.now()), UserId(), ClientId())
+      EventDecoder(MessageEventEncoder(msg)) match {
+        case ev: SessionReset =>
+          ev.convId shouldEqual msg.convId
+          ev.time shouldEqual msg.time
+          ev.from shouldEqual msg.from
+          ev.sender shouldEqual msg.sender
+        case e => fail(s"unexpected event: $e")
+      }
+    }
+
 
     scenario("Parse MemberUpdateEvent") {
       val rConvId = RConvId("bbe1053c-4999-4324-8a2a-851ce48c56c5")

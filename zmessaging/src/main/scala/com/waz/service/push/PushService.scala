@@ -159,8 +159,9 @@ class PushServiceImpl(selfUserId:           UserId,
         verbose(l"decodeRow($event) for an otr event")
         val msg = GenericMessage(event.plain.get)
         val msgEvent = ConversationEvent.ConversationEventDecoder(event.event)
+        verbose(l"FIX msg: $msg, msgEvent: $msgEvent")
         returning(otrService.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)) { event =>
-          verbose(l"decoded otr event: $event")
+          verbose(l"FIX decoded otr event: $event")
         }
       } else {
         verbose(l"decodeRow($event) for a non-otr event")

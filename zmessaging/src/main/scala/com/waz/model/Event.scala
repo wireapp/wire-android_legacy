@@ -120,6 +120,7 @@ case class IdentityChangedError(from: UserId, sender: ClientId) extends OtrError
 case class UnknownOtrErrorEvent(json: JSONObject) extends OtrError
 
 case class OtrErrorEvent(convId: RConvId, time: RemoteInstant, from: UserId, error: OtrError) extends MessageEvent
+case class SessionReset(convId: RConvId, time: RemoteInstant, from: UserId, sender: ClientId) extends MessageEvent
 
 case class TypingEvent(convId: RConvId, time: RemoteInstant, from: UserId, isTyping: Boolean) extends ConversationEvent
 
@@ -282,6 +283,7 @@ object ConversationEvent extends DerivedLogTag {
           //Note, the following events are not from the backend, but are the result of decrypting and re-encoding conversation.otr-message-add events - hence the different name for `convId
         case "conversation.generic-message"      => GenericMessageEvent('convId, time, 'from, 'content)
         case "conversation.otr-error"            => OtrErrorEvent('convId, time, 'from, decodeOtrError('error))
+        case "conversation.session-reset"        => SessionReset('convId, time, 'from, 'sender)
         case _ =>
           error(l"unhandled event: $js")
           UnknownConvEvent(js)
@@ -342,6 +344,9 @@ object MessageEvent {
           setFields(json, convId, time, from, "conversation.call-message")
             .put("sender", sender.str)
             .put("content", content)
+        case SessionReset(convId, time, from, sender) =>
+          setFields(json, convId, time, from, "conversation.session-reset")
+            .put("sender", sender.str)
         case e => throw new JSONException(s"Encoder for event $e not implemented")
       }
     }

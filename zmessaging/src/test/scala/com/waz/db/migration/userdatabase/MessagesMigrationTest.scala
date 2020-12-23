@@ -21,6 +21,8 @@ class MessagesMigrationTest extends UserDatabaseMigrationTest {
           messageData.userId.str,
           null,
           null,
+          null,
+          null,
           messageData.time.toEpochMilli,
           false,
           null,

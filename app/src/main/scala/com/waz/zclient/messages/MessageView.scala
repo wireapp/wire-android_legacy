@@ -176,11 +176,12 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     val recalled = msg.msgType == Message.Type.RECALLED
     val edited = msg.isEdited
     val knock = msg.msgType == Message.Type.KNOCK
+    val sessionReset = msg.msgType == Message.Type.SESSION_RESET
     val otrError = msg.msgType == Message.Type.OTR_ERROR ||
                    msg.msgType == Message.Type.OTR_ERROR_FIXED ||
                    msg.msgType == Message.Type.OTR_IDENTITY_CHANGED
 
-    !knock && !systemMessage(msg) && !otrError && (recalled || edited || userChanged)
+    !knock && !systemMessage(msg) && !sessionReset && !otrError && (recalled || edited || userChanged)
   }
 
   private def shouldShowFooter(mAndL: MessageAndLikes, opts: MsgBindOptions): Boolean = {
@@ -190,7 +191,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
       mAndL.message.isFailed
   }
 
-  def getFooter = listParts.lastOption.collect { case footer: FooterPartView => footer }
+  def getFooter: Option[FooterPartView] = listParts.lastOption.collect { case footer: FooterPartView => footer }
 }
 
 object MessageView extends DerivedLogTag {
