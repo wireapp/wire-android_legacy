@@ -40,7 +40,7 @@ import com.waz.znet2.http.ResponseCode
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
+import scala.util.{Success, Try}
 
 trait AssetService {
   def assetSignal(id: GeneralAssetId): Signal[GeneralAsset]
@@ -176,7 +176,6 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
           )
         case Right(fileWithSha) =>
           contentCache.put(asset.id, fileWithSha.file, removeOriginal = true)
-           // .flatMap(_ => contentCache.get(asset.id).map(file => asset.encryption.decrypt(file, asset.id.str)))
             .flatMap(_ => contentCache.getStream(asset.id).map(asset.encryption.decrypt(_)))
             .map(AssetInput(_))
             .toCancellable
@@ -195,8 +194,11 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
       }
       .toCancellable
 
-  private def loadFromFileSystem(localSource: LocalSource): AssetInput =
-    uriHelper.assetInput(localSource.uri).validate(localSource.sha)
+  private def loadFromFileSystem(localSource: LocalSource): Option[AssetInput] =
+    uriHelper.extractMime(localSource.uri).map {
+      case mime if Mime.Video.supported.contains(mime) => uriHelper.assetInput(localSource.uri)
+      case _ => uriHelper.assetInput(localSource.uri).validate(localSource.sha)
+    }.toOption
 
   override def loadPublicContentById(assetId: AssetId, convId: Option[ConvId], callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
     assetClient.loadPublicAssetContent(assetId, convId, callback).map {
@@ -232,10 +234,13 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
     asset.localSource match {
       case None         => loadFromCache(asset).recoverWith { case _ => loadFromBackend(asset, callback) }
       case Some(source) => loadFromFileSystem(source) match {
-        case AssetFailure(throwable)  =>
+        case None =>
+          verbose(l"Can not load content from file system for asset $asset.")
+          assetsStorage.save(asset.copy(localSource = None)).flatMap(_ => loadFromBackend(asset, callback)).toCancellable
+        case Some(AssetFailure(throwable))  =>
           verbose(l"Can not load content from file system for asset $asset. ${showString(throwable.getMessage)}")
           assetsStorage.save(asset.copy(localSource = None)).flatMap(_ => loadFromBackend(asset, callback)).toCancellable
-        case other =>
+        case Some(other) =>
           CancellableFuture.successful(other)
       }
     }

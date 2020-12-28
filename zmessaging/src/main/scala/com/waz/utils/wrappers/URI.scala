@@ -66,17 +66,17 @@ trait URIBuilder {
 }
 
 //Default Android dependencies
-class AndroidURI(val uri: Uri) extends URI {
-  override def buildUpon                      = new AndroidURIBuilder(uri.buildUpon())
-  override def getPath                        = uri.getPath
-  override def getScheme                      = uri.getScheme
-  override def getAuthority                   = uri.getAuthority
-  override def getHost                        = uri.getHost
-  override def getPathSegments                = uri.getPathSegments.asScala.toList
-  override def getLastPathSegment             = uri.getLastPathSegment
-  override def normalizeScheme                = new AndroidURI(uri.normalizeScheme())
-  override def getQueryParameter(key: String) = uri.getQueryParameter(key)
-  override def toString                       = uri.toString
+final case class AndroidURI(uri: Uri) extends URI {
+  override def buildUpon: URIBuilder                  = new AndroidURIBuilder(uri.buildUpon())
+  override def getPath: String                        = uri.getPath
+  override def getScheme: String                      = uri.getScheme
+  override def getAuthority: String                   = uri.getAuthority
+  override def getHost: String                        = uri.getHost
+  override def getPathSegments: List[String]          = uri.getPathSegments.asScala.toList
+  override def getLastPathSegment: String             = uri.getLastPathSegment
+  override def normalizeScheme: URI                   = AndroidURI(uri.normalizeScheme())
+  override def getQueryParameter(key: String): String = uri.getQueryParameter(key)
+  override def toString: String                       = uri.toString
 }
 
 class AndroidURIBuilder(var uriBuilder: Uri.Builder) extends URIBuilder {
@@ -84,13 +84,13 @@ class AndroidURIBuilder(var uriBuilder: Uri.Builder) extends URIBuilder {
   override def encodedPath(path: String)                        = new AndroidURIBuilder(uriBuilder.encodedPath(path))
   override def appendEncodedPath(newSegment: String)            = new AndroidURIBuilder(uriBuilder.appendEncodedPath(newSegment))
   override def appendQueryParameter(key: String, value: String) = new AndroidURIBuilder(uriBuilder.appendQueryParameter(key, value))
-  override def build                                            = new AndroidURI(uriBuilder.build())
+  override def build: AndroidURI                                = AndroidURI(uriBuilder.build())
 
 }
 
 object AndroidURIUtil extends URIUtil {
-  override def parse(uri: String) = new AndroidURI(Uri.parse(uri))
-  override def fromFile(file: File) = new AndroidURI(Uri.fromFile(file))
+  override def parse(uri: String): AndroidURI = AndroidURI(Uri.parse(uri))
+  override def fromFile(file: File): AndroidURI = AndroidURI(Uri.fromFile(file))
 }
 
 object URI {

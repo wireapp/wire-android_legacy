@@ -78,10 +78,10 @@ class TestResourceContentProvider(val authority: String = "com.waz.testresources
     } getOrElse Empty
   })
 
-  override def getType(uri: Uri): String = getResource(new AndroidURI(uri)).mime.str
+  override def getType(uri: Uri): String = getResource(AndroidURI(uri)).mime.str
 
   override def query(uri: Uri, projection: Array[String], selection: String, selectionArgs: Array[String], sortOrder: String): Cursor =
-    getResource(new AndroidURI(uri)) match {
+    getResource(AndroidURI(uri)) match {
       case `Empty` => null
       case res => cursor(Vector(DISPLAY_NAME, SIZE), Vector(Vector(res.name, res.size.toString)))
     }

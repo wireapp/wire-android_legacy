@@ -119,7 +119,7 @@ class WireContentProvider extends ContentProvider with DerivedLogTag {
   object CacheUriExtractor {
     val extractor = CacheUri.unapply(getContext) _
 
-    def unapply(uri: Uri): Option[CacheKey] = extractor(new AndroidURI(uri))
+    def unapply(uri: Uri): Option[CacheKey] = extractor(AndroidURI(uri))
   }
 }
 

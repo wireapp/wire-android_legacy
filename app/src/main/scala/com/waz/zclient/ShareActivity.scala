@@ -18,20 +18,23 @@
 
 package com.waz.zclient
 
+import java.io.File
+
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
-import android.content.{ContentUris, Context, Intent}
+import android.content.Intent
 import android.net.Uri
-import android.os.{Bundle, Environment}
-import android.provider.DocumentsContract._
-import android.provider.MediaStore
+import android.os.Bundle
+import android.provider.OpenableColumns
 import androidx.core.app.ShareCompat
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.Mime
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
 import com.waz.threading.Threading
-import com.waz.utils.returning
-import com.waz.utils.wrappers.AndroidURIUtil.parse
-import com.waz.utils.wrappers.AndroidURI
+import com.waz.threading.Threading._
+import com.waz.utils.wrappers.{AndroidURI, AndroidURIUtil}
+import com.waz.utils.{IoUtils, returning}
+import com.waz.zclient.Intents._
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, NewContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -39,12 +42,9 @@ import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.sharing.ConversationSelectorFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
-import com.waz.threading.Threading._
 
 import scala.collection.immutable.ListSet
-import scala.util.{Failure, Success, Try}
-import com.waz.zclient.Intents._
-import com.waz.zclient.utils.DeprecationUtils
+import scala.util.{Success, Try}
 
 class ShareActivity extends BaseActivity with ActivityHelper {
   import ShareActivity._
@@ -107,7 +107,11 @@ class ShareActivity extends BaseActivity with ActivityHelper {
               else
                 Option(incomingIntent.getStream).toSeq
 
-            val uris = rawUris.flatMap(uri => getPath(WireApplication.APP_INSTANCE, uri))
+            val uris = rawUris.map(uri => (uri, isVideo(uri))).flatMap {
+              case (uri, Success(true))  => getVideoContentUri(uri)
+              case (uri, Success(false)) => getDocumentContentUri(uri)
+              case _                     => None
+            }
 
             if (uris.nonEmpty)
               sharing.sharableContent ! Some(
@@ -122,143 +126,50 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     }
   }
 
-  override def onBackPressed() =
+  override def onBackPressed(): Unit =
     withFragmentOpt(ConversationSelectorFragment.TAG) {
       case Some(f: ConversationSelectorFragment) if f.onBackPressed() => //
       case _ => super.onBackPressed()
     }
 
+  private lazy val contentResolver = getContentResolver
+  private lazy val cacheDir = getExternalCacheDir
+
+  private def isVideo(uri: Uri) =
+    Try(contentResolver.getType(uri)).map { mime =>
+      Mime.Video.supported.exists(_.str == mime.toLowerCase.trim)
+    }
+
+  private def getVideoContentUri(uri: Uri) = {
+    Try(contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)).recover {
+      case err => error(l"error while taking a persistable uri permission for $uri: ${err.getMessage}")
+    }
+    Some(AndroidURI(uri))
+  }
+
+  private def getDocumentContentUri(uri: Uri) = copyToCache(uri).map(AndroidURIUtil.fromFile)
+
+  private def copyToCache(uri: Uri) =
+    if (Option(cacheDir).isEmpty || !cacheDir.exists()) Option.empty[File]
+    else {
+      val cursor = contentResolver.query(uri, null, null, null, null)
+      val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+      cursor.moveToFirst()
+      val name = cursor.getString(nameIndex)
+      cursor.close()
+
+      Try(contentResolver.openInputStream(uri)).flatMap { stream =>
+        Try(returning(new File(cacheDir, name)) { file =>
+          if (file.exists()) file.delete()
+          file.deleteOnExit()
+          IoUtils.copy(stream, file)
+        })
+      }.toOption
+  }
 }
 
 object ShareActivity extends DerivedLogTag {
-
   val MessageIntentType = "message/plain"
   val TextIntentType = "text/plain"
   val ImageIntentType = "image/"
-
-  val PrimaryPrefix = "primary"
-  val RawPrefix = "raw"
-
-  val ExternalStorageAuth = "com.android.externalstorage.documents"
-  val DownloadsAuth = "com.android.providers.downloads.documents"
-  val MediaAuth = "com.android.providers.media.documents"
-
-  val PublicDownloadsPath = "content://downloads/public_downloads"
-
-  val ImageMedia = "image"
-  val VideoMedia = "video"
-  val AudioMedia = "audio"
-
-  /*
-   * This part (the methods getPath and getDataColumn) of the Wire software are based heavily off of code posted in this
-   * Stack Overflow answer.
-   * (https://stackoverflow.com/a/20559372/1751834)
-   *
-   * That work is licensed under a Creative Commons Attribution-ShareAlike 2.5 Generic License.
-   * (http://creativecommons.org/licenses/by-sa/2.5)
-   *
-   * Contributors on StackOverflow:
-   *  - Paul Burke (https://stackoverflow.com/users/377260/paul-burke)
-   */
-
-  /**
-    * Get a file path from a URI. This will get the the path for Storage Access Framework Documents, as well as the _data
-    * field for the MediaStore and other file-based ContentProviders.
-    *
-    * @param context The context.
-    * @param uri     The URI to query.
-    */
-  def getPath(context: Context, uri: Uri): Option[AndroidURI] = {
-    val default = Some(new AndroidURI(uri)) // to be returned in most cases if we fail to resolve the path
-    if (isDocumentUri(context, uri)) {
-      (uri.getAuthority match {
-        case ExternalStorageAuth =>
-          val split = getDocumentId(uri).split(":")
-          // TODO handle non-primary volumes
-          if (PrimaryPrefix.equalsIgnoreCase(split(0))) {
-            val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-            Some(parse(dir + "/" + split(1)))
-          }
-          else None
-
-        case DownloadsAuth =>
-          val docId = getDocumentId(uri)
-          Try(docId.toLong) match {
-            case Success(id) =>
-              val contentUri = ContentUris.withAppendedId(Uri.parse(PublicDownloadsPath), id)
-              getDocumentPath(context, contentUri)
-            case _ =>
-              val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-              val split = docId.split(":")
-              if (PrimaryPrefix.equalsIgnoreCase(split(0))) Some(parse(dir + "/" + split(1)))
-              else if (RawPrefix.equalsIgnoreCase(split(0))) Some(parse(dir + "/" + split(1)))
-              else None
-          }
-        case MediaAuth =>
-          val docId = getDocumentId(uri)
-          val split = docId.split(":")
-          val contentUri = split(0) match {
-            case ImageMedia => Some(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            case VideoMedia => Some(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-            case AudioMedia => Some(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-            case _          => None
-          }
-          contentUri.flatMap(uri => getDocumentPath(context, uri, Some("_id=?"), Seq(split(1))))
-        case _ if isDocumentUri(context, uri) =>
-          getDocumentPath(context, uri).orElse(default)
-        case _ =>
-          None
-      }).orElse(default)
-    } else
-      (uri.getScheme.toLowerCase match {
-        case "content" => getDocumentPath(context, uri).orElse(default)
-        case _ =>
-          warn(l"Unreachable content: $uri")
-          default
-      }).flatMap { u =>
-        //filter out attempts to trick us into sending application/sensitive data
-        val path = u.getPath
-
-        if (!u.getLastPathSegment.contains(".Android_wbu") && (path.contains(context.getPackageName) ||
-            path.startsWith("/proc"))) {
-          None
-        } else {
-          Some(u)
-        }
-      }
-  }
-
-  /**
-    * Get the value of the data column for this URI. This is useful for MediaStore Uris, and other file-based ContentProviders.
-    *
-    * @param context       The context.
-    * @param uri           The URI to query.
-    * @param selection     (Optional) Filter used in the query.
-    * @param selectionArgs (Optional) Selection arguments used in the query.
-    * @return The value of the _data column, which is typically a file path.
-    */
-  private def getDocumentPath(context:       Context,
-                              uri:           Uri,
-                              selection:     Option[String] = None,
-                              selectionArgs: Seq[String] = Nil
-                             ): Option[AndroidURI] =
-    Try {
-      verbose(l"getDocumentPath for uri: $uri")
-      val projection = Array(DeprecationUtils.MEDIA_COLUMN_DATA)
-      val cursor = context.getContentResolver.query(
-        uri,
-        projection,
-        selection.orNull,
-        if (selectionArgs.nonEmpty) selectionArgs.toArray else null,
-        null
-      )
-      val index = cursor.getColumnIndexOrThrow(DeprecationUtils.MEDIA_COLUMN_DATA)
-      cursor.moveToFirst()
-      val path = cursor.getString(index)
-      cursor.close()
-      returning(parse(path)) { p => verbose(l"the document path is: $p") }
-    }.recoverWith { case e =>
-      warn(l"Unable to get document path for $uri: ${e.getMessage}")
-      Failure(e)
-    }.toOption
 }
