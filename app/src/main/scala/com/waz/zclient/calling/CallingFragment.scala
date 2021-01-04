@@ -92,12 +92,14 @@ class CallingFragment extends FragmentHelper {
 
     videoGrid
 
-    Signal.zip(controller.showTopSpeakers,
+    Signal.zip(
+      controller.showTopSpeakers,
       controller.activeParticipantsWithVideo().map(_.size > 0),
-      controller.controlsVisible
+      controller.controlsVisible,
+      controller.isGroupCall
     ).onUi {
-      case (true, false, false) => noActiveSpeakersLayout.foreach(_.setVisibility(View.VISIBLE))
-      case _                    => noActiveSpeakersLayout.foreach(_.setVisibility(View.GONE))
+      case (true, false, false, true) => noActiveSpeakersLayout.foreach(_.setVisibility(View.VISIBLE))
+      case _                          => noActiveSpeakersLayout.foreach(_.setVisibility(View.GONE))
     }
   }
 
