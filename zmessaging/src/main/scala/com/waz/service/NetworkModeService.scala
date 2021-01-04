@@ -19,12 +19,14 @@ package com.waz.service
 
 import android.content.Context
 import android.net.{ConnectivityManager, Network, NetworkCapabilities, NetworkRequest}
-import android.provider.Settings
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
+import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.wire.signals.Signal
+import com.wire.signals.{CancellableFuture, Signal}
+
+import scala.concurrent.duration._
 
 trait NetworkModeService {
   def networkMode: Signal[NetworkMode]
@@ -37,52 +39,59 @@ trait NetworkModeService {
 
 class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle)
   extends NetworkModeService with DerivedLogTag {
+
+  private val currentNetwork = Signal[Option[Network]]()
+  private val currentCapabilities = Signal[Option[NetworkCapabilities]]()
+
+  currentNetwork.throttle(500.millis).map {
+    case Some(network) => Option(connectivityManager.getNetworkCapabilities(network))
+    case None => None
+  }.pipeTo(currentCapabilities)
+
+  override val networkMode: Signal[NetworkMode] = currentCapabilities.throttle(500.millis).map {
+    case Some(capabilities) =>
+      returning(computeMode(capabilities)) { mode => info(l"new network mode: $mode") }
+    case None =>
+      info(l"new network mode: OFFLINE")
+      NetworkMode.OFFLINE
+  }.disableAutowiring()
+
+  private def computeMode(capabilities: NetworkCapabilities): NetworkMode =
+    if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) NetworkMode.WIFI
+    else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) NetworkMode.CELLULAR
+    else NetworkMode.OFFLINE
+
   private lazy val connectivityManager =
     returning(context.getSystemService(Context.CONNECTIVITY_SERVICE).asInstanceOf[ConnectivityManager]) { connectivityManager =>
       connectivityManager.registerNetworkCallback(new NetworkRequest.Builder().build(), new ConnectivityManager.NetworkCallback() {
 
-        override def onAvailable(network: Network): Unit = {
-          val mode = computeMode(network)
+        override def onAvailable(network: Network): Unit =
+          currentNetwork ! Some(network)
 
-          info(l"new network mode: $mode")
-          networkMode ! mode
-        }
-
-        /** FIXME: Trying to figure out if we are offline inside `onLost` may suffer from a race condition
-         *    and the app may end up thinking it's offline when it's not or vice versa. Try to find
-         *    a better solution.
-        */
         override def onLost(network: Network): Unit =
-          if (Settings.Global.getInt(context.getContentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0) {
-            info(l"new network mode: OFFLINE (the airplane mode is on)")
-            networkMode ! NetworkMode.OFFLINE
-          } else {
-            val mode = computeMode(network)
-            networkMode.mutate {
-              case currentMode if currentMode == mode =>
-                info(l"new network mode: OFFLINE (network $mode lost)")
-                NetworkMode.OFFLINE
-              case currentMode => currentMode
-            }
+          currentNetwork.mutate {
+            case Some(n) if n == network => None
+            case other => other
           }
 
-        override def onUnavailable(): Unit = {
-          info(l"new network mode: OFFLINE (no network available)")
-          networkMode ! NetworkMode.OFFLINE
-        }
+        override def onUnavailable(): Unit =
+          currentNetwork ! None
+
+        override def onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities): Unit =
+          currentCapabilities ! Some(networkCapabilities)
       })
     }
 
-  override val networkMode = returning(Signal[NetworkMode](NetworkMode.UNKNOWN)) { _.disableAutowiring() }
+  override def registerNetworkCallback(): Unit = {
+    connectivityManager
 
-  override def registerNetworkCallback(): Unit = connectivityManager
-
-  def computeMode(network: Network): NetworkMode =
-    Option(connectivityManager.getNetworkCapabilities(network)).map { networkCapabilities =>
-      if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) NetworkMode.WIFI
-      else if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) NetworkMode.CELLULAR
-      else NetworkMode.OFFLINE
-    }.getOrElse(NetworkMode.OFFLINE)
+    // If the device was offline before the app was opened, `currentNetwork` will stay empty, not None,
+    // because no update will come from `ConnectivityManager`. To fix this, we wait a short while,
+    // and if afterwards `currentNetwork` is still empty, we switch it to None
+    CancellableFuture.delay(1.second).foreach { _ =>
+      if (currentNetwork.currentValue.isEmpty) currentNetwork ! None
+    }(Threading.Background)
+  }
 
   override def isDeviceIdleMode: Boolean = false
 }
