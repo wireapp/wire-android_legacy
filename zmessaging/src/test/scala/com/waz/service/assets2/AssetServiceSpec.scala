@@ -159,6 +159,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
 
       (assetStorage.find _).expects(*).once().returns(Future.successful(Some(asset)))
       (uriHelperMock.assetInput _).expects(*).anyNumberOfTimes().onCall { _: URI => AssetStream(inputStream) }
+      (uriHelperMock.extractMime _).expects(*).anyNumberOfTimes().returns(Success(Mime.Default))
       (uriHelperMock.openInputStream _)
         .expects(*)
         .anyNumberOfTimes()
@@ -185,6 +186,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
 
       (assetStorage.find _).expects(*).anyNumberOfTimes().returns(Future.successful(Some(asset)))
       (uriHelperMock.assetInput _).expects(*).anyNumberOfTimes().onCall { _: URI => AssetFailure(new IllegalArgumentException) }
+      (uriHelperMock.extractMime _).expects(*).anyNumberOfTimes().returns(Success(Mime.Default))
       (assetStorage.save _).expects(asset.copy(localSource = None)).anyNumberOfTimes().returns(Future.successful(()))
       (client.loadAssetContent _)
         .expects(asset, *)
@@ -217,6 +219,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
         .expects(*)
         .anyNumberOfTimes()
         .returns(Success(new ByteArrayInputStream(testAssetContent :+ 1.toByte)))
+      (uriHelperMock.extractMime _).expects(*).anyNumberOfTimes().returns(Success(Mime.Default))
       (assetStorage.save _).expects(asset.copy(localSource = None)).anyNumberOfTimes().returns(Future.successful(()))
       (client.loadAssetContent _)
         .expects(asset, *)
