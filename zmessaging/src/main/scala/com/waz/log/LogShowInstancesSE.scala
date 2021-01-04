@@ -228,7 +228,7 @@ trait LogShowInstancesSE {
       l"""
          |CallInfo(account: ${selfParticipant.userId} | clientId: ${selfParticipant.clientId} | convId: $convId | caller: $caller | state: $state | prevState: $prevState | isCbrEnabled: $isCbrEnabled
          |  isGroup: $isGroup | shouldRing: $shouldRing |  muted: $muted | startedAsVideoCall: $startedAsVideoCall | videoSendState: $videoSendState
-         |  otherParticipants: $otherParticipants | maxParticipants: $maxParticipants |
+         |  allParticipants: $allParticipants | maxParticipants: $maxParticipants |
          |  startTime: $startTime | joinedTime: $joinedTime | estabTime: $estabTime | endTime: $endTime
          |  endReason: ${endReason.map(r => showString(reasonString(r)))} | wasVideoToggled: $wasVideoToggled | hasOutstandingMsg: ${outstandingMsg.isDefined})
         """.stripMargin

@@ -111,7 +111,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   lazy val cbrEnabled                 = currentCall.map(_.isCbrEnabled)
   private lazy val duration           = currentCall.flatMap(_.durationFormatted)
   lazy val selfParticipant            = currentCall.map(_.selfParticipant)
-  lazy val otherParticipants          = currentCall.map(_.otherParticipants)
+  lazy val allParticipants            = currentCall.map(_.allParticipants)
   lazy val activeSpeakers             = currentCall.map(_.activeSpeakers)
 
 
@@ -152,7 +152,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   lazy val participantInfos: Signal[Vector[CallParticipantInfo]] =
     for {
       cZms         <- callingZms
-      participants <- otherParticipants.map(_.toSeq)
+      participants <- allParticipants.map(_.toSeq)
       ids           = participants.map(_.userId)
       users        <- cZms.usersStorage.listSignal(ids)
       videoStates  <- mergedVideoStates
@@ -176,6 +176,13 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     activeSpeakers.map(_.exists { activeSpeaker =>
       activeSpeaker.clientId == clientId && activeSpeaker.userId == userId && activeSpeaker.audioLevel > 0
     })
+
+  def isTopSpeaker(userId: UserId, clientId: ClientId): Signal[Boolean] = activeSpeakers.map { speakers =>
+    if (speakers.nonEmpty) {
+      val topSpeaker = speakers.maxBy(_.audioLevel)
+      topSpeaker.clientId == clientId && topSpeaker.userId == userId
+    } else false
+  }
 
   val flowManager = callingZms.map(_.flowmanager)
 
@@ -219,13 +226,13 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   val conversationName: Signal[Name] = zmsConvId.flatMap { case (z, cId) => z.conversations.conversationName(cId) }
   val conversationMembers: Signal[Map[UserId, ConversationRole]] = zmsConvId.flatMap { case (z, cId) => z.conversations.convMembers(cId) }
 
-  private lazy val otherUser = Signal.zip(isGroupCall, userStorage, otherParticipants.map(_.toSeq.headOption)).flatMap {
-    case (false, usersStorage, Some(participant)) =>
-      // 1:1 conversation has the same id as the other user, so we can access it directly
-      usersStorage.optSignal(participant.userId)
-    case _ =>
-      // Need a none signal to help with further signals
-      Signal.const[Option[UserData]](None)
+  private lazy val otherUser = Signal.zip(isGroupCall, userStorage, allParticipants, selfParticipant).flatMap {
+    case (false, usersStorage, participants, self) =>
+      participants.find(_.userId != self.userId) match {
+        case Some(participant) => usersStorage.optSignal(participant.userId)
+        case None              => Signal.const[Option[UserData]](None)
+      }
+    case _ => Signal.const[Option[UserData]](None)
   }
 
   val memberForPicture: Signal[Option[UserId]] = isGroupCall.flatMap {

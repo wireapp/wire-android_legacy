@@ -122,7 +122,7 @@ class CallingFragment extends FragmentHelper {
     controller.selfParticipant,
     controller.videoUsers,
     controller.participantInfos,
-    controller.otherParticipants,
+    controller.allParticipants,
     isVideoBeingSent
   )
 
@@ -136,7 +136,7 @@ class CallingFragment extends FragmentHelper {
       viewMap = viewMap.updated(participant, userView)
         userView.onDoubleClick.onUi { _ =>
 
-          controller.otherParticipants.map(_.size > 2).head.foreach {
+          controller.allParticipants.map(_.size > 2).head.foreach {
             case true =>
               showFullScreenVideo(participant)
               clearVideoGrid()
