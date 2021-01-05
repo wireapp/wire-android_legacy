@@ -101,7 +101,6 @@ object Time {
       format(getString(datePatternRes, timePattern), localTime, defaultDateFormatter)
     }
   }
-
   object TimeStamp {
 
     def apply(time: Instant, showWeekday: Boolean = true): TimeStamp = {

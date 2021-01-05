@@ -25,7 +25,6 @@ import androidx.appcompat.app.AlertDialog
 import android.widget.Toast
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetService
 import com.waz.service.assets.Asset.Image
@@ -61,7 +60,6 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   private lazy val keyboardController   = inject[KeyboardController]
   private lazy val userPrefsController  = inject[IUserPreferencesController]
   private lazy val clipboard            = inject[ClipboardUtils]
-  private lazy val permissions          = inject[PermissionsService]
   private lazy val replyController      = inject[ReplyController]
   private lazy val screenController = inject[ScreenController]
   private lazy val externalFileSharing = inject[ExternalFileSharing]
