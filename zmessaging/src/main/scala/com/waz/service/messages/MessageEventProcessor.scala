@@ -61,6 +61,7 @@ class MessageEventProcessor(selfUserId:           UserId,
       }
     }
   }
+
   private[service] def processEvents(conv: ConversationData, isGroup: Boolean, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
     verbose(l"processEvents: ${conv.id} isGroup:$isGroup ${events.map(_.from)}")
 
