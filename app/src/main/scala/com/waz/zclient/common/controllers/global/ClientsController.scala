@@ -91,7 +91,7 @@ class ClientsController(implicit inj: Injector) extends Injectable with DerivedL
       z      <- inject[Signal[ZMessaging]].head
       syncId <- z.otrService.resetSession(convId, userId, clientId)
       resp   <- z.syncRequests.await(syncId)
-      _ = verbose(l"FIX session request sent")
+
     } yield resp)
       .recover {
         case e: Throwable => SyncResult(e)
@@ -111,12 +111,9 @@ class ClientsController(implicit inj: Injector) extends Injectable with DerivedL
         }
     }
 
-    verbose(l"FIX resetSession($userId, $clientId, $convIdOpt)")
-
     for {
       convId    <- convId
       result    <- resetSession(convId, userId, clientId)
-      _ = verbose(l"FIX result: $result")
       service   <- messagesService.head
       _         <- if (result == SyncResult.Success) service.fixErrorMessages(userId, clientId)
                    else Future.successful(())

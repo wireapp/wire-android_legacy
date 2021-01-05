@@ -121,7 +121,6 @@ class OtrServiceImpl(selfUserId:     UserId,
               Some(GenericMessageEvent(conv, time, from, msg).withLocalTime(localTime))
           }
         case GenericMessage(_, ClientAction.SessionReset) =>
-          verbose(l"FIX session reset notification")
           Some(SessionReset(conv, time, from, sender))
         case GenericMessage(_, Calling(content)) =>
           Some(CallMessageEvent(conv, time, from, sender, content)) //call messages need sender client id
