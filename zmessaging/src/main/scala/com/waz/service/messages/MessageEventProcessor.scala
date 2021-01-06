@@ -43,6 +43,7 @@ class MessageEventProcessor(selfUserId:           UserId,
                             convs:                ConversationsContentUpdater,
                             downloadAssetStorage: DownloadAssetStorage,
                             global:               GlobalModule,
+                            prefs:                GlobalPreferences, // remove after testing of Session Reset is done
                             otrClientsStorage:    OtrClientsStorage // remove after testing of Session Reset is done
                            ) extends DerivedLogTag {
   import MessageEventProcessor._
@@ -85,7 +86,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     }
 
     for {
-      sessionResetTest <- global.prefs.preference(GlobalPreferences.SessionResetTest).apply()
+      sessionResetTest <- prefs.preference(GlobalPreferences.SessionResetTest).apply()
       toProcess        <- if (sessionResetTest) replaceWithErrorEvents(toProcess) else Future.successful(toProcess)
       eventsWithAssets <- Future.traverse(toProcess)(ev => assetForEvent(ev).map(ev -> _))
       richMessages     =  createRichMessages(eventsWithAssets, conv, isGroup)
