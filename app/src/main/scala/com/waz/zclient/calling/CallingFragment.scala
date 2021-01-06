@@ -59,10 +59,6 @@ class CallingFragment extends FragmentHelper {
 
     vh.foreach { grid =>
 
-      grid.setOnClickListener(new OnClickListener {
-        override def onClick(view: View): Unit = controller.controlsClick(true)
-      })
-
       Signal.zip(videoGridInfo, controller.isFullScreenEnabled, controller.showTopSpeakers, controller.activeParticipantsWithVideo()).foreach {
         case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false, true, activeParticipantsWithVideo) =>
           refreshVideoGrid(grid, selfParticipant, activeParticipantsWithVideo, infos, participants, isVideoBeingSent, true)
@@ -101,6 +97,10 @@ class CallingFragment extends FragmentHelper {
       case (true, false, false, true) => noActiveSpeakersLayout.foreach(_.setVisibility(View.VISIBLE))
       case _                          => noActiveSpeakersLayout.foreach(_.setVisibility(View.GONE))
     }
+
+    getView.setOnClickListener(new OnClickListener {
+      override def onClick(view: View): Unit = controller.controlsClick(true)
+    })
   }
 
   override def onBackPressed(): Boolean =
