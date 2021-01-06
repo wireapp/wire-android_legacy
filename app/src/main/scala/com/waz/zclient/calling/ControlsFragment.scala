@@ -148,7 +148,6 @@ class ControlsFragment extends FragmentHelper {
   }
 
   override def onStop(): Unit = {
-    getView.getParent.asInstanceOf[View].setOnClickListener(null)
     subs.foreach(_.destroy())
     subs = Set.empty
     super.onStop()
