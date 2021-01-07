@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.content.GlobalPreferences.AppLockEnabled
+import com.waz.content.UserPreferences.AppLockEnabled
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.PasswordController
@@ -26,11 +26,16 @@ class AppLockView(context: Context, attrs: AttributeSet, style: Int)
   private val passwordController = inject[PasswordController]
 
   private val appLockSwitch = returning(findById[SwitchPreference](R.id.preferences_app_lock_switch)) { appLock =>
-    appLock.setPreference(AppLockEnabled, global = true)
-    appLock.setSubtitle(getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString))
+    appLock.setPreference(AppLockEnabled)
+    passwordController.appLockTimeout.foreach { timeout =>
+      appLock.setSubtitle(getString(R.string.pref_options_app_lock_summary, timeout.toString))
+    }
   }
 
-  appLockSwitch.setDisabled(BuildConfig.FORCE_APP_LOCK)
+  passwordController.appLockForced.map {
+    case true  => true
+    case false => BuildConfig.FORCE_APP_LOCK
+  }.foreach(appLockSwitch.setDisabled)
 
   private val appLockChangeButton = returning(findById[TextButton](R.id.preferences_app_lock_change_button)) { button =>
     button.onClickEvent.foreach { _ => passwordController.changeSSOPassword() }

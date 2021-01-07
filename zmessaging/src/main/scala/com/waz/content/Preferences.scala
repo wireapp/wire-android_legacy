@@ -414,8 +414,6 @@ object GlobalPreferences {
 
   lazy val RootDetected: PrefKey[Boolean] = PrefKey[Boolean]("root_detected", customDefault = false)
 
-  lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
-
   lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
 
   //DEPRECATED!!! Use the UserPreferences instead!!
@@ -423,6 +421,9 @@ object GlobalPreferences {
   lazy val _SoundsPrefKey = PrefKey[String]("PREF_KEY_SOUND")
   lazy val _DownloadImages = PrefKey[String]("zms_pref_image_download")
 
+  //deprecated
+  lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
+  lazy val GlobalAppLockDeprecated: PrefKey[Boolean] = PrefKey[Boolean]("global_app_lock_deprecated", customDefault = false)
 }
 
 object UserPreferences {
@@ -508,4 +509,8 @@ object UserPreferences {
 
   lazy val SSOPassword = PrefKey[Option[String]]("sso_password", customDefault = None)
   lazy val SSOPasswordIv = PrefKey[Option[String]]("sso_password_iv", customDefault = None)
+
+  lazy val AppLockEnabled: PrefKey[Boolean]                = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
+  lazy val AppLockForced:  PrefKey[Boolean]                = PrefKey[Boolean]("app_lock_forced", customDefault = false)
+  lazy val AppLockTimeout: PrefKey[Option[FiniteDuration]] = PrefKey[Option[FiniteDuration]]("app_lock_timeout", customDefault = None)
 }
