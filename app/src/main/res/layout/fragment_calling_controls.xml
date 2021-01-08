@@ -42,15 +42,45 @@
         android:layout_marginBottom="@dimen/wire__padding__32"
         android:layout_weight="1" />
 
-    <ToggleButton
-        android:id="@+id/all_speakers_toggle"
+    <LinearLayout
+        android:id="@+id/all_speakers_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textOff="@string/calling_toggle_all"
-        android:textOn="@string/calling_toggle_speakers"
+        android:layout_gravity="center"
         android:layout_marginTop="@dimen/wire__padding__16"
-        android:layout_marginBottom="@dimen/wire__padding__16"
-        android:layout_gravity="center"/>
+        android:layout_marginBottom="@dimen/wire__padding__32"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/speakers_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/selector_toggle_left_button_background"
+            android:textColor="@drawable/selector_toggle_button_text_color"
+            android:text="@string/calling_toggle_speakers"
+            android:paddingTop="@dimen/wire__padding__4"
+            android:paddingBottom="@dimen/wire__padding__4"
+            android:paddingStart="@dimen/wire__padding__12"
+            android:paddingEnd="@dimen/wire__padding__12"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            />
+
+        <Button
+            android:id="@+id/all_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/selector_toggle_right_button_background"
+            android:textColor="@drawable/selector_toggle_button_text_color"
+            android:text="@string/calling_toggle_all"
+            android:paddingTop="@dimen/wire__padding__4"
+            android:paddingBottom="@dimen/wire__padding__4"
+            android:paddingStart="@dimen/wire__padding__12"
+            android:paddingEnd="@dimen/wire__padding__12"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            />
+    </LinearLayout>
 
     <com.waz.zclient.calling.views.ControlsView
         android:id="@+id/controls_grid"
