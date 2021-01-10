@@ -21,8 +21,7 @@ import android.content.{Context, DialogInterface, Intent}
 import android.graphics.Color
 import android.os.Bundle
 import android.view._
-import android.widget.CompoundButton.OnCheckedChangeListener
-import android.widget.{CompoundButton, ToggleButton}
+import android.widget.{Button, LinearLayout}
 import androidx.annotation.Nullable
 import androidx.fragment.app.Fragment
 import com.waz.service.call.Avs.VideoState
@@ -44,13 +43,23 @@ class ControlsFragment extends FragmentHelper {
 
   private lazy val callingHeader = view[CallingHeader](R.id.calling_header)
 
-  private lazy val callingMiddle   = view[CallingMiddleLayout](R.id.calling_middle)
+  private lazy val callingMiddle = view[CallingMiddleLayout](R.id.calling_middle)
   private lazy val callingControls = view[ControlsView](R.id.controls_grid)
-  private lazy val allSpeakersToggle = returning(view[ToggleButton](R.id.all_speakers_toggle)) { vh =>
-    vh.foreach{ toggle =>
-      toggle.setOnCheckedChangeListener(new OnCheckedChangeListener(){
-        override def onCheckedChanged(compoundButton: CompoundButton, checked: Boolean): Unit = controller.showTopSpeakers ! checked
-      })
+  private lazy val speakersLayoutContainer = view[LinearLayout](R.id.all_speakers_layout)
+  private lazy val speakersButton = returning(view[Button](R.id.speakers_button)) { vh =>
+    vh.foreach { button =>
+      button.onClick {
+        updateToggleSelection(true)
+      }
+    }
+  }
+
+  private lazy val allButton = returning(view[Button](R.id.all_button)) { vh =>
+    vh.foreach { button =>
+      button.setSelected(true)
+      button.onClick {
+        updateToggleSelection(false)
+      }
     }
   }
 
@@ -69,7 +78,12 @@ class ControlsFragment extends FragmentHelper {
 
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
-    allSpeakersToggle
+    speakersButton
+    allButton
+
+    controller.showTopSpeakers.onUi { shouldShowActiveSpeakers =>
+      updateToggleSelection(shouldShowActiveSpeakers)
+    }
 
     callingControls
     callingMiddle // initializing it later than the header and controls to reduce the number of height recalculations
@@ -92,12 +106,12 @@ class ControlsFragment extends FragmentHelper {
         controller.isVideoCall,
         controller.isFullScreenEnabled
       ).onUi {
-        case (true, true, true, false) => allSpeakersToggle.foreach(_.setVisibility(View.VISIBLE))
-        case _ => allSpeakersToggle.foreach(_.setVisibility(View.GONE))
+        case (true, true, true, false) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
+        case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.GONE))
       }
     }
     else {
-      allSpeakersToggle.foreach(_.setVisibility(View.GONE))
+      speakersLayoutContainer.foreach(_.setVisibility(View.GONE))
     }
 
   }
@@ -108,7 +122,7 @@ class ControlsFragment extends FragmentHelper {
     controller.controlsClick(true) //reset timer after coming back from participants
 
     subs += controller.controlsVisible.onUi {
-      case true  => getView.fadeIn()
+      case true => getView.fadeIn()
       case false => getView.fadeOut()
     }
 
@@ -163,6 +177,11 @@ class ControlsFragment extends FragmentHelper {
     },
     false)
 
+  private def updateToggleSelection(shouldShowActiveSpeakers: Boolean): Unit = {
+    speakersButton.foreach(_.setSelected(shouldShowActiveSpeakers))
+    allButton.foreach(_.setSelected(!shouldShowActiveSpeakers))
+    controller.showTopSpeakers ! shouldShowActiveSpeakers
+  }
 }
 
 object ControlsFragment {

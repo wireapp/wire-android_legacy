@@ -157,7 +157,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     if (BuildConfig.ACTIVE_SPEAKERS) {
       val border = new GradientDrawable()
       border.setColor(getColor(R.color.black))
-      border.setStroke(3, color)
+      border.setStroke(1, color)
       setBackground(border)
       getChildAt(1).setMargin(3, 3, 3, 3)
     }
