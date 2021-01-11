@@ -205,35 +205,6 @@ class GlobalPreferences(context: Context, val prefs: SharedPreferences) extends 
 
   def v31AssetsEnabled = false
 
-  //TODO eventually remove
-  private def migrate() = Serialized(GlobalPreferences.MigrationKey)(dispatcher {
-    val oldPrefFiles = Seq("zmessaging", "com.waz.zclient.user.preferences")
-      .map(name => Option(context.getSharedPreferences(name, Context.MODE_PRIVATE)))
-      .collect { case Some(pref) => pref }
-
-    val editor = prefs.edit()
-
-    oldPrefFiles
-      .map(_.getAll.asScala)
-      .foldLeft(Map.empty[String, Any]) { case (cur, i) => cur ++ i }
-      .foreach {
-        case (key, value) =>
-          value match {
-            case v: String => editor.putString(key, v)
-            case v: Boolean => editor.putBoolean(key, v)
-            case v: Int => editor.putInt(key, v)
-            case v: Long => editor.putLong(key, v)
-            case v => warn(l"Preference ${showString(key)} has unexpected type. Leaving out of migration")
-          }
-      }
-
-    if (editor.commit()) {
-      oldPrefFiles.foreach { pref =>
-        pref.edit().clear().commit()
-      }
-    }
-  })
-
   //TODO would be nice to hide this, but for now it's fine
   def getFromPref[A: PrefCodec](key: PrefKey[A]) = {
     val codec = implicitly[PrefCodec[A]]
@@ -306,64 +277,6 @@ class UserPreferences(context: Context, storage: ZmsDatabase)
 
   override def setValue[A: PrefCodec](key: PrefKey[A], value: A) =
     put(key.str, KeyValueData(key.str, implicitly[PrefCodec[A]].encode(value))).map(_ => {})
-
-  def migrate(gPrefs: GlobalPreferences) = Serialized.future(GlobalPreferences.MigrationKey) {
-    for {
-      _ <- migrateFromGlobal(gPrefs)
-      _ <- migrateToGlobal(gPrefs)
-    } yield ()
-  }
-
-  def migrateToGlobal(gPrefs: GlobalPreferences)(implicit ec: ExecutionContext) = {
-    list().map(_.map(kvd => kvd.key -> kvd.value).toMap).flatMap { currentPrefs =>
-      currentPrefs.get("analytics_enabled").map(PrefCodec.BooleanCodec.decode).fold {
-        Future.successful(())
-      } {
-        case false =>
-          gPrefs.setValue(GlobalPreferences.SendAnonymousDataEnabled, false).map(_ => remove("analytics_enabled"))
-        case _ =>
-          remove("analytics_enabled")
-      }
-    }
-  }
-
-  //TODO eventually remove
-  def migrateFromGlobal(gPrefs: GlobalPreferences)(implicit ec: ExecutionContext) = {
-    list().map(_.map(_.key)).flatMap { currentPrefs =>
-      verbose(l"migrating global prefs to user prefs: ${currentPrefs.map(showString)}")
-      import UserPreferences._
-
-      val darKTheme = if (!currentPrefs.contains(DarkTheme.str)) setValue(DarkTheme, gPrefs.getFromPref(GlobalPreferences._DarkTheme)) else Future.successful({})
-      val sounds =
-        if (!currentPrefs.contains(Sounds.str)) {
-          import IntensityLevel._
-          val level = gPrefs.getFromPref(GlobalPreferences._SoundsPrefKey) match {
-            case "all" => FULL
-            case "some" => SOME
-            case "none" => NONE
-            case _ => FULL
-          }
-          setValue(Sounds, level)
-        }
-        else Future.successful({})
-      val wifiDownload =
-        if (!currentPrefs.contains(DownloadImagesAlways.str)) {
-          val enabled = gPrefs.getFromPref(GlobalPreferences._DownloadImages) match {
-            case "always" => false
-            case "wifi" => true
-          }
-          setValue(DownloadImagesAlways, enabled)
-        }
-        else Future.successful({})
-
-      for {
-        _ <- darKTheme
-        _ <- sounds
-        _ <- wifiDownload
-      } yield {}
-    }
-  }
-
 }
 
 object GlobalPreferences {
@@ -371,9 +284,8 @@ object GlobalPreferences {
   val MigrationKey = "PreferenceMigration"
   val PreferencesName = "com.wire.preferences"
 
-  def apply(context: Context): GlobalPreferences = {
-    returning(new GlobalPreferences(context, context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE)))(_.migrate())
-  }
+  def apply(context: Context): GlobalPreferences =
+    new GlobalPreferences(context, context.getSharedPreferences(PreferencesName, Context.MODE_PRIVATE))
 
   lazy val LoggingInUser = PrefKey[Option[UserInfo]]("logging_in_user") //only to be used during DB import
 
@@ -416,11 +328,6 @@ object GlobalPreferences {
 
   lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
 
-  //DEPRECATED!!! Use the UserPreferences instead!!
-  lazy val _DarkTheme = PrefKey[Boolean]("DarkTheme")
-  lazy val _SoundsPrefKey = PrefKey[String]("PREF_KEY_SOUND")
-  lazy val _DownloadImages = PrefKey[String]("zms_pref_image_download")
-
   //deprecated
   lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
   lazy val GlobalAppLockDeprecated: PrefKey[Boolean] = PrefKey[Boolean]("global_app_lock_deprecated", customDefault = false)
@@ -428,8 +335,8 @@ object GlobalPreferences {
 
 object UserPreferences {
 
-  def apply(context: Context, storage: ZmsDatabase, globalPreferences: GlobalPreferences) =
-    returning(new UserPreferences(context, storage))(_.migrate(globalPreferences))
+  def apply(context: Context, storage: ZmsDatabase, globalPreferences: GlobalPreferences): UserPreferences =
+    new UserPreferences(context, storage)
 
   lazy val IsLogin = PrefKey[Boolean]("is_login")
   lazy val IsNewClient = PrefKey[Boolean]("is_new_client")
