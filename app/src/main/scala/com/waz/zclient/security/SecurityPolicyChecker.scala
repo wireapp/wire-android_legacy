@@ -20,7 +20,6 @@ package com.waz.zclient.security
 import android.app.Activity
 import android.content.Context
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountManager, ZMessaging}
 import com.wire.signals.Signal
@@ -88,10 +87,10 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
   private val authenticationNeeded = Signal(false)
   private val timerEnabled = Signal(true)
 
-  private def timerExpired: Boolean = {
+  private def timerExpired(timeout: Int): Boolean = {
     val secondsSinceEnteredBackground = timeEnteredBackground.fold(Long.MaxValue)(_.until(Instant.now(), ChronoUnit.SECONDS))
-    verbose(l"timeEnteredBackground: $timeEnteredBackground, secondsSinceEnteredBackground: $secondsSinceEnteredBackground, timeout is: ${BuildConfig.APP_LOCK_TIMEOUT}")
-    secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
+    verbose(l"timeEnteredBackground: $timeEnteredBackground, secondsSinceEnteredBackground: $secondsSinceEnteredBackground, timeout is: $timeout")
+    secondsSinceEnteredBackground >= timeout
   }
 
   private def updateBackgroundEntryTimer(): Unit = {
@@ -105,11 +104,12 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
       case false => Future.successful(false)
       case true =>
         if (BuildConfig.FORCE_APP_LOCK) Future.successful(true)
-        else globalPreferences.preference(AppLockEnabled).apply().flatMap {
-          case false => Future.successful(false)
-          case true =>
+        else
+          Signal.zip(passwordController.appLockEnabled, passwordController.appLockTimeout).head.flatMap {
+          case (false, _) => Future.successful(false)
+          case (true, timeout) =>
             authenticationNeeded.mutate {
-              case false if timerExpired => true
+              case false if timerExpired(timeout) => true
               case b => b
             }
             authenticationNeeded.head

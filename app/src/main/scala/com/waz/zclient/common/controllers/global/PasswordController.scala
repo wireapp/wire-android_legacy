@@ -19,19 +19,19 @@ package com.waz.zclient.common.controllers.global
 
 import android.content.Context
 import androidx.fragment.app.FragmentTransaction
-import com.waz.content.GlobalPreferences.AppLockEnabled
+import com.waz.content.UserPreferences.{AppLockEnabled, AppLockForced, AppLockTimeout}
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
+import com.waz.service.teams.FeatureFlagsService
 import com.waz.service.{AccountsService, GlobalModule, UserService}
 import com.waz.threading.Threading
-import com.waz.threading.Threading._
-import com.waz.utils.crypto.AESUtils.{encryptWithAlias, decryptWithAlias, EncryptedBytes}
-import com.waz.zclient.common.controllers.ThemeController
+import com.waz.utils.crypto.AESUtils.{EncryptedBytes, decryptWithAlias, encryptWithAlias}
+import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.dialogs.NewPasswordDialog
 import com.waz.zclient.security.ActivityLifecycleCallback
-import com.waz.zclient.{BaseActivity, Injectable, Injector}
+import com.waz.zclient.{BaseActivity, BuildConfig, Injectable, Injector}
 import com.wire.signals.{EventStream, Signal, SourceStream}
 
 import scala.concurrent.Future
@@ -41,15 +41,40 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
 
   private val accounts = inject[AccountsService]
   private val prefs = inject[Signal[UserPreferences]]
+  private val userAccountsController = inject[UserAccountsController]
+  private lazy val featureFlags = inject[Signal[FeatureFlagsService]]
+  private val appInBackground = inject[ActivityLifecycleCallback].appInBackground.map(_._1)
   private val ssoPassword = prefs.map(_.preference(UserPreferences.SSOPassword))
   private val ssoPasswordIv = prefs.map(_.preference(UserPreferences.SSOPasswordIv))
 
   private lazy val sodiumHandler = inject[SodiumHandler]
 
-  val ssoEnabled:       Signal[Boolean] = accounts.isActiveAccountSSO
-  val ssoPasswordEmpty: Signal[Boolean] = ssoPassword.flatMap(_.signal.map(_.isEmpty))
-  val appLockEnabled:   Signal[Boolean] = inject[GlobalPreferences].preference(AppLockEnabled).signal
-  lazy val password:    Signal[Option[Password]] = accounts.activeAccount.map(_.flatMap(_.password)).disableAutowiring()
+  // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
+  if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
+    appLockPrefMigration()
+  }
+
+  appInBackground.foreach {
+    case true  =>
+      clearPassword()
+    case false =>
+      if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
+        userAccountsController.isTeam.head.foreach {
+          case true => featureFlags.head.foreach(_.updateAppLock())
+          case false =>
+        }
+      }
+  }
+
+  val ssoEnabled:       Signal[Boolean]                = accounts.isActiveAccountSSO
+  val ssoPasswordEmpty: Signal[Boolean]                = ssoPassword.flatMap(_.signal.map(_.isEmpty))
+  val appLockEnabled:   Signal[Boolean]                = prefs.flatMap(_.preference(AppLockEnabled).signal)
+  val appLockForced:    Signal[Boolean]                = prefs.flatMap(_.preference(AppLockForced).signal)
+  lazy val password:    Signal[Option[Password]]       = accounts.activeAccount.map(_.flatMap(_.password)).disableAutowiring()
+  val appLockTimeout: Signal[Int] = prefs.flatMap(_.preference(AppLockTimeout).signal).map {
+    case None           => BuildConfig.APP_LOCK_TIMEOUT
+    case Some(duration) => duration.toSeconds.toInt
+  }
 
   val passwordCheckSuccessful: SourceStream[Unit] = EventStream[Unit]()
 
@@ -128,11 +153,6 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       _                  <- ssoIvPref := Some(iv)
     } yield ()
 
-  inject[ActivityLifecycleCallback].appInBackground.onUi {
-    case (true, _) => clearPassword()
-    case _ =>
-  }
-
   private def checkSSOPassword(pwdToCheck: Password): Future[Boolean] =
     for {
       Some(userId) <- accounts.activeAccountId.head
@@ -153,4 +173,18 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       case Some(id) =>
         sodiumHandler.hash(password, id.str.replace("-", ""))
     }(Threading.Background)
+
+  // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
+  private def appLockPrefMigration() =
+    inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated).apply().foreach {
+      case true =>
+      case false =>
+        inject[GlobalPreferences].preference(GlobalPreferences.AppLockEnabled).apply().foreach { globalAppLock =>
+          prefs.map(_.preference(AppLockEnabled)).head.foreach { userAppLockPref =>
+            verbose(l"Migrating the AppLockEnabled preference (set to $globalAppLock) from global to user preferences")
+            userAppLockPref := globalAppLock
+            inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated) := true
+          }
+        }
+    }
 }

@@ -44,6 +44,7 @@ import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.Andr
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.threading.Threading._
+import com.waz.zclient.common.controllers.global.PasswordController
 
 trait OptionsView {
   def setSounds(level: IntensityLevel): Unit
@@ -103,7 +104,9 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)
 
-  appLockButton.setSubtitle(getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString))
+  inject[PasswordController].appLockTimeout.foreach { timeout =>
+    appLockButton.setSubtitle(getString(R.string.pref_options_app_lock_summary, timeout.toString))
+  }
 
   override val appLock: EventStream[Unit] = appLockButton.onClickEvent.map(_ => ())
 
