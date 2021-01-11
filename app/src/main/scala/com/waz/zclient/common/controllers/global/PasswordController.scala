@@ -49,26 +49,30 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
 
   private lazy val sodiumHandler = inject[SodiumHandler]
 
-  // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled (let's say, June 2021?)
-  inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated).apply().foreach {
-    case true =>
-    case false =>
-      inject[GlobalPreferences].preference(GlobalPreferences.AppLockEnabled).apply().foreach { globalAppLock =>
-        prefs.map(_.preference(AppLockEnabled)).head.foreach { userAppLockPref =>
-          verbose(l"Migrating the AppLockEnabled preference (set to $globalAppLock) from global to user preferences")
-          userAppLockPref := globalAppLock
-          inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated) := true
+  if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
+    // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled (let's say, June 2021?)
+    inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated).apply().foreach {
+      case true =>
+      case false =>
+        inject[GlobalPreferences].preference(GlobalPreferences.AppLockEnabled).apply().foreach { globalAppLock =>
+          prefs.map(_.preference(AppLockEnabled)).head.foreach { userAppLockPref =>
+            verbose(l"Migrating the AppLockEnabled preference (set to $globalAppLock) from global to user preferences")
+            userAppLockPref := globalAppLock
+            inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated) := true
+          }
         }
-      }
+    }
   }
 
   appInBackground.foreach {
     case true  =>
       clearPassword()
     case false =>
-      userAccountsController.isTeam.head.foreach {
-        case true  => featureFlags.head.foreach(_.updateAppLock())
-        case false =>
+      if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
+        userAccountsController.isTeam.head.foreach {
+          case true => featureFlags.head.foreach(_.updateAppLock())
+          case false =>
+        }
       }
   }
 
