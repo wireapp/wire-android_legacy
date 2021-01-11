@@ -129,7 +129,7 @@ class TeamsServiceImpl(selfUser:           UserId,
       def userMatches(data: UserData) = data.isInTeam(teamId) && data.matchesQuery(query)
 
       new AggregatingSignal[Seq[ContentChange[UserId, UserData]], Set[UserData]](
-        load,
+        () => load,
         changesStream,
         { (current, changes) =>
           val added = changes.collect {
@@ -153,7 +153,7 @@ class TeamsServiceImpl(selfUser:           UserId,
       Signal.const[Option[TeamData]](None)
     case Some(id) =>
       new RefreshingSignal(
-        CancellableFuture.lift(teamStorage.get(id)),
+        () => CancellableFuture.lift(teamStorage.get(id)),
         teamStorage.onChanged.map(_.filter(_.id == id)).filter(_.nonEmpty)
       )
   }
@@ -171,7 +171,7 @@ class TeamsServiceImpl(selfUser:           UserId,
 
     teamId match {
       case None => Signal.const(Set.empty[UserId])
-      case Some(id) => new RefreshingSignal(CancellableFuture.lift(load(id)), allChanges)
+      case Some(id) => RefreshingSignal(() => CancellableFuture.lift(load(id)), allChanges)
     }
   }
 

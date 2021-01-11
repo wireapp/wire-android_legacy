@@ -63,7 +63,7 @@ class TypingService(userId:        UserId,
   }
 
   def typingUsers(conv: ConvId): Signal[IndexedSeq[UserId]] = new AggregatingSignal[IndexedSeq[TypingUser], IndexedSeq[UserId]] (
-    loader        = Future { typing(conv).map(_.id) },
+    loader        = () => Future { typing(conv).map(_.id) },
     sourceStream  = onTypingChanged.filter(_._1 == conv).map(_._2),
     updater       = (_, updated) => updated.map(_.id)
   )

@@ -49,7 +49,7 @@ class PermissionsService extends DerivedLogTag {
     (for {
       keys       <- knownKeys
       Some(prov) <- providerSignal
-      res        <- RefreshingSignal(Threading.Ui.apply(prov.hasPermissions(keys.map(Permission(_)))), refresh)
+      res        <- RefreshingSignal(() => Threading.Ui.apply(prov.hasPermissions(keys.map(Permission(_)))), refresh)
   } yield res).disableAutowiring()
 
   /**

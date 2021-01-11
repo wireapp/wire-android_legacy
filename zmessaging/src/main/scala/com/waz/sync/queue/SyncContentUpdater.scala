@@ -102,7 +102,7 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
     }
 
     new AggregatingSignal[Cmd, Map[SyncId, SyncJob]](
-      listSyncJobs.map(_.toIdMap),
+      () => listSyncJobs.map(_.toIdMap),
       onChange,
       {
         case (jobs, Add(job))    => jobs + (job.id -> job)
