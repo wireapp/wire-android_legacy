@@ -28,7 +28,7 @@ import scala.math.max
 
 class RecordingLevels(liveLevels: EventStream[Float]) extends DerivedLogTag {
   private val allLevels = returning(
-    new AggregatingSignal[Float, Vector[Float]](Future.successful(Vector.empty), liveLevels, _ :+ _)
+    new AggregatingSignal[Float, Vector[Float]](() => Future.successful(Vector.empty), liveLevels, _ :+ _)
   )(_.disableAutowiring())
 
   def windowed(windowSize: Int): Signal[Array[Float]] = allLevels map { levels =>

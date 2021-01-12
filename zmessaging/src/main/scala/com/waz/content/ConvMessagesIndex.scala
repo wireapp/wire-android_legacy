@@ -72,7 +72,7 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
       unread <- Signal.from(messages.countUnread(convId, time))
     } yield unread
 
-    val messagesCursor: Signal[MessagesCursor] = new RefreshingSignal(loadCursor, indexChanged.filter(_.orderChanged))
+    val messagesCursor: Signal[MessagesCursor] = new RefreshingSignal(() => loadCursor, indexChanged.filter(_.orderChanged))
   }
 
   import sources._

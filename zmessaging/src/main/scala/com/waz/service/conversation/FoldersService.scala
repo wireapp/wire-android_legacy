@@ -204,7 +204,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     } yield folderConvs.toMap
 
     new AggregatingSignal[(Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]]), Map[FolderId, Set[ConvId]]](
-      loadAll,
+      () => loadAll,
       changesStream,
       { case (current, (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)) =>
         // Step 1: remove deleted folders and add new ones

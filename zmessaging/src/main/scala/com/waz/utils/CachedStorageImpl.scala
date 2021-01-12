@@ -94,7 +94,7 @@ trait ReactiveStorage2[K, V <: Identifiable[K]] extends Storage2[K, V] {
   def optSignal(key: K): Signal[Option[V]] = {
     val changeOrDelete = onChanged(key).map(Option(_)).zip(onRemoved(key).map(_ => Option.empty[V]))
     new AggregatingSignal[Option[V], Option[V]](
-      find(key),
+      () => find(key),
       changeOrDelete,
       { (_, v) => v }
     )
@@ -367,7 +367,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   def optSignal(key: K): Signal[Option[V]] = {
     val changeOrDelete = onChanged(key).map(Option(_)).zip(onRemoved(key).map(_ => Option.empty[V]))
     new AggregatingSignal[Option[V], Option[V]](
-      get(key),
+      () => get(key),
       changeOrDelete,
       { (_, v) => v }
     )
@@ -538,7 +538,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
       valueMap = values.map { v => v.id -> v }.toMap
     } yield valueMap
 
-    new AggregatingSignal[Seq[ContentChange[K, V]], Map[K, V]](load, changesStream, { (values, changes) =>
+    new AggregatingSignal[Seq[ContentChange[K, V]], Map[K, V]](() => load, changesStream, { (values, changes) =>
       val added = new mutable.HashMap[K, V]
       val removed = new mutable.HashSet[K]
       changes foreach {

@@ -50,7 +50,7 @@ class ReactionsStorageImpl(context: Context, storage: Database)
   private val likesCache = new TrimmingLruCache[MessageId, Map[UserId, RemoteInstant]](context, Fixed(1024))
   private val maxTime = returning(
     new AggregatingSignal[RemoteInstant, RemoteInstant](
-      storage.read(LikingDao.findMaxTime(_)),
+      () => storage.read(LikingDao.findMaxTime(_)),
       onChanged.map(_.maxBy(_.timestamp).timestamp),
       _ max _
     )
@@ -89,7 +89,7 @@ class ReactionsStorageImpl(context: Context, storage: Database)
 
   override def likes(msg: MessageId): Signal[Likes] =
     new RefreshingSignal[Likes](
-      CancellableFuture.lift(getLikes(msg)),
+      () => CancellableFuture.lift(getLikes(msg)),
       onChanged.map(_.filter(_.message == msg))
     )
 
