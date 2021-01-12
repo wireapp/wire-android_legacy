@@ -45,11 +45,11 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase)
     with UsersStorage {
   import com.waz.threading.Threading.Implicits.Background
 
-  override def listAll(ids: Traversable[UserId]) = getAll(ids).map(_.collect { case Some(x) => x }(breakOut))
+  override def listAll(ids: Traversable[UserId]): Future[Vector[UserData]] = getAll(ids).map(_.collect { case Some(x) => x }(breakOut))
 
   override def listSignal(ids: Traversable[UserId]): Signal[Vector[UserData]] = {
     val idSet = ids.toSet
-    new RefreshingSignal(listAll(ids).lift, onChanged.map(_.filter(u => idSet(u.id))).filter(_.nonEmpty))
+    new RefreshingSignal(() => listAll(ids).lift, onChanged.map(_.filter(u => idSet(u.id))).filter(_.nonEmpty))
   }
 
   override def listUsersByConnectionStatus(p: Set[ConnectionStatus]): Future[Map[UserId, UserData]] =

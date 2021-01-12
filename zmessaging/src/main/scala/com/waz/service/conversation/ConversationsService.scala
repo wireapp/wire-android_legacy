@@ -271,7 +271,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         .zip(membersStorage.onDeleted.map(_.filter(_._2 == conv).map(_._1 -> (None, false)))).map(_.toMap)
 
     new AggregatingSignal[Map[UserId, (Option[ConversationMemberData], Boolean)], Seq[ConversationMemberData]](
-      membersStorage.getByConv(conv),
+      () => membersStorage.getByConv(conv),
       onConvMemberDataChanged,
       { (current, changes) =>
         val (active, inactive) = changes.partition(_._2._2)

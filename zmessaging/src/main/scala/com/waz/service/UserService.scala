@@ -135,7 +135,7 @@ class UserServiceImpl(selfUserId:        UserId,
     def initialLoad = usersStorage.list().map(_.map(user => user.id -> user.name).toMap)
 
     new AggregatingSignal[Map[UserId, Name], Map[UserId, Name]](
-      initialLoad,
+      () => initialLoad,
       EventStream.zip(added, updated),
       { (values, changes) => values ++ changes }
     )
@@ -187,7 +187,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override lazy val acceptedOrBlockedUsers: Signal[Map[UserId, UserData]] =
     new AggregatingSignal[Seq[UserData], Map[UserId, UserData]](
-      usersStorage.listUsersByConnectionStatus(AcceptedOrBlocked),
+      () => usersStorage.listUsersByConnectionStatus(AcceptedOrBlocked),
       usersStorage.onChanged,
       { (accu, us) =>
         val (toAdd, toRemove) = us.partition(u => AcceptedOrBlocked(u.connection))

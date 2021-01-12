@@ -103,7 +103,7 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) extends DerivedLogTag {
     val stream = onCreate.filter(_ == sid).mapAsync(_ => fingerprint)
 
     new AggregatingSignal[Option[Array[Byte]], Option[Array[Byte]]](
-      fingerprint,
+      () => fingerprint,
       stream,
       (_, next) => next
     )
