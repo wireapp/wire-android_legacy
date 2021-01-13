@@ -51,7 +51,7 @@ class ConversationsTableTestHelper private constructor() {
             conversationType: Int,
             team: String?,
             managed: Boolean?,
-            lastEventTime: Int,
+            lastEventTime: Long,
             active: Boolean,
             lastRead: Int,
             mutedStatus: Int,

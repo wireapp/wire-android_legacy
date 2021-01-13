@@ -2,13 +2,11 @@ package com.waz.zclient.framework.data.messages
 
 import com.waz.zclient.framework.data.TestDataProvider
 
-data class MessageTestData(
+data class MessageTestData129(
     val id: String,
     val conversationId: String,
     val messageType: String,
     val userId: String,
-    val clientId: String?,
-    val errorCode: Long?,
     val content: String?,
     val protos: ByteArray?,
     val time: Long,
@@ -31,14 +29,12 @@ data class MessageTestData(
     val assetId: String?
 )
 
-object MessagesTestDataProvider : TestDataProvider<MessageTestData>() {
-    override fun provideDummyTestData(): MessageTestData = MessageTestData(
+object MessagesTestDataProvider : TestDataProvider<MessageTestData129>() {
+    override fun provideDummyTestData(): MessageTestData129 = MessageTestData129(
         id = "3-1-70b5baab-323d-446e-936d-745c64d6c7d8",
         conversationId = "3762d820-83a1-4fae-ae58-6c39fb2e9d8a",
         messageType = "ConnectRequest",
         userId = "3762d820-83a1-4fae-ae58-6c39fb2e9d8a",
-        clientId = null,
-        errorCode = null,
         content = "[{\"type\":\"TextEmojiOnly\",\"content\":\" \"}]",
         protos = ByteArray(PROTOS_BYTE_SIZE) { it.toByte() },
         time = 0,
