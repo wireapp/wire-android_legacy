@@ -38,7 +38,7 @@ allprojects {
 }
 
 ext {
-    activeSpeakers = false
+    activeSpeakers = true
     appLockFeatureFlag = true
     sessionReset = true
     //Update kotlinCore flag as well when adding new kotlin features

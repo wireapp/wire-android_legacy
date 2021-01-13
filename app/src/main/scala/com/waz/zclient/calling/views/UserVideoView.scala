@@ -30,7 +30,7 @@ import com.waz.utils.returning
 import com.waz.zclient.ViewHelper
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
-import com.waz.zclient.utils.ContextUtils.getColor
+import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.R
 import com.waz.zclient.BuildConfig
@@ -69,6 +69,14 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
       isGroup <- callController.isGroupCall
       infos   <- if (isGroup) callController.participantInfos else Signal.const(Vector.empty)
     } yield infos.find(_.id == participant.userId)
+
+  protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
+    participantInfo.onUi {
+      case Some(p) if p.isSelf => view.setText(getString(R.string.calling_self, p.displayName))
+      case Some(p)             => view.setText(p.displayName)
+      case _                   =>
+    }
+  }
 
   Signal.zip(
     callController.isGroupCall,
