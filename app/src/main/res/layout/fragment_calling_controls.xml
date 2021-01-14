@@ -48,7 +48,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="@dimen/wire__padding__16"
-        android:layout_marginBottom="@dimen/wire__padding__32"
+        android:layout_marginBottom="@dimen/wire__padding__16"
         android:orientation="horizontal">
 
         <Button
