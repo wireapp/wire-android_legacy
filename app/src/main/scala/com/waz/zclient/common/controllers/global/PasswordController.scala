@@ -50,9 +50,7 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
   private lazy val sodiumHandler = inject[SodiumHandler]
 
   // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
-  if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
-    appLockPrefMigration()
-  }
+  appLockPrefMigration()
 
   appInBackground.foreach {
     case true  =>
