@@ -26,7 +26,6 @@ import androidx.annotation.Nullable
 import androidx.fragment.app.Fragment
 import com.waz.service.call.Avs.VideoState
 import com.waz.threading.Threading._
-import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
 import com.waz.zclient.log.LogUI._
@@ -46,22 +45,8 @@ class ControlsFragment extends FragmentHelper {
   private lazy val callingMiddle = view[CallingMiddleLayout](R.id.calling_middle)
   private lazy val callingControls = view[ControlsView](R.id.controls_grid)
   private lazy val speakersLayoutContainer = view[LinearLayout](R.id.all_speakers_layout)
-  private lazy val speakersButton = returning(view[Button](R.id.speakers_button)) { vh =>
-    vh.foreach { button =>
-      button.onClick {
-        updateToggleSelection(true)
-      }
-    }
-  }
-
-  private lazy val allButton = returning(view[Button](R.id.all_button)) { vh =>
-    vh.foreach { button =>
-      button.setSelected(true)
-      button.onClick {
-        updateToggleSelection(false)
-      }
-    }
-  }
+  private lazy val speakersButton = view[Button](R.id.speakers_button)
+  private lazy val allButton = view[Button](R.id.all_button)
 
   private var subs = Set[Subscription]()
 
@@ -78,8 +63,18 @@ class ControlsFragment extends FragmentHelper {
 
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
-    speakersButton
-    allButton
+
+    speakersButton.foreach { button =>
+      button.onClick {
+        updateToggleSelection(true)
+      }
+    }
+    allButton.foreach { button =>
+      button.setSelected(true)
+      button.onClick {
+        updateToggleSelection(false)
+      }
+    }
 
     controller.showTopSpeakers.onUi { shouldShowActiveSpeakers =>
       updateToggleSelection(shouldShowActiveSpeakers)
@@ -107,11 +102,11 @@ class ControlsFragment extends FragmentHelper {
         controller.isFullScreenEnabled
       ).onUi {
         case (true, true, true, false) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
-        case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.GONE))
+        case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
       }
     }
     else {
-      speakersLayoutContainer.foreach(_.setVisibility(View.GONE))
+      speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
     }
 
   }
