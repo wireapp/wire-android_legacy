@@ -102,11 +102,11 @@ class ControlsFragment extends FragmentHelper {
         controller.isFullScreenEnabled
       ).onUi {
         case (true, true, true, false) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
-        case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.GONE))
+        case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
       }
     }
     else {
-      speakersLayoutContainer.foreach(_.setVisibility(View.GONE))
+      speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
     }
 
   }
