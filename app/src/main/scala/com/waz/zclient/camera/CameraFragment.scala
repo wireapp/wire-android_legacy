@@ -118,7 +118,7 @@ class CameraFragment extends FragmentHelper
       override def onDataReceived(t: AssetIntentsManager.IntentType, uri: URI): Unit = processGalleryImage(uri)
       override def onCanceled(t: AssetIntentsManager.IntentType): Unit = showCameraFeed()
       override def onFailed(t: AssetIntentsManager.IntentType): Unit = showCameraFeed()
-      override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Unit =
+      override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Boolean =
         safeStartActivityForResult(intent, intentType.requestCode)
     })
   }

@@ -85,8 +85,7 @@ public class AssetIntentsManager {
                 intent.setType(INTENT_ALL_TYPES);
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toArray());
             }
-            if (!context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL).isEmpty()) {
-                callback.openIntent(intent, tpe);
+            if (callback.openIntent(intent, tpe)) {
                 return;
             }
             Logger.info(TAG, "Did not resolve testing gallery for intent:" + intent.toString());
@@ -284,7 +283,7 @@ public class AssetIntentsManager {
 
         void onFailed(IntentType type);
 
-        void openIntent(Intent intent, AssetIntentsManager.IntentType intentType);
+        boolean openIntent(Intent intent, AssetIntentsManager.IntentType intentType);
     }
 
     public static void grantUriPermissions(Context context, Intent intent, Uri uri) {
