@@ -101,15 +101,15 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   private val isMuted = Signal(false)
 
-  private val topSpeakerData = Signal(Option.empty[(UserId, ClientId)])
-  private val isTopSpeaker = for {
-    Some((userId, clientId)) <- topSpeakerData
-    topSpeaker                 <- callController.isTopSpeaker(userId, clientId)
-  } yield topSpeaker
+  private val activeSpeakerData = Signal(Option.empty[(UserId, ClientId)])
+  private val isActiveSpeaker = for {
+    Some((userId, clientId)) <- activeSpeakerData
+    isActive                 <- callController.isActiveSpeaker(userId, clientId)
+  } yield isActive
 
   audioIndicator.setVisible(true)
 
-  Signal.zip(chosenCurrentTheme, isMuted, isTopSpeaker, accentColorController.accentColor.map(_.color)
+  Signal.zip(chosenCurrentTheme, isMuted, isActiveSpeaker, accentColorController.accentColor.map(_.color)
   ).onUi {
     case (Theme.Light, true, _, _)        =>
       updateAudioIndicator(R.drawable.ic_muted_light_theme, getColor(R.color.graphite), false)
@@ -175,7 +175,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     isGuest ! user.isGuest
     isPartner ! user.isExternal
     setVerified(user.isVerified)
-    topSpeakerData ! Some((user.id, user.clientId))
+    activeSpeakerData ! Some((user.id, user.clientId))
   }
 
   def setUserData(userData:       UserData,

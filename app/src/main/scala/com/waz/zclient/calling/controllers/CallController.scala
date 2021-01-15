@@ -177,13 +177,6 @@ class CallController(implicit inj: Injector, cxt: WireContext)
       activeSpeaker.clientId == clientId && activeSpeaker.userId == userId && activeSpeaker.audioLevel > 0
     })
 
-  def isTopSpeaker(userId: UserId, clientId: ClientId): Signal[Boolean] = activeSpeakers.map { speakers =>
-    if (speakers.nonEmpty) {
-      val topSpeaker = speakers.maxBy(_.audioLevel)
-      topSpeaker.clientId == clientId && topSpeaker.userId == userId
-    } else false
-  }
-
   val flowManager = callingZms.map(_.flowmanager)
 
   def continueDegradedCall(): Unit = callingServiceAndCurrentConvId.head.map {
