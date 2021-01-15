@@ -360,9 +360,11 @@ class DrawingFragment extends FragmentHelper
 
   override def onFailed(tpe: AssetIntentsManager.IntentType): Unit = {}
 
-  override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Unit =
-    if (safeStartActivityForResult(intent, intentType.requestCode))
+  override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Boolean =
+    if (safeStartActivityForResult(intent, intentType.requestCode)) {
       getActivity.overridePendingTransition(R.anim.camera_in, R.anim.camera_out)
+      true
+    } else false
 
   override def onColorSelected(color: Int, strokeSize: Int): Unit = {
     onSketchClick() //when user selects color, they expect to be able to sketch
