@@ -144,15 +144,6 @@
                 app:title="@string/pref_dev_new_unsplash_profile_pic_title"
                 app:subtitle="@string/pref_dev_new_unsplash_profile_pic_summary"
                 />
-
-            <com.waz.zclient.preferences.views.SwitchPreference
-                android:id="@+id/preferences_dev_session_reset"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:title="@string/pref_dev_session_reset_title"
-                app:subtitle="@string/pref_dev_session_reset_summary"
-                app:key="@string/pref_dev_push_enabled_key"
-                />
         </LinearLayout>
 
     </ScrollView>

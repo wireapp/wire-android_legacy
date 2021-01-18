@@ -19,7 +19,7 @@ package com.waz.service.messages
 
 import com.waz.api.Message
 import com.waz.api.Message.Type._
-import com.waz.content.{GlobalPreferences, MessagesStorage, OtrClientsStorage}
+import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
@@ -42,9 +42,7 @@ class MessageEventProcessor(selfUserId:           UserId,
                             convsService:         ConversationsService,
                             convs:                ConversationsContentUpdater,
                             downloadAssetStorage: DownloadAssetStorage,
-                            global:               GlobalModule,
-                            prefs:                GlobalPreferences, // remove after testing of Session Reset is done
-                            otrClientsStorage:    OtrClientsStorage // remove after testing of Session Reset is done
+                            global:               GlobalModule
                            ) extends DerivedLogTag {
   import MessageEventProcessor._
   import Threading.Implicits.Background
@@ -65,30 +63,12 @@ class MessageEventProcessor(selfUserId:           UserId,
   private[service] def processEvents(conv: ConversationData, isGroup: Boolean, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
     verbose(l"processEvents: ${conv.id} isGroup:$isGroup ${events.map(_.from)}")
 
-    // remove after testing of Session Reset is done
-    def replaceWithErrorEvents(toProcess: Seq[MessageEvent]) = Future.sequence {
-      toProcess.foldLeft(Seq.empty[Future[MessageEvent]]) { (acc, event) =>
-        val resultEvent = event match {
-          case event@GenericMessageEvent(convId, time, from, _) =>
-            otrClientsStorage.getClients(from).map {
-              _.headOption.fold[MessageEvent](event) { sender =>
-                OtrErrorEvent(convId, time, from, DecryptionError("", Some(OtrError.ERROR_CODE_DECRYPTION_OTHER), from, sender.id))
-              }
-            }
-          case event => Future.successful(event)
-        }
-        acc :+ resultEvent
-      }
-    }
-
     val toProcess = events.filter {
       case GenericMessageEvent(_, _, _, msg) if GenericMessage.isBroadcastMessage(msg) => false
       case e => conv.cleared.forall(_.isBefore(e.time))
     }
 
     for {
-      sessionResetTest <- prefs.preference(GlobalPreferences.SessionResetTest).apply()
-      toProcess        <- if (sessionResetTest) replaceWithErrorEvents(toProcess) else Future.successful(toProcess)
       eventsWithAssets <- Future.traverse(toProcess)(ev => assetForEvent(ev).map(ev -> _))
       richMessages     =  createRichMessages(eventsWithAssets, conv, isGroup)
       msgs             <- checkReplyHashes(richMessages.collect { case m if !m.empty => m.message })

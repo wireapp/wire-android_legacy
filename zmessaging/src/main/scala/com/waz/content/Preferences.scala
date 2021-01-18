@@ -332,7 +332,6 @@ object GlobalPreferences {
   // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
   lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
   lazy val GlobalAppLockDeprecated: PrefKey[Boolean] = PrefKey[Boolean]("global_app_lock_deprecated", customDefault = false)
-  lazy val SessionResetTest = PrefKey[Boolean]("session_reset_test", customDefault = false)
 }
 
 object UserPreferences {
