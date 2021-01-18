@@ -165,7 +165,6 @@ class CallingFragment extends FragmentHelper {
         previewCardView.foreach { cardView =>
           if (!showTopSpeakers && views.size == 2 && participants.size == 2 && isVideoBeingSent) {
             verbose(l"Showing card preview")
-            cardView.removeAllViews()
             grid.removeView(selfView)
             selfView.setLayoutParams(
               new FrameLayout.LayoutParams(
