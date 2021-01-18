@@ -415,8 +415,8 @@ object UserPreferences {
 
   lazy val ShouldWarnAVSUpgrade = PrefKey[Boolean]("should_warn_avs_upgrade", customDefault = false)
 
-  lazy val SSOPassword = PrefKey[Option[String]]("sso_password", customDefault = None)
-  lazy val SSOPasswordIv = PrefKey[Option[String]]("sso_password_iv", customDefault = None)
+  lazy val CustomPassword = PrefKey[Option[String]]("sso_password", customDefault = None)
+  lazy val CustomPasswordIv = PrefKey[Option[String]]("sso_password_iv", customDefault = None)
 
   lazy val AppLockEnabled: PrefKey[Boolean]                = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
   lazy val AppLockForced:  PrefKey[Boolean]                = PrefKey[Boolean]("app_lock_forced", customDefault = false)

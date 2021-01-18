@@ -74,9 +74,9 @@ trait UserService {
   def updateEmail(email: EmailAddress): ErrorOr[Unit]
   def updatePhone(phone: PhoneNumber): ErrorOr[Unit]
   def clearPhone(): ErrorOr[Unit]
-  def setPassword(password: Password): ErrorOr[Unit]
-  def checkPassword(password: Password): ErrorOr[Unit]
-  def changePassword(newPassword: Password, oldPassword: Password): ErrorOr[Unit]
+  def setAccountPassword(password: Password): ErrorOr[Unit]
+  def checkAccountPassword(password: Password): ErrorOr[Unit]
+  def clearAccountPassword(): Future[Unit]
   def updateHandle(handle: Handle): ErrorOr[Unit]
 
   //These self user properties should always succeed given no fatal errors, so we update locally and create sync jobs
@@ -287,7 +287,7 @@ class UserServiceImpl(selfUserId:        UserId,
   //TODO - remove and find a better flow for the settings
   override def setEmail(email: EmailAddress, password: Password) =
     credentialsClient.updateEmail(email).future.flatMap {
-      case Right(_) => setPassword(password)
+      case Right(_) => setAccountPassword(password)
       case Left(e) => Future.successful(Left(e))
     }
 
@@ -308,19 +308,16 @@ class UserServiceImpl(selfUserId:        UserId,
   // A hacky solution for now: we pretend to change the password to itself and interpret
   // the error message "password must differ" as the correct one and all others as failures.
   // Note that it's not possible to get `Right` as the response from BE.
-  override def checkPassword(password: Password): ErrorOr[Unit] =
+  override def checkAccountPassword(password: Password): ErrorOr[Unit] =
     credentialsClient.updatePassword(password, Some(password)).future.map {
       case Left(err) if err.code == PasswordMustDifferCode && err.label == PasswordMustDifferLabel => Right(())
       case otherErr => otherErr
     }
 
-  override def changePassword(newPassword: Password, currentPassword: Password) =
-    credentialsClient.updatePassword(newPassword, Some(currentPassword)).future.flatMap {
-      case Left(err) => Future.successful(Left(err))
-      case Right(_)  => accsStorage.update(selfUserId, _.copy(password = Some(newPassword))).map(_ => Right({}))
-    }
+  override def clearAccountPassword(): Future[Unit] =
+    accsStorage.update(selfUserId, _.copy(password = None)).map(_ => ())
 
-  override def setPassword(password: Password) =
+  override def setAccountPassword(password: Password): ErrorOr[Unit] =
     credentialsClient.updatePassword(password, None).future.flatMap {
       case Left(err) => Future.successful(Left(err))
       case Right(_)  => accsStorage.update(selfUserId, _.copy(password = Some(password))).map(_ => Right({}))

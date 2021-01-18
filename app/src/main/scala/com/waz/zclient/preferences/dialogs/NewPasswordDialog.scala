@@ -65,7 +65,7 @@ class NewPasswordDialog extends DialogFragment with FragmentHelper {
         def onClick(v: View): Unit = {
           val pass = passwordEditText.getText.toString
           if (strongPasswordValidator.isValidPassword(pass)) {
-            inject[PasswordController].setPassword(Password(pass))
+            inject[PasswordController].setCustomPassword(Password(pass))
             keyboard.hideKeyboardIfVisible()
             dismiss()
           } else {
@@ -122,8 +122,15 @@ object NewPasswordDialog {
     override val dialogButtonId: Int = R.string.new_password_dialog_button_change
   }
 
+  case object ChangeInWireMode extends Mode {
+    override val id: String = "ChangeInWire"
+    override val dialogTitleId: Int = R.string.new_password_dialog_title_change_in_wire
+    override val dialogButtonId: Int = R.string.new_password_dialog_button
+  }
+
   def getMode(id: String): Mode = id match {
-    case SetMode.id    => SetMode
-    case ChangeMode.id => ChangeMode
+    case SetMode.id          => SetMode
+    case ChangeMode.id       => ChangeMode
+    case ChangeInWireMode.id => ChangeInWireMode
   }
 }

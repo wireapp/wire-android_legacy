@@ -20,27 +20,23 @@ package com.waz.zclient.preferences.dialogs
 import android.app.Dialog
 import android.content.DialogInterface.BUTTON_POSITIVE
 import android.os.Bundle
-import com.google.android.material.textfield.TextInputLayout
-import androidx.fragment.app.DialogFragment
-import androidx.appcompat.app.AlertDialog
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
-import com.waz.api.EmailCredentials
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import com.google.android.material.textfield.TextInputLayout
 import com.waz.model.AccountData.Password
-import com.waz.service.ZMessaging
-import com.waz.threading.Threading
-import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R}
+import com.wire.signals.EventStream
 
 import scala.util.Try
 
 class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
   import RemoveDeviceDialog._
-  import Threading.Implicits.Ui
 
   val onDelete = EventStream[Option[Password]]()
 
@@ -48,16 +44,7 @@ class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
 
   private def providePassword(password: Option[Password]): Unit = {
     onDelete ! password
-    password.foreach { pwd =>
-      for {
-        zms         <- inject[Signal[ZMessaging]].head
-        Some(am)    <- zms.accounts.activeAccountManager.head
-        self        <- am.getSelf
-        Some(email) = self.email
-        _           <- zms.auth.onPasswordReset(Option(EmailCredentials(email, pwd)))
-      } yield ()
-    }
-    dismiss()
+    dismiss() // if the password is wrong a new dialog will appear
   }
 
   private lazy val passwordEditText = returning(findById[EditText](root, R.id.acet__remove_otr__password)) { v =>

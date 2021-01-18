@@ -171,7 +171,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
       wipeOnCookieInvalid <- accountManager.fold(EmptyCheck)(wipeOnCookieInvalid)
       requestPassword     <- unpack(passwordController, userPreferences, accountManager).fold(EmptyCheck) {
                                case (ctrl, prefs, am) =>
-                                 Signal.zip(ctrl.ssoEnabled, ctrl.ssoPasswordEmpty).head.flatMap {
+                                 Signal.zip(ctrl.ssoEnabled, ctrl.customPasswordEmpty).head.flatMap {
                                    case (true, true) => EmptyCheck // the user must set the password first
                                    case _            => requestPassword(ctrl, prefs, am, authNeeded)
                                  }

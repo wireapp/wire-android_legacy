@@ -27,13 +27,12 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
-import com.waz.zclient.common.controllers.global.PasswordController
+import com.waz.threading.Threading._
 import com.waz.zclient.preferences.views.DeviceButton
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
-import com.waz.threading.Threading._
+import com.wire.signals.{EventContext, Signal}
 
 trait DevicesView {
   def setSelfDevice(device: Option[Client]): Unit
@@ -100,7 +99,6 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
 
   val zms = inject[Signal[Option[ZMessaging]]]
   val accounts = inject[AccountsService]
-  val passwordController = inject[PasswordController]
 
   val otherClients = for {
     Some(am)      <- accounts.activeAccountManager
@@ -125,8 +123,8 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
   def onViewClose(): Unit = {
     implicit val ec = Threading.Background
     for {
-      _         <- passwordController.clearPassword()
       Some(zms) <- zms.head
+      _         <- zms.users.clearAccountPassword()
       _         <- zms.otrClientsService.updateUnknownToUnverified(zms.selfUserId)
     } ()
   }
