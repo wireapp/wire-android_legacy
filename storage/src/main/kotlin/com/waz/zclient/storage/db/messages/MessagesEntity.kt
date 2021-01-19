@@ -23,6 +23,12 @@ data class MessagesEntity(
     @ColumnInfo(name = "user_id", defaultValue = "")
     val userId: String,
 
+    @ColumnInfo(name = "client_id")
+    val clientId: String?,
+
+    @ColumnInfo(name = "error_code")
+    val errorCode: Long?,
+
     @ColumnInfo(name = "content")
     val content: String?,
 

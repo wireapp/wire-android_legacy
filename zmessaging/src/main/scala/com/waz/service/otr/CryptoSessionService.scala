@@ -59,8 +59,8 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) extends DerivedLogTag {
     }
 
   def deleteSession(id: SessionId) = dispatch(id) { cb =>
-    verbose(l"deleteSession($id)")
-    cb foreach (_.deleteSession(id.toString))
+    verbose(l"FIX deleteSession($id)")
+    cb.foreach(_.deleteSession(id.toString))
   }
 
   def getSession(id: SessionId) = dispatch(id) { cb =>

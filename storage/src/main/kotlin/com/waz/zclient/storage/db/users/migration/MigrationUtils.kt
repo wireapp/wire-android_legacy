@@ -4,6 +4,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import android.util.Log
 
 object MigrationUtils {
+
+    enum class ColumnType(val defaultValue: String) {
+        INTEGER("0"), TEXT("''")
+    }
+
     private fun tableExists(database: SupportSQLiteDatabase, tableName: String): Boolean {
         val query = "SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name = '$tableName'"
         database.query(query).use { cursor ->
@@ -41,6 +46,25 @@ object MigrationUtils {
     fun deleteTable(database: SupportSQLiteDatabase, tableName: String) {
         with(database) {
             execSQL("DROP TABLE IF EXISTS $tableName")
+        }
+    }
+
+    fun addColumn(
+        database: SupportSQLiteDatabase,
+        tableName: String,
+        columnName: String,
+        columnType: ColumnType,
+        canBeNull: Boolean = true
+    ) {
+        val execStr = "ALTER TABLE $tableName ADD COLUMN $columnName ${columnType.name}" +
+            if (canBeNull) {
+                ""
+            } else {
+                " NOT NULL DEFAULT ${columnType.defaultValue}"
+            }
+
+        with(database) {
+            execSQL(execStr)
         }
     }
 }

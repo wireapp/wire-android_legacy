@@ -218,7 +218,7 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapte
   }
 
   def bind(msg: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
-    view.set(msg,prev, next, opts, adapter)
+    view.set(msg, prev, next, opts, adapter)
     message ! msg.message
     this.opts = Some(opts)
     _isFocused = selection.isFocused(msg.message.id)

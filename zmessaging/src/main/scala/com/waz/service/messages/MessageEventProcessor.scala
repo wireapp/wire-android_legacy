@@ -19,17 +19,16 @@ package com.waz.service.messages
 
 import com.waz.api.Message
 import com.waz.api.Message.Type._
-import com.waz.content.MessagesStorage
+import com.waz.content.{GlobalPreferences, MessagesStorage, OtrClientsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.{GenericContent, _}
-import com.waz.service.{EventScheduler, GlobalModule, ZMessaging}
+import com.waz.service.{EventScheduler, GlobalModule}
 import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
-import com.wire.signals.EventContext
 import com.waz.utils.{RichFuture, _}
 
 import scala.concurrent.Future
@@ -43,7 +42,9 @@ class MessageEventProcessor(selfUserId:           UserId,
                             convsService:         ConversationsService,
                             convs:                ConversationsContentUpdater,
                             downloadAssetStorage: DownloadAssetStorage,
-                            global:               GlobalModule
+                            global:               GlobalModule,
+                            prefs:                GlobalPreferences, // remove after testing of Session Reset is done
+                            otrClientsStorage:    OtrClientsStorage // remove after testing of Session Reset is done
                            ) extends DerivedLogTag {
   import MessageEventProcessor._
   import Threading.Implicits.Background
@@ -64,12 +65,30 @@ class MessageEventProcessor(selfUserId:           UserId,
   private[service] def processEvents(conv: ConversationData, isGroup: Boolean, events: Seq[MessageEvent]): Future[Set[MessageData]] = {
     verbose(l"processEvents: ${conv.id} isGroup:$isGroup ${events.map(_.from)}")
 
+    // remove after testing of Session Reset is done
+    def replaceWithErrorEvents(toProcess: Seq[MessageEvent]) = Future.sequence {
+      toProcess.foldLeft(Seq.empty[Future[MessageEvent]]) { (acc, event) =>
+        val resultEvent = event match {
+          case event@GenericMessageEvent(convId, time, from, _) =>
+            otrClientsStorage.getClients(from).map {
+              _.headOption.fold[MessageEvent](event) { sender =>
+                OtrErrorEvent(convId, time, from, DecryptionError("", Some(OtrError.ERROR_CODE_DECRYPTION_OTHER), from, sender.id))
+              }
+            }
+          case event => Future.successful(event)
+        }
+        acc :+ resultEvent
+      }
+    }
+
     val toProcess = events.filter {
       case GenericMessageEvent(_, _, _, msg) if GenericMessage.isBroadcastMessage(msg) => false
       case e => conv.cleared.forall(_.isBefore(e.time))
     }
 
     for {
+      sessionResetTest <- prefs.preference(GlobalPreferences.SessionResetTest).apply()
+      toProcess        <- if (sessionResetTest) replaceWithErrorEvents(toProcess) else Future.successful(toProcess)
       eventsWithAssets <- Future.traverse(toProcess)(ev => assetForEvent(ev).map(ev -> _))
       richMessages     =  createRichMessages(eventsWithAssets, conv, isGroup)
       msgs             <- checkReplyHashes(richMessages.collect { case m if !m.empty => m.message })
@@ -102,7 +121,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     lazy val id = MessageId()
     event match {
       case ConnectRequestEvent(_, time, from, text, recipient, name, email) =>
-        RichMessage(MessageData(id, conv.id, CONNECT_REQUEST, from, MessageData.textContent(text), recipient = Some(recipient), email = email, name = Some(name), time = time, localTime = event.localTime))
+        RichMessage(MessageData(id, conv.id, CONNECT_REQUEST, from, content = MessageData.textContent(text), recipient = Some(recipient), email = email, name = Some(name), time = time, localTime = event.localTime))
       case RenameConversationEvent(_, time, from, name) =>
         RichMessage(MessageData(id, conv.id, RENAME, from, name = Some(name), time = time, localTime = event.localTime))
       case MessageTimerEvent(_, time, from, duration) =>
@@ -115,10 +134,14 @@ class MessageEventProcessor(selfUserId:           UserId,
         RichMessage(MessageData(id, conv.id, READ_RECEIPTS_ON, from, time = time, localTime = event.localTime))
       case MemberLeaveEvent(_, time, from, userIds) =>
         RichMessage(MessageData(id, conv.id, MEMBER_LEAVE, from, members = userIds.toSet, time = time, localTime = event.localTime))
-      case OtrErrorEvent(_, time, from, IdentityChangedError(_, _)) =>
-        RichMessage(MessageData(id, conv.id, OTR_IDENTITY_CHANGED, from, time = time, localTime = event.localTime))
+      case OtrErrorEvent(_, time, from, IdentityChangedError(_, sender)) =>
+        RichMessage(MessageData(id, conv.id, OTR_IDENTITY_CHANGED, from, error = Some(ErrorContent(sender, OtrError.ERROR_CODE_IDENTITY_CHANGED)), time = time, localTime = event.localTime))
+      case OtrErrorEvent(_, time, from, DecryptionError(_, code, _, sender)) =>
+        RichMessage(MessageData(id, conv.id, OTR_ERROR, from, error = Some(ErrorContent(sender, code.getOrElse(OtrError.ERROR_CODE_DECRYPTION_OTHER))), time = time, localTime = event.localTime))
       case OtrErrorEvent(_, time, from, _) =>
         RichMessage(MessageData(id, conv.id, OTR_ERROR, from, time = time, localTime = event.localTime))
+      case SessionReset(_, time, from, _) =>
+        RichMessage(MessageData(id, conv.id, SESSION_RESET, from, time = time, localTime = event.localTime))
       case GenericMessageEvent(_, time, from, proto) =>
         verbose(l"generic message event")
         val GenericMessage(uid, msgContent) = proto
@@ -238,7 +261,7 @@ class MessageEventProcessor(selfUserId:           UserId,
       .map(lp => Asset2.create(DownloadAsset.create(lp.image), lp.image.getUploaded))
 
     val messageData = MessageData(
-      id, convId, tpe, from, content, time = time, localTime = localTime, protos = Seq(proto),
+      id, convId, tpe, from, content = content, time = time, localTime = localTime, protos = Seq(proto),
       quote = quoteContent, forceReadReceipts = forceReadReceipts, assetId = asset.map(_.id)
     )
     RichMessage(messageData.adjustMentions(false).getOrElse(messageData), asset.map((_, None)))

@@ -163,6 +163,8 @@
     <string translatable="false" name="pref_dev_full_conv_key">>PREF_FULL_CONV</string>
     <string translatable="false" name="pref_dev_full_conv_summary">Instead of an empty conversation, create one populated with all contacts in the list (up to 256)</string>
     <string translatable="false" name="pref_dev_full_conv_title">Create full conversation</string>
+    <string translatable="false" name="pref_dev_session_reset_title">Replace a generic message with an error</string>
+    <string translatable="false" name="pref_dev_session_reset_summary">When it\'s switched on, the app will create a fake error message instead of the message it really received.</string>
     <string translatable="false" name="prefs__username_change__username_at">\@</string>
 
     <string translatable="false" name="pref_dev_check_push_token_title">Check Registered Push Token</string>
