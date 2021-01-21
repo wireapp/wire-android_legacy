@@ -37,6 +37,7 @@ import com.waz.zclient.BuildConfig
 import com.waz.zclient.utils.RichView
 import com.waz.threading.Threading._
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.ui.animation.interpolators.penner.Quad.EaseOut
 
 abstract class UserVideoView(context: Context, val participant: Participant) extends FrameLayout(context, null, 0) with ViewHelper {
   protected lazy val callController: CallController = inject[CallController]
@@ -135,7 +136,11 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     audioStatusImageView.setImageResource(imageResource)
     if (BuildConfig.ACTIVE_SPEAKERS) {
       audioStatusImageView.setColorFilter(color)
-      if (isAnimated) audioStatusImageView.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out))
+      if (isAnimated){
+        val animation = AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out)
+        animation.setInterpolator(new EaseOut)
+        audioStatusImageView.startAnimation(animation)
+      }
       else audioStatusImageView.clearAnimation()
     }
   }
