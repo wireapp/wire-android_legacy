@@ -157,6 +157,7 @@ class ControlsFragment extends FragmentHelper {
   }
 
   override def onStop(): Unit = {
+    controller.showTopSpeakers ! false
     subs.foreach(_.destroy())
     subs = Set.empty
     super.onStop()
