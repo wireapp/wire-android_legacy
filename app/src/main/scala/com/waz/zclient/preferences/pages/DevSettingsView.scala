@@ -99,10 +99,6 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
 
   val newPicturePicButton = findById[TextButton](R.id.preferences_dev_new_unsplash_profile_pic)
 
-  val sessionResetSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_session_reset)) { v =>
-    v.setPreference(SessionResetTest, global = true)
-  }
-
   private def checkIfDeviceIsRooted(): Unit = {
     val preferences = inject[GlobalPreferences]
     RootDetectionCheck(preferences).isSatisfied.foreach { notRooted =>
