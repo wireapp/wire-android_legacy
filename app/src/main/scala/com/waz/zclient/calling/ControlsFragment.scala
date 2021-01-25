@@ -94,21 +94,22 @@ class ControlsFragment extends FragmentHelper {
       }
     }
 
-    if (BuildConfig.ACTIVE_SPEAKERS) {
-      Signal.zip(
-        controller.isCallEstablished,
-        controller.isGroupCall,
-        controller.isVideoCall,
-        controller.isFullScreenEnabled
-      ).onUi {
-        case (true, true, true, false) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
-        case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
-      }
-    }
-    else {
-      speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
-    }
+    //TODO : The calling squad decided to disable all/speaker toggle to perform some optimizations
+    // in terms of user experience before releasing it to public
 
+    /* if (BuildConfig.ACTIVE_SPEAKERS) {
+       Signal.zip(
+         controller.isCallEstablished,
+         controller.isGroupCall,
+         controller.isVideoCall,
+         controller.isFullScreenEnabled
+       ).onUi {
+         case (true, true, true, false) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
+         case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
+       }
+     }
+     else */
+    speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
   }
 
   override def onStart(): Unit = {
