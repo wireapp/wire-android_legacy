@@ -320,7 +320,7 @@ trait LogShowInstancesSE {
   implicit val OtrErrorLogShow: LogShow[OtrError] =
     LogShow.createFrom {
       case Duplicate => l"Duplicate"
-      case DecryptionError(msg, from, sender) => l"DecryptionError(msg: ${showString(msg)} | from: $from | sender: $sender)"
+      case DecryptionError(msg, code, from, sender) => l"DecryptionError(msg: ${showString(msg)} | code: $code | from: $from | sender: $sender)"
       case IdentityChangedError(from, sender) => l"IdentityChangedError(from: $from | sender: $sender)"
       case UnknownOtrErrorEvent(json) => l"UnknownOtrErrorEvent(json: $json)"
     }
@@ -329,6 +329,12 @@ trait LogShowInstancesSE {
     LogShow.createFrom { e =>
       import e._
       l"OtrErrorEvent(convId: $convId | time: $time | from: $from | error: ${e.error})"
+    }
+
+  implicit val SessionResetLogShow: LogShow[SessionReset] =
+    LogShow.createFrom { sr =>
+      import sr._
+      l"SessionReset(convId: $convId | time: $time | from: $from | sender: $sender)"
     }
 
   //Protos

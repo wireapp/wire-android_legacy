@@ -41,6 +41,7 @@ import com.waz.zclient.utils.{GuestUtils, StringUtils, _}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.ui.animation.interpolators.penner.Quad.EaseOut
 import com.wire.signals.{EventStream, Signal, SourceStream}
 import org.threeten.bp.Instant
 
@@ -101,15 +102,15 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   private val isMuted = Signal(false)
 
-  private val topSpeakerData = Signal(Option.empty[(UserId, ClientId)])
-  private val isTopSpeaker = for {
-    Some((userId, clientId)) <- topSpeakerData
-    topSpeaker                 <- callController.isTopSpeaker(userId, clientId)
-  } yield topSpeaker
+  private val activeSpeakerData = Signal(Option.empty[(UserId, ClientId)])
+  private val isActiveSpeaker = for {
+    Some((userId, clientId)) <- activeSpeakerData
+    isActive                 <- callController.isActiveSpeaker(userId, clientId)
+  } yield isActive
 
   audioIndicator.setVisible(true)
 
-  Signal.zip(chosenCurrentTheme, isMuted, isTopSpeaker, accentColorController.accentColor.map(_.color)
+  Signal.zip(chosenCurrentTheme, isMuted, isActiveSpeaker, accentColorController.accentColor.map(_.color)
   ).onUi {
     case (Theme.Light, true, _, _)        =>
       updateAudioIndicator(R.drawable.ic_muted_light_theme, getColor(R.color.graphite), false)
@@ -130,7 +131,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     audioIndicator.setImageResource(imageResource)
     if (BuildConfig.ACTIVE_SPEAKERS) {
       audioIndicator.setColorFilter(color)
-      if (isAnimated) audioIndicator.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out))
+      if (isAnimated) {
+        val animation = AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out)
+        animation.setInterpolator(new EaseOut)
+        audioIndicator.startAnimation(animation)
+      }
       else audioIndicator.clearAnimation()
     }
   }
@@ -175,7 +180,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     isGuest ! user.isGuest
     isPartner ! user.isExternal
     setVerified(user.isVerified)
-    topSpeakerData ! Some((user.id, user.clientId))
+    activeSpeakerData ! Some((user.id, user.clientId))
   }
 
   def setUserData(userData:       UserData,

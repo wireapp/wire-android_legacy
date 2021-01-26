@@ -9,6 +9,8 @@ data class MessagesBackUpModel(
     val conversationId: String = String.empty(),
     val messageType: String = String.empty(),
     val userId: String = String.empty(),
+    val clientId: String? = null,
+    val errorCode: Long? = null,
     val content: String? = null,
     val protos: ByteArray? = null,
     val time: Long = 0,

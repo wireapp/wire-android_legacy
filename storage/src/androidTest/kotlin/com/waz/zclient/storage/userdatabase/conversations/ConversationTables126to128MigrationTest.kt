@@ -85,7 +85,7 @@ class ConversationTables126to128MigrationTest : UserDatabaseMigrationTest(126, 1
         val conversationType = 1 // Group
         val team = "7477749KKY888"
         val managed = false
-        val lastEventTime = 124778833
+        val lastEventTime = 124778833L
         val active = false
         val lastRead = 1188777
         val mutedStatus = 0 // false

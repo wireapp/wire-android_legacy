@@ -328,6 +328,7 @@ object GlobalPreferences {
 
   lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
 
+
   // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
   lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
   lazy val GlobalAppLockDeprecated: PrefKey[Boolean] = PrefKey[Boolean]("global_app_lock_deprecated", customDefault = false)

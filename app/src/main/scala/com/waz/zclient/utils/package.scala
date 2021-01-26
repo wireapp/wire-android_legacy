@@ -111,9 +111,9 @@ package object utils {
       override def onClick(v: View): Unit = f
     })
 
-    def onClick(onSingleClickArg: => Unit, onDoubleClickArg: => Unit): Unit = view.setOnClickListener(new OnDoubleClickListener {
-      override def onSingleClick(): Unit = onSingleClickArg
-      override def onDoubleClick(): Unit = onDoubleClickArg
+    def onClick(onSingleClickArg: () => Unit, onDoubleClickArg: () => Unit): Unit = view.setOnClickListener(new OnDoubleClickListener {
+      override def onSingleClick(): Unit = onSingleClickArg()
+      override def onDoubleClick(): Unit = onDoubleClickArg()
     })
 
     def onLongClick(f: => Boolean): Unit = view.setOnLongClickListener(new OnLongClickListener {

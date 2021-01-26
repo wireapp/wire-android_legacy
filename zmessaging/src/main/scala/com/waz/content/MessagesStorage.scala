@@ -26,8 +26,9 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.UnreadCount
-import com.waz.model.MessageData.{MessageDataDao, MessageEntry}
+import com.waz.model.MessageData.MessageDataDao
 import com.waz.model._
+import com.waz.model.otr.ClientId
 import com.waz.service.Timeouts
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
@@ -62,6 +63,8 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
 
   //System message events no longer have IDs, so we need to search by type, timestamp and sender
   def hasSystemMessage(conv: ConvId, serverTime: RemoteInstant, tpe: Message.Type, sender: UserId): Future[Boolean]
+  def findSystemMessages(convId: ConvId, tpe: Message.Type): Future[IndexedSeq[MessageData]]
+  def findErrorMessages(userId: UserId, clientId: ClientId): Future[IndexedSeq[MessageData]]
 
   def getLastSystemMessage(conv: ConvId, tpe: Message.Type, noOlderThan: RemoteInstant = RemoteInstant.Epoch): Future[Option[MessageData]]
   def getLastMessage(conv: ConvId): Future[Option[MessageData]]
@@ -189,8 +192,6 @@ class MessagesStorageImpl(context:     Context,
 
   def countSentByType(selfUserId: UserId, tpe: Message.Type): Future[Int] = storage(MessageDataDao.countSentByType(selfUserId, tpe)(_).toInt)
 
-  def countMessages(conv: ConvId, p: MessageEntry => Boolean): Future[Int] = storage(MessageDataDao.countMessages(conv, p)(_))
-
   def countLaterThan(conv: ConvId, time: RemoteInstant): Future[Long] = storage(MessageDataDao.countLaterThan(conv, time)(_))
 
   override def getMessage(id: MessageId) = get(id)
@@ -289,6 +290,12 @@ class MessagesStorageImpl(context:     Context,
         true
     }
   }
+
+  override def findSystemMessages(convId: ConvId, tpe: Message.Type): Future[IndexedSeq[MessageData]] =
+    find(m => m.convId == convId && m.msgType == tpe, MessageDataDao.findByType(convId, tpe)(_), identity)
+
+  override def findErrorMessages(userId: UserId, clientId: ClientId): Future[IndexedSeq[MessageData]] =
+    find(m => m.msgType == Message.Type.OTR_ERROR && m.userId == userId && m.error.exists(_.clientId == clientId), MessageDataDao.findErrors(userId, clientId)(_), identity)
 
   override def getLastSystemMessage(conv: ConvId, tpe: Message.Type, noOlderThan: RemoteInstant = RemoteInstant.Epoch): Future[Option[MessageData]] = {
     def matches(msg: MessageData) = msg.convId == conv && msg.msgType == tpe && msg.time >= noOlderThan

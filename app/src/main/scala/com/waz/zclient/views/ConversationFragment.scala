@@ -544,7 +544,7 @@ class ConversationFragment extends FragmentHelper {
         extendedCursorContainer.foreach(_.close(true))
     }
 
-    override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Unit = {
+    override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Boolean = {
       extendedCursorContainer.foreach { ecc =>
         if (MediaStore.ACTION_VIDEO_CAPTURE.equals(intent.getAction) &&
           ecc.getType == ExtendedCursorContainer.Type.IMAGES &&
@@ -554,8 +554,10 @@ class ConversationFragment extends FragmentHelper {
         }
       }
 
-      if (safeStartActivityForResult(intent, intentType.requestCode))
+      if (safeStartActivityForResult(intent, intentType.requestCode)) {
         getActivity.overridePendingTransition(R.anim.camera_in, R.anim.camera_out)
+        true
+      } else false
     }
 
     override def onFailed(tpe: AssetIntentsManager.IntentType): Unit = {}

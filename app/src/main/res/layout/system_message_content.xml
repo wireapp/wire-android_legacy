@@ -58,5 +58,4 @@
         app:w_font="@string/wire__typeface__light"
         android:visibility="gone"
         />
-
 </merge>

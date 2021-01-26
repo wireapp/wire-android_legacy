@@ -55,7 +55,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     with DevSettingsView
     with ViewHelper
     with DerivedLogTag {
-  
+
   import com.waz.threading.Threading.Implicits.Ui
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
