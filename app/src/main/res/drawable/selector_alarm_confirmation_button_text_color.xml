@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:color="@color/white" app:state_confirmed="true" />
+    <item app:state_confirmed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/white" />
+            <corners android:radius="@dimen/rounded_button_radius" />
+        </shape>
+    </item>
     <item android:color="?attr/alarmButtonTextColor" />
 </selector>

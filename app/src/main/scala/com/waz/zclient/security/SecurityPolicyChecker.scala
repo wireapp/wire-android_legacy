@@ -145,10 +145,14 @@ object SecurityPolicyChecker extends DerivedLogTag {
                               accountManager: AccountManager,
                               authNeeded: Boolean)(implicit context: Context) =
     if (authNeeded) {
-      verbose(l"check request password, force app lock: ${BuildConfig.FORCE_APP_LOCK}")
-      val check = RequestPasswordCheck(passwordController, userPreferences)
-      val actions = if (BuildConfig.FORCE_APP_LOCK) List(new WipeDataAction()) else Nil
-      Future.successful(Some(check, actions))
+      Signal.zip(passwordController.appLockForced, passwordController.customPasswordEmpty).head.map {
+        case (true, true) => None // a corner case where the password was enforced but wasn't set yet.
+        case _ =>
+          verbose(l"check request password, force app lock from the build: ${BuildConfig.FORCE_APP_LOCK}")
+          val check = RequestPasswordCheck(passwordController, userPreferences)
+          val actions = if (BuildConfig.FORCE_APP_LOCK) List(new WipeDataAction()) else Nil
+          Some(check, actions)
+      }
     } else EmptyCheck
 
   /**

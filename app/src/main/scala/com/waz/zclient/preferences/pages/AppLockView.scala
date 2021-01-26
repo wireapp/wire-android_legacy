@@ -42,7 +42,7 @@ class AppLockView(context: Context, attrs: AttributeSet, style: Int)
 
   passwordController.appLockEnabled.foreach {
     case true =>
-      passwordController.setCustomPasswordIfNeeded(forced = true)
+      passwordController.setCustomPasswordIfNeeded(fromSettings = true)
       appLockChangeButton.setVisible(true)
     case false =>
       appLockChangeButton.setVisible(false)

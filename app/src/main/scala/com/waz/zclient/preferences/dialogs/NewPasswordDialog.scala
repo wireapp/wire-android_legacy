@@ -53,7 +53,7 @@ class NewPasswordDialog extends DialogFragment with FragmentHelper {
       .setMessage(getString(R.string.new_password_dialog_message))
       .setPositiveButton(mode.dialogButtonId, null)
 
-    if (mode == ChangeMode) builder.setNegativeButton(android.R.string.cancel, null)
+    if (mode.cancellable) builder.setNegativeButton(android.R.string.cancel, null)
 
     builder.create()
   }
@@ -108,24 +108,28 @@ object NewPasswordDialog {
     val id: String
     val dialogTitleId: Int
     val dialogButtonId: Int
+    val cancellable: Boolean
   }
 
   case object SetMode extends Mode {
     override val id: String = "Set"
     override val dialogTitleId: Int = R.string.new_password_dialog_title
     override val dialogButtonId: Int = R.string.new_password_dialog_button
+    override val cancellable: Boolean = false
   }
 
   case object ChangeMode extends Mode {
     override val id: String = "Change"
     override val dialogTitleId: Int = R.string.new_password_dialog_title_change
     override val dialogButtonId: Int = R.string.new_password_dialog_button_change
+    override val cancellable: Boolean = true
   }
 
   case object ChangeInWireMode extends Mode {
     override val id: String = "ChangeInWire"
     override val dialogTitleId: Int = R.string.new_password_dialog_title_change_in_wire
     override val dialogButtonId: Int = R.string.new_password_dialog_button
+    override val cancellable: Boolean = false
   }
 
   def getMode(id: String): Mode = id match {

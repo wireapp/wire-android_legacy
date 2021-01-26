@@ -83,15 +83,14 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       _    <- openNewPasswordDialog(NewPasswordDialog.ChangeMode)
     } yield ()
 
-  def setCustomPasswordIfNeeded(forced: Boolean = false)(implicit ctx: Context): Future[Unit] =
+  def setCustomPasswordIfNeeded(fromSettings: Boolean = false)(implicit ctx: Context): Future[Unit] =
     for {
       enabled       <- appLockEnabled.head
-      forced        <- if (forced) Future.successful(true) else appLockForced.head
+      forced        <- appLockForced.head
       passwordPref  <- customPassword.head
       password      <- passwordPref()
-      _             <- if (enabled && forced && password.isEmpty) {
-                         openNewPasswordDialog(NewPasswordDialog.ChangeInWireMode)
-                       } else Future.successful(())
+      _             <- if (enabled && (fromSettings || forced) && password.isEmpty) openNewPasswordDialog(NewPasswordDialog.ChangeInWireMode)
+                       else Future.successful(())
     } yield ()
 
   // TODO: This check is used for the app lock, but some people still use the account password
