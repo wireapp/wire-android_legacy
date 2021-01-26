@@ -30,7 +30,7 @@ import com.waz.utils.crypto.AESUtils.{EncryptedBytes, decryptWithAlias, encryptW
 import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.dialogs.NewPasswordDialog
-import com.waz.zclient.security.ActivityLifecycleCallback
+import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.{BaseActivity, BuildConfig, Injectable, Injector}
 import com.wire.signals.{EventStream, Signal, SourceStream}
 
@@ -142,6 +142,7 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       _                  <- passwordPref := Some(encryptedPwd)
       passwordIvPref     <- customPasswordIv.head
       _                  <- passwordIvPref := Some(iv)
+      _                  =  inject[SecurityPolicyChecker].updateBackgroundEntryTimer()
     } yield ()
 
   private def hash(password: String): Future[Array[Byte]] =
