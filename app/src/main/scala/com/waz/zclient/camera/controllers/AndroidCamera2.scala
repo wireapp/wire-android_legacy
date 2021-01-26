@@ -305,8 +305,9 @@ class AndroidCamera2(cameraData: CameraData,
     }
     imageReader.close()
     cameraSession.foreach { session =>
-      session.stopRepeating()
-      session.close()
+      Try(session.close()).recover {
+        case ex => error(l"Unable to close session", ex)
+      }
     }
     camera.foreach(_.close())
     cameraRequest = None
