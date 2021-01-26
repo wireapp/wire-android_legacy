@@ -21,18 +21,13 @@ import android.content.Context
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.cache.CacheEntryData.CacheEntryDao
 import com.waz.content.ZmsDatabase
-import com.waz.db.Col._
 import com.waz.db.ZGlobalDB.{DbName, DbVersion, daos}
-import com.waz.db.migrate.AccountDataMigration
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.AccountData.AccountDataDao
 import com.waz.model.TeamData.TeamDataDao
-import com.waz.model.otr.ClientId
-import com.waz.model.{AccountId, UserId}
-import com.waz.sync.client.AuthenticationManager.AccessToken
+import com.waz.utils.Resource
 import com.waz.utils.wrappers.DB
-import com.waz.utils.{JsonDecoder, JsonEncoder, Resource}
 
 class ZGlobalDB(context: Context, dbNameSuffix: String = "")
   extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, DbVersion, daos, ZGlobalDB.migrations)
@@ -43,7 +38,7 @@ class ZGlobalDB(context: Context, dbNameSuffix: String = "")
     else super.onUpgrade(db, from, to)
   }
 
-  def clearAllData(db: SupportSQLiteDatabase) = {
+  def clearAllData(db: SupportSQLiteDatabase): Unit = {
     debug(l"wiping global db...")
     dropAllTables(db)
     onCreate(db)
@@ -57,32 +52,14 @@ object ZGlobalDB {
   lazy val daos = Seq(AccountDataDao, CacheEntryDao, TeamDataDao)
 
   lazy val migrations = Seq(
-    Migration(13, 14) {
-      implicit db => AccountDataMigration.v14(db)
-    },
-    Migration(14, 15) { db =>
-      //      no longer valid
-    },
-    Migration(15, 16) { db =>
-      //      no longer valid
-    },
-    Migration(16, 17) { db =>
-      db.execSQL(s"ALTER TABLE Accounts ADD COLUMN registered_push TEXT")
-    },
-    Migration(17, 18) { db =>
-      db.execSQL("ALTER TABLE Accounts ADD COLUMN teamId TEXT")
-      db.execSQL("UPDATE Accounts SET teamId = ''")
-      db.execSQL("ALTER TABLE Accounts ADD COLUMN self_permissions INTEGER DEFAULT 0")
-      db.execSQL("ALTER TABLE Accounts ADD COLUMN copy_permissions INTEGER DEFAULT 0")
-    },
     Migration(18, 19) { db =>
       db.execSQL("CREATE TABLE IF NOT EXISTS Teams (_id TEXT PRIMARY KEY, name TEXT, creator TEXT, icon TEXT, icon_key TEXT)")
     },
     Migration(19, 20) { db =>
-      AccountDataMigration.v20(db)
+      //      no longer valid
     },
     Migration(20, 21) { db =>
-      db.execSQL("ALTER TABLE Accounts ADD COLUMN pending_team_name TEXT DEFAULT NULL")
+      //      no longer valid
     },
     Migration(21, 22) { db =>
       db.execSQL("CREATE TABLE IF NOT EXISTS ActiveAccounts (_id TEXT PRIMARY KEY, team_id TEXT, cookie TEXT NOT NULL, access_token TEXT, registered_push TEXT)")
@@ -114,37 +91,4 @@ object ZGlobalDB {
     implicit object DbRes extends Resource[DB] {
       override def close(r: DB): Unit = r.close()
     }
-
-
-  object Columns {
-
-    object v12 {
-      val Id = id[AccountId]('_id, "PRIMARY KEY")
-      val Email = opt(emailAddress('email))
-      val Hash = text('hash)
-      val EmailVerified = bool('verified)
-      val PhoneVerified = bool('phone_verified)
-      val Cookie = opt(text('cookie))
-      val Phone = opt(phoneNumber('phone))
-
-      val all = Seq(Id, Email, Hash, EmailVerified, PhoneVerified, Cookie, Phone)
-    }
-
-    object v13 {
-      val Id = id[AccountId]('_id, "PRIMARY KEY")
-      val Email = opt(emailAddress('email))
-      val Hash = text('hash)
-      val EmailVerified = bool('verified)
-      val Cookie = opt(text('cookie))
-      val Phone = opt(phoneNumber('phone))
-      val Token = opt(text[AccessToken]('access_token, JsonEncoder.encodeString[AccessToken], JsonDecoder.decode[AccessToken]))
-      val UserId = opt(id[UserId]('user_id))
-      val ClientId = opt(id[ClientId]('client_id))
-      val ClientRegState = text('reg_state)
-
-      val all = Seq(Id, Email, Hash, EmailVerified, Cookie, Phone, Token, UserId, ClientId, ClientRegState)
-    }
-
-  }
-
 }
