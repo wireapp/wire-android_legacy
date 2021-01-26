@@ -116,7 +116,7 @@
     <string name="request_password_cancel">Cancel</string>
     <string name="request_password_biometric_description">Unlock using biometric authentication.</string>
     <string name="request_password_biometric_cancel">Cancel</string>
-    <string name="request_password_error">Wrong password</string>
+    <string name="request_password_error">Wrong passcode</string>
 
     <!-- Bots / Integrations / Services -->
     <string name="integrations_picker__section_title">Services</string>
