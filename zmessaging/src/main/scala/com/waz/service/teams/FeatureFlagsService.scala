@@ -17,12 +17,12 @@ class FeatureFlagsServiceImpl(syncHandler: FeatureFlagsSyncHandler,
   extends FeatureFlagsService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
-  override def updateAppLock(): Future[Unit] = syncHandler.fetchAppLock().map { appLock =>
-    verbose(l"AppLock feature flag : $appLock")
+  override def updateAppLock(): Future[Unit] =
     for {
-      _ <- userPrefs(AppLockEnabled) := appLock.enabled
-      _ <- userPrefs(AppLockForced) := appLock.forced
-      _ <- userPrefs(AppLockTimeout) := appLock.timeout
+      appLock <- syncHandler.fetchAppLock()
+      _       =  verbose(l"AppLock feature flag : $appLock")
+      _       <- userPrefs(AppLockEnabled) := appLock.enabled
+      _       <- userPrefs(AppLockForced)  := appLock.forced
+      _       <- userPrefs(AppLockTimeout) := appLock.timeout
     } yield ()
-  }
 }
