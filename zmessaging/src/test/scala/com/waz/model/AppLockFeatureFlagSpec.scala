@@ -8,7 +8,7 @@ class AppLockFeatureFlagSpec extends AndroidFreeSpec {
 
   feature("Deserialization form JSON") {
 
-    scenario("Deserializing an enabled") {
+    scenario("Deserializing an enabled flag") {
       val json =
         """
           |{
@@ -35,6 +35,13 @@ class AppLockFeatureFlagSpec extends AndroidFreeSpec {
           |}
           |""".stripMargin
 
+      val appLockFeatureFlag: AppLockFeatureFlag = JsonDecoder.decode[AppLockFeatureFlag](json)
+
+      appLockFeatureFlag shouldEqual AppLockFeatureFlag.Disabled
+    }
+
+    scenario("Deserializing an error (empty json object)") {
+      val json = "{}"
       val appLockFeatureFlag: AppLockFeatureFlag = JsonDecoder.decode[AppLockFeatureFlag](json)
 
       appLockFeatureFlag shouldEqual AppLockFeatureFlag.Default
