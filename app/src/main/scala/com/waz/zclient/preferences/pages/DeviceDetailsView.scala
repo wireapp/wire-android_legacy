@@ -25,13 +25,12 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, ScrollView, Toast}
 import androidx.fragment.app.FragmentTransaction
-import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.ConvId
 import com.waz.model.otr.ClientId
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
-import com.waz.service.{AccountManager, ZMessaging}
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.sync.SyncResult
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
@@ -186,11 +185,11 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   import Threading.Implicits.Background
 
   private lazy val zms                = inject[Signal[ZMessaging]]
-  private lazy val passwordController = inject[PasswordController]
   private lazy val clientsController  = inject[ClientsController]
   private lazy val spinnerController  = inject[SpinnerController]
 
-  private lazy val accountManager = inject[Signal[AccountManager]]
+  private lazy val accountManager  = inject[Signal[AccountManager]]
+  private lazy val accountsService = inject[AccountsService]
 
   private lazy val client = clientsController.selfClient(clientId).collect { case Some(c) => c }
 
@@ -232,7 +231,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   }
 
   view.onDeviceRemoved { _ =>
-    passwordController.password.head.map {
+    accountsService.accountPassword.head.map {
       case Some(p) => removeDevice(Some(p))
       case _       => showRemoveDeviceDialog()
     }
@@ -249,14 +248,13 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
       _ <- am.deleteClient(clientId, password).map {
         case Right(_) =>
           for {
-            _ <- password.fold(Future.successful(()))(passwordController.setPassword)
             _ <- if (limitReached) am.getOrRegisterClient() else Future.successful({})
             _ <- Threading.Ui {
               spinnerController.showSpinner(false)
               context.asInstanceOf[BaseActivity].onBackPressed()
             }
           } yield {}
-        case Left(ErrorResponse(_, msg, _)) =>
+        case Left(_) =>
           Threading.Ui {
             spinnerController.showSpinner(false)
             showRemoveDeviceDialog(Some(getString(R.string.otr__remove_device__error)))
@@ -266,7 +264,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   }
 
   private def showRemoveDeviceDialog(error: Option[String] = None): Unit =
-    Signal.zip(passwordController.ssoEnabled, client.map(_.model)).head.foreach { case (isSSO, name) =>
+    Signal.zip(inject[PasswordController].ssoEnabled, client.map(_.model)).head.foreach { case (isSSO, name) =>
       val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onDelete(removeDevice))
       context.asInstanceOf[BaseActivity]
         .getSupportFragmentManager

@@ -29,7 +29,7 @@ import com.waz.model.AccountData.Password
 import com.waz.model.EmailAddress
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
 import com.waz.service.AccountsService.{InvalidCredentials, UserInitiated}
-import com.waz.service.{AccountManager, AccountsService}
+import com.waz.service.{AccountManager, AccountsService, UserService}
 import com.waz.threading.Threading.Implicits.Ui
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
@@ -37,7 +37,7 @@ import com.wire.signals.Signal
 import com.waz.utils.{returning, PasswordValidator => StrongValidator, _}
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.common.controllers.BrowserController
-import com.waz.zclient.common.controllers.global.{KeyboardController, PasswordController}
+import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.newreg.views.PhoneConfirmationButton.State.{CONFIRM, NONE}
 import com.waz.zclient.pages.main.profile.validator.{EmailValidator, PasswordValidator}
@@ -255,9 +255,8 @@ object VerifyEmailFragment {
 }
 
 class SetOrRequestPasswordFragment extends CredentialsFragment {
-
-  lazy val passwordController = inject[PasswordController]
   lazy val password = Signal(Option.empty[Password])
+  lazy val userService = inject[Signal[UserService]]
 
   private val minPasswordLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
   private val maxPasswordLength = BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH
@@ -301,6 +300,7 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
 
       for {
         am       <- am.head
+        users    <- userService.head
         Some(pw) <- password.head // pw should be defined
       } {
         // There is an existing password, thus user is just entering it.
@@ -309,7 +309,7 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
             resp  <- am.auth.onPasswordReset(Some(EmailCredentials(email, pw)))
             resp2 <- resp.fold(
               e => Future.successful(Left(e)),
-              _ => passwordController.setPassword(pw).flatMap(_ => am.getOrRegisterClient())
+              _ => users.setAccountPassword(pw).flatMap(_ => am.getOrRegisterClient())
             )
           } yield resp2 match {
             case Right(state) =>
@@ -329,7 +329,7 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
               resp <- am.setPassword(pw)
               _    <- resp.fold(
                 e => Future.successful(Left(e)),
-                _ => passwordController.setPassword(pw).flatMap(_ => am.storage.userPrefs(PendingPassword) := false).map(_ => Right({}))
+                _ => users.setAccountPassword(pw).flatMap(_ => am.storage.userPrefs(PendingPassword) := false).map(_ => Right({}))
               )
             } yield resp match {
               case Right(_) =>

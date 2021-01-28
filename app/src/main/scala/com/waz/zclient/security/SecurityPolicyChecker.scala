@@ -93,7 +93,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
     secondsSinceEnteredBackground >= timeout
   }
 
-  private def updateBackgroundEntryTimer(): Unit = {
+  def updateBackgroundEntryTimer(): Unit = {
     verbose(l"updateBackgroundEntryTimer")
     timerEnabled ! true
     timeEnteredBackground = Some(Instant.now())
@@ -145,10 +145,10 @@ object SecurityPolicyChecker extends DerivedLogTag {
                               accountManager: AccountManager,
                               authNeeded: Boolean)(implicit context: Context) =
     if (authNeeded) {
-      verbose(l"check request password, force app lock: ${BuildConfig.FORCE_APP_LOCK}")
-      val check = RequestPasswordCheck(passwordController, userPreferences)
-      val actions = if (BuildConfig.FORCE_APP_LOCK) List(new WipeDataAction()) else Nil
-      Future.successful(Some(check, actions))
+          verbose(l"check request password, force app lock from the build: ${BuildConfig.FORCE_APP_LOCK}")
+          val check = RequestPasswordCheck(passwordController, userPreferences)
+          val actions = if (BuildConfig.FORCE_APP_LOCK) List(new WipeDataAction()) else Nil
+          Future.successful(Some(check, actions))
     } else EmptyCheck
 
   /**
@@ -171,7 +171,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
       wipeOnCookieInvalid <- accountManager.fold(EmptyCheck)(wipeOnCookieInvalid)
       requestPassword     <- unpack(passwordController, userPreferences, accountManager).fold(EmptyCheck) {
                                case (ctrl, prefs, am) =>
-                                 Signal.zip(ctrl.ssoEnabled, ctrl.ssoPasswordEmpty).head.flatMap {
+                                 Signal.zip(ctrl.appLockEnabled, ctrl.customPasswordEmpty).head.flatMap {
                                    case (true, true) => EmptyCheck // the user must set the password first
                                    case _            => requestPassword(ctrl, prefs, am, authNeeded)
                                  }

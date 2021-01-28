@@ -154,7 +154,7 @@ class MainPhoneFragment extends FragmentHelper
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    inject[PasswordController].setSSOPasswordIfNeeded()
+    inject[PasswordController].setCustomPasswordIfNeeded()
 
     confirmationMenu.foreach(_.setVisibility(View.GONE))
     zms.flatMap(_.errors.getErrors).onUi {

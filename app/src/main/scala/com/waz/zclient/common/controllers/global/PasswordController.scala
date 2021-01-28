@@ -24,13 +24,13 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.service.teams.FeatureFlagsService
-import com.waz.service.{AccountsService, GlobalModule, UserService}
+import com.waz.service.{AccountsService, UserService}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.AESUtils.{EncryptedBytes, decryptWithAlias, encryptWithAlias}
 import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.dialogs.NewPasswordDialog
-import com.waz.zclient.security.ActivityLifecycleCallback
+import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.{BaseActivity, BuildConfig, Injectable, Injector}
 import com.wire.signals.{EventStream, Signal, SourceStream}
 
@@ -39,24 +39,23 @@ import scala.concurrent.Future
 class PasswordController(implicit inj: Injector) extends Injectable with DerivedLogTag {
   import Threading.Implicits.Background
 
-  private val accounts = inject[AccountsService]
-  private val prefs = inject[Signal[UserPreferences]]
-  private val userAccountsController = inject[UserAccountsController]
-  private lazy val featureFlags = inject[Signal[FeatureFlagsService]]
-  private val appInBackground = inject[ActivityLifecycleCallback].appInBackground.map(_._1)
-  private val ssoPassword = prefs.map(_.preference(UserPreferences.SSOPassword))
-  private val ssoPasswordIv = prefs.map(_.preference(UserPreferences.SSOPasswordIv))
-
-  private lazy val sodiumHandler = inject[SodiumHandler]
+  private lazy val accounts               = inject[AccountsService]
+  private lazy val prefs                  = inject[Signal[UserPreferences]]
+  private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val featureFlags           = inject[Signal[FeatureFlagsService]]
+  private lazy val appInBackground        = inject[ActivityLifecycleCallback].appInBackground
+  private lazy val customPassword         = prefs.map(_.preference(UserPreferences.CustomPassword))
+  private lazy val customPasswordIv       = prefs.map(_.preference(UserPreferences.CustomPasswordIv))
+  private lazy val sodiumHandler          = inject[SodiumHandler]
 
   // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
   if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
     appLockPrefMigration()
   }
 
-  appInBackground.foreach {
+  appInBackground.map(_._1).foreach {
     case true  =>
-      clearPassword()
+      inject[Signal[UserService]].head.foreach(_.clearAccountPassword())
     case false =>
       if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
         userAccountsController.isTeam.head.foreach {
@@ -66,11 +65,11 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       }
   }
 
-  val ssoEnabled:       Signal[Boolean]                = accounts.isActiveAccountSSO
-  val ssoPasswordEmpty: Signal[Boolean]                = ssoPassword.flatMap(_.signal.map(_.isEmpty))
-  val appLockEnabled:   Signal[Boolean]                = prefs.flatMap(_.preference(AppLockEnabled).signal)
-  val appLockForced:    Signal[Boolean]                = prefs.flatMap(_.preference(AppLockForced).signal)
-  lazy val password:    Signal[Option[Password]]       = accounts.activeAccount.map(_.flatMap(_.password)).disableAutowiring()
+  val ssoEnabled:           Signal[Boolean]                = accounts.isActiveAccountSSO
+  val customPasswordEmpty:  Signal[Boolean]                = customPassword.flatMap(_.signal.map(_.isEmpty))
+  val appLockEnabled:       Signal[Boolean]                = prefs.flatMap(_.preference(AppLockEnabled).signal)
+  val appLockForced:        Signal[Boolean]                = prefs.flatMap(_.preference(AppLockForced).signal)
+
   val appLockTimeout: Signal[Int] = prefs.flatMap(_.preference(AppLockTimeout).signal).map {
     case None           => BuildConfig.APP_LOCK_TIMEOUT
     case Some(duration) => duration.toSeconds.toInt
@@ -78,42 +77,45 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
 
   val passwordCheckSuccessful: SourceStream[Unit] = EventStream[Unit]()
 
-  def setPassword(p: Password): Future[Unit] = setPassword(Some(p))
-  def clearPassword(): Future[Unit] = setPassword(None)
-
-  def changeSSOPassword()(implicit ctx: Context): Future[Unit] =
+  def changeCustomPassword()(implicit ctx: Context): Future[Unit] =
     for {
       true <- appLockEnabled.head
-      true <- ssoEnabled.head
       _    <- openNewPasswordDialog(NewPasswordDialog.ChangeMode)
     } yield ()
 
-  def setSSOPasswordIfNeeded()(implicit ctx: Context): Future[Unit] =
+  def setCustomPasswordIfNeeded(fromSettings: Boolean = false)(implicit ctx: Context): Future[Unit] =
     for {
-      true        <- appLockEnabled.head
-      true        <- ssoEnabled.head
-      pwd         <- password.head
-      ssoPref     <- ssoPassword.head
-      ssoPassword <- ssoPref()
-      _           <- if (pwd.isEmpty && ssoPassword.isEmpty) openNewPasswordDialog(NewPasswordDialog.SetMode)
-                     else Future.successful(())
+      enabled       <- appLockEnabled.head
+      forced        <- appLockForced.head
+      passwordPref  <- customPassword.head
+      password      <- passwordPref()
+      _             <- if (enabled && (fromSettings || forced) && password.isEmpty) openNewPasswordDialog(NewPasswordDialog.ChangeInWireMode)
+                       else Future.successful(())
     } yield ()
 
+  // TODO: This check is used for the app lock, but some people still use the account password
+  // instead of the custom one as their app lock password. When everyone migrates, it can be simplified.
   def checkPassword(password: Password): Future[Boolean] =
     for {
-      isSSO <- ssoEnabled.head
-      users <- inject[Signal[UserService]].head
-      res   <- if (isSSO)
-                 checkSSOPassword(password).map {
-                   case true  => Right(())
-                   case false => Left("")
-                 }
-               else
-                 users.checkPassword(password)
-    } yield res match {
-      case Right(_)  => true
-      case Left(err) =>
-        verbose(l"Check password error: $err")
+      users       <- inject[Signal[UserService]].head
+      isEmpty     <- customPasswordEmpty.head
+      pwdCorrect  <- if (!isEmpty) checkCustomPassword(password)
+                     else users.checkAccountPassword(password).map(_.isRight)
+      _ = if (!pwdCorrect) verbose(l"wrong password")
+    } yield pwdCorrect
+
+  private def checkCustomPassword(pwdToCheck: Password): Future[Boolean] =
+    for {
+      Some(userId) <- accounts.activeAccountId.head
+      hashToCheck  <- hash(pwdToCheck.str)
+      ssoPref      <- customPassword.head
+      ssoPwd       <- ssoPref()
+      ssoIvPref    <- customPasswordIv.head
+      ssoIv        <- ssoIvPref()
+    } yield (ssoPwd, ssoIv) match {
+      case (Some(encryptedPwd), Some(iv)) =>
+        hashToCheck sameElements decryptWithAlias(EncryptedBytes(encryptedPwd, iv), userId.str)
+      case _ =>
         false
     }
 
@@ -131,42 +133,17 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       .commit
   }(Threading.Ui)
 
-  private def setPassword(pwd: Option[Password]): Future[Unit] =
-    for {
-      Some(accountData) <- accounts.activeAccount.head
-      _                 <- inject[GlobalModule].accountsStorage.update(accountData.id, _.copy(password = pwd))
-      isSSO             <- ssoEnabled.head
-      _                 <- pwd match {
-                             case Some(p) if isSSO => setSSOPassword(p)
-                             case _                => Future.successful(())
-                           }
-    } yield ()
-
-  private def setSSOPassword(pwd: Password): Future[Unit] =
+  def setCustomPassword(pwd: Password): Future[Unit] =
     for {
       Some(userId)       <- accounts.activeAccountId.head
       hashedPwd          <- hash(pwd.str)
       (encryptedPwd, iv) =  encryptWithAlias(hashedPwd, userId.str).asStrings
-      ssoPref            <- ssoPassword.head
-      _                  <- ssoPref := Some(encryptedPwd)
-      ssoIvPref          <- ssoPasswordIv.head
-      _                  <- ssoIvPref := Some(iv)
+      passwordPref       <- customPassword.head
+      _                  <- passwordPref := Some(encryptedPwd)
+      passwordIvPref     <- customPasswordIv.head
+      _                  <- passwordIvPref := Some(iv)
+      _                  =  inject[SecurityPolicyChecker].updateBackgroundEntryTimer()
     } yield ()
-
-  private def checkSSOPassword(pwdToCheck: Password): Future[Boolean] =
-    for {
-      Some(userId) <- accounts.activeAccountId.head
-      hashToCheck  <- hash(pwdToCheck.str)
-      ssoPref      <- ssoPassword.head
-      ssoPwd       <- ssoPref()
-      ssoIvPref    <- ssoPasswordIv.head
-      ssoIv        <- ssoIvPref()
-    } yield (ssoPwd, ssoIv) match {
-      case (Some(encryptedPwd), Some(iv)) =>
-        hashToCheck sameElements decryptWithAlias(EncryptedBytes(encryptedPwd, iv), userId.str)
-      case _ =>
-        false
-    }
 
   private def hash(password: String): Future[Array[Byte]] =
     accounts.activeAccountId.head.collect {
@@ -175,7 +152,7 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
     }(Threading.Background)
 
   // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
-  private def appLockPrefMigration() =
+  private def appLockPrefMigration(): Unit =
     inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated).apply().foreach {
       case true =>
       case false =>

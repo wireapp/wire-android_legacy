@@ -10,7 +10,8 @@ import scala.concurrent.duration.FiniteDuration
 final case class AppLockFeatureFlag(enabled: Boolean, forced: Boolean, timeout: Option[FiniteDuration])
 
 object AppLockFeatureFlag {
-  val Default: AppLockFeatureFlag = AppLockFeatureFlag(enabled = false, forced = false, None)
+  val Default: AppLockFeatureFlag  = AppLockFeatureFlag(enabled = true, forced = false, None)
+  val Disabled: AppLockFeatureFlag = AppLockFeatureFlag(enabled = false, forced = false, None)
 
   import JsonDecoder._
 
@@ -22,14 +23,17 @@ object AppLockFeatureFlag {
     }
 
     override def apply(implicit js: JSONObject): AppLockFeatureFlag =
-      if (js.getString("status") == "enabled") {
+      if (!js.has("status")) {
+        Default
+      } else if (js.getString("status") == "enabled") {
         val config = decodeConfig(js.getJSONObject("config"))
         AppLockFeatureFlag(
           enabled = true,
           forced  = config.enforceAppLock,
           timeout = Some(FiniteDuration(config.inactivityTimeoutSecs, TimeUnit.SECONDS))
         )
-      } else
-        Default
+      } else {
+        Disabled
+      }
   }
 }

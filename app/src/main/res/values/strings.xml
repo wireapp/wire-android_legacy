@@ -116,7 +116,7 @@
     <string name="request_password_cancel">Cancel</string>
     <string name="request_password_biometric_description">Unlock using biometric authentication.</string>
     <string name="request_password_biometric_cancel">Cancel</string>
-    <string name="request_password_error">Wrong password</string>
+    <string name="request_password_error">Wrong passcode</string>
 
     <!-- Bots / Integrations / Services -->
     <string name="integrations_picker__section_title">Services</string>
@@ -478,14 +478,15 @@
     <string name="pref_options_app_lock">Passcode</string>
     <string name="pref_options_app_lock_change">Change passcode</string>
     <string name="app_lock_locked_title">Wire is locked due to inactivity</string>
-    <string name="app_lock_locked_message">Please enter your account password.</string>
-    <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passphrase in your device settings.</string>
+    <string name="app_lock_locked_message">Please enter your account passcode.</string>
+    <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passcode in your device settings.</string>
     <string name="new_password_dialog_title">Create a Passcode</string>
     <string name="new_password_dialog_button">Create Passcode</string>
     <string name="new_password_dialog_title_change">Change Passcode</string>
     <string name="new_password_dialog_button_change">Change Passcode</string>
     <string name="new_password_dialog_message">Your organization needs to lock your app when Wire is not in use to keep the Team safe.\nCreate a memorable passcode, as it cannot be recovered.</string>
-    <string name="new_password_dialog_showhide_cd">Show/hide the password</string>
+    <string name="new_password_dialog_showhide_cd">Show/hide the passcode</string>
+    <string name="new_password_dialog_title_change_in_wire">There was a change in Wire</string>
 
     <!-- Options -->
     <string name="pref_options_screen_title">Options</string>
@@ -517,8 +518,8 @@
     <string name="pref_options_cursor_send_button_summary">Disable to send via the keyboard.</string>
     <string name="pref_options_message_previews">Message Previews</string>
     <string name="pref_options_message_previews_summary">Display message content in notifications.</string>
-    <string name="pref_options_app_lock_title">Lock with Passphrase</string>
-    <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Password or Biometrics.</string>
+    <string name="pref_options_app_lock_title">Lock with Passcode</string>
+    <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Passcode or Biometrics.</string>
     <string name="pref_options_incognito_keyboard">Incognito keyboard</string>
     <string name="pref_options_incognito_keyboard_summary">The keyboard will not show suggestions when typing messages</string>
 
@@ -532,7 +533,7 @@
     <string name="pref_devices_device_id">ID: %1$s</string>
     <string name="pref_devices_device_verified">Verified</string>
     <string name="pref_devices_device_not_verified">Not verified</string>
-    <string name="pref_devices_warning_summary">If you don\'t recognize a device above, remove it and reset your password.</string>
+    <string name="pref_devices_warning_summary">If you don\'t recognize a device above, remove it and reset your passcode.</string>
     <string name="pref_devices_device_screen_title">Device details</string>
     <string name="pref_devices_device_fingerprint_category_title">Key Fingerprint</string>
     <string name="pref_devices_device_fingerprint_summary">Wire gives every device a unique fingerprint. Compare them and verify your devices and conversations.</string>

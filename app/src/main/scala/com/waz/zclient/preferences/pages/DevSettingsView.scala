@@ -31,11 +31,10 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.Uid
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
-import com.waz.service.{AccountManager, ZMessaging}
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient._
-import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog.{PasswordAnswer, PasswordCancelled, PromptAnswer}
@@ -129,7 +128,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
         showToast(s"Registered new client: $id")
         Future.successful(Right(true))
       case Right(PasswordMissing) =>
-        inject[PasswordController].password.head.flatMap {
+        inject[AccountsService].accountPassword.head.flatMap {
           case Some(p) => registerClient(Some(p))
           case _       => Future.successful(Right(false))
         }

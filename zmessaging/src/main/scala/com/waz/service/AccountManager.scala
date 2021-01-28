@@ -175,7 +175,6 @@ class AccountManager(val userId:  UserId,
     }
   }
 
-  //Note: this method should only be externally called from tests and debug preferences. User `registerClient` for all normal flows.
   def registerNewClient(password: Option[Password] = None): ErrorOr[ClientRegistrationState] = {
     for {
       account <- global.accountsStorage.signal(userId).head

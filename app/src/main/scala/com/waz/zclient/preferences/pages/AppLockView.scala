@@ -13,7 +13,6 @@ import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.{BuildConfig, R, ViewHelper}
 import com.waz.zclient.utils._
-import com.wire.signals.Signal
 
 class AppLockView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style) with ViewHelper {
@@ -38,14 +37,14 @@ class AppLockView(context: Context, attrs: AttributeSet, style: Int)
   }.foreach(appLockSwitch.setDisabled)
 
   private val appLockChangeButton = returning(findById[TextButton](R.id.preferences_app_lock_change_button)) { button =>
-    button.onClickEvent.foreach { _ => passwordController.changeSSOPassword() }
+    button.onClickEvent.foreach { _ => passwordController.changeCustomPassword() }
   }
 
-  Signal.zip(passwordController.ssoEnabled, passwordController.appLockEnabled).foreach {
-    case (true, true) =>
+  passwordController.appLockEnabled.foreach {
+    case true =>
+      passwordController.setCustomPasswordIfNeeded(fromSettings = true)
       appLockChangeButton.setVisible(true)
-      passwordController.setSSOPasswordIfNeeded()
-    case _ =>
+    case false =>
       appLockChangeButton.setVisible(false)
   }
 }

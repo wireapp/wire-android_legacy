@@ -104,6 +104,8 @@ trait AccountsService {
   def loginClient: LoginClient
 
   def wipeDataForAllAccounts(): Future[Unit]
+
+  lazy val accountPassword: Signal[Option[Password]] = activeAccount.map(_.flatMap(_.password)).disableAutowiring()
 }
 
 object AccountsService {

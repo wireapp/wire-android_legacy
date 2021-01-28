@@ -71,6 +71,8 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   inflate(R.layout.preferences_options_layout)
 
+  private lazy val passwordController = inject[PasswordController]
+
   private val vbrSwitch               = findById[SwitchPreference](R.id.preferences_vbr)
   private val vibrationSwitch         = findById[SwitchPreference](R.id.preferences_vibration)
   private val darkThemeSwitch         = findById[SwitchPreference](R.id.preferences_dark_theme)
@@ -104,9 +106,11 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)
 
-  inject[PasswordController].appLockTimeout.foreach { timeout =>
+  passwordController.appLockTimeout.foreach { timeout =>
     appLockButton.setSubtitle(getString(R.string.pref_options_app_lock_summary, timeout.toString))
   }
+
+  passwordController.appLockEnabled.foreach(appLockButton.setVisible)
 
   override val appLock: EventStream[Unit] = appLockButton.onClickEvent.map(_ => ())
 
