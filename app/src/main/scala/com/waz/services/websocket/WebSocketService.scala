@@ -37,6 +37,8 @@ import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient._
 import com.waz.zclient.log.LogUI._
 
+import scala.concurrent.Future
+
 class WebSocketController(implicit inj: Injector) extends Injectable {
   private lazy val global = inject[GlobalModule]
   private lazy val accounts = inject[AccountsService]
@@ -67,13 +69,12 @@ class WebSocketController(implicit inj: Injector) extends Injectable {
       Signal.sequence(zs.map(_.wsPushService.connected).toSeq: _ *).map(_.exists(!identity(_)))
     )
 
-  lazy val notificationTitleRes: Signal[Option[Int]] =
-    Signal.zip(serviceInForeground, global.network.isOnline, anyPushServiceConnected).map {
-      case (true, true, true)  => Option(R.string.ws_foreground_notification_connecting_title)
-      case (true, true, false) => Option(R.string.ws_foreground_notification_connected_title)
-      case (true, false, _)    => Option(R.string.ws_foreground_notification_no_internet_title)
-      case _                   => Option.empty[Int]
-    }
+  def notificationTitleId: Future[Int] =
+    Signal.zip(global.network.isOnline, anyPushServiceConnected).head.map {
+      case (true, true)  => R.string.ws_foreground_notification_connecting_title
+      case (true, false) => R.string.ws_foreground_notification_connected_title
+      case (false, _)    => R.string.ws_foreground_notification_no_internet_title
+    }(Threading.Background)
 }
 
 /**
@@ -132,7 +133,7 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
 
   import WebSocketService._
 
-  private implicit def context = getApplicationContext
+  private implicit def context: Context = getApplicationContext
 
   private lazy val launchIntent        = PendingIntent.getActivity(context, 1, Intents.ShowAdvancedSettingsIntent, 0)
 
@@ -156,24 +157,25 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
     if (stopIfNeeded && activate.isEmpty) stopSelf()
   }
 
-  private lazy val appInForegroundSubscription =
-    controller.notificationTitleRes {
-      case None =>
-        stopForeground(true)
+  private def startForeground(title: String): Unit =
+    startForeground(WebSocketService.ForegroundId,
+      new NotificationCompat.Builder(this, ForegroundNotificationChannelId)
+        .setSmallIcon(R.drawable.websocket)
+        .setContentTitle(title)
+        .setContentIntent(launchIntent)
+        .setStyle(new NotificationCompat.BigTextStyle()
+          .bigText(getString(R.string.ws_foreground_notification_summary)))
+        .setCategory(NotificationCompat.CATEGORY_SERVICE)
+        .setPriority(if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) NotificationCompat.PRIORITY_MIN else NotificationCompat.PRIORITY_LOW)
+        .build()
+    )
 
-      case Some(title) =>
+  private lazy val appInForegroundSubscription =
+    controller.serviceInForeground.foreach {
+      case false => stopForeground(true)
+      case true =>
         createNotificationChannel()
-        startForeground(WebSocketService.ForegroundId,
-          new NotificationCompat.Builder(this, ForegroundNotificationChannelId)
-            .setSmallIcon(R.drawable.websocket)
-            .setContentTitle(getString(title))
-            .setContentIntent(launchIntent)
-            .setStyle(new NotificationCompat.BigTextStyle()
-              .bigText(getString(R.string.ws_foreground_notification_summary)))
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setPriority(if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) NotificationCompat.PRIORITY_MIN else NotificationCompat.PRIORITY_LOW)
-            .build()
-        )
+        controller.notificationTitleId.foreach(titleId => startForeground(getString(titleId)))(Threading.Ui)
     }
 
   override def onBind(intent: content.Intent): IBinder = null
