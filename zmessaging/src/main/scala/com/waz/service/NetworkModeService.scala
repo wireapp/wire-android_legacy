@@ -43,12 +43,12 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle)
   private val currentNetwork = Signal[Option[Network]]()
   private val currentCapabilities = Signal[Option[NetworkCapabilities]]()
 
-  currentNetwork.throttle(500.millis).map {
+  currentNetwork.map {
     case Some(network) => Option(connectivityManager.getNetworkCapabilities(network))
     case None => None
   }.pipeTo(currentCapabilities)
 
-  override val networkMode: Signal[NetworkMode] = currentCapabilities.throttle(500.millis).map {
+  override val networkMode: Signal[NetworkMode] = currentCapabilities.map {
     case Some(capabilities) =>
       returning(computeMode(capabilities)) { mode => info(l"new network mode: $mode") }
     case None =>
