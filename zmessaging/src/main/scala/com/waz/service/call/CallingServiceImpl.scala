@@ -49,6 +49,7 @@ import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.wire.signals._
 import com.waz.utils.wrappers.Context
 import com.waz.utils.{RichInstant, returning, returningF}
+import com.waz.zms.BuildConfig
 import org.threeten.bp.Duration
 import org.threeten.bp.temporal.ChronoUnit
 
@@ -446,6 +447,7 @@ class CallingServiceImpl(val accountId:       UserId,
                     verbose(l"Answering call")
                     avs.answerCall(w, conv.remoteId, callType, !vbr)
                     updateActiveCall(_.updateCallState(SelfJoining))("startCall/OtherCalling")
+                    if (BuildConfig.JOIN_GROUP_CALL_MUTED) setCallMuted(muted = isGroup)
                     if (forceOption)
                       setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
                   case _ =>
@@ -462,7 +464,7 @@ class CallingServiceImpl(val accountId:       UserId,
                     avs.answerCall(w, conv.remoteId, callType, !vbr)
                     val active = call.updateCallState(SelfJoining).copy(joinedTime = None, estabTime = None) // reset previous call state if exists
                     callProfile.mutate(_.copy(calls = profile.calls + (convId -> active)))
-                    setCallMuted(muted = false)
+                    if (BuildConfig.JOIN_GROUP_CALL_MUTED) setCallMuted(muted = true) else setCallMuted(muted = false)
                     if (forceOption)
                       setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
                   }
