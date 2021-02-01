@@ -316,14 +316,6 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     }
   }
 
-  (lastCallAccountId zip isCallEstablished).onChanged.filter(_._2 == true) { case (userId, _) =>
-    soundController.playCallEstablishedSound(userId)
-  }
-
-  (lastCallAccountId zip isCallActive).onChanged.filter(_._2 == false) { case (userId, _) =>
-    soundController.playCallEndedSound(userId)
-  }
-
   isCallActive.onChanged.filter(_ == false).on(Threading.Ui) { _ =>
     screenManager.releaseWakeLock()
   }
