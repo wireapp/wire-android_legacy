@@ -72,6 +72,7 @@ trait ConversationsService {
   def deleteConversation(rConvId: RConvId): Future[Unit]
   def conversationName(convId: ConvId): Signal[Name]
   def deleteMembersFromConversations(members: Set[UserId]): Future[Unit]
+  def remoteIds: Future[Set[RConvId]]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -377,6 +378,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                        deleteMembers(convId, uIds.map(_.userId).toSet, remover = None, sendSystemMessage = true)
                      })
     } yield ()
+
+  override def remoteIds: Future[Set[RConvId]] = convsStorage.list.map(_.map(_.remoteId).toSet)
 
   private def deleteMembers(convId: ConvId): Future[Unit] =
     for {

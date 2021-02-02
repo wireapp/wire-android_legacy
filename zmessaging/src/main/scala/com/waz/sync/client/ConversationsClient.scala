@@ -23,7 +23,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
-import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
+import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, Decoder}
+import com.waz.utils.JsonDecoder.{array, decodeBool}
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
 import com.waz.znet2.AuthRequestInterceptor
@@ -69,7 +70,11 @@ class ConversationsClientImpl(implicit
 
   private implicit val ConversationIdsResponseDeserializer: RawBodyDeserializer[ConversationsResult] =
     RawBodyDeserializer[JSONObject].map { json =>
-      val (ids, hasMore) = ConversationsResult.unapply(JsonObjectResponse(json)).get
+      val (ids, hasMore) =
+        if (json.has("conversations"))
+          (array[ConversationResponse](json.getJSONArray("conversations")).toList, decodeBool('has_more)(json))
+        else
+          (List(Decoder(json)), false)
       ConversationsResult(ids, hasMore)
     }
 
@@ -338,24 +343,6 @@ object ConversationsClient {
     }
 
     case class ConversationsResult(conversations: Seq[ConversationResponse], hasMore: Boolean)
-    
-    object ConversationsResult extends DerivedLogTag {
-
-      def unapply(response: ResponseContent): Option[(List[ConversationResponse], Boolean)] = try {
-        response match {
-          case JsonObjectResponse(js) if js.has("conversations") =>
-            Some((array[ConversationResponse](js.getJSONArray("conversations")).toList, decodeBool('has_more)(js)))
-          case JsonArrayResponse(js) => Some((array[ConversationResponse](js).toList, false))
-          case JsonObjectResponse(js) => Some((List(Decoder(js)), false))
-          case _ => None
-        }
-      } catch {
-        case NonFatal(e) =>
-          warn(l"couldn't parse conversations response", e)
-          warn(l"json decoding failed", e)
-          None
-      }
-    }
   }
 
   case class ConvRole(conversation_role: String, actions: Seq[String]) {
