@@ -135,20 +135,23 @@ class PushServiceImpl(selfUserId:           UserId,
       verbose(l"Processing ${rows.size} encrypted rows")
       Future.sequence(rows.map { row =>
         if (!isOtrEventJson(row.event)) notificationStorage.setAsDecrypted(row.index)
-        else {
-          val otrEvent = ConversationEvent.ConversationEventDecoder(row.event).asInstanceOf[OtrEvent]
-          val writer = notificationStorage.writeClosure(row.index)
-          otrService.decryptStoredOtrEvent(otrEvent, writer).flatMap {
-            case Left(Duplicate) =>
-              verbose(l"Ignoring duplicate message")
-              notificationStorage.remove(row.index)
-            case Left(error) =>
-              val e = OtrErrorEvent(otrEvent.convId, otrEvent.time, otrEvent.from, error)
-              verbose(l"Got error when decrypting: $e")
-              tracking.msgDecryptionFailed(otrEvent.convId, this.selfUserId)
-              notificationStorage.writeError(row.index, e)
-            case Right(_) => Future.successful(())
-          }
+        else ConversationEvent.ConversationEventDecoder(row.event) match {
+          case otrEvent: OtrEvent =>
+            val writer = notificationStorage.writeClosure(row.index)
+            otrService.decryptStoredOtrEvent(otrEvent, writer).flatMap {
+              case Left(Duplicate) =>
+                verbose(l"Ignoring duplicate message")
+                notificationStorage.remove(row.index)
+              case Left(error) =>
+                val e = OtrErrorEvent(otrEvent.convId, otrEvent.time, otrEvent.from, error)
+                verbose(l"Got error when decrypting: $e")
+                tracking.msgDecryptionFailed(otrEvent.convId, this.selfUserId)
+                notificationStorage.writeError(row.index, e)
+              case Right(_) => Future.successful(())
+            }
+          case _ =>
+            error(l"Unrecognized event: ${row.event.toString}")
+            notificationStorage.setAsDecrypted(row.index)
         }
       }).map(_ => ())
     }

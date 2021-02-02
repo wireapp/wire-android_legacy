@@ -285,11 +285,11 @@ object ConversationEvent extends DerivedLogTag {
         case "conversation.otr-error"            => OtrErrorEvent('convId, time, 'from, decodeOtrError('error))
         case "conversation.session-reset"        => SessionReset('convId, time, 'from, 'sender)
         case _ =>
-          error(l"unhandled event: $js")
+          error(l"unhandled event (1): ${js.toString}")
           UnknownConvEvent(js)
       }
     } .getOrElse {
-      error(l"unhandled event: $js")
+      error(l"unhandled event (2): ${js.toString}")
       UnknownConvEvent(js)
     }
   }
