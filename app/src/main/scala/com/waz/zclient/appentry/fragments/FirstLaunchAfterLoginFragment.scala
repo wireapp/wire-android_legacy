@@ -210,6 +210,8 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       _                    =  backupFile.delete()
       registrationState    <- accountManager.getOrRegisterClient()
       _                    <- Future.traverse(List(SelfClient, OtrLastPrekey, LastSelfClientsSyncRequestedTime, LastStableNotification, ShouldSyncInitial))(p => accountManager.userPrefs.remove(p.str))
+      Some(zms)            <- accountsService.getZms(userId)
+      _                    <- zms.sync.performFullSync()
       _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
       _                    <- CancellableFuture.delay(750.millis).future
     } yield registrationState match {

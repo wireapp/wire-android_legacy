@@ -25,15 +25,14 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service._
-import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl, ConversationsService}
+import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConversationsClient
-import com.waz.sync.client.ConversationsClient.{ConversationInitState, ConversationResponse}
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
+import com.waz.sync.client.ConversationsClient.{ConversationInitState, ConversationResponse}
 import com.waz.threading.Threading
-import com.wire.signals.EventContext
 
 import scala.concurrent.Future
 import scala.util.Right
@@ -49,7 +48,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
                                messagesStorage:     MessagesStorage,
                                messagesService:     MessagesService,
                                convService:         ConversationsService,
-                               convs:               ConversationsContentUpdaterImpl,
+                               convs:               ConversationsContentUpdater,
                                convEvents:          ConversationOrderEventsService,
                                convStorage:         ConversationStorage,
                                errorsService:       ErrorsService,
@@ -89,19 +88,27 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       }
     }
 
-  def syncConversations(start: Option[RConvId] = None): Future[SyncResult] =
+  def syncConversations(start: Option[RConvId] = None, rIdsFromBackend: Set[RConvId] = Set.empty): Future[SyncResult] =
     conversationsClient.loadConversations(start).future.flatMap {
       case Right(ConversationsResult(responses, hasMore)) =>
-        debug(l"syncConversations received ${responses.size}")
         loadConversationRoles(responses).flatMap { roles =>
-          val future = convService.updateConversationsWithDeviceStartMessage(responses, roles)
-          if (hasMore) future.flatMap(_ => syncConversations(responses.lastOption.map(_.id)))
-          else future.map(_ => Success)
+          convService.updateConversationsWithDeviceStartMessage(responses, roles).flatMap { _ =>
+            if (hasMore)
+              syncConversations(responses.lastOption.map(_.id), rIdsFromBackend ++ responses.map(_.id))
+            else
+              removeConvsMissingOnBackend(rIdsFromBackend ++ responses.map(_.id)).map(_ => Success)
+          }
         }
       case Left(error) =>
-        warn(l"ConversationsClient.loadConversations($start) failed with error: $error")
         Future.successful(SyncResult(error))
     }
+
+  private def removeConvsMissingOnBackend(rIdsFromBackend: Set[RConvId]) =
+    for {
+      rIdsFromStorage <- convService.remoteIds
+      missing         =  rIdsFromStorage -- rIdsFromBackend
+      _               <- Future.sequence(missing.map(convService.deleteConversation))
+    } yield ()
 
   def postConversationName(id: ConvId, name: Name): Future[SyncResult] =
     postConv(id) { conv => conversationsClient.postName(conv.remoteId, name).future }
