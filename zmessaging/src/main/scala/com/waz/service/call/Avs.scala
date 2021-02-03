@@ -216,14 +216,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)
 
       val activeSpeakersHandler = new ActiveSpeakersHandler {
-        override def onActiveSpeakersChanged(inst: Handle, convId: String, data: String, arg: Pointer): Unit = {
-
-          Log.i("mejdoo",data)
-
+        override def onActiveSpeakersChanged(inst: Handle, convId: String, data: String, arg: Pointer): Unit =
           ActiveSpeakerChangeDecoder.decode(data).foreach { activeSpeakersChange =>
             val activeSpeakers = activeSpeakersChange.audio_levels.map(m => ActiveSpeaker(m.userid, m.clientid, m.audio_level, m.audio_level_now)).toSet
             cs.onActiveSpeakersChanged(RConvId(convId), activeSpeakers)
-        }
         }
       }
 
