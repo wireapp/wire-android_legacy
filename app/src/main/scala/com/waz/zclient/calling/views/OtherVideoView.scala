@@ -31,7 +31,7 @@ class OtherVideoView(context: Context, participant: Participant) extends UserVid
 
   Signal.zip(
     participantInfo.map(_.map(_.isMuted)),
-    callController.isActiveSpeaker(participant.userId, participant.clientId),
+    callController.isInstantActiveSpeaker(participant.userId, participant.clientId),
     accentColorController.accentColor.map(_.color),
     callController.isFullScreenEnabled,
     callController.showTopSpeakers,

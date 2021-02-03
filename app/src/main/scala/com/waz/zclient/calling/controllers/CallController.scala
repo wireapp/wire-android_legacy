@@ -115,7 +115,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   lazy val activeSpeakers             = currentCall.map(_.activeSpeakers)
 
 
-  def activeParticipantsWithVideo(): Signal[Seq[Participant]] =
+  def longTermActiveParticipantsWithVideo(): Signal[Seq[Participant]] =
     Signal.zip(activeSpeakers, videoUsers).map {
       case (activeSpeakers, videoUsers) =>
         videoUsers.filter { participant =>
@@ -172,9 +172,9 @@ class CallController(implicit inj: Injector, cxt: WireContext)
       )
     }
 
-  def isActiveSpeaker(userId: UserId, clientId: ClientId): Signal[Boolean] =
+  def isInstantActiveSpeaker(userId: UserId, clientId: ClientId): Signal[Boolean] =
     activeSpeakers.map(_.exists { activeSpeaker =>
-      activeSpeaker.clientId == clientId && activeSpeaker.userId == userId && activeSpeaker.audioLevel > 0
+      activeSpeaker.clientId == clientId && activeSpeaker.userId == userId && activeSpeaker.instantAudioLevel > 0
     })
 
   val flowManager = callingZms.map(_.flowmanager)

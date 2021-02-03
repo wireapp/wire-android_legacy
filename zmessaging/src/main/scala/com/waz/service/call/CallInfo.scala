@@ -144,7 +144,7 @@ case class CallInfo(convId:             ConvId,
 
 object CallInfo {
 
-  case class ActiveSpeaker(userId: UserId, clientId: ClientId, audioLevel: Int)
+  case class ActiveSpeaker(userId: UserId, clientId: ClientId, longTermAudioLevel: Int, instantAudioLevel: Int)
 
   case class Participant(userId: UserId, clientId: ClientId, muted: Boolean = false)
 
