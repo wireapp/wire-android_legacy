@@ -148,7 +148,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def network           = global.network
   def blacklist         = global.blacklist
   def backend           = global.backend
-  def accountsStorage   = global.accountsStorageOld
   def teamsStorage      = global.teamsStorage
   def videoTranscoder   = global.videoTranscoder
   def audioTranscader   = global.audioTranscoder

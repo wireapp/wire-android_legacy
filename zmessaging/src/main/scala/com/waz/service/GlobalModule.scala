@@ -86,7 +86,6 @@ trait GlobalModule {
   def audioTranscoder:          AudioTranscoder
   def cacheCleanup:             CacheCleaningService
   def accountsStorage:          AccountStorage
-  def accountsStorageOld:       AccountsStorageOld
   def teamsStorage:             TeamsStorage
   def recordingAndPlayback:     GlobalRecordAndPlayService
   def tempFiles:                TempFileService
@@ -124,7 +123,6 @@ class GlobalModuleImpl(val context:             AContext,
 
   val tokenService:             GlobalTokenService               = wire[GlobalTokenServiceImpl]
   val storage:                  Database                         = new GlobalDatabase(context, tracking = trackingService)
-  val accountsStorageOld:       AccountsStorageOld               = wire[AccountsStorageOldImpl]
 
   lazy val ssoService:          SSOService                       = wire[SSOService]
   lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this, BuildConfig.KOTLIN_SETTINGS)
@@ -217,7 +215,6 @@ class EmptyGlobalModule extends GlobalModule {
   override def audioTranscoder:          AudioTranscoder                                     = ???
   override def cacheCleanup:             CacheCleaningService                                = ???
   override def accountsStorage:          AccountStorage                                      = ???
-  override def accountsStorageOld:       AccountsStorageOld                                  = ???
   override def teamsStorage:             TeamsStorage                                        = ???
   override def recordingAndPlayback:     GlobalRecordAndPlayService                          = ???
   override def tempFiles:                TempFileService                                     = ???

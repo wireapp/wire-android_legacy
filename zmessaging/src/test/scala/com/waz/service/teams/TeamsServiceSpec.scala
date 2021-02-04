@@ -44,7 +44,6 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val selfUser      = id('me)
   val teamId        = Some(TeamId())
   val teamStorage   = mock[TeamsStorage]
-  val accStorage    = mock[AccountsStorageOld]
   val userService   = mock[UserService]
   val userStorage   = mock[UsersStorage]
   val convsStorage  = mock[ConversationStorage]

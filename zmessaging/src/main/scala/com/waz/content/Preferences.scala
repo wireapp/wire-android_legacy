@@ -292,9 +292,6 @@ object GlobalPreferences {
   lazy val ActiveAccountPref = PrefKey[Option[UserId]]("active_account")
   lazy val CurrentAccountPrefOld = PrefKey[Option[AccountId]]("CurrentUserPref")
 
-  lazy val FirstTimeWithTeams = PrefKey[Boolean]("first_time_with_teams", customDefault = true)
-  lazy val DatabasesRenamed = PrefKey[Boolean]("databases_renamed", customDefault = false)
-
   lazy val BackendDrift = PrefKey[Duration]("backend_drift")
 
   //TODO think of a nicer way of ensuring that these key values are used in UI - right now, we need to manually check they're correct
@@ -327,7 +324,6 @@ object GlobalPreferences {
   lazy val RootDetected: PrefKey[Boolean] = PrefKey[Boolean]("root_detected", customDefault = false)
 
   lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
-
 
   // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
   lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
