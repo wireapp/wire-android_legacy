@@ -59,7 +59,7 @@ class CallingFragment extends FragmentHelper {
 
     vh.foreach { grid =>
 
-      Signal.zip(videoGridInfo, controller.isFullScreenEnabled, controller.showTopSpeakers, controller.activeParticipantsWithVideo()).foreach {
+      Signal.zip(videoGridInfo, controller.isFullScreenEnabled, controller.showTopSpeakers, controller.longTermActiveParticipantsWithVideo()).foreach {
         case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false, true, activeParticipantsWithVideo) =>
           refreshVideoGrid(grid, selfParticipant, activeParticipantsWithVideo, infos, participants, isVideoBeingSent, true)
         case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false, false, _) =>
@@ -90,7 +90,7 @@ class CallingFragment extends FragmentHelper {
 
     Signal.zip(
       controller.showTopSpeakers,
-      controller.activeParticipantsWithVideo().map(_.size > 0),
+      controller.longTermActiveParticipantsWithVideo().map(_.size > 0),
       controller.controlsVisible,
       controller.isGroupCall
     ).onUi {

@@ -35,7 +35,7 @@ class SelfVideoView(context: Context, participant: Participant)
 
   Signal.zip(
     callController.isMuted,
-    callController.isActiveSpeaker(participant.userId, participant.clientId),
+    callController.isInstantActiveSpeaker(participant.userId, participant.clientId),
     accentColorController.accentColor.map(_.color),
     callController.isFullScreenEnabled,
     callController.showTopSpeakers,

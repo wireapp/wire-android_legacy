@@ -218,9 +218,9 @@ class AvsImpl() extends Avs with DerivedLogTag {
       val activeSpeakersHandler = new ActiveSpeakersHandler {
         override def onActiveSpeakersChanged(inst: Handle, convId: String, data: String, arg: Pointer): Unit =
           ActiveSpeakerChangeDecoder.decode(data).foreach { activeSpeakersChange =>
-            val activeSpeakers = activeSpeakersChange.audio_levels.map(m => ActiveSpeaker(m.userid, m.clientid, m.audio_level)).toSet
+            val activeSpeakers = activeSpeakersChange.audio_levels.map(m => ActiveSpeaker(m.userid, m.clientid, m.audio_level, m.audio_level_now)).toSet
             cs.onActiveSpeakersChanged(RConvId(convId), activeSpeakers)
-          }
+        }
       }
 
       Calling.wcall_set_active_speaker_handler(wCall, activeSpeakersHandler)
@@ -445,7 +445,7 @@ object Avs extends DerivedLogTag {
 
     case class ActiveSpeakerChange(audio_levels: Seq[Speaker])
 
-    case class Speaker(userid: UserId, clientid: ClientId, audio_level: Int)
+    case class Speaker(userid: UserId, clientid: ClientId, audio_level: Int, audio_level_now: Int)
 
     private lazy val decoder: Decoder[ActiveSpeakerChange] = Decoder.apply
 
