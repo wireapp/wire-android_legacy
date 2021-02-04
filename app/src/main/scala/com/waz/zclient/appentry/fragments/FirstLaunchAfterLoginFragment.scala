@@ -26,7 +26,6 @@ import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.{Fragment, FragmentTransaction}
-import com.waz.content.UserPreferences.{apply => _, _}
 import com.waz.model.AccountData.Password
 import com.waz.model.UserId
 import com.waz.permissions.PermissionsService
@@ -209,7 +208,6 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       _                    <- promise.future
       _                    =  backupFile.delete()
       registrationState    <- accountManager.getOrRegisterClient()
-      _                    <- Future.traverse(List(SelfClient, OtrLastPrekey, LastSelfClientsSyncRequestedTime, LastStableNotification, ShouldSyncInitial))(p => accountManager.userPrefs.remove(p.str))
       Some(zms)            <- accountsService.getZms(userId)
       _                    <- zms.sync.performFullSync()
       _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
