@@ -40,7 +40,7 @@ import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
-import com.waz.zclient.{Injectable, Injector, R, WireContext}
+import com.waz.zclient.{BuildConfig, Injectable, Injector, R, WireContext}
 import com.wire.signals._
 import org.threeten.bp.Instant
 
@@ -316,12 +316,14 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     }
   }
 
-  (lastCallAccountId zip isCallEstablished).onChanged.filter(_._2 == true) { case (userId, _) =>
-    soundController.playCallEstablishedSound(userId)
-  }
+  if (!BuildConfig.REMOVE_JOIN_LEAVE_SOUNDS) {
+    (lastCallAccountId zip isCallEstablished).onChanged.filter(_._2 == true) { case (userId, _) =>
+      soundController.playCallEstablishedSound(userId)
+    }
 
-  (lastCallAccountId zip isCallActive).onChanged.filter(_._2 == false) { case (userId, _) =>
-    soundController.playCallEndedSound(userId)
+    (lastCallAccountId zip isCallActive).onChanged.filter(_._2 == false) { case (userId, _) =>
+      soundController.playCallEndedSound(userId)
+    }
   }
 
   isCallActive.onChanged.filter(_ == false).on(Threading.Ui) { _ =>
