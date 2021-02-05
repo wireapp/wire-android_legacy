@@ -23,11 +23,18 @@ object WhereAmI {
 
   class WhereAmI() extends Exception("Where am I?")
 
-  def whereAmI = {
+  def whereAmI: String = {
     val where = new WhereAmI()
     val result = new StringWriter()
     val printWriter = new PrintWriter(result)
     where.printStackTrace(printWriter)
+    result.toString
+  }
+
+  def whereAmI(throwable: Throwable): String = {
+    val result = new StringWriter()
+    val printWriter = new PrintWriter(result)
+    throwable.printStackTrace(printWriter)
     result.toString
   }
 }

@@ -40,6 +40,7 @@ import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.{BuildConfig, R, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.utils.WhereAmI
 
 class TextPartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
@@ -102,7 +103,10 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int)
       textView.markdown()
     } catch {
       case ex: ArrayIndexOutOfBoundsException =>
-        info(l"Error on markdown. text: ${redactedString(text)}")
+        warn(l"ArrayIndexOutOfBoundsException on markdown. text: ${redactedString(text)}, stacktrace: ${WhereAmI.whereAmI(ex)}")
+        if (BuildConfig.FLAVOR == "internal") throw ex
+      case ex: NullPointerException =>
+        warn(l"NullPointerException on markdown. text: ${redactedString(text)}, stacktrace: ${WhereAmI.whereAmI(ex)}")
         if (BuildConfig.FLAVOR == "internal") throw ex
     }
   }
