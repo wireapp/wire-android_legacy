@@ -68,6 +68,8 @@ object Versions {
     const val PIN_EDITTEXT = "1.2.1"
     const val LIB_SODIUM = "2.0.2"
     const val COUNTLY = "20.04.2"
+    const val ZOOMING = "0.8.1"
+
 
     //testing
     const val JUNIT = "4.12"
@@ -152,7 +154,7 @@ object BuildDependencies {
     val pinEditText = "com.poovam:pin-edittext-field:${Versions.PIN_EDITTEXT}"
     val libSodium = "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:${Versions.LIB_SODIUM}"
     val countly = "ly.count.android:sdk:${Versions.COUNTLY}"
-
+    val zooming = "com.shopgun.android:zoomlayout:${Versions.ZOOMING}"
     val wireSignals = "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:${LegacyDependencies.WIRE_SIGNALS}"
 }
 
