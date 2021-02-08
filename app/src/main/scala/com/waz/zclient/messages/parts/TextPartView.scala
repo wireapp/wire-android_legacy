@@ -94,19 +94,26 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int)
     try {
       textView.setTransformedText(text)
     } catch {
-      case ex: ArrayIndexOutOfBoundsException =>
-        info(l"Error while transforming text link. text: ${redactedString(text)}")
+      case ex: Exception =>
+        warn(l"""
+          Error while transforming text link,
+          exception type: ${ex.getClass.getCanonicalName},
+          text: ${redactedString(text)},
+          stacktrace: ${WhereAmI.whereAmI(ex)}
+        """)
         if (BuildConfig.FLAVOR == "internal") throw ex
     }
 
     try {
       textView.markdown()
     } catch {
-      case ex: ArrayIndexOutOfBoundsException =>
-        warn(l"ArrayIndexOutOfBoundsException on markdown. text: ${redactedString(text)}, stacktrace: ${WhereAmI.whereAmI(ex)}")
-        if (BuildConfig.FLAVOR == "internal") throw ex
-      case ex: NullPointerException =>
-        warn(l"NullPointerException on markdown. text: ${redactedString(text)}, stacktrace: ${WhereAmI.whereAmI(ex)}")
+      case ex: Exception =>
+        warn(l"""
+          Error on markdown,
+          exception type: ${ex.getClass.getCanonicalName},
+          text: ${redactedString(text)},
+          stacktrace: ${WhereAmI.whereAmI(ex)}
+        """)
         if (BuildConfig.FLAVOR == "internal") throw ex
     }
   }
