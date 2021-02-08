@@ -40,6 +40,7 @@ import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.{BuildConfig, R, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.utils.WhereAmI
 
 class TextPartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
@@ -93,16 +94,26 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int)
     try {
       textView.setTransformedText(text)
     } catch {
-      case ex: ArrayIndexOutOfBoundsException =>
-        info(l"Error while transforming text link. text: ${redactedString(text)}")
+      case ex: Exception =>
+        warn(l"""
+          Error while transforming text link,
+          exception type: ${ex.getClass.getCanonicalName},
+          text: ${redactedString(text)},
+          stacktrace: ${WhereAmI.whereAmI(ex)}
+        """)
         if (BuildConfig.FLAVOR == "internal") throw ex
     }
 
     try {
       textView.markdown()
     } catch {
-      case ex: ArrayIndexOutOfBoundsException =>
-        info(l"Error on markdown. text: ${redactedString(text)}")
+      case ex: Exception =>
+        warn(l"""
+          Error on markdown,
+          exception type: ${ex.getClass.getCanonicalName},
+          text: ${redactedString(text)},
+          stacktrace: ${WhereAmI.whereAmI(ex)}
+        """)
         if (BuildConfig.FLAVOR == "internal") throw ex
     }
   }
