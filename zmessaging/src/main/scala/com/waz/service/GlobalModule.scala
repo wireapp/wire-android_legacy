@@ -38,8 +38,7 @@ import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
 import com.waz.sync.client._
 import com.waz.sync.{AccountSyncHandler, SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
-import com.waz.ui.MemoryImageCache
-import com.waz.ui.MemoryImageCache.{Entry, Key}
+import com.waz.ui.{MemoryImageCache, MemoryImageCacheImpl}
 import com.waz.utils.wrappers.{Context, GoogleApi}
 import com.waz.utils.{Cache, IoUtils}
 import com.waz.zms.BuildConfig
@@ -69,7 +68,6 @@ trait GlobalModule {
   def metadata:                 MetaDataService
   def cache:                    CacheService
   def bitmapDecoder:            BitmapDecoder
-  def trimmingLruCache:         Cache[Key, Entry]
   def imageCache:               MemoryImageCache
   def network:                  DefaultNetworkModeService
   def phoneNumbers:             PhoneNumberService
@@ -135,8 +133,7 @@ class GlobalModuleImpl(val context:             AContext,
   lazy val cache:               CacheService                     = CacheService(context, storage)
   lazy val bitmapDecoder:       BitmapDecoder                    = wire[BitmapDecoder]
 
-  lazy val trimmingLruCache:    Cache[Key, Entry]                = MemoryImageCache.newTrimmingLru(context)
-  lazy val imageCache:          MemoryImageCache                 = wire[MemoryImageCache]
+  lazy val imageCache:          MemoryImageCache                 = wire[MemoryImageCacheImpl]
 
   lazy val phoneNumbers:        PhoneNumberService               = wire[PhoneNumberServiceImpl]
   lazy val timeouts                                              = wire[Timeouts]
@@ -201,7 +198,6 @@ class EmptyGlobalModule extends GlobalModule {
   override def metadata:                 MetaDataService                                     = ???
   override def cache:                    CacheService                                        = ???
   override def bitmapDecoder:            BitmapDecoder                                       = ???
-  override def trimmingLruCache:         Cache[MemoryImageCache.Key, MemoryImageCache.Entry] = ???
   override def imageCache:               MemoryImageCache                                    = ???
   override def network:                  DefaultNetworkModeService                           = ???
   override def phoneNumbers:             PhoneNumberService                                  = ???
