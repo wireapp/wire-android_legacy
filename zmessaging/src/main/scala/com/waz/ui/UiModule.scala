@@ -17,24 +17,12 @@
  */
 package com.waz.ui
 
-import android.os.{Handler, Looper}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service._
-import com.wire.signals.{CancellableFuture, EventContext, ForcedEventSource, SourceSignal, SourceStream}
 import com.waz.threading.Threading
+import com.wire.signals._
 
-import scala.concurrent.{ExecutionContext, Future}
-
-trait ZMessagingResolverComponent {
-  val zms: ZMessagingResolver
-}
-
-class ZMessagingResolver(ui: UiModule) {
-  def apply[A](f: ZMessaging => A)(implicit ec: ExecutionContext = Threading.Background): CancellableFuture[A] =
-    CancellableFuture.lift(ui.getCurrent.collect { case Some(zms) => f(zms) })
-
-  def flatMapFuture[A](f: ZMessaging => Future[A])(implicit ec: ExecutionContext = Threading.Background) = apply(identity).future flatMap f
-}
+import scala.concurrent.Future
 
 trait UiEventContext {
   implicit lazy val eventContext: EventContext = EventContext()
@@ -72,22 +60,14 @@ trait UiEventContext {
   }
 }
 
-class UiModule(val global: GlobalModule) extends UiEventContext with ZMessagingResolverComponent with DerivedLogTag {
-
+class UiModule(val global: GlobalModule) extends UiEventContext with DerivedLogTag {
   private implicit val ui: UiModule = this
+  private lazy val accounts: AccountsService = global.accountsService
 
-  val zms = new ZMessagingResolver(this)
-
-  lazy val accounts = global.accountsService
-
-  val currentAccount = accounts.activeAccountManager
-  val currentZms = accounts.activeZms
+  val currentZms: Signal[Option[ZMessaging]] = accounts.activeZms
 
   currentZms.onChanged { _ => onReset ! true }
 
   def getCurrent: Future[Option[ZMessaging]] = accounts.activeZms.head
 }
 
-object UiModule {
-  val UiHandler = new Handler(Looper.getMainLooper)
-}

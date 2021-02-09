@@ -30,47 +30,10 @@ trait UiObservable extends com.waz.api.UiObservable {
 
   override def removeUpdateListener(listener: UpdateListener): Unit = updateListeners.remove(listener)
 
-  def getListenersCount = updateListeners.size
+  def getListenersCount: Int = updateListeners.size
 
   protected def notifyChanged(): Unit = {
     Threading.assertUiThread()
     updateListeners.notify(_.updated())
-  }
-}
-
-abstract class UiSignal[A]()(implicit ui: UiModule) extends com.waz.api.UiSignal[A] with UiObservable with SignalLoading {
-
-  private var value = Option.empty[A]
-
-  private var subscribers = Vector.empty[Subscriber[A]]
-
-  protected[api] def set(v: A) = {
-    if (!value.contains(v)) {
-      value = Some(v)
-      subscribers foreach (_.next(v))
-      notifyChanged()
-    }
-  }
-
-  override def isEmpty: Boolean = value.isEmpty
-
-  override def get: A = value.getOrElse(throw new IllegalStateException("Called `UiSignal.get` on signal which was not loaded yet. Use `UiSignal.subscribe` instead. Or, if you must, check `isEmpty` before calling `get`."))
-
-  override def subscribe(sub: Subscriber[A]): Subscription = {
-    Threading.assertUiThread()
-
-    subscribers = subscribers :+ sub
-    value foreach sub.next
-    new Subscription {
-      override def cancel(): Unit = subscribers = subscribers.filter(_ ne sub)
-    }
-  }
-
-  override def toString: String = value.toString
-}
-
-object UiSignal {
-  def apply[A](s: ZMessaging => Signal[A])(implicit ui: UiModule): UiSignal[A] = new UiSignal[A]() {
-    addLoader(s) { set }
   }
 }

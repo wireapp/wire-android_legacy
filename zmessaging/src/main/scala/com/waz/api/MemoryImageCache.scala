@@ -23,7 +23,7 @@ import com.waz.ui.MemoryImageCache.BitmapRequest.Single
 import com.waz.utils.returning
 
 object MemoryImageCache {
-  def reserveImageMemory(width: Int, height: Int) = returning(AssetId()) { id =>
+  def reserveImageMemory(width: Int, height: Int): AssetId = returning(AssetId()) { id =>
     ZMessaging.currentGlobal.imageCache.reserve(id, Single(width), width, height)
   }
 }
