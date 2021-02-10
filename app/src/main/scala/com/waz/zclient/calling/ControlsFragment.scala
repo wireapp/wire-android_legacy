@@ -95,8 +95,10 @@ class ControlsFragment extends FragmentHelper {
     }
 
 
+    //TODO : The calling squad decided to disable all/speaker toggle to perform some optimizations
+    // in terms of user experience before releasing it to public
 
-     if (BuildConfig.ACTIVE_SPEAKERS) {
+     /*if (BuildConfig.ACTIVE_SPEAKERS) {
        Signal.zip(
          controller.isCallEstablished,
          controller.isGroupCall,
@@ -107,7 +109,7 @@ class ControlsFragment extends FragmentHelper {
          case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
        }
      }
-     else
+     else*/
     speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
   }
 
