@@ -23,7 +23,7 @@ No license is granted to the Wire trademark and its associated logos, all of whi
 The project in this repository contains the Wire for Android client project. You can build the project yourself. However, there are some differences with the binary Wire client available on the Play Store.
 These differences are:
 
-- the open source project does not include the API keys of YouTube, Localytics, HockeyApp and other 3rd party services.
+- the open source project does not include the API keys of 3rd party services.
 - the open source project links against the open source Wire audio-video-signaling (AVS) library. The binary Play Store client links against an AVS version that contains proprietary improvements for the call quality.
 
 ## Prerequisites
