@@ -21,8 +21,11 @@ class FeatureFlagsServiceImpl(syncHandler: FeatureFlagsSyncHandler,
     for {
       appLock <- syncHandler.fetchAppLock()
       _       =  verbose(l"AppLock feature flag : $appLock")
-      _       <- userPrefs(AppLockEnabled) := appLock.enabled
+      _       <- userPrefs(AppLockFeatureEnabled) := appLock.enabled
       _       <- userPrefs(AppLockForced)  := appLock.forced
+      _       <- if (!appLock.enabled) userPrefs(AppLockEnabled) := false
+                 else if (appLock.forced) userPrefs(AppLockEnabled) := true
+                 else Future.successful(())
       _       <- userPrefs(AppLockTimeout) := appLock.timeout
     } yield ()
 }

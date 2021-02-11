@@ -15,7 +15,6 @@ import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.utils.ContextUtils
 import ContextUtils._
 import android.content.DialogInterface
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.wire.signals.EventStream
 

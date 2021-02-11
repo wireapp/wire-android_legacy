@@ -18,7 +18,7 @@
 package com.waz.zclient.common.controllers.global
 
 import android.content.Context
-import com.waz.content.UserPreferences.{AppLockEnabled, AppLockForced, AppLockTimeout}
+import com.waz.content.UserPreferences._
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
@@ -58,11 +58,12 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       }
   }
 
-  val ssoEnabled:          Signal[Boolean] = accounts.isActiveAccountSSO
-  val customPasswordEmpty: Signal[Boolean] = customPassword.flatMap(_.signal.map(_.isEmpty))
-  val appLockEnabled:      Signal[Boolean] = prefs.flatMap(_.preference(AppLockEnabled).signal)
-  val appLockForced:       Signal[Boolean] = prefs.flatMap(_.preference(AppLockForced).signal)
-  val appLockTimeout:      Signal[Int]     = prefs.flatMap(_.preference(AppLockTimeout).signal).map {
+  val ssoEnabled:            Signal[Boolean] = accounts.isActiveAccountSSO
+  val customPasswordEmpty:   Signal[Boolean] = customPassword.flatMap(_.signal.map(_.isEmpty))
+  val appLockEnabled:        Signal[Boolean] = prefs.flatMap(_.preference(AppLockEnabled).signal)
+  val appLockFeatureEnabled: Signal[Boolean] = prefs.flatMap(_.preference(AppLockFeatureEnabled).signal)
+  val appLockForced:         Signal[Boolean] = prefs.flatMap(_.preference(AppLockForced).signal)
+  val appLockTimeout:        Signal[Int]     = prefs.flatMap(_.preference(AppLockTimeout).signal).map {
     case None           => BuildConfig.APP_LOCK_TIMEOUT
     case Some(duration) => duration.toSeconds.toInt
   }
@@ -122,7 +123,7 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
     }
 
   private def openNewPasswordDialog(mode: NewPasswordDialog.Mode)(implicit ctx: Context) =  {
-    // The "Change Passcode" version of the dialog is always presented on the dark theme even if the controller says otherwise
+    // The "Change Passcode" version of the dialog is always presented on the dark themeeven if the controller says otherwise
     val isDarkTheme = mode == NewPasswordDialog.ChangeMode || inject[ThemeController].isDarkTheme
     val dialog = NewPasswordDialog.newInstance(mode, isDarkTheme)
     dialog.show(ctx.asInstanceOf[BaseActivity])
