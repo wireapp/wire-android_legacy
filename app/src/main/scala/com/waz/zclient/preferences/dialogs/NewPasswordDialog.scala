@@ -1,7 +1,7 @@
 package com.waz.zclient.preferences.dialogs
 
 import android.app.Dialog
-import android.content.DialogInterface.BUTTON_POSITIVE
+import android.content.DialogInterface.{BUTTON_NEGATIVE, BUTTON_POSITIVE, OnClickListener}
 import android.os.Bundle
 import android.text.method.{HideReturnsTransformationMethod, PasswordTransformationMethod}
 import android.view.{LayoutInflater, View, WindowManager}
@@ -10,12 +10,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.waz.model.AccountData.Password
 import com.waz.utils.{PasswordValidator, returning}
-import com.waz.zclient.{BuildConfig, FragmentHelper, R}
-import com.waz.zclient.common.controllers.global.{KeyboardController, PasswordController}
+import com.waz.zclient.{BaseActivity, BuildConfig, FragmentHelper, R}
+import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.utils.ContextUtils
 import ContextUtils._
-
-import scala.util.Try
+import android.content.DialogInterface
+import com.waz.zclient.ui.utils.KeyboardUtils
+import com.wire.signals.EventStream
 
 class NewPasswordDialog extends DialogFragment with FragmentHelper {
   import NewPasswordDialog._
@@ -46,34 +47,63 @@ class NewPasswordDialog extends DialogFragment with FragmentHelper {
   private lazy val isDarkTheme = getBooleanArg(IsDarkTheme)
   private lazy val keyboard = inject[KeyboardController]
 
-  override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
+  private lazy val dialog = {
     val builder = new AlertDialog.Builder(getActivity)
       .setView(root)
       .setTitle(getString(mode.dialogTitleId))
       .setMessage(getString(R.string.new_password_dialog_message))
-      .setPositiveButton(mode.dialogButtonId, null)
+      .setPositiveButton(mode.dialogButtonId, new OnClickListener() {
+        override def onClick(dialog: DialogInterface, which: Int): Unit = checkAndSetPassword()
+      })
 
-    if (mode.cancellable) builder.setNegativeButton(android.R.string.cancel, null)
+    if (mode.cancellable) builder.setNegativeButton(android.R.string.cancel, new OnClickListener {
+      override def onClick(dialog: DialogInterface, which: Int): Unit = onAnswer ! None
+    })
 
     builder.create()
   }
 
+  val onAnswer = EventStream[Option[Password]]()
+
+  def close(): Unit = {
+    KeyboardUtils.closeKeyboardIfShown(getActivity)
+    dismiss()
+  }
+
+  private def checkAndSetPassword(): Unit = {
+    val pass = passwordEditText.getText.toString
+    if (strongPasswordValidator.isValidPassword(pass)) {
+      onAnswer ! Some(Password(pass))
+    } else {
+      newPasswordHint.setTextColor(getColor(R.color.accent_red))
+    }
+  }
+
+  def show(activity: BaseActivity): Unit =
+    activity.getSupportFragmentManager
+      .beginTransaction
+      .add(this, NewPasswordDialog.Tag)
+      .addToBackStack(NewPasswordDialog.Tag)
+      .commit
+
+  override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
+    dialog
+  }
+
+  override def onBackPressed(): Boolean = {
+    if (mode.cancellable) onAnswer ! None
+    true
+  }
+
   override def onStart(): Unit = {
     super.onStart()
-    Try(getDialog.asInstanceOf[AlertDialog]).foreach {
-      _.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-        def onClick(v: View): Unit = {
-          val pass = passwordEditText.getText.toString
-          if (strongPasswordValidator.isValidPassword(pass)) {
-            inject[PasswordController].setCustomPassword(Password(pass))
-            keyboard.hideKeyboardIfVisible()
-            dismiss()
-          } else {
-            newPasswordHint.setTextColor(getColor(R.color.accent_red))
-          }
-        }
-      })
-    }
+    dialog.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+      override def onClick(v: View): Unit = checkAndSetPassword()
+    })
+
+    if (mode.cancellable) dialog.getButton(BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener {
+      override def onClick(v: View): Unit = onAnswer ! None
+    })
 
     newPasswordHint
     showHideButton
@@ -97,11 +127,12 @@ object NewPasswordDialog {
   val Mode: String = "Mode"
   val IsDarkTheme: String = "IsDarkTheme"
 
-  def newInstance(mode: Mode, isDarkTheme: Boolean): NewPasswordDialog = returning(new NewPasswordDialog){
-    _.setArguments(returning(new Bundle()) { bundle =>
+  def newInstance(mode: Mode, isDarkTheme: Boolean): NewPasswordDialog = returning(new NewPasswordDialog){ dialog =>
+    dialog.setArguments(returning(new Bundle()) { bundle =>
       bundle.putString(Mode, mode.id)
       bundle.putBoolean(IsDarkTheme, isDarkTheme)
     })
+    dialog.setCancelable(mode.cancellable)
   }
 
   sealed trait Mode {

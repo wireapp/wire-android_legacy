@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.content.UserPreferences.AppLockEnabled
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.PasswordController
@@ -13,9 +14,10 @@ import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.{BuildConfig, R, ViewHelper}
 import com.waz.zclient.utils._
+import com.waz.zclient.log.LogUI._
 
 class AppLockView(context: Context, attrs: AttributeSet, style: Int)
-  extends LinearLayout(context, attrs, style) with ViewHelper {
+  extends LinearLayout(context, attrs, style) with ViewHelper with DerivedLogTag {
   import Threading.Implicits.Ui
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -42,9 +44,12 @@ class AppLockView(context: Context, attrs: AttributeSet, style: Int)
 
   passwordController.appLockEnabled.foreach {
     case true =>
-      passwordController.setCustomPasswordIfNeeded(fromSettings = true)
+      verbose(l"app lock enabled")
+      passwordController.setCustomPasswordIfNeeded()
       appLockChangeButton.setVisible(true)
     case false =>
+      verbose(l"app lock disabled")
+      passwordController.clearCustomPassword()
       appLockChangeButton.setVisible(false)
   }
 }

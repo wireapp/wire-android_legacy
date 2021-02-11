@@ -110,7 +110,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     appLockButton.setSubtitle(getString(R.string.pref_options_app_lock_summary, timeout.toString))
   }
 
-  passwordController.appLockEnabled.foreach(appLockButton.setVisible)
+  passwordController.appLockFeatureEnabled.foreach(appLockButton.setVisible)
 
   override val appLock: EventStream[Unit] = appLockButton.onClickEvent.map(_ => ())
 

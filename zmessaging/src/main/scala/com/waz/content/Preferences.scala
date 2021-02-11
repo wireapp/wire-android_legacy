@@ -415,6 +415,7 @@ object UserPreferences {
   lazy val CustomPasswordIv = PrefKey[Option[String]]("sso_password_iv", customDefault = None)
 
   lazy val AppLockEnabled: PrefKey[Boolean]                = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
+  lazy val AppLockFeatureEnabled: PrefKey[Boolean]         = PrefKey[Boolean]("app_lock_feature_enabled", customDefault = true)
   lazy val AppLockForced:  PrefKey[Boolean]                = PrefKey[Boolean]("app_lock_forced", customDefault = false)
   lazy val AppLockTimeout: PrefKey[Option[FiniteDuration]] = PrefKey[Option[FiniteDuration]]("app_lock_timeout", customDefault = None)
 }

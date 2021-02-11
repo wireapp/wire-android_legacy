@@ -18,8 +18,7 @@
 package com.waz.zclient.common.controllers.global
 
 import android.content.Context
-import androidx.fragment.app.FragmentTransaction
-import com.waz.content.UserPreferences.{AppLockEnabled, AppLockForced, AppLockTimeout}
+import com.waz.content.UserPreferences._
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
@@ -34,7 +33,7 @@ import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecke
 import com.waz.zclient.{BaseActivity, BuildConfig, Injectable, Injector}
 import com.wire.signals.{EventStream, Signal, SourceStream}
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 
 class PasswordController(implicit inj: Injector) extends Injectable with DerivedLogTag {
   import Threading.Implicits.Background
@@ -43,17 +42,11 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
   private lazy val prefs                  = inject[Signal[UserPreferences]]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val featureFlags           = inject[Signal[FeatureFlagsService]]
-  private lazy val appInBackground        = inject[ActivityLifecycleCallback].appInBackground
   private lazy val customPassword         = prefs.map(_.preference(UserPreferences.CustomPassword))
   private lazy val customPasswordIv       = prefs.map(_.preference(UserPreferences.CustomPasswordIv))
   private lazy val sodiumHandler          = inject[SodiumHandler]
 
-  // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
-  if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
-    appLockPrefMigration()
-  }
-
-  appInBackground.map(_._1).foreach {
+  inject[ActivityLifecycleCallback].appInBackground.map(_._1).foreach {
     case true  =>
       inject[Signal[UserService]].head.foreach(_.clearAccountPassword())
     case false =>
@@ -65,12 +58,12 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       }
   }
 
-  val ssoEnabled:           Signal[Boolean]                = accounts.isActiveAccountSSO
-  val customPasswordEmpty:  Signal[Boolean]                = customPassword.flatMap(_.signal.map(_.isEmpty))
-  val appLockEnabled:       Signal[Boolean]                = prefs.flatMap(_.preference(AppLockEnabled).signal)
-  val appLockForced:        Signal[Boolean]                = prefs.flatMap(_.preference(AppLockForced).signal)
-
-  val appLockTimeout: Signal[Int] = prefs.flatMap(_.preference(AppLockTimeout).signal).map {
+  val ssoEnabled:            Signal[Boolean] = accounts.isActiveAccountSSO
+  val customPasswordEmpty:   Signal[Boolean] = customPassword.flatMap(_.signal.map(_.isEmpty))
+  val appLockEnabled:        Signal[Boolean] = prefs.flatMap(_.preference(AppLockEnabled).signal)
+  val appLockFeatureEnabled: Signal[Boolean] = prefs.flatMap(_.preference(AppLockFeatureEnabled).signal)
+  val appLockForced:         Signal[Boolean] = prefs.flatMap(_.preference(AppLockForced).signal)
+  val appLockTimeout:        Signal[Int]     = prefs.flatMap(_.preference(AppLockTimeout).signal).map {
     case None           => BuildConfig.APP_LOCK_TIMEOUT
     case Some(duration) => duration.toSeconds.toInt
   }
@@ -83,25 +76,35 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       _    <- openNewPasswordDialog(NewPasswordDialog.ChangeMode)
     } yield ()
 
-  def setCustomPasswordIfNeeded(fromSettings: Boolean = false)(implicit ctx: Context): Future[Unit] =
+  def setCustomPasswordIfNeeded()(implicit ctx: Context): Future[Unit] =
     for {
       enabled       <- appLockEnabled.head
-      forced        <- appLockForced.head
       passwordPref  <- customPassword.head
       password      <- passwordPref()
-      _             <- if (enabled && (fromSettings || forced) && password.isEmpty) openNewPasswordDialog(NewPasswordDialog.ChangeInWireMode)
-                       else Future.successful(())
+      _             <- if (enabled && password.isEmpty)
+                         openNewPasswordDialog(NewPasswordDialog.ChangeInWireMode)
+                       else
+                         Future.successful(())
+    } yield ()
+
+  def clearCustomPassword(): Future[Unit] =
+    for {
+      passwordPref   <- customPassword.head
+      _              <- passwordPref := None
+      passwordIvPref <- customPasswordIv.head
+      _              <- passwordIvPref := None
     } yield ()
 
   // TODO: This check is used for the app lock, but some people still use the account password
-  // instead of the custom one as their app lock password. When everyone migrates, it can be simplified.
+  //   instead of the custom one as their app lock password. When everyone migrates, it can be simplified.
   def checkPassword(password: Password): Future[Boolean] =
     for {
       users       <- inject[Signal[UserService]].head
       isEmpty     <- customPasswordEmpty.head
-      pwdCorrect  <- if (!isEmpty) checkCustomPassword(password)
-                     else users.checkAccountPassword(password).map(_.isRight)
-      _ = if (!pwdCorrect) verbose(l"wrong password")
+      pwdCorrect  <- if (!isEmpty)
+                       checkCustomPassword(password)
+                     else
+                       users.checkAccountPassword(password).map(_.isRight)
     } yield pwdCorrect
 
   private def checkCustomPassword(pwdToCheck: Password): Future[Boolean] =
@@ -119,19 +122,27 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
         false
     }
 
-  private def openNewPasswordDialog(mode: NewPasswordDialog.Mode)(implicit ctx: Context): Future[Int] = Future {
-    // The "Change Passcode" version of the dialog is always presented on the dark theme
-    // even if the controller says otherwise
+  private def openNewPasswordDialog(mode: NewPasswordDialog.Mode)(implicit ctx: Context) =  {
+    // The "Change Passcode" version of the dialog is always presented on the dark themeeven if the controller says otherwise
     val isDarkTheme = mode == NewPasswordDialog.ChangeMode || inject[ThemeController].isDarkTheme
-    val fragment = NewPasswordDialog.newInstance(mode, isDarkTheme)
-    ctx.asInstanceOf[BaseActivity]
-      .getSupportFragmentManager
-      .beginTransaction
-      .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-      .add(fragment, NewPasswordDialog.Tag)
-      .addToBackStack(NewPasswordDialog.Tag)
-      .commit
-  }(Threading.Ui)
+    val dialog = NewPasswordDialog.newInstance(mode, isDarkTheme)
+    dialog.show(ctx.asInstanceOf[BaseActivity])
+    val operationFinished = Promise[Unit]()
+    dialog.onAnswer.foreach {
+      case None if mode.cancellable =>
+        dialog.close()
+        customPasswordEmpty.head.foreach {
+          case true => prefs.foreach(_.preference(AppLockEnabled) := false)
+          case false =>
+        }
+        operationFinished.success(())
+      case Some(password) =>
+        dialog.close()
+        setCustomPassword(password).map(_ => operationFinished.success(()))
+      case _ =>
+    }
+    operationFinished.future
+  }
 
   def setCustomPassword(pwd: Password): Future[Unit] =
     for {
@@ -152,7 +163,7 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
     }(Threading.Background)
 
   // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
-  private def appLockPrefMigration(): Unit =
+  if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
     inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated).apply().foreach {
       case true =>
       case false =>
@@ -164,4 +175,5 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
           }
         }
     }
+  }
 }
