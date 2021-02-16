@@ -70,7 +70,6 @@ class ControlsFragment extends FragmentHelper {
       }
     }
     allButton.foreach { button =>
-      button.setSelected(true)
       button.onClick {
         updateToggleSelection(false)
       }
@@ -155,7 +154,6 @@ class ControlsFragment extends FragmentHelper {
   }
 
   override def onStop(): Unit = {
-    controller.showTopSpeakers ! false
     subs.foreach(_.destroy())
     subs = Set.empty
     super.onStop()
