@@ -68,7 +68,7 @@ object Versions {
     const val PIN_EDITTEXT = "1.2.1"
     const val LIB_SODIUM = "2.0.2"
     const val COUNTLY = "20.04.2"
-    const val ZOOMING = "0.8.1"
+    const val ZOOMING = "2.0.0"
 
 
     //testing

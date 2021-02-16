@@ -18,11 +18,8 @@
 
 -->
 <com.shopgun.android.zoomlayout.ZoomLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/full_screen_video_container"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:ignore="MissingClass" />
+    android:layout_height="match_parent" />
 
 

@@ -30,11 +30,13 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.FullScreenVideoFragment.PARTICIPANT_BUNDLE_KEY
 import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
 import com.waz.zclient.R
+import com.shopgun.android.zoomlayout.ZoomLayout
+import com.shopgun.android.zoomlayout.ZoomLayout.{OnDoubleTapListener, OnTapListener}
 
 class FullScreenVideoFragment extends FragmentHelper {
 
   private lazy val controller = inject[CallController]
-  private lazy val fullScreenVideoContainer = returning(view[FrameLayout](R.id.full_screen_video_container)){ vh =>
+  private lazy val fullScreenVideoContainer = returning(view[ZoomLayout](R.id.full_screen_video_container)) { vh =>
     val bundle = this.getArguments
     if (bundle != null) {
       val participant = bundle.getSerializable(PARTICIPANT_BUNDLE_KEY).asInstanceOf[Participant]
@@ -47,9 +49,19 @@ class FullScreenVideoFragment extends FragmentHelper {
         val userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
         else new OtherVideoView(getContext, participant)
 
-        userVideoView.onDoubleClick.onUi { _ =>
-          minimizeVideo(container, userVideoView)
-        }
+        container.addOnTapListener(new OnTapListener {
+          override def onTap(view: ZoomLayout, info: ZoomLayout.TapInfo): Boolean = {
+            controller.controlsClick(true)
+            true
+          }
+        })
+
+        container.addOnDoubleTapListener(new OnDoubleTapListener {
+          override def onDoubleTap(view: ZoomLayout, info: ZoomLayout.TapInfo): Boolean = {
+            minimizeVideo(container, userVideoView)
+            true
+          }
+        })
 
         container.addView(userVideoView)
 
@@ -73,6 +85,14 @@ class FullScreenVideoFragment extends FragmentHelper {
     container.removeView(userVideoView)
     getFragmentManager.popBackStack()
     controller.isFullScreenEnabled ! false
+  }
+
+  override def onDestroy(): Unit = {
+    super.onDestroy()
+    fullScreenVideoContainer.foreach { zoomLayout =>
+      zoomLayout.clearOnTabListeners()
+      zoomLayout.clearOnDoubleTapListeners()
+    }
   }
 }
 
