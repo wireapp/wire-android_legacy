@@ -36,38 +36,41 @@ import com.shopgun.android.zoomlayout.ZoomLayout.{OnDoubleTapListener, OnTapList
 class FullScreenVideoFragment extends FragmentHelper {
 
   private lazy val controller = inject[CallController]
-  private lazy val fullScreenVideoContainer = returning(view[ZoomLayout](R.id.full_screen_video_container)) { vh =>
+  private lazy val fullScreenVideoZoomLayout = returning(view[ZoomLayout](R.id.full_screen_video_zoom_layout)) { vh =>
     val bundle = this.getArguments
     if (bundle != null) {
       val participant = bundle.getSerializable(PARTICIPANT_BUNDLE_KEY).asInstanceOf[Participant]
       controller.isFullScreenEnabled ! true
 
-      vh.foreach { container =>
+      vh.foreach { zoomLayout =>
 
-        val selfParticipant = controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)).currentValue.get
+        view[FrameLayout](R.id.full_screen_video_container).foreach { container =>
 
-        val userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
-        else new OtherVideoView(getContext, participant)
+          val selfParticipant = controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)).currentValue.get
 
-        container.addOnTapListener(new OnTapListener {
-          override def onTap(view: ZoomLayout, info: ZoomLayout.TapInfo): Boolean = {
-            controller.controlsClick(true)
-            true
+          val userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
+          else new OtherVideoView(getContext, participant)
+
+          container.addView(userVideoView)
+
+          zoomLayout.addOnTapListener(new OnTapListener {
+            override def onTap(view: ZoomLayout, info: ZoomLayout.TapInfo): Boolean = {
+              controller.controlsClick(true)
+              true
+            }
+          })
+
+          zoomLayout.addOnDoubleTapListener(new OnDoubleTapListener {
+            override def onDoubleTap(view: ZoomLayout, info: ZoomLayout.TapInfo): Boolean = {
+              minimizeVideo(container, userVideoView)
+              true
+            }
+          })
+
+          controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
+            case VideoState.Started | VideoState.ScreenShare =>
+            case _ => minimizeVideo(container, userVideoView)
           }
-        })
-
-        container.addOnDoubleTapListener(new OnDoubleTapListener {
-          override def onDoubleTap(view: ZoomLayout, info: ZoomLayout.TapInfo): Boolean = {
-            minimizeVideo(container, userVideoView)
-            true
-          }
-        })
-
-        container.addView(userVideoView)
-
-        controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
-          case VideoState.Started | VideoState.ScreenShare =>
-          case _ => minimizeVideo(container, userVideoView)
         }
       }
     }
@@ -78,7 +81,7 @@ class FullScreenVideoFragment extends FragmentHelper {
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
-    fullScreenVideoContainer
+    fullScreenVideoZoomLayout
   }
 
   def minimizeVideo(container: FrameLayout, userVideoView: UserVideoView): Unit = {
@@ -89,7 +92,7 @@ class FullScreenVideoFragment extends FragmentHelper {
 
   override def onDestroy(): Unit = {
     super.onDestroy()
-    fullScreenVideoContainer.foreach { zoomLayout =>
+    fullScreenVideoZoomLayout.foreach { zoomLayout =>
       zoomLayout.clearOnTabListeners()
       zoomLayout.clearOnDoubleTapListeners()
     }
