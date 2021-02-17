@@ -182,19 +182,26 @@ object SecurityPolicyChecker extends DerivedLogTag {
   }
 
   /**
-    * Security checklist for background activities (e.g. receiving notifications). This is
-    * static so that it can be accessible from `FCMHandlerService`.
-    */
+   * Security checklist for background activities (e.g. receiving notifications). This is
+   * static so that it can be accessible from `FCMHandlerService`.
+   *
+   * This checklist might be called from FCMHandlerService when the device is in the doze mode and
+   * the app has only a few seconds to handle and incoming message. Every millisecond counts, so
+   * we use a quick if/else at start to check if more complicated checks are necessary at all.
+   */
   def runBackgroundSecurityChecklist()(implicit context: Context): Future[Boolean] =
-    ZMessaging.currentAccounts.activeAccountManager.head.flatMap(am =>
-      runSecurityChecklist(
-        passwordController = None,
-        globalPreferences  = ZMessaging.currentGlobal.prefs,
-        userPreferences    = None,
-        accountManager     = am,
-        isForeground       = false,
-        authNeeded         = false
-      )
+    if (!BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT && !BuildConfig.WIPE_ON_COOKIE_INVALID)
+      Future.successful(true)
+    else
+      ZMessaging.currentAccounts.activeAccountManager.head.flatMap(am =>
+        runSecurityChecklist(
+          passwordController = None,
+          globalPreferences  = ZMessaging.currentGlobal.prefs,
+          userPreferences    = None,
+          accountManager     = am,
+          isForeground       = false,
+          authNeeded         = false
+        )
     )
 
 }

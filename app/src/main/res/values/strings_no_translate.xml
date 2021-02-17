@@ -146,6 +146,7 @@
     <string translatable="false" name="pref_dev_register_new_client_summary">Useful for testing too many devices. This button will grey itself out when you reach the limit</string>
 
     <!--Notifications preferences-->
+    <string translatable="false" name="default_notification_channel_id">FOREGROUND_NOTIFICATION_CHANNEL_ID</string>
     <string translatable="false" name="pref_dev_category_notifications_key">PREF_NOTIFICATIONS_CATEGORY</string>
     <string translatable="false" name="pref_dev_category_notifications_title">Notifications</string>
     <string translatable="false" name="pref_dev_category_net_debug_key">PREF_NET_DEBUG_CATEGORY</string>
