@@ -29,7 +29,8 @@ import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessa
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.utils.returning
-import com.wire.signals.{ClockSignal, Signal}
+import com.wire.signals.Signal
+import com.wire.signals.ext.ClockSignal
 import org.threeten.bp.Duration
 import org.threeten.bp.Duration.between
 

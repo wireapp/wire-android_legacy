@@ -29,7 +29,7 @@ import com.waz.service.ZMessaging
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.wire.signals.{ClockSignal, Signal, Subscription}
+import com.wire.signals.{Signal, Subscription}
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -45,6 +45,7 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
+import com.wire.signals.ext.ClockSignal
 
 class SingleParticipantFragment extends FragmentHelper {
   import Threading.Implicits.Ui

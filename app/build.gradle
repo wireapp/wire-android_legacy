@@ -407,6 +407,7 @@ dependencies {
     implementation BuildDependencies.countly
 
     implementation BuildDependencies.wireSignals
+    implementation BuildDependencies.wireSignalsExtensions
 
     implementation BuildDependencies.libSodium
 

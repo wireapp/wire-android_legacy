@@ -154,6 +154,7 @@ object BuildDependencies {
     val countly = "ly.count.android:sdk:${Versions.COUNTLY}"
 
     val wireSignals = "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:${LegacyDependencies.WIRE_SIGNALS}"
+    val wireSignalsExtensions = "com.wire:wire-signals-extensions_${LegacyDependencies.SCALA_MAJOR_VERSION}:${LegacyDependencies.WIRE_SIGNALS_EXTENSIONS}"
 }
 
 object ModuleDependencies {
@@ -191,7 +192,8 @@ object LegacyDependencies {
     const val SCALA_MAJOR_VERSION = "2.11"
     const val SCALA_VERSION = SCALA_MAJOR_VERSION.plus(".12")
     // signals
-    const val WIRE_SIGNALS = "0.3.2"
+    const val WIRE_SIGNALS = "0.4.0"
+    const val WIRE_SIGNALS_EXTENSIONS = "0.4.0"
 
     //build
     val scalaLibrary = "org.scala-lang:scala-library:$SCALA_VERSION"

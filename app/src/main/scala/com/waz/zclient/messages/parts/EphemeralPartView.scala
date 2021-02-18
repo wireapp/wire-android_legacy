@@ -25,7 +25,7 @@ import android.widget.{ImageView, TextView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccentColor
 import com.waz.threading.Threading
-import com.wire.signals.{ClockSignal, Signal}
+import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.MessageViewPart
@@ -33,6 +33,7 @@ import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.{ColorUtils, TypefaceUtils}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
+import com.wire.signals.ext.ClockSignal
 
 trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
 
@@ -100,7 +101,7 @@ trait EphemeralIndicatorPartView
       if (expired) Signal const 360
       else expiryTime.fold(Signal const 0) { time =>
         val interval = ephemeral.get / 360
-        ClockSignal(interval) map { now =>
+        ClockSignal(interval).map { now =>
           val remaining = time.toEpochMilli - now.toEpochMilli
           360 - ((remaining * 360f / ephemeral.get.toMillis).toInt max 0 min 360)
         }
