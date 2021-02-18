@@ -42,6 +42,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R, WireContext}
 import com.wire.signals._
+import com.wire.signals.ext.{ButtonSignal, ClockSignal}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future

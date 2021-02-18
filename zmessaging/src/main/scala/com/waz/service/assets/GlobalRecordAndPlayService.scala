@@ -39,6 +39,7 @@ import com.waz.threading.Threading
 import com.waz.utils._
 import com.wire.signals._
 import com.waz.utils.wrappers.URI
+import com.wire.signals.ext.ClockSignal
 import org.threeten.bp
 import org.threeten.bp.Instant
 
