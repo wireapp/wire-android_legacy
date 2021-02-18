@@ -19,8 +19,8 @@ package com.waz.zclient.calling
 
 import android.os.Bundle
 import android.view.View.OnClickListener
-import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{FrameLayout, LinearLayout}
+import android.view.{Gravity, LayoutInflater, View, ViewGroup}
+import android.widget.{FrameLayout, LinearLayout, Toast}
 import androidx.cardview.widget.CardView
 import androidx.gridlayout.widget.GridLayout
 import com.waz.service.call.Avs.VideoState
@@ -101,6 +101,15 @@ class CallingFragment extends FragmentHelper {
     getView.setOnClickListener(new OnClickListener {
       override def onClick(view: View): Unit = controller.controlsClick(true)
     })
+
+    controller.isGroupCall.onUi {
+      case true =>
+        val toast = Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG)
+        toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0)
+        toast.show()
+      case _ =>
+    }
+
   }
 
   override def onBackPressed(): Boolean =
@@ -137,7 +146,6 @@ class CallingFragment extends FragmentHelper {
     } { userView =>
       viewMap = viewMap.updated(participant, userView)
         userView.onDoubleClick.onUi { _ =>
-
           controller.allParticipants.map(_.size > 2).head.foreach {
             case true =>
               showFullScreenVideo(participant)

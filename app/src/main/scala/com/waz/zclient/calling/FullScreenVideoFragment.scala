@@ -18,8 +18,8 @@
 package com.waz.zclient.calling
 
 import android.os.Bundle
-import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.FrameLayout
+import android.view.{Gravity, LayoutInflater, View, ViewGroup}
+import android.widget.{FrameLayout, Toast}
 import androidx.fragment.app.Fragment
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
@@ -51,7 +51,10 @@ class FullScreenVideoFragment extends FragmentHelper {
           val userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
           else new OtherVideoView(getContext, participant)
 
-          container.addView(userVideoView)
+          userVideoView.onDoubleClick.onUi { _ =>
+            minimizeVideo(container, userVideoView)
+          }
+
 
           zoomLayout.addOnTapListener(new OnTapListener {
             override def onTap(view: ZoomLayout, info: ZoomLayout.TapInfo): Boolean = {
@@ -66,6 +69,8 @@ class FullScreenVideoFragment extends FragmentHelper {
               true
             }
           })
+
+          container.addView(userVideoView)
 
           controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
             case VideoState.Started | VideoState.ScreenShare =>
@@ -84,18 +89,16 @@ class FullScreenVideoFragment extends FragmentHelper {
     fullScreenVideoZoomLayout
   }
 
+  override def onResume(): Unit = {
+    super.onResume()
+    val toast = Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG)
+    toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0)
+    toast.show()
+  }
   def minimizeVideo(container: FrameLayout, userVideoView: UserVideoView): Unit = {
     container.removeView(userVideoView)
     getFragmentManager.popBackStack()
     controller.isFullScreenEnabled ! false
-  }
-
-  override def onDestroy(): Unit = {
-    super.onDestroy()
-    fullScreenVideoZoomLayout.foreach { zoomLayout =>
-      zoomLayout.clearOnTabListeners()
-      zoomLayout.clearOnDoubleTapListeners()
-    }
   }
 }
 
