@@ -135,7 +135,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def contextWrapper    = new AndroidContext(context)
   def googleApi         = global.googleApi
   def globalToken       = global.tokenService
-  def imageCache        = global.imageCache
   def permissions       = global.permissions
   def phoneNumbers      = global.phoneNumbers
   def prefs             = global.prefs

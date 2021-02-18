@@ -19,78 +19,31 @@ package com.waz.ui
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
-import com.waz.log.LogSE._
 import com.waz.model.AssetId
-import com.wire.signals.CancellableFuture
-import com.waz.threading.Threading
-import com.waz.ui.MemoryImageCache.BitmapRequest
-import com.waz.ui.MemoryImageCache.BitmapRequest.{Blurred, Regular, Round, Single}
-import com.waz.utils.{Cache, TrimmingLruCache}
 import com.waz.utils.TrimmingLruCache.CacheSize
-import com.waz.utils.wrappers.{Bitmap, Context, EmptyBitmap}
+import com.waz.utils.wrappers.Context
+import com.waz.utils.{Cache, TrimmingLruCache}
 
 trait MemoryImageCache {
-  def get(id: AssetId, req: BitmapRequest, imgWidth: Int): Option[Bitmap]
-  def add(id: AssetId, req: BitmapRequest, bmp: Bitmap): Unit
-  def remove(id: AssetId, req: BitmapRequest): Unit
-  def reserve(id: AssetId,  req: BitmapRequest, width: Int, height: Int): Unit
-  def reserve(id: AssetId, req: BitmapRequest, size: Int): Unit
-  def clear(): Unit
-  def apply(id: AssetId, req: BitmapRequest, imgWidth: Int, load: => CancellableFuture[Bitmap]): CancellableFuture[Bitmap]
+  def reserve(id: AssetId, width: Int, height: Int): Unit
 }
 
-class MemoryImageCacheImpl(lru: Cache[MemoryImageCache.Key, MemoryImageCache.Entry])
-  extends MemoryImageCache
-    with DerivedLogTag {
-
+class MemoryImageCacheImpl(context: Context) extends MemoryImageCache with DerivedLogTag {
   import MemoryImageCache._
 
-  override def get(id: AssetId, req: BitmapRequest, imgWidth: Int): Option[Bitmap] = Option(lru.get(Key(id, tag(req)))) flatMap {
-    case BitmapEntry(bmp) if bmp.getWidth >= req.width || (imgWidth > 0 && bmp.getWidth > imgWidth) => Some(bmp)
-    case _ => None
-  }
-
-  override def add(id: AssetId, req: BitmapRequest, bmp: Bitmap): Unit = if (bmp != null && !bmp.isEmpty) {
-    lru.put(Key(id, tag(req)), BitmapEntry(bmp))
-  }
-
-  override def remove(id: AssetId, req: BitmapRequest): Unit = lru.remove(Key(id, tag(req)))
-
-  override def reserve(id: AssetId,  req: BitmapRequest, width: Int, height: Int): Unit = reserve(id, req, width * height * 4 + 256)
-
-  override def reserve(id: AssetId, req: BitmapRequest, size: Int): Unit = lru.synchronized {
-    val key = Key(id, tag(req))
-    Option(lru.get(key)) getOrElse lru.put(key, EmptyEntry(size))
-  }
-
-  override def clear(): Unit = lru.evictAll()
-
-  override def apply(id: AssetId, req: BitmapRequest, imgWidth: Int, load: => CancellableFuture[Bitmap]): CancellableFuture[Bitmap] =
-    get(id, req, imgWidth) match {
-      case Some(bitmap) =>
-        verbose(l"found bitmap for req: $req")
-        CancellableFuture.successful(bitmap)
-      case None =>
-        verbose(l"no bitmap for req: $req, loading...")
-        val future = load
-        future.onSuccess {
-          case EmptyBitmap => // ignore
-          case img => add(id, req, img)
-        }(Threading.Ui)
-        future
+  private lazy val lru: Cache[AssetId, MemoryImageCache.Entry] =
+    new TrimmingLruCache[AssetId, Entry](context, CacheSize(total => math.max(5 * 1024 * 1024, (total - 30 * 1024 * 1024) / 2))) {
+      override def sizeOf(id: AssetId, value: Entry): Int = value.size
     }
+
+  override def reserve(id: AssetId,  width: Int, height: Int): Unit = lru.synchronized {
+    Option(lru.get(id)).getOrElse(lru.put(id, EmptyEntry(width * height * 4 + 256)))
+  }
 }
 
 object MemoryImageCache {
-
-  case class Key(id: AssetId, string: String)
-
   sealed trait Entry {
     def size: Int
-  }
-
-  case class BitmapEntry(bmp: Bitmap) extends Entry {
-    override def size = bmp.getByteCount
   }
 
   // used to reserve space
@@ -98,30 +51,8 @@ object MemoryImageCache {
     require(size > 0)
   }
 
-  def apply(context: Context) = new MemoryImageCacheImpl(newTrimmingLru(context))
-
-  def newTrimmingLru(context: Context):Cache[Key, Entry] =
-    new TrimmingLruCache[Key, Entry](context, CacheSize(total => math.max(5 * 1024 * 1024, (total - 30 * 1024 * 1024) / 2))) {
-      override def sizeOf(id: Key, value: Entry): Int = value.size
-    }
-
   sealed trait BitmapRequest extends SafeToLog {
     val width: Int
     val mirror: Boolean = false
-  }
-
-  object BitmapRequest {
-    case class Regular(width: Int = 0, override val mirror: Boolean = false) extends BitmapRequest
-    case class Single(width: Int = 0, override val mirror: Boolean = false) extends BitmapRequest
-    case class Round(width: Int = 0, borderWidth: Int = 0, borderColor: Int = 0) extends BitmapRequest
-    case class Blurred(width: Int = 0, blurRadius: Int = 1, blurPasses: Int = 1) extends BitmapRequest
-  }
-
-  //The width makes BitmapRequests themselves bad keys, remove them
-  def tag(request: BitmapRequest) = request match {
-    case Regular(_, mirror) => s"Regular-$mirror"
-    case Single(_, mirror) => s"Single-$mirror"
-    case Round(_, bw, bc) => s"Round-$bw-$bc"
-    case Blurred(_, br, bp) => s"Blurred-$br-$bp"
   }
 }

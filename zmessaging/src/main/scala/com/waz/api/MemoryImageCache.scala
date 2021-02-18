@@ -19,11 +19,10 @@ package com.waz.api
 
 import com.waz.model.AssetId
 import com.waz.service.ZMessaging
-import com.waz.ui.MemoryImageCache.BitmapRequest.Single
 import com.waz.utils.returning
 
 object MemoryImageCache {
-  def reserveImageMemory(width: Int, height: Int) = returning(AssetId()) { id =>
-    ZMessaging.currentGlobal.imageCache.reserve(id, Single(width), width, height)
+  def reserveImageMemory(width: Int, height: Int): AssetId = returning(AssetId()) { id =>
+    ZMessaging.currentGlobal.imageCache.reserve(id, width, height)
   }
 }

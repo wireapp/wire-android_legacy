@@ -24,7 +24,8 @@ import com.waz.ui.{SignalLoading, UiModule}
 import com.wire.signals.Signal
 import org.threeten.bp.Duration
 
-class PlaybackControls(key: MediaKey, content: Content, durationSource: ZMessaging => Signal[Duration])(implicit ui: UiModule) extends api.PlaybackControls with UiObservable with SignalLoading {
+class PlaybackControls(key: MediaKey, content: Content, durationSource: ZMessaging => Signal[Duration])(implicit ui: UiModule)
+  extends api.PlaybackControls with UiObservable with SignalLoading {
   private var playing = false
   private var playhead = Duration.ZERO
   private var duration = Duration.ZERO
