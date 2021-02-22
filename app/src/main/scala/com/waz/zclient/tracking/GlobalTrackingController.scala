@@ -85,7 +85,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
     } yield {
         verbose(l"Using countly Id: ${trackingId.str}")
         val config = new CountlyConfig(cxt, GlobalTrackingController.countlyAppKey, BuildConfig.COUNTLY_SERVER_URL)
-          .setLoggingEnabled(logsEnabled)
+          .setLoggingEnabled(false)
           .setIdMode(DeviceId.Type.DEVELOPER_SUPPLIED)
           .setDeviceId(trackingId.str)
           .setRecordAppStartTime(true)

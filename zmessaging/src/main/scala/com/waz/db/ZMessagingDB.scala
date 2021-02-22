@@ -367,12 +367,14 @@ object ZMessagingDB {
       val messages = MessageDataDao.findByTypes(Set(Message.Type.ANY_ASSET, Message.Type.VIDEO_ASSET, Message.Type.AUDIO_ASSET, Message.Type.IMAGE_ASSET))(db)
 
       messages.foreach { m =>
-        m.protos.lastOption match {
-          case Some(GenericMessage(_, a @ GenericContent.Asset(_, _))) if a.getUploaded != null =>
-            val newMessage = m.copy(assetId = Option(AssetId(a.getUploaded.assetId)))
-            MessageDataDao.insertOrReplace(newMessage)(db)
+        m.genericMsgs.lastOption match {
+          case Some(msg) => msg.unpackContent match {
+            case GenericContent.Asset(proto) if proto.hasUploaded =>
+              val newMessage = m.copy(assetId = Option(AssetId(proto.getUploaded.getAssetId)))
+              MessageDataDao.insertOrReplace(newMessage)(db)
+            case _ =>
+          }
           case _ =>
-            m
         }
       }
     },

@@ -25,7 +25,8 @@ import com.waz.content.{MembersStorage, MessagesStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.AssetData.{ProcessingTaskKey, UploadTaskKey}
-import com.waz.model.GenericContent.{ButtonAction, Ephemeral, Knock, Location, MsgEdit}
+import com.waz.model.{ReadReceipt => MReadReceipt}
+import com.waz.model.GenericContent.{ButtonAction, DeliveryReceipt, Ephemeral, EphemeralLocation, Knock, Location, MsgDeleted, MsgEdit, MsgRecall, Asset => GAsset, ReadReceipt => GReadReceipt}
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.errors._
@@ -39,7 +40,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.service.{ErrorsService, Timeouts}
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult.Failure
-import com.waz.sync.client.ErrorOrResponse
+import com.waz.sync.client.{ErrorOr, ErrorOrResponse}
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.sync.{SyncResult, SyncServiceHandle}
@@ -49,7 +50,7 @@ import com.wire.signals.CancellableFuture
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 class MessagesSyncHandler(selfUserId: UserId,
                           service:    MessagesService,
@@ -72,7 +73,7 @@ class MessagesSyncHandler(selfUserId: UserId,
   def postDeleted(convId: ConvId, msgId: MessageId): Future[SyncResult] =
     convs.convById(convId).flatMap {
       case Some(conv) =>
-        val msg = GenericMessage(Uid(), Proto.MsgDeleted(conv.remoteId, msgId))
+        val msg = GenericMessage(Uid(), MsgDeleted(conv.remoteId, msgId))
         otrSync
           .postOtrMessage(ConvId(selfUserId.str), msg)
           .map(SyncResult(_))
@@ -83,7 +84,7 @@ class MessagesSyncHandler(selfUserId: UserId,
   def postRecalled(convId: ConvId, msgId: MessageId, recalled: MessageId): Future[SyncResult] =
     convs.convById(convId) flatMap {
       case Some(conv) =>
-        val msg = GenericMessage(msgId.uid, Proto.MsgRecall(recalled))
+        val msg = GenericMessage(msgId.uid, MsgRecall(recalled))
         otrSync.postOtrMessage(conv.id, msg).flatMap {
           case Left(e) => successful(SyncResult(e))
           case Right(time) =>
@@ -99,9 +100,9 @@ class MessagesSyncHandler(selfUserId: UserId,
     convs.convById(convId).flatMap {
       case Some(conv) =>
         val (msg, recipients) = tpe match {
-          case ReceiptType.Delivery         => (GenericMessage(msgs.head.uid, Proto.DeliveryReceipt(msgs))(Proto.DeliveryReceipt), Set(userId))
-          case ReceiptType.Read             => (GenericMessage(msgs.head.uid, Proto.ReadReceipt(msgs))(Proto.ReadReceipt), Set(userId))
-          case ReceiptType.EphemeralExpired => (GenericMessage(msgs.head.uid, Proto.MsgRecall(msgs.head)), Set(selfUserId, userId))
+          case ReceiptType.Delivery         => (GenericMessage(msgs.head.uid, DeliveryReceipt(msgs)), Set(userId))
+          case ReceiptType.Read             => (GenericMessage(msgs.head.uid, GReadReceipt(msgs)), Set(userId))
+          case ReceiptType.EphemeralExpired => (GenericMessage(msgs.head.uid, MsgRecall(msgs.head)), Set(selfUserId, userId))
         }
 
         otrSync
@@ -124,7 +125,8 @@ class MessagesSyncHandler(selfUserId: UserId,
       } yield SyncResult(result)
     }
 
-  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant)(implicit info: RequestInfo): Future[SyncResult] =
+  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant)(implicit info: RequestInfo): Future[SyncResult] = {
+    verbose(l"postMessage($convId, $id, $editTime)")
     storage.getMessage(id).flatMap { message =>
       message
         .fold(successful(None: Option[ConversationData]))(msg => convs.convById(msg.convId))
@@ -137,7 +139,8 @@ class MessagesSyncHandler(selfUserId: UserId,
             for {
               _ <- service.messageSent(convId, timeAndId._2, timeAndId._1)
               (prevLastTime, lastTime) <- msgContent.updateLocalMessageTimes(convId, msg.time, timeAndId._1)
-                .map(_.lastOption.map { case (p, c) => (p.time, c.time)}.getOrElse((msg.time, timeAndId._1)))
+                                                    .map(_.lastOption.map { case (p, c) => (p.time, c.time)}
+                                                    .getOrElse((msg.time, timeAndId._1)))
               // update conv lastRead time if there is no unread message after the message that was just sent
               _ <- convs.storage.update(convId, c => if (!c.lastRead.isAfter(prevLastTime)) c.copy(lastRead = lastTime) else c)
               _ <- convs.updateLastEvent(convId, timeAndId._1)
@@ -147,16 +150,12 @@ class MessagesSyncHandler(selfUserId: UserId,
             verbose(l"postOtrMessage($msg) not successful $error")
             for {
               _ <- error match {
-                case ErrorResponse(ResponseCode.Forbidden, _, "unknown-client") =>
-                  clients.onCurrentClientRemoved()
-                case _ =>
-                  Future.successful({})
+                case ErrorResponse(ResponseCode.Forbidden, _, "unknown-client") => clients.onCurrentClientRemoved()
+                case _ => Future.successful({})
               }
               syncResult = error match {
-                case ErrorResponse(ErrorResponse.ConnectionErrorCode, _, _) =>
-                  Failure.apply(error)
-                case _ =>
-                  SyncResult(error)
+                case ErrorResponse(ErrorResponse.ConnectionErrorCode, _, _) => Failure.apply(error)
+                case _ => SyncResult(error)
               }
               result <- syncResult match {
                 case r: SyncResult.Failure =>
@@ -179,61 +178,76 @@ class MessagesSyncHandler(selfUserId: UserId,
       case _ =>
         successful(Failure("postMessage failed, couldn't find either message or conversation"))
     }
+  }
 
   /**
     * Sends a message to the given conversation. If the message is an edit, it will also update the message
     * in the database to the new message ID.
     * @return either error, or the remote timestamp and the new message ID
     */
-  private def postMessage(conv: ConversationData, msg: MessageData, reqEditTime: RemoteInstant): Future[Either[ErrorResponse, (RemoteInstant, MessageId)]] = {
+  private def postMessage(conv: ConversationData,
+                          msg: MessageData,
+                          reqEditTime: RemoteInstant): ErrorOr[(RemoteInstant, MessageId)] = {
 
-    def postTextMessage() = {
+    def postTextMessage(): ErrorOr[MessageData] = {
+
       val adjustedMsg = msg.adjustMentions(true).getOrElse(msg)
 
-      val (gm, isEdit) =
-        adjustedMsg.protos.lastOption match {
-          case Some(m@GenericMessage(id, MsgEdit(ref, text))) if !reqEditTime.isEpoch =>
-            (m, true) // will send edit only if original message was already sent (reqEditTime > EPOCH)
-          case _ =>
-            (TextMessage(adjustedMsg), false)
+      val (gm, isEdit) = adjustedMsg.genericMsgs.lastOption.flatMap { m =>
+        m.unpackContent match {
+          case _: MsgEdit if !reqEditTime.isEpoch => Some((m, true))
+          // will send edit only if original message was already sent (reqEditTime > EPOCH)
+          case _ => None
         }
+      }.getOrElse((TextMessage(adjustedMsg), false))
 
       otrSync.postOtrMessage(conv.id, gm).flatMap {
         case Right(time) if isEdit =>
+          verbose(l"postOtrMessage successful for edit")
           // delete original message and create new message with edited content
-          service.applyMessageEdit(conv.id, msg.userId, RemoteInstant(time.instant), gm) map {
+          service.applyMessageEdit(conv.id, msg.userId, RemoteInstant(time.instant), gm).map {
             case Some(m) => Right(m)
-            case _ => Right(msg.copy(time = RemoteInstant(time.instant)))
+            case _       => Right(msg.copy(time = RemoteInstant(time.instant)))
           }
-        case Right(time) => successful(Right(msg.copy(time = time)))
-        case Left(err) => successful(Left(err))
+        case Right(time) =>
+          verbose(l"postOtrMessage successful for text")
+          successful(Right(msg.copy(time = time)))
+        case Left(err) =>
+          verbose(l"postOtrMessage error: $err")
+          successful(Left(err))
       }
     }
 
     import Message.Type._
 
     msg.msgType match {
-      case _ if msg.isAssetMessage => Cancellable(UploadTaskKey(msg.assetId.get))(uploadAsset(conv, msg)).future.map(_.map((_, msg.id)))
-      case KNOCK => otrSync.postOtrMessage(conv.id, GenericMessage(msg.id.uid, msg.ephemeral, Proto.Knock(msg.expectsRead.getOrElse(false)))).map(_.map((_, msg.id)))
-      case TEXT | TEXT_EMOJI_ONLY => postTextMessage().map(_.map(data => (data.time, data.id)))
+      case _ if msg.isAssetMessage =>
+        Cancellable(UploadTaskKey(msg.assetId.get))(uploadAsset(conv, msg)).future.map(_.map((_, msg.id)))
+      case KNOCK =>
+        otrSync.postOtrMessage(conv.id, GenericMessage(msg.id.uid, msg.ephemeral, Knock(msg.expectsRead.getOrElse(false)))).map(_.map((_, msg.id)))
+      case TEXT | TEXT_EMOJI_ONLY =>
+        postTextMessage().map(_.map(data => (data.time, data.id)))
       case RICH_MEDIA =>
         postTextMessage().flatMap {
-          case Right(m) => sync.postOpenGraphData(conv.id, m.id, m.editTime).map(_ => Right(m.time, m.id))
+          case Right(m)  => sync.postOpenGraphData(conv.id, m.id, m.editTime).map(_ => Right(m.time, m.id))
           case Left(err) => successful(Left(err))
         }
       case LOCATION =>
-        msg.protos.headOption match {
-          case Some(GenericMessage(id, loc: Location)) if msg.isEphemeral =>
-            otrSync.postOtrMessage(conv.id, GenericMessage(id, Ephemeral(msg.ephemeral, loc))).map(_.map((_, msg.id)))
-          case Some(proto) =>
-            otrSync.postOtrMessage(conv.id, proto).map(_.map((_, msg.id)))
-          case None =>
-            successful(Left(internalError(s"Unexpected location message content: $msg")))
+        msg.genericMsgs.headOption.map { m =>
+          m.unpack match {
+            case (id, loc: Location) if msg.isEphemeral =>
+              val expiry = msg.ephemeral.getOrElse(Duration.Zero)
+              otrSync.postOtrMessage(conv.id, GenericMessage(id, Ephemeral(msg.ephemeral, EphemeralLocation(loc.proto, expiry)))).map(_.map((_, msg.id)))
+            case _ =>
+              otrSync.postOtrMessage(conv.id, m).map(_.map((_, msg.id)))
+          }
+        }.getOrElse {
+          successful(Left(internalError(s"Unexpected location message content: $msg")))
         }
       case tpe =>
-        msg.protos.headOption match {
+        verbose(l"post generic message")
+        msg.genericMsgs.headOption match {
           case Some(proto) if !msg.isEphemeral =>
-            verbose(l"sending generic message: $proto")
             otrSync.postOtrMessage(conv.id, proto).map(_.map((_, msg.id)))
           case Some(_) =>
             successful(Left(internalError(s"Can not send generic ephemeral message: $msg")))
@@ -248,12 +262,12 @@ class MessagesSyncHandler(selfUserId: UserId,
 
     verbose(l"uploadAsset($conv, $msg)")
 
-    def postAssetMessage(proto: GenericMessage, id: GeneralAssetId): CancellableFuture[RemoteInstant] = {
+    def postAssetMessage(message: GenericMessage, id: GeneralAssetId): CancellableFuture[RemoteInstant] = {
       for {
-        time <- otrSync.postOtrMessage(conv.id, proto).flatMap { case Left(errorResponse) => Future.failed(errorResponse)
+        time <- otrSync.postOtrMessage(conv.id, message).flatMap { case Left(errorResponse) => Future.failed(errorResponse)
           case Right(time) => Future.successful(time)
         }.toCancellable
-        _ <- msgContent.updateMessage(msg.id)(_.copy(protos = Seq(proto), time = time, assetId = Some(id))).toCancellable
+        _ <- msgContent.updateMessage(msg.id)(_.copy(genericMsgs = Seq(message), time = time, assetId = Some(id))).toCancellable
       } yield time
     }
 
@@ -261,8 +275,17 @@ class MessagesSyncHandler(selfUserId: UserId,
     def postOriginal(rawAsset: UploadAsset): CancellableFuture[RemoteInstant] =
       if (rawAsset.status != UploadAssetStatus.NotStarted) CancellableFuture.successful(msg.time)
       else rawAsset.details match {
-        case _: Image => CancellableFuture.successful(msg.time)
-        case _ => postAssetMessage(GenericMessage(msg.id.uid, msg.ephemeral, Proto.Asset(rawAsset, None, expectsReadConfirmation = msg.expectsRead.contains(true))), rawAsset.id)
+        case _: Image =>
+          CancellableFuture.successful(msg.time)
+        case _ =>
+          postAssetMessage(
+            GenericMessage(
+              msg.id.uid,
+              msg.ephemeral,
+              GAsset(rawAsset, None, expectsReadConfirmation = msg.expectsRead.contains(true))
+            ),
+            rawAsset.id
+          )
       }
 
     def sendWithV3(uploadAssetOriginal: UploadAsset): CancellableFuture[RemoteInstant] = {
@@ -283,7 +306,7 @@ class MessagesSyncHandler(selfUserId: UserId,
               proto = GenericMessage(
                 msg.id.uid,
                 msg.ephemeral,
-                Proto.Asset(uploadAssetOriginal, Some(previewAsset), expectsReadConfirmation = false)
+                GAsset(uploadAssetOriginal, Some(previewAsset), expectsReadConfirmation = false)
               )
               _ <- postAssetMessage(proto, uploadAssetOriginal.id)
             } yield Some(previewAsset)
@@ -302,7 +325,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         proto = GenericMessage(
           msg.id.uid,
           msg.ephemeral,
-          Proto.Asset(asset, previewAsset, expectsReadConfirmation = msg.expectsRead.contains(true))
+          GAsset(asset, previewAsset, expectsReadConfirmation = msg.expectsRead.contains(true))
         )
         _ <- postAssetMessage(proto, asset.id)
       } yield time
@@ -358,7 +381,7 @@ class MessagesSyncHandler(selfUserId: UserId,
       }
       genericAsset <- uploadAsset.status match {
         case assetStatus if assetStatus == statusToPost =>
-          Future.successful(Proto.Asset(uploadAsset.asInstanceOf[UploadAsset], uploadAssetPreview, expectsReadConfirmation = false))
+          Future.successful(GAsset(uploadAsset.asInstanceOf[UploadAsset], uploadAssetPreview, expectsReadConfirmation = false))
         case assetStatus =>
           Future.failed(FailedExpectationsError(s"We expect uploaded asset status $statusToPost. Got $assetStatus."))
       }

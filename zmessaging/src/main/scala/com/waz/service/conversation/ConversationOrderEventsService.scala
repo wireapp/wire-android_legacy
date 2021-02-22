@@ -50,13 +50,13 @@ class ConversationOrderEventsService(selfUserId: UserId,
       case _: OtrMessageEvent         => true
       case MemberJoinEvent(_, _, _, added, _, _) if added.contains(selfUserId) => true
       case MemberLeaveEvent(_, _, _, leaving) if leaving.contains(selfUserId) => true
-      case GenericMessageEvent(_, _, _, GenericMessage(_, content)) =>
-        content match {
+      case GenericMessageEvent(_, _, _, gm: GenericMessage) =>
+        gm.unpackContent match {
           case _: Asset               => true
           case _: Calling             => true
           case _: Cleared             => false
           case _: ClientAction        => false
-          case _: Receipt             => false
+          case _: DeliveryReceipt     => false
           case _: Ephemeral           => true
           case _: AvailabilityStatus  => false
           case _: External            => true
@@ -146,21 +146,36 @@ class ConversationOrderEventsService(selfUserId: UserId,
 
   private def unarchiveMuted(events: Seq[ConversationEvent]): Boolean =
     events.exists {
-      case GenericMessageEvent(_, _, _, GenericMessage(_, _: Knock)) => true
+      case GenericMessageEvent(_, _, _, gm: GenericMessage) =>
+        gm.unpackContent match {
+          case _: Knock => true
+          case _ => false
+        }
       case _ => false
     }
 
-  private def hasMentions(events: Seq[ConversationEvent]): Boolean =
-    events.exists {
-      case GenericMessageEvent(_, _, _, GenericMessage(_, Text(_, mentions, _, _))) =>
-        mentions.exists(_.userId.contains(selfUserId))
-      case _ => false
-    }
+  private def hasMentions(events: Seq[ConversationEvent]): Boolean = events.exists {
+    case GenericMessageEvent(_, _, _, gm: GenericMessage) =>
+      gm.unpackContent match {
+        case text: Text =>
+          val (_, mentions, _, _, _) = text.unpack
+          mentions.exists(_.userId.contains(selfUserId))
+        case _ => false
+      }
+    case _ => false
+  }
 
   private def hasSelfQuotes(events: Seq[ConversationEvent]): Future[Boolean] = {
-    val originalIds = events.collect {
-      case GenericMessageEvent(_, _, _, GenericMessage(_, Text(_, _, _, Some(Quote(originalId, _))))) => originalId
+    object OriginalId {
+      def unapply(event: GenericMessageEvent): Option[MessageId] = event.content.unpackContent match {
+        case text: Text =>
+          val (_, _, _, quote, _) = text.unpack
+          quote.map(_.unpack._1)
+        case _ => None
+      }
     }
+
+    val originalIds = events.collect { case OriginalId(originalId) => originalId }
     msgStorage.getMessages(originalIds: _*).map(
       _.exists(_.exists(_.userId == selfUserId))
     )

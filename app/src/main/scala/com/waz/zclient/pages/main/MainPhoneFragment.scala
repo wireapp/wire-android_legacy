@@ -383,7 +383,7 @@ class MainPhoneFragment extends FragmentHelper
             Future.successful(getString(R.string.in_app_notification__sync_error__add_multiple_user__body))
         case CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER =>
           conversationController.conversationName(error.convId.get).head
-            .map(name => getString(R.string.in_app_notification__sync_error__create_group_convo__body, name))
+            .map(name => getString(R.string.in_app_notification__sync_error__create_group_convo__body, name.str))
         case _ =>
           Future.successful(getString(R.string.in_app_notification__sync_error__unknown__body))
       }

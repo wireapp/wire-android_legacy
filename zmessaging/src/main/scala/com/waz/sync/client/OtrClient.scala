@@ -17,6 +17,7 @@
  */
 package com.waz.sync.client
 
+import com.google.protobuf.ByteString
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{OtrClientType, Verification}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -32,8 +33,7 @@ import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import com.wire.cryptobox.PreKey
-import com.wire.messages.nano.Otr
-import com.wire.messages.nano.Otr.ClientEntry
+import com.wire.messages.Otr
 import org.json.{JSONArray, JSONObject}
 
 import scala.collection.breakOut
@@ -206,36 +206,36 @@ object OtrClient extends DerivedLogTag {
 
   type ClientKey = (ClientId, PreKey)
 
-  final def userId(id: UserId) = {
-    val user = new Otr.UserId
-    user.uuid = id.bytes
-    user
+  final def userId(id: UserId): Otr.UserId = {
+    val builder = Otr.UserId.newBuilder()
+    builder.setUuid(ByteString.copyFrom(id.bytes))
+    builder.build()
   }
 
-  final def clientId(id: ClientId) = {
-    val client = new Otr.ClientId
-    client.client = id.longId
-    client
+  final def clientId(id: ClientId): Otr.ClientId = {
+    val builder = Otr.ClientId.newBuilder()
+    builder.setClient(id.longId)
+    builder.build()
   }
 
   case class EncryptedContent(content: Map[UserId, Map[ClientId, Array[Byte]]]) {
-    def isEmpty = content.isEmpty
-    def nonEmpty = content.nonEmpty
-    lazy val estimatedSize = content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
+    import scala.collection.JavaConverters._
+    lazy val estimatedSize: Int = content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
 
     lazy val userEntries: Array[Otr.UserEntry] =
       content.map {
         case (user, cs) =>
-          val entry = new Otr.UserEntry
-          entry.user = userId(user)
-          entry.clients = cs.map {
+          val builder = Otr.UserEntry.newBuilder()
+          builder.setUser(userId(user))
+          val clients = cs.map {
             case (c, msg) =>
-              val ce = new ClientEntry
-              ce.client = clientId(c)
-              ce.text = msg
-              ce
+              val ce = Otr.ClientEntry.newBuilder()
+              ce.setClient(clientId(c))
+              ce.setText(ByteString.copyFrom(msg))
+              ce.build()
           } (breakOut)
-          entry
+          builder.addAllClients(clients.asJava)
+          builder.build()
       } (breakOut)
   }
 

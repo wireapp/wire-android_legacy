@@ -1,7 +1,6 @@
 package com.waz.sync.handler
 
 import com.waz.content.UsersStorage
-import com.waz.model.nano.Messages
 import com.waz.model._
 import com.waz.service.{UserSearchService, UserService}
 import com.waz.service.assets.AssetService
@@ -54,7 +53,11 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          message.unpackContent match {
+            case content: GenericContent.AvailabilityStatus =>
+              content.proto.getType shouldEqual Messages.Availability.Type.AVAILABLE
+            case _ => fail("Availability should be set to AVAILABLE")
+          }
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
@@ -81,7 +84,11 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          message.unpackContent match {
+            case content: GenericContent.AvailabilityStatus =>
+              content.proto.getType shouldEqual Messages.Availability.Type.AVAILABLE
+            case _ => fail("Availability should be set to AVAILABLE")
+          }
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id, user3.id, user4.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
@@ -110,7 +117,11 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          message.unpackContent match {
+            case content: GenericContent.AvailabilityStatus =>
+              content.proto.getType shouldEqual Messages.Availability.Type.AVAILABLE
+            case _ => fail("Availability should be set to AVAILABLE")
+          }
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id, user3.id, user4.id, user5.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
@@ -137,7 +148,11 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          message.unpackContent match {
+            case content: GenericContent.AvailabilityStatus =>
+              content.proto.getType shouldEqual Messages.Availability.Type.AVAILABLE
+            case _ => fail("Availability should be set to AVAILABLE")
+          }
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id, user3.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
@@ -165,7 +180,11 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          message.unpackContent match {
+            case content: GenericContent.AvailabilityStatus =>
+              content.proto.getType shouldEqual Messages.Availability.Type.AVAILABLE
+            case _ => fail("Availability should be set to AVAILABLE")
+          }
           recipients shouldEqual Some(Set(self.id, user1.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }

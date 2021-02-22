@@ -23,6 +23,7 @@ import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE.{error, _}
+import com.waz.model.GenericContent.{ClientAction, External}
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.conversation.ConversationsService
@@ -48,15 +49,15 @@ trait OtrSyncHandler {
                      targetRecipients:     TargetRecipients = ConversationParticipants,
                      nativePush:           Boolean = true,
                      enforceIgnoreMissing: Boolean = false
-                    ): Future[Either[ErrorResponse, RemoteInstant]]
+                    ): ErrorOr[RemoteInstant]
 
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
   def broadcastMessage(message:    GenericMessage,
                        retry:      Int = 0,
                        previous:   EncryptedContent = EncryptedContent.Empty,
                        recipients: Option[Set[UserId]] = None
-                      ): Future[Either[ErrorResponse, RemoteInstant]]
-  def postClientDiscoveryMessage(convId: RConvId): Future[Either[ErrorResponse, Map[UserId, Seq[ClientId]]]]
+                      ): ErrorOr[RemoteInstant]
+  def postClientDiscoveryMessage(convId: RConvId): ErrorOr[Map[UserId, Seq[ClientId]]]
 }
 
 class OtrSyncHandlerImpl(teamId:             Option[TeamId],
@@ -82,7 +83,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                               targetRecipients:     TargetRecipients = ConversationParticipants,
                               nativePush:           Boolean = true,
                               enforceIgnoreMissing: Boolean = false
-                             ): Future[Either[ErrorResponse, RemoteInstant]] = {
+                             ): ErrorOr[RemoteInstant] = {
     import com.waz.utils.{RichEither, RichFutureEither}
 
     def encryptAndSend(msg:      GenericMessage,
@@ -109,10 +110,10 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                           ignoreMissing = shouldIgnoreMissingClients || enforceIgnoreMissing || retries > 1
                         ).future
                       } else {
-                        verbose(l"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
+                        warn(l"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
                         val key = AESKey()
-                        val (sha, data) = AESUtils.encrypt(key, GenericMessage.toByteArray(msg))
-                        val newMessage  = GenericMessage(Uid(msg.messageId), Proto.External(key, sha))
+                        val (sha, data) = AESUtils.encrypt(key, msg.proto.toByteArray)
+                        val newMessage  = GenericMessage(Uid(msg.proto.getMessageId), External(key, sha))
                         encryptAndSend(newMessage, Some(data)) //abandon retries and previous EncryptedContent
                       }
         _          <- resp.map(_.deleted).mapFuture(service.deleteClients)
@@ -125,16 +126,14 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                             encryptAndSend(msg, external, retries + 1, content)
                           }
                         case _: MessageResponse.Failure =>
-                          successful(Left(internalError(
-                            s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries"
-                          )))
+                          successful(Left(internalError(s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries")))
                         case resp => Future.successful(Right(resp))
                       }
       } yield retry
 
     encryptAndSend(message).recover {
       case UnverifiedException =>
-        if (!message.hasCalling) errors.addConvUnverifiedError(convId, MessageId(message.messageId))
+        if (!message.proto.hasCalling) errors.addConvUnverifiedError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.Unverified)
       case NonFatal(e) =>
         Left(ErrorResponse.internalError(e.getMessage))
@@ -228,9 +227,9 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         successful(Left(err))
     }
 
-  override def postSessionReset(convId: ConvId, user: UserId, client: ClientId) = {
+  override def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult] = {
 
-    val msg = GenericMessage(Uid(), Proto.ClientAction.SessionReset)
+    val msg = GenericMessage(Uid(), ClientAction.SessionReset)
 
     val convData = convStorage.get(convId).flatMap {
       case None => convStorage.get(ConvId(user.str))

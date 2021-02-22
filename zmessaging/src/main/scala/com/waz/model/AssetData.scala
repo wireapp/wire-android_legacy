@@ -23,7 +23,7 @@ import com.waz.db.Dao
 import com.waz.model.AssetMetaData.Image
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetStatus.{UploadCancelled, UploadDone}
-import com.waz.model.GenericContent.EncryptionAlgorithm
+import com.waz.model.GenericContent.Asset.EncryptionAlgorithm
 import com.waz.model.otr.SignalingKey
 import com.waz.service.ZMessaging
 import com.waz.sync.client.AssetClient
@@ -61,14 +61,14 @@ case class AssetData(override val id: AssetId               = AssetId(),
 
   import AssetData._
 
-  lazy val size = data.fold(sizeInBytes)(_.length)
+  lazy val size: Long = data.fold(sizeInBytes)(_.length)
 
   //be careful when accessing - can be expensive
   lazy val data64 = data.map(AESUtils.base64)
 
   lazy val fileExtension = mime.extension
 
-  lazy val remoteData = (remoteId, token, otrKey, sha, encryption) match {
+  lazy val remoteData: Option[RemoteData] = (remoteId, token, otrKey, sha, encryption) match {
     case (None, None, None, None, None) => Option.empty[RemoteData]
     case _ => Some(RemoteData(remoteId, token, otrKey, sha, encryption))
   }
@@ -78,7 +78,7 @@ case class AssetData(override val id: AssetId               = AssetId(),
     case (_, Some(uri)) if uri.getPath != AssetClient.UnsplashPath => CacheKey.fromUri(uri)
     case _                                                         => CacheKey.fromAssetId(id)
   }
-  
+
   lazy val isDownloadable = this match {
     case WithRemoteData(_)  => true
     case WithExternalUri(_) => true

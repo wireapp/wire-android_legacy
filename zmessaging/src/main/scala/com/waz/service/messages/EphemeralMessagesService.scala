@@ -48,7 +48,7 @@ class EphemeralMessagesService(selfUserId: UserId,
                                assets:     AssetService) extends DerivedLogTag {
   import EphemeralMessagesService._
   import com.waz.threading.Threading.Implicits.Background
-  
+
   private val nextExpiryTime = Signal[LocalInstant](LocalInstant.Max)
 
   val init = removeExpired()
@@ -104,12 +104,12 @@ class EphemeralMessagesService(selfUserId: UserId,
 
     msg.msgType match {
       case TEXT | TEXT_EMOJI_ONLY =>
-        msg.copy(expired = true, content = Nil, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false))))
+        msg.copy(expired = true, content = Nil, genericMsgs = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false))))
       case RICH_MEDIA =>
         val content = msg.content map { ct =>
           ct.copy(content = obfuscate(ct.content), openGraph = None) //TODO: asset and rich media
         }
-        msg.copy(expired = true, content = content, protos = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false)))) // TODO: obfuscate links
+        msg.copy(expired = true, content = content, genericMsgs = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false)))) // TODO: obfuscate links
       case VIDEO_ASSET | AUDIO_ASSET =>
         removeSource(msg)
         msg.copy(expired = true)
@@ -117,7 +117,7 @@ class EphemeralMessagesService(selfUserId: UserId,
         msg.copy(expired = true)
       case LOCATION =>
         val (name, zoom) = msg.location.fold(("", 14)) { l => (obfuscate(l.getName), l.getZoom) }
-        msg.copy(expired = true, content = Nil, protos = Seq(GenericMessage(msg.id.uid, Location(0, 0, name, zoom, expectsReadConfirmation = false))))
+        msg.copy(expired = true, content = Nil, genericMsgs = Seq(GenericMessage(msg.id.uid, Location(0, 0, name, zoom, expectsReadConfirmation = false))))
       case _ =>
         msg.copy(expired = true)
     }
@@ -147,14 +147,21 @@ class EphemeralMessagesService(selfUserId: UserId,
 
   private def shouldStartTimer(msg: MessageData) = {
     if (msg.ephemeral.isEmpty || msg.expiryTime.isDefined || msg.state != Message.Status.SENT) false
-    else if (msg.isAssetMessage) {
+    else if (msg.isAssetMessage)
       // check if asset was fully uploaded
-      msg.protos.exists {
-        case GenericMessage(_, Ephemeral(_, Asset(AssetData.WithStatus(UploadDone | UploadFailed), _))) => true
-        case GenericMessage(_, Ephemeral(_, ImageAsset(AssetData.WithStatus(UploadDone | UploadFailed)))) => true
+      msg.genericMsgs.exists(_.unpackContent match {
+        case eph: Ephemeral =>
+          eph.unpackContent match {
+            case asset: Asset =>
+              val status = asset.unpack._1.status
+              status == UploadDone || status == UploadFailed
+            case image: ImageAsset =>
+              val status = image.unpack.status
+              status == UploadDone || status == UploadFailed
+            case _ => false
+          }
         case _ => false
-      }
-    }
+      })
     else true
   }
 }

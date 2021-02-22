@@ -306,7 +306,6 @@ dependencies {
     implementation BuildDependencies.kotlin.standardLibrary
     implementation BuildDependencies.kotlin.coroutinesAndroid
     implementation BuildDependencies.kotlin.coroutinesCore
-
     implementation avsDependency
 
     implementation BuildDependencies.wire.audioNotifications
@@ -373,6 +372,9 @@ dependencies {
         transitive = true
     }
     annotationProcessor BuildDependencies.glide.compiler
+
+    // protobuf
+    implementation "com.wire:generic-message-proto:1.28.1"
 
     //Retrofit
     implementation BuildDependencies.retrofit.core

@@ -18,13 +18,15 @@
 package com.waz.service
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model
+import com.waz.model.GenericContent.{ReadReceipt => GReadReceipt}
+import com.waz.model.{ReadReceipt => MReadReceipt}
 import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl}
 import com.waz.service.messages.{MessagesContentUpdater, ReactionsService, ReceiptService}
 import com.waz.service.tracking.TrackingService
 
+import scala.concurrent.Future
 import scala.concurrent.Future.traverse
 
 class GenericMessageService(selfUserId: UserId,
@@ -39,63 +41,86 @@ class GenericMessageService(selfUserId: UserId,
 
   import com.waz.threading.Threading.Implicits.Background
 
-  val eventProcessingStage = EventScheduler.Stage[GenericMessageEvent] { (_, events) =>
+  // performance optimization - private mutable caches
+  // thanks to them we don't need to allocate memory for sequences with every new event
+  import scala.collection.mutable
+  private val incomingReactions   = new mutable.ArrayBuffer[Liking]()
+  private val lastRead            = new mutable.ArrayBuffer[(RConvId, RemoteInstant)]()
+  private val cleared             = new mutable.ArrayBuffer[(RConvId, RemoteInstant)]()
+  private val deleted             = new mutable.ArrayBuffer[MessageId]()
+  private val confirmed           = new mutable.ArrayBuffer[MessageId]()
+  private val availabilities      = new mutable.HashMap[UserId, Availability]()
+  private val read                = new mutable.ArrayBuffer[MReadReceipt]()
+  private val buttonConfirmations = new mutable.HashMap[MessageId, Option[ButtonId]]()
+  private val newTrackingIds      = new mutable.ArrayBuffer[TrackingId]()
 
-    def lastForConv(items: Seq[(RConvId, RemoteInstant)]) =
-      items.groupBy(_._1).map { case (_, times) => times.maxBy(_._2.toEpochMilli) }
+  private def clearCaches(): Unit = {
+    incomingReactions.clear()
+    lastRead.clear()
+    cleared.clear()
+    deleted.clear()
+    confirmed.clear()
+    availabilities.clear()
+    read.clear()
+    buttonConfirmations.clear()
+    newTrackingIds.clear()
+  }
 
-    val incomingReactions = events.collect {
-      case GenericMessageEvent(_, time, from, GenericMessage(_, Reaction(msg, action))) => Liking(msg, from, time, action)
-    }
+  private var processing = Future.successful(())
 
-    val lastRead = lastForConv(events.collect {
-      case GenericMessageEvent(_, _, _, GenericMessage(_, LastRead(conv, time))) => (conv, time)
-    })
-
-    val cleared = lastForConv(events.collect {
-      case GenericMessageEvent(_, _, userId, GenericMessage(_, Cleared(conv, time))) if userId == selfUserId => (conv, time)
-    })
-
-    val deleted = events.collect {
-      case GenericMessageEvent(_, _, _, GenericMessage(_, MsgDeleted(_, msg))) => msg
-    }
-
-    val confirmed = events.collect {
-      case GenericMessageEvent(_, _, _, GenericMessage(_, DeliveryReceipt(msgs))) => msgs
-    }.flatten
-
-    val availabilities = events.collect {
-      case GenericMessageEvent(_, _, userId, GenericMessage(_, AvailabilityStatus(available))) => userId -> available
-    }.toMap
-
-    val read = events.collect {
-      case GenericMessageEvent(_, time, from, GenericMessage(_, Proto.ReadReceipt(msgs))) => msgs.map { msg =>
-        model.ReadReceipt(msg, from, time)
+  private def updateCaches(events: Seq[GenericMessageEvent]): Unit = {
+    clearCaches()
+    events.foreach { case GenericMessageEvent(_, time, from, content) =>
+      content.unpackContent match {
+        case r: Reaction =>
+          val (msg, action) = r.unpack
+          incomingReactions += Liking(msg, from, time, action)
+        case lr: LastRead =>
+          lastRead += lr.unpack
+        case c: Cleared =>
+          cleared += c.unpack
+        case msg: MsgDeleted =>
+          val (_, msgId) = msg.unpack
+          deleted += msgId
+        case dr: DeliveryReceipt =>
+          confirmed ++= dr.unpack.getOrElse(Seq.empty)
+        case av: AvailabilityStatus =>
+          av.unpack.foreach(availabilities += from -> _)
+        case r: GReadReceipt =>
+          read ++= r.unpack.getOrElse(Seq.empty).map(msg => MReadReceipt(msg, from, time))
+        case bac: ButtonActionConfirmation =>
+          val (msgId, buttonId) = bac.unpack
+          buttonConfirmations += msgId -> buttonId
+        case dt: DataTransfer if from == selfUserId =>
+          newTrackingIds += dt.unpack
+        case _ =>
       }
-    }.flatten
+    }
+  }
 
-    val buttonConfirmations = events.collect {
-      case GenericMessageEvent(_, _, _, GenericMessage(_, ButtonActionConfirmation(msgId, buttonId))) => msgId -> buttonId
-    }.toMap
-
-    val newTrackingId = events.collect {
-      case GenericMessageEvent(_, _, userId, GenericMessage(_, DataTransfer(trackingId))) if userId == selfUserId => trackingId
-    }.lastOption
-
+  private def process(events: Seq[GenericMessageEvent]) =
     for {
+      _ <- Future.successful { updateCaches(events) }
       _ <- messages.deleteOnUserRequest(deleted)
       _ <- traverse(lastRead) { case (remoteId, timestamp) =>
-             convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationLastRead(conv.id, timestamp) }
-           }
+        convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationLastRead(conv.id, timestamp) }
+      }
       _ <- reactions.processReactions(incomingReactions)
       _ <- traverse(cleared) { case (remoteId, timestamp) =>
-             convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationCleared(conv.id, timestamp) }
-           }
+        convs.processConvWithRemoteId(remoteId, retryAsync = true) { conv => convs.updateConversationCleared(conv.id, timestamp) }
+      }
       _ <- receipts.processDeliveryReceipts(confirmed)
       _ <- receipts.processReadReceipts(read)
-      _ <- users.storeAvailabilities(availabilities)
-      _ <- messages.updateButtonConfirmations(buttonConfirmations)
-      _ =  newTrackingId.foreach { tracking.onTrackingIdChange ! _ }
+      _ <- users.storeAvailabilities(availabilities.toMap)
+      _ <- messages.updateButtonConfirmations(buttonConfirmations.toMap)
+      _ =  newTrackingIds.lastOption.foreach { tracking.onTrackingIdChange ! _ }
+      _ = clearCaches()
     } yield ()
+
+  val eventProcessingStage = EventScheduler.Stage[GenericMessageEvent] { (_, events) =>
+    synchronized {
+      processing = if (processing.isCompleted) process(events) else processing.flatMap(_ => process(events))
+      processing
+    }
   }
 }

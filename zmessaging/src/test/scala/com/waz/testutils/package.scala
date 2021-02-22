@@ -19,7 +19,6 @@ package com.waz
 
 import android.database.Cursor
 import android.os.Parcel
-import com.google.protobuf.nano.MessageNano
 import com.waz.cache.CacheEntryData
 import com.waz.content.MsgCursor
 import com.waz.model.{otr => _, _}
@@ -115,7 +114,7 @@ package object testutils {
     implicit object GenericMessageEquality extends Equality[GenericMessage] {
       override def areEqual(a: GenericMessage, b: Any): Boolean = {
         b match {
-          case m: MessageNano => MessageNano.toByteArray(m).toSeq == MessageNano.toByteArray(a).toSeq
+          case m: GenericMessage => m.proto.toByteArray.sameElements(a.proto.toByteArray)
           case _ => false
         }
       }
@@ -125,8 +124,8 @@ package object testutils {
       override def areEqual(a: MessageData, b: Any): Boolean = {
         b match {
           case m: MessageData =>
-            if (m.copy(protos = Nil) != a.copy(protos = Nil)) println(s"message content differ: \n$a\n$m\n")
-            m.copy(protos = Nil) == a.copy(protos = Nil) && m.protos.size == a.protos.size && m.protos.zip(a.protos).forall { case (p1, p2) => GenericMessageEquality.areEqual(p1, p2) }
+            if (m.copy(genericMsgs = Nil) != a.copy(genericMsgs = Nil)) println(s"message content differ: \n$a\n$m\n")
+            m.copy(genericMsgs = Nil) == a.copy(genericMsgs = Nil) && m.genericMsgs.size == a.genericMsgs.size && m.genericMsgs.zip(a.genericMsgs).forall { case (p1, p2) => GenericMessageEquality.areEqual(p1, p2) }
           case _ => false
         }
       }

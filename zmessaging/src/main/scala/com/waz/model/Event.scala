@@ -336,7 +336,7 @@ object MessageEvent {
       event match {
         case GenericMessageEvent(convId, time, from, content) =>
           setFields(json, convId, time, from, "conversation.generic-message")
-            .put("content", AESUtils.base64(GenericMessage.toByteArray(content)))
+            .put("content", AESUtils.base64(content.proto.toByteArray))
         case OtrErrorEvent(convId, time, from, error) =>
           setFields(json, convId, time, from, "conversation.otr-error")
             .put("error", OtrError.OtrErrorEncoder(error))

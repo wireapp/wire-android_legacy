@@ -7,6 +7,6 @@ case class CompositeData(items:                   Seq[CompositeMessageItem],
                          legalHoldStatus:         Option[Int])
 
 sealed trait CompositeMessageItem
-case class TextItem(text: Text)       extends CompositeMessageItem
-case class ButtonItem(button: Button) extends CompositeMessageItem
-case object UnknownItem               extends CompositeMessageItem
+final case class TextItem(text: Text)       extends CompositeMessageItem
+final case class ButtonItem(button: Button) extends CompositeMessageItem
+final case object UnknownItem               extends CompositeMessageItem

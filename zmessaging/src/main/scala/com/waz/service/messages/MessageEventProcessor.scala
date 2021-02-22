@@ -33,6 +33,8 @@ import com.waz.utils.{RichFuture, _}
 
 import scala.concurrent.Future
 
+import scala.language.existentials
+
 class MessageEventProcessor(selfUserId:           UserId,
                             storage:              MessagesStorage,
                             contentUpdater:       MessagesContentUpdater,
@@ -64,7 +66,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     verbose(l"processEvents: ${conv.id} isGroup:$isGroup ${events.map(_.from)}")
 
     val toProcess = events.filter {
-      case GenericMessageEvent(_, _, _, msg) if GenericMessage.isBroadcastMessage(msg) => false
+      case GenericMessageEvent(_, _, _, msg) if msg.isBroadcastMessage => false
       case e => conv.cleared.forall(_.isBefore(e.time))
     }
 
@@ -85,13 +87,11 @@ class MessageEventProcessor(selfUserId:           UserId,
 
   private def createRichMessages(eventsWithAssets:  Seq[(MessageEvent, Option[DownloadAsset])],
                                  conversationData:  ConversationData,
-                                 isGroup: Boolean): Seq[RichMessage] = {
-
+                                 isGroup: Boolean): Seq[RichMessage] =
     eventsWithAssets.foldLeft(List.empty[RichMessage]) { (acc, next) =>
       val (event, downloadAsset) = next
       createMessage(conversationData, isGroup, event, downloadAsset, acc) :: acc
     }
-  }
 
   private def createMessage(conv:          ConversationData,
                             isGroup:       Boolean,
@@ -124,7 +124,7 @@ class MessageEventProcessor(selfUserId:           UserId,
         RichMessage(MessageData(id, conv.id, SESSION_RESET, from, time = time, localTime = event.localTime))
       case GenericMessageEvent(_, time, from, proto) =>
         verbose(l"generic message event")
-        val GenericMessage(uid, msgContent) = proto
+        val (uid, msgContent) = proto.unpack
         content(acc, MessageId(uid.str), conv.id, msgContent, from, event.localTime, time, conv.receiptMode.filter(_ => isGroup), downloadAsset, proto)
       case _: CallMessageEvent =>
         RichMessage.Empty
@@ -137,7 +137,7 @@ class MessageEventProcessor(selfUserId:           UserId,
   private def content(acc:               List[RichMessage],
                       id:                MessageId,
                       convId:            ConvId,
-                      msgContent:        Any,
+                      msgContent:        GenericContent[_],
                       from:              UserId,
                       localTime:         LocalInstant,
                       time:              RemoteInstant,
@@ -145,33 +145,35 @@ class MessageEventProcessor(selfUserId:           UserId,
                       downloadAsset:     Option[DownloadAsset],
                       proto:             GenericMessage
                      ): RichMessage = msgContent match {
-    case Ephemeral(expiry, ct) =>
+    case e: Ephemeral =>
+      val (expiry, ct) = e.unpack
       val messageWithAsset = content(acc, id, convId, ct, from, localTime, time, forceReadReceipts, downloadAsset, proto)
       messageWithAsset.copy(message = messageWithAsset.message.copy(ephemeral = expiry))
-    case Text(text, mentions, links, quote) =>
+    case t: Text =>
+      val (text, mentions, links, quote, _) = t.unpack
       textMessage(id, convId, text, mentions, links, quote, from, localTime, time, forceReadReceipts, proto)
     case asset: Asset =>
       assetMessage(acc, id, convId, asset, from, localTime, time, forceReadReceipts, downloadAsset, proto)
     case _: Knock =>
-      RichMessage(MessageData(id, convId, KNOCK, from, time = time, localTime = localTime, protos = Seq(proto), forceReadReceipts = forceReadReceipts))
+      RichMessage(MessageData(id, convId, KNOCK, from, time = time, localTime = localTime, genericMsgs = Seq(proto), forceReadReceipts = forceReadReceipts))
     case _: Location =>
-      RichMessage(MessageData(id, convId, LOCATION, from, time = time, localTime = localTime, protos = Seq(proto), forceReadReceipts = forceReadReceipts))
-    case Composite(compositeData) =>
-      compositeMessage(id, convId, compositeData, from, localTime, time, proto)
+      RichMessage(MessageData(id, convId, LOCATION, from, time = time, localTime = localTime, genericMsgs = Seq(proto), forceReadReceipts = forceReadReceipts))
+    case c: Composite =>
+      compositeMessage(id, convId, c.unpack, from, localTime, time, proto)
     case _: Reaction                   => RichMessage.Empty
     case _: LastRead                   => RichMessage.Empty
     case _: Cleared                    => RichMessage.Empty
     case _: MsgDeleted                 => RichMessage.Empty
     case _: MsgRecall                  => RichMessage.Empty
     case _: MsgEdit                    => RichMessage.Empty
-    case DeliveryReceipt(_)            => RichMessage.Empty
-    case GenericContent.ReadReceipt(_) => RichMessage.Empty
+    case _: DeliveryReceipt            => RichMessage.Empty
+    case _: ReadReceipt                => RichMessage.Empty
     case _: Calling                    => RichMessage.Empty
     case _: ButtonAction               => RichMessage.Empty
     case _: ButtonActionConfirmation   => RichMessage.Empty
     case _ =>
       // TODO: this message should be processed again after app update, maybe future app version will understand it
-      RichMessage(MessageData(id, convId, UNKNOWN, from, time = time, localTime = localTime, protos = Seq(proto)))
+      RichMessage(MessageData(id, convId, UNKNOWN, from, time = time, localTime = localTime, genericMsgs = Seq(proto)))
   }
 
   private def compositeMessage(id:            MessageId,
@@ -184,7 +186,8 @@ class MessageEventProcessor(selfUserId:           UserId,
     val readReceipts = compositeData.expectsReadConfirmation.map { if (_) 1 else 0 }
 
     val textParts = compositeData.items.collect {
-      case TextItem(Text(text, mentions, links, quote)) =>
+      case TextItem(t: Text) =>
+        val (text, mentions, links, quote, _) = t.unpack
         textMessage(id, convId, text, mentions, links, quote, from, localTime, time, readReceipts, proto)
     }
 
@@ -192,7 +195,9 @@ class MessageEventProcessor(selfUserId:           UserId,
       compositeData.items
         .collect { case ButtonItem(button) => button }
         .zipWithIndex
-        .map { case (button, ord) => ButtonData(id, ButtonId(button.id), button.text, ord) }
+        .map { case (button, ord) =>
+          ButtonData(id, ButtonId(button.proto.getId), button.proto.getText, ord)
+        }
 
     val msg =
       if (textParts.isEmpty) RichMessage.Empty
@@ -200,7 +205,7 @@ class MessageEventProcessor(selfUserId:           UserId,
       else textParts.reduce[RichMessage] { case (acc, next) =>
         val message = acc.message.copy(
           content = acc.message.content ++ next.message.content,
-          protos  = acc.message.protos  ++ next.message.protos
+          genericMsgs  = acc.message.genericMsgs  ++ next.message.genericMsgs
         )
         acc.copy(message = message)
       }
@@ -229,19 +234,21 @@ class MessageEventProcessor(selfUserId:           UserId,
                           proto:             GenericMessage): RichMessage = {
     val (text, links) =
       if (originalText.length > MaxTextContentLength)
-        (originalText.take(MaxTextContentLength), linkPreviews.filter(p => p.url.length + p.urlOffset <= MaxTextContentLength))
+        (originalText.take(MaxTextContentLength), linkPreviews.filter(p => p.proto.getUrl.length + p.proto.getUrlOffset <= MaxTextContentLength))
       else
         (originalText, linkPreviews)
 
     val (tpe, content) = MessageData.messageContent(text, mentions, links)
-    val quoteContent = quote.map(q => QuoteContent(MessageId(q.quotedMessageId), validity = false, Some(Sha256(q.quotedMessageSha256))))
+    val quoteContent = quote.map(q =>
+      QuoteContent(MessageId(q.proto.getQuotedMessageId), validity = false, Some(Sha256(q.proto.getQuotedMessageSha256.toByteArray)))
+    )
 
     val asset = links
-      .find(lp => lp.image != null && lp.image.hasUploaded)
-      .map(lp => Asset2.create(DownloadAsset.create(lp.image), lp.image.getUploaded))
+      .find(lp => if (lp.proto.hasImage) Option(lp.proto.getImage).exists(_.hasUploaded) else false)
+      .map { lp => Asset2.create(DownloadAsset.create(lp.proto.getImage), lp.proto.getImage.getUploaded) }
 
     val messageData = MessageData(
-      id, convId, tpe, from, content = content, time = time, localTime = localTime, protos = Seq(proto),
+      id, convId, tpe, from, content = content, time = time, localTime = localTime, genericMsgs = Seq(proto),
       quote = quoteContent, forceReadReceipts = forceReadReceipts, assetId = asset.map(_.id)
     )
     RichMessage(messageData.adjustMentions(false).getOrElse(messageData), asset.map((_, None)))
@@ -257,20 +264,22 @@ class MessageEventProcessor(selfUserId:           UserId,
                            forceReadReceipts: Option[Int],
                            downloadAsset:     Option[DownloadAsset],
                            proto:             GenericMessage): RichMessage =
-    if (DownloadAsset.getStatus(asset) == DownloadAssetStatus.Cancelled) RichMessage.Empty else {
-      val tpe = Option(asset.original) match {
-        case None                      => UNKNOWN
-        case Some(org) if !global.fileRestrictionList.isAllowed(Mime(org.mimeType).extension) => RESTRICTED_FILE
-        case Some(org) if org.hasVideo => VIDEO_ASSET
-        case Some(org) if org.hasAudio => AUDIO_ASSET
-        case Some(org) if org.hasImage => IMAGE_ASSET
-        case Some(_)                   => ANY_ASSET
-      }
+    if (DownloadAsset.getStatus(asset.proto) == DownloadAssetStatus.Cancelled) RichMessage.Empty else {
+      val tpe =
+        if (!asset.proto.hasOriginal) UNKNOWN
+        else Option(asset.proto.getOriginal) match {
+          case None                      => UNKNOWN
+          case Some(org) if !global.fileRestrictionList.isAllowed(Mime(org.getMimeType).extension) => RESTRICTED_FILE
+          case Some(org) if org.hasVideo => VIDEO_ASSET
+          case Some(org) if org.hasAudio => AUDIO_ASSET
+          case Some(org) if org.hasImage => IMAGE_ASSET
+          case Some(_)                   => ANY_ASSET
+        }
 
       val assetAndPreview: Option[(GeneralAsset, Option[GeneralAsset])] =
         if (tpe == RESTRICTED_FILE) None
-        else if (asset.hasUploaded) {
-          val preview = Option(asset.preview).map(Asset2.create)
+        else if (asset.proto.hasUploaded) {
+          val preview = if (asset.proto.hasPreview) Option(asset.proto.getPreview).map(Asset2.create) else None
 
           lazy val previouslyProcessedDownloadAsset = acc
             .find(_.message.id == id)
@@ -281,27 +290,27 @@ class MessageEventProcessor(selfUserId:           UserId,
             .map(da => da.copy(preview = preview.map(_.id).orElse(da.preview), status = AssetStatus.Done))
 
           val asset2 = updatedDownloadAsset match {
-            case Some(x) => Asset2.create(x, asset.getUploaded)
-            case None => Asset2.create(DownloadAsset.create(asset), asset.getUploaded)
+            case Some(x) => Asset2.create(x, asset.proto.getUploaded)
+            case None => Asset2.create(DownloadAsset.create(asset.proto), asset.proto.getUploaded)
           }
 
           verbose(l"Received asset v3 with preview.")
           Some((asset2, preview))
 
-        } else if (DownloadAsset.getStatus(asset) == DownloadAssetStatus.Failed && asset.original.hasImage) {
+        } else if (DownloadAsset.getStatus(asset.proto) == DownloadAssetStatus.Failed && asset.proto.getOriginal.hasImage) {
           verbose(l"Received a message about a failed image upload: $id. Dropping")
           None
 
-        } else if (DownloadAsset.getStatus(asset) == DownloadAssetStatus.Cancelled) {
+        } else if (DownloadAsset.getStatus(asset.proto) == DownloadAssetStatus.Cancelled) {
           verbose(l"Uploader cancelled asset: $id")
-          val asset2 = downloadAsset.map(_.copy(status = DownloadAssetStatus.Cancelled)).getOrElse(DownloadAsset.create(asset))
+          val asset2 = downloadAsset.map(_.copy(status = DownloadAssetStatus.Cancelled)).getOrElse(DownloadAsset.create(asset.proto))
           Some((asset2, None))
 
         } else {
-          val preview = Option(asset.preview).map(Asset2.create)
+          val preview = if (asset.proto.hasPreview) Option(asset.proto.getPreview).map(Asset2.create) else None
           val asset2 = downloadAsset
-            .map(da => da.copy(preview = preview.map(_.id).orElse(da.preview), status = DownloadAsset.getStatus(asset)))
-            .getOrElse(DownloadAsset.create(asset))
+            .map(da => da.copy(preview = preview.map(_.id).orElse(da.preview), status = DownloadAsset.getStatus(asset.proto)))
+            .getOrElse(DownloadAsset.create(asset.proto))
 
           verbose(l"Received asset without remote data - we will expect another update. Asset: $asset2")
           Some((asset2, preview))
@@ -309,7 +318,7 @@ class MessageEventProcessor(selfUserId:           UserId,
 
       RichMessage(
         MessageData(
-          id, convId, tpe, from, time = time, localTime = localTime, protos = Seq(proto),
+          id, convId, tpe, from, time = time, localTime = localTime, genericMsgs = Seq(proto),
           forceReadReceipts = forceReadReceipts, assetId = assetAndPreview.map(_._1.id)
         ),
         assetAndPreview
@@ -334,7 +343,7 @@ class MessageEventProcessor(selfUserId:           UserId,
   private def assetForEvent(event: MessageEvent) = {
     for {
       message <- event match {
-        case GenericMessageEvent(_, _, _, c) => storage.get(MessageId(c.messageId))
+        case GenericMessageEvent(_, _, _, c) => storage.get(MessageId(c.proto.getMessageId))
         case _                               => Future.successful(None)
       }
       asset <- message.flatMap(_.assetId) match {
@@ -362,24 +371,42 @@ class MessageEventProcessor(selfUserId:           UserId,
   }
 
   private def applyRecalls(convId: ConvId, toProcess: Seq[MessageEvent]) = {
-    import com.waz.api.Message.Status.SENT
-    val recalls = toProcess collect {
-      case GenericMessageEvent(_, time, from, msg @ GenericMessage(_, MsgRecall(_))) => (msg, from, time)
+    object Recall {
+      def unapply(event: MessageEvent): Option[(MessageId, UserId, MessageId, RemoteInstant)] = event match {
+        case GenericMessageEvent(_, time, from, msg) =>
+          msg.unpack match {
+            case (id, MsgRecall(proto)) => Some((MessageId(proto.getMessageId), from, MessageId(id.str), time))
+            case _ => None
+          }
+        case _ => None
+      }
+    }
+
+    val recalls = toProcess.collect {
+      case Recall(ref, user, systemMsgId, time) => (ref, user, systemMsgId, time)
     }
     Future.traverse(recalls) {
-      case (GenericMessage(id, MsgRecall(ref)), user, time) =>
-        msgsService.recallMessage(convId, ref, user, MessageId(id.str), time, SENT)
+      case (ref, user, systemMsgId, time) =>
+        msgsService.recallMessage(convId, ref, user, systemMsgId, time, com.waz.api.Message.Status.SENT)
     }
   }
 
   // TODO: handle mentions in case of MsgEdit
   private def applyEdits(convId: ConvId, toProcess: Seq[MessageEvent]) = {
-    val edits = toProcess collect {
-      case GenericMessageEvent(_, time, from, msg @ GenericMessage(_, MsgEdit(_, _))) => (msg, from, time)
+    object Edit {
+      def unapply(event: MessageEvent): Option[(UserId, RemoteInstant, GenericMessage)] = event match {
+        case GenericMessageEvent(_, time, from, msg) =>
+          msg.unpackContent match {
+            case edit: MsgEdit => edit.unpack.map(_ => (from, time, msg))
+            case _ => None
+          }
+        case _ => None
+      }
     }
+
+    val edits = toProcess.collect { case Edit(from, time, msg) => (from, time, msg) }
     RichFuture.traverseSequential(edits) {
-      case (gm @ GenericMessage(_, MsgEdit(_, Text(_, _, _, _))), user, time) =>
-        msgsService.applyMessageEdit(convId, user, time, gm)
+      case (from, time, msg) => msgsService.applyMessageEdit(convId, from, time, msg)
     }
   }
 

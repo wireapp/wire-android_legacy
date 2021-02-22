@@ -526,7 +526,7 @@ class ConversationListManagerFragment extends Fragment
           convController.conversationName(cId).head.foreach(convName =>
             showErrorDialog(
               getString(R.string.delete_group_conversation_error_title),
-              getString(R.string.delete_group_conversation_error_message_with_group_name, convName)
+              getString(R.string.delete_group_conversation_error_message_with_group_name, convName.str)
             )
           )
         case _ =>

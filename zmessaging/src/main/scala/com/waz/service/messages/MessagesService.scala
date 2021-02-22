@@ -38,7 +38,7 @@ import com.waz.threading.Threading
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
-import com.wire.signals.{EventContext, EventStream, RefreshingSignal, Signal}
+import com.wire.signals.{EventStream, RefreshingSignal, Signal}
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -124,7 +124,17 @@ class MessagesServiceImpl(selfUserId:      UserId,
         Future successful None
       case Some(msg) if msg.canRecall(convId, userId) =>
         updater.deleteOnUserRequest(Seq(msgId)) flatMap { _ =>
-          val recall = MessageData(systemMsgId, convId, Message.Type.RECALLED, time = msg.time, editTime = time max msg.time, userId = userId, state = state, protos = Seq(GenericMessage(systemMsgId.uid, MsgRecall(msgId))))
+          val recall =
+            MessageData(
+              systemMsgId,
+              convId,
+              Message.Type.RECALLED,
+              time = msg.time,
+              editTime = time max msg.time,
+              userId = userId,
+              state = state,
+              genericMsgs = Seq(GenericMessage(systemMsgId.uid, MsgRecall(msgId)))
+            )
           if (userId == selfUserId) Future successful Some(recall) // don't save system message for self user
           else updater.addMessage(recall)
         }
@@ -136,77 +146,85 @@ class MessagesServiceImpl(selfUserId:      UserId,
         Future successful None
     }
 
-  override def applyMessageEdit(convId: ConvId, userId: UserId, time: RemoteInstant, gm: GenericMessage) = Serialized.future(s"applyMessageEdit $convId") {
+  override def applyMessageEdit(convId: ConvId, userId: UserId, time: RemoteInstant, gm: GenericMessage): Future[Option[MessageData]] =
+    Serialized.future(s"applyMessageEdit $convId") {
 
-    def findLatestUpdate(id: MessageId): Future[Option[MessageData]] =
-      updater.getMessage(id) flatMap {
+      def findLatestUpdate(id: MessageId): Future[Option[MessageData]] = updater.getMessage(id).flatMap {
         case Some(msg) => Future successful Some(msg)
         case None =>
-          edits.get(id) flatMap {
+          edits.get(id).flatMap {
             case Some(EditHistory(_, updated, _)) => findLatestUpdate(updated)
             case None => Future successful None
           }
       }
 
-    gm match {
-      case GenericMessage(newId, MsgEdit(oldId, Text(text, mentions, links, quote))) =>
+      gm.unpack match {
+        case (newId, edit: MsgEdit) =>
+          edit.unpack match {
+            case Some((oldId, oldTextMessage)) =>
+              val (text, mentions, links, _, _) = oldTextMessage.unpack
 
-        def applyEdit(msg: MessageData) = {
-          val newMsgId = MessageId(newId.str)
-          for {
-            _         <- edits.insert(EditHistory(msg.id, newMsgId, time))
-            (tpe, ct) =  MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
-            edited    =  msg.copy(id = newMsgId, msgType = tpe, content = ct, protos = Seq(gm), editTime = time)
-            res       <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
-            quotesOf  <- storage.findQuotesOf(msg.id)
-            _         <- storage.updateAll2(quotesOf.map(_.id), _.replaceQuote(newMsgId))
-            _         =  msgEdited ! (msg.id, newMsgId)
-            _         <- updater.deleteOnUserRequest(Seq(msg.id))
-          } yield res
-        }
+              def applyEdit(msg: MessageData) = {
+                val newMsgId = MessageId(newId.str)
+                for {
+                  _ <- edits.insert(EditHistory(msg.id, newMsgId, time))
+                  (tpe, ct) = MessageData.messageContent(text, mentions, links, weblinkEnabled = true)
+                  edited = msg.copy(id = newMsgId, msgType = tpe, content = ct, genericMsgs = Seq(gm), editTime = time)
+                  res <- updater.addMessage(edited.adjustMentions(false).getOrElse(edited))
+                  quotesOf <- storage.findQuotesOf(msg.id)
+                  _ <- storage.updateAll2(quotesOf.map(_.id), _.replaceQuote(newMsgId))
+                  _ = msgEdited ! (msg.id, newMsgId)
+                  _ <- updater.deleteOnUserRequest(Seq(msg.id))
+                } yield res
+              }
 
-        updater.getMessage(oldId) flatMap {
-          case Some(msg) if msg.userId == userId && msg.convId == convId =>
-            applyEdit(msg)
-          case _ =>
-            // original message was already deleted, let's check if it was already updated
-            edits.get(oldId) flatMap {
-              case Some(EditHistory(_, _, editTime)) if editTime <= time =>
-                verbose(l"message $oldId has already been updated, discarding later update")
-                Future successful None
+              updater.getMessage(oldId) flatMap {
+                case Some(msg) if msg.userId == userId && msg.convId == convId =>
+                  applyEdit(msg)
+                case _ =>
+                  // original message was already deleted, let's check if it was already updated
+                  edits.get(oldId) flatMap {
+                    case Some(EditHistory(_, _, editTime)) if editTime <= time =>
+                      verbose(l"message $oldId has already been updated, discarding later update")
+                      Future successful None
 
-              case Some(EditHistory(_, updated, _)) =>
-                // this happens if message has already been edited locally,
-                // but that edit is actually newer than currently received one, so we should revert it
-                // we always use only the oldest edit for given message (as each update changes the message id)
-                verbose(l"message $oldId has already been updated, will overwrite new message")
-                findLatestUpdate(updated) flatMap {
-                  case Some(msg) => applyEdit(msg)
-                  case None =>
-                    error(l"Previously updated message was not found for: $gm")
-                    Future successful None
-                }
+                    case Some(EditHistory(_, updated, _)) =>
+                      // this happens if message has already been edited locally,
+                      // but that edit is actually newer than currently received one, so we should revert it
+                      // we always use only the oldest edit for given message (as each update changes the message id)
+                      verbose(l"message $oldId has already been updated, will overwrite new message")
+                      findLatestUpdate(updated) flatMap {
+                        case Some(msg) => applyEdit(msg)
+                        case None =>
+                          error(l"Previously updated message was not found for: $gm")
+                          Future successful None
+                      }
 
-              case None =>
-                verbose(l"didn't find the original message for edit: $gm")
-                Future successful None
-            }
-        }
-      case _ =>
-        error(l"invalid message for applyMessageEdit: $gm")
-        Future successful None
-    }
+                    case None =>
+                      verbose(l"didn't find the original message for edit: $gm")
+                      Future successful None
+                  }
+              }
+            case _ =>
+              error(l"invalid message for applyMessageEdit (1): $gm")
+              Future successful None
+          }
+        case _ =>
+          error(l"invalid message for applyMessageEdit (2): $gm")
+          Future successful None
+      }
   }
 
   override def addTextMessage(convId: ConvId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[MessageData] = {
-    verbose(l"addTextMessage($convId, ${content.length}, $mentions, $exp")
+    verbose(l"addTextMessage($convId, ${content.length}, $mentions, $exp)")
     val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
     val id = MessageId()
+    val gm = GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, expectsReadReceipt.selfSettings))
     updater.addLocalMessage(
       MessageData(
         id, convId, tpe, selfUserId,
         content = ct,
-        protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, expectsReadReceipt.selfSettings))),
+        genericMsgs = Seq(gm),
         forceReadReceipts = expectsReadReceipt.convSetting
       ),
       exp = exp
@@ -228,7 +246,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
             MessageData(
               id, original.convId, tpe, selfUserId,
               content = ct,
-              protos = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash))), expectsReadReceipt.selfSettings))),
+              genericMsgs = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash))), expectsReadReceipt.selfSettings))),
               quote = Some(QuoteContent(quote, validity = true, hash = Some(hash))),
               forceReadReceipts = expectsReadReceipt.convSetting
             ),
@@ -250,7 +268,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
   override def addLocationMessage(convId: ConvId, content: Location, expectsReadReceipt: ReadReceiptSettings = AllDisabled) = {
     verbose(l"addLocationMessage($convId, $content)")
     val id = MessageId()
-    updater.addLocalMessage(MessageData(id, convId, Type.LOCATION, selfUserId, protos = Seq(GenericMessage(id.uid, content)), forceReadReceipts = expectsReadReceipt.convSetting))
+    updater.addLocalMessage(MessageData(id, convId, Type.LOCATION, selfUserId, genericMsgs = Seq(GenericMessage(id.uid, content)), forceReadReceipts = expectsReadReceipt.convSetting))
   }
 
   override def addAssetMessage(convId: ConvId,
@@ -273,7 +291,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
       tpe,
       selfUserId,
       content = Seq(),
-      protos = Seq(GenericMessage(msgId.uid, GenericAsset(asset, None, expectsReadConfirmation = expectsReadReceipt.selfSettings))),
+      genericMsgs = Seq(GenericMessage(msgId.uid, GenericAsset(asset, None, expectsReadConfirmation = expectsReadReceipt.selfSettings))),
       forceReadReceipts = expectsReadReceipt.convSetting,
       assetId = Some(asset.id)
     )

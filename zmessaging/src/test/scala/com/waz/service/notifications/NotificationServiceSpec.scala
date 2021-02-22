@@ -66,19 +66,19 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   private lazy val event = GenericMessageEvent(rConvId, lastEventTime, from, content)
 
   private val msg = MessageData(
-    MessageId(content.messageId),
+    MessageId(content.unpack._1.str),
     conv.id,
     msgType = Message.Type.TEXT,
-    protos  = Seq(content),
+    genericMsgs  = Seq(content),
     userId  = from,
     time    = lastEventTime
   )
 
   private val compositeMsg = MessageData(
-    MessageId(content.messageId),
+    MessageId(content.unpack._1.str),
     conv.id,
     msgType = Message.Type.COMPOSITE,
-    protos  = Seq(content),
+    genericMsgs  = Seq(content),
     userId  = from,
     time    = lastEventTime
   )
@@ -246,15 +246,15 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         MessageId("orig"),
         conv.id,
         msgType = Message.Type.TEXT,
-        protos  = Seq(content),
+        genericMsgs  = Seq(content),
         userId  = self.id,
         time    = lastEventTime
       )
       val reply = MessageData(
-        MessageId(content.messageId),
+        MessageId(content.unpack._1.str),
         conv.id,
         msgType = Message.Type.TEXT,
-        protos  = Seq(content),
+        genericMsgs  = Seq(content),
         userId  = from,
         time    = lastEventTime,
         quote   = Some(QuoteContent(origMsg.id, validity = true, hash = None))
@@ -373,14 +373,14 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       val originalContent = GenericMessage(Uid("messageId"), Text("abc"))
 
-      val editContent1 = GenericMessage(Uid("edit-id-1"), MsgEdit(MessageId(originalContent.messageId), Text("def")))
+      val editContent1 = GenericMessage(Uid("edit-id-1"), MsgEdit(MessageId(originalContent.unpack._1.str), Text("def")))
       val editEvent1 = GenericMessageEvent(rConvId, edit1EventTime, from, editContent1)
 
-      val editContent2 = GenericMessage(Uid("edit-id-2"), MsgEdit(MessageId(editContent1.messageId), Text("ghi")))
+      val editContent2 = GenericMessage(Uid("edit-id-2"), MsgEdit(MessageId(editContent1.unpack._1.str), Text("ghi")))
       val editEvent2 = GenericMessageEvent(rConvId, edit2EventTime, from, editContent2)
 
       val originalNotification = NotificationData(
-        id               = NotId(originalContent.messageId),
+        id               = NotId(originalContent.unpack._1.str),
         msg              = "abc",
         conv             = conv.id,
         user             = from,
@@ -403,7 +403,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         val not = nots.head
-        not.id shouldEqual NotId(editContent2.messageId)
+        not.id shouldEqual NotId(editContent2.unpack._1.str)
         not.msg shouldEqual "ghi"
         Future.successful({})
       }
@@ -436,7 +436,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val deleteContent1 = GenericMessage(Uid(), MsgDeleted(rConvId, MessageId(toBeDeletedNotif.id.str)))
       val deleteEvent1 = GenericMessageEvent(rConvId, RemoteInstant.apply(clock.instant()), from, deleteContent1)
 
-      val deleteContent2 = GenericMessage(Uid(), MsgRecall(MessageId(msgContent.messageId)))
+      val deleteContent2 = GenericMessage(Uid(), MsgRecall(MessageId(msgContent.unpack._1.str)))
       val deleteEvent2 = GenericMessageEvent(rConvId, RemoteInstant.apply(clock.instant()), from, deleteContent2)
 
       setup(

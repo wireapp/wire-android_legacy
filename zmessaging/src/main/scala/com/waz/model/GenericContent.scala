@@ -17,16 +17,13 @@
  */
 package com.waz.model
 
-
-import com.google.protobuf.nano.MessageNano
+import com.google.protobuf.ByteString
+import com.waz.log.BasicLogging.LogTag
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.AssetMetaData.Loudness
 import com.waz.model.AssetStatus.{DownloadFailed, UploadCancelled, UploadDone, UploadFailed, UploadInProgress, UploadNotStarted}
-import com.waz.model.nano.Messages
-import com.waz.model.nano.Messages.MessageEdit
 import com.waz.service.assets
-import com.waz.service.assets.Asset.{Audio, Image, Video}
-import com.waz.service.assets.{AES_CBC_Encryption, UploadAsset, UploadAssetStatus}
+import com.waz.service.assets.{AES_CBC_Encryption, AudioDetails, ImageDetails, UploadAsset, UploadAssetStatus, VideoDetails}
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.URI
@@ -35,256 +32,33 @@ import org.threeten.bp.{Duration => Dur}
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
+import com.waz.log.LogSE._
 
-trait GenericContent[-T] {
-  def set(msg: GenericMessage): T => GenericMessage
+import scala.collection.JavaConverters._
+
+sealed trait GenericContent[Proto] {
+  val proto: Proto
+  def set(builder: Messages.GenericMessage.Builder): Unit = {}
+}
+
+sealed trait EphemeralContent extends GenericContent[Messages.Ephemeral] {
+  def set(builder: Messages.Ephemeral.Builder): Unit
 }
 
 object GenericContent {
+  final case class Asset(override val proto: Messages.Asset) extends GenericContent[Messages.Asset] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setAsset(proto)
 
-  trait EphemeralContent[-T] {
-    def set(eph: Ephemeral): T => Ephemeral
-  }
-
-  type Asset = Messages.Asset
-
-  implicit object Asset extends GenericContent[Asset] {
-
-    override def set(msg: GenericMessage) = msg.setAsset
-
-    type Original = Messages.Asset.Original
-    object Original {
-
-      def apply(asset: AssetData): Original =
-        returning(new Messages.Asset.Original) { o =>
-          o.mimeType = asset.mime.str
-          o.size = asset.size
-          asset.name foreach {o.name = _}
-          asset.metaData match {
-            case Some(video: AssetMetaData.Video) => o.setVideo(VideoMetaData(video))
-            case Some(image: AssetMetaData.Image) => o.setImage(ImageMetaData(image))
-            case Some(audio: AssetMetaData.Audio) => o.setAudio(AudioMetaData(audio))
-            case _ =>
-          }
-          //TODO Dean giphy source and caption
-        }
-
-      def apply(asset: UploadAsset): Original =
-        returning(new Messages.Asset.Original) { o =>
-          o.mimeType = asset.mime.str
-          o.size = asset.size
-          o.name = asset.name
-          asset.details match {
-            case image: Image => o.setImage(ImageMetaData(image))
-            case video: Video => o.setVideo(VideoMetaData(video))
-            case audio: Audio => o.setAudio(AudioMetaData(audio))
-            case _ =>
-          }
-        }
-
-      def apply(asset: assets.Asset): Original =
-        returning(new Messages.Asset.Original) { o =>
-          o.mimeType = asset.mime.str
-          o.size = asset.size
-          o.name = asset.name
-          asset.details match {
-            case image: Image => o.setImage(ImageMetaData(image))
-            case video: Video => o.setVideo(VideoMetaData(video))
-            case audio: Audio => o.setAudio(AudioMetaData(audio))
-            case _ =>
-          }
-        }
-
-      def unapply(proto: Original): Option[(Mime, Long, Option[String], Option[AssetMetaData])] = Option(proto) map { orig =>
-        (
-          Option(orig.mimeType).filter(_.nonEmpty).map(Mime(_)).getOrElse(Mime.Unknown),
-          orig.size,
-          Option(orig.name).filter(_.nonEmpty),
-          orig.getMetaDataCase match {
-            case Messages.Asset.Original.IMAGE_FIELD_NUMBER => ImageMetaData.unapply(orig.getImage)
-            case Messages.Asset.Original.VIDEO_FIELD_NUMBER => VideoMetaData.unapply(orig.getVideo)
-            case Messages.Asset.Original.AUDIO_FIELD_NUMBER => AudioMetaData.unapply(orig.getAudio)
-            case _ => None
-          })
-      }
-    }
-
-    type ImageMetaData = Messages.Asset.ImageMetaData
-    object ImageMetaData {
-      def apply(md: AssetMetaData.Image): ImageMetaData = returning(new Messages.Asset.ImageMetaData) { p =>
-        p.tag = md.tag.toString
-        p.width = md.dimensions.width
-        p.height = md.dimensions.height
-      }
-
-      def apply(details: Image): ImageMetaData = returning(new Messages.Asset.ImageMetaData) { p =>
-        p.width = details.dimensions.width
-        p.height = details.dimensions.height
-      }
-
-      def unapply(proto: ImageMetaData): Option[AssetMetaData.Image] =
-        Some(AssetMetaData.Image(Dim2(proto.width, proto.height), Tag(proto.tag)))
-    }
-
-    type VideoMetaData = Messages.Asset.VideoMetaData
-    object VideoMetaData {
-      def apply(md: AssetMetaData.Video): VideoMetaData = returning(new Messages.Asset.VideoMetaData) { p =>
-        p.width = md.dimensions.width
-        p.height = md.dimensions.height
-        p.durationInMillis = md.duration.toMillis
-      }
-
-      def apply(details: Video): VideoMetaData = returning(new Messages.Asset.VideoMetaData) { p =>
-        p.width = details.dimensions.width
-        p.height = details.dimensions.height
-        p.durationInMillis = details.duration.toMillis
-      }
-
-      def unapply(proto: VideoMetaData): Option[AssetMetaData.Video] =
-        Some(AssetMetaData.Video(Dim2(proto.width, proto.height), Dur.ofMillis(proto.durationInMillis)))
-    }
-
-    type AudioMetaData = Messages.Asset.AudioMetaData
-    object AudioMetaData {
-      def apply(md: AssetMetaData.Audio): AudioMetaData = returning(new Messages.Asset.AudioMetaData) { p =>
-        p.durationInMillis = md.duration.toMillis
-        md.loudness.foreach(l => p.normalizedLoudness = bytify(l.levels))
-      }
-
-      def apply(details: Audio): AudioMetaData = returning(new Messages.Asset.AudioMetaData) { p =>
-        p.durationInMillis = details.duration.toMillis
-        p.normalizedLoudness = bytify(details.loudness.levels.map(_.toFloat))
-      }
-
-      def unapply(p: AudioMetaData): Option[AssetMetaData.Audio] =
-        Some(AssetMetaData.Audio(Dur.ofMillis(p.durationInMillis), Some(Loudness(floatify(p.normalizedLoudness)))))
-
-      def bytify(ls: Iterable[Float]): Array[Byte] = ls.map(l => (l * 255f).toByte)(breakOut)
-      def floatify(bs: Array[Byte]): Vector[Float] = bs.map(b => (b & 255) / 255f)(breakOut)
-    }
-
-    type Preview = Messages.Asset.Preview
-    object Preview {
-      def apply(preview: AssetData): Preview = returning(new Messages.Asset.Preview()) { p =>
-        p.mimeType = preview.mime.str
-        p.size = preview.size
-
-        //remote
-        preview.remoteData.foreach(ak => p.remote = RemoteData.apply(ak))
-
-        //image meta
-        preview.metaData.foreach {
-          case meta@AssetMetaData.Image(_, _) => p.setImage(ImageMetaData(meta))
-          case _ => //other meta data types not supported
-        }
-      }
-
-      def apply(asset: assets.Asset): Preview = returning(new Messages.Asset.Preview()) { p =>
-        p.mimeType = asset.mime.str
-        p.size = asset.size
-        p.remote = RemoteData(asset)
-
-        //image meta
-        asset.details match {
-          case image: Image => p.setImage(ImageMetaData(image))
-          case _ =>
-        }
-      }
-
-      def unapply(preview: Preview): Option[AssetData] = Option(preview) map { prev =>
-        val remoteData = RemoteData.unapply(prev.remote)
-        AssetData(
-          mime        = Mime(prev.mimeType),
-          sizeInBytes = prev.size,
-          status      = remoteData.map(_ => UploadDone).getOrElse(UploadNotStarted),
-          remoteId    = remoteData.flatMap(_.remoteId),
-          token       = remoteData.flatMap(_.token),
-          otrKey      = remoteData.flatMap(_.otrKey),
-          sha         = remoteData.flatMap(_.sha256),
-          metaData    = Option(prev.getImage).flatMap(ImageMetaData.unapply)
-        )
-      }
-    }
-
-    type RemoteData = Messages.Asset.RemoteData
-    object RemoteData {
-      def apply(ak: AssetData.RemoteData): RemoteData =
-        returning(new Messages.Asset.RemoteData) { rData =>
-          ak.remoteId.foreach(v => rData.assetId = v.str)
-          ak.token.foreach(v => rData.assetToken = v.str)
-          ak.otrKey.foreach(v => rData.otrKey = v.bytes)
-          ak.sha256.foreach(v => rData.sha256 = v.bytes)
-          ak.encryption.foreach(v => rData.encryption = v.value)
-        }
-
-      def apply(asset: assets.Asset): RemoteData =
-        returning(new Messages.Asset.RemoteData) { rData =>
-          rData.assetId = asset.id.str
-          asset.token.foreach(token => rData.assetToken = token.str)
-          rData.sha256 = asset.sha.bytes
-          asset.encryption match {
-            case AES_CBC_Encryption(key) =>
-              rData.encryption = Messages.AES_CBC
-              rData.otrKey = key.bytes
-            case _ =>
-          }
-        }
-
-      def unapply(remoteData: RemoteData): Option[AssetData.RemoteData] = Option(remoteData) map { rData =>
-        AssetData.RemoteData(
-          Option(rData.assetId).filter(_.nonEmpty).map(RAssetId),
-          Option(rData.assetToken).filter(_.nonEmpty).map(AssetToken),
-          Some(AESKey(rData.otrKey)).filter(_ != AESKey.Empty),
-          Some(Sha256(rData.sha256)).filter(_ != Sha256.Empty),
-          Some(EncryptionAlgorithm(rData.encryption)))
-      }
-    }
-
-
-    def apply(asset: AssetData, preview: Option[AssetData] = None, expectsReadConfirmation: Boolean): Messages.Asset = returning(new Messages.Asset) { proto =>
-      proto.original = Original(asset)
-      preview.foreach(p => proto.preview = Preview(p))
-      (asset.status, asset.remoteData) match {
-        case (UploadCancelled, _) => proto.setNotUploaded(Messages.Asset.CANCELLED)
-        case (UploadFailed, _) => proto.setNotUploaded(Messages.Asset.FAILED)
-        case (UploadDone, Some(data)) => proto.setUploaded(RemoteData(data))
-        case (DownloadFailed, Some(data)) => proto.setUploaded(RemoteData(data))
-        case _ =>
-      }
-      proto.expectsReadConfirmation = expectsReadConfirmation
-    }
-
-    def apply(asset: UploadAsset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Messages.Asset =
-      returning(new Messages.Asset) { proto =>
-        proto.original = Original(asset)
-        preview.foreach(p => proto.preview = Preview(p))
-        asset.status match {
-          case UploadAssetStatus.Cancelled => proto.setNotUploaded(Messages.Asset.CANCELLED)
-          case UploadAssetStatus.Failed    => proto.setNotUploaded(Messages.Asset.FAILED)
-          case _ =>
-        }
-        proto.expectsReadConfirmation = expectsReadConfirmation
-      }
-
-    def apply(asset: assets.Asset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Messages.Asset =
-      returning(new Messages.Asset) { proto =>
-        proto.original = Original(asset)
-        preview.foreach(p => proto.preview = Preview(p))
-        proto.setUploaded(RemoteData(asset))
-        proto.expectsReadConfirmation = expectsReadConfirmation
-      }
-
-    def unapply(a: Messages.Asset): Option[(AssetData, Option[AssetData])] = {
-      //TODO Dean - think of better way to handle when only one part of asset proto appears without original
-      val (mime, size, name, meta) = Original.unapply(a.original).getOrElse(Mime.Unknown, 0L, None, None)
-      val preview = Preview.unapply(a.preview)
-      val remoteData = RemoteData.unapply(a.getUploaded)
-      val status = a.getStatusCase match {
+    lazy val unpack: (AssetData, Option[AssetData]) = {
+      val (mime, size, name, meta) = Asset.Original(proto.getOriginal).unpack.getOrElse(Mime.Unknown, 0L, None, None)
+      val preview = Asset.Preview(proto.getPreview).unpack
+      val remoteData = Asset.RemoteData(proto.getUploaded).unpack
+      val status = proto.getStatusCase.getNumber match {
         case Messages.Asset.UPLOADED_FIELD_NUMBER => remoteData.map(_ => UploadDone).getOrElse(UploadFailed)
         case Messages.Asset.NOT_UPLOADED_FIELD_NUMBER =>
-          a.getNotUploaded match {
-            case Messages.Asset.CANCELLED => UploadCancelled
-            case Messages.Asset.FAILED => UploadFailed
+          proto.getNotUploaded match {
+            case Messages.Asset.NotUploaded.CANCELLED => UploadCancelled
+            case Messages.Asset.NotUploaded.FAILED    => UploadFailed
             case _ => UploadInProgress
           }
         case _ => UploadInProgress
@@ -302,532 +76,949 @@ object GenericContent {
         sha         = remoteData.flatMap(_.sha256),
         previewId   = preview.map(_.id)
       )
-      Some((asset, preview))
+      (asset, preview)
     }
-
   }
 
-  implicit object EphemeralAsset extends EphemeralContent[Messages.Asset] {
-    override def set(eph: Ephemeral): Messages.Asset => Ephemeral = eph.setAsset
-  }
+  object Asset {
 
-  type ImageAsset = Messages.ImageAsset
-  implicit object ImageAsset extends GenericContent[ImageAsset] {
-    override def set(msg: GenericMessage) = msg.setImage
-
-    def unapply(proto: ImageAsset): Option[AssetData] = {
-      Some(AssetData(
-        status = UploadDone,
-        otrKey = Option(proto.otrKey).map(AESKey(_)),
-        sha = Option(proto.sha256).map(Sha256(_)),
-        sizeInBytes = proto.size,
-        mime = Mime(proto.mimeType),
-        metaData = Some(AssetMetaData.Image(Dim2(proto.width, proto.height), Tag(proto.tag)))
-      ))
-    }
-
-    def apply(asset: AssetData): ImageAsset = returning(new Messages.ImageAsset) { proto =>
-      asset.metaData.foreach {
-        case AssetMetaData.Image(Dim2(w, h), tag) =>
-          proto.tag = tag.toString
-          proto.width = w
-          proto.height = h
-          proto.originalWidth = w
-          proto.originalHeight = h
-        case _ => throw new Exception("Trying to create image proto from non image asset data")
+    def apply(asset: AssetData, preview: Option[AssetData] = None, expectsReadConfirmation: Boolean): Asset = {
+      val builder = Messages.Asset.newBuilder()
+      builder.setOriginal(Original(asset).proto)
+      preview.foreach(p => builder.setPreview(Preview(p).proto))
+      (asset.status, asset.remoteData) match {
+        case (UploadCancelled, _)         => builder.setNotUploaded(Messages.Asset.NotUploaded.CANCELLED)
+        case (UploadFailed, _)            => builder.setNotUploaded(Messages.Asset.NotUploaded.FAILED)
+        case (UploadDone, Some(data))     => builder.setUploaded(RemoteData(data).proto)
+        case (DownloadFailed, Some(data)) => builder.setUploaded(RemoteData(data).proto)
+        case _ =>
       }
-      proto.mimeType = asset.mime.str
-      proto.size = asset.size.toInt
-      asset.otrKey.foreach(v => proto.otrKey = v.bytes)
-      asset.sha.foreach(v => proto.sha256 = v.bytes)
+      builder.setExpectsReadConfirmation(expectsReadConfirmation)
+      Asset(builder.build())
+    }
+
+    def apply(asset: UploadAsset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Asset = {
+      val builder = Messages.Asset.newBuilder()
+      builder.setOriginal(Original(asset).proto)
+      preview.foreach(p => builder.setPreview(Preview(p).proto))
+      asset.status match {
+        case UploadAssetStatus.Cancelled => builder.setNotUploaded(Messages.Asset.NotUploaded.CANCELLED)
+        case UploadAssetStatus.Failed    => builder.setNotUploaded(Messages.Asset.NotUploaded.FAILED)
+        case _ =>
+      }
+      builder.setExpectsReadConfirmation(expectsReadConfirmation)
+      Asset(builder.build())
+    }
+
+    def apply(asset: assets.Asset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Asset = {
+      val builder = Messages.Asset.newBuilder()
+      builder.setOriginal(Original(asset).proto)
+      preview.foreach(p => builder.setPreview(Preview(p).proto))
+      builder.setUploaded(RemoteData(asset).proto)
+      builder.setExpectsReadConfirmation(expectsReadConfirmation)
+      Asset(builder.build())
+    }
+
+    final case class Original(override val proto: Messages.Asset.Original) extends GenericContent[Messages.Asset.Original]{
+      override def set(builder: Messages.GenericMessage.Builder): Unit = {
+        val ab = Messages.Asset.newBuilder()
+        ab.setOriginal(proto)
+        builder.setAsset(ab)
+      }
+
+      lazy val unpack: Option[(Mime, Long, Option[String], Option[AssetMetaData])] = Option(proto).map { orig =>
+        (
+          if (orig.hasMimeType) Mime(orig.getMimeType) else Mime.Unknown,
+          orig.getSize,
+          if (orig.hasName) Option(orig.getName) else None,
+          orig.getMetaDataCase.getNumber match {
+            case Messages.Asset.Original.IMAGE_FIELD_NUMBER => Some(ImageMetaData(orig.getImage).unpack)
+            case Messages.Asset.Original.VIDEO_FIELD_NUMBER => Some(VideoMetaData(orig.getVideo).unpack)
+            case Messages.Asset.Original.AUDIO_FIELD_NUMBER => Some(AudioMetaData(orig.getAudio).unpack)
+            case _ => None
+          })
+      }
+    }
+
+    object Original {
+      def apply(asset: AssetData): Original = {
+        val builder = Messages.Asset.Original.newBuilder()
+        builder.setMimeType(asset.mime.str)
+        builder.setSize(asset.size)
+        asset.name.foreach(builder.setName)
+        asset.metaData match {
+          case Some(video: AssetMetaData.Video) => builder.setVideo(VideoMetaData(video).proto)
+          case Some(image: AssetMetaData.Image) => builder.setImage(ImageMetaData(image).proto)
+          case Some(audio: AssetMetaData.Audio) => builder.setAudio(AudioMetaData(audio).proto)
+          case _ =>
+        }
+        Original(builder.build())
+      }
+
+      def apply(asset: UploadAsset): Original = {
+        val builder = Messages.Asset.Original.newBuilder()
+        builder.setMimeType(asset.mime.str)
+        builder.setSize(asset.size)
+        builder.setName(asset.name)
+        asset.details match {
+          case image: ImageDetails => builder.setImage(ImageMetaData(image).proto)
+          case video: VideoDetails => builder.setVideo(VideoMetaData(video).proto)
+          case audio: AudioDetails => builder.setAudio(AudioMetaData(audio).proto)
+          case _ =>
+        }
+        Original(builder.build())
+      }
+
+      def apply(asset: assets.Asset): Original = {
+        val builder = Messages.Asset.Original.newBuilder()
+        builder.setMimeType(asset.mime.str)
+        builder.setSize(asset.size)
+        builder.setName(asset.name)
+        asset.details match {
+          case image: ImageDetails => builder.setImage(ImageMetaData(image).proto)
+          case video: VideoDetails => builder.setVideo(VideoMetaData(video).proto)
+          case audio: AudioDetails => builder.setAudio(AudioMetaData(audio).proto)
+          case _ =>
+        }
+        Original(builder.build())
+      }
+    }
+
+    final case class ImageMetaData(override val proto: Messages.Asset.ImageMetaData) extends GenericContent[Messages.Asset.ImageMetaData] {
+      lazy val unpack: AssetMetaData.Image =
+        AssetMetaData.Image(Dim2(proto.getWidth, proto.getHeight), Tag(proto.getTag))
+    }
+
+    object ImageMetaData {
+      def apply(image: AssetMetaData.Image): ImageMetaData = {
+        val builder = Messages.Asset.ImageMetaData.newBuilder()
+        builder.setTag(image.tag.toString)
+        builder.setWidth(image.dimensions.width)
+        builder.setHeight(image.dimensions.height)
+        ImageMetaData(builder.build())
+      }
+
+      def apply(details: ImageDetails): ImageMetaData = {
+        val builder = Messages.Asset.ImageMetaData.newBuilder()
+        builder.setWidth(details.dimensions.width)
+        builder.setHeight(details.dimensions.height)
+        ImageMetaData(builder.build())
+      }
+    }
+
+    final case class VideoMetaData(override val proto: Messages.Asset.VideoMetaData) extends GenericContent[Messages.Asset.VideoMetaData] {
+      lazy val unpack: AssetMetaData.Video = {
+        val dim = if (!proto.hasWidth || !proto.hasHeight) Dim2(0, 0) else Dim2(proto.getWidth, proto.getHeight)
+        val dur = if (!proto.hasDurationInMillis) Dur.ZERO else Dur.ofMillis(proto.getDurationInMillis)
+        AssetMetaData.Video(dim, dur)
+      }
+    }
+
+    object VideoMetaData {
+      def apply(video: AssetMetaData.Video): VideoMetaData = {
+        val builder = Messages.Asset.VideoMetaData.newBuilder()
+        builder.setWidth(video.dimensions.width)
+        builder.setHeight(video.dimensions.height)
+        builder.setDurationInMillis(video.duration.toMillis)
+        VideoMetaData(builder.build())
+      }
+
+      def apply(details: VideoDetails): VideoMetaData = {
+        val builder = Messages.Asset.VideoMetaData.newBuilder()
+        builder.setWidth(details.dimensions.width)
+        builder.setHeight(details.dimensions.height)
+        builder.setDurationInMillis(details.duration.toMillis)
+        VideoMetaData(builder.build())
+      }
+    }
+
+    final case class AudioMetaData(override val proto: Messages.Asset.AudioMetaData) extends GenericContent[Messages.Asset.AudioMetaData] {
+      lazy val unpack: AssetMetaData.Audio = {
+        val dur = if (!proto.hasDurationInMillis) Dur.ZERO else Dur.ofMillis(proto.getDurationInMillis)
+        val loudness = if(!proto.hasNormalizedLoudness) None else Some(Loudness(AudioMetaData.floatify(proto.getNormalizedLoudness.toByteArray)))
+        AssetMetaData.Audio(dur, loudness)
+      }
+    }
+
+    object AudioMetaData {
+      def apply(audio: AssetMetaData.Audio): AudioMetaData = {
+        val builder = Messages.Asset.AudioMetaData.newBuilder()
+        builder.setDurationInMillis(audio.duration.toMillis)
+        audio.loudness.foreach(l => builder.setNormalizedLoudness(bytify(l.levels)))
+        AudioMetaData(builder.build())
+      }
+
+      def apply(details: AudioDetails): AudioMetaData = {
+        val builder = Messages.Asset.AudioMetaData.newBuilder()
+        builder.setDurationInMillis(details.duration.toMillis)
+        builder.setNormalizedLoudness(bytify(details.loudness.levels.map(_.toFloat)))
+        AudioMetaData(builder.build())
+      }
+
+      private def bytify(ls: Iterable[Float]): ByteString = ByteString.copyFrom(ls.map(l => (l * 255f).toByte)(breakOut).toArray)
+
+      private def floatify(bs: Array[Byte]): Vector[Float] = bs.map(b => (b & 255) / 255f)(breakOut)
+    }
+
+    final case class Preview(override val proto: Messages.Asset.Preview) extends GenericContent[Messages.Asset.Preview] {
+      override def set(builder: Messages.GenericMessage.Builder): Unit = {
+        val pb = Messages.Asset.newBuilder()
+        pb.setPreview(proto)
+        builder.setAsset(pb.build())
+      }
+
+      lazy val unpack: Option[AssetData] = Option(proto).map { prev =>
+        val remoteData = if (prev.hasRemote) RemoteData(prev.getRemote).unpack else None
+        AssetData(
+          mime = Mime(prev.getMimeType),
+          sizeInBytes = prev.getSize,
+          status = remoteData.map(_ => UploadDone).getOrElse(UploadNotStarted),
+          remoteId = remoteData.flatMap(_.remoteId),
+          token = remoteData.flatMap(_.token),
+          otrKey = remoteData.flatMap(_.otrKey),
+          sha = remoteData.flatMap(_.sha256),
+          metaData = if (prev.hasImage) Option(prev.getImage).map(image => ImageMetaData(image).unpack) else None
+        )
+      }
+    }
+
+    object Preview {
+      def apply(preview: AssetData): Preview = {
+        val builder = Messages.Asset.Preview.newBuilder()
+        builder.setMimeType(preview.mime.str)
+        builder.setSize(preview.size)
+
+        // remote
+        preview.remoteData.foreach(data => builder.setRemote(RemoteData(data).proto))
+
+        //image meta
+        preview.metaData.foreach {
+          case meta@AssetMetaData.Image(_, _) => builder.setImage(ImageMetaData(meta).proto)
+          case _ => //other meta data types not supported
+        }
+
+        Preview(builder.build())
+      }
+
+      def apply(asset: assets.Asset): Preview = {
+        val builder = Messages.Asset.Preview.newBuilder()
+        builder.setMimeType(asset.mime.str)
+        builder.setSize(asset.size)
+        builder.setRemote(RemoteData(asset).proto)
+
+        //image meta
+        asset.details match {
+          case image: ImageDetails => builder.setImage(ImageMetaData(image).proto)
+          case _ =>
+        }
+
+        Preview(builder.build())
+      }
+    }
+
+    sealed trait EncryptionAlgorithm {
+      val value: Int
+    }
+
+    case object AES_CBC extends EncryptionAlgorithm {
+      override val value: Int = Messages.EncryptionAlgorithm.AES_CBC.getNumber
+    }
+
+    case object AES_GCM extends EncryptionAlgorithm {
+      override val value: Int = Messages.EncryptionAlgorithm.AES_GCM.getNumber
+    }
+
+    object EncryptionAlgorithm {
+      def apply(v: Int): EncryptionAlgorithm = if (v == AES_GCM.value) AES_GCM else AES_CBC
+
+      def unapply(encryption: EncryptionAlgorithm): Option[Int] = encryption match {
+        case AES_GCM => Some(Messages.EncryptionAlgorithm.AES_GCM.getNumber)
+        case _       => Some(Messages.EncryptionAlgorithm.AES_CBC.getNumber)
+      }
+    }
+
+    final case class RemoteData(override val proto: Messages.Asset.RemoteData) extends GenericContent[Messages.Asset.RemoteData] {
+      override def set(builder: Messages.GenericMessage.Builder): Unit = {
+        val rdb = Messages.Asset.Preview.newBuilder()
+        rdb.setRemote(proto)
+        Preview(rdb.build()).set(builder)
+      }
+
+      lazy val unpack: Option[AssetData.RemoteData] = Option(proto).map { rData =>
+        AssetData.RemoteData(
+          if (rData.hasAssetId) Some(RAssetId(rData.getAssetId)) else None,
+          if (rData.hasAssetToken) Some(AssetToken(rData.getAssetToken)) else None,
+          Some(AESKey(rData.getOtrKey.toByteArray)).filter(_ != AESKey.Empty),
+          Some(Sha256(rData.getSha256.toByteArray)).filter(_ != Sha256.Empty),
+          if (rData.hasEncryption) Some(EncryptionAlgorithm(rData.getEncryption.getNumber)) else None
+        )
+      }
+    }
+
+    object RemoteData {
+      def apply(ak: AssetData.RemoteData): RemoteData = {
+        val builder = Messages.Asset.RemoteData.newBuilder()
+        ak.remoteId.foreach(id => builder.setAssetId(id.str))
+        ak.token.foreach(t => builder.setAssetToken(t.str))
+        ak.otrKey.foreach(key => builder.setOtrKey(ByteString.copyFrom(key.bytes)))
+        ak.sha256.foreach(sha => builder.setSha256(ByteString.copyFrom(sha.bytes)))
+        ak.encryption.foreach(enc => builder.setEncryption(toEncryptionAlg(enc)))
+        RemoteData(builder.build())
+      }
+
+      private def toEncryptionAlg(enc: EncryptionAlgorithm): Messages.EncryptionAlgorithm = enc match {
+        case AES_CBC => Messages.EncryptionAlgorithm.AES_CBC
+        case AES_GCM => Messages.EncryptionAlgorithm.AES_GCM
+      }
+
+      def apply(asset: assets.Asset): RemoteData = {
+        val builder = Messages.Asset.RemoteData.newBuilder()
+        builder.setAssetId(asset.id.str)
+        asset.token.foreach(token => builder.setAssetToken(token.str))
+        builder.setSha256(ByteString.copyFrom(asset.sha.bytes))
+        asset.encryption match {
+          case AES_CBC_Encryption(key) =>
+            builder.setEncryption(Messages.EncryptionAlgorithm.AES_CBC)
+            builder.setOtrKey(ByteString.copyFrom(key.bytes))
+          case _ =>
+        }
+        RemoteData(builder.build())
+      }
     }
   }
 
-  implicit object EphemeralImageAsset extends EphemeralContent[ImageAsset] {
-    override def set(eph: Ephemeral): ImageAsset => Ephemeral = eph.setImage
+  final case class ImageAsset(override val proto: Messages.ImageAsset) extends GenericContent[Messages.ImageAsset] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setImage(proto)
+
+    lazy val unpack: AssetData =
+      AssetData(
+        status = UploadDone,
+        otrKey = if (proto.hasOtrKey) Option(AESKey(proto.getOtrKey.toByteArray)) else None,
+        sha = if (proto.hasSha256) Option(Sha256(proto.getSha256.toByteArray)) else None,
+        sizeInBytes = proto.getSize,
+        mime = Mime(proto.getMimeType),
+        metaData = Some(AssetMetaData.Image(Dim2(proto.getWidth, proto.getHeight), Tag(proto.getTag)))
+      )
   }
 
-  type Mention = Messages.Mention
+  object ImageAsset {
+    def apply(asset: AssetData): ImageAsset = {
+      val builder = Messages.ImageAsset.newBuilder()
+        asset.metaData.foreach {
+          case AssetMetaData.Image(Dim2(w, h), tag) =>
+            builder.setTag(tag.toString)
+            builder.setWidth(w)
+            builder.setHeight(h)
+            builder.setOriginalWidth(w)
+            builder.setOriginalHeight(h)
+          case _ => error(l"Trying to create image proto from non image asset data: $asset")(LogTag("ImageAsset"))
+        }
+      builder.setMimeType(asset.mime.str)
+      builder.setSize(asset.size.toInt)
+      asset.otrKey.foreach(v => builder.setOtrKey(ByteString.copyFrom(v.bytes)))
+      asset.sha.foreach(v => builder.setSha256(ByteString.copyFrom(v.bytes)))
+      ImageAsset(builder.build())
+    }
+  }
+
+  final case class Mention(override val proto: Messages.Mention) extends GenericContent[Messages.Mention] {
+    lazy val unpack: com.waz.model.Mention =
+      com.waz.model.Mention(
+        if (proto.hasUserId) Some(UserId(proto.getUserId)) else None,
+        proto.getStart,
+        proto.getLength
+      )
+  }
 
   object Mention {
-    def apply(userId: Option[UserId], start: Int, length: Int) = returning(new Messages.Mention) { m =>
-      userId.map(id => m.setUserId(id.str))
-      m.start = start
-      m.length = length
+    def apply(userId: Option[UserId], start: Int, length: Int): Mention = {
+      val builder = Messages.Mention.newBuilder()
+      userId.map(id => builder.setUserId(id.str))
+      builder.setStart(start)
+      builder.setLength(length)
+      Mention(builder.build())
     }
+
+    def apply(mention: com.waz.model.Mention): Mention =
+      apply(mention.userId, mention.start, mention.length)
   }
 
-  type Quote = Messages.Quote
+  final case class Quote(override val proto: Messages.Quote) extends GenericContent[Messages.Quote] {
+    lazy val unpack: (MessageId, Option[Sha256]) = {
+      val sha =
+        if (proto.hasQuotedMessageSha256)
+          Option(proto.getQuotedMessageSha256).map(_.toByteArray).collect { case bytes if bytes.nonEmpty => Sha256.calculate(bytes) }
+        else None
+     (MessageId(proto.getQuotedMessageId), sha)
+    }
+  }
 
   object Quote {
-    def apply(id: MessageId, sha256: Option[Sha256]) = returning(new Messages.Quote) { q =>
-      q.quotedMessageId = id.str
-      sha256.foreach(sha => if (sha.bytes.nonEmpty) q.quotedMessageSha256 = sha.bytes)
+    def apply(id: MessageId, sha256: Option[Sha256]): Quote = {
+      val builder = Messages.Quote.newBuilder()
+      builder.setQuotedMessageId(id.str)
+      sha256.foreach(sha => if (sha.bytes.nonEmpty) builder.setQuotedMessageSha256(ByteString.copyFrom(sha.bytes)))
+      Quote(builder.build())
     }
-
-    def unapply(quote: Quote): Option[(MessageId, Option[Sha256])] =
-      Some(MessageId(quote.quotedMessageId), Option(quote.quotedMessageSha256).collect { case bytes if bytes.nonEmpty => Sha256.calculate(bytes) })
   }
 
-  type LinkPreview = Messages.LinkPreview
+  final case class LinkPreview(override val proto: Messages.LinkPreview) extends GenericContent[Messages.LinkPreview] {
+    def unpackWithAsset: Option[AssetData] = {
+      val image = if (proto.hasImage) Option(proto.getImage) else None
+      image
+        .orElse { if (proto.hasArticle) Option(proto.getArticle.getImage) else None }
+        .map { proto => Asset(proto).unpack._1 }
+    }
+
+    def unpackWithDescription: (String, String) =
+      if (proto.hasArticle) (proto.getArticle.getTitle, proto.getArticle.getSummary)
+      else (proto.getTitle, proto.getSummary)
+  }
 
   object LinkPreview {
-
-    trait PreviewMeta[A] {
-      def apply(preview: LinkPreview, meta: A): LinkPreview
+    def apply(linkPreview: LinkPreview, meta: Messages.Tweet): LinkPreview = {
+      val builder = linkPreview.proto.toBuilder
+      builder.setTweet(meta)
+      LinkPreview(builder.build())
     }
 
-    implicit object TweetMeta extends PreviewMeta[Tweet] {
-      override def apply(preview: LinkPreview, meta: Tweet): LinkPreview = returning(preview) {_.setTweet(meta)}
+    def apply(uri: URI, offset: Int): LinkPreview = {
+      val builder = Messages.LinkPreview.newBuilder()
+      builder.setUrl(uri.toString)
+      builder.setUrlOffset(offset)
+      LinkPreview(builder.build())
     }
 
-    def apply(uri: URI, offset: Int): LinkPreview = returning(new Messages.LinkPreview) { p =>
-      p.url = uri.toString
-      p.urlOffset = offset
+    def apply(uri: URI, offset: Int, title: String, summary: String, image: Option[Asset], permanentUrl: Option[URI]): LinkPreview = {
+      val builder = Messages.LinkPreview.newBuilder()
+      builder.setUrl(uri.toString)
+      builder.setUrlOffset(offset)
+      builder.setTitle(title)
+      builder.setSummary(summary)
+      permanentUrl.foreach { u => builder.setPermanentUrl(u.toString) }
+      image.foreach(im => builder.setImage(im.proto))
+
+      // set article for backward compatibility, we will stop sending it once all platforms switch to using LinkPreview properties
+      builder.setArticle(article(title, summary, image, permanentUrl))
+      LinkPreview(builder.build())
     }
 
-    def apply(uri: URI, offset: Int, title: String, summary: String, image: Option[Messages.Asset], permanentUrl: Option[URI]): LinkPreview =
-      returning(new Messages.LinkPreview) { p =>
-        p.url = uri.toString
-        p.urlOffset = offset
-        p.title = title
-        p.summary = summary
-        permanentUrl foreach { u => p.permanentUrl = u.toString }
-        image foreach {p.image = _}
-
-        // set article for backward compatibility, we will stop sending it once all platforms switch to using LinkPreview properties
-        p.setArticle(article(title, summary, image, permanentUrl))
-      }
-
-    def apply[Meta: PreviewMeta](uri: URI, offset: Int, title: String, summary: String, image: Option[Messages.Asset], permanentUrl: Option[URI], meta: Meta): LinkPreview =
-      returning(apply(uri, offset, title, summary, image, permanentUrl)) { p =>
-        implicitly[PreviewMeta[Meta]].apply(p, meta)
-      }
-
-    type Tweet = Messages.Tweet
-
-    object Tweet {
-
-    }
-
-    private def article(title: String, summary: String, image: Option[Messages.Asset], uri: Option[URI]) = returning(new Messages.Article) { p =>
-      p.title = title
-      p.summary = summary
-      uri foreach { u => p.permanentUrl = u.toString }
-      image foreach {p.image = _}
+    private def article(title: String, summary: String, image: Option[Asset], uri: Option[URI]) = {
+      val builder = Messages.Article.newBuilder()
+      builder.setTitle(title)
+      builder.setSummary(summary)
+      uri.foreach { u => builder.setPermanentUrl(u.toString) }
+      image.foreach(im => builder.setImage(im.proto))
+      builder.build()
     }
 
     implicit object JsDecoder extends JsonDecoder[LinkPreview] {
-      override def apply(implicit js: JSONObject): LinkPreview = Messages.LinkPreview.parseFrom(AESUtils.base64(js.getString("proto")))
+      override def apply(implicit js: JSONObject): LinkPreview =
+        LinkPreview(Messages.LinkPreview.parseFrom(AESUtils.base64(js.getString("proto"))))
     }
 
     implicit object JsEncoder extends JsonEncoder[LinkPreview] {
       override def apply(v: LinkPreview): JSONObject = JsonEncoder { o =>
-        o.put("proto", AESUtils.base64(MessageNano.toByteArray(v)))
+        o.put("proto", AESUtils.base64(v.proto.toByteArray))
       }
     }
-
-    object WithAsset {
-      def unapply(lp: LinkPreview): Option[AssetData] =
-        (Option(lp.image) orElse {if (lp.hasArticle) Option(lp.getArticle.image) else None}).flatMap { a => Asset.unapply(a).map { case (asset, _) => asset}}
-    }
-
-    object WithDescription {
-      def unapply(lp: LinkPreview): Option[(String, String)] =
-        if (lp.hasArticle) Some((lp.getArticle.title, lp.getArticle.summary))
-        else Some((lp.title, lp.summary))
-    }
-
   }
 
-  type Reaction = Messages.Reaction
+  final case class Reaction(override val proto: Messages.Reaction) extends GenericContent[Messages.Reaction] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setReaction(proto)
 
-  implicit object Reaction extends GenericContent[Reaction] {
+    lazy val unpack: (MessageId, Liking.Action) =
+      (MessageId(proto.getMessageId),
+       proto.getEmoji match {
+         case Reaction.HeavyBlackHeart => Liking.Action.Like
+         case _ => Liking.Action.Unlike
+       })
+  }
 
-    override def set(msg: GenericMessage) = msg.setReaction
-
+  object Reaction {
     val HeavyBlackHeart = "\u2764\uFE0F"
 
-    def apply(msg: MessageId, action: Liking.Action): Reaction = returning(new Messages.Reaction) { proto =>
-      proto.emoji = action match {
-        case Liking.Action.Like => HeavyBlackHeart
-        case Liking.Action.Unlike => ""
-      }
-      proto.messageId = msg.str
-    }
-
-    def unapply(proto: Messages.Reaction): Option[(MessageId, Liking.Action)] = Some((MessageId(proto.messageId), proto.emoji match {
-      case HeavyBlackHeart => Liking.Action.Like
-      case _ => Liking.Action.Unlike
-    }))
-  }
-
-  type Knock = Messages.Knock
-
-  implicit object Knock extends GenericContent[Knock] {
-    override def set(msg: GenericMessage) = msg.setKnock
-    def apply(expectsReadConfirmation: Boolean) = returning(new Messages.Knock())(_.expectsReadConfirmation = expectsReadConfirmation)
-    def unapply(arg: Knock): Boolean = true
-  }
-
-  implicit object EphemeralKnock extends EphemeralContent[Knock] {
-    override def set(eph: Ephemeral): (Knock) => Ephemeral = eph.setKnock
-  }
-
-  type Text = Messages.Text
-
-  implicit object Text extends GenericContent[Text] {
-    override def set(msg: GenericMessage) = msg.setText
-
-    def apply(content: String): Text = apply(content, Nil, Nil, None, expectsReadConfirmation = false)
-
-    def apply(content: String, links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text = apply(content, Nil, links, None, expectsReadConfirmation)
-
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text = apply(content, mentions, links, None, expectsReadConfirmation)
-
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Quote, expectsReadConfirmation: Boolean): Text = apply(content, mentions, links, Some(quote), expectsReadConfirmation)
-
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): Text = returning(new Messages.Text()) { t =>
-      t.content = content
-      t.mentions = mentions.map { case com.waz.model.Mention(userId, start, length) => GenericContent.Mention(userId, start, length) }(breakOut).toArray
-      t.linkPreview = links.toArray
-      t.expectsReadConfirmation = expectsReadConfirmation
-      quote.foreach(q => t.quote = q)
-    }
-
-    def unapply(proto: Text): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote])] = {
-      val mentions = proto.mentions.map { m =>
-        val userId = m.getUserId match {
-          case id: String if id.nonEmpty => Option(UserId(id))
-          case _ => None
+    def apply(msg: MessageId, action: Liking.Action): Reaction = {
+      val builder = Messages.Reaction.newBuilder()
+      builder.setEmoji(
+        action match {
+          case Liking.Action.Like => HeavyBlackHeart
+          case Liking.Action.Unlike => ""
         }
-        com.waz.model.Mention(userId, m.start, m.length)
-      }.toSeq
-      Option((proto.content, mentions, proto.linkPreview.toSeq, Option(proto.quote)))
+      )
+      builder.setMessageId(msg.str)
+      Reaction(builder.build())
     }
   }
 
-  implicit object EphemeralText extends EphemeralContent[Text] {
-    override def set(eph: Ephemeral): (Text) => Ephemeral = eph.setText
+  final case class Knock(override val proto: Messages.Knock) extends GenericContent[Messages.Knock] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setKnock(proto)
+
+    def unpack: Boolean = if (proto.hasExpectsReadConfirmation) proto.getExpectsReadConfirmation else false
   }
 
-  type MsgEdit = Messages.MessageEdit
+  object Knock {
+    def apply(expectsReadConfirmation: Boolean): Knock = {
+      val builder = Messages.Knock.newBuilder()
+      builder.setHotKnock(false)
+      builder.setExpectsReadConfirmation(expectsReadConfirmation)
+      Knock(builder.build())
+    }
+  }
+
+  final case class Text(override val proto: Messages.Text) extends GenericContent[Messages.Text] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setText(proto)
+
+    lazy val unpack: (String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean) = {
+      (
+        proto.getContent,
+        proto.getMentionsList.asScala.map(m => Mention(m).unpack),
+        proto.getLinkPreviewList.asScala.map(LinkPreview(_)),
+        if (proto.hasQuote) Some(Quote(proto.getQuote)) else None,
+        proto.getExpectsReadConfirmation
+      )
+    }
+  }
+
+  object Text {
+    def apply(content: String): Text =
+      apply(content, Nil, Nil, None, expectsReadConfirmation = false)
+
+    def apply(content: String, links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text =
+      apply(content, Nil, links, None, expectsReadConfirmation)
+
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text =
+      apply(content, mentions, links, None, expectsReadConfirmation)
+
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): Text = {
+      val builder = Messages.Text.newBuilder()
+      builder.setContent(content)
+      builder.addAllMentions(mentions.map(Mention(_).proto).asJava)
+      builder.addAllLinkPreview(links.map(_.proto).asJava)
+      builder.setExpectsReadConfirmation(expectsReadConfirmation)
+      quote.foreach(q => builder.setQuote(q.proto))
+      Text(builder.build())
+    }
+
+    def newMentions(text: Text, mentions: Seq[com.waz.model.Mention]): Text = {
+      val builder = text.proto.toBuilder
+      builder.clearMentions()
+      builder.addAllMentions(mentions.map(Mention(_).proto).asJava)
+      Text(builder.build())
+    }
+  }
 
   //TODO: BUTTONS - add Composite here
-  implicit object MsgEdit extends GenericContent[MsgEdit] {
-    override def set(msg: GenericMessage) = msg.setEdited
+  final case class MsgEdit(override val proto: Messages.MessageEdit) extends GenericContent[Messages.MessageEdit] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setEdited(proto)
 
-    def apply(ref: MessageId, content: Text) = returning(new MessageEdit) { c =>
-      c.replacingMessageId = ref.str
-      c.setText(content)
-    }
-
-    def unapply(arg: MsgEdit): Option[(MessageId, Text)] =
-      arg.getContentCase match {
+    lazy val unpack: Option[(MessageId, Text)] =
+      proto.getContentCase.getNumber match {
         case Messages.MessageEdit.TEXT_FIELD_NUMBER =>
-          Some((MessageId(arg.replacingMessageId), arg.getText))
+          Some((MessageId(proto.getReplacingMessageId), Text(proto.getText)))
         case _ =>
           None
       }
   }
 
-  type Cleared = Messages.Cleared
-
-  implicit object Cleared extends GenericContent[Cleared] {
-    override def set(msg: GenericMessage) = msg.setCleared
-
-    def apply(conv: RConvId, time: RemoteInstant) = returning(new Messages.Cleared) { c =>
-      c.conversationId = conv.str
-      c.clearedTimestamp = time.toEpochMilli
+  object MsgEdit {
+    def apply(ref: MessageId, content: Text): MsgEdit = {
+      val builder = Messages.MessageEdit.newBuilder()
+      builder.setReplacingMessageId(ref.str)
+      builder.setText(content.proto)
+      MsgEdit(builder.build())
     }
-
-    def unapply(arg: Cleared): Option[(RConvId, RemoteInstant)] =
-      for {
-        conv <- Option(arg.conversationId)
-        time <- Option(arg.clearedTimestamp)
-      } yield (RConvId(conv), RemoteInstant.ofEpochMilli(time))
   }
 
-  type LastRead = Messages.LastRead
+  final case class Cleared(override val proto: Messages.Cleared) extends GenericContent[Messages.Cleared] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setCleared(proto)
 
-  implicit object LastRead extends GenericContent[LastRead] {
-    override def set(msg: GenericMessage): LastRead => GenericMessage = msg.setLastRead
-
-    def apply(conv: RConvId, time: RemoteInstant): Messages.LastRead = returning(new Messages.LastRead) { l =>
-      l.conversationId = conv.str
-      l.lastReadTimestamp = time.toEpochMilli
-    }
-
-    def unapply(arg: LastRead): Option[(RConvId, RemoteInstant)] =
-      Some((RConvId(arg.conversationId), RemoteInstant.ofEpochMilli(arg.lastReadTimestamp)))
+    lazy val unpack: (RConvId, RemoteInstant) =
+      (RConvId(proto.getConversationId), RemoteInstant.ofEpochMilli(proto.getClearedTimestamp))
   }
 
-  type DataTransfer = Messages.DataTransfer
-
-  implicit object DataTransfer extends GenericContent[DataTransfer] {
-    override def set(msg: GenericMessage): DataTransfer => GenericMessage = msg.setDataTransfer
-
-    def apply(trackingId: TrackingId): Messages.DataTransfer = returning(new Messages.DataTransfer) { d =>
-      d.trackingIdentifier = returning(new Messages.TrackingIdentifier){ _.identifier = trackingId.str }
+  object Cleared {
+    def apply(conv: RConvId, time: RemoteInstant): Cleared  = {
+      val builder = Messages.Cleared.newBuilder()
+      builder.setConversationId(conv.str)
+      builder.setClearedTimestamp(time.toEpochMilli)
+      Cleared(builder.build())
     }
-
-    def unapply(arg: DataTransfer): Option[TrackingId] =
-      Some(TrackingId(arg.trackingIdentifier.identifier))
   }
 
-  type MsgDeleted = Messages.MessageHide
+  final case class LastRead(override val proto: Messages.LastRead) extends GenericContent[Messages.LastRead] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setLastRead(proto)
 
-  implicit object MsgDeleted extends GenericContent[MsgDeleted] {
-    override def set(msg: GenericMessage) = msg.setHidden
-
-    def apply(conv: RConvId, msg: MessageId) = returning(new Messages.MessageHide) { d =>
-      d.conversationId = conv.str
-      d.messageId = msg.str
-    }
-
-    def unapply(proto: MsgDeleted): Option[(RConvId, MessageId)] =
-      Some((RConvId(proto.conversationId), MessageId(proto.messageId)))
+    lazy val unpack: (RConvId, RemoteInstant) =
+      (RConvId(proto.getConversationId), RemoteInstant.ofEpochMilli(proto.getLastReadTimestamp))
   }
 
-  type MsgRecall = Messages.MessageDelete
-
-  implicit object MsgRecall extends GenericContent[MsgRecall] {
-    override def set(msg: GenericMessage) = msg.setDeleted
-
-    def apply(msg: MessageId) = returning(new Messages.MessageDelete) { d =>
-      d.messageId = msg.str
+  object LastRead {
+    def apply(conv: RConvId, time: RemoteInstant): LastRead  = {
+      val builder = Messages.LastRead.newBuilder()
+      builder.setConversationId(conv.str)
+      builder.setLastReadTimestamp(time.toEpochMilli)
+      LastRead(builder.build())
     }
-
-    def unapply(proto: MsgRecall): Option[MessageId] = Some(MessageId(proto.messageId))
   }
 
-  type Location = Messages.Location
+  // not a mistake - we use Messages.MessageHide for MsgDeleted
+  final case class MsgDeleted(override val proto: Messages.MessageHide) extends GenericContent[Messages.MessageHide] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setHidden(proto)
 
-  implicit object Location extends GenericContent[Location] {
-    override def set(msg: GenericMessage): Location => GenericMessage = msg.setLocation
-
-    def apply(lon: Float, lat: Float, name: String, zoom: Int, expectsReadConfirmation: Boolean) = returning(new Messages.Location) { p =>
-      p.longitude = lon
-      p.latitude = lat
-      p.name = name
-      p.zoom = zoom
-      p.expectsReadConfirmation = expectsReadConfirmation
-    }
-
-    def unapply(l: Location): Option[(Float, Float, Option[String], Option[Int])] =
-      Some((l.longitude, l.latitude, Option(l.name).filter(_.nonEmpty), Option(l.zoom).filter(_ != 0)))
+    lazy val unpack: (RConvId, MessageId) = (RConvId(proto.getConversationId), MessageId(proto.getMessageId))
   }
 
-  implicit object EphemeralLocation extends EphemeralContent[Location] {
-    override def set(eph: Ephemeral): Location => Ephemeral = eph.setLocation
+  object MsgDeleted {
+    def apply(conv: RConvId, msg: MessageId): MsgDeleted  = {
+      val builder = Messages.MessageHide.newBuilder()
+      builder.setConversationId(conv.str)
+      builder.setMessageId(msg.str)
+      MsgDeleted(builder.build())
+    }
   }
 
-  type Receipt = Messages.Confirmation
+  // not a mistake - we use Messages.MessageDelete for MsgRecall
+  final case class MsgRecall(override val proto: Messages.MessageDelete) extends GenericContent[Messages.MessageDelete] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setDeleted(proto)
 
-  object DeliveryReceipt extends GenericContent[Receipt] {
-    override def set(msg: GenericMessage) = msg.setConfirmation
-
-    def apply(msg: MessageId) = returning(new Messages.Confirmation) { c =>
-      c.firstMessageId = msg.str
-      c.`type` = Messages.Confirmation.DELIVERED
-    }
-
-    def apply(msgs: Seq[MessageId]) = returning(new Messages.Confirmation) { c =>
-      c.firstMessageId = msgs.head.str
-      c.moreMessageIds = msgs.map(_.str).tail.toArray
-      c.`type` = Messages.Confirmation.DELIVERED
-    }
-
-    def unapply(proto: Receipt): Option[Seq[MessageId]] = if (proto.`type` == Messages.Confirmation.DELIVERED)
-      Some(Seq(MessageId(proto.firstMessageId)) ++ proto.moreMessageIds.map(MessageId(_)).toSeq)
-    else
-      None
+    lazy val unpack: MessageId = MessageId(proto.getMessageId)
   }
 
-  object ReadReceipt extends GenericContent[Receipt] {
-    override def set(msg: GenericMessage) = msg.setConfirmation
-
-    def apply(msg: MessageId) = returning(new Messages.Confirmation) { c =>
-      c.firstMessageId = msg.str
-      c.`type` = Messages.Confirmation.READ
+  object MsgRecall {
+    def apply(msg: MessageId): MsgRecall  = {
+      val builder = Messages.MessageDelete.newBuilder()
+      builder.setMessageId(msg.str)
+      MsgRecall(builder.build())
     }
-
-    def apply(msgs: Seq[MessageId]) = returning(new Messages.Confirmation) { c =>
-      c.firstMessageId = msgs.head.str
-      c.moreMessageIds = msgs.map(_.str).tail.toArray
-      c.`type` = Messages.Confirmation.READ
-    }
-
-    def unapply(proto: Receipt): Option[Seq[MessageId]] = if (proto.`type` == Messages.Confirmation.READ)
-      Some(Seq(MessageId(proto.firstMessageId)) ++ proto.moreMessageIds.map(MessageId(_)).toSeq)
-    else
-      None
   }
 
-  type External = Messages.External
+  final case class Location(override val proto: Messages.Location) extends GenericContent[Messages.Location] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setLocation(proto)
 
-  implicit object External extends GenericContent[External] {
-    override def set(msg: GenericMessage) = msg.setExternal
-
-    def apply(key: AESKey, sha: Sha256) = returning(new Messages.External) { e =>
-      e.otrKey = key.bytes
-      e.sha256 = sha.bytes
-    }
-
-    def unapply(e: External): Option[(AESKey, Sha256)] =
-      for {
-        key <- Option(e.otrKey)
-        sha <- Option(e.sha256)
-      } yield (AESKey(key), Sha256(sha))
+    lazy val unpack: (Float, Float, Option[String], Option[Int], Boolean) =
+      (
+        proto.getLongitude,
+        proto.getLatitude,
+        if (proto.hasName) Option(proto.getName).filter(_.nonEmpty) else None,
+        if (proto.hasZoom) Option(proto.getZoom).filter(_ != 0) else None,
+        proto.getExpectsReadConfirmation
+      )
   }
 
-  type Ephemeral = Messages.Ephemeral
+  object Location {
+    def apply(lon: Float, lat: Float, name: String, zoom: Int, expectsReadConfirmation: Boolean): Location = {
+      val builder = Messages.Location.newBuilder()
+      builder.setLongitude(lon)
+      builder.setLatitude(lat)
+      builder.setName(name)
+      builder.setZoom(zoom)
+      builder.setExpectsReadConfirmation(expectsReadConfirmation)
+      Location(builder.build())
+    }
+  }
 
-  implicit object Ephemeral extends GenericContent[Ephemeral] {
+  final case class DeliveryReceipt(override val proto: Messages.Confirmation) extends GenericContent[Messages.Confirmation] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setConfirmation(proto)
 
-    override def set(msg: GenericMessage): Ephemeral => GenericMessage = msg.setEphemeral
+    lazy val unpack: Option[Seq[MessageId]] =
+      if (proto.getType == Messages.Confirmation.Type.DELIVERED) {
+        val msgs = new scala.collection.mutable.ArrayBuffer[MessageId](proto.getMoreMessageIdsCount + 1)
+        msgs += MessageId(proto.getFirstMessageId)
+        (0 until proto.getMoreMessageIdsCount).foreach { i =>
+          msgs += MessageId(proto.getMoreMessageIds(i))
+        }
+        Some(msgs.toVector)
+      } else None
+  }
 
-    def apply[Content: EphemeralContent](expiry: Option[FiniteDuration], content: Content) = returning(new Messages.Ephemeral) { proto =>
-      proto.expireAfterMillis = expiry.getOrElse(Duration.Zero).toMillis
-      implicitly[EphemeralContent[Content]].set(proto)(content)
+  object DeliveryReceipt {
+    def apply(msg: MessageId): DeliveryReceipt = {
+      val builder = Messages.Confirmation.newBuilder()
+      builder.setFirstMessageId(msg.str)
+      builder.setType(Messages.Confirmation.Type.DELIVERED)
+      DeliveryReceipt(builder.build())
     }
 
-    def unapply(proto: Ephemeral): Option[(Option[FiniteDuration], Any)] = proto.expireAfterMillis match {
-      case 0 => Some((None, content(proto)))
-      case _ => Some(Some(EphemeralDuration(proto.expireAfterMillis)), content(proto))
+    def apply(msgs: Seq[MessageId]): DeliveryReceipt = {
+      val builder = Messages.Confirmation.newBuilder()
+      builder.setFirstMessageId(msgs.head.str)
+      builder.addAllMoreMessageIds(msgs.tail.map(_.str).asJava)
+      builder.setType(Messages.Confirmation.Type.DELIVERED)
+      DeliveryReceipt(builder.build())
+    }
+  }
+
+  final case class ReadReceipt(override val proto: Messages.Confirmation) extends GenericContent[Messages.Confirmation] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setConfirmation(proto)
+
+    lazy val unpack: Option[Seq[MessageId]] =
+      if (proto.getType == Messages.Confirmation.Type.READ) {
+        val msgs = new scala.collection.mutable.ArrayBuffer[MessageId](proto.getMoreMessageIdsCount + 1)
+        msgs += MessageId(proto.getFirstMessageId)
+        (0 until proto.getMoreMessageIdsCount).foreach { i =>
+          msgs += MessageId(proto.getMoreMessageIds(i))
+        }
+        Some(msgs.toVector)
+      } else None
+  }
+
+  object ReadReceipt {
+    def apply(msg: MessageId): ReadReceipt = {
+      val builder = Messages.Confirmation.newBuilder()
+      builder.setFirstMessageId(msg.str)
+      builder.setType(Messages.Confirmation.Type.READ)
+      ReadReceipt(builder.build())
     }
 
-    def content(e: Ephemeral) = e.getContentCase match {
-      case Messages.Ephemeral.TEXT_FIELD_NUMBER => e.getText
-      case Messages.Ephemeral.ASSET_FIELD_NUMBER => e.getAsset
-      case Messages.Ephemeral.IMAGE_FIELD_NUMBER => e.getImage
-      case Messages.Ephemeral.KNOCK_FIELD_NUMBER => e.getKnock
-      case Messages.Ephemeral.LOCATION_FIELD_NUMBER => e.getLocation
+    def apply(msgs: Seq[MessageId]): ReadReceipt = {
+      val builder = Messages.Confirmation.newBuilder()
+      builder.setFirstMessageId(msgs.head.str)
+      builder.addAllMoreMessageIds(msgs.tail.map(_.str).asJava)
+      builder.setType(Messages.Confirmation.Type.READ)
+      ReadReceipt(builder.build())
+    }
+  }
+
+  final case class External(override val proto: Messages.External) extends GenericContent[Messages.External] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setExternal(proto)
+
+    lazy val unpack: (AESKey, Sha256) =
+      (AESKey(proto.getOtrKey.toByteArray), Sha256(proto.getSha256.toByteArray))
+  }
+
+  object External {
+    def apply(key: AESKey, sha: Sha256): External = {
+      val builder = Messages.External.newBuilder()
+      builder.setOtrKey(ByteString.copyFrom(key.bytes))
+      builder.setSha256(ByteString.copyFrom(sha.bytes))
+      External(builder.build())
+    }
+  }
+
+  final case class EphemeralAsset(override val proto: Messages.Ephemeral) extends EphemeralContent {
+    override def set(builder: Messages.Ephemeral.Builder): Unit = {
+      if (proto.hasAsset) builder.setAsset(proto.getAsset)
+      if (proto.hasExpireAfterMillis) builder.setExpireAfterMillis(proto.getExpireAfterMillis)
+    }
+  }
+
+  object EphemeralAsset {
+    def apply(asset: Messages.Asset, expiry: FiniteDuration): EphemeralAsset = {
+      val builder = Messages.Ephemeral.newBuilder()
+      builder.setAsset(asset)
+      builder.setExpireAfterMillis(expiry.toMillis)
+      EphemeralAsset(builder.build())
+    }
+  }
+
+  final case class EphemeralImageAsset(override val proto: Messages.Ephemeral) extends EphemeralContent {
+    override def set(builder: Messages.Ephemeral.Builder): Unit = {
+      if (proto.hasImage) builder.setImage(proto.getImage)
+      if (proto.hasExpireAfterMillis) builder.setExpireAfterMillis(proto.getExpireAfterMillis)
+    }
+  }
+
+  object EphemeralImageAsset {
+    def apply(image: Messages.ImageAsset, expiry: FiniteDuration): EphemeralAsset = {
+      val builder = Messages.Ephemeral.newBuilder()
+      builder.setImage(image)
+      builder.setExpireAfterMillis(expiry.toMillis)
+      EphemeralAsset(builder.build())
+    }
+  }
+
+  case class EphemeralLocation(override val proto: Messages.Ephemeral) extends EphemeralContent {
+    override def set(builder: Messages.Ephemeral.Builder): Unit = {
+      if (proto.hasLocation) builder.setLocation(proto.getLocation)
+      if (proto.hasExpireAfterMillis) builder.setExpireAfterMillis(proto.getExpireAfterMillis)
+    }
+  }
+
+  object EphemeralLocation {
+    def apply(location: Messages.Location, expiry: FiniteDuration): EphemeralLocation = {
+      val builder = Messages.Ephemeral.newBuilder()
+      builder.setLocation(location)
+      builder.setExpireAfterMillis(expiry.toMillis)
+      EphemeralLocation(builder.build())
+    }
+  }
+
+  final case class EphemeralText(override val proto: Messages.Ephemeral) extends EphemeralContent {
+    override def set(builder: Messages.Ephemeral.Builder): Unit = {
+      if (proto.hasText) builder.setText(proto.getText)
+      if (proto.hasExpireAfterMillis) builder.setExpireAfterMillis(proto.getExpireAfterMillis)
+    }
+  }
+
+  object EphemeralText {
+    def apply(text: Messages.Text, expiry: FiniteDuration): EphemeralText = {
+      val builder = Messages.Ephemeral.newBuilder()
+      builder.setText(text)
+      builder.setExpireAfterMillis(expiry.toMillis)
+      EphemeralText(builder.build())
+    }
+  }
+
+  final case class EphemeralKnock(override val proto: Messages.Ephemeral) extends EphemeralContent {
+    override def set(builder: Messages.Ephemeral.Builder): Unit = {
+      if (proto.hasKnock) builder.setKnock(proto.getKnock)
+      if (proto.hasExpireAfterMillis) builder.setExpireAfterMillis(proto.getExpireAfterMillis)
+    }
+  }
+
+  object EphemeralKnock {
+    def apply(knock: Messages.Knock, expiry: FiniteDuration): EphemeralKnock = {
+      val builder = Messages.Ephemeral.newBuilder()
+      builder.setKnock(knock)
+      builder.setExpireAfterMillis(expiry.toMillis)
+      EphemeralKnock(builder.build())
+    }
+  }
+
+  final case class Ephemeral(override val proto: Messages.Ephemeral) extends GenericContent[Messages.Ephemeral] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setEphemeral(proto)
+
+    lazy val unpack: (Option[FiniteDuration], GenericContent[_]) =
+      if (!proto.hasExpireAfterMillis) (None, content)
+      else proto.getExpireAfterMillis match {
+        case 0      => (None, content)
+        case millis => (Some(EphemeralDuration(millis)), content)
+      }
+
+    def unpackContent: GenericContent[_] = unpack._2
+
+    private lazy val content: GenericContent[_] = proto.getContentCase.getNumber match {
+      case Messages.Ephemeral.TEXT_FIELD_NUMBER     => Text(proto.getText)
+      case Messages.Ephemeral.ASSET_FIELD_NUMBER    => Asset(proto.getAsset)
+      case Messages.Ephemeral.IMAGE_FIELD_NUMBER    => ImageAsset(proto.getImage)
+      case Messages.Ephemeral.KNOCK_FIELD_NUMBER    => Knock(proto.getKnock)
+      case Messages.Ephemeral.LOCATION_FIELD_NUMBER => Location(proto.getLocation)
       case _ => Unknown
     }
   }
 
-  type AvailabilityStatus = Messages.Availability
-
-  implicit object AvailabilityStatus extends GenericContent[AvailabilityStatus] {
-    import Messages.Availability._
-
-    override def set(msg: GenericMessage): AvailabilityStatus => GenericMessage = msg.setAvailability
-
-    def apply(activity: Availability): AvailabilityStatus = returning(new Messages.Availability) {
-      _.`type` = activity match {
-        case Availability.None      => NONE
-        case Availability.Available => AVAILABLE
-        case Availability.Away      => AWAY
-        case Availability.Busy      => BUSY
-      }
-    }
-
-    def unapply(availability: AvailabilityStatus): Option[Availability] = availability.`type` match {
-      case NONE      => Some(Availability.None)
-      case AVAILABLE => Some(Availability.Available)
-      case AWAY      => Some(Availability.Away)
-      case BUSY      => Some(Availability.Busy)
-      case _         => None
+  object Ephemeral {
+    def apply(expiry: Option[FiniteDuration], content: EphemeralContent): Ephemeral = {
+      val builder = Messages.Ephemeral.newBuilder()
+      builder.setExpireAfterMillis(expiry.getOrElse(Duration.Zero).toMillis)
+      content.set(builder)
+      Ephemeral(builder.build())
     }
   }
 
-  case object Unknown
+  final case class AvailabilityStatus(override val proto: Messages.Availability) extends GenericContent[Messages.Availability] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setAvailability(proto)
 
-  implicit object UnknownContent extends GenericContent[Unknown.type] {
-    override def set(msg: GenericMessage) = { _ => msg }
-  }
-
-  sealed trait ClientAction {
-    val value: Int
-  }
-
-  implicit object ClientAction extends GenericContent[ClientAction] {
-
-    case object SessionReset extends ClientAction {
-      override val value: Int = Messages.RESET_SESSION
-    }
-
-    case class UnknownAction(value: Int) extends ClientAction
-
-    def apply(v: Int) = v match {
-      case Messages.RESET_SESSION => SessionReset
-      case other => UnknownAction(other)
-    }
-
-    override def set(msg: GenericMessage) = { action => msg.setClientAction(action.value) }
-  }
-
-  type Calling = Messages.Calling
-
-  implicit object Calling extends GenericContent[Calling] {
-    override def set(msg: GenericMessage): Calling => GenericMessage = msg.setCalling
-
-    def apply(content: String): Calling = returning(new Calling) { c =>
-      c.content = content
-    }
-
-    def unapply(calling: Calling): Option[String] = Option(calling.content)
-  }
-
-  sealed trait EncryptionAlgorithm {
-    val value: Int
-  }
-
-  implicit object EncryptionAlgorithm {
-
-    case object AES_CBC extends EncryptionAlgorithm {
-      override val value: Int = Messages.AES_CBC
-    }
-
-    case object AES_GCM extends EncryptionAlgorithm {
-      override val value: Int = Messages.AES_GCM
-    }
-
-    def apply(v: Int) = v match {
-      case Messages.AES_GCM => AES_GCM
-      case other => AES_CBC
-    }
-
-    def unapply(encryption: EncryptionAlgorithm): Option[Int] = encryption match {
-      case AES_GCM => Some(Messages.AES_GCM)
-      case _ => Some(Messages.AES_CBC)
+    lazy val unpack: Option[Availability] = proto.getType match {
+      case Messages.Availability.Type.NONE      => Some(Availability.None)
+      case Messages.Availability.Type.AVAILABLE => Some(Availability.Available)
+      case Messages.Availability.Type.AWAY      => Some(Availability.Away)
+      case Messages.Availability.Type.BUSY      => Some(Availability.Busy)
+      case _ => None
     }
   }
 
-  type ButtonActionConfirmation = Messages.ButtonActionConfirmation
-
-  implicit object ButtonActionConfirmation extends GenericContent[ButtonActionConfirmation] {
-    override def set(msg: GenericMessage): ButtonActionConfirmation => GenericMessage = msg.setButtonActionConfirmation
-
-    def unapply(proto: ButtonActionConfirmation): Option[(MessageId, Option[ButtonId])] =
-      Some(MessageId(proto.referenceMessageId), Option(proto.buttonId).map(ButtonId(_)))
-  }
-
-  type ButtonAction = Messages.ButtonAction
-
-  implicit object ButtonAction extends GenericContent[ButtonAction] {
-    override def set(msg: GenericMessage): ButtonAction => GenericMessage = msg.setButtonAction
-
-    def apply(buttonId: String, referenceMsgId: String)= returning(new Messages.ButtonAction) { action =>
-      action.buttonId = buttonId
-      action.referenceMessageId = referenceMsgId
+  object AvailabilityStatus {
+    def apply(av: Availability): AvailabilityStatus = {
+      val builder = Messages.Availability.newBuilder()
+      builder.setType(av match {
+        case Availability.None      => Messages.Availability.Type.NONE
+        case Availability.Available => Messages.Availability.Type.AVAILABLE
+        case Availability.Away      => Messages.Availability.Type.AWAY
+        case Availability.Busy      => Messages.Availability.Type.BUSY
+      })
+      AvailabilityStatus(builder.build())
     }
   }
 
-  type Composite = Messages.Composite
-  type Button = Messages.Button
+  final case object Unknown extends GenericContent[Unit] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = {}
 
-  implicit object Composite extends GenericContent[Composite] {
-    override def set(msg: GenericMessage): Composite => GenericMessage = msg.setComposite
+    override val proto: Unit = ()
+  }
 
-    def unapply(proto: Composite): Option[CompositeData] = {
-      val items = proto.items.map { protoItem =>
-        if (protoItem.hasText) TextItem(protoItem.getText)
-        else if (protoItem.hasButton) ButtonItem(protoItem.getButton)
+  sealed trait ClientAction extends GenericContent[Int] {
+    override val proto: Int
+    override def set(builder: Messages.GenericMessage.Builder): Unit =
+      if (proto == ClientAction.SessionReset.proto) builder.setClientAction(Messages.ClientAction.RESET_SESSION)
+  }
+
+  object ClientAction {
+    final case object SessionReset extends ClientAction {
+      override val proto: Int = Messages.ClientAction.RESET_SESSION.getNumber
+    }
+
+    final case class UnknownAction(override val proto: Int) extends ClientAction
+
+    def apply(v: Int): ClientAction =
+      if (v == SessionReset.proto) SessionReset else UnknownAction(v)
+  }
+
+  final case class Calling(override val proto: Messages.Calling) extends GenericContent[Messages.Calling] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setCalling(proto)
+
+    lazy val unpack: String = proto.getContent
+  }
+
+  object Calling {
+    def apply(content: String): Calling = {
+      val builder = Messages.Calling.newBuilder()
+      builder.setContent(content)
+      Calling(builder.build())
+    }
+  }
+
+  final case class ButtonActionConfirmation(override val proto: Messages.ButtonActionConfirmation)
+    extends GenericContent[Messages.ButtonActionConfirmation] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setButtonActionConfirmation(proto)
+
+    lazy val unpack: (MessageId, Option[ButtonId]) =
+      (MessageId(proto.getReferenceMessageId), if (proto.hasButtonId) Some(ButtonId(proto.getButtonId)) else None)
+  }
+
+  final case class ButtonAction(override val proto: Messages.ButtonAction) extends GenericContent[Messages.ButtonAction] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setButtonAction(proto)
+  }
+
+  object ButtonAction {
+    def apply(buttonId: String, referenceMsgId: String): ButtonAction = {
+      val builder = Messages.ButtonAction.newBuilder()
+      builder.setButtonId(buttonId)
+      builder.setReferenceMessageId(referenceMsgId)
+      ButtonAction(builder.build())
+    }
+  }
+
+  final case class Button(override val proto: Messages.Button) extends GenericContent[Messages.Button]
+
+  final case class Composite(override val proto: Messages.Composite) extends GenericContent[Messages.Composite] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setComposite(proto)
+
+    lazy val unpack: CompositeData = {
+      import scala.collection.JavaConverters._
+      val items = proto.getItemsList.asScala.map { protoItem =>
+        if (protoItem.hasText) TextItem(Text(protoItem.getText))
+        else if (protoItem.hasButton) ButtonItem(Button(protoItem.getButton))
         else UnknownItem
       }
-      Some(CompositeData(items, Option(proto.expectsReadConfirmation), Option(proto.legalHoldStatus)))
+      CompositeData(items, Option(proto.getExpectsReadConfirmation), Option(proto.getLegalHoldStatus.getNumber))
+    }
+  }
+
+  final case class DataTransfer(override val proto: Messages.DataTransfer) extends GenericContent[Messages.DataTransfer] {
+    override def set(builder: Messages.GenericMessage.Builder): Unit = builder.setDataTransfer(proto)
+
+    lazy val unpack: TrackingId = TrackingId(proto.getTrackingIdentifier.getIdentifier)
+  }
+
+  object DataTransfer {
+    def apply(trackingId: TrackingId): DataTransfer = {
+      val trackingBuilder = Messages.TrackingIdentifier.newBuilder()
+      trackingBuilder.setIdentifier(trackingId.str)
+      val builder = Messages.DataTransfer.newBuilder()
+      builder.setTrackingIdentifier(trackingBuilder.build())
+      DataTransfer(builder.build())
     }
   }
 }

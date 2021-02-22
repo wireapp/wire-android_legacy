@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
+import com.waz.model.Name._
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, Signal}
@@ -121,7 +122,7 @@ object QuickReplyContentAdapter {
 
     val contentStr = message.zip(userName) map {
       case (msg, name) if isGroupConv =>
-        context.getString(R.string.quick_reply__message_group, name, getMessageBody(msg, name))
+        context.getString(R.string.quick_reply__message_group, name.str, getMessageBody(msg, name.str))
       case (msg, name) =>
         getMessageBody(msg, name)
     }
@@ -133,7 +134,7 @@ object QuickReplyContentAdapter {
       }
     }
 
-    private def getMessageBody(message: MessageData, userName: String): String = {
+    private def getMessageBody(message: MessageData, userName: Name): String = {
       import com.waz.api.Message.Type._
       message.msgType match {
         case TEXT => message.contentString
@@ -151,7 +152,7 @@ object QuickReplyContentAdapter {
         case MEMBER_JOIN =>
           StringUtils.capitalise(context.getString(R.string.notification__message__group__add))
         case CONNECT_ACCEPTED =>
-          context.getString(R.string.notification__message__single__accept_request, userName)
+          context.getString(R.string.notification__message__single__accept_request, userName.str)
         case ANY_ASSET | AUDIO_ASSET | VIDEO_ASSET =>
           context.getString(R.string.notification__message__one_to_one__shared_file)
         case _ => ""

@@ -23,7 +23,7 @@ import com.waz.cache.{CacheService, LocalData}
 import com.waz.content.{GlobalPreferences, MembersStorage, OtrClientsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.ClientAction
+import com.waz.model.GenericContent.Asset.{AES_CBC, EncryptionAlgorithm}
 import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.model.otr._
@@ -36,8 +36,8 @@ import com.waz.sync.client.OtrClient.EncryptedContent
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
-import com.wire.signals.{EventContext, Signal}
 import com.wire.cryptobox.CryptoException
+import com.wire.signals.Signal
 import javax.crypto.Mac
 import org.json.JSONObject
 
@@ -69,8 +69,7 @@ trait OtrService {
   def decryptAssetData(assetId:    AssetId,
                        otrKey:     Option[AESKey],
                        sha:        Option[Sha256],
-                       data:       Option[Array[Byte]],
-                       encryption: Option[EncryptionAlgorithm]): Option[Array[Byte]]
+                       data:       Option[Array[Byte]]): Option[Array[Byte]]
 
   def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter): Future[Either[OtrError, Unit]]
   def parseGenericMessage(msgEvent: OtrMessageEvent, msg: GenericMessage): Option[MessageEvent]
@@ -105,27 +104,31 @@ class OtrServiceImpl(selfUserId:     UserId,
     val sender = otrMsg.sender
     val extData = otrMsg.externalData
     val localTime = otrMsg.localTime
-    if (!(GenericMessage.isBroadcastMessage(genericMsg) || from == selfUserId) && conv.str == selfUserId.str) {
+    if (!(genericMsg.isBroadcastMessage || from == selfUserId) && conv.str == selfUserId.str) {
       warn(l"Received a message to the self-conversation by someone else than self and it's not a broadcast")
       None
     } else {
-      genericMsg match {
-        case GenericMessage(_, External(key, sha)) =>
+      genericMsg.unpackContent match {
+        case ext: External =>
+          val (key, sha) = ext.unpack
           decodeExternal(key, Some(sha), extData) match {
             case None =>
               error(l"External message could not be decoded External($key, $sha), data: $extData")
               Some(OtrErrorEvent(conv, time, from, DecryptionError("symmetric decryption failed", Some(OtrError.ERROR_CODE_SYMMETRIC_DECRYPTION_FAILED), from, sender)))
-            case Some(GenericMessage(_, Calling(content))) =>
-              Some(CallMessageEvent(conv, time, from, sender, content)) //call messages need sender client id
-            case Some(msg) =>
-              Some(GenericMessageEvent(conv, time, from, msg).withLocalTime(localTime))
+            case Some(msg :GenericMessage) =>
+              msg.unpackContent match {
+                case calling: Calling =>
+                  Some(CallMessageEvent(conv, time, from, sender, calling.unpack)) //call messages need sender client id
+                case _ =>
+                  Some(GenericMessageEvent(conv, time, from, msg).withLocalTime(localTime))
+              }
           }
-        case GenericMessage(_, ClientAction.SessionReset) =>
+        case _: SessionReset =>
           Some(SessionReset(conv, time, from, sender))
-        case GenericMessage(_, Calling(content)) =>
-          Some(CallMessageEvent(conv, time, from, sender, content)) //call messages need sender client id
-        case msg =>
-          Some(GenericMessageEvent(conv, time, from, msg).withLocalTime(localTime))
+        case calling: Calling =>
+          Some(CallMessageEvent(conv, time, from, sender, calling.unpack)) //call messages need sender client id
+        case _ =>
+          Some(GenericMessageEvent(conv, time, from, genericMsg).withLocalTime(localTime))
       }
     }
   }
@@ -134,7 +137,7 @@ class OtrServiceImpl(selfUserId:     UserId,
     for {
       data  <- extData if sha.forall(_.matches(data))
       plain <- Try(AESUtils.decrypt(key, data)).toOption
-      msg  <- Try(GenericMessage(plain)).toOption
+      msg   <- Try(GenericMessage(plain)).toOption
     } yield msg
 
   override def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter)
@@ -182,7 +185,7 @@ class OtrServiceImpl(selfUserId:     UserId,
   }
 
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
-    val msgData = GenericMessage.toByteArray(msg)
+    val msgData = msg.toByteArray
 
     sessions.withSession(SessionId(user, client)) { session =>
       EncryptedContent(Map(user -> Map(client -> session.encrypt(msgData))))
@@ -230,7 +233,7 @@ class OtrServiceImpl(selfUserId:     UserId,
                               useFakeOnError:  Boolean = false,
                               partialResult:   EncryptedContent): Future[EncryptedContent] = {
 
-    val msgData = GenericMessage.toByteArray(message)
+    val msgData = message.toByteArray
 
     for {
       payloads <- Future.traverse(recipients) { case (userId, clientIds) =>
@@ -285,24 +288,20 @@ class OtrServiceImpl(selfUserId:     UserId,
 
     def encryptFile() = cache.createForFile(length = Some(sizeWithPaddingAndIV(data.length))) map { entry =>
       val mac = AESUtils.encrypt(key, data.inputStream, entry.outputStream)
-      (mac, entry, EncryptionAlgorithm.AES_CBC)
+      (mac, entry, AES_CBC)
     }
 
     def encryptBytes() = {
       val bos = new ByteArrayOutputStream()
       val mac = AESUtils.encrypt(key, data.inputStream, bos)
-      cache.addData(CacheKey(), bos.toByteArray) map { (mac, _, EncryptionAlgorithm.AES_CBC) }
+      cache.addData(CacheKey(), bos.toByteArray) map { (mac, _, AES_CBC) }
     }
 
     data.byteArray.fold(encryptFile()){ _ => encryptBytes() }
   }
 
-  // TODO: AN-5168. Right now throws a NotImplementedError when called; to be implemented later
-  def encryptAssetDataGCM(key: AESKey, data: LocalData): Future[(Sha256, LocalData, EncryptionAlgorithm)] = ???
-
-  def encryptAssetData(key: AESKey, data: LocalData):Future[(Sha256, LocalData, EncryptionAlgorithm)] =
-    if(prefs.v31AssetsEnabled) encryptAssetDataGCM(key, data)
-    else encryptAssetDataCBC(key, data)
+  def encryptAssetData(key: AESKey, data: LocalData): Future[(Sha256, LocalData, EncryptionAlgorithm)] =
+    encryptAssetDataCBC(key, data)
 
   def decryptAssetDataCBC(assetId: AssetId, otrKey: Option[AESKey], sha: Option[Sha256], data: Option[Array[Byte]]): Option[Array[Byte]] = {
     data.flatMap { arr =>
@@ -315,15 +314,8 @@ class OtrServiceImpl(selfUserId:     UserId,
     }.filter(_.nonEmpty)
   }
 
-  // TODO: AN-5167. Right now throws a NotImplementedError when called; to be implemented later
-  def decryptAssetDataGCM(assetId: AssetId, otrKey: Option[AESKey], sha: Option[Sha256], data: Option[Array[Byte]]): Option[Array[Byte]] = ???
-
-  override def decryptAssetData(assetId: AssetId, otrKey: Option[AESKey], sha: Option[Sha256], data: Option[Array[Byte]], encryption: Option[EncryptionAlgorithm]): Option[Array[Byte]] =
-    (prefs.v31AssetsEnabled, encryption) match {
-      case (true, Some(EncryptionAlgorithm.AES_GCM)) => decryptAssetDataGCM(assetId, otrKey, sha, data)
-      case _ => decryptAssetDataCBC(assetId, otrKey, sha, data)
-    }
-
+  override def decryptAssetData(assetId: AssetId, otrKey: Option[AESKey], sha: Option[Sha256], data: Option[Array[Byte]]): Option[Array[Byte]] =
+    decryptAssetDataCBC(assetId, otrKey, sha, data)
 }
 
 object OtrService {

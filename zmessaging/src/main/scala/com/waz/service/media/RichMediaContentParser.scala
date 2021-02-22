@@ -27,6 +27,7 @@ import com.waz.model.{Mention, MessageContent}
 import com.waz.sync.client.YouTubeClient
 import com.waz.utils.wrappers.URI
 
+import scala.collection.mutable
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -82,7 +83,7 @@ object RichMediaContentParser extends DerivedLogTag {
     val mentionsRanges = mentions.map(m => (m.start - offset, m.start + m.length - offset) -> m).toMap.filterKeys(_._1 >= 0)
 
     def mentionsBetween(from: Int, to: Int): Seq[Mention] =
-      mentionsRanges.filterKeys(r => r._1 >= from && r._2 <= to).values.toSeq
+      mentionsRanges.filterKeys(r => r._1 >= from && r._2 <= to).values.toVector
 
     try {
       val res = new MessageContentBuilder
@@ -98,7 +99,7 @@ object RichMediaContentParser extends DerivedLogTag {
       if (end < content.length)
         res += (content.substring(end), mentionsBetween(end, content.length))
 
-      res.result()
+      res.result
     } catch {
       case e: Throwable =>
         error(l"got error while parsing message content", e)
@@ -124,7 +125,7 @@ object RichMediaContentParser extends DerivedLogTag {
 
   private def decode[T](url: String)(op: URI => Option[T]): Option[T] = op(URI.parse(URLDecoder.decode(url, "UTF-8")))
 
-  def textMessageContent(part: String, mentions: Seq[Mention] = Nil) =
+  def textMessageContent(part: String, mentions: Seq[Mention] = Nil): MessageContent =
     MessageContent(if (containsOnlyEmojis(part)) TEXT_EMOJI_ONLY else TEXT, part, mentions = mentions)
 
   def containsOnlyEmojis(part: String): Boolean = {
@@ -160,7 +161,7 @@ object RichMediaContentParser extends DerivedLogTag {
     true
   }
 
-  def parseUriWithScheme(content: String, defaultScheme: String = "https") = {
+  def parseUriWithScheme(content: String, defaultScheme: String = "https"): URI = {
     Try {
       val cleanContent = cleanInvalidEscapes(content)
 
@@ -170,24 +171,24 @@ object RichMediaContentParser extends DerivedLogTag {
     }.getOrElse(URI.parse(""))
   }
 
-  def cleanInvalidEscapes(content: String) = {
+  private def cleanInvalidEscapes(content: String) = {
     val illegalEscapes = "%[^(0-9|a-f|A-F)]|%.[^(0-9|a-f|A-F)]".r
     illegalEscapes.replaceAllIn(content, m => m.toString().replace("%", "%25"))
   }
 }
 
 class MessageContentBuilder {
-  val res = Seq.newBuilder[MessageContent]
+  private val res = mutable.ArrayBuffer[MessageContent]()
 
-  def +=(tpe: Part.Type, part: String) =
+  def +=(tpe: Part.Type, part: String): Unit =
     if (part.trim.nonEmpty) res += MessageContent(tpe, part)
 
-  def +=(part: String, mentions: Seq[Mention]) =
+  def +=(part: String, mentions: Seq[Mention]): Unit =
     if (part.trim.nonEmpty) res += RichMediaContentParser.textMessageContent(part, mentions)
 
-  def +=(content: MessageContent) = res += content
+  def +=(content: MessageContent): Unit = res += content
 
-  def ++=(ct: Seq[MessageContent]) = res ++= ct
+  def ++=(ct: Seq[MessageContent]): Unit = res ++= ct
 
-  def result() = res.result()
+  def result: Vector[MessageContent] = res.result().toVector
 }

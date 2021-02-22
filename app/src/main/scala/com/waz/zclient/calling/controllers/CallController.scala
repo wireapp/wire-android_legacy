@@ -438,7 +438,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     } yield (video, state, dur, callerName.filter(_ => group))).map {
       case (true,  SelfCalling,  _, _)  => cxt.getString(R.string.calling__header__outgoing_video_subtitle)
       case (false, SelfCalling,  _, _)  => cxt.getString(R.string.calling__header__outgoing_subtitle)
-      case (_,     OtherCalling, _, Some(callerName)) => cxt.getString(R.string.calling__header__incoming_subtitle__group, callerName)
+      case (_,     OtherCalling, _, Some(callerName)) => cxt.getString(R.string.calling__header__incoming_subtitle__group, callerName.str)
       case (true,  OtherCalling, _, _)  => cxt.getString(R.string.calling__header__incoming_subtitle__video)
       case (false, OtherCalling, _, _)  => cxt.getString(R.string.calling__header__incoming_subtitle)
       case (_,     SelfJoining,  _, _)  => cxt.getString(R.string.calling__header__joining)

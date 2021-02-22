@@ -32,7 +32,6 @@ import com.waz.model.GenericContent.LinkPreview
 import com.waz.model.{AssetData, AssetId, Dim2, MessageContent}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
-import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
@@ -67,31 +66,33 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
   def inflate(): Unit = inflate(R.layout.message_part_weblink_content)
   inflate()
 
-  val linkPreview = for {
+  val linkPreview: Signal[Option[LinkPreview]] = for {
     msg <- message
     ct <- content
   } yield {
     val index = msg.content.indexOf(ct)
     val linkIndex = msg.content.take(index).count(_.tpe == Part.Type.WEB_LINK)
-    if (index >= 0 && msg.links.size > linkIndex) Some(msg.links(linkIndex)) else None
+    if (index >= 0 && msg.links.size > linkIndex) Option(msg.links(linkIndex)) else None
   }
 
   val image: Signal[Option[Either[AssetData, URL]]] = for {
     ct <- content
     lp <- linkPreview
   } yield (ct.openGraph, lp) match {
-    case (_, Some(LinkPreview.WithAsset(asset)))            => Some(Left(asset))
+    case (_, Some(preview: LinkPreview)) => preview.unpackWithAsset.map(Left(_))
     case (Some(OpenGraphData(_, _, Some(OpenGraphImage(url)), _, _)), None) => Some(Right(url))
-    case _                                                  => None
+    case _ => None
   }
 
-  val dimensions = content.zip(linkPreview) map {
-    case (_, Some(LinkPreview.WithAsset(AssetData.WithDimensions(d)))) => d
+  val dimensions: Signal[Dim2] = content.zip(linkPreview).map {
+    case (ct, Some(preview: LinkPreview)) => preview.unpackWithAsset.fold(Dim2(ct.width, ct.height))(_.dimensions)
     case (ct, _) => Dim2(ct.width, ct.height)
   }
 
-  val openGraph = content.zip(linkPreview) map {
-    case (_, Some(LinkPreview.WithDescription(t, s))) => OpenGraphData(t, s, None, "", None)
+  val openGraph = content.zip(linkPreview).map {
+    case (_, Some(preview: LinkPreview)) =>
+      val (title, summary) = preview.unpackWithDescription
+      OpenGraphData(title, summary, None, "", None)
     case (ct, _) => ct.openGraph.getOrElse(OpenGraphData.Empty)
   }
 
@@ -122,10 +123,9 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
 
   imageView.setBackground(dotsDrawable)
 
-  hasImage.on(Threading.Ui) { imageView.setVisible }
-  title.on(Threading.Ui) { titleTextView.setText }
-
-  urlText.on(Threading.Ui) { urlTextView.setText }
+  hasImage.onUi { imageView.setVisible }
+  title.onUi { titleTextView.setText }
+  urlText.onUi { urlTextView.setText }
 
   onClicked { _ =>
     if (expired.currentValue.forall(_ == false)) {
