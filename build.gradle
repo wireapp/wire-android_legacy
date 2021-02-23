@@ -39,8 +39,8 @@ allprojects {
 
 ext {
     activeSpeakers = true
-    joinGroupCallMuted = true
-    removeJoinLeaveSounds = true
+    joinGroupCallMuted = false
+    removeJoinLeaveSounds = false
     appLockFeatureFlag = true
     sessionReset = true
     //Update kotlinCore flag as well when adding new kotlin features
