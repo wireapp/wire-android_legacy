@@ -189,7 +189,7 @@ class CallingFragment extends FragmentHelper {
         views.sortWith {
           case (v1, v2) =>
             infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
-        }.take(MaxTopSpeakerVideoPreviews)
+        }
       else
         views.filter {
           case _: SelfVideoView if views.size == 2 && participants.size == 2 && isVideoBeingSent => false
@@ -255,6 +255,5 @@ class CallingFragment extends FragmentHelper {
 object CallingFragment {
   val Tag: String = getClass.getSimpleName
   val MaxAllVideoPreviews = 12
-  val MaxTopSpeakerVideoPreviews = 4
   def apply(): CallingFragment = new CallingFragment()
 }

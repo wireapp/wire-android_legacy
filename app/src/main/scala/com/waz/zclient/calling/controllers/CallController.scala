@@ -54,6 +54,8 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   import Threading.Implicits.Background
   import VideoState._
 
+  val MaxTopSpeakerVideoPreviews = 4
+
   val isFullScreenEnabled = Signal(false)
   val showTopSpeakers = Signal(false)
 
@@ -123,7 +125,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
           activeSpeakers.exists { speaker =>
             participant.clientId == speaker.clientId && participant.userId == speaker.userId && speaker.longTermAudioLevel > 0
           }
-        }
+        }.take(MaxTopSpeakerVideoPreviews)
     }
 
   lazy val videoUsers =
