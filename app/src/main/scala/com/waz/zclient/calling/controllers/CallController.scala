@@ -121,7 +121,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
       case (activeSpeakers, videoUsers) =>
         videoUsers.filter { participant =>
           activeSpeakers.exists { speaker =>
-            participant.clientId == speaker.clientId && participant.userId == speaker.userId
+            participant.clientId == speaker.clientId && participant.userId == speaker.userId && speaker.longTermAudioLevel > 0
           }
         }
     }
