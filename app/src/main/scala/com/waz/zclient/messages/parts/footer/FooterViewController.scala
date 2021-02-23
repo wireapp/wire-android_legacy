@@ -25,7 +25,7 @@ import com.waz.service.messages.{MessageAndLikes, MessagesService}
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.wire.signals.CancellableFuture
 import com.waz.utils._
-import com.wire.signals.{ClockSignal, EventContext, Signal}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
@@ -33,6 +33,7 @@ import com.waz.zclient.messages.{LikesController, UsersController}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Time.SameDayTimeStamp
 import com.waz.zclient.{Injectable, Injector, R}
+import com.wire.signals.ext.ClockSignal
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
@@ -42,7 +43,7 @@ import scala.concurrent.duration._
   */
 class FooterViewController(implicit inj: Injector, context: Context, ec: EventContext)
   extends Injectable with DerivedLogTag {
-  
+
   import com.waz.threading.Threading.Implicits.Ui
 
   val accents                = inject[AccentColorController]
@@ -97,7 +98,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     case None => Signal const None
     case Some(expiry) if expiry <= LocalInstant.Now => Signal const None
     case Some(expiry) =>
-      ClockSignal(1.second) map { now =>
+      ClockSignal(1.second).map { now =>
         Some(now.until(expiry.instant).asScala).filterNot(_.isNegative)
       }
   }

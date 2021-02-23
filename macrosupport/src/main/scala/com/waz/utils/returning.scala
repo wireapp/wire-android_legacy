@@ -18,7 +18,7 @@
 package com.waz.utils
 
 import scala.language.experimental.macros
-import scala.reflect.macros.blackbox.Context
+import scala.reflect.macros.blackbox
 
 object returning {
   def apply[A](init: A)(effects: A => Unit): A = macro KestrelMacro.apply[A]
@@ -29,7 +29,7 @@ object returningF { // fallback for the very rare case where macro expansion res
 }
 
 private object KestrelMacro {
-  def apply[A](c: Context)(init: c.Tree)(effects: c.Tree) = {
+  def apply[A](c: blackbox.Context)(init: c.Tree)(effects: c.Tree): c.universe.Tree = {
     import c.universe._
     c.untypecheck(effects) match {
       case          Function(List(ValDef(_, t: TermName, _, EmptyTree)), b)  => q"val $t = $init; $b; $t"

@@ -164,9 +164,10 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
 
   private def calculateAccountManagers() =
     (for {
-      ids       <- storage.list().map(_.map(_.id).toSet)
-       managers <- Future.sequence(ids.map(createAccountManager(_, None, None)))
-     } yield Serialized.future(AccountManagersKey)(Future[Unit](accountManagers ! managers.flatten))).recoverWith {
+      ids      <- storage.list().map(_.map(_.id).toSet)
+      managers <- Future.sequence(ids.map(createAccountManager(_, None, None)))
+      _        <- Serialized.future(AccountManagersKey)(Future(accountManagers ! managers.flatten))
+     } yield ()).recoverWith {
        case e : Exception =>
          error(l"error creating account managers $e")
          Future.failed(e)
@@ -214,7 +215,7 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
     })
   }
 
-  override lazy val activeAccountManager: Signal[Option[AccountManager]] = activeAccountPref.signal.flatMap[Option[AccountManager]] {
+  override val activeAccountManager: Signal[Option[AccountManager]] = activeAccountPref.signal.flatMap[Option[AccountManager]] {
     case Some(id) => accountManagers.map(_.find(_.userId == id))
     case None     => Signal.const(None)
   }
@@ -226,7 +227,7 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
 
   override lazy val activeAccountId: Signal[Option[UserId]] = activeAccount.map(_.map(_.id))
 
-  override lazy val activeZms: Signal[Option[ZMessaging]] = activeAccountManager.flatMap[Option[ZMessaging]] {
+  override val activeZms: Signal[Option[ZMessaging]] = activeAccountManager.flatMap[Option[ZMessaging]] {
     case Some(am) => Signal.from(am.zmessaging.map(Some(_)))
     case None     => Signal.const(None)
   }
@@ -239,9 +240,13 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
       verbose(l"Loaded: ${v.size} zms instances for ${ams.size} accounts")
     }).disableAutowiring()
 
-  override def getZms(userId: UserId): Future[Option[ZMessaging]] = {
-    zmsInstances.head.map(_.find(_.selfUserId == userId))
-  }
+  override def getZms(userId: UserId): Future[Option[ZMessaging]] =
+    activeZms.currentValue.flatten match {
+      case Some(zms) if zms.selfUserId == userId =>
+        Future.successful(Some(zms)) // an optimization - maybe we don't need to initialize the other account
+      case _ =>
+        zmsInstances.head.map(_.find(_.selfUserId == userId))
+    }
 
   lazy val onAccountLoggedOut = EventStream[(UserId, LogoutReason)]()
 

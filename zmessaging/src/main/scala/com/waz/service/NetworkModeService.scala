@@ -32,8 +32,6 @@ trait NetworkModeService {
   def networkMode: Signal[NetworkMode]
 
   def registerNetworkCallback(): Unit
-  def isDeviceIdleMode: Boolean
-
   lazy val isOnline: Signal[Boolean] = networkMode.map(NetworkModeService.isOnlineMode)
 }
 
@@ -92,8 +90,6 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle)
       if (currentNetwork.currentValue.isEmpty) currentNetwork ! None
     }(Threading.Background)
   }
-
-  override def isDeviceIdleMode: Boolean = false
 }
 
 object NetworkModeService extends DerivedLogTag {

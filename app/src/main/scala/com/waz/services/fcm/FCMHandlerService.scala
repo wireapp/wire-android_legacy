@@ -22,23 +22,23 @@ import com.google.firebase.messaging.{FirebaseMessagingService, RemoteMessage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InForeground
-import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.push.PushService.{FetchFromIdle, SyncHistory}
 import com.waz.service.push._
 import com.waz.services.ZMessagingService
 import com.waz.services.fcm.FCMHandlerService._
 import com.waz.threading.Threading
-import com.wire.signals.Serialized
-import com.waz.utils.{JsonDecoder, RichInstant}
+import com.waz.utils.JsonDecoder
 import com.waz.zclient.WireApplication
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security._
+import com.wire.signals.CancellableFuture
 import org.json
 import org.threeten.bp.Instant
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.Try
 
 /**
@@ -61,38 +61,36 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
     * According to the docs, we have 10 seconds to process notifications upon receiving the `remoteMessage`.
     * it is sometimes not enough time to process everything - leading to missing messages!
     */
-  override def onMessageReceived(remoteMessage: RemoteMessage): Unit = {
+  override def onMessageReceived(remoteMessage: RemoteMessage): Unit =
     if (WireApplication.ensureInitialized()) processRemoteMessage(remoteMessage)
-  }
 
-  private def processRemoteMessage(remoteMessage: RemoteMessage): Unit = {
-    getData(remoteMessage).foreach { data =>
-      verbose(l"processing remote message with data: ${redactedString(data.toString())}")
-      implicit val context: Context = this
+  private def processRemoteMessage(remoteMessage: RemoteMessage): Unit = getData(remoteMessage).foreach { data =>
+    implicit val context: Context = this
 
-      Option(ZMessaging.currentGlobal) match {
-        case None =>
-          warn(l"No ZMessaging global available - calling too early")
-        case Some(globalModule) if !isSenderKnown(globalModule, remoteMessage.getFrom) =>
-          warn(l"Received FCM notification from unknown sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
-        case _ => SecurityPolicyChecker.runBackgroundSecurityChecklist().foreach { allChecksPassed =>
-          if (allChecksPassed) {
-            getTargetAccount(data) match {
-              case None =>
-                warn(l"User key missing msg: ${redactedString(UserKeyMissingMsg)}")
-              case Some(account) =>
-                targetAccountExists(account).foreach {
-                  case false =>
-                    warn(l"Could not find target account for notification")
-                  case true =>
-                    accounts.getZms(account).foreach {
-                      case None => warn(l"Couldn't instantiate zms instance")
-                      case Some(zms) => FCMHandler(zms, data, Instant.ofEpochMilli(remoteMessage.getSentTime))
-                    }
-                }
-            }
-          }
+    // If we're here, the initialization of ZMS is either done or in progress.
+    // If we don't get the ZMS immediately, maybe we just need to try again after a small delay.
+    def callFCMHandlerOrWait(userId: UserId, retry: Int = 0)(implicit maxRetries: Int = 3, delay: FiniteDuration = 250.millis): Unit =
+      accounts.getZms(userId).foreach {
+        case None if retry < maxRetries => CancellableFuture.delayed(delay)(callFCMHandlerOrWait(userId, retry + 1))
+        case None                       => warn(l"Couldn't instantiate zms instance")
+        case Some(zms)                  => FCMHandler(zms, data, Instant.ofEpochMilli(remoteMessage.getSentTime))
+      }
+
+    verbose(l"processing remote message with data: ${redactedString(data.toString())}")
+
+    Option(ZMessaging.currentGlobal) match {
+      case None =>
+        warn(l"No ZMessaging global available - calling too early")
+      case Some(globalModule) if !isSenderKnown(globalModule, remoteMessage.getFrom) =>
+        warn(l"Received FCM notification from unknown sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
+      case _ => SecurityPolicyChecker.runBackgroundSecurityChecklist().foreach {
+        case true => getTargetAccount(data) match {
+          case None =>
+            warn(l"User key missing msg: ${redactedString(UserKeyMissingMsg)}")
+          case Some(account) =>
+            callFCMHandlerOrWait(account)
         }
+        case false =>
       }
     }
   }
@@ -107,10 +105,6 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
 
   private def getTargetAccount(data: Map[String, String]): Option[UserId] = {
     data.get(UserKey).map(UserId)
-  }
-
-  private def targetAccountExists(userId: UserId): Future[Boolean] = {
-    accounts.accountsWithManagers.head.map(_.contains(userId))
   }
 
   /**
@@ -148,9 +142,6 @@ object FCMHandlerService {
     private def addNotificationToProcess(nId: Option[Uid]): Future[Unit] =
       for {
         false <- accounts.accountState(userId).map(_ == InForeground).head
-        drift <- push.beDrift.head
-        now   =  clock.instant + drift
-        idle  =  network.isDeviceIdleMode
         _     <- nId match {
                    case Some(n) => fcmPushes.markNotificationsWithState(Set(n), Pushed)
                    case _       => Future.successful(())
@@ -165,8 +156,7 @@ object FCMHandlerService {
           * online at once. For that reason, we start a job which can run for as long as we need to avoid the app from being
           * killed mid-processing messages.
           */
-        _ <- if (idle) push.syncNotifications(SyncHistory(FetchFromIdle(nId)))
-              else Serialized.future("fetch")(Future(FetchJob(userId, nId)))
+          _ <- push.syncNotifications(SyncHistory(FetchFromIdle(nId)))
       } yield {}
   }
 

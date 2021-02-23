@@ -50,6 +50,7 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
+import com.wire.signals.ext.ClockSignal
 
 class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]],
                           maxParticipants: Option[Int] = None,
@@ -355,7 +356,7 @@ object ParticipantsAdapter {
     private var userId = Option.empty[UserId]
 
     view.onClick(userId.foreach(onClick ! _))
-    
+
     def bind(participant:    ParticipantData,
              teamId:         Option[TeamId],
              lastRow:        Boolean,

@@ -20,11 +20,11 @@ package com.waz.zclient
 import java.io.File
 import java.util.Calendar
 
-import android.app.{Activity, ActivityManager, NotificationManager}
+import android.app.{Activity, ActivityManager, NotificationChannel, NotificationManager}
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
 import android.media.AudioManager
-import android.os.{PowerManager, Vibrator}
+import android.os.{Build, PowerManager, Vibrator}
 import android.renderscript.RenderScript
 import android.telephony.TelephonyManager
 import android.util.Log
@@ -52,7 +52,7 @@ import com.waz.services.websocket.WebSocketController
 import com.waz.sync.client.CustomBackendClient
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
-import com.waz.utils.SafeBase64
+import com.waz.utils.{SafeBase64, returning}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
 import com.waz.zclient.assets.{AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
@@ -444,7 +444,27 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
 
     inject[SecurityPolicyChecker]
+
+    notificationChannel
   }
+
+  lazy val notificationChannel: Option[NotificationChannel] =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      Some(
+        returning(
+          new NotificationChannel(
+            getString(R.string.default_notification_channel_id),
+            getString(R.string.foreground_service_notification_name),
+            NotificationManager.IMPORTANCE_LOW)
+        ) { ch =>
+          ch.setDescription(getString(R.string.foreground_service_notification_description))
+          ch.enableVibration(false)
+          ch.setShowBadge(false)
+          ch.setSound(null, null)
+          inject[NotificationManager].createNotificationChannel(ch)
+        }
+      )
+    } else None
 
   private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi): Unit =
     prefs(GlobalPreferences.CheckedForPlayServices).apply().foreach {
