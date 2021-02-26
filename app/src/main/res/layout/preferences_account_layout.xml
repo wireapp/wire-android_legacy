@@ -152,6 +152,12 @@
                 android:layout_height="@dimen/preference_button_height"
                 app:title="@string/pref_account_backup_title"
                 />
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_export"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="@string/pref_account_export_title"
+            />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/typefaceTextView"

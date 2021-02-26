@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="bottom|center"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/participants__left_margin"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/b__export_file_input"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="@string/filename">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Button
+                    android:id="@+id/b__export_file_select"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:text="@string/dots"
+                    android:textSize="@dimen/wire__text_size__medium" />
+            </LinearLayout>
+
+            <Switch
+                android:id="@+id/export_include_media"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:switchMinWidth="56dp"
+                android:layout_marginBottom="20dp"
+                android:text="@string/include_media_files"
+                android:checked="true"/>
+
+            <Switch
+                android:id="@+id/export_include_profile_pictures"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:switchMinWidth="56dp"
+                android:layout_marginBottom="20dp"
+                android:text="@string/include_profile_pictures"
+                android:checked="true"/>
+
+            <Switch
+                android:id="@+id/export_include_html"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:switchMinWidth="56dp"
+                android:layout_marginBottom="20dp"
+                android:text="@string/include_html_files"
+                android:checked="true"/>
+
+            <Switch
+                android:id="@+id/export_limit_from"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:switchMinWidth="56dp"
+                android:text="@string/enable_export_date_from"
+                android:checked="false"/>
+
+            <Button
+                android:id="@+id/export_date_from"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:textAlignment="center"
+                android:hint="@string/date_from">
+            </Button>
+
+            <Switch
+                android:id="@+id/export_limit_to"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:switchMinWidth="56dp"
+                android:text="@string/enable_export_date_to"
+                android:checked="false"/>
+
+            <Button
+                android:id="@+id/export_date_to"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:textAlignment="center"
+                android:hint="@string/date_to">
+
+            </Button>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center|bottom"
+                android:orientation="vertical">
+                <Button
+                    android:id="@+id/b__export_start"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/start_export"
+                    android:textSize="@dimen/wire__text_size__medium" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/export_loading_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible"
+        android:layout_centerInParent="true"
+        android:background="#FFDDDDDD"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="@dimen/wire__text_size__medium"
+            android:layout_weight="1"
+            android:textColor="@color/black"
+            android:text="@string/current_state"/>
+
+        <TextView
+            android:id="@+id/export_progress_state"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="@dimen/wire__text_size__medium"
+            android:layout_weight="1"
+            android:textColor="@color/black"
+            android:text=""/>
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="@dimen/wire__text_size__medium"
+            android:layout_weight="1"
+            android:textColor="@color/black"
+            android:text="@string/conversations_exported"/>
+
+        <RelativeLayout
+            android:layout_weight="1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <ProgressBar
+                android:id="@+id/export_progress_conversations"
+                android:layout_width="fill_parent"
+                android:layout_height="@dimen/wire__text_size__regular"
+                android:layout_margin="5dp"
+                android:scaleY="9"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+                <TextView
+                    android:id="@+id/export_progress_conversations_current"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:text=""
+                    android:layout_weight="1"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:textColor="@color/black"
+                    tools:ignore="RtlHardcoded" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="/"
+                    android:layout_weight="0"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:textColor="@color/black"
+                    tools:ignore="HardcodedText" />
+                <TextView
+                    android:id="@+id/export_progress_conversations_total"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="left"
+                    android:text=""
+                    android:layout_weight="1"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:textColor="@color/black"
+                    tools:ignore="RtlHardcoded" />
+            </LinearLayout>
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="@dimen/wire__text_size__medium"
+            android:layout_weight="1"
+            android:textColor="@color/black"
+            android:text="@string/users_exported"/>
+
+        <RelativeLayout
+            android:layout_weight="1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <ProgressBar
+                android:id="@+id/export_progress_users"
+                android:layout_width="fill_parent"
+                android:layout_height="@dimen/wire__text_size__regular"
+                android:layout_margin="5dp"
+                android:scaleY="9"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+                <TextView
+                    android:id="@+id/export_progress_users_current"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:text=""
+                    android:layout_weight="1"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:textColor="@color/black"
+                    tools:ignore="RtlHardcoded" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="/"
+                    android:layout_weight="0"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:textColor="@color/black"
+                    tools:ignore="HardcodedText" />
+                <TextView
+                    android:id="@+id/export_progress_users_total"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="left"
+                    android:text=""
+                    android:layout_weight="1"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:textColor="@color/black"
+                    tools:ignore="RtlHardcoded" />
+            </LinearLayout>
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="@dimen/wire__text_size__medium"
+            android:layout_weight="1"
+            android:textColor="@color/black"
+            android:text="@string/messages_exported"/>
+
+        <RelativeLayout
+            android:id="@+id/export_progress_messages_container"
+            android:layout_weight="1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <ProgressBar
+                android:id="@+id/export_progress_messages"
+                android:layout_width="fill_parent"
+                android:layout_height="@dimen/wire__text_size__regular"
+                android:layout_margin="5dp"
+                android:scaleY="9"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+                <TextView
+                    android:id="@+id/export_progress_messages_current"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:text=""
+                    android:layout_weight="1"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:textColor="@color/black"
+                    tools:ignore="RtlHardcoded" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="/"
+                    android:layout_weight="0"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:textColor="@color/black"
+                    tools:ignore="HardcodedText" />
+                <TextView
+                    android:id="@+id/export_progress_messages_total"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="left"
+                    android:text=""
+                    android:layout_weight="1"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    android:textColor="@color/black"
+                    tools:ignore="RtlHardcoded" />
+            </LinearLayout>
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="@dimen/wire__text_size__medium"
+            android:layout_weight="1"
+            android:textColor="@color/black"
+            android:text="@string/file_export"/>
+
+        <ProgressBar
+            android:id="@+id/export_progress_asset"
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/wire__text_size__regular"
+            android:layout_margin="5dp"
+            android:scaleY="4"
+            android:layout_weight="1"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
+
+        <ProgressBar
+            android:id="@+id/export_progress_running"
+            android:layout_margin="10dp"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_weight="2000"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center|bottom"
+            android:layout_marginBottom="40dp"
+            android:orientation="vertical">
+            <Button
+                android:id="@+id/export_cancel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/cancel_export"
+                android:textColor="@color/black"
+                android:textSize="@dimen/wire__text_size__medium" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

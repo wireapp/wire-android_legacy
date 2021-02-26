@@ -49,6 +49,7 @@ import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
 import com.waz.zclient.{BuildConfig, _}
 import com.waz.threading.Threading._
+import com.waz.zclient.convExport.fragments.{ExportKey, ExportSelectionView, ExportFragment}
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -61,6 +62,7 @@ trait AccountView {
   val onLogoutClick:        EventStream[Unit]
   val onDeleteClick:        EventStream[Unit]
   val onBackupClick:        EventStream[Unit]
+  val onExportClick:        EventStream[Unit]
   val onDataUsageClick:     EventStream[Unit]
   val onReadReceiptSwitch:  EventStream[Boolean]
 
@@ -94,6 +96,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val logoutButton        = findById[TextButton](R.id.preferences_account_logout)
   val deleteAccountButton = findById[TextButton](R.id.preferences_account_delete)
   val backupButton        = findById[TextButton](R.id.preferences_backup)
+  val exportButton        = findById[TextButton](R.id.preferences_export)
   val dataUsageButton     = findById[TextButton](R.id.preferences_data_usage_permissions)
   val readReceiptsSwitch  = findById[SwitchPreference](R.id.preferences_account_read_receipts)
   val personalInformationHeaderLabel = findById[TypefaceTextView](R.id.preference_personal_information_header)
@@ -115,6 +118,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override val onLogoutClick        = logoutButton.onClickEvent.map(_ => ())
   override val onDeleteClick        = deleteAccountButton.onClickEvent.map(_ => ())
   override val onBackupClick        = backupButton.onClickEvent.map(_ => ())
+  override val onExportClick        = exportButton.onClickEvent.map(_ => ())
   override val onDataUsageClick     = dataUsageButton.onClickEvent.map(_ => ())
   override val onReadReceiptSwitch  = readReceiptsSwitch.onCheckedChange
 
@@ -375,6 +379,18 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
             def onClick(dialog: DialogInterface, which: Int) = dialog.dismiss()
           }, true)
     }(Threading.Ui)
+  }
+
+  view.onExportClick.onUi{ _ =>
+    //context.asInstanceOf[BaseActivity]
+        //.getSupportFragmentManager
+        //.beginTransaction()
+        //.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+        //.add(ExportFragment.newInstance(Some(ExportSelectionView.Tag)), ExportFragment.TAG)
+        //.addToBackStack(ExportFragment.TAG)
+        //.commit()
+    //navigator.goTo(ExportKey())
+    navigator.goTo(ExportKey(returning(new Bundle)(_.putString(ExportFragment.PageToOpenArg, ExportSelectionView.Tag))))
   }
 
   view.onDataUsageClick.onUi { _ =>

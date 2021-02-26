@@ -1,0 +1,620 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:element name="chatexport" type="chatexportType"/>
+
+    <!-- COMPLEX TYPES -->
+    <xs:complexType name="chatexportType">
+        <xs:all>
+            <xs:element name="conversations" type="conversationListType"/>
+            <xs:element name="users" type="userListType"/>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="conversationType">
+        <xs:all>
+            <!-- required values -->
+            <xs:element name="id" type="uuid"/>
+            <xs:element name="remoteid" type="uuid"/>
+            <xs:element name="creator" type="uuid"/>
+            <xs:element name="convType" type="xs:string"/> <!-- maybe type conversation_type_type -->
+            <xs:element name="verified" type="xs:string"/> <!-- maybe type verified_type -->
+
+            <!-- Sequences -->
+            <xs:element name="userroles" type="userrolesListType"/>
+            <xs:element name="messages" type="messageListType"/>
+
+            <!-- optional values -->
+            <xs:element name="name" type="xs:string" minOccurs="0"/>
+            <xs:element name="teamid" type="uuid" minOccurs="0"/>
+            <xs:element name="access" type="accessListType" minOccurs="0"/>
+            <xs:element name="accessrole" type="xs:string" minOccurs="0"/> <!-- maybe type accessrole_type -->
+            <xs:element name="link" type="xs:anyURI" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="messageType">
+        <xs:all>
+            <!-- required values -->
+            <xs:element name="id" type="uuid"/>
+            <xs:element name="msg_type" type="xs:string"/> <!-- maybe type message_type -->
+            <xs:element name="userid" type="uuid"/>
+            <xs:element name="state" type="message_status"/>
+            <xs:element name="time" type="xs:dateTime"/>
+
+            <!-- Seq of message data -->
+            <xs:element name="contents" type="messageContentListType" minOccurs="0"/>
+            <xs:element name="protos" type="protoListType" minOccurs="0"/>
+
+            <!-- optional values -->
+            <xs:element name="local_time" type="xs:dateTime" minOccurs="0"/>
+            <xs:element name="error" type="errorContent" minOccurs="0"/>
+            <xs:element name="first_message" type="xs:boolean" default="false" minOccurs="0"/>
+            <xs:element name="members" type="uuid_list" minOccurs="0"/>
+            <xs:element name="recipient" type="uuid" minOccurs="0"/>
+            <xs:element name="edit_time" type="xs:dateTime" minOccurs="0"/>
+            <xs:element name="ephemeral" type="durationType" minOccurs="0"/>
+            <xs:element name="expiry_time" type="xs:dateTime" minOccurs="0"/>
+            <xs:element name="duration" type="durationType" minOccurs="0"/>
+            <xs:element name="asset_id" type="uuid" minOccurs="0"/>
+            <xs:element name="quote" type="quoteType" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="protoType">
+        <xs:choice>
+            <xs:element name="asset" type="asset_type"/>
+            <xs:element name="calling" type="xs:string"/>
+            <xs:element name="cleared">
+                <xs:complexType>
+                    <xs:attribute name="timestamp" type="xs:long"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="clientaction" type="clientaction_type"/>
+            <xs:element name="deleted" type="uuid"/> <!-- message id of the deleted item -->
+            <xs:element name="edited">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="replacingMessageId" type="uuid"/>
+                        <xs:element name="text" type="message_text_type" minOccurs="0"/>
+                        <xs:element name="composite" type="message_composite_type" minOccurs="0"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="external">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="encryption" type="xs:int"/>
+                        <xs:element name="otrKey" type="xs:string"/>
+                        <xs:element name="sha256" type="xs:string"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="hidden" type="uuid"/> <!-- message id of the hidden item -->
+            <xs:element name="image">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="mimeType" type="xs:string"/>
+                        <xs:element name="tag" type="xs:string"/>
+                        <xs:element name="width" type="xs:int"/>
+                        <xs:element name="height" type="xs:int"/>
+                        <xs:element name="originalWidth" type="xs:int"/>
+                        <xs:element name="originalHeight" type="xs:int"/>
+                        <xs:element name="size" type="xs:long"/>
+                        <xs:element name="mac" type="xs:string"/>
+                        <xs:element name="macKey" type="xs:string"/>
+                        <xs:element name="otrKey" type="xs:string"/>
+                        <xs:element name="sha256" type="xs:string"/>
+                    </xs:all>
+                    <xs:attribute name="expiremillis" type="xs:long"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="knock">
+                <xs:complexType>
+                    <xs:attribute name="hotknock" type="xs:boolean"/>
+                    <xs:attribute name="expiremillis" type="xs:long"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="lastread" type="xs:long"/> <!-- timestamp -->
+            <xs:element name="reaction">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="emoji" type="xs:string"/>
+                        <xs:element name="messageid" type="uuid"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="text" type="message_text_type"/>
+            <xs:element name="location">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="latitude" type="xs:float"/>
+                        <xs:element name="longitude" type="xs:float"/>
+                        <xs:element name="name" type="xs:string"/>
+                        <xs:element name="zoom" type="xs:int"/>
+                    </xs:all>
+                    <xs:attribute name="expiremillis" type="xs:long"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="confirmation">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="type">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="DELIVERED"/>
+                                    <xs:enumeration value="READ"/>
+                                    <xs:enumeration value="UNKNOWN"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="messageids" type="uuid_list"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="availability" type="availability_type"/>
+            <xs:element name="composite" type="message_composite_type"/>
+            <xs:element name="buttonaction">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="buttonid" type="xs:string"/>
+                        <xs:element name="refmessageid" type="xs:string"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="buttonactionconfirmation">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="buttonid" type="xs:string"/>
+                        <xs:element name="refmessageid" type="xs:string"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="datatransfer" type="xs:string"/>
+            <xs:element name="debug_data" type="xs:string" minOccurs="0"/> <!-- error/unsupported -->
+        </xs:choice>
+    </xs:complexType>
+
+    <xs:complexType name="message_text_type">
+        <xs:all>
+            <xs:element name="content" type="xs:string"/>
+            <xs:element name="quote" type="uuid" minOccurs="0"/>
+            <xs:element name="mentions" type="mentionListType" minOccurs="0"/>
+            <xs:element name="linkpreviews" type="linkpreviewsListType" minOccurs="0"/>
+        </xs:all>
+        <xs:attribute name="expiremillis" type="xs:long"/>
+    </xs:complexType>
+
+    <xs:complexType name="message_composite_type">
+        <xs:all>
+            <xs:element name="text" type="message_text_type" minOccurs="0"/>
+            <xs:element name="button" minOccurs="0">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="id" type="xs:string"/>
+                        <xs:element name="text" type="xs:string"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="linkpreviewType">
+        <xs:all>
+            <xs:element name="permanenturl" type="xs:string"/>
+            <xs:element name="url" type="xs:string"/>
+            <xs:element name="title" type="xs:string"/>
+            <xs:element name="summary" type="xs:string"/>
+            <xs:element name="urloffset" type="xs:int"/>
+            <xs:element name="image" type="asset_type" minOccurs="0"/>
+            <xs:element name="tweet" minOccurs="0">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="author" type="xs:string"/>
+                        <xs:element name="username" type="xs:string"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="asset_type">
+        <xs:all>
+            <xs:element name="mime_type" type="xs:string"/>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="size" type="xs:long"/>
+            <xs:element name="filepath" type="xs:string" minOccurs="0"/> <!-- Does not occur if media export is turned of -->
+            <xs:element name="metadata">
+                <xs:complexType>
+                    <xs:choice>
+                        <xs:element name="audio">
+                            <xs:complexType>
+                                <xs:all>
+                                    <xs:element name="duration_in_millis" type="xs:long"/>
+                                    <xs:element name="normalized_loudness" type="xs:string"/>
+                                </xs:all>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="image">
+                            <xs:complexType>
+                                <xs:all>
+                                    <xs:element name="width" type="xs:int"/>
+                                    <xs:element name="height" type="xs:int"/>
+                                    <xs:element name="tag" type="xs:string"/>
+                                </xs:all>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="video">
+                            <xs:complexType>
+                                <xs:all>
+                                    <xs:element name="duration_in_millis" type="xs:long"/>
+                                    <xs:element name="height" type="xs:int"/>
+                                    <xs:element name="width" type="xs:int"/>
+                                </xs:all>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="unknown" type="xs:string"/>
+                    </xs:choice>
+                    <xs:attribute name="type" type="xs:string" use="required"/> <!-- maybe type asset_metadata_type -->
+                </xs:complexType>
+            </xs:element>
+        </xs:all>
+        <xs:attribute name="expiremillis" type="xs:long"/>
+    </xs:complexType>
+
+    <xs:complexType name="messageContentType">
+        <xs:all>
+            <!-- required values -->
+            <xs:element name="type" type="xs:string"/> <!-- maybe type message_part_type -->
+            <xs:element name="content" type="xs:string"/>
+
+            <!-- optional values -->
+            <xs:element name="rich_media" type="rich_media_type" minOccurs="0"/>
+            <xs:element name="open_graph" minOccurs="0">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="title" type="xs:string"/>
+                        <xs:element name="description" type="xs:string"/>
+                        <xs:element name="tpe" type="xs:string"/>
+                        <xs:element name="permanenturl" type="xs:anyURI" minOccurs="0"/>
+                        <xs:element name="image" type="xs:anyURI" minOccurs="0"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="asset_id" type="uuid" minOccurs="0"/>
+            <xs:element name="width" type="xs:int" default="0" minOccurs="0"/>
+            <xs:element name="height" type="xs:int" default="0" minOccurs="0"/>
+            <xs:element name="mentions" type="mentionListType" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="rich_media_type">
+        <xs:all>
+            <xs:element name="kind">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="PLAYLIST"/>
+                        <xs:enumeration value="TRACK"/>
+                        <xs:enumeration value="UNKNOWN"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="provider">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="YOUTUBE"/>
+                        <xs:enumeration value="SOUNDCLOUD"/>
+                        <xs:enumeration value="SPOTIFY"/>
+                        <xs:enumeration value="UNKNOWN"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+            <xs:element name="title" type="xs:string"/>
+            <xs:element name="linkurl" type="xs:string"/>
+            <xs:element name="artist" minOccurs="0">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="name" type="xs:string"/>
+                        <xs:element name="avatar" type="xs:string" minOccurs="0"/> <!-- filename, assetid (uuid) on failure -->
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="duration" type="xs:long" minOccurs="0"/> <!-- in milliseconds -->
+            <xs:element name="artwork" type="xs:string" minOccurs="0"/> <!-- filename, assetid (uuid) on failure -->
+            <xs:element name="expires" type="xs:long" minOccurs="0"/> <!-- Epoch in milliseconds -->
+            <xs:element name="tracks" type="trackListType" minOccurs="0"/>
+            <xs:element name="streamable" type="xs:boolean" minOccurs="0"/>
+            <xs:element name="streamurl" type="xs:anyURI" minOccurs="0"/>
+            <xs:element name="previewurl" type="xs:anyURI" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="userType">
+        <xs:all>
+            <!-- required values -->
+            <xs:element name="userid" type="uuid"/>
+            <xs:element name="name" type="xs:string"/>
+            <xs:element name="accent_color" type="xs:int"/>
+
+            <!-- optional values -->
+            <xs:element name="username" type="xs:string" minOccurs="0"/>
+            <xs:element name="teamid" type="uuid" minOccurs="0"/>
+            <xs:element name="email" type="xs:string" minOccurs="0"/>
+            <xs:element name="phone" type="xs:string" minOccurs="0"/>
+            <xs:element name="trackingid" type="uuid" minOccurs="0"/>
+            <xs:element name="picture" type="profilePictureType" minOccurs="0"/>
+            <xs:element name="userfields" type="xs:string" minOccurs="0"/><!-- Maybe remove -->
+            <xs:element name="permission" type="xs:string" default="0 0" minOccurs="0"/>
+        </xs:all>
+        <xs:attribute name="isSelf" type="xs:boolean" default="false"/>
+    </xs:complexType>
+
+    <xs:complexType name="profilePictureType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string"> <!-- filename, assetid (uuid) on failure -->
+                <xs:attribute name="uploaded" type="xs:boolean" default="false"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="quoteType">
+        <xs:simpleContent>
+            <xs:extension base="uuid">
+                <xs:attribute name="validity" type="xs:boolean"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="mentionType">
+        <xs:all>
+            <xs:element name="start" type="xs:int"/>
+            <xs:element name="length" type="xs:int"/>
+            <xs:element name="userid" type="uuid" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="errorContent">
+        <xs:all>
+            <xs:element name="client_id" type="uuid"/>
+            <xs:element name="errorcode" type="xs:integer"/>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="durationType">
+        <xs:all>
+            <xs:element name="length" type="xs:long"/>
+            <xs:element name="timeunit" type="time_unit"/>
+        </xs:all>
+    </xs:complexType>
+
+
+    <!-- SIMPLE TYPES -->
+    <xs:simpleType name="uuid">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([0-9a-fA-F]{1,4}-[0-9a-fA-F]{1,4}-)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="message_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="TEXT"/>
+            <xs:enumeration value="TEXT_EMOJI_ONLY"/>
+            <xs:enumeration value="IMAGE_ASSET"/>
+            <xs:enumeration value="ANY_ASSET"/>
+            <xs:enumeration value="VIDEO_ASSET"/>
+            <xs:enumeration value="AUDIO_ASSET"/>
+            <xs:enumeration value="RESTRICTED_FILE"/>
+            <xs:enumeration value="KNOCK"/>
+            <xs:enumeration value="MEMBER_JOIN"/>
+            <xs:enumeration value="RICH_MEDIA"/>
+            <xs:enumeration value="LOCATION"/>
+            <xs:enumeration value="RECALLED"/>
+            <xs:enumeration value="MEMBER_LEAVE"/>
+            <xs:enumeration value="CONNECT_REQUEST"/>
+            <xs:enumeration value="CONNECT_ACCEPTED"/>
+            <xs:enumeration value="RENAME"/>
+            <xs:enumeration value="MISSED_CALL"/>
+            <xs:enumeration value="SUCCESSFUL_CALL"/>
+            <xs:enumeration value="OTR_ERROR"/>
+            <xs:enumeration value="OTR_ERROR_FIXED"/>
+            <xs:enumeration value="OTR_IDENTITY_CHANGED"/>
+            <xs:enumeration value="OTR_VERIFIED"/>
+            <xs:enumeration value="OTR_UNVERIFIED"/>
+            <xs:enumeration value="OTR_DEVICE_ADDED"/>
+            <xs:enumeration value="OTR_MEMBER_ADDED"/>
+            <xs:enumeration value="SESSION_RESET"/>
+            <xs:enumeration value="STARTED_USING_DEVICE"/>
+            <xs:enumeration value="HISTORY_LOST"/>
+            <xs:enumeration value="MESSAGE_TIMER"/>
+            <xs:enumeration value="READ_RECEIPTS_ON"/>
+            <xs:enumeration value="READ_RECEIPTS_OFF"/>
+            <xs:enumeration value="COMPOSITE"/>
+            <xs:enumeration value="UNKNOWN"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="message_status">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="DEFAULT"/>
+            <xs:enumeration value="SENT"/>
+            <xs:enumeration value="PENDING"/>
+            <xs:enumeration value="DELETED"/>
+            <xs:enumeration value="FAILED"/>
+            <xs:enumeration value="FAILED_READ"/>
+            <xs:enumeration value="DELIVERED"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="message_part_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="TEXT"/>
+            <xs:enumeration value="TEXT_EMOJI_ONLY"/>
+            <xs:enumeration value="ASSET"/>
+            <xs:enumeration value="ANY_ASSET"/>
+            <xs:enumeration value="YOUTUBE"/>
+            <xs:enumeration value="SOUNDCLOUD"/>
+            <xs:enumeration value="TWITTER"/>
+            <xs:enumeration value="SPOTIFY"/>
+            <xs:enumeration value="WEB_LINK"/>
+            <xs:enumeration value="GOOGLE_MAPS"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="conversation_role_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="wire_admin"/>
+            <xs:enumeration value="wire_member"/>
+            <xs:enumeration value="wire_bot"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="conversation_type_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="UNKNOWN"/>
+            <xs:enumeration value="GROUP"/>
+            <xs:enumeration value="SELF"/>
+            <xs:enumeration value="ONE_TO_ONE"/>
+            <xs:enumeration value="WAIT_FOR_CONNECTION"/>
+            <xs:enumeration value="INCOMING_CONNECTION"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="time_unit">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="DAYS"/>
+            <xs:enumeration value="HOURS"/>
+            <xs:enumeration value="MICROSECONDS"/>
+            <xs:enumeration value="MILLISECONDS"/>
+            <xs:enumeration value="MINUTES"/>
+            <xs:enumeration value="NANOSECONDS"/>
+            <xs:enumeration value="SECONDS"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="access_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="INVITE"/>
+            <xs:enumeration value="CODE"/>
+            <xs:enumeration value="LINK"/>
+            <xs:enumeration value="PRIVATE"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="accessrole_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="TEAM"/>
+            <xs:enumeration value="ACTIVATED"/>
+            <xs:enumeration value="NON_ACTIVATED"/>
+            <xs:enumeration value="PRIVATE"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="verified_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="UNKNOWN"/>
+            <xs:enumeration value="VERIFIED"/>
+            <xs:enumeration value="UNVERIFIED"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="asset_metadata_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AUDIO"/>
+            <xs:enumeration value="IMAGE"/>
+            <xs:enumeration value="VIDEO"/>
+            <xs:enumeration value="UNKNOWN"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="clientaction_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="RESET_SESSION"/>
+            <xs:enumeration value="DISABLED"/>
+            <xs:enumeration value="ENABLED"/>
+            <xs:enumeration value="UNKNOWN"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="availability_type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="AVAILABLE"/>
+            <xs:enumeration value="AWAY"/>
+            <xs:enumeration value="BUSY"/>
+            <xs:enumeration value="NONE"/>
+            <xs:enumeration value="UNKNOWN"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- LIST TYPES -->
+    <xs:complexType name="uuid_list">
+        <xs:sequence>
+            <xs:element name="uuid" type="uuid" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="messageContentListType">
+        <xs:sequence>
+            <xs:element name="content" type="messageContentType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="protoListType">
+        <xs:sequence>
+            <xs:element name="proto" type="protoType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="conversationListType">
+        <xs:sequence>
+            <xs:element name="conversation" type="conversationType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="userrolesListType">
+        <xs:sequence>
+            <xs:element name="userrole" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="userid" type="uuid" use="required"/>
+                    <xs:attribute name="role" type="xs:string" use="required"/> <!-- maybe type conversation_role_type -->
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="messageListType">
+        <xs:sequence>
+            <xs:element name="message" type="messageType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="mentionListType">
+        <xs:sequence>
+            <xs:element name="mention" type="mentionType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="userListType">
+        <xs:sequence>
+            <xs:element name="user" type="userType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="accessListType">
+        <xs:sequence>
+            <xs:element name="accesstype" type="xs:string" minOccurs="0" maxOccurs="unbounded"/> <!-- maybe type access_type -->
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="linkpreviewsListType">
+        <xs:sequence>
+            <xs:element name="linkpreview" type="linkpreviewType" minOccurs="0" maxOccurs="unbounded"/> <!-- maybe type access_type -->
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="trackListType">
+        <xs:sequence>
+            <xs:element name="track" type="rich_media_type" minOccurs="0" maxOccurs="unbounded"/> <!-- maybe type access_type -->
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

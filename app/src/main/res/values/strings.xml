@@ -896,6 +896,7 @@
     <string name="conversation_toolbar__collection">Collection</string>
     <string name="conversation_toolbar__call_video">Video call</string>
     <string name="conversation_toolbar__call_audio">Audio call</string>
+    <string name="conversation_toolbar__export_chat">Export chat</string>
 
     <!-- Asset upload errors -->
     <string name="asset_upload_error__not_found__title">File not found</string>
@@ -1253,6 +1254,33 @@
     <string name="new_conv_no_results">No results</string>
     <string name="new_conv_no_contacts">No contacts</string>
 
+    <string name="start_export">Start export</string>
+    <string name="export_file_not_set">The export file is not defined</string>
+    <string name="export_done">Export done</string>
+    <string name="include_media_files">Include media files</string>
+    <string name="include_profile_pictures">Include profile pictures</string>
+    <string name="include_html_files">Include HTML-Viewer files</string>
+    <string name="enable_export_date_from">Enable export date from</string>
+    <string name="date_from">Date from</string>
+    <string name="enable_export_date_to">Enable export date to</string>
+    <string name="date_to">Date to</string>
+    <string name="dots">…</string>
+    <string name="filename">Filename</string>
+    <string name="current_state">Current state</string>
+    <string name="conversations_exported">Conversations exported</string>
+    <string name="users_exported">Users exported</string>
+    <string name="messages_exported">Messages exported</string>
+    <string name="file_export">File export</string>
+    <string name="cancel_export">Cancel export</string>
+    <string name="confirm_selection">Confirm selection</string>
+    <string name="init_export">Initialize export</string>
+    <string name="conversation_export">Export conversation</string>
+    <string name="user_export">Export users</string>
+    <string name="xml_export">Save XML file</string>
+    <string name="html_export">Add HTML-Viewer</string>
+    <string name="done_export">Export done</string>
+    <string name="canceled_export">Export canceled</string>
+
 
     <plurals name="participants_divider_services">
         <item quantity="zero">SERVICES</item>
@@ -1325,6 +1353,7 @@
     <string name="backup_description">Create a backup to preserve your conversation history. You can use this to restore history if you lose your device or switch to a new one.
         \n\nChoose a strong password to protect the backup file.</string>
     <string name="pref_account_backup_title">Back up conversations</string>
+    <string name="pref_account_export_title">Export conversations</string>
     <string name="backup_password_dialog_title">Set password</string>
     <string name="backup_password_dialog_message">The backup will be compressed and encrypted with a password. Make sure to store it in a secure place.</string>
     <string name="backup_password_dialog_ok">OK</string>

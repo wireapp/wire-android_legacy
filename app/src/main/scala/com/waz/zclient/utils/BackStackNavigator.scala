@@ -120,6 +120,10 @@ class BackStackNavigator(implicit context: Context) extends Injectable {
     }
   }
 
+  def getView(): Option[ViewGroup] ={
+    root
+  }
+
   def detachView(backStackKey: BackStackKey, transitionAnimation: TransitionAnimation, forward: Boolean): Unit ={
     root.foreach{ root =>
       backStackKey.onViewDetached()

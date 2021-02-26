@@ -53,6 +53,8 @@ import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.views.ConversationFragment
 import com.waz.zclient.{FragmentHelper, R}
 import com.waz.threading.Threading._
+import com.waz.zclient.convExport.ExportController
+import com.waz.zclient.convExport.fragments.{ExportConfigurationFragment, ExportFragment}
 
 class ConversationManagerFragment extends FragmentHelper
   with ConversationScreenControllerObserver
@@ -73,6 +75,7 @@ class ConversationManagerFragment extends FragmentHelper
   private lazy val createConvController   = inject[CreateConversationController]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val keyboard               = inject[KeyboardController]
+  private lazy val exportController       = inject[ExportController]
 
   private var subs = Set.empty[com.wire.signals.Subscription]
 
@@ -134,6 +137,10 @@ class ConversationManagerFragment extends FragmentHelper
 
     subs += participantsController.onShowParticipantsWithUserId.onUi { p =>
       openParticipantFragment(p.userId, Right(p))
+    }
+
+    subs += exportController.onShowExport.onUi { p =>
+      showFragment(ExportFragment.newInstance(Some(ExportConfigurationFragment.Tag)), ExportFragment.TAG)
     }
 
     subs += participantsController.onLeaveParticipants.onUi { withAnimations =>

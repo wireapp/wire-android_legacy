@@ -46,6 +46,8 @@ import com.waz.zclient.utils.{BackStackNavigator, RingtoneUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{BaseActivity, R, _}
 import com.waz.threading.Threading._
+import com.waz.zclient.convExport.ExportController
+import com.waz.zclient.convExport.fragments.ExportConfigurationFragment
 import com.waz.zclient.tracking.GlobalTrackingController
 
 class PreferencesActivity extends BaseActivity
@@ -61,6 +63,7 @@ class PreferencesActivity extends BaseActivity
   private lazy val zms = inject[Signal[ZMessaging]]
   private lazy val spinnerController = inject[SpinnerController]
   private lazy val cameraController = inject[ICameraController]
+  private lazy val exportController = inject[ExportController]
 
   lazy val accentColor = inject[AccentColorController].accentColor
   lazy val accounts = inject[AccountsService]
@@ -151,6 +154,8 @@ class PreferencesActivity extends BaseActivity
         case OptionsView.PingToneResultId => UserPreferences.PingTone
       }
       zms.head.flatMap(_.userPrefs.preference(key).update(pickedUri.fold(RingtoneUtils.getSilentValue)(_.toString)))(Threading.Ui)
+    } else if(resultCode == Activity.RESULT_OK && requestCode.equals(ExportConfigurationFragment.SELECT_FILE_REQUEST)){
+      exportController.exportFile.onNext(Some(data.getData))
     }
   }
 
