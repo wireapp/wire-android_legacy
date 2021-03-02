@@ -93,7 +93,6 @@ class ControlsFragment extends FragmentHelper {
       }
     }
 
-
     if (BuildConfig.ACTIVE_SPEAKERS) {
        Signal.zip(
          controller.isCallEstablished,

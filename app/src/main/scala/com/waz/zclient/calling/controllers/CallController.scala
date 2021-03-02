@@ -329,6 +329,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
 
   isCallActive.onChanged.filter(_ == false).on(Threading.Ui) { _ =>
     screenManager.releaseWakeLock()
+    showTopSpeakers ! false
   }
 
   (for {
