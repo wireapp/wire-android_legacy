@@ -82,6 +82,8 @@ case class MessageData(override val id:   MessageId              = MessageId(),
     case _ => Nil
   }
 
+  def unpackLinks: Seq[(String, String, Option[AssetData])] = links.map(_.unpack)
+
   lazy val protoQuote: Option[Quote] = genericMsgs.lastOption match {
     case Some(TextMessage(_, _, _, quote, _)) => quote
     case _ => None

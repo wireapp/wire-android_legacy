@@ -463,16 +463,16 @@ object GenericContent {
   }
 
   final case class LinkPreview(override val proto: Messages.LinkPreview) extends GenericContent[Messages.LinkPreview] {
-    def unpackWithAsset: Option[AssetData] = {
-      val image = if (proto.hasImage) Option(proto.getImage) else None
-      image
-        .orElse { if (proto.hasArticle) Option(proto.getArticle.getImage) else None }
-        .map { proto => Asset(proto).unpack._1 }
+    lazy val unpack: (String, String, Option[AssetData]) = {
+      val (title, summary) =
+        if (proto.hasArticle) (proto.getArticle.getTitle, proto.getArticle.getSummary)
+        else (proto.getTitle, proto.getSummary)
+      val image =
+        if (proto.hasImage) Some(proto.getImage)
+        else if (proto.hasArticle && proto.getArticle.hasImage) Some(proto.getArticle.getImage)
+        else None
+      (title, summary, image.map { proto => Asset(proto).unpack._1 })
     }
-
-    def unpackWithDescription: (String, String) =
-      if (proto.hasArticle) (proto.getArticle.getTitle, proto.getArticle.getSummary)
-      else (proto.getTitle, proto.getSummary)
   }
 
   object LinkPreview {

@@ -373,9 +373,6 @@ dependencies {
     }
     annotationProcessor BuildDependencies.glide.compiler
 
-    // protobuf
-    implementation "com.wire:generic-message-proto:1.28.1"
-
     //Retrofit
     implementation BuildDependencies.retrofit.core
     implementation BuildDependencies.retrofit.protoBufConverter

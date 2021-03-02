@@ -28,8 +28,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.ImageViewTarget
 import com.waz.api.Message.Part
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.GenericContent.LinkPreview
-import com.waz.model.{AssetData, AssetId, Dim2, MessageContent}
+import com.waz.model.{AssetData, AssetId, MessageContent}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
 import com.wire.signals.Signal
@@ -55,57 +54,47 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
 
   override val tpe: MsgPart = MsgPart.WebLink
 
-  lazy val browser = inject[BrowserController]
+  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
+    super.set(msg, part, opts)
+    verbose(l"set $part")
+    part foreach { content ! _ }
+  }
 
-  lazy val titleTextView: TextView  = findById(R.id.ttv__row_conversation__link_preview__title)
-  lazy val urlTextView: TextView    = findById(R.id.ttv__row_conversation__link_preview__url)
-  lazy val imageView: ImageView     = findById(R.id.iv__row_conversation__link_preview__image)
+  private lazy val titleTextView: TextView  = findById(R.id.ttv__row_conversation__link_preview__title)
+  private lazy val urlTextView: TextView    = findById(R.id.ttv__row_conversation__link_preview__url)
+  private lazy val imageView: ImageView     = findById(R.id.iv__row_conversation__link_preview__image)
 
   private val content = Signal[MessageContent]()
 
   def inflate(): Unit = inflate(R.layout.message_part_weblink_content)
   inflate()
 
-  val linkPreview: Signal[Option[LinkPreview]] = for {
+  private val linkPreview = for {
     msg <- message
-    ct <- content
+    ct  <- content
   } yield {
     val index = msg.content.indexOf(ct)
     val linkIndex = msg.content.take(index).count(_.tpe == Part.Type.WEB_LINK)
-    if (index >= 0 && msg.links.size > linkIndex) Option(msg.links(linkIndex)) else None
+    if (index >= 0 && msg.links.size > linkIndex) Option(msg.unpackLinks.apply(linkIndex)) else None
   }
 
-  val image: Signal[Option[Either[AssetData, URL]]] = for {
-    ct <- content
-    lp <- linkPreview
-  } yield (ct.openGraph, lp) match {
-    case (_, Some(preview: LinkPreview)) => preview.unpackWithAsset.map(Left(_))
-    case (Some(OpenGraphData(_, _, Some(OpenGraphImage(url)), _, _)), None) => Some(Right(url))
-    case _ => None
-  }
-
-  val dimensions: Signal[Dim2] = content.zip(linkPreview).map {
-    case (ct, Some(preview: LinkPreview)) => preview.unpackWithAsset.fold(Dim2(ct.width, ct.height))(_.dimensions)
-    case (ct, _) => Dim2(ct.width, ct.height)
-  }
-
-  val openGraph = content.zip(linkPreview).map {
-    case (_, Some(preview: LinkPreview)) =>
-      val (title, summary) = preview.unpackWithDescription
-      OpenGraphData(title, summary, None, "", None)
-    case (ct, _) => ct.openGraph.getOrElse(OpenGraphData.Empty)
-  }
-
-  val title = openGraph.map(_.title)
-  val urlText = content.map(c => StringUtils.trimLinkPreviewUrls(c.contentAsUri))
-  val hasImage = image.map(_.isDefined)
+  private val imageRequest = for {
+    ct         <- content
+    lp         <- linkPreview
+    assetOrUrl =  (ct.openGraph, lp) match {
+                    case (_, Some((_, _, Some(asset))))                                  => Some(Left(asset))
+                    case (Some(OpenGraphData(_, _, Some(OpenGraphImage(url)), _, _)), _) => Some(Right(url))
+                    case _                                                               => Option.empty[Either[AssetData, URL]]
+                  }
+    request    =  assetOrUrl.flatMap {
+                    case Left(asset) => asset.remoteId.map(id => WireGlide(context).load(AssetId(id.str)))
+                    case Right(uri) => Some(WireGlide(context).load(uri.toString))
+                  }
+  } yield request
 
   private val dotsDrawable = new ProgressDotsDrawable
 
-  image.map (_.flatMap{
-    case Left(asset) => asset.remoteId.map(id => WireGlide(context).load(AssetId(id.str)))
-    case Right(uri) => Some(WireGlide(context).load(uri.toString))
-  }).onUi {
+  imageRequest.onUi {
     case Some(request) =>
       request.apply(new RequestOptions().centerCrop().placeholder(dotsDrawable))
         .into(new ImageViewTarget[Drawable](imageView) {
@@ -123,19 +112,18 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
 
   imageView.setBackground(dotsDrawable)
 
-  hasImage.onUi { imageView.setVisible }
-  title.onUi { titleTextView.setText }
-  urlText.onUi { urlTextView.setText }
-
-  onClicked { _ =>
-    if (expired.currentValue.forall(_ == false)) {
-      content.currentValue foreach { c => browser.openUrl(c.contentAsUri) }
-    }
+  private val openGraph = content.zip(linkPreview).map {
+    case (_, Some((title, summary, _))) => OpenGraphData(title, summary, None, "", None)
+    case (ct, _)                        => ct.openGraph.getOrElse(OpenGraphData.Empty)
   }
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
-    super.set(msg, part, opts)
-    verbose(l"set $part")
-    part foreach { content ! _ }
+  openGraph.map(_.title).onUi { titleTextView.setText }
+  imageRequest.map(_.isDefined).onUi { imageView.setVisible }
+  content.map(c => StringUtils.trimLinkPreviewUrls(c.contentAsUri)).onUi { urlTextView.setText }
+
+  onClicked.foreach { _ =>
+    if (expired.currentValue.forall(_ == false)) {
+      content.currentValue foreach { c => inject[BrowserController].openUrl(c.contentAsUri) }
+    }
   }
 }
