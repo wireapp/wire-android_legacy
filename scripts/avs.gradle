@@ -23,18 +23,12 @@ if (propertiesFile.exists()) {
 }
 
 if (!nexusUrl.isEmpty()) {
-    allprojects {
-        repositories {
-            maven { url nexusUrl }
-        }
-    }
     ext {
         avsGroup = System.getenv(AVS_GROUP_ENV_VAR) ?: AVS_PRIVATE_GROUP
         avsName = System.getenv(AVS_NAME_ENV_VAR) ?: AVS_NAME
         avsVersion = System.getenv(AVS_VERSION_ENV_VAR) ?: avsPrivateVersion
         avsDependency = "${avsGroup}:${avsName}:${avsVersion}"
     }
-
 } else {
     ext {
         avsGroup = System.getenv(AVS_GROUP_ENV_VAR) ?: AVS_PUBLIC_GROUP
