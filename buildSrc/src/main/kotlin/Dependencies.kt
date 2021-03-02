@@ -52,7 +52,7 @@ object Versions {
     const val PLAY_SERVICES_BASE = "17.1.0"
     const val FIREBASE_MESSAGING = "20.1.0"
     const val GLIDE = "4.11.0"
-    const val RETROFIT = "2.6.2"
+    const val RETROFIT = "2.9.0"
     const val OKHTTP = "3.14.9"
     const val KOIN = "2.0.1"
     const val RX_KOTLIN = "2.3.0"
@@ -128,7 +128,6 @@ object BuildDependencies {
     ))
     val retrofit = RetrofitDependencyMap(mapOf(
         "core" to "com.squareup.retrofit2:retrofit:${Versions.RETROFIT}",
-        "protoBufConverter" to "com.squareup.retrofit2:converter-protobuf:${Versions.RETROFIT}",
         "gsonConverter" to "com.squareup.retrofit2:converter-gson:${Versions.RETROFIT}"
     ))
     val okHttpLoggingInterceptor = "com.squareup.okhttp3:logging-interceptor:${Versions.OKHTTP}"

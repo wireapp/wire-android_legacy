@@ -374,8 +374,11 @@ dependencies {
     annotationProcessor BuildDependencies.glide.compiler
 
     //Retrofit
-    implementation BuildDependencies.retrofit.core
-    implementation BuildDependencies.retrofit.protoBufConverter
+    implementation (BuildDependencies.retrofit.core) {
+        exclude group: 'com.google.protobuf', module: 'protobuf-javalite'
+        exclude group: 'com.google.protobuf', module: 'protobuf-lite'
+        exclude group: 'com.google.protobuf', module: 'protobuf-java'
+    }
     implementation BuildDependencies.retrofit.gsonConverter
 
     //OkHttp
