@@ -244,8 +244,8 @@ class CallingFragment extends FragmentHelper {
 
     viewsToRemove.foreach {
       case (participant, view) =>
-        if ( participant == selfParticipant) {
-          if (isSelfVideoEnabled) view.setVisibility(View.VISIBLE)  else view.setVisibility(View.INVISIBLE)
+        if (participant == selfParticipant) {
+          if (isSelfVideoEnabled) view.setVisibility(View.VISIBLE) else view.setVisibility(View.INVISIBLE)
         }
         else grid.removeView(view)
     }
