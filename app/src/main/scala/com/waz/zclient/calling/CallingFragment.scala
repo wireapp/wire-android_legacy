@@ -238,10 +238,6 @@ class CallingFragment extends FragmentHelper {
       case (participant, _) => !videoUsers.contains(participant)
     }
 
-    /*val isSelfVideoDisabled = videoUsers.find { participant =>
-      participant == selfParticipant
-    }.isEmpty*/
-
     val isSelfVideoEnabled = videoUsers.contains(selfParticipant)
 
     viewMap.foreach { case (_, view) => view.setVisibility(View.VISIBLE) }
