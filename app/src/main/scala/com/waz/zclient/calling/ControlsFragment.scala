@@ -94,17 +94,18 @@ class ControlsFragment extends FragmentHelper {
     }
 
     if (BuildConfig.ACTIVE_SPEAKERS) {
-       Signal.zip(
-         controller.isCallEstablished,
-         controller.isGroupCall,
-         controller.isVideoCall,
-         controller.isFullScreenEnabled
-       ).onUi {
-         case (true, true, true, false) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
-         case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
-       }
-     }
-     else speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
+      Signal.zip(
+        controller.isCallEstablished,
+        controller.isGroupCall,
+        controller.isVideoCall,
+        controller.isFullScreenEnabled,
+        controller.allParticipants.map(_.size > 2)
+      ).onUi {
+        case (true, true, true, false, true) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
+        case _                               => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
+      }
+    }
+    else speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
   }
 
   override def onStart(): Unit = {
