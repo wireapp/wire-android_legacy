@@ -88,10 +88,6 @@ class CallingFragment extends FragmentHelper {
 
     videoGrid
 
-    controller.showTopSpeakers.onChanged { _ =>
-      clearVideoGrid()
-    }
-
     Signal.zip(
       controller.showTopSpeakers,
       controller.longTermActiveParticipantsWithVideo().map(_.size > 0),
@@ -244,17 +240,16 @@ class CallingFragment extends FragmentHelper {
 
     val isSelfVideoEnabled = videoUsers.contains(selfParticipant)
 
-    viewMap.foreach{case (_,view) => view.setVisibility(View.VISIBLE)}
+    viewMap.foreach { case (_, view) => view.setVisibility(View.VISIBLE) }
 
     viewsToRemove.foreach {
       case (participant, view) =>
         if (participant == selfParticipant) {
-          if (showTopSpeakers && !isSelfVideoEnabled) view.setVisibility(View.INVISIBLE)
-          else view.setVisibility(View.VISIBLE)
+          if (isSelfVideoEnabled) view.setVisibility(View.VISIBLE) else view.setVisibility(View.INVISIBLE)
         }
         else grid.removeView(view)
     }
-    viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) }
+    viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) || participant == selfParticipant }
   }
 
   def clearVideoGrid(): Unit = {
