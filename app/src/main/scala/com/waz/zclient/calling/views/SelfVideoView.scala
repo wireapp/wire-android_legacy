@@ -26,7 +26,6 @@ import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.utils.returning
 import com.wire.signals.Signal
-import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.zclient.R
 
@@ -64,13 +63,15 @@ class SelfVideoView(context: Context, participant: Participant)
     case _                                         =>
   }
 
-  callController.videoSendState.filter(_ == VideoState.Started).head.foreach { _ =>
+  callController.videoSendState.onUi {
+    case VideoState.Started | VideoState.ScreenShare | VideoState.BadConnection =>
     registerHandler(returning(new VideoPreview(getContext)) { v =>
       callController.setVideoPreview(Some(v))
       v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
       addView(v, 1)
     })
-  }(Threading.Ui)
+    case _ =>  callController.setVideoPreview(null)
+  }
 
   override lazy val shouldShowInfo: Signal[Boolean] = Signal.zip(pausedTextVisible, callController.isMuted).map {
     case (paused, muted) => paused || muted
