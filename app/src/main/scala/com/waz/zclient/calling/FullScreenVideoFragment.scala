@@ -18,8 +18,8 @@
 package com.waz.zclient.calling
 
 import android.os.Bundle
-import android.view.{Gravity, LayoutInflater, View, ViewGroup}
-import android.widget.{FrameLayout, Toast}
+import android.view.{ LayoutInflater, View, ViewGroup}
+import android.widget.{FrameLayout}
 import androidx.fragment.app.Fragment
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
@@ -30,8 +30,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.FullScreenVideoFragment.PARTICIPANT_BUNDLE_KEY
 import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
 import com.waz.zclient.R
-import com.shopgun.android.zoomlayout.ZoomLayout
-import com.shopgun.android.zoomlayout.ZoomLayout.{OnDoubleTapListener, OnTapListener}
+import com.xuliwen.zoom.ZoomLayout
 
 class FullScreenVideoFragment extends FragmentHelper {
 
@@ -55,8 +54,7 @@ class FullScreenVideoFragment extends FragmentHelper {
             minimizeVideo(container, userVideoView)
           }
 
-
-          zoomLayout.addOnTapListener(new OnTapListener {
+       /*   zoomLayout.addOnTapListener(new OnTapListener {
             override def onTap(view: ZoomLayout, info: ZoomLayout.TapInfo): Boolean = {
               controller.controlsClick(true)
               true
@@ -68,7 +66,7 @@ class FullScreenVideoFragment extends FragmentHelper {
               minimizeVideo(container, userVideoView)
               true
             }
-          })
+          })*/
 
           container.addView(userVideoView)
 
@@ -91,9 +89,8 @@ class FullScreenVideoFragment extends FragmentHelper {
 
   override def onResume(): Unit = {
     super.onResume()
-    val toast = Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG)
-    toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0)
-    toast.show()
+   // Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG).show()
+  //  toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0)
   }
   def minimizeVideo(container: FrameLayout, userVideoView: UserVideoView): Unit = {
     container.removeView(userVideoView)
