@@ -27,6 +27,10 @@ buildscript {
                 maven { url nexusUrl }
             }
         }
+
+        ext {
+            nexusUrlExt = nexusUrl
+        }
     }
 
     repositories {
