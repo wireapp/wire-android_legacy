@@ -20,7 +20,7 @@ package com.waz.zclient.calling
 import android.os.Bundle
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{FrameLayout, LinearLayout}
+import android.widget.{FrameLayout, LinearLayout, Toast}
 import androidx.cardview.widget.CardView
 import androidx.gridlayout.widget.GridLayout
 import com.waz.service.call.Avs.VideoState
@@ -102,13 +102,11 @@ class CallingFragment extends FragmentHelper {
       override def onClick(view: View): Unit = controller.controlsClick(true)
     })
 
-   /* controller.isGroupCall.onUi {
+    controller.isGroupCall.head.foreach {
       case true =>
-        val toast = Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG)
-        toast.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL, 0, 0)
-        toast.show()
+        Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG).show()
       case _ =>
-    }*/
+    }
 
   }
 
@@ -257,6 +255,7 @@ class CallingFragment extends FragmentHelper {
   def showFullScreenVideo(participant: Participant): Unit = getChildFragmentManager
     .beginTransaction
     .replace(R.id.full_screen_video_container, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
+    .addToBackStack(FullScreenVideoFragment.Tag)
     .commit
 }
 
