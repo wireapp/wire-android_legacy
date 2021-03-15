@@ -102,7 +102,7 @@ class CallingFragment extends FragmentHelper {
       override def onClick(view: View): Unit = controller.controlsClick(true)
     })
 
-    controller.isGroupCall.head.foreach {
+    controller.isGroupCall.onChanged {
       case true =>
         Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG).show()
       case _ =>

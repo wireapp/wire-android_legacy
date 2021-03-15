@@ -36,59 +36,66 @@ import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 class FullScreenVideoFragment extends FragmentHelper {
 
   private lazy val controller = inject[CallController]
-  private lazy val fullScreenVideoZoomLayout = returning(view[ZoomLayout](R.id.full_screen_video_zoom_layout)) { vh =>
-    val bundle = this.getArguments
-    if (bundle != null) {
-      val participant = bundle.getSerializable(PARTICIPANT_BUNDLE_KEY).asInstanceOf[Participant]
-      controller.isFullScreenEnabled ! true
-
-      vh.foreach { zoomLayout =>
-
-        view[FrameLayout](R.id.full_screen_video_container).foreach { container =>
-
-          val selfParticipant = controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)).currentValue.get
-
-          val userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
-          else new OtherVideoView(getContext, participant)
-
-          userVideoView.onDoubleClick.onUi { _ =>
-            minimizeVideo(container, userVideoView)
-          }
-
-          zoomLayout.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
-            override def onScrollBegin(): Unit = {}
-
-            override def onScaleGestureBegin(): Unit = {}
-
-            override def onDoubleTap(): Unit = minimizeVideo(container, userVideoView)
-          })
-
-          container.addView(userVideoView)
-
-          controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
-            case VideoState.Started | VideoState.ScreenShare =>
-            case _ => minimizeVideo(container, userVideoView)
-          }
-        }
-      }
-    }
-  }
+  private val fullScreenVideoZoomLayout = view[ZoomLayout](R.id.full_screen_video_zoom_layout)
+  private val fullScreenVideoContainer = view[FrameLayout](R.id.full_screen_video_container)
+  private var participant: Participant = _
+  private var userVideoView: UserVideoView = _
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_full_screen_video, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
-    fullScreenVideoZoomLayout
+    controller.isFullScreenEnabled ! true
+    initParticipant()
+    initUserVideoView()
+    initVideoZoomLayout()
+    initVideoContainer()
+    minimizeVideoWhenNotAvailable()
   }
 
   override def onResume(): Unit = {
     super.onResume()
     Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG).show()
   }
-  def minimizeVideo(container: FrameLayout, userVideoView: UserVideoView): Unit = {
+
+  def initParticipant(): Unit = {
+    val bundle = this.getArguments
+    if (bundle != null) {
+      participant = bundle.getSerializable(PARTICIPANT_BUNDLE_KEY).asInstanceOf[Participant]
+    }
+  }
+
+  def initUserVideoView(): Unit = {
+
+    val selfParticipant = controller.selfParticipant.currentValue.get
+
+    userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
+    else new OtherVideoView(getContext, participant)
+
+    userVideoView.onDoubleClick.onUi { _ =>
+      minimizeVideo()
+    }
+  }
+
+  def initVideoZoomLayout(): Unit = fullScreenVideoZoomLayout.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
+    override def onScrollBegin(): Unit = {}
+
+    override def onScaleGestureBegin(): Unit = {}
+
+    override def onDoubleTap(): Unit = minimizeVideo()
+  }))
+
+  def initVideoContainer(): Unit = fullScreenVideoContainer.foreach(_.addView(userVideoView))
+
+  def minimizeVideoWhenNotAvailable() = controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
+    case VideoState.Started | VideoState.ScreenShare =>
+    case _ => minimizeVideo()
+  }
+
+  def minimizeVideo(): Unit = {
     controller.isFullScreenEnabled ! false
-    container.removeView(userVideoView)
+    fullScreenVideoContainer.foreach(_.removeView(userVideoView))
     getFragmentManager.popBackStack()
   }
 }
