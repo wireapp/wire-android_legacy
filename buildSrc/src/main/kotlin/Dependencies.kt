@@ -70,7 +70,6 @@ object Versions {
     const val COUNTLY = "20.04.2"
     const val ZOOMING = "1.0.0"
 
-
     //testing
     const val JUNIT = "4.12"
     const val MOCKITO = "3.1.0"
