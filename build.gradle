@@ -63,7 +63,7 @@ allprojects {
 
 ext {
     activeSpeakers = true
-    joinGroupCallMuted = false
+    joinGroupCallMuted = true
     removeJoinLeaveSounds = true
     appLockFeatureFlag = true
     sessionReset = true
