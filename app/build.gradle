@@ -411,6 +411,8 @@ dependencies {
 
     implementation BuildDependencies.libSodium
 
+    implementation BuildDependencies.zooming
+
     // Unit Tests
     testImplementation TestDependencies.jUnit
     testImplementation TestDependencies.mockito.core
