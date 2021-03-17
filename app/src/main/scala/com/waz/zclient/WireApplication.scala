@@ -43,6 +43,7 @@ import com.waz.service._
 import com.waz.service.assets._
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation._
+import com.waz.service.legalhold.LegalHoldController
 import com.waz.service.messages.MessagesService
 import com.waz.service.teams.{FeatureFlagsService, TeamsService}
 import com.waz.service.tracking.TrackingService
@@ -323,6 +324,7 @@ object WireApplication extends DerivedLogTag {
     bind [UiTrackingController]    to new UiTrackingController()
 
     bind[MessagePagedListController] to new MessagePagedListController()
+    bind[LegalHoldController] to new LegalHoldController()
   }
 
   def clearOldVideoFiles(context: Context): Unit = {
