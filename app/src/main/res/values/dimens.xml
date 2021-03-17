@@ -120,6 +120,7 @@
     <dimen name="wire__stroke">0.5dp</dimen>
     <dimen name="wire__button__height_small">28dp</dimen>
     <dimen name="wire__otr__shield__small_width">16dp</dimen>
+    <dimen name="legal_hold_indicator_size">16dp</dimen>
 
     <dimen name="wire__otr__switch_height">20dp</dimen>
     <dimen name="wire__dialog__min_width">104dp</dimen>

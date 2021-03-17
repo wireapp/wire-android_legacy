@@ -26,7 +26,7 @@ import android.provider.MediaStore
 import android.text.TextUtils
 import android.view._
 import android.view.animation.Animation
-import android.widget.{AbsListView, FrameLayout, TextView}
+import android.widget.{AbsListView, FrameLayout, ImageView, TextView}
 import androidx.annotation.Nullable
 import androidx.appcompat.widget.{ActionMenuView, Toolbar}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
@@ -37,6 +37,7 @@ import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
+import com.waz.service.legalhold.{LegalHoldController, LegalHoldStatus}
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.wire.signals.{EventStreamWithAuxSignal, Signal}
@@ -108,6 +109,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val userPrefs              = inject[Signal[UserPreferences]]
   private lazy val replyController        = inject[ReplyController]
   private lazy val accentColor            = inject[Signal[AccentColor]]
+  private lazy val legalHoldController    = inject[LegalHoldController]
 
   //TODO remove use of old java controllers
   private lazy val globalLayoutController     = inject[IGlobalLayoutController]
@@ -148,6 +150,7 @@ class ConversationFragment extends FragmentHelper {
     accentColor.map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
   }
   private var toolbarTitle: TextView = _
+  private var toolbarLegalHoldIndicator : ImageView = _
   private lazy val listView = view[MessagesListView](R.id.messages_list_view)
 
   private var leftMenu: ActionMenuView = _
@@ -339,10 +342,23 @@ class ConversationFragment extends FragmentHelper {
     leftMenu = findById(R.id.conversation_left_menu)
     toolbar = findById(R.id.t_conversation_toolbar)
     toolbarTitle = ViewUtils.getView(toolbar, R.id.tv__conversation_toolbar__title).asInstanceOf[TextView]
+    setUpLegalHoldIndicator()
 
     replyView.foreach {
       _.setOnClose(replyController.clearMessageInCurrentConversation())
     }
+  }
+
+  private def setUpLegalHoldIndicator(): Unit = {
+    toolbarLegalHoldIndicator = ViewUtils.getView(toolbar, R.id.conversation_toolbar_image_view_legal_hold).asInstanceOf[ImageView]
+
+    (for {
+      convId          <- convController.currentConvId
+      legalHoldStatus <- legalHoldController.legalHoldStatus(convId)
+    } yield (legalHoldStatus)).onUi({
+      case LegalHoldStatus.Enabled => toolbarLegalHoldIndicator.setVisible(true)
+      case _ => toolbarLegalHoldIndicator.setVisible(false)
+    })
   }
 
   override def onStart(): Unit = {

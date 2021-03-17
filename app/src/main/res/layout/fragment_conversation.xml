@@ -54,6 +54,14 @@
                 android:orientation="horizontal"
                 >
 
+                <ImageView
+                    android:id="@+id/conversation_toolbar_image_view_legal_hold"
+                    android:layout_width="@dimen/legal_hold_indicator_size"
+                    android:layout_height="@dimen/legal_hold_indicator_size"
+                    android:layout_marginEnd="@dimen/wire__padding__8"
+                    android:src="@drawable/ic_legal_hold_active"
+                    android:visibility="gone"/>
+
                 <com.waz.zclient.views.e2ee.ShieldView
                     android:id="@+id/sv__conversation_toolbar__verified_shield"
                     android:layout_width="wrap_content"
