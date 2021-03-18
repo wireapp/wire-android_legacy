@@ -37,7 +37,7 @@ import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
-import com.waz.service.legalhold.{LegalHoldController, LegalHoldStatus}
+import com.waz.service.legalhold.LegalHoldController
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.wire.signals.{EventStreamWithAuxSignal, Signal}
@@ -354,10 +354,9 @@ class ConversationFragment extends FragmentHelper {
 
     (for {
       convId          <- convController.currentConvId
-      legalHoldStatus <- legalHoldController.legalHoldStatus(convId)
-    } yield (legalHoldStatus)).onUi({
-      case LegalHoldStatus.Enabled => toolbarLegalHoldIndicator.setVisible(true)
-      case _ => toolbarLegalHoldIndicator.setVisible(false)
+      legalHoldActive <- legalHoldController.isLegalHoldActive(convId)
+    } yield (legalHoldActive)).onUi({
+      toolbarLegalHoldIndicator.setVisible(_)
     })
   }
 
