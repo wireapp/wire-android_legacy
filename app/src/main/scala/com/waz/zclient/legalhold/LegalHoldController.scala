@@ -1,4 +1,4 @@
-package com.waz.service.legalhold
+package com.waz.zclient.legalhold
 
 import com.waz.model.{ConvId, UserId}
 import com.wire.signals.Signal

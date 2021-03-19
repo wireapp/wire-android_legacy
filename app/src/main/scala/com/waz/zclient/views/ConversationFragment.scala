@@ -37,7 +37,6 @@ import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
-import com.waz.service.legalhold.LegalHoldController
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.wire.signals.{EventStreamWithAuxSignal, Signal}
@@ -61,6 +60,7 @@ import com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
 import com.waz.zclient.conversation.{ConversationController, ReplyContent, ReplyController, ReplyView}
 import com.waz.zclient.cursor._
 import com.waz.zclient.drawing.DrawingFragment.Sketch
+import com.waz.zclient.legalhold.LegalHoldController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.{MessagesController, MessagesListView, UsersController}
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
