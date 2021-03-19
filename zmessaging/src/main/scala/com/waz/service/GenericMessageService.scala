@@ -22,6 +22,7 @@ import com.waz.model.GenericContent.{ReadReceipt => GReadReceipt}
 import com.waz.model.{ReadReceipt => MReadReceipt}
 import com.waz.model.GenericContent._
 import com.waz.model._
+import com.waz.service.EventScheduler.Stage
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl}
 import com.waz.service.messages.{MessagesContentUpdater, ReactionsService, ReceiptService}
 import com.waz.service.tracking.TrackingService
@@ -66,8 +67,6 @@ class GenericMessageService(selfUserId: UserId,
     newTrackingIds.clear()
   }
 
-  private var processing = Future.successful(())
-
   private def updateCaches(events: Seq[GenericMessageEvent]): Unit = {
     clearCaches()
     events.foreach { case GenericMessageEvent(_, time, from, content) =>
@@ -77,7 +76,7 @@ class GenericMessageService(selfUserId: UserId,
           incomingReactions += Liking(msg, from, time, action)
         case lr: LastRead =>
           lastRead += lr.unpack
-        case c: Cleared =>
+        case c: Cleared if from == selfUserId =>
           cleared += c.unpack
         case msg: MsgDeleted =>
           val (_, msgId) = msg.unpack
@@ -114,10 +113,11 @@ class GenericMessageService(selfUserId: UserId,
       _ <- users.storeAvailabilities(availabilities.toMap)
       _ <- messages.updateButtonConfirmations(buttonConfirmations.toMap)
       _ =  newTrackingIds.lastOption.foreach { tracking.onTrackingIdChange ! _ }
-      _ = clearCaches()
     } yield ()
 
-  val eventProcessingStage = EventScheduler.Stage[GenericMessageEvent] { (_, events) =>
+  private var processing = Future.successful(())
+
+  val eventProcessingStage: Stage = EventScheduler.Stage[GenericMessageEvent] { (_, events) =>
     synchronized {
       processing = if (processing.isCompleted) process(events) else processing.flatMap(_ => process(events))
       processing

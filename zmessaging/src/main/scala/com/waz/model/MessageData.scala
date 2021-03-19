@@ -604,7 +604,6 @@ object MessageData extends DerivedLogTag {
   }
 
   def adjustMentions(text: String, mentions: Seq[Mention], forSending: Boolean, offset: Int = 0): Seq[Mention] = {
-    verbose(l"adjustMentions($text, $mentions, $forSending, $offset)")
     lazy val textAsUTF16 = encode(text) // optimization: textAsUTF16 is used only for incoming mentions
 
     mentions.foldLeft(List.empty[Mention]) { case (acc, m) =>
@@ -623,5 +622,5 @@ object MessageData extends DerivedLogTag {
 
   private def decode(array: Array[Byte]) = UTF_16_CHARSET.decode(ByteBuffer.wrap(array)).toString
 
-  def readReceiptMode(enabled: Boolean) = if (enabled) Some(1) else Some(0)
+  def readReceiptMode(enabled: Boolean): Option[Int] = if (enabled) Some(1) else Some(0)
 }

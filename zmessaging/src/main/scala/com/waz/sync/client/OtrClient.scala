@@ -206,48 +206,43 @@ object OtrClient extends DerivedLogTag {
 
   type ClientKey = (ClientId, PreKey)
 
-  final def userId(id: UserId): Otr.UserId = {
-    val builder = Otr.UserId.newBuilder()
-    builder.setUuid(ByteString.copyFrom(id.bytes))
-    builder.build()
-  }
+  final def userId(id: UserId): Otr.UserId =
+    Otr.UserId.newBuilder
+      .setUuid(ByteString.copyFrom(id.bytes))
+      .build
 
-  final def clientId(id: ClientId): Otr.ClientId = {
-    val builder = Otr.ClientId.newBuilder()
-    builder.setClient(id.longId)
-    builder.build()
-  }
+  final def clientId(id: ClientId): Otr.ClientId =
+    Otr.ClientId.newBuilder
+      .setClient(id.longId)
+      .build
 
   case class EncryptedContent(content: Map[UserId, Map[ClientId, Array[Byte]]]) {
     import scala.collection.JavaConverters._
     lazy val estimatedSize: Int = content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
 
-    lazy val userEntries: Array[Otr.UserEntry] =
-      content.map {
-        case (user, cs) =>
-          val builder = Otr.UserEntry.newBuilder()
-          builder.setUser(userId(user))
-          val clients = cs.map {
-            case (c, msg) =>
-              val ce = Otr.ClientEntry.newBuilder()
-              ce.setClient(clientId(c))
-              ce.setText(ByteString.copyFrom(msg))
-              ce.build()
-          } (breakOut)
-          builder.addAllClients(clients.asJava)
-          builder.build()
+    lazy val userEntries: Array[Otr.UserEntry] = content.map { case (user, cs) =>
+      val clients = cs.map { case (c, msg) =>
+          Otr.ClientEntry.newBuilder
+            .setClient(clientId(c))
+            .setText(ByteString.copyFrom(msg))
+            .build
       } (breakOut)
+      Otr.UserEntry.newBuilder
+        .setUser(userId(user))
+        .addAllClients(clients.asJava)
+        .build
+    } (breakOut)
   }
 
   object EncryptedContent {
-    val Empty = EncryptedContent(Map.empty)
+    val Empty: EncryptedContent = EncryptedContent(Map.empty)
   }
 
   lazy val EncryptedContentEncoder: JsonEncoder[EncryptedContent] = new JsonEncoder[EncryptedContent] {
     override def apply(content: EncryptedContent): JSONObject = JsonEncoder { o =>
-      content.content foreach { case (user, clients) =>
+      content.content.foreach { case (user, clients) =>
         o.put(user.str, JsonEncoder { u =>
-          clients foreach { case (c, msg) => u.put(c.str, AESUtils.base64(msg)) }
+          clients.foreach { case (c, msg) => u.put(c.str, AESUtils.base64(msg)) }
         })
       }
     }
@@ -333,16 +328,14 @@ object OtrClient extends DerivedLogTag {
 
       import scala.collection.JavaConverters._
 
-      def decodeMap(key: Symbol)(implicit js: JSONObject): Map[UserId, Seq[ClientId]] = {
+      def decodeMap(key: Symbol)(implicit js: JSONObject): Map[UserId, Seq[ClientId]] =
         if (!js.has(key.name) || js.isNull(key.name)) Map.empty
         else {
           val mapJs = js.getJSONObject(key.name)
-          mapJs.keys().asScala.map { key =>
+          mapJs.keys.asScala.map { key =>
             UserId(key) -> decodeStringSeq(Symbol(key))(mapJs).map(ClientId(_))
           }.toMap
         }
-
-      }
 
       override def apply(implicit js: JSONObject): ClientMismatch =
         ClientMismatch(decodeMap('redundant),

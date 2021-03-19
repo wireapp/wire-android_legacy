@@ -187,24 +187,28 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val remoteAssetId = AssetId("remoteAssetId")
 
       val originalAsset = GenericContent.Asset {
-        val assetBuilder = Messages.Asset.newBuilder()
-        val origBuilder = Messages.Asset.Original.newBuilder()
-        origBuilder.setName("The Alphabet")
-        origBuilder.setMimeType("text/plain")
-        origBuilder.setSize(26)
+        val orig =
+          Messages.Asset.Original.newBuilder
+            .setName("The Alphabet")
+            .setMimeType("text/plain")
+            .setSize(26)
+            .build
 
-        assetBuilder.setOriginal(origBuilder.build())
-        assetBuilder.build()
+        Messages.Asset.newBuilder
+          .setOriginal(orig)
+          .build
       }
 
       val uploadAsset = GenericContent.Asset {
-        val assetBuilder = Messages.Asset.newBuilder()
-        val remoteDataBuilder = Messages.Asset.RemoteData.newBuilder()
-        remoteDataBuilder.setAssetId(remoteAssetId.str)
-        remoteDataBuilder.setOtrKey(ByteString.copyFromUtf8(""))
-        remoteDataBuilder.setSha256(ByteString.copyFromUtf8(""))
-        assetBuilder.setUploaded(remoteDataBuilder.build())
-        assetBuilder.build()
+        val remoteData =
+          Messages.Asset.RemoteData.newBuilder()
+            .setAssetId(remoteAssetId.str)
+            .setOtrKey(ByteString.copyFromUtf8(""))
+            .setSha256(ByteString.copyFromUtf8(""))
+            .build
+        Messages.Asset.newBuilder
+          .setUploaded(remoteData)
+          .build
       }
 
       clock.advance(5.seconds)
@@ -296,27 +300,20 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
 
   // if we need those utility methods in other specs, we can think of turning them into `apply` methods in GenericContent
   private def button(id: String, text: String) = {
-    val buttonBuilder = Messages.Button.newBuilder()
-    buttonBuilder.setId(id)
-    buttonBuilder.setText(text)
-    val builder = Messages.Composite.Item.newBuilder()
-    builder.setButton(buttonBuilder.build())
-    builder.build()
+    val b = Messages.Button.newBuilder.setId(id).setText(text).build
+    Messages.Composite.Item.newBuilder().setButton(b).build
   }
 
-  private def text(text: String) = {
-    val builder = Messages.Composite.Item.newBuilder()
-    builder.setText(Text(text).proto)
-    builder.build()
-  }
+  private def text(text: String) =
+    Messages.Composite.Item.newBuilder.setText(Text(text).proto).build
 
   private def composite(items: Messages.Composite.Item*) = GenericContent.Composite {
     import scala.collection.JavaConverters._
-    val builder = Messages.Composite.newBuilder()
-    builder.setExpectsReadConfirmation(false)
-    builder.setLegalHoldStatus(Messages.LegalHoldStatus.UNKNOWN)
-    builder.addAllItems(items.toIterable.asJava)
-    builder.build()
+    Messages.Composite.newBuilder
+      .setExpectsReadConfirmation(false)
+      .setLegalHoldStatus(Messages.LegalHoldStatus.UNKNOWN)
+      .addAllItems(items.toIterable.asJava)
+      .build
   }
 
   private def event(convId: RConvId, sender: UserId, uid: String, composite: Composite) =

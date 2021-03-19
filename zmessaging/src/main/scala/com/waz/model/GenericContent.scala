@@ -82,9 +82,11 @@ object GenericContent {
 
   object Asset {
 
-    def apply(asset: AssetData, preview: Option[AssetData] = None, expectsReadConfirmation: Boolean): Asset = {
-      val builder = Messages.Asset.newBuilder()
-      builder.setOriginal(Original(asset).proto)
+    def apply(asset: AssetData, preview: Option[AssetData] = None, expectsReadConfirmation: Boolean): Asset = Asset {
+      val builder =
+        Messages.Asset.newBuilder
+          .setOriginal(Original(asset).proto)
+          .setExpectsReadConfirmation(expectsReadConfirmation)
       preview.foreach(p => builder.setPreview(Preview(p).proto))
       (asset.status, asset.remoteData) match {
         case (UploadCancelled, _)         => builder.setNotUploaded(Messages.Asset.NotUploaded.CANCELLED)
@@ -93,35 +95,36 @@ object GenericContent {
         case (DownloadFailed, Some(data)) => builder.setUploaded(RemoteData(data).proto)
         case _ =>
       }
-      builder.setExpectsReadConfirmation(expectsReadConfirmation)
-      Asset(builder.build())
+      builder.build
     }
 
-    def apply(asset: UploadAsset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Asset = {
-      val builder = Messages.Asset.newBuilder()
-      builder.setOriginal(Original(asset).proto)
+    def apply(asset: UploadAsset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Asset = Asset {
+      val builder =
+        Messages.Asset.newBuilder
+          .setOriginal(Original(asset).proto)
+          .setExpectsReadConfirmation(expectsReadConfirmation)
       preview.foreach(p => builder.setPreview(Preview(p).proto))
       asset.status match {
         case UploadAssetStatus.Cancelled => builder.setNotUploaded(Messages.Asset.NotUploaded.CANCELLED)
         case UploadAssetStatus.Failed    => builder.setNotUploaded(Messages.Asset.NotUploaded.FAILED)
         case _ =>
       }
-      builder.setExpectsReadConfirmation(expectsReadConfirmation)
-      Asset(builder.build())
+      builder.build
     }
 
-    def apply(asset: assets.Asset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Asset = {
-      val builder = Messages.Asset.newBuilder()
-      builder.setOriginal(Original(asset).proto)
+    def apply(asset: assets.Asset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Asset = Asset {
+      val builder =
+        Messages.Asset.newBuilder
+          .setOriginal(Original(asset).proto)
+          .setUploaded(RemoteData(asset).proto)
+          .setExpectsReadConfirmation(expectsReadConfirmation)
       preview.foreach(p => builder.setPreview(Preview(p).proto))
-      builder.setUploaded(RemoteData(asset).proto)
-      builder.setExpectsReadConfirmation(expectsReadConfirmation)
-      Asset(builder.build())
+      builder.build
     }
 
     final case class Original(override val proto: Messages.Asset.Original) extends GenericContent[Messages.Asset.Original]{
       override def set(builder: Messages.GenericMessage.Builder): Unit = {
-        val ab = Messages.Asset.newBuilder()
+        val ab = Messages.Asset.newBuilder
         ab.setOriginal(proto)
         builder.setAsset(ab)
       }
@@ -141,10 +144,11 @@ object GenericContent {
     }
 
     object Original {
-      def apply(asset: AssetData): Original = {
-        val builder = Messages.Asset.Original.newBuilder()
-        builder.setMimeType(asset.mime.str)
-        builder.setSize(asset.size)
+      def apply(asset: AssetData): Original = Original {
+        val builder =
+          Messages.Asset.Original.newBuilder
+            .setMimeType(asset.mime.str)
+            .setSize(asset.size)
         asset.name.foreach(builder.setName)
         asset.metaData match {
           case Some(video: AssetMetaData.Video) => builder.setVideo(VideoMetaData(video).proto)
@@ -152,35 +156,37 @@ object GenericContent {
           case Some(audio: AssetMetaData.Audio) => builder.setAudio(AudioMetaData(audio).proto)
           case _ =>
         }
-        Original(builder.build())
+        builder.build
       }
 
-      def apply(asset: UploadAsset): Original = {
-        val builder = Messages.Asset.Original.newBuilder()
-        builder.setMimeType(asset.mime.str)
-        builder.setSize(asset.size)
-        builder.setName(asset.name)
+      def apply(asset: UploadAsset): Original = Original {
+        val builder =
+          Messages.Asset.Original.newBuilder
+            .setMimeType(asset.mime.str)
+            .setSize(asset.size)
+            .setName(asset.name)
         asset.details match {
           case image: ImageDetails => builder.setImage(ImageMetaData(image).proto)
           case video: VideoDetails => builder.setVideo(VideoMetaData(video).proto)
           case audio: AudioDetails => builder.setAudio(AudioMetaData(audio).proto)
           case _ =>
         }
-        Original(builder.build())
+        builder.build
       }
 
-      def apply(asset: assets.Asset): Original = {
-        val builder = Messages.Asset.Original.newBuilder()
-        builder.setMimeType(asset.mime.str)
-        builder.setSize(asset.size)
-        builder.setName(asset.name)
+      def apply(asset: assets.Asset): Original = Original {
+        val builder =
+          Messages.Asset.Original.newBuilder
+            .setMimeType(asset.mime.str)
+            .setSize(asset.size)
+            .setName(asset.name)
         asset.details match {
           case image: ImageDetails => builder.setImage(ImageMetaData(image).proto)
           case video: VideoDetails => builder.setVideo(VideoMetaData(video).proto)
           case audio: AudioDetails => builder.setAudio(AudioMetaData(audio).proto)
           case _ =>
         }
-        Original(builder.build())
+        builder.build
       }
     }
 
@@ -190,19 +196,19 @@ object GenericContent {
     }
 
     object ImageMetaData {
-      def apply(image: AssetMetaData.Image): ImageMetaData = {
-        val builder = Messages.Asset.ImageMetaData.newBuilder()
-        builder.setTag(image.tag.toString)
-        builder.setWidth(image.dimensions.width)
-        builder.setHeight(image.dimensions.height)
-        ImageMetaData(builder.build())
+      def apply(image: AssetMetaData.Image): ImageMetaData = ImageMetaData {
+        Messages.Asset.ImageMetaData.newBuilder
+          .setTag(image.tag.toString)
+          .setWidth(image.dimensions.width)
+          .setHeight(image.dimensions.height)
+          .build
       }
 
-      def apply(details: ImageDetails): ImageMetaData = {
-        val builder = Messages.Asset.ImageMetaData.newBuilder()
-        builder.setWidth(details.dimensions.width)
-        builder.setHeight(details.dimensions.height)
-        ImageMetaData(builder.build())
+      def apply(details: ImageDetails): ImageMetaData = ImageMetaData {
+        Messages.Asset.ImageMetaData.newBuilder
+          .setWidth(details.dimensions.width)
+          .setHeight(details.dimensions.height)
+          .build
       }
     }
 
@@ -215,20 +221,20 @@ object GenericContent {
     }
 
     object VideoMetaData {
-      def apply(video: AssetMetaData.Video): VideoMetaData = {
-        val builder = Messages.Asset.VideoMetaData.newBuilder()
-        builder.setWidth(video.dimensions.width)
-        builder.setHeight(video.dimensions.height)
-        builder.setDurationInMillis(video.duration.toMillis)
-        VideoMetaData(builder.build())
+      def apply(video: AssetMetaData.Video): VideoMetaData = VideoMetaData {
+        Messages.Asset.VideoMetaData.newBuilder
+          .setWidth(video.dimensions.width)
+          .setHeight(video.dimensions.height)
+          .setDurationInMillis(video.duration.toMillis)
+          .build
       }
 
-      def apply(details: VideoDetails): VideoMetaData = {
-        val builder = Messages.Asset.VideoMetaData.newBuilder()
-        builder.setWidth(details.dimensions.width)
-        builder.setHeight(details.dimensions.height)
-        builder.setDurationInMillis(details.duration.toMillis)
-        VideoMetaData(builder.build())
+      def apply(details: VideoDetails): VideoMetaData = VideoMetaData {
+        Messages.Asset.VideoMetaData.newBuilder
+          .setWidth(details.dimensions.width)
+          .setHeight(details.dimensions.height)
+          .setDurationInMillis(details.duration.toMillis)
+          .build
       }
     }
 
@@ -241,18 +247,19 @@ object GenericContent {
     }
 
     object AudioMetaData {
-      def apply(audio: AssetMetaData.Audio): AudioMetaData = {
-        val builder = Messages.Asset.AudioMetaData.newBuilder()
-        builder.setDurationInMillis(audio.duration.toMillis)
+      def apply(audio: AssetMetaData.Audio): AudioMetaData = AudioMetaData {
+        val builder =
+          Messages.Asset.AudioMetaData.newBuilder
+            .setDurationInMillis(audio.duration.toMillis)
         audio.loudness.foreach(l => builder.setNormalizedLoudness(bytify(l.levels)))
-        AudioMetaData(builder.build())
+        builder.build
       }
 
-      def apply(details: AudioDetails): AudioMetaData = {
-        val builder = Messages.Asset.AudioMetaData.newBuilder()
-        builder.setDurationInMillis(details.duration.toMillis)
-        builder.setNormalizedLoudness(bytify(details.loudness.levels.map(_.toFloat)))
-        AudioMetaData(builder.build())
+      def apply(details: AudioDetails): AudioMetaData = AudioMetaData {
+        Messages.Asset.AudioMetaData.newBuilder
+          .setDurationInMillis(details.duration.toMillis)
+          .setNormalizedLoudness(bytify(details.loudness.levels.map(_.toFloat)))
+          .build
       }
 
       private def bytify(ls: Iterable[Float]): ByteString = ByteString.copyFrom(ls.map(l => (l * 255f).toByte)(breakOut).toArray)
@@ -262,9 +269,9 @@ object GenericContent {
 
     final case class Preview(override val proto: Messages.Asset.Preview) extends GenericContent[Messages.Asset.Preview] {
       override def set(builder: Messages.GenericMessage.Builder): Unit = {
-        val pb = Messages.Asset.newBuilder()
+        val pb = Messages.Asset.newBuilder
         pb.setPreview(proto)
-        builder.setAsset(pb.build())
+        builder.setAsset(pb.build)
       }
 
       lazy val unpack: Option[AssetData] = Option(proto).map { prev =>
@@ -283,10 +290,11 @@ object GenericContent {
     }
 
     object Preview {
-      def apply(preview: AssetData): Preview = {
-        val builder = Messages.Asset.Preview.newBuilder()
-        builder.setMimeType(preview.mime.str)
-        builder.setSize(preview.size)
+      def apply(preview: AssetData): Preview = Preview {
+        val builder =
+          Messages.Asset.Preview.newBuilder
+            .setMimeType(preview.mime.str)
+            .setSize(preview.size)
 
         // remote
         preview.remoteData.foreach(data => builder.setRemote(RemoteData(data).proto))
@@ -297,14 +305,15 @@ object GenericContent {
           case _ => //other meta data types not supported
         }
 
-        Preview(builder.build())
+        builder.build
       }
 
-      def apply(asset: assets.Asset): Preview = {
-        val builder = Messages.Asset.Preview.newBuilder()
-        builder.setMimeType(asset.mime.str)
-        builder.setSize(asset.size)
-        builder.setRemote(RemoteData(asset).proto)
+      def apply(asset: assets.Asset): Preview = Preview {
+        val builder =
+          Messages.Asset.Preview.newBuilder
+            .setMimeType(asset.mime.str)
+            .setSize(asset.size)
+            .setRemote(RemoteData(asset).proto)
 
         //image meta
         asset.details match {
@@ -312,7 +321,7 @@ object GenericContent {
           case _ =>
         }
 
-        Preview(builder.build())
+        builder.build
       }
     }
 
@@ -339,9 +348,9 @@ object GenericContent {
 
     final case class RemoteData(override val proto: Messages.Asset.RemoteData) extends GenericContent[Messages.Asset.RemoteData] {
       override def set(builder: Messages.GenericMessage.Builder): Unit = {
-        val rdb = Messages.Asset.Preview.newBuilder()
+        val rdb = Messages.Asset.Preview.newBuilder
         rdb.setRemote(proto)
-        Preview(rdb.build()).set(builder)
+        Preview(rdb.build).set(builder)
       }
 
       lazy val unpack: Option[AssetData.RemoteData] = Option(proto).map { rData =>
@@ -356,14 +365,14 @@ object GenericContent {
     }
 
     object RemoteData {
-      def apply(ak: AssetData.RemoteData): RemoteData = {
-        val builder = Messages.Asset.RemoteData.newBuilder()
+      def apply(ak: AssetData.RemoteData): RemoteData = RemoteData {
+        val builder = Messages.Asset.RemoteData.newBuilder
         ak.remoteId.foreach(id => builder.setAssetId(id.str))
         ak.token.foreach(t => builder.setAssetToken(t.str))
         ak.otrKey.foreach(key => builder.setOtrKey(ByteString.copyFrom(key.bytes)))
         ak.sha256.foreach(sha => builder.setSha256(ByteString.copyFrom(sha.bytes)))
         ak.encryption.foreach(enc => builder.setEncryption(toEncryptionAlg(enc)))
-        RemoteData(builder.build())
+        builder.build
       }
 
       private def toEncryptionAlg(enc: EncryptionAlgorithm): Messages.EncryptionAlgorithm = enc match {
@@ -371,18 +380,19 @@ object GenericContent {
         case AES_GCM => Messages.EncryptionAlgorithm.AES_GCM
       }
 
-      def apply(asset: assets.Asset): RemoteData = {
-        val builder = Messages.Asset.RemoteData.newBuilder()
-        builder.setAssetId(asset.id.str)
+      def apply(asset: assets.Asset): RemoteData = RemoteData {
+        val builder =
+          Messages.Asset.RemoteData.newBuilder
+            .setAssetId(asset.id.str)
+            .setSha256(ByteString.copyFrom(asset.sha.bytes))
         asset.token.foreach(token => builder.setAssetToken(token.str))
-        builder.setSha256(ByteString.copyFrom(asset.sha.bytes))
         asset.encryption match {
           case AES_CBC_Encryption(key) =>
             builder.setEncryption(Messages.EncryptionAlgorithm.AES_CBC)
             builder.setOtrKey(ByteString.copyFrom(key.bytes))
           case _ =>
         }
-        RemoteData(builder.build())
+        builder.build
       }
     }
   }
@@ -402,22 +412,25 @@ object GenericContent {
   }
 
   object ImageAsset {
-    def apply(asset: AssetData): ImageAsset = {
-      val builder = Messages.ImageAsset.newBuilder()
-        asset.metaData.foreach {
-          case AssetMetaData.Image(Dim2(w, h), tag) =>
-            builder.setTag(tag.toString)
-            builder.setWidth(w)
-            builder.setHeight(h)
-            builder.setOriginalWidth(w)
-            builder.setOriginalHeight(h)
-          case _ => error(l"Trying to create image proto from non image asset data: $asset")(LogTag("ImageAsset"))
-        }
-      builder.setMimeType(asset.mime.str)
-      builder.setSize(asset.size.toInt)
+    def apply(asset: AssetData): ImageAsset = ImageAsset {
+      val builder =
+        Messages.ImageAsset.newBuilder
+          .setMimeType(asset.mime.str)
+          .setSize(asset.size.toInt)
+      asset.metaData.foreach {
+        case AssetMetaData.Image(Dim2(w, h), tag) =>
+          builder
+            .setTag(tag.toString)
+            .setWidth(w)
+            .setHeight(h)
+            .setOriginalWidth(w)
+            .setOriginalHeight(h)
+        case _ =>
+          error(l"Trying to create image proto from non image asset data: $asset")(LogTag("ImageAsset"))
+      }
       asset.otrKey.foreach(v => builder.setOtrKey(ByteString.copyFrom(v.bytes)))
       asset.sha.foreach(v => builder.setSha256(ByteString.copyFrom(v.bytes)))
-      ImageAsset(builder.build())
+      builder.build
     }
   }
 
@@ -431,12 +444,13 @@ object GenericContent {
   }
 
   object Mention {
-    def apply(userId: Option[UserId], start: Int, length: Int): Mention = {
-      val builder = Messages.Mention.newBuilder()
+    def apply(userId: Option[UserId], start: Int, length: Int): Mention = Mention {
+      val builder =
+        Messages.Mention.newBuilder
+          .setStart(start)
+          .setLength(length)
       userId.map(id => builder.setUserId(id.str))
-      builder.setStart(start)
-      builder.setLength(length)
-      Mention(builder.build())
+      builder.build
     }
 
     def apply(mention: com.waz.model.Mention): Mention =
@@ -454,11 +468,12 @@ object GenericContent {
   }
 
   object Quote {
-    def apply(id: MessageId, sha256: Option[Sha256]): Quote = {
-      val builder = Messages.Quote.newBuilder()
-      builder.setQuotedMessageId(id.str)
+    def apply(id: MessageId, sha256: Option[Sha256]): Quote = Quote {
+      val builder =
+        Messages.Quote.newBuilder
+          .setQuotedMessageId(id.str)
       sha256.foreach(sha => if (sha.bytes.nonEmpty) builder.setQuotedMessageSha256(ByteString.copyFrom(sha.bytes)))
-      Quote(builder.build())
+      builder.build
     }
   }
 
@@ -476,40 +491,38 @@ object GenericContent {
   }
 
   object LinkPreview {
-    def apply(linkPreview: LinkPreview, meta: Messages.Tweet): LinkPreview = {
-      val builder = linkPreview.proto.toBuilder
-      builder.setTweet(meta)
-      LinkPreview(builder.build())
+    def apply(linkPreview: LinkPreview, meta: Messages.Tweet): LinkPreview = LinkPreview {
+      linkPreview.proto.toBuilder.setTweet(meta).build
     }
 
-    def apply(uri: URI, offset: Int): LinkPreview = {
-      val builder = Messages.LinkPreview.newBuilder()
-      builder.setUrl(uri.toString)
-      builder.setUrlOffset(offset)
-      LinkPreview(builder.build())
+    def apply(uri: URI, offset: Int): LinkPreview = LinkPreview {
+      Messages.LinkPreview.newBuilder
+        .setUrl(uri.toString)
+        .setUrlOffset(offset)
+        .build
     }
 
-    def apply(uri: URI, offset: Int, title: String, summary: String, image: Option[Asset], permanentUrl: Option[URI]): LinkPreview = {
-      val builder = Messages.LinkPreview.newBuilder()
-      builder.setUrl(uri.toString)
-      builder.setUrlOffset(offset)
-      builder.setTitle(title)
-      builder.setSummary(summary)
-      permanentUrl.foreach { u => builder.setPermanentUrl(u.toString) }
+    def apply(uri: URI, offset: Int, title: String, summary: String, image: Option[Asset], permanentUrl: Option[URI]): LinkPreview = LinkPreview {
+      val builder =
+        Messages.LinkPreview.newBuilder
+          .setUrl(uri.toString)
+          .setUrlOffset(offset)
+          .setTitle(title)
+          .setSummary(summary)
+          .setArticle(article(title, summary, image, permanentUrl))
+          // set article for backward compatibility, we will stop sending it once all platforms switch to using LinkPreview properties
       image.foreach(im => builder.setImage(im.proto))
-
-      // set article for backward compatibility, we will stop sending it once all platforms switch to using LinkPreview properties
-      builder.setArticle(article(title, summary, image, permanentUrl))
-      LinkPreview(builder.build())
+      permanentUrl.foreach { u => builder.setPermanentUrl(u.toString) }
+      builder.build
     }
 
     private def article(title: String, summary: String, image: Option[Asset], uri: Option[URI]) = {
-      val builder = Messages.Article.newBuilder()
+      val builder = Messages.Article.newBuilder
       builder.setTitle(title)
       builder.setSummary(summary)
       uri.foreach { u => builder.setPermanentUrl(u.toString) }
       image.foreach(im => builder.setImage(im.proto))
-      builder.build()
+      builder.build
     }
 
     implicit object JsDecoder extends JsonDecoder[LinkPreview] {
@@ -538,16 +551,16 @@ object GenericContent {
   object Reaction {
     val HeavyBlackHeart = "\u2764\uFE0F"
 
-    def apply(msg: MessageId, action: Liking.Action): Reaction = {
-      val builder = Messages.Reaction.newBuilder()
-      builder.setEmoji(
-        action match {
-          case Liking.Action.Like => HeavyBlackHeart
-          case Liking.Action.Unlike => ""
-        }
-      )
-      builder.setMessageId(msg.str)
-      Reaction(builder.build())
+    def apply(msg: MessageId, action: Liking.Action): Reaction = Reaction {
+      Messages.Reaction.newBuilder
+        .setMessageId(msg.str)
+        .setEmoji(
+          action match {
+            case Liking.Action.Like => HeavyBlackHeart
+            case Liking.Action.Unlike => ""
+          }
+        )
+        .build
     }
   }
 
@@ -558,11 +571,11 @@ object GenericContent {
   }
 
   object Knock {
-    def apply(expectsReadConfirmation: Boolean): Knock = {
-      val builder = Messages.Knock.newBuilder()
-      builder.setHotKnock(false)
-      builder.setExpectsReadConfirmation(expectsReadConfirmation)
-      Knock(builder.build())
+    def apply(expectsReadConfirmation: Boolean): Knock = Knock {
+      Messages.Knock.newBuilder
+        .setHotKnock(false)
+        .setExpectsReadConfirmation(expectsReadConfirmation)
+        .build
     }
   }
 
@@ -590,21 +603,22 @@ object GenericContent {
     def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text =
       apply(content, mentions, links, None, expectsReadConfirmation)
 
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): Text = {
-      val builder = Messages.Text.newBuilder()
-      builder.setContent(content)
-      builder.addAllMentions(mentions.map(Mention(_).proto).asJava)
-      builder.addAllLinkPreview(links.map(_.proto).asJava)
-      builder.setExpectsReadConfirmation(expectsReadConfirmation)
+    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): Text = Text {
+      val builder =
+        Messages.Text.newBuilder
+          .setContent(content)
+          .addAllMentions(mentions.map(Mention(_).proto).asJava)
+          .addAllLinkPreview(links.map(_.proto).asJava)
+          .setExpectsReadConfirmation(expectsReadConfirmation)
       quote.foreach(q => builder.setQuote(q.proto))
-      Text(builder.build())
+      builder.build
     }
 
-    def newMentions(text: Text, mentions: Seq[com.waz.model.Mention]): Text = {
-      val builder = text.proto.toBuilder
-      builder.clearMentions()
-      builder.addAllMentions(mentions.map(Mention(_).proto).asJava)
-      Text(builder.build())
+    def newMentions(text: Text, mentions: Seq[com.waz.model.Mention]): Text = Text {
+      text.proto.toBuilder
+        .clearMentions()
+        .addAllMentions(mentions.map(Mention(_).proto).asJava)
+        .build
     }
   }
 
@@ -622,11 +636,11 @@ object GenericContent {
   }
 
   object MsgEdit {
-    def apply(ref: MessageId, content: Text): MsgEdit = {
-      val builder = Messages.MessageEdit.newBuilder()
-      builder.setReplacingMessageId(ref.str)
-      builder.setText(content.proto)
-      MsgEdit(builder.build())
+    def apply(ref: MessageId, content: Text): MsgEdit = MsgEdit {
+      Messages.MessageEdit.newBuilder
+        .setReplacingMessageId(ref.str)
+        .setText(content.proto)
+        .build
     }
   }
 
@@ -638,11 +652,11 @@ object GenericContent {
   }
 
   object Cleared {
-    def apply(conv: RConvId, time: RemoteInstant): Cleared  = {
-      val builder = Messages.Cleared.newBuilder()
-      builder.setConversationId(conv.str)
-      builder.setClearedTimestamp(time.toEpochMilli)
-      Cleared(builder.build())
+    def apply(conv: RConvId, time: RemoteInstant): Cleared  = Cleared {
+      Messages.Cleared.newBuilder
+        .setConversationId(conv.str)
+        .setClearedTimestamp(time.toEpochMilli)
+        .build
     }
   }
 
@@ -654,11 +668,11 @@ object GenericContent {
   }
 
   object LastRead {
-    def apply(conv: RConvId, time: RemoteInstant): LastRead  = {
-      val builder = Messages.LastRead.newBuilder()
-      builder.setConversationId(conv.str)
-      builder.setLastReadTimestamp(time.toEpochMilli)
-      LastRead(builder.build())
+    def apply(conv: RConvId, time: RemoteInstant): LastRead  = LastRead {
+      Messages.LastRead.newBuilder
+        .setConversationId(conv.str)
+        .setLastReadTimestamp(time.toEpochMilli)
+        .build
     }
   }
 
@@ -670,11 +684,11 @@ object GenericContent {
   }
 
   object MsgDeleted {
-    def apply(conv: RConvId, msg: MessageId): MsgDeleted  = {
-      val builder = Messages.MessageHide.newBuilder()
-      builder.setConversationId(conv.str)
-      builder.setMessageId(msg.str)
-      MsgDeleted(builder.build())
+    def apply(conv: RConvId, msg: MessageId): MsgDeleted  = MsgDeleted {
+      Messages.MessageHide.newBuilder
+        .setConversationId(conv.str)
+        .setMessageId(msg.str)
+        .build
     }
   }
 
@@ -686,10 +700,10 @@ object GenericContent {
   }
 
   object MsgRecall {
-    def apply(msg: MessageId): MsgRecall  = {
-      val builder = Messages.MessageDelete.newBuilder()
-      builder.setMessageId(msg.str)
-      MsgRecall(builder.build())
+    def apply(msg: MessageId): MsgRecall  = MsgRecall {
+      Messages.MessageDelete.newBuilder
+        .setMessageId(msg.str)
+        .build
     }
   }
 
@@ -707,14 +721,14 @@ object GenericContent {
   }
 
   object Location {
-    def apply(lon: Float, lat: Float, name: String, zoom: Int, expectsReadConfirmation: Boolean): Location = {
-      val builder = Messages.Location.newBuilder()
-      builder.setLongitude(lon)
-      builder.setLatitude(lat)
-      builder.setName(name)
-      builder.setZoom(zoom)
-      builder.setExpectsReadConfirmation(expectsReadConfirmation)
-      Location(builder.build())
+    def apply(lon: Float, lat: Float, name: String, zoom: Int, expectsReadConfirmation: Boolean): Location = Location {
+      Messages.Location.newBuilder
+        .setLongitude(lon)
+        .setLatitude(lat)
+        .setName(name)
+        .setZoom(zoom)
+        .setExpectsReadConfirmation(expectsReadConfirmation)
+        .build
     }
   }
 
@@ -733,19 +747,19 @@ object GenericContent {
   }
 
   object DeliveryReceipt {
-    def apply(msg: MessageId): DeliveryReceipt = {
-      val builder = Messages.Confirmation.newBuilder()
-      builder.setFirstMessageId(msg.str)
-      builder.setType(Messages.Confirmation.Type.DELIVERED)
-      DeliveryReceipt(builder.build())
+    def apply(msg: MessageId): DeliveryReceipt = DeliveryReceipt {
+      Messages.Confirmation.newBuilder
+        .setFirstMessageId(msg.str)
+        .setType(Messages.Confirmation.Type.DELIVERED)
+        .build
     }
 
-    def apply(msgs: Seq[MessageId]): DeliveryReceipt = {
-      val builder = Messages.Confirmation.newBuilder()
-      builder.setFirstMessageId(msgs.head.str)
-      builder.addAllMoreMessageIds(msgs.tail.map(_.str).asJava)
-      builder.setType(Messages.Confirmation.Type.DELIVERED)
-      DeliveryReceipt(builder.build())
+    def apply(msgs: Seq[MessageId]): DeliveryReceipt = DeliveryReceipt {
+      Messages.Confirmation.newBuilder
+        .setFirstMessageId(msgs.head.str)
+        .addAllMoreMessageIds(msgs.tail.map(_.str).asJava)
+        .setType(Messages.Confirmation.Type.DELIVERED)
+        .build
     }
   }
 
@@ -764,19 +778,19 @@ object GenericContent {
   }
 
   object ReadReceipt {
-    def apply(msg: MessageId): ReadReceipt = {
-      val builder = Messages.Confirmation.newBuilder()
-      builder.setFirstMessageId(msg.str)
-      builder.setType(Messages.Confirmation.Type.READ)
-      ReadReceipt(builder.build())
+    def apply(msg: MessageId): ReadReceipt = ReadReceipt {
+      Messages.Confirmation.newBuilder
+        .setFirstMessageId(msg.str)
+        .setType(Messages.Confirmation.Type.READ)
+        .build
     }
 
-    def apply(msgs: Seq[MessageId]): ReadReceipt = {
-      val builder = Messages.Confirmation.newBuilder()
-      builder.setFirstMessageId(msgs.head.str)
-      builder.addAllMoreMessageIds(msgs.tail.map(_.str).asJava)
-      builder.setType(Messages.Confirmation.Type.READ)
-      ReadReceipt(builder.build())
+    def apply(msgs: Seq[MessageId]): ReadReceipt = ReadReceipt {
+      Messages.Confirmation.newBuilder
+        .setFirstMessageId(msgs.head.str)
+        .addAllMoreMessageIds(msgs.tail.map(_.str).asJava)
+        .setType(Messages.Confirmation.Type.READ)
+        .build
     }
   }
 
@@ -788,11 +802,11 @@ object GenericContent {
   }
 
   object External {
-    def apply(key: AESKey, sha: Sha256): External = {
-      val builder = Messages.External.newBuilder()
-      builder.setOtrKey(ByteString.copyFrom(key.bytes))
-      builder.setSha256(ByteString.copyFrom(sha.bytes))
-      External(builder.build())
+    def apply(key: AESKey, sha: Sha256): External = External {
+      Messages.External.newBuilder
+        .setOtrKey(ByteString.copyFrom(key.bytes))
+        .setSha256(ByteString.copyFrom(sha.bytes))
+        .build
     }
   }
 
@@ -804,11 +818,11 @@ object GenericContent {
   }
 
   object EphemeralAsset {
-    def apply(asset: Messages.Asset, expiry: FiniteDuration): EphemeralAsset = {
-      val builder = Messages.Ephemeral.newBuilder()
-      builder.setAsset(asset)
-      builder.setExpireAfterMillis(expiry.toMillis)
-      EphemeralAsset(builder.build())
+    def apply(asset: Messages.Asset, expiry: FiniteDuration): EphemeralAsset = EphemeralAsset {
+      Messages.Ephemeral.newBuilder
+        .setAsset(asset)
+        .setExpireAfterMillis(expiry.toMillis)
+        .build
     }
   }
 
@@ -820,11 +834,11 @@ object GenericContent {
   }
 
   object EphemeralImageAsset {
-    def apply(image: Messages.ImageAsset, expiry: FiniteDuration): EphemeralAsset = {
-      val builder = Messages.Ephemeral.newBuilder()
-      builder.setImage(image)
-      builder.setExpireAfterMillis(expiry.toMillis)
-      EphemeralAsset(builder.build())
+    def apply(image: Messages.ImageAsset, expiry: FiniteDuration): EphemeralAsset = EphemeralAsset {
+      Messages.Ephemeral.newBuilder
+        .setImage(image)
+        .setExpireAfterMillis(expiry.toMillis)
+        .build
     }
   }
 
@@ -836,11 +850,11 @@ object GenericContent {
   }
 
   object EphemeralLocation {
-    def apply(location: Messages.Location, expiry: FiniteDuration): EphemeralLocation = {
-      val builder = Messages.Ephemeral.newBuilder()
-      builder.setLocation(location)
-      builder.setExpireAfterMillis(expiry.toMillis)
-      EphemeralLocation(builder.build())
+    def apply(location: Messages.Location, expiry: FiniteDuration): EphemeralLocation = EphemeralLocation {
+      Messages.Ephemeral.newBuilder
+        .setLocation(location)
+        .setExpireAfterMillis(expiry.toMillis)
+        .build
     }
   }
 
@@ -852,11 +866,11 @@ object GenericContent {
   }
 
   object EphemeralText {
-    def apply(text: Messages.Text, expiry: FiniteDuration): EphemeralText = {
-      val builder = Messages.Ephemeral.newBuilder()
-      builder.setText(text)
-      builder.setExpireAfterMillis(expiry.toMillis)
-      EphemeralText(builder.build())
+    def apply(text: Messages.Text, expiry: FiniteDuration): EphemeralText = EphemeralText {
+      Messages.Ephemeral.newBuilder
+        .setText(text)
+        .setExpireAfterMillis(expiry.toMillis)
+        .build
     }
   }
 
@@ -868,11 +882,11 @@ object GenericContent {
   }
 
   object EphemeralKnock {
-    def apply(knock: Messages.Knock, expiry: FiniteDuration): EphemeralKnock = {
-      val builder = Messages.Ephemeral.newBuilder()
-      builder.setKnock(knock)
-      builder.setExpireAfterMillis(expiry.toMillis)
-      EphemeralKnock(builder.build())
+    def apply(knock: Messages.Knock, expiry: FiniteDuration): EphemeralKnock = EphemeralKnock {
+      Messages.Ephemeral.newBuilder
+        .setKnock(knock)
+        .setExpireAfterMillis(expiry.toMillis)
+        .build
     }
   }
 
@@ -899,11 +913,12 @@ object GenericContent {
   }
 
   object Ephemeral {
-    def apply(expiry: Option[FiniteDuration], content: EphemeralContent): Ephemeral = {
-      val builder = Messages.Ephemeral.newBuilder()
-      builder.setExpireAfterMillis(expiry.getOrElse(Duration.Zero).toMillis)
+    def apply(expiry: Option[FiniteDuration], content: EphemeralContent): Ephemeral = Ephemeral {
+      val builder =
+        Messages.Ephemeral.newBuilder
+          .setExpireAfterMillis(expiry.getOrElse(Duration.Zero).toMillis)
       content.set(builder)
-      Ephemeral(builder.build())
+      builder.build
     }
   }
 
@@ -920,15 +935,15 @@ object GenericContent {
   }
 
   object AvailabilityStatus {
-    def apply(av: Availability): AvailabilityStatus = {
-      val builder = Messages.Availability.newBuilder()
-      builder.setType(av match {
-        case Availability.None      => Messages.Availability.Type.NONE
-        case Availability.Available => Messages.Availability.Type.AVAILABLE
-        case Availability.Away      => Messages.Availability.Type.AWAY
-        case Availability.Busy      => Messages.Availability.Type.BUSY
-      })
-      AvailabilityStatus(builder.build())
+    def apply(av: Availability): AvailabilityStatus = AvailabilityStatus {
+      Messages.Availability.newBuilder
+        .setType(av match {
+          case Availability.None      => Messages.Availability.Type.NONE
+          case Availability.Available => Messages.Availability.Type.AVAILABLE
+          case Availability.Away      => Messages.Availability.Type.AWAY
+          case Availability.Busy      => Messages.Availability.Type.BUSY
+        })
+        .build
     }
   }
 
@@ -962,10 +977,10 @@ object GenericContent {
   }
 
   object Calling {
-    def apply(content: String): Calling = {
-      val builder = Messages.Calling.newBuilder()
-      builder.setContent(content)
-      Calling(builder.build())
+    def apply(content: String): Calling = Calling {
+      Messages.Calling.newBuilder
+        .setContent(content)
+        .build
     }
   }
 
@@ -982,11 +997,11 @@ object GenericContent {
   }
 
   object ButtonAction {
-    def apply(buttonId: String, referenceMsgId: String): ButtonAction = {
-      val builder = Messages.ButtonAction.newBuilder()
-      builder.setButtonId(buttonId)
-      builder.setReferenceMessageId(referenceMsgId)
-      ButtonAction(builder.build())
+    def apply(buttonId: String, referenceMsgId: String): ButtonAction = ButtonAction {
+      Messages.ButtonAction.newBuilder
+        .setButtonId(buttonId)
+        .setReferenceMessageId(referenceMsgId)
+        .build
     }
   }
 
@@ -1013,12 +1028,11 @@ object GenericContent {
   }
 
   object DataTransfer {
-    def apply(trackingId: TrackingId): DataTransfer = {
-      val trackingBuilder = Messages.TrackingIdentifier.newBuilder()
-      trackingBuilder.setIdentifier(trackingId.str)
-      val builder = Messages.DataTransfer.newBuilder()
-      builder.setTrackingIdentifier(trackingBuilder.build())
-      DataTransfer(builder.build())
+    def apply(trackingId: TrackingId): DataTransfer = DataTransfer {
+      val tracking = Messages.TrackingIdentifier.newBuilder.setIdentifier(trackingId.str).build
+      Messages.DataTransfer.newBuilder
+        .setTrackingIdentifier(tracking)
+        .build
     }
   }
 }

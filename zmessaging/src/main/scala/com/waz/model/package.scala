@@ -97,16 +97,18 @@ package object model {
   object GenericMessage {
     import GenericContent._
 
-    def apply[Proto](id: Uid, content: GenericContent[Proto]): GenericMessage = {
-      val builder = Messages.GenericMessage.newBuilder()
-      builder.setMessageId(id.str)
+    def apply[Proto](id: Uid, content: GenericContent[Proto]): GenericMessage = GenericMessage {
+      val builder =
+        Messages.GenericMessage.newBuilder
+          .setMessageId(id.str)
       content.set(builder)
-      GenericMessage(builder.build())
+      builder.build()
     }
 
-    def apply[Proto](id: Uid, expiration: Option[FiniteDuration], content: GenericContent[Proto]): GenericMessage = {
-      val builder = Messages.GenericMessage.newBuilder()
-      builder.setMessageId(id.str)
+    def apply[Proto](id: Uid, expiration: Option[FiniteDuration], content: GenericContent[Proto]): GenericMessage = GenericMessage {
+      val builder =
+        Messages.GenericMessage.newBuilder
+          .setMessageId(id.str)
       expiration match {
         case Some(expiry) =>
           val ephemeralContent: Option[EphemeralContent] = content match {
@@ -123,7 +125,7 @@ package object model {
         case None => content.set(builder)
       }
 
-      GenericMessage(builder.build())
+      builder.build
     }
 
     def apply(bytes: Array[Byte]): GenericMessage =

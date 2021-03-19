@@ -25,7 +25,6 @@ import com.waz.content.{MembersStorage, MessagesStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.AssetData.{ProcessingTaskKey, UploadTaskKey}
-import com.waz.model.{ReadReceipt => MReadReceipt}
 import com.waz.model.GenericContent.{ButtonAction, DeliveryReceipt, Ephemeral, EphemeralLocation, Knock, Location, MsgDeleted, MsgEdit, MsgRecall, Asset => GAsset, ReadReceipt => GReadReceipt}
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
@@ -125,8 +124,7 @@ class MessagesSyncHandler(selfUserId: UserId,
       } yield SyncResult(result)
     }
 
-  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant)(implicit info: RequestInfo): Future[SyncResult] = {
-    verbose(l"postMessage($convId, $id, $editTime)")
+  def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant)(implicit info: RequestInfo): Future[SyncResult] =
     storage.getMessage(id).flatMap { message =>
       message
         .fold(successful(None: Option[ConversationData]))(msg => convs.convById(msg.convId))
@@ -178,7 +176,6 @@ class MessagesSyncHandler(selfUserId: UserId,
       case _ =>
         successful(Failure("postMessage failed, couldn't find either message or conversation"))
     }
-  }
 
   /**
     * Sends a message to the given conversation. If the message is an edit, it will also update the message

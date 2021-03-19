@@ -35,7 +35,6 @@ import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
 import com.waz.zclient.glide.WireGlide
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils._
@@ -56,8 +55,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
 
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
-    verbose(l"set $part")
-    part foreach { content ! _ }
+    part.foreach(content ! _)
   }
 
   private lazy val titleTextView: TextView  = findById(R.id.ttv__row_conversation__link_preview__title)
