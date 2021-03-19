@@ -1578,5 +1578,12 @@
     <string name="start_sso_leaving_wire">Redirecting…</string>
     <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
     <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
+
+    <!-- Legal Hold -->
+    <string name="legal_hold_info_title">Legal Hold</string>
+    <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and timed messages.\n\nYour conversation partners will be aware of the recording.
+    </string>
+    <string name="legal_hold_info_list_title">Legal Hold Subjects</string>
+
 </resources>
 
