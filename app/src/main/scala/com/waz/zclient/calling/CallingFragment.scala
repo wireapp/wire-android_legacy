@@ -22,6 +22,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout, Toast}
 import androidx.cardview.widget.CardView
 import androidx.gridlayout.widget.GridLayout
+import com.waz.avs.VideoPreview
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading
@@ -51,7 +52,10 @@ class CallingFragment extends FragmentHelper {
   private lazy val controlsFragment         = ControlsFragment.newInstance
   private lazy val previewCardView          = view[CardView](R.id.preview_card_view)
   private lazy val noActiveSpeakersLayout   = view[LinearLayout](R.id.no_active_speakers_layout)
+  private lazy val parentLayout             = view[FrameLayout](R.id.parent_layout)
+  private var videoPreview: VideoPreview    = _
   private lazy val fullScreenVideoContainer = view[FrameLayout](R.id.full_screen_video_container)
+
   private lazy val zoomLayout = returning(view[ZoomLayout](R.id.zoom_layout)) { vh =>
     vh.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
 
@@ -64,7 +68,8 @@ class CallingFragment extends FragmentHelper {
       override def onScaleGestureBegin(): Unit = {}
     }))
   }
-  private lazy val videoGrid                = returning(view[GridLayout](R.id.video_grid)) { vh =>
+
+  private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
 
     controller.theme.map(themeController.getTheme).foreach { theme =>
       vh.foreach {
@@ -130,6 +135,20 @@ class CallingFragment extends FragmentHelper {
       case _ => zoomLayout.foreach(_.setEnabled(false))
     }
 
+    controller.videoSendState.onUi {
+      case VideoState.Started | VideoState.ScreenShare | VideoState.BadConnection =>
+        videoPreview = new VideoPreview(getContext) {
+          v =>
+          controller.setVideoPreview(Some(v))
+          v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+          v.setElevation(0)
+          parentLayout.foreach(_.addView(v))
+        }
+      case _ =>
+        controller.setVideoPreview(null)
+        parentLayout.foreach(_.removeView(videoPreview))
+    }
+
   }
 
   override def onBackPressed(): Boolean =
@@ -161,7 +180,9 @@ class CallingFragment extends FragmentHelper {
 
   private def refreshViews(videoUsers: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
     def createView(participant: Participant): UserVideoView = returning {
-      if (participant == selfParticipant) new SelfVideoView(getContext, participant)
+      if (participant == selfParticipant) returning(new SelfVideoView(getContext, selfParticipant)) {
+        view => view.setVideoPreview(videoPreview)
+      }
       else new OtherVideoView(getContext, participant)
     } { userView =>
       viewMap = viewMap.updated(participant, userView)
@@ -266,18 +287,9 @@ class CallingFragment extends FragmentHelper {
       case (participant, _) => !videoUsers.contains(participant)
     }
 
-    val isSelfVideoEnabled = videoUsers.contains(selfParticipant)
+    viewsToRemove.foreach { case (_, view) => grid.removeView(view) }
 
-    viewMap.foreach { case (_, view) => view.setVisibility(View.VISIBLE) }
-
-    viewsToRemove.foreach {
-      case (participant, view) =>
-        if (participant == selfParticipant) {
-          if (isSelfVideoEnabled) view.setVisibility(View.VISIBLE) else view.setVisibility(View.INVISIBLE)
-        }
-        else grid.removeView(view)
-    }
-    viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) || participant == selfParticipant }
+    viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) }
   }
 
   def clearVideoGrid(): Unit = {
@@ -289,7 +301,6 @@ class CallingFragment extends FragmentHelper {
     .beginTransaction
     .replace(R.id.full_screen_video_container, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
     .commit
-
 }
 
 object CallingFragment {
