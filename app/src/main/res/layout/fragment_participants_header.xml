@@ -19,22 +19,30 @@
 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:gravity="center_horizontal"
-              android:orientation="vertical"
-              android:fitsSystemWindows="true"
-    >
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/t__participants__toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:gravity="center"
-        app:contentInsetStart="@dimen/content__padding_left"
         style="?conversationToolbarNoDivider"
         >
+
+        <ImageButton
+            android:id="@+id/participants_header_toolbar_image_button_legal_hold"
+            android:layout_width="@dimen/legal_hold_indicator_size"
+            android:layout_height="@dimen/legal_hold_indicator_size"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_legal_hold_active"
+            android:visibility="gone"
+            tools:visibility="visible"/>
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/participants__header"
