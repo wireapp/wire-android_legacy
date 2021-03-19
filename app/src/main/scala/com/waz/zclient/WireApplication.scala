@@ -43,7 +43,6 @@ import com.waz.service._
 import com.waz.service.assets._
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation._
-import com.waz.service.legalhold.LegalHoldController
 import com.waz.service.messages.MessagesService
 import com.waz.service.teams.{FeatureFlagsService, TeamsService}
 import com.waz.service.tracking.TrackingService
@@ -75,6 +74,7 @@ import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversationlist.{ConversationListController, FolderStateController}
 import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.deeplinks.DeepLinkService
+import com.waz.zclient.legalhold.LegalHoldController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
 import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}

@@ -21,7 +21,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.widget.Toolbar
 import android.view._
-import android.widget.TextView
+import android.widget.{ImageButton, TextView}
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.wire.signals.Signal
@@ -32,6 +32,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page => NavPage}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
+import com.waz.zclient.legalhold.LegalHoldController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getDrawable}
@@ -44,6 +45,7 @@ import scala.concurrent.duration._
 import com.waz.threading.Threading._
 
 class ParticipantHeaderFragment extends FragmentHelper {
+
   import ParticipantHeaderFragment._
   import Threading.Implicits.Ui
 
@@ -53,6 +55,7 @@ class ParticipantHeaderFragment extends FragmentHelper {
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val themeController        = inject[ThemeController]
   private lazy val newConvController      = inject[CreateConversationController]
+  private lazy val legalHoldController    = inject[LegalHoldController]
   private lazy val accentColor            = inject[AccentColorController].accentColor.map(_.color)
 
   private lazy val page = Option(getParentFragment) match {
@@ -187,6 +190,20 @@ class ParticipantHeaderFragment extends FragmentHelper {
     }
   }
 
+  private lazy val legalHoldIndicatorButton = view[ImageButton](R.id.participants_header_toolbar_image_button_legal_hold)
+
+  private lazy val legalHoldActive : Signal[Boolean] =
+    for {
+      tag            <- pageTag
+      checkLegalHold  = tag match {
+                          case Some(SingleParticipantFragment.Tag) | Some(GroupParticipantsFragment.Tag) => true
+                          case _ => false
+                        }
+      conversation   <- participantsController.conv
+      status         <- if (checkLegalHold) legalHoldController.isLegalHoldActive(conversation.id)
+                        else Signal.const(false)
+    } yield (status)
+
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
@@ -215,6 +232,7 @@ class ParticipantHeaderFragment extends FragmentHelper {
     headerUsername
     closeButton
     confButton
+    setUpLegalHoldIndicator()
   }
 
   override def onResume(): Unit = {
@@ -227,6 +245,13 @@ class ParticipantHeaderFragment extends FragmentHelper {
   override def onPause(): Unit = {
     toolbar.foreach(_.setNavigationOnClickListener(null))
     super.onPause()
+  }
+
+  private def setUpLegalHoldIndicator(): Unit = {
+    legalHoldActive.onUi({ isActive =>
+      legalHoldIndicatorButton.foreach(_.setVisible(isActive))
+    })
+    //TODO: set click event for legal hold info
   }
 
   private def fromDeepLink() = getBooleanArg(ARG_FROM_DEEP_LINK)
