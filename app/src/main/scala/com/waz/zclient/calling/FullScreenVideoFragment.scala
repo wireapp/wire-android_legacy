@@ -25,11 +25,10 @@ import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading._
 import com.waz.utils.returning
-import com.waz.zclient.FragmentHelper
+import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.FullScreenVideoFragment.PARTICIPANT_BUNDLE_KEY
 import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
-import com.waz.zclient.R
 import com.xuliwen.zoom.ZoomLayout
 import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 
@@ -42,21 +41,22 @@ class FullScreenVideoFragment extends FragmentHelper {
   private var userVideoView: UserVideoView = _
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
-    inflater.inflate(R.layout.fragment_full_screen_video, container, false)
+    if (BuildConfig.ZOOMING) inflater.inflate(R.layout.fragment_full_screen_video, container, false)
+    else inflater.inflate(R.layout.fragment_full_screen_video_without_zooming, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
     controller.isFullScreenEnabled ! true
     initParticipant()
     initUserVideoView()
-    initVideoZoomLayout()
+    if (BuildConfig.ZOOMING) initVideoZoomLayout()
     initVideoContainer()
     minimizeVideoWhenNotAvailable()
   }
 
   override def onResume(): Unit = {
     super.onResume()
-    Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG).show()
+    if (BuildConfig.ZOOMING) Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG).show()
   }
 
   def initParticipant(): Unit = {
