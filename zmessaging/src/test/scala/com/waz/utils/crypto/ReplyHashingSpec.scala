@@ -111,8 +111,8 @@ class ReplyHashingSpec extends AndroidFreeSpec {
     scenario("hash locations") {
       val msg1Id = MessageId("msg1")
       val msg2Id = MessageId("msg2")
-      val msg1 = MessageData(id = msg1Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg1Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false))))
-      val msg2 = MessageData(id = msg2Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg2Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false))))
+      val msg1 = MessageData(id = msg1Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg1Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false))))
+      val msg2 = MessageData(id = msg2Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg2Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false))))
 
       (assetStorage.loadAll _).expects(*).once.returning(Future.successful(Nil))
 
@@ -124,8 +124,8 @@ class ReplyHashingSpec extends AndroidFreeSpec {
     scenario("hash text messages") {
       val msg1Id = MessageId("msg1")
       val msg2Id = MessageId("msg2")
-      val msg1 = MessageData(id = msg1Id, msgType = Message.Type.TEXT, time = timestamp2, protos = Seq(GenericMessage(msg1Id.uid, Text("This has **markdown**"))))
-      val msg2 = MessageData(id = msg2Id, msgType = Message.Type.TEXT, time = timestamp2, protos = Seq(GenericMessage(msg2Id.uid, Text("بغداد"))))
+      val msg1 = MessageData(id = msg1Id, msgType = Message.Type.TEXT, time = timestamp2, genericMsgs = Seq(GenericMessage(msg1Id.uid, Text("This has **markdown**"))))
+      val msg2 = MessageData(id = msg2Id, msgType = Message.Type.TEXT, time = timestamp2, genericMsgs = Seq(GenericMessage(msg2Id.uid, Text("بغداد"))))
 
       (assetStorage.loadAll _).expects(*).once.returning(Future.successful(Nil))
 
@@ -133,7 +133,7 @@ class ReplyHashingSpec extends AndroidFreeSpec {
       hexString(shas(msg1Id)) shouldEqual "f25a925d55116800e66872d2a82d8292adf1d4177195703f976bc884d32b5c94"
       hexString(shas(msg2Id)) shouldEqual "5830012f6f14c031bf21aded5b07af6e2d02d01074f137d106d4645e4dc539ca"
     }
-    
+
     scenario("hash mixed messages") {
       val msg1Id = MessageId("msg1")
       val msg2Id = MessageId("msg2")
@@ -141,20 +141,20 @@ class ReplyHashingSpec extends AndroidFreeSpec {
       val msg4Id = MessageId("msg4")
       val msg5Id = MessageId("msg5")
       val msg6Id = MessageId("msg6")
-      
+
       val msg1 = MessageData(id = msg1Id, msgType = Message.Type.IMAGE_ASSET, time = timestamp1, assetId = Some(assetId1))
       val msg2 = MessageData(id = msg2Id, msgType = Message.Type.IMAGE_ASSET, time = timestamp2, assetId = Some(assetId2))
-      val msg3 = MessageData(id = msg3Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg3Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false))))
-      val msg4 = MessageData(id = msg4Id, msgType = Message.Type.LOCATION, time = timestamp1, protos = Seq(GenericMessage(msg4Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false))))
-      val msg5 = MessageData(id = msg5Id, msgType = Message.Type.TEXT, time = timestamp2, protos = Seq(GenericMessage(msg5Id.uid, Text("This has **markdown**"))))
-      val msg6 = MessageData(id = msg6Id, msgType = Message.Type.TEXT, time = timestamp2, protos = Seq(GenericMessage(msg2Id.uid, Text("بغداد"))))
+      val msg3 = MessageData(id = msg3Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg3Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false))))
+      val msg4 = MessageData(id = msg4Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg4Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false))))
+      val msg5 = MessageData(id = msg5Id, msgType = Message.Type.TEXT, time = timestamp2, genericMsgs = Seq(GenericMessage(msg5Id.uid, Text("This has **markdown**"))))
+      val msg6 = MessageData(id = msg6Id, msgType = Message.Type.TEXT, time = timestamp2, genericMsgs = Seq(GenericMessage(msg2Id.uid, Text("بغداد"))))
 
       val asset1 = fakeAsset(assetId1)
       val asset2 = fakeAsset(assetId2)
 
 
       (assetStorage.loadAll _).expects(*).anyNumberOfTimes.returning(Future.successful(Seq(asset1, asset2)))
-      
+
       val shas = result(getReplyHashing.hashMessages(Seq(msg3, msg5, msg1, msg4, msg6, msg2)))
 
       hexString(shas(msg1Id)) shouldEqual "bf20de149847ae999775b3cc88e5ff0c0382e9fa67b9d382b1702920b8afa1de"

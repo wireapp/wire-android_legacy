@@ -29,7 +29,7 @@ import com.waz.db.Dao
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Asset, Composite, ImageAsset, Knock, LinkPreview, Location, MsgEdit, Quote, Text}
-import com.waz.model.GenericMessage.{GenericMessageContent, TextMessage}
+import com.waz.model.GenericMessage.TextMessage
 import com.waz.model.MessageData.MessageState
 import com.waz.model.messages.media.{MediaAssetData, MediaAssetDataProtocol}
 import com.waz.model.otr.ClientId
@@ -52,7 +52,7 @@ case class MessageData(override val id:   MessageId              = MessageId(),
                        userId:            UserId                 = UserId(),
                        error:             Option[ErrorContent]   = None,
                        content:           Seq[MessageContent]    = Seq.empty,
-                       protos:            Seq[GenericMessage]    = Seq.empty,
+                       genericMsgs:       Seq[GenericMessage]    = Seq.empty,
                        firstMessage:      Boolean                = false,
                        members:           Set[UserId]            = Set.empty[UserId],
                        recipient:         Option[UserId]         = None,
@@ -70,42 +70,44 @@ case class MessageData(override val id:   MessageId              = MessageId(),
                        quote:             Option[QuoteContent]   = None,
                        forceReadReceipts: Option[Int]            = None
                       ) extends Identifiable[MessageId] with DerivedLogTag {
-  lazy val contentString: String = protos.lastOption match {
+  lazy val contentString: String = genericMsgs.lastOption match {
     case Some(TextMessage(ct, _, _, _, _)) => ct
     case _ if msgType == api.Message.Type.RICH_MEDIA => content.map(_.content).mkString(" ")
     case _ if msgType == api.Message.Type.COMPOSITE => content.map(_.content).mkString("\n")
     case _ => content.headOption.fold("")(_.content)
   }
 
-  lazy val links: Seq[LinkPreview] = protos.lastOption match {
+  lazy val links: Seq[LinkPreview] = genericMsgs.lastOption match {
     case Some(TextMessage(_, _, links, _, _)) => links
     case _ => Nil
   }
 
-  lazy val protoQuote: Option[Quote] = protos.lastOption match {
+  def unpackLinks: Seq[(String, String, Option[AssetData])] = links.map(_.unpack)
+
+  lazy val protoQuote: Option[Quote] = genericMsgs.lastOption match {
     case Some(TextMessage(_, _, _, quote, _)) => quote
     case _ => None
   }
 
-  lazy val protoReadReceipts: Option[Boolean] = protos.lastOption.map {
-    case GenericMessage(_, a @ Text(_, _, _, _))     => a.expectsReadConfirmation
-    case GenericMessage(_, a @ Knock())              => a.expectsReadConfirmation
-    case GenericMessage(_, a @ Location(_, _, _, _)) => a.expectsReadConfirmation
-    case GenericMessage(_, a @ Asset(_, _))          => a.expectsReadConfirmation
-    case GenericMessage(_, a @ Composite(_))         => a.expectsReadConfirmation
+  lazy val protoReadReceipts: Option[Boolean] = genericMsgs.lastOption.map(_.unpackContent match {
+    case t: Text      if t.proto.hasExpectsReadConfirmation => t.proto.getExpectsReadConfirmation
+    case k: Knock     if k.proto.hasExpectsReadConfirmation => k.proto.getExpectsReadConfirmation
+    case l: Location  if l.proto.hasExpectsReadConfirmation => l.proto.getExpectsReadConfirmation
+    case a: Asset     if a.proto.hasExpectsReadConfirmation => a.proto.getExpectsReadConfirmation
+    case c: Composite if c.proto.hasExpectsReadConfirmation => c.proto.getExpectsReadConfirmation
     case _ => false
-  }
+  })
 
   lazy val expectsRead: Option[Boolean] = forceReadReceipts.map(_ > 0).orElse(protoReadReceipts)
 
   // used to create a copy of the message quoting the one that had its msgId changed
   def replaceQuote(quoteId: MessageId): MessageData = {
     // we assume that the reply is already valid, so we don't have to update the hash (the old one is invalid)
-    val newProtos = protos.lastOption match {
+    val newProtos = genericMsgs.lastOption match {
       case Some(TextMessage(text, ms, ls, Some(q), rr)) => Seq(TextMessage(text, ms, ls, Some(Quote(quoteId, None)), rr))
-      case _ => protos
+      case _ => genericMsgs
     }
-    copy(quote = Some(QuoteContent(quoteId, validity = true, None)), protos = newProtos)
+    copy(quote = Some(QuoteContent(quoteId, validity = true, None)), genericMsgs = newProtos)
   }
 
   lazy val isLocal: Boolean = state == Message.Status.DEFAULT || state == Message.Status.PENDING || state == Message.Status.FAILED || state == Message.Status.FAILED_READ
@@ -117,18 +119,31 @@ case class MessageData(override val id:   MessageId              = MessageId(),
 
   def hasMentionOf(userId: UserId): Boolean = mentions.exists(_.userId.forall(_ == userId)) // a mention with userId == None is a "mention" of everyone, so it counts
 
-  lazy val imageDimensions: Option[Dim2] =
-    protos.collectFirst {
-      case GenericMessageContent(Asset(AssetData.WithDimensions(d), _)) => d
-      case GenericMessageContent(ImageAsset(AssetData.WithDimensions(d))) => d
-    } orElse content.headOption.collect {
-      case MessageContent(_, _, _, _, Some(_), w, h, _, _) => Dim2(w, h)
+  object ImageDimensions {
+    def unapply(msg: GenericMessage): Option[Dim2] = msg.unpackContent match {
+      case asset: Asset      => Some(asset.unpack._1.dimensions)
+      case image: ImageAsset => Some(image.unpack.dimensions)
+      case _                 => None
     }
+  }
+
+  lazy val imageDimensions: Option[Dim2] = genericMsgs.collectFirst {
+    case ImageDimensions(dim2) => dim2
+  }.orElse(content.headOption.collect {
+    case MessageContent(_, _, _, _, Some(_), w, h, _, _) => Dim2(w, h)
+  })
+
+  object Location {
+    def unapply(msg: GenericMessage): Option[api.MessageContent.Location] = msg.unpackContent match {
+      case location: Location =>
+        val (lon, lat, name, zoom, _) = location.unpack
+        Some(new api.MessageContent.Location(lon, lat, name.getOrElse(""), zoom.getOrElse(14)))
+      case _ => None
+    }
+  }
 
   lazy val location: Option[api.MessageContent.Location] =
-    protos.collectFirst {
-      case GenericMessageContent(Location(lon, lat, descr, zoom)) => new api.MessageContent.Location(lon, lat, descr.getOrElse(""), zoom.getOrElse(14))
-    }
+    genericMsgs.collectFirst { case Location(loc) => loc }
 
   /**
    * System messages are messages generated by backend in response to user actions.
@@ -155,7 +170,6 @@ case class MessageData(override val id:   MessageId              = MessageId(),
   def adjustMentions(forSending: Boolean): Option[MessageData] =
     if (mentions.isEmpty) None
     else {
-      verbose(l"adjustMentions(forSending = $forSending)")
       val newContent =
         if (content.size == 1)
           content.map(_.copy(mentions = MessageData.adjustMentions(content.head.content, mentions, forSending)))
@@ -173,17 +187,28 @@ case class MessageData(override val id:   MessageId              = MessageId(),
 
       val newMentions = newContent.flatMap(_.mentions)
 
-      val newProto = protos.lastOption match {
-        case Some(GenericMessage(uid, MsgEdit(ref, t @ Text(_, _, links, quote)))) =>
-          GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links, quote, t.expectsReadConfirmation)))
-        case Some(GenericMessage(uid, t @ Text(_, _, links, quote))) =>
-          GenericMessage(uid, ephemeral, Text(contentString, newMentions, links, quote, t.expectsReadConfirmation))
-        case _ =>
-          GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil, protoReadReceipts.getOrElse(false)))
-      }
+      val newProto = (genericMsgs.lastOption.flatMap {
+        _.unpack match {
+            case (uid, edit: MsgEdit) =>
+              edit.unpack.map { case (ref, text) =>
+                val expectsReadConfirmation =
+                  if (text.proto.hasExpectsReadConfirmation) text.proto.getExpectsReadConfirmation
+                  else false
+                GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links, text.unpack._4, expectsReadConfirmation)))
+              }
+            case (uid, text: Text) =>
+              val expectsReadConfirmation =
+                if (text.proto.hasExpectsReadConfirmation) text.proto.getExpectsReadConfirmation
+                else false
+              Some(GenericMessage(uid, ephemeral, Text(contentString, newMentions, links, text.unpack._4, expectsReadConfirmation)))
+            case _ => None
+          }
+      }).getOrElse(
+        GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil, protoReadReceipts.getOrElse(false)))
+      )
 
-      if (content == newContent && protos.lastOption.contains(newProto)) None
-      else Some(copy(content = newContent, protos = Seq(newProto)))
+      if (content == newContent && genericMsgs.lastOption.contains(newProto)) None
+      else Some(copy(content = newContent, genericMsgs = Seq(newProto)))
     }
 }
 
@@ -343,7 +368,7 @@ object MessageData extends DerivedLogTag {
     val Client = opt(id[ClientId]('client_id))(_.error.map(_.clientId))
     val ErrorCode = opt(int('error_code))(_.error.map(_.code))
     val Content = jsonArray[MessageContent, Seq, Vector]('content).apply(_.content)
-    val Protos = protoSeq[GenericMessage, Seq, Vector]('protos).apply(_.protos)
+    val Protos = protoSeq('protos).apply(_.genericMsgs)
     val ContentSize = int('content_size)(_.content.size)
     val FirstMessage = bool('first_msg)(_.firstMessage)
     val Members = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))(_.members)
@@ -358,7 +383,7 @@ object MessageData extends DerivedLogTag {
     val ExpiryTime = opt(localTimestamp('expiry_time))(_.expiryTime)
     val Expired = bool('expired)(_.expired)
     val Duration = opt(finiteDuration('duration))(_.duration)
-    val Quote         = opt(id[MessageId]('quote))(_.quote.map(_.message))
+    val Quote = opt(id[MessageId]('quote))(_.quote.map(_.message))
     val QuoteValidity = bool('quote_validity)(_.quote.exists(_.validity))
     val ForceReadReceipts = opt(int('force_read_receipts))(_.forceReadReceipts)
     val AssetId = opt(text('asset_id, GeneralAssetIdCodec.serialize, GeneralAssetIdCodec.deserialize))(_.assetId)
@@ -531,14 +556,20 @@ object MessageData extends DerivedLogTag {
         }
 
         val res = new MessageContentBuilder
-        val end = links.filterNot(l => markdownLinks.contains(l.url)).sortBy(_.urlOffset).foldLeft(0) {
+        val end = links.filterNot { l => markdownLinks.contains(l.proto.getUrl)}.sortBy(_.proto.getUrlOffset).foldLeft(0) {
           case (prevEnd, link) =>
-            if (link.urlOffset > prevEnd) res ++= RichMediaContentParser.splitContent(message.substring(prevEnd, link.urlOffset), mentions, prevEnd)
+            if (link.proto.getUrlOffset > prevEnd)
+              res ++= RichMediaContentParser.splitContent(message.substring(prevEnd, link.proto.getUrlOffset), mentions, prevEnd)
 
-          returning(linkEnd(link.urlOffset)) { end =>
-            if (end > link.urlOffset) {
-              val openGraph = Option(link.getArticle).map { a => OpenGraphData(a.title, a.summary, None, "", Option(a.permanentUrl).filter(_.nonEmpty).map(new URL(_))) }
-              res += MessageContent(Message.Part.Type.WEB_LINK, message.substring(link.urlOffset, end), openGraph)
+          returning(linkEnd(link.proto.getUrlOffset)) { end =>
+            if (end > link.proto.getUrlOffset) {
+              val openGraph =
+                if (link.proto.hasArticle)
+                  Option(link.proto.getArticle).map { a =>
+                    OpenGraphData(a.getTitle, a.getSummary, None, "", Option(a.getPermanentUrl).filter(_.nonEmpty).map(new URL(_)))
+                  }
+                else None
+              res += MessageContent(Message.Part.Type.WEB_LINK, message.substring(link.proto.getUrlOffset, end), openGraph)
             }
           }
         }
@@ -591,5 +622,5 @@ object MessageData extends DerivedLogTag {
 
   private def decode(array: Array[Byte]) = UTF_16_CHARSET.decode(ByteBuffer.wrap(array)).toString
 
-  def readReceiptMode(enabled: Boolean) = if (enabled) Some(1) else Some(0)
+  def readReceiptMode(enabled: Boolean): Option[Int] = if (enabled) Some(1) else Some(0)
 }

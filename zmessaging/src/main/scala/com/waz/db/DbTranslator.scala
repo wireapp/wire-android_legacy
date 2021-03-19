@@ -21,7 +21,9 @@ import java.io.File
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
-import com.google.protobuf.nano.{CodedInputByteBufferNano, CodedOutputByteBufferNano, MessageNano}
+import com.google.protobuf.{CodedInputStream, CodedOutputStream}
+import com.google.protobuf.MessageLite
+import com.waz.model.Messages.{GenericMessage => Proto}
 import com.waz.model._
 import com.waz.utils.wrappers.{DBContentValues, DBCursor, DBProgram}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
@@ -166,18 +168,49 @@ object DbTranslator {
     override def load(cursor: DBCursor, index: Int): B[A] = if (cursor.isNull(index)) cbf.apply.result else JsonDecoder.arrayColl[A, B](new JSONArray(cursor.getString(index)))
     override def literal(value: B[A]): String = JsonEncoder.arr(value).toString
   }
-  implicit def protoTranslator[A <: MessageNano : ProtoDecoder](): DbTranslator[A] = new DbTranslator[A] {
-    override def save(value: A, name: String, values: DBContentValues): Unit = values.put(name, MessageNano.toByteArray(value))
-    override def bind(value: A, index: Int, stmt: DBProgram): Unit = stmt.bindBlob(index, MessageNano.toByteArray(value))
+  implicit def protoTranslator[A <: MessageLite : ProtoDecoder](): DbTranslator[A] = new DbTranslator[A] {
+    override def save(value: A, name: String, values: DBContentValues): Unit = values.put(name, value.toByteArray)
+    override def bind(value: A, index: Int, stmt: DBProgram): Unit = stmt.bindBlob(index, value.toByteArray)
     override def load(cursor: DBCursor, index: Int): A = implicitly[ProtoDecoder[A]].apply(cursor.getBlob(index))
     override def literal(value: A): String = throw new UnsupportedOperationException("can't get sql literal for proto")
   }
-  implicit def protoSeqTranslator[A <: MessageNano, B[C] <: Traversable[C]]()(implicit dec: ProtoDecoder[A], cbf: CanBuild[A, B[A]]): DbTranslator[B[A]] = new DbTranslator[B[A]] {
-    def toBytes(value: B[A]) = {
+
+  implicit def gmSeqTranslator()(implicit dec: ProtoDecoder[Proto], cbf: CanBuild[GenericMessage, Seq[GenericMessage]]): DbTranslator[Seq[GenericMessage]] =
+    new DbTranslator[Seq[GenericMessage]] {
+      def toBytes(gms: Seq[GenericMessage]): Array[Byte] = {
+        val value = gms.map(_.proto)
+        val size = value.foldLeft(0)(_ + _.getSerializedSize)
+        val buff = Array.ofDim[Byte](size)
+        val out = CodedOutputStream.newInstance(buff)
+        value.foreach { _.writeTo(out) }
+        buff
+      }
+
+      override def save(value: Seq[GenericMessage], name: String, values: DBContentValues): Unit =
+        if (value.isEmpty) values.putNull(name) else values.put(name, toBytes(value))
+
+      override def bind(value: Seq[GenericMessage], index: Int, stmt: DBProgram): Unit =
+        if (value.isEmpty) stmt.bindNull(index) else stmt.bindBlob(index, toBytes(value))
+
+      override def load(cursor: DBCursor, index: Int): Seq[GenericMessage] =
+        if (cursor.isNull(index)) cbf.apply.result else {
+          val builder = cbf.apply()
+          val in = CodedInputStream.newInstance(cursor.getBlob(index))
+          while (!in.isAtEnd)
+            builder += GenericMessage(implicitly[ProtoDecoder[Proto]].apply(in))
+          builder.result()
+        }
+
+      override def literal(value: Seq[GenericMessage]): String =
+        throw new UnsupportedOperationException("can't get sql literal for proto seq")
+    }
+
+  implicit def protoSeqTranslator[A <: MessageLite, B[C] <: Traversable[C]]()(implicit dec: ProtoDecoder[A], cbf: CanBuild[A, B[A]]): DbTranslator[B[A]] = new DbTranslator[B[A]] {
+    def toBytes(value: B[A]): Array[Byte] = {
       val size = value.foldLeft(0)(_ + _.getSerializedSize)
       val buff = Array.ofDim[Byte](size)
-      val out = CodedOutputByteBufferNano.newInstance(buff)
-      value foreach { _.writeTo(out) }
+      val out = CodedOutputStream.newInstance(buff)
+      value.foreach { _.writeTo(out) }
       buff
     }
 
@@ -185,7 +218,7 @@ object DbTranslator {
     override def bind(value: B[A], index: Int, stmt: DBProgram): Unit = if (value.isEmpty) stmt.bindNull(index) else stmt.bindBlob(index, toBytes(value))
     override def load(cursor: DBCursor, index: Int): B[A] = if (cursor.isNull(index)) cbf.apply.result else {
       val builder = cbf.apply()
-      val in = CodedInputByteBufferNano.newInstance(cursor.getBlob(index))
+      val in = CodedInputStream.newInstance(cursor.getBlob(index))
       while (!in.isAtEnd)
         builder += implicitly[ProtoDecoder[A]].apply(in)
       builder.result()

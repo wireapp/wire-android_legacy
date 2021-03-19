@@ -105,6 +105,14 @@ class NotificationServiceImpl(selfUserId:      UserId,
   }
 
   override val messageNotificationEventsStage = EventScheduler.Stage[ConversationEvent]({ (c, events) =>
+    object Deleted {
+      def unapply(event: GenericMessageEvent): Option[NotId] = event.content.unpackContent match {
+        case d: MsgDeleted => Some(NotId(d.unpack._2))
+        case r: MsgRecall  => Some(NotId(r.unpack))
+        case _             => None
+      }
+    }
+
     if (events.nonEmpty) {
       for {
         (undoneLikes, likes) <- getReactionChanges(events)
@@ -113,10 +121,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
 
         (afterEditsApplied, beforeEditsApplied) = applyEdits(currentNotifications ++ msgNotifications, events)
 
-        deleted = events.collect {
-          case GenericMessageEvent(_, _, _, GenericMessage(_, MsgDeleted(_, msg))) => NotId(msg)
-          case GenericMessageEvent(_, _, _, GenericMessage(_, MsgRecall(msg)))     => NotId(msg)
-        }.toSet
+        deleted = events.collect { case Deleted(notId) => notId }.toSet
 
         toShow = (afterEditsApplied ++ likes).filterNot(n => (undoneLikes ++ deleted).contains(n.id))
         toRemove = undoneLikes ++ beforeEditsApplied ++ deleted
@@ -273,9 +278,15 @@ class NotificationServiceImpl(selfUserId:      UserId,
   }
 
   private def applyEdits(currentNotifications: Set[NotificationData], events: Vector[Event]) = {
-    val edits = events
-      .collect { case GenericMessageEvent(_, _, _, GenericMessage(newId, MsgEdit(id, Text(msg, _, _, _)))) => (id, (newId, msg)) }
-      .toMap
+    object Edited {
+      def unapply(event: GenericMessageEvent): Option[(MessageId, MessageId, String)] = event.content.unpack match {
+        case (newId, edit: MsgEdit) =>
+          edit.unpack.map { case (id, text) => (id, MessageId(newId.str), text.unpack._1) }
+        case _ => None
+      }
+    }
+
+    val edits = events.collect { case Edited(id, newId, msg) => (id, (newId, msg)) }.toMap
 
     val (afterEditsApplied, beforeEditsApplied) = edits.foldLeft((currentNotifications.map(n => (n.id, n)).toMap, Set.empty[NotId])) {
       case ((edited, toRemove), (oldId, (newId, newContent))) =>
@@ -294,12 +305,22 @@ class NotificationServiceImpl(selfUserId:      UserId,
   }
 
   private def getReactionChanges(events: Vector[Event]) = {
-    val reactions = events.collect {
-      case GenericMessageEvent(_, time, from, GenericMessage(_, Reaction(msg, action))) if from != selfUserId => Liking(msg, from, time, action)
+    object Reacted {
+      def unapply(event: GenericMessageEvent): Option[Liking] = event match {
+        case GenericMessageEvent(_, time, from, gm: GenericMessage) if from != selfUserId =>
+          gm.unpackContent match {
+            case r: Reaction =>
+              val (msg, action) = r.unpack
+              Some(Liking(msg, from, time, action))
+            case _ => None
+          }
+        case _ => None
+      }
     }
 
-    messages.getAll(reactions.map(_.message).toSet).map(_.flatten).map { msgs =>
+    val reactions = events.collect { case Reacted(liking) => liking }
 
+    messages.getAll(reactions.map(_.message).toSet).map(_.flatten).map { msgs =>
       val msgsById = msgs.toIdMap
       val convsByMsg = msgs.iterator.by[MessageId, Map](_.id).mapValues(_.convId)
       val myMsgs = msgs.collect { case m if m.userId == selfUserId => m.id }.toSet

@@ -17,7 +17,7 @@
  */
 package com.waz.service
 
-import com.waz.api.Message
+import com.google.protobuf.ByteString
 import com.waz.api.Message.Status
 import com.waz.api.Message.Type._
 import com.waz.content._
@@ -25,7 +25,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent.{Composite, Text}
 import com.waz.model._
-import com.waz.model.nano.Messages
 import com.waz.model.otr.UserClients
 import com.waz.service.assets.{AssetService, DownloadAssetStorage}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
@@ -35,7 +34,6 @@ import com.waz.testutils.TestGlobalPreferences
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
 import com.wire.signals.{EventStream, Signal}
-import com.waz.utils.returning
 import org.scalatest.Inside
 
 import scala.concurrent.Future
@@ -89,7 +87,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
           m.time                 shouldEqual event.time
           m.localTime            shouldEqual event.localTime
           m.state                shouldEqual Status.SENT
-          m.protos.head.toString shouldEqual event.asInstanceOf[GenericMessageEvent].content.toString
+          m.genericMsgs.head.toString shouldEqual event.asInstanceOf[GenericMessageEvent].content.toString
       }
     }
 
@@ -188,17 +186,29 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val messageId = Uid("messageId")
       val remoteAssetId = AssetId("remoteAssetId")
 
-      val originalAsset = returning(new Messages.Asset) { asset =>
-        asset.original = returning(new Messages.Asset.Original) { original =>
-          original.name = "The Alphabet"
-          original.mimeType = "text/plain"
-          original.size = 26
-        }
+      val originalAsset = GenericContent.Asset {
+        val orig =
+          Messages.Asset.Original.newBuilder
+            .setName("The Alphabet")
+            .setMimeType("text/plain")
+            .setSize(26)
+            .build
+
+        Messages.Asset.newBuilder
+          .setOriginal(orig)
+          .build
       }
 
-      val uploadAsset = returning(new Messages.Asset) { asset =>
-        val remoteData = returning(new Messages.Asset.RemoteData)(_.assetId = remoteAssetId.str)
-        asset.setUploaded(remoteData)
+      val uploadAsset = GenericContent.Asset {
+        val remoteData =
+          Messages.Asset.RemoteData.newBuilder()
+            .setAssetId(remoteAssetId.str)
+            .setOtrKey(ByteString.copyFromUtf8(""))
+            .setSha256(ByteString.copyFromUtf8(""))
+            .build
+        Messages.Asset.newBuilder
+          .setUploaded(remoteData)
+          .build
       }
 
       clock.advance(5.seconds)
@@ -231,7 +241,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
           m.time                 shouldEqual originalEvent.time
           m.localTime            shouldEqual originalEvent.localTime
           m.state                shouldEqual Status.SENT
-          m.protos.head.toString shouldEqual uploadEvent.asInstanceOf[GenericMessageEvent].content.toString
+          m.genericMsgs.head.toString shouldEqual uploadEvent.asInstanceOf[GenericMessageEvent].content.toString
           m.assetId              shouldEqual Some(remoteAssetId)
       }
     }
@@ -269,7 +279,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
           m.time                 shouldEqual messageEvent.time
           m.localTime            shouldEqual messageEvent.localTime
           m.state                shouldEqual Status.SENT
-          m.protos.head.toString shouldEqual messageEvent.asInstanceOf[GenericMessageEvent].content.toString
+          m.genericMsgs.head.toString shouldEqual messageEvent.asInstanceOf[GenericMessageEvent].content.toString
       }
     }
   }
@@ -289,19 +299,21 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
   }
 
   // if we need those utility methods in other specs, we can think of turning them into `apply` methods in GenericContent
-  private def button(id: String, text: String) = returning(new Messages.Composite.Item) { item =>
-    item.setButton(returning(new Messages.Button) { button =>
-      button.id = id
-      button.text = text
-    })
+  private def button(id: String, text: String) = {
+    val b = Messages.Button.newBuilder.setId(id).setText(text).build
+    Messages.Composite.Item.newBuilder().setButton(b).build
   }
 
-  private def text(text: String) = returning(new Messages.Composite.Item) { item => item.setText(Text(text)) }
+  private def text(text: String) =
+    Messages.Composite.Item.newBuilder.setText(Text(text).proto).build
 
-  private def composite(items: Messages.Composite.Item*) = returning(new Composite) { composite =>
-    composite.expectsReadConfirmation = false
-    composite.legalHoldStatus = 0
-    composite.items = items.toArray
+  private def composite(items: Messages.Composite.Item*) = GenericContent.Composite {
+    import scala.collection.JavaConverters._
+    Messages.Composite.newBuilder
+      .setExpectsReadConfirmation(false)
+      .setLegalHoldStatus(Messages.LegalHoldStatus.UNKNOWN)
+      .addAllItems(items.toIterable.asJava)
+      .build
   }
 
   private def event(convId: RConvId, sender: UserId, uid: String, composite: Composite) =

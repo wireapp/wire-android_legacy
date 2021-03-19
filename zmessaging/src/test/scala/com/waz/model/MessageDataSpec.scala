@@ -66,7 +66,7 @@ class MessageDataSpec extends AndroidFreeSpec {
       val mentions = Seq(Mention(Some(userId1), 4, 5), Mention(Some(userId2), 32, 5))
       val linkPreview = LinkPreview(URI.parse("http://bit.ly"), 15)
 
-      val expected = List(
+      val expected = Vector(
         MessageContent(Message.Part.Type.TEXT, "Aaa @user1 aaa ", mentions = Seq(mentions(0))),
         MessageContent(Message.Part.Type.WEB_LINK, "http://bit.ly", mentions = Nil),
         MessageContent(Message.Part.Type.TEXT, " aaa @user2 aaa", mentions = Seq(mentions(1)))

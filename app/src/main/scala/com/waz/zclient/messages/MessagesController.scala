@@ -34,7 +34,7 @@ import scala.concurrent.duration._
 
 class MessagesController()(implicit injector: Injector, cxt: WireContext)
   extends Injectable with DerivedLogTag {
-  
+
 import com.waz.threading.Threading.Implicits.Background
 
 import scala.concurrent.Future

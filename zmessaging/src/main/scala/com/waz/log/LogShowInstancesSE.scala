@@ -339,8 +339,8 @@ trait LogShowInstancesSE {
 
   //Protos
   implicit val GenericMessageLogShow: LogShow[GenericMessage] = LogShow.create { m =>
-    m.getContentCase
-    s"GenericMessage(messageId: ${sha2(m.messageId)} | contentCase: ${m.getContentCase})"
+    m.proto.getContentCase
+    s"GenericMessage(messageId: ${sha2(m.proto.getMessageId)} | contentCase: ${m.proto.getContentCase})"
   }
 
   implicit val ReadReceiptShow: LogShow[ReadReceipt] = LogShow.createFrom { r =>

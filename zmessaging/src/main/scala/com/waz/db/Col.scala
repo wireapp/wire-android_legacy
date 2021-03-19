@@ -20,8 +20,7 @@ package com.waz.db
 import java.io.File
 import java.util.Date
 
-import com.google.protobuf.nano.MessageNano
-import com.waz.db.Col.{blob, text}
+import com.google.protobuf.MessageLite
 import com.waz.model._
 import com.waz.service.assets.Codec
 import com.waz.utils.wrappers.{DBContentValues, DBCursor, DBProgram}
@@ -74,10 +73,10 @@ object Col {
   })
   def json[A: JsonDecoder : JsonEncoder](name: Symbol) = Col[A](name.name, "TEXT")(DbTranslator.jsonTranslator[A]())
   def jsonArr[A, B[C] <: Traversable[C]](name: Symbol)(implicit enc: JsonEncoder[A], dec: JsonDecoder[A], cbf: CanBuild[A, B[A]]) = Col[B[A]](name.name, "TEXT")(DbTranslator.jsonArrTranslator[A, B]())
-  def jsonArray[A, B[C] <: Traversable[C], D[E] <: B[E]](name: Symbol)(implicit enc: JsonEncoder[A], dec: JsonDecoder[A], cbf: CanBuild[A, D[A]]): Col[B[A]] = jsonArr[A, B](name)(enc, dec, cbf)
+  def jsonArray[A, B[C] <: Traversable[C], D[E] <: B[E]](name: Symbol)(implicit enc: JsonEncoder[A], dec: JsonDecoder[A], cbf: CanBuild[A, B[A]]): Col[B[A]] = jsonArr[A, B](name)(enc, dec, cbf)
 
-  def proto[A <: MessageNano](name: Symbol)(implicit dec: ProtoDecoder[A]) = Col[A](name.name, "BLOB")(DbTranslator.protoTranslator[A]())
-  def protoSeq[A <: MessageNano, B[C] <: Traversable[C], D[E] <: B[E]](name: Symbol)(implicit dec: ProtoDecoder[A], cbf: CanBuild[A, D[A]]): Col[B[A]] = Col[B[A]](name.name, "BLOB")(DbTranslator.protoSeqTranslator[A, B]())
+  def protoSeq(name: Symbol)(implicit dec: ProtoDecoder[Messages.GenericMessage]): Col[Seq[GenericMessage]] =
+    Col[Seq[GenericMessage]](name.name, "BLOB")(DbTranslator.gmSeqTranslator())
 
   def text(name: Symbol) = Col[String](name.name, "TEXT")
   def text(name: Symbol, modifiers: String) = Col[String](name.name, "TEXT", modifiers)

@@ -18,7 +18,6 @@
 package com.waz.model
 
 import com.waz.model.Event.EventDecoder
-import com.waz.model.nano.Messages
 import com.waz.model.otr.ClientId
 import com.waz.service.PropertyKey
 import com.waz.specs.AndroidFreeSpec
@@ -162,7 +161,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode GenericMessageEvent") {
-      val msg = GenericMessageEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), new Messages.GenericMessage)
+      val msg = GenericMessageEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), GenericMessage.TextMessage("content"))
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: GenericMessageEvent =>
           ev.convId shouldEqual msg.convId

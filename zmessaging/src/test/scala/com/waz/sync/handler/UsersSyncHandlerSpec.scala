@@ -1,7 +1,6 @@
 package com.waz.sync.handler
 
 import com.waz.content.UsersStorage
-import com.waz.model.nano.Messages
 import com.waz.model._
 import com.waz.service.{UserSearchService, UserService}
 import com.waz.service.assets.AssetService
@@ -35,6 +34,12 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
     userService, usersStorage, assetService, searchService, usersClient, otrSync, Some(teamId), teamsSyncHandler
   )
 
+  private def checkAvailabilityStatus(message: GenericMessage, expectedAvailability: Messages.Availability.Type): Unit = message.unpackContent match {
+    case content: GenericContent.AvailabilityStatus =>
+      content.proto.getType shouldEqual expectedAvailability
+    case _ => fail(s"Availability should be set to $expectedAvailability}")
+  }
+
   feature("Post availability status") {
     scenario("Post only to self and connected users if self is not in a team") {
       // given
@@ -54,7 +59,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          checkAvailabilityStatus(message, Messages.Availability.Type.AVAILABLE)
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
@@ -81,7 +86,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          checkAvailabilityStatus(message, Messages.Availability.Type.AVAILABLE)
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id, user3.id, user4.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
@@ -110,7 +115,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          checkAvailabilityStatus(message, Messages.Availability.Type.AVAILABLE)
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id, user3.id, user4.id, user5.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
@@ -137,7 +142,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          checkAvailabilityStatus(message, Messages.Availability.Type.AVAILABLE)
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id, user3.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
@@ -165,7 +170,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       // then
       (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          message.getAvailability.`type` shouldEqual Messages.Availability.AVAILABLE
+          checkAvailabilityStatus(message, Messages.Availability.Type.AVAILABLE)
           recipients shouldEqual Some(Set(self.id, user1.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }

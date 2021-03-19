@@ -56,7 +56,7 @@ class ReplyHashingImpl(storage: AssetStorage) extends ReplyHashing with DerivedL
                     })
       otherShas  <- Future.sequence(otherMsgs.map {
                       case m if ReplyHashing.textTypes.contains(m.msgType) =>
-                        m.protos.last match {
+                        m.genericMsgs.last match {
                           case TextMessage(content, _, _, _, _) => Future.successful(m.id -> hashTextReply(content, m.time))
                           case _                             => Future.successful(m.id -> Sha256.Empty) // should not happen
                         }

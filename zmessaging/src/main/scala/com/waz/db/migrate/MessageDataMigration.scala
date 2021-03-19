@@ -45,9 +45,9 @@ object MessageDataMigration {
         forEachRow(db.query("Messages", Array("_id", "hot"), "msg_type = 'Knock'", null, null, null, null)) { c =>
           stmt.clearBindings()
           val id = c.getString(0)
-          val protos = Seq(GenericMessage(Uid(id), Knock(false)))
+          val gms = Seq(GenericMessage(Uid(id), Knock(false)))
 
-          dst.Protos.bind(protos, 1, stmt)
+          dst.Protos.bind(gms, 1, stmt)
           stmt.bindString(2, id)
           stmt.execute()
         }
@@ -115,7 +115,7 @@ object MessageDataMigration {
 
     val Type = text[Message.Type]('msg_type, MessageData.MessageTypeCodec.encode, MessageData.MessageTypeCodec.decode)
     val Content = jsonArray[MessageContent, Seq, Vector]('content)
-    val Protos = protoSeq[GenericMessage, Seq, Vector]('protos)
+    val Protos = protoSeq('protos)
 
     val queryString =
       "SELECT _id, conv_id, msg_type, content, protos, time FROM Messages WHERE msg_type IN ('Text', 'TextEmojiOnly', 'RichMedia') AND _id NOT IN (SELECT message_id FROM MessageContentIndex)"
@@ -181,7 +181,7 @@ object MessageDataMigration {
       val Type = text[Message.Type]('msg_type, MessageData.MessageTypeCodec.encode, MessageData.MessageTypeCodec.decode)
       val User = id[UserId]('user_id)
       val Content = jsonArray[MessageContent, Seq, Vector]('content)
-      val Protos = protoSeq[GenericMessage, Seq, Vector]('protos)
+      val Protos = protoSeq('protos)
       val ContentSize = int('content_size)
       val FirstMessage = bool('first_msg)
       val Members = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))
@@ -202,7 +202,7 @@ object MessageDataMigration {
       val Type = text[Message.Type]('msg_type, MessageData.MessageTypeCodec.encode, MessageData.MessageTypeCodec.decode)
       val User = id[UserId]('user_id)
       val Content = jsonArray[MessageContent, Seq, Vector]('content)
-      val Protos = protoSeq[GenericMessage, Seq, Vector]('protos)
+      val Protos = protoSeq('protos)
       val ContentSize = int('content_size)
       val FirstMessage = bool('first_msg)
       val Members = set[UserId]('members, _.mkString(","), _.split(",").filter(!_.isEmpty).map(UserId(_))(breakOut))

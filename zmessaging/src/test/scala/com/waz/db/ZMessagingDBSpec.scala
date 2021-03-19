@@ -145,7 +145,7 @@ import org.threeten.bp.Instant
       val msgs = MessageDataDao.list
       msgs should have size 994
       msgs foreach { m =>
-        if (m.msgType == Message.Type.KNOCK) m.protos should have size 1
+        if (m.msgType == Message.Type.KNOCK) m.genericMsgs should have size 1
       }
     }
 
@@ -156,7 +156,7 @@ import org.threeten.bp.Instant
       val msgs = MessageDataDao.list
       msgs should have size 994
       msgs foreach { m =>
-        if (m.msgType == Message.Type.KNOCK) m.protos should have size 1
+        if (m.msgType == Message.Type.KNOCK) m.genericMsgs should have size 1
         m.editTime shouldEqual Instant.EPOCH
       }
     }

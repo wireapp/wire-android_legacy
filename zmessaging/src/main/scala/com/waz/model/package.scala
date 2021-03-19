@@ -17,10 +17,12 @@
  */
 package com.waz
 
-import com.google.protobuf.nano.{CodedInputByteBufferNano, MessageNano}
-import com.waz.model.nano.Messages
+import com.google.protobuf.{CodedInputStream, MessageLite}
+import com.waz.log.BasicLogging.LogTag
+import com.waz.log.LogSE._
+import com.waz.model.GenericContent.{Ephemeral, Unknown}
 import com.waz.utils.crypto.AESUtils
-import com.waz.utils.{JsonDecoder, JsonEncoder, returning}
+import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 
 import scala.concurrent.duration.FiniteDuration
@@ -28,125 +30,151 @@ import scala.language.implicitConversions
 
 package object model {
 
-  case class Name(str: String) {
-    def length = str.length
+  final case class Name(str: String) extends AnyVal {
+    def length: Int = str.length
 
     override def toString: String = str
 
     def isEmpty: Boolean = str.isEmpty
     def nonEmpty: Boolean = str.nonEmpty
 
-    def substring(beginIndex: Int, endIndex: Int) =
+    def substring(beginIndex: Int, endIndex: Int): Name =
       Name(str.substring(beginIndex, endIndex))
   }
 
   object Name extends (String => Name) {
     implicit def toNameString(name: Name): String = name.str
     implicit def fromNameString(str: String): Name = Name(str)
-    val Empty = Name("")
+    val Empty: Name = Name("")
   }
 
-  trait ProtoDecoder[A <: MessageNano] {
+  trait ProtoDecoder[A] {
     def apply(data: Array[Byte]): A
-    def apply(in: CodedInputByteBufferNano): A
+    def apply(in: CodedInputStream): A
   }
 
-  val Proto = GenericContent
+  final case class GenericMessage(proto: Messages.GenericMessage) {
+    lazy val unpack: (Uid, GenericContent[_]) = (Uid(proto.getMessageId), content)
 
-  type GenericMessage = Messages.GenericMessage
-  object GenericMessage {
-    import GenericContent._
+    def toByteArray: Array[Byte] = proto.toByteArray
 
-    def apply[A: GenericContent](id: Uid, content: A): GenericMessage =
-      returning(new Messages.GenericMessage()) { msg =>
-        msg.messageId = id.str
-        implicitly[GenericContent[A]].set(msg)(content)
-      }
-
-    def apply[A: EphemeralContent : GenericContent](id: Uid, expiration: Option[FiniteDuration], content: A): GenericMessage =
-      returning(new Messages.GenericMessage()) { msg =>
-        msg.messageId = id.str
-        if (expiration.isEmpty) {
-          implicitly[GenericContent[A]].set(msg)(content)
-        } else {
-          Ephemeral.set(msg)(Ephemeral(expiration, content))
-        }
-      }
-
-    def apply(bytes: Array[Byte]): GenericMessage = Messages.GenericMessage.parseFrom(bytes)
-
-    def unapply(msg: GenericMessage): Option[(Uid, Any)] = Some((Uid(msg.messageId), content(msg)))
-
-    def toByteArray(msg: GenericMessage): Array[Byte] = MessageNano.toByteArray(msg)
-
-    import Messages.{GenericMessage => GM}
-
-    def isBroadcastMessage(msg: GenericMessage): Boolean = msg.getContentCase match {
-      case GM.AVAILABILITY_FIELD_NUMBER => true
+    lazy val isBroadcastMessage: Boolean = proto.getContentCase.getNumber match {
+      case Messages.GenericMessage.AVAILABILITY_FIELD_NUMBER => true
       case _ => false
     }
 
-    def content(msg: GenericMessage): Any = msg.getContentCase match {
-      case GM.ASSET_FIELD_NUMBER                    => msg.getAsset
-      case GM.CALLING_FIELD_NUMBER                  => msg.getCalling
-      case GM.CLEARED_FIELD_NUMBER                  => msg.getCleared
-      case GM.CLIENTACTION_FIELD_NUMBER             => ClientAction(msg.getClientAction)
-      case GM.DELETED_FIELD_NUMBER                  => msg.getDeleted
-      case GM.EDITED_FIELD_NUMBER                   => msg.getEdited
-      case GM.EXTERNAL_FIELD_NUMBER                 => msg.getExternal
-      case GM.HIDDEN_FIELD_NUMBER                   => msg.getHidden
-      case GM.IMAGE_FIELD_NUMBER                    => msg.getImage
-      case GM.KNOCK_FIELD_NUMBER                    => msg.getKnock
-      case GM.LASTREAD_FIELD_NUMBER                 => msg.getLastRead
-      case GM.REACTION_FIELD_NUMBER                 => msg.getReaction
-      case GM.TEXT_FIELD_NUMBER                     => msg.getText
-      case GM.LOCATION_FIELD_NUMBER                 => msg.getLocation
-      case GM.CONFIRMATION_FIELD_NUMBER             => msg.getConfirmation
-      case GM.EPHEMERAL_FIELD_NUMBER                => msg.getEphemeral
-      case GM.AVAILABILITY_FIELD_NUMBER             => msg.getAvailability
-      case GM.COMPOSITE_FIELD_NUMBER                => msg.getComposite
-      case GM.BUTTONACTION_FIELD_NUMBER             => msg.getButtonAction
-      case GM.BUTTONACTIONCONFIRMATION_FIELD_NUMBER => msg.getButtonActionConfirmation
-      case GM.DATATRANSFER_FIELD_NUMBER             => msg.getDataTransfer
-      case _                                        => Unknown
+    def unpackContent: GenericContent[_] = unpack match {
+      case (_, eph: Ephemeral) => eph.unpack._2
+      case (_, content)        => content
     }
+
+    private def content: GenericContent[_] = proto.getContentCase.getNumber match {
+      case Messages.GenericMessage.ASSET_FIELD_NUMBER                    => GenericContent.Asset(proto.getAsset)
+      case Messages.GenericMessage.CALLING_FIELD_NUMBER                  => GenericContent.Calling(proto.getCalling)
+      case Messages.GenericMessage.CLEARED_FIELD_NUMBER                  => GenericContent.Cleared(proto.getCleared)
+      case Messages.GenericMessage.CLIENTACTION_FIELD_NUMBER             => GenericContent.ClientAction(proto.getClientAction.getNumber)
+      case Messages.GenericMessage.DELETED_FIELD_NUMBER                  => GenericContent.MsgRecall(proto.getDeleted)
+      case Messages.GenericMessage.EDITED_FIELD_NUMBER                   => GenericContent.MsgEdit(proto.getEdited)
+      case Messages.GenericMessage.EXTERNAL_FIELD_NUMBER                 => GenericContent.External(proto.getExternal)
+      case Messages.GenericMessage.HIDDEN_FIELD_NUMBER                   => GenericContent.MsgDeleted(proto.getHidden)
+      case Messages.GenericMessage.IMAGE_FIELD_NUMBER                    => GenericContent.ImageAsset(proto.getImage)
+      case Messages.GenericMessage.KNOCK_FIELD_NUMBER                    => GenericContent.Knock(proto.getKnock)
+      case Messages.GenericMessage.LASTREAD_FIELD_NUMBER                 => GenericContent.LastRead(proto.getLastRead)
+      case Messages.GenericMessage.REACTION_FIELD_NUMBER                 => GenericContent.Reaction(proto.getReaction)
+      case Messages.GenericMessage.TEXT_FIELD_NUMBER                     => GenericContent.Text(proto.getText)
+      case Messages.GenericMessage.LOCATION_FIELD_NUMBER                 => GenericContent.Location(proto.getLocation)
+      case Messages.GenericMessage.CONFIRMATION_FIELD_NUMBER             => GenericContent.DeliveryReceipt(proto.getConfirmation)
+      case Messages.GenericMessage.EPHEMERAL_FIELD_NUMBER                => GenericContent.Ephemeral(proto.getEphemeral)
+      case Messages.GenericMessage.AVAILABILITY_FIELD_NUMBER             => GenericContent.AvailabilityStatus(proto.getAvailability)
+      case Messages.GenericMessage.COMPOSITE_FIELD_NUMBER                => GenericContent.Composite(proto.getComposite)
+      case Messages.GenericMessage.BUTTONACTION_FIELD_NUMBER             => GenericContent.ButtonAction(proto.getButtonAction)
+      case Messages.GenericMessage.BUTTONACTIONCONFIRMATION_FIELD_NUMBER => GenericContent.ButtonActionConfirmation(proto.getButtonActionConfirmation)
+      case Messages.GenericMessage.DATATRANSFER_FIELD_NUMBER             => GenericContent.DataTransfer(proto.getDataTransfer)
+      case _ => Unknown
+    }
+  }
+
+  object GenericMessage {
+    import GenericContent._
+
+    def apply[Proto](id: Uid, content: GenericContent[Proto]): GenericMessage = GenericMessage {
+      val builder =
+        Messages.GenericMessage.newBuilder
+          .setMessageId(id.str)
+      content.set(builder)
+      builder.build()
+    }
+
+    def apply[Proto](id: Uid, expiration: Option[FiniteDuration], content: GenericContent[Proto]): GenericMessage = GenericMessage {
+      val builder =
+        Messages.GenericMessage.newBuilder
+          .setMessageId(id.str)
+      expiration match {
+        case Some(expiry) =>
+          val ephemeralContent: Option[EphemeralContent] = content match {
+            case Asset(proto)      => Some(EphemeralAsset(proto, expiry))
+            case ImageAsset(proto) => Some(EphemeralImageAsset(proto, expiry))
+            case Text(proto)       => Some(EphemeralText(proto, expiry))
+            case Location(proto)   => Some(EphemeralLocation(proto, expiry))
+            case Knock(proto)      => Some(EphemeralKnock(proto, expiry))
+            case _ =>
+              error(l"Unable to create ephemeral content - the generic content cannot be turned into ephemeral: $content")(LogTag("GenericMessage"))
+              None
+          }
+          ephemeralContent.foreach(eph => Ephemeral(expiration, eph).set(builder))
+        case None => content.set(builder)
+      }
+
+      builder.build
+    }
+
+    def apply(bytes: Array[Byte]): GenericMessage =
+      GenericMessage(Messages.GenericMessage.parseFrom(bytes))
 
     object TextMessage {
 
+      implicit val log: LogTag = LogTag("TextMessage")
+
       def apply(text: String): GenericMessage = GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false))
 
-      def apply(text: String, mentions: Seq[com.waz.model.Mention], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation))
+      def apply(text: String,
+                mentions: Seq[com.waz.model.Mention],
+                expectsReadConfirmation: Boolean): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation))
 
-      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation))
+      def apply(text: String,
+                mentions: Seq[com.waz.model.Mention],
+                links: Seq[LinkPreview],
+                expectsReadConfirmation: Boolean): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation))
 
-      def apply(text: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): GenericMessage = GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation))
+      def apply(text: String,
+                mentions: Seq[com.waz.model.Mention],
+                links: Seq[LinkPreview],
+                quote: Option[Quote],
+                expectsReadConfirmation: Boolean): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation))
 
-      def apply(msg: MessageData): GenericMessage = GenericMessage(msg.id.uid, msg.ephemeral, Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false)))
+      def apply(msg: MessageData): GenericMessage =
+        GenericMessage(
+          msg.id.uid,
+          msg.ephemeral,
+          Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false))
+        )
 
-      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean)] = msg match {
-        case GenericMessage(_, t @ Text(content, mentions, links, quote)) =>
-          Some((content, mentions, links, quote, t.expectsReadConfirmation))
-        case GenericMessage(_, Ephemeral(_, t @ Text(content, mentions, links, quote))) =>
-          Some((content, mentions, links, quote, t.expectsReadConfirmation))
-        case GenericMessage(_, MsgEdit(_, t @ Text(content, mentions, links, quote))) =>
-          Some((content, mentions, links, quote, t.expectsReadConfirmation))
-        case _ =>
-          None
+      def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean)] = msg.unpackContent match {
+        case text: Text     => Some(text.unpack)
+        case eph: Ephemeral => eph.unpackContent match {
+          case text: Text => Some(text.unpack)
+          case _          => None
+        }
+        case edit: MsgEdit  => edit.unpack.map(_._2.unpack)
+        case _              => None
       }
 
-      def updateMentions(msg: GenericMessage, newMentions: Seq[com.waz.model.Mention]): GenericMessage = msg match {
-        case GenericMessage(uid, t @ Text(text, mentions, links, quote)) if mentions != newMentions =>
-          GenericMessage(uid, Text(text, newMentions, links, quote, t.expectsReadConfirmation))
-        case _ =>
-          msg
-      }
-    }
-
-    //TODO Dean: this can lead to some very tricky problems - try to get around the Any...
-    object GenericMessageContent {
-      def unapply(msg: GenericMessage): Option[Any] = msg match {
-        case GenericMessage(_, Ephemeral(_, content)) => Some(content)
-        case GenericMessage(_, content)               => Some(content)
+      def updateMentions(msg: GenericMessage, newMentions: Seq[com.waz.model.Mention]): GenericMessage = msg.unpack match {
+        case (uid, t: Text) => GenericMessage(uid, Text.newMentions(t, newMentions))
+        case _ => msg
       }
     }
 
@@ -156,13 +184,18 @@ package object model {
 
     implicit object JsEncoder extends JsonEncoder[GenericMessage] {
       override def apply(v: GenericMessage): JSONObject = JsonEncoder { o =>
-        o.put("proto", AESUtils.base64(MessageNano.toByteArray(v)))
+        o.put("proto", AESUtils.base64(v.proto.toByteArray))
       }
     }
 
     implicit object MessageDecoder extends ProtoDecoder[GenericMessage] {
       override def apply(data: Array[Byte]): GenericMessage = GenericMessage(data)
-      override def apply(in: CodedInputByteBufferNano): GenericMessage = Messages.GenericMessage.parseFrom(in)
+      override def apply(in: CodedInputStream): GenericMessage = GenericMessage(Messages.GenericMessage.parseFrom(in))
+    }
+
+    implicit object GMessageDecoder extends ProtoDecoder[Messages.GenericMessage] {
+      override def apply(data: Array[Byte]): Messages.GenericMessage = Messages.GenericMessage.parseFrom(data)
+      override def apply(in: CodedInputStream): Messages.GenericMessage = Messages.GenericMessage.parseFrom(in)
     }
   }
 }

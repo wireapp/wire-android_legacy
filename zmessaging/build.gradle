@@ -77,8 +77,7 @@ dependencies {
     // should match okhttp3's mockserver version (see test dependencies)
     implementation BuildDependencies.libPhoneNumber
     implementation "com.wire:cryptobox-android:1.1.2"
-    api "com.wire:generic-message-proto:1.27.1"
-    implementation "com.wire:backend-api-proto:2.3"
+    implementation "com.wire:generic-message-proto:1.28.2"
     implementation "io.circe:circe-core_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
     implementation "io.circe:circe-generic_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
     implementation "io.circe:circe-parser_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"

@@ -93,7 +93,7 @@ class SingleOtrClientFragment extends FragmentHelper {
   private lazy val descriptionText = returning(view[TextView] (R.id.client_description)) { vh =>
     (userId match {
       case Some(uId) =>
-        usersController.user(uId).map(u => getString(R.string.otr__participant__single_device__description, u.name))
+        usersController.user(uId).map(u => getString(R.string.otr__participant__single_device__description, u.name.str))
       case _ =>
         Signal.const(getString(R.string.otr__participant__my_device__description))
     }).onUi(t => vh.foreach(_.setText(t)))

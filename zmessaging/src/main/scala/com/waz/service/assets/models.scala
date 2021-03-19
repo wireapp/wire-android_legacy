@@ -22,8 +22,6 @@ import java.net.URI
 
 import com.waz.model.GenericContent.{Asset => GenericAsset}
 import com.waz.model._
-import com.waz.model.nano.Messages
-import com.waz.model.nano.Messages.Asset.RemoteData
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.utils.Identifiable
 import org.threeten.bp.Duration
@@ -165,19 +163,19 @@ case class DownloadAsset(
 
 object DownloadAsset {
 
-  def create(asset: GenericAsset): DownloadAsset = {
-    val original = Option(asset.original)
+  def create(asset: Messages.Asset): DownloadAsset = {
+    val original = Option(asset.getOriginal)
 
     val (mime, size, detailsInput) = original match {
-      case Some(o) => (o.mimeType, o.size, Left(o))
-      case _       => (asset.preview.mimeType, asset.preview.size, Right(asset.preview))
+      case Some(o) => (o.getMimeType, o.getSize, Left(o))
+      case _       => (asset.getPreview.getMimeType, asset.getPreview.getSize, Right(asset.getPreview))
     }
 
     DownloadAsset(
       id = DownloadAssetId(),
       mime = Mime(mime),
-      name = original.map(_.name).getOrElse(""),
-      preview = Option(asset.preview).flatMap(p => Option(p.remote)).map(r => AssetId(r.assetId)),
+      name = original.map(_.getName).getOrElse(""),
+      preview = Option(asset.getPreview).flatMap(p => Option(p.getRemote)).map(r => AssetId(r.getAssetId)),
       details = Asset.extractDetails(detailsInput),
       downloaded = 0,
       size = size,
@@ -185,14 +183,14 @@ object DownloadAsset {
     )
   }
 
-  def getStatus(proto: GenericAsset): DownloadAssetStatus =
-    proto.getStatusCase match {
+  def getStatus(asset: Messages.Asset): DownloadAssetStatus =
+    asset.getStatusCase.getNumber match {
       case Messages.Asset.UPLOADED_FIELD_NUMBER => AssetStatus.Done
       case Messages.Asset.NOT_UPLOADED_FIELD_NUMBER =>
-        proto.getNotUploaded match {
-          case Messages.Asset.CANCELLED => DownloadAssetStatus.Cancelled
-          case Messages.Asset.FAILED    => DownloadAssetStatus.Failed
-          case _                        => DownloadAssetStatus.InProgress
+        asset.getNotUploaded match {
+          case Messages.Asset.NotUploaded.CANCELLED => DownloadAssetStatus.Cancelled
+          case Messages.Asset.NotUploaded.FAILED    => DownloadAssetStatus.Failed
+          case _                                    => DownloadAssetStatus.InProgress
         }
       case _ => DownloadAssetStatus.InProgress
     }
@@ -200,8 +198,6 @@ object DownloadAsset {
 }
 
 object Asset {
-  import com.waz.model.GenericContent.Asset.{Original => GOriginal, Preview => GPreview}
-
   type UploadGeneral = UploadAssetDetails
   type NotReady      = DetailsNotReady.type
   type General       = AssetDetails
@@ -210,33 +206,33 @@ object Asset {
   type Audio         = AudioDetails
   type Video         = VideoDetails
 
-  def extractEncryption(remote: RemoteData): Encryption = remote.encryption match {
-    case Messages.AES_GCM => AES_CBC_Encryption(AESKeyBytes(remote.otrKey))
-    case Messages.AES_CBC => AES_CBC_Encryption(AESKeyBytes(remote.otrKey))
+  def extractEncryption(remote: Messages.Asset.RemoteData): Encryption = remote.getEncryption match {
+    case Messages.EncryptionAlgorithm.AES_GCM => AES_CBC_Encryption(AESKeyBytes(remote.getOtrKey.toByteArray))
+    case Messages.EncryptionAlgorithm.AES_CBC => AES_CBC_Encryption(AESKeyBytes(remote.getOtrKey.toByteArray))
     case _                => NoEncryption
   }
 
-  def extractDetails(either: Either[GOriginal, GPreview]): AssetDetails =
+  def extractDetails(either: Either[Messages.Asset.Original, Messages.Asset.Preview]): AssetDetails =
     if (either.fold(_.hasImage, _.hasImage)) {
       val image = either.fold(_.getImage, _.getImage)
-      ImageDetails(Dim2(image.width, image.height))
+      ImageDetails(Dim2(image.getWidth, image.getHeight))
     } else
       either match {
         case Left(original) if original.hasAudio =>
           val audio = original.getAudio
-          AudioDetails(Duration.ofMillis(audio.durationInMillis), Loudness(audio.normalizedLoudness.toVector))
+          AudioDetails(Duration.ofMillis(audio.getDurationInMillis), Loudness(audio.getNormalizedLoudness.toByteArray.toVector))
         case Left(original) if original.hasVideo =>
           val video = original.getVideo
-          VideoDetails(Dim2(video.width, video.height), Duration.ofMillis(video.durationInMillis))
+          VideoDetails(Dim2(video.getWidth, video.getHeight), Duration.ofMillis(video.getDurationInMillis))
         case _ =>
           BlobDetails
       }
 
-  def create(asset: DownloadAsset, remote: RemoteData): Asset =
+  def create(asset: DownloadAsset, remote: Messages.Asset.RemoteData): Asset =
     Asset(
-      id = AssetId(remote.assetId),
-      token = if (remote.assetToken.isEmpty) None else Some(AssetToken(remote.assetToken)),
-      sha = Sha256(remote.sha256),
+      id = AssetId(remote.getAssetId),
+      token = if (remote.getAssetToken.isEmpty) None else Some(AssetToken(remote.getAssetToken)),
+      sha = Sha256(remote.getSha256.toByteArray),
       mime = asset.mime,
       encryption = extractEncryption(remote),
       localSource = None,
@@ -247,18 +243,18 @@ object Asset {
       convId = None
     )
 
-  def create(preview: GPreview): Asset = {
-    val remote = preview.remote
+  def create(preview: Messages.Asset.Preview): Asset = {
+    val remote = preview.getRemote
     Asset(
-      id = AssetId(remote.assetId),
-      token = if (remote.assetToken.isEmpty) None else Some(AssetToken(remote.assetToken)),
-      sha = Sha256(remote.sha256),
-      mime = Mime(preview.mimeType),
+      id = AssetId(remote.getAssetId),
+      token = if (remote.getAssetToken.isEmpty) None else Some(AssetToken(remote.getAssetToken)),
+      sha = Sha256(remote.getSha256.toByteArray),
+      mime = Mime(preview.getMimeType),
       encryption = extractEncryption(remote),
       localSource = None,
       preview = None,
       name = s"preview_${System.currentTimeMillis()}",
-      size = preview.size,
+      size = preview.getSize,
       details = Asset.extractDetails(Right(preview)),
       convId = None
     )

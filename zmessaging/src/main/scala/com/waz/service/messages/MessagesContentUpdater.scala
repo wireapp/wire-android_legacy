@@ -279,7 +279,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       val u = prev.copy(
         msgType       = if (msg.msgType != Message.Type.UNKNOWN) msg.msgType else prev.msgType ,
         time          = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time,
-        protos        = prev.protos ++ msg.protos,
+        genericMsgs        = prev.genericMsgs ++ msg.genericMsgs,
         content       = msg.content,
         quote         = msg.quote,
         assetId       = assetId

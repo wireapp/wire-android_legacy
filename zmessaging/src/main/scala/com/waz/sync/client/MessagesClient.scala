@@ -19,7 +19,7 @@ package com.waz.sync.client
 
 import java.io.ByteArrayInputStream
 
-import com.google.protobuf.nano.MessageNano
+import com.google.protobuf.ByteString
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
@@ -28,7 +28,9 @@ import com.waz.sync.otr.OtrSyncHandler.OtrMessage
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
-import com.wire.messages.nano.Otr
+import com.wire.messages.Otr
+
+import com.waz.log.LogSE._
 
 trait MessagesClient {
   def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse]
@@ -37,7 +39,7 @@ trait MessagesClient {
 class MessagesClientImpl(implicit
                          urlCreator: UrlCreator,
                          httpClient: HttpClient,
-                         authRequestInterceptor: AuthRequestInterceptor) extends MessagesClient {
+                         authRequestInterceptor: AuthRequestInterceptor) extends MessagesClient with DerivedLogTag {
 
   import HttpClient.dsl._
   import HttpClient.AutoDerivationOld._
@@ -49,9 +51,9 @@ class MessagesClientImpl(implicit
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.PreconditionFailed)
       .withResultType[Response[ClientMismatch]]
       .withErrorType[ErrorResponse]
-      .executeSafe { case Response(code, _, body) =>
-        if (code == ResponseCode.PreconditionFailed) MessageResponse.Failure(body)
-        else MessageResponse.Success(body)
+      .executeSafe {
+        case Response(code, _, body) if code == ResponseCode.PreconditionFailed => MessageResponse.Failure(body)
+        case Response(_, _, body) => MessageResponse.Success(body)
       }
 }
 
@@ -63,14 +65,16 @@ object MessagesClient extends DerivedLogTag {
   }
 
   implicit val OtrMessageSerializer: RawBodySerializer[OtrMessage] = RawBodySerializer.create { m =>
-    val msg = new Otr.NewOtrMessage
-    msg.sender = OtrClient.clientId(m.sender)
-    msg.nativePush = m.nativePush
-    msg.recipients = m.recipients.userEntries
-    m.external foreach { msg.blob = _ }
-    m.report_missing.foreach(users => msg.reportMissing = users.map(OtrClient.userId).toArray)
+    import scala.collection.JavaConverters._
+    val builder = Otr.NewOtrMessage.newBuilder()
+    builder.setSender(OtrClient.clientId(m.sender))
+    builder.setNativePush(m.nativePush)
+    builder.addAllRecipients(m.recipients.userEntries.toIterable.asJava)
+    m.external.foreach { ext => builder.setBlob(ByteString.copyFrom(ext)) }
+    m.report_missing.foreach { missing => builder.addAllReportMissing(missing.map(OtrClient.userId).asJava) }
 
-    val bytes = MessageNano.toByteArray(msg)
+    val msg = builder.build()
+    val bytes = msg.toByteArray
     RawBody(mediaType = Some(MediaType.Protobuf), () => new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
   }
 

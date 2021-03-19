@@ -134,7 +134,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
       }
     }
 
-    msg.protos.lastOption match {
+    msg.genericMsgs.lastOption match {
       case Some(TextMessage(content, mentions, ps, quote, rr)) =>
         val previews = if (ps.isEmpty) createEmptyPreviews(content) else ps
 
@@ -145,9 +145,9 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
             case (_, p) => p
           }
 
-          val proto = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated, quote, rr))
+          val gm = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated, quote, rr))
 
-          updateIfNotEdited(msg, _.copy(protos = Seq(proto))) map { _ => if (errors.isEmpty) Right(proto) else Left(errors) }
+          updateIfNotEdited(msg, _.copy(genericMsgs = Seq(gm))) map { _ => if (errors.isEmpty) Right(gm) else Left(errors) }
         }
 
       case _ =>
@@ -163,7 +163,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
     }
 
     def uploadImage(imageFile: File): CancellableFuture[Asset2] = {
-      val content = ContentForUpload(s"open_graph_image_${prev.permanentUrl}", Content.File(Mime.Image.Jpg, imageFile))
+      val content = ContentForUpload(s"open_graph_image_${prev.proto.getPermanentUrl}", Content.File(Mime.Image.Jpg, imageFile))
       val encryption = AES_CBC_Encryption.random
       for {
         rawAsset <- assets.createAndSaveUploadAsset(content, encryption, public = false, retention, Some(messageId)).toCancellable
@@ -171,7 +171,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
       } yield asset
     }
 
-    if (prev.hasArticle) Future successful Right(None -> prev)
+    if (prev.proto.hasArticle) Future successful Right(None -> prev)
     else for {
       imageFile <- downloadImageFile
       imageAsset <- imageFile match {
@@ -185,7 +185,14 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
         val assetId = asset.map(_.id)
         val messagesAsset = asset.map(Asset.apply(_, None, expectsReadConfirmation = false))
         val permanentUri = meta.permanentUrl.map(url => URI.parse(url.toString))
-        val preview = LinkPreview(URI.parse(prev.url), prev.urlOffset, meta.title, meta.description, messagesAsset, permanentUri)
+        val preview = LinkPreview(
+          uri = URI.parse(prev.proto.getUrl),
+          offset = prev.proto.getUrlOffset,
+          title = meta.title,
+          summary = meta.description,
+          image = messagesAsset,
+          permanentUrl = permanentUri
+        )
 
         assetId -> preview
       }
