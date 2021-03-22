@@ -25,9 +25,8 @@ import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.model.sync._
 import com.waz.sync.queue.SyncJobMerger.{Merged, Unchanged, Updated}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{AggregatingSignal, DispatchQueue, EventStream, SerialDispatchQueue, Signal}
 import com.waz.utils._
-import com.wire.signals.{AggregatingSignal, EventStream, Signal}
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -53,11 +52,11 @@ trait SyncContentUpdater {
 class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with DerivedLogTag {
   import SyncContentUpdater._
 
-  private implicit val dispatcher = SerialDispatchQueue(name = "SyncContentUpdaterQueue")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "SyncContentUpdaterQueue")
 
   private val mergers = new mutable.HashMap[Any, SyncJobMerger]
 
-  val syncStorageFuture = db(SyncJobDao.list(_)).future map { jobs =>
+  private val syncStorageFuture = db(SyncJobDao.list(_)).future map { jobs =>
     // make sure no job is loaded with Syncing state, this could happen if app is killed while syncing
     jobs map { job =>
       if (job.state == SyncState.SYNCING) {
@@ -82,7 +81,7 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
         updateMerger(job, storage)
       }
 
-      storage.onUpdated { case (prev, updated) => updateMerger(updated, storage) }
+      storage.onUpdated { case (_, updated) => updateMerger(updated, storage) }
 
       storage.onRemoved { job =>
         mergers.get(job.mergeKey) foreach { merger =>
@@ -114,13 +113,13 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
 
   // XXX: this exposes internal SyncStorage instance which should never be used outside of our dispatch queue (as it is not thread safe)
   // We should use some kind of delegate here, which gets closed once body completes
-  override def syncStorage[A](body: SyncStorage => A) = syncStorageFuture map body
+  override def syncStorage[A](body: SyncStorage => A): Future[A] = syncStorageFuture map body
 
   /**
    * Adds new request, merges it to existing request or skips it if duplicate.
    * @return affected (new or updated) SyncJob
    */
-  override def addSyncJob(job: SyncJob, forceRetry: Boolean = false) = syncStorageFuture map { syncStorage =>
+  override def addSyncJob(job: SyncJob, forceRetry: Boolean = false): Future[SyncJob] = syncStorageFuture.map { syncStorage =>
 
     def onAdded(added: SyncJob) = {
       assert(added.id == job.id)
@@ -142,9 +141,9 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
     syncStorage.add(toSave)
   }
 
-  override def removeSyncJob(id: SyncId) = syncStorageFuture.map(_.remove(id))
+  override def removeSyncJob(id: SyncId): Future[Future[Any]] = syncStorageFuture.map(_.remove(id))
 
-  override def getSyncJob(id: SyncId) = {
+  override def getSyncJob(id: SyncId): Future[Option[SyncJob]] = {
     for {
       job     <- syncStorageFuture.map(_.get(id))
       updated <- job.fold(Future.successful(Option.empty[SyncJob])) { j =>
@@ -154,11 +153,11 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
     } yield updated
   }
 
-  override def listSyncJobs = syncStorageFuture.map(_.getJobs)
+  override def listSyncJobs: Future[Iterable[SyncJob]] = syncStorageFuture.map(_.getJobs)
 
-  override def updateSyncJob(id: SyncId)(updater: SyncJob => SyncJob) = syncStorageFuture.map(_.update(id)(updater))
+  override def updateSyncJob(id: SyncId)(updater: SyncJob => SyncJob): Future[Option[SyncJob]] = syncStorageFuture.map(_.update(id)(updater))
 
-  private def updateMerger(job: SyncJob, storage: SyncStorage) =
+  private def updateMerger(job: SyncJob, storage: SyncStorage): Unit =
     mergers.getOrElseUpdate(job.mergeKey, new SyncJobMerger(job.mergeKey, storage)).insert(job)
 
   private def merge(job: SyncJob, storage: SyncStorage) =
@@ -177,7 +176,7 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
 
 object SyncContentUpdater {
 
-  val StaleJobTimeout = 1.day
+  val StaleJobTimeout: FiniteDuration = 1.day
 
   sealed trait Cmd {
     val job: SyncJob
