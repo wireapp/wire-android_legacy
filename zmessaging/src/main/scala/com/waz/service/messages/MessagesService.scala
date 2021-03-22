@@ -311,7 +311,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
     updater.updateOrCreateLocalMessage(convId, Message.Type.RESTRICTED_FILE, update, create)
   }
 
-  override def addReceiptModeChangeMessage(convId: ConvId, from: UserId, receiptMode: Int) = {
+  override def addReceiptModeChangeMessage(convId: ConvId, from: UserId, receiptMode: Int): Future[Option[MessageData]] = {
     val msgType = if (receiptMode > 0) Message.Type.READ_RECEIPTS_ON else Message.Type.READ_RECEIPTS_OFF
     def create = MessageData(MessageId(), convId, msgType, from)
     updater.updateOrCreateLocalMessage(convId, msgType, msg => msg, create)

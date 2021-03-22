@@ -18,6 +18,7 @@
 package com.waz.service
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{ReadReceipt => GReadReceipt}
 import com.waz.model.{ReadReceipt => MReadReceipt}
 import com.waz.model.GenericContent._
@@ -92,7 +93,8 @@ class GenericMessageService(selfUserId: UserId,
           buttonConfirmations += msgId -> buttonId
         case dt: DataTransfer if from == selfUserId =>
           newTrackingIds += dt.unpack
-        case _ =>
+        case unknown =>
+          warn(l"An unknown event content is being processed: $unknown")
       }
     }
   }

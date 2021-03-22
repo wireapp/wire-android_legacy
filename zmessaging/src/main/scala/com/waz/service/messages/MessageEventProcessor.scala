@@ -22,7 +22,7 @@ import com.waz.api.Message.Type._
 import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
+import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, ReadReceipt => GReadReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.{GenericContent, _}
 import com.waz.service.{EventScheduler, GlobalModule}
 import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
@@ -123,7 +123,6 @@ class MessageEventProcessor(selfUserId:           UserId,
       case SessionReset(_, time, from, _) =>
         RichMessage(MessageData(id, conv.id, SESSION_RESET, from, time = time, localTime = event.localTime))
       case GenericMessageEvent(_, time, from, proto) =>
-        verbose(l"generic message event")
         val (uid, msgContent) = proto.unpack
         content(acc, MessageId(uid.str), conv.id, msgContent, from, event.localTime, time, conv.receiptMode.filter(_ => isGroup), downloadAsset, proto)
       case _: CallMessageEvent =>
@@ -167,7 +166,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     case _: MsgRecall                  => RichMessage.Empty
     case _: MsgEdit                    => RichMessage.Empty
     case _: DeliveryReceipt            => RichMessage.Empty
-    case _: ReadReceipt                => RichMessage.Empty
+    case _: GReadReceipt               => RichMessage.Empty
     case _: Calling                    => RichMessage.Empty
     case _: ButtonAction               => RichMessage.Empty
     case _: ButtonActionConfirmation   => RichMessage.Empty
