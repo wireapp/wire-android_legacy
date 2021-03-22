@@ -25,17 +25,17 @@ import com.waz.model.sync.SyncRequest.PostOpenGraphMeta
 import com.waz.model.{ConvId, MessageId, RemoteInstant, SyncId}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.queue.SyncContentUpdater.StaleJobTimeout
-import com.waz.sync.queue.SyncContentUpdaterImpl
+import com.waz.sync.queue.{SyncContentUpdater, SyncContentUpdaterImpl}
 import com.wire.signals.CancellableFuture
 import com.waz.utils.wrappers.DB
 
 class SyncContentUpdaterSpec extends AndroidFreeSpec {
-  val db = mock[Database]
+  private val db = mock[Database]
 
   scenario("Returning stale sync jobs") {
 
-    val staleJob = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), RemoteInstant(clock.instant())), priority = Priority.Low, timestamp = System.currentTimeMillis() - (StaleJobTimeout.toMillis + 100L))
-    val nonStaleJob = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), RemoteInstant(clock.instant())), priority = Priority.Low, timestamp = System.currentTimeMillis() - (StaleJobTimeout.toMillis - 100L))
+    val staleJob = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), RemoteInstant(clock.instant())), priority = Priority.Low, timestamp = System.currentTimeMillis() - (StaleJobTimeout.toMillis + 10000L))
+    val nonStaleJob = SyncJob(SyncId(), PostOpenGraphMeta(ConvId(), MessageId(), RemoteInstant(clock.instant())), priority = Priority.Low, timestamp = System.currentTimeMillis() - (StaleJobTimeout.toMillis - 10000L))
 
     val savedJobs = Vector(
       staleJob,
@@ -49,7 +49,7 @@ class SyncContentUpdaterSpec extends AndroidFreeSpec {
     result(updater.getSyncJob(nonStaleJob.id)) shouldEqual Some(nonStaleJob)
   }
 
-  def getUpdater = {
+  def getUpdater: SyncContentUpdater = {
     new SyncContentUpdaterImpl(db)
   }
 

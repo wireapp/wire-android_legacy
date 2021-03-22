@@ -19,6 +19,7 @@ package com.waz
 
 import com.google.protobuf.{CodedInputStream, MessageLite}
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Ephemeral, Unknown}
 import com.waz.utils.crypto.AESUtils
@@ -53,7 +54,7 @@ package object model {
     def apply(in: CodedInputStream): A
   }
 
-  final case class GenericMessage(proto: Messages.GenericMessage) {
+  final case class GenericMessage(proto: Messages.GenericMessage) extends DerivedLogTag {
     lazy val unpack: (Uid, GenericContent[_]) = (Uid(proto.getMessageId), content)
 
     def toByteArray: Array[Byte] = proto.toByteArray
@@ -83,14 +84,23 @@ package object model {
       case Messages.GenericMessage.REACTION_FIELD_NUMBER                 => GenericContent.Reaction(proto.getReaction)
       case Messages.GenericMessage.TEXT_FIELD_NUMBER                     => GenericContent.Text(proto.getText)
       case Messages.GenericMessage.LOCATION_FIELD_NUMBER                 => GenericContent.Location(proto.getLocation)
-      case Messages.GenericMessage.CONFIRMATION_FIELD_NUMBER             => GenericContent.DeliveryReceipt(proto.getConfirmation)
+      case Messages.GenericMessage.CONFIRMATION_FIELD_NUMBER             =>
+        proto.getConfirmation match {
+          case c if c.getType.getNumber == Messages.Confirmation.Type.DELIVERED_VALUE => GenericContent.DeliveryReceipt(c)
+          case c if c.getType.getNumber == Messages.Confirmation.Type.READ_VALUE      => GenericContent.ReadReceipt(c)
+          case unknown =>
+            warn(l"Unknown confirmation content: $unknown")
+            Unknown
+        }
       case Messages.GenericMessage.EPHEMERAL_FIELD_NUMBER                => GenericContent.Ephemeral(proto.getEphemeral)
       case Messages.GenericMessage.AVAILABILITY_FIELD_NUMBER             => GenericContent.AvailabilityStatus(proto.getAvailability)
       case Messages.GenericMessage.COMPOSITE_FIELD_NUMBER                => GenericContent.Composite(proto.getComposite)
       case Messages.GenericMessage.BUTTONACTION_FIELD_NUMBER             => GenericContent.ButtonAction(proto.getButtonAction)
       case Messages.GenericMessage.BUTTONACTIONCONFIRMATION_FIELD_NUMBER => GenericContent.ButtonActionConfirmation(proto.getButtonActionConfirmation)
       case Messages.GenericMessage.DATATRANSFER_FIELD_NUMBER             => GenericContent.DataTransfer(proto.getDataTransfer)
-      case _ => Unknown
+      case unknown =>
+        warn(l"Unknown content: $unknown")
+        Unknown
     }
   }
 
