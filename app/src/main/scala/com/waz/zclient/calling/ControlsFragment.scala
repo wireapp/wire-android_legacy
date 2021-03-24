@@ -31,8 +31,8 @@ import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, Contro
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{BuildConfig, FragmentHelper, MainActivity, R}
-import com.wire.signals.{Signal, Subscription}
+import com.waz.zclient.{FragmentHelper, MainActivity, R}
+import com.wire.signals.Subscription
 
 class ControlsFragment extends FragmentHelper {
 
@@ -93,7 +93,7 @@ class ControlsFragment extends FragmentHelper {
       }
     }
 
-    if (BuildConfig.ACTIVE_SPEAKERS) {
+    /* if (BuildConfig.ACTIVE_SPEAKERS) {
       Signal.zip(
         controller.isCallEstablished,
         controller.isGroupCall,
@@ -105,7 +105,7 @@ class ControlsFragment extends FragmentHelper {
         case _                               => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
       }
     }
-    else speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
+    else */ speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
   }
 
   override def onStart(): Unit = {
