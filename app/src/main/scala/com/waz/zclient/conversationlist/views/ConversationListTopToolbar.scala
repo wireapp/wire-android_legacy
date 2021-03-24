@@ -134,10 +134,9 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
   (for {
     selfUser        <- usersController.selfUser
     legalHoldActive <- inject[LegalHoldController].isLegalHoldActive(selfUser.id)
-  } yield (legalHoldActive)).onUi({ isActive =>
-    if (isActive) legalHoldIndicatorButton.setVisibility(View.VISIBLE)
-    else legalHoldIndicatorButton.setVisibility(View.INVISIBLE)
-  })
+  } yield legalHoldActive)
+    .map(if(_) View.VISIBLE else View.INVISIBLE)
+    .onUi(legalHoldIndicatorButton.setVisibility)
 
   def setIndicatorVisible(visible: Boolean): Unit = settingsIndicator.setVisible(visible)
 
