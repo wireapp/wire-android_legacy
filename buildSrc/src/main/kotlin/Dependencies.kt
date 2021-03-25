@@ -21,7 +21,7 @@ object Versions {
 
     //plugins
     const val ANDROID_GRADLE_PLUGIN = "3.2.1"
-    const val SCALA_BUILD_PLUGIN = "1.6"
+    const val SCALA_BUILD_PLUGIN = "2.0.1"
     const val GMS = "3.1.1"
     const val DETEKT = "1.2.2"
     const val JACOCO = "0.8.5"
