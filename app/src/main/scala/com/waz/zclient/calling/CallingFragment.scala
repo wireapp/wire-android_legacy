@@ -88,6 +88,10 @@ class CallingFragment extends FragmentHelper {
 
     videoGrid
 
+    controller.showTopSpeakers.onChanged { _ =>
+      clearVideoGrid()
+    }
+
     Signal.zip(
       controller.showTopSpeakers,
       controller.longTermActiveParticipantsWithVideo().map(_.size > 0),
