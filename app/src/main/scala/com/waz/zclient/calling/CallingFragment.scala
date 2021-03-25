@@ -244,18 +244,8 @@ class CallingFragment extends FragmentHelper {
       case (participant, _) => !videoUsers.contains(participant)
     }
 
-    val isSelfVideoEnabled = videoUsers.contains(selfParticipant)
-
-    viewMap.foreach { case (_, view) => view.setVisibility(View.VISIBLE) }
-
-    viewsToRemove.foreach {
-      case (participant, view) =>
-        if (participant == selfParticipant) {
-          if (isSelfVideoEnabled) view.setVisibility(View.VISIBLE) else view.setVisibility(View.INVISIBLE)
-        }
-        else grid.removeView(view)
-    }
-    viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) || participant == selfParticipant }
+    viewsToRemove.foreach { case (_, view) => grid.removeView(view) }
+    viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) }
   }
 
   def clearVideoGrid(): Unit = {
