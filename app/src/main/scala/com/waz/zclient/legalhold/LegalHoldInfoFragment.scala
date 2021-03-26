@@ -2,14 +2,11 @@ package com.waz.zclient.legalhold
 
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
-import androidx.annotation.StringRes
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.model.UserId
-import com.waz.utils.returning
-import com.waz.zclient.FragmentHelper
 import com.waz.zclient.pages.BaseFragment
-import com.waz.zclient.R
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.Signal
 
 class LegalHoldInfoFragment extends BaseFragment[LegalHoldInfoFragment.Container]()
@@ -32,11 +29,8 @@ class LegalHoldInfoFragment extends BaseFragment[LegalHoldInfoFragment.Container
     setUpRecyclerView()
   }
 
-  private def setMessage(): Unit = {
-    getIntArg(ARG_MESSAGE_RES).foreach { messageResId =>
-      infoMessageTextView.foreach(_.setText(messageResId))
-    }
-  }
+  private def setMessage(): Unit =
+      infoMessageTextView.foreach(_.setText(getContainer.legalHoldInfoMessage))
 
   private def setUpRecyclerView(): Unit = {
     subjectsRecyclerView.foreach { recyclerView =>
@@ -50,15 +44,10 @@ object LegalHoldInfoFragment {
 
   trait Container {
     val legalHoldUsers: Signal[Seq[UserId]]
+    val legalHoldInfoMessage: Int
   }
 
   private val MAX_PARTICIPANTS = 7
-  private val ARG_MESSAGE_RES = "LegalHoldInfoFragment_messageResId"
 
-  def newInstance(@StringRes messageResId: Int): LegalHoldInfoFragment =
-    returning(new LegalHoldInfoFragment()) { frag =>
-      val bundle = new Bundle()
-      bundle.putInt(ARG_MESSAGE_RES, messageResId)
-      frag.setArguments(bundle)
-    }
+  def newInstance() = new LegalHoldInfoFragment()
 }
