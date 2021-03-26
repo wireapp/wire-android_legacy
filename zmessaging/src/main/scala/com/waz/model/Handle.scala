@@ -38,7 +38,7 @@ object Handle extends (String => Handle){
   def apply(): Handle = Empty
   def random: Handle = Handle(UUID.randomUUID().toString)
   val handlePattern = """@(.+)""".r
-  def transliterated(s: String): String = Locales.transliteration.transliterate(s).trim
+  def transliterated(s: String): String = Locales.transliterate(s)
 
   def isHandle(input: String): Boolean = input.startsWith("@")
 

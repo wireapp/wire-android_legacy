@@ -66,9 +66,11 @@ object Locales extends DerivedLogTag {
 
   def transliteration(id: String) = Transliteration.chooseImplementation(id)
 
-  //fixme: possibly unstable dependency due to reflection
-  def indexing(locale: Locale = currentLocale): Indexing = Try(Class.forName("libcore.icu.AlphabeticIndex")).flatMap(
-    _ => Try(LibcoreIndexing.create(locale))).getOrElse(FallbackIndexing.instance)
+  def transliterate(str: String): String =
+    if(utils.isTest) str
+    else transliteration.transliterate(str).trim
+
+  def indexing(locale: Locale = currentLocale): Indexing = FallbackIndexing.instance
 }
 
 object CollationKeyComparator extends Comparator[(Int, CollationKey)] {
@@ -96,19 +98,8 @@ trait Transliteration {
 object Transliteration extends DerivedLogTag {
   private val id = "Any-Latin; Latin-ASCII; Lower; [^\\ 0-9a-z] Remove"
   def chooseImplementation(id: String = id): Transliteration = {
-    //fixme: unstable dependency: on API >=24, this fallbacks to ICU4j, o/w uses libcore via reflection
     verbose(l"chooseImplementation: ${showString(id)}")
-    if (!utils.isTest && Try(Class.forName("libcore.icu.Transliterator")).isSuccess) LibcoreTransliteration.create(id)
-    else ICU4JTransliteration.create(id)
-  }
-}
-
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-object LibcoreTransliteration {
-  def create(id: String)(implicit logTag: LogTag): Transliteration = new Transliteration {
-    debug(l"using libcore transliteration")(logTag)
-    private val delegate = new libcore.icu.Transliterator(id)
-    def transliterate(s: String): String = delegate.transliterate(s)
+    ICU4JTransliteration.create(id)
   }
 }
 
@@ -122,25 +113,6 @@ object ICU4JTransliteration {
 
 trait Indexing {
   def labelFor(s: String): String
-}
-
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-object LibcoreIndexing {
-  def create(locale: Locale)(implicit logTag: LogTag): Indexing = new Indexing {
-
-    private val delegate = new libcore.icu.AlphabeticIndex(locale).getImmutableIndex
-
-    verbose(l"using libcore indexing for locale $locale; buckets: ${delegate.getBucketCount}")
-
-    override def labelFor(s: String): String = {
-      val index = delegate.getBucketIndex(s)
-      if (index == -1) "#"
-      else {
-        val label = delegate.getBucketLabel(index)
-        if (label.isEmpty) "#" else label
-      }
-    }
-  }
 }
 
 object FallbackIndexing extends DerivedLogTag {
@@ -173,7 +145,7 @@ object FallbackIndexing extends DerivedLogTag {
         if (Character.isDigit(c)) "#"
         else if (c >= 'A' && c <= 'Z') String.valueOf(c.toChar)
         else if (c >= 'a' && c <= 'z') String.valueOf((c - 32).toChar)
-        else if (isProbablyLatin(c)) labelFor(Locales.transliteration.transliterate(s.substring(0, Character.charCount(c))))
+        else if (isProbablyLatin(c)) labelFor(Locales.transliterate(s.substring(0, Character.charCount(c))))
         else "#"
       }
     }

@@ -138,7 +138,7 @@ case class UserData(override val id:       UserId,
 
   def matchesQuery(query: Option[SearchKey] = None, handleOnly: Boolean = false): Boolean = query match {
     case Some(q) =>
-      this.handle.map(_.string).contains(q.asciiRepresentation) || (!handleOnly && q.isAtTheStartOfAnyWordIn(this.searchKey))
+      this.handle.map(_.string).contains(q.asciiRepresentation.toLowerCase) || (!handleOnly && q.isAtTheStartOfAnyWordIn(this.searchKey))
     case _ => true
   }
 }
@@ -173,6 +173,7 @@ object UserData {
 
   // used for testing only
   def apply(name: String): UserData = UserData(UserId(name), name = Name(name), searchKey = SearchKey.simple(name))
+  def withName(id: UserId, name: String): UserData = UserData(id, None, Name(name), None, None, searchKey = SearchKey.simple(name), handle = None)
 
   def apply(id: UserId, name: String): UserData = UserData(id, None, Name(name), None, None, searchKey = SearchKey(name), handle = None)
 

@@ -24,13 +24,11 @@ import com.waz.content.MsgCursor
 import com.waz.model.{otr => _, _}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, FlatMapSignal, Signal, Subscription}
+import com.wire.signals.{EventContext, Signal, Subscription}
 import com.waz.utils.{CachedStorageImpl, Cleanup, Managed, returning}
-import libcore.net.MimeUtils
 import org.scalactic.Equality
 import org.scalatest.enablers.Emptiness
 
-import scala.collection.JavaConverters._
 import scala.language.implicitConversions
 import scala.util.Random
 
@@ -131,8 +129,6 @@ package object testutils {
       }
     }
   }
-
-  lazy val knownMimeTypes = returning(classOf[MimeUtils].getDeclaredField("mimeTypeToExtensionMap"))(_.setAccessible(true)).get(null).asInstanceOf[java.util.Map[String, String]].asScala.keys.toVector.map(Mime(_))
 
   def withParcel[A](f: Parcel => A): A = Managed(Parcel.obtain).acquire(f)
   implicit lazy val ParcelCleanup: Cleanup[Parcel] = new Cleanup[Parcel] { def apply(a: Parcel): Unit = a.recycle() }

@@ -69,7 +69,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val selfUserId      = UserId("self-user")
   val selfClientId    = ClientId("selfClient")
   val selfParticipant = Participant(selfUserId, selfClientId)
-  val selfUserData    = UserData(selfUserId, "")
+  val selfUserData    = UserData.withName(selfUserId, "")
 
   // For one to one
   val otherUserId       = UserId("otherUser")

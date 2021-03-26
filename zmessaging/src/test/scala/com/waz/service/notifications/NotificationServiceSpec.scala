@@ -56,7 +56,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   private def lastEventTime = RemoteInstant.apply(clock.instant())
 
-  private val self       = UserData(account1Id, "")
+  private val self       = UserData.withName(account1Id, "")
   private val beDrift    = Signal(Duration.ZERO)
   private val rConvId    = RConvId("r-conv")
   private val convId     = ConvId("conv")

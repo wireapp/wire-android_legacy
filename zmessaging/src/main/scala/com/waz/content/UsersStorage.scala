@@ -70,5 +70,6 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase)
   override def findUsersForService(id: IntegrationId) =
     find(_.integrationId.contains(id), UserDataDao.findService(id)(_), identity).map(_.toSet)
 
-  override def searchByTeam(team: TeamId, prefix: SearchKey, handleOnly: Boolean) = storage(UserDataDao.search(prefix, handleOnly, Some(team))(_)).future
+  override def searchByTeam(team: TeamId, prefix: SearchKey, handleOnly: Boolean): Future[Set[UserData]] =
+    storage(UserDataDao.search(prefix, handleOnly, Some(team))(_)).future
 }
