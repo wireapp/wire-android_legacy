@@ -32,12 +32,11 @@ class LegalHoldInfoFragment extends BaseFragment[LegalHoldInfoFragment.Container
   private def setMessage(): Unit =
       infoMessageTextView.foreach(_.setText(getContainer.legalHoldInfoMessage))
 
-  private def setUpRecyclerView(): Unit = {
+  private def setUpRecyclerView(): Unit =
     subjectsRecyclerView.foreach { recyclerView =>
       recyclerView.setLayoutManager(new LinearLayoutManager(getContext))
       recyclerView.setAdapter(adapter)
     }
-  }
 }
 
 object LegalHoldInfoFragment {

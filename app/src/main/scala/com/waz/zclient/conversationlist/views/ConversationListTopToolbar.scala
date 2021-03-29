@@ -105,11 +105,7 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
   private val settingsIndicator = findById[CircleView](R.id.conversation_list_settings_indicator)
 
   private val legalHoldIndicatorButton = returning(findById[ImageButton](R.id.conversation_list_toolbar_image_button_legal_hold)) { button =>
-    button.setOnClickListener(new OnClickListener {
-      override def onClick(v: View): Unit = {
-        legalHoldIndicatorClick ! Unit
-      }
-    })
+    button.onClick { legalHoldIndicatorClick ! (()) }
   }
 
   val legalHoldIndicatorClick: SourceStream[Unit] = EventStream[Unit]()

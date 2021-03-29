@@ -27,13 +27,12 @@ class SelfUserLegalHoldInfoActivity extends BaseActivity with LegalHoldInfoFragm
 
   private def setUpCloseButton(): Unit = closeButton.onClick { finish() }
 
-  private def showLegalHoldInfo(): Unit = {
+  private def showLegalHoldInfo(): Unit = 
     getSupportFragmentManager.beginTransaction()
       .replace(
         R.id.legal_hold_info_fragment_container_layout,
         LegalHoldInfoFragment.newInstance()
       ).commit()
-  }
 
   override def finish(): Unit = {
     super.finish()
