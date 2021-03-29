@@ -25,7 +25,7 @@ import android.widget.{FrameLayout, ImageButton, ImageView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Availability, UserData}
 import com.waz.service.teams.TeamsService
-import com.wire.signals.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal, SourceStream}
 import com.waz.utils.{NameParts, returning}
 import com.waz.zclient.common.drawables.TeamIconDrawable
 import com.waz.zclient.common.views.GlyphButton
@@ -104,7 +104,11 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
 
   private val settingsIndicator = findById[CircleView](R.id.conversation_list_settings_indicator)
 
-  private val legalHoldIndicatorButton = findById[ImageButton](R.id.conversation_list_toolbar_image_button_legal_hold)
+  private val legalHoldIndicatorButton = returning(findById[ImageButton](R.id.conversation_list_toolbar_image_button_legal_hold)) { button =>
+    button.onClick { legalHoldIndicatorClick ! (()) }
+  }
+
+  val legalHoldIndicatorClick: SourceStream[Unit] = EventStream[Unit]()
 
   separatorDrawable.setDuration(0)
   separatorDrawable.setMinMax(0.0f, 1.0f)
@@ -126,10 +130,9 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
   (for {
     selfUser        <- usersController.selfUser
     legalHoldActive <- inject[LegalHoldController].isLegalHoldActive(selfUser.id)
-  } yield (legalHoldActive)).onUi({ isActive =>
-    if (isActive) legalHoldIndicatorButton.setVisibility(View.VISIBLE)
-    else legalHoldIndicatorButton.setVisibility(View.INVISIBLE)
-  })
+  } yield legalHoldActive)
+    .map(if(_) View.VISIBLE else View.INVISIBLE)
+    .onUi(legalHoldIndicatorButton.setVisibility)
 
   def setIndicatorVisible(visible: Boolean): Unit = settingsIndicator.setVisible(visible)
 
