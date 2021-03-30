@@ -1,6 +1,7 @@
 package com.waz.model
 
 import com.waz.model.LegalHoldRequest._
+import com.waz.model.otr.ClientId
 import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder}
@@ -29,7 +30,7 @@ class LegalHoldRequestSpec extends AndroidFreeSpec {
       val legalHoldRequest: LegalHoldRequest = JsonDecoder.decode[LegalHoldRequest](json)
 
       // Then
-      legalHoldRequest.client.id shouldEqual "123"
+      legalHoldRequest.clientId.str shouldEqual "123"
       legalHoldRequest.lastPreKey.id shouldEqual 456
       legalHoldRequest.lastPreKey.data shouldEqual AESUtils.base64("oENwaFy74nagzFBlqn9nOQ==")
     }
@@ -37,7 +38,7 @@ class LegalHoldRequestSpec extends AndroidFreeSpec {
     scenario("to JSON") {
       // Given
       val legalHoldRequest = LegalHoldRequest(
-        Client("123"),
+        ClientId("123"),
         new PreKey(456, AESUtils.base64("oENwaFy74nagzFBlqn9nOQ=="))
       )
 

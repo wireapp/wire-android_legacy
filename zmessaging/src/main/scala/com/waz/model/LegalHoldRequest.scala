@@ -17,41 +17,37 @@
  */
 package com.waz.model
 
-import com.waz.model.LegalHoldRequest.Client
-import com.waz.model.otr.PreKeyEncoder
+import com.waz.model.otr.{ClientId, PreKeyEncoder}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.wire.cryptobox.PreKey
 import org.json.JSONObject
 
-final case class LegalHoldRequest(client: Client, lastPreKey: PreKey)
+final case class LegalHoldRequest(clientId: ClientId, lastPreKey: PreKey)
 
 object LegalHoldRequest {
-
-  final case class Client(id: String)
 
   implicit object Decoder extends JsonDecoder[LegalHoldRequest] {
 
     override def apply(implicit json: JSONObject): LegalHoldRequest =
       LegalHoldRequest(
-        client = decodeClient(json.getJSONObject("client")),
+        clientId = decodeClient(json.getJSONObject("client")),
         lastPreKey = otr.PreKeyDecoder(json.getJSONObject("last_prekey"))
       )
 
-    private def decodeClient(implicit json: JSONObject): Client =
-      Client(json.getString("id"))
-
+    private def decodeClient(implicit json: JSONObject): ClientId =
+      ClientId(json.getString("id"))
   }
 
 
   implicit object Encoder extends JsonEncoder[LegalHoldRequest] {
 
     override def apply(request: LegalHoldRequest): JSONObject = JsonEncoder { json =>
-      json.put("client", encodeClient(request.client))
+      json.put("client", encodeClient(request.clientId))
       json.put("last_prekey", JsonEncoder.encode(request.lastPreKey)(PreKeyEncoder))
     }
 
-    private def encodeClient(client: Client): JSONObject = JsonEncoder { json =>
-      json.put("id", client.id)
+    private def encodeClient(client: ClientId): JSONObject = JsonEncoder { json =>
+      json.put("id", client.str)
     }
   }
 }
