@@ -21,7 +21,7 @@ class LegalHoldRequestSpec extends AndroidFreeSpec {
           |    "key": "abc"
           |  }
           |}
-          |""".stripMargin
+          |""".stripMargin.replaceAll("\\s", "")
 
       // When
       val legalHoldRequest: LegalHoldRequest = JsonDecoder.decode[LegalHoldRequest](json)
@@ -51,7 +51,7 @@ class LegalHoldRequestSpec extends AndroidFreeSpec {
           |    "key": "abc"
           |  }
           |}
-          |""".stripMargin
+          |""".stripMargin.replaceAll("\\s", "")
     }
   }
 }
