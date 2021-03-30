@@ -1,8 +1,10 @@
 package com.waz.model
 
-import com.waz.model.LegalHoldRequest.{Client, Prekey}
+import com.waz.model.LegalHoldRequest._
 import com.waz.specs.AndroidFreeSpec
+import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.wire.cryptobox.PreKey
 
 class LegalHoldRequestSpec extends AndroidFreeSpec {
 
@@ -18,7 +20,7 @@ class LegalHoldRequestSpec extends AndroidFreeSpec {
           |  },
           |  "last_prekey": {
           |    "id": 456,
-          |    "key": "abc"
+          |    "key": "oENwaFy74nagzFBlqn9nOQ=="
           |  }
           |}
           |""".stripMargin.replaceAll("\\s", "")
@@ -28,13 +30,16 @@ class LegalHoldRequestSpec extends AndroidFreeSpec {
 
       // Then
       legalHoldRequest.client.id shouldEqual "123"
-      legalHoldRequest.lastPrekey.id shouldEqual 456
-      legalHoldRequest.lastPrekey.key shouldEqual "abc"
+      legalHoldRequest.lastPreKey.id shouldEqual 456
+      legalHoldRequest.lastPreKey.data shouldEqual AESUtils.base64("oENwaFy74nagzFBlqn9nOQ==")
     }
 
     scenario("to JSON") {
       // Given
-      val legalHoldRequest = LegalHoldRequest(Client("123"), Prekey(456, "abc"))
+      val legalHoldRequest = LegalHoldRequest(
+        Client("123"),
+        new PreKey(456, AESUtils.base64("oENwaFy74nagzFBlqn9nOQ=="))
+      )
 
       // When
       val json = JsonEncoder.encode[LegalHoldRequest](legalHoldRequest)
@@ -48,7 +53,7 @@ class LegalHoldRequestSpec extends AndroidFreeSpec {
           |  },
           |  "last_prekey": {
           |    "id": 456,
-          |    "key": "abc"
+          |    "key": "oENwaFy74nagzFBlqn9nOQ=="
           |  }
           |}
           |""".stripMargin.replaceAll("\\s", "")
