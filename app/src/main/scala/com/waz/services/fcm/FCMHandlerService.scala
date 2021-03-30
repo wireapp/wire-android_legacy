@@ -23,6 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InForeground
 import com.waz.service._
+import com.waz.service.push.PushService.{FetchFromIdle, SyncHistory}
 import com.waz.service.push._
 import com.waz.services.ZMessagingService
 import com.waz.services.fcm.FCMHandlerService._
@@ -31,7 +32,7 @@ import com.waz.utils.JsonDecoder
 import com.waz.zclient.WireApplication
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security._
-import com.wire.signals.{CancellableFuture, Serialized}
+import com.wire.signals.CancellableFuture
 import org.json
 import org.threeten.bp.Instant
 
@@ -155,7 +156,7 @@ object FCMHandlerService {
           * online at once. For that reason, we start a job which can run for as long as we need to avoid the app from being
           * killed mid-processing messages.
           */
-          _ <- Serialized.future("fetch")(Future(FetchJob(userId, nId)))
+          _ <- push.syncNotifications(SyncHistory(FetchFromIdle(nId)))
       } yield {}
   }
 
