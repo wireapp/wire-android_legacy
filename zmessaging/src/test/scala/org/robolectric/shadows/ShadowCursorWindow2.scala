@@ -33,8 +33,8 @@ import scala.collection.JavaConverters._
 
   @Implementation def nativeCreate(name: String, cursorWindowSize: Int): Int = {
     val ptr = ShadowCursorWindow.nativeCreate(name, cursorWindowSize)
-    if (trackWindows) stacks.put(ptr, Thread.currentThread.getStackTrace)
-    ptr
+    if (trackWindows) stacks.put(ptr.toInt, Thread.currentThread.getStackTrace)
+    ptr.toInt
   }
 
   @Implementation def nativeDispose(windowPtr: Int): Unit = {

@@ -25,7 +25,7 @@ import org.robolectric.annotation.{Implementation, Implements}
 
   @Implementation
   def nativePrepareStatement(connectionPtr: Int, sql: String): Int =
-    ShadowSQLiteConnection.nativePrepareStatement(connectionPtr, collatePattern.matcher(sql).replaceAll(" COLLATE NOCASE"))
+    ShadowSQLiteConnection.nativePrepareStatement(connectionPtr, collatePattern.matcher(sql).replaceAll(" COLLATE NOCASE")).toInt
 }
 
 @Implements(classOf[SQLiteConnection]) class ShadowSQLiteConnection2 extends ShadowSQLiteConnection

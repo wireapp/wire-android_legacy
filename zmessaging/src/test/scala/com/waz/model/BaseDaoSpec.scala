@@ -22,11 +22,13 @@ import java.util.UUID.randomUUID
 import com.waz.db.{BaseDao, Dao, DaoDB, Table}
 import com.waz.utils.wrappers.{DB, DBCursor}
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FeatureSpec, Matchers, RobolectricTests}
 
 @RunWith(classOf[JUnitRunner])
+@Config(sdk=Array(21))
 class BaseDaoSpec extends FeatureSpec with Matchers with RobolectricTests {
 
   case class TestModel(id: Uid)
@@ -42,7 +44,7 @@ class BaseDaoSpec extends FeatureSpec with Matchers with RobolectricTests {
   def dummyData(size: Int): Seq[TestModel] = (0 until size).map(_ => TestModel(Uid()))
 
   def withDB(f: DB => Unit): Unit = {
-    val dbHelper = new DaoDB(Robolectric.application, s"testDB-$randomUUID", 1, List(TestDao), List.empty)
+    val dbHelper = new DaoDB(RuntimeEnvironment.application, s"testDB-$randomUUID", 1, List(TestDao), List.empty)
     try f(dbHelper.getWritableDatabase) finally dbHelper.close()
   }
 

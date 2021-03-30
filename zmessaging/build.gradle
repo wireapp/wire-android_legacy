@@ -105,7 +105,7 @@ dependencies {
     }
     testImplementation "org.scalamock:scalamock_${LegacyDependencies.SCALA_MAJOR_VERSION}:4.1.0"
     testImplementation "org.scalacheck:scalacheck_${LegacyDependencies.SCALA_MAJOR_VERSION}:1.14.0"
-    testImplementation("com.wire:robotest_${LegacyDependencies.SCALA_MAJOR_VERSION}:0.7") {
+    testImplementation("com.wire:robotest_${LegacyDependencies.SCALA_MAJOR_VERSION}:1.0.1") {
         exclude(group: "org.scalatest", module: "scalatest")
     }
     testImplementation TestDependencies.robolectric
