@@ -30,7 +30,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.push.WSPushService
 import com.waz.service.{AccountsService, GlobalModule, NetworkModeService}
+import com.waz.services.websocket.WebSocketService.ForegroundNotificationChannelId
 import com.waz.threading.Threading
+import com.waz.utils.returning
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient._
 import com.waz.zclient.log.LogUI._
@@ -193,11 +195,25 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
     webSocketActiveSubscription
     appInForegroundSubscription
     notificationBuilder
+    createNotificationChannel
   }
+
+  private lazy val createNotificationChannel: Unit =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      val notificationManager = inject[NotificationManager]
+      notificationManager.createNotificationChannel(
+        returning(new NotificationChannel(ForegroundNotificationChannelId, getString(R.string.foreground_service_notification_name), NotificationManager.IMPORTANCE_LOW)) { ch =>
+          ch.setDescription(getString(R.string.foreground_service_notification_description))
+          ch.enableVibration(false)
+          ch.setShowBadge(false)
+          ch.setSound(null, null)
+        })
+    }
 }
 
 object WebSocketService {
   val ForegroundId = 41235
+  val ForegroundNotificationChannelId = "FOREGROUND_NOTIFICATION_CHANNEL_ID"
 
   def apply(context: Context): ComponentName = context.startService(new Intent(context, classOf[WebSocketService]))
 }
