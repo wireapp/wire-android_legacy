@@ -6,6 +6,7 @@ import LegalHoldService._
 import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent}
 import com.waz.model.otr.ClientId
 import com.waz.service.EventScheduler.{Sequential, Stage}
+import com.waz.sync.handler.LegalHoldSyncHandler
 import com.waz.utils.JsonEncoder
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
@@ -17,12 +18,13 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   import LegalHoldServiceSpec._
 
   private val storage = mock[PropertiesStorage]
+  private val syncHandler = mock[LegalHoldSyncHandler]
 
   feature("Fetch the legal hold request") {
 
     scenario("legal hold request exists") {
       // Given
-      val service = new LegalHoldServiceImpl(storage)
+      val service = new LegalHoldServiceImpl(storage, syncHandler)
       val value = JsonEncoder.encode[LegalHoldRequest](legalHoldRequest).toString
 
       (storage.find _)
@@ -42,7 +44,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("legal hold request does not exist") {
       // Given
-      val service = new LegalHoldServiceImpl(storage)
+      val service = new LegalHoldServiceImpl(storage, syncHandler)
 
       (storage.find _)
         .expects(LegalHoldRequestKey)
@@ -61,7 +63,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it processes the legal hold request event") {
       // Given
-      val service = new LegalHoldServiceImpl(storage)
+      val service = new LegalHoldServiceImpl(storage, syncHandler)
       val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
       val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
       val event = LegalHoldRequestEvent(legalHoldRequest)
