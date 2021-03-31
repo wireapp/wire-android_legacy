@@ -29,10 +29,10 @@ trait LegalHoldClient {
                             userId: UserId): ErrorOrResponse[Option[LegalHoldRequest]]
 }
 
-class LegalHoldRequestClientImpl(implicit
-                                 urlCreator: UrlCreator,
-                                 httpClient: HttpClient,
-                                 authRequestInterceptor: AuthRequestInterceptor) extends LegalHoldClient {
+class LegalHoldClientImpl(implicit
+                          urlCreator: UrlCreator,
+                          httpClient: HttpClient,
+                          authRequestInterceptor: AuthRequestInterceptor) extends LegalHoldClient {
   import LegalHoldClient._
   import HttpClient.dsl._
   import HttpClient.AutoDerivationOld._
