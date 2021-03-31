@@ -33,7 +33,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .returning(Future.successful(Some(PropertyValue(LegalHoldRequestKey, value))))
 
       // When
-      val fetchedResult = result(service.fetchLegalHoldRequest)
+      val fetchedResult = result(service.fetchLegalHoldRequest())
 
       // Then
       fetchedResult shouldBe defined
@@ -52,7 +52,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .returning(Future.successful(None))
 
       // When
-      val fetchedResult = result(service.fetchLegalHoldRequest)
+      val fetchedResult = result(service.fetchLegalHoldRequest())
 
       // Then
       fetchedResult shouldEqual None
