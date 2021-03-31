@@ -52,6 +52,7 @@ trait SyncServiceHandle {
   def syncConnections(dependsOn: Option[SyncId] = None): Future[SyncId]
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId]
   def syncFolders(): Future[SyncId]
+  def syncLegalHoldRequest(): Future[SyncId]
 
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncId]
   def postRemoveBot(cId: ConvId, botId: UserId): Future[SyncId]
@@ -154,6 +155,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncConnections(dependsOn: Option[SyncId]) = addRequest(SyncConnections, dependsOn = dependsOn.toSeq)
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority) = addRequest(SyncRichMedia(id), priority = priority)
   def syncFolders(): Future[SyncId] = addRequest(SyncFolders)
+  def syncLegalHoldRequest(): Future[SyncId] = addRequest(SyncLegalHoldRequest)
 
   def postSelfUser(info: UserInfo) = addRequest(PostSelf(info))
   def postSelfPicture(picture: UploadAssetId) = addRequest(PostSelfPicture(picture))
@@ -222,8 +224,9 @@ class AndroidSyncServiceHandle(account:         UserId,
       userIds <- usersStorage.list().map(_.map(_.id).toSet)
       id8     <- syncUsers(userIds)
       id9     <- syncFolders()
+      id10    <- syncLegalHoldRequest()
       _       =  verbose(l"waiting for full sync to finish...")
-      _       <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8, id9))
+      _       <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8, id9, id10))
       _       =  verbose(l"... and done")
     } yield ()
   }
@@ -314,6 +317,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostFolders                                     => zms.foldersSyncHandler.postFolders()
           case SyncFolders                                     => zms.foldersSyncHandler.syncFolders()
           case PostTrackingId(trackingId)                      => zms.trackingSync.postNewTrackingId(trackingId)
+          case SyncLegalHoldRequest                            => zms.legalHold.syncLegalHoldRequest()
           case Unknown                                         => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))

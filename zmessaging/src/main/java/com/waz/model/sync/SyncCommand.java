@@ -77,6 +77,7 @@ public enum SyncCommand {
     PostStringProperty("post-string-property"),
     PostFolders("post-folders-favorites"),
     SyncFolders("sync-folders"),
+    SyncLegalHoldRequest("sync-legal-hold-request"),
     DeleteGroupConv("delete-group-conv"),
     PostTrackingId("post-tracking-id"),
 
