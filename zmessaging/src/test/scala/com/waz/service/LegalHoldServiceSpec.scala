@@ -59,7 +59,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   feature("Legal hold event processing") {
 
-    scenario("if processes the legal hold request event") {
+    scenario("it processes the legal hold request event") {
       // Given
       val service = new LegalHoldServiceImpl(storage)
       val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
