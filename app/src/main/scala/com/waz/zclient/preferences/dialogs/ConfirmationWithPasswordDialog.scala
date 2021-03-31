@@ -22,14 +22,14 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
 
   val onAccept = EventStream[Option[Password]]()
 
-  private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.remove_otr_device_dialog, null)
+  private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.confirmation_with_password_dialog, null)
 
   private def providePassword(password: Option[Password]): Unit = {
     onAccept ! password
     dismiss() // if the password is wrong a new dialog will appear
   }
 
-  private lazy val passwordEditText = returning(findById[EditText](root, R.id.acet__remove_otr__password)) { v =>
+  private lazy val passwordEditText = returning(findById[EditText](root, R.id.confirmation_with_password_edit_text)) { v =>
     v.setOnEditorActionListener(new TextView.OnEditorActionListener() {
       def onEditorAction(v: TextView, actionId: Int, event: KeyEvent) =
         actionId match {
@@ -41,9 +41,9 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
     })
   }
 
-  private lazy val textInputLayout = findById[TextInputLayout](root, R.id.til__remove_otr_device)
+  private lazy val textInputLayout = findById[TextInputLayout](root, R.id.confirmation_with_password_text_input_layout)
 
-  private lazy val forgotPasswordButton = returning(findById[TextView](root, R.id.device_forgot_password)) {
+  private lazy val forgotPasswordButton = returning(findById[TextView](root, R.id.confirmation_with_password_forgot_password_button)) {
     _.onClick(inject[BrowserController].openForgotPassword())
   }
 
@@ -56,7 +56,7 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
     if(isSSO){
-      findById[View](root, R.id.remove_otr_device_scrollview).setVisible(false)
+      findById[View](root, R.id.confirmation_with_password_scrollview).setVisible(false)
     }
     passwordEditText.setVisible(!isSSO)
     textInputLayout.setVisible(!isSSO)
