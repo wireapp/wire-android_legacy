@@ -81,31 +81,37 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       withChildFragment(R.id.fl__participant__overlay)(getChildFragmentManager.beginTransaction.remove(_).commit)
     }
 
+  private def pageToOpen = getStringArg(PageToOpenArg) match {
+    case Some(GuestOptionsFragment.Tag) =>
+      Future.successful((new GuestOptionsFragment, GuestOptionsFragment.Tag))
+    case Some(SingleParticipantFragment.DevicesTab.str) =>
+      Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.DevicesTab.str)), SingleParticipantFragment.Tag))
+    case _ =>
+      participantsController.isGroupOrBot.head.map {
+        case true if getStringArg(UserToOpenArg).isEmpty =>
+          (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
+        case _ =>
+          (SingleParticipantFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg)), SingleParticipantFragment.Tag)
+      }
+  }
+
   override def onViewCreated(view: View, @Nullable savedInstanceState: Bundle): Unit = {
     verbose(l"onViewCreated.")
 
     withChildFragmentOpt(R.id.fl__participant__container) {
-      case Some(_) => //no action to take, view was already set
+      case Some(_) => // the view is already set, only replace the content
+        pageToOpen.foreach { case (f, tag) =>
+          getChildFragmentManager.beginTransaction
+            .replace(R.id.fl__participant__container, f, tag)
+            .commit
+        }
       case _ =>
-        (getStringArg(PageToOpenArg) match {
-          case Some(GuestOptionsFragment.Tag) =>
-            Future.successful((new GuestOptionsFragment, GuestOptionsFragment.Tag))
-          case Some(SingleParticipantFragment.DevicesTab.str) =>
-            Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.DevicesTab.str)), SingleParticipantFragment.Tag))
-          case _ =>
-            participantsController.isGroupOrBot.head.map {
-              case true if getStringArg(UserToOpenArg).isEmpty =>
-                (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
-              case _ =>
-                (SingleParticipantFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg)), SingleParticipantFragment.Tag)
-            }
-        }).map {
-          case (f, tag) =>
-            getChildFragmentManager.beginTransaction
-              .replace(R.id.fl__participant__header__container, headerFragment, ParticipantHeaderFragment.TAG)
-              .replace(R.id.fl__participant__container, f, tag)
-              .addToBackStack(tag)
-              .commit
+        pageToOpen.foreach { case (f, tag) =>
+          getChildFragmentManager.beginTransaction
+            .replace(R.id.fl__participant__header__container, headerFragment, ParticipantHeaderFragment.TAG)
+            .replace(R.id.fl__participant__container, f, tag)
+            .addToBackStack(tag)
+            .commit
         }
     }
 
