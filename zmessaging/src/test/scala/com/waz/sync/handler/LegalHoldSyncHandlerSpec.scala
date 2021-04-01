@@ -51,7 +51,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
     (client.fetchLegalHoldRequest _)
       .expects(TeamId("team1"), UserId("user1"))
       .once()
-      .returning(CancellableFuture.successful(Left(error))
+      .returning(CancellableFuture.successful(Left(error)))
 
     // When
     val actualResult = result(syncHandler.fetchLegalHoldRequest())
