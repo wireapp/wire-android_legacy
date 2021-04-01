@@ -3,7 +3,7 @@ package com.waz.service
 import com.waz.content.{PropertiesStorage, PropertyValue}
 import com.waz.specs.AndroidFreeSpec
 import LegalHoldService._
-import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent}
+import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, UserId}
 import com.waz.model.otr.ClientId
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.utils.JsonEncoder
@@ -16,13 +16,14 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   import LegalHoldServiceSpec._
 
+  private val selfUserId = UserId("selfUserId")
   private val storage = mock[PropertiesStorage]
 
   feature("Fetch the legal hold request") {
 
     scenario("legal hold request exists") {
       // Given
-      val service = new LegalHoldServiceImpl(storage)
+      val service = new LegalHoldServiceImpl(selfUserId, storage)
       val value = JsonEncoder.encode[LegalHoldRequest](legalHoldRequest).toString
 
       (storage.find _)
@@ -42,7 +43,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("legal hold request does not exist") {
       // Given
-      val service = new LegalHoldServiceImpl(storage)
+      val service = new LegalHoldServiceImpl(selfUserId, storage)
 
       (storage.find _)
         .expects(LegalHoldRequestKey)
@@ -61,16 +62,32 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it processes the legal hold request event") {
       // Given
-      val service = new LegalHoldServiceImpl(storage)
+      val service = new LegalHoldServiceImpl(selfUserId, storage)
       val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
       val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
-      val event = LegalHoldRequestEvent(legalHoldRequest)
+      val event = LegalHoldRequestEvent(selfUserId, legalHoldRequest)
 
       // Then
       (storage.save _)
         .expects( PropertyValue(LegalHoldRequestKey, encodedLegalHoldRequest))
         .once()
         .returning(Future.successful({}))
+
+      // When
+      result(pipeline.apply(Seq(event)))
+    }
+
+    scenario("it ignores a legal hold request event not for the self user") {
+      // Given
+      val service = new LegalHoldServiceImpl(selfUserId, storage)
+      val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
+      val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+      val event = LegalHoldRequestEvent(targetUserId = UserId("someOtherUser"), legalHoldRequest)
+
+      // Then
+      (storage.save _)
+        .expects( PropertyValue(LegalHoldRequestKey, encodedLegalHoldRequest))
+        .never()
 
       // When
       result(pipeline.apply(Seq(event)))
