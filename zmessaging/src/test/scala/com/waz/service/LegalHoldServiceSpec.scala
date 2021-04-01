@@ -4,7 +4,7 @@ import com.waz.content.{PropertiesStorage, PropertyValue}
 import com.waz.specs.AndroidFreeSpec
 import LegalHoldService._
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent}
+import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, UserId}
 import com.waz.model.otr.ClientId
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.sync.SyncResult
@@ -19,6 +19,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   import LegalHoldServiceSpec._
 
+  private val selfUserId = UserId("selfUserId")
   private val storage = mock[PropertiesStorage]
   private val syncHandler = mock[LegalHoldSyncHandler]
 
@@ -26,7 +27,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("legal hold request exists") {
       // Given
-      val service = new LegalHoldServiceImpl(storage, syncHandler)
+      val service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler)
       val value = JsonEncoder.encode[LegalHoldRequest](legalHoldRequest).toString
 
       (storage.find _)
@@ -46,7 +47,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("legal hold request does not exist") {
       // Given
-      val service = new LegalHoldServiceImpl(storage, syncHandler)
+      val service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler)
 
       (storage.find _)
         .expects(LegalHoldRequestKey)
@@ -65,10 +66,10 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it processes the legal hold request event") {
       // Given
-      val service = new LegalHoldServiceImpl(storage, syncHandler)
+      val service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler)
       val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
       val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
-      val event = LegalHoldRequestEvent(legalHoldRequest)
+      val event = LegalHoldRequestEvent(selfUserId, legalHoldRequest)
 
       // Then
       (storage.save _)
@@ -79,13 +80,29 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       // When
       result(pipeline.apply(Seq(event)))
     }
+
+    scenario("it ignores a legal hold request event not for the self user") {
+      // Given
+      val service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler)
+      val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
+      val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+      val event = LegalHoldRequestEvent(targetUserId = UserId("someOtherUser"), legalHoldRequest)
+
+      // Then
+      (storage.save _)
+        .expects( PropertyValue(LegalHoldRequestKey, encodedLegalHoldRequest))
+        .never()
+
+      // When
+      result(pipeline.apply(Seq(event)))
+    }
   }
 
   feature("Sync legal hold request") {
 
     scenario("it succeeds if legal hold request exists") {
       // Given
-      val service = new LegalHoldServiceImpl(storage, syncHandler)
+      val service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler)
 
       (syncHandler.fetchLegalHoldRequest _ )
         .expects()
@@ -106,7 +123,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it succeeds if legal hold does not exist") {
       // Given
-      val service = new LegalHoldServiceImpl(storage, syncHandler)
+      val service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler)
 
       (syncHandler.fetchLegalHoldRequest _ )
         .expects()
@@ -122,7 +139,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it fails if an error occurs") {
       // Given
-      val service = new LegalHoldServiceImpl(storage, syncHandler)
+      val service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler)
       val error = ErrorResponse(400, "", "")
 
       (syncHandler.fetchLegalHoldRequest _ )

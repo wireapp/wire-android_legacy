@@ -1,7 +1,7 @@
 package com.waz.service
 
 import com.waz.content.{PropertiesStorage, PropertyValue}
-import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent}
+import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, UserId}
 import com.waz.service.EventScheduler.Stage
 import com.waz.sync.SyncResult
 import com.waz.sync.handler.LegalHoldSyncHandler
@@ -15,14 +15,18 @@ trait LegalHoldService {
   def fetchLegalHoldRequest(): Future[Option[LegalHoldRequest]]
 }
 
-class LegalHoldServiceImpl(storage: PropertiesStorage, syncHandler: LegalHoldSyncHandler)
+class LegalHoldServiceImpl(selfUserId: UserId, storage: PropertiesStorage, syncHandler: LegalHoldSyncHandler)
   extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
   import LegalHoldService._
 
   override def legalHoldRequestEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldRequestEvent] { (_, events) =>
-    Future.sequence(events.map(event => storeRequest(event.request))).map(_ => ())
+    Future.sequence {
+      events
+        .filter(_.targetUserId == selfUserId)
+        .map(event => storeRequest(event.request))
+    }.map(_ => ())
   }
 
   override def syncLegalHoldRequest(): Future[SyncResult] = syncHandler.fetchLegalHoldRequest().flatMap {

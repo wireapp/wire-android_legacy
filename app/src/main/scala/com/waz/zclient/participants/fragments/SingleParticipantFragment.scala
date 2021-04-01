@@ -64,8 +64,11 @@ class SingleParticipantFragment extends FragmentHelper {
 
   protected val visibleTab = Signal[SingleParticipantFragment.Tab](DetailsTab)
 
-  protected lazy val tabs = returning(view[TabLayout](R.id.details_and_devices_tabs)) {
+  private var tabLayout : TabLayout = _
+  private def initTabLayout(): Unit = returning(view[TabLayout](R.id.details_and_devices_tabs)) {
     _.foreach { layout =>
+      tabLayout = layout
+
       if (fromDeepLink)
         layout.setVisibility(View.GONE)
       else {
@@ -96,7 +99,7 @@ class SingleParticipantFragment extends FragmentHelper {
       case _                    => None
     }
 
-  protected lazy val participantOtrDeviceAdapter = returning(new ParticipantOtrDeviceAdapter) { adapter =>
+  private def createOtrDeviceAdapter(): ParticipantOtrDeviceAdapter = returning(new ParticipantOtrDeviceAdapter) { adapter =>
     subs += adapter.onClientClick.onUi { client =>
       participantsController.otherParticipantId.head.foreach {
         case Some(userId) =>
@@ -111,7 +114,7 @@ class SingleParticipantFragment extends FragmentHelper {
     subs += adapter.onHeaderClick { _ => inject[BrowserController].openOtrLearnWhy() }
   }
 
-  protected lazy val devicesView = returning( view[RecyclerView](R.id.devices_recycler_view) ) { vh =>
+  private def initDevicesView(): Unit = returning(view[RecyclerView](R.id.devices_recycler_view)) { vh =>
     visibleTab.onUi {
       case DevicesTab => vh.foreach(_.setVisible(true))
       case _          => vh.foreach(_.setVisible(false))
@@ -120,13 +123,13 @@ class SingleParticipantFragment extends FragmentHelper {
     vh.foreach { view =>
       view.setLayoutManager(new LinearLayoutManager(ctx))
       view.setHasFixedSize(true)
-      view.setAdapter(participantOtrDeviceAdapter)
+      view.setAdapter(createOtrDeviceAdapter())
       view.setPaddingBottomRes(R.dimen.participants__otr_device__padding_bottom)
       view.setClipToPadding(false)
     }
   }
 
-  protected lazy val detailsView = returning( view[RecyclerView](R.id.details_recycler_view) ) { vh =>
+  protected def initDetailsView() : Unit = returning( view[RecyclerView](R.id.details_recycler_view) ) { vh =>
     subs += visibleTab.onUi {
       case DetailsTab => vh.foreach(_.setVisible(true))
       case _          => vh.foreach(_.setVisible(false))
@@ -174,7 +177,7 @@ class SingleParticipantFragment extends FragmentHelper {
     }
   }
 
-  protected lazy val userHandle = returning(view[TextView](R.id.user_handle)) { vh =>
+  private def initUserHandle(): Unit = returning(view[TextView](R.id.user_handle)) { vh =>
     subs += participantsController.otherParticipant.map(_.handle.map(_.string)).onUi {
       case Some(h) =>
         vh.foreach { view =>
@@ -231,7 +234,7 @@ class SingleParticipantFragment extends FragmentHelper {
     (R.string.glyph__conversation, R.string.conversation__action__open_conversation)
   }
 
-  protected lazy val footerMenu = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
+  protected def initFooterMenu(): Unit = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
     // TODO: merge this logic with ConversationOptionsMenuController
     subs += (for {
         conv            <- participantsController.conv
@@ -262,15 +265,16 @@ class SingleParticipantFragment extends FragmentHelper {
   }
 
   protected def initViews(savedInstanceState: Bundle): Unit = {
-    userHandle
-    detailsView
-    devicesView
-    footerMenu
+    initUserHandle()
+    initDetailsView()
+    initDevicesView()
+    initFooterMenu()
+    initTabLayout()
 
     if (Option(savedInstanceState).isEmpty) {
       val tab = Tab(getStringArg(TabToOpen))
       visibleTab ! tab
-      tabs.foreach(_.getTabAt(tab.pos).select())
+      tabLayout.getTabAt(tab.pos).select()
     }
   }
 
