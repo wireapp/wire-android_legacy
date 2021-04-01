@@ -260,6 +260,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
           |    "id": 456,
           |    "key": "oENwaFy74nagzFBlqn9nOQ=="
           |  },
+          |  "id": "858db163-c05d-486f-a478-cfe912e9ccde",
           |  "type": "user.legalhold-request"
           |}
           |""".stripMargin
