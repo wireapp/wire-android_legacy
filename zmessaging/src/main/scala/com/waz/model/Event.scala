@@ -234,7 +234,7 @@ object Event {
         case "user.client-remove" => OtrClientRemoveEvent(decodeId[ClientId]('id)(js.getJSONObject("client"), implicitly))
         case "user.properties-set" => PropertyEvent.Decoder(js)
         case "user.properties-delete" => PropertyEvent.Decoder(js)
-        case "user.client-legal-hold-request" => LegalHoldRequestEvent(LegalHoldRequest.Decoder(js))
+        case "user.legalhold-request" => LegalHoldRequestEvent(LegalHoldRequest.Decoder(js))
         case _ =>
           error(l"unhandled event: $js")
           UnknownEvent(js)
