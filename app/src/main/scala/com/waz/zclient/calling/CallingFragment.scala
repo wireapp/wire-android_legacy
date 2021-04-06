@@ -261,7 +261,6 @@ class CallingFragment extends FragmentHelper {
   def showFullScreenVideo(participant: Participant): Unit = getChildFragmentManager
     .beginTransaction
     .replace(R.id.full_screen_video_container, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
-    .addToBackStack(FullScreenVideoFragment.Tag)
     .commit
 }
 
