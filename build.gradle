@@ -62,7 +62,10 @@ allprojects {
 }
 
 ext {
+    // Pulsing microphone - active speakers frames
     activeSpeakers = true
+    // Active Speakers/All toggle
+    activeSpeakersView = false
     joinGroupCallMuted = true
     removeJoinLeaveSounds = true
     zoomingGroupCall = true
