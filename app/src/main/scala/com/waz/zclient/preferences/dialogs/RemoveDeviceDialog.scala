@@ -26,21 +26,21 @@ class RemoveDeviceDialog extends ConfirmationWithPasswordDialog {
 
   override lazy val isSSO: Boolean = getArguments.getBoolean(IsSSOARG)
 
-  override def errorMessage: Option[String] = Option(getArguments.getString(ErrorArg))
+  override lazy val errorMessage: Option[String] = Option(getArguments.getString(ErrorArg))
 
-  override def title: String = getString(
+  override lazy val title: String = getString(
     R.string.otr__remove_device__title,
     getArguments.getString(NameArg, getString(R.string.otr__remove_device__default))
   )
 
-  override def message: String = {
+  override lazy val message: String = {
     val resId = if (isSSO) R.string.otr__remove_device__are_you_sure else R.string.otr__remove_device__message
     getString(resId)
   }
 
-  override def positiveButtonText: Int = R.string.otr__remove_device__button_delete
+  override lazy val positiveButtonText: Int = R.string.otr__remove_device__button_delete
 
-  override def negativeButtonText: Int = R.string.otr__remove_device__button_cancel
+  override lazy val negativeButtonText: Int = R.string.otr__remove_device__button_cancel
 }
 
 object RemoveDeviceDialog {
