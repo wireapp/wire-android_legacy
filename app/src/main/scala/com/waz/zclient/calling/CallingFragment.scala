@@ -18,7 +18,6 @@
 package com.waz.zclient.calling
 
 import android.os.Bundle
-import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout, Toast}
 import androidx.cardview.widget.CardView
@@ -97,10 +96,6 @@ class CallingFragment extends FragmentHelper {
       case (true, false, false, true) => noActiveSpeakersLayout.foreach(_.setVisibility(View.VISIBLE))
       case _                          => noActiveSpeakersLayout.foreach(_.setVisibility(View.GONE))
     }
-
-    getView.setOnClickListener(new OnClickListener {
-      override def onClick(view: View): Unit = controller.controlsClick(true)
-    })
 
     controller.isGroupCall.onChanged {
       case true =>

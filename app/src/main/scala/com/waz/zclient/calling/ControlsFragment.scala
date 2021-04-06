@@ -106,12 +106,15 @@ class ControlsFragment extends FragmentHelper {
       }
     }
     else speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
+
+    getView.onClick {
+      if (getView.isVisible) controller.controlsClick(false)
+      else controller.controlsClick(true)
+    }
   }
 
   override def onStart(): Unit = {
     super.onStart()
-
-    controller.controlsClick(true) //reset timer after coming back from participants
 
     subs += controller.controlsVisible.onUi {
       case true => getView.fadeIn()
