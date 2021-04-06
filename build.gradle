@@ -65,8 +65,8 @@ ext {
     activeSpeakers = true
     joinGroupCallMuted = true
     removeJoinLeaveSounds = true
+    zoomingGroupCall = true
     appLockFeatureFlag = true
-    zooming = true
     sessionReset = true
     //Update kotlinCore flag as well when adding new kotlin features
     kotlinSettings = false
