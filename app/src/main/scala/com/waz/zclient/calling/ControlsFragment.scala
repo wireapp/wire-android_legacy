@@ -93,7 +93,7 @@ class ControlsFragment extends FragmentHelper {
       }
     }
 
-    if (BuildConfig.ACTIVE_SPEAKERS) {
+   /* if (BuildConfig.ACTIVE_SPEAKERS) {
       Signal.zip(
         controller.isCallEstablished,
         controller.isGroupCall,
@@ -105,7 +105,8 @@ class ControlsFragment extends FragmentHelper {
         case _                               => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
       }
     }
-    else speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
+    else*/
+      speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
 
     getView.onClick {
       if (getView.isVisible) controller.controlsClick(false)
