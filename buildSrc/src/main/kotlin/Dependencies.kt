@@ -5,7 +5,7 @@ import org.gradle.api.JavaVersion
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.66."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.67."
     const val COMPILE_SDK_VERSION = 30
     const val TARGET_SDK_VERSION = 30
     const val MIN_SDK_VERSION = 24
@@ -21,7 +21,7 @@ object Versions {
 
     //plugins
     const val ANDROID_GRADLE_PLUGIN = "3.2.1"
-    const val SCALA_BUILD_PLUGIN = "1.6"
+    const val SCALA_BUILD_PLUGIN = "2.0.3"
     const val GMS = "3.1.1"
     const val DETEKT = "1.2.2"
     const val JACOCO = "0.8.5"

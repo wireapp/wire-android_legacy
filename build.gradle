@@ -39,7 +39,7 @@ buildscript {
     }
     dependencies {
         classpath "com.android.tools.build:gradle:${Versions.ANDROID_GRADLE_PLUGIN}"
-        classpath "com.wire.gradle:gradle-android-scala-plugin:${Versions.SCALA_BUILD_PLUGIN}"
+        classpath "com.wire:gradle-android-scala-plugin:${Versions.SCALA_BUILD_PLUGIN}"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}"
         classpath "org.jetbrains.kotlin:kotlin-serialization:${Versions.KOTLIN}"
         classpath "com.google.gms:google-services:${Versions.GMS}"
@@ -62,11 +62,14 @@ allprojects {
 }
 
 ext {
+    // Pulsing microphone - active speakers frames
     activeSpeakers = true
+    // Active Speakers/All toggle
+    activeSpeakersView = false
     joinGroupCallMuted = true
     removeJoinLeaveSounds = true
+    zoomingGroupCall = true
     appLockFeatureFlag = true
-    zooming = false
     sessionReset = true
     //Update kotlinCore flag as well when adding new kotlin features
     kotlinSettings = false

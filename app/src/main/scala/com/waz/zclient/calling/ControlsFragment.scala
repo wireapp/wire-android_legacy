@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.calling
 
-import android.content.{Context, DialogInterface, Intent}
+import android.content.{Context, DialogInterface}
 import android.graphics.Color
 import android.os.Bundle
 import android.view._
@@ -33,6 +33,8 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{FragmentHelper, MainActivity, R}
 import com.wire.signals.Subscription
+import com.waz.zclient.{BuildConfig, FragmentHelper, R}
+import com.wire.signals.{Signal, Subscription}
 
 class ControlsFragment extends FragmentHelper {
 
@@ -89,11 +91,11 @@ class ControlsFragment extends FragmentHelper {
     callingHeader.foreach {
       _.closeButton.onClick {
         controller.callControlsVisible ! false
-        getContext.startActivity(new Intent(getContext, classOf[MainActivity]))
+        getActivity.finish()
       }
     }
 
-    /* if (BuildConfig.ACTIVE_SPEAKERS) {
+    if (BuildConfig.ACTIVE_SPEAKERS_VIEW) {
       Signal.zip(
         controller.isCallEstablished,
         controller.isGroupCall,
@@ -104,14 +106,16 @@ class ControlsFragment extends FragmentHelper {
         case (true, true, true, false, true) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
         case _                               => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
       }
+    } else speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
+
+    getView.onClick {
+      if (getView.isVisible) controller.controlsClick(false)
+      else controller.controlsClick(true)
     }
-    else */ speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
   }
 
   override def onStart(): Unit = {
     super.onStart()
-
-    controller.controlsClick(true) //reset timer after coming back from participants
 
     subs += controller.controlsVisible.onUi {
       case true => getView.fadeIn()

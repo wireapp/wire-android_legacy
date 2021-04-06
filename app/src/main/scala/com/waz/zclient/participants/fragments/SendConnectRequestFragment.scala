@@ -48,7 +48,7 @@ class SendConnectRequestFragment extends UntabbedRequestFragment {
           convScreenCtrl.showConversationMenu(false, conv.id)
   }
 
-  override protected lazy val footerMenu = returning( view[FooterMenu](R.id.not_tabbed_footer) ) { vh =>
+  override protected def initFooterMenu(): Unit = returning( view[FooterMenu](R.id.not_tabbed_footer) ) { vh =>
     vh.foreach { menu =>
       menu.setLeftActionText(getString(R.string.glyph__plus))
       menu.setLeftActionLabelText(getString(R.string.send_connect_request__connect_button__text))

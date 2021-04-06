@@ -50,7 +50,7 @@ class PendingConnectRequestFragment extends UntabbedRequestFragment {
             convScreenController.showConversationMenu(false, conv.id)
   }
 
-  override protected lazy val footerMenu = returning(view[FooterMenu](R.id.not_tabbed_footer)) { vh =>
+  override protected def initFooterMenu(): Unit = returning(view[FooterMenu](R.id.not_tabbed_footer)) { vh =>
     if (fromParticipants) {
       subs += removeMemberPermission.map { remPerm =>
           getString(if (remPerm)  R.string.glyph__more else R.string.empty_string)

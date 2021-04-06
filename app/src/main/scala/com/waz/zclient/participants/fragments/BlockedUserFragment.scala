@@ -30,7 +30,7 @@ class BlockedUserFragment extends UntabbedRequestFragment {
           inject[IConversationScreenController].showConversationMenu(false, conv.id)
   }
 
-  override protected lazy val footerMenu = returning( view[FooterMenu](R.id.not_tabbed_footer) ) { vh =>
+  override protected def initFooterMenu(): Unit = returning( view[FooterMenu](R.id.not_tabbed_footer) ) { vh =>
     vh.foreach { menu =>
       menu.setLeftActionText(getString(R.string.glyph__block))
       menu.setLeftActionLabelText(getString(R.string.connect_request__unblock__button__text))

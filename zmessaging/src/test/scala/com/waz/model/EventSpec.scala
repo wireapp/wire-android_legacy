@@ -22,6 +22,7 @@ import com.waz.model.otr.ClientId
 import com.waz.service.PropertyKey
 import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.JsonDecoder
+import com.waz.utils.crypto.AESUtils
 import org.json.JSONObject
 import org.scalatest._
 import org.threeten.bp.Instant
@@ -246,6 +247,32 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
         case e => fail(s"unexpected event: $e")
       }
 
+    }
+
+    scenario("parse LegalHoldRequestEvent") {
+      val jsonStr =
+        """
+          |{
+          |  "client": {
+          |    "id": "123"
+          |  },
+          |  "last_prekey": {
+          |    "id": 456,
+          |    "key": "oENwaFy74nagzFBlqn9nOQ=="
+          |  },
+          |  "id": "858db163-c05d-486f-a478-cfe912e9ccde",
+          |  "type": "user.legalhold-request"
+          |}
+          |""".stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      EventDecoder(jsonObject) match {
+        case ev: LegalHoldRequestEvent =>
+          ev.request.clientId.str shouldEqual "123"
+          ev.request.lastPreKey.id shouldEqual 456
+          ev.request.lastPreKey.data shouldEqual AESUtils.base64("oENwaFy74nagzFBlqn9nOQ==")
+        case e => fail(s"unexpected event: $e")
+      }
     }
   }
 }

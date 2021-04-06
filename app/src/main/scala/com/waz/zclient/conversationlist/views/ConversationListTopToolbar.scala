@@ -21,11 +21,11 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
-import android.widget.{FrameLayout, ImageView}
+import android.widget.{FrameLayout, ImageButton, ImageView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Availability, UserData}
 import com.waz.service.teams.TeamsService
-import com.wire.signals.{EventStream, Signal}
+import com.wire.signals.{EventStream, Signal, SourceStream}
 import com.waz.utils.{NameParts, returning}
 import com.waz.zclient.common.drawables.TeamIconDrawable
 import com.waz.zclient.common.views.GlyphButton
@@ -40,12 +40,13 @@ import com.waz.zclient.utils.RichView
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.zclient.legalhold.LegalHoldController
 
 abstract class ConversationListTopToolbar(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr)
     with ViewHelper
     with DerivedLogTag {
-  
+
   inflate(R.layout.view_conv_list_top)
 
   val onRightButtonClick = EventStream[View]()
@@ -99,7 +100,15 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
     button.setVisible(true)
   }
 
+  private lazy val usersController = inject[UsersController]
+
   private val settingsIndicator = findById[CircleView](R.id.conversation_list_settings_indicator)
+
+  private val legalHoldIndicatorButton = returning(findById[ImageButton](R.id.conversation_list_toolbar_image_button_legal_hold)) { button =>
+    button.onClick { legalHoldIndicatorClick ! (()) }
+  }
+
+  val legalHoldIndicatorClick: SourceStream[Unit] = EventStream[Unit]()
 
   separatorDrawable.setDuration(0)
   separatorDrawable.setMinMax(0.0f, 1.0f)
@@ -108,7 +117,7 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
   (for {
     teams <- inject[Signal[TeamsService]]
     team  <- teams.selfTeam
-    user  <- inject[UsersController].selfUser
+    user  <- usersController.selfUser
   } yield (user, team)).onUi {
     case (_, Some(team)) =>
       drawable.setPicture(team.picture)
@@ -117,6 +126,13 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
       drawable.setPicture(user.picture)
       drawable.setInfo(NameParts.maybeInitial(user.name).getOrElse(""), TeamIconDrawable.UserShape, selected = false)
   }
+
+  (for {
+    selfUser        <- usersController.selfUser
+    legalHoldActive <- inject[LegalHoldController].isLegalHoldActive(selfUser.id)
+  } yield legalHoldActive)
+    .map(if(_) View.VISIBLE else View.INVISIBLE)
+    .onUi(legalHoldIndicatorButton.setVisibility)
 
   def setIndicatorVisible(visible: Boolean): Unit = settingsIndicator.setVisible(visible)
 

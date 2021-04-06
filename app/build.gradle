@@ -127,8 +127,9 @@ android {
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
         buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
         buildConfigField 'boolean', 'ACTIVE_SPEAKERS', "$activeSpeakers"
+        buildConfigField 'boolean', 'ACTIVE_SPEAKERS_VIEW', "$activeSpeakersView"
         buildConfigField 'boolean', 'REMOVE_JOIN_LEAVE_SOUNDS', "$removeJoinLeaveSounds"
-        buildConfigField 'boolean', 'ZOOMING', "$zooming"
+        buildConfigField 'boolean', 'ZOOMING_GROUP_CALL', "$zoomingGroupCall"
         buildConfigField 'boolean', 'APP_LOCK_FEATURE_FLAG', "$appLockFeatureFlag"
     }
 

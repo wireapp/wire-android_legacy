@@ -269,6 +269,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val propertiesService: PropertiesService       = wire[PropertiesServiceImpl]
   lazy val fcmNotStatsService                         = wire[FCMNotificationStatsServiceImpl]
   lazy val trackingSync                               = wire[TrackingSyncHandler]
+  lazy val legalHold: LegalHoldService                = wire[LegalHoldServiceImpl]
 
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
 
@@ -319,7 +320,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         notifications.connectionNotificationEventStage,
         genericMsgs.eventProcessingStage,
         foldersService.eventProcessingStage,
-        propertiesService.eventProcessor
+        propertiesService.eventProcessor,
+        legalHold.legalHoldRequestEventStage
       )
     )
   }

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/legal_hold_info_image_view"
+        android:layout_width="@dimen/legal_hold_info_image_size"
+        android:layout_height="@dimen/legal_hold_info_image_size"
+        android:layout_marginTop="@dimen/wire__margin_huge"
+        android:src="@drawable/ic_legal_hold_active"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/legal_hold_info_title_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/wire__padding__huge"
+        android:text="@string/legal_hold_info_title"
+        android:textColor="?wirePrimaryTextColor"
+        android:textSize="@dimen/wire__text_size__big"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/legal_hold_info_image_view"
+        app:w_font="@string/wire__typeface__bold" />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/legal_hold_info_message_text_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/wire__padding__huge"
+        android:gravity="start"
+        android:paddingStart="@dimen/wire__padding__16"
+        android:paddingEnd="@dimen/wire__padding__16"
+        android:paddingBottom="@dimen/wire__padding__20"
+        android:textColor="?wirePrimaryTextColor"
+        android:textSize="@dimen/wire__text_size__regular"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/legal_hold_info_title_text_view"
+        app:w_font="@string/wire__typeface__regular"
+        tools:text="@string/legal_hold_self_user_info_message" />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/legal_hold_info_list_title_text_view"
+        style="?userChatHeadLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/wire__padding__16"
+        android:layout_marginEnd="@dimen/wire__padding__16"
+        android:paddingTop="@dimen/wire__padding__tiny"
+        android:text="@string/legal_hold_info_list_title"
+        android:textColor="@color/light_graphite"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/legal_hold_info_message_text_view"
+        app:w_font="@string/wire__typeface__medium" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/legal_hold_info_subjects_recycler_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/wire__padding__8"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/legal_hold_info_list_title_text_view" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

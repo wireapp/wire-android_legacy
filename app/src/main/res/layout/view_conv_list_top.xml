@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -19,20 +18,21 @@
 
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
     <LinearLayout
-        android:layout_height="match_parent"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:orientation="horizontal"
-        >
+        tools:layout_height="?actionBarSize">
 
         <FrameLayout
             android:id="@+id/button_container"
             android:layout_width="?attr/actionBarSize"
             android:layout_height="match_parent"
             android:layout_gravity="start|center_vertical"
-            android:layout_weight="0"
-            >
+            android:layout_weight="0">
 
             <ImageView
                 android:id="@+id/conversation_list_settings"
@@ -40,8 +40,7 @@
                 android:layout_height="@dimen/action_icon__size"
                 android:layout_gravity="center_vertical|start"
                 android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
-                android:visibility="gone"
-                />
+                android:visibility="gone" />
 
             <com.waz.zclient.common.views.GlyphButton
                 android:id="@+id/conversation_list_close"
@@ -49,12 +48,11 @@
                 android:layout_height="@dimen/action_icon__size"
                 android:layout_gravity="center_vertical|start"
                 android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
-                android:text="@string/glyph__close"
-                android:textSize="@dimen/wire__icon_button__text_size"
-                android:textColor="@color/text__primary_dark"
                 android:gravity="center"
-                android:visibility="gone"
-                />
+                android:text="@string/glyph__close"
+                android:textColor="@color/text__primary_dark"
+                android:textSize="@dimen/wire__icon_button__text_size"
+                android:visibility="gone" />
 
             <com.waz.zclient.ui.views.CircleView
                 android:id="@+id/conversation_list_settings_indicator"
@@ -62,8 +60,7 @@
                 android:layout_height="@dimen/conversation_list__new_device_indicator_size"
                 android:layout_gravity="top|end"
                 android:layout_margin="@dimen/wire__padding__14"
-                android:visibility="gone"
-                />
+                android:visibility="gone" />
 
         </FrameLayout>
 
@@ -72,16 +69,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:gravity="center"
             android:layout_weight="1"
+            android:drawablePadding="@dimen/wire__padding__8"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:lines="1"
+            android:textColor="@color/white"
             android:textSize="@dimen/wire__text_size__regular"
             app:w_font="@string/wire__typeface__medium"
-            android:textColor="@color/white"
-            android:drawablePadding="@dimen/wire__padding__8"
-            android:paddingEnd="?attr/actionBarSize"
-            android:lines="1"
-            android:ellipsize="end"
-            />
+            tools:text="Username" />
+
+        <ImageButton
+            android:id="@+id/conversation_list_toolbar_image_button_legal_hold"
+            android:layout_width="?actionBarSize"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:scaleType="center"
+            android:src="@drawable/ic_legal_hold_active"
+            android:visibility="invisible"
+            tools:visibility="visible" />
 
     </LinearLayout>
 
@@ -89,6 +95,5 @@
         android:id="@+id/conversation_list__border"
         android:layout_width="match_parent"
         android:layout_height="@dimen/people_picker__border_line__height"
-        android:layout_gravity="bottom"
-        />
+        android:layout_gravity="bottom" />
 </merge>

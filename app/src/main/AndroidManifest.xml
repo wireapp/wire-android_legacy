@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -22,8 +21,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.waz.zclient"
     android:sharedUserId="${sharedUserId}"
-    tools:ignore="MissingRegistered"
-    >
+    tools:ignore="MissingRegistered">
 
     <!-- See if device is connected to a network -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -61,50 +59,49 @@
 
     <uses-feature
         android:name="android.hardware.camera"
-        android:required="false"
-        />
+        android:required="false" />
     <uses-feature
         android:name="android.hardware.camera.front"
-        android:required="false"
-        />
+        android:required="false" />
     <uses-feature
         android:name="android.hardware.camera.autofocus"
-        android:required="false"
-        />
+        android:required="false" />
 
     <!-- TODO: Remove requestLegacyExternalStorage when you bump to sdk 30 and migrate the legacy data-->
     <application
         android:name=".ZApplication"
         android:allowBackup="false"
-        android:requestLegacyExternalStorage="true"
         android:hardwareAccelerated="true"
         android:icon="${applicationIcon}"
         android:label="${applicationLabel}"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.Splash"
         android:vmSafeMode="${applicationVmSafeMode}"
-        tools:replace="android:allowBackup"
-        android:networkSecurityConfig="@xml/network_security_config"
-        >
+        tools:replace="android:allowBackup">
 
         <!--    TODO: not required when using play-services-maps:16.1.0 and above
                    https://developer.android.com/about/versions/pie/android-9.0-changes-28#apache-p
                    https://developers.google.com/maps/documentation/android-sdk/config#specify_requirement_for_apache_http_legacy_library
         -->
-        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
 
         <activity
             android:name=".LaunchActivity"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:noHistory="true"
-            android:theme="@style/Theme.Splash"
-            android:launchMode="singleTask">
+            android:theme="@style/Theme.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
             <intent-filter>
-                <data android:host="email-verified"
+                <data
+                    android:host="email-verified"
                     android:scheme="${customURLScheme}" />
 
                 <action android:name="android.intent.action.VIEW" />
@@ -117,8 +114,7 @@
             <intent-filter>
                 <data
                     android:host="connect"
-                    android:scheme="${customURLScheme}"
-                    />
+                    android:scheme="${customURLScheme}" />
 
                 <action android:name="android.intent.action.VIEW" />
 
@@ -136,8 +132,7 @@
             android:hardwareAccelerated="true"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Light"
-            android:windowSoftInputMode="stateHidden|adjustResize"
-            >
+            android:windowSoftInputMode="stateHidden|adjustResize">
 
             <intent-filter>
                 <data android:scheme="${customURLScheme}" />
@@ -149,8 +144,8 @@
             </intent-filter>
 
             <intent-filter>
-                <action android:name="com.wire.ACTION_CURRENT_USER_CHANGED"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="com.wire.ACTION_CURRENT_USER_CHANGED" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
         </activity>
@@ -162,37 +157,33 @@
             android:screenOrientation="portrait"
             android:showOnLockScreen="true"
             android:theme="@style/Theme.Calling"
-            android:windowSoftInputMode="stateHidden"
-            />
+            android:windowSoftInputMode="stateHidden" />
 
         <activity
             android:name="com.waz.zclient.preferences.PreferencesActivity"
             android:hardwareAccelerated="true"
-            android:theme="@style/Theme.Dark.Preferences"
-            android:launchMode="singleTask"
             android:label="@string/empty_string"
-            />
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Dark.Preferences" />
         <activity
             android:name=".PopupActivity"
+            android:excludeFromRecents="true"
             android:hardwareAccelerated="true"
             android:launchMode="singleTop"
-            android:taskAffinity=""
-            android:excludeFromRecents="true"
             android:screenOrientation="unspecified"
+            android:taskAffinity=""
             android:theme="@style/Theme.Popup"
-            android:windowSoftInputMode="stateVisible"
-            />
+            android:windowSoftInputMode="stateVisible" />
         <activity
             android:name=".ShareActivity"
             android:configChanges="orientation|keyboardHidden"
             android:excludeFromRecents="true"
             android:hardwareAccelerated="true"
             android:launchMode="singleTask"
-            android:taskAffinity=""
             android:screenOrientation="portrait"
+            android:taskAffinity=""
             android:theme="@style/Theme.Share"
-            android:windowSoftInputMode="adjustPan"
-            >
+            android:windowSoftInputMode="adjustPan">
             <intent-filter android:label="@string/app_name">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -209,44 +200,48 @@
 
         <activity
             android:name=".appentry.AppEntryActivity"
+            android:exported="false"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Dark"
-            android:windowSoftInputMode="stateHidden|adjustResize"
-            android:exported="false">
+            android:windowSoftInputMode="stateHidden|adjustResize">
             <intent-filter>
-                <action android:name="com.wire.ACTION_NO_USER_LEFT"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="com.wire.ACTION_NO_USER_LEFT" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
         <activity
             android:name=".ForceUpdateActivity"
+            android:launchMode="singleTask"
             android:noHistory="true"
-            android:theme="@style/Theme.Light"
-            android:launchMode="singleTask">
-        </activity>
+            android:theme="@style/Theme.Light" />
 
         <activity
             android:name=".conversation.folders.moveto.MoveToFolderActivity"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".legalhold.SelfUserLegalHoldInfoActivity"
             android:screenOrientation="portrait" />
 
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"
             android:permission="android.permission.INSTALL_PACKAGES"
-            tools:ignore="ExportedReceiver"
-            >
+            tools:ignore="ExportedReceiver">
             <intent-filter>
                 <action android:name="com.android.vending.INSTALL_REFERRER" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.waz.services.SecurityPolicyService"
-            android:label="@string/security_policy_title"
+        <receiver
+            android:name="com.waz.services.SecurityPolicyService"
             android:description="@string/security_policy_description"
+            android:label="@string/security_policy_title"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
-            <meta-data android:name="android.app.device_admin"
+            <meta-data
+                android:name="android.app.device_admin"
                 android:resource="@xml/device_admin" />
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
@@ -257,7 +252,7 @@
             android:name="com.waz.content.WireContentProvider"
             android:authorities="${applicationId}"
             android:exported="false"
-            android:grantUriPermissions="true"/>
+            android:grantUriPermissions="true" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -266,7 +261,7 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths"/>
+                android:resource="@xml/provider_paths" />
         </provider>
 
         <!--
@@ -276,28 +271,32 @@
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"
             android:authorities="${applicationId}.firebaseinitprovider"
-            tools:node="remove"/>
+            tools:node="remove" />
 
         <!--Disable tracking in the FCM core-->
-        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
-        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_deactivated"
+            android:value="true" />
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
 
-        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBA1m9faI3-P4sP6S9B_JH3XTNIxHBz2Qg"/>
+            android:value="AIzaSyBA1m9faI3-P4sP6S9B_JH3XTNIxHBz2Qg" />
 
         <service
             android:name="com.waz.services.fcm.FCMHandlerService"
-            android:exported="false"
-            >
+            android:exported="false">
             <meta-data
                 android:name="com.google.firebase.messaging.default_notification_channel_id"
-                android:value="@string/default_notification_channel_id"
-            />
+                android:value="@string/default_notification_channel_id" />
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
 
@@ -309,42 +308,42 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="com.waz.services.websocket.WebSocketService"
-            android:exported="false"
-            />
+        <service
+            android:name="com.waz.services.websocket.WebSocketService"
+            android:exported="false" />
 
         <!--For Evernote Background jobs-->
         <service
             android:name="com.evernote.android.job.gcm.PlatformGcmService"
             android:enabled="true"
-            tools:replace="android:enabled"
             android:exported="true"
-            android:permission="com.google.android.gms.permission.BIND_NETWORK_TASK_SERVICE">
+            android:permission="com.google.android.gms.permission.BIND_NETWORK_TASK_SERVICE"
+            tools:replace="android:enabled">
             <intent-filter>
-                <action android:name="com.google.android.gms.gcm.ACTION_TASK_READY"/>
+                <action android:name="com.google.android.gms.gcm.ACTION_TASK_READY" />
             </intent-filter>
         </service>
 
         <service
             android:name="com.evernote.android.job.JobRescheduleService"
-            android:exported="false"/>
+            android:exported="false" />
 
         <service
             android:name="com.evernote.android.job.v21.PlatformJobService"
             android:exported="false"
-            android:permission="android.permission.BIND_JOB_SERVICE"/>
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <service
             android:name="com.evernote.android.job.v14.PlatformAlarmService"
-            android:exported="false"/>
+            android:exported="false" />
 
         <receiver
             android:name="com.evernote.android.job.v14.PlatformAlarmReceiver"
             android:exported="false">
             <intent-filter>
                 <!-- Keep the filter for legacy intents -->
-                <action android:name="com.evernote.android.job.v14.RUN_JOB"/>
-                <action android:name="net.vrallev.android.job.v14.RUN_JOB"/>
+                <action android:name="com.evernote.android.job.v14.RUN_JOB" />
+                <action android:name="net.vrallev.android.job.v14.RUN_JOB" />
             </intent-filter>
         </receiver>
 
@@ -352,29 +351,30 @@
             android:name="com.evernote.android.job.JobBootReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 
         <service
             android:name="com.waz.services.calling.CallingNotificationsService"
-            android:exported="false"
-            />
+            android:exported="false" />
         <service
             android:name="com.waz.services.calling.CallWakeService"
-            android:exported="true"
-            />
+            android:exported="true" />
         <service
             android:name="com.waz.services.notifications.NotificationsHandlerService"
-            android:exported="false"
-            />
+            android:exported="false" />
 
         <!-- Here you can put customized HTTP Proxy details -->
-        <meta-data android:name="http_proxy_url" android:value=""/>
-        <meta-data android:name="http_proxy_port" android:value=""/>
+        <meta-data
+            android:name="http_proxy_url"
+            android:value="" />
+        <meta-data
+            android:name="http_proxy_port"
+            android:value="" />
     </application>
 
 </manifest>

@@ -24,7 +24,7 @@ class ConnectRequestFragment extends UntabbedRequestFragment {
 
   override protected val Tag: String = ConnectRequestFragment.Tag
 
-  private lazy val ignoreButton = returning(view[ZetaButton](R.id.zb__connect_request__ignore_button)) { vh =>
+  private def initIgnoreButton(): Unit = returning(view[ZetaButton](R.id.zb__connect_request__ignore_button)) { vh =>
     vh.foreach { button =>
       button.setIsFilled(false)
       button.onClick(usersController.ignoreConnectionRequest(userToConnectId).map(_ => getActivity.onBackPressed()))
@@ -38,7 +38,7 @@ class ConnectRequestFragment extends UntabbedRequestFragment {
     )
   }
 
-  private lazy val acceptButton = returning(view[ZetaButton](R.id.zb__connect_request__accept_button)) { vh =>
+  private def initAcceptButton(): Unit = returning(view[ZetaButton](R.id.zb__connect_request__accept_button)) { vh =>
     vh.foreach {
       _.onClick(usersController.connectToUser(userToConnectId).map(_ => getActivity.onBackPressed()))
     }
@@ -58,7 +58,7 @@ class ConnectRequestFragment extends UntabbedRequestFragment {
           inject[IConversationScreenController].showConversationMenu(false, conv.id)
   }
 
-  override protected lazy val footerMenu = returning( view[FooterMenu](R.id.not_tabbed_footer) ) { vh =>
+  override protected def initFooterMenu(): Unit = returning( view[FooterMenu](R.id.not_tabbed_footer) ) { vh =>
     vh.foreach(_.setCallback(footerCallback))
 
     if (fromParticipants) {
@@ -69,10 +69,10 @@ class ConnectRequestFragment extends UntabbedRequestFragment {
   }
 
   override protected def initViews(savedInstanceState: Bundle): Unit = {
-    detailsView
-    footerMenu
-    ignoreButton
-    acceptButton
+    initDetailsView()
+    initFooterMenu()
+    initIgnoreButton()
+    initAcceptButton()
   }
 }
 

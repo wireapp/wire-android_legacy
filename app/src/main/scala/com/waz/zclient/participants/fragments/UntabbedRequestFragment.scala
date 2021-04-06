@@ -22,7 +22,7 @@ import com.waz.threading.Threading._
 abstract class UntabbedRequestFragment extends SingleParticipantFragment {
   import Threading.Implicits.Ui
   import UntabbedRequestFragment._
-  
+
   protected val Tag: String
 
   override protected val layoutId: Int = R.layout.fragment_participants_not_tabbed
@@ -34,13 +34,13 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
   protected lazy val removeMemberPermission = participantsController.selfRole.map(_.canRemoveGroupMember)
 
   override protected def initViews(savedInstanceState: Bundle): Unit = {
-    detailsView
-    footerMenu
+    initDetailsView()
+    initFooterMenu()
   }
-  
-  override protected lazy val detailsView = returning( view[RecyclerView](R.id.not_tabbed_recycler_view) ) { vh =>
+
+  override protected def initDetailsView(): Unit = returning(view[RecyclerView](R.id.not_tabbed_recycler_view)) { vh =>
     vh.foreach(_.setLayoutManager(new LinearLayoutManager(ctx)))
-    
+
     (for {
         zms           <- inject[Signal[ZMessaging]].head
         Some(user)    <- participantsController.getUser(userToConnectId)
