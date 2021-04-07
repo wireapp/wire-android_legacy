@@ -8,22 +8,22 @@ import com.waz.zclient.R
 class LegalHoldRequestDialog extends ConfirmationWithPasswordDialog {
   import LegalHoldRequestDialog._
 
-  override def isSSO: Boolean = getArguments.getBoolean(ARG_IS_SSO)
+  override lazy val isSSO: Boolean = getArguments.getBoolean(ARG_IS_SSO)
 
-  override def errorMessage: Option[String] = None // TODO
+  override lazy val errorMessage: Option[String] = None // TODO
 
-  override def title: String = getString(R.string.legal_hold_request_dialog_title)
+  override lazy val title: String = getString(R.string.legal_hold_request_dialog_title)
 
-  override def message: String = {
+  override lazy val message: String = {
     val stringRes =
       if (isSSO) R.string.legal_hold_request_dialog_message_for_sso
       else R.string.legal_hold_request_dialog_message
     getString(stringRes, getArguments.getString(ARG_CLIENT_FINGERPRINT))
   }
 
-  override def positiveButtonText: Int = R.string.legal_hold_request_dialog_positive_button_text
+  override lazy val positiveButtonText: Int = R.string.legal_hold_request_dialog_positive_button_text
 
-  override def negativeButtonText: Int = R.string.legal_hold_request_dialog_negative_button_text
+  override lazy val negativeButtonText: Int = R.string.legal_hold_request_dialog_negative_button_text
 }
 
 object LegalHoldRequestDialog {
