@@ -31,8 +31,7 @@ import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, Contro
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{FragmentHelper, MainActivity, R}
-import com.wire.signals.Subscription
+import com.waz.zclient.R
 import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 import com.wire.signals.{Signal, Subscription}
 
