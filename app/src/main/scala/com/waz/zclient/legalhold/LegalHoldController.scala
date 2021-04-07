@@ -16,4 +16,7 @@ class LegalHoldController(implicit injector: Injector)
 
   def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] =
     Signal.const(false)
+
+  def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] =
+    Signal.const(Seq.empty)
 }
