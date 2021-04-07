@@ -251,7 +251,9 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       .addToBackStack(LegalHoldInfoFragment.TAG)
       .commit
 
-  private def showUser(userId: UserId): Unit = usersController.syncUserAndCheckIfDeleted(userId).foreach {
+  override def onLegalHoldSubjectClick(userId: UserId): Unit = showUser(userId, forLegalHold = true)
+
+  private def showUser(userId: UserId, forLegalHold: Boolean = false): Unit = usersController.syncUserAndCheckIfDeleted(userId).foreach {
     case (Some(user), None) =>
       ContextUtils.showToast(getString(R.string.participant_was_removed_from_team, user.name.str))
     case (None, None) =>
@@ -267,7 +269,9 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
         isTeamMember <- userAccountsController.isTeamMember(userId).head
       } userOpt match {
         case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
-          openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+          import SingleParticipantFragment._
+          val tabToOpen = if (forLegalHold) Some(DevicesTab.str) else None
+          openUserProfileFragment(SingleParticipantFragment.newInstance(tabToOpen), Tag)
 
         case Some(user) if user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
           import PendingConnectRequestFragment._
