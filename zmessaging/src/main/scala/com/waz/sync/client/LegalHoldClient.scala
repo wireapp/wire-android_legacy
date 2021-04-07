@@ -19,6 +19,7 @@ package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.{LegalHoldRequest, TeamId, UserId}
+import com.waz.utils.JsonEncoder
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
 import com.waz.znet2.http.Request.UrlCreator
@@ -27,6 +28,10 @@ import org.json.JSONObject
 trait LegalHoldClient {
   def fetchLegalHoldRequest(teamId: TeamId,
                             userId: UserId): ErrorOrResponse[Option[LegalHoldRequest]]
+
+  def approveRequest(teamId: TeamId,
+                     userId: UserId,
+                     password: Option[String]): ErrorOrResponse[Unit]
 }
 
 class LegalHoldClientImpl(implicit
@@ -52,6 +57,17 @@ class LegalHoldClientImpl(implicit
       .withResultType[Option[LegalHoldRequest]]
       .withErrorType[ErrorResponse]
       .executeSafe
+
+  override def approveRequest(teamId: TeamId,
+                              userId: UserId,
+                              password: Option[String]): ErrorOrResponse[Unit] =
+    Request.Put(
+      relativePath = s"${path(teamId, userId)}/approve",
+      body = JsonEncoder { _.put("password", password) }
+    )
+    .withResultType[Unit]
+    .withErrorType[ErrorResponse]
+    .executeSafe
 }
 
 object LegalHoldClient {
