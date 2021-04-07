@@ -198,6 +198,8 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       promise.failure(BackupError(reason))
     }
 
+    import com.waz.content.UserPreferences.ShouldSyncConversations
+
     (for {
       Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true))
       _                    =  accountManager.addUnsplashIfProfilePictureMissing()
@@ -208,8 +210,8 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       _                    <- promise.future
       _                    =  backupFile.delete()
       registrationState    <- accountManager.getOrRegisterClient()
-      Some(zms)            <- accountsService.getZms(userId)
-      _                    <- zms.sync.performFullSync()
+      zmsOpt               <- if (registrationState.isRight) accountManager.zmessaging.map(Option(_)) else Future.successful(None)
+      _                    <- zmsOpt.fold(Future.successful(()))(_.userPrefs(ShouldSyncConversations) := true)
       _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
       _                    <- CancellableFuture.delay(750.millis).future
     } yield registrationState match {
