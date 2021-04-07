@@ -17,87 +17,30 @@
  */
 package com.waz.zclient.preferences.dialogs
 
-import android.app.Dialog
-import android.content.DialogInterface.BUTTON_POSITIVE
 import android.os.Bundle
-import android.view.inputmethod.EditorInfo
-import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
-import android.widget.{EditText, TextView}
-import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.DialogFragment
-import com.google.android.material.textfield.TextInputLayout
-import com.waz.model.AccountData.Password
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.BrowserController
-import com.waz.zclient.utils.RichView
-import com.waz.zclient.{FragmentHelper, R}
-import com.wire.signals.EventStream
+import com.waz.zclient.R
 
-import scala.util.Try
-
-class RemoveDeviceDialog extends DialogFragment with FragmentHelper {
+class RemoveDeviceDialog extends ConfirmationWithPasswordDialog {
   import RemoveDeviceDialog._
 
-  val onDelete = EventStream[Option[Password]]()
+  override lazy val isSSO: Boolean = getArguments.getBoolean(IsSSOARG)
 
-  private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.remove_otr_device_dialog, null)
+  override lazy val errorMessage: Option[String] = Option(getArguments.getString(ErrorArg))
 
-  private def providePassword(password: Option[Password]): Unit = {
-    onDelete ! password
-    dismiss() // if the password is wrong a new dialog will appear
+  override lazy val title: String = getString(
+    R.string.otr__remove_device__title,
+    getArguments.getString(NameArg, getString(R.string.otr__remove_device__default))
+  )
+
+  override lazy val message: String = {
+    val resId = if (isSSO) R.string.otr__remove_device__are_you_sure else R.string.otr__remove_device__message
+    getString(resId)
   }
 
-  private lazy val passwordEditText = returning(findById[EditText](root, R.id.acet__remove_otr__password)) { v =>
-    v.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-      def onEditorAction(v: TextView, actionId: Int, event: KeyEvent) =
-        actionId match {
-          case EditorInfo.IME_ACTION_DONE =>
-            providePassword(Some(Password(v.getText.toString)))
-            true
-          case _ => false
-        }
-    })
-  }
+  override lazy val positiveButtonText: Int = R.string.otr__remove_device__button_delete
 
-  private lazy val textInputLayout = findById[TextInputLayout](root, R.id.til__remove_otr_device)
-
-  private lazy val forgotPasswordButton = returning(findById[TextView](root, R.id.device_forgot_password)) {
-    _.onClick(inject[BrowserController].openForgotPassword())
-  }
-
-  private lazy val isSSO = getArguments.getBoolean(IsSSOARG)
-
-  override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
-    if(isSSO){
-      findById[View](root, R.id.remove_otr_device_scrollview).setVisible(false)
-    }
-    passwordEditText.setVisible(!isSSO)
-    textInputLayout.setVisible(!isSSO)
-    forgotPasswordButton.setVisible(!isSSO)
-    Option(getArguments.getString(ErrorArg)).foreach(textInputLayout.setError)
-    new AlertDialog.Builder(getActivity)
-      .setView(root)
-      .setTitle(getString(R.string.otr__remove_device__title, getArguments.getString(NameArg, getString(R.string.otr__remove_device__default))))
-      .setMessage(if (isSSO) R.string.otr__remove_device__are_you_sure else R.string.otr__remove_device__message)
-      .setPositiveButton(R.string.otr__remove_device__button_delete, null)
-      .setNegativeButton(R.string.otr__remove_device__button_cancel, null)
-      .create
-  }
-
-  override def onStart() = {
-    super.onStart()
-    Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { d =>
-      d.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-        def onClick(v: View) =
-          providePassword(if (isSSO) None else Some(Password(passwordEditText.getText.toString)))
-      })
-    }
-  }
-
-  override def onActivityCreated(savedInstanceState: Bundle) = {
-    super.onActivityCreated(savedInstanceState)
-    getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
-  }
+  override lazy val negativeButtonText: Int = R.string.otr__remove_device__button_cancel
 }
 
 object RemoveDeviceDialog {

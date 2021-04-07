@@ -265,7 +265,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
 
   private def showRemoveDeviceDialog(error: Option[String] = None): Unit =
     Signal.zip(inject[PasswordController].ssoEnabled, client.map(_.model)).head.foreach { case (isSSO, name) =>
-      val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onDelete(removeDevice))
+      val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onAccept(removeDevice))
       context.asInstanceOf[BaseActivity]
         .getSupportFragmentManager
         .beginTransaction
