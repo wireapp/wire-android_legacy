@@ -125,7 +125,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       val actualResult = result(syncHandler.approveRequest(Some("123")))
 
       // Then
-      actualResult shouldBe Right(LegalHoldError.NotInTeam)
+      actualResult shouldBe Left(LegalHoldError.NotInTeam)
     }
 
   }
