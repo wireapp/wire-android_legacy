@@ -53,7 +53,7 @@ object LegalHoldInfoFragment {
     def onLegalHoldSubjectClick(userId: UserId): Unit = {}
   }
 
-  val TAG = "LegalHoldInfoFragment"
+  val Tag = "LegalHoldInfoFragment"
   private val MAX_PARTICIPANTS = 7
   val ARG_MESSAGE_RES_ID = "messageResId_Arg"
 

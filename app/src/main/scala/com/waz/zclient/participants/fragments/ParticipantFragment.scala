@@ -246,9 +246,9 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       .replace(
         R.id.fl__participant__container,
         LegalHoldInfoFragment.newInstance(R.string.legal_hold_conversation_info_message),
-        LegalHoldInfoFragment.TAG
+        LegalHoldInfoFragment.Tag
       )
-      .addToBackStack(LegalHoldInfoFragment.TAG)
+      .addToBackStack(LegalHoldInfoFragment.Tag)
       .commit
 
   override def onLegalHoldSubjectClick(userId: UserId): Unit = showUser(userId, forLegalHold = true)
