@@ -38,6 +38,7 @@ import com.wire.signals.Signal
 import com.waz.zclient.calling.CallingFragment.MaxAllVideoPreviews
 import com.waz.zclient.calling.CallingFragment.MaxTopSpeakerVideoPreviews
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
+import com.waz.zclient.utils.RichView
 
 class CallingFragment extends FragmentHelper {
   import Threading.Implicits.Ui
@@ -47,7 +48,7 @@ class CallingFragment extends FragmentHelper {
   private lazy val controlsFragment       = ControlsFragment.newInstance
   private lazy val previewCardView        = view[CardView](R.id.preview_card_view)
   private lazy val noActiveSpeakersLayout = view[LinearLayout](R.id.no_active_speakers_layout)
-
+  private lazy val fullScreenVideoContainer = view[FrameLayout](R.id.full_screen_video_container)
   private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
 
     controller.theme.map(themeController.getTheme).foreach { theme =>
@@ -101,6 +102,14 @@ class CallingFragment extends FragmentHelper {
       case true =>
         Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG).show()
       case _ =>
+    }
+
+    getView.onClick {
+      controller.controlsClick(true)
+    }
+
+    controller.isFullScreenEnabled.onUi { isFullScreenEnabled =>
+      fullScreenVideoContainer.foreach(_.setVisible(isFullScreenEnabled))
     }
 
   }
@@ -262,6 +271,7 @@ class CallingFragment extends FragmentHelper {
     .beginTransaction
     .replace(R.id.full_screen_video_container, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
     .commit
+
 }
 
 object CallingFragment {

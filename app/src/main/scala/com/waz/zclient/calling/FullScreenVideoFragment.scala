@@ -59,6 +59,16 @@ class FullScreenVideoFragment extends FragmentHelper {
     if (BuildConfig.ZOOMING_GROUP_CALL) Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG).show()
   }
 
+  override def onBackPressed() = {
+    minimizeVideo()
+    super.onBackPressed()
+  }
+
+  override def onDestroy(): Unit = {
+    controller.isFullScreenEnabled ! false
+    super.onDestroy()
+  }
+
   def initParticipant(): Unit = {
     val bundle = this.getArguments
     if (bundle != null) {
@@ -96,7 +106,7 @@ class FullScreenVideoFragment extends FragmentHelper {
   def minimizeVideo(): Unit = {
     controller.isFullScreenEnabled ! false
     fullScreenVideoContainer.foreach(_.removeView(userVideoView))
-    getFragmentManager.popBackStack()
+    getFragmentManager.popBackStackImmediate()
   }
 }
 
