@@ -130,6 +130,11 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .once()
         .returning(Future.successful(Right(None)))
 
+      (storage.deleteByKey _)
+        .expects(LegalHoldRequestKey)
+        .once()
+        .returning(Future.successful({}))
+
       // When
       val actualResult = result(service.syncLegalHoldRequest())
 

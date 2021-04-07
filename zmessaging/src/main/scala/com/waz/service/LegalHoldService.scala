@@ -31,7 +31,7 @@ class LegalHoldServiceImpl(selfUserId: UserId, storage: PropertiesStorage, syncH
 
   override def syncLegalHoldRequest(): Future[SyncResult] = syncHandler.fetchLegalHoldRequest().flatMap {
     case Right(Some(request)) => storeRequest(request).map(_ => SyncResult.Success)
-    case Right(None)          => Future.successful(SyncResult.Success)
+    case Right(None)          => deleteRequest().map(_ => SyncResult.Success)
     case Left(err)            => Future.successful(SyncResult.Failure(err))
   }
 
@@ -45,6 +45,9 @@ class LegalHoldServiceImpl(selfUserId: UserId, storage: PropertiesStorage, syncH
     val value = JsonEncoder.encode[LegalHoldRequest](request).toString
     storage.save(PropertyValue(LegalHoldRequestKey, value))
   }
+
+  private def deleteRequest(): Future[Unit] =
+    storage.deleteByKey(LegalHoldRequestKey)
 
 }
 
