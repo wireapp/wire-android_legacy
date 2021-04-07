@@ -204,6 +204,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val integrationsClient = new IntegrationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val callingClient      = new CallingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val propertiesClient: PropertiesClient = new PropertiesClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val legalHoldClient    = new LegalHoldClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val fcmNotsRepo        = new FCMNotificationsRepositoryImpl()(db)
   lazy val fcmNotStatsRepo    = new FCMNotificationStatsRepositoryImpl(fcmNotsRepo)(db, Threading.Background)
 
@@ -270,6 +271,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val fcmNotStatsService                         = wire[FCMNotificationStatsServiceImpl]
   lazy val trackingSync                               = wire[TrackingSyncHandler]
   lazy val legalHold: LegalHoldService                = wire[LegalHoldServiceImpl]
+  lazy val legalHoldSync: LegalHoldSyncHandler        = wire[LegalHoldSyncHandlerImpl]
 
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
 

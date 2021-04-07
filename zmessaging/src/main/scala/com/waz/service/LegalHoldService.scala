@@ -3,16 +3,19 @@ package com.waz.service
 import com.waz.content.{PropertiesStorage, PropertyValue}
 import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, UserId}
 import com.waz.service.EventScheduler.Stage
+import com.waz.sync.SyncResult
+import com.waz.sync.handler.LegalHoldSyncHandler
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 
 import scala.concurrent.Future
 
 trait LegalHoldService {
   def legalHoldRequestEventStage: Stage.Atomic
-  def fetchLegalHoldRequest: Future[Option[LegalHoldRequest]]
+  def syncLegalHoldRequest(): Future[SyncResult]
+  def fetchLegalHoldRequest(): Future[Option[LegalHoldRequest]]
 }
 
-class LegalHoldServiceImpl(selfUserId: UserId, storage: PropertiesStorage)
+class LegalHoldServiceImpl(selfUserId: UserId, storage: PropertiesStorage, syncHandler: LegalHoldSyncHandler)
   extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
@@ -26,7 +29,13 @@ class LegalHoldServiceImpl(selfUserId: UserId, storage: PropertiesStorage)
     }.map(_ => ())
   }
 
-  override def fetchLegalHoldRequest: Future[Option[LegalHoldRequest]] = {
+  override def syncLegalHoldRequest(): Future[SyncResult] = syncHandler.fetchLegalHoldRequest().flatMap {
+    case Right(Some(request)) => storeRequest(request).map(_ => SyncResult.Success)
+    case Right(None)          => deleteRequest().map(_ => SyncResult.Success)
+    case Left(err)            => Future.successful(SyncResult.Failure(err))
+  }
+
+  override def fetchLegalHoldRequest(): Future[Option[LegalHoldRequest]] = {
     storage.find(LegalHoldRequestKey).map { property =>
       property.map(_.value).map(JsonDecoder.decode[LegalHoldRequest])
     }
@@ -36,6 +45,9 @@ class LegalHoldServiceImpl(selfUserId: UserId, storage: PropertiesStorage)
     val value = JsonEncoder.encode[LegalHoldRequest](request).toString
     storage.save(PropertyValue(LegalHoldRequestKey, value))
   }
+
+  private def deleteRequest(): Future[Unit] =
+    storage.deleteByKey(LegalHoldRequestKey)
 
 }
 
