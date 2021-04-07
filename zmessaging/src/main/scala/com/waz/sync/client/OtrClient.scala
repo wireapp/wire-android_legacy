@@ -135,11 +135,17 @@ class OtrClientImpl(implicit
       o.put("lastkey", JsonEncoder.encode(lastKey)(PreKeyEncoder))
       client.signalingKey foreach { sk => o.put("sigkeys", JsonEncoder.encode(sk)) }
       o.put("prekeys", JsonEncoder.arr(keys)(PreKeyEncoder))
-      o.put("type", if (PermanentClient) "permanent" else "temporary")
       o.put("label", client.label)
       o.put("model", client.model)
       o.put("class", client.devType.deviceClass)
       o.put("cookie", userId.str)
+
+      if (client.devType == OtrClientType.LEGALHOLD) {
+        o.put("type", "legalhold")
+      } else {
+        o.put("type", if (PermanentClient) "permanent" else "temporary")
+      }
+
       password.map(_.str).foreach(o.put("password", _))
     }
 
