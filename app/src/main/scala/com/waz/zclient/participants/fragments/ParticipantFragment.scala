@@ -39,12 +39,17 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 import com.waz.api.ConnectionStatus._
+import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.legalhold.{LegalHoldController, LegalHoldInfoFragment}
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.utils.ContextUtils
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 
-class ParticipantFragment extends ManagerFragment with ConversationScreenControllerObserver {
+class ParticipantFragment extends ManagerFragment with ConversationScreenControllerObserver
+  with LegalHoldInfoFragment.Container {
+
   import ParticipantFragment._
 
   implicit def ctx: Context = getActivity
@@ -63,6 +68,12 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
   private lazy val convScreenController   = inject[IConversationScreenController]
 
   private lazy val headerFragment = ParticipantHeaderFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg))
+
+  override lazy val legalHoldUsers: Signal[Seq[UserId]] =
+    for {
+      convId <- inject[ConversationController].currentConvId
+      users  <- inject[LegalHoldController].legalHoldUsers(convId)
+    } yield users
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
     if (nextAnim == 0 || getParentFragment == null)
@@ -116,6 +127,7 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       case Some(userId) => showUser(userId)
       case _ =>
     }
+    headerFragment.onLegalHoldClick { _ => openLegalHoldInfoScreen() }
   }
 
   override def onStart(): Unit = {
@@ -222,6 +234,21 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
         R.anim.fragment_animation_second_page_slide_out_to_right)
       .replace(R.id.fl__participant__container, fragment, tag)
       .addToBackStack(tag)
+      .commit
+
+  private def openLegalHoldInfoScreen(): Unit =
+    getChildFragmentManager.beginTransaction
+      .setCustomAnimations(
+        R.anim.slide_in_from_bottom_pick_user,
+        R.anim.open_new_conversation__thread_list_out,
+        R.anim.open_new_conversation__thread_list_in,
+        R.anim.slide_out_to_bottom_pick_user)
+      .replace(
+        R.id.fl__participant__container,
+        LegalHoldInfoFragment.newInstance(R.string.legal_hold_conversation_info_message),
+        LegalHoldInfoFragment.TAG
+      )
+      .addToBackStack(LegalHoldInfoFragment.TAG)
       .commit
 
   private def showUser(userId: UserId): Unit = usersController.syncUserAndCheckIfDeleted(userId).foreach {

@@ -16,8 +16,6 @@ class SelfUserLegalHoldInfoActivity extends BaseActivity with LegalHoldInfoFragm
   override lazy val legalHoldUsers: Signal[Seq[UserId]] =
     inject[UsersController].selfUser.map(user => Seq(user.id))
 
-  override lazy val legalHoldInfoMessage: Int = R.string.legal_hold_self_user_info_message
-
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_legal_hold_info)
@@ -27,11 +25,11 @@ class SelfUserLegalHoldInfoActivity extends BaseActivity with LegalHoldInfoFragm
 
   private def setUpCloseButton(): Unit = closeButton.onClick { finish() }
 
-  private def showLegalHoldInfo(): Unit = 
+  private def showLegalHoldInfo(): Unit =
     getSupportFragmentManager.beginTransaction()
       .replace(
         R.id.legal_hold_info_fragment_container_layout,
-        LegalHoldInfoFragment.newInstance()
+        LegalHoldInfoFragment.newInstance(R.string.legal_hold_self_user_info_message)
       ).commit()
 
   override def finish(): Unit = {

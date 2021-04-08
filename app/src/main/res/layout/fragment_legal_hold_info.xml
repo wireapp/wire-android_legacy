@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?wireBackgroundCollection">
 
     <ImageView
         android:id="@+id/legal_hold_info_image_view"
@@ -64,6 +65,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/wire__padding__8"
+        android:layout_marginBottom="@dimen/wire__padding__16"
+        android:background="?wireBackgroundColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/legal_hold_info_list_title_text_view" />
