@@ -199,8 +199,8 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
     notificationChannel
   }
 
-  // this is the same code as in WireApplication.notificationChannel but I don't want to access it
-  // from here and the other way around as well (Maciek)
+  // this is the same code as in WireApplication.notificationChannel
+  // but we don't want to access it from here and the other way around as well
   lazy val notificationChannel: Option[NotificationChannel] =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       Some(
