@@ -48,7 +48,7 @@ import com.waz.service.teams.{FeatureFlagsService, TeamsService}
 import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
-import com.waz.services.websocket.WebSocketController
+import com.waz.services.websocket.{WebSocketController, WebSocketService}
 import com.waz.sync.client.CustomBackendClient
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
@@ -456,7 +456,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       Some(
         returning(
           new NotificationChannel(
-            getString(R.string.default_notification_channel_id),
+            WebSocketService.ForegroundNotificationChannelId,
             getString(R.string.foreground_service_notification_name),
             NotificationManager.IMPORTANCE_LOW)
         ) { ch =>

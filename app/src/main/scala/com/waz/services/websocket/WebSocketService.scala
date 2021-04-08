@@ -158,7 +158,7 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
   }
 
   private lazy val notificationBuilder =
-    new NotificationCompat.Builder(this, getString(R.string.default_notification_channel_id))
+    new NotificationCompat.Builder(this, ForegroundNotificationChannelId)
       .setSmallIcon(R.drawable.websocket)
       .setContentIntent(launchIntent)
       .setStyle(new NotificationCompat.BigTextStyle()
@@ -176,6 +176,7 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
       case false =>
         stopForeground(true)
       case true =>
+        notificationChannel
         startForeground(getString(controller.notificationTitleId))
     }
 
@@ -195,20 +196,28 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
     webSocketActiveSubscription
     appInForegroundSubscription
     notificationBuilder
-    createNotificationChannel
+    notificationChannel
   }
 
-  private lazy val createNotificationChannel: Unit =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      val notificationManager = inject[NotificationManager]
-      notificationManager.createNotificationChannel(
-        returning(new NotificationChannel(ForegroundNotificationChannelId, getString(R.string.foreground_service_notification_name), NotificationManager.IMPORTANCE_LOW)) { ch =>
+  // this is the same code as in WireApplication.notificationChannel but I don't want to access it
+  // from here and the other way around as well (Maciek)
+  lazy val notificationChannel: Option[NotificationChannel] =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+      Some(
+        returning(
+          new NotificationChannel(
+            ForegroundNotificationChannelId,
+            getString(R.string.foreground_service_notification_name),
+            NotificationManager.IMPORTANCE_LOW)
+        ) { ch =>
           ch.setDescription(getString(R.string.foreground_service_notification_description))
           ch.enableVibration(false)
           ch.setShowBadge(false)
           ch.setSound(null, null)
-        })
-    }
+          inject[NotificationManager].createNotificationChannel(ch)
+        }
+      )
+    else None
 }
 
 object WebSocketService {
