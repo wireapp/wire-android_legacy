@@ -54,12 +54,11 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   override def approveRequest(request: LegalHoldRequest, password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {
     _      <- createLegalHoldClientAndSession(request)
     result <- syncHandler.approveRequest(password)
-    _      <- if (result.isLeft) {
-                deleteLegalHoldClientAndSession(request.clientId)
-              } else {
-                Future.successful({})
-              }
-  } yield { result }
+    _      <- result match {
+      case Left(_) => deleteLegalHoldClientAndSession(request.clientId)
+      case Right(_) => deleteRequest()
+    }
+  } yield result
 
   private def createLegalHoldClientAndSession(request: LegalHoldRequest): Future[Unit] = for {
     client          <- clientsService.getOrCreateClient(selfUserId, request.clientId)
