@@ -198,8 +198,6 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       promise.failure(BackupError(reason))
     }
 
-    import com.waz.content.UserPreferences.ShouldSyncConversations
-
     (for {
       Some(accountManager) <- accountsService.createAccountManager(userId, isLogin = Some(true))
       _                    =  accountManager.addUnsplashIfProfilePictureMissing()
@@ -210,13 +208,11 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       _                    <- promise.future
       _                    =  backupFile.delete()
       registrationState    <- accountManager.getOrRegisterClient()
-      zmsOpt               <- if (registrationState.isRight) accountManager.zmessaging.map(Option(_)) else Future.successful(None)
-      _                    <- zmsOpt.fold(Future.successful(()))(_.userPrefs(ShouldSyncConversations) := true)
       _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
       _                    <- CancellableFuture.delay(750.millis).future
     } yield registrationState match {
-      case Right(regState) => activity.onEnterApplication(openSettings = false, Some(regState))
-      case _               => activity.onEnterApplication(openSettings = false)
+      case Right(regState) => activity.onEnterApplication(openSettings = false, initSync = true, Some(regState))
+      case _               => activity.onEnterApplication(openSettings = false, initSync = true)
     }).recover {
       case BackupError(reason) =>
         error(l"Unable to restore backup: $reason")
@@ -239,8 +235,8 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
       _                    <- CancellableFuture.delay(750.millis).future
     } yield registrationState match {
-      case Right(regState) => activity.onEnterApplication(openSettings = false, Some(regState))
-      case _               => activity.onEnterApplication(openSettings = false)
+      case Right(regState) => activity.onEnterApplication(openSettings = false, initSync = false, Some(regState))
+      case _               => activity.onEnterApplication(openSettings = false, initSync = false)
     }
   }
 

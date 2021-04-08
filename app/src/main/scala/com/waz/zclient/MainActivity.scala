@@ -459,10 +459,13 @@ class MainActivity extends BaseActivity
       _        <- am.auth.onPasswordReset(emailCredentials = None)
     } yield {}
 
-  def handleIntent(intent: Intent): Future[Boolean] = {
+  private def handleIntent(intent: Intent): Future[Boolean] = {
     verbose(l"handleIntent: ${RichIntent(intent)}")
 
-    def clearIntent() = {
+    if (intent.initSync)
+      userPreferences.head.foreach { prefs => prefs(ShouldSyncInitial) := true }
+
+    def clearIntent(): Unit = {
       intent.clearExtras()
       setIntent(intent)
     }

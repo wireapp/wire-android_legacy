@@ -201,7 +201,7 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
           }
         case _ =>
           activity.enableProgress(false)
-          activity.onEnterApplication(openSettings = false)
+          activity.onEnterApplication(openSettings = false, initSync = false)
       }
     }
   }
