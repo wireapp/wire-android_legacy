@@ -15,6 +15,7 @@ import com.waz.sync.handler.{LegalHoldError, LegalHoldSyncHandler}
 import com.waz.utils.JsonEncoder
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 
@@ -38,13 +39,13 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val service = createService()
       val value = JsonEncoder.encode[LegalHoldRequest](legalHoldRequest).toString
 
-      (storage.find _)
+      (storage.optSignal _)
         .expects(LegalHoldRequestKey)
         .once()
-        .returning(Future.successful(Some(PropertyValue(LegalHoldRequestKey, value))))
+        .returning(Signal.const(Some(PropertyValue(LegalHoldRequestKey, value))))
 
       // When
-      val fetchedResult = result(service.fetchLegalHoldRequest())
+      val fetchedResult = result(service.legalHoldRequest.head)
 
       // Then
       fetchedResult shouldBe defined
@@ -57,13 +58,13 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       // Given
       val service = createService()
 
-      (storage.find _)
+      (storage.optSignal _)
         .expects(LegalHoldRequestKey)
         .once()
-        .returning(Future.successful(None))
+        .returning(Signal.const(None))
 
       // When
-      val fetchedResult = result(service.fetchLegalHoldRequest())
+      val fetchedResult = result(service.legalHoldRequest.head)
 
       // Then
       fetchedResult shouldEqual None

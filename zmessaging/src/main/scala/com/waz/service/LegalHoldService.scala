@@ -10,13 +10,14 @@ import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.sync.SyncResult
 import com.waz.sync.handler.{LegalHoldError, LegalHoldSyncHandler}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 
 trait LegalHoldService {
   def legalHoldRequestEventStage: Stage.Atomic
   def syncLegalHoldRequest(): Future[SyncResult]
-  def fetchLegalHoldRequest(): Future[Option[LegalHoldRequest]]
+  def legalHoldRequest: Signal[Option[LegalHoldRequest]]
   def approveRequest(request: LegalHoldRequest,
                      password: Option[String]): Future[Either[LegalHoldError, Unit]]
 }
@@ -44,8 +45,8 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     case Left(err)            => Future.successful(SyncResult.Failure(err))
   }
 
-  override def fetchLegalHoldRequest(): Future[Option[LegalHoldRequest]] = {
-    storage.find(LegalHoldRequestKey).map { property =>
+  override def legalHoldRequest: Signal[Option[LegalHoldRequest]] = {
+    storage.optSignal(LegalHoldRequestKey).map { property =>
       property.map(_.value).map(JsonDecoder.decode[LegalHoldRequest])
     }
   }
