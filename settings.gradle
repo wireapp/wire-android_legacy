@@ -16,6 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 include ':app', ':common-test', ':custom-checkstyle', ':storage',
-    ':zmessaging', 'macrosupport'
+    ':zmessaging', 'macrosupport', ':zoomlayout'
 
 rootProject.name = 'zclient-root'
