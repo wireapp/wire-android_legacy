@@ -22,7 +22,7 @@ import com.waz.log.LogSE._
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.threading.Threading
-import com.wire.signals.{AggregatingSignal, DispatchQueue, EventStream, Serialized}
+import com.wire.signals.{AggregatingSignal, DispatchQueue, EventStream, Serialized, Signal}
 import com.waz.utils.returning
 import com.wire.cryptobox.{CryptoBox, CryptoSession, PreKey}
 
@@ -36,7 +36,7 @@ trait CryptoSessionService {
   def getSession(id: SessionId): Future[Option[CryptoSession]]
   def withSession[A](id: SessionId)(f: CryptoSession => A): Future[Option[A]]
   def decryptMessage(sessionId: SessionId, msg: Array[Byte], eventsWriter: PlainWriter): Future[Unit]
-  def remoteFingerprint(sid: SessionId): AggregatingSignal[Option[Array[Byte]], Option[Array[Byte]]]
+  def remoteFingerprint(sid: SessionId): Signal[Option[Array[Byte]]]
 }
 
 class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
@@ -109,7 +109,7 @@ class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
     }
   }
 
-  def remoteFingerprint(sid: SessionId): AggregatingSignal[Option[Array[Byte]], Option[Array[Byte]]] = {
+  def remoteFingerprint(sid: SessionId): Signal[Option[Array[Byte]]] = {
     def fingerprint = withSession(sid)(_.getRemoteFingerprint)
     val stream = onCreate.filter(_ == sid).mapAsync(_ => fingerprint)
 
