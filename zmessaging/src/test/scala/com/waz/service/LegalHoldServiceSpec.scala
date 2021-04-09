@@ -29,14 +29,17 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   private val clientsService = mock[OtrClientsService]
   private val cryptoSessionService = mock[CryptoSessionService]
 
-  private def createService(): LegalHoldService =
-    new LegalHoldServiceImpl(selfUserId, storage, syncHandler, clientsService, cryptoSessionService)
+  var service: LegalHoldServiceImpl = _
+
+  override protected def beforeEach(): Unit = {
+    super.beforeEach()
+    service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler, clientsService, cryptoSessionService)
+  }
 
   feature("Fetch the legal hold request") {
 
     scenario("legal hold request exists") {
       // Given
-      val service = createService()
       val value = JsonEncoder.encode[LegalHoldRequest](legalHoldRequest).toString
 
       (storage.optSignal _)
@@ -55,9 +58,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
 
     scenario("legal hold request does not exist") {
-      // Given
-      val service = createService()
-
       (storage.optSignal _)
         .expects(LegalHoldRequestKey)
         .once()
@@ -75,7 +75,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it processes the legal hold request event") {
       // Given
-      val service = createService()
       val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
       val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
       val event = LegalHoldRequestEvent(selfUserId, legalHoldRequest)
@@ -92,7 +91,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it ignores a legal hold request event not for the self user") {
       // Given
-      val service = createService()
       val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
       val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
       val event = LegalHoldRequestEvent(targetUserId = UserId("someOtherUser"), legalHoldRequest)
@@ -110,9 +108,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   feature("Sync legal hold request") {
 
     scenario("it succeeds if legal hold request exists") {
-      // Given
-      val service = createService()
-
       (syncHandler.fetchLegalHoldRequest _ )
         .expects()
         .once()
@@ -131,9 +126,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
 
     scenario("it succeeds if legal hold does not exist") {
-      // Given
-      val service = createService()
-
       (syncHandler.fetchLegalHoldRequest _ )
         .expects()
         .once()
@@ -153,7 +145,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it fails if an error occurs") {
       // Given
-      val service = createService()
       val error = ErrorResponse(400, "", "")
 
       (syncHandler.fetchLegalHoldRequest _ )
@@ -172,9 +163,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   feature("Approve legal hold request") {
 
     scenario("It creates a client and and approves the request") {
-      // Given
-      val service = createService()
-
       mockClientAndSessionCreation()
 
       // Approve the request.
@@ -198,7 +186,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("It deletes the client if approval failed") {
       // Given
-      val service = createService()
       val client = mockClientAndSessionCreation()
 
       // Approve the request.
