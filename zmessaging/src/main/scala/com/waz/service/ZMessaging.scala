@@ -127,6 +127,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val otrClientsService: OtrClientsService       = wire[OtrClientsServiceImpl]
   lazy val otrClientsSync:    OtrClientsSyncHandler   = wire[OtrClientsSyncHandlerImpl]
   lazy val otrClient:         OtrClientImpl           = account.otrClient
+  lazy val cryptoSessionService: CryptoSessionService = cryptoBox.sessions
   lazy val credentialsClient: CredentialsUpdateClientImpl = account.credentialsClient
   implicit lazy val authRequestInterceptor: AuthRequestInterceptor = account.authRequestInterceptor
 

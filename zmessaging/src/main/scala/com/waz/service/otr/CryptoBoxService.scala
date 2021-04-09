@@ -49,7 +49,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
 
   private var _cryptoBox = Option.empty[CryptoBox]
 
-  lazy val sessions = new CryptoSessionService(this)
+  lazy val sessions = new CryptoSessionServiceImpl(this)
 
   def cryptoBox = Future {
     _cryptoBox.orElse {
