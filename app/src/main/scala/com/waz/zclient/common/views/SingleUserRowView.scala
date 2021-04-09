@@ -40,7 +40,6 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{GuestUtils, StringUtils, _}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.BuildConfig
 import com.waz.zclient.ui.animation.interpolators.penner.Quad.EaseOut
 import com.wire.signals.{EventStream, Signal, SourceStream}
 import org.threeten.bp.Instant
@@ -129,15 +128,13 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   def updateAudioIndicator(imageResource: Int, color: Int, isAnimated: Boolean): Unit = {
     audioIndicator.setImageResource(imageResource)
-    if (BuildConfig.ACTIVE_SPEAKERS) {
-      audioIndicator.setColorFilter(color)
-      if (isAnimated) {
-        val animation = AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out)
-        animation.setInterpolator(new EaseOut)
-        audioIndicator.startAnimation(animation)
-      }
-      else audioIndicator.clearAnimation()
+    audioIndicator.setColorFilter(color)
+    if (isAnimated) {
+      val animation = AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out)
+      animation.setInterpolator(new EaseOut)
+      audioIndicator.startAnimation(animation)
     }
+    else audioIndicator.clearAnimation()
   }
 
   private val isGuest = Signal(false)
