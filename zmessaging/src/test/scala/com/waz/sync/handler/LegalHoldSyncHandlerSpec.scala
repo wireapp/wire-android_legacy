@@ -45,7 +45,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       actualResult.right.get.isEmpty shouldBe true
     }
 
-    scenario("It fails the request fails") {
+    scenario("It fails if the request fails") {
       // Given
       val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client)
       val error = ErrorResponse(400, "", "")
