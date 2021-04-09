@@ -62,7 +62,7 @@ class LegalHoldClientImpl(implicit
                               userId: UserId,
                               password: Option[String]): ErrorOrResponse[Unit] =
     Request.Put(
-      relativePath = s"${path(teamId, userId)}/approve",
+      relativePath = approvePath(teamId, userId),
       body = JsonEncoder { _.put("password", password) }
     )
     .withResultType[Unit]
@@ -72,4 +72,5 @@ class LegalHoldClientImpl(implicit
 
 object LegalHoldClient {
   def path(teamId: TeamId, userId: UserId): String = s"/teams/${teamId.str}/legalhold/${userId.str}"
+  def approvePath(teamId: TeamId, userId: UserId): String = s"${path(teamId, userId)}/approve"
 }
