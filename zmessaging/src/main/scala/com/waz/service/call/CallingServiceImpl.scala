@@ -447,7 +447,7 @@ class CallingServiceImpl(val accountId:       UserId,
                     verbose(l"Answering call")
                     avs.answerCall(w, conv.remoteId, callType, !vbr)
                     updateActiveCall(_.updateCallState(SelfJoining))("startCall/OtherCalling")
-                    if (BuildConfig.JOIN_GROUP_CALL_MUTED) setCallMuted(muted = isGroup)
+                    setCallMuted(muted = isGroup)
                     if (forceOption)
                       setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
                   case _ =>
@@ -464,7 +464,7 @@ class CallingServiceImpl(val accountId:       UserId,
                     avs.answerCall(w, conv.remoteId, callType, !vbr)
                     val active = call.updateCallState(SelfJoining).copy(joinedTime = None, estabTime = None) // reset previous call state if exists
                     callProfile.mutate(_.copy(calls = profile.calls + (convId -> active)))
-                    if (BuildConfig.JOIN_GROUP_CALL_MUTED) setCallMuted(muted = true) else setCallMuted(muted = false)
+                    setCallMuted(muted = true)
                     if (forceOption)
                       setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
                   }
