@@ -86,14 +86,15 @@ class FullScreenVideoFragment extends FragmentHelper {
     userVideoView.onDoubleClick.onUi { _ =>
       minimizeVideo()
     }
+
+    userVideoView.disableSingleClickAction()
   }
 
   def initVideoZoomLayout(): Unit = fullScreenVideoZoomLayout.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
-    override def onScrollBegin(): Unit = {}
-
-    override def onScaleGestureBegin(): Unit = {}
 
     override def onDoubleTap(): Unit = minimizeVideo()
+
+    override def onSingleTap(): Unit = controller.controlsClick(true)
   }))
 
   def initVideoContainer(): Unit = fullScreenVideoContainer.foreach(_.addView(userVideoView))

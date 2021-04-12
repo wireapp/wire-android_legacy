@@ -44,7 +44,7 @@ public class ZoomLayout extends LinearLayout {
 
     private static final String TAG = "ZoomLayout";
     private static final float DEFAULT_MIN_ZOOM = 1.0f;
-    private static final float DEFAULT_MAX_ZOOM = 10.0f;
+    private static final float DEFAULT_MAX_ZOOM = 4.0f;
     private static final float DEFAULT_DOUBLE_CLICK_ZOOM = 2.0f;
 
     private float mDoubleClickZoom;
@@ -131,22 +131,17 @@ public class ZoomLayout extends LinearLayout {
             setScale(newScale, (int) detector.getFocusX(), (int) detector.getFocusY());
             return true;
         }
-
-        @Override
-        public boolean onScaleBegin(ScaleGestureDetector detector) {
-            if (mZoomLayoutGestureListener != null) {
-                mZoomLayoutGestureListener.onScaleGestureBegin();
-            }
-            return true;
-        }
-
-        @Override
-        public void onScaleEnd(ScaleGestureDetector detector) {
-        }
     };
 
     private GestureDetector.SimpleOnGestureListener mSimpleOnGestureListener = new GestureDetector.SimpleOnGestureListener() {
 
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            if (mZoomLayoutGestureListener != null) {
+                mZoomLayoutGestureListener.onSingleTap();
+            }
+            return true;
+        }
 
         @Override
         public boolean onDown(MotionEvent e) {
@@ -178,12 +173,7 @@ public class ZoomLayout extends LinearLayout {
             if (!isEnabled()) {
                 return false;
             }
-            if (!mScrollBegin) {
-                mScrollBegin = true;
-                if (mZoomLayoutGestureListener != null) {
-                    mZoomLayoutGestureListener.onScrollBegin();
-                }
-            }
+            if (!mScrollBegin) mScrollBegin = true;
             processScroll((int) distanceX, (int) distanceY, getScrollRangeX(), getScrollRangeY());
             return true;
         }
@@ -479,8 +469,7 @@ public class ZoomLayout extends LinearLayout {
     }
 
     public interface ZoomLayoutGestureListener {
-        void onScrollBegin();
-        void onScaleGestureBegin();
         void onDoubleTap();
+        void onSingleTap();
     }
 }
