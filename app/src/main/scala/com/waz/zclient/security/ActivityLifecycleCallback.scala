@@ -53,8 +53,11 @@ class ActivityLifecycleCallback(implicit injector: Injector)
     activity match {
       case _: LaunchActivity =>
       case _ =>
+        activitiesRunning.mutate {
+          case (running, Some(currentActivity)) if currentActivity == activity => (running - 1, None)
+          case (running, act) => (running - 1, act)
+        }
         verbose(l"onActivityStopped, activities still active: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
-        activitiesRunning.mutate { case (running, _) => (running - 1, Option(activity)) }
     }
   }
 
@@ -62,9 +65,8 @@ class ActivityLifecycleCallback(implicit injector: Injector)
     activity match {
       case _: LaunchActivity =>
       case _ =>
+        activitiesRunning.mutate { case (running, _) => (running + 1, Some(activity)) }
         verbose(l"onActivityStarted, activities active now: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
-        activitiesRunning.mutate { case (running, _) => (running + 1, Option(activity)) }
-
     }
   }
 
