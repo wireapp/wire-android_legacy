@@ -92,6 +92,8 @@ case class Client(override val id: ClientId,
 
   def isVerified = verified == Verification.VERIFIED
 
+  def isLegalHoldDevice: Boolean = devType == OtrClientType.LEGALHOLD
+
   def updated(c: Client) = {
     val location = (regLocation, c.regLocation) match {
       case (Some(loc), Some(l)) if loc.lat == l.lat && loc.lon == l.lon => Some(loc)
