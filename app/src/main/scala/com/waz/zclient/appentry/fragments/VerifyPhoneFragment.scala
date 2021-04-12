@@ -192,7 +192,7 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
                         }
             _        <- accountService.setAccount(Some(userId))
             regState <- am.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient())
-          } yield activity.onEnterApplication(openSettings = false, regState.fold(_ => None, Some(_)))
+          } yield activity.onEnterApplication(openSettings = false, initSync = false, regState.fold(_ => None, Some(_)))
       }
     } else {
       accountService.verifyPhoneNumber(PhoneNumber(phone), ConfirmationCode(code), dryRun = true).foreach {

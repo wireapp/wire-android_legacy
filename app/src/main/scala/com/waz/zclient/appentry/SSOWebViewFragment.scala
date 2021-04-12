@@ -69,7 +69,7 @@ class SSOWebViewFragment extends FragmentHelper {
             am      <- accountsService.accountManagers.head.map(_.find(_.userId == userId))
             clState <- am.fold2(Future.successful(None), _.getOrRegisterClient().map(_.fold(_ => None, Some(_))))
             _       <- accountsService.setAccount(Some(userId))
-          } getActivity.asInstanceOf[AppEntryActivity].onEnterApplication(openSettings = false, clState)
+          } getActivity.asInstanceOf[AppEntryActivity].onEnterApplication(openSettings = false, initSync = false, clState)
       }
     case Left(error) =>
       ViewUtils.showAlertDialog(

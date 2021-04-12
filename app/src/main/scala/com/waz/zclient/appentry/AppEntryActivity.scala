@@ -137,7 +137,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
         }
       }
     })
-    skipButton.onClick(onEnterApplication(false))
+    skipButton.onClick(onEnterApplication(openSettings = false, initSync = false))
 
     spinnerController.spinnerShowing.onUi {
       case Show(animation, forcedTheme) => progressView.show(animation, darkTheme = forcedTheme.getOrElse(true), 300)
@@ -271,11 +271,11 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
     }
   }
 
-  def abortAddAccount(): Unit = onEnterApplication(openSettings = false)
+  def abortAddAccount(): Unit = onEnterApplication(openSettings = false, initSync = false)
 
-  def onEnterApplication(openSettings: Boolean, clientRegState: Option[ClientRegistrationState] = None): Unit = {
+  def onEnterApplication(openSettings: Boolean, initSync: Boolean, clientRegState: Option[ClientRegistrationState] = None): Unit = {
     getControllerFactory.getVerificationController.finishVerification()
-    val intent = Intents.EnterAppIntent(openSettings)(this)
+    val intent = Intents.EnterAppIntent(openSettings, initSync)(this)
     clientRegState.foreach(state => intent.putExtra(MainActivity.ClientRegStateArg, PrefCodec.SelfClientIdCodec.encode(state)))
     startActivity(intent)
     finish()

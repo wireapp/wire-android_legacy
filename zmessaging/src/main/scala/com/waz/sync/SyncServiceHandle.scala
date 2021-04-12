@@ -19,7 +19,7 @@ package com.waz.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.NetworkMode
-import com.waz.content.UserPreferences.{ShouldSyncConversations, ShouldSyncInitial}
+import com.waz.content.UserPreferences.{SelfClient, ShouldSyncConversations, ShouldSyncInitial}
 import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -28,10 +28,12 @@ import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync._
 import com.waz.model.{AccentColor, Availability, _}
+import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service._
 import com.waz.service.assets.UploadAssetStatus
 import com.waz.sync.SyncResult.Failure
 import com.waz.threading.Threading
+import com.wire.signals.Signal
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -122,19 +124,20 @@ class AndroidSyncServiceHandle(account:         UserId,
   import Threading.Implicits.Background
   import com.waz.model.sync.SyncRequest._
 
-  val shouldSyncAll           = userPreferences(ShouldSyncInitial)
-  val shouldSyncConversations = userPreferences(ShouldSyncConversations)
+  private val shouldSyncAll           = userPreferences(ShouldSyncInitial)
+  private val shouldSyncConversations = userPreferences(ShouldSyncConversations)
+  private val isRegistered = userPreferences(SelfClient).signal.map {
+    case Registered(_) => true
+    case _ => false
+  }
 
-  for {
-    all   <- shouldSyncAll()
-    convs <- shouldSyncConversations()
-    _     <-
-      if (all) performFullSync()
-      else if (convs) syncConversations()
-      else Future.successful({})
-    _ <- shouldSyncAll := false
-    _ <- shouldSyncConversations := false
-  } yield {}
+  Signal.zip(isRegistered, shouldSyncAll.signal, shouldSyncConversations.signal).foreach {
+    case (true, true, _) =>
+      performFullSync().flatMap(_ => shouldSyncAll := false).flatMap(_ => shouldSyncConversations := false)
+    case (true, false, true) =>
+      syncConversations().flatMap(_ => shouldSyncConversations := false)
+    case _ =>
+  }
 
   private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] =
     service.addRequest(account, req, priority, dependsOn, forceRetry, delay)

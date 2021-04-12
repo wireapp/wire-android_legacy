@@ -34,6 +34,7 @@ object Intents {
   private val ConvIdExtra           = "conv_id"
 
   private val OpenPageExtra         = "open_page"
+  private val InitSyncExtra         = "init_sync"
 
   type Page = String
   object Page {
@@ -60,9 +61,10 @@ object Intents {
   def SharingIntent(implicit context: Context) =
     new Intent(context, classOf[MainActivity]).putExtra(FromSharingExtra, true)
 
-  def EnterAppIntent(showSettings: Boolean = false)(implicit context: Context) = {
+  def EnterAppIntent(showSettings: Boolean = false, initSync: Boolean = false)(implicit context: Context) = {
     returning(new Intent(context, classOf[MainActivity])) { i =>
       if (showSettings) i.putExtra(OpenPageExtra, Page.Settings)
+      if (initSync) i.putExtra(InitSyncExtra, true)
     }
   }
 
@@ -97,7 +99,6 @@ object Intents {
     def getExtras: Option[Bundle] = Option(intent).flatMap(i => Option(i.getExtras))
     def getDataString: Option[String] = Option(intent).map(_.getDataString)
 
-
     def fromNotification: Boolean = Option(intent).exists(_.getBooleanExtra(FromNotificationExtra, false))
     def fromSharing: Boolean = Option(intent).exists(_.getBooleanExtra(FromSharingExtra, false))
 
@@ -106,6 +107,7 @@ object Intents {
     def convId: Option[ConvId] = Option(intent).map(_.getStringExtra(ConvIdExtra)).filter(_ != null).map(ConvId)
 
     def page: Option[Page] = Option(intent).map(_.getStringExtra(OpenPageExtra)).filter(_ != null)
+    def initSync: Boolean = Option(intent).exists(_.getBooleanExtra(InitSyncExtra, false))
 
     def clearExtras(): Unit = Option(intent).foreach { i =>
       i.removeExtra(FromNotificationExtra)
@@ -114,6 +116,7 @@ object Intents {
       i.removeExtra(AccountIdExtra)
       i.removeExtra(ConvIdExtra)
       i.removeExtra(OpenPageExtra)
+      i.removeExtra(InitSyncExtra)
     }
 
     def ssoToken: Option[String] = Option(intent.getDataString).flatMap { str =>
