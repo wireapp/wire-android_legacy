@@ -19,7 +19,7 @@ package com.waz.model
 
 import com.waz.api.IConversation.Access.{CODE, INVITE}
 import com.waz.api.IConversation.AccessRole._
-import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.api.IConversation.{Access, AccessRole, LegalHoldStatus}
 import com.waz.api.{IConversation, Verification}
 import com.waz.db.Col._
 import com.waz.db.{Dao, Dao2}
@@ -61,7 +61,8 @@ case class ConversationData(override val id:      ConvId                 = ConvI
                             access:               Set[Access]            = Set.empty,
                             accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
                             link:                 Option[Link]           = None,
-                            receiptMode:          Option[Int]            = None  //Some(1) if both users have RR enabled in a 1-to-1 convo
+                            receiptMode:          Option[Int]            = None,  //Some(1) if both users have RR enabled in a 1-to-1 convo
+                            legalHoldStatus:      LegalHoldStatus        = LegalHoldStatus.DISABLED
                            ) extends Identifiable[ConvId] {
   def getName(): String = name.fold("")(_.str) // still used in Java
 
@@ -227,6 +228,7 @@ object ConversationData {
     val UnreadMentionsCount = int('unread_mentions_count)(_.unreadCount.mentions)
     val UnreadQuotesCount   = int('unread_quote_count)(_.unreadCount.quotes)
     val ReceiptMode         = opt(int('receipt_mode))(_.receiptMode)
+    val LegalHoldStatus     = int[LegalHoldStatus]('legal_hold_status, _.id, IConversation.LegalHoldStatus.withId)(_.legalHoldStatus)
 
     private def getVerification(name: String): Verification =
       Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)
@@ -266,7 +268,8 @@ object ConversationData {
       Link,
       UnreadMentionsCount,
       UnreadQuotesCount,
-      ReceiptMode
+      ReceiptMode,
+      LegalHoldStatus
     )
 
     override def apply(implicit cursor: DBCursor): ConversationData =
@@ -298,7 +301,8 @@ object ConversationData {
         Access,
         AccessRole,
         Link,
-        ReceiptMode
+        ReceiptMode,
+        LegalHoldStatus
       )
 
     import com.waz.model.ConversationData.ConversationType._

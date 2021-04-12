@@ -64,4 +64,24 @@ public interface IConversation extends UiObservable {
         NON_ACTIVATED, //"wireless" users may join the conversation
         PRIVATE        //for 1:1 conversations
     }
+
+    enum LegalHoldStatus {
+
+        DISABLED(0), PENDING_APPROVAL(1), ENABLED(2);
+
+        public int id;
+
+        LegalHoldStatus(int id) {
+            this.id = id;
+        }
+
+        public static LegalHoldStatus withId(int id) {
+            switch(id) {
+                case 1: return PENDING_APPROVAL;
+                case 2: return ENABLED;
+                default: return DISABLED;
+            }
+        }
+
+    }
 }
