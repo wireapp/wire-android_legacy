@@ -20,6 +20,7 @@ android {
         buildConfigField 'boolean', 'JOIN_GROUP_CALL_MUTED', "$joinGroupCallMuted"
         buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
+        buildConfigField 'boolean', 'LEGAL_HOLD_ENABLED', "$legalHold"
     }
 
     externalNativeBuild {
