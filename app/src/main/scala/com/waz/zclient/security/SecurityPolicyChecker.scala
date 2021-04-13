@@ -34,15 +34,17 @@ import org.threeten.bp.temporal.ChronoUnit
 
 import scala.concurrent.Future
 import com.waz.threading.Threading._
+import com.waz.zclient.legalhold.LegalHoldController
 
 class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with DerivedLogTag {
   import SecurityPolicyChecker._
   import com.waz.threading.Threading.Implicits.Ui
 
-  private lazy val globalPreferences  = inject[GlobalPreferences]
-  private lazy val accountManager     = inject[Signal[AccountManager]]
-  private lazy val userPreferences    = inject[Signal[UserPreferences]]
-  private lazy val passwordController = inject[PasswordController]
+  private lazy val globalPreferences   = inject[GlobalPreferences]
+  private lazy val accountManager      = inject[Signal[AccountManager]]
+  private lazy val userPreferences     = inject[Signal[UserPreferences]]
+  private lazy val passwordController  = inject[PasswordController]
+  private lazy val legalHoldController = inject[LegalHoldController]
 
   private val alc = inject[ActivityLifecycleCallback]
   private val appInBackground = alc.appInBackground.map(_._1).onChanged
@@ -70,6 +72,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
                            globalPreferences,
                            Some(userPrefs),
                            Some(accManager),
+                           Some(legalHoldController),
                            isForeground = true,
                            authNeeded = authNeeded
                          )(activity)
@@ -151,9 +154,9 @@ object SecurityPolicyChecker extends DerivedLogTag {
           Future.successful(Some(check, actions))
     } else EmptyCheck
 
-  private def requestLegalHoldAcceptance(implicit context: Context) = {
+  private def requestLegalHoldAcceptance(legalHoldController: LegalHoldController)(implicit context: Context) = {
       verbose(l"check request legal hold acceptance")
-      val check = RequestLegalHoldCheck()
+      val check = RequestLegalHoldCheck(legalHoldController)
       val actions = List(new ShowLegalHoldApprovalAction())
       Future.successful(Some(check, actions))
   }
@@ -165,6 +168,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
                                    globalPreferences : GlobalPreferences,
                                    userPreferences   : Option[UserPreferences],
                                    accountManager    : Option[AccountManager],
+                                   legalHoldController: Option[LegalHoldController],
                                    isForeground      : Boolean,
                                    authNeeded        : Boolean
                                   )(implicit context: Context): Future[Boolean] = {
@@ -183,7 +187,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
                                    case _            => requestPassword(ctrl, prefs, am, authNeeded)
                                  }
                              }
-      requestLegalHold    <- requestLegalHoldAcceptance
+      requestLegalHold    <- legalHoldController.fold(EmptyCheck)(requestLegalHoldAcceptance)
       list                =  new SecurityChecklist(List(blockOnJailbreak, wipeOnCookieInvalid, requestPassword, requestLegalHold).flatten)
       allChecksPassed     <- list.run()
     } yield allChecksPassed
@@ -203,12 +207,13 @@ object SecurityPolicyChecker extends DerivedLogTag {
     else
       ZMessaging.currentAccounts.activeAccountManager.head.flatMap(am =>
         runSecurityChecklist(
-          passwordController = None,
-          globalPreferences  = ZMessaging.currentGlobal.prefs,
-          userPreferences    = None,
-          accountManager     = am,
-          isForeground       = false,
-          authNeeded         = false
+          passwordController  = None,
+          globalPreferences   = ZMessaging.currentGlobal.prefs,
+          userPreferences     = None,
+          accountManager      = am,
+          legalHoldController = None,
+          isForeground        = false,
+          authNeeded          = false
         )
     )
 
