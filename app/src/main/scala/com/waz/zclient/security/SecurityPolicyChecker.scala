@@ -157,7 +157,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
   private def requestLegalHoldAcceptance(legalHoldController: LegalHoldController)(implicit context: Context) = {
       verbose(l"check request legal hold acceptance")
       val check = RequestLegalHoldCheck(legalHoldController)
-      val actions = List(new ShowLegalHoldApprovalAction())
+      val actions = List(new ShowLegalHoldApprovalAction(legalHoldController))
       Future.successful(Some(check, actions))
   }
 
