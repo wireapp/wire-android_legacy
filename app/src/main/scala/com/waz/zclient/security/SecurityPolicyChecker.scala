@@ -151,6 +151,13 @@ object SecurityPolicyChecker extends DerivedLogTag {
           Future.successful(Some(check, actions))
     } else EmptyCheck
 
+  private def requestLegalHoldAcceptance(implicit context: Context) = {
+      verbose(l"check request legal hold acceptance")
+      val check = RequestLegalHoldCheck()
+      val actions = List(new ShowLegalHoldApprovalAction())
+      Future.successful(Some(check, actions))
+  }
+
   /**
     * Security checklist for foreground activity
     */
@@ -176,7 +183,8 @@ object SecurityPolicyChecker extends DerivedLogTag {
                                    case _            => requestPassword(ctrl, prefs, am, authNeeded)
                                  }
                              }
-      list                =  new SecurityChecklist(List(blockOnJailbreak, wipeOnCookieInvalid, requestPassword).flatten)
+      requestLegalHold    <- requestLegalHoldAcceptance
+      list                =  new SecurityChecklist(List(blockOnJailbreak, wipeOnCookieInvalid, requestPassword, requestLegalHold).flatten)
       allChecksPassed     <- list.run()
     } yield allChecksPassed
   }
