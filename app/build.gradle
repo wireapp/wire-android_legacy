@@ -58,6 +58,8 @@ task copyCustomResources(type: Copy) {
 }
 
 android {
+    def patchVersion = System.getenv("PATCH_VERSION") as Integer?: System.getenv("BUILD_NUMBER") as Integer ?: 99999
+
     //Trigger the licenseFormat task at least once in any compile phase
     applicationVariants.all { variant ->
         variant.javaCompiler.dependsOn(rootProject.licenseFormat)
@@ -71,9 +73,8 @@ android {
     defaultConfig {
         minSdkVersion Versions.MIN_SDK_VERSION
         targetSdkVersion Versions.TARGET_SDK_VERSION
-        //BUILD_NUMBER is required by the old jenkins builder, PATCH_VERSION will be used for the new builder to remove the dependency of the pipeline build_number
-        versionCode System.getenv("PATCH_VERSION") as Integer?: System.getenv("BUILD_NUMBER") as Integer ?: 99999
-        versionName = (System.getenv("CLIENT_VERSION") ?: Versions.ANDROID_CLIENT_MAJOR_VERSION) + android.defaultConfig.versionCode
+        versionCode getUnixTimestamp() as Integer
+        versionName = (System.getenv("CLIENT_VERSION") ?: Versions.ANDROID_CLIENT_MAJOR_VERSION) + patchVersion
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
 
@@ -464,13 +465,17 @@ tasks.withType(ScalaCompile) {
         "UTF-8"]
 }
 
-static def getDate() {
+def getDate() {
     def date = new Date()
     def formattedDate = date.format('MM/dd HH:mm:ss')
     return formattedDate
 }
 
-static def buildSuffixForVersion(String versionString) {
+def getUnixTimestamp() {
+    return (int)(new Date().getTime()/1000L)
+}
+
+def buildSuffixForVersion(String versionString) {
     if (versionString.matches("\\d+\\.\\d+\\.\\d+(-[.0-9a-zA-Z]+)")) "" else "-DEV"
 }
 
