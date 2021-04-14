@@ -331,7 +331,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     (usersStorage.updateOrCreateAll2 _).expects(*,*).anyNumberOfTimes().onCall{ (uIds, creator) =>
         Future.successful(uIds.map(creator(_, None)).toSet)
     }
-    (usersStorage.get _).expects(*).anyNumberOfTimes().onCall{uId: UserId => Future.successful(Some(UserData(uId, "")))}
+    (usersStorage.get _).expects(*).anyNumberOfTimes().onCall{uId: UserId => Future.successful(Some(UserData.withName(uId, "")))}
 
     (members.addAll (_:Map[ConvId, Map[UserId, ConversationRole]])).expects(*).anyNumberOfTimes().returning(Future.successful(()))
 

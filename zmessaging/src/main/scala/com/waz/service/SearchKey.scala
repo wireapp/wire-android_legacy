@@ -22,12 +22,12 @@ import java.util.regex.Pattern.{compile, quote}
 import com.waz.utils.Locales
 
 final class SearchKey private (val asciiRepresentation: String) extends Serializable {
-  private[this] lazy val pattern = compile(s"(.+ )?${quote(asciiRepresentation)}.*")
-  def isAtTheStartOfAnyWordIn(other: SearchKey) = pattern.matcher(other.asciiRepresentation).matches
+  private[this] lazy val pattern = compile(s"(.+ )?${quote(asciiRepresentation.toLowerCase)}.*")
+  def isAtTheStartOfAnyWordIn(other: SearchKey) = pattern.matcher(other.asciiRepresentation.toLowerCase).matches
   def isEmpty = asciiRepresentation.isEmpty
 
   override def equals(any: Any): Boolean = any match {
-    case other: SearchKey => other.asciiRepresentation == asciiRepresentation
+    case other: SearchKey => other.asciiRepresentation.equalsIgnoreCase(asciiRepresentation)
     case _ => false
   }
   override def hashCode: Int = asciiRepresentation.##
@@ -40,10 +40,9 @@ object SearchKey extends (String => SearchKey) {
   def unsafeRestore(asciiRepresentation: String) = new SearchKey(asciiRepresentation)
   def unapply(k: SearchKey): Option[String] = Some(k.asciiRepresentation)
 
-  def transliterated(s: String): String = Locales.transliteration.transliterate(s).trim
+  def transliterated(s: String): String = Locales.transliterate(s)
 
   private def tokenize(s: String): String = s.replaceAll("[-|_]+", " ")
 
-  //TODO for tests only - get libcore working in tests again
   def simple(name: String): SearchKey = if (name.isEmpty) Empty else new SearchKey(tokenize(name))
 }
