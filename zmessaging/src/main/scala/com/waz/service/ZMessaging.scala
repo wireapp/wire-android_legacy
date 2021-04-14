@@ -48,10 +48,10 @@ import com.waz.ui.UiModule
 import com.waz.utils.crypto._
 import com.waz.utils.wrappers.{AndroidContext, DB, GoogleApi}
 import com.waz.utils.{IoUtils, Locales}
+import com.waz.zms.BuildConfig
 import com.waz.znet2.http.HttpClient
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.{AuthRequestInterceptor, OkHttpWebSocketFactory}
-import com.wire.signals.{EventContext, SerialDispatchQueue}
 import org.threeten.bp.{Clock, Duration, Instant}
 
 import scala.concurrent.duration._
@@ -271,7 +271,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val propertiesService: PropertiesService       = wire[PropertiesServiceImpl]
   lazy val fcmNotStatsService                         = wire[FCMNotificationStatsServiceImpl]
   lazy val trackingSync                               = wire[TrackingSyncHandler]
-  lazy val legalHold: LegalHoldService                = wire[LegalHoldServiceImpl]
+  lazy val legalHold: LegalHoldService                = if (BuildConfig.LEGAL_HOLD_ENABLED) wire[LegalHoldServiceImpl]
+                                                        else wire[DisabledLegalHoldService]
   lazy val legalHoldSync: LegalHoldSyncHandler        = wire[LegalHoldSyncHandlerImpl]
 
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
