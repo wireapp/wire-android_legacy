@@ -1589,5 +1589,6 @@
     <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$s\nThis includes deleted, edited and timed messages in all conversations.\n\nEnter your password to confirm.</string>
     <string name="legal_hold_request_dialog_positive_button_text">Accept</string>
     <string name="legal_hold_request_dialog_negative_button_text">Not Now</string>
+    <string name="legal_hold_request_dialog_wrong_password_error">Wrong password</string>
 </resources>
 

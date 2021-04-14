@@ -1,7 +1,7 @@
 package com.waz.zclient.preferences.dialogs
 
 import android.app.Dialog
-import android.content.DialogInterface.BUTTON_POSITIVE
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
@@ -16,11 +16,10 @@ import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.EventStream
 
-import scala.util.Try
-
 abstract class ConfirmationWithPasswordDialog extends DialogFragment with FragmentHelper {
 
   val onAccept = EventStream[Option[Password]]()
+  val onDecline = EventStream[Unit]
 
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.confirmation_with_password_dialog, null)
 
@@ -47,6 +46,14 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
     _.onClick(inject[BrowserController].openForgotPassword())
   }
 
+  private lazy val dialogClickListener = new DialogInterface.OnClickListener {
+    override def onClick(dialog: DialogInterface, which: Int): Unit = which match {
+      case DialogInterface.BUTTON_POSITIVE => providePassword(if (isSSO) None else Some(Password(passwordEditText.getText.toString)))
+      case DialogInterface.BUTTON_NEGATIVE => onDecline ! (())
+      case _ =>
+    }
+  }
+
   def isSSO : Boolean
   def errorMessage: Option[String]
   def title: String
@@ -66,19 +73,9 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
       .setView(root)
       .setTitle(title)
       .setMessage(message)
-      .setPositiveButton(positiveButtonText, null)
-      .setNegativeButton(negativeButtonText, null)
+      .setPositiveButton(positiveButtonText, dialogClickListener)
+      .setNegativeButton(negativeButtonText, dialogClickListener)
       .create
-  }
-
-  override def onStart() = {
-    super.onStart()
-    Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { d =>
-      d.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-        def onClick(v: View) =
-          providePassword(if (isSSO) None else Some(Password(passwordEditText.getText.toString)))
-      })
-    }
   }
 
   override def onActivityCreated(savedInstanceState: Bundle) = {

@@ -1,5 +1,6 @@
 package com.waz.zclient.legalhold
 
+import android.app.Dialog
 import android.os.Bundle
 import com.waz.utils.returning
 import com.waz.zclient.preferences.dialogs.ConfirmationWithPasswordDialog
@@ -10,7 +11,10 @@ class LegalHoldRequestDialog extends ConfirmationWithPasswordDialog {
 
   override lazy val isSSO: Boolean = getArguments.getBoolean(ARG_IS_SSO)
 
-  override lazy val errorMessage: Option[String] = None // TODO
+  override lazy val errorMessage: Option[String] =
+    if (getArguments.getBoolean(ARG_SHOW_ERROR))
+      Some(getString(R.string.legal_hold_request_dialog_wrong_password_error))
+    else None
 
   override lazy val title: String = getString(R.string.legal_hold_request_dialog_title)
 
@@ -24,6 +28,12 @@ class LegalHoldRequestDialog extends ConfirmationWithPasswordDialog {
   override lazy val positiveButtonText: Int = R.string.legal_hold_request_dialog_positive_button_text
 
   override lazy val negativeButtonText: Int = R.string.legal_hold_request_dialog_negative_button_text
+
+  override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
+    val dialog = super.onCreateDialog(savedInstanceState)
+    setCancelable(false)
+    dialog
+  }
 }
 
 object LegalHoldRequestDialog {
@@ -31,12 +41,14 @@ object LegalHoldRequestDialog {
 
   private val ARG_IS_SSO = "LegalHold_arg_isSso"
   private val ARG_CLIENT_FINGERPRINT = "LegalHold_arg_fingerprint"
+  private val ARG_SHOW_ERROR = "LegalHold_arg_showError"
 
-  def newInstance(isSso: Boolean, fingerprint: String) : LegalHoldRequestDialog =
+  def newInstance(isSso: Boolean, fingerprint: String, showError: Boolean) : LegalHoldRequestDialog =
     returning(new LegalHoldRequestDialog) {
       _.setArguments(returning(new Bundle()) { args =>
         args.putString(ARG_CLIENT_FINGERPRINT, fingerprint)
         args.putBoolean(ARG_IS_SSO, isSso)
+        args.putBoolean(ARG_SHOW_ERROR, showError)
       })
     }
 }
