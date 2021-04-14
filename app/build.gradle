@@ -472,7 +472,10 @@ def getDate() {
 }
 
 def getUnixTimestamp() {
-    return (int)(new Date().getTime()/1000L)
+    def date = new Date()
+    def versionCode = (int)(date.getTime()/1000L)
+    println("VERSIONCODE for ("+date.dateTimeString+"):"+versionCode)
+    return versionCode
 }
 
 def buildSuffixForVersion(String versionString) {
