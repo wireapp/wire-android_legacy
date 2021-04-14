@@ -32,6 +32,7 @@ import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoVi
 import com.xuliwen.zoom.ZoomLayout
 import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 
+
 class FullScreenVideoFragment extends FragmentHelper {
 
   private lazy val controller = inject[CallController]
@@ -86,14 +87,19 @@ class FullScreenVideoFragment extends FragmentHelper {
     userVideoView.onDoubleClick.onUi { _ =>
       minimizeVideo()
     }
+
+    userVideoView.disableSingleClickAction()
   }
 
   def initVideoZoomLayout(): Unit = fullScreenVideoZoomLayout.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
+
+    override def onDoubleTap(): Unit = minimizeVideo()
+
+    override def onSingleTap(): Unit = controller.controlsClick(true)
+
     override def onScrollBegin(): Unit = {}
 
     override def onScaleGestureBegin(): Unit = {}
-
-    override def onDoubleTap(): Unit = minimizeVideo()
   }))
 
   def initVideoContainer(): Unit = fullScreenVideoContainer.foreach(_.addView(userVideoView))

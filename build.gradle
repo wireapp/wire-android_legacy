@@ -68,7 +68,7 @@ ext {
     activeSpeakersView = false
     joinGroupCallMuted = true
     removeJoinLeaveSounds = true
-    zoomingGroupCall = false
+    zoomingGroupCall = true
     appLockFeatureFlag = true
     sessionReset = true
     legalHold = false

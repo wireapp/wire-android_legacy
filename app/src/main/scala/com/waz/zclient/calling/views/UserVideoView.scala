@@ -160,4 +160,6 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
       getChildAt(1).setMargin(0, 0, 0, 0)
     }
 
+  def disableSingleClickAction() = this.onClick(() => {}, () => onDoubleClick ! {})
+
 }
