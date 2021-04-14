@@ -323,7 +323,6 @@ dependencies {
     api(project(ModuleDependencies.syncEngine)) {
         exclude group: avsGroup, module: avsName
     }
-    api project(ModuleDependencies.zoomLayout)
 
     //Android
     annotationProcessor BuildDependencies.androidX.annotation
@@ -416,6 +415,8 @@ dependencies {
     implementation BuildDependencies.wireSignalsExtensions
 
     implementation BuildDependencies.libSodium
+
+    implementation BuildDependencies.zooming
 
     // Unit Tests
     testImplementation TestDependencies.jUnit
