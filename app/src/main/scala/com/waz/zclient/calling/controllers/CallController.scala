@@ -135,6 +135,8 @@ class CallController(implicit inj: Injector, cxt: WireContext)
         }
     }
 
+  val screenShares = participantInfos.map(_.filter(_.isScreenShareEnabled == true))
+
   private val lastCallAccountId: SourceSignal[UserId] = Signal()
   currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
 
