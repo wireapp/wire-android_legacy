@@ -123,7 +123,7 @@ class GlobalModuleImpl(val context:             AContext,
   val storage:                  Database                         = new GlobalDatabase(context, tracking = trackingService)
 
   lazy val ssoService:          SSOService                       = wire[SSOService]
-  lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this, BuildConfig.KOTLIN_SETTINGS)
+  lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this, false)
   lazy val syncHandler:         SyncHandler                      = new AccountSyncHandler(accountsService)
   lazy val calling:             GlobalCallingService             = new GlobalCallingService
 

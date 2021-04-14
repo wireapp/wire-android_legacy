@@ -52,7 +52,6 @@ import com.waz.zclient.storage.db.sync.SyncJobsDao
 import com.waz.zclient.storage.db.sync.SyncJobsEntity
 import com.waz.zclient.storage.db.userclients.UserClientDao
 import com.waz.zclient.storage.db.userclients.UserClientsEntity
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_128_TO_129
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_129_TO_130
@@ -109,7 +108,6 @@ abstract class UserDatabase : RoomDatabase() {
 
         @JvmStatic
         val migrations = arrayOf(
-            USER_DATABASE_MIGRATION_126_TO_127,
             USER_DATABASE_MIGRATION_127_TO_128,
             USER_DATABASE_MIGRATION_128_TO_129,
             USER_DATABASE_MIGRATION_129_TO_130
