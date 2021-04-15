@@ -40,6 +40,7 @@ import com.waz.zclient.calling.CallingFragment.MaxTopSpeakerVideoPreviews
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.utils.RichView
 import com.xuliwen.zoom.ZoomLayout
+import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 
 class CallingFragment extends FragmentHelper {
   import Threading.Implicits.Ui
@@ -50,8 +51,19 @@ class CallingFragment extends FragmentHelper {
   private lazy val previewCardView          = view[CardView](R.id.preview_card_view)
   private lazy val noActiveSpeakersLayout   = view[LinearLayout](R.id.no_active_speakers_layout)
   private lazy val fullScreenVideoContainer = view[FrameLayout](R.id.full_screen_video_container)
-  private lazy val zoomLayout               = view[ZoomLayout](R.id.zoom_layout)
-  private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
+  private lazy val zoomLayout = returning(view[ZoomLayout](R.id.zoom_layout)) { vh =>
+    vh.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
+
+      override def onDoubleTap(): Unit = {}
+
+      override def onSingleTap(): Unit = controller.controlsClick(true)
+
+      override def onScrollBegin(): Unit = {}
+
+      override def onScaleGestureBegin(): Unit = {}
+    }))
+  }
+  private lazy val videoGrid                = returning(view[GridLayout](R.id.video_grid)) { vh =>
 
     controller.theme.map(themeController.getTheme).foreach { theme =>
       vh.foreach {
@@ -114,8 +126,10 @@ class CallingFragment extends FragmentHelper {
       fullScreenVideoContainer.foreach(_.setVisible(isFullScreenEnabled))
     }
 
-    Signal.zip(controller.screenShares.map(_.size), controller.videoUsers.map(_.size)).onUi {
-      case (1, 1) => zoomLayout.foreach(_.setEnabled(true))
+    Signal.zip(controller.screenShares.map(_.size), controller.allParticipants.map(_.size)).onUi {
+      case (1, 2) =>
+        zoomLayout.foreach(_.setEnabled(true))
+        //Toast.makeText(getContext, R.string.calling_screenshare_zooming_message, Toast.LENGTH_LONG).show()
       case _ => zoomLayout.foreach(_.setEnabled(false))
     }
 

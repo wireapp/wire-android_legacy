@@ -48,7 +48,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   val onDoubleClick = EventStream[Unit]()
 
-  this.onClick(() => callController.controlsClick(true), () => onDoubleClick ! {})
+  this.onClick(() => {}, () => onDoubleClick ! {})
 
   private val audioStatusImageView    = findById[ImageView](R.id.audio_status_image_view)
   private val pausedText              = findById[TextView](R.id.paused_text_view)
@@ -154,7 +154,5 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     setBackgroundColor(getColor(R.color.black))
     getChildAt(1).setMargin(0, 0, 0, 0)
   }
-
-  def disableSingleClickAction() = this.onClick(() => {}, () => onDoubleClick ! {})
 
 }
