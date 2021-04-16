@@ -122,8 +122,8 @@ class CallingFragment extends FragmentHelper {
       controller.controlsClick(true)
     }
 
-    Signal.zip(controller.screenShares.map(_.size), controller.allParticipants.map(_.size)).onUi {
-      case (1, 2) =>
+    controller.allParticipants.map(_.size).onUi {
+      case 2 =>
         zoomLayout.foreach(_.setEnabled(true))
         Toast.makeText(getContext, R.string.calling_screenshare_zooming_message, Toast.LENGTH_LONG).show()
       case _ => zoomLayout.foreach(_.setEnabled(false))
