@@ -122,10 +122,6 @@ class CallingFragment extends FragmentHelper {
       controller.controlsClick(true)
     }
 
-    controller.isFullScreenEnabled.onUi { isFullScreenEnabled =>
-      fullScreenVideoContainer.foreach(_.setVisible(isFullScreenEnabled))
-    }
-
     Signal.zip(controller.screenShares.map(_.size), controller.allParticipants.map(_.size)).onUi {
       case (1, 2) =>
         zoomLayout.foreach(_.setEnabled(true))

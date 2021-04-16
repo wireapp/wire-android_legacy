@@ -31,6 +31,7 @@ import com.waz.zclient.calling.FullScreenVideoFragment.PARTICIPANT_BUNDLE_KEY
 import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
 import com.xuliwen.zoom.ZoomLayout
 import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
+import com.waz.zclient.utils.RichView
 
 
 class FullScreenVideoFragment extends FragmentHelper {
@@ -100,7 +101,13 @@ class FullScreenVideoFragment extends FragmentHelper {
     override def onScaleGestureBegin(): Unit = {}
   }))
 
-  def initVideoContainer(): Unit = fullScreenVideoContainer.foreach(_.addView(userVideoView))
+  def initVideoContainer(): Unit = {
+    fullScreenVideoContainer.foreach(_.addView(userVideoView))
+
+    controller.isFullScreenEnabled.onUi { isFullScreenEnabled =>
+      fullScreenVideoContainer.foreach(_.setVisible(isFullScreenEnabled))
+    }
+  }
 
   def minimizeVideoWhenNotAvailable() = controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
     case VideoState.Started | VideoState.ScreenShare =>
