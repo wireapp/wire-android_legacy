@@ -87,8 +87,6 @@ class FullScreenVideoFragment extends FragmentHelper {
     userVideoView.onDoubleClick.onUi { _ =>
       minimizeVideo()
     }
-
-    userVideoView.disableSingleClickAction()
   }
 
   def initVideoZoomLayout(): Unit = fullScreenVideoZoomLayout.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
