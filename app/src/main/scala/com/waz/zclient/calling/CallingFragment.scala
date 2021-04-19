@@ -54,7 +54,6 @@ class CallingFragment extends FragmentHelper {
   private lazy val noActiveSpeakersLayout   = view[LinearLayout](R.id.no_active_speakers_layout)
   private lazy val parentLayout             = view[FrameLayout](R.id.parent_layout)
   private var videoPreview: VideoPreview    = _
-  private lazy val fullScreenVideoContainer = view[FrameLayout](R.id.full_screen_video_container)
 
   private lazy val zoomLayout = returning(view[ZoomLayout](R.id.zoom_layout)) { vh =>
     vh.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
@@ -135,17 +134,20 @@ class CallingFragment extends FragmentHelper {
       case _ => zoomLayout.foreach(_.setEnabled(false))
     }
 
-    controller.videoSendState.onUi {
-      case VideoState.Started | VideoState.ScreenShare | VideoState.BadConnection =>
+    Signal.zip(controller.isSelfViewVisible, controller.videoSendState).onUi {
+      case (false, VideoState.Started | VideoState.ScreenShare | VideoState.BadConnection) =>
         videoPreview = new VideoPreview(getContext) {
           v =>
+          controller.setVideoPreview(null)
           controller.setVideoPreview(Some(v))
           v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
           v.setElevation(0)
           parentLayout.foreach(_.addView(v))
         }
-      case _ =>
+      case (false, _) =>
         controller.setVideoPreview(null)
+        parentLayout.foreach(_.removeView(videoPreview))
+      case (true, _) =>
         parentLayout.foreach(_.removeView(videoPreview))
     }
 
@@ -179,10 +181,9 @@ class CallingFragment extends FragmentHelper {
   private var viewMap = Map[Participant, UserVideoView]()
 
   private def refreshViews(videoUsers: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
+
     def createView(participant: Participant): UserVideoView = returning {
-      if (participant == selfParticipant) returning(new SelfVideoView(getContext, selfParticipant)) {
-        view => view.setVideoPreview(videoPreview)
-      }
+      if (participant == selfParticipant) new SelfVideoView(getContext, selfParticipant)
       else new OtherVideoView(getContext, participant)
     } { userView =>
       viewMap = viewMap.updated(participant, userView)
@@ -195,6 +196,9 @@ class CallingFragment extends FragmentHelper {
           }
         }
     }
+
+    if (videoUsers.contains(selfParticipant)) controller.isSelfViewVisible ! true
+    else controller.isSelfViewVisible ! false
 
     videoUsers.map { participant => viewMap.getOrElse(participant, createView(participant)) }
   }

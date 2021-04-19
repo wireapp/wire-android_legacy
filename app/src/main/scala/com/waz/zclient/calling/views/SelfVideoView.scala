@@ -63,9 +63,11 @@ class SelfVideoView(context: Context, participant: Participant)
     case _                                         =>
   }
 
-  def setVideoPreview(videoPreview: VideoPreview): Unit = callController.videoSendState.onUi {
+  callController.videoSendState.onUi {
     case VideoState.Started | VideoState.ScreenShare | VideoState.BadConnection =>
-      registerHandler(returning(videoPreview) { v =>
+      registerHandler(returning(new VideoPreview(getContext)) { v =>
+        callController.setVideoPreview(null)
+        callController.setVideoPreview(Some(v))
         v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         addView(v, 1)
       })
