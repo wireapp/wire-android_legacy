@@ -110,5 +110,8 @@ data class ConversationsEntity(
     val unreadQuoteCount: Int,
 
     @ColumnInfo(name = "receipt_mode")
-    val receiptMode: Int?
+    val receiptMode: Int?,
+
+    @ColumnInfo(name = "legal_hold_status")
+    val legalHoldStatus: Int
 )

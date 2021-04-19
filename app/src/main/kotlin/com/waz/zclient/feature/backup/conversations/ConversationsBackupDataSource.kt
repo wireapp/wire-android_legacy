@@ -42,7 +42,8 @@ data class ConversationsBackUpModel(
     val link: String? = null,
     val unreadMentionsCount: Int = 0,
     val unreadQuoteCount: Int = 0,
-    val receiptMode: Int? = null
+    val receiptMode: Int? = null,
+    val legalHoldStatus: Int = 0
 )
 
 class ConversationsBackupMapper : BackUpDataMapper<ConversationsBackUpModel, ConversationsEntity> {
@@ -115,7 +116,8 @@ class ConversationsBackupMapper : BackUpDataMapper<ConversationsBackUpModel, Con
         link = model.link,
         unreadMentionsCount = model.unreadMentionsCount,
         unreadQuoteCount = model.unreadQuoteCount,
-        receiptMode = model.receiptMode
+        receiptMode = model.receiptMode,
+        legalHoldStatus = model.legalHoldStatus
     )
 }
 
