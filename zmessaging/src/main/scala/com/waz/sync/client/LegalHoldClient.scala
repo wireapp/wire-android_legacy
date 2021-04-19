@@ -54,7 +54,7 @@ class LegalHoldClientImpl(implicit
   override def fetchLegalHoldRequest(teamId: TeamId,
                                      userId: UserId): ErrorOrResponse[Option[LegalHoldRequest]] =
     Request.Get(relativePath = path(teamId, userId))
-      .withResultType[Option[LegalHoldRequest]]
+      .withResultType[Option[LegalHoldRequest]](responseDeserializerFrom(bodyDeserializerFrom(Deserializer)))
       .withErrorType[ErrorResponse]
       .executeSafe
 
