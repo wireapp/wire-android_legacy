@@ -37,6 +37,7 @@ import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.Signal
 import com.waz.zclient.calling.CallingFragment.MaxAllVideoPreviews
 import com.waz.zclient.calling.CallingFragment.MaxTopSpeakerVideoPreviews
+import com.waz.zclient.calling.CallingFragment.NbParticipantsOneOneCall
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.utils.RichView
 import com.xuliwen.zoom.ZoomLayout
@@ -122,8 +123,8 @@ class CallingFragment extends FragmentHelper {
       controller.controlsClick(true)
     }
 
-    Signal.zip(controller.screenShares.map(_.size), controller.allParticipants.map(_.size)).onUi {
-      case (1, 2) =>
+    controller.allParticipants.map(_.size).onUi {
+      case NbParticipantsOneOneCall =>
         zoomLayout.foreach(_.setEnabled(true))
         Toast.makeText(getContext, R.string.calling_screenshare_zooming_message, Toast.LENGTH_LONG).show()
       case _ => zoomLayout.foreach(_.setEnabled(false))
@@ -295,5 +296,6 @@ object CallingFragment {
   val Tag: String = getClass.getSimpleName
   val MaxAllVideoPreviews = 12
   val MaxTopSpeakerVideoPreviews = 4
+  val NbParticipantsOneOneCall: Int = 2
   def apply(): CallingFragment = new CallingFragment()
 }
