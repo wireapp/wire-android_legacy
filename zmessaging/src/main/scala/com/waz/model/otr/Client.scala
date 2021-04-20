@@ -90,6 +90,7 @@ final case class Client(override val id: ClientId,
 
   lazy val isVerified: Boolean = verified == Verification.VERIFIED
 
+
   def updated(c: Client): Client = {
     val location = (regLocation, c.regLocation) match {
       case (Some(loc), Some(l)) if loc.lat == l.lat && loc.lon == l.lon => Some(loc)
