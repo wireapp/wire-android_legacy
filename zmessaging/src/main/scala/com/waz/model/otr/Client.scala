@@ -31,6 +31,7 @@ import org.threeten.bp.Instant
 
 import scala.collection.breakOut
 
+
 final case class ClientId(str: String) extends AnyVal {
   def longId: Long = new BigInteger(str, 16).longValue()
   override def toString: String = str
@@ -87,6 +88,7 @@ final case class Client(override val id: ClientId,
                         signalingKey:    Option[SignalingKey] = None,
                         verified:        Verification = Verification.UNKNOWN,
                         devType:         OtrClientType = OtrClientType.PHONE) extends Identifiable[ClientId] {
+
   lazy val isVerified: Boolean = verified == Verification.VERIFIED
 
   def updated(c: Client): Client = {
@@ -95,7 +97,7 @@ final case class Client(override val id: ClientId,
       case (_, loc @ Some(_)) => loc
       case (loc, _) => loc
     }
-    copy (
+    copy(
       label        = if (c.label.isEmpty) label else c.label,
       model        = if (c.model.isEmpty) model else c.model,
       regTime      = c.regTime.orElse(regTime),
@@ -154,7 +156,6 @@ object UserClients {
   }
 
   implicit object UserClientsDao extends Dao[UserClients, UserId] {
-
     val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.user)
     val Data = text('data)(JsonEncoder.encodeString(_))
 
