@@ -72,9 +72,9 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
       })
   }
 
-  override def getActiveUsers(conv: ConvId) = getByConv(conv) map { _.map(_.userId) }
+  override def getActiveUsers(conv: ConvId): Future[Seq[UserId]] = getByConv(conv).map { _.map(_.userId) }
 
-  override def getActiveConvs(user: UserId) = getByUser(user) map { _.map(_.convId) }
+  override def getActiveConvs(user: UserId): Future[Seq[ConvId]] = getByUser(user).map { _.map(_.convId) }
 
   override def getActiveUsers2(convs: Set[ConvId]): Future[Map[ConvId, Set[UserId]]] =
     getByConvs(convs).map(_.groupBy(_.convId).map {

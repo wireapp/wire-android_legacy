@@ -30,6 +30,7 @@ import com.waz.model.otr._
 import com.waz.model.{RemoteInstant, UserId}
 import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
 import com.waz.sync.otr.OtrSyncHandler.OtrMessage
+import com.waz.utils.JsonDecoder.decodeStringSeq
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
 import com.waz.znet2.AuthRequestInterceptor
@@ -37,6 +38,7 @@ import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import com.wire.cryptobox.PreKey
 import com.wire.messages.Otr
+import com.wire.signals.CancellableFuture
 import org.json.{JSONArray, JSONObject}
 
 import scala.collection.breakOut
@@ -48,6 +50,7 @@ trait OtrClient {
   def loadPreKeys(users: Map[UserId, Seq[ClientId]]): ErrorOrResponse[Map[UserId, Seq[ClientKey]]]
   def loadClients(): ErrorOrResponse[Seq[Client]]
   def loadClients(user: UserId): ErrorOrResponse[Seq[Client]]
+  def loadClients(users: Seq[(UserId, String)]): ErrorOrResponse[Map[UserId, Seq[Client]]]
   def loadRemainingPreKeys(id: ClientId): ErrorOrResponse[Seq[Int]]
   def deleteClient(id: ClientId, password: Option[Password]): ErrorOrResponse[Unit]
   def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client]
@@ -118,6 +121,21 @@ class OtrClientImpl(implicit
       .withResultType[Seq[Client]]
       .withErrorType[ErrorResponse]
       .executeSafe
+  }
+
+  override def loadClients(users: Seq[(UserId, String)]): ErrorOrResponse[Map[UserId, Seq[Client]]] = {
+    val data = JsonEncoder.array(users) { case (arr, (userId, domain)) =>
+      arr.put(JsonEncoder { o =>
+        o.put("id", userId.str)
+        o.put("domain", domain)
+      })
+    }
+
+    CancellableFuture.successful(Left(ErrorResponse.PageNotFound))
+    /*Request.Post(relativePath = ListClientsPath)
+      .withResultType[Map[UserId, Seq[Client]]]
+      .withErrorType[ErrorResponse]
+      .executeSafe*/
   }
 
   override def loadRemainingPreKeys(id: ClientId): ErrorOrResponse[Seq[Int]] = {
@@ -204,6 +222,7 @@ object OtrClient extends DerivedLogTag {
   val clientsPath = "/clients"
   val prekeysPath = "/users/prekeys"
   val BroadcastPath = "/broadcast/otr/messages"
+  val ListClientsPath = "/users/list-clients"
 
   def clientPath(id: ClientId) = s"/clients/$id"
   def clientKeyIdsPath(id: ClientId) = s"/clients/$id/prekeys"
@@ -330,14 +349,14 @@ object OtrClient extends DerivedLogTag {
       mismatch.missing
   }
   object MessageResponse {
-    case class Success(mismatch: ClientMismatch) extends MessageResponse
-    case class Failure(mismatch: ClientMismatch) extends MessageResponse
+    final case class Success(mismatch: ClientMismatch) extends MessageResponse
+    final case class Failure(mismatch: ClientMismatch) extends MessageResponse
   }
 
-  case class ClientMismatch(redundant: Map[UserId, Seq[ClientId]] = Map.empty,
-                            missing:   Map[UserId, Seq[ClientId]] = Map.empty,
-                            deleted:   Map[UserId, Seq[ClientId]] = Map.empty,
-                            time: RemoteInstant)
+  final case class ClientMismatch(redundant: Map[UserId, Seq[ClientId]] = Map.empty,
+                                  missing:   Map[UserId, Seq[ClientId]] = Map.empty,
+                                  deleted:   Map[UserId, Seq[ClientId]] = Map.empty,
+                                  time:     RemoteInstant)
 
   object ClientMismatch {
     implicit lazy val Decoder: JsonDecoder[ClientMismatch] = new JsonDecoder[ClientMismatch] {
