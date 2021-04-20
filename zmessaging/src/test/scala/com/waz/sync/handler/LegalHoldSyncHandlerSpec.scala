@@ -1,53 +1,82 @@
 package com.waz.sync.handler
 
+import com.waz.api.impl.ErrorResponse
 import com.waz.model.otr.ClientId
 import com.waz.model.{LegalHoldRequest, TeamId, UserId}
+import com.waz.service.LegalHoldService
 import com.waz.specs.AndroidFreeSpec
+import com.waz.sync.SyncResult
 import com.waz.sync.client.LegalHoldClient
+import com.waz.sync.handler.LegalHoldSyncHandlerSpec._
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
-import LegalHoldSyncHandlerSpec._
-import com.waz.api.impl.ErrorResponse
 import com.wire.signals.CancellableFuture
+
+import scala.concurrent.Future
 
 class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
   private val client = mock[LegalHoldClient]
+  private val service  = mock[LegalHoldService]
 
   feature("Fetching a legal hold request") {
 
-    scenario("It fetches the legal hold request if the user is a team member") {
+    scenario("It fetches and stores the legal hold request if it exists") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client)
+      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service)
 
       (client.fetchLegalHoldRequest _)
         .expects(TeamId("team1"), UserId("user1"))
         .once()
         .returning(CancellableFuture.successful(Right(Some(legalHoldRequest))))
 
+      (service.storeLegalHoldRequest _)
+        .expects(legalHoldRequest)
+        .once()
+        .returning(Future.successful({}))
+
       // When
-      val actualResult = result(syncHandler.fetchLegalHoldRequest())
+      val actualResult = result(syncHandler.syncLegalHoldRequest())
 
       // Then
-      actualResult.isRight shouldBe true
-      actualResult.right.get.isDefined shouldBe true
+      actualResult shouldBe SyncResult.Success
+    }
+
+    scenario("It deletes the existing legal hold request if none fetched") {
+      // Given
+      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service)
+
+      (client.fetchLegalHoldRequest _)
+        .expects(TeamId("team1"), UserId("user1"))
+        .once()
+        .returning(CancellableFuture.successful(Right(None)))
+
+      (service.deleteLegalHoldRequest _)
+        .expects()
+        .once()
+        .returning(Future.successful({}))
+
+      // When
+      val actualResult = result(syncHandler.syncLegalHoldRequest())
+
+      // Then
+      actualResult shouldBe SyncResult.Success
     }
 
     scenario("It returns none if the user is not a team member") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(None, UserId("user1"), client)
+      val syncHandler = new LegalHoldSyncHandlerImpl(None, UserId("user1"), client, service)
 
       // When
-      val actualResult = result(syncHandler.fetchLegalHoldRequest())
+      val actualResult = result(syncHandler.syncLegalHoldRequest())
 
       // Then
-      actualResult.isRight shouldBe true
-      actualResult.right.get.isEmpty shouldBe true
+      actualResult shouldBe SyncResult.Success
     }
 
     scenario("It fails if the request fails") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client)
+      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service)
       val error = ErrorResponse(400, "", "")
 
       (client.fetchLegalHoldRequest _)
@@ -56,76 +85,10 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
         .returning(CancellableFuture.successful(Left(error)))
 
       // When
-      val actualResult = result(syncHandler.fetchLegalHoldRequest())
+      val actualResult = result(syncHandler.syncLegalHoldRequest())
 
       // Then
-      actualResult.isLeft shouldBe true
-      actualResult.left.get shouldEqual error
-    }
-
-  }
-
-  feature("Approving a legal hold request") {
-
-    scenario("It succeeds if the password is correct") {
-      // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client)
-
-      (client.approveRequest _)
-        .expects(TeamId("team1"), UserId("user1"), Some("123"))
-        .once()
-        .returning(CancellableFuture.successful(Right({})))
-
-      // When
-      val actualResult = result(syncHandler.approveRequest(Some("123")))
-
-      // Then
-      actualResult.isRight shouldBe true
-    }
-
-    scenario("It fails if the password is incorrect") {
-      // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client)
-      val error = ErrorResponse(400, "", "access-denied")
-
-      (client.approveRequest _)
-        .expects(TeamId("team1"), UserId("user1"), Some("123"))
-        .once()
-        .returning(CancellableFuture.successful(Left(error)))
-
-      // When
-      val actualResult = result(syncHandler.approveRequest(Some("123")))
-
-      // Then
-      actualResult shouldBe Left(LegalHoldError.InvalidPassword)
-    }
-
-    scenario("It fails if the password is invalid") {
-      // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client)
-      val error = ErrorResponse(400, "", "invalid-payload")
-
-      (client.approveRequest _)
-        .expects(TeamId("team1"), UserId("user1"), Some("123"))
-        .once()
-        .returning(CancellableFuture.successful(Left(error)))
-
-      // When
-      val actualResult = result(syncHandler.approveRequest(Some("123")))
-
-      // Then
-      actualResult shouldBe Left(LegalHoldError.InvalidPassword)
-    }
-
-    scenario("It fails if the self user is not in a team") {
-      // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(teamId = None, UserId("user1"), client)
-
-      // When
-      val actualResult = result(syncHandler.approveRequest(Some("123")))
-
-      // Then
-      actualResult shouldBe Left(LegalHoldError.NotInTeam)
+      actualResult shouldBe SyncResult.Failure(error)
     }
 
   }

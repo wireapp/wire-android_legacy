@@ -320,7 +320,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostFolders                                     => zms.foldersSyncHandler.postFolders()
           case SyncFolders                                     => zms.foldersSyncHandler.syncFolders()
           case PostTrackingId(trackingId)                      => zms.trackingSync.postNewTrackingId(trackingId)
-          case SyncLegalHoldRequest                            => zms.legalHold.syncLegalHoldRequest()
+          case SyncLegalHoldRequest                            => zms.legalHoldSync.syncLegalHoldRequest()
           case Unknown                                         => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))
