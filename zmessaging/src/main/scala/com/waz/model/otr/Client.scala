@@ -23,6 +23,7 @@ import com.waz.api.{OtrClientType, Verification}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model.{Id, UserId}
+import com.waz.utils.JsonDecoder.{decodeId, decodeOptString, decodeOptUtcDate, opt}
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder}
@@ -87,7 +88,9 @@ final case class Client(override val id: ClientId,
                         signalingKey:    Option[SignalingKey] = None,
                         verified:        Verification = Verification.UNKNOWN,
                         devType:         OtrClientType = OtrClientType.PHONE) extends Identifiable[ClientId] {
+
   lazy val isVerified: Boolean = verified == Verification.VERIFIED
+
 
   def updated(c: Client): Client = {
     val location = (regLocation, c.regLocation) match {
@@ -95,7 +98,7 @@ final case class Client(override val id: ClientId,
       case (_, loc @ Some(_)) => loc
       case (loc, _) => loc
     }
-    copy (
+    copy(
       label        = if (c.label.isEmpty) label else c.label,
       model        = if (c.model.isEmpty) model else c.model,
       regTime      = c.regTime.orElse(regTime),
@@ -127,7 +130,14 @@ object Client {
   implicit lazy val Decoder: JsonDecoder[Client] = new JsonDecoder[Client] {
     import JsonDecoder._
     override def apply(implicit js: JSONObject): Client = {
-      new Client(decodeId[ClientId]('id), 'label, 'model, 'regTime, opt[Location]('regLocation), 'regIpAddress, opt[SignalingKey]('signalingKey),
+      new Client(
+        decodeId[ClientId]('id),
+        'label,
+        'model,
+        'regTime,
+        opt[Location]('regLocation),
+        'regIpAddress,
+        opt[SignalingKey]('signalingKey),
         decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
         decodeOptString('devType).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass)
       )
@@ -154,7 +164,6 @@ object UserClients {
   }
 
   implicit object UserClientsDao extends Dao[UserClients, UserId] {
-
     val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.user)
     val Data = text('data)(JsonEncoder.encodeString(_))
 

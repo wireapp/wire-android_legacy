@@ -251,6 +251,18 @@ object SyncRequest {
 
   case class SyncClients(userId: UserId) extends RequestForUser(Cmd.SyncClients)
 
+  final case class SyncClientsBatch(ids: Set[QualifiedId]) extends BaseRequest(Cmd.SyncClientsBatch) {
+    override def merge(req: SyncRequest) = mergeHelper[SyncClientsBatch](req) { other =>
+      if (other.ids.subsetOf(ids)) Merged(this)
+      else Merged(SyncClientsBatch(ids ++ other.ids))
+    }
+
+    override def isDuplicateOf(req: SyncRequest): Boolean = req match {
+      case SyncClientsBatch(us) => ids.subsetOf(us)
+      case _ => false
+    }
+  }
+
   case class SyncPreKeys(userId: UserId, clients: Set[ClientId]) extends RequestForUser(Cmd.SyncPreKeys) {
 
     override def merge(req: SyncRequest) = mergeHelper[SyncPreKeys](req) { other =>
@@ -417,6 +429,7 @@ object SyncRequest {
           case Cmd.SyncSelfClients           => SyncSelfClients
           case Cmd.SyncSelfPermissions       => SyncSelfPermissions
           case Cmd.SyncClients               => SyncClients(userId)
+          case Cmd.SyncClientsBatch          => SyncClientsBatch(decodeQualifiedIds('qualifiableIds).toSet)
           case Cmd.SyncClientLocation        => SyncClientsLocation
           case Cmd.SyncPreKeys               => SyncPreKeys(userId, decodeClientIdSeq('clients).toSet)
           case Cmd.PostClientLabel           => PostClientLabel(decodeId[ClientId]('client), 'label)
@@ -547,7 +560,10 @@ object SyncRequest {
         case PostSessionReset(_, user, client) =>
           o.put("client", client.str)
           o.put("user", user)
-        case SyncClients(user) => o.put("user", user.str)
+        case SyncClients(user) =>
+          o.put("user", user.str)
+        case SyncClientsBatch(ids) =>
+          o.put("qualifiableIds", ids.map(QualifiedId.Encoder(_)))
         case SyncPreKeys(user, clients) =>
           o.put("user", user.str)
           o.put("clients", arrString(clients.toSeq map (_.str)))

@@ -223,4 +223,9 @@ object JsonDecoder {
   implicit def decodeConversationRole(s: Symbol)(implicit js: JSONObject): ConversationRole = ConversationRole.getRole(js.getString(s.name))
   implicit def decodeOptConversationRole(s: Symbol)(implicit js: JSONObject): Option[ConversationRole] =
     opt(s, js => ConversationRole.getRole(js.getString(s.name)))
+
+  implicit def decodeQualifiedId(s: Symbol)(implicit js: JSONObject): QualifiedId =
+    QualifiedId.Decoder(js.getJSONObject(s.name))
+  implicit def decodeQualifiedIds(s: Symbol)(implicit js: JSONObject): Seq[QualifiedId] =
+    array[QualifiedId](s)({ (arr, i) => QualifiedId.Decoder(arr.getJSONObject(i)) })
 }
