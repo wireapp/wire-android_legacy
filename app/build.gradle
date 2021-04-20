@@ -473,7 +473,7 @@ def getDate() {
 
 def getUnixTimestamp() {
     def date = new Date()
-    def versionCode = (int)(date.getTime()/1000L)
+    def versionCode = (int)(date.getTime()/10000L)
     println("VERSIONCODE for ("+date.dateTimeString+"):"+versionCode)
     return versionCode
 }
