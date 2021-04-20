@@ -31,6 +31,8 @@ import com.waz.zclient.calling.FullScreenVideoFragment.PARTICIPANT_BUNDLE_KEY
 import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
 import com.xuliwen.zoom.ZoomLayout
 import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
+import com.waz.zclient.utils.RichView
+
 
 class FullScreenVideoFragment extends FragmentHelper {
 
@@ -59,6 +61,16 @@ class FullScreenVideoFragment extends FragmentHelper {
     if (BuildConfig.ZOOMING_GROUP_CALL) Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG).show()
   }
 
+  override def onBackPressed() = {
+    minimizeVideo()
+    super.onBackPressed()
+  }
+
+  override def onDestroy(): Unit = {
+    controller.isFullScreenEnabled ! false
+    super.onDestroy()
+  }
+
   def initParticipant(): Unit = {
     val bundle = this.getArguments
     if (bundle != null) {
@@ -73,20 +85,32 @@ class FullScreenVideoFragment extends FragmentHelper {
     userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
     else new OtherVideoView(getContext, participant)
 
+    if (participant == selfParticipant) controller.isSelfViewVisible ! true
+    else controller.isSelfViewVisible ! false
+
     userVideoView.onDoubleClick.onUi { _ =>
       minimizeVideo()
     }
   }
 
   def initVideoZoomLayout(): Unit = fullScreenVideoZoomLayout.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
+
+    override def onDoubleTap(): Unit = minimizeVideo()
+
+    override def onSingleTap(): Unit = controller.controlsClick(true)
+
     override def onScrollBegin(): Unit = {}
 
     override def onScaleGestureBegin(): Unit = {}
-
-    override def onDoubleTap(): Unit = minimizeVideo()
   }))
 
-  def initVideoContainer(): Unit = fullScreenVideoContainer.foreach(_.addView(userVideoView))
+  def initVideoContainer(): Unit = {
+    fullScreenVideoContainer.foreach(_.addView(userVideoView))
+
+    controller.isFullScreenEnabled.onUi { isFullScreenEnabled =>
+      fullScreenVideoContainer.foreach(_.setVisible(isFullScreenEnabled))
+    }
+  }
 
   def minimizeVideoWhenNotAvailable() = controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
     case VideoState.Started | VideoState.ScreenShare =>
@@ -94,9 +118,10 @@ class FullScreenVideoFragment extends FragmentHelper {
   }
 
   def minimizeVideo(): Unit = {
-    controller.isFullScreenEnabled ! false
     fullScreenVideoContainer.foreach(_.removeView(userVideoView))
-    getFragmentManager.popBackStack()
+    controller.isFullScreenEnabled ! false
+    controller.isSelfViewVisible ! false
+    getFragmentManager.popBackStackImmediate()
   }
 }
 

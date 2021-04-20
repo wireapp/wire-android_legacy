@@ -71,7 +71,8 @@ android {
     defaultConfig {
         minSdkVersion Versions.MIN_SDK_VERSION
         targetSdkVersion Versions.TARGET_SDK_VERSION
-        versionCode System.getenv("BUILD_NUMBER") as Integer ?: 99999
+        //BUILD_NUMBER is required by the old jenkins builder, PATCH_VERSION will be used for the new builder to remove the dependency of the pipeline build_number
+        versionCode System.getenv("PATCH_VERSION") as Integer?: System.getenv("BUILD_NUMBER") as Integer ?: 99999
         versionName = (System.getenv("CLIENT_VERSION") ?: Versions.ANDROID_CLIENT_MAJOR_VERSION) + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
@@ -124,11 +125,7 @@ android {
         buildConfigField 'String',  'COUNTLY_APP_KEY',               "\"$buildtimeConfiguration.configuration.countly_app_key\""
 
         //Feature Flags
-        buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
-        buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
-        buildConfigField 'boolean', 'ACTIVE_SPEAKERS', "$activeSpeakers"
         buildConfigField 'boolean', 'ACTIVE_SPEAKERS_VIEW', "$activeSpeakersView"
-        buildConfigField 'boolean', 'REMOVE_JOIN_LEAVE_SOUNDS', "$removeJoinLeaveSounds"
         buildConfigField 'boolean', 'ZOOMING_GROUP_CALL', "$zoomingGroupCall"
         buildConfigField 'boolean', 'APP_LOCK_FEATURE_FLAG', "$appLockFeatureFlag"
     }

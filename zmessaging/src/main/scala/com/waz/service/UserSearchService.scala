@@ -159,7 +159,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       rules.foldLeft((Set.empty[UserId], IndexedSeq.empty[UserData])){ case ((found, results), rule) =>
         val matches = included.filter(rule).filter(u => !found.contains(u.id)).sortBy(_.name.toLowerCase)
         (found ++ matches.map(_.id).toSet, results ++ matches)
-      }._2
+      }._2.sortBy(_.name.toLowerCase)
     }
 
   private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] =
@@ -181,7 +181,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     }
 
   private def sortUsers(results: IndexedSeq[UserData], query: SearchQuery): IndexedSeq[UserData] = {
-    def toLower(str: String) = Locales.transliteration.transliterate(str).trim.toLowerCase
+    def toLower(str: String) = Locales.transliterate(str).toLowerCase
 
     lazy val toLowerSymbolStripped = toLower(query.str)
 

@@ -19,12 +19,11 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.os.Bundle
-import androidx.appcompat.widget.Toolbar
 import android.view._
 import android.widget.{ImageButton, TextView}
-import com.wire.signals.CancellableFuture
+import androidx.appcompat.widget.Toolbar
 import com.waz.threading.Threading
-import com.wire.signals.Signal
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.ManagerFragment.Page
 import com.waz.zclient.common.controllers.ThemeController
@@ -36,13 +35,12 @@ import com.waz.zclient.legalhold.LegalHoldController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getDrawable}
-import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils}
-import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
-import com.waz.zclient.utils._
+import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils, _}
 import com.waz.zclient.views.AvailabilityView
+import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
+import com.wire.signals.{CancellableFuture, EventStream, Signal, SourceStream}
 
 import scala.concurrent.duration._
-import com.waz.threading.Threading._
 
 class ParticipantHeaderFragment extends FragmentHelper {
 
@@ -190,6 +188,7 @@ class ParticipantHeaderFragment extends FragmentHelper {
     }
   }
 
+  val onLegalHoldClick: SourceStream[Unit] = EventStream[Unit]()
   private lazy val legalHoldIndicatorButton = view[ImageButton](R.id.participants_header_toolbar_image_button_legal_hold)
 
   private lazy val legalHoldActive : Signal[Boolean] =
@@ -247,12 +246,11 @@ class ParticipantHeaderFragment extends FragmentHelper {
     super.onPause()
   }
 
-  private def setUpLegalHoldIndicator(): Unit = {
-    legalHoldActive.onUi({ isActive =>
-      legalHoldIndicatorButton.foreach(_.setVisible(isActive))
-    })
-    //TODO: set click event for legal hold info
-  }
+  private def setUpLegalHoldIndicator(): Unit =
+    legalHoldIndicatorButton.foreach { button =>
+      button.onClick { onLegalHoldClick ! Unit}
+      legalHoldActive.onUi(button.setVisible)
+    }
 
   private def fromDeepLink() = getBooleanArg(ARG_FROM_DEEP_LINK)
 }

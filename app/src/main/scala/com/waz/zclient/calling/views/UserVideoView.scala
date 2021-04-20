@@ -33,7 +33,6 @@ import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.R
-import com.waz.zclient.BuildConfig
 import com.waz.zclient.utils.RichView
 import com.waz.threading.Threading._
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -49,7 +48,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   val onDoubleClick = EventStream[Unit]()
 
-  this.onClick(() => callController.controlsClick(true), () => onDoubleClick ! {})
+  this.onClick(() => {}, () => onDoubleClick ! {})
 
   private val audioStatusImageView    = findById[ImageView](R.id.audio_status_image_view)
   private val pausedText              = findById[TextView](R.id.paused_text_view)
@@ -134,30 +133,26 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   def updateAudioIndicator(imageResource: Int, color: Int, isAnimated: Boolean): Unit = {
     audioStatusImageView.setImageResource(imageResource)
-    if (BuildConfig.ACTIVE_SPEAKERS) {
-      audioStatusImageView.setColorFilter(color)
-      if (isAnimated){
-        val animation = AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out)
-        animation.setInterpolator(new EaseOut)
-        audioStatusImageView.startAnimation(animation)
-      }
-      else audioStatusImageView.clearAnimation()
+    audioStatusImageView.setColorFilter(color)
+    if (isAnimated) {
+      val animation = AnimationUtils.loadAnimation(getContext, R.anim.infinite_fade_in_fade_out)
+      animation.setInterpolator(new EaseOut)
+      audioStatusImageView.startAnimation(animation)
     }
+    else audioStatusImageView.clearAnimation()
   }
 
-  def showActiveSpeakerFrame(color: Int): Unit =
-    if (BuildConfig.ACTIVE_SPEAKERS) {
-      val border = new GradientDrawable()
-      border.setColor(getColor(R.color.black))
-      border.setStroke(1, color)
-      setBackground(border)
-      getChildAt(1).setMargin(3, 3, 3, 3)
-    }
+  def showActiveSpeakerFrame(color: Int): Unit = {
+    val border = new GradientDrawable()
+    border.setColor(getColor(R.color.black))
+    border.setStroke(1, color)
+    setBackground(border)
+    getChildAt(1).setMargin(3, 3, 3, 3)
+  }
 
-  def hideActiveSpeakerFrame(): Unit =
-    if (BuildConfig.ACTIVE_SPEAKERS) {
-      setBackgroundColor(getColor(R.color.black))
-      getChildAt(1).setMargin(0, 0, 0, 0)
-    }
+  def hideActiveSpeakerFrame(): Unit = {
+    setBackgroundColor(getColor(R.color.black))
+    getChildAt(1).setMargin(0, 0, 0, 0)
+  }
 
 }

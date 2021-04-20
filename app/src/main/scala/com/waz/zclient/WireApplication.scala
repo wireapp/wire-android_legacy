@@ -226,6 +226,7 @@ object WireApplication extends DerivedLogTag {
     bind [ThemeController]         to new ThemeController
     bind [SpinnerController]       to new SpinnerController()
     bind [SearchController]        to new SearchController()
+    bind [LegalHoldController]     to new LegalHoldController()
 
     bind [UiStorage] to new UiStorage()
 
@@ -325,7 +326,6 @@ object WireApplication extends DerivedLogTag {
     bind [UiTrackingController]    to new UiTrackingController()
 
     bind[MessagePagedListController] to new MessagePagedListController()
-    bind[LegalHoldController] to new LegalHoldController()
   }
 
   def clearOldVideoFiles(context: Context): Unit = {

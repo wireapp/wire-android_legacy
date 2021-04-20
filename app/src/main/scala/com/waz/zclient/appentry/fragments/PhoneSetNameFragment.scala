@@ -124,7 +124,7 @@ class PhoneSetNameFragment extends FragmentHelper with TextWatcher with View.OnC
         }
       case Right(accountManager) =>
         activity.enableProgress(false)
-        activity.onEnterApplication(false)
+        activity.onEnterApplication(openSettings = false, initSync = false)
         accountManager.foreach { am =>
           am.initZMessaging()
           am.addUnsplashIfProfilePictureMissing()

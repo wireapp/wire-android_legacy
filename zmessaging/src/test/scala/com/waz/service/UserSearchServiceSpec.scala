@@ -55,79 +55,79 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val userPrefs         = new TestUserPreferences
 
   lazy val users = Map(
-    id('me) -> UserData(id('me), "A user"),
-    id('a) -> UserData(id('a), "other user 1"),
-    id('b) -> UserData(id('b), "other user 2"),
-    id('c) -> UserData(id('c), "some name"),
-    id('d) -> UserData(id('d), "related user 1").copy(relation = Relation.Second), // TODO: relation does not exists anymore, can be removed!
-    id('e) -> UserData(id('e), "related user 2").copy(relation = Relation.Second),
-    id('f) -> UserData(id('f), "other related").copy(relation = Relation.Third),
-    id('g) -> UserData(id('g), "friend user 1").copy(connection = ConnectionStatus.ACCEPTED),
-    id('h) -> UserData(id('h), "friend user 2").copy(connection = ConnectionStatus.ACCEPTED),
-    id('i) -> UserData(id('i), "some other friend").copy(connection = ConnectionStatus.ACCEPTED),
-    id('j) -> UserData(id('j), "meep moop").copy(email = Some(EmailAddress("moop@meep.me"))),
-    id('k) -> UserData(id('k), "unconnected user").copy(connection = ConnectionStatus.UNCONNECTED),
-    id('l) -> UserData(id('l), "Björn-Rodrigo Smith"),
-    id('m) -> UserData(id('m), "John Smith"),
-    id('n) -> UserData(id('n), "Jason-John Mercier"),
-    id('o) -> UserData(id('o), "Captain Crunch").copy(handle = Some(Handle("john"))),
-    id('p) -> UserData(id('p), "Peter Pan").copy(handle = Some(Handle("john"))),
-    id('q) -> UserData(id('q), "James gjohnjones"),
-    id('r) -> UserData(id('r), "Liv Boeree").copy(handle = Some(Handle("testjohntest"))),
-    id('s) -> UserData(id('s), "blah").copy(handle = Some(Handle("mores"))),
-    id('t) -> UserData(id('t), "test handle").copy(handle = Some(Handle("smoresare"))),
-    id('u) -> UserData(id('u), "Wireless").copy(expiresAt = Some(RemoteInstant.ofEpochMilli(12345L))),
-    id('v) -> UserData(id('v), "Wireful"),
-    id('pp1) -> UserData(id('pp1), "External 1").copy(
+    id('me) -> UserData.withName(id('me), "A user"),
+    id('a) -> UserData.withName(id('a), "other user 1"),
+    id('b) -> UserData.withName(id('b), "other user 2"),
+    id('c) -> UserData.withName(id('c), "some name"),
+    id('d) -> UserData.withName(id('d), "related user 1").copy(relation = Relation.Second), // TODO: relation does not exists anymore, can be removed!
+    id('e) -> UserData.withName(id('e), "related user 2").copy(relation = Relation.Second),
+    id('f) -> UserData.withName(id('f), "other related").copy(relation = Relation.Third),
+    id('g) -> UserData.withName(id('g), "friend user 1").copy(connection = ConnectionStatus.ACCEPTED),
+    id('h) -> UserData.withName(id('h), "friend user 2").copy(connection = ConnectionStatus.ACCEPTED),
+    id('i) -> UserData.withName(id('i), "some other friend").copy(connection = ConnectionStatus.ACCEPTED),
+    id('j) -> UserData.withName(id('j), "meep moop").copy(email = Some(EmailAddress("moop@meep.me"))),
+    id('k) -> UserData.withName(id('k), "unconnected user").copy(connection = ConnectionStatus.UNCONNECTED),
+    id('l) -> UserData.withName(id('l), "Bjorn-Rodrigo Smith"),
+    id('m) -> UserData.withName(id('m), "John Smith"),
+    id('n) -> UserData.withName(id('n), "Jason-John Mercier"),
+    id('o) -> UserData.withName(id('o), "Captain Crunch").copy(handle = Some(Handle("john"))),
+    id('p) -> UserData.withName(id('p), "Peter Pan").copy(handle = Some(Handle("john"))),
+    id('q) -> UserData.withName(id('q), "James gjohnjones"),
+    id('r) -> UserData.withName(id('r), "Liv Boeree").copy(handle = Some(Handle("testjohntest"))),
+    id('s) -> UserData.withName(id('s), "blah").copy(handle = Some(Handle("mores"))),
+    id('t) -> UserData.withName(id('t), "test handle").copy(handle = Some(Handle("smoresare"))),
+    id('u) -> UserData.withName(id('u), "Wireless").copy(expiresAt = Some(RemoteInstant.ofEpochMilli(12345L))),
+    id('v) -> UserData.withName(id('v), "Wireful"),
+    id('pp1) -> UserData.withName(id('pp1), "External 1").copy(
       permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
       handle = Some(Handle("pp1")),
       createdBy = Some(id('aa1))
     ),
-    id('pp2) -> UserData(id('pp2), "External 2").copy(
+    id('pp2) -> UserData.withName(id('pp2), "External 2").copy(
       permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
       handle = Some(Handle("pp2")),
       createdBy = Some(id('aa2))
     ),
-    id('pp3) -> UserData(id('pp3), "External 3").copy(
+    id('pp3) -> UserData.withName(id('pp3), "External 3").copy(
       permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
       handle = Some(Handle("pp3"))
     ),
-    id('mm1) -> UserData(id('mm1), "Member 1").copy(
+    id('mm1) -> UserData.withName(id('mm1), "Member 1").copy(
       permissions = (memberPermissions, memberPermissions),
       teamId = teamId,
       handle = Some(Handle("mm1")),
       createdBy = Some(id('aa1))
     ),
-    id('mm2) -> UserData(id('mm2), "Member 2").copy(
+    id('mm2) -> UserData.withName(id('mm2), "Member 2").copy(
       permissions = (memberPermissions, memberPermissions),
       teamId = teamId,
       handle = Some(Handle("mm2")),
       createdBy = Some(id('aa1))
     ),
-    id('mm3) -> UserData(id('mm3), "Member 3").copy(
+    id('mm3) -> UserData.withName(id('mm3), "Member 3").copy(
       permissions = (memberPermissions, memberPermissions),
       teamId = teamId,
       handle = Some(Handle("mm3")),
       createdBy = Some(id('aa1))
     ),
-    id('aa1) -> UserData(id('aa1), "Admin 1").copy(
+    id('aa1) -> UserData.withName(id('aa1), "Admin 1").copy(
       permissions = (adminPermissions, adminPermissions),
       teamId = teamId,
       handle = Some(Handle("aa1"))
     ),
-    id('aa2) -> UserData(id('aa2), "Admin 2").copy(
+    id('aa2) -> UserData.withName(id('aa2), "Admin 2").copy(
       permissions = (adminPermissions, adminPermissions),
       teamId = teamId,
       handle = Some(Handle("aa2"))
     ),
-    id('me1) -> UserData(id('me1), "Team Member With Email").copy(
+    id('me1) -> UserData.withName(id('me1), "Team Member With Email").copy(
       email = Some(EmailAddress("a_member@wire.com")),
       teamId = teamId
     ),
-    id('pe1) -> UserData(id('pe1), "Person With Email").copy(
+    id('pe1) -> UserData.withName(id('pe1), "Person With Email").copy(
       email = Some(EmailAddress("a_person@wire.com"))
     )
   )
@@ -150,7 +150,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
 
     val res = getService(false, id('me)).mentionsSearchUsersInConversation(ConvId("123"),"rod")
-    result(res.filter(_.size == 1).head)
+    result(res.filter(_.nonEmpty).head)
   }
 
   scenario("search conversation with name starting with query") {
@@ -161,7 +161,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
 
     val res = getService(false, id('me)).mentionsSearchUsersInConversation(ConvId("123"),"bjo")
-    result(res.filter(_.size == 1).head)
+    result(res.filter(_.nonEmpty).head)
   }
 
   scenario("search conversation with name containing query") {
@@ -200,7 +200,8 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   scenario("search conversation people ordering") {
 
     val convMembers = Set(id('q), id('r),id('p), id('n), id('m), id('o))
-    val correctOrder = IndexedSeq(ud('m), ud('n), ud('o), ud('p), ud('q), ud('r))
+    val correctOrder = IndexedSeq(ud('o), ud('q), ud('n), ud('m), ud('r), ud('p))
+    // sorting is by name: ('o,Captain Crunch),('q,James gjohnjones),('n,Jason-John Mercier),('m,John Smith),('r,Liv Boeree),('p,Peter Pan)
 
     (membersStorage.activeMembers _).expects(*).anyNumberOfTimes().returning(Signal.const(convMembers))
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
@@ -274,10 +275,9 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     * Will mock all services, instantiate a UserSearchService to test, and store the query to expect
       */
     def prepareTestSearch(query: String,
-                            selfId: UserId,
-                            conversationMembers: Set[UserId] = Set(),
-                            connectedUsers: Set[UserId] = Set()
-                           ): PreparedSearch = {
+                          selfId: UserId,
+                          conversationMembers: Set[UserId] = Set(),
+                          connectedUsers: Set[UserId] = Set()): PreparedSearch = {
       val convId = ConvId("e7969e91-366d-4ec5-9d85-4e8a4f9d53e6")
 
       val querySignal = new SourceSignal[Option[Vector[UserId]]]()

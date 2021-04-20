@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum OtrClientType {
-    PHONE("phone"), TABLET("tablet"), DESKTOP("desktop");
+    PHONE("phone"), TABLET("tablet"), DESKTOP("desktop"), LEGALHOLD("legalhold");
 
     public final String deviceClass;
 
@@ -30,6 +30,7 @@ public enum OtrClientType {
         classMap.put(PHONE.deviceClass, PHONE);
         classMap.put(TABLET.deviceClass, TABLET);
         classMap.put(DESKTOP.deviceClass, DESKTOP);
+        classMap.put(LEGALHOLD.deviceClass, LEGALHOLD);
     }
 
     public static OtrClientType fromDeviceClass(String cls) {

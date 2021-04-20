@@ -17,9 +17,7 @@ android {
             abiFilters "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
         }
 
-        buildConfigField 'boolean', 'JOIN_GROUP_CALL_MUTED', "$joinGroupCallMuted"
-        buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
-        buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
+        buildConfigField 'boolean', 'LEGAL_HOLD_ENABLED', "$legalHold"
     }
 
     externalNativeBuild {
@@ -60,7 +58,6 @@ def versions = [
 
 repositories {
     maven { url "https://oss.sonatype.org/content/repositories/releases" }
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
 }
 
 dependencies {

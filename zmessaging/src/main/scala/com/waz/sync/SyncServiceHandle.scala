@@ -19,7 +19,7 @@ package com.waz.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.NetworkMode
-import com.waz.content.UserPreferences.{ShouldSyncConversations, ShouldSyncInitial}
+import com.waz.content.UserPreferences.{SelfClient, ShouldSyncConversations, ShouldSyncInitial}
 import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -28,10 +28,12 @@ import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync._
 import com.waz.model.{AccentColor, Availability, _}
+import com.waz.service.AccountManager.ClientRegistrationState.Registered
 import com.waz.service._
 import com.waz.service.assets.UploadAssetStatus
 import com.waz.sync.SyncResult.Failure
 import com.waz.threading.Threading
+import com.wire.signals.Signal
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -52,6 +54,7 @@ trait SyncServiceHandle {
   def syncConnections(dependsOn: Option[SyncId] = None): Future[SyncId]
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId]
   def syncFolders(): Future[SyncId]
+  def syncLegalHoldRequest(): Future[SyncId]
 
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncId]
   def postRemoveBot(cId: ConvId, botId: UserId): Future[SyncId]
@@ -121,19 +124,20 @@ class AndroidSyncServiceHandle(account:         UserId,
   import Threading.Implicits.Background
   import com.waz.model.sync.SyncRequest._
 
-  val shouldSyncAll           = userPreferences(ShouldSyncInitial)
-  val shouldSyncConversations = userPreferences(ShouldSyncConversations)
+  private val shouldSyncAll           = userPreferences(ShouldSyncInitial)
+  private val shouldSyncConversations = userPreferences(ShouldSyncConversations)
+  private val isRegistered = userPreferences(SelfClient).signal.map {
+    case Registered(_) => true
+    case _ => false
+  }
 
-  for {
-    all   <- shouldSyncAll()
-    convs <- shouldSyncConversations()
-    _     <-
-      if (all) performFullSync()
-      else if (convs) syncConversations()
-      else Future.successful({})
-    _ <- shouldSyncAll := false
-    _ <- shouldSyncConversations := false
-  } yield {}
+  Signal.zip(isRegistered, shouldSyncAll.signal, shouldSyncConversations.signal).foreach {
+    case (true, true, _) =>
+      performFullSync().flatMap(_ => shouldSyncAll := false).flatMap(_ => shouldSyncConversations := false)
+    case (true, false, true) =>
+      syncConversations().flatMap(_ => shouldSyncConversations := false)
+    case _ =>
+  }
 
   private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] =
     service.addRequest(account, req, priority, dependsOn, forceRetry, delay)
@@ -154,6 +158,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncConnections(dependsOn: Option[SyncId]) = addRequest(SyncConnections, dependsOn = dependsOn.toSeq)
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority) = addRequest(SyncRichMedia(id), priority = priority)
   def syncFolders(): Future[SyncId] = addRequest(SyncFolders)
+  def syncLegalHoldRequest(): Future[SyncId] = addRequest(SyncLegalHoldRequest)
 
   def postSelfUser(info: UserInfo) = addRequest(PostSelf(info))
   def postSelfPicture(picture: UploadAssetId) = addRequest(PostSelfPicture(picture))
@@ -222,8 +227,9 @@ class AndroidSyncServiceHandle(account:         UserId,
       userIds <- usersStorage.list().map(_.map(_.id).toSet)
       id8     <- syncUsers(userIds)
       id9     <- syncFolders()
+      id10    <- syncLegalHoldRequest()
       _       =  verbose(l"waiting for full sync to finish...")
-      _       <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8, id9))
+      _       <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8, id9, id10))
       _       =  verbose(l"... and done")
     } yield ()
   }
@@ -314,6 +320,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostFolders                                     => zms.foldersSyncHandler.postFolders()
           case SyncFolders                                     => zms.foldersSyncHandler.syncFolders()
           case PostTrackingId(trackingId)                      => zms.trackingSync.postNewTrackingId(trackingId)
+          case SyncLegalHoldRequest                            => zms.legalHold.syncLegalHoldRequest()
           case Unknown                                         => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))

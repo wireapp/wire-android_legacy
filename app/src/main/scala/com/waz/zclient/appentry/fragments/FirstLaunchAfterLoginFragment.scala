@@ -208,13 +208,11 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       _                    <- promise.future
       _                    =  backupFile.delete()
       registrationState    <- accountManager.getOrRegisterClient()
-      Some(zms)            <- accountsService.getZms(userId)
-      _                    <- zms.sync.performFullSync()
       _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
       _                    <- CancellableFuture.delay(750.millis).future
     } yield registrationState match {
-      case Right(regState) => activity.onEnterApplication(openSettings = false, Some(regState))
-      case _               => activity.onEnterApplication(openSettings = false)
+      case Right(regState) => activity.onEnterApplication(openSettings = false, initSync = true, Some(regState))
+      case _               => activity.onEnterApplication(openSettings = false, initSync = true)
     }).recover {
       case BackupError(reason) =>
         error(l"Unable to restore backup: $reason")
@@ -237,8 +235,8 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       _                    =  spinnerController.hideSpinner(Some(getString(R.string.back_up_progress_complete)))
       _                    <- CancellableFuture.delay(750.millis).future
     } yield registrationState match {
-      case Right(regState) => activity.onEnterApplication(openSettings = false, Some(regState))
-      case _               => activity.onEnterApplication(openSettings = false)
+      case Right(regState) => activity.onEnterApplication(openSettings = false, initSync = false, Some(regState))
+      case _               => activity.onEnterApplication(openSettings = false, initSync = false)
     }
   }
 

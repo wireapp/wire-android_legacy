@@ -174,11 +174,12 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
   private lazy val appInForegroundSubscription =
     controller.serviceInForeground.foreach {
       case false =>
+        notificationChannel
         stopForeground(true)
       case true =>
         notificationChannel
         startForeground(getString(controller.notificationTitleId))
-    }
+    }(Threading.Ui)
 
   override def onBind(intent: content.Intent): IBinder = null
 

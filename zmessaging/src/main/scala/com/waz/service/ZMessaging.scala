@@ -48,10 +48,10 @@ import com.waz.ui.UiModule
 import com.waz.utils.crypto._
 import com.waz.utils.wrappers.{AndroidContext, DB, GoogleApi}
 import com.waz.utils.{IoUtils, Locales}
+import com.waz.zms.BuildConfig
 import com.waz.znet2.http.HttpClient
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.{AuthRequestInterceptor, OkHttpWebSocketFactory}
-import com.wire.signals.{EventContext, SerialDispatchQueue}
 import org.threeten.bp.{Clock, Duration, Instant}
 
 import scala.concurrent.duration._
@@ -127,6 +127,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val otrClientsService: OtrClientsService       = wire[OtrClientsServiceImpl]
   lazy val otrClientsSync:    OtrClientsSyncHandler   = wire[OtrClientsSyncHandlerImpl]
   lazy val otrClient:         OtrClientImpl           = account.otrClient
+  lazy val cryptoSessionService: CryptoSessionService = cryptoBox.sessions
   lazy val credentialsClient: CredentialsUpdateClientImpl = account.credentialsClient
   implicit lazy val authRequestInterceptor: AuthRequestInterceptor = account.authRequestInterceptor
 
@@ -204,6 +205,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val integrationsClient = new IntegrationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val callingClient      = new CallingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val propertiesClient: PropertiesClient = new PropertiesClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val legalHoldClient    = new LegalHoldClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val fcmNotsRepo        = new FCMNotificationsRepositoryImpl()(db)
   lazy val fcmNotStatsRepo    = new FCMNotificationStatsRepositoryImpl(fcmNotsRepo)(db, Threading.Background)
 
@@ -269,7 +271,9 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val propertiesService: PropertiesService       = wire[PropertiesServiceImpl]
   lazy val fcmNotStatsService                         = wire[FCMNotificationStatsServiceImpl]
   lazy val trackingSync                               = wire[TrackingSyncHandler]
-  lazy val legalHold: LegalHoldService                = wire[LegalHoldServiceImpl]
+  lazy val legalHold: LegalHoldService                = if (BuildConfig.LEGAL_HOLD_ENABLED) wire[LegalHoldServiceImpl]
+                                                        else wire[DisabledLegalHoldService]
+  lazy val legalHoldSync: LegalHoldSyncHandler        = wire[LegalHoldSyncHandlerImpl]
 
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
 

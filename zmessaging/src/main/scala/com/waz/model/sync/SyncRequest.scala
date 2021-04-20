@@ -69,19 +69,20 @@ object SyncRequest {
 
   import sync.{SyncCommand => Cmd}
 
-  case object Unknown             extends BaseRequest(Cmd.Unknown)
-  case object SyncSelf            extends BaseRequest(Cmd.SyncSelf)
-  case object DeleteAccount       extends BaseRequest(Cmd.DeleteAccount)
-  case object SyncConversations   extends BaseRequest(Cmd.SyncConversations)
-  case object SyncConnections     extends BaseRequest(Cmd.SyncConnections)
-  case object SyncSelfClients     extends BaseRequest(Cmd.SyncSelfClients)
-  case object SyncSelfPermissions extends BaseRequest(Cmd.SyncSelfPermissions)
-  case object SyncClientsLocation extends BaseRequest(Cmd.SyncClientLocation)
-  case object SyncTeam            extends BaseRequest(Cmd.SyncTeam)
-  case object SyncTeamData        extends BaseRequest(Cmd.SyncTeamData)
-  case object SyncProperties      extends BaseRequest(Cmd.SyncProperties)
-  case object PostFolders         extends BaseRequest(Cmd.PostFolders)
-  case object SyncFolders         extends BaseRequest(Cmd.SyncFolders)
+  case object Unknown              extends BaseRequest(Cmd.Unknown)
+  case object SyncSelf             extends BaseRequest(Cmd.SyncSelf)
+  case object DeleteAccount        extends BaseRequest(Cmd.DeleteAccount)
+  case object SyncConversations    extends BaseRequest(Cmd.SyncConversations)
+  case object SyncConnections      extends BaseRequest(Cmd.SyncConnections)
+  case object SyncSelfClients      extends BaseRequest(Cmd.SyncSelfClients)
+  case object SyncSelfPermissions  extends BaseRequest(Cmd.SyncSelfPermissions)
+  case object SyncClientsLocation  extends BaseRequest(Cmd.SyncClientLocation)
+  case object SyncTeam             extends BaseRequest(Cmd.SyncTeam)
+  case object SyncTeamData         extends BaseRequest(Cmd.SyncTeamData)
+  case object SyncProperties       extends BaseRequest(Cmd.SyncProperties)
+  case object PostFolders          extends BaseRequest(Cmd.PostFolders)
+  case object SyncFolders          extends BaseRequest(Cmd.SyncFolders)
+  case object SyncLegalHoldRequest extends BaseRequest(Cmd.SyncLegalHoldRequest)
 
   case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
     override val mergeKey: Any = (cmd, userId)
@@ -434,6 +435,7 @@ object SyncRequest {
           case Cmd.SyncFolders               => SyncFolders
           case Cmd.DeleteGroupConv           => DeleteGroupConversation(teamId, rConvId)
           case Cmd.PostTrackingId            => PostTrackingId(trackingId)
+          case Cmd.SyncLegalHoldRequest      => SyncLegalHoldRequest
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -559,7 +561,7 @@ object SyncRequest {
           o.put("key", key)
           o.put("value", value)
         case PostFolders | SyncFolders | SyncSelf | SyncTeam | SyncTeamData | DeleteAccount | SyncConversations | SyncConnections |
-             SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | Unknown => () // nothing to do
+             SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | SyncLegalHoldRequest | Unknown => () // nothing to do
         case DeleteGroupConversation(teamId, rConvId)  =>
           o.put("teamId", teamId.str)
           o.put("rConv", rConvId.str)

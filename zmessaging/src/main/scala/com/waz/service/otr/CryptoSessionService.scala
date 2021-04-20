@@ -22,14 +22,25 @@ import com.waz.log.LogSE._
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.threading.Threading
-import com.wire.signals.{AggregatingSignal, DispatchQueue, EventStream, Serialized}
+import com.wire.signals.{AggregatingSignal, DispatchQueue, EventStream, Serialized, Signal}
 import com.waz.utils.returning
 import com.wire.cryptobox.{CryptoBox, CryptoSession, PreKey}
 
 import scala.concurrent.Future
 import scala.util.Try
 
-class CryptoSessionService(cryptoBox: CryptoBoxService) extends DerivedLogTag {
+trait CryptoSessionService {
+  val onCreateFromMessage: EventStream[SessionId]
+  def getOrCreateSession(id: SessionId, key: PreKey): Future[Option[CryptoSession]]
+  def deleteSession(id: SessionId): Future[Unit]
+  def getSession(id: SessionId): Future[Option[CryptoSession]]
+  def withSession[A](id: SessionId)(f: CryptoSession => A): Future[Option[A]]
+  def decryptMessage(sessionId: SessionId, msg: Array[Byte], eventsWriter: PlainWriter): Future[Unit]
+  def remoteFingerprint(sid: SessionId): Signal[Option[Array[Byte]]]
+}
+
+class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
+  extends CryptoSessionService with DerivedLogTag {
 
   private implicit val dis: DispatchQueue = Threading.Background
 
@@ -58,12 +69,12 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) extends DerivedLogTag {
       None
     }
 
-  def deleteSession(id: SessionId) = dispatch(id) { cb =>
+  def deleteSession(id: SessionId): Future[Unit] = dispatch(id) { cb =>
     verbose(l"FIX deleteSession($id)")
     cb.foreach(_.deleteSession(id.toString))
   }
 
-  def getSession(id: SessionId) = dispatch(id) { cb =>
+  def getSession(id: SessionId): Future[Option[CryptoSession]] = dispatch(id) { cb =>
     verbose(l"getSession($id)")
     cb.flatMap(loadSession(_, id))
   }
@@ -98,7 +109,7 @@ class CryptoSessionService(cryptoBox: CryptoBoxService) extends DerivedLogTag {
     }
   }
 
-  def remoteFingerprint(sid: SessionId) = {
+  def remoteFingerprint(sid: SessionId): Signal[Option[Array[Byte]]] = {
     def fingerprint = withSession(sid)(_.getRemoteFingerprint)
     val stream = onCreate.filter(_ == sid).mapAsync(_ => fingerprint)
 
