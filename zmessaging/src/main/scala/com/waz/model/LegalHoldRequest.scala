@@ -18,13 +18,13 @@
 package com.waz.model
 
 import com.waz.model.otr.{ClientId, PreKeyEncoder}
-import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.utils.{CirceJSONSupport, JsonDecoder, JsonEncoder}
 import com.wire.cryptobox.PreKey
 import org.json.JSONObject
 
 final case class LegalHoldRequest(clientId: ClientId, lastPreKey: PreKey)
 
-object LegalHoldRequest {
+object LegalHoldRequest extends CirceJSONSupport {
 
   implicit object Decoder extends JsonDecoder[LegalHoldRequest] {
 
