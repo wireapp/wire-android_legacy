@@ -6,6 +6,7 @@ import com.waz.model.AccountData.Password
 import com.waz.sync.handler.LegalHoldError
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.utils.returning
+import com.waz.zclient.SpinnerController
 import com.waz.zclient.legalhold.{LegalHoldController, LegalHoldRequestDialog}
 import com.waz.zclient.security.SecurityChecklist
 import com.waz.zclient.utils.ContextUtils
@@ -13,7 +14,8 @@ import com.waz.zclient.utils.ContextUtils
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
-class ShowLegalHoldApprovalAction(legalHoldController: LegalHoldController)(implicit context: Context)
+class ShowLegalHoldApprovalAction(legalHoldController: LegalHoldController,
+                                  spinnerController: SpinnerController)(implicit context: Context)
   extends SecurityChecklist.Action {
 
   private lazy val actionTaken = Promise[Unit]
@@ -44,13 +46,18 @@ class ShowLegalHoldApprovalAction(legalHoldController: LegalHoldController)(impl
   private def isShowingLegalHoldRequestDialog(fragmentManager: FragmentManager) =
     fragmentManager.findFragmentByTag(LegalHoldRequestDialog.TAG) != null
 
-  //TODO: show loading animation while we're waiting for network response
-  private def onLegalHoldAccepted(password: Option[Password]): Unit =
-    legalHoldController.approveRequest(password).foreach {
+  private def onLegalHoldAccepted(password: Option[Password]): Unit = {
+    spinnerController.showDimmedSpinner(show = true)
+
+    legalHoldController.approveRequest(password).map { result =>
+      spinnerController.hideSpinner()
+      result
+    }.foreach {
       case Left(LegalHoldError.InvalidPassword) => showLegalHoldRequestDialog(true)
       case Left(_)  => showGeneralError()
       case Right(_) => setFinished()
     }
+  }
 
   private def showGeneralError(): Unit =
     ContextUtils.showGenericErrorDialog().foreach(_ => setFinished())
