@@ -39,7 +39,7 @@ class PushTokenCheckJob extends Job with DerivedLogTag {
   import Threading.Implicits.Background
 
   override def onRunJob(params: Job.Params): Job.Result = {
-    Option(params.getExtras.getString(AccountExtra, null)).map(UserId) match {
+    Option(params.getExtras.getString(AccountExtra, null)).map(UserId(_)) match {
       case Some(acc) =>
         val res = ZMessaging.currentGlobal.accountsService.getZms(acc).flatMap {
           case Some(zms) =>
