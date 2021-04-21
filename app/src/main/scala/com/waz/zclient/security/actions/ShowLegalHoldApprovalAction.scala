@@ -46,7 +46,7 @@ class ShowLegalHoldApprovalAction(legalHoldController: LegalHoldController)(impl
 
   //TODO: show loading animation while we're waiting for network response
   private def onLegalHoldAccepted(password: Option[Password]): Unit =
-    legalHoldController.approveRequest(password).map {
+    legalHoldController.approveRequest(password).foreach {
       case Left(LegalHoldError.InvalidPassword) => showLegalHoldRequestDialog(true)
       case Left(_)  => showGeneralError()
       case Right(_) => setFinished()
