@@ -4,8 +4,8 @@ import com.waz.api.IConversation.LegalHoldStatus._
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{ConvId, ConversationData, UserId}
-import com.waz.model.otr.{Client, UserClients}
+import com.waz.model.otr.UserClients
+import com.waz.model.{ConvId, ConversationData}
 
 import scala.concurrent.Future
 
