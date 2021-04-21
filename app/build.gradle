@@ -472,8 +472,11 @@ def getDate() {
 }
 
 def getUnixTimestamp() {
+    def dateOffset = new Date("04/21/2021 01:00:00")
     def date = new Date()
-    def versionCode = (int)(date.getTime()/10000L)
+    def dateTime = (date.getTime()/10000L)
+    def dateTimeOffset = (dateOffset.getTime()/10000L)
+    def versionCode = (int)(dateTime-dateTimeOffset)
     println("VERSIONCODE for ("+date.dateTimeString+"):"+versionCode)
     return versionCode
 }
