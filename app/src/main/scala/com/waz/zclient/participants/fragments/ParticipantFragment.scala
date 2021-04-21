@@ -66,13 +66,14 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
   private lazy val singleImageController  = inject[ISingleImageController]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val convScreenController   = inject[IConversationScreenController]
+  private lazy val legalHoldController    = inject[LegalHoldController]
 
   private lazy val headerFragment = ParticipantHeaderFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg))
 
   override lazy val legalHoldUsers: Signal[Seq[UserId]] =
     for {
       convId <- inject[ConversationController].currentConvId
-      users  <- inject[LegalHoldController].legalHoldUsers(convId)
+      users  <- legalHoldController.legalHoldUsers(convId)
     } yield users
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
@@ -128,6 +129,7 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       case _ =>
     }
     headerFragment.onLegalHoldClick { _ => openLegalHoldInfoScreen() }
+    legalHoldController.onLegalHoldSubjectClick { userId => showUser(userId, forLegalHold = true) }
   }
 
   override def onStart(): Unit = {
@@ -250,8 +252,6 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       )
       .addToBackStack(LegalHoldInfoFragment.Tag)
       .commit
-
-  override def onLegalHoldSubjectClick(userId: UserId): Unit = showUser(userId, forLegalHold = true)
 
   private def showUser(userId: UserId, forLegalHold: Boolean = false): Unit = usersController.syncUserAndCheckIfDeleted(userId).foreach {
     case (Some(user), None) =>
