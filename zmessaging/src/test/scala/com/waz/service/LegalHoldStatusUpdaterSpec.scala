@@ -63,7 +63,6 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
       setUpExpectationsForConversationUpdate()
 
       // When
-
       result(statusUpdater.updateLegalHoldStatus(Seq(convId)))
     }
 
