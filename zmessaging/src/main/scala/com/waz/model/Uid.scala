@@ -21,7 +21,6 @@ import java.util.UUID
 
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
-import com.waz.log.LogShow.SafeToLog
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{JsonDecoder, JsonEncoder}
@@ -267,20 +266,6 @@ object CallSessionId {
 
   implicit object DefaultOrdering extends Ordering[CallSessionId] {
     def compare(a: CallSessionId, b: CallSessionId): Int = Ordering.String.compare(a.str, b.str)
-  }
-}
-
-// TODO: Remove together with Contact
-case class ContactId(str: String) {
-  override def toString: String = str
-}
-
-object ContactId extends (String => ContactId) {
-  def apply(): ContactId = Id.random()
-
-  implicit object Id extends Id[ContactId] {
-    override def random(): ContactId = ContactId(Uid().toString)
-    override def decode(str: String): ContactId = ContactId(str)
   }
 }
 

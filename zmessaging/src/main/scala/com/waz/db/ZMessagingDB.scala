@@ -23,10 +23,8 @@ import com.waz.api.Message
 import com.waz.content.PropertiesDao
 import com.waz.db.ZMessagingDB.{DbVersion, daos, migrations}
 import com.waz.db.migrate._
-import com.waz.model.AddressBook.ContactHashesDao
 import com.waz.model.AssetData.AssetDataDao
 import com.waz.model.ButtonData.ButtonDataDao
-import com.waz.model.Contact.{ContactsDao, ContactsOnWireDao, EmailAddressesDao, PhoneNumbersDao}
 import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model.ConversationFolderData.ConversationFolderDataDao
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao
@@ -70,8 +68,7 @@ object ZMessagingDB {
   lazy val daos = Seq (
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
     MessageDataDao, KeyValueDataDao, SyncJobDao, ErrorDataDao, NotificationDataDao,
-    ContactHashesDao, ContactsOnWireDao, UserClientsDao, LikingDao, ContactsDao, EmailAddressesDao,
-    PhoneNumbersDao, MsgDeletionDao, EditHistoryDao,
+    UserClientsDao, LikingDao, MsgDeletionDao, EditHistoryDao,
     PushNotificationEventsDao, ReadReceiptDao, PropertiesDao, UploadAssetDao, DownloadAssetDao,
     AssetDao, FCMNotificationsDao, FCMNotificationStatsDao, FolderDataDao, ConversationFolderDataDao,
     ConversationRoleActionDao, ButtonDataDao, MessageContentIndexDao
