@@ -11,13 +11,16 @@ import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.sync.client.LegalHoldClient
 import com.waz.sync.handler.LegalHoldError
+import com.wire.cryptobox.CryptoBox
 import com.wire.signals.Signal
 
 import scala.concurrent.Future
+import scala.util.Try
 
 trait LegalHoldService {
   def legalHoldRequestEventStage: Stage.Atomic
   def legalHoldRequest: Signal[Option[LegalHoldRequest]]
+  def getFingerprint(request: LegalHoldRequest): Option[String]
   def deleteLegalHoldRequest(): Future[Unit]
   def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit]
   def approveRequest(request: LegalHoldRequest,
@@ -43,6 +46,9 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   override def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
     userPrefs.preference(UserPreferences.LegalHoldRequest).signal
+
+  override def getFingerprint(request: LegalHoldRequest): Option[String] =
+    Try(CryptoBox.getFingerprintFromPrekey(request.lastPreKey)).toOption.map(new String(_))
 
   override def approveRequest(request: LegalHoldRequest,
                               password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {

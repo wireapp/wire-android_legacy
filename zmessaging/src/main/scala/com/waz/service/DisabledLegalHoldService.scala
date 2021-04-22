@@ -16,6 +16,8 @@ class DisabledLegalHoldService extends LegalHoldService {
 
   override def legalHoldRequest: Signal[Option[LegalHoldRequest]] = Signal.const(Option.empty)
 
+  override def getFingerprint(request: LegalHoldRequest): Option[String] = Option.empty
+
   override def approveRequest(request: LegalHoldRequest, password: Option[String]): Future[Either[LegalHoldError, Unit]] =
     Future.successful(Right(()))
 
