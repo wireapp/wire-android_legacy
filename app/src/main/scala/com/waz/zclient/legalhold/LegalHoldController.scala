@@ -5,7 +5,7 @@ import com.waz.model.{ConvId, LegalHoldRequest, UserId}
 import com.waz.service.LegalHoldService
 import com.waz.sync.handler.LegalHoldError
 import com.waz.zclient.{Injectable, Injector}
-import com.wire.signals.Signal
+import com.wire.signals.{EventStream, Signal, SourceStream}
 
 import scala.concurrent.Future
 
@@ -16,6 +16,8 @@ class LegalHoldController(implicit injector: Injector)
   import com.waz.threading.Threading.Implicits.Background
 
   private lazy val legalHoldService = inject[Signal[LegalHoldService]]
+
+  val onLegalHoldSubjectClick: SourceStream[UserId] = EventStream[UserId]
 
   def isLegalHoldActive(userId: UserId): Signal[Boolean] =
     Signal.const(false)
