@@ -74,7 +74,7 @@ import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversationlist.{ConversationListController, FolderStateController}
 import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.deeplinks.DeepLinkService
-import com.waz.zclient.legalhold.LegalHoldController
+import com.waz.zclient.legalhold.{LegalHoldApprovalHandler, LegalHoldController}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
 import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}
@@ -281,6 +281,8 @@ object WireApplication extends DerivedLogTag {
     bind[SecurityPolicyChecker] to new SecurityPolicyChecker()
 
     bind[FolderStateController] to new FolderStateController()
+
+    bind[LegalHoldApprovalHandler] to new LegalHoldApprovalHandler()
 
     KotlinServices.INSTANCE.init(ctx)
   }

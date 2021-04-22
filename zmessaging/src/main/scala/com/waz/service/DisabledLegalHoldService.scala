@@ -1,7 +1,6 @@
 package com.waz.service
 import com.waz.model.{Event, LegalHoldRequest}
 import com.waz.service.EventScheduler.Stage
-import com.waz.sync.SyncResult
 import com.waz.sync.handler.LegalHoldError
 import com.wire.signals.Signal
 
