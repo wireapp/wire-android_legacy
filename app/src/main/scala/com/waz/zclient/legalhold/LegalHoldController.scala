@@ -31,6 +31,8 @@ class LegalHoldController(implicit injector: Injector)
   def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
     legalHoldService.flatMap(_.legalHoldRequest)
 
+  def hasPendingRequest: Signal[Boolean] = legalHoldRequest.map(_.isDefined)
+
   def getFingerprint(request: LegalHoldRequest): Future[Option[String]] =
     legalHoldService.head.map(_.getFingerprint(request))
 

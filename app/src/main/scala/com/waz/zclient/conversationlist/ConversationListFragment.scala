@@ -52,7 +52,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R, ViewHolder}
 import com.waz.threading.Threading._
-import com.waz.zclient.legalhold.SelfUserLegalHoldInfoActivity
+import com.waz.zclient.legalhold.{LegalHoldApprovalHandler, SelfUserLegalHoldInfoActivity}
 
 /**
   * Due to how we use the NormalConversationListFragment - it gets replaced by the ArchiveConversationListFragment or
@@ -216,7 +216,10 @@ class NormalConversationFragment extends ConversationListFragment {
       case (count, clients, rrChanged) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0 || rrChanged))
     }
     vh.foreach({ toolbar =>
-      subs += toolbar.legalHoldIndicatorClick.onUi(_ => showLegalHoldInfo())
+      subs += toolbar.legalHoldIndicatorClick.onUi { isPendingApproval =>
+        if (isPendingApproval) showLegalHoldApprovalAction()
+        else showLegalHoldInfo()
+      }
     })
   }
 
@@ -310,6 +313,10 @@ class NormalConversationFragment extends ConversationListFragment {
       showLoading()
       waitingAccount ! Some(UserId(data.getStringExtra(PreferencesActivity.SwitchAccountExtra)))
     }
+  }
+
+  private def showLegalHoldApprovalAction(): Unit = {
+    inject[LegalHoldApprovalHandler].showDialog(getActivity)
   }
 
   private def showLegalHoldInfo(): Unit = {
