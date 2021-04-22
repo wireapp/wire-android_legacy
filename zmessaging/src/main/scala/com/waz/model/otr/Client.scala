@@ -31,7 +31,6 @@ import org.threeten.bp.Instant
 
 import scala.collection.breakOut
 
-
 final case class ClientId(str: String) extends AnyVal {
   def longId: Long = new BigInteger(str, 16).longValue()
   override def toString: String = str
