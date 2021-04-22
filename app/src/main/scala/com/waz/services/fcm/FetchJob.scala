@@ -40,7 +40,7 @@ class FetchJob extends Job with DerivedLogTag {
   import Threading.Implicits.Background
 
   override def onRunJob(params: Job.Params) = {
-    val account = Option(params.getExtras.getString(AccountExtra, null)).map(UserId)
+    val account = Option(params.getExtras.getString(AccountExtra, null)).map(UserId(_))
     val notification = Option(params.getExtras.getString(NotificationExtra, null)).map(Uid(_))
     verbose(l"onStartJob, account: $account")
     def syncAccount(userId: UserId, nId: Option[Uid]): Future[Unit] =

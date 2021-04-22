@@ -60,16 +60,16 @@ class IntegrationDetailsFragment extends FragmentHelper {
   private lazy val convController         = inject[ConversationController]
   private lazy val spinner                = inject[SpinnerController]
 
-  private lazy val serviceId   = getStringArg(ServiceId).map(IntegrationId)
-  private lazy val providerId  = getStringArg(ProviderId).map(model.ProviderId) //only defined when adding to a conversation
+  private lazy val serviceId   = getStringArg(ServiceId).map(IntegrationId(_))
+  private lazy val providerId  = getStringArg(ProviderId).map(model.ProviderId(_)) //only defined when adding to a conversation
   private lazy val name        = getStringArg(Name)
   private lazy val description = getStringArg(Description)
   private lazy val summary     = getStringArg(Summary)
   private lazy val assetId     = getStringArg(Asset).map(AssetId.apply)
 
   //will only be defined if removing from a conversation
-  private lazy val fromConv    = getStringArg(RemoveFromConv).map(ConvId)
-  private lazy val serviceUser = getStringArg(ServiceUser).map(UserId)
+  private lazy val fromConv    = getStringArg(RemoveFromConv).map(ConvId(_))
+  private lazy val serviceUser = getStringArg(ServiceUser).map(UserId(_))
 
   private lazy val isBackgroundTransparent = getBooleanArg(IsTransparent)
   private lazy val addRemoveButton = view[View](R.id.add_remove_service_button)
