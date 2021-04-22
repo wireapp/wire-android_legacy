@@ -24,6 +24,7 @@ class UserDataSpec extends AndroidFreeSpec {
 
   val referenceInfo = UserInfo(
     UserId(),
+    Some("staging.zinfra.io"),
     Some(Name("Atticus")),
     Some(4),
     Some(EmailAddress("atticus@wire.com")),
@@ -53,6 +54,7 @@ class UserDataSpec extends AndroidFreeSpec {
 
       // THEN
       data.id.shouldEqual(referenceInfo.id)
+      data.domain.shouldEqual(referenceInfo.domain)
       data.name.shouldEqual(referenceInfo.name.get)
       data.accent.shouldEqual(referenceInfo.accentId.get)
       data.email.shouldEqual(referenceInfo.email)
@@ -72,7 +74,7 @@ class UserDataSpec extends AndroidFreeSpec {
 
       // GIVEN
       val oldData = UserData(referenceInfo, false)
-      val info = UserInfo(referenceInfo.id, referenceInfo.name)
+      val info = UserInfo(referenceInfo.id, None, referenceInfo.name)
 
       // WHEN
       val data = oldData.updated(info)

@@ -71,8 +71,11 @@ final case class UserData(override val id:       UserId,
   lazy val isReadOnlyProfile: Boolean   = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
+  lazy val qualifiedId: Option[QualifiedId] = domain.map(d => QualifiedId(id, d))
+
   def updated(user: UserInfo): UserData = updated(user, withSearchKey = true, permissions = permissions)
   def updated(user: UserInfo, withSearchKey: Boolean, permissions: PermissionsMasks): UserData = copy(
+    domain        = user.domain,
     name          = user.name.getOrElse(name),
     email         = user.email.orElse(email),
     phone         = user.phone.orElse(phone),

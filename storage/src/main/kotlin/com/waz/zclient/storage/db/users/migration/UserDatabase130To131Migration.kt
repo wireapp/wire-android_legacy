@@ -15,4 +15,3 @@ val USER_DATABASE_MIGRATION_130_TO_131 = object : Migration(130, 131) {
         )
     }
 }
-
