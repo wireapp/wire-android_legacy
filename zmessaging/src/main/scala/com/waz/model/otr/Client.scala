@@ -23,6 +23,7 @@ import com.waz.api.{OtrClientType, Verification}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model.{Id, UserId}
+import com.waz.utils.JsonDecoder.{decodeId, decodeOptString, decodeOptUtcDate, opt}
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder}
@@ -129,7 +130,14 @@ object Client {
   implicit lazy val Decoder: JsonDecoder[Client] = new JsonDecoder[Client] {
     import JsonDecoder._
     override def apply(implicit js: JSONObject): Client = {
-      new Client(decodeId[ClientId]('id), 'label, 'model, 'regTime, opt[Location]('regLocation), 'regIpAddress, opt[SignalingKey]('signalingKey),
+      new Client(
+        decodeId[ClientId]('id),
+        'label,
+        'model,
+        'regTime,
+        opt[Location]('regLocation),
+        'regIpAddress,
+        opt[SignalingKey]('signalingKey),
         decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
         decodeOptString('devType).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass)
       )

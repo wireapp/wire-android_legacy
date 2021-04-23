@@ -20,6 +20,7 @@ package com.waz.service.conversation
 import com.waz.content.UserPreferences.SelectedConvId
 import com.waz.content.{Preferences, UserPreferences}
 import com.waz.model.ConvId
+import com.waz.service.UserService
 import com.wire.signals.Signal
 
 import scala.concurrent.Future
@@ -33,10 +34,16 @@ trait SelectedConversationService {
 /**
  * Keeps track of general conversation list stats needed for display of conversations lists.
  */
-class SelectedConversationServiceImpl(userPrefs: UserPreferences) extends SelectedConversationService {
+class SelectedConversationServiceImpl(userPrefs: UserPreferences, users: UserService) extends SelectedConversationService {
+  import com.waz.threading.Threading.Implicits.Background
+
   val selectedConvIdPref: Preferences.Preference[Option[ConvId]] = userPrefs.preference(SelectedConvId)
 
-  def selectedConversationId: Signal[Option[ConvId]] = selectedConvIdPref.signal
+  val selectedConversationId: Signal[Option[ConvId]] = selectedConvIdPref.signal
 
   def selectConversation(id: Option[ConvId]): Future[Unit] = selectedConvIdPref := id
+
+  selectedConversationId
+    .collect { case Some(convId) => convId }
+    .foreach(convId => users.syncClients(convId))
 }
