@@ -437,10 +437,6 @@ dependencies {
     androidTestImplementation TestDependencies.androidX.testRules
     androidTestImplementation TestDependencies.androidX.testWorkManager
 
-    // Development - Experimental
-    devImplementation DevDependencies.stetho
-    experimentalImplementation DevDependencies.stetho
-    internalImplementation DevDependencies.stetho
 
     // Legacy Scala
     ScalaCompileOptions.metaClass.daemonServer = true
