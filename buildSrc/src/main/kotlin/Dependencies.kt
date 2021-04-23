@@ -78,8 +78,6 @@ object Versions {
     const val ANDROIDX_TEST_JUNIT = "1.1.1"
     const val ROBOLECTRIC = "5.0.0_r2-robolectric-1"
 
-    //dev
-    const val STETHO = "1.5.0"
 }
 
 object BuildDependencies {
@@ -184,9 +182,6 @@ object TestDependencies {
     val robolectric = "org.robolectric:android-all:${Versions.ROBOLECTRIC}"
 }
 
-object DevDependencies {
-    val stetho = "com.facebook.stetho:stetho:${Versions.STETHO}"
-}
 
 object LegacyDependencies {
     const val SCALA_MAJOR_VERSION = "2.11"
