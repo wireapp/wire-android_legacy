@@ -28,7 +28,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.waz.api.{OtrClientType, Verification}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
-import com.waz.service.ZMessaging
+import com.waz.service.{UserService, ZMessaging}
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -42,11 +42,11 @@ class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector,
   extends RecyclerView.Adapter[ParticipantOtrDeviceAdapter.ViewHolder]
     with Injectable
     with DerivedLogTag {
-  
+
   import ParticipantOtrDeviceAdapter._
   import Threading.Implicits.Background
 
-  private lazy val zms = inject[Signal[ZMessaging]]
+  private lazy val userService = inject[Signal[UserService]]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val accentColorController = inject[AccentColorController]
 
@@ -64,9 +64,9 @@ class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector,
   } yield clients.fold(List.empty[Client])(_.clients.values.toList.reverse)
 
   private lazy val syncClientsRequest = for {
-    z             <- zms.head
+    userService   <- userService.head
     Some(userId)  <- participantsController.otherParticipantId.head
-  } yield z.sync.syncClients(userId)
+  } yield userService.syncClients(userId)
 
   (for {
     cs    <- clients

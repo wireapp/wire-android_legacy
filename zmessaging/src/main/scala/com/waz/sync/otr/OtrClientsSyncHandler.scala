@@ -24,7 +24,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.OtrClientsStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.UserId
+import com.waz.model.{QualifiedId, UserId}
 import com.waz.model.otr.{Client, ClientId, Location, UserClients}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr._
@@ -40,6 +40,7 @@ import scala.concurrent.Future
 import scala.util.Try
 
 trait OtrClientsSyncHandler {
+  def syncClients(users: Set[QualifiedId]): Future[SyncResult]
   def syncClients(user: UserId): Future[SyncResult]
   def postLabel(id: ClientId, label: String): Future[SyncResult]
   def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult]
@@ -109,13 +110,28 @@ class OtrClientsSyncHandlerImpl(context:    Context,
     } yield res
   }
 
-  def syncClients(users: Seq[(UserId, String)]): Future[SyncResult] =
+  override def syncClients(users: Set[QualifiedId]): Future[SyncResult] =
     netClient.loadClients(users).future.flatMap {
-      case Left(error)    => Future.successful(SyncResult(error))
-      case Right(clients) => syncClients(clients)
+      case Right(response) =>
+        syncClients(response.map { case (QualifiedId(id, _), clients) => id -> clients })
+      case Left(ErrorResponse.PageNotFound) =>
+        // fallback to requesting clients per user
+        Future
+          .sequence(users.map { case QualifiedId(id, _) => netClient.loadClients(id).future.map(id -> _) })
+          .flatMap { responses =>
+            val error = responses.collectFirst { case (_, Left(error)) => error }
+            error match {
+              case Some(err) =>
+                Future.successful(SyncResult(err))
+              case None =>
+                syncClients(responses.collect { case (id, Right(clients)) => id -> clients }.toMap)
+            }
+          }
+      case Left(error)=>
+        Future.successful(SyncResult(error))
     }
 
-  def syncClients(user: UserId): Future[SyncResult] = {
+  override def syncClients(user: UserId): Future[SyncResult] = {
     val loadClients =
       (if (user == selfId) netClient.loadClients() else netClient.loadClients(user)).future
 
@@ -125,18 +141,18 @@ class OtrClientsSyncHandlerImpl(context:    Context,
     }
   }
 
-  def postLabel(id: ClientId, label: String): Future[SyncResult] =
+  override def postLabel(id: ClientId, label: String): Future[SyncResult] =
     netClient.postClientLabel(id, label).future map {
       case Right(_)  => Success
       case Left(err) => SyncResult(err)
     }
 
-  def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult] = syncSessions(clients).map {
+  override def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult] = syncSessions(clients).map {
     case Some(error) => SyncResult(error)
     case None        => Success
   }
 
-  def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]] =
+  override def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]] =
     netClient.loadPreKeys(clients).future
       .flatMap {
         case Left(error) => Future.successful(Some(error))
@@ -151,7 +167,7 @@ class OtrClientsSyncHandlerImpl(context:    Context,
         case e: Throwable => Some(ErrorResponse.internalError(e.getMessage))
       }
 
-  def syncClientsLocation(): Future[SyncResult] = {
+  override def syncClientsLocation(): Future[SyncResult] = {
     import scala.collection.JavaConverters._
 
     def loadName(lat: Double, lon: Double) = Future {
