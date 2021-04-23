@@ -4,9 +4,9 @@ import com.waz.api.IConversation.LegalHoldStatus
 import com.waz.api.IConversation.LegalHoldStatus._
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage}
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{ConvId, ConversationData, ConversationMemberData, UserId}
+import com.waz.model.{ConvId, ConversationData, UserId}
 import com.waz.specs.AndroidFreeSpec
-import com.wire.signals.{EventStream, SourceStream}
+import com.wire.signals.EventStream
 
 import scala.concurrent.Future
 
@@ -20,7 +20,7 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
 
   // Set up
 
-  private var statusUpdater: LegalHoldStatusUpdater = _
+  private var statusUpdater: LegalHoldStatusUpdaterImpl = _
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -44,7 +44,7 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
       .once()
       .returning(EventStream())
 
-    statusUpdater = new LegalHoldStatusUpdater(clients, convs, members)
+    statusUpdater = new LegalHoldStatusUpdaterImpl(clients, convs, members)
   }
 
 

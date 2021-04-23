@@ -274,8 +274,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val legalHold: LegalHoldService                = if (BuildConfig.LEGAL_HOLD_ENABLED) wire[LegalHoldServiceImpl]
                                                         else wire[DisabledLegalHoldService]
   lazy val legalHoldSync: LegalHoldSyncHandler        = wire[LegalHoldSyncHandlerImpl]
-  lazy val legalHoldStatusUpdater =                   if (BuildConfig.LEGAL_HOLD_ENABLED) Some(wire[LegalHoldStatusUpdater])
-                                                      else None
+  lazy val legalHoldStatusUpdater: LegalHoldStatusUpdater = if (BuildConfig.LEGAL_HOLD_ENABLED) wire[LegalHoldStatusUpdaterImpl]
+                                                            else new DummyLegalHoldStatusUpdater()
 
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
 

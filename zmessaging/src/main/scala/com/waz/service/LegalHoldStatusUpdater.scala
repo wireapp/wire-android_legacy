@@ -9,31 +9,32 @@ import com.waz.model.{ConvId, ConversationData}
 
 import scala.concurrent.Future
 
+trait LegalHoldStatusUpdater {}
+
+class DummyLegalHoldStatusUpdater() extends LegalHoldStatusUpdater
+
 // Updates the legal hold status of conversations when new
 // legal hold devices are discovered.
 
-class LegalHoldStatusUpdater(clientsStorage: OtrClientsStorage,
-                             convStorage: ConversationStorage,
-                             membersStorage: MembersStorage) extends DerivedLogTag {
+class LegalHoldStatusUpdaterImpl(clientsStorage: OtrClientsStorage,
+                                 convStorage: ConversationStorage,
+                                 membersStorage: MembersStorage) extends LegalHoldStatusUpdater with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
   // When clients are added, updated, or deleted...
   clientsStorage.onChanged { userClients =>
-    verbose(l"on clients changed")
     onClientsChanged(userClients)
   }
 
   // When a participant is added...
   membersStorage.onAdded { members =>
-    verbose(l"on members added")
     val convIds = members.map(_.convId)
     updateLegalHoldStatus(convIds)
   }
 
   // When a participant is removed...
   membersStorage.onDeleted { members =>
-    verbose(l"on members deleted")
     val convIds = members.map(_._2)
     updateLegalHoldStatus(convIds)
   }
