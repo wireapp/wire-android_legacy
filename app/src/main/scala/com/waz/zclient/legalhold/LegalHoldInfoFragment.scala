@@ -18,7 +18,11 @@ class LegalHoldInfoFragment extends BaseFragment[LegalHoldInfoFragment.Container
   private lazy val infoMessageTextView = view[TypefaceTextView](R.id.legal_hold_info_message_text_view)
   private lazy val subjectsRecyclerView = view[RecyclerView](R.id.legal_hold_info_subjects_recycler_view)
 
-  private lazy val adapter = new LegalHoldUsersAdapter(users, MAX_PARTICIPANTS)
+  private lazy val legalHoldController = inject[LegalHoldController]
+
+  private lazy val adapter = returning(new LegalHoldUsersAdapter(users, MAX_PARTICIPANTS)) {
+    _.onClick(legalHoldController.onLegalHoldSubjectClick ! _)
+  }
 
   private lazy val users = getContainer.legalHoldUsers.map(_.toSet)
 
@@ -49,7 +53,7 @@ object LegalHoldInfoFragment {
     val legalHoldUsers: Signal[Seq[UserId]]
   }
 
-  val TAG = "LegalHoldInfoFragment"
+  val Tag = "LegalHoldInfoFragment"
   private val MAX_PARTICIPANTS = 7
   val ARG_MESSAGE_RES_ID = "messageResId_Arg"
 

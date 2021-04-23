@@ -58,12 +58,12 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
 }
 
 ext {
-    // Active Speakers/All toggle
-    activeSpeakersView = false
+    activeSpeakersView = true
     zoomingGroupCall = true
     appLockFeatureFlag = true
     sessionReset = true

@@ -21,7 +21,7 @@ import java.io.File
 
 import com.waz.db.{BaseDao, DaoDB, Migration}
 import com.waz.utils.wrappers.DB
-import org.robolectric.Robolectric
+import org.robolectric.RuntimeEnvironment
 import org.scalatest.Matchers
 
 trait DbLoader {
@@ -32,6 +32,6 @@ trait DbLoader {
     val file = File.createTempFile("temp", ".db")
     file.deleteOnExit()
     IoUtils.copy(input, file)
-    new DaoDB(Robolectric.application, file.getName, 1, Seq.empty[BaseDao[_]], Seq.empty[Migration]).getWritableDatabase
+    new DaoDB(RuntimeEnvironment.application, file.getName, 1, Seq.empty[BaseDao[_]], Seq.empty[Migration]).getWritableDatabase
   }
 }

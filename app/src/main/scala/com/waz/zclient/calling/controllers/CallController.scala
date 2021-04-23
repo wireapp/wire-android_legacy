@@ -56,6 +56,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
 
   val isFullScreenEnabled = Signal(false)
   val showTopSpeakers = Signal(false)
+  val isSelfViewVisible = Signal(false)
 
   private lazy val screenManager  = new ScreenManager
   private lazy val soundController = inject[SoundController]
