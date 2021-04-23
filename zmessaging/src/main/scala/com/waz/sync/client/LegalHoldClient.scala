@@ -63,7 +63,7 @@ class LegalHoldClientImpl(implicit
                               password: Option[String]): ErrorOrResponse[Unit] =
     Request.Put(
       relativePath = approvePath(teamId, userId),
-      body = JsonEncoder { _.put("password", password) }
+      body = JsonEncoder { _.put("password", password.getOrElse("")) }
     )
     .withResultType[Unit]
     .withErrorType[ErrorResponse]

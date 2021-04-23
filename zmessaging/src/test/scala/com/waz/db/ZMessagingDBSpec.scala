@@ -31,19 +31,21 @@ import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.utils.wrappers.{DB, URI}
 import com.waz.utils.{DbLoader, returning}
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.threeten.bp.Instant
 
 @RunWith(classOf[JUnitRunner])
+@Config(sdk=Array(21))
 @Ignore class ZMessagingDBSpec extends FeatureSpec with Matchers with Inspectors with GeneratorDrivenPropertyChecks with BeforeAndAfter with RobolectricTests with DbLoader {
-  lazy val dbHelper = new ZMessagingDB(Robolectric.application, "test_db")
+  lazy val dbHelper = new ZMessagingDB(RuntimeEnvironment.application, "test_db")
 
   after {
     dbHelper.close()
-    Robolectric.application.getDatabasePath(dbHelper.getDatabaseName).delete()
+    RuntimeEnvironment.application.getDatabasePath(dbHelper.getDatabaseName).delete()
   }
 
   feature("Database migrations") {

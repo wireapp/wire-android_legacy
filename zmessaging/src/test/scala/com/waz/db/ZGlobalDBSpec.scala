@@ -22,25 +22,27 @@ import com.waz.model._
 import com.waz.utils.DbLoader
 import com.waz.utils.wrappers.DB
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
+@Config(sdk=Array(21))
 class ZGlobalDBSpec extends FeatureSpec with Matchers with OptionValues with Inspectors with BeforeAndAfter
   with RobolectricTests with DbLoader {
 
-  lazy val dbHelper = new ZGlobalDB(Robolectric.application)
+  lazy val dbHelper = new ZGlobalDB(RuntimeEnvironment.application)
 
   after {
     dbHelper.close()
-    Robolectric.application.getDatabasePath(dbHelper.getDatabaseName).delete()
+    RuntimeEnvironment.application.getDatabasePath(dbHelper.getDatabaseName).delete()
   }
 
   feature("Database migrations") {
 
     def createZmessagingDb(id: AccountId, userId: UserId) = {
-      val zdb = new ZMessagingDB(Robolectric.application, id.str)
+      val zdb = new ZMessagingDB(RuntimeEnvironment.application, id.str)
       implicit val db: DB  = zdb.getWritableDatabase
       KeyValueDataDao.insertOrIgnore(KeyValueData("self_user_id", userId.str))
       db.close()

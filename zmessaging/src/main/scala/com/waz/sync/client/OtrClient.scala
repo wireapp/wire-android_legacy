@@ -17,6 +17,9 @@
  */
 package com.waz.sync.client
 
+import java.nio.ByteBuffer
+import java.util.UUID
+
 import com.google.protobuf.ByteString
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{OtrClientType, Verification}
@@ -212,12 +215,20 @@ object OtrClient extends DerivedLogTag {
 
   type ClientKey = (ClientId, PreKey)
 
-  final def userId(id: UserId): Otr.UserId =
+  private def userIdBytes(id: UserId): Array[Byte] =
+    returning(Array.ofDim[Byte](16)) { bytes =>
+      val bb = ByteBuffer.wrap(bytes).asLongBuffer()
+      val uuid = UUID.fromString(id.str)
+      bb.put(uuid.getMostSignificantBits)
+      bb.put(uuid.getLeastSignificantBits)
+    }
+
+  def userId(id: UserId): Otr.UserId =
     Otr.UserId.newBuilder
-      .setUuid(ByteString.copyFrom(id.bytes))
+      .setUuid(ByteString.copyFrom(userIdBytes(id)))
       .build
 
-  final def clientId(id: ClientId): Otr.ClientId =
+  def clientId(id: ClientId): Otr.ClientId =
     Otr.ClientId.newBuilder
       .setClient(id.longId)
       .build

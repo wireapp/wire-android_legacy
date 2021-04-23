@@ -85,6 +85,9 @@ class FullScreenVideoFragment extends FragmentHelper {
     userVideoView = if (participant == selfParticipant) new SelfVideoView(getContext, participant)
     else new OtherVideoView(getContext, participant)
 
+    if (participant == selfParticipant) controller.isSelfViewVisible ! true
+    else controller.isSelfViewVisible ! false
+
     userVideoView.onDoubleClick.onUi { _ =>
       minimizeVideo()
     }
@@ -115,8 +118,9 @@ class FullScreenVideoFragment extends FragmentHelper {
   }
 
   def minimizeVideo(): Unit = {
-    controller.isFullScreenEnabled ! false
     fullScreenVideoContainer.foreach(_.removeView(userVideoView))
+    controller.isFullScreenEnabled ! false
+    controller.isSelfViewVisible ! false
     getFragmentManager.popBackStackImmediate()
   }
 }
