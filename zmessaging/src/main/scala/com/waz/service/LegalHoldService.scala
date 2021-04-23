@@ -2,7 +2,8 @@ package com.waz.service
 
 import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{PropertiesStorage, PropertyValue}
+import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
+import com.waz.content.UserPreferences
 import com.waz.model.otr.ClientId
 import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.Stage
@@ -10,7 +11,6 @@ import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.sync.client.LegalHoldClient
 import com.waz.sync.handler.LegalHoldError
-import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.wire.signals.Signal
 
 import scala.concurrent.Future
@@ -26,12 +26,11 @@ trait LegalHoldService {
 
 class LegalHoldServiceImpl(selfUserId: UserId,
                            teamId: Option[TeamId],
-                           storage: PropertiesStorage,
+                           userPrefs: UserPreferences,
                            client: LegalHoldClient,
                            clientsService: OtrClientsService,
                            cryptoSessionService: CryptoSessionService) extends LegalHoldService {
 
-  import LegalHoldService._
   import com.waz.threading.Threading.Implicits.Background
 
   override def legalHoldRequestEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldRequestEvent] { (_, events) =>
@@ -42,11 +41,8 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     }.map(_ => ())
   }
 
-  override def legalHoldRequest: Signal[Option[LegalHoldRequest]] = {
-    storage.optSignal(LegalHoldRequestKey).map { property =>
-      property.map(_.value).map(JsonDecoder.decode[LegalHoldRequest])
-    }
-  }
+  override def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
+    userPrefs.preference(UserPreferences.LegalHoldRequest).signal
 
   override def approveRequest(request: LegalHoldRequest,
                               password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {
@@ -85,18 +81,11 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, clientId))
   } yield ()
 
-  def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit] = {
-    val value = JsonEncoder.encode[LegalHoldRequest](request).toString
-    storage.save(PropertyValue(LegalHoldRequestKey, value))
-  }
+  def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit] =
+    userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(request))
 
   def deleteLegalHoldRequest(): Future[Unit] =
-    storage.deleteByKey(LegalHoldRequestKey)
+    userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
 
 }
 
-object LegalHoldService {
-
-  val LegalHoldRequestKey: PropertyKey = PropertyKey("legal-hold-request")
-
-}

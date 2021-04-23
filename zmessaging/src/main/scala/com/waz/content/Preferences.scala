@@ -32,13 +32,12 @@ import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.threading.Threading
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Serialized, Signal, SourceSignal}
 import com.waz.utils.{CachedStorageImpl, CirceJSONSupport, JsonDecoder, JsonEncoder, TrimmingLruCache, returning}
 import com.waz.zms.BuildConfig
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Signal, SourceSignal}
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -180,6 +179,11 @@ object Preferences {
           parser.decode(json)(decoder).right.toOption.getOrElse(Map.empty)
       }
 
+      implicit lazy val LegalHoldRequestCodec = apply[Option[LegalHoldRequest]](
+        { d =>  d.fold("")(r => LegalHoldRequest.Encoder(r).toString) },
+        { s => if (s.isEmpty) None else Some(LegalHoldRequest.Decoder(new JSONObject(s))) },
+        defaultVal = None
+      )
     }
 
   }
@@ -418,4 +422,6 @@ object UserPreferences {
   lazy val AppLockFeatureEnabled: PrefKey[Boolean]         = PrefKey[Boolean]("app_lock_feature_enabled", customDefault = true)
   lazy val AppLockForced:  PrefKey[Boolean]                = PrefKey[Boolean]("app_lock_forced", customDefault = false)
   lazy val AppLockTimeout: PrefKey[Option[FiniteDuration]] = PrefKey[Option[FiniteDuration]]("app_lock_timeout", customDefault = None)
+
+  lazy val LegalHoldRequest: PrefKey[Option[LegalHoldRequest]] = PrefKey[Option[LegalHoldRequest]]("legal_hold_request", customDefault = None)
 }

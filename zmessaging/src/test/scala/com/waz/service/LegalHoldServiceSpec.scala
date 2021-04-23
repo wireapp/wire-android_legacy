@@ -2,20 +2,20 @@ package com.waz.service
 
 import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{PropertiesStorage, PropertyValue}
+import com.waz.content.UserPreferences
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.{Sequential, Stage}
-import com.waz.service.LegalHoldService._
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.LegalHoldClient
 import com.waz.sync.handler.LegalHoldError
+import com.waz.testutils.TestUserPreferences
 import com.waz.utils.JsonEncoder
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
-import com.wire.signals.{CancellableFuture, Signal}
+import com.wire.signals.CancellableFuture
 
 import scala.concurrent.Future
 
@@ -25,7 +25,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   private val selfUserId = UserId("selfUserId")
   private val teamId = TeamId("teamId")
-  private val storage = mock[PropertiesStorage]
+  private val userPrefs = new TestUserPreferences()
   private val apiClient = mock[LegalHoldClient]
   private val clientsService = mock[OtrClientsService]
   private val cryptoSessionService = mock[CryptoSessionService]
@@ -34,19 +34,15 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
-    service = new LegalHoldServiceImpl(selfUserId, Some(teamId), storage, apiClient, clientsService, cryptoSessionService)
+    service = new LegalHoldServiceImpl(selfUserId, Some(teamId), userPrefs, apiClient, clientsService, cryptoSessionService)
+    userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
   }
 
   feature("Fetch the legal hold request") {
 
     scenario("legal hold request exists") {
       // Given
-      val value = JsonEncoder.encode[LegalHoldRequest](legalHoldRequest).toString
-
-      (storage.optSignal _)
-        .expects(LegalHoldRequestKey)
-        .once()
-        .returning(Signal.const(Some(PropertyValue(LegalHoldRequestKey, value))))
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
       // When
       val fetchedResult = result(service.legalHoldRequest.head)
@@ -59,10 +55,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
 
     scenario("legal hold request does not exist") {
-      (storage.optSignal _)
-        .expects(LegalHoldRequestKey)
-        .once()
-        .returning(Signal.const(None))
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
 
       // When
       val fetchedResult = result(service.legalHoldRequest.head)
@@ -80,14 +73,15 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
       val event = LegalHoldRequestEvent(selfUserId, legalHoldRequest)
 
-      // Then
-      (storage.save _)
-        .expects(PropertyValue(LegalHoldRequestKey, encodedLegalHoldRequest))
-        .once()
-        .returning(Future.successful({}))
-
       // When
       result(pipeline.apply(Seq(event)))
+
+      // Then
+      val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
+      storedLegalHoldRequest.isDefined shouldBe true
+      storedLegalHoldRequest.get.clientId shouldEqual legalHoldRequest.clientId
+      storedLegalHoldRequest.get.lastPreKey.id shouldEqual legalHoldRequest.lastPreKey.id
+      storedLegalHoldRequest.get.lastPreKey.data shouldEqual legalHoldRequest.lastPreKey.data
     }
 
     scenario("it ignores a legal hold request event not for the self user") {
@@ -96,19 +90,20 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
       val event = LegalHoldRequestEvent(targetUserId = UserId("someOtherUser"), legalHoldRequest)
 
-      // Then
-      (storage.save _)
-        .expects( PropertyValue(LegalHoldRequestKey, encodedLegalHoldRequest))
-        .never()
-
       // When
       result(pipeline.apply(Seq(event)))
+
+      // Then
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()) shouldBe None
     }
   }
 
   feature("Approve legal hold request") {
 
     scenario("It creates a client and and approves the request") {
+      // Given
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+
       mockClientAndSessionCreation()
 
       // Approve the request.
@@ -117,17 +112,12 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .once()
         .returning(CancellableFuture.successful(Right({})))
 
-      // Then pending request is deleted.
-      (storage.deleteByKey _)
-        .expects(LegalHoldRequestKey)
-        .once()
-        .returning(Future.successful({}))
-
       // When
       val actualResult = result(service.approveRequest(legalHoldRequest, Some("password")))
 
       // Then
       actualResult.isRight shouldBe true
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()) shouldBe None
     }
 
     scenario("It deletes the client if approval failed") {
