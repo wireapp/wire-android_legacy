@@ -121,8 +121,8 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         retry      <- resp.flatMapFuture {
                         case MessageResponse.Failure(ClientMismatch(_, missing, _, _)) if retries < 3 =>
                           warn(l"a message response failure with client mismatch with $missing, self client id is: $selfClientId")
-                          clientsSyncHandler.syncSessions(missing).flatMap { err =>
-                            if (err.isDefined) error(l"syncSessions for missing clients failed: $err")
+                          clientsSyncHandler.syncAllClients(missing.keys.toSeq).flatMap { err =>
+                            if (err.isDefined) error(l"syncAllClients for missing clients failed: $err")
                             encryptAndSend(msg, external, retries + 1, content)
                           }
                         case _: MessageResponse.Failure =>
@@ -216,7 +216,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
               s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries: $missing"
             )))
           case _ =>
-            clientsSyncHandler.syncSessions(missing).flatMap {
+            clientsSyncHandler.syncAllClients(missing.keys.toSeq).flatMap {
               case None                 => onRetry(missing.keySet)
               case Some(_) if retry < 3 => onRetry(currentRecipients)
               case Some(err)            => successful(Left(err))

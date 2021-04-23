@@ -230,7 +230,9 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         }
       }
 
-    (clientsSyncHandler.syncSessions _).expects(missing).returning(Future.successful(None))
+    (clientsSyncHandler.syncAllClients _)
+      .expects(Seq(missingUser))
+      .returning(Future.successful(None))
 
     val sh = getSyncHandler
     result(sh.postOtrMessage(conv.id, msg))

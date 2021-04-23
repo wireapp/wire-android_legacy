@@ -45,6 +45,7 @@ trait OtrClientsSyncHandler {
   def syncClientsLocation(): Future[SyncResult]
 
   def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]]
+  def syncAllClients(userIds: Seq[UserId]): Future[Option[ErrorResponse]]
 }
 
 class OtrClientsSyncHandlerImpl(context:    Context,
@@ -140,6 +141,12 @@ class OtrClientsSyncHandlerImpl(context:    Context,
       }.recover {
         case e: Throwable => Some(ErrorResponse.internalError(e.getMessage))
       }
+
+  def syncAllClients(userIds: Seq[UserId]): Future[Option[ErrorResponse]] =
+    Future.traverse(userIds)(syncClients).map(_.collectFirst {
+      case SyncResult.Failure(error) => error
+      case Retry(error)              => error
+    })
 
   def syncClientsLocation(): Future[SyncResult] = {
     import scala.collection.JavaConverters._
