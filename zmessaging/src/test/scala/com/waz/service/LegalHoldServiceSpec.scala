@@ -4,18 +4,18 @@ import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{PropertiesStorage, PropertyValue}
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, UserId}
+import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.LegalHoldService._
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.SyncResult
-import com.waz.sync.handler.{LegalHoldError, LegalHoldSyncHandler}
+import com.waz.sync.client.LegalHoldClient
+import com.waz.sync.handler.LegalHoldError
 import com.waz.utils.JsonEncoder
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
-import com.wire.signals.Signal
+import com.wire.signals.{CancellableFuture, Signal}
 
 import scala.concurrent.Future
 
@@ -24,8 +24,9 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   import LegalHoldServiceSpec._
 
   private val selfUserId = UserId("selfUserId")
+  private val teamId = TeamId("teamId")
   private val storage = mock[PropertiesStorage]
-  private val syncHandler = mock[LegalHoldSyncHandler]
+  private val apiClient = mock[LegalHoldClient]
   private val clientsService = mock[OtrClientsService]
   private val cryptoSessionService = mock[CryptoSessionService]
 
@@ -33,7 +34,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
-    service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler, clientsService, cryptoSessionService)
+    service = new LegalHoldServiceImpl(selfUserId, Some(teamId), storage, apiClient, clientsService, cryptoSessionService)
   }
 
   feature("Fetch the legal hold request") {
@@ -105,71 +106,16 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
   }
 
-  feature("Sync legal hold request") {
-
-    scenario("it succeeds if legal hold request exists") {
-      (syncHandler.fetchLegalHoldRequest _ )
-        .expects()
-        .once()
-        .returning(Future.successful(Right(Some(legalHoldRequest))))
-
-      (storage.save _)
-        .expects(PropertyValue(LegalHoldRequestKey, encodedLegalHoldRequest))
-        .once()
-        .returning(Future.successful({}))
-
-      // When
-      val actualResult = result(service.syncLegalHoldRequest())
-
-      // Then
-      actualResult shouldEqual SyncResult.Success
-    }
-
-    scenario("it succeeds if legal hold does not exist") {
-      (syncHandler.fetchLegalHoldRequest _ )
-        .expects()
-        .once()
-        .returning(Future.successful(Right(None)))
-
-      (storage.deleteByKey _)
-        .expects(LegalHoldRequestKey)
-        .once()
-        .returning(Future.successful({}))
-
-      // When
-      val actualResult = result(service.syncLegalHoldRequest())
-
-      // Then
-      actualResult shouldEqual SyncResult.Success
-    }
-
-    scenario("it fails if an error occurs") {
-      // Given
-      val error = ErrorResponse(400, "", "")
-
-      (syncHandler.fetchLegalHoldRequest _ )
-        .expects()
-        .once()
-        .returning(Future.successful(Left(error)))
-
-      // When
-      val actualResult = result(service.syncLegalHoldRequest())
-
-      // Then
-      actualResult shouldEqual SyncResult.Failure(error)
-    }
-  }
-
   feature("Approve legal hold request") {
 
     scenario("It creates a client and and approves the request") {
       mockClientAndSessionCreation()
 
       // Approve the request.
-      (syncHandler.approveRequest _)
-        .expects(Some("password"))
+      (apiClient.approveRequest _)
+        .expects(teamId, selfUserId, Some("password"))
         .once()
-        .returning(Future.successful(Right({})))
+        .returning(CancellableFuture.successful(Right({})))
 
       // Then pending request is deleted.
       (storage.deleteByKey _)
@@ -189,10 +135,10 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val client = mockClientAndSessionCreation()
 
       // Approve the request.
-      (syncHandler.approveRequest _)
-        .expects(Some("password"))
+      (apiClient.approveRequest _)
+        .expects(teamId, selfUserId, Some("password"))
         .once()
-        .returning(Future.successful(Left(LegalHoldError.InvalidPassword)))
+        .returning(CancellableFuture.successful(Left(ErrorResponse(400, "", "access-denied"))))
 
       // Delete client.
       (clientsService.removeClients _ )

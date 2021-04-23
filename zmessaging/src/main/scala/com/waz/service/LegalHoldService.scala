@@ -1,14 +1,15 @@
 package com.waz.service
 
 import com.waz.api.OtrClientType
+import com.waz.api.impl.ErrorResponse
 import com.waz.content.{PropertiesStorage, PropertyValue}
 import com.waz.model.otr.ClientId
-import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, UserId}
+import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
-import com.waz.sync.SyncResult
-import com.waz.sync.handler.{LegalHoldError, LegalHoldSyncHandler}
+import com.waz.sync.client.LegalHoldClient
+import com.waz.sync.handler.LegalHoldError
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.wire.signals.Signal
 
@@ -16,15 +17,17 @@ import scala.concurrent.Future
 
 trait LegalHoldService {
   def legalHoldRequestEventStage: Stage.Atomic
-  def syncLegalHoldRequest(): Future[SyncResult]
   def legalHoldRequest: Signal[Option[LegalHoldRequest]]
+  def deleteLegalHoldRequest(): Future[Unit]
+  def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit]
   def approveRequest(request: LegalHoldRequest,
                      password: Option[String]): Future[Either[LegalHoldError, Unit]]
 }
 
 class LegalHoldServiceImpl(selfUserId: UserId,
+                           teamId: Option[TeamId],
                            storage: PropertiesStorage,
-                           syncHandler: LegalHoldSyncHandler,
+                           client: LegalHoldClient,
                            clientsService: OtrClientsService,
                            cryptoSessionService: CryptoSessionService) extends LegalHoldService {
 
@@ -35,14 +38,8 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     Future.sequence {
       events
         .filter(_.targetUserId == selfUserId)
-        .map(event => storeRequest(event.request))
+        .map(event => storeLegalHoldRequest(event.request))
     }.map(_ => ())
-  }
-
-  override def syncLegalHoldRequest(): Future[SyncResult] = syncHandler.fetchLegalHoldRequest().flatMap {
-    case Right(Some(request)) => storeRequest(request).map(_ => SyncResult.Success)
-    case Right(None)          => deleteRequest().map(_ => SyncResult.Success)
-    case Left(err)            => Future.successful(SyncResult.Failure(err))
   }
 
   override def legalHoldRequest: Signal[Option[LegalHoldRequest]] = {
@@ -51,14 +48,29 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     }
   }
 
-  override def approveRequest(request: LegalHoldRequest, password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {
+  override def approveRequest(request: LegalHoldRequest,
+                              password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {
     _      <- createLegalHoldClientAndSession(request)
-    result <- syncHandler.approveRequest(password)
+    result <- postApproval(password)
     _      <- result match {
       case Left(_) => deleteLegalHoldClientAndSession(request.clientId)
-      case Right(_) => deleteRequest()
+      case Right(_) => deleteLegalHoldRequest()
     }
   } yield result
+
+  private def postApproval(password: Option[String]): Future[Either[LegalHoldError, Unit]] = teamId match {
+    case None =>
+      Future.successful(Left(LegalHoldError.NotInTeam))
+    case Some(teamId) =>
+      client.approveRequest(teamId, selfUserId, password).future.map {
+        case Left(ErrorResponse(_, _, label)) if label == "access-denied" || label == "invalid-payload" =>
+          Left(LegalHoldError.InvalidPassword)
+        case Left(_) =>
+          Left(LegalHoldError.InvalidResponse)
+        case Right(_) =>
+          Right(())
+    }
+  }
 
   private def createLegalHoldClientAndSession(request: LegalHoldRequest): Future[Unit] = for {
     client          <- clientsService.getOrCreateClient(selfUserId, request.clientId)
@@ -73,12 +85,12 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, clientId))
   } yield ()
 
-  private def storeRequest(request: LegalHoldRequest): Future[Unit] = {
+  def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit] = {
     val value = JsonEncoder.encode[LegalHoldRequest](request).toString
     storage.save(PropertyValue(LegalHoldRequestKey, value))
   }
 
-  private def deleteRequest(): Future[Unit] =
+  def deleteLegalHoldRequest(): Future[Unit] =
     storage.deleteByKey(LegalHoldRequestKey)
 
 }
