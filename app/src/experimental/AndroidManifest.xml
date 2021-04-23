@@ -19,9 +19,7 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <application xmlns:tools="http://schemas.android.com/tools"
-        android:name=".ZApplication"
-        tools:replace="android:name">
+    <application xmlns:tools="http://schemas.android.com/tools">
         <receiver tools:ignore="ExportedReceiver" android:name="com.waz.zclient.PreferenceReceiver"
             android:enabled="true" android:exported="true">
             <intent-filter>
