@@ -18,7 +18,7 @@
 package com.waz.model
 
 import com.waz.specs.AndroidFreeSpec
-import com.waz.utils.JsonDecoder
+import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.threeten.bp.Instant
 
 class UserInfoSpec extends AndroidFreeSpec {
@@ -54,6 +54,56 @@ class UserInfoSpec extends AndroidFreeSpec {
       info.name.shouldEqual(Some(Name("Atticus")))
       info.accentId.shouldEqual(Some(6))
 
+    }
+
+    scenario("JSON with 'qualified_id'") {
+      // GIVEN
+      val document =
+        """
+          |{
+          |  "qualified_id":{"domain":"staging.zinfra.io","id":"e902e865-7564-4bd9-9789-d2395a984922"},
+          |  "id" : "e902e865-7564-4bd9-9789-d2395a984922",
+          |  "picture" : [
+          |
+          |  ],
+          |  "assets" : [
+          |
+          |  ],
+          |  "name" : "Atticus",
+          |  "accent_id" : 6
+          |}
+          """.stripMargin
+
+      // WHEN
+      val info: UserInfo = JsonDecoder.decode[UserInfo](document)
+
+      // THEN
+      info.id.shouldEqual(UserId("e902e865-7564-4bd9-9789-d2395a984922"))
+      info.domain.shouldEqual(Some("staging.zinfra.io"))
+      info.name.shouldEqual(Some(Name("Atticus")))
+      info.accentId.shouldEqual(Some(6))
+    }
+  }
+
+  feature("Deserialize and serialize again") {
+    scenario("Deserialize and serialize again with 'qualified_id'") {
+      // GIVEN
+      val info = UserInfo(
+        id = UserId("e902e865-7564-4bd9-9789-d2395a984922"),
+        domain = Some("staging.zinfra.io"),
+        name = Some("Atticus"),
+        accentId = Some(6)
+      )
+
+      // WHEN
+      val document = JsonEncoder.encode(info)(UserInfo.Encoder).toString
+      val info2: UserInfo = JsonDecoder.decode[UserInfo](document)
+
+      // THEN
+      info.id.shouldEqual(info2.id)
+      info.domain.shouldEqual(info2.domain)
+      info.name.shouldEqual(info2.name)
+      info.accentId.shouldEqual(info2.accentId)
     }
   }
 }

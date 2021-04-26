@@ -6,6 +6,7 @@ import com.waz.zclient.storage.db.users.model.UsersEntity
 class UsersBackUpDataMapper : BackUpDataMapper<UsersBackUpModel, UsersEntity> {
     override fun fromEntity(entity: UsersEntity) = UsersBackUpModel(
         id = entity.id,
+        domain = entity.domain,
         teamId = entity.teamId,
         name = entity.name,
         email = entity.email,
@@ -35,6 +36,7 @@ class UsersBackUpDataMapper : BackUpDataMapper<UsersBackUpModel, UsersEntity> {
 
     override fun toEntity(model: UsersBackUpModel) = UsersEntity(
         id = model.id,
+        domain = model.domain,
         teamId = model.teamId,
         name = model.name,
         email = model.email,

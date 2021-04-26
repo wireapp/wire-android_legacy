@@ -21,6 +21,7 @@ class UsersBackUpDataMapperTest : UnitTest() {
         val data = UsersTestDataProvider.provideDummyTestData()
         val entity = UsersEntity(
             id = data.id,
+            domain = data.domain,
             teamId = data.teamId,
             name = data.name,
             email = data.email,
@@ -82,6 +83,7 @@ class UsersBackUpDataMapperTest : UnitTest() {
         val data = UsersTestDataProvider.provideDummyTestData()
         val model = UsersBackUpModel(
             id = data.id,
+            domain = data.domain,
             teamId = data.teamId,
             name = data.name,
             email = data.email,
@@ -112,6 +114,7 @@ class UsersBackUpDataMapperTest : UnitTest() {
         val entity = mapper.toEntity(model)
 
         assertEquals(data.id, entity.id)
+        assertEquals(data.domain, entity.domain)
         assertEquals(data.teamId, entity.teamId)
         assertEquals(data.name, entity.name)
         assertEquals(data.email, entity.email)

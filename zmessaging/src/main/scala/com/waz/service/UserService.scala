@@ -199,7 +199,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def getOrCreateUser(id: UserId) = usersStorage.getOrCreate(id, {
     sync.syncUsers(Set(id))
-    UserData(id, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None)
+    UserData(id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None)
   })
 
   override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =

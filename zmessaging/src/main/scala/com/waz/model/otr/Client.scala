@@ -31,8 +31,8 @@ import org.threeten.bp.Instant
 
 import scala.collection.breakOut
 
-case class ClientId(str: String) {
-  def longId = new BigInteger(str, 16).longValue()
+final case class ClientId(str: String) extends AnyVal {
+  def longId: Long = new BigInteger(str, 16).longValue()
   override def toString: String = str
 }
 
@@ -44,19 +44,17 @@ object ClientId {
     override def encode(id: ClientId): String = id.str
   }
 
-  def apply() = id.random()
+  def apply(): ClientId = id.random()
 
-  def opt(id: String) = Option(id).filter(_.nonEmpty).map(ClientId(_))
+  def opt(id: String): Option[ClientId] = Option(id).filter(_.nonEmpty).map(ClientId(_))
 }
 
-case class Location(lon: Double, lat: Double, name: String) {
-
+final case class Location(lon: Double, lat: Double, name: String) {
   def hasName = name != ""
-  def getName = if (hasName) name else s"$lat, $lon"
 }
 
 object Location {
-  val Empty = Location(0, 0, "")
+  val Empty: Location = Location(0, 0, "")
 
   implicit lazy val Encoder: JsonEncoder[Location] = new JsonEncoder[Location] {
     override def apply(v: Location): JSONObject = JsonEncoder { o =>
@@ -80,33 +78,32 @@ object Location {
  * @param signalingKey - will only be set for current device
  * @param verified - client verification state, updated when user verifies client fingerprint
  */
-case class Client(override val id: ClientId,
-                  label:           String,
-                  model:           String = "",
-                  regTime:         Option[Instant] = None,
-                  regLocation:     Option[Location] = None,
-                  regIpAddress:    Option[String] = None,
-                  signalingKey:    Option[SignalingKey] = None,
-                  verified:        Verification = Verification.UNKNOWN,
-                  devType:         OtrClientType = OtrClientType.PHONE) extends Identifiable[ClientId] {
+final case class Client(override val id: ClientId,
+                        label:           String,
+                        model:           String = "",
+                        regTime:         Option[Instant] = None,
+                        regLocation:     Option[Location] = None,
+                        regIpAddress:    Option[String] = None,
+                        signalingKey:    Option[SignalingKey] = None,
+                        verified:        Verification = Verification.UNKNOWN,
+                        devType:         OtrClientType = OtrClientType.PHONE) extends Identifiable[ClientId] {
+  lazy val isVerified: Boolean = verified == Verification.VERIFIED
 
-  def isVerified = verified == Verification.VERIFIED
-
-  def updated(c: Client) = {
+  def updated(c: Client): Client = {
     val location = (regLocation, c.regLocation) match {
       case (Some(loc), Some(l)) if loc.lat == l.lat && loc.lon == l.lon => Some(loc)
       case (_, loc @ Some(_)) => loc
       case (loc, _) => loc
     }
     copy (
-      label = if (c.label.isEmpty) label else c.label,
-      model = if (c.model.isEmpty) model else c.model,
-      regTime = c.regTime.orElse(regTime),
-      regLocation = location,
+      label        = if (c.label.isEmpty) label else c.label,
+      model        = if (c.model.isEmpty) model else c.model,
+      regTime      = c.regTime.orElse(regTime),
+      regLocation  = location,
       regIpAddress = c.regIpAddress.orElse(regIpAddress),
       signalingKey = c.signalingKey.orElse(signalingKey),
-      verified = c.verified.orElse(verified),
-      devType = if (c.devType == OtrClientType.PHONE) devType else c.devType
+      verified     = c.verified.orElse(verified),
+      devType      = if (c.devType == OtrClientType.PHONE) devType else c.devType
     )
   }
 }
@@ -138,13 +135,12 @@ object Client {
   }
 }
 
-case class UserClients(user: UserId, clients: Map[ClientId, Client]) extends Identifiable[UserId] {
+final case class UserClients(user: UserId, clients: Map[ClientId, Client]) extends Identifiable[UserId] {
   override val id: UserId = user
-  def -(clientId: ClientId) = UserClients(user, clients - clientId)
+  def -(clientId: ClientId): UserClients = UserClients(user, clients - clientId)
 }
 
 object UserClients {
-
   implicit lazy val Encoder: JsonEncoder[UserClients] = new JsonEncoder[UserClients] {
     override def apply(v: UserClients): JSONObject = JsonEncoder { o =>
       o.put("user", v.user.str)
@@ -156,7 +152,6 @@ object UserClients {
     import JsonDecoder._
     override def apply(implicit js: JSONObject): UserClients = new UserClients(decodeId[UserId]('user), decodeSeq[Client]('clients).map(c => c.id -> c)(breakOut))
   }
-
 
   implicit object UserClientsDao extends Dao[UserClients, UserId] {
 

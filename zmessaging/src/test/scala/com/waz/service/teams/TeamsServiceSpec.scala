@@ -68,11 +68,11 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
     val initialTeamMembers = Set(
-      UserData(UserId(), teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty),
-      UserData(UserId(), teamId, Name("user2"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+      UserData(UserId(), None, teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty),
+      UserData(UserId(), None, teamId, Name("user2"), handle = Some(Handle()), searchKey = SearchKey.Empty)
     )
 
-    val newTeamMember = UserData(UserId(), teamId, Name("user3"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+    val newTeamMember = UserData(UserId(), None, teamId, Name("user3"), handle = Some(Handle()), searchKey = SearchKey.Empty)
 
     (userStorage.getByTeam _).expects(Set(teamId).flatten).once().returning(Future.successful(initialTeamMembers))
 
@@ -100,8 +100,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
 
-    val member1 = UserData(UserId(), teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.simple("user1"))
-    val member2 = UserData(UserId(), teamId, Name("rick2"), handle = Some(Handle()), searchKey = SearchKey.simple("rick2"))
+    val member1 = UserData(UserId(), None, teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.simple("user1"))
+    val member2 = UserData(UserId(), None, teamId, Name("rick2"), handle = Some(Handle()), searchKey = SearchKey.simple("rick2"))
     val member2Updated = member2.copy(name = Name("user2"), searchKey = SearchKey.simple("user2"))
 
     (userStorage.searchByTeam _).expects(teamId.get, SearchKey.simple("user"), false).once().returning(Future.successful(Set(member1)))
@@ -130,11 +130,11 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
     val initialTeamMembers = Set(
-      UserData(UserId(), teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty),
-      UserData(UserId(), teamId, Name("user2"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+      UserData(UserId(), None, teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty),
+      UserData(UserId(), None, teamId, Name("user2"), handle = Some(Handle()), searchKey = SearchKey.Empty)
     )
 
-    val newTeamMember = UserData(UserId(), None, Name("user3"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+    val newTeamMember = UserData(UserId(), None, None, Name("user3"), handle = Some(Handle()), searchKey = SearchKey.Empty)
 
     (userStorage.getByTeam _).expects(Set(teamId).flatten).once().returning(Future.successful(initialTeamMembers))
 
@@ -161,8 +161,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (userStorage.onUpdated _).expects().once().returning(userStorageOnUpdated)
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
-    val constUser = UserData(UserId(), teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty)
-    val teamMemberToUpdate = UserData(UserId(), teamId, Name("user2"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+    val constUser = UserData(UserId(), None, teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+    val teamMemberToUpdate = UserData(UserId(), None, teamId, Name("user2"), handle = Some(Handle()), searchKey = SearchKey.Empty)
     val updatedTeamMember = teamMemberToUpdate.copy(name = Name("user3"))
 
     val initialTeamMembers = Set(constUser, teamMemberToUpdate)
@@ -184,7 +184,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     // GIVEN
     val createdBy = id('creator)
     val permissions = TeamsClient.Permissions(123, 890)
-    val userData = UserData(selfUser, teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty)
+    val userData = UserData(selfUser, None, teamId, Name("user1"), handle = Some(Handle()), searchKey = SearchKey.Empty)
     val service = createService
     val teamMember = TeamMember(selfUser, Some(permissions), Some(createdBy))
 
