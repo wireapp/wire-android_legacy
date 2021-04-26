@@ -111,8 +111,6 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 
   val hasUnreadMessages: Boolean =
     (isAllAllowed && unreadCount.total > 0) || (onlyMentionsAllowed && (unreadCount.mentions > 0 || unreadCount.quotes > 0))
-
-  def isUnderLegalHold: Boolean = legalHoldStatus != LegalHoldStatus.DISABLED
 }
 
 
