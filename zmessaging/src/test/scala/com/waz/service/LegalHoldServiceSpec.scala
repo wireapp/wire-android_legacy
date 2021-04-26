@@ -1,10 +1,11 @@
 package com.waz.service
 
+import com.waz.api.IConversation.LegalHoldStatus
 import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
+import com.waz.model.{ConvId, ConversationData, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -15,7 +16,7 @@ import com.waz.testutils.TestUserPreferences
 import com.waz.utils.JsonEncoder
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
-import com.wire.signals.CancellableFuture
+import com.wire.signals.{CancellableFuture, Signal}
 
 import scala.concurrent.Future
 
@@ -50,6 +51,121 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     )
 
     userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
+  }
+
+  // Helpers
+
+  def expectation(userId: UserId, deviceTypes: Seq[OtrClientType]): Unit = {
+    val clients = deviceTypes.map { deviceType =>
+      val clientId = ClientId()
+      clientId -> Client(clientId, "", devType = deviceType)
+    }
+
+    (clientsStorage.optSignal _)
+      .expects(userId)
+      .once()
+      .returning(Signal.const(Some(UserClients(userId, clients.toMap))))
+  }
+
+  def expectation(convId: ConvId, legalHoldStatus: LegalHoldStatus): Unit =
+    (convsStorage.optSignal _)
+      .expects(convId)
+      .once()
+      .returning(Signal.const(Some(ConversationData(convId, legalHoldStatus = legalHoldStatus))))
+
+  // Tests
+
+  feature("Is legal hold active for user") {
+
+    scenario("with a legal hold device") {
+      // Given
+      val userId = UserId("user1")
+      expectation(userId, Seq(OtrClientType.PHONE, OtrClientType.LEGALHOLD))
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(userId).future)
+
+      // Then
+      actualResult shouldBe true
+    }
+
+    scenario("without a legal hold device") {
+      // Given
+      val userId = UserId("user1")
+      expectation(userId, Seq(OtrClientType.PHONE))
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(userId).future)
+
+      // Then
+      actualResult shouldBe false
+    }
+  }
+
+  feature("Is legal hold active for a conversation") {
+
+    scenario("for a conversation with enabled legal hold status") {
+      // Given
+      val convId = ConvId("conv1")
+      expectation(convId, LegalHoldStatus.ENABLED)
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(convId).future)
+
+      // Then
+      actualResult shouldBe true
+    }
+
+    scenario("for a conversation with pending legal hold status") {
+      // Given
+      val convId = ConvId("conv1")
+      expectation(convId, LegalHoldStatus.PENDING_APPROVAL)
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(convId).future)
+
+      // Then
+      actualResult shouldBe true
+    }
+
+    scenario("for a conversation with disabled legal hold status") {
+      // Given
+      val convId = ConvId("conv1")
+      expectation(convId, LegalHoldStatus.DISABLED)
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(convId).future)
+
+      // Then
+      actualResult shouldBe false
+    }
+  }
+
+  feature("Legal hold users in a conversation") {
+
+    scenario("that contains legal hold subjects") {
+      // Given
+      val convId = ConvId("conv1")
+      val user1 = UserId("user1")
+      val user2 = UserId("user2")
+      val user3 = UserId("user3")
+
+      (membersStorage.activeMembers _)
+        .expects(convId)
+        .once()
+        .returning(Signal.const(Set(user1, user2, user3)))
+
+      expectation(user1, Seq(OtrClientType.PHONE))
+      expectation(user2, Seq(OtrClientType.DESKTOP, OtrClientType.LEGALHOLD))
+      expectation(user3, Seq(OtrClientType.PHONE, OtrClientType.LEGALHOLD))
+
+      // when
+      val actualResult = result(service.legalHoldUsers(convId).future)
+
+      // Then
+      actualResult.toSet shouldEqual Set(user2, user3)
+    }
+
   }
 
   feature("Fetch the legal hold request") {
