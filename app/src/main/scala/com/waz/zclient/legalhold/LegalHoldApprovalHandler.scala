@@ -2,9 +2,11 @@ package com.waz.zclient.legalhold
 
 import androidx.fragment.app.FragmentActivity
 import com.waz.model.AccountData.Password
+import com.waz.service.AccountsService
 import com.waz.sync.handler.LegalHoldError
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.utils.returning
+import com.waz.zclient.preferences.DevicesPreferencesUtil
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.{Injectable, Injector, SpinnerController}
 
@@ -14,7 +16,8 @@ import scala.ref.WeakReference
 class LegalHoldApprovalHandler(implicit injector: Injector) extends Injectable {
 
   private lazy val legalHoldController = inject[LegalHoldController]
-  private lazy val spinnerController = inject[SpinnerController]
+  private lazy val spinnerController   = inject[SpinnerController]
+  private lazy val accountsService     = inject[AccountsService]
 
   private lazy val actionTaken = Promise[Unit]
 
@@ -27,18 +30,31 @@ class LegalHoldApprovalHandler(implicit injector: Injector) extends Injectable {
   }
 
   private def showLegalHoldRequestDialog(showError: Boolean = false): Unit = {
-    //TODO: check isSSO and display proper fingerprint
-    def showDialog(activity: FragmentActivity): Unit =
-      returning(LegalHoldRequestDialog.newInstance(isSso = false, "...", showError = showError)) { dialog =>
+    def showDialog(activity: FragmentActivity,
+                   isSso: Boolean,
+                   fingerprint: String): Unit = {
+      val fingerprintText = DevicesPreferencesUtil.getFormattedFingerprint(activity, fingerprint).toString
+
+      returning(LegalHoldRequestDialog.newInstance(isSso = isSso, fingerprintText, showError = showError)) { dialog =>
         dialog.onAccept(onLegalHoldAccepted)
         dialog.onDecline(_ => setFinished())
       }.show(activity.getSupportFragmentManager, LegalHoldRequestDialog.TAG)
+    }
 
     activityRef.get.foreach { activity =>
       if (!isShowingLegalHoldRequestDialog(activity)) {
-        legalHoldController.legalHoldRequest.head.foreach {
-          case Some(_) => showDialog(activity)
-          case None    =>
+
+        for {
+          request     <- legalHoldController.legalHoldRequest.head
+          isSso       <- accountsService.isActiveAccountSSO.head
+          fingerprint <- request match {
+                           case Some(r) => legalHoldController.getFingerprint(r)
+                           case None    => Future.successful(Option.empty)
+                         }
+        } yield (request, isSso, fingerprint) match {
+          case (_, sso, Some(fp)) => showDialog(activity, sso, fp)
+          case (Some(_), _, None) => showGeneralError()
+          case _ =>
         }
       }
     }
