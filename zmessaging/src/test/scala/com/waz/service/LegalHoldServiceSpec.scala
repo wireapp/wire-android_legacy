@@ -2,7 +2,7 @@ package com.waz.service
 
 import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.UserPreferences
+import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.{Sequential, Stage}
@@ -28,13 +28,27 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   private val userPrefs = new TestUserPreferences()
   private val apiClient = mock[LegalHoldClient]
   private val clientsService = mock[OtrClientsService]
+  private val clientsStorage = mock[OtrClientsStorage]
+  private val convsStorage = mock[ConversationStorage]
+  private val membersStorage = mock[MembersStorage]
   private val cryptoSessionService = mock[CryptoSessionService]
 
   var service: LegalHoldServiceImpl = _
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
-    service = new LegalHoldServiceImpl(selfUserId, Some(teamId), userPrefs, apiClient, clientsService, cryptoSessionService)
+    service = new LegalHoldServiceImpl(
+      selfUserId,
+      Some(teamId),
+      userPrefs,
+      apiClient,
+      clientsService,
+      clientsStorage,
+      convsStorage,
+      membersStorage,
+      cryptoSessionService
+    )
+
     userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
   }
 

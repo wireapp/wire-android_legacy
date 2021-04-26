@@ -3,9 +3,9 @@ package com.waz.service
 import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
-import com.waz.content.UserPreferences
+import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.otr.ClientId
-import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
+import com.waz.model.{ConvId, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -17,6 +17,9 @@ import scala.concurrent.Future
 
 trait LegalHoldService {
   def legalHoldRequestEventStage: Stage.Atomic
+  def isLegalHoldActive(userId: UserId): Signal[Boolean]
+  def isLegalHoldActive(conversationId: ConvId): Signal[Boolean]
+  def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]]
   def legalHoldRequest: Signal[Option[LegalHoldRequest]]
   def deleteLegalHoldRequest(): Future[Unit]
   def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit]
@@ -29,11 +32,14 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                            userPrefs: UserPreferences,
                            client: LegalHoldClient,
                            clientsService: OtrClientsService,
+                           clientsStorage: OtrClientsStorage,
+                           convsStorage: ConversationStorage,
+                           membersStorage: MembersStorage,
                            cryptoSessionService: CryptoSessionService) extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
 
-  override def legalHoldRequestEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldRequestEvent] { (_, events) =>
+  def legalHoldRequestEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldRequestEvent] { (_, events) =>
     Future.sequence {
       events
         .filter(_.targetUserId == selfUserId)
@@ -41,11 +47,23 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     }.map(_ => ())
   }
 
-  override def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
+  def isLegalHoldActive(userId: UserId): Signal[Boolean] =
+    clientsStorage.optSignal(userId).map(_.fold(false)(_.clients.values.exists(_.isLegalHoldDevice)))
+
+  def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] =
+    convsStorage.optSignal(conversationId).map(_.fold(false)(_.isUnderLegalHold))
+
+  def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] = for {
+    users             <- membersStorage.activeMembers(conversationId)
+    usersAndStatus    <- Signal.sequence(users.map(userId => Signal.zip(Signal.const(userId), isLegalHoldActive(userId))).toSeq: _*)
+    legalHoldSubjects = usersAndStatus.filter(_._2).map(_._1)
+  } yield legalHoldSubjects
+
+  def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
     userPrefs.preference(UserPreferences.LegalHoldRequest).signal
 
-  override def approveRequest(request: LegalHoldRequest,
-                              password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {
+  def approveRequest(request: LegalHoldRequest,
+                     password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {
     _      <- createLegalHoldClientAndSession(request)
     result <- postApproval(password)
     _      <- result match {

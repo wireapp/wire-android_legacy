@@ -1,7 +1,6 @@
 package com.waz.zclient.legalhold
 
 import com.waz.model.AccountData.Password
-import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage}
 import com.waz.model.{ConvId, LegalHoldRequest, UserId}
 import com.waz.service.LegalHoldService
 import com.waz.sync.handler.LegalHoldError
@@ -10,35 +9,23 @@ import com.wire.signals.{EventStream, Signal, SourceStream}
 
 import scala.concurrent.Future
 
-//TODO: implement status calculation
 class LegalHoldController(implicit injector: Injector)
   extends Injectable {
 
   import com.waz.threading.Threading.Implicits.Background
 
   private lazy val legalHoldService = inject[Signal[LegalHoldService]]
-  private lazy val convsStorage = inject[Signal[ConversationStorage]]
-  private lazy val clientsStorage = inject[Signal[OtrClientsStorage]]
-  private lazy val memberStorage = inject[Signal[MembersStorage]]
 
   val onLegalHoldSubjectClick: SourceStream[UserId] = EventStream[UserId]
 
   def isLegalHoldActive(userId: UserId): Signal[Boolean] =
-    clientsStorage.flatMap {
-      _.optSignal(userId).map(_.fold(false)(_.clients.values.exists(_.isLegalHoldDevice)))
-    }
+    legalHoldService.flatMap(_.isLegalHoldActive(userId))
 
   def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] =
-    convsStorage.flatMap {
-      _.optSignal(conversationId).map(_.fold(false)(_.isUnderLegalHold))
-    }
+    legalHoldService.flatMap(_.isLegalHoldActive(conversationId))
 
-  def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] = for {
-    members           <- memberStorage
-    users             <- members.activeMembers(conversationId)
-    usersAndStatus    <- Signal.sequence(users.map(userId => Signal.zip(Signal.const(userId), isLegalHoldActive(userId))).toSeq: _*)
-    legalHoldSubjects = usersAndStatus.filter(_._2).map(_._1)
-  } yield legalHoldSubjects
+  def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] =
+    legalHoldService.flatMap(_.legalHoldUsers(conversationId))
 
   def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
     legalHoldService.flatMap(_.legalHoldRequest)
