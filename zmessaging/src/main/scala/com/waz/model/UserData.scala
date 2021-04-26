@@ -225,12 +225,14 @@ object UserData {
     val CopyPermissions = long('copy_permissions)(_.permissions._2)
     val CreatedBy = opt(id[UserId]('created_by))(_.createdBy)
 
+    private val UsersTableName = "Users"
+
     private def getVerification(name: String): Verification =
       Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)
 
     override val idCol = Id
     override val table = Table(
-      "Users", Id, Domain, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, ConnTime, ConnMessage,
+      UsersTableName, Id, Domain, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, ConnTime, ConnMessage,
       Conversation, Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId,
       ExpiresAt, Managed, SelfPermissions, CopyPermissions, CreatedBy // Fields are now lazy-loaded from BE every time the user opens a profile
     )
