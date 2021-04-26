@@ -263,8 +263,8 @@ class MessagesSyncHandler(selfUserId: UserId,
       for {
         time <- otrSync.postOtrMessage(conv.id, message).flatMap { case Left(errorResponse) => Future.failed(errorResponse)
           case Right(time) => Future.successful(time)
-        }.toCancellable
-        _ <- msgContent.updateMessage(msg.id)(_.copy(genericMsgs = Seq(message), time = time, assetId = Some(id))).toCancellable
+        }.toUncancellable
+        _ <- msgContent.updateMessage(msg.id)(_.copy(genericMsgs = Seq(message), time = time, assetId = Some(id))).toUncancellable
       } yield time
     }
 
@@ -293,7 +293,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         }
         time <- postOriginal(rawAssetWithMetadata)
         uploadAssetOriginal <- uploadAssetOriginal.preview match {
-          case PreviewNotReady => assets.createAndSavePreview(rawAssetWithMetadata).toCancellable
+          case PreviewNotReady => assets.createAndSavePreview(rawAssetWithMetadata).toUncancellable
           case _ => CancellableFuture.successful(rawAssetWithMetadata)
         }
         previewAsset <- uploadAssetOriginal.preview match {
@@ -308,7 +308,7 @@ class MessagesSyncHandler(selfUserId: UserId,
               _ <- postAssetMessage(proto, uploadAssetOriginal.id)
             } yield Some(previewAsset)
           case PreviewUploaded(assetId) =>
-            assetStorage.get(assetId).map(Some.apply).toCancellable
+            assetStorage.get(assetId).map(Some.apply).toUncancellable
           case PreviewEmpty =>
             CancellableFuture.successful(None)
           case PreviewNotReady =>
@@ -317,7 +317,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         _ <- (previewAsset match {
           case Some(p) => uploadAssetStorage.update(uploadAssetOriginal.id, _.copy(preview = PreviewUploaded(p.id)))
           case None => Future.successful(())
-        }).toCancellable
+        }).toUncancellable
         asset <- assets.uploadAsset(uploadAssetOriginal.id)
         proto = GenericMessage(
           msg.id.uid,
@@ -330,8 +330,8 @@ class MessagesSyncHandler(selfUserId: UserId,
 
     //want to wait until asset meta and preview data is loaded before we send any messages
     for {
-      _ <- AssetProcessing.get(ProcessingTaskKey(msg.assetId.get)).toCancellable
-      rawAsset <- uploadAssetStorage.find(msg.assetId.collect { case id: UploadAssetId => id }.get).toCancellable
+      _ <- AssetProcessing.get(ProcessingTaskKey(msg.assetId.get)).toUncancellable
+      rawAsset <- uploadAssetStorage.find(msg.assetId.collect { case id: UploadAssetId => id }.get).toUncancellable
       result <- rawAsset match {
         case None =>
           CancellableFuture.successful(Left(internalError(s"no asset found for msg: $msg")))

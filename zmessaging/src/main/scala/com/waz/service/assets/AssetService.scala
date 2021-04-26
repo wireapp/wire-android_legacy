@@ -166,7 +166,7 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
           contentCache
             .remove(asset.id)
             .map(_ => AssetInput(NotFoundRemote(s"Asset '$asset'")))
-            .toCancellable
+            .toUncancellable
         case Left(err) =>
           CancellableFuture.successful(AssetInput(NetworkError(err)))
         case Right(fileWithSha) if fileWithSha.sha256 != asset.sha =>
@@ -178,7 +178,7 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
           contentCache.put(asset.id, fileWithSha.file, removeOriginal = true)
             .flatMap(_ => contentCache.getStream(asset.id).map(asset.encryption.decrypt(_)))
             .map(AssetInput(_))
-            .toCancellable
+            .toUncancellable
       }
       .recoverWith { case err =>
         verbose(l"Can not load asset content from backend. ${showString(err.getMessage)}")
@@ -192,7 +192,7 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
         verbose(l"Can not load asset content from cache. $err")
         Future.failed(err)
       }
-      .toCancellable
+      .toUncancellable
 
   private def loadFromFileSystem(localSource: LocalSource): Option[AssetInput] =
     uriHelper.extractMime(localSource.uri).map {
@@ -219,16 +219,16 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
         case (_, Some(ls))  => Future.successful(uriHelper.assetInput(ls.uri))
         case _              => uploadContentCache.get(uploadAssetId).map(AssetInput(_))
       }
-    }.toCancellable
+    }.toUncancellable
 
   override def loadContentById(assetId: AssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
-    assetsStorage.get(assetId).flatMap(asset => loadContentFromAsset(asset, callback)).toCancellable
+    assetsStorage.get(assetId).flatMap(asset => loadContentFromAsset(asset, callback)).toUncancellable
 
   override def loadContent(asset: Asset, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
     assetsStorage.find(asset.id).flatMap {
       case None              => assetsStorage.save(asset).flatMap(_ => loadFromBackend(asset, callback))
       case Some(fromStorage) => loadContentFromAsset(fromStorage, callback)
-    }.toCancellable
+    }.toUncancellable
 
   private def loadContentFromAsset(asset: Asset, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
     asset.localSource match {
@@ -236,10 +236,10 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
       case Some(source) => loadFromFileSystem(source) match {
         case None =>
           verbose(l"Can not load content from file system for asset $asset.")
-          assetsStorage.save(asset.copy(localSource = None)).flatMap(_ => loadFromBackend(asset, callback)).toCancellable
+          assetsStorage.save(asset.copy(localSource = None)).flatMap(_ => loadFromBackend(asset, callback)).toUncancellable
         case Some(AssetFailure(throwable))  =>
           verbose(l"Can not load content from file system for asset $asset. ${showString(throwable.getMessage)}")
-          assetsStorage.save(asset.copy(localSource = None)).flatMap(_ => loadFromBackend(asset, callback)).toCancellable
+          assetsStorage.save(asset.copy(localSource = None)).flatMap(_ => loadFromBackend(asset, callback)).toUncancellable
         case Some(other) =>
           CancellableFuture.successful(other)
       }
@@ -307,14 +307,16 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
         _             <- uploadContentCache.remove(assetId)
       } yield ()
 
-    for {
-      _                      <- CancellableFuture.lift(Future.successful(()), actionsOnCancellation())
-      uploadAsset            <- loadUploadAsset.toCancellable
-      Some((_, uploadAsset)) <- uploadAssetStorage.update(uploadAsset.id, _.copy(uploaded = 0, status = UploadAssetStatus.InProgress)).toCancellable
+    val cancellable = for {
+      _                      <- CancellableFuture.lift(Future.successful(()))
+      uploadAsset            <- loadUploadAsset.toUncancellable
+      Some((_, uploadAsset)) <- uploadAssetStorage.update(uploadAsset.id, _.copy(uploaded = 0, status = UploadAssetStatus.InProgress)).toUncancellable
       uploadResult           <- doUpload(uploadAsset)
-      asset                  <- handleUploadResult(uploadResult, uploadAsset).toCancellable
-      _                      <- encryptAssetContentAndMoveToCache(asset).toCancellable
+      asset                  <- handleUploadResult(uploadResult, uploadAsset).toUncancellable
+      _                      <- encryptAssetContentAndMoveToCache(asset).toUncancellable
     } yield asset
+
+    cancellable.onCancel(actionsOnCancellation())
   }
 
   override def createAndSavePreview(uploadAsset: UploadAsset): Future[UploadAsset] = {

@@ -76,7 +76,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
           case NonFatal(cause) =>
             error(l"PCM overview generation failed", cause)
             None
-        })(_.onCancelled(cancelRequested.set(true)))
+        })(_.onCancel(cancelRequested.set(true)))
     }
 
   private def createOtherAudioOverview(content: URI, numBars: Int): CancellableFuture[Option[AssetMetaData.Loudness]] = {
@@ -104,7 +104,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
       case NonFatal(cause) =>
         error(l"overview generation failed", cause)
         None
-    })(_.onCancelled(cancelRequested.set(true)))
+    })(_.onCancel(cancelRequested.set(true)))
   }
 
   private def extractAudioTrackInfo(extractor: MediaExtractor, content: URI): TrackInfo = {

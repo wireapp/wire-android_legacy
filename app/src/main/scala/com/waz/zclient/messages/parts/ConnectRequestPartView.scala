@@ -50,9 +50,7 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
   private val users   = inject[UsersController]
   private val integrations = inject[Signal[IntegrationsService]]
 
-  val members = message.map(m => m.members + m.userId)
-
-  val user = for {
+  private val user = for {
     self <- inject[Signal[UserId]]
     members <-  message.map(m => Set(m.userId) ++ Set(m.recipient).flatten)
     Some(user) <- members.find(_ != self).fold {
@@ -63,7 +61,7 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
   } yield user
 
 
-  val integration = for {
+  private val integration = for {
     usr <- user
     intService <- integrations
     integration <- Signal.from((usr.integrationId, usr.providerId) match {
@@ -80,7 +78,7 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
     case (_, usr)     => chathead.loadUser(usr)
   }
 
-  user.map(_.id)(userDetails.setUserId)
+  user.map(_.id).foreach(userDetails.setUserId)
 
   user.map(u => (u.isAutoConnect, u.isWireBot)).on(Threading.Ui) {
     case (true, _) =>

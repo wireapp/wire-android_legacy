@@ -119,15 +119,15 @@ class FooterPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   private val likeDetails: LikeDetailsView = findById(R.id.like_details)
 
   setClipChildren(true)
-  height { h =>
+  height.onUi { h =>
     ViewCompat.setClipBounds(this, new Rect(0, 0, getWidth, h))
   }
 
-  contentTranslate { likeButton.setTranslationY }
-  likesTranslate { likeDetails.setTranslationY }
-  statusTranslate { timeStampAndStatus.setTranslationY }
-  likesVisible { likeDetails.setVisible }
-  statusVisible { timeStampAndStatus.setVisible }
+  contentTranslate.onUi { likeButton.setTranslationY }
+  likesTranslate.onUi { likeDetails.setTranslationY }
+  statusTranslate.onUi { timeStampAndStatus.setTranslationY }
+  likesVisible.onUi { likeDetails.setVisible }
+  statusVisible.onUi { timeStampAndStatus.setVisible }
 
   likeButton.init(controller)
   likeDetails.init(controller)
@@ -252,7 +252,7 @@ object FooterPartView {
     val size = Signal(1f)
     val lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, expandedHeight)
 
-    size .map { s => (expandedHeight * s).toInt } { h =>
+    size .map { s => (expandedHeight * s).toInt }.onUi { h =>
       lp.height = h
       footer.setLayoutParams(lp)
     }

@@ -49,7 +49,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
   //helps us fire the "app.open" event at the right time.
   private val initialized = Signal(false)
 
-  initialized.onChanged { _ =>
+  initialized.onChanged.foreach { _ =>
     accountsService.activeAccount.foreach(_.foreach(user => tracking.appOpen(user.id)))
   }
 

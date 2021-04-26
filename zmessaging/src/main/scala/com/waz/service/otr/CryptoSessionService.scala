@@ -111,7 +111,7 @@ class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
 
   def remoteFingerprint(sid: SessionId): Signal[Option[Array[Byte]]] = {
     def fingerprint = withSession(sid)(_.getRemoteFingerprint)
-    val stream = onCreate.filter(_ == sid).mapAsync(_ => fingerprint)
+    val stream = onCreate.filter(_ == sid).mapSync(_ => fingerprint)
 
     new AggregatingSignal[Option[Array[Byte]], Option[Array[Byte]]](
       () => fingerprint,

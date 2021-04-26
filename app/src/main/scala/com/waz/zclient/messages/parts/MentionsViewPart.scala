@@ -33,7 +33,7 @@ import com.waz.zclient.utils.ContextUtils._
 
 trait MentionsViewPart extends MessageViewPart with ViewHelper {
 
-  private val participantsController = inject[ParticipantsController]
+  private lazy val participantsController = inject[ParticipantsController]
 
   def addMentionSpans(spannable: Spannable, mentions: Seq[Mention], selfId: Option[UserId], color: Int): Unit = {
       spannable.getSpans(0, spannable.length(), classOf[OtherMentionSpan]).foreach(spannable.removeSpan)

@@ -26,7 +26,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 object errors {
 
   implicit class FutureOps[T](val value: Future[T]) extends AnyVal {
-    def toCancellable: CancellableFuture[T] = CancellableFuture.lift(value)
+    def toUncancellable: CancellableFuture[T] = CancellableFuture.lift(value)
     def modelToEither(implicit ec: ExecutionContext): Future[Either[ZError, T]] =
       value.map(Right(_): Either[ZError, T]).recover { case err => Left(UnexpectedError(err)) }
     def eitherToModel[A](implicit ev: T =:= Either[ZError, A], ec: ExecutionContext): Future[A] =

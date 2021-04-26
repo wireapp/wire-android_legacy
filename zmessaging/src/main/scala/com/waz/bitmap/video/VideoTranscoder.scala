@@ -32,7 +32,7 @@ import com.waz.bitmap.video.VideoTranscoder.{CodecResponse, MediaCodecIterator}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model.{AssetMetaData, Dim2}
-import com.wire.signals.CancellableFuture
+import com.wire.signals.{CancellableFuture, DispatchQueue}
 import com.waz.utils.Deprecated.{codecInfoAtIndex, numberOfCodecs}
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{Cleanup, Managed, returning}
@@ -94,10 +94,9 @@ object VideoTranscoder {
 
 abstract class BaseTranscoder(context: Context) extends VideoTranscoder with DerivedLogTag {
   import VideoTranscoder._
-  private implicit val ec = com.waz.threading.Threading.IO
+  private implicit val ec: DispatchQueue = com.waz.threading.Threading.IO
 
   def apply(input: URI, out: File, callback: ProgressData => Unit): CancellableFuture[File] = CancellableFuture {
-
     for {
       extractor   <- Managed(returning(new MediaExtractor()) { _.setDataSource(context, URI.unwrap(input), null)})
       videoTrack  = videoTrackIndex(extractor)
@@ -121,7 +120,7 @@ abstract class BaseTranscoder(context: Context) extends VideoTranscoder with Der
       progress.completed()
       out
     })
-    new CancellableFuture(p)
+    CancellableFuture.from(p)
   }
 
   def audioStream(input: URI, audioTrack: Int): Managed[MediaCodecIterator] = {

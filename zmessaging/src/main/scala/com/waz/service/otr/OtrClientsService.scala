@@ -37,7 +37,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 trait OtrClientsService {
-
   val lastSelfClientsSyncPref: Preferences.Preference[Long]
   val otrClientsProcessingStage: Stage.Atomic
 
@@ -54,7 +53,6 @@ trait OtrClientsService {
   def updateUnknownToUnverified(userId: UserId): Future[Unit]
 }
 
-
 class OtrClientsServiceImpl(selfId:    UserId,
                             clientId:  ClientId,
                             netClient: OtrClient,
@@ -67,7 +65,7 @@ class OtrClientsServiceImpl(selfId:    UserId,
 
   override lazy val lastSelfClientsSyncPref: Preferences.Preference[Long] = userPrefs.preference(LastSelfClientsSyncRequestedTime)
 
-  accounts.accountState(selfId) {
+  accounts.accountState(selfId).foreach {
     case _: Active => requestSyncIfNeeded()
     case _ =>
   }

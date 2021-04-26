@@ -330,7 +330,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
     )
   }
 
-  private lazy val blockStreamsWhenProcessing = push.processing(messagesStorage.blockStreams)
+  private lazy val blockStreamsWhenProcessing = push.processing.foreach(messagesStorage.blockStreams)
 
   // force loading of services which should run on start
   {

@@ -22,8 +22,8 @@ class LegalHoldInfoFragment extends BaseFragment[LegalHoldSubjectsContainer]()
   private lazy val legalHoldController = inject[LegalHoldController]
 
   private lazy val adapter = returning(new LegalHoldUsersAdapter(users, Some(MAX_PARTICIPANTS))) { adapter =>
-    adapter.onClick(legalHoldController.onLegalHoldSubjectClick ! _)
-    adapter.onShowAllParticipantsClick(_ => legalHoldController.onAllLegalHoldSubjectsClick ! (()))
+    adapter.onClick.pipeTo(legalHoldController.onLegalHoldSubjectClick)
+    adapter.onShowAllParticipantsClick.pipeTo(legalHoldController.onAllLegalHoldSubjectsClick)
   }
 
   private lazy val users = getContainer.legalHoldUsers.map(_.toSet)

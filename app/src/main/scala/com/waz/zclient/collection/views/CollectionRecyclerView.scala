@@ -60,7 +60,7 @@ class CollectionRecyclerView(context: Context, attrs: AttributeSet, style: Int)
 
     addItemDecoration(collectionItemDecorator)
 
-    scrollController.onScroll { case Scroll(pos, smooth) =>
+    scrollController.onScroll.foreach { case Scroll(pos, smooth) =>
       verbose(l"Scrolling to pos: $pos, smooth: $smooth")
       val scrollTo = math.min(adapter.getItemCount - 1, pos)
       if (smooth) {

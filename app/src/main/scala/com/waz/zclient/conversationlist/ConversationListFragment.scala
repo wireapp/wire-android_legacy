@@ -132,12 +132,12 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
     subs += userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
-    subs += adapter.onConversationClick { conv =>
+    subs += adapter.onConversationClick.foreach { conv =>
       verbose(l"handleItemClick, switching conv to $conv")
       conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
     }
 
-    subs += adapter.onConversationLongClick { conv =>
+    subs += adapter.onConversationLongClick.foreach { conv =>
       if (Set(Group, OneToOne, WaitForConnection).contains(conv.convType))
         screenController.showConversationMenu(true, conv.id)
     }
@@ -164,7 +164,7 @@ class ArchiveListFragment extends ConversationListFragment with OnBackPressedLis
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
-    topToolbar.foreach(toolbar => subs += toolbar.onRightButtonClick(_ => Option(getContainer).foreach(_.closeArchive())))
+    topToolbar.foreach(toolbar => subs += toolbar.onRightButtonClick.foreach(_ => Option(getContainer).foreach(_.closeArchive())))
   }
 
   override def onBackPressed() = {
@@ -243,7 +243,7 @@ class NormalConversationFragment extends ConversationListFragment {
     }.onUi(visibility => vh.foreach(_.setVisibility(visibility)))
   }
 
-  override def onViewCreated(v: View, savedInstanceState: Bundle) = {
+  override def onViewCreated(v: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
 
     subs += loading.onUi {
@@ -254,7 +254,7 @@ class NormalConversationFragment extends ConversationListFragment {
     }
 
     topToolbar.foreach { toolbar =>
-      subs += toolbar.onRightButtonClick { _ =>
+      subs += toolbar.onRightButtonClick.foreach { _ =>
         getActivity.startActivityForResult(PreferencesActivity.getDefaultIntent(getContext), PreferencesActivity.SwitchAccountCode)
       }
     }

@@ -32,12 +32,13 @@ import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 class AboutView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
     with ViewHelper
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -55,17 +56,17 @@ class AboutView(context: Context, attrs: AttributeSet, style: Int)
   val versionTextButton = findById[TextButton](R.id.preferences_about_version)
   val copyrightButton = findById[TextButton](R.id.preferences_about_copyright)
 
-  websiteButton.onClickEvent { _ => browser.openAboutWebsite() }
-  termsButton.onClickEvent { _ =>
+  websiteButton.onClickEvent.onUi { _ => browser.openAboutWebsite() }
+  termsButton.onClickEvent.onUi { _ =>
     if (inject[Signal[Option[ZMessaging]]].map(_.flatMap(_.teamId)).currentValue.flatten.isDefined)
       browser.openTeamsTermsOfService()
     else
       browser.openPersonalTermsOfService()
   }
-  privacyPolicyButton.onClickEvent { _ => browser.openPrivacyPolicy() }
-  licenseButton.onClickEvent {_ => browser.openThirdPartyLicenses() }
+  privacyPolicyButton.onClickEvent.onUi { _ => browser.openPrivacyPolicy() }
+  licenseButton.onClickEvent.onUi {_ => browser.openThirdPartyLicenses() }
 
-  versionTextButton.onClickEvent{ _ =>
+  versionTextButton.onClickEvent.onUi { _ =>
     versionClickCounter += 1
     if (versionClickCounter >= A_BUNCH_OF_CLICKS_TO_PREVENT_ACCIDENTAL_TRIGGERING) {
       versionClickCounter = 0

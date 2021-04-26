@@ -31,10 +31,10 @@ class KeyboardController(implicit inj: Injector, cxt: WireContext, ec: EventCont
   extends ViewTreeObserver.OnGlobalLayoutListener with Injectable with DerivedLogTag {
 
   val isKeyboardVisible = Signal(false)
-  isKeyboardVisible(v => verbose(l"Keyboard visible: $v"))
+  isKeyboardVisible.foreach(v => verbose(l"Keyboard visible: $v"))
 
   val keyboardHeight = Signal(0)
-  keyboardHeight(h => verbose(l"Keyboard height: $h"))
+  keyboardHeight.foreach(h => verbose(l"Keyboard height: $h"))
 
   private val rootLayout = cxt match {
     case c: Activity => Some(c.getWindow.getDecorView.findViewById(android.R.id.content).asInstanceOf[View])

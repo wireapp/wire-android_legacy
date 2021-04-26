@@ -90,7 +90,7 @@ class CallingFragment extends FragmentHelper {
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_calling, container, false)) { v =>
-      controller.theme(t => v.asInstanceOf[ThemeControllingFrameLayout].theme ! Some(t))
+      controller.theme.foreach(t => v.asInstanceOf[ThemeControllingFrameLayout].theme ! Some(t))
     }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
@@ -117,7 +117,7 @@ class CallingFragment extends FragmentHelper {
       case _                          => noActiveSpeakersLayout.foreach(_.setVisibility(View.GONE))
     }
 
-    controller.isGroupCall.onChanged {
+    controller.isGroupCall.onChanged.foreach {
       case true =>
         Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG).show()
       case _ =>

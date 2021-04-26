@@ -27,13 +27,13 @@ import com.bumptech.glide.request.target.ImageViewTarget
 import com.waz.api.MessageContent.Location
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.{ClickableViewPart, HighlightViewPart, MsgPart}
 import com.waz.zclient.{R, ViewHelper}
-
 
 class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
@@ -70,20 +70,19 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
 
   private def setupTextView(): Unit = {
     registerEphemeral(textView)
-    name { textView.setText }
+    name.onUi { textView.setText }
   }
 
   private def setupPinView(): Unit = {
-    accentController.accentColor.map(_.color) (pinView.setTextColor)
+    accentController.accentColor.map(_.color).onUi(pinView.setTextColor)
     pinView.setVisibility(View.VISIBLE)
   }
 
-  private def setupImageView(): Unit = {
-    location {
+  private def setupImageView(): Unit =
+    location.onUi {
       case Some(loc) => loadMapPreview(loc)
       case None => warn(l"No location data.")
     }
-  }
 
   private def loadMapPreview(location: Location): Unit = {
     val options = new RequestOptions()
@@ -103,8 +102,8 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   private def setupOnClickHandler(): Unit = {
-    onClicked { _ =>
-      expired.head foreach {
+    onClicked.onUi { _ =>
+      expired.head.foreach {
         case true => // ignore click on expired msg
         case false => message.currentValue.flatMap(_.location) foreach { browser.openLocation }
       }

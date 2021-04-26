@@ -76,7 +76,7 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
       zms.messagesStorage.onUpdated.map(_.exists { case (prev, updated) =>
         updated.convId == convId &&  !MessagesPagedListAdapter.areMessageContentsTheSame(prev, updated)
       }),
-      zms.reactionsStorage.onChanged.map(_.map(_.message)).mapAsync { msgs: Seq[MessageId] =>
+      zms.reactionsStorage.onChanged.map(_.map(_.message)).mapSync { msgs: Seq[MessageId] =>
         zms.messagesStorage.getMessages(msgs: _*).map(_.flatten.exists(_.convId == convId))
       }
     ).filter(identity)

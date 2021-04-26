@@ -42,7 +42,7 @@ class CallLoggingService(selfUserId:  UserId,
     * changes (note, we only ever add or change CallInfos, we never remove them from the Map of available calls), we then
     * subscribe to the state changes of each one, passing in the current value for each call to decide how we might react.
     */
-  calling.calls.onPartialUpdate(_.keySet) { calls =>
+  calling.calls.onPartialUpdate(_.keySet).foreach { calls =>
     val ids = calls.keySet
     verbose(l"Listening to calls: $ids")
 
@@ -53,12 +53,12 @@ class CallLoggingService(selfUserId:  UserId,
     toCreate.foreach { id =>
       val callSignal = calling.calls.map(_.get(id))
 
-      callSignal.onPartialUpdate(_.map(_.state)) {
+      callSignal.onPartialUpdate(_.map(_.state)).foreach {
         case Some(call) if call.state == Ended => onCallFinished(call)
         case _ =>
       }
 
-      callSignal.onPartialUpdate(_.map(c => (c.state, c.endReason))) {
+      callSignal.onPartialUpdate(_.map(c => (c.state, c.endReason))).foreach {
         //We don't want to track the Terminating state, or the Ended state if we don't yet have the end reason
         case Some(call) if call.state != Terminating && (call.state != Ended || call.endReason.isDefined) =>
           tracking.trackCallState(selfUserId, call)

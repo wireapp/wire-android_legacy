@@ -40,6 +40,7 @@ import com.waz.zclient._
 import com.waz.zclient.preferences.dialogs.BackupPasswordDialog.SetPasswordMode
 
 import scala.concurrent.Future
+import com.waz.threading.Threading._
 
 class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
@@ -61,7 +62,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
 
   def requestPassword(): Future[Unit] = {
     val fragment = returning(BackupPasswordDialog.newInstance(SetPasswordMode)) {
-      _.onPasswordEntered(backupData)
+      _.onPasswordEntered.onUi(backupData)
     }
 
     context.asInstanceOf[BaseActivity]

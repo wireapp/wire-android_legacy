@@ -123,7 +123,7 @@ class UserServiceImpl(selfUserId:        UserId,
     membersIds   <- membersStorage.activeMembers(convId)
   } yield membersIds
 
-  currentConvMembers(syncIfNeeded(_))
+  currentConvMembers.foreach(syncIfNeeded(_))
 
   override lazy val userNames: Signal[Map[UserId, Name]] = {
     val added = usersStorage.onAdded.map(_.map(user => user.id -> user.name).toMap)
@@ -142,7 +142,7 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   //Update user data for other accounts
-  accounts.accountsWithManagers.map(_ - selfUserId)(userIds => syncIfNeeded(userIds))
+  accounts.accountsWithManagers.map(_ - selfUserId).foreach(syncIfNeeded(_))
 
   override val selfUser: Signal[UserData] = usersStorage.optSignal(selfUserId) flatMap {
     case Some(data) => Signal.const(data)
@@ -385,7 +385,7 @@ class ExpiredUsersService(push:         PushService,
   private var timers = Map[UserId, CancellableFuture[Unit]]()
 
   //if a given user is removed from all conversations, drop the timer
-  members.onDeleted(_.foreach { m =>
+  members.onDeleted.foreach(_.foreach { m =>
     members.getByUsers(Set(m._1)).map(_.isEmpty).map {
       case true =>
         timers.get(m._1).foreach(_.cancel())
@@ -394,10 +394,11 @@ class ExpiredUsersService(push:         PushService,
     }
   })
 
-  (for {
+  for {
     membersIds <- users.currentConvMembers
     members    <- Signal.sequence(membersIds.map(usersStorage.signal).toSeq: _*)
-  } yield members.filter(_.expiresAt.isDefined).toSet){ wireless =>
+    wireless   =  members.filter(_.expiresAt.isDefined).toSet
+  } yield
     push.beDrift.head.map { drift =>
       val woTimer = wireless.filter(u => (wireless.map(_.id) -- timers.keySet).contains(u.id))
       woTimer.foreach { u =>
@@ -408,5 +409,4 @@ class ExpiredUsersService(push:         PushService,
         }
       }
     }
-  }
 }

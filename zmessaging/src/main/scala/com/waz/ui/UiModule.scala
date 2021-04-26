@@ -20,9 +20,8 @@ package com.waz.ui
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service._
 import com.waz.threading.Threading
-import com.wire.signals._
 
-import scala.concurrent.Future
+import com.wire.signals._
 
 trait UiEventContext {
   implicit lazy val eventContext: EventContext = EventContext()
@@ -30,8 +29,7 @@ trait UiEventContext {
   private[ui] var createCount = 0
   private[ui] var startCount = 0
 
-  val onStarted = new SourceSignal[Boolean]() with ForcedEventSource[Boolean]
-  val onReset = new SourceStream[Boolean] with ForcedEventSource[Boolean]
+  val onStarted = new SourceSignal[Boolean]()
 
   def onStart(): Unit = {
     Threading.assertUiThread()
@@ -65,9 +63,5 @@ class UiModule(val global: GlobalModule) extends UiEventContext with DerivedLogT
   private lazy val accounts: AccountsService = global.accountsService
 
   val currentZms: Signal[Option[ZMessaging]] = accounts.activeZms
-
-  currentZms.onChanged { _ => onReset ! true }
-
-  def getCurrent: Future[Option[ZMessaging]] = accounts.activeZms.head
 }
 

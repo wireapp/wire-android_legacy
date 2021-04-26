@@ -26,6 +26,7 @@ import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.BackStackKey
+import com.waz.threading.Threading._
 
 class SupportView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -36,8 +37,8 @@ class SupportView(context: Context, attrs: AttributeSet, style: Int) extends Lin
   val websiteButton = findById[TextButton](R.id.settings_support_website)
   val contactButton = findById[TextButton](R.id.settings_support_contact)
 
-  websiteButton.onClickEvent{ _ => inject[BrowserController].openSupportPage() }
-  contactButton.onClickEvent{ _ => inject[BrowserController].openContactSupport() }
+  websiteButton.onClickEvent.onUi { _ => inject[BrowserController].openSupportPage() }
+  contactButton.onClickEvent.onUi { _ => inject[BrowserController].openContactSupport() }
 }
 
 case class SupportBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {

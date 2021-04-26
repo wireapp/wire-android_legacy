@@ -21,7 +21,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
 import com.waz.model.Name
-import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, UsersController}
 import com.waz.zclient.utils.ContextUtils._
@@ -52,9 +52,9 @@ class RenamePartView(context: Context, attrs: AttributeSet, style: Int) extends 
     case Other(name)  => getString(R.string.content__system__other_renamed_conv, name)
   }.map(_.toUpperCase)
 
-  text.on(Threading.Ui) { messageView.setText }
+  text.onUi { messageView.setText }
 
-  message.map(_.name) { name =>
+  message.map(_.name).onUi { name =>
     nameView.setVisible(name.isDefined)
     nameView.setText(name.getOrElse(Name.Empty))
   }

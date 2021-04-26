@@ -46,8 +46,8 @@ class LegalHoldApprovalHandler(implicit injector: Injector) extends Injectable {
       val fingerprintText = DevicesPreferencesUtil.getFormattedFingerprint(activity, fingerprint).toString
 
       returning(LegalHoldRequestDialog.newInstance(isSso = isSso, fingerprintText, showError = showError)) { dialog =>
-        dialog.onAccept(onLegalHoldAccepted)
-        dialog.onDecline(_ => setFinished())
+        dialog.onAccept.foreach(onLegalHoldAccepted)
+        dialog.onDecline.foreach(_ => setFinished())
       }.show(activity.getSupportFragmentManager, LegalHoldRequestDialog.TAG)
     }
 

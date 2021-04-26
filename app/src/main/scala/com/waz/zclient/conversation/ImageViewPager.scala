@@ -52,7 +52,7 @@ class ImageViewPager(context: Context, attrs: AttributeSet) extends ViewPager(co
 
   private var imageAdapter: Option[PagerAdapter] = None
 
-  messageData { msg => imageAdapter match {
+  messageData.foreach { msg => imageAdapter match {
     case None => setImageAdapter(msg)
     case Some(adapter) => adapter match { // Maciek: needed for an AN-5315 corner case where focusedItem gives two different messages and the second one is correct
       case _: ImageSwipeAdapter if msg.isEphemeral => setImageAdapter(msg)

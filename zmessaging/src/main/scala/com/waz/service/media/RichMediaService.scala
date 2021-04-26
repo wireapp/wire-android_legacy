@@ -27,7 +27,6 @@ import com.waz.model.messages.media.MediaAssetData
 import com.waz.service.messages.MessagesContentUpdater
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.wire.signals.EventContext
 import com.waz.utils.wrappers.URI
 import com.waz.sync.client.ErrorOr
 
@@ -51,9 +50,9 @@ class RichMediaService(msgsStorage: MessagesStorage,
     prev.content.size != updated.content.size || prev.content.zip(updated.content).exists { case (c1, c2) => c1.content != c2.content && isSyncable(c2) }
   }
 
-  msgsStorage.onAdded(msgs => scheduleSyncFor(msgs.filter(isSyncableMsg)))
+  msgsStorage.onAdded.foreach(msgs => scheduleSyncFor(msgs.filter(isSyncableMsg)))
 
-  msgsStorage.onUpdated { _ foreach {
+  msgsStorage.onUpdated.foreach { _ foreach {
     case (prev, updated) =>
       if (isSyncableMsg(updated) && syncableContentChanged(prev, updated)) {
         verbose(l"Updated rich media message: $updated, scheduling sync")
