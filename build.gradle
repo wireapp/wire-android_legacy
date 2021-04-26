@@ -67,7 +67,7 @@ ext {
     zoomingGroupCall = true
     appLockFeatureFlag = true
     sessionReset = true
-    legalHold = false
+    legalHold = true
 }
 
 apply from: "./scripts/avs.gradle"

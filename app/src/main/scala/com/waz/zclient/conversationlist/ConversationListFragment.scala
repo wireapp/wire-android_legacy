@@ -216,9 +216,9 @@ class NormalConversationFragment extends ConversationListFragment {
       case (count, clients, rrChanged) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0 || rrChanged))
     }
     vh.foreach({ toolbar =>
-      subs += toolbar.legalHoldIndicatorClick.onUi { isPendingApproval =>
-        if (isPendingApproval) showLegalHoldApprovalAction()
-        else showLegalHoldInfo()
+      subs += toolbar.legalHoldIndicatorClick.onUi {
+        case true  => showLegalHoldApprovalAction()
+        case false => showLegalHoldInfo()
       }
     })
   }
@@ -315,9 +315,8 @@ class NormalConversationFragment extends ConversationListFragment {
     }
   }
 
-  private def showLegalHoldApprovalAction(): Unit = {
+  private def showLegalHoldApprovalAction(): Unit =
     inject[LegalHoldApprovalHandler].showDialog(getActivity)
-  }
 
   private def showLegalHoldInfo(): Unit = {
     startActivity(SelfUserLegalHoldInfoActivity.newIntent(getActivity))

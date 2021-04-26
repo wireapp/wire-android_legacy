@@ -26,7 +26,7 @@ import androidx.core.content.ContextCompat
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Availability, UserData}
 import com.waz.service.teams.TeamsService
-import com.waz.threading.Threading
+import com.waz.threading.Threading.Implicits.Ui
 import com.wire.signals.{EventStream, Signal, SourceStream}
 import com.waz.utils.{NameParts, returning}
 import com.waz.zclient.common.drawables.TeamIconDrawable
@@ -43,8 +43,6 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
 import com.waz.zclient.legalhold.LegalHoldController
-
-import scala.concurrent.ExecutionContext
 
 abstract class ConversationListTopToolbar(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends FrameLayout(context, attrs, defStyleAttr)
@@ -111,8 +109,6 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
 
   private val legalHoldIndicatorButton = returning(findById[ImageButton](R.id.conversation_list_toolbar_image_button_legal_hold)) { button =>
     button.onClick {
-      implicit val executionContext: ExecutionContext = Threading.Ui
-
       legalHoldController.hasPendingRequest.head.foreach { isPending =>
         legalHoldIndicatorClick ! isPending
       }

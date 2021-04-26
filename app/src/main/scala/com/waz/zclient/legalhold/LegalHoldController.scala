@@ -1,5 +1,7 @@
 package com.waz.zclient.legalhold
 
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.zclient.log.LogUI._
 import com.waz.model.AccountData.Password
 import com.waz.model.{ConvId, LegalHoldRequest, UserId}
 import com.waz.service.LegalHoldService
@@ -11,7 +13,7 @@ import scala.concurrent.Future
 
 //TODO: implement status calculation
 class LegalHoldController(implicit injector: Injector)
-  extends Injectable {
+  extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -28,10 +30,14 @@ class LegalHoldController(implicit injector: Injector)
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] =
     Signal.const(Seq.empty)
 
-  def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
-    legalHoldService.flatMap(_.legalHoldRequest)
+  val legalHoldRequest: Signal[Option[LegalHoldRequest]] =
+    for {
+      service <- legalHoldService
+      request <- service.legalHoldRequest
+      _        = verbose(l"legalHoldRequest changed: $r")
+    } yield request
 
-  def hasPendingRequest: Signal[Boolean] = legalHoldRequest.map(_.isDefined)
+  val hasPendingRequest: Signal[Boolean] = legalHoldRequest.map(_.isDefined)
 
   def getFingerprint(request: LegalHoldRequest): Future[Option[String]] =
     legalHoldService.head.map(_.getFingerprint(request))
