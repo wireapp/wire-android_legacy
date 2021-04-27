@@ -21,12 +21,22 @@ class LegalHoldApprovalHandler(implicit injector: Injector) extends Injectable {
 
   private lazy val actionTaken = Promise[Unit]
 
-  private var activityRef : WeakReference[FragmentActivity] = _
+  private var activityRef: WeakReference[FragmentActivity] = _
+
+  legalHoldController.legalHoldRequest.onChanged {
+    case None    => dismissDialog()
+    case Some(_) =>
+  }
 
   def showDialog(activity: FragmentActivity): Future[Unit] = {
     activityRef = new WeakReference(activity)
     showLegalHoldRequestDialog()
     actionTaken.future
+  }
+
+  private def dismissDialog(): Unit = activityRef.get.foreach { activity =>
+    legalHoldRequestDialog(activity).foreach(_.dismiss())
+    setFinished()
   }
 
   private def showLegalHoldRequestDialog(showError: Boolean = false): Unit = {
@@ -60,8 +70,12 @@ class LegalHoldApprovalHandler(implicit injector: Injector) extends Injectable {
     }
   }
 
+  private def legalHoldRequestDialog(activity: FragmentActivity) =
+    Option(activity.getSupportFragmentManager.findFragmentByTag(LegalHoldRequestDialog.TAG))
+      .map(_.asInstanceOf[LegalHoldRequestDialog])
+
   private def isShowingLegalHoldRequestDialog(activity: FragmentActivity) =
-    activity.getSupportFragmentManager.findFragmentByTag(LegalHoldRequestDialog.TAG) != null
+    legalHoldRequestDialog(activity).isDefined
 
   private def onLegalHoldAccepted(password: Option[Password]): Unit = {
     spinnerController.showDimmedSpinner(show = true)

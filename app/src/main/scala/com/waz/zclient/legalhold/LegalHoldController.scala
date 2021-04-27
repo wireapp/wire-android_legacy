@@ -28,8 +28,10 @@ class LegalHoldController(implicit injector: Injector)
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] =
     Signal.const(Seq.empty)
 
-  def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
+  val legalHoldRequest: Signal[Option[LegalHoldRequest]] =
     legalHoldService.flatMap(_.legalHoldRequest)
+
+  val hasPendingRequest: Signal[Boolean] = legalHoldRequest.map(_.isDefined)
 
   def getFingerprint(request: LegalHoldRequest): Future[Option[String]] =
     legalHoldService.head.map(_.getFingerprint(request))
