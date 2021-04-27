@@ -43,7 +43,8 @@ class SelectedConversationServiceImpl(userPrefs: UserPreferences, users: UserSer
 
   def selectConversation(id: Option[ConvId]): Future[Unit] = selectedConvIdPref := id
 
-  selectedConversationId
-    .collect { case Some(convId) => convId }
-    .foreach(convId => users.syncClients(convId))
+  selectedConversationId.foreach {
+    case Some(convId) => users.syncClients(convId)
+    case _ =>
+  }
 }
