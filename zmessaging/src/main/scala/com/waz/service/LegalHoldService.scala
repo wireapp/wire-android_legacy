@@ -58,8 +58,8 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] = for {
     users             <- membersStorage.activeMembers(conversationId)
-    usersAndStatus    <- Signal.sequence(users.map(userId => Signal.zip(Signal.const(userId), isLegalHoldActive(userId))).toSeq: _*)
-    legalHoldSubjects = usersAndStatus.filter(_._2).map(_._1)
+    usersAndStatus    <- Signal.sequence(users.map(userId => isLegalHoldActive(userId).map(active => userId -> active)).toSeq: _*)
+    legalHoldSubjects = usersAndStatus.collect { case (userId, true) => userId }
   } yield legalHoldSubjects
 
   def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
