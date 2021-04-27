@@ -5,7 +5,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.otr.ClientId
-import com.waz.model.{ConvId, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
+import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -16,7 +16,7 @@ import com.wire.signals.Signal
 import scala.concurrent.Future
 
 trait LegalHoldService {
-  def legalHoldRequestEventStage: Stage.Atomic
+  def legalHoldEventStage: Stage.Atomic
   def isLegalHoldActive(userId: UserId): Signal[Boolean]
   def isLegalHoldActive(conversationId: ConvId): Signal[Boolean]
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]]
@@ -39,12 +39,19 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   import com.waz.threading.Threading.Implicits.Background
 
-  def legalHoldRequestEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldRequestEvent] { (_, events) =>
-    Future.sequence {
-      events
-        .filter(_.targetUserId == selfUserId)
-        .map(event => storeLegalHoldRequest(event.request))
-    }.map(_ => ())
+  def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldEvent] { (_, events) =>
+    Future.traverse(events)(processEvent)
+  }
+
+  private def processEvent(event: LegalHoldEvent): Future[Unit] = event match {
+    case LegalHoldRequestEvent(targetUserId, request) if targetUserId == selfUserId =>
+      storeLegalHoldRequest(request)
+
+    case LegalHoldEnableEvent() | LegalHoldDisableEvent() =>
+      deleteLegalHoldRequest()
+
+    case _ =>
+      Future.successful({})
   }
 
   def isLegalHoldActive(userId: UserId): Signal[Boolean] =
