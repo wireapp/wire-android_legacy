@@ -55,7 +55,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   // Helpers
 
-  def expectation(userId: UserId, deviceTypes: Seq[OtrClientType]): Unit = {
+  def mockUserDevices(userId: UserId, deviceTypes: Seq[OtrClientType]): Unit = {
     val clients = deviceTypes.map { deviceType =>
       val clientId = ClientId()
       clientId -> Client(clientId, "", devType = deviceType)
@@ -67,7 +67,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       .returning(Signal.const(Some(UserClients(userId, clients.toMap))))
   }
 
-  def expectation(convId: ConvId, legalHoldStatus: LegalHoldStatus): Unit =
+  def mockConversation(convId: ConvId, legalHoldStatus: LegalHoldStatus): Unit =
     (convsStorage.optSignal _)
       .expects(convId)
       .once()
@@ -80,7 +80,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("with a legal hold device") {
       // Given
       val userId = UserId("user1")
-      expectation(userId, Seq(OtrClientType.PHONE, OtrClientType.LEGALHOLD))
+      mockUserDevices(userId, Seq(OtrClientType.PHONE, OtrClientType.LEGALHOLD))
 
       // When
       val actualResult = result(service.isLegalHoldActive(userId).future)
@@ -92,7 +92,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("without a legal hold device") {
       // Given
       val userId = UserId("user1")
-      expectation(userId, Seq(OtrClientType.PHONE))
+      mockUserDevices(userId, Seq(OtrClientType.PHONE))
 
       // When
       val actualResult = result(service.isLegalHoldActive(userId).future)
@@ -107,7 +107,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("for a conversation with enabled legal hold status") {
       // Given
       val convId = ConvId("conv1")
-      expectation(convId, LegalHoldStatus.ENABLED)
+      mockConversation(convId, LegalHoldStatus.ENABLED)
 
       // When
       val actualResult = result(service.isLegalHoldActive(convId).future)
@@ -119,7 +119,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("for a conversation with pending legal hold status") {
       // Given
       val convId = ConvId("conv1")
-      expectation(convId, LegalHoldStatus.PENDING_APPROVAL)
+      mockConversation(convId, LegalHoldStatus.PENDING_APPROVAL)
 
       // When
       val actualResult = result(service.isLegalHoldActive(convId).future)
@@ -131,7 +131,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("for a conversation with disabled legal hold status") {
       // Given
       val convId = ConvId("conv1")
-      expectation(convId, LegalHoldStatus.DISABLED)
+      mockConversation(convId, LegalHoldStatus.DISABLED)
 
       // When
       val actualResult = result(service.isLegalHoldActive(convId).future)
@@ -155,9 +155,9 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .once()
         .returning(Signal.const(Set(user1, user2, user3)))
 
-      expectation(user1, Seq(OtrClientType.PHONE))
-      expectation(user2, Seq(OtrClientType.DESKTOP, OtrClientType.LEGALHOLD))
-      expectation(user3, Seq(OtrClientType.PHONE, OtrClientType.LEGALHOLD))
+      mockUserDevices(user1, Seq(OtrClientType.PHONE))
+      mockUserDevices(user2, Seq(OtrClientType.DESKTOP, OtrClientType.LEGALHOLD))
+      mockUserDevices(user3, Seq(OtrClientType.PHONE, OtrClientType.LEGALHOLD))
 
       // when
       val actualResult = result(service.legalHoldUsers(convId).future)
