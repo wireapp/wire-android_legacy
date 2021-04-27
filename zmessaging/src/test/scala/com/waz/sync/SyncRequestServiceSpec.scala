@@ -48,7 +48,7 @@ class SyncRequestServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val reporting    = mock[ReportingService]
   val usersStorage = mock[UsersStorage]
   lazy val prefs   = new TestUserPreferences {
-    result(this.preference(UserPreferences.ShouldSyncInitial) := false)
+    result(this.preference(UserPreferences.shouldSyncAllOnUpdate) := false)
     result(this.preference(UserPreferences.ShouldSyncConversations) := false)
   }
 

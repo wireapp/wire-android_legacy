@@ -29,29 +29,30 @@ import org.json.{JSONArray, JSONObject}
 
 import scala.util.Try
 
-case class UserInfo(id:           UserId,
-                    name:         Option[Name]            = None,
-                    accentId:     Option[Int]             = None,
-                    email:        Option[EmailAddress]    = None,
-                    phone:        Option[PhoneNumber]     = None,
-                    picture:      Option[Seq[ProfilePicture]]  = None, //the empty sequence is used to delete pictures
-                    trackingId:   Option[TrackingId]      = None,
-                    deleted:      Boolean                 = false,
-                    handle:       Option[Handle]          = None,
-                    privateMode:  Option[Boolean]         = None,
-                    service:      Option[Service]         = None,
-                    teamId:       Option[TeamId]          = None,
-                    expiresAt:    Option[RemoteInstant]   = None,
-                    ssoId:        Option[SSOId]           = None,
-                    managedBy:    Option[ManagedBy]       = None,
-                    fields:       Option[Seq[UserField]]  = None)
+final case class UserInfo(id:           UserId,
+                          domain:       Option[String]          = None,
+                          name:         Option[Name]            = None,
+                          accentId:     Option[Int]             = None,
+                          email:        Option[EmailAddress]    = None,
+                          phone:        Option[PhoneNumber]     = None,
+                          picture:      Option[Seq[ProfilePicture]]  = None, //the empty sequence is used to delete pictures
+                          trackingId:   Option[TrackingId]      = None,
+                          deleted:      Boolean                 = false,
+                          handle:       Option[Handle]          = None,
+                          privateMode:  Option[Boolean]         = None,
+                          service:      Option[Service]         = None,
+                          teamId:       Option[TeamId]          = None,
+                          expiresAt:    Option[RemoteInstant]   = None,
+                          ssoId:        Option[SSOId]           = None,
+                          managedBy:    Option[ManagedBy]       = None,
+                          fields:       Option[Seq[UserField]]  = None)
 
 object UserInfo {
   import JsonDecoder._
 
-  case class Service(id: IntegrationId, provider: ProviderId)
+  final case class Service(id: IntegrationId, provider: ProviderId)
 
-  case class ProfilePicture(id: AssetId, tag: Tag)
+  final case class ProfilePicture(id: AssetId, tag: Tag)
 
   def decodeService(s: Symbol)(implicit js: JSONObject): Service = Service(decodeId[IntegrationId]('id), decodeId[ProviderId]('provider))
 
@@ -62,12 +63,12 @@ object UserInfo {
 
   implicit object Decoder extends JsonDecoder[UserInfo] {
 
-    def imageData(userId: UserId, js: JSONObject) = {
+    def imageData(userId: UserId, js: JSONObject): AssetData = {
       val mime = decodeString('content_type)(js)
       val size = decodeInt('content_length)(js)
       val data = decodeOptString('data)(js)
       val id = RAssetId(decodeString('id)(js))
-      implicit val info = js.getJSONObject("info")
+      implicit val info: JSONObject = js.getJSONObject("info")
 
       AssetData(
         status = UploadDone,
@@ -98,14 +99,16 @@ object UserInfo {
           case _ => None
         }
       }
-      val id = UserId('id)
+      val qualifiedId = QualifiedId.decodeOpt('qualified_id)
+      val id = qualifiedId.map(_.id).getOrElse(UserId('id))
+      val domain = qualifiedId.map(_.domain)
       val pic = getAssets
       val privateMode = decodeOptBoolean('privateMode)
       val ssoId = SSOId.decodeOptSSOId('sso_id)
       val managedBy = ManagedBy.decodeOptManagedBy('managed_by)
       val fields = UserField.decodeOptUserFields('fields)
       UserInfo(
-        id, 'name, accentId, 'email, 'phone, Some(pic), decodeOptString('tracking_id) map (TrackingId(_)),
+        id, domain, 'name, accentId, 'email, 'phone, Some(pic), decodeOptString('tracking_id) map (TrackingId(_)),
         deleted = 'deleted, handle = 'handle, privateMode = privateMode, service = decodeOptService('service),
         'team, decodeOptISORemoteInstant('expires_at), ssoId = ssoId, managedBy = managedBy, fields = fields)
     }
@@ -136,9 +139,15 @@ object UserInfo {
     o.put("provider", service.provider)
   }
 
+  def encodeQualifiedId(qualifiedId: QualifiedId): JSONObject = JsonEncoder { o =>
+    o.put("id", qualifiedId.id.str)
+    o.put("domain", qualifiedId.domain)
+  }
+
   implicit lazy val Encoder: JsonEncoder[UserInfo] = new JsonEncoder[UserInfo] {
     override def apply(info: UserInfo): JSONObject = JsonEncoder { o =>
       o.put("id", info.id.str)
+      info.domain.map(d => o.put("qualified_id", encodeQualifiedId(QualifiedId(info.id, d))))
       info.name.foreach(o.put("name", _))
       info.phone.foreach(p => o.put("phone", p.str))
       info.email.foreach(e => o.put("email", e.str))

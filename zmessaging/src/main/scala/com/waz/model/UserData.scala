@@ -34,32 +34,33 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 import scala.concurrent.duration._
 import scala.util.Try
 
-case class UserData(override val id:       UserId,
-                    teamId:                Option[TeamId]         = None,
-                    name:                  Name,
-                    email:                 Option[EmailAddress]  = None,
-                    phone:                 Option[PhoneNumber]   = None,
-                    trackingId:            Option[TrackingId]    = None,
-                    picture:               Option[Picture] = None,
-                    accent:                Int                   = 0, // accent color id
-                    searchKey:             SearchKey,
-                    connection:            ConnectionStatus       = ConnectionStatus.Unconnected,
-                    connectionLastUpdated: RemoteInstant          = RemoteInstant.Epoch, // server side timestamp of last connection update
-                    connectionMessage:     Option[String]         = None, // incoming connection request message
-                    conversation:          Option[RConvId]        = None, // remote conversation id with this contact (one-to-one)
-                    relation:              Relation               = Relation.Other, //unused - remove in future migration
-                    syncTimestamp:         Option[LocalInstant]   = None,
-                    verified:              Verification           = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
-                    deleted:               Boolean                = false,
-                    availability:          Availability           = Availability.None,
-                    handle:                Option[Handle]         = None,
-                    providerId:            Option[ProviderId]     = None,
-                    integrationId:         Option[IntegrationId]  = None,
-                    expiresAt:             Option[RemoteInstant]  = None,
-                    managedBy:             Option[ManagedBy]      = None,
-                    fields:                Seq[UserField]         = Seq.empty,
-                    permissions:           PermissionsMasks       = (0,0),
-                    createdBy:             Option[UserId]         = None) extends Identifiable[UserId] {
+final case class UserData(override val id:       UserId,
+                          domain:                Option[String]         = None,
+                          teamId:                Option[TeamId]         = None,
+                          name:                  Name,
+                          email:                 Option[EmailAddress]   = None,
+                          phone:                 Option[PhoneNumber]    = None,
+                          trackingId:            Option[TrackingId]     = None,
+                          picture:               Option[Picture]        = None,
+                          accent:                Int                    = 0, // accent color id
+                          searchKey:             SearchKey,
+                          connection:            ConnectionStatus       = ConnectionStatus.Unconnected,
+                          connectionLastUpdated: RemoteInstant          = RemoteInstant.Epoch, // server side timestamp of last connection update
+                          connectionMessage:     Option[String]         = None, // incoming connection request message
+                          conversation:          Option[RConvId]        = None, // remote conversation id with this contact (one-to-one)
+                          relation:              Relation               = Relation.Other, //unused - remove in future migration
+                          syncTimestamp:         Option[LocalInstant]   = None,
+                          verified:              Verification           = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
+                          deleted:               Boolean                = false,
+                          availability:          Availability           = Availability.None,
+                          handle:                Option[Handle]         = None,
+                          providerId:            Option[ProviderId]     = None,
+                          integrationId:         Option[IntegrationId]  = None,
+                          expiresAt:             Option[RemoteInstant]  = None,
+                          managedBy:             Option[ManagedBy]      = None,
+                          fields:                Seq[UserField]         = Seq.empty,
+                          permissions:           PermissionsMasks       = (0,0),
+                          createdBy:             Option[UserId]         = None) extends Identifiable[UserId] {
 
   lazy val isConnected: Boolean         = ConnectionStatus.isConnected(connection)
   lazy val hasEmailOrPhone: Boolean     = email.isDefined || phone.isDefined
@@ -70,8 +71,11 @@ case class UserData(override val id:       UserId,
   lazy val isReadOnlyProfile: Boolean   = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
+  lazy val qualifiedId: Option[QualifiedId] = domain.map(d => QualifiedId(id, d))
+
   def updated(user: UserInfo): UserData = updated(user, withSearchKey = true, permissions = permissions)
   def updated(user: UserInfo, withSearchKey: Boolean, permissions: PermissionsMasks): UserData = copy(
+    domain        = user.domain,
     name          = user.name.getOrElse(name),
     email         = user.email.orElse(email),
     phone         = user.phone.orElse(phone),
@@ -173,9 +177,9 @@ object UserData {
 
   // used for testing only
   def apply(name: String): UserData = UserData(UserId(name), name = Name(name), searchKey = SearchKey.simple(name))
-  def withName(id: UserId, name: String): UserData = UserData(id, None, Name(name), None, None, searchKey = SearchKey.simple(name), handle = None)
+  def withName(id: UserId, name: String): UserData = UserData(id, None, None, Name(name), None, None, searchKey = SearchKey.simple(name), handle = None)
 
-  def apply(id: UserId, name: String): UserData = UserData(id, None, Name(name), None, None, searchKey = SearchKey(name), handle = None)
+  def apply(id: UserId, name: String): UserData = UserData(id, None, None, Name(name), None, None, searchKey = SearchKey(name), handle = None)
 
   def apply(entry: UserSearchEntry): UserData =
     UserData(
@@ -194,6 +198,7 @@ object UserData {
 
   implicit object UserDataDao extends Dao[UserData, UserId] with StorageCodecs {
     val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.id)
+    val Domain = opt(text('domain))(_.domain)
     val TeamId = opt(id[TeamId]('teamId))(_.teamId)
     val Name = text[model.Name]('name, _.str, model.Name(_))(_.name)
     val Email = opt(emailAddress('email))(_.email)
@@ -220,18 +225,20 @@ object UserData {
     val CopyPermissions = long('copy_permissions)(_.permissions._2)
     val CreatedBy = opt(id[UserId]('created_by))(_.createdBy)
 
+    private val UsersTableName = "Users"
+
     private def getVerification(name: String): Verification =
       Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)
 
     override val idCol = Id
     override val table = Table(
-      "Users", Id, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, ConnTime, ConnMessage,
+      UsersTableName, Id, Domain, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, ConnTime, ConnMessage,
       Conversation, Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId,
       ExpiresAt, Managed, SelfPermissions, CopyPermissions, CreatedBy // Fields are now lazy-loaded from BE every time the user opens a profile
     )
 
     override def apply(implicit cursor: DBCursor): UserData = new UserData(
-      Id, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
+      Id, Domain, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
       Conversation, Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed,
       Seq.empty, (SelfPermissions, CopyPermissions), CreatedBy
     )
