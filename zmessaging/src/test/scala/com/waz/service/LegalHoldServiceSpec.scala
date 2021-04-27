@@ -166,6 +166,29 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       actualResult.toSet shouldEqual Set(user2, user3)
     }
 
+    scenario("that does not contain any legal hold subjects") {
+      // Given
+      val convId = ConvId("conv1")
+      val user1 = UserId("user1")
+      val user2 = UserId("user2")
+      val user3 = UserId("user3")
+
+      (membersStorage.activeMembers _)
+        .expects(convId)
+        .once()
+        .returning(Signal.const(Set(user1, user2, user3)))
+
+      mockUserDevices(user1, Seq(OtrClientType.PHONE))
+      mockUserDevices(user2, Seq(OtrClientType.DESKTOP, OtrClientType.PHONE))
+      mockUserDevices(user3, Seq(OtrClientType.PHONE, OtrClientType.DESKTOP))
+
+      // when
+      val actualResult = result(service.legalHoldUsers(convId).future)
+
+      // Then
+      actualResult shouldBe empty
+    }
+
   }
 
   feature("Fetch the legal hold request") {
