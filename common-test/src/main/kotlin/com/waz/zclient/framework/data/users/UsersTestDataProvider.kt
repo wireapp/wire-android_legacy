@@ -5,6 +5,7 @@ import java.util.UUID
 
 data class UsersTestData(
     val id: String,
+    val domain: String,
     val teamId: String,
     val name: String,
     val email: String,
@@ -36,6 +37,7 @@ object UsersTestDataProvider : TestDataProvider<UsersTestData>() {
     override fun provideDummyTestData(): UsersTestData =
         UsersTestData(
             id = UUID.randomUUID().toString(),
+            domain = "staging.zinfra.io",
             teamId = UUID.randomUUID().toString(),
             name = "name",
             email = "email@email.com",

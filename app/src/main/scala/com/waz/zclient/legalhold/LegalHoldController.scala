@@ -30,6 +30,9 @@ class LegalHoldController(implicit injector: Injector)
   def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
     legalHoldService.flatMap(_.legalHoldRequest)
 
+  def getFingerprint(request: LegalHoldRequest): Future[Option[String]] =
+    legalHoldService.head.map(_.getFingerprint(request))
+
   def approveRequest(password: Option[Password]): Future[Either[LegalHoldError, Unit]] = for {
     service <- legalHoldService.head
     request <- service.legalHoldRequest.head

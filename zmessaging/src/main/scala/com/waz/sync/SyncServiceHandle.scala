@@ -19,7 +19,7 @@ package com.waz.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.NetworkMode
-import com.waz.content.UserPreferences.{SelfClient, ShouldSyncConversations, ShouldSyncInitial}
+import com.waz.content.UserPreferences.{SelfClient, ShouldSyncConversations, shouldSyncAllOnUpdate}
 import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -124,7 +124,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   import Threading.Implicits.Background
   import com.waz.model.sync.SyncRequest._
 
-  private val shouldSyncAll           = userPreferences(ShouldSyncInitial)
+  private val shouldSyncAll           = userPreferences(shouldSyncAllOnUpdate)
   private val shouldSyncConversations = userPreferences(ShouldSyncConversations)
   private val isRegistered = userPreferences(SelfClient).signal.map {
     case Registered(_) => true

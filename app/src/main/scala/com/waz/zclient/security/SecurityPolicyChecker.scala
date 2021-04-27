@@ -28,13 +28,13 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.security.actions._
 import com.waz.zclient.security.checks._
-import com.waz.zclient.{BuildConfig, Injectable, Injector, R, SpinnerController}
+import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import org.threeten.bp.Instant
 import org.threeten.bp.temporal.ChronoUnit
 
 import scala.concurrent.Future
 import com.waz.threading.Threading._
-import com.waz.zclient.legalhold.LegalHoldController
+import com.waz.zclient.legalhold.{LegalHoldApprovalHandler, LegalHoldController}
 
 class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with DerivedLogTag {
   import SecurityPolicyChecker._
@@ -45,7 +45,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
   private lazy val userPreferences     = inject[Signal[UserPreferences]]
   private lazy val passwordController  = inject[PasswordController]
   private lazy val legalHoldController = inject[LegalHoldController]
-  private lazy val spinnerController   = inject[SpinnerController]
+  private lazy val legalHoldHandler    = inject[LegalHoldApprovalHandler]
 
   private val alc = inject[ActivityLifecycleCallback]
   private val appInBackground = alc.appInBackground.map(_._1).onChanged
@@ -74,7 +74,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
                            Some(userPrefs),
                            Some(accManager),
                            Some(legalHoldController),
-                           Some(spinnerController),
+                           Some(legalHoldHandler),
                            isForeground = true,
                            authNeeded = authNeeded
                          )(activity)
@@ -147,7 +147,6 @@ object SecurityPolicyChecker extends DerivedLogTag {
 
   private def requestPassword(passwordController: PasswordController,
                               userPreferences: UserPreferences,
-                              accountManager: AccountManager,
                               authNeeded: Boolean)(implicit context: Context) =
     if (authNeeded) {
           verbose(l"check request password, force app lock from the build: ${BuildConfig.FORCE_APP_LOCK}")
@@ -157,10 +156,10 @@ object SecurityPolicyChecker extends DerivedLogTag {
     } else EmptyCheck
 
   private def requestLegalHoldAcceptance(legalHoldController: LegalHoldController,
-                                         spinnerController: SpinnerController)(implicit context: Context) = {
+                                         legalHoldApprovalHandler: LegalHoldApprovalHandler)(implicit context: Context) = {
       verbose(l"check request legal hold acceptance")
       val check = RequestLegalHoldCheck(legalHoldController)
-      val actions = List(new ShowLegalHoldApprovalAction(legalHoldController, spinnerController))
+      val actions = List(new ShowLegalHoldApprovalAction(legalHoldApprovalHandler))
       Future.successful(Some(check, actions))
   }
 
@@ -172,28 +171,25 @@ object SecurityPolicyChecker extends DerivedLogTag {
                                    userPreferences    : Option[UserPreferences],
                                    accountManager     : Option[AccountManager],
                                    legalHoldController: Option[LegalHoldController],
-                                   spinnerController  : Option[SpinnerController],
+                                   legalHoldHandler   : Option[LegalHoldApprovalHandler],
                                    isForeground       : Boolean,
                                    authNeeded         : Boolean
                                   )(implicit context: Context): Future[Boolean] = {
-    def unpack[A, B, C](a: Option[A], b: Option[B], c: Option[C]): Option[(A, B, C)] = (a, b, c) match {
-      case (Some(aa), Some(bb), Some(cc)) => Some((aa, bb, cc))
-      case _ => None
-    }
 
     for {
       blockOnJailbreak    <- blockOnJailbreak(globalPreferences, isForeground)
       wipeOnCookieInvalid <- accountManager.fold(EmptyCheck)(wipeOnCookieInvalid)
-      requestPassword     <- unpack(passwordController, userPreferences, accountManager).fold(EmptyCheck) {
-                               case (ctrl, prefs, am) =>
+      requestPassword     <- (passwordController, userPreferences) match {
+                               case (Some(ctrl), Some(prefs)) =>
                                  Signal.zip(ctrl.appLockEnabled, ctrl.customPasswordEmpty).head.flatMap {
                                    case (true, true) => EmptyCheck // the user must set the password first
-                                   case _            => requestPassword(ctrl, prefs, am, authNeeded)
+                                   case _            => requestPassword(ctrl, prefs, authNeeded)
                                  }
+                               case _ => EmptyCheck
                              }
-      requestLegalHold    <- (legalHoldController, spinnerController) match {
-                               case (Some(lc), Some(sc)) => requestLegalHoldAcceptance(lc, sc)
-                               case _                    => EmptyCheck
+      requestLegalHold    <- (legalHoldController, legalHoldHandler) match {
+                               case (Some(controller), Some(handler)) => requestLegalHoldAcceptance(controller, handler)
+                               case  _ => EmptyCheck
                              }
       list                =  new SecurityChecklist(List(blockOnJailbreak, wipeOnCookieInvalid, requestPassword, requestLegalHold).flatten)
       allChecksPassed     <- list.run()
@@ -219,7 +215,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
           userPreferences     = None,
           accountManager      = am,
           legalHoldController = None,
-          spinnerController   = None,
+          legalHoldHandler    = None,
           isForeground        = false,
           authNeeded          = false
         )
