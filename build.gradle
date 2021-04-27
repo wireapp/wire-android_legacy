@@ -63,7 +63,7 @@ allprojects {
 }
 
 ext {
-    largeVideoConferenceCalls = true
+    LargeVideoConferenceCalls = true
     appLockFeatureFlag = true
     sessionReset = true
     legalHold = true

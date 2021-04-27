@@ -125,7 +125,7 @@ android {
         buildConfigField 'String',  'COUNTLY_APP_KEY',               "\"$buildtimeConfiguration.configuration.countly_app_key\""
 
         //Feature Flags
-        buildConfigField 'boolean', 'LARGE_VIDEO_CONFERENCE_CALLS', "$largeVideoConferenceCalls"
+        buildConfigField 'boolean', 'LARGE_VIDEO_CONFERENCE_CALLS', "$LargeVideoConferenceCalls"
         buildConfigField 'boolean', 'APP_LOCK_FEATURE_FLAG', "$appLockFeatureFlag"
     }
 
