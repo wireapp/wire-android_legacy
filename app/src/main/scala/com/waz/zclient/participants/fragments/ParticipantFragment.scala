@@ -20,7 +20,7 @@ package com.waz.zclient.participants.fragments
 import android.content.Context
 import android.os.Bundle
 import androidx.annotation.Nullable
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model._
@@ -40,7 +40,7 @@ import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 import com.waz.api.ConnectionStatus._
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.legalhold.{LegalHoldController, LegalHoldInfoFragment}
+import com.waz.zclient.legalhold.{AllLegalHoldSubjectsFragment, LegalHoldController, LegalHoldInfoFragment, LegalHoldSubjectsContainer}
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.utils.ContextUtils
 import com.wire.signals.Signal
@@ -48,7 +48,7 @@ import com.wire.signals.Signal
 import scala.concurrent.Future
 
 class ParticipantFragment extends ManagerFragment with ConversationScreenControllerObserver
-  with LegalHoldInfoFragment.Container {
+  with LegalHoldSubjectsContainer {
 
   import ParticipantFragment._
 
@@ -130,6 +130,7 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
     }
     headerFragment.onLegalHoldClick { _ => openLegalHoldInfoScreen() }
     legalHoldController.onLegalHoldSubjectClick { userId => showUser(userId, forLegalHold = true) }
+    legalHoldController.onAllLegalHoldSubjectsClick { _ => showAllLegalHoldSubjects() }
   }
 
   override def onStart(): Unit = {
@@ -177,18 +178,11 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
     }
 
   def showOtrClient(userId: UserId, clientId: ClientId): Unit =
-    getChildFragmentManager
-      .beginTransaction
-      .setCustomAnimations(
-        R.anim.fragment_animation_second_page_slide_in_from_right,
-        R.anim.fragment_animation_second_page_slide_out_to_left,
-        R.anim.fragment_animation_second_page_slide_in_from_left,
-        R.anim.fragment_animation_second_page_slide_out_to_right)
+    withSlideAnimation(getChildFragmentManager.beginTransaction)
       .add(
         R.id.fl__participant__overlay,
         SingleOtrClientFragment.newInstance(userId, clientId),
-        SingleOtrClientFragment.Tag
-      )
+        SingleOtrClientFragment.Tag)
       .addToBackStack(SingleOtrClientFragment.Tag)
       .commit
 
@@ -210,30 +204,17 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
 
   // TODO: AN-5980
   def showIntegrationDetails(service: IntegrationData, convId: ConvId, userId: UserId): Unit = {
-    getChildFragmentManager
-      .beginTransaction
-      .setCustomAnimations(
-        R.anim.fragment_animation_second_page_slide_in_from_right,
-        R.anim.fragment_animation_second_page_slide_out_to_left,
-        R.anim.fragment_animation_second_page_slide_in_from_left,
-        R.anim.fragment_animation_second_page_slide_out_to_right
-      )
+    withSlideAnimation(getChildFragmentManager.beginTransaction)
       .replace(
         R.id.fl__participant__overlay,
         IntegrationDetailsFragment.newRemovingInstance(service, convId, userId),
-        IntegrationDetailsFragment.Tag
-      )
+        IntegrationDetailsFragment.Tag)
       .addToBackStack(IntegrationDetailsFragment.Tag)
       .commit
   }
 
   private def openUserProfileFragment(fragment: Fragment, tag: String) =
-    getChildFragmentManager.beginTransaction
-      .setCustomAnimations(
-        R.anim.fragment_animation_second_page_slide_in_from_right,
-        R.anim.fragment_animation_second_page_slide_out_to_left,
-        R.anim.fragment_animation_second_page_slide_in_from_left,
-        R.anim.fragment_animation_second_page_slide_out_to_right)
+    withSlideAnimation(getChildFragmentManager.beginTransaction)
       .replace(R.id.fl__participant__container, fragment, tag)
       .addToBackStack(tag)
       .commit
@@ -252,6 +233,23 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       )
       .addToBackStack(LegalHoldInfoFragment.Tag)
       .commit
+
+  private def showAllLegalHoldSubjects(): Unit =
+    withSlideAnimation(getChildFragmentManager.beginTransaction)
+      .replace(R.id.fl__participant__container,
+        AllLegalHoldSubjectsFragment.newInstance(),
+        AllLegalHoldSubjectsFragment.Tag)
+      .addToBackStack(AllLegalHoldSubjectsFragment.Tag)
+      .commit
+
+  private def withSlideAnimation(transaction: FragmentTransaction): FragmentTransaction =
+    returning(transaction) {
+      _.setCustomAnimations(
+        R.anim.fragment_animation_second_page_slide_in_from_right,
+        R.anim.fragment_animation_second_page_slide_out_to_left,
+        R.anim.fragment_animation_second_page_slide_in_from_left,
+        R.anim.fragment_animation_second_page_slide_out_to_right)
+    }
 
   private def showUser(userId: UserId, forLegalHold: Boolean = false): Unit = usersController.syncUserAndCheckIfDeleted(userId).foreach {
     case (Some(user), None) =>

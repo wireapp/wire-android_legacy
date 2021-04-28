@@ -18,6 +18,7 @@ class LegalHoldController(implicit injector: Injector)
   private lazy val legalHoldService = inject[Signal[LegalHoldService]]
 
   val onLegalHoldSubjectClick: SourceStream[UserId] = EventStream[UserId]
+  val onAllLegalHoldSubjectsClick: SourceStream[Unit] = EventStream[Unit]
 
   def isLegalHoldActive(userId: UserId): Signal[Boolean] =
     Signal.const(false)
