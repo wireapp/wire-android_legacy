@@ -25,7 +25,7 @@ import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading._
 import com.waz.utils.returning
-import com.waz.zclient.{BuildConfig, FragmentHelper, R}
+import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.FullScreenVideoFragment.PARTICIPANT_BUNDLE_KEY
 import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
