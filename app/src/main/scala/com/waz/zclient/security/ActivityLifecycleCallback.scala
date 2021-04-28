@@ -24,9 +24,10 @@ import android.os.Bundle
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.threading.Threading.Implicits.Ui
 import com.waz.threading.Threading._
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.{BuildConfig, Injectable, Injector, LaunchActivity}
+import com.waz.zclient.{BaseActivity, BuildConfig, Injectable, Injector, LaunchActivity}
 import com.wire.signals._
 
 import scala.collection.convert.DecorateAsScala
@@ -48,6 +49,12 @@ class ActivityLifecycleCallback(implicit injector: Injector)
   protected lazy val userPreferences = inject[Signal[UserPreferences]]
 
   val appInBackground: Signal[(Boolean, Option[Activity])] = activitiesRunning.map { case (running, lastAct) => (running == 0, lastAct) }
+
+  def withCurrentActivity(action: BaseActivity => Unit): Unit =
+    activitiesRunning.map(_._2).head.foreach {
+      case Some(activity) => Try(activity.asInstanceOf[BaseActivity]).foreach(action)
+      case None =>
+    }
 
   override def onActivityStopped(activity: Activity): Unit = synchronized {
     activity match {
