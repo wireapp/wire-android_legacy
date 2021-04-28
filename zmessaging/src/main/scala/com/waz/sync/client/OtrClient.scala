@@ -36,11 +36,10 @@ import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import com.wire.cryptobox.PreKey
 import com.wire.messages.Otr
-import com.wire.signals.CancellableFuture
 import org.json.{JSONArray, JSONObject}
 
 import scala.collection.breakOut
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 trait OtrClient {
   def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]]
@@ -81,7 +80,7 @@ class OtrClientImpl(implicit
     RawBodyDeserializer[JSONArray].map(json => RemainingPreKeysResponse.unapply(JsonArrayResponse(json)).get)
 
   private implicit val ListClientsResponseDeserializer: RawBodyDeserializer[ListClientsResponse] =
-    RawBodyDeserializer[JSONObject].map(json => ListClientsResponse.unapply(JsonObjectResponse(json)))
+    RawBodyDeserializer[JSONObject].map(ListClientsResponse.Decoder(_))
 
   override def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]] = {
     Request.Get(relativePath = userPreKeysPath(user))
@@ -105,8 +104,6 @@ class OtrClientImpl(implicit
       }
     }
 
-    val foo: Request[JSONObject] = Request.Post(relativePath = prekeysPath, body = data)
-
     Request.Post(relativePath = prekeysPath, body = data)
       .withResultType[PreKeysResponse]
       .withErrorType[ErrorResponse]
@@ -127,15 +124,11 @@ class OtrClientImpl(implicit
       .executeSafe
   }
 
-  override def loadClients(users: Set[QualifiedId]): ErrorOrResponse[Map[QualifiedId, Seq[Client]]] = {
-    val data = JsonEncoder.array(users) { case (arr, qid) => arr.put(QualifiedId.Encoder(qid)) }
-
-    CancellableFuture.successful(Left(ErrorResponse.PageNotFound))
-/*    Request.Post(relativePath = ListClientsPath, body = data)
-      .withResultType[ListClientsResponse](ListClientsResponseDeserializer)
+  override def loadClients(users: Set[QualifiedId]): ErrorOrResponse[Map[QualifiedId, Seq[Client]]] =
+    Request.Post(relativePath = ListClientsPath, body = ListClientsRequest(users.toSeq).encode)
+      .withResultType[ListClientsResponse]
       .withErrorType[ErrorResponse]
-      .executeSafe(_.values)*/
-  }
+      .executeSafe(_.values)
 
   override def loadRemainingPreKeys(id: ClientId): ErrorOrResponse[Seq[Int]] = {
     Request.Get(relativePath = clientKeyIdsPath(id))
@@ -221,7 +214,7 @@ object OtrClient extends DerivedLogTag {
   val clientsPath = "/clients"
   val prekeysPath = "/users/prekeys"
   val BroadcastPath = "/broadcast/otr/messages"
-  val ListClientsPath = "/users/list-clients"
+  val ListClientsPath = "/users/list-clients/v2"
 
   def clientPath(id: ClientId) = s"/clients/$id"
   def clientKeyIdsPath(id: ClientId) = s"/clients/$id/prekeys"
@@ -319,7 +312,22 @@ object OtrClient extends DerivedLogTag {
     }
   }
 
-  final case class ListClientsResponse(values: Map[QualifiedId, Seq[Client]]) extends AnyVal
+  final case class ListClientsRequest(qualifiedUsers: Seq[QualifiedId]) {
+    def encode: JSONObject = JsonEncoder { o =>
+      o.put(
+        "qualified_users",
+        JsonEncoder.array(qualifiedUsers) { case (arr, qid) => arr.put(QualifiedId.Encoder(qid)) }
+      )
+    }
+  }
+
+  object ListClientsRequest {
+    implicit object Encoder extends JsonEncoder[ListClientsRequest] {
+      override def apply(request: ListClientsRequest): JSONObject = request.encode
+    }
+  }
+
+  final case class ListClientsResponse(values: Map[QualifiedId, Seq[Client]])
 
   object ListClientsResponse {
     val Empty: ListClientsResponse = ListClientsResponse(Map.empty)
@@ -336,14 +344,17 @@ object OtrClient extends DerivedLogTag {
         }.toOption
       }.toMap
 
-    def unapply(content: ResponseContent): ListClientsResponse = content match {
-      case JsonObjectResponse(js) =>
-        val response = js.keySet.asScala.toSeq.flatMap { domain =>
-          Try(js.getJSONObject(domain)).map { getUserClients(domain, _) }.getOrElse(Map.empty)
-        }.toMap
+    implicit object Decoder extends JsonDecoder[ListClientsResponse] {
+      override def apply(implicit js: JSONObject): ListClientsResponse = {
+        val response = Try(js.getJSONObject("qualified_user_map")) match {
+          case Success(jsMap) =>
+            jsMap.keySet.asScala.toSeq.flatMap { domain =>
+              Try(jsMap.getJSONObject(domain)).map(getUserClients(domain, _)).getOrElse(Map.empty)
+            }.toMap
+          case Failure(_) => Map.empty[QualifiedId, Seq[Client]]
+        }
         if (response.nonEmpty) ListClientsResponse(response) else Empty
-      case _ =>
-        Empty
+      }
     }
   }
 

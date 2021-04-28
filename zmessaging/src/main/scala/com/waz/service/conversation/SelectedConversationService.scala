@@ -33,8 +33,11 @@ trait SelectedConversationService {
 
 /**
  * Keeps track of general conversation list stats needed for display of conversations lists.
+ *
+ * UserService is injected lazily (`users : => UserService` instead of `users: UserService`)
+ * to prevent circular dependency.
  */
-class SelectedConversationServiceImpl(userPrefs: UserPreferences, users: UserService) extends SelectedConversationService {
+class SelectedConversationServiceImpl(userPrefs: UserPreferences, users: => UserService) extends SelectedConversationService {
   import com.waz.threading.Threading.Implicits.Background
 
   val selectedConvIdPref: Preferences.Preference[Option[ConvId]] = userPrefs.preference(SelectedConvId)
