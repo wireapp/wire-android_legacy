@@ -22,11 +22,13 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Ephemeral, Unknown}
+import com.waz.model.Messages.LegalHoldStatus
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 
 import scala.concurrent.duration.FiniteDuration
+import scala.language.existentials
 import scala.language.implicitConversions
 
 package object model {
@@ -62,6 +64,37 @@ package object model {
     lazy val isBroadcastMessage: Boolean = proto.getContentCase.getNumber match {
       case Messages.GenericMessage.AVAILABILITY_FIELD_NUMBER => true
       case _ => false
+    }
+
+    def legalHoldStatus: LegalHoldStatus = unpackContent match {
+      case reaction: GenericContent.Reaction   => reaction.proto.getLegalHoldStatus
+      case knock: GenericContent.Knock         => knock.proto.getLegalHoldStatus
+      case text: GenericContent.Text           => text.proto.getLegalHoldStatus
+      case location: GenericContent.Location   => location.proto.getLegalHoldStatus
+      case asset: GenericContent.Asset         => asset.proto.getLegalHoldStatus
+      case composite: GenericContent.Composite => composite.proto.getLegalHoldStatus
+      case _                                   => LegalHoldStatus.UNKNOWN
+    }
+
+    def withLegalHoldStatus(status: LegalHoldStatus): GenericMessage = {
+      update {
+        case reaction: GenericContent.Reaction   => GenericContent.Reaction(reaction, status)
+        case knock: GenericContent.Knock         => GenericContent.Knock(knock, status)
+        case text: GenericContent.Text           => GenericContent.Text(text, status)
+        case location: GenericContent.Location   => GenericContent.Location(location, status)
+        case asset: GenericContent.Asset         => GenericContent.Asset(asset, status)
+        case composite: GenericContent.Composite => GenericContent.Composite(composite, status)
+        case other                               => other
+      }
+    }
+
+    def update(transform: GenericContent[_] => GenericContent[_]): GenericMessage = {
+      val (expiration, content) = unpack._2 match {
+        case ephemeral: Ephemeral => ephemeral.unpack
+        case content => (None, content)
+      }
+
+      GenericMessage(Uid(proto.getMessageId), expiration, transform(content))
     }
 
     def unpackContent: GenericContent[_] = unpack match {
