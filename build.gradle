@@ -63,8 +63,6 @@ allprojects {
 }
 
 ext {
-    activeSpeakersView = true
-    zoomingGroupCall = true
     appLockFeatureFlag = true
     sessionReset = true
     legalHold = true

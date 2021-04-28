@@ -43,22 +43,21 @@ class FullScreenVideoFragment extends FragmentHelper {
   private var userVideoView: UserVideoView = _
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
-    if (BuildConfig.ZOOMING_GROUP_CALL) inflater.inflate(R.layout.fragment_full_screen_video, container, false)
-    else inflater.inflate(R.layout.fragment_full_screen_video_without_zooming, container, false)
+    inflater.inflate(R.layout.fragment_full_screen_video, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
     controller.isFullScreenEnabled ! true
     initParticipant()
     initUserVideoView()
-    if (BuildConfig.ZOOMING_GROUP_CALL) initVideoZoomLayout()
+    initVideoZoomLayout()
     initVideoContainer()
     minimizeVideoWhenNotAvailable()
   }
 
   override def onResume(): Unit = {
     super.onResume()
-    if (BuildConfig.ZOOMING_GROUP_CALL) Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG).show()
+    Toast.makeText(getContext, R.string.calling_double_tap_exit_fullscreen_message, Toast.LENGTH_LONG).show()
   }
 
   override def onBackPressed() = {
