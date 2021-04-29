@@ -79,20 +79,20 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
   }
 
   override def getItemViewType(position: Int): Int =
-    if (shouldHideParticipants) ParticipantsCount
-    else if (maxRows.contains(position + 1) && maxRows.exists(_ < numOfParticipants)) ParticipantsCount
+    if (shouldHideParticipants) ShowAll
+    else if (maxRows.contains(position + 1) && maxRows.exists(_ < numOfParticipants)) ShowAll
     else UserRow
 
   override def getItemCount: Int =
-    if (shouldHideParticipants) 1
+    if (shouldHideParticipants) SingleItemCount
     else maxRows match {
       case Some(mr) if mr < numOfParticipants => mr
       case _ => items.size
     }
 
   override def getItemId(position: Int): Long =
-    if (shouldHideParticipants) 0
-    else if (maxRows.contains(position) && maxRows.exists(_ < numOfParticipants)) 0
+    if (shouldHideParticipants) SingleItemPosition
+    else if (maxRows.contains(position) && maxRows.exists(_ < numOfParticipants)) SingleItemPosition
     else items.lift(position).map(_.id.hashCode().toLong).getOrElse(0)
 
   setHasStableIds(true)
@@ -106,7 +106,7 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = viewType match {
     case UserRow =>
       CallParticipantViewHolder(inflate[SingleUserRowView](R.layout.single_user_row, parent, addToParent = false))
-    case ParticipantsCount =>
+    case ShowAll =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button, parent, false)
       view.onClick(onShowAllClicked ! {})
       ShowAllButtonViewHolder(view)
@@ -115,7 +115,9 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
 
 object CallParticipantsAdapter {
   val UserRow = 0
-  val ParticipantsCount = 1
+  val ShowAll = 1
+  val SingleItemPosition = 0
+  val SingleItemCount = 1
 }
 
 case class CallParticipantViewHolder(view: SingleUserRowView) extends ViewHolder(view) {
