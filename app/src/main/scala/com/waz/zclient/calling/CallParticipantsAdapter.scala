@@ -34,7 +34,7 @@ import com.waz.zclient.paintcode.ForwardNavigationIcon
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getColor, getDrawable, getString}
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import com.waz.threading.Threading._
 
 class CallParticipantsAdapter(implicit context: Context, eventContext: EventContext, inj: Injector)
@@ -48,6 +48,7 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
   private var numOfParticipants = 0
   private var maxRows = Option.empty[Int]
   private var theme: Theme = Theme.Dark
+  private var shouldHideParticipants: Boolean = false
 
   val onShowAllClicked = EventStream[Unit]()
 
@@ -62,6 +63,10 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
     notifyDataSetChanged()
   }
 
+  def hideParticipants(): Unit = {
+    shouldHideParticipants = true
+  }
+
   callController.orderedParticipantInfos.onUi { v =>
     numOfParticipants = v.size
     items = maxRows.filter(_ < numOfParticipants).fold(v)(m => v.take(m - 1))
@@ -74,16 +79,20 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
   }
 
   override def getItemViewType(position: Int): Int =
-    if (maxRows.contains(position + 1) && maxRows.exists(_ < numOfParticipants)) ShowAll
+    if (shouldHideParticipants) ParticipantsCount
+    else if (maxRows.contains(position + 1) && maxRows.exists(_ < numOfParticipants)) ParticipantsCount
     else UserRow
 
-  override def getItemCount: Int = maxRows match {
-    case Some(mr) if mr < numOfParticipants => mr
-    case _                                  => items.size
-  }
+  override def getItemCount: Int =
+    if (shouldHideParticipants) 1
+    else maxRows match {
+      case Some(mr) if mr < numOfParticipants => mr
+      case _ => items.size
+    }
 
   override def getItemId(position: Int): Long =
-    if (maxRows.contains(position) && maxRows.exists(_ < numOfParticipants)) 0
+    if (shouldHideParticipants) 0
+    else if (maxRows.contains(position) && maxRows.exists(_ < numOfParticipants)) 0
     else items.lift(position).map(_.id.hashCode().toLong).getOrElse(0)
 
   setHasStableIds(true)
@@ -97,7 +106,7 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = viewType match {
     case UserRow =>
       CallParticipantViewHolder(inflate[SingleUserRowView](R.layout.single_user_row, parent, addToParent = false))
-    case ShowAll =>
+    case ParticipantsCount =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button, parent, false)
       view.onClick(onShowAllClicked ! {})
       ShowAllButtonViewHolder(view)
@@ -106,7 +115,7 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
 
 object CallParticipantsAdapter {
   val UserRow = 0
-  val ShowAll = 1
+  val ParticipantsCount = 1
 }
 
 case class CallParticipantViewHolder(view: SingleUserRowView) extends ViewHolder(view) {
@@ -124,7 +133,10 @@ case class ShowAllButtonViewHolder(view: View) extends ViewHolder(view) {
   private lazy val nameView = view.findViewById[TypefaceTextView](R.id.name_text)
 
   def bind(numOfParticipants: Int, theme: Theme): Unit = {
-    nameView.setText(getString(R.string.show_all_participants, numOfParticipants.toString))
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+      nameView.setText(getString(R.string.all_participants, numOfParticipants.toString))
+    else
+      nameView.setText(getString(R.string.show_all_participants, numOfParticipants.toString))
     setTheme(theme)
   }
 
