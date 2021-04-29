@@ -31,7 +31,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page => NavPage}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
-import com.waz.zclient.legalhold.LegalHoldController
+import com.waz.zclient.legalhold.{AllLegalHoldSubjectsFragment, LegalHoldController}
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getDrawable}
@@ -155,6 +155,8 @@ class ParticipantHeaderFragment extends FragmentHelper {
         }
       case Some(AllGroupParticipantsFragment.Tag) =>
         Signal.const(getString(R.string.participant_search_title))
+      case Some(AllLegalHoldSubjectsFragment.Tag) =>
+        Signal.const(getString(R.string.legal_hold_all_subjects_title))
       case _ =>
         Signal.const(getString(R.string.empty_string))
     }.onUi(t => vh.foreach { view =>

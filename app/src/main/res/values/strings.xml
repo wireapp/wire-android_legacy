@@ -1591,5 +1591,6 @@
     <string name="legal_hold_request_dialog_positive_button_text">Accept</string>
     <string name="legal_hold_request_dialog_negative_button_text">Not Now</string>
     <string name="legal_hold_request_dialog_wrong_password_error">Wrong password</string>
+    <string name="legal_hold_all_subjects_title">LEGAL HOLD SUBJECTS</string>
 </resources>
 
