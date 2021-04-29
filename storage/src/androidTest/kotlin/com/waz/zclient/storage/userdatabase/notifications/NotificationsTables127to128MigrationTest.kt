@@ -1,6 +1,5 @@
 package com.waz.zclient.storage.userdatabase.notifications
 
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -10,10 +9,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
+class NotificationsTables127to128MigrationTest : UserDatabaseMigrationTest(127, 128) {
 
     @Test
-    fun givenCloudNotificationsStatInsertedIntoCloudNotificationsStatsTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
+    fun givenCloudNotificationsStatInsertedIntoCloudNotificationsStatsTableVersion127_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
 
         val stage = "testStage"
         val firstBucket = 1
@@ -23,7 +22,7 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
         CloudNotificationsStatsTableTestHelper.insertCloudNotificationStat(stage, firstBucket,
             secondBucket, thirdBucket, openHelper = testOpenHelper)
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
+        validateMigration(USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(allCloudNotificationStats()[0]) {
@@ -36,7 +35,7 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
     }
 
     @Test
-    fun givenCloudNotificationInsertedIntoCloudNotificationsTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
+    fun givenCloudNotificationInsertedIntoCloudNotificationsTableVersion127_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
 
         val id = "testId"
         val stage = "testStage"
@@ -46,7 +45,7 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
             openHelper = testOpenHelper
         )
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
+        validateMigration(USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(allCloudNotifications()[0]) {
@@ -58,7 +57,7 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
     }
 
     @Test
-    fun givenNotificationDataInsertedIntoNotificationDataTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
+    fun givenNotificationDataInsertedIntoNotificationDataTableVersion127_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
 
         val id = "testId"
         val data = "testData"
@@ -69,7 +68,7 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
             openHelper = testOpenHelper
         )
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
+        validateMigration(USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(allNotificationsData()[0]) {
@@ -80,7 +79,7 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
     }
 
     @Test
-    fun givenPushNotificationEventInsertedIntoPushNotificationEventsDataTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
+    fun givenPushNotificationEventInsertedIntoPushNotificationEventsDataTableVersion127_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
 
 
         val eventIndex = 1
@@ -100,7 +99,7 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
             openHelper = testOpenHelper
         )
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
+        validateMigration(USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(allPushNotificationEvents()[0]) {
