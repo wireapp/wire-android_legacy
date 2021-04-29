@@ -268,10 +268,48 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       val jsonObject = new JSONObject(jsonStr)
       EventDecoder(jsonObject) match {
         case ev: LegalHoldRequestEvent =>
+          ev.userId shouldEqual UserId("858db163-c05d-486f-a478-cfe912e9ccde")
           ev.request.clientId.str shouldEqual "123"
           ev.request.lastPreKey.id shouldEqual 456
           ev.request.lastPreKey.data shouldEqual AESUtils.base64("oENwaFy74nagzFBlqn9nOQ==")
-        case e => fail(s"unexpected event: $e")
+        case e =>
+          fail(s"unexpected event: $e")
+      }
+    }
+
+    scenario("parse LegalHoldEnableEvent") {
+      val jsonStr =
+        """
+          |{
+          |  "id": "858db163-c05d-486f-a478-cfe912e9ccde",
+          |  "type": "user.legalhold-enable"
+          |}
+          |""".stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      EventDecoder(jsonObject) match {
+        case ev: LegalHoldEnableEvent =>
+          ev.userId shouldEqual UserId("858db163-c05d-486f-a478-cfe912e9ccde")
+        case e =>
+          fail(s"unexpected event: $e")
+      }
+    }
+
+    scenario("parse LegalHoldDisableEvent") {
+      val jsonStr =
+        """
+          |{
+          |  "id": "858db163-c05d-486f-a478-cfe912e9ccde",
+          |  "type": "user.legalhold-disable"
+          |}
+          |""".stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      EventDecoder(jsonObject) match {
+        case ev: LegalHoldDisableEvent =>
+          ev.userId shouldEqual UserId("858db163-c05d-486f-a478-cfe912e9ccde")
+        case e =>
+          fail(s"unexpected event: $e")
       }
     }
   }

@@ -73,6 +73,11 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       .once()
       .returning(Signal.const(Some(ConversationData(convId, legalHoldStatus = legalHoldStatus))))
 
+  def createEventPipeline(): EventPipeline = {
+    val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldEventStage))
+    new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+  }
+
   // Tests
 
   feature("Is legal hold active for user") {
@@ -222,8 +227,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it processes the legal hold request event") {
       // Given
-      val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldEventStage))
-      val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+      val pipeline = createEventPipeline()
       val event = LegalHoldRequestEvent(selfUserId, legalHoldRequest)
 
       // When
@@ -239,9 +243,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it ignores a legal hold request event not for the self user") {
       // Given
-      val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldEventStage))
-      val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
-      val event = LegalHoldRequestEvent(targetUserId = UserId("someOtherUser"), legalHoldRequest)
+      val pipeline = createEventPipeline()
+      val event = LegalHoldRequestEvent(UserId("someOtherUser"), legalHoldRequest)
 
       // When
       result(pipeline.apply(Seq(event)))
@@ -252,30 +255,50 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it deletes an existing legal hold request when legal hold is enabled") {
       // Given
-      val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldEventStage))
-      val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
-
+      val pipeline = createEventPipeline()
       userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
       // When
-      result(pipeline.apply(Seq(LegalHoldEnableEvent())))
+      result(pipeline.apply(Seq(LegalHoldEnableEvent(selfUserId))))
 
       // Then
       result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()) shouldBe None
     }
 
-    scenario("it deletes an existing legal hold request when legal hold is disabled") {
+    scenario("it does not delete an existing legal hold request when legal hold is enabled for another user") {
       // Given
-      val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldEventStage))
-      val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
-
+      val pipeline = createEventPipeline()
       userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
       // When
-      result(pipeline.apply(Seq(LegalHoldDisableEvent())))
+      result(pipeline.apply(Seq(LegalHoldEnableEvent(UserId("someOtherUser")))))
+
+      // Then
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()).isEmpty shouldBe false
+    }
+
+    scenario("it deletes an existing legal hold request when legal hold is disabled") {
+      // Given
+      val pipeline = createEventPipeline()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+
+      // When
+      result(pipeline.apply(Seq(LegalHoldDisableEvent(selfUserId))))
 
       // Then
       result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()) shouldBe None
+    }
+
+    scenario("it does not delete an existing legal hold request when legal hold is disabled for another user") {
+      // Given
+      val pipeline = createEventPipeline()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+
+      // When
+      result(pipeline.apply(Seq(LegalHoldDisableEvent(UserId("someOtherUser")))))
+
+      // Then
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()).isEmpty shouldBe false
     }
 
   }
