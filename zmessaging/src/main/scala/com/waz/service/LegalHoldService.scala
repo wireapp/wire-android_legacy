@@ -44,10 +44,13 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   }
 
   private def processEvent(event: LegalHoldEvent): Future[Unit] = event match {
-    case LegalHoldRequestEvent(targetUserId, request) if targetUserId == selfUserId =>
+    case LegalHoldRequestEvent(userId, request) if userId == selfUserId =>
       storeLegalHoldRequest(request)
 
-    case LegalHoldEnableEvent() | LegalHoldDisableEvent() =>
+    case LegalHoldEnableEvent(userId) if userId == selfUserId =>
+      deleteLegalHoldRequest()
+
+    case LegalHoldDisableEvent(userId) if userId == selfUserId =>
       deleteLegalHoldRequest()
 
     case _ =>

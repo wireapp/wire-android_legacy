@@ -235,8 +235,8 @@ object Event {
         case "user.properties-set" => PropertyEvent.Decoder(js)
         case "user.properties-delete" => PropertyEvent.Decoder(js)
         case "user.legalhold-request" => LegalHoldRequestEvent(decodeId[UserId]('id), LegalHoldRequest.Decoder(js))
-        case "user.legalhold-enable" => LegalHoldEnableEvent()
-        case "user.legalhold-disable" => LegalHoldDisableEvent()
+        case "user.legalhold-enable" => LegalHoldEnableEvent(decodeId[UserId]('id))
+        case "user.legalhold-disable" => LegalHoldDisableEvent(decodeId[UserId]('id))
         case _ =>
           error(l"unhandled event: $js")
           UnknownEvent(js)
@@ -463,6 +463,6 @@ object PropertyEvent {
 }
 
 sealed trait LegalHoldEvent extends UserEvent
-case class LegalHoldRequestEvent(targetUserId: UserId, request: LegalHoldRequest) extends LegalHoldEvent
-case class LegalHoldEnableEvent() extends LegalHoldEvent
-case class LegalHoldDisableEvent() extends LegalHoldEvent
+case class LegalHoldRequestEvent(userId: UserId, request: LegalHoldRequest) extends LegalHoldEvent
+case class LegalHoldEnableEvent(userId: UserId) extends LegalHoldEvent
+case class LegalHoldDisableEvent(userId: UserId) extends LegalHoldEvent
