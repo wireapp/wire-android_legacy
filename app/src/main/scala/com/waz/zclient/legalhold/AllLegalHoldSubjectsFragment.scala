@@ -28,9 +28,17 @@ class AllLegalHoldSubjectsFragment extends BaseFragment[LegalHoldSubjectsContain
 
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    val recyclerView = findById[RecyclerView](R.id.recycler_view)
-    recyclerView.setLayoutManager(new LinearLayoutManager(getContext))
-    recyclerView.setAdapter(adapter)
+    setUpRecyclerView()
+    setUpSearchBox()
+  }
+
+  private def setUpRecyclerView(): Unit =
+    returning(findById[RecyclerView](R.id.recycler_view)) { recyclerView =>
+      recyclerView.setLayoutManager(new LinearLayoutManager(getContext))
+      recyclerView.setAdapter(adapter)
+    }
+
+  private def setUpSearchBox(): Unit =
     searchBox.foreach { sb =>
       sb.applyDarkTheme(inject[ThemeController].isDarkTheme)
       sb.setCallback(new PickerSpannableEditText.Callback {
@@ -41,7 +49,6 @@ class AllLegalHoldSubjectsFragment extends BaseFragment[LegalHoldSubjectsContain
         }
       })
     }
-  }
 }
 
 object AllLegalHoldSubjectsFragment {
