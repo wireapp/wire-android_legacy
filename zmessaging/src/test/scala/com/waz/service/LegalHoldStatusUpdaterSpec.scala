@@ -135,7 +135,7 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
       val conv = ConversationData(legalHoldStatus = existingStatus)
 
       // When
-      val result = statusUpdater.update(conv, detectedLegalHoldDevice)
+      val result = conv.withNewLegalHoldStatus(detectedLegalHoldDevice)
 
       // Then
       result.legalHoldStatus shouldEqual expectation

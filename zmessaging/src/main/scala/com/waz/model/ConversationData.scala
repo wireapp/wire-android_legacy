@@ -84,7 +84,20 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 
   def withCleared(time: RemoteInstant) = copy(cleared = Some(cleared.fold(time)(_ max time)))
 
-  val isTeamOnly: Boolean = accessRole match {
+  def withNewLegalHoldStatus(detectedLegalHoldDevice: Boolean): ConversationData = {
+    import LegalHoldStatus._
+
+    val status = (legalHoldStatus, detectedLegalHoldDevice) match {
+      case (Disabled, true) => PendingApproval
+      case (PendingApproval, false) => Disabled
+      case (Enabled, false) => Disabled
+      case (existingStatus, _) => existingStatus
+    }
+
+    copy(legalHoldStatus = status)
+  }
+
+    val isTeamOnly: Boolean = accessRole match {
     case Some(TEAM) if access.contains(Access.INVITE) => true
     case _ => false
   }
