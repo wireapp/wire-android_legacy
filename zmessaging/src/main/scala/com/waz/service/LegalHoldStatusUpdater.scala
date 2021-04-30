@@ -9,9 +9,9 @@ import com.waz.model.ConversationData.LegalHoldStatus._
 
 import scala.concurrent.Future
 
-trait LegalHoldStatusUpdater {}
+trait LegalHoldStatusUpdater
 
-class DummyLegalHoldStatusUpdater() extends LegalHoldStatusUpdater
+class DummyLegalHoldStatusUpdater extends LegalHoldStatusUpdater
 
 // Updates the legal hold status of conversations when new
 // legal hold devices are discovered.
