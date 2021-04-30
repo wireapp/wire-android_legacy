@@ -276,13 +276,13 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 
 object OtrSyncHandler {
 
-  case object UnverifiedException extends Exception
+  final case object UnverifiedException extends Exception
 
-  case class OtrMessage(sender:         ClientId,
-                        recipients:     EncryptedContent,
-                        external:       Option[Array[Byte]] = None,
-                        nativePush:     Boolean = true,
-                        report_missing: Option[Set[UserId]] = None)
+  final case class OtrMessage(sender:         ClientId,
+                              recipients:     EncryptedContent,
+                              external:       Option[Array[Byte]] = None,
+                              nativePush:     Boolean = true,
+                              report_missing: Option[Set[UserId]] = None)
 
   val MaxInlineSize  = 10 * 1024
   val MaxContentSize = 256 * 1024 // backend accepts 256KB for otr messages, but we would prefer to send less
@@ -292,13 +292,13 @@ object OtrSyncHandler {
 
   object TargetRecipients {
     /// All participants (and all their clients) should receive the message.
-    object ConversationParticipants extends TargetRecipients
+    final object ConversationParticipants extends TargetRecipients
 
     /// All clients of the given users should receive the message.
-    case class SpecificUsers(userIds: Set[UserId]) extends TargetRecipients
+    final case class SpecificUsers(userIds: Set[UserId]) extends TargetRecipients
 
     /// These exact clients should receive the message.
-    case class SpecificClients(clientsByUser: Map[UserId, Set[ClientId]]) extends TargetRecipients
+    final case class SpecificClients(clientsByUser: Map[UserId, Set[ClientId]]) extends TargetRecipients
   }
 
   /// Describes how missing clients should be handled.
@@ -312,7 +312,7 @@ object OtrSyncHandler {
     object IgnoreMissingClients extends MissingClientsStrategy
 
     /// Only fetch missing clients from the given users and resend the message.
-    case class IgnoreMissingClientsExceptFromUsers(userIds: Set[UserId]) extends MissingClientsStrategy
+    final case class IgnoreMissingClientsExceptFromUsers(userIds: Set[UserId]) extends MissingClientsStrategy
   }
 
 }

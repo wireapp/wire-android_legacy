@@ -58,6 +58,7 @@ object ErrorResponse {
   val Unverified = ErrorResponse(UnverifiedCode, "Unverified", "")
   val PasswordExists = ErrorResponse(Forbidden, "Forbidden", "password-exists")
   val Unauthorized = ErrorResponse(UnauthorizedCode, "Unauthorized", "account-logged-out")
+  val PageNotFound = ErrorResponse(NotFound, "NotFound", "not-found")
 
   implicit lazy val Decoder: JsonDecoder[ErrorResponse] = new JsonDecoder[ErrorResponse] {
     import JsonDecoder._

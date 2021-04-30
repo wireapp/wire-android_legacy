@@ -38,7 +38,6 @@ trait OtrClientsStorage extends CachedStorage[UserId, UserClients] {
   def getClients(user: UserId): Future[Seq[Client]]
   def updateVerified(userId: UserId, clientId: ClientId, verified: Boolean): Future[Option[(UserClients, UserClients)]]
   def updateClients(ucs: Map[UserId, Seq[Client]], replace: Boolean = false): Future[Set[UserClients]]
-
 }
 
 class OtrClientsStorageImpl(userId: UserId, context: Context, storage: Database)
@@ -48,22 +47,24 @@ class OtrClientsStorageImpl(userId: UserId, context: Context, storage: Database)
 
   import com.waz.threading.Threading.Implicits.Background
 
-  override def incomingClientsSignal(userId: UserId, clientId: ClientId) =
-    signal(userId) map { ucs =>
+  override def incomingClientsSignal(userId: UserId, clientId: ClientId): Signal[Seq[Client]] =
+    signal(userId).map { ucs =>
       ucs.clients.get(clientId).flatMap(_.regTime).fold(Seq.empty[Client]) { current =>
         ucs.clients.values.filter(c => c.verified == Verification.UNKNOWN && c.regTime.exists(_.isAfter(current))).toVector
       }
     }
 
-  override def getClients(user: UserId) = get(user).map(_.fold(Seq.empty[Client])(_.clients.values.toVector))
+  override def getClients(user: UserId): Future[Seq[Client]] =
+    get(user).map(_.fold(Seq.empty[Client])(_.clients.values.toVector))
 
-  override def updateVerified(userId: UserId, clientId: ClientId, verified: Boolean) = update(userId, { uc =>
-    uc.clients.get(clientId) .fold (uc) { client =>
-      uc.copy(clients = uc.clients + (client.id -> client.copy(verified = if (verified) Verification.VERIFIED else Verification.UNVERIFIED)))
-    }
-  })
+  override def updateVerified(userId: UserId, clientId: ClientId, verified: Boolean): Future[Option[(UserClients, UserClients)]] =
+    update(userId, { uc =>
+      uc.clients.get(clientId) .fold (uc) { client =>
+        uc.copy(clients = uc.clients + (client.id -> client.copy(verified = if (verified) Verification.VERIFIED else Verification.UNVERIFIED)))
+      }
+    })
 
-  override def updateClients(ucs: Map[UserId, Seq[Client]], replace: Boolean = false) = {
+  override def updateClients(ucs: Map[UserId, Seq[Client]], replace: Boolean = false): Future[Set[UserClients]] = {
 
     def updateOrCreate(user: UserId, clients: Seq[Client]): (Option[UserClients] => UserClients) = {
       case Some(cs) =>

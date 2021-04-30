@@ -37,7 +37,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 trait OtrClientsService {
-
   val lastSelfClientsSyncPref: Preferences.Preference[Long]
   val otrClientsProcessingStage: Stage.Atomic
 
@@ -54,25 +53,22 @@ trait OtrClientsService {
   def updateUnknownToUnverified(userId: UserId): Future[Unit]
 }
 
-
 class OtrClientsServiceImpl(selfId:    UserId,
                             clientId:  ClientId,
-                            netClient: OtrClient,
                             userPrefs: UserPreferences,
                             storage:   OtrClientsStorage,
                             sync:      SyncServiceHandle,
                             accounts:  AccountsService) extends OtrClientsService with DerivedLogTag {
-
   import com.waz.threading.Threading.Implicits.Background
 
   override lazy val lastSelfClientsSyncPref: Preferences.Preference[Long] = userPrefs.preference(LastSelfClientsSyncRequestedTime)
 
-  accounts.accountState(selfId) {
+  accounts.accountState(selfId).foreach {
     case _: Active => requestSyncIfNeeded()
     case _ =>
   }
 
-  override val otrClientsProcessingStage: Stage.Atomic = EventScheduler.Stage[OtrClientEvent] { (convId, events) =>
+  override val otrClientsProcessingStage: Stage.Atomic = EventScheduler.Stage[OtrClientEvent] { (_, events) =>
     RichFuture.traverseSequential(events) {
       case OtrClientAddEvent(client) =>
         for {
@@ -93,15 +89,17 @@ class OtrClientsServiceImpl(selfId:    UserId,
         }
     }
 
-  override def getClient(id: UserId, client: ClientId): Future[Option[Client]] = storage.get(id) map { _.flatMap(_.clients.get(client)) }
+  override def getClient(id: UserId, client: ClientId): Future[Option[Client]] =
+    storage.get(id) map { _.flatMap(_.clients.get(client)) }
 
   override def getOrCreateClient(id: UserId, client: ClientId): Future[Client] = {
-    storage.get(id) flatMap {
+    storage.get(id).flatMap {
       case Some(uc) if uc.clients.contains(client) => Future.successful(uc.clients(client))
       case _ =>
         def create = UserClients(id, Map(client -> Client(client, "")))
-        def update(uc: UserClients) = uc.copy(clients = uc.clients.updated(client, uc.clients.getOrElse(client, Client(client, ""))))
-        storage.updateOrCreate(id, update, create) flatMap { ucs =>
+        def update(uc: UserClients) =
+          uc.copy(clients = uc.clients.updated(client, uc.clients.getOrElse(client, Client(client, ""))))
+        storage.updateOrCreate(id, update, create).flatMap { ucs =>
           val res = ucs.clients(client)
           if (res.isVerified) Future successful res
           else VerificationStateUpdater.awaitUpdated(selfId) map { _ => res } // synchronize with verification state processing to ensure that OTR_UNVERIFIED message is added before anything else
