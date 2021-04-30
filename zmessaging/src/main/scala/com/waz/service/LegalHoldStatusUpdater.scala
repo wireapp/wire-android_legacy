@@ -41,9 +41,7 @@ class LegalHoldStatusUpdaterImpl(clientsStorage: OtrClientsStorage,
   }
 
   def updateLegalHoldStatus(convIds: Seq[ConvId]): Future[Unit] =
-    for {
-      _ <- Future.traverse(convIds.distinct)(updateLegalHoldStatus)
-    } yield ()
+    Future.traverse(convIds.distinct)(updateLegalHoldStatus).map(_ => ())
 
   private def updateLegalHoldStatus(convId: ConvId): Future[Unit] = {
     for {
