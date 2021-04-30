@@ -23,21 +23,13 @@ class LegalHoldStatusUpdaterImpl(clientsStorage: OtrClientsStorage,
   import com.waz.threading.Threading.Implicits.Background
 
   // When clients are added, updated, or deleted...
-  clientsStorage.onChanged { userClients =>
-    onClientsChanged(userClients)
-  }
+  clientsStorage.onChanged.foreach(onClientsChanged)
 
   // When a participant is added...
-  membersStorage.onAdded { members =>
-    val convIds = members.map(_.convId)
-    updateLegalHoldStatus(convIds)
-  }
+  membersStorage.onAdded.foreach(members => updateLegalHoldStatus(members.map(_.convId)))
 
   // When a participant is removed...
-  membersStorage.onDeleted { members =>
-    val convIds = members.map(_._2)
-    updateLegalHoldStatus(convIds)
-  }
+  membersStorage.onDeleted.foreach(members => updateLegalHoldStatus(members.map(_._2)))
 
   def onClientsChanged(userClients: Seq[UserClients]): Future[Unit] = {
     val userIds = userClients.map(_.id)
