@@ -394,11 +394,11 @@ class ExpiredUsersService(push:         PushService,
     }
   })
 
-  for {
+  (for {
     membersIds <- users.currentConvMembers
     members    <- Signal.sequence(membersIds.map(usersStorage.signal).toSeq: _*)
     wireless   =  members.filter(_.expiresAt.isDefined).toSet
-  } yield
+  } yield wireless).foreach { wireless =>
     push.beDrift.head.map { drift =>
       val woTimer = wireless.filter(u => (wireless.map(_.id) -- timers.keySet).contains(u.id))
       woTimer.foreach { u =>
@@ -409,4 +409,5 @@ class ExpiredUsersService(push:         PushService,
         }
       }
     }
+  }
 }

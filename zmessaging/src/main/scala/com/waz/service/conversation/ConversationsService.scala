@@ -26,6 +26,7 @@ import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.ConversationData.{ConversationType, Link, getAccessAndRoleForGroupConv}
 import com.waz.model._
+import com.waz.service.EventScheduler.Stage
 import com.waz.service._
 import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
@@ -43,7 +44,7 @@ import scala.concurrent.Future.successful
 import scala.util.control.{NoStackTrace, NonFatal}
 
 trait ConversationsService {
-  def convStateEventProcessingStage: EventScheduler.Stage
+  def convStateEventProcessingStage: EventScheduler.Stage.Atomic
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
   def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
   def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]]
@@ -130,7 +131,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _        =  verbose(l"Uncontacted team members removed for the team $teamId")
       } yield ()
 
-  override val convStateEventProcessingStage: EventScheduler.Stage = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
+  override val convStateEventProcessingStage: Stage.Atomic = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
     RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))
   }
 
