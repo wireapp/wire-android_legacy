@@ -1,5 +1,6 @@
 package com.waz.zclient.legalhold
 
+import android.content.Context
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
@@ -34,6 +35,16 @@ class LegalHoldInfoFragment extends BaseFragment[LegalHoldSubjectsContainer]()
     super.onViewCreated(view, savedInstanceState)
     setMessage()
     setUpRecyclerView()
+  }
+
+  override def onAttach(context: Context): Unit = {
+    super.onAttach(context)
+    legalHoldController.showingLegalHoldInfo ! true
+  }
+
+  override def onPreDetach(): Unit = {
+    super.onPreDetach()
+    legalHoldController.showingLegalHoldInfo ! false
   }
 
   private def setMessage(): Unit =

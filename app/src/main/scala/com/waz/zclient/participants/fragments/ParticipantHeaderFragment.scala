@@ -39,7 +39,6 @@ import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils, _}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 import com.wire.signals.{CancellableFuture, EventStream, Signal, SourceStream}
-
 import scala.concurrent.duration._
 
 class ParticipantHeaderFragment extends FragmentHelper {
@@ -191,7 +190,14 @@ class ParticipantHeaderFragment extends FragmentHelper {
   }
 
   val onLegalHoldClick: SourceStream[Unit] = EventStream[Unit]()
-  private lazy val legalHoldIndicatorButton = view[ImageButton](R.id.participants_header_toolbar_image_button_legal_hold)
+
+  private lazy val legalHoldIndicatorButton =
+    returning(view[ImageButton](R.id.participants_header_toolbar_image_button_legal_hold)) { button =>
+      Signal.zip(Signal.from(false, legalHoldController.showingLegalHoldInfo), legalHoldActive).onUi {
+        case (true, _)   => button.foreach(_.setVisible(false))
+        case (_, active) => button.foreach(_.setVisible(active))
+      }
+    }
 
   private lazy val legalHoldActive : Signal[Boolean] =
     for {
@@ -251,7 +257,6 @@ class ParticipantHeaderFragment extends FragmentHelper {
   private def setUpLegalHoldIndicator(): Unit =
     legalHoldIndicatorButton.foreach { button =>
       button.onClick { onLegalHoldClick ! Unit}
-      legalHoldActive.onUi(button.setVisible)
     }
 
   private def fromDeepLink() = getBooleanArg(ARG_FROM_DEEP_LINK)
