@@ -18,14 +18,13 @@ class AllLegalHoldSubjectsFragment extends BaseFragment[LegalHoldSubjectsContain
   private lazy val users = getContainer.legalHoldUsers.map(_.toSet)
 
   private lazy val adapter = returning(new LegalHoldUsersAdapter(users)) {
-    _.onClick(legalHoldController.onLegalHoldSubjectClick ! _)
+    _.onClick.pipeTo(legalHoldController.onLegalHoldSubjectClick)
   }
 
   private lazy val searchBox = view[SearchEditText](R.id.search_box)
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
     inflater.inflate(R.layout.all_participants_fragment, container, false)
-
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     setUpRecyclerView()

@@ -5,6 +5,7 @@ import com.waz.model.AccountData.Password
 import com.waz.service.AccountsService
 import com.waz.sync.handler.LegalHoldError
 import com.waz.threading.Threading.Implicits.Ui
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.preferences.DevicesPreferencesUtil
 import com.waz.zclient.utils.ContextUtils
@@ -23,7 +24,7 @@ class LegalHoldApprovalHandler(implicit injector: Injector) extends Injectable {
 
   private var activityRef: WeakReference[FragmentActivity] = _
 
-  legalHoldController.legalHoldRequest.onChanged {
+  legalHoldController.legalHoldRequest.onChanged.onUi {
     case None    => dismissDialog()
     case Some(_) =>
   }
