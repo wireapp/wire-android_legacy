@@ -1,11 +1,11 @@
 package com.waz.service
 
-import com.waz.api.IConversation.LegalHoldStatus._
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.otr.UserClients
 import com.waz.model.{ConvId, ConversationData}
+import com.waz.model.ConversationData.LegalHoldStatus._
 
 import scala.concurrent.Future
 
@@ -66,10 +66,10 @@ class LegalHoldStatusUpdaterImpl(clientsStorage: OtrClientsStorage,
 
   def update(conv: ConversationData, detectedLegalHoldDevice: Boolean): ConversationData = {
     val status = (conv.legalHoldStatus, detectedLegalHoldDevice) match {
-      case (DISABLED, true)          => PENDING_APPROVAL
-      case (PENDING_APPROVAL, false) => DISABLED
-      case (ENABLED, false)          => DISABLED
-      case (existingStatus, _)       => existingStatus
+      case (Disabled, true)         => PendingApproval
+      case (PendingApproval, false) => Disabled
+      case (Enabled, false)         => Disabled
+      case (existingStatus, _)      => existingStatus
     }
 
     verbose(l"Updating ${conv.name} from status ${conv.legalHoldStatus} to $status")
