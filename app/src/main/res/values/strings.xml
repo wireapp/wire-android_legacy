@@ -536,6 +536,7 @@
     <string name="pref_devices_device_id">ID: %1$s</string>
     <string name="pref_devices_device_verified">Verified</string>
     <string name="pref_devices_device_not_verified">Not verified</string>
+    <string name="pref_devices_device_legal_hold">Legal Hold device</string>
     <string name="pref_devices_warning_summary">If you don\'t recognize a device above, remove it and reset your passcode.</string>
     <string name="pref_devices_device_screen_title">Device details</string>
     <string name="pref_devices_device_fingerprint_category_title">Key Fingerprint</string>
@@ -870,6 +871,7 @@
     <string name="otr__participant__device_class__phone">Phone</string>
     <string name="otr__participant__device_class__tablet">Tablet</string>
     <string name="otr__participant__device_class__desktop">Desktop computer</string>
+    <string name="otr__participant__device_class__legal_hold">Legal Hold</string>
     <string name="otr__participant__tab_details">DETAILS</string>
     <string name="otr__participant__tab_devices">DEVICES</string>
     <string name="otr__participant__information">INFORMATION</string>

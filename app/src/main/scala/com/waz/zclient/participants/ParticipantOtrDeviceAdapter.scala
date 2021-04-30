@@ -42,7 +42,7 @@ class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector,
   extends RecyclerView.Adapter[ParticipantOtrDeviceAdapter.ViewHolder]
     with Injectable
     with DerivedLogTag {
-  
+
   import ParticipantOtrDeviceAdapter._
   import Threading.Implicits.Background
 
@@ -73,7 +73,8 @@ class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector,
     user  <- participantsController.otherParticipant
     color <- accentColorController.accentColor
   } yield (cs, user.name, color)).onUi { case (cs, name, color) =>
-    devices = cs
+    val (legalHoldDevice, otherDevices) = cs.partition(_.devType == OtrClientType.LEGALHOLD)
+    devices = legalHoldDevice ::: otherDevices
     userName = name
     accentColor = color.color
     notifyDataSetChanged()
@@ -111,10 +112,11 @@ object ParticipantOtrDeviceAdapter {
 
   def deviceClassName(client: Client)(implicit ctx: Context): String = ctx.getString(
     client.devType match {
-      case OtrClientType.DESKTOP => R.string.otr__participant__device_class__desktop
-      case OtrClientType.PHONE   => R.string.otr__participant__device_class__phone
-      case OtrClientType.TABLET  => R.string.otr__participant__device_class__tablet
-      case _                     => R.string.otr__participant__device_class__unknown
+      case OtrClientType.DESKTOP   => R.string.otr__participant__device_class__desktop
+      case OtrClientType.PHONE     => R.string.otr__participant__device_class__phone
+      case OtrClientType.TABLET    => R.string.otr__participant__device_class__tablet
+      case OtrClientType.LEGALHOLD => R.string.otr__participant__device_class__legal_hold
+      case _                       => R.string.otr__participant__device_class__unknown
     }
   )
 
@@ -179,7 +181,10 @@ object ParticipantOtrDeviceAdapter {
       textView.setText(TextViewUtils.getBoldText(textView.getContext, clientText))
 
       ViewUtils.getView[ImageView](itemView, R.id.iv__row_otr_icon).setImageResource(
-        if (client.verified == Verification.VERIFIED) {
+        if (client.devType == OtrClientType.LEGALHOLD) {
+          textView.setContentDescription(itemView.context.getString(R.string.pref_devices_device_legal_hold))
+          R.drawable.ic_legal_hold_active
+        } else if (client.verified == Verification.VERIFIED) {
           textView.setContentDescription("Device " + itemView.context.getString(R.string.pref_devices_device_verified))
           R.drawable.shield_full
         } else {
