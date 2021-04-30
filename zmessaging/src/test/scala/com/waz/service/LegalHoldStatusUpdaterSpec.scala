@@ -124,7 +124,7 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
     }
 
     scenario("existing status is enabled") {
-      assert(existingStatus = Enabled, detectedLegalHoldDevice = true, expectation = Enabledk)
+      assert(existingStatus = Enabled, detectedLegalHoldDevice = true, expectation = Enabled)
       assert(existingStatus = Enabled, detectedLegalHoldDevice = false, expectation = Disabled)
     }
 
