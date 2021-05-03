@@ -12,7 +12,7 @@ import scala.concurrent.Future.successful
  */
 class DisabledLegalHoldService extends LegalHoldService {
 
-  override def legalHoldRequestEventStage: Stage.Atomic = EventScheduler.Stage[Event]((_, _) => successful(()))
+  override def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[Event]((_, _) => successful(()))
 
   override def isLegalHoldActive(userId: UserId): Signal[Boolean] = Signal.const(false)
 

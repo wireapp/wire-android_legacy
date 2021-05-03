@@ -97,10 +97,7 @@ case class ConversationData(override val id:      ConvId                 = ConvI
     copy(legalHoldStatus = status)
   }
 
-  def isUnderLegalHold: Boolean = legalHoldStatus match {
-    case LegalHoldStatus.PendingApproval | LegalHoldStatus.Enabled => true
-    case LegalHoldStatus.Disabled                                  => false
-  }
+  def isUnderLegalHold: Boolean = legalHoldStatus != LegalHoldStatus.Disabled
 
   val isTeamOnly: Boolean = accessRole match {
     case Some(TEAM) if access.contains(Access.INVITE) => true
@@ -129,6 +126,7 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 
   val hasUnreadMessages: Boolean =
     (isAllAllowed && unreadCount.total > 0) || (onlyMentionsAllowed && (unreadCount.mentions > 0 || unreadCount.quotes > 0))
+
 }
 
 

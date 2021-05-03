@@ -5,7 +5,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.otr.ClientId
-import com.waz.model.{ConvId, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
+import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -18,7 +18,7 @@ import scala.concurrent.Future
 import scala.util.Try
 
 trait LegalHoldService {
-  def legalHoldRequestEventStage: Stage.Atomic
+  def legalHoldEventStage: Stage.Atomic
   def isLegalHoldActive(userId: UserId): Signal[Boolean]
   def isLegalHoldActive(conversationId: ConvId): Signal[Boolean]
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]]
@@ -42,12 +42,22 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   import com.waz.threading.Threading.Implicits.Background
 
-  override def legalHoldRequestEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldRequestEvent] { (_, events) =>
-    Future.sequence {
-      events
-        .filter(_.targetUserId == selfUserId)
-        .map(event => storeLegalHoldRequest(event.request))
-    }.map(_ => ())
+  override def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldEvent] { (_, events) =>
+    Future.traverse(events)(processEvent)
+  }
+
+  private def processEvent(event: LegalHoldEvent): Future[Unit] = event match {
+    case LegalHoldRequestEvent(userId, request) if userId == selfUserId =>
+      storeLegalHoldRequest(request)
+
+    case LegalHoldEnableEvent(userId) if userId == selfUserId =>
+      deleteLegalHoldRequest()
+
+    case LegalHoldDisableEvent(userId) if userId == selfUserId =>
+      deleteLegalHoldRequest()
+
+    case _ =>
+      Future.successful({})
   }
 
   override def isLegalHoldActive(userId: UserId): Signal[Boolean] =
@@ -69,8 +79,8 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   override def getFingerprint(request: LegalHoldRequest): Option[String] =
     Try(CryptoBox.getFingerprintFromPrekey(request.lastPreKey)).toOption.map(new String(_))
 
-  override def approveRequest(request: LegalHoldRequest,
-                              password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {
+  def approveRequest(request: LegalHoldRequest,
+                     password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {
     _      <- createLegalHoldClientAndSession(request)
     result <- postApproval(password)
     _      <- result match {
