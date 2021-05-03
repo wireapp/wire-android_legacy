@@ -81,12 +81,12 @@
 
         <ImageButton
             android:id="@+id/conversation_list_toolbar_image_button_legal_hold"
-            android:layout_width="?actionBarSize"
-            android:layout_height="match_parent"
+            android:layout_width="?attr/actionBarSize"
+            android:layout_height="?attr/actionBarSize"
             android:background="@null"
             android:scaleType="center"
-            android:src="@drawable/ic_legal_hold_active"
             android:visibility="invisible"
+            tools:src="@drawable/ic_legal_hold_active"
             tools:visibility="visible" />
 
     </LinearLayout>

@@ -46,4 +46,10 @@ object SyncResult {
 
   def apply(result: Either[ErrorResponse, _]): SyncResult =
     result.fold[SyncResult](SyncResult(_), _ => SyncResult.Success)
+
+  def unapply(result: SyncResult): Option[ErrorResponse] = result match {
+    case Success => None
+    case Failure(error) =>Some(error)
+    case Retry(error) =>Some(error)
+  }
 }

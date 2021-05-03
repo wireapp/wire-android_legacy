@@ -17,7 +17,10 @@ class LegalHoldController(implicit injector: Injector)
 
   private lazy val legalHoldService = inject[Signal[LegalHoldService]]
 
+  val showingLegalHoldInfo: SourceStream[Boolean] = EventStream[Boolean]
+
   val onLegalHoldSubjectClick: SourceStream[UserId] = EventStream[UserId]
+  val onAllLegalHoldSubjectsClick: SourceStream[Unit] = EventStream[Unit]
 
   def isLegalHoldActive(userId: UserId): Signal[Boolean] =
     Signal.const(false)
@@ -28,8 +31,10 @@ class LegalHoldController(implicit injector: Injector)
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] =
     Signal.const(Seq.empty)
 
-  def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
+  val legalHoldRequest: Signal[Option[LegalHoldRequest]] =
     legalHoldService.flatMap(_.legalHoldRequest)
+
+  val hasPendingRequest: Signal[Boolean] = legalHoldRequest.map(_.isDefined)
 
   def getFingerprint(request: LegalHoldRequest): Future[Option[String]] =
     legalHoldService.head.map(_.getFingerprint(request))

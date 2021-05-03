@@ -9,7 +9,7 @@ import scala.concurrent.Future
 class RequestLegalHoldCheck(legalHoldController: LegalHoldController) extends SecurityChecklist.Check {
 
   override def isSatisfied: Future[Boolean] =
-    legalHoldController.legalHoldRequest.head.map(_.isEmpty)
+    legalHoldController.hasPendingRequest.head.map(!_)
 }
 
 object RequestLegalHoldCheck {

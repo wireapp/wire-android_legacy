@@ -1,5 +1,6 @@
 package com.waz.zclient.legalhold
 
+import android.content.Context
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
@@ -10,7 +11,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.Signal
 
-class LegalHoldInfoFragment extends BaseFragment[LegalHoldInfoFragment.Container]()
+class LegalHoldInfoFragment extends BaseFragment[LegalHoldSubjectsContainer]()
   with FragmentHelper {
 
   import LegalHoldInfoFragment._
@@ -20,8 +21,9 @@ class LegalHoldInfoFragment extends BaseFragment[LegalHoldInfoFragment.Container
 
   private lazy val legalHoldController = inject[LegalHoldController]
 
-  private lazy val adapter = returning(new LegalHoldUsersAdapter(users, MAX_PARTICIPANTS)) {
-    _.onClick(legalHoldController.onLegalHoldSubjectClick ! _)
+  private lazy val adapter = returning(new LegalHoldUsersAdapter(users, Some(MAX_PARTICIPANTS))) { adapter =>
+    adapter.onClick(legalHoldController.onLegalHoldSubjectClick ! _)
+    adapter.onShowAllParticipantsClick(_ => legalHoldController.onAllLegalHoldSubjectsClick ! (()))
   }
 
   private lazy val users = getContainer.legalHoldUsers.map(_.toSet)
@@ -33,6 +35,16 @@ class LegalHoldInfoFragment extends BaseFragment[LegalHoldInfoFragment.Container
     super.onViewCreated(view, savedInstanceState)
     setMessage()
     setUpRecyclerView()
+  }
+
+  override def onAttach(context: Context): Unit = {
+    super.onAttach(context)
+    legalHoldController.showingLegalHoldInfo ! true
+  }
+
+  override def onPreDetach(): Unit = {
+    super.onPreDetach()
+    legalHoldController.showingLegalHoldInfo ! false
   }
 
   private def setMessage(): Unit =
@@ -49,12 +61,8 @@ class LegalHoldInfoFragment extends BaseFragment[LegalHoldInfoFragment.Container
 
 object LegalHoldInfoFragment {
 
-  trait Container {
-    val legalHoldUsers: Signal[Seq[UserId]]
-  }
-
   val Tag = "LegalHoldInfoFragment"
-  private val MAX_PARTICIPANTS = 7
+  private val MAX_PARTICIPANTS = 4
   val ARG_MESSAGE_RES_ID = "messageResId_Arg"
 
   def newInstance(messageResId: Int): LegalHoldInfoFragment =
@@ -64,4 +72,8 @@ object LegalHoldInfoFragment {
       }
       frag.setArguments(args)
     }
+}
+
+trait LegalHoldSubjectsContainer {
+  val legalHoldUsers: Signal[Seq[UserId]]
 }

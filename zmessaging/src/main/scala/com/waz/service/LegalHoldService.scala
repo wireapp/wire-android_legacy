@@ -44,8 +44,9 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     }.map(_ => ())
   }
 
-  override def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
-    userPrefs.preference(UserPreferences.LegalHoldRequest).signal
+  private lazy val legalHoldRequestPref = userPrefs(UserPreferences.LegalHoldRequest)
+
+  override def legalHoldRequest: Signal[Option[LegalHoldRequest]] = legalHoldRequestPref.signal
 
   override def getFingerprint(request: LegalHoldRequest): Option[String] =
     Try(CryptoBox.getFingerprintFromPrekey(request.lastPreKey)).toOption.map(new String(_))
@@ -88,10 +89,10 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   } yield ()
 
   def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit] =
-    userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(request))
+    legalHoldRequestPref := Some(request)
 
   def deleteLegalHoldRequest(): Future[Unit] =
-    userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
+    legalHoldRequestPref := None
 
 }
 
