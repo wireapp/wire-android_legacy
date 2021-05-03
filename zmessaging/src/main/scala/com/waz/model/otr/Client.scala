@@ -91,6 +91,7 @@ final case class Client(override val id: ClientId,
 
   lazy val isVerified: Boolean = verified == Verification.VERIFIED
 
+  def isLegalHoldDevice: Boolean = devType == OtrClientType.LEGALHOLD
 
   def updated(c: Client): Client = {
     val location = (regLocation, c.regLocation) match {

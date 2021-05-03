@@ -25,7 +25,7 @@ import com.waz.db.Col._
 import com.waz.db.{Dao, Dao2}
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model
-import com.waz.model.ConversationData.{ConversationType, Link, UnreadCount}
+import com.waz.model.ConversationData.{ConversationType, LegalHoldStatus, Link, UnreadCount}
 import com.waz.service.SearchKey
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
@@ -61,7 +61,8 @@ case class ConversationData(override val id:      ConvId                 = ConvI
                             access:               Set[Access]            = Set.empty,
                             accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
                             link:                 Option[Link]           = None,
-                            receiptMode:          Option[Int]            = None  //Some(1) if both users have RR enabled in a 1-to-1 convo
+                            receiptMode:          Option[Int]            = None,  //Some(1) if both users have RR enabled in a 1-to-1 convo
+                            legalHoldStatus:      LegalHoldStatus        = LegalHoldStatus.Disabled
                            ) extends Identifiable[ConvId] {
   def getName(): String = name.fold("")(_.str) // still used in Java
 
@@ -83,7 +84,20 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 
   def withCleared(time: RemoteInstant) = copy(cleared = Some(cleared.fold(time)(_ max time)))
 
-  val isTeamOnly: Boolean = accessRole match {
+  def withNewLegalHoldStatus(detectedLegalHoldDevice: Boolean): ConversationData = {
+    import LegalHoldStatus._
+
+    val status = (legalHoldStatus, detectedLegalHoldDevice) match {
+      case (Disabled, true) => PendingApproval
+      case (PendingApproval, false) => Disabled
+      case (Enabled, false) => Disabled
+      case (existingStatus, _) => existingStatus
+    }
+
+    copy(legalHoldStatus = status)
+  }
+
+    val isTeamOnly: Boolean = accessRole match {
     case Some(TEAM) if access.contains(Access.INVITE) => true
     case _ => false
   }
@@ -183,6 +197,13 @@ object ConversationData {
     def values = Set(Unknown, Group, OneToOne, Self, WaitForConnection, Incoming)
   }
 
+  final case class LegalHoldStatus(value: Int)
+  object LegalHoldStatus {
+    val Disabled = LegalHoldStatus(0)
+    val PendingApproval = LegalHoldStatus(1)
+    val Enabled = LegalHoldStatus(2)
+  }
+
   def getAccessAndRoleForGroupConv(teamOnly: Boolean, teamId: Option[TeamId]): (Set[Access], AccessRole) = {
     teamId match {
       case Some(_) if teamOnly => (Set(INVITE), TEAM)
@@ -227,6 +248,7 @@ object ConversationData {
     val UnreadMentionsCount = int('unread_mentions_count)(_.unreadCount.mentions)
     val UnreadQuotesCount   = int('unread_quote_count)(_.unreadCount.quotes)
     val ReceiptMode         = opt(int('receipt_mode))(_.receiptMode)
+    val LegalHoldStatus     = int[LegalHoldStatus]('legal_hold_status, _.value, ConversationData.LegalHoldStatus.apply)(_.legalHoldStatus)
 
     private def getVerification(name: String): Verification =
       Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)
@@ -266,7 +288,8 @@ object ConversationData {
       Link,
       UnreadMentionsCount,
       UnreadQuotesCount,
-      ReceiptMode
+      ReceiptMode,
+      LegalHoldStatus
     )
 
     override def apply(implicit cursor: DBCursor): ConversationData =
@@ -298,7 +321,8 @@ object ConversationData {
         Access,
         AccessRole,
         Link,
-        ReceiptMode
+        ReceiptMode,
+        LegalHoldStatus
       )
 
     import com.waz.model.ConversationData.ConversationType._
