@@ -1,6 +1,5 @@
 package com.waz.zclient.storage.userdatabase.property
 
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -9,10 +8,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class PropertyTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
+class PropertyTables127to128MigrationTest : UserDatabaseMigrationTest(127, 128) {
 
     @Test
-    fun givenKeyValueInsertedIntoMessagesTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
+    fun givenKeyValueInsertedIntoMessagesTableVersion127_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
 
         val key = "testKey"
         val value = "testValue"
@@ -22,7 +21,7 @@ class PropertyTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
             value = value,
             openHelper = testOpenHelper)
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
+        validateMigration(USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(allKeyValues()[0]) {
@@ -33,7 +32,7 @@ class PropertyTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
     }
 
     @Test
-    fun givenPropertyInsertedIntoPropertiesTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
+    fun givenPropertyInsertedIntoPropertiesTableVersion127_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
 
         val key = "testKey"
         val value = "testValue"
@@ -44,7 +43,7 @@ class PropertyTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
             openHelper = testOpenHelper
         )
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
+        validateMigration(USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(allProperties()[0]) {

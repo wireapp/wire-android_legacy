@@ -1,10 +1,11 @@
 package com.waz.service
 
-import com.waz.api.IConversation.LegalHoldStatus
-import com.waz.api.IConversation.LegalHoldStatus._
+
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model.{ConvId, ConversationData, UserId}
+import com.waz.model.ConversationData.LegalHoldStatus
+import com.waz.model.ConversationData.LegalHoldStatus._
 import com.waz.specs.AndroidFreeSpec
 import com.wire.signals.EventStream
 
@@ -113,18 +114,18 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
   feature("it calculates status when") {
 
     scenario("existing status is disabled") {
-      assert(existingStatus = DISABLED, detectedLegalHoldDevice = true, expectation = PENDING_APPROVAL)
-      assert(existingStatus = DISABLED, detectedLegalHoldDevice = false, expectation = DISABLED)
+      assert(existingStatus = Disabled, detectedLegalHoldDevice = true, expectation = PendingApproval)
+      assert(existingStatus = Disabled, detectedLegalHoldDevice = false, expectation = Disabled)
     }
 
     scenario("existing status is pending approval") {
-      assert(existingStatus = PENDING_APPROVAL, detectedLegalHoldDevice = true, expectation = PENDING_APPROVAL)
-      assert(existingStatus = PENDING_APPROVAL, detectedLegalHoldDevice = false, expectation = DISABLED)
+      assert(existingStatus = PendingApproval, detectedLegalHoldDevice = true, expectation = PendingApproval)
+      assert(existingStatus = PendingApproval, detectedLegalHoldDevice = false, expectation = Disabled)
     }
 
     scenario("existing status is enabled") {
-      assert(existingStatus = ENABLED, detectedLegalHoldDevice = true, expectation = ENABLED)
-      assert(existingStatus = ENABLED, detectedLegalHoldDevice = false, expectation = DISABLED)
+      assert(existingStatus = Enabled, detectedLegalHoldDevice = true, expectation = Enabled)
+      assert(existingStatus = Enabled, detectedLegalHoldDevice = false, expectation = Disabled)
     }
 
     def assert(existingStatus: LegalHoldStatus,
@@ -134,7 +135,7 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
       val conv = ConversationData(legalHoldStatus = existingStatus)
 
       // When
-      val result = statusUpdater.update(conv, detectedLegalHoldDevice)
+      val result = conv.withNewLegalHoldStatus(detectedLegalHoldDevice)
 
       // Then
       result.legalHoldStatus shouldEqual expectation

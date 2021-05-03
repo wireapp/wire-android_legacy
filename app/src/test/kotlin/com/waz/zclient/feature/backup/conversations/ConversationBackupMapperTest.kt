@@ -127,7 +127,8 @@ class ConversationBackupMapperTest : UnitTest() {
             link = data.link,
             unreadMentionsCount = data.unreadMentionsCount,
             unreadQuoteCount = data.unreadQuoteCount,
-            receiptMode = data.receiptMode
+            receiptMode = data.receiptMode,
+            legalHoldStatus = data.legalHoldStatus
         )
 
         val entity = backupMapper.toEntity(model)

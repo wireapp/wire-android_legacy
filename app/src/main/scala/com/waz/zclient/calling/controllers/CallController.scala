@@ -40,7 +40,7 @@ import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
-import com.waz.zclient.{Injectable, Injector, R, WireContext}
+import com.waz.zclient.{BuildConfig, Injectable, Injector, R, WireContext}
 import com.wire.signals._
 import com.wire.signals.ext.{ButtonSignal, ClockSignal}
 import org.threeten.bp.Instant
@@ -139,9 +139,13 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   private val lastCallAccountId: SourceSignal[UserId] = Signal()
   currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
 
-  val theme: Signal[Theme] = isVideoCall.flatMap {
-    case true  => Signal.const(Theme.Dark)
-    case false => inject[ThemeController].currentTheme
+  var theme: Signal[Theme] = Signal.const(Theme.Dark)
+
+  if (!BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
+    theme = isVideoCall.flatMap {
+      case true => Signal.const(Theme.Dark)
+      case false => inject[ThemeController].currentTheme
+    }
   }
 
   private val mergedVideoStates: Signal[Map[UserId, Set[VideoState]]] = {

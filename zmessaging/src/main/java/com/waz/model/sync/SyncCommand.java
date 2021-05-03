@@ -62,6 +62,7 @@ public enum SyncCommand {
     SyncSelfClients("sync-clients"),   // sync user clients, register current client and update prekeys when needed
     SyncSelfPermissions("sync-self-permissions"),
     SyncClients("sync-user-clients"),
+    SyncClientsBatch("sync-user-clients-batch"),
     SyncClientLocation("sync-client-location"),
     SyncPreKeys("sync-prekeys"),
     PostAddBot("post-add-bot"),

@@ -39,7 +39,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ContextUtils, RichView}
-import com.waz.zclient.{R, ViewHelper, WireApplication}
+import com.waz.zclient.{BuildConfig, R, ViewHelper, WireApplication}
 import com.wire.signals.{EventStream, Signal, SourceStream}
 
 import scala.async.Async._
@@ -48,7 +48,7 @@ import scala.concurrent.Future
 
 class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends GridLayout(context, attrs, defStyleAttr) with ViewHelper with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
@@ -80,17 +80,30 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   returning(findById[CallControlButtonView](R.id.mute_call)) { button =>
     controller.isCallEstablished.onUi(button.setEnabled)
     controller.isMuted.onUi(button.setActivated)
-    Signal.zip(controller.isVideoCall, controller.isMuted, themeController.currentTheme).map {
-      case (true, true, _)             => Some(drawMuteDark _)
-      case (true, false, _)            => Some(drawUnmuteDark _)
-      case (false, true, Theme.Dark)   => Some(drawMuteDark _)
-      case (false, true, Theme.Light)  => Some(drawMuteLight _)
-      case (false, false, Theme.Dark)  => Some(drawUnmuteDark _)
-      case (false, false, Theme.Light) => Some(drawUnmuteLight _)
-      case _                           => None
-    }.onUi {
-      case Some(drawFunction)          => button.set(drawFunction, R.string.incoming__controls__ongoing__mute, mute)
-      case _ =>
+
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
+      Signal.zip(controller.isMuted, themeController.currentTheme).map {
+        case (true, _) => Some(drawMuteDark _)
+        case (false, _) => Some(drawUnmuteDark _)
+        case _ => None
+      }.onUi {
+        case Some(drawFunction) => button.set(drawFunction, R.string.incoming__controls__ongoing__mute, mute)
+        case _ =>
+      }
+    }
+    else {
+      Signal.zip(controller.isVideoCall, controller.isMuted, themeController.currentTheme).map {
+        case (true, true, _) => Some(drawMuteDark _)
+        case (true, false, _) => Some(drawUnmuteDark _)
+        case (false, true, Theme.Dark) => Some(drawMuteDark _)
+        case (false, true, Theme.Light) => Some(drawMuteLight _)
+        case (false, false, Theme.Dark) => Some(drawUnmuteDark _)
+        case (false, false, Theme.Light) => Some(drawUnmuteLight _)
+        case _ => None
+      }.onUi {
+        case Some(drawFunction) => button.set(drawFunction, R.string.incoming__controls__ongoing__mute, mute)
+        case _ =>
+      }
     }
   }
 
@@ -193,7 +206,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   private def drawUnmuteLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
     drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, lightTheme)
 
-  private def drawUnmuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit = 
+  private def drawUnmuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
     drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, darkTheme)
 
   private def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int, theme: Resources#Theme): Unit =
