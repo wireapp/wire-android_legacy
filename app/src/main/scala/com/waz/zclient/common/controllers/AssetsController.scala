@@ -86,7 +86,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     zms.flatMap(_.userPrefs.preference(DownloadImagesAlways).signal).disableAutowiring()
 
   messageActionsController.onMessageAction
-    .collect { case (MessageAction.OpenFile, msg) => msg.assetId } {
+    .collect { case (MessageAction.OpenFile, msg) => msg.assetId }.foreach {
       case Some(id) => openFile(id)
       case _ =>
     }

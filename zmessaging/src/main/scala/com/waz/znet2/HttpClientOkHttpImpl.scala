@@ -60,22 +60,20 @@ class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: Exec
   ): CancellableFuture[Response[Body]] =
     CancellableFuture { client.newCall(convertHttpRequest(request, uploadCallback)) }
       .flatMap { okCall =>
-        CancellableFuture.lift(
-          future = Future { okCall.execute() }
-            .recoverWith {
-              case ex: UnknownServiceException =>
-                error(l"failure while getting okHttp response, unknown service.", ex)
-                Future.failed(UnknownServiceError(ex))
-              case err =>
-                error(l"failure while getting okHttp response.", err)
-                Future.failed(ConnectionError(err))
-            }
-            .map(convertOkHttpResponse(_, downloadCallback)),
-          onCancel = {
+        CancellableFuture(okCall.execute())
+          .recoverWith {
+            case ex: UnknownServiceException =>
+              error(l"failure while getting okHttp response, unknown service.", ex)
+              CancellableFuture.failed(UnknownServiceError(ex))
+            case err =>
+              error(l"failure while getting okHttp response.", err)
+              CancellableFuture.failed(ConnectionError(err))
+          }
+          .map(convertOkHttpResponse(_, downloadCallback))
+          .onCancel {
             verbose(l"cancel executing okHttp request: $request")
             okCall.cancel()
           }
-        )
       }
 }
 

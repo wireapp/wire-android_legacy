@@ -52,12 +52,12 @@ class ConversationStorageImpl(storage: ZmsDatabase)
 
   import com.waz.threading.Threading.Implicits.Background
 
-  onAdded { cs => updateSearchKey(cs)}
+  onAdded.foreach { cs => updateSearchKey(cs)}
 
-  def setUnknownVerification(convId: ConvId) =
+  def setUnknownVerification(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] =
     update(convId, { c => c.copy(verified = if (c.verified == Verification.UNVERIFIED) UNKNOWN else c.verified) })
 
-  onUpdated { cs =>
+  onUpdated.foreach { cs =>
     updateSearchKey(cs.collect {
       case (p, c) if p.name != c.name || (p.convType == Group) != (c.convType == Group) || (c.name.nonEmpty && c.searchKey.isEmpty) => c
     })

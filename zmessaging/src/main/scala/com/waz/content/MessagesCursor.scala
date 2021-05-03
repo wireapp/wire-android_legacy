@@ -54,14 +54,14 @@ class MessagesCursor(cursor: DBCursor,
   private val quotes = new LruCache[MessageId, Seq[MessageId]](WindowSize * 2)
   private val windowLoader = new WindowLoader(cursor)
 
-  val createTime = LocalInstant.Now //used in UI
+  val createTime: LocalInstant = LocalInstant.Now //used in UI
 
-  override def size = cursor.getCount
+  override def size: Int = cursor.getCount
 
   val onUpdate = EventStream[(MessageAndLikes, MessageAndLikes)]()
 
-  private val subs = Seq (
-    loader.onUpdate { id =>
+  private val sub =
+    loader.onUpdate.foreach { id =>
 
       val replies = Option(quotes.get(id)).map(qs => qs.map(q => Option(messages.get(q)))).getOrElse(Seq())
 
@@ -73,13 +73,12 @@ class MessagesCursor(cursor: DBCursor,
         })
       }
     }
-  )
 
   verbose(l"init(_, $lastReadIndex, $lastReadTime) - lastRead: $lastReadIndex")
 
   override def close(): Unit = {
     Threading.assertUiThread()
-    subs foreach(_.destroy())
+    sub.destroy()
     Future(if (! cursor.isClosed) cursor.close())
   }
 
@@ -195,6 +194,7 @@ class MessagesCursor(cursor: DBCursor,
       if (indexFromEnd < 0) -1 else cursor.getCount - indexFromEnd - 1
     }
 
+  @scala.annotation.tailrec
   private def cursorBinarySearch(time: RemoteInstant, from: Int = 0, to: Int = cursor.getCount - 1): Int = {
     val idx = from + (to - from - 1) / 2
     cursor.moveToPosition(idx)
@@ -206,7 +206,7 @@ class MessagesCursor(cursor: DBCursor,
     }
   }
 
-  private def putMessage(message: MessageAndLikes) = {
+  private def putMessage(message: MessageAndLikes): Unit = {
     messages.put(message.message.id, message)
     message.quote.foreach { q =>
       val qs = Option(quotes.get(q.id)).getOrElse(Seq())

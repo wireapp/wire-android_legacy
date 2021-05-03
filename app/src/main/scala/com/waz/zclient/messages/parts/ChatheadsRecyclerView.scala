@@ -26,6 +26,7 @@ import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageViewFactory
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.threading.Threading._
 
 trait ChatheadsRecyclerView extends ViewGroup with ViewHelper with DerivedLogTag {
   val cache = inject[MessageViewFactory]
@@ -33,14 +34,14 @@ trait ChatheadsRecyclerView extends ViewGroup with ViewHelper with DerivedLogTag
 
   val users = Signal[Seq[UserId]]()
 
-  users { ids =>
+  users.onUi { ids =>
     verbose(l"user id: $ids")
     if (getChildCount > ids.length) {
       for (i <- ids.length until getChildCount) cache.recycle(getChildAt(i), chatHeadResId)
       removeViewsInLayout(ids.length, getChildCount - ids.length)
     }
 
-    ids.zipWithIndex foreach { case (id, index) =>
+    ids.zipWithIndex.foreach { case (id, index) =>
       val view =
         if (index < getChildCount) getChildAt(index).asInstanceOf[ChatHeadView]
         else returning(cache.get[ChatHeadView](chatHeadResId, this)) { addView }

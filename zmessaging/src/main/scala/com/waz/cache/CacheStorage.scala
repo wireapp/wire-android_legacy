@@ -46,7 +46,7 @@ class CacheStorageImpl(storage: Database, context: Context)
 
   import com.waz.threading.Threading.Implicits.Background
 
-  onUpdated { _ foreach {
+  onUpdated.foreach { _.foreach {
     case (prev, updated) if prev.fileId != updated.fileId => cleanup(prev)
     case _ => // ignore
   } }

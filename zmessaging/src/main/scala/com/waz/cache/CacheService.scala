@@ -167,7 +167,8 @@ class CacheServiceImpl(context: Context, storage: Database, cacheStorage: CacheS
     }
   }
 
-  def move(key: CacheKey, entry: LocalData, mime: Mime = Mime.Unknown, name: Option[String] = None, cacheLocation: Option[File] = None)(implicit timeout: Expiration = CacheService.DefaultExpiryTime) = {
+  def move(key: CacheKey, entry: LocalData, mime: Mime = Mime.Unknown, name: Option[String] = None, cacheLocation: Option[File] = None)
+          (implicit timeout: Expiration = CacheService.DefaultExpiryTime) = {
     verbose(l"move($key)")
 
     def copy() = addStream(key, entry.inputStream, mime, name, cacheLocation, entry.length)

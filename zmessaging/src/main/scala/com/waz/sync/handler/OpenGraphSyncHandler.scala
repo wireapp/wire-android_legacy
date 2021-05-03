@@ -166,7 +166,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
       val content = ContentForUpload(s"open_graph_image_${prev.proto.getPermanentUrl}", Content.File(Mime.Image.Jpg, imageFile))
       val encryption = AES_CBC_Encryption.random
       for {
-        rawAsset <- assets.createAndSaveUploadAsset(content, encryption, public = false, retention, Some(messageId)).toCancellable
+        rawAsset <- assets.createAndSaveUploadAsset(content, encryption, public = false, retention, Some(messageId)).lift
         asset <- assets.uploadAsset(rawAsset.id)
       } yield asset
     }

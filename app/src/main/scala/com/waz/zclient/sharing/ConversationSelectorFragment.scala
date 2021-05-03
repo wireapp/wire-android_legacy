@@ -78,7 +78,7 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
   private lazy val multiPicker = getBooleanArg(MultiPickerArgumentKey)
 
   private lazy val adapter = returning(new ConversationSelectorAdapter(getContext, filterText, multiPicker)) { a =>
-    onClickEvent { _ =>
+    onClickEvent.onUi { _ =>
       a.selectedConversations.head.map { convs =>
         sharingController.onContentShared(getActivity, convs)
         if (multiPicker) showToast(R.string.multi_share_toast_sending, long = false)
@@ -199,7 +199,7 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
       list.setAdapter(adapter)
     }
 
-    accountTabs.map(_.onTabClick.map(a => Some(a.id))(accounts.setAccount)).foreach(subs += _)
+    accountTabs.map(_.onTabClick.map(a => Some(a.id)).foreach(accounts.setAccount)).foreach(subs += _)
 
     sendButton.foreach(_.onClick {
       if (!adapter.selectedConversations.currentValue.forall(_.isEmpty)) {

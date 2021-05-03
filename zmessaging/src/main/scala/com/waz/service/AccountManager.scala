@@ -108,7 +108,7 @@ class AccountManager(val userId:  UserId,
   }
 
   private var hasClient = false
-  otrCurrentClient.map(_.isDefined) { exists =>
+  otrCurrentClient.map(_.isDefined).foreach { exists =>
     if (hasClient && !exists) {
       info(l"client has been removed on backend, logging out")
       logoutAndResetClient()

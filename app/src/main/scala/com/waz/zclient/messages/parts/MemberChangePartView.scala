@@ -44,7 +44,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
     with MessageViewPart
     with ViewHelper
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -96,7 +96,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
       case Other(name) => name == users.DefaultDeletedName.str
       case _           => false
     }
-    
+
     (msg.msgType, displayName, msg.members.toSeq) match {
         //Create Conv
       case (MEMBER_JOIN, Me, _)       if msg.firstMessage && msg.name.isDefined && shorten => getQuantityString(R.plurals.content__system__with_others_only, othersCount, namesListString, othersCount.toString)
@@ -153,7 +153,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
     .map(_.map(toPx))
     .onUi(_.foreach(this.setMarginTop))
 
-  iconGlyph {
+  iconGlyph.onUi {
     case Left(i) => messageView.setIconGlyph(i)
     case Right(d) => messageView.setIcon(d)
   }
@@ -166,7 +166,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
 
   servicesPresentWarning.onUi { text =>
     warningText.setVisible(text.isDefined)
-    text.foreach(warningText.setText(_))
+    text.foreach(warningText.setText)
   }
 
 }

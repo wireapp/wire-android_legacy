@@ -138,7 +138,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
 
   private val actionsController = inject[MessageActionsController]
 
-  actionsController.onMessageAction {
+  actionsController.onMessageAction.foreach {
     case (MessageAction.Edit, message) =>
       editingMsg ! Some(message)
       CancellableFuture.delayed(100.millis) { keyboard ! KeyboardState.Shown }
@@ -148,7 +148,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
 
   // notify SE about typing state
   private var prevEnteredText = ""
-  enteredText {
+  enteredText.foreach {
     case (CursorText(text, _), EnteredTextSource.FromView) if text != prevEnteredText =>
       for {
         typing <- zms.map(_.typing).head
@@ -207,11 +207,6 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
         enteredText ! (CursorText.Empty, EnteredTextSource.FromController)
       }
     case false =>
-  }
-
-  editHasFocus {
-    case true => // TODO - reimplement for tablets
-    case false => // ignore
   }
 
   private val msgBeingSendInConv = Signal(Set.empty[ConvId])
@@ -306,10 +301,9 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   private lazy val screenController   = inject[ScreenController]
   private lazy val accentColorController  = inject[AccentColorController]
 
-
   import CursorMenuItem._
 
-  onCursorItemClick {
+  onCursorItemClick.foreach {
     case CursorMenuItem.More => secondaryToolbarVisible ! true
     case CursorMenuItem.Less => secondaryToolbarVisible ! false
     case AudioMessage =>

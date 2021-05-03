@@ -73,7 +73,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
 
   //if the user likes OR dislikes something, we want to allow the timestamp/footer to disappear immediately
   val likedBySelfTime = Signal(Instant.EPOCH)
-  likedBySelf.onChanged(_ => likedBySelfTime ! Instant.now)
+  likedBySelf.onChanged.foreach(_ => likedBySelfTime ! Instant.now)
 
   val active =
     for {

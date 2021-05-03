@@ -51,18 +51,18 @@ class EphemeralMessagesService(selfUserId: UserId,
 
   private val nextExpiryTime = Signal[LocalInstant](LocalInstant.Max)
 
-  val init = removeExpired()
+  private val init = removeExpired()
 
-  nextExpiryTime {
+  nextExpiryTime.foreach {
     case LocalInstant.Max => // nothing to expire
     case time => CancellableFuture.delayed((time.toEpochMilli - LocalInstant.Now.toEpochMilli).millis) { removeExpired() }
   }
 
-  storage.onAdded { msgs =>
+  storage.onAdded.foreach { msgs =>
     updateNextExpiryTime(msgs.flatMap(_.expiryTime))
   }
 
-  storage.onUpdated { updates =>
+  storage.onUpdated.foreach { updates =>
     updateNextExpiryTime(updates.flatMap(_._2.expiryTime))
   }
 

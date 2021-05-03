@@ -60,17 +60,17 @@ trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
       case false => Signal const Left(originalColor)
     }
 
-    typeface { textView.setTypeface }
-    color {
+    typeface.foreach { textView.setTypeface }
+    color.foreach {
       case Left(csl) => textView.setTextColor(csl)
       case Right(ac) => textView.setTextColor(ac.color)
     }
   }
 
-  def ephemeralDrawable(drawable: Drawable) =
+  def ephemeralDrawable(drawable: Drawable): Signal[Drawable] =
     for {
       hide <- expired
-      acc <- accentController.accentColor
+      acc  <- accentController.accentColor
     } yield
       if (hide) new ColorDrawable(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(getContext), acc.color))
       else drawable

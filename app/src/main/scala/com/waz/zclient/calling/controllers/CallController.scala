@@ -137,7 +137,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     }
 
   private val lastCallAccountId: SourceSignal[UserId] = Signal()
-  currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
+  currentCall.map(_.selfParticipant.userId).foreach { selfUserId => lastCallAccountId ! selfUserId }
 
   var theme: Signal[Theme] = Signal.const(Theme.Dark)
 
@@ -204,7 +204,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     conv   <- conversation
     device <- currentCaptureDevice
     VideoState.Started <- videoSendState
-  } yield (fm, conv, device)) {
+  } yield (fm, conv, device)).foreach {
     case (fm, conv, Some(currentDevice)) => fm.setVideoCaptureDevice(conv.remoteId, currentDevice.id)
     case _ =>
   }
@@ -331,7 +331,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     v            <- isVideoCall
     st           <- callStateOpt
     callingShown <- callControlsVisible
-  } yield (v, callingShown, st)) {
+  } yield (v, callingShown, st)).foreach {
     case (true, _, _)                       => screenManager.setStayAwake()
     case (false, true, Some(OtherCalling))  => screenManager.setStayAwake()
     case (false, true, Some(SelfCalling |
@@ -345,7 +345,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     isIncoming <- isCallIncoming
     isAllowed  <- allowedByStatus
     uid        <- lastCallAccountId
-  } yield (isMuted, isIncoming, isAllowed, uid)) { case (isMuted, isIncoming, isAllowed, uid) =>
+  } yield (isMuted, isIncoming, isAllowed, uid)).foreach { case (isMuted, isIncoming, isAllowed, uid) =>
     //TODO Why we call this method when isCallIncoming is false?
     soundController.setIncomingRingTonePlaying(uid, !isMuted && isIncoming && isAllowed)
   }
@@ -362,7 +362,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     users   <- zms.usersStorage.listSignal(members)
   } yield users.map(u => u.id -> u.isVerified).toMap
 
-  usersVerifications { newUV =>
+  usersVerifications.foreach { newUV =>
     isCallDegraded = currentUV.exists {
       case (id, verified) => verified && newUV.get(id).contains(false)
     }
@@ -374,20 +374,19 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     }
   }
 
-  isCallActive {
-    case false => {
+  isCallActive.foreach {
+    case false =>
       currentUV = Map.empty
       if (!isCallDegraded) Future {
         shouldHideCallingUi ! {}
       }(Threading.Ui)
-    }
     case _ =>
   }
 
   (for {
     v <- isVideoCall
     o <- isCallOutgoing
-  } yield (v, o & !isCallDegraded)) { case (v, play) =>
+  } yield (v, o & !isCallDegraded)).foreach { case (v, play) =>
     soundController.setOutgoingRingTonePlaying(play, v)
   }
 

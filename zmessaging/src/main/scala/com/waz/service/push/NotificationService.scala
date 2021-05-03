@@ -76,13 +76,13 @@ class NotificationServiceImpl(selfUserId:      UserId,
 
   private val schedulePushNotificationsToUi = Signal(false)
 
-  Signal.zip(schedulePushNotificationsToUi, pushService.processing).onChanged {
+  Signal.zip(schedulePushNotificationsToUi, pushService.processing).onChanged.foreach {
     case (true, false) =>
       pushNotificationsToUi().map { _ => schedulePushNotificationsToUi ! false }
     case _ =>
   }
 
-  uiController.notificationsSourceVisible { sources =>
+  uiController.notificationsSourceVisible.foreach { sources =>
     sources.get(selfUserId).map(Some(_)).foreach(dismissNotifications)
   }
 

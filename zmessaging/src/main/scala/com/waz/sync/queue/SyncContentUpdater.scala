@@ -69,7 +69,7 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
 
       jobs foreach { updateMerger(_, storage) }
 
-      storage.onAdded { job =>
+      storage.onAdded.foreach { job =>
         job.request match {
           case SerialConvRequest(conv) =>
             storage.getJobs.filter { j => SerialConvRequest.unapply(j.request).contains(conv) && j.priority > job.priority } foreach { j =>
@@ -81,9 +81,9 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
         updateMerger(job, storage)
       }
 
-      storage.onUpdated { case (_, updated) => updateMerger(updated, storage) }
+      storage.onUpdated.foreach { case (_, updated) => updateMerger(updated, storage) }
 
-      storage.onRemoved { job =>
+      storage.onRemoved.foreach { job =>
         mergers.get(job.mergeKey) foreach { merger =>
           merger.remove(job.id)
           if (merger.isEmpty) mergers.remove(job.mergeKey)
@@ -95,9 +95,9 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
   override lazy val syncJobs: Signal[Map[SyncId, SyncJob]] = {
     val onChange = EventStream[Cmd]()
     syncStorageFuture.map { syncStorage =>
-      syncStorage.onUpdated { case (_, updated) => onChange ! Update(updated) }
-      syncStorage.onAdded   { job => onChange ! Add(job) }
-      syncStorage.onRemoved { job => onChange ! Del(job) }
+      syncStorage.onUpdated.foreach { case (_, updated) => onChange ! Update(updated) }
+      syncStorage.onAdded.foreach   { job => onChange ! Add(job) }
+      syncStorage.onRemoved.foreach { job => onChange ! Del(job) }
     }
 
     new AggregatingSignal[Cmd, Map[SyncId, SyncJob]](

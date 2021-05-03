@@ -131,7 +131,7 @@ class ConversationFragment extends FragmentHelper {
   private var assetIntentsManager: Option[AssetIntentsManager] = None
 
   private lazy val loadingIndicatorView = returning(view[LoadingIndicatorView](R.id.lbv__conversation__loading_indicator)) { vh =>
-    accentColor.map(_.color)(c => vh.foreach(_.setColor(c)))
+    accentColor.map(_.color).foreach(c => vh.foreach(_.setColor(c)))
   }
 
   private var containerPreview: ViewGroup = _

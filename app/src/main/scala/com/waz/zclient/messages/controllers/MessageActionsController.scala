@@ -77,7 +77,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
 
   private var dialog = Option.empty[OptionsMenu]
 
-  onMessageAction {
+  onMessageAction.foreach {
     case (MessageAction.Copy, message)             => copyMessage(message)
     case (MessageAction.DeleteGlobal, message)     => recallMessage(message)
     case (MessageAction.DeleteLocal, message)      => deleteMessage(message)

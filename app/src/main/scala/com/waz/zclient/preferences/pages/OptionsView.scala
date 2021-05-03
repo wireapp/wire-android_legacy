@@ -136,22 +136,22 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     context.asInstanceOf[BaseActivity].startActivityForResult(intent, 0)
   }
 
-  ringToneButton.onClickEvent{ _ => showRingtonePicker(RingtoneManager.TYPE_RINGTONE, defaultRingToneUri, RingToneResultId, ringToneUri)}
-  textToneButton.onClickEvent{ _ =>
+  ringToneButton.onClickEvent.onUi { _ => showRingtonePicker(RingtoneManager.TYPE_RINGTONE, defaultRingToneUri, RingToneResultId, ringToneUri)}
+  textToneButton.onClickEvent.onUi { _ =>
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       openNotificationSettings(NotificationManagerWrapper.MessageNotificationsChannelId(accountId))
     } else {
       showRingtonePicker(RingtoneManager.TYPE_NOTIFICATION, defaultTextToneUri, TextToneResultId, textToneUri)
     }
   }
-  pingToneButton.onClickEvent{ _ =>
+  pingToneButton.onClickEvent.onUi { _ =>
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       openNotificationSettings(NotificationManagerWrapper.PingNotificationsChannelId(accountId))
     } else {
       showRingtonePicker(RingtoneManager.TYPE_NOTIFICATION, defaultPingToneUri, PingToneResultId, pingToneUri)
     }
   }
-  soundsButton.onClickEvent{ _ => showPrefDialog(SoundLevelDialog(soundLevel), SoundLevelDialog.Tag)}
+  soundsButton.onClickEvent.onUi { _ => showPrefDialog(SoundLevelDialog(soundLevel), SoundLevelDialog.Tag)}
 
   override def setSounds(level: IntensityLevel): Unit = {
     soundLevel = level

@@ -23,7 +23,7 @@ import com.waz.content.{MessagesStorage, ReadReceiptsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.sync.ReceiptType
-import com.waz.model.{MessageId, ReadReceipt, UserId}
+import com.waz.model.{MessageData, MessageId, ReadReceipt, UserId}
 import com.waz.service.conversation.ConversationsService
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
@@ -39,7 +39,7 @@ class ReceiptService(messages: MessagesStorage,
                      readReceiptsStorage: ReadReceiptsStorage) extends DerivedLogTag {
   import Threading.Implicits.Background
 
-  messages.onAdded { msgs =>
+  messages.onAdded.foreach { msgs =>
     val filteredMessages = msgs.filter(msg => msg.userId != selfUserId && confirmable(msg.msgType)).groupBy(m => (m.convId, m.userId))
     Future.traverse(filteredMessages) { case ((convId, userId), groupMessages) =>
       for {
@@ -52,7 +52,7 @@ class ReceiptService(messages: MessagesStorage,
   val confirmable = Set(TEXT, TEXT_EMOJI_ONLY, IMAGE_ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, KNOCK,
     RICH_MEDIA, HISTORY_LOST, LOCATION, COMPOSITE)
 
-  def processDeliveryReceipts(receipts: Seq[MessageId]) =
+  def processDeliveryReceipts(receipts: Seq[MessageId]): Future[Seq[(MessageData, MessageData)]] =
     if (receipts.nonEmpty) {
       debug(l"received receipts: $receipts")
       messages.updateAll2(receipts, _.copy(state = DELIVERED))

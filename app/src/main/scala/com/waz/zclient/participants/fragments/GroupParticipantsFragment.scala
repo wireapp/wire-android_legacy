@@ -75,7 +75,7 @@ class GroupParticipantsFragment extends FragmentHelper {
   }
 
   private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.participants, Some(7))) { adapter =>
-    adapter.onClick.mapAsync(participantsController.getUser).onUi {
+    adapter.onClick.mapSync(participantsController.getUser).onUi {
       case Some(user) => (user.providerId, user.integrationId) match {
         case (Some(pId), Some(iId)) =>
           for {

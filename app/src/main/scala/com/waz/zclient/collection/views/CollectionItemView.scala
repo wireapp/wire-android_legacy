@@ -91,7 +91,7 @@ trait CollectionNormalItemView extends CollectionItemView with ClickableViewPart
 
   messageAndLikesResolver.onUi { mal => set(mal, content) }
 
-  onClicked { _ =>
+  onClicked.foreach { _ =>
     import Threading.Implicits.Ui
     for {
       false <- expired.head
@@ -202,37 +202,36 @@ class CollectionSimpleWebLinkPartView(context: Context, attrs: AttributeSet, sty
   val urlText =
     message.map(msg => msg.content.find(c => URLUtil.isValidUrl(c.content)).map(_.content).getOrElse(msg.contentString))
 
-  urlText.on(Threading.Ui) {
+  urlText.onUi {
     urlTextView.setText
   }
 
-  onClicked { _ =>
+  onClicked.onUi { _ =>
     import Threading.Implicits.Ui
     for {
       false <- expired.head
-      text <- urlText.head
+      text  <- urlText.head
     } browser.openUrl(AndroidURIUtil.parse(text))
   }
   registerEphemeral(urlTextView)
 }
 
-case class CollectionItemViewHolder(view: CollectionNormalItemView)(implicit eventContext: EventContext) extends RecyclerView.ViewHolder(view) {
+case class CollectionItemViewHolder(view: CollectionNormalItemView)(implicit eventContext: EventContext)
+  extends RecyclerView.ViewHolder(view) {
 
-  def setMessageData(messageData: MessageData, content: Option[MessageContent]): Unit = {
+  def setMessageData(messageData: MessageData, content: Option[MessageContent]): Unit =
     view.setMessageData(messageData, content)
-  }
 
-  def setMessageData(messageData: MessageData): Unit = {
+  def setMessageData(messageData: MessageData): Unit =
     setMessageData(messageData, None)
-  }
 }
 
-case class CollectionImageViewHolder(view: CollectionImageView, listener: OnClickListener)(implicit eventContext: EventContext) extends RecyclerView.ViewHolder(view) {
-  view.onClicked { _ =>
+case class CollectionImageViewHolder(view: CollectionImageView, listener: OnClickListener)
+                                    (implicit eventContext: EventContext) extends RecyclerView.ViewHolder(view) {
+  view.onClicked.onUi { _ =>
     listener.onClick(view)
   }
 
-  def setMessageData(messageData: MessageData, width: Int, color: Int) = {
+  def setMessageData(messageData: MessageData, width: Int, color: Int): Unit =
     view.setMessageData(messageData, width, color)
-  }
 }

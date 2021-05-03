@@ -32,7 +32,7 @@ class AllGroupParticipantsFragment extends FragmentHelper {
   private lazy val participantsController = inject[ParticipantsController]
 
   private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.participants, showPeopleOnly = true)) {
-    _.onClick(participantsController.onShowUser ! Some(_))
+    _.onClick.foreach(participantsController.onShowUser ! Some(_))
   }
 
   private lazy val searchBox = view[SearchEditText](R.id.search_box)

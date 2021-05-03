@@ -44,15 +44,15 @@ class CreateConversationController(implicit inj: Injector)
 
   private implicit lazy val uiStorage = inject[UiStorage]
 
-  val convId   = Signal(Option.empty[ConvId])
-  val name     = Signal("")
-  val users    = Signal(Set.empty[UserId])
+  val convId       = Signal(Option.empty[ConvId])
+  val name         = Signal("")
+  val users        = Signal(Set.empty[UserId])
   val integrations = Signal(Set.empty[(ProviderId, IntegrationId)])
-  val teamOnly = Signal(true)
+  val teamOnly     = Signal(true)
   val readReceipts = Signal(true)
-  val fromScreen = Signal[GroupConversationEvent.Method]()
+  val fromScreen   = Signal[GroupConversationEvent.Method]()
 
-  teamOnly.onChanged {
+  teamOnly.onChanged.foreach {
     case true =>
       for {
         z   <- zms.head
