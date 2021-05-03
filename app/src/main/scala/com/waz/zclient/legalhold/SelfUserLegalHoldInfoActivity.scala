@@ -9,7 +9,7 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.utils.RichView
 import com.wire.signals.Signal
 
-class SelfUserLegalHoldInfoActivity extends BaseActivity with LegalHoldInfoFragment.Container {
+class SelfUserLegalHoldInfoActivity extends BaseActivity with LegalHoldSubjectsContainer {
 
   private lazy val closeButton = findById[GlyphButton](R.id.legal_hold_info_close_button)
 

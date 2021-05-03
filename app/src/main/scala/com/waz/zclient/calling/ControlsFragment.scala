@@ -31,7 +31,7 @@ import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, Contro
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{BuildConfig, FragmentHelper, R}
+import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.{Signal, Subscription}
 
 class ControlsFragment extends FragmentHelper {
@@ -93,7 +93,6 @@ class ControlsFragment extends FragmentHelper {
       }
     }
 
-    if (BuildConfig.ACTIVE_SPEAKERS_VIEW) {
       Signal.zip(
         controller.isCallEstablished,
         controller.isGroupCall,
@@ -104,7 +103,6 @@ class ControlsFragment extends FragmentHelper {
         case (true, true, true, false, true) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
         case _                               => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
       }
-    } else speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
 
     getView.onClick {
       if (getView.isVisible) controller.controlsClick(false)

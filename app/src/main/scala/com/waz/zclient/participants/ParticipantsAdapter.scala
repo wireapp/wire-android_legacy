@@ -211,7 +211,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = (items(position), holder) match {
     case (Right(AllParticipants), h: ShowAllParticipantsViewHolder) =>
-      h.bind(membersCount + adminsCount)
+      h.bind(allParticipantsCount)
     case (Left(userData), h: ParticipantRowViewHolder) if userData.isAdmin =>
       val lastRow = maxParticipants.forall(n => if (userData.isAdmin) adminsCount <= n else membersCount <= n) && items.lift(position + 1).forall(_.isRight)
       h.bind(userData, teamId, lastRow, createSubtitle, showArrow)
@@ -252,6 +252,8 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       if (showPeopleOnly) h.setContentDescription(s"Admins") else h.setContentDescription(s"Admins: $adminsCount")
     case _ =>
   }
+
+  protected def allParticipantsCount: Int = membersCount + adminsCount
 
   override def getItemCount: Int = items.size
 

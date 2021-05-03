@@ -80,7 +80,8 @@ class ConversationsBackupMapper : BackUpDataMapper<ConversationsBackUpModel, Con
         link = entity.link,
         unreadMentionsCount = entity.unreadMentionsCount,
         unreadQuoteCount = entity.unreadQuoteCount,
-        receiptMode = entity.receiptMode
+        receiptMode = entity.receiptMode,
+        legalHoldStatus = entity.legalHoldStatus
     )
 
     override fun toEntity(model: ConversationsBackUpModel) = ConversationsEntity(

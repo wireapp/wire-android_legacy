@@ -27,6 +27,7 @@ import com.waz.service.conversation.ConversationsService
 import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, UserService}
 import com.waz.specs.AndroidFreeSpec
+import com.waz.sync.SyncResult
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
 import com.waz.sync.client.{MessagesClient, OtrClient}
 import com.waz.sync.otr.OtrSyncHandler.{OtrMessage, TargetRecipients}
@@ -230,9 +231,9 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         }
       }
 
-    (clientsSyncHandler.syncAllClients _)
-      .expects(Seq(missingUser))
-      .returning(Future.successful(None))
+    (clientsSyncHandler.syncClients(_ : Set[QualifiedId]))
+      .expects(Set(QualifiedId(missingUser)))
+      .returning(Future.successful(SyncResult.Success))
 
     val sh = getSyncHandler
     result(sh.postOtrMessage(conv.id, msg))

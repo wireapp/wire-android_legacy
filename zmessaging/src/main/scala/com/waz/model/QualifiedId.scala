@@ -7,6 +7,8 @@ import org.json.JSONObject
 final case class QualifiedId(id: UserId, domain: String)
 
 object QualifiedId {
+  def apply(userId: UserId): QualifiedId = QualifiedId(userId, "")
+
   private val IdFieldName = "id"
   private val DomainFieldName  = "domain"
 
