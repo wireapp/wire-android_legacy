@@ -23,9 +23,11 @@
     android:layout_height="match_parent">
 
     <ImageView
-        android:id="@+id/image_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:id="@+id/profile_picture_image_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/wire__padding__32"
+        />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/participant_info_card_view"
