@@ -49,7 +49,7 @@ object SyncResult {
 
   def unapply(result: SyncResult): Option[ErrorResponse] = result match {
     case Success => None
-    case Failure(error) =>Some(error)
-    case Retry(error) =>Some(error)
+    case Failure(error) => Some(error)
+    case Retry(error) => Some(error)
   }
 }
