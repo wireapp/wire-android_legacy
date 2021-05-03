@@ -20,12 +20,6 @@ class DisabledLegalHoldService extends LegalHoldService {
 
   override def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] = Signal.const(Seq())
 
-  override def isLegalHoldActive(userId: UserId): Signal[Boolean] = Signal.const(false)
-
-  override def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] = Signal.const(false)
-
-  override def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] = Signal.const(Seq())
-
   override def legalHoldRequest: Signal[Option[LegalHoldRequest]] = Signal.const(Option.empty)
 
   override def getFingerprint(request: LegalHoldRequest): Option[String] = Option.empty

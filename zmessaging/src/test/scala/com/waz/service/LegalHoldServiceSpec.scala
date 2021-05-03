@@ -5,7 +5,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{ConvId, ConversationData, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
+import com.waz.model.{ConvId, ConversationData, LegalHoldDisableEvent, LegalHoldEnableEvent, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}

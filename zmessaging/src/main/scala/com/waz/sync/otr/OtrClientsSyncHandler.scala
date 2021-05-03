@@ -47,7 +47,6 @@ trait OtrClientsSyncHandler {
   def syncClientsLocation(): Future[SyncResult]
 
   def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]]
-  def syncAllClients(userIds: Seq[UserId]): Future[Option[ErrorResponse]]
 }
 
 class OtrClientsSyncHandlerImpl(context:    Context,
