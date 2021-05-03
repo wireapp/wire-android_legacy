@@ -9,7 +9,6 @@ import com.wire.signals.{EventStream, Signal, SourceStream}
 
 import scala.concurrent.Future
 
-//TODO: implement status calculation
 class LegalHoldController(implicit injector: Injector)
   extends Injectable {
 
@@ -23,13 +22,13 @@ class LegalHoldController(implicit injector: Injector)
   val onAllLegalHoldSubjectsClick: SourceStream[Unit] = EventStream[Unit]
 
   def isLegalHoldActive(userId: UserId): Signal[Boolean] =
-    Signal.const(false)
+    legalHoldService.flatMap(_.isLegalHoldActive(userId))
 
   def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] =
-    Signal.const(false)
+    legalHoldService.flatMap(_.isLegalHoldActive(conversationId))
 
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] =
-    Signal.const(Seq.empty)
+    legalHoldService.flatMap(_.legalHoldUsers(conversationId))
 
   val legalHoldRequest: Signal[Option[LegalHoldRequest]] =
     legalHoldService.flatMap(_.legalHoldRequest)
