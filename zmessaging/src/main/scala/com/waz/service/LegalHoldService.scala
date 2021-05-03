@@ -3,9 +3,9 @@ package com.waz.service
 import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
-import com.waz.content.UserPreferences
+import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.otr.ClientId
-import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
+import com.waz.model.{ConvId, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -19,6 +19,9 @@ import scala.util.Try
 
 trait LegalHoldService {
   def legalHoldRequestEventStage: Stage.Atomic
+  def isLegalHoldActive(userId: UserId): Signal[Boolean]
+  def isLegalHoldActive(conversationId: ConvId): Signal[Boolean]
+  def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]]
   def legalHoldRequest: Signal[Option[LegalHoldRequest]]
   def getFingerprint(request: LegalHoldRequest): Option[String]
   def deleteLegalHoldRequest(): Future[Unit]
@@ -32,6 +35,9 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                            userPrefs: UserPreferences,
                            client: LegalHoldClient,
                            clientsService: OtrClientsService,
+                           clientsStorage: OtrClientsStorage,
+                           convsStorage: ConversationStorage,
+                           membersStorage: MembersStorage,
                            cryptoSessionService: CryptoSessionService) extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
@@ -43,6 +49,18 @@ class LegalHoldServiceImpl(selfUserId: UserId,
         .map(event => storeLegalHoldRequest(event.request))
     }.map(_ => ())
   }
+
+  override def isLegalHoldActive(userId: UserId): Signal[Boolean] =
+    clientsStorage.optSignal(userId).map(_.fold(false)(_.clients.values.exists(_.isLegalHoldDevice)))
+
+  override def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] =
+    convsStorage.optSignal(conversationId).map(_.fold(false)(_.isUnderLegalHold))
+
+  override def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] = for {
+    users             <- membersStorage.activeMembers(conversationId)
+    usersAndStatus    <- Signal.sequence(users.map(userId => isLegalHoldActive(userId).map(active => userId -> active)).toSeq: _*)
+    legalHoldSubjects = usersAndStatus.collect { case (userId, true) => userId }
+  } yield legalHoldSubjects
 
   private lazy val legalHoldRequestPref = userPrefs(UserPreferences.LegalHoldRequest)
 
