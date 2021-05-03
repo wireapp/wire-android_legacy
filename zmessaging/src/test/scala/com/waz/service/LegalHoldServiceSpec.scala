@@ -1,11 +1,11 @@
 package com.waz.service
 
-import com.waz.api.IConversation.LegalHoldStatus
 import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
+import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{ConvId, ConversationData, LegalHoldDisableEvent, LegalHoldEnableEvent, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
+import com.waz.model.{ConvId, ConversationData, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -112,7 +112,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("for a conversation with enabled legal hold status") {
       // Given
       val convId = ConvId("conv1")
-      mockConversation(convId, LegalHoldStatus.ENABLED)
+      mockConversation(convId, LegalHoldStatus.Enabled)
 
       // When
       val actualResult = result(service.isLegalHoldActive(convId).future)
@@ -124,7 +124,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("for a conversation with pending legal hold status") {
       // Given
       val convId = ConvId("conv1")
-      mockConversation(convId, LegalHoldStatus.PENDING_APPROVAL)
+      mockConversation(convId, LegalHoldStatus.PendingApproval)
 
       // When
       val actualResult = result(service.isLegalHoldActive(convId).future)
@@ -136,7 +136,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("for a conversation with disabled legal hold status") {
       // Given
       val convId = ConvId("conv1")
-      mockConversation(convId, LegalHoldStatus.DISABLED)
+      mockConversation(convId, LegalHoldStatus.Disabled)
 
       // When
       val actualResult = result(service.isLegalHoldActive(convId).future)

@@ -11,9 +11,11 @@ import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.sync.client.LegalHoldClient
 import com.waz.sync.handler.LegalHoldError
+import com.wire.cryptobox.CryptoBox
 import com.wire.signals.Signal
 
 import scala.concurrent.Future
+import scala.util.Try
 
 trait LegalHoldService {
   def legalHoldEventStage: Stage.Atomic
@@ -21,6 +23,7 @@ trait LegalHoldService {
   def isLegalHoldActive(conversationId: ConvId): Signal[Boolean]
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]]
   def legalHoldRequest: Signal[Option[LegalHoldRequest]]
+  def getFingerprint(request: LegalHoldRequest): Option[String]
   def deleteLegalHoldRequest(): Future[Unit]
   def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit]
   def approveRequest(request: LegalHoldRequest,
@@ -39,7 +42,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   import com.waz.threading.Threading.Implicits.Background
 
-  def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldEvent] { (_, events) =>
+  override def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldEvent] { (_, events) =>
     Future.traverse(events)(processEvent)
   }
 
@@ -57,20 +60,24 @@ class LegalHoldServiceImpl(selfUserId: UserId,
       Future.successful({})
   }
 
-  def isLegalHoldActive(userId: UserId): Signal[Boolean] =
+  override def isLegalHoldActive(userId: UserId): Signal[Boolean] =
     clientsStorage.optSignal(userId).map(_.fold(false)(_.clients.values.exists(_.isLegalHoldDevice)))
 
-  def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] =
+  override def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] =
     convsStorage.optSignal(conversationId).map(_.fold(false)(_.isUnderLegalHold))
 
-  def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] = for {
+  override def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]] = for {
     users             <- membersStorage.activeMembers(conversationId)
-    usersAndStatus    <- Signal.sequence(users.map(userId => Signal.zip(Signal.const(userId), isLegalHoldActive(userId))).toSeq: _*)
-    legalHoldSubjects = usersAndStatus.filter(_._2).map(_._1)
+    usersAndStatus    <- Signal.sequence(users.map(userId => isLegalHoldActive(userId).map(active => userId -> active)).toSeq: _*)
+    legalHoldSubjects = usersAndStatus.collect { case (userId, true) => userId }
   } yield legalHoldSubjects
 
-  def legalHoldRequest: Signal[Option[LegalHoldRequest]] =
-    userPrefs.preference(UserPreferences.LegalHoldRequest).signal
+  private lazy val legalHoldRequestPref = userPrefs(UserPreferences.LegalHoldRequest)
+
+  override def legalHoldRequest: Signal[Option[LegalHoldRequest]] = legalHoldRequestPref.signal
+
+  override def getFingerprint(request: LegalHoldRequest): Option[String] =
+    Try(CryptoBox.getFingerprintFromPrekey(request.lastPreKey)).toOption.map(new String(_))
 
   def approveRequest(request: LegalHoldRequest,
                      password: Option[String]): Future[Either[LegalHoldError, Unit]] = for {
@@ -110,10 +117,10 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   } yield ()
 
   def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit] =
-    userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(request))
+    legalHoldRequestPref := Some(request)
 
   def deleteLegalHoldRequest(): Future[Unit] =
-    userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
+    legalHoldRequestPref := None
 
 }
 

@@ -56,6 +56,7 @@ trait UserService {
 
   def getSelfUser: Future[Option[UserData]]
   def findUser(id: UserId): Future[Option[UserData]]
+  def qualifiedId(userId: UserId): Future[QualifiedId]
   def getOrCreateUser(id: UserId): Future[UserData]
   def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]]
   def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan): Future[Option[SyncId]]
@@ -86,6 +87,10 @@ trait UserService {
 
   def storeAvailabilities(availabilities: Map[UserId, Availability]): Future[Seq[(UserData, UserData)]]
   def updateSelfPicture(content: Content): Future[Unit]
+
+  def syncClients(userId: UserId): Future[Unit]
+  def syncClients(userIds: Set[UserId]): Future[Unit]
+  def syncClients(convId: ConvId): Future[Unit]
 }
 
 class UserServiceImpl(selfUserId:        UserId,
@@ -197,9 +202,12 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def findUser(id: UserId): Future[Option[UserData]] = usersStorage.get(id)
 
+  override def qualifiedId(userId: UserId): Future[QualifiedId] =
+    findUser(userId).map(_.flatMap(_.qualifiedId).getOrElse(QualifiedId(userId)))
+
   override def getOrCreateUser(id: UserId) = usersStorage.getOrCreate(id, {
     sync.syncUsers(Set(id))
-    UserData(id, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None)
+    UserData(id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None)
   })
 
   override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =
@@ -358,6 +366,19 @@ class UserServiceImpl(selfUserId:        UserId,
       case Some((p, u)) if p != u => sync(u).map(_ => {})
       case _ => Future.successful({})
     })
+
+  override def syncClients(userId: UserId): Future[Unit] =
+    sync.syncClients(userId).map(_ => ())
+
+  override def syncClients(userIds: Set[UserId]): Future[Unit] =
+    for {
+      users <- usersStorage.listAll(userIds)
+      qIds  =  users.map(user => user.qualifiedId.getOrElse(QualifiedId(user.id))).toSet
+      _     <- sync.syncClients(qIds)
+    } yield ()
+
+  override def syncClients(convId: ConvId): Future[Unit] =
+    membersStorage.getActiveUsers(convId).flatMap(userIds => syncClients(userIds.toSet))
 }
 
 object UserService {

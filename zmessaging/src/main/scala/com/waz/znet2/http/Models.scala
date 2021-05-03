@@ -256,6 +256,6 @@ object RequestInterceptor {
 
 }
 
-case class Request[+T](url: URL, httpMethod: Method, headers: Headers, body: T, interceptor: RequestInterceptor)
+final case class Request[+T](url: URL, httpMethod: Method, headers: Headers, body: T, interceptor: RequestInterceptor)
 
-case class Response[T](code: Int, headers: Headers, body: T)
+final case class Response[T](code: Int, headers: Headers, body: T)

@@ -6,7 +6,7 @@ final String AVS_PRIVATE_GROUP = "com.wearezeta.avs"
 final String AVS_NAME = "avs"
 
 String avsPublicVersion = "6.6.239"
-String avsPrivateVersion = "7.0.5"
+String avsPrivateVersion = "7.1.1"
 
 if (!rootProject.ext.nexusUrlExt.isEmpty()) {
     ext {

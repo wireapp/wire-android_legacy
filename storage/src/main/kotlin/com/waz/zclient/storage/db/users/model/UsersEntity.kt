@@ -18,6 +18,9 @@ data class UsersEntity(
     @PrimaryKey
     val id: String,
 
+    @ColumnInfo(name = "domain")
+    val domain: String?,
+
     @ColumnInfo(name = "teamId")
     val teamId: String?,
 

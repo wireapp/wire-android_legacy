@@ -31,7 +31,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page => NavPage}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
-import com.waz.zclient.legalhold.LegalHoldController
+import com.waz.zclient.legalhold.{AllLegalHoldSubjectsFragment, LegalHoldController}
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getDrawable}
@@ -39,7 +39,6 @@ import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils, _}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 import com.wire.signals.{CancellableFuture, EventStream, Signal, SourceStream}
-
 import scala.concurrent.duration._
 
 class ParticipantHeaderFragment extends FragmentHelper {
@@ -155,6 +154,8 @@ class ParticipantHeaderFragment extends FragmentHelper {
         }
       case Some(AllGroupParticipantsFragment.Tag) =>
         Signal.const(getString(R.string.participant_search_title))
+      case Some(AllLegalHoldSubjectsFragment.Tag) =>
+        Signal.const(getString(R.string.legal_hold_all_subjects_title))
       case _ =>
         Signal.const(getString(R.string.empty_string))
     }.onUi(t => vh.foreach { view =>
@@ -189,7 +190,14 @@ class ParticipantHeaderFragment extends FragmentHelper {
   }
 
   val onLegalHoldClick: SourceStream[Unit] = EventStream[Unit]()
-  private lazy val legalHoldIndicatorButton = view[ImageButton](R.id.participants_header_toolbar_image_button_legal_hold)
+
+  private lazy val legalHoldIndicatorButton =
+    returning(view[ImageButton](R.id.participants_header_toolbar_image_button_legal_hold)) { button =>
+      Signal.zip(Signal.from(false, legalHoldController.showingLegalHoldInfo), legalHoldActive).onUi {
+        case (true, _)   => button.foreach(_.setVisible(false))
+        case (_, active) => button.foreach(_.setVisible(active))
+      }
+    }
 
   private lazy val legalHoldActive : Signal[Boolean] =
     for {
@@ -249,7 +257,6 @@ class ParticipantHeaderFragment extends FragmentHelper {
   private def setUpLegalHoldIndicator(): Unit =
     legalHoldIndicatorButton.foreach { button =>
       button.onClick { onLegalHoldClick ! Unit}
-      legalHoldActive.onUi(button.setVisible)
     }
 
   private def fromDeepLink() = getBooleanArg(ARG_FROM_DEEP_LINK)
