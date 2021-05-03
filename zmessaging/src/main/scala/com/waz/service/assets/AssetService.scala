@@ -34,13 +34,13 @@ import com.wire.signals.CancellableFuture
 import com.wire.signals.Signal
 import com.waz.utils.streams.CountInputStream
 import com.waz.utils.wrappers.Bitmap
-import com.waz.utils.{Cancellable, IoUtils}
+import com.waz.utils._
 import com.waz.znet2.http.HttpClient._
 import com.waz.znet2.http.ResponseCode
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Try}
+import scala.util.Try
 
 trait AssetService {
   def assetSignal(id: GeneralAssetId): Signal[GeneralAsset]
