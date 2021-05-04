@@ -33,6 +33,7 @@ import org.threeten.bp.{Duration => Dur}
 import scala.collection.breakOut
 import scala.concurrent.duration._
 import com.waz.log.LogSE._
+import com.waz.model.Messages.LegalHoldStatus
 
 import scala.collection.JavaConverters._
 
@@ -120,6 +121,12 @@ object GenericContent {
           .setExpectsReadConfirmation(expectsReadConfirmation)
       preview.foreach(p => builder.setPreview(Preview(p).proto))
       builder.build
+    }
+
+    def apply(asset: Asset, legalHoldStatus: LegalHoldStatus): Asset = Asset {
+      asset.proto.toBuilder
+        .setLegalHoldStatus(legalHoldStatus)
+        .build
     }
 
     final case class Original(override val proto: Messages.Asset.Original) extends GenericContent[Messages.Asset.Original]{
@@ -562,6 +569,12 @@ object GenericContent {
         )
         .build
     }
+
+    def apply(reaction: Reaction, legalHoldStatus: LegalHoldStatus): Reaction = Reaction {
+      reaction.proto.toBuilder
+        .setLegalHoldStatus(legalHoldStatus)
+        .build
+    }
   }
 
   final case class Knock(override val proto: Messages.Knock) extends GenericContent[Messages.Knock] {
@@ -576,6 +589,12 @@ object GenericContent {
         .setHotKnock(false)
         .setExpectsReadConfirmation(expectsReadConfirmation)
         .build
+    }
+
+    def apply(knock: Knock, legalHoldStatus: LegalHoldStatus): Knock = Knock {
+      knock.proto.toBuilder
+        .setLegalHoldStatus(legalHoldStatus)
+      .build
     }
   }
 
@@ -612,6 +631,12 @@ object GenericContent {
           .setExpectsReadConfirmation(expectsReadConfirmation)
       quote.foreach(q => builder.setQuote(q.proto))
       builder.build
+    }
+
+    def apply(text: Text, legalHoldStatus: LegalHoldStatus): Text = Text {
+      text.proto.toBuilder
+        .setLegalHoldStatus(legalHoldStatus)
+        .build
     }
 
     def newMentions(text: Text, mentions: Seq[com.waz.model.Mention]): Text = Text {
@@ -728,6 +753,12 @@ object GenericContent {
         .setName(name)
         .setZoom(zoom)
         .setExpectsReadConfirmation(expectsReadConfirmation)
+        .build
+    }
+
+    def apply(location: Location, legalHoldStatus: LegalHoldStatus): Location = Location {
+      location.proto.toBuilder
+        .setLegalHoldStatus(legalHoldStatus)
         .build
     }
   }
@@ -1019,6 +1050,16 @@ object GenericContent {
       }
       CompositeData(items, Option(proto.getExpectsReadConfirmation), Option(proto.getLegalHoldStatus.getNumber))
     }
+  }
+
+  object Composite {
+
+    def apply(composite: Composite, legalHoldStatus: LegalHoldStatus): Composite = Composite {
+      composite.proto.toBuilder
+        .setLegalHoldStatus(legalHoldStatus)
+        .build
+    }
+
   }
 
   final case class DataTransfer(override val proto: Messages.DataTransfer) extends GenericContent[Messages.DataTransfer] {
