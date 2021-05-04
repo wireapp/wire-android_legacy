@@ -63,10 +63,10 @@ allprojects {
 }
 
 ext {
-    largeVideoConferenceCalls = true
+    largeVideoConferenceCalls = false
     appLockFeatureFlag = true
     sessionReset = true
-    legalHold = true
+    legalHold = false
 }
 
 apply from: "./scripts/avs.gradle"
