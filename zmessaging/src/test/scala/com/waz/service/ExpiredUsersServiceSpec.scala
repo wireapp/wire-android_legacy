@@ -62,7 +62,7 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
     (users.currentConvMembers _).expects().once().returning(Signal.const(convUsers.map(_.id)))
     (usersStorage.signal _).expects(*).anyNumberOfTimes().onCall { id: UserId => convSignals(id) }
 
-    getService //trigger creation of service
+    val service = getService //trigger creation of service
 
     val finished = EventStream[Unit]()
     (sync.syncUsers _).expects(*).once().onCall { (us: Set[UserId]) =>

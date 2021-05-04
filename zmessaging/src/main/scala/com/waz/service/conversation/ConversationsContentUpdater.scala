@@ -17,17 +17,16 @@
  */
 package com.waz.service.conversation
 
-import com.waz.log.LogSE._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.sync.ReceiptType
 import com.waz.model.{UserId, _}
 import com.waz.sync.SyncServiceHandle
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
+import com.wire.signals.CancellableFuture
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NoStackTrace
@@ -75,9 +74,8 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                       messagesStorage: => MessagesStorage,
                                       syncHandler:     SyncServiceHandle) extends ConversationsContentUpdater with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
-  val conversationsFuture = Future successful storage
 
-  storage.onUpdated(_.foreach {
+  storage.onUpdated.foreach(_.foreach {
     case (prev, conv) if prev.cleared != conv.cleared =>
       verbose(l"cleared updated will clear messages, prev: $prev, updated: $conv")
       conv.cleared.foreach(messagesStorage.clear(conv.id, _).recoverWithLog())

@@ -36,9 +36,9 @@ class MessageBottomSheetDialog(message: MessageData,
                                operations: Seq[MessageAction] = Seq.empty)(implicit injector: Injector, context: Context, ec: EventContext)
   extends OptionsMenuController with Injectable {
 
-  lazy val zmessaging = inject[Signal[ZMessaging]]
-  lazy val messageActionsController = inject[MessageActionsController]
-  lazy val assetsController = inject[AssetsController]
+  private lazy val zmessaging = inject[Signal[ZMessaging]]
+  private lazy val messageActionsController = inject[MessageActionsController]
+  private lazy val assetsController = inject[AssetsController]
 
   override val title: Signal[Option[String]] = Signal.const(None)
   override val optionItems: Signal[Seq[OptionsMenuController.MenuItem]] =
@@ -55,13 +55,12 @@ class MessageBottomSheetDialog(message: MessageData,
   override val onMenuItemClicked: SourceStream[OptionsMenuController.MenuItem] = EventStream()
   override val selectedItems: Signal[Set[OptionsMenuController.MenuItem]] = Signal.const(Set())
 
-  onMenuItemClicked {
+  onMenuItemClicked.foreach {
     case action: MessageAction =>
       messageActionsController.onMessageAction ! (action, message)
     case _ =>
   }
 }
-
 
 object MessageBottomSheetDialog {
   val CollectionExtra = "COLLECTION_EXTRA"

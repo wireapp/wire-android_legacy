@@ -156,7 +156,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
     case Some(backupUri) =>
       getBackupFile(backupUri).map { backupFile =>
         val fragment = returning(BackupPasswordDialog.newInstance(InputPasswordMode)) {
-          _.onPasswordEntered(password => enterWithBackup(userId, backupFile, password))
+          _.onPasswordEntered.foreach(password => enterWithBackup(userId, backupFile, password))
         }
         getActivity.asInstanceOf[BaseActivity]
           .getSupportFragmentManager

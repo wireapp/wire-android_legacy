@@ -80,7 +80,7 @@ class DefaultMediaManagerService(context: Context) extends MediaManagerService w
     Signal.const(IntensityLevelCodec.default)
   }
 
-  soundIntensity { intensity =>
+  soundIntensity.foreach { intensity =>
     mediaManager.foreach(_.setIntensity(intensity))
   }
 

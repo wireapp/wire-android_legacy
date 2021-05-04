@@ -29,7 +29,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.threading.Threading._
 
-class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, layoutManager: MessagesListLayoutManager)(implicit ec: EventContext)
+class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, layoutManager: MessagesListLayoutManager)
+                      (implicit ec: EventContext)
   extends DerivedLogTag {
 
   private var lastVisiblePosition = 0
@@ -55,7 +56,7 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
     scrollToPositionRequested.map { pos => Scroll(pos, smooth = false, force = true) }
   )
 
-  adapter.onScrollRequested(scrollToPositionRequested ! _._2)
+  adapter.onScrollRequested.foreach(scrollToPositionRequested ! _._2)
 
   view.addOnScrollListener(new OnScrollListener {
     override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit =

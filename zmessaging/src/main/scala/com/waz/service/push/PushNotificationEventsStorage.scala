@@ -112,7 +112,7 @@ class PushNotificationEventsStorageImpl(context: Context, storage: Database, cli
   //This method is called once on app start, so invoke the handler in case there are any events to be processed
   //This is safe as the handler only allows one invocation at a time.
   override def registerEventHandler(handler: EventHandler)(implicit ec: EventContext): Future[Unit] = {
-    onAdded(_ => handler())
+    onAdded.foreach(_ => handler())
     processStoredEvents(handler)
   }
 

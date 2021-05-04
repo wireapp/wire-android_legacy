@@ -26,6 +26,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
@@ -124,13 +125,14 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
     bodyContainer
     participantsContainerView
 
-    participantsController.onShowUser {
+    participantsController.onShowUser.onUi {
       case Some(userId) => showUser(userId)
       case _ =>
     }
-    headerFragment.onLegalHoldClick { _ => openLegalHoldInfoScreen() }
-    legalHoldController.onLegalHoldSubjectClick { userId => showUser(userId, forLegalHold = true) }
-    legalHoldController.onAllLegalHoldSubjectsClick { _ => showAllLegalHoldSubjects() }
+
+    headerFragment.onLegalHoldClick.onUi { _ => openLegalHoldInfoScreen() }
+    legalHoldController.onLegalHoldSubjectClick.onUi { userId => showUser(userId, forLegalHold = true) }
+    legalHoldController.onAllLegalHoldSubjectsClick.onUi { _ => showAllLegalHoldSubjects() }
   }
 
   override def onStart(): Unit = {

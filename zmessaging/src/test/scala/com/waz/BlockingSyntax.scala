@@ -44,7 +44,7 @@ object BlockingSyntax {
     private val defaultTimeout: Duration = 3.seconds
 
     def subscribe(implicit ev: EventContext): Unit = {
-      subscription = eventStream { e =>
+      subscription = eventStream.foreach { e =>
         println(s"BlockingEventStream. Received event: $e")
         events.append(e)
       }

@@ -29,14 +29,13 @@ import com.waz.model.MessageData
 class LikesController(implicit ec: EventContext, injector: Injector)
   extends Injectable with DerivedLogTag {
 
-  val zms = inject[Signal[ZMessaging]]
-  val reactions = zms.map(_.reactions)
+  private lazy val reactions = inject[Signal[ZMessaging]].map(_.reactions)
 
   val onLikeButtonClicked = EventStream[MessageAndLikes]()
   val onViewDoubleClicked = EventStream[MessageAndLikes]()
 
-  onLikeButtonClicked(toggleLike)
-  onViewDoubleClicked(toggleLike)
+  onLikeButtonClicked.foreach(toggleLike)
+  onViewDoubleClicked.foreach(toggleLike)
 
   private def toggleLike(msgAndLikes: MessageAndLikes): Unit = {
     if (!msgAndLikes.message.isEphemeral) {

@@ -62,7 +62,7 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int)
   val submitLogs = returning(findById[TextButton](R.id.preferences_debug_report)) { v =>
     setButtonEnabled(v, initialLogsEnabled)
 
-    v.onClickEvent { _ =>
+    v.onClickEvent.onUi { _ =>
       DebugUtils.sendDebugReport(context.asInstanceOf[Activity])
     }
   }
@@ -70,14 +70,14 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int)
   val loggingSwitch = returning(findById[SwitchPreference](R.id.preferences_enable_logs)) { v =>
     v.setChecked(initialLogsEnabled)
 
-    v.onCheckedChange { enabled =>
+    v.onCheckedChange.onUi { enabled =>
       logsService.setLogsEnabled(enabled)
       setButtonEnabled(submitLogs, enabled)
     }
   }
 
   val resetPush = returning(findById[TextButton](R.id.preferences_reset_push)) { v =>
-    v.onClickEvent { _ =>
+    v.onClickEvent.onUi { _ =>
       ZMessaging.currentGlobal.tokenService.resetGlobalToken()
       Toast.makeText(getContext, getString(R.string.pref_advanced_reset_push_completed)(getContext), Toast.LENGTH_LONG).show()
       setButtonEnabled(v, enabled = false)
@@ -107,7 +107,7 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int)
   }
 
   val slowSyncButton = returning(findById[TextButton](R.id.preferences_slow_sync)) { toggle =>
-    toggle.onClickEvent { _ =>
+    toggle.onClickEvent.onUi { _ =>
       showPrefDialog(FullSyncDialog.newInstance, FullSyncDialog.Tag)
     }
   }

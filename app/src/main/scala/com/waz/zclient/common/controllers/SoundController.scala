@@ -86,7 +86,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   private val soundIntensity = zms.flatMap(_.mediamanager.soundIntensity)
 
   private var _mediaManager = Option.empty[MediaManager]
-  mediaManager(m => _mediaManager = Some(m))
+  mediaManager.foreach(m => _mediaManager = Some(m))
 
   //TODO Refactor MessageNotificationsController and remove this. Work with normal Signal.head method instead
   private implicit class RichSignal[T](val value: Signal[T]) {
@@ -124,7 +124,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
     pingTone <- zms.userPrefs.preference(UserPreferences.PingTone).signal
   } yield (ringTone, textTone, pingTone)).disableAutowiring()
 
-  tonePrefs {
+  tonePrefs.foreach {
     case (ring, text, ping) => setCustomSoundUrisFromPreferences(ring, text, ping)
   }
 

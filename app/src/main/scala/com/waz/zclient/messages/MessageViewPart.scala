@@ -191,7 +191,7 @@ class UnreadDot(context: Context, attrs: AttributeSet, style: Int)
   val dotRadius = getDimenPx(R.dimen.conversation__unread_dot__radius)
   val dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
 
-  accent { color =>
+  accent.onUi { color =>
     dotPaint.setColor(color.color)
     postInvalidate()
   }
@@ -228,7 +228,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     case _ => None
   }
 
-  userId(chathead.loadUser)
+  userId.onUi(chathead.loadUser)
 
   user.map(_.name).onUi(tvName.setTransformedText(_))
   user.map(_.isWireBot).on(Threading.Ui) { isBot.setVisible }
@@ -237,9 +237,9 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     tvName.setTextColor(getNameColor(a))
   }
 
-  stateGlyph.map(_.isDefined) { tvStateGlyph.setVisible }
+  stateGlyph.map(_.isDefined).onUi { tvStateGlyph.setVisible }
 
-  stateGlyph.collect { case Some(glyph) => glyph } { tvStateGlyph.setText }
+  stateGlyph.collect { case Some(glyph) => glyph }.onUi { tvStateGlyph.setText }
 
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)

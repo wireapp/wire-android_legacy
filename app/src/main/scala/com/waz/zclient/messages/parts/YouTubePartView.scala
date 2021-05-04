@@ -27,7 +27,6 @@ import com.waz.model.{GeneralAssetId, MessageContent}
 import com.waz.model.messages.media.MediaAssetData
 import com.waz.service.NetworkModeService
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.core.images.transformations.DarkenTransformation
@@ -67,7 +66,7 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val media: Signal[MediaAssetData] = content.map(_.richMedia.getOrElse(MediaAssetData.empty(Message.Part.Type.YOUTUBE)))
   private lazy val image: Signal[GeneralAssetId] = media.map(_.artwork).collect{case Some(id) => id}
 
-  val loadingFailed = Signal(false)
+  private val loadingFailed = Signal(false)
 
   image.onUi { id =>
     WireGlide(context)
@@ -76,25 +75,25 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
       .into(previewImage)
   }
 
-  val showError = loadingFailed.zip(network.networkMode).map { case (failed, mode) => failed && mode != NetworkMode.OFFLINE }
+  private val showError = loadingFailed.zip(network.networkMode).map { case (failed, mode) => failed && mode != NetworkMode.OFFLINE }
 
-  val title = for {
+  private val title = for {
     m <- media
     failed <- loadingFailed
   } yield if (failed) "" else m.title
 
-  val height = width map { _ * 9 / 16 }
+  private val height = width map { _ * 9 / 16 }
 
-  title { tvTitle.setText }
+  title.onUi { tvTitle.setText }
 
-  showError.on(Threading.Ui) { error.setVisible }
+  showError.onUi { error.setVisible }
 
-  loadingFailed { failed =>
+  loadingFailed.onUi { failed =>
     glyphView.setText(getString(if (failed) R.string.glyph__movie else R.string.glyph__play))
     glyphView.setTextColor(getColor(if (failed) R.color.content__youtube__error_indicator else R.color.content__youtube__text))
   }
 
-  height { h =>
+  height.onUi { h =>
     setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h))
   }
 
@@ -110,7 +109,7 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
     width ! (right - left)
   }
 
-  onClicked { _ =>
+  onClicked.onUi { _ =>
     for {
       c <- content.currentValue
       m <- message.currentValue

@@ -139,7 +139,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
             Unmute
 
         val isConvFavorite = favoriteConvIds.contains(convId)
-        
+
         (conv.archived, isConvFavorite) match {
           case (true, _)           => builder += Unarchive
           case (false, isFavorite) => builder ++= List(Archive, if (isFavorite) RemoveFromFavorites else AddToFavorites)
@@ -176,7 +176,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
       participantsController.onLeaveParticipants ! true
     }
 
-  new EventStreamWithAuxSignal(onMenuItemClicked, convState).apply {
+  new EventStreamWithAuxSignal(onMenuItemClicked, convState).foreach {
     case (item, Some((cId, user))) =>
       verbose(l"onMenuItemClicked: item: $item, conv: $cId, user: $user")
       item match {

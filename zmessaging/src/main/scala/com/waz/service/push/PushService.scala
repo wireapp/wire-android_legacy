@@ -192,7 +192,7 @@ class PushServiceImpl(selfUserId:           UserId,
   private val timeOffset = System.currentTimeMillis()
   @inline private def timePassed = System.currentTimeMillis() - timeOffset
 
-  wsPushService.notifications { nots =>
+  wsPushService.notifications.foreach { nots =>
     syncNotifications(StoreNotifications(nots))
   }
 

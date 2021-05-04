@@ -77,15 +77,13 @@ object IoUtils {
   def copyAsync(in: => InputStream, out: File)(implicit ec: ExecutionContext): CancellableFuture[Long] =
     copyAsync(in, new BufferedOutputStream(new FileOutputStream(out)))
 
-  def copyAsync(in: => InputStream, out: => OutputStream)(implicit ec: ExecutionContext): CancellableFuture[Long] = {
+  private def copyAsync(in: => InputStream, out: => OutputStream)(implicit ec: ExecutionContext): CancellableFuture[Long] = {
     val promise = Promise[Long]
     val cancelled = new AtomicBoolean(false)
 
     promise.trySuccess(copy(new CancellableStream(in, cancelled), out))
 
-    new CancellableFuture(promise) {
-      override def cancel(): Boolean = cancelled.compareAndSet(false, true)
-    }
+    CancellableFuture.from(promise).onCancel(cancelled.compareAndSet(false, true))
   }
 
   def writeBytesToFile(file: File, bytes: Array[Byte]): Unit =

@@ -156,7 +156,7 @@ class ConversationController(implicit injector: Injector, context: Context)
     convId <- currentConvId.head
   } yield convs.setConversationRole(convId, userId, role)
 
-  currentConvIdOpt {
+  currentConvIdOpt.foreach {
     case Some(convId) =>
       if (!lastConvId.contains(convId)) { // to only catch changes coming from SE (we assume it's an account switch)
         verbose(l"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
@@ -427,7 +427,7 @@ class ConversationController(implicit injector: Injector, context: Context)
       */
     val lastActive = Signal((MessageId.Empty, Instant.EPOCH)) // message showing status info
 
-    currentConv.onChanged { _ => clear() }
+    currentConv.onChanged.foreach { _ => clear() }
 
     def clear() = {
       focused ! None

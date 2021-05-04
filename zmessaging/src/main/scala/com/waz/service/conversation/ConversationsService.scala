@@ -26,6 +26,7 @@ import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.ConversationData.{ConversationType, Link, getAccessAndRoleForGroupConv}
 import com.waz.model._
+import com.waz.service.EventScheduler.Stage
 import com.waz.service._
 import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
@@ -43,7 +44,7 @@ import scala.concurrent.Future.successful
 import scala.util.control.{NoStackTrace, NonFatal}
 
 trait ConversationsService {
-  def convStateEventProcessingStage: EventScheduler.Stage
+  def convStateEventProcessingStage: EventScheduler.Stage.Atomic
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
   def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
   def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]]
@@ -102,7 +103,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   import Threading.Implicits.Background
 
   //On conversation changed, update the state of the access roles as part of migration, then check for a link if necessary
-  selectedConv.selectedConversationId {
+  selectedConv.selectedConversationId.foreach {
     case Some(convId) => convsStorage.get(convId).flatMap {
       case Some(conv) if conv.accessRole.isEmpty =>
         for {
@@ -130,16 +131,16 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _        =  verbose(l"Uncontacted team members removed for the team $teamId")
       } yield ()
 
-  val convStateEventProcessingStage = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
+  override val convStateEventProcessingStage: Stage.Atomic = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
     RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))
   }
 
-  push.onHistoryLost { req =>
+  push.onHistoryLost.foreach { req =>
     verbose(l"onSlowSyncNeeded($req)")
     // TODO: this is just very basic implementation creating empty message
     // This should be updated to include information about possibly missed changes
     // this message will be shown rarely (when notifications stream skips data)
-    convsStorage.list.flatMap(messages.addHistoryLostMessages(_, selfUserId))
+    convsStorage.list().flatMap(messages.addHistoryLostMessages(_, selfUserId))
   }
 
   errors.onErrorDismissed {

@@ -59,7 +59,7 @@ class DevicesViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
       selfDeviceButton.setVisibility(View.VISIBLE)
       currentDeviceTitle.setVisibility(View.VISIBLE)
       selfDeviceButton.setDevice(device, self = true)
-      selfDeviceButton.onClickEvent { _ => navigator.goTo(DeviceDetailsBackStackKey(device.id.str)) }
+      selfDeviceButton.onClickEvent.onUi { _ => navigator.goTo(DeviceDetailsBackStackKey(device.id.str)) }
     }
 
   }
@@ -69,7 +69,7 @@ class DevicesViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     devices.foreach{ device =>
       val deviceButton = new DeviceButton(context, attrs, style)
       deviceButton.setDevice(device, self = false)
-      deviceButton.onClickEvent { _ => navigator.goTo(DeviceDetailsBackStackKey(device.id.str)) }
+      deviceButton.onClickEvent.onUi { _ => navigator.goTo(DeviceDetailsBackStackKey(device.id.str)) }
       deviceList.addView(deviceButton)
       val margin = context.getResources.getDimensionPixelSize(R.dimen.wire__padding__8)
       Option(deviceButton.getLayoutParams.asInstanceOf[MarginLayoutParams]).foreach(_.setMargins(0, 0, 0, margin))

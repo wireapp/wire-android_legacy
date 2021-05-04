@@ -52,7 +52,7 @@ class DefaultFlowManagerService(context:      Context,
 
   override val cameraFailedSig = Signal[Boolean](false)
 
-  network.networkMode.onChanged {  _ =>
+  network.networkMode.onChanged.foreach {  _ =>
     flowManager.fold { warn(l"unable to access flow manager") } { fm => Try { fm.networkChanged() } }
   }
 

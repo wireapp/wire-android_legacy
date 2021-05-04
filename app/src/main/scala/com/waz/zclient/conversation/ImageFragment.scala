@@ -131,7 +131,7 @@ class ImageFragment extends FragmentHelper {
 
     imageInput
 
-    EventStream.zip(bottomToolbar.topToolbar.onCursorButtonClicked, bottomToolbar.bottomToolbar.onCursorButtonClicked) {
+    EventStream.zip(bottomToolbar.topToolbar.onCursorButtonClicked, bottomToolbar.bottomToolbar.onCursorButtonClicked).foreach {
       case item: CursorActionToolbarItem =>
         import IDrawingController.DrawingMethod._
 

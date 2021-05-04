@@ -26,7 +26,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.utils.ContextUtils.getDimenPx
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.{BuildConfig, R, ViewHelper}
 import com.waz.threading.Threading._
 
 class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
@@ -40,9 +40,9 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
 
   private lazy val controller   = inject[CallController]
   private lazy val chathead     = findById[ChatHeadView](R.id.call_chathead)
-  private lazy val participants = findById[CallParticipantsView](R.id.call_participants)
+  private lazy val callParticipantsView = findById[CallParticipantsView](R.id.call_participants)
 
-  lazy val onShowAllClicked: EventStream[Unit] = participants.onShowAllClicked
+  lazy val onShowAllClicked: EventStream[Unit] = callParticipantsView.onShowAllClicked
 
   Signal.zip(controller.callStateCollapseJoin, controller.isVideoCall, controller.isGroupCall).map {
     case (_,             false, false) => CallDisplay.Chathead
@@ -51,7 +51,7 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
     case _                             => CallDisplay.Empty
   }.onUi { display =>
     chathead.setVisible(display == CallDisplay.Chathead)
-    participants.setVisible(display == CallDisplay.Participants)
+    callParticipantsView.setVisible(display == CallDisplay.Participants)
   }
 
   controller.memberForPicture.onUi {
@@ -61,9 +61,11 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
 
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
     super.onLayout(changed, l, t, r, b)
-    if (changed) participants.setMaxRows((b - t) / getDimenPx(R.dimen.user_row_height))
+    if (changed) callParticipantsView.setMaxRows((b - t) / getDimenPx(R.dimen.user_row_height))
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
+      callParticipantsView.hideParticipants()
+    }
   }
-
 }
 
 object CallingMiddleLayout {

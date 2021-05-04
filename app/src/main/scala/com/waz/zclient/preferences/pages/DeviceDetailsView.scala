@@ -127,7 +127,7 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
     resetSessionView.setVisible(!removeOnly)
   }
 
-  fingerprintView.onClickEvent{ _ =>
+  fingerprintView.onClickEvent.onUi { _ =>
     val clip = ClipData.newPlainText(getContext.getString(R.string.pref_devices_device_fingerprint_copy_description), fingerprint)
     clipboard.setPrimaryClip(clip)
     showToast(R.string.pref_devices_device_fingerprint_copy_toast)
@@ -202,7 +202,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   clientsController.selfFingerprint(clientId).onUi{ _.foreach(view.setFingerPrint) }
   clientsController.selfClientId.map(_.isEmpty).onUi(view.setRemoveOnly)
 
-  view.onVerifiedChecked { checked =>
+  view.onVerifiedChecked.onUi { checked =>
     //TODO should this be a signal? Will create a new subscription every time the view is clicked...
     for {
       userId     <- accountManager.map(_.userId)
@@ -211,7 +211,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
     } {}
   }
 
-  view.onSessionReset(_ => resetSession())
+  view.onSessionReset.onUi(_ => resetSession())
 
   private def resetSession(): Unit = {
     zms.head.flatMap { zms =>
@@ -230,7 +230,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
     }(Threading.Ui)
   }
 
-  view.onDeviceRemoved { _ =>
+  view.onDeviceRemoved.onUi { _ =>
     accountsService.accountPassword.head.map {
       case Some(p) => removeDevice(Some(p))
       case _       => showRemoveDeviceDialog()
@@ -265,7 +265,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
 
   private def showRemoveDeviceDialog(error: Option[String] = None): Unit =
     Signal.zip(inject[PasswordController].ssoEnabled, client.map(_.model)).head.foreach { case (isSSO, name) =>
-      val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onAccept(removeDevice))
+      val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onAccept.onUi(removeDevice))
       context.asInstanceOf[BaseActivity]
         .getSupportFragmentManager
         .beginTransaction

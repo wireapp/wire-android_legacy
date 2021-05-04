@@ -69,7 +69,7 @@ class AddParticipantsFragment extends FragmentHelper {
   private lazy val adapter = AddParticipantsAdapter(newConvController.users, newConvController.integrations)
 
   private lazy val searchBox = returning(view[SearchEditText](R.id.search_box)) { vh =>
-    adapter.onSelectionChanged.mapAsync {
+    adapter.onSelectionChanged.mapSync {
       case (Left(userId), selected) =>
         zms.head.flatMap(_.usersStorage.get(userId).collect {
           case Some(u) => (Pickable(userId.str, u.name), selected)

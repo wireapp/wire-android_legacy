@@ -52,7 +52,9 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
         case _ =>
           CancellableFuture.failed(NotSupportedError("Unsupported image request"))
       }
-    }.withTimeout(30.seconds)
+    }
+
+    data.addTimeout(30.seconds)
 
     currentData.foreach(_.cancel())
     currentData = Some(data)

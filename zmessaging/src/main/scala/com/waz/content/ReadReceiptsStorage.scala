@@ -38,9 +38,9 @@ class ReadReceiptsStorageImpl(context: Context, storage: Database, msgStorage: M
   with ReadReceiptsStorage {
   import com.waz.threading.Threading.Implicits.Background
 
-  msgStorage.onDeleted { ids => removeAllForMessages(ids.toSet) }
+  msgStorage.onDeleted.foreach { ids => removeAllForMessages(ids.toSet) }
 
-  msgService.msgEdited { case (prev, cur) =>
+  msgService.msgEdited.foreach { case (prev, cur) =>
     // `updateAll2` is not going to work here, because we're updating the messageId of the receipts which is a part of the receipt's id.
     // `update*` methods assume that the ids are not going to be updated. Instead, we need to remove the old and insert the new receipts.
       for {

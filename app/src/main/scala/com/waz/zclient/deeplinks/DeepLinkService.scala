@@ -39,7 +39,7 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
 
   val deepLink = Signal(Option.empty[CheckingResult])
 
-  deepLink { result =>
+  deepLink.foreach { result =>
     verbose(l"DeepLink checking result: $result")
   }
 

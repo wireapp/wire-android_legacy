@@ -313,7 +313,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   // allows the controller to "empty" the text field if necessary by resetting the signal.
   // specifying the source guards us from an infinite loop of the view and controller updating each other
-  controller.enteredText {
+  controller.enteredText.foreach {
     case (CursorText(text, mentions), EnteredTextSource.FromController) if text != cursorEditText.getText.toString => setText(text, mentions)
     case _ =>
   }
@@ -342,7 +342,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     } (Threading.Ui)
   }
 
-  controller.onCursorItemClick {
+  controller.onCursorItemClick.foreach {
     case CursorMenuItem.Mention =>
       mentionQuery.head.map {
         case None =>

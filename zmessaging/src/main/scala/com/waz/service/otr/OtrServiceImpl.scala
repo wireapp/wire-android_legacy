@@ -94,7 +94,7 @@ class OtrServiceImpl(selfUserId:     UserId,
     // request self clients sync to update prekeys on backend
     // we've just created a session from message, this means that some user had to obtain our prekey from backend (so we can upload it)
     // using signal and sync interval parameter to limit requests to one an hour
-    Signal.from(sessions.onCreateFromMessage).throttle(15.seconds) { _ => clients.requestSyncIfNeeded(1.hour) }
+    Signal.from(sessions.onCreateFromMessage).throttle(15.seconds).foreach { _ => clients.requestSyncIfNeeded(1.hour) }
   }
 
   override def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent] = {

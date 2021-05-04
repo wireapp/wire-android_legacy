@@ -107,7 +107,7 @@ trait PlayableAsset extends ActionableAssetPart {
   protected val durationView: TextView = findById(R.id.duration)
 
   protected lazy val playControls = controller.getPlaybackControls(asset)
-  playControls.flatMap(_.isPlaying) (isPlaying ! _)
+  playControls.flatMap(_.isPlaying).pipeTo(isPlaying)
 }
 
 trait FileLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {

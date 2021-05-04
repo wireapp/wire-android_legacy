@@ -78,7 +78,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   private val randomTrackingIdButton = findById[TextButton](R.id.preferences_dev_generate_random_trackingid)
 
   val registerAnotherClient = returning(findById[TextButton](R.id.register_another_client)) {
-    _.onClickEvent(_ => registerClient().foreach {
+    _.onClickEvent.onUi(_ => registerClient().foreach {
       case Right(registered) => if(!registered) dialog.show(context.asInstanceOf[PreferencesActivity])
       case Left(err) => dialog.showError(Some(err))
     })
@@ -89,11 +89,11 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   }
 
   val checkPushTokenButton = returning(findById[TextButton](R.id.preferences_dev_check_push_tokens)) { v =>
-    v.onClickEvent(_ => PushTokenCheckJob())
+    v.onClickEvent.onUi(_ => PushTokenCheckJob())
   }
 
   val checkDeviceRootedButton = returning(findById[TextButton](R.id.preferences_dev_check_rooted_device)) { v =>
-    v.onClickEvent(_ => checkIfDeviceIsRooted())
+    v.onClickEvent.onUi(_ => checkIfDeviceIsRooted())
   }
 
   val newPicturePicButton = findById[TextButton](R.id.preferences_dev_new_unsplash_profile_pic)
@@ -157,7 +157,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     case _ => // no biometric prompt allowed
   }
 
-  randomLastIdButton.onClickEvent { _ =>
+  randomLastIdButton.onClickEvent.onUi { _ =>
     val randomUid = Uid()
 
     new AlertDialog.Builder(context)
@@ -177,11 +177,11 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
       .setIcon(android.R.drawable.ic_dialog_alert).show
   }
 
-  randomTrackingIdButton.onClickEvent { _ =>
+  randomTrackingIdButton.onClickEvent.onUi { _ =>
     inject[GlobalTrackingController].setAndSendNewTrackingId()
   }
 
-  newPicturePicButton.onClickEvent { _ =>
+  newPicturePicButton.onClickEvent.onUi { _ =>
     am.head.flatMap(_.addUnsplashIfProfilePictureMissing()).foreach { _ =>
       showToast("The profile picture changed")
     }

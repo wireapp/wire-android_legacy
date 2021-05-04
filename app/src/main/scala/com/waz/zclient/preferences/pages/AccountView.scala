@@ -271,7 +271,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       case Right(hasPass) =>
         showPrefDialog(
           returning(ChangeEmailDialog(hasPassword = hasPass)) {
-            _.onEmailChanged { e =>
+            _.onEmailChanged.onUi { e =>
               val f = VerifyEmailPreferencesFragment(e)
               //hide the verification screen when complete
               self.map(_.email).onChanged.filter(_.contains(e)).onUi { _ =>
@@ -294,7 +294,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     } {
       showPrefDialog(
         returning(ChangePhoneDialog(ph.map(_.str), email.isDefined)) {
-          _.onPhoneChanged {
+          _.onPhoneChanged.onUi {
             case Some(p) =>
               val f = VerifyPhoneFragment.newInstance(p.str)
               //hide the verification screen when complete
@@ -396,7 +396,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
 
   inject[UserAccountsController].readReceiptsEnabled.onUi(view.setReadReceipt)
 
-  view.onReadReceiptSwitch { enabled =>
+  view.onReadReceiptSwitch.foreach { enabled =>
     zms.head.flatMap(_.propertiesService.setReadReceiptsEnabled(enabled))(Threading.Background)
   }
 }

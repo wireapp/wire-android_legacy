@@ -203,7 +203,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       verbose(l"Outdated avatar info")
   }
 
-  badge.onClickEvent {
+  badge.onClickEvent.foreach {
     case ConversationBadge.IncomingCall =>
       (zms.map(_.selfUserId).currentValue, conversationData.map(_.id)) match {
         case (Some(acc), Some(cId)) => inject[CallStartController].startCall(acc, cId, forceOption = true)

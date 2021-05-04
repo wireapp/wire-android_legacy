@@ -179,7 +179,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       }).once().returning(Future.successful(None))
 
       // WHEN
-      result(service.convStateEventProcessingStage.apply(rConvId, events))
+      result(service.convStateEventProcessingStage(rConvId, events))
     }
 
     scenario("Does not archive conversation when the user is removed by someone else") {
