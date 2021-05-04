@@ -32,18 +32,17 @@ class DeviceButton(context: Context, attrs: AttributeSet, style: Int) extends Pi
   def this(context: Context) = this(context, null, 0)
 
   def setDevice(client: Client, self: Boolean): Unit = {
-    title.foreach(_.setText(client.model))
+    title.foreach(_.setText(displayName(client)))
     subtitle.foreach(setOptionText(_, Some(displayId(client))))
     subtitle.foreach(TextViewUtils.boldText)
     setDrawableEnd(drawableForClient(client, self))
   }
 
-  private def drawableForClient(client: Client, self: Boolean): Option[Drawable] = {
-    if (self)
-      None
+  private def drawableForClient(client: Client, self: Boolean): Option[Drawable] =
+    if (self) None
+    else if (client.isLegalHoldDevice) Option(getDrawable(R.drawable.ic_legal_hold_active))
     else
       Option(getDrawable(if (client.isVerified) R.drawable.shield_full else R.drawable.shield_half))
-  }
 
   private def displayId(client: Client): String = {
     val date = client.regTime match {
@@ -54,5 +53,9 @@ class DeviceButton(context: Context, attrs: AttributeSet, style: Int) extends Pi
     }
     s"ID: ${client.displayId}\n$date"
   }
+
+  private def displayName(client: Client): String =
+    if (client.isLegalHoldDevice) getString(R.string.legal_hold_device_name)
+    else client.model
 
 }

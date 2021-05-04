@@ -66,7 +66,9 @@ class DevicesViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setOtherDevices(devices: Seq[Client]): Unit = {
     deviceList.removeAllViews()
-    devices.foreach{ device =>
+    val (legalHoldDevice, otherDevices) = devices.partition(_.isLegalHoldDevice)
+    val sortedDevices = legalHoldDevice ++ otherDevices
+    sortedDevices.foreach { device =>
       val deviceButton = new DeviceButton(context, attrs, style)
       deviceButton.setDevice(device, self = false)
       deviceButton.onClickEvent.onUi { _ => navigator.goTo(DeviceDetailsBackStackKey(device.id.str)) }
