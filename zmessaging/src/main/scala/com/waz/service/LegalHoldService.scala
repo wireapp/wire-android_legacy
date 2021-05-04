@@ -131,5 +131,63 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   def deleteLegalHoldRequest(): Future[Unit] =
     legalHoldRequestPref := None
 
+
+  // --------------------------------------------------------------
+  // Legal hold status & verification
+
+  // The status should be recomputed when the participants change. There are
+  // two ways we do this, 1) reacting to changes in the db due to normal client
+  // discovery, and 2) explicitly syncing with the backend discover legal hold
+  // devices. While 2) is ongoing, we prevent 1) from occurring, so we don't
+  // try to compute the status with incomplete data.
+
+  // To prevent update the legal hold status if we are still gathering
+  // information about which clients were added/deleted.
+  private var isVerifyingLegalHold: Boolean = false
+
+  // When clients are added, updated, or deleted...
+  clientsStorage.onChanged.foreach { clients =>
+    if (!isVerifyingLegalHold) onClientsChanged(clients)
+  }
+
+  // When a participant is added...
+  membersStorage.onAdded.foreach { members =>
+  if (!isVerifyingLegalHold) updateLegalHoldStatus(members.map(_.convId))
+  }
+
+  // When a participant is removed...
+  membersStorage.onDeleted.foreach { members =>
+    if (!isVerifyingLegalHold) updateLegalHoldStatus(members.map(_._2))
+  }
+
+  def onClientsChanged(userClients: Seq[UserClients]): Future[Unit] = {
+    val userIds = userClients.map(_.id)
+
+    for {
+      convs <- Future.traverse(userIds)(membersStorage.getActiveConvs).map(_.flatten)
+      _     <- updateLegalHoldStatus(convs)
+    } yield ()
+  }
+
+  def updateLegalHoldStatus(convIds: Seq[ConvId]): Future[Unit] =
+    Future.traverse(convIds.distinct)(updateLegalHoldStatus).map(_ => ())
+
+  private def updateLegalHoldStatus(convId: ConvId): Future[Unit] = {
+    for {
+      participants      <- membersStorage.getActiveUsers(convId)
+      clients           <- Future.traverse(participants)(clientsStorage.getClients).map(_.flatten)
+      detectedLegalHold = clients.exists(_.isLegalHoldDevice)
+      _                 <- convsStorage.updateAll2(Seq(convId), _.withNewLegalHoldStatus(detectedLegalHold))
+    } yield ()
+  }
+
+  override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (_, events) =>
+    Future.traverse(events) {
+      case GenericMessageEvent(convId, _, _, content) =>
+        updateStatusFromMessageHint(convId, content.legalHoldStatus)
+      case _ =>
+        Future.successful(())
+    }
+  }
 }
 
