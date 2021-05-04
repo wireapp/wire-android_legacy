@@ -4,8 +4,9 @@ import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.ConversationData.LegalHoldStatus
+import com.waz.model.GenericContent.Text
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{ConvId, ConversationData, LegalHoldDisableEvent, LegalHoldEnableEvent, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
+import com.waz.model.{ConvId, ConversationData, GenericMessage, GenericMessageEvent, LegalHoldDisableEvent, LegalHoldEnableEvent, LegalHoldRequest, LegalHoldRequestEvent, Messages, RConvId, RemoteInstant, TeamId, Uid, UserId}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -17,6 +18,7 @@ import com.waz.utils.JsonEncoder
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
 import com.wire.signals.{CancellableFuture, Signal}
+import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 
@@ -33,6 +35,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   private val convsStorage = mock[ConversationStorage]
   private val membersStorage = mock[MembersStorage]
   private val cryptoSessionService = mock[CryptoSessionService]
+  private val legalHoldStatusUpdater = mock[LegalHoldStatusUpdater]
 
   var service: LegalHoldServiceImpl = _
 
@@ -47,7 +50,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       clientsStorage,
       convsStorage,
       membersStorage,
-      cryptoSessionService
+      cryptoSessionService,
+      legalHoldStatusUpdater
     )
 
     userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
@@ -301,6 +305,29 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()).isEmpty shouldBe false
     }
 
+  }
+
+  feature("Update legal hold status from message hint") {
+
+    scenario("it informs status updater of new hints") {
+      // Given
+      val scheduler = new EventScheduler(Stage(Sequential)(service.messageEventStage))
+      val pipeline = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+
+      val message = GenericMessage(Uid("messageId"), None, Text("Hello!"))
+        .withLegalHoldStatus(Messages.LegalHoldStatus.ENABLED)
+
+      val event = GenericMessageEvent(RConvId("convId"), RemoteInstant(Instant.now()), UserId("senderId"), message)
+
+      // Expectation
+      (legalHoldStatusUpdater.updateStatusFromMessageHint _)
+          .expects(RConvId("convId"), Messages.LegalHoldStatus.ENABLED)
+          .once()
+          .returning(Future.successful(()))
+
+      // When
+      result(pipeline.apply(Seq(event)))
+    }
   }
 
   feature("Approve legal hold request") {

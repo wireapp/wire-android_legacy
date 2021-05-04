@@ -1,5 +1,5 @@
 package com.waz.service
-import com.waz.model.{ConvId, Event, LegalHoldRequest, UserId}
+import com.waz.model.{ConvId, Event, LegalHoldRequest, MessageEvent, UserId}
 import com.waz.service.EventScheduler.Stage
 import com.waz.sync.handler.LegalHoldError
 import com.wire.signals.Signal
@@ -13,6 +13,8 @@ import scala.concurrent.Future.successful
 class DisabledLegalHoldService extends LegalHoldService {
 
   override def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[Event]((_, _) => successful(()))
+
+  override def messageEventStage: Stage.Atomic = EventScheduler.Stage[Event]((_, _) => successful(()))
 
   override def isLegalHoldActive(userId: UserId): Signal[Boolean] = Signal.const(false)
 

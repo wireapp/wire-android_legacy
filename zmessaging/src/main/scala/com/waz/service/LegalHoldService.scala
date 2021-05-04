@@ -19,6 +19,7 @@ import scala.util.Try
 
 trait LegalHoldService {
   def legalHoldEventStage: Stage.Atomic
+  def messageEventStage: Stage.Atomic
   def isLegalHoldActive(userId: UserId): Signal[Boolean]
   def isLegalHoldActive(conversationId: ConvId): Signal[Boolean]
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]]
@@ -38,26 +39,34 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                            clientsStorage: OtrClientsStorage,
                            convsStorage: ConversationStorage,
                            membersStorage: MembersStorage,
-                           cryptoSessionService: CryptoSessionService) extends LegalHoldService {
+                           cryptoSessionService: CryptoSessionService,
+                           legalHoldStatusUpdater: LegalHoldStatusUpdater) extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
 
   override def legalHoldEventStage: Stage.Atomic = EventScheduler.Stage[LegalHoldEvent] { (_, events) =>
-    Future.traverse(events)(processEvent)
+    Future.traverse(events) {
+      case LegalHoldRequestEvent(userId, request) if userId == selfUserId =>
+        storeLegalHoldRequest(request)
+
+      case LegalHoldEnableEvent(userId) if userId == selfUserId =>
+        deleteLegalHoldRequest()
+
+      case LegalHoldDisableEvent(userId) if userId == selfUserId =>
+        deleteLegalHoldRequest()
+
+      case _ =>
+        Future.successful({})
+    }
   }
 
-  private def processEvent(event: LegalHoldEvent): Future[Unit] = event match {
-    case LegalHoldRequestEvent(userId, request) if userId == selfUserId =>
-      storeLegalHoldRequest(request)
-
-    case LegalHoldEnableEvent(userId) if userId == selfUserId =>
-      deleteLegalHoldRequest()
-
-    case LegalHoldDisableEvent(userId) if userId == selfUserId =>
-      deleteLegalHoldRequest()
-
-    case _ =>
-      Future.successful({})
+  override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (_, events) =>
+    Future.traverse(events) {
+      case GenericMessageEvent(convId, _, _, content) =>
+        legalHoldStatusUpdater.updateStatusFromMessageHint(convId, content.legalHoldStatus)
+      case _ =>
+        Future.successful(())
+    }
   }
 
   override def isLegalHoldActive(userId: UserId): Signal[Boolean] =
