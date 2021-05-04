@@ -55,6 +55,7 @@ trait SyncServiceHandle {
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId]
   def syncFolders(): Future[SyncId]
   def syncLegalHoldRequest(): Future[SyncId]
+  def syncClientsForLegalHold(convId: RConvId): Future[SyncId]
 
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncId]
   def postRemoveBot(cId: ConvId, botId: UserId): Future[SyncId]
@@ -160,6 +161,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority) = addRequest(SyncRichMedia(id), priority = priority)
   def syncFolders(): Future[SyncId] = addRequest(SyncFolders)
   def syncLegalHoldRequest(): Future[SyncId] = addRequest(SyncLegalHoldRequest)
+  def syncClientsForLegalHold(convId: RConvId): Future[SyncId] = addRequest(SyncClientsForLegalHold(convId))
 
   def postSelfUser(info: UserInfo) = addRequest(PostSelf(info))
   def postSelfPicture(picture: UploadAssetId) = addRequest(PostSelfPicture(picture))
@@ -324,6 +326,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case SyncFolders                                     => zms.foldersSyncHandler.syncFolders()
           case PostTrackingId(trackingId)                      => zms.trackingSync.postNewTrackingId(trackingId)
           case SyncLegalHoldRequest                            => zms.legalHoldSync.syncLegalHoldRequest()
+          case SyncClientsForLegalHold(convId)                 => zms.legalHoldSync.syncClientsForLegalHoldVerification(convId)
           case Unknown                                         => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))

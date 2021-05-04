@@ -8,6 +8,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
 import com.waz.sync.client.LegalHoldClient
 import com.waz.sync.handler.LegalHoldSyncHandlerSpec._
+import com.waz.sync.otr.OtrSyncHandler
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
 import com.wire.signals.CancellableFuture
@@ -18,12 +19,13 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
   private val client = mock[LegalHoldClient]
   private val service  = mock[LegalHoldService]
+  private val otrSync = mock[OtrSyncHandler]
 
   feature("Fetching a legal hold request") {
 
     scenario("It fetches and stores the legal hold request if it exists") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service)
+      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service, otrSync)
 
       (client.fetchLegalHoldRequest _)
         .expects(TeamId("team1"), UserId("user1"))
@@ -44,7 +46,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("It deletes the existing legal hold request if none fetched") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service)
+      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service, otrSync)
 
       (client.fetchLegalHoldRequest _)
         .expects(TeamId("team1"), UserId("user1"))
@@ -65,7 +67,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("It returns none if the user is not a team member") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(None, UserId("user1"), client, service)
+      val syncHandler = new LegalHoldSyncHandlerImpl(None, UserId("user1"), client, service, otrSync)
 
       // When
       val actualResult = result(syncHandler.syncLegalHoldRequest())
@@ -76,7 +78,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("It fails if the request fails") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service)
+      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service, otrSync)
       val error = ErrorResponse(400, "", "")
 
       (client.fetchLegalHoldRequest _)
