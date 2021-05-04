@@ -63,8 +63,8 @@ allprojects {
 }
 
 ext {
-    largeVideoConferenceCalls = true
-    legalHold = true
+    largeVideoConferenceCalls = false
+    legalHold = false
 }
 
 apply from: "./scripts/avs.gradle"
