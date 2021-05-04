@@ -27,6 +27,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/wire__padding__32"
+        android:visibility="gone"
         />
 
     <androidx.cardview.widget.CardView
