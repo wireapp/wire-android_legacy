@@ -24,9 +24,9 @@
 
     <ImageView
         android:id="@+id/profile_picture_image_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/wire__padding__32"
+        android:layout_width="@dimen/profile__image__width_small"
+        android:layout_height="@dimen/profile__image__height_small"
+        android:layout_gravity="center"
         android:visibility="gone"
         />
 
