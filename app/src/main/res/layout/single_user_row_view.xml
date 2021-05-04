@@ -92,7 +92,7 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/wire__padding__small"
             android:layout_marginEnd="@dimen/wire__padding__small"
-            android:src="@drawable/ic_partner_dark_theme"
+            android:src="@drawable/ic_external_user"
             android:tint="@color/graphite_16"
             android:visibility="gone" />
 
