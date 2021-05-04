@@ -3,7 +3,7 @@ package com.waz.service
 
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage}
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{ConvId, ConversationData, UserId}
+import com.waz.model.{ConvId, ConversationData, Messages, RConvId, UserId}
 import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.ConversationData.LegalHoldStatus._
 import com.waz.specs.AndroidFreeSpec
@@ -18,6 +18,7 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
   private val clients = mock[OtrClientsStorage]
   private val convs = mock[ConversationStorage]
   private val members = mock[MembersStorage]
+  private val userService = mock[UserService]
 
   // Set up
 
@@ -45,9 +46,8 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
       .once()
       .returning(EventStream())
 
-    statusUpdater = new LegalHoldStatusUpdaterImpl(clients, convs, members)
+    statusUpdater = new LegalHoldStatusUpdaterImpl(clients, convs, members, userService)
   }
-
 
   // Tests
 
@@ -143,4 +143,51 @@ class LegalHoldStatusUpdaterSpec extends AndroidFreeSpec {
 
   }
 
+  feature("Generic message hints") {
+
+    scenario("it triggers client sync if status differ") {
+      // Given
+      val remoteConvId = RConvId("convId")
+      val convId = ConvId("convId")
+      val conv = ConversationData(convId, remoteConvId, legalHoldStatus = Disabled)
+      val messageStatus = Messages.LegalHoldStatus.ENABLED
+
+      // Expectations
+      (convs.getByRemoteId _)
+          .expects(remoteConvId)
+          .once()
+          .returning(Future.successful(Some(conv)))
+
+      // Note: we don't care about the return value
+      (convs.update _)
+          .expects(convId, *)
+          .once()
+          .returning(Future.successful(None))
+
+      (userService.syncClients(_ : ConvId))
+          .expects(convId)
+          .once()
+          .returning(Future.successful(()))
+
+      // When
+      result(statusUpdater.updateStatusFromMessageHint(remoteConvId, messageStatus))
+    }
+
+    scenario("it does not trigger client sync if status are equal") {
+      // Given
+      val remoteConvId = RConvId("convId")
+      val convId = ConvId("convId")
+      val conv = ConversationData(convId, remoteConvId, legalHoldStatus = Enabled)
+      val messageStatus = Messages.LegalHoldStatus.ENABLED
+
+      // Expectations
+      (convs.getByRemoteId _)
+        .expects(remoteConvId)
+        .once()
+        .returning(Future.successful(Some(conv)))
+
+      // When
+      result(statusUpdater.updateStatusFromMessageHint(remoteConvId, messageStatus))
+    }
+  }
 }

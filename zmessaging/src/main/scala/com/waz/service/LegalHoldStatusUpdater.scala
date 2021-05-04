@@ -1,21 +1,29 @@
 package com.waz.service
 
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage}
-import com.waz.model.ConvId
+import com.waz.model.{ConvId, ConversationData, Messages, RConvId}
 import com.waz.model.otr.UserClients
 
 import scala.concurrent.Future
 
-trait LegalHoldStatusUpdater
+trait LegalHoldStatusUpdater {
+  def updateStatusFromMessageHint(convId: RConvId,
+                                  messageStatus: Messages.LegalHoldStatus): Future[Unit]
+}
 
-class DummyLegalHoldStatusUpdater extends LegalHoldStatusUpdater
+class DummyLegalHoldStatusUpdater extends LegalHoldStatusUpdater {
+  override def updateStatusFromMessageHint(convId: RConvId,
+                                           messageStatus: Messages.LegalHoldStatus): Future[Unit] =
+    Future.successful(())
+}
 
 // Updates the legal hold status of conversations when new
 // legal hold devices are discovered.
 
 class LegalHoldStatusUpdaterImpl(clientsStorage: OtrClientsStorage,
                                  convStorage: ConversationStorage,
-                                 membersStorage: MembersStorage) extends LegalHoldStatusUpdater {
+                                 membersStorage: MembersStorage,
+                                 userService: UserService) extends LegalHoldStatusUpdater {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -48,5 +56,33 @@ class LegalHoldStatusUpdaterImpl(clientsStorage: OtrClientsStorage,
       _                 <- convStorage.updateAll2(Seq(convId), _.withNewLegalHoldStatus(detectedLegalHold))
     } yield ()
   }
+
+  override def updateStatusFromMessageHint(convId: RConvId,
+                                           messageStatus: Messages.LegalHoldStatus): Future[Unit] = {
+    convStorage.getByRemoteId(convId).flatMap {
+      case Some(conv) => statusUpdate(conv, messageStatus) match {
+          case Some(updater) =>
+            convStorage.update(conv.id, updater)
+              .flatMap(_ => userService.syncClients(conv.id))
+          case None =>
+            Future.successful(())
+        }
+      case None =>
+        Future.successful(())
+    }
+  }
+
+  private def statusUpdate(conv: ConversationData,
+                           messageStatus: Messages.LegalHoldStatus): Option[ConversationData => ConversationData] =
+    (conv.isUnderLegalHold, messageStatus) match {
+      case (false, Messages.LegalHoldStatus.ENABLED) =>
+        Some(_.withNewLegalHoldStatus(detectedLegalHoldDevice = true))
+      case (true, Messages.LegalHoldStatus.DISABLED) =>
+        Some(_.withNewLegalHoldStatus(detectedLegalHoldDevice = false))
+      case _ =>
+        None
+    }
+
+
 
 }
