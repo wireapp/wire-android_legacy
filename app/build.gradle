@@ -126,7 +126,6 @@ android {
 
         //Feature Flags
         buildConfigField 'boolean', 'LARGE_VIDEO_CONFERENCE_CALLS', "$largeVideoConferenceCalls"
-        buildConfigField 'boolean', 'APP_LOCK_FEATURE_FLAG', "$appLockFeatureFlag"
     }
 
     packagingOptions {
