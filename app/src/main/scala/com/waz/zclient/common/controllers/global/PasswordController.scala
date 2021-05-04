@@ -19,7 +19,7 @@ package com.waz.zclient.common.controllers.global
 
 import android.content.Context
 import com.waz.content.UserPreferences._
-import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.service.teams.FeatureFlagsService
@@ -27,7 +27,6 @@ import com.waz.service.{AccountsService, UserService}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.AESUtils.{EncryptedBytes, decryptWithAlias, encryptWithAlias}
 import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.dialogs.NewPasswordDialog
 import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.{BaseActivity, BuildConfig, Injectable, Injector}
@@ -50,11 +49,9 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
     case true  =>
       inject[Signal[UserService]].head.foreach(_.clearAccountPassword())
     case false =>
-      if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
-        userAccountsController.isTeam.head.foreach {
-          case true => featureFlags.head.foreach(_.updateAppLock())
-          case false =>
-        }
+      userAccountsController.isTeam.head.foreach {
+        case true  => featureFlags.head.foreach(_.updateAppLock())
+        case false =>
       }
   }
 
@@ -161,19 +158,4 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       case Some(id) =>
         sodiumHandler.hash(password, id.str.replace("-", ""))
     }(Threading.Background)
-
-  // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
-  if (BuildConfig.APP_LOCK_FEATURE_FLAG) {
-    inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated).apply().foreach {
-      case true =>
-      case false =>
-        inject[GlobalPreferences].preference(GlobalPreferences.AppLockEnabled).apply().foreach { globalAppLock =>
-          prefs.map(_.preference(AppLockEnabled)).head.foreach { userAppLockPref =>
-            verbose(l"Migrating the AppLockEnabled preference (set to $globalAppLock) from global to user preferences")
-            userAppLockPref := globalAppLock
-            inject[GlobalPreferences].preference(GlobalPreferences.GlobalAppLockDeprecated) := true
-          }
-        }
-    }
-  }
 }
