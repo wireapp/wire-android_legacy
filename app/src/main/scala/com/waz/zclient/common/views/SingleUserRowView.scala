@@ -142,9 +142,10 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   Signal.zip(isGuest, isPartner).map { case (v, s) => v || s }.onUi(guestPartnerIndicator.setVisible)
   Signal.zip(chosenCurrentTheme, isGuest, isPartner).onUi {
-    case (Theme.Light, true, _) => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_light_theme)
-    case (Theme.Dark, true, _)  => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_dark_theme)
-    case (_, false, true)       => guestPartnerIndicator.setImageResource(R.drawable.ic_external_user)
+    case (Theme.Light, true, _)     => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_light_theme)
+    case (Theme.Light, false, true) => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_light_theme)
+    case (Theme.Dark, true, _)      => guestPartnerIndicator.setImageResource(R.drawable.ic_guest_dark_theme)
+    case (Theme.Dark, false, true)  => guestPartnerIndicator.setImageResource(R.drawable.ic_partner_dark_theme)
     case _ =>
   }
 
