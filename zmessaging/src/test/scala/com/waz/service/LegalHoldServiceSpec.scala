@@ -7,7 +7,7 @@ import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.ConversationData.LegalHoldStatus.{Disabled, Enabled, PendingApproval}
 import com.waz.model.GenericContent.Text
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{ConvId, ConversationData, GenericMessage, GenericMessageEvent, LegalHoldDisableEvent, LegalHoldEnableEvent, LegalHoldRequest, LegalHoldRequestEvent, Messages, RConvId, RemoteInstant, TeamId, Uid, UserId}
+import com.waz.model.{ConvId, ConversationData, GenericMessage, GenericMessageEvent, LegalHoldDisableEvent, LegalHoldEnableEvent, LegalHoldRequest, LegalHoldRequestEvent, Messages, RConvId, RemoteInstant, SyncId, TeamId, Uid, UserId}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -444,6 +444,26 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       result(service.onClientsChanged(Seq(userClients)))
     }
 
+    scenario("after fetching clients for verification") {
+      // Given
+      val userClients = UserClients(user1, Map(client1.id -> client1))
+      service.isVerifyingLegalHold = true
+
+      // Expectations
+      (membersStorage.getActiveConvs _)
+        .expects(user1)
+        .once()
+        .returning(Future.successful(Seq(convId)))
+
+      setUpExpectationsForConversationUpdate()
+
+      // When
+      result(service.updateLegalHoldStatusAfterFetchingClients(Seq(userClients)))
+
+      // Then
+      service.isVerifyingLegalHold shouldBe false
+    }
+
     def setUpExpectationsForConversationUpdate(): Unit = {
       // Get the active users of the conversations.
       (membersStorage.getActiveUsers _)
@@ -506,69 +526,124 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   feature("Generic message hints") {
 
-    // It triggers verification if it believes to have legal hold
-    // It triggers verification if it believes to no longer have legal hold.
-
-    scenario("it triggers client sync if status differ") {
+    scenario("it triggers client sync if it discovers legal hold to be enabled") {
       // Given
-      val remoteConvId = RConvId("convId")
-      val convId = ConvId("convId")
-      val conv = ConversationData(convId, remoteConvId, legalHoldStatus = Disabled)
-      val messageStatus = Messages.LegalHoldStatus.ENABLED
+      val pipeline = createMessageEventPipeline()
+      val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Disabled)
+      val message = createMessage(Messages.LegalHoldStatus.ENABLED)
+      val event = createEvent(conv.remoteId, message)
 
       // Expectations
       (convsStorage.getByRemoteId _)
-        .expects(remoteConvId)
+        .expects(conv.remoteId)
         .once()
         .returning(Future.successful(Some(conv)))
 
       // Note: we don't care about the return value
       (convsStorage.update _)
-        .expects(convId, *)
+        .expects(conv.id, *)
         .once()
         .returning(Future.successful(None))
 
-//      (userService.syncClients(_ : ConvId))
-//        .expects(convId)
-//        .once()
-//        .returning(Future.successful(()))
-//
-//      // When
-//      result(statusUpdater.updateStatusFromMessageHint(remoteConvId, messageStatus))
+      (sync.syncClientsForLegalHold _)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(SyncId("syncIc")))
+
+      // When
+      result(pipeline.apply(Seq(event)))
+
+      // Then
+      service.isVerifyingLegalHold shouldBe true
     }
 
-    scenario("it does not trigger client sync if status are equal") {
+    scenario("it triggers client sync if it discovers legal hold to be disabled") {
       // Given
-      val remoteConvId = RConvId("convId")
-      val convId = ConvId("convId")
-      val conv = ConversationData(convId, remoteConvId, legalHoldStatus = Enabled)
-      val messageStatus = Messages.LegalHoldStatus.ENABLED
+      val pipeline = createMessageEventPipeline()
+      val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Enabled)
+      val message = createMessage(Messages.LegalHoldStatus.DISABLED)
+      val event = createEvent(conv.remoteId, message)
 
       // Expectations
       (convsStorage.getByRemoteId _)
-        .expects(remoteConvId)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(Some(conv)))
+
+      // Note: we don't care about the return value
+      (convsStorage.update _)
+        .expects(conv.id, *)
+        .once()
+        .returning(Future.successful(None))
+
+      (sync.syncClientsForLegalHold _)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(SyncId("syncIc")))
+
+      // When
+      result(pipeline.apply(Seq(event)))
+
+      // Then
+      service.isVerifyingLegalHold shouldBe true
+    }
+
+    scenario("it does not trigger client sync if current status and hint are both enabled") {
+      // Given
+      val pipeline = createMessageEventPipeline()
+      val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Enabled)
+      val message = createMessage(Messages.LegalHoldStatus.ENABLED)
+      val event = createEvent(conv.remoteId, message)
+
+      // Expectations
+      (convsStorage.getByRemoteId _)
+        .expects(conv.remoteId)
         .once()
         .returning(Future.successful(Some(conv)))
 
       // When
-//      result(statusUpdater.updateStatusFromMessageHint(remoteConvId, messageStatus))
+      result(pipeline.apply(Seq(event)))
+
+      // Then
+      service.isVerifyingLegalHold shouldBe false
     }
 
-    //    scenario("it informs status updater of new hints") {
-    //      // Given
-    //      val scheduler = new EventScheduler(Stage(Sequential)(service.messageEventStage))
-    //      val pipeline = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
-    //
-    //      val message = GenericMessage(Uid("messageId"), None, Text("Hello!"))
-    //        .withLegalHoldStatus(Messages.LegalHoldStatus.ENABLED)
-    //
-    //      val event = GenericMessageEvent(RConvId("convId"), RemoteInstant(Instant.now()), UserId("senderId"), message)
-    //
-    //      // Expectation
-    //
-    //      // When
-    //      result(pipeline.apply(Seq(event)))
-    //    }
+    scenario("it does not trigger client sync if current status and hint are both disabled") {
+      // Given
+      val pipeline = createMessageEventPipeline()
+      val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Disabled)
+      val message = createMessage(Messages.LegalHoldStatus.DISABLED)
+      val event = createEvent(conv.remoteId, message)
+
+      // Expectations
+      (convsStorage.getByRemoteId _)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(Some(conv)))
+
+      // When
+      result(pipeline.apply(Seq(event)))
+
+      // Then
+      service.isVerifyingLegalHold shouldBe false
+    }
+
+    def createMessageEventPipeline(): EventPipeline = {
+      val scheduler = new EventScheduler(Stage(Sequential)(service.messageEventStage))
+      new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+    }
+
+    def createMessage(status: Messages.LegalHoldStatus): GenericMessage =
+      GenericMessage(Uid("messageId"), None, Text("Hello!"))
+        .withLegalHoldStatus(status)
+
+    def createEvent(convId: RConvId, message: GenericMessage): GenericMessageEvent =
+      GenericMessageEvent(
+        convId,
+        RemoteInstant(Instant.now()),
+        UserId("senderId"),
+        message
+      )
 
   }
 

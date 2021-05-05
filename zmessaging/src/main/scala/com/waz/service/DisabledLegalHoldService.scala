@@ -1,4 +1,5 @@
 package com.waz.service
+import com.waz.model.otr.UserClients
 import com.waz.model.{ConvId, Event, LegalHoldRequest, MessageEvent, UserId}
 import com.waz.service.EventScheduler.Stage
 import com.waz.sync.handler.LegalHoldError
@@ -32,4 +33,6 @@ class DisabledLegalHoldService extends LegalHoldService {
   override def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit] = Future.successful(())
 
   override def deleteLegalHoldRequest(): Future[Unit] = Future.successful(())
+
+  override def updateLegalHoldStatusAfterFetchingClients(clients: Seq[UserClients]): Future[Unit] = Future.successful(())
 }
