@@ -80,7 +80,7 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
 
   user.map(_.id).foreach(userDetails.setUserId)
 
-  user.map(u => (u.isAutoConnect, u.isWireBot)).on(Threading.Ui) {
+  user.map(u => (u.isAutoConnect, u.isWireBot)).onUi {
     case (true, _) =>
       label.setText(R.string.content__message__connect_request__auto_connect__footer)
       TextViewUtils.linkifyText(label, getStyledColor(R.attr.wirePrimaryTextColor), true, true, new Runnable() {

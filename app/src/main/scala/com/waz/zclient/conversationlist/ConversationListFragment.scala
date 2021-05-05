@@ -132,12 +132,12 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
     subs += userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
-    subs += adapter.onConversationClick.foreach { conv =>
+    subs += adapter.onConversationClick.onUi { conv =>
       verbose(l"handleItemClick, switching conv to $conv")
       conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
     }
 
-    subs += adapter.onConversationLongClick.foreach { conv =>
+    subs += adapter.onConversationLongClick.onUi { conv =>
       if (Set(Group, OneToOne, WaitForConnection).contains(conv.convType))
         screenController.showConversationMenu(true, conv.id)
     }
@@ -164,7 +164,7 @@ class ArchiveListFragment extends ConversationListFragment with OnBackPressedLis
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
-    topToolbar.foreach(toolbar => subs += toolbar.onRightButtonClick.foreach(_ => Option(getContainer).foreach(_.closeArchive())))
+    topToolbar.foreach(toolbar => subs += toolbar.onRightButtonClick.onUi(_ => Option(getContainer).foreach(_.closeArchive())))
   }
 
   override def onBackPressed() = {
@@ -254,7 +254,7 @@ class NormalConversationFragment extends ConversationListFragment {
     }
 
     topToolbar.foreach { toolbar =>
-      subs += toolbar.onRightButtonClick.foreach { _ =>
+      subs += toolbar.onRightButtonClick.onUi { _ =>
         getActivity.startActivityForResult(PreferencesActivity.getDefaultIntent(getContext), PreferencesActivity.SwitchAccountCode)
       }
     }
