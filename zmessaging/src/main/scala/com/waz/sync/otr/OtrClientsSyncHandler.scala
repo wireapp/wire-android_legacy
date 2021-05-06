@@ -23,7 +23,6 @@ import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.OtrClientsStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
 import com.waz.model.{QualifiedId, UserId}
 import com.waz.model.otr.{Client, ClientId, Location, UserClients}
 import com.waz.service.otr.OtrService.SessionId
@@ -63,45 +62,47 @@ class OtrClientsSyncHandlerImpl(context:    Context,
 
   private lazy val sessions = cryptoBox.sessions
 
-  private def syncClients(users: Map[UserId, Seq[Client]]) = {
-    verbose(l"syncClients: $users")
+  private def hasSession(user: UserId, client: ClientId) = sessions.getSession(SessionId(user, client)).map(_.isDefined)
 
-    def hasSession(user: UserId, client: ClientId) = sessions.getSession(SessionId(user, client)).map(_.isDefined)
+  private def loadClients(user: UserId) =
+    (if (user == selfId) netClient.loadClients() else netClient.loadClients(user)).future
 
-    def withoutSession(user: UserId, clients: Iterable[ClientId]) =
-      Future.traverse(clients) { client =>
-        if (selfClient == client) Future successful None
-        else hasSession(user, client) map { if (_) None else Some(client) }
-      } map { _.flatten.toSeq }
+  private def withoutSession(userId: UserId, clients: Iterable[ClientId]) =
+    Future.traverse(clients) { client =>
+      if (selfClient == client) Future successful None
+      else hasSession(userId, client) map { if (_) None else Some(client) }
+    } map { _.flatten.toSeq }
 
-    def syncSessionsIfNeeded(clients: Iterable[UserClients]) = {
-      for {
-        toSync <- Future.sequence(clients.map { uc => withoutSession(uc.id, uc.clients.keys).map(cs => selfId -> cs) })
-        err    <- if (toSync.isEmpty) Future.successful(None) else syncSessions(toSync.toMap)
-      } yield
-        err.fold[SyncResult](Success)(SyncResult(_))
+  private def syncSessionsIfNeeded(userId: UserId, clients: Iterable[ClientId]) =
+    for {
+      toSync <- withoutSession(userId, clients)
+      err    <- if (toSync.isEmpty) Future.successful(None) else syncSessions(Map(userId -> toSync))
+    } yield
+      err.fold[SyncResult](Success)(SyncResult(_))
+
+  private def updatePreKeys(clientId: ClientId) =
+    netClient.loadRemainingPreKeys(clientId).future.flatMap {
+      case Right(ids) =>
+        cryptoBox.generatePreKeysIfNeeded(ids).flatMap {
+          case keys if keys.isEmpty => Future.successful(Success)
+          case keys                 => netClient.updateKeys(clientId, Some(keys)).future map {
+            case Right(_)    => Success
+            case Left(error) => SyncResult(error)
+          }
+        }
+      case Left(error) => Future.successful(SyncResult(error))
     }
 
-    def updatePreKeys(id: ClientId) =
-      netClient.loadRemainingPreKeys(id).future.flatMap {
-        case Right(ids) =>
-          cryptoBox.generatePreKeysIfNeeded(ids).flatMap {
-            case keys if keys.isEmpty => Future.successful(Success)
-            case keys                 => netClient.updateKeys(id, Some(keys)).future map {
-              case Right(_)    => Success
-              case Left(error) => SyncResult(error)
-            }
-          }
-        case Left(error) => Future.successful(SyncResult(error))
-      }
-
-    val (selfClients, otherClients) = users.partition(uc => uc._1 == selfId)
+  private def updateClients(userId: UserId, clients: Seq[Client]) = {
     val userClients =
-      otherClients ++ selfClients.mapValues(_.map(c => if (selfClient == c.id) c.copy(verified = Verification.VERIFIED) else c))
+      if (userId == selfId)
+        clients.map(c => if (selfClient == c.id) c.copy(verified = Verification.VERIFIED) else c)
+      else
+        clients
 
     for {
-      ucs <- otrClients.updateClients(userClients, replace = true)
-      _   <- syncSessionsIfNeeded(ucs)
+      ucs <- otrClients.updateUserClients(userId, userClients, replace = true)
+      _   <- syncSessionsIfNeeded(userId, ucs.clients.keys)
       res <- updatePreKeys(selfClient)
       _   <- res match {
         case Success => otrClients.lastSelfClientsSyncPref := System.currentTimeMillis()
@@ -110,36 +111,59 @@ class OtrClientsSyncHandlerImpl(context:    Context,
     } yield res
   }
 
-  override def syncClients(users: Set[QualifiedId]): Future[SyncResult] =
+  private def updateClients(users: Map[UserId, Seq[Client]]): Future[SyncResult] =
+    Future
+      .sequence(users.map { case (userId, clients) => updateClients(userId, clients) })
+      .map {
+        _.collectFirst { case error@SyncResult.Failure(_) => error }
+         .getOrElse(SyncResult.Success)
+      }
+
+  override def syncClients(userId: UserId): Future[SyncResult] =
+    loadClients(userId).flatMap {
+      case Left(error)    => Future.successful(SyncResult(error))
+      case Right(clients) => updateClients(userId, clients)
+    }
+
+  override def syncClients(users: Set[QualifiedId]): Future[SyncResult] = {
+    val (qualified, unqualified) = users.partition(_.hasDomain)
+
+    val qualifiedSync =
+      if (qualified.nonEmpty) syncQualified(qualified)
+      else Future.successful(SyncResult.Success)
+    val unqualifiedSync =
+      if (unqualified.nonEmpty) syncUnqualified(unqualified.map(_.id))
+      else Future.successful(SyncResult.Success)
+
+    qualifiedSync.flatMap {
+      case SyncResult(error) => Future.successful(SyncResult(error))
+      case _                 => unqualifiedSync
+    }
+  }
+
+  private def syncQualified(users: Set[QualifiedId]): Future[SyncResult] =
     netClient.loadClients(users).future.flatMap {
       case Right(response) =>
-        syncClients(response.map { case (QualifiedId(id, _), clients) => id -> clients })
+        updateClients(response.map { case (QualifiedId(id, _), clients) => id -> clients })
       case Left(ErrorResponse.PageNotFound) =>
         // fallback to requesting clients per user
-        Future
-          .sequence(users.map { case QualifiedId(id, _) => netClient.loadClients(id).future.map(id -> _) })
-          .flatMap { responses =>
-            val error = responses.collectFirst { case (_, Left(error)) => error }
-            error match {
-              case Some(err) =>
-                Future.successful(SyncResult(err))
-              case None =>
-                syncClients(responses.collect { case (id, Right(clients)) => id -> clients }.toMap)
-            }
-          }
+        syncUnqualified(users.map(_.id))
       case Left(error)=>
         Future.successful(SyncResult(error))
     }
 
-  override def syncClients(user: UserId): Future[SyncResult] = {
-    val loadClients =
-      (if (user == selfId) netClient.loadClients() else netClient.loadClients(user)).future
-
-    loadClients.flatMap {
-      case Left(error)    => Future.successful(SyncResult(error))
-      case Right(clients) => syncClients(Map(user -> clients))
-    }
-  }
+  private def syncUnqualified(users: Set[UserId]): Future[SyncResult] =
+    Future
+      .sequence(users.map { id => netClient.loadClients(id).future.map(id -> _) })
+      .flatMap { responses =>
+        val error = responses.collectFirst { case (_, Left(error)) => error }
+        error match {
+          case Some(err) =>
+            Future.successful(SyncResult(err))
+          case None =>
+            updateClients(responses.collect { case (id, Right(clients)) => id -> clients }.toMap)
+        }
+      }
 
   override def postLabel(id: ClientId, label: String): Future[SyncResult] =
     netClient.postClientLabel(id, label).future map {
