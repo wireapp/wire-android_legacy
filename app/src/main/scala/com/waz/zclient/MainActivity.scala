@@ -534,7 +534,7 @@ class MainActivity extends BaseActivity
     } (Threading.Ui)
   }
 
-  def manageDevices(): Unit = startActivity(ShowDevicesIntent(this))
+  def manageDevices(): Unit = startActivity(ShowDeviceRemovalIntent(this))
 
   def dismissOtrDeviceLimitFragment(): Unit = withFragmentOpt(OtrDeviceLimitFragment.Tag)(_.foreach(removeFragment))
 

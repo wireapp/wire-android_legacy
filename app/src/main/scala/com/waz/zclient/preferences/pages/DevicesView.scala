@@ -24,7 +24,7 @@ import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.{LinearLayout, ScrollView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.otr.Client
+import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
@@ -84,8 +84,11 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 
   private var controller = Option.empty[DevicesViewController]
 
+  private lazy val removeOnly = args.getBoolean(DevicesBackStackKey.KeyRemoveOnly, false)
+
   override def onViewAttached(v: View) = {
-    controller = Option(v.asInstanceOf[DevicesViewImpl]).map(view => DevicesViewController(view)(view.injector, view.eventContext))
+    controller = Option(v.asInstanceOf[DevicesViewImpl])
+      .map(view => DevicesViewController(view, removeOnly)(view.injector, view.eventContext))
   }
 
   override def onViewDetached() = {
@@ -94,7 +97,17 @@ case class DevicesBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   }
 }
 
-case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: EventContext)
+object DevicesBackStackKey {
+  private val KeyRemoveOnly = "KeyRemoveOnly"
+
+  def newInstance(removeOnly: Boolean = false): DevicesBackStackKey = {
+    val bundle = new Bundle
+    bundle.putBoolean(KeyRemoveOnly, removeOnly)
+    DevicesBackStackKey(bundle)
+  }
+}
+
+case class DevicesViewController(view: DevicesView, removeOnly: Boolean)(implicit inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
 
   val zms = inject[Signal[Option[ZMessaging]]]
@@ -105,9 +118,12 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
     selfClientId  <- am.clientId
     clients       <- Signal.from(am.storage.otrClientsStorage.get(am.userId))
   } yield clients.fold(Seq[Client]()) { userClients =>
-    val others = userClients.clients.values.filter(client => !selfClientId.contains(client.id))
-    sortClients(others.toSeq)
+    val filtered = filterClients(userClients.clients.values, selfClientId)
+    sortClients(filtered.toSeq)
   }
+
+  private def filterClients(clients: Iterable[Client], selfClientId: Option[ClientId]): Iterable[Client] =
+    clients.filter(client => !selfClientId.contains(client.id) && (!removeOnly || !client.isLegalHoldDevice))
 
   private def sortClients(clients: Seq[Client]): Seq[Client] = {
     val (legalHoldClient, otherClients) = clients.partition(_.isLegalHoldDevice)
