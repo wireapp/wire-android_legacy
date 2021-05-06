@@ -53,6 +53,7 @@ class NewCallingFragment extends FragmentHelper {
   private lazy val parentLayout             = view[FrameLayout](R.id.parent_layout)
   private lazy val zoomLayout               = view[ZoomLayout](R.id.zoom_layout)
   private lazy val videoGrid                = view[GridLayout](R.id.video_grid)
+  private var viewMap                       = Map[Participant, UserVideoView]()
   private var videoPreview: VideoPreview    = _
 
 
@@ -70,41 +71,10 @@ class NewCallingFragment extends FragmentHelper {
     initZoomLayout()
     initVideoGrid()
     initNoActiveSpeakersLayout()
-
-
-    callController.isGroupCall.onChanged {
-      case true =>
-        Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG).show()
-      case _ =>
-    }
-
-    getView.onClick {
-      callController.controlsClick(true)
-    }
-
-    callController.allParticipants.map(_.size).onUi {
-      case NbParticipantsOneOneCall =>
-        zoomLayout.foreach(_.setEnabled(true))
-        Toast.makeText(getContext, R.string.calling_screenshare_zooming_message, Toast.LENGTH_LONG).show()
-      case _ => zoomLayout.foreach(_.setEnabled(false))
-    }
-
-    Signal.zip(callController.isSelfViewVisible, callController.videoSendState).onUi {
-      case (false, VideoState.Started | VideoState.ScreenShare | VideoState.BadConnection) =>
-        videoPreview = new VideoPreview(getContext) {
-          v =>
-          callController.setVideoPreview(null)
-          callController.setVideoPreview(Some(v))
-          v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-          v.setElevation(0)
-          parentLayout.foreach(_.addView(v))
-        }
-      case (false, _) =>
-        callController.setVideoPreview(null)
-        parentLayout.foreach(_.removeView(videoPreview))
-      case (true, _) =>
-        parentLayout.foreach(_.removeView(videoPreview))
-    }
+    displayFullScreenModeIndication()
+    observeParticipantsCount()
+    manageVideoPreview()
+    initClickForRootView()
 
   }
 
@@ -116,8 +86,8 @@ class NewCallingFragment extends FragmentHelper {
     }
 
   override def onDestroyView(): Unit = {
-    super.onDestroyView()
     clearVideoGrid()
+    super.onDestroyView()
   }
 
   private def runSecurityPolicyChecker(): Unit =
@@ -173,48 +143,72 @@ class NewCallingFragment extends FragmentHelper {
       case _ => noActiveSpeakersLayout.foreach(_.setVisibility(View.GONE))
     }
 
+  private def displayFullScreenModeIndication(): Unit ={
+    callController.isGroupCall.onChanged {
+      case true =>
+        Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG).show()
+      case _ =>
+    }
+  }
+
+  private def observeParticipantsCount(): Unit = {
+    callController.allParticipants.map(_.size).onUi {
+      case NbParticipantsOneOneCall =>
+        enableZooming()
+        displayPinchToZoomIndication()
+      case _ => disableZooming()
+    }
+  }
+
+  private def enableZooming(): Unit = zoomLayout.foreach(_.setEnabled(true))
+
+  private def disableZooming(): Unit = zoomLayout.foreach(_.setEnabled(false))
+
+  private def displayPinchToZoomIndication(): Unit =
+    Toast.makeText(getContext, R.string.calling_ping_to_zoom_message, Toast.LENGTH_LONG).show()
+
+  private def manageVideoPreview(): Unit = {
+    Signal.zip(callController.isSelfViewVisible, callController.videoSendState).onUi {
+      case (false, VideoState.Started | VideoState.ScreenShare | VideoState.BadConnection) =>
+        initVideoPreview()
+        stopVideoPreview()
+        startVideoPreview()
+        attachVideoPreviewToParentLayout()
+      case (false, _) =>
+        stopVideoPreview()
+        detachVideoPreviewFromParentLayout()
+      case (true, _) =>
+        detachVideoPreviewFromParentLayout()
+    }
+  }
+
+  private def initVideoPreview(): Unit = {
+    videoPreview = new VideoPreview(getContext)
+    videoPreview.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+    videoPreview.setElevation(0)
+  }
+
+  private def stopVideoPreview(): Unit = callController.setVideoPreview(null)
+
+  private def startVideoPreview(): Unit =
+    callController.setVideoPreview(Some(videoPreview))
+
+  private def attachVideoPreviewToParentLayout(): Unit =
+    parentLayout.foreach(_.addView(videoPreview))
+
+  private def detachVideoPreviewFromParentLayout(): Unit =
+    parentLayout.foreach(_.removeView(videoPreview))
+
+  private def initClickForRootView(): Unit = getView.onClick {
+    callController.controlsClick(true)
+  }
+
   private def showFullScreenVideo(participant: Participant): Unit = getChildFragmentManager
     .beginTransaction
     .replace(R.id.full_screen_video_container, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
     .commit
 
-  private lazy val isVideoBeingSent =
-    Signal.zip(callController.allVideoReceiveStates, callController.selfParticipant).map {
-      case (videoStates, self) => !videoStates.get(self).contains(VideoState.Stopped)
-    }
 
-  private lazy val videoGridInfo = Signal.zip(
-    callController.selfParticipant,
-    callController.videoUsers,
-    callController.participantInfos,
-    callController.allParticipants,
-    isVideoBeingSent
-  )
-
-  private var viewMap = Map[Participant, UserVideoView]()
-
-  private def refreshViews(videoUsers: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
-
-    def createView(participant: Participant): UserVideoView = returning {
-      if (participant == selfParticipant) new SelfVideoView(getContext, selfParticipant)
-      else new OtherVideoView(getContext, participant)
-    } { userView =>
-      viewMap = viewMap.updated(participant, userView)
-        userView.onDoubleClick.onUi { _ =>
-          callController.allParticipants.map(_.size > 2).head.foreach {
-            case true =>
-              showFullScreenVideo(participant)
-              clearVideoGrid()
-            case false =>
-          }
-        }
-    }
-
-    if (videoUsers.contains(selfParticipant)) callController.isSelfViewVisible ! true
-    else callController.isSelfViewVisible ! false
-
-    videoUsers.map { participant => viewMap.getOrElse(participant, createView(participant)) }
-  }
 
   private def refreshVideoGrid(grid: GridLayout,
                                selfParticipant: Participant,
@@ -309,9 +303,46 @@ class NewCallingFragment extends FragmentHelper {
     viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) }
   }
 
-  def clearVideoGrid(): Unit = {
+  private def clearVideoGrid(): Unit = {
     videoGrid.foreach(_.removeAllViews())
     viewMap = Map.empty
+  }
+
+  private lazy val isVideoBeingSent =
+    Signal.zip(callController.allVideoReceiveStates, callController.selfParticipant).map {
+      case (videoStates, self) => !videoStates.get(self).contains(VideoState.Stopped)
+    }
+
+  private lazy val videoGridInfo = Signal.zip(
+    callController.selfParticipant,
+    callController.videoUsers,
+    callController.participantInfos,
+    callController.allParticipants,
+    isVideoBeingSent
+  )
+
+
+  private def refreshViews(videoUsers: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
+
+    def createView(participant: Participant): UserVideoView = returning {
+      if (participant == selfParticipant) new SelfVideoView(getContext, selfParticipant)
+      else new OtherVideoView(getContext, participant)
+    } { userView =>
+      viewMap = viewMap.updated(participant, userView)
+      userView.onDoubleClick.onUi { _ =>
+        callController.allParticipants.map(_.size > 2).head.foreach {
+          case true =>
+            showFullScreenVideo(participant)
+            clearVideoGrid()
+          case false =>
+        }
+      }
+    }
+
+    if (videoUsers.contains(selfParticipant)) callController.isSelfViewVisible ! true
+    else callController.isSelfViewVisible ! false
+
+    videoUsers.map { participant => viewMap.getOrElse(participant, createView(participant)) }
   }
 
 

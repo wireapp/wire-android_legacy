@@ -344,7 +344,7 @@
     <string name="calling_toggle_speakers">SPEAKERS</string>
     <string name="calling_double_tap_enter_fullscreen_message">Double tap on a tile for fullscreen</string>
     <string name="calling_double_tap_exit_fullscreen_message">Double tap to go back, pinch to zoom</string>
-    <string name="calling_screenshare_zooming_message">Pinch to zoom</string>
+    <string name="calling_ping_to_zoom_message">Pinch to zoom</string>
 
     <!-- Connect request -->
     <string name="connect__message">Hi %1$s,\nLet\'s connect on Wire.\n%2$s</string>
