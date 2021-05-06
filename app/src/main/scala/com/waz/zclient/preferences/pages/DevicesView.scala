@@ -66,9 +66,7 @@ class DevicesViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setOtherDevices(devices: Seq[Client]): Unit = {
     deviceList.removeAllViews()
-    val (legalHoldDevice, otherDevices) = devices.partition(_.isLegalHoldDevice)
-    val sortedDevices = legalHoldDevice ++ otherDevices
-    sortedDevices.foreach { device =>
+    devices.foreach { device =>
       val deviceButton = new DeviceButton(context, attrs, style)
       deviceButton.setDevice(device, self = false)
       deviceButton.onClickEvent.onUi { _ => navigator.goTo(DeviceDetailsBackStackKey(device.id.str)) }
@@ -106,7 +104,15 @@ case class DevicesViewController(view: DevicesView)(implicit inj: Injector, ec: 
     Some(am)      <- accounts.activeAccountManager
     selfClientId  <- am.clientId
     clients       <- Signal.from(am.storage.otrClientsStorage.get(am.userId))
-  } yield clients.fold(Seq[Client]())(_.clients.values.filter(client => !selfClientId.contains(client.id)).toSeq.sortBy(_.regTime).reverse)
+  } yield clients.fold(Seq[Client]()) { userClients =>
+    val others = userClients.clients.values.filter(client => !selfClientId.contains(client.id))
+    sortClients(others.toSeq)
+  }
+
+  private def sortClients(clients: Seq[Client]): Seq[Client] = {
+    val (legalHoldClient, otherClients) = clients.partition(_.isLegalHoldDevice)
+    legalHoldClient ++ otherClients.sortBy(_.regTime).reverse
+  }
 
   val incomingClients = for {
     Some(am)           <- accounts.activeAccountManager
