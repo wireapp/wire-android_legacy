@@ -230,7 +230,7 @@ object Event {
         case "user.connection" => connectionEvent(js.getJSONObject("connection"), JsonDecoder.opt('user, _.getJSONObject("user")) flatMap (JsonDecoder.decodeOptName('name)(_)))
         case "user.push-remove" => gcmTokenRemoveEvent(js.getJSONObject("token"))
         case "user.delete" => UserDeleteEvent(user = 'id)
-        case "user.client-add" => OtrClientAddEvent(OtrClient.ClientsResponse.client(js.getJSONObject("client")))
+        case "user.client-add" => OtrClientAddEvent(OtrClient.ClientsResponse.Decoder(js.getJSONObject("client")))
         case "user.client-remove" => OtrClientRemoveEvent(decodeId[ClientId]('id)(js.getJSONObject("client"), implicitly))
         case "user.properties-set" => PropertyEvent.Decoder(js)
         case "user.properties-delete" => PropertyEvent.Decoder(js)

@@ -81,6 +81,9 @@ class OtrClientImpl(implicit
   private implicit val ListClientsResponseDeserializer: RawBodyDeserializer[ListClientsResponse] =
     RawBodyDeserializer[JSONObject].map(ListClientsResponse.Decoder(_))
 
+  private implicit val ClientDeserializer: RawBodyDeserializer[Client] =
+    RawBodyDeserializer[JSONObject].map(ClientsResponse.Decoder(_))
+
   override def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]] = {
     Request.Get(relativePath = userPreKeysPath(user))
       .withResultType[UserPreKeysResponse]
@@ -327,7 +330,7 @@ object OtrClient extends DerivedLogTag {
     import scala.collection.JavaConverters._
 
     private def getClients(json: JSONArray): Seq[Client] =
-      JsonDecoder.array(json, (arr, i) => Try(arr.getJSONObject(i)).map(Client.Decoder(_)).toOption).flatten
+      JsonDecoder.array(json, (arr, i) => Try(arr.getJSONObject(i)).map(ClientsResponse.Decoder(_)).toOption).flatten
 
     private def getUserClients(domain: String, json: JSONObject): Map[QualifiedId, Seq[Client]] =
       json.keySet.asScala.toSeq.flatMap { userId =>
@@ -352,20 +355,23 @@ object OtrClient extends DerivedLogTag {
 
   object ClientsResponse {
 
-    def client(implicit js: JSONObject): Client =
-      Client(
-        id = decodeId[ClientId]('id),
-        label = 'label,
-        model = 'model,
-        deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
-        deviceType = decodeOptString('type).map(DeviceType.apply),
-        regTime = decodeOptUtcDate('time).map(_.instant),
-        regLocation = opt[Location]('location)
-      )
+    implicit object Decoder extends JsonDecoder[Client] {
+      override def apply(implicit js: JSONObject): Client = {
+        Client(
+          id = decodeId[ClientId]('id),
+          label = 'label,
+          model = 'model,
+          deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
+          deviceType = decodeOptString('type).map(DeviceType.apply),
+          regTime = decodeOptUtcDate('time).map(_.instant),
+          regLocation = opt[Location]('location)
+        )
+      }
+    }
 
     def unapply(content: ResponseContent): Option[Seq[Client]] = content match {
-      case JsonObjectResponse(js) => Try(Seq(client(js))).toOption
-      case JsonArrayResponse(arr) => Try(JsonDecoder.array(arr, { (arr, i) => client(arr.getJSONObject(i)) })).toOption
+      case JsonObjectResponse(js) => Try(Seq(Decoder(js))).toOption
+      case JsonArrayResponse(arr) => Try(JsonDecoder.array(arr, { (arr, i) => Decoder(arr.getJSONObject(i)) })).toOption
       case _ => None
     }
   }
