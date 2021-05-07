@@ -76,7 +76,6 @@ object Location {
  *
  * @param id
  * @param label
- * @param signalingKey - will only be set for current device
  * @param verified - client verification state, updated when user verifies client fingerprint
  */
 final case class Client(override val id: ClientId,
@@ -85,7 +84,6 @@ final case class Client(override val id: ClientId,
                         regTime:         Option[Instant] = None,
                         regLocation:     Option[Location] = None,
                         regIpAddress:    Option[String] = None,
-                        signalingKey:    Option[SignalingKey] = None,
                         verified:        Verification = Verification.UNKNOWN,
                         devType:         OtrClientType = OtrClientType.PHONE) extends Identifiable[ClientId] {
 
@@ -105,7 +103,6 @@ final case class Client(override val id: ClientId,
       regTime      = c.regTime.orElse(regTime),
       regLocation  = location,
       regIpAddress = c.regIpAddress.orElse(regIpAddress),
-      signalingKey = c.signalingKey.orElse(signalingKey),
       verified     = c.verified.orElse(verified),
       devType      = if (c.devType == OtrClientType.PHONE) devType else c.devType
     )
@@ -122,7 +119,6 @@ object Client {
       v.regTime foreach { t => o.put("regTime", t.toEpochMilli) }
       v.regLocation foreach { l => o.put("regLocation", JsonEncoder.encode(l)) }
       v.regIpAddress foreach { o.put("regIpAddress", _) }
-      v.signalingKey foreach { sk => o.put("signalingKey", JsonEncoder.encode(sk)) }
       o.put("verification", v.verified.name)
       o.put("devType", v.devType.deviceClass)
     }
@@ -138,7 +134,6 @@ object Client {
         'regTime,
         opt[Location]('regLocation),
         'regIpAddress,
-        opt[SignalingKey]('signalingKey),
         decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
         decodeOptString('devType).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass)
       )

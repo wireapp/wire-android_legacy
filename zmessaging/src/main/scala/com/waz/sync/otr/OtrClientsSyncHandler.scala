@@ -216,7 +216,7 @@ class OtrClientsSyncHandlerImpl(context:    Context,
         Future.successful(Success)
       case Some(ucs) =>
         val toSync = ucs.clients.values collect {
-          case Client(_, _, _, _, Some(loc), _, _, _, _) if !loc.hasName => loc
+          case Client(_, _, _, _, Some(loc), _, _, _) if !loc.hasName => loc
         }
         if (toSync.isEmpty)
           Future.successful(Success)

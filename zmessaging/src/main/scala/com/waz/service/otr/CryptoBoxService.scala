@@ -26,7 +26,7 @@ import com.waz.content.UserPreferences.OtrLastPrekey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.UserId
-import com.waz.model.otr.{Client, ClientId, SignalingKey}
+import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.MetaDataService
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -83,7 +83,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
   def createClient(id: ClientId = ClientId()) = apply { cb =>
     val (lastKey, keys) = (cb.newLastPreKey(), cb.newPreKeys(0, PreKeysCount))
     (lastPreKeyId := keys.last.id).map { _ =>
-      (Client(id, clientLabel, metadata.deviceModel, Some(Instant.now), signalingKey = Some(SignalingKey()), verified = Verification.VERIFIED, devType = metadata.deviceClass), lastKey, keys.toSeq)
+      (Client(id, clientLabel, metadata.deviceModel, Some(Instant.now), verified = Verification.VERIFIED, devType = metadata.deviceClass), lastKey, keys.toSeq)
     }
   }
 

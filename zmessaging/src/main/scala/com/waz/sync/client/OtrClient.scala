@@ -52,7 +52,7 @@ trait OtrClient {
   def deleteClient(id: ClientId, password: Option[Password]): ErrorOrResponse[Unit]
   def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client]
   def postClientLabel(id: ClientId, label: String): ErrorOrResponse[Unit]
-  def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None, sigKey: Option[SignalingKey] = None): ErrorOrResponse[Unit]
+  def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None): ErrorOrResponse[Unit]
   def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse]
 }
 
@@ -146,7 +146,6 @@ class OtrClientImpl(implicit
   override def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client] = {
     val data = JsonEncoder { o =>
       o.put("lastkey", JsonEncoder.encode(lastKey)(PreKeyEncoder))
-      client.signalingKey foreach { sk => o.put("sigkeys", JsonEncoder.encode(sk)) }
       o.put("prekeys", JsonEncoder.arr(keys)(PreKeyEncoder))
       o.put("label", client.label)
       o.put("model", client.model)
@@ -165,7 +164,7 @@ class OtrClientImpl(implicit
     Request.Post(relativePath = clientsPath, body = data)
       .withResultType[Client]
       .withErrorType[ErrorResponse]
-      .executeSafe(_.copy(signalingKey = client.signalingKey, verified = Verification.VERIFIED)) //TODO Maybe we can add description for this?
+      .executeSafe(_.copy(verified = Verification.VERIFIED)) //TODO Maybe we can add description for this?
   }
 
   override def postClientLabel(id: ClientId, label: String): ErrorOrResponse[Unit] = {
@@ -179,10 +178,9 @@ class OtrClientImpl(implicit
       .executeSafe
   }
 
-  override def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None, sigKey: Option[SignalingKey] = None): ErrorOrResponse[Unit] = {
+  override def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None): ErrorOrResponse[Unit] = {
     val data = JsonEncoder { o =>
       lastKey.foreach(k => o.put("lastkey", JsonEncoder.encode(k)))
-      sigKey.foreach(k => o.put("sigkeys", JsonEncoder.encode(k)))
       prekeys.foreach(ks => o.put("prekeys", JsonEncoder.arr(ks)))
     }
     Request.Put(relativePath = clientPath(id), body = data)
