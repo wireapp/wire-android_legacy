@@ -24,7 +24,6 @@ import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.{Id, UserId}
-import com.waz.utils.JsonDecoder.{decodeId, decodeOptString, decodeOptUtcDate, opt}
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder}
@@ -76,16 +75,20 @@ object Location {
  * Otr client registered on backend, either our own or from other user.
  *
  * @param id
- * @param label
+ * @param label - A description of the client, for the self user only
+ * @param model - A description of the  client model, for the self user only
  * @param verified - client verification state, updated when user verifies client fingerprint
+ * @param deviceClass - The class of the client
+ * @param regTime - When the client was registered, for the self user only
+ * @param regLocation - Where the client was registered, for the self user only
  */
 final case class Client(override val id: ClientId,
-                        label:           String,
+                        label:           String = "",
                         model:           String = "",
-                        regTime:         Option[Instant] = None,
-                        regLocation:     Option[Location] = None,
                         verified:        Verification = Verification.UNKNOWN,
-                        deviceClass:     DeviceClass = DeviceClass.Phone) extends Identifiable[ClientId] {
+                        deviceClass:     DeviceClass = DeviceClass.Phone,
+                        regTime:         Option[Instant] = None,
+                        regLocation:     Option[Location] = None) extends Identifiable[ClientId] {
 
   lazy val isVerified: Boolean = verified == Verification.VERIFIED
 
@@ -137,10 +140,10 @@ object Client {
         decodeId[ClientId]('id),
         'label,
         'model,
-        'regTime,
-        opt[Location]('regLocation),
         decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
-        decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply)
+        decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
+        'regTime,
+        opt[Location]('regLocation)
       )
     }
   }

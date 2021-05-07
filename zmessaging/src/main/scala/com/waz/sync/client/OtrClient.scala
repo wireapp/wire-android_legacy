@@ -364,9 +364,9 @@ object OtrClient extends DerivedLogTag {
         decodeId[ClientId]('id),
         'label,
         'model,
-        decodeOptUtcDate('time).map(_.instant),
-        opt[Location]('location),
-        deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply)
+        deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
+        regTime = decodeOptUtcDate('time).map(_.instant),
+        regLocation = opt[Location]('location)
       )
 
     def unapply(content: ResponseContent): Option[Seq[Client]] = content match {
