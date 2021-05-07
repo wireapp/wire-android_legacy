@@ -43,8 +43,8 @@ trait OtrClientsService {
   def requestSyncIfNeeded(retryInterval: FiniteDuration = 7.days): Unit
   def getClient(id: UserId, client: ClientId): Future[Option[Client]]
   def getOrCreateClient(id: UserId, client: ClientId): Future[Client]
-  def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean = false): Future[UserClients]
-  def updateClients(ucs: Map[UserId, Seq[Client]], replace: Boolean = false): Future[Set[UserClients]]
+  def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean): Future[UserClients]
+  def updateUserClients(ucs: Map[UserId, Seq[Client]], replace: Boolean): Future[Set[UserClients]]
   def onCurrentClientRemoved(): Future[Option[(UserClients, UserClients)]]
   def removeClients(user: UserId, clients: Seq[ClientId]): Future[Option[(UserClients, UserClients)]]
   def updateClientLabel(id: ClientId, label: String): Future[Option[SyncId]]
@@ -72,7 +72,7 @@ class OtrClientsServiceImpl(selfId:    UserId,
     RichFuture.traverseSequential(events) {
       case OtrClientAddEvent(client) =>
         for {
-          _  <- updateUserClients(selfId, Seq(client))
+          _  <- updateUserClients(selfId, Seq(client), replace = false)
           id <- sync.syncPreKeys(selfId, Set(client.id))
         } yield id
       case OtrClientRemoveEvent(cId) =>
@@ -107,13 +107,10 @@ class OtrClientsServiceImpl(selfId:    UserId,
     }
   }
 
-  override def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean = false): Future[UserClients] = {
-    verbose(l"updateUserClients($user, $clients, $replace)")
-    updateClients(Map(user -> clients), replace).map(_.head)
-  }
+  override def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean): Future[UserClients] =
+    updateUserClients(Map(user -> clients), replace).map(_.head)
 
-  override def updateClients(ucs: Map[UserId, Seq[Client]], replace: Boolean = false): Future[Set[UserClients]] = {
-
+  override def updateUserClients(ucs: Map[UserId, Seq[Client]], replace: Boolean): Future[Set[UserClients]] = {
     // request clients location sync if some location has no name
     // location will be present only for self clients, but let's check that just to be explicit
     def needsLocationSync(selfId: UserId, uss: Traversable[UserClients]): Boolean = {
@@ -124,7 +121,7 @@ class OtrClientsServiceImpl(selfId:    UserId,
     verbose(l"updateUserClients(${ucs.map { case (id, cs) => id -> cs.size }}, $replace)")
     for {
       updated <- storage.updateClients(ucs, replace)
-      _ <- if (needsLocationSync(selfId, updated)) sync.syncClientsLocation() else Future.successful({})
+      _       <- if (needsLocationSync(selfId, updated)) sync.syncClientsLocation() else Future.successful({})
     } yield updated
   }
 
