@@ -83,7 +83,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
   def createClient(id: ClientId = ClientId()) = apply { cb =>
     val (lastKey, keys) = (cb.newLastPreKey(), cb.newPreKeys(0, PreKeysCount))
     (lastPreKeyId := keys.last.id).map { _ =>
-      (Client(id, clientLabel, metadata.deviceModel, Some(Instant.now), verified = Verification.VERIFIED, devType = metadata.deviceClass), lastKey, keys.toSeq)
+      (Client(id, clientLabel, metadata.deviceModel, Some(Instant.now), verified = Verification.VERIFIED, deviceClass = metadata.deviceClass), lastKey, keys.toSeq)
     }
   }
 

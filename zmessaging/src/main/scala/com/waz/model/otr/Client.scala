@@ -19,9 +19,10 @@ package com.waz.model.otr
 
 import java.math.BigInteger
 
-import com.waz.api.{OtrClientType, Verification}
+import com.waz.api.Verification
 import com.waz.db.Col._
 import com.waz.db.Dao
+import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.{Id, UserId}
 import com.waz.utils.JsonDecoder.{decodeId, decodeOptString, decodeOptUtcDate, opt}
 import com.waz.utils.crypto.ZSecureRandom
@@ -84,11 +85,11 @@ final case class Client(override val id: ClientId,
                         regTime:         Option[Instant] = None,
                         regLocation:     Option[Location] = None,
                         verified:        Verification = Verification.UNKNOWN,
-                        devType:         OtrClientType = OtrClientType.PHONE) extends Identifiable[ClientId] {
+                        deviceClass:     DeviceClass = DeviceClass.Phone) extends Identifiable[ClientId] {
 
   lazy val isVerified: Boolean = verified == Verification.VERIFIED
 
-  def isLegalHoldDevice: Boolean = devType == OtrClientType.LEGALHOLD
+  def isLegalHoldDevice: Boolean = deviceClass == DeviceClass.LegalHold
 
   def updated(c: Client): Client = {
     val location = (regLocation, c.regLocation) match {
@@ -102,12 +103,20 @@ final case class Client(override val id: ClientId,
       regTime      = c.regTime.orElse(regTime),
       regLocation  = location,
       verified     = c.verified.orElse(verified),
-      devType      = if (c.devType == OtrClientType.PHONE) devType else c.devType
+      deviceClass  = if (c.deviceClass == DeviceClass.Phone) deviceClass else c.deviceClass
     )
   }
 }
 
 object Client {
+
+  final case class DeviceClass(value: String)
+  object DeviceClass {
+    val Phone = DeviceClass("phone")
+    val Tablet = DeviceClass("tablet")
+    val Desktop = DeviceClass("desktop")
+    val LegalHold = DeviceClass("legalhold")
+  }
 
   implicit lazy val Encoder: JsonEncoder[Client] = new JsonEncoder[Client] {
     override def apply(v: Client): JSONObject = JsonEncoder { o =>
@@ -117,7 +126,7 @@ object Client {
       v.regTime foreach { t => o.put("regTime", t.toEpochMilli) }
       v.regLocation foreach { l => o.put("regLocation", JsonEncoder.encode(l)) }
       o.put("verification", v.verified.name)
-      o.put("devType", v.devType.deviceClass)
+      o.put("class", v.deviceClass.value)
     }
   }
 
@@ -131,7 +140,7 @@ object Client {
         'regTime,
         opt[Location]('regLocation),
         decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
-        decodeOptString('devType).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass)
+        decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply)
       )
     }
   }

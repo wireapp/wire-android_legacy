@@ -20,9 +20,9 @@ package com.waz.service
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.pm.PackageManager
-import com.waz.api.OtrClientType
-import scala.collection.JavaConverters._
+import com.waz.model.otr.Client.DeviceClass
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 class MetaDataService(context: Context) {
@@ -46,10 +46,10 @@ class MetaDataService(context: Context) {
   lazy val internalBuild: Boolean = metaData.get("INTERNAL").exists(_.toBoolean)
 
   // rough check for device type, used in otr client info
-  lazy val deviceClass: OtrClientType = {
+  lazy val deviceClass: DeviceClass = {
     val dm = context.getResources.getDisplayMetrics
     val minSize = 600 * dm.density
-    if (dm.heightPixels >= minSize && dm.widthPixels >= minSize) OtrClientType.TABLET else OtrClientType.PHONE
+    if (dm.heightPixels >= minSize && dm.widthPixels >= minSize) DeviceClass.Tablet else DeviceClass.Phone
   }
 
   lazy val deviceModel: String = {

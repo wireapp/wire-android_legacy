@@ -25,9 +25,10 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, TextView}
 import androidx.annotation.StringRes
 import androidx.recyclerview.widget.RecyclerView
-import com.waz.api.{OtrClientType, Verification}
+import com.waz.api.Verification
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
+import com.waz.model.otr.Client.DeviceClass
 import com.waz.service.{UserService, ZMessaging}
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
@@ -73,7 +74,7 @@ class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector,
     user  <- participantsController.otherParticipant
     color <- accentColorController.accentColor
   } yield (cs, user.name, color)).onUi { case (cs, name, color) =>
-    val (legalHoldDevice, otherDevices) = cs.partition(_.devType == OtrClientType.LEGALHOLD)
+    val (legalHoldDevice, otherDevices) = cs.partition(_.deviceClass == DeviceClass.LegalHold)
     devices = legalHoldDevice ::: otherDevices
     userName = name
     accentColor = color.color
@@ -111,11 +112,11 @@ object ParticipantOtrDeviceAdapter {
   private val OTR_CLIENT_TEXT_TEMPLATE = "[[%s]]\n%s"
 
   def deviceClassName(client: Client)(implicit ctx: Context): String = ctx.getString(
-    client.devType match {
-      case OtrClientType.DESKTOP   => R.string.otr__participant__device_class__desktop
-      case OtrClientType.PHONE     => R.string.otr__participant__device_class__phone
-      case OtrClientType.TABLET    => R.string.otr__participant__device_class__tablet
-      case OtrClientType.LEGALHOLD => R.string.otr__participant__device_class__legal_hold
+    client.deviceClass match {
+      case DeviceClass.Desktop   => R.string.otr__participant__device_class__desktop
+      case DeviceClass.Phone     => R.string.otr__participant__device_class__phone
+      case DeviceClass.Tablet    => R.string.otr__participant__device_class__tablet
+      case DeviceClass.LegalHold => R.string.otr__participant__device_class__legal_hold
       case _                       => R.string.otr__participant__device_class__unknown
     }
   )
@@ -181,7 +182,7 @@ object ParticipantOtrDeviceAdapter {
       textView.setText(TextViewUtils.getBoldText(textView.getContext, clientText))
 
       ViewUtils.getView[ImageView](itemView, R.id.iv__row_otr_icon).setImageResource(
-        if (client.devType == OtrClientType.LEGALHOLD) {
+        if (client.deviceClass == DeviceClass.LegalHold) {
           textView.setContentDescription(itemView.context.getString(R.string.pref_devices_device_legal_hold))
           R.drawable.ic_legal_hold_active
         } else if (client.verified == Verification.VERIFIED) {

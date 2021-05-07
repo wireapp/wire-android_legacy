@@ -1,9 +1,9 @@
 package com.waz.service
 
-import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.ConversationData.LegalHoldStatus
+import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model.{ConvId, ConversationData, LegalHoldDisableEvent, LegalHoldEnableEvent, LegalHoldRequest, LegalHoldRequestEvent, TeamId, UserId}
 import com.waz.service.EventScheduler.{Sequential, Stage}
@@ -55,10 +55,10 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   // Helpers
 
-  def mockUserDevices(userId: UserId, deviceTypes: Seq[OtrClientType]): Unit = {
+  def mockUserDevices(userId: UserId, deviceTypes: Seq[DeviceClass]): Unit = {
     val clients = deviceTypes.map { deviceType =>
       val clientId = ClientId()
-      clientId -> Client(clientId, "", devType = deviceType)
+      clientId -> Client(clientId, "", deviceClass = deviceType)
     }
 
     (clientsStorage.optSignal _)
@@ -85,7 +85,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("with a legal hold device") {
       // Given
       val userId = UserId("user1")
-      mockUserDevices(userId, Seq(OtrClientType.PHONE, OtrClientType.LEGALHOLD))
+      mockUserDevices(userId, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
 
       // When
       val actualResult = result(service.isLegalHoldActive(userId).future)
@@ -97,7 +97,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("without a legal hold device") {
       // Given
       val userId = UserId("user1")
-      mockUserDevices(userId, Seq(OtrClientType.PHONE))
+      mockUserDevices(userId, Seq(DeviceClass.Phone))
 
       // When
       val actualResult = result(service.isLegalHoldActive(userId).future)
@@ -160,9 +160,9 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .once()
         .returning(Signal.const(Set(user1, user2, user3)))
 
-      mockUserDevices(user1, Seq(OtrClientType.PHONE))
-      mockUserDevices(user2, Seq(OtrClientType.DESKTOP, OtrClientType.LEGALHOLD))
-      mockUserDevices(user3, Seq(OtrClientType.PHONE, OtrClientType.LEGALHOLD))
+      mockUserDevices(user1, Seq(DeviceClass.Phone))
+      mockUserDevices(user2, Seq(DeviceClass.Desktop, DeviceClass.LegalHold))
+      mockUserDevices(user3, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
 
       // when
       val actualResult = result(service.legalHoldUsers(convId).future)
@@ -183,9 +183,9 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .once()
         .returning(Signal.const(Set(user1, user2, user3)))
 
-      mockUserDevices(user1, Seq(OtrClientType.PHONE))
-      mockUserDevices(user2, Seq(OtrClientType.DESKTOP, OtrClientType.PHONE))
-      mockUserDevices(user3, Seq(OtrClientType.PHONE, OtrClientType.DESKTOP))
+      mockUserDevices(user1, Seq(DeviceClass.Phone))
+      mockUserDevices(user2, Seq(DeviceClass.Desktop, DeviceClass.Phone))
+      mockUserDevices(user3, Seq(DeviceClass.Phone, DeviceClass.Desktop))
 
       // when
       val actualResult = result(service.legalHoldUsers(convId).future)
@@ -356,7 +356,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
 
     def mockClientAndSessionCreation(): Client = {
-      val client = Client(legalHoldRequest.clientId, "", devType = OtrClientType.LEGALHOLD)
+      val client = Client(legalHoldRequest.clientId, "", deviceClass = DeviceClass.LegalHold)
 
       // Create the client.
       (clientsService.getOrCreateClient _)

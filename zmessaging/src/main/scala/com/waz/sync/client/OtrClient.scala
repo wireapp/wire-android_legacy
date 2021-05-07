@@ -22,9 +22,10 @@ import java.util.UUID
 
 import com.google.protobuf.ByteString
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.{OtrClientType, Verification}
+import com.waz.api.Verification
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
+import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.otr._
 import com.waz.model.{QualifiedId, RemoteInstant, UserId}
 import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
@@ -149,10 +150,10 @@ class OtrClientImpl(implicit
       o.put("prekeys", JsonEncoder.arr(keys)(PreKeyEncoder))
       o.put("label", client.label)
       o.put("model", client.model)
-      o.put("class", client.devType.deviceClass)
+      o.put("class", client.deviceClass.value)
       o.put("cookie", userId.str)
 
-      if (client.devType == OtrClientType.LEGALHOLD) {
+      if (client.deviceClass == DeviceClass.LegalHold) {
         o.put("type", "legalhold")
       } else {
         o.put("type", if (PermanentClient) "permanent" else "temporary")
@@ -365,7 +366,7 @@ object OtrClient extends DerivedLogTag {
         'model,
         decodeOptUtcDate('time).map(_.instant),
         opt[Location]('location),
-        devType = decodeOptString('class).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass)
+        deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply)
       )
 
     def unapply(content: ResponseContent): Option[Seq[Client]] = content match {
