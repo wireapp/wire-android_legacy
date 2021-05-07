@@ -365,7 +365,6 @@ object OtrClient extends DerivedLogTag {
         'model,
         decodeOptUtcDate('time).map(_.instant),
         opt[Location]('location),
-        'address,
         devType = decodeOptString('class).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass)
       )
 

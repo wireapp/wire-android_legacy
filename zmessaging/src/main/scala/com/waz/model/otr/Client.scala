@@ -83,7 +83,6 @@ final case class Client(override val id: ClientId,
                         model:           String = "",
                         regTime:         Option[Instant] = None,
                         regLocation:     Option[Location] = None,
-                        regIpAddress:    Option[String] = None,
                         verified:        Verification = Verification.UNKNOWN,
                         devType:         OtrClientType = OtrClientType.PHONE) extends Identifiable[ClientId] {
 
@@ -102,7 +101,6 @@ final case class Client(override val id: ClientId,
       model        = if (c.model.isEmpty) model else c.model,
       regTime      = c.regTime.orElse(regTime),
       regLocation  = location,
-      regIpAddress = c.regIpAddress.orElse(regIpAddress),
       verified     = c.verified.orElse(verified),
       devType      = if (c.devType == OtrClientType.PHONE) devType else c.devType
     )
@@ -118,7 +116,6 @@ object Client {
       o.put("model", v.model)
       v.regTime foreach { t => o.put("regTime", t.toEpochMilli) }
       v.regLocation foreach { l => o.put("regLocation", JsonEncoder.encode(l)) }
-      v.regIpAddress foreach { o.put("regIpAddress", _) }
       o.put("verification", v.verified.name)
       o.put("devType", v.devType.deviceClass)
     }
@@ -133,7 +130,6 @@ object Client {
         'model,
         'regTime,
         opt[Location]('regLocation),
-        'regIpAddress,
         decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
         decodeOptString('devType).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass)
       )
