@@ -131,7 +131,7 @@ object Client {
     val LegalHold = DeviceType("legalhold")
   }
 
-  implicit lazy val Encoder: JsonEncoder[Client] = new JsonEncoder[Client] {
+  private[otr] implicit lazy val Encoder: JsonEncoder[Client] = new JsonEncoder[Client] {
     override def apply(v: Client): JSONObject = JsonEncoder { o =>
       o.put("id", v.id.str)
       o.put("label", v.label)
@@ -144,7 +144,7 @@ object Client {
     }
   }
 
-  implicit lazy val Decoder: JsonDecoder[Client] = new JsonDecoder[Client] {
+  private[otr] implicit lazy val Decoder: JsonDecoder[Client] = new JsonDecoder[Client] {
     import JsonDecoder._
     override def apply(implicit js: JSONObject): Client = {
       new Client(
