@@ -25,7 +25,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.api.Verification
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.model.otr.Client.DeviceClass
+import com.waz.model.otr.Client.{DeviceClass, DeviceType}
 import com.waz.model.otr._
 import com.waz.model.{QualifiedId, RemoteInstant, UserId}
 import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
@@ -67,8 +67,6 @@ class OtrClientImpl(implicit
   import MessagesClient.OtrMessageSerializer
   import OtrClient._
   import com.waz.threading.Threading.Implicits.Background
-
-  private[waz] val PermanentClient = true // for testing
 
   private implicit val PreKeysResponseDeserializer: RawBodyDeserializer[PreKeysResponse] =
     RawBodyDeserializer[JSONObject].map(json => PreKeysResponse.unapply(JsonObjectResponse(json)).get)
@@ -151,13 +149,8 @@ class OtrClientImpl(implicit
       o.put("label", client.label)
       o.put("model", client.model)
       o.put("class", client.deviceClass.value)
+      o.put("type", client.deviceType.getOrElse(DeviceType.Permanent).value)
       o.put("cookie", userId.str)
-
-      if (client.deviceClass == DeviceClass.LegalHold) {
-        o.put("type", "legalhold")
-      } else {
-        o.put("type", if (PermanentClient) "permanent" else "temporary")
-      }
 
       password.map(_.str).foreach(o.put("password", _))
     }
@@ -361,10 +354,11 @@ object OtrClient extends DerivedLogTag {
 
     def client(implicit js: JSONObject): Client =
       Client(
-        decodeId[ClientId]('id),
-        'label,
-        'model,
+        id = decodeId[ClientId]('id),
+        label = 'label,
+        model = 'model,
         deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
+        deviceType = decodeOptString('type).map(DeviceType.apply),
         regTime = decodeOptUtcDate('time).map(_.instant),
         regLocation = opt[Location]('location)
       )

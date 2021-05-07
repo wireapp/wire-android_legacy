@@ -22,7 +22,7 @@ import java.math.BigInteger
 import com.waz.api.Verification
 import com.waz.db.Col._
 import com.waz.db.Dao
-import com.waz.model.otr.Client.DeviceClass
+import com.waz.model.otr.Client.{DeviceClass, DeviceType}
 import com.waz.model.{Id, UserId}
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.wrappers.{DB, DBCursor}
@@ -79,6 +79,7 @@ object Location {
  * @param model - A description of the  client model, for the self user only
  * @param verified - client verification state, updated when user verifies client fingerprint
  * @param deviceClass - The class of the client
+ * @param deviceType - The type of client, for the self user only
  * @param regTime - When the client was registered, for the self user only
  * @param regLocation - Where the client was registered, for the self user only
  */
@@ -87,6 +88,7 @@ final case class Client(override val id: ClientId,
                         model:           String = "",
                         verified:        Verification = Verification.UNKNOWN,
                         deviceClass:     DeviceClass = DeviceClass.Phone,
+                        deviceType:      Option[DeviceType] = None,
                         regTime:         Option[Instant] = None,
                         regLocation:     Option[Location] = None) extends Identifiable[ClientId] {
 
@@ -103,10 +105,11 @@ final case class Client(override val id: ClientId,
     copy(
       label        = if (c.label.isEmpty) label else c.label,
       model        = if (c.model.isEmpty) model else c.model,
-      regTime      = c.regTime.orElse(regTime),
-      regLocation  = location,
       verified     = c.verified.orElse(verified),
-      deviceClass  = if (c.deviceClass == DeviceClass.Phone) deviceClass else c.deviceClass
+      deviceClass  = if (c.deviceClass == DeviceClass.Phone) deviceClass else c.deviceClass,
+      deviceType   = c.deviceType.orElse(deviceType),
+      regTime      = c.regTime.orElse(regTime),
+      regLocation  = location
     )
   }
 }
@@ -121,15 +124,23 @@ object Client {
     val LegalHold = DeviceClass("legalhold")
   }
 
+  final case class DeviceType(value: String)
+  object DeviceType {
+    val Permanent = DeviceType("permanent")
+    val Temporary = DeviceType("temporary")
+    val LegalHold = DeviceType("legalhold")
+  }
+
   implicit lazy val Encoder: JsonEncoder[Client] = new JsonEncoder[Client] {
     override def apply(v: Client): JSONObject = JsonEncoder { o =>
       o.put("id", v.id.str)
       o.put("label", v.label)
       o.put("model", v.model)
-      v.regTime foreach { t => o.put("regTime", t.toEpochMilli) }
-      v.regLocation foreach { l => o.put("regLocation", JsonEncoder.encode(l)) }
       o.put("verification", v.verified.name)
       o.put("class", v.deviceClass.value)
+      v.deviceType.foreach { d => o.put("type", d.value) }
+      v.regTime.foreach { t => o.put("regTime", t.toEpochMilli) }
+      v.regLocation.foreach { l => o.put("regLocation", JsonEncoder.encode(l)) }
     }
   }
 
@@ -137,13 +148,14 @@ object Client {
     import JsonDecoder._
     override def apply(implicit js: JSONObject): Client = {
       new Client(
-        decodeId[ClientId]('id),
-        'label,
-        'model,
-        decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
-        decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
-        'regTime,
-        opt[Location]('regLocation)
+        id = decodeId[ClientId]('id),
+        label = 'label,
+        model = 'model,
+        verified = decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
+        deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
+        deviceType = decodeOptString('type).map(DeviceType.apply),
+        regTime = 'regTime,
+        regLocation = opt[Location]('regLocation)
       )
     }
   }
