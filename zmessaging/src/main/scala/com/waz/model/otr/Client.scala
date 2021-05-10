@@ -27,10 +27,11 @@ import com.waz.model.{Id, UserId}
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder}
-import org.json.JSONObject
+import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant
 
 import scala.collection.breakOut
+import scala.util.Try
 
 final case class ClientId(str: String) extends AnyVal {
   def longId: Long = new BigInteger(str, 16).longValue()
@@ -121,9 +122,27 @@ object Client {
         label = 'label,
         model = 'model,
         verified = decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
-        deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
+        deviceClass = DeviceClass(js.getString("class")),
         deviceType = decodeOptString('type).map(DeviceType.apply),
         regTime = 'regTime
+      )
+    }
+  }
+
+  // Previously the device class was stored under "devType" and the device type was not
+  // stored at all. This legacy decoder remains as a way to decode old client metadata if the
+  // new decoder fails. It can be remove after some time.
+
+  private[otr] implicit lazy val LegacyDecoder: JsonDecoder[Client] = new JsonDecoder[Client] {
+    import JsonDecoder._
+    override def apply(implicit js: JSONObject): Client = {
+      new Client(
+        id = decodeId[ClientId]('id),
+        label = 'label,
+        model ='model,
+        verified = decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
+        deviceClass = decodeOptString('devType).fold(DeviceClass.Phone)(DeviceClass.apply),
+        regTime ='regTime
       )
     }
   }
@@ -144,7 +163,18 @@ object UserClients {
 
   implicit lazy val Decoder: JsonDecoder[UserClients] = new JsonDecoder[UserClients] {
     import JsonDecoder._
-    override def apply(implicit js: JSONObject): UserClients = new UserClients(decodeId[UserId]('user), decodeSeq[Client]('clients).map(c => c.id -> c)(breakOut))
+    override def apply(implicit js: JSONObject): UserClients =
+      new UserClients(
+        decodeId[UserId]('user),
+        decodeClients(js.getJSONArray("clients")).map(c => c.id -> c)(breakOut)
+      )
+
+    private def decodeClients(clients: JSONArray): Seq[Client] =
+      array(clients, { (arr, index) =>
+        val obj = arr.getJSONObject(index)
+        Try(Client.Decoder.apply(obj))
+          .getOrElse(Client.LegacyDecoder.apply(obj))
+      })
   }
 
   implicit object UserClientsDao extends Dao[UserClients, UserId] {
