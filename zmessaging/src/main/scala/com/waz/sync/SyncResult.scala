@@ -52,4 +52,9 @@ object SyncResult {
     case Failure(error) => Some(error)
     case Retry(error) => Some(error)
   }
+
+  def isSuccess(result: SyncResult): Boolean = result match {
+    case Success => true
+    case _       => false
+  }
 }

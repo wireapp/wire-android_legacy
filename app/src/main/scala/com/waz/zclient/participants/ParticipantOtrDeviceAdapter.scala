@@ -74,7 +74,7 @@ class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector,
     user  <- participantsController.otherParticipant
     color <- accentColorController.accentColor
   } yield (cs, user.name, color)).onUi { case (cs, name, color) =>
-    val (legalHoldDevice, otherDevices) = cs.partition(_.deviceClass == DeviceClass.LegalHold)
+    val (legalHoldDevice, otherDevices) = cs.partition(_.isLegalHoldDevice)
     devices = legalHoldDevice ::: otherDevices
     userName = name
     accentColor = color.color
@@ -182,7 +182,7 @@ object ParticipantOtrDeviceAdapter {
       textView.setText(TextViewUtils.getBoldText(textView.getContext, clientText))
 
       ViewUtils.getView[ImageView](itemView, R.id.iv__row_otr_icon).setImageResource(
-        if (client.deviceClass == DeviceClass.LegalHold) {
+        if (client.isLegalHoldDevice) {
           textView.setContentDescription(itemView.context.getString(R.string.pref_devices_device_legal_hold))
           R.drawable.ic_legal_hold_active
         } else if (client.verified == Verification.VERIFIED) {

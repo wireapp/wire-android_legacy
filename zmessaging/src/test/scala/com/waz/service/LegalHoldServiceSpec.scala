@@ -367,7 +367,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         })
 
       // Saving the client.
-      (clientsService.updateUserClients _)
+      (clientsService.updateUserClients(_: UserId, _: Seq[Client], _: Boolean))
         .expects(selfUserId, Seq(client), false)
         .once()
         .returning(Future.successful {

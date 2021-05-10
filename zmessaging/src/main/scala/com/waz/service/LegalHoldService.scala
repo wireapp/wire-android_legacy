@@ -106,7 +106,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   private def createLegalHoldClientAndSession(request: LegalHoldRequest): Future[Unit] = for {
     client          <- clientsService.getOrCreateClient(selfUserId, request.clientId)
     legalHoldClient = client.copy(deviceClass = DeviceClass.LegalHold)
-    _               <- clientsService.updateUserClients(selfUserId, Seq(legalHoldClient))
+    _               <- clientsService.updateUserClients(selfUserId, Seq(legalHoldClient), replace = false)
     sessionId       = SessionId(selfUserId, legalHoldClient.id)
     _               <- cryptoSessionService.getOrCreateSession(sessionId, request.lastPreKey)
   } yield ()
