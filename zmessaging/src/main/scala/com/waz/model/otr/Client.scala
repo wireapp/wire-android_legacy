@@ -50,27 +50,6 @@ object ClientId {
   def opt(id: String): Option[ClientId] = Option(id).filter(_.nonEmpty).map(ClientId(_))
 }
 
-final case class Location(lon: Double, lat: Double, name: String) {
-  def hasName = name != ""
-}
-
-object Location {
-  val Empty: Location = Location(0, 0, "")
-
-  implicit lazy val Encoder: JsonEncoder[Location] = new JsonEncoder[Location] {
-    override def apply(v: Location): JSONObject = JsonEncoder { o =>
-      o.put("lon", v.lon)
-      o.put("lat", v.lat)
-      o.put("name", v.name)
-    }
-  }
-
-  implicit lazy val Decoder: JsonDecoder[Location] = new JsonDecoder[Location] {
-    import JsonDecoder._
-    override def apply(implicit js: JSONObject): Location = new Location('lon, 'lat, 'name)
-  }
-}
-
 /**
  * Otr client registered on backend, either our own or from other user.
  *
@@ -81,7 +60,6 @@ object Location {
  * @param deviceClass - The class of the client
  * @param deviceType - The type of client, for the self user only
  * @param regTime - When the client was registered, for the self user only
- * @param regLocation - Where the client was registered, for the self user only
  */
 final case class Client(override val id: ClientId,
                         label:           String = "",
@@ -89,29 +67,21 @@ final case class Client(override val id: ClientId,
                         verified:        Verification = Verification.UNKNOWN,
                         deviceClass:     DeviceClass = DeviceClass.Phone,
                         deviceType:      Option[DeviceType] = None,
-                        regTime:         Option[Instant] = None,
-                        regLocation:     Option[Location] = None) extends Identifiable[ClientId] {
+                        regTime:         Option[Instant] = None) extends Identifiable[ClientId] {
 
   lazy val isVerified: Boolean = verified == Verification.VERIFIED
 
   def isLegalHoldDevice: Boolean = deviceClass == DeviceClass.LegalHold
 
-  def updated(c: Client): Client = {
-    val location = (regLocation, c.regLocation) match {
-      case (Some(loc), Some(l)) if loc.lat == l.lat && loc.lon == l.lon => Some(loc)
-      case (_, loc @ Some(_)) => loc
-      case (loc, _) => loc
-    }
+  def updated(c: Client): Client =
     copy(
       label        = if (c.label.isEmpty) label else c.label,
       model        = if (c.model.isEmpty) model else c.model,
       verified     = c.verified.orElse(verified),
       deviceClass  = if (c.deviceClass == DeviceClass.Phone) deviceClass else c.deviceClass,
       deviceType   = c.deviceType.orElse(deviceType),
-      regTime      = c.regTime.orElse(regTime),
-      regLocation  = location
-    )
-  }
+      regTime      = c.regTime.orElse(regTime)
+  )
 }
 
 object Client {
@@ -140,7 +110,6 @@ object Client {
       o.put("class", v.deviceClass.value)
       v.deviceType.foreach { d => o.put("type", d.value) }
       v.regTime.foreach { t => o.put("regTime", t.toEpochMilli) }
-      v.regLocation.foreach { l => o.put("regLocation", JsonEncoder.encode(l)) }
     }
   }
 
@@ -154,8 +123,7 @@ object Client {
         verified = decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
         deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
         deviceType = decodeOptString('type).map(DeviceType.apply),
-        regTime = 'regTime,
-        regLocation = opt[Location]('regLocation)
+        regTime = 'regTime
       )
     }
   }

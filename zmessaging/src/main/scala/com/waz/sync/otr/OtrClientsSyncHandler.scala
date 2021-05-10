@@ -18,32 +18,26 @@
 package com.waz.sync.otr
 
 import android.content.Context
-import android.location.Geocoder
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.OtrClientsStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.otr.{Client, ClientId}
 import com.waz.model.{QualifiedId, UserId}
-import com.waz.model.otr.{Client, ClientId, Location, UserClients}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr._
 import com.waz.sync.SyncResult
-import com.waz.sync.SyncResult.{Retry, Success}
+import com.waz.sync.SyncResult.Success
 import com.waz.sync.client.OtrClient
-import com.waz.threading.Threading
-import com.waz.utils.Locales
 
-import scala.collection.breakOut
 import scala.collection.immutable.Map
 import scala.concurrent.Future
-import scala.util.Try
 
 trait OtrClientsSyncHandler {
   def syncClients(users: Set[QualifiedId]): Future[SyncResult]
   def syncClients(user: UserId): Future[SyncResult]
   def postLabel(id: ClientId, label: String): Future[SyncResult]
   def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult]
-  def syncClientsLocation(): Future[SyncResult]
 
   def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]]
 }
@@ -191,48 +185,5 @@ class OtrClientsSyncHandlerImpl(context:    Context,
         case e: Throwable => Some(ErrorResponse.internalError(e.getMessage))
       }
 
-  override def syncClientsLocation(): Future[SyncResult] = {
-    import scala.collection.JavaConverters._
-
-    def loadName(lat: Double, lon: Double) = Future {
-      val geocoder = new Geocoder(context, Locales.currentLocale)
-      Try(geocoder.getFromLocation(lat, lon, 1).asScala).toOption.flatMap(_.headOption).flatMap { add =>
-        Option(Seq(Option(add.getLocality), Option(add.getCountryCode)).flatten.mkString(", ")).filter(_.nonEmpty)
-      }
-    } (Threading.IO)
-
-    def loadNames(locs: Iterable[Location]) =
-      Future.traverse(locs) { l => loadName(l.lat, l.lon).map { (l.lat, l.lon) -> _ } }
-
-    def updateClients(locs: Map[(Double, Double), String])(ucs: UserClients) =
-      ucs.copy(clients = ucs.clients.mapValues { c =>
-        c.regLocation.flatMap { l =>
-          locs.get((l.lat, l.lon)).map(n => l.copy(name = n))
-        }.fold(c) { loc => c.copy(regLocation = Some(loc)) }
-      })
-
-    storage.get(selfId) flatMap {
-      case None =>
-        Future.successful(Success)
-      case Some(ucs) =>
-        val toSync = ucs.clients.values collect {
-          case Client(_, _, _, _, _, _, _, Some(loc)) if !loc.hasName => loc
-        }
-        if (toSync.isEmpty)
-          Future.successful(Success)
-        else
-          for {
-            ls <- loadNames(toSync)
-            locations: Map[(Double, Double), String] = ls.collect { case (k, Some(name)) => k -> name }(breakOut)
-            update <- storage.update(selfId, updateClients(locations))
-          } yield {
-            update match {
-              case Some((_, UserClients(_, cs))) if cs.values.forall(_.regLocation.forall(_.hasName)) => Success
-              case _ =>
-                Retry(s"user clients were not updated, locations: $locations, toSync: $toSync")
-            }
-          }
-    }
-  }
 }
 
