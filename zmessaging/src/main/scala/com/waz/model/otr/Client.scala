@@ -87,7 +87,7 @@ final case class Client(override val id: ClientId,
 
 object Client {
 
-  final case class DeviceClass(value: String)
+  final case class DeviceClass(value: String) extends AnyVal
   object DeviceClass {
     val Phone = DeviceClass("phone")
     val Tablet = DeviceClass("tablet")
@@ -95,7 +95,7 @@ object Client {
     val LegalHold = DeviceClass("legalhold")
   }
 
-  final case class DeviceType(value: String)
+  final case class DeviceType(value: String) extends AnyVal
   object DeviceType {
     val Permanent = DeviceType("permanent")
     val Temporary = DeviceType("temporary")
