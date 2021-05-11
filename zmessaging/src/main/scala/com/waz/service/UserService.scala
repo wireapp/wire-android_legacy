@@ -31,7 +31,7 @@ import com.waz.service.assets.{AssetService, AssetStorage, Content, ContentForUp
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
-import com.waz.sync.SyncServiceHandle
+import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
 import com.waz.threading.Threading
@@ -88,9 +88,9 @@ trait UserService {
   def storeAvailabilities(availabilities: Map[UserId, Availability]): Future[Seq[(UserData, UserData)]]
   def updateSelfPicture(content: Content): Future[Unit]
 
-  def syncClients(userId: UserId): Future[Unit]
-  def syncClients(userIds: Set[UserId]): Future[Unit]
-  def syncClients(convId: ConvId): Future[Unit]
+  def syncClients(userId: UserId): Future[SyncId]
+  def syncClients(userIds: Set[UserId]): Future[SyncId]
+  def syncClients(convId: ConvId): Future[SyncId]
 }
 
 class UserServiceImpl(selfUserId:        UserId,
@@ -367,17 +367,17 @@ class UserServiceImpl(selfUserId:        UserId,
       case _ => Future.successful({})
     })
 
-  override def syncClients(userId: UserId): Future[Unit] =
-    sync.syncClients(userId).map(_ => ())
+  override def syncClients(userId: UserId): Future[SyncId] =
+    sync.syncClients(userId)
 
-  override def syncClients(userIds: Set[UserId]): Future[Unit] =
+  override def syncClients(userIds: Set[UserId]): Future[SyncId] =
     for {
-      users <- usersStorage.listAll(userIds)
-      qIds  =  users.map(user => user.qualifiedId.getOrElse(QualifiedId(user.id))).toSet
-      _     <- sync.syncClients(qIds)
-    } yield ()
+      users  <- usersStorage.listAll(userIds)
+      qIds   =  users.map(user => user.qualifiedId.getOrElse(QualifiedId(user.id))).toSet
+      syncId <- sync.syncClients(qIds)
+    } yield (syncId)
 
-  override def syncClients(convId: ConvId): Future[Unit] =
+  override def syncClients(convId: ConvId): Future[SyncId] =
     membersStorage.getActiveUsers(convId).flatMap(userIds => syncClients(userIds.toSet))
 }
 

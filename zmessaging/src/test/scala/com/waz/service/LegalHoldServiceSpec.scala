@@ -7,7 +7,7 @@ import com.waz.model.ConversationData.LegalHoldStatus.{Disabled, Enabled, Pendin
 import com.waz.model.GenericContent.Text
 import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{ConvId, ConversationData, GenericMessage, GenericMessageEvent, LegalHoldDisableEvent, LegalHoldEnableEvent, LegalHoldRequest, LegalHoldRequestEvent, Messages, RConvId, RemoteInstant, SyncId, TeamId, Uid, UserId}
+import com.waz.model._
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}

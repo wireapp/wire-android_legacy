@@ -25,7 +25,7 @@ import com.waz.model.otr.{Client, ClientId}
 import com.waz.model._
 import com.waz.service.conversation.ConversationsService
 import com.waz.service.push.PushService
-import com.waz.service.{ErrorsService, UserService}
+import com.waz.service.{ErrorsService, SearchKey, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
@@ -127,6 +127,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
     val encryptedContent1 = EncryptedContent(Map(otherUser -> Map(otherUsersClient -> content)))
 
     val missingUser       = UserId("missing-user-id")
+    val missingUserData   = UserData(missingUser, domain = Some("domain"), name = Name("missing user"), searchKey = SearchKey.simple("missing user"))
     val missingUserClient = ClientId("missing-user-client-1")
     val contentForMissing = "content".getBytes
     val missing = Map(missingUser -> Seq(missingUserClient))
@@ -231,8 +232,13 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         }
       }
 
+    (usersStorage.listAll _)
+      .expects(Set(missingUser))
+      .once()
+      .returning(Future.successful(Vector(missingUserData)))
+
     (clientsSyncHandler.syncClients(_ : Set[QualifiedId]))
-      .expects(Set(QualifiedId(missingUser)))
+      .expects(Set(missingUserData.qualifiedId.get))
       .returning(Future.successful(SyncResult.Success))
 
     val sh = getSyncHandler

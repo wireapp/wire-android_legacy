@@ -3,9 +3,9 @@ package com.waz.service
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
-import com.waz.model.otr.{ClientId, UserClients}
 import com.waz.model._
 import com.waz.model.otr.Client.DeviceClass
+import com.waz.model.otr.{ClientId, UserClients}
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -206,8 +206,11 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     sync.syncClientsForLegalHold(convId).map(_ => ())
   }
 
-  def updateLegalHoldStatusAfterFetchingClients(clients: Seq[UserClients]): Future[Unit] =
-    onClientsChanged(clients).map { _ => isVerifyingLegalHold = false }
+  override def updateLegalHoldStatusAfterFetchingClients(clients: Seq[UserClients]): Future[Unit] = {
+    (if (clients.nonEmpty) onClientsChanged(clients) else Future.successful(())).map { _ =>
+      isVerifyingLegalHold = false
+    }
+  }
 
 }
 

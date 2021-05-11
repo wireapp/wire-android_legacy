@@ -1,11 +1,12 @@
 package com.waz.sync.handler
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.otr.ClientId
-import com.waz.model.{LegalHoldRequest, TeamId, UserId}
-import com.waz.service.LegalHoldService
+import com.waz.content.OtrClientsStorage
+import com.waz.model.otr.{Client, ClientId, UserClients}
+import com.waz.model.{LegalHoldRequest, RConvId, SyncId, TeamId, UserId}
+import com.waz.service.{LegalHoldService, UserService}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.SyncResult
+import com.waz.sync.{SyncRequestService, SyncResult}
 import com.waz.sync.client.LegalHoldClient
 import com.waz.sync.handler.LegalHoldSyncHandlerSpec._
 import com.waz.sync.otr.OtrSyncHandler
@@ -19,13 +20,28 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
   private val client = mock[LegalHoldClient]
   private val service  = mock[LegalHoldService]
+  private val userService = mock[UserService]
+  private val clientsStorage = mock[OtrClientsStorage]
   private val otrSync = mock[OtrSyncHandler]
+  private val syncRequestService = mock[SyncRequestService]
+
+  def createSyncHandler(teamId: Option[String], userId: String): LegalHoldSyncHandlerImpl =
+    new LegalHoldSyncHandlerImpl(
+      teamId.map(TeamId.apply),
+      UserId(userId),
+      client,
+      service,
+      userService,
+      clientsStorage,
+      otrSync,
+      syncRequestService
+    )
 
   feature("Fetching a legal hold request") {
 
     scenario("It fetches and stores the legal hold request if it exists") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service, otrSync)
+      val syncHandler = createSyncHandler(Some("team1"), "user1")
 
       (client.fetchLegalHoldRequest _)
         .expects(TeamId("team1"), UserId("user1"))
@@ -46,7 +62,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("It deletes the existing legal hold request if none fetched") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service, otrSync)
+      val syncHandler = createSyncHandler(Some("team1"), "user1")
 
       (client.fetchLegalHoldRequest _)
         .expects(TeamId("team1"), UserId("user1"))
@@ -67,7 +83,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("It returns none if the user is not a team member") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(None, UserId("user1"), client, service, otrSync)
+      val syncHandler = createSyncHandler(teamId = None, "user1")
 
       // When
       val actualResult = result(syncHandler.syncLegalHoldRequest())
@@ -78,7 +94,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("It fails if the request fails") {
       // Given
-      val syncHandler = new LegalHoldSyncHandlerImpl(Some(TeamId("team1")), UserId("user1"), client, service, otrSync)
+      val syncHandler = createSyncHandler(Some("team1"), "user1")
       val error = ErrorResponse(400, "", "")
 
       (client.fetchLegalHoldRequest _)
@@ -91,6 +107,95 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
       // Then
       actualResult shouldBe SyncResult.Failure(error)
+    }
+
+  }
+
+  feature("Sync clients for legal hold verification") {
+
+    scenario("It successfully discovers clients") {
+      // Given
+      val syncHandler = createSyncHandler(Some("team1"), "user1")
+      val convId = RConvId("convId")
+
+      val user1 = UserId("user1")
+      val user2 = UserId("user2")
+
+      val client1 = Client(ClientId("client1"))
+      val client2 = Client(ClientId("client2"))
+
+      val clientList = Map(
+        user1 -> Seq(client1.id),
+        user2 -> Seq(client2.id)
+      )
+
+      // Expectations
+      (otrSync.postClientDiscoveryMessage _)
+        .expects(convId)
+        .once()
+        .returning(CancellableFuture.successful(Right(clientList)))
+
+      val syncId1 = SyncId("syncId1")
+
+      (userService.syncIfNeeded _)
+        .expects(Set(user1, user2), *)
+        .once()
+        .returning(Future.successful(Some(syncId1)))
+
+      val syncId2 = SyncId("syncId2")
+
+      (userService.syncClients(_: Set[UserId]))
+        .expects(Set(user1, user2))
+        .once()
+        .returning(Future.successful(syncId2))
+
+      (syncRequestService.await(_: Set[SyncId]))
+        .expects(Set(syncId1, syncId2))
+        .once().
+        returning(Future.successful(Set(SyncResult.Success, SyncResult.Success)))
+
+      val userClients1 = UserClients(user1, Map(client1.id -> client1))
+      val userClients2 = UserClients(user2, Map(client2.id -> client2))
+
+      (clientsStorage.getAll _)
+        .expects(Set(user1, user2))
+        .once()
+        .returning(Future.successful(Seq(Some(userClients1), Some(userClients2))))
+
+      (service.updateLegalHoldStatusAfterFetchingClients _)
+        .expects(Seq(userClients1, userClients2))
+        .once()
+        .returning(Future.successful(()))
+
+      // When
+      val actualResult = result(syncHandler.syncClientsForLegalHoldVerification(convId))
+
+      // Then
+      actualResult shouldEqual SyncResult.Success
+    }
+
+    scenario("It passes empty client list if discovery fails") {
+      // Given
+      val syncHandler = createSyncHandler(Some("team1"), "user1")
+      val convId = RConvId("convId")
+      val errorResponse = ErrorResponse(400, "", "")
+
+      // Expectations
+      (otrSync.postClientDiscoveryMessage _)
+        .expects(convId)
+        .once()
+        .returning(CancellableFuture.successful(Left(errorResponse)))
+
+      (service.updateLegalHoldStatusAfterFetchingClients _)
+        .expects(Seq.empty)
+        .once()
+        .returning(Future.successful(()))
+
+      // When
+      val actualResult = result(syncHandler.syncClientsForLegalHoldVerification(convId))
+
+      // Then
+      actualResult shouldEqual SyncResult.Failure
     }
 
   }
