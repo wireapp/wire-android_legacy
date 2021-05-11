@@ -120,7 +120,11 @@ object Client {
 
   implicit lazy val Decoder: JsonDecoder[Client] = new JsonDecoder[Client] {
     import JsonDecoder._
+
     override def apply(implicit js: JSONObject): Client =
+      Try(decodeClient).getOrElse(legacyDecodeClient)
+
+    private def decodeClient(implicit js: JSONObject): Client =
       Client(
         id = decodeId[ClientId]('id),
         label = 'label,
@@ -130,15 +134,12 @@ object Client {
         deviceType = decodeOptString('type).map(DeviceType.apply),
         regTime = 'regTime
       )
-  }
 
-  // Previously the device class was stored under "devType" and the device type was not
-  // stored at all. This legacy decoder remains as a way to decode old client metadata if the
-  // new decoder fails. It can be remove after some time.
+    // Previously the device class was stored under "devType" and the device type was not
+    // stored at all. This legacy decoder remains as a way to decode old client metadata if the
+    // new decoder fails. It can be remove after some time.
 
-  implicit lazy val LegacyDecoder: JsonDecoder[Client] = new JsonDecoder[Client] {
-    import JsonDecoder._
-    override def apply(implicit js: JSONObject): Client =
+    private def legacyDecodeClient(implicit js: JSONObject): Client =
       Client(
         id = decodeId[ClientId]('id),
         label = 'label,
@@ -168,15 +169,11 @@ object UserClients {
     override def apply(implicit js: JSONObject): UserClients =
       UserClients(
         decodeId[UserId]('user),
-        decodeClients(js.getJSONArray("clients")).toIdMap
+        decodeSeq[Client]('clients).toIdMap
       )
 
     private def decodeClients(clients: JSONArray): Seq[Client] =
-      array(clients, { (arr, index) =>
-        val obj = arr.getJSONObject(index)
-        Try(Client.Decoder(obj))
-          .getOrElse(Client.LegacyDecoder(obj))
-      })
+      array(clients, { (arr, index) => Client.Decoder(arr.getJSONObject(index)) })
   }
 
   implicit object UserClientsDao extends Dao[UserClients, UserId] {
