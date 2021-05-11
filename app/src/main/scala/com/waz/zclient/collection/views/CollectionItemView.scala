@@ -91,7 +91,7 @@ trait CollectionNormalItemView extends CollectionItemView with ClickableViewPart
 
   messageAndLikesResolver.onUi { mal => set(mal, content) }
 
-  onClicked.foreach { _ =>
+  onClicked.onUi { _ =>
     import Threading.Implicits.Ui
     for {
       false <- expired.head

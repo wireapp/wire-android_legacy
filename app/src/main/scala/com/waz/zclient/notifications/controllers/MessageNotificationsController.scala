@@ -53,6 +53,8 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import com.waz.threading.Threading._
 
+import scala.util.Try
+
 class MessageNotificationsController(applicationId: String = BuildConfig.APPLICATION_ID)
                                     (implicit inj: Injector, cxt: Context)
   extends Injectable
@@ -401,7 +403,7 @@ class MessageNotificationsController(applicationId: String = BuildConfig.APPLICA
     }
     else Future.successful(None)
 
-  private def loadPicture(picture: Picture): Future[Option[Bitmap]] = {
+  private def loadPicture(picture: Picture): Future[Option[Bitmap]] = Try {
     Threading.ImageDispatcher {
       Option(WireGlide(cxt)
         .asBitmap()
@@ -410,7 +412,7 @@ class MessageNotificationsController(applicationId: String = BuildConfig.APPLICA
         .submit(128, 128)
         .get()).map(Bitmap.fromAndroid)
     }.future
-  }
+  }.getOrElse(Future.successful(None))
 
   private def getSound(ns: Seq[NotificationData]) = {
     if (soundController.soundIntensityNone) None

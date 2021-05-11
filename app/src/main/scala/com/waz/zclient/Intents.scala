@@ -41,6 +41,7 @@ object Intents {
     val Settings = "Settings"
     val Advanced = "Advanced"
     val Devices  = "Devices"
+    val DeviceRemoval = "DeviceRemoval"
   }
 
   def CallIntent(userId: UserId, convId: ConvId, requestCode: Int = System.currentTimeMillis().toInt)(implicit context: Context) =
@@ -70,6 +71,9 @@ object Intents {
 
   def ShowDevicesIntent(implicit context: Context) =
     new Intent(context, classOf[PreferencesActivity]).putExtra(OpenPageExtra, Page.Devices)
+
+  def ShowDeviceRemovalIntent(implicit context: Context) =
+    new Intent(context, classOf[PreferencesActivity]).putExtra(OpenPageExtra, Page.DeviceRemoval)
 
   def ShowAdvancedSettingsIntent(implicit context: Context) =
     new Intent(context, classOf[PreferencesActivity]).putExtra(OpenPageExtra, Page.Advanced)

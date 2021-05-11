@@ -22,9 +22,10 @@ import java.util.UUID
 
 import com.google.protobuf.ByteString
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.{OtrClientType, Verification}
+import com.waz.api.Verification
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
+import com.waz.model.otr.Client.{DeviceClass, DeviceType}
 import com.waz.model.otr._
 import com.waz.model.{QualifiedId, RemoteInstant, UserId}
 import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
@@ -52,7 +53,7 @@ trait OtrClient {
   def deleteClient(id: ClientId, password: Option[Password]): ErrorOrResponse[Unit]
   def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client]
   def postClientLabel(id: ClientId, label: String): ErrorOrResponse[Unit]
-  def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None, sigKey: Option[SignalingKey] = None): ErrorOrResponse[Unit]
+  def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None): ErrorOrResponse[Unit]
   def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse]
 }
 
@@ -67,8 +68,6 @@ class OtrClientImpl(implicit
   import OtrClient._
   import com.waz.threading.Threading.Implicits.Background
 
-  private[waz] val PermanentClient = true // for testing
-
   private implicit val PreKeysResponseDeserializer: RawBodyDeserializer[PreKeysResponse] =
     RawBodyDeserializer[JSONObject].map(json => PreKeysResponse.unapply(JsonObjectResponse(json)).get)
 
@@ -81,6 +80,9 @@ class OtrClientImpl(implicit
 
   private implicit val ListClientsResponseDeserializer: RawBodyDeserializer[ListClientsResponse] =
     RawBodyDeserializer[JSONObject].map(ListClientsResponse.Decoder(_))
+
+  private implicit val ClientDeserializer: RawBodyDeserializer[Client] =
+    RawBodyDeserializer[JSONObject].map(ClientsResponse.Decoder(_))
 
   override def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]] = {
     Request.Get(relativePath = userPreKeysPath(user))
@@ -146,18 +148,12 @@ class OtrClientImpl(implicit
   override def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client] = {
     val data = JsonEncoder { o =>
       o.put("lastkey", JsonEncoder.encode(lastKey)(PreKeyEncoder))
-      client.signalingKey foreach { sk => o.put("sigkeys", JsonEncoder.encode(sk)) }
       o.put("prekeys", JsonEncoder.arr(keys)(PreKeyEncoder))
       o.put("label", client.label)
       o.put("model", client.model)
-      o.put("class", client.devType.deviceClass)
+      o.put("class", client.deviceClass.value)
+      o.put("type", client.deviceType.getOrElse(DeviceType.Permanent).value)
       o.put("cookie", userId.str)
-
-      if (client.devType == OtrClientType.LEGALHOLD) {
-        o.put("type", "legalhold")
-      } else {
-        o.put("type", if (PermanentClient) "permanent" else "temporary")
-      }
 
       password.map(_.str).foreach(o.put("password", _))
     }
@@ -165,7 +161,7 @@ class OtrClientImpl(implicit
     Request.Post(relativePath = clientsPath, body = data)
       .withResultType[Client]
       .withErrorType[ErrorResponse]
-      .executeSafe(_.copy(signalingKey = client.signalingKey, verified = Verification.VERIFIED)) //TODO Maybe we can add description for this?
+      .executeSafe(_.copy(verified = Verification.VERIFIED)) //TODO Maybe we can add description for this?
   }
 
   override def postClientLabel(id: ClientId, label: String): ErrorOrResponse[Unit] = {
@@ -179,10 +175,9 @@ class OtrClientImpl(implicit
       .executeSafe
   }
 
-  override def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None, sigKey: Option[SignalingKey] = None): ErrorOrResponse[Unit] = {
+  override def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None): ErrorOrResponse[Unit] = {
     val data = JsonEncoder { o =>
       lastKey.foreach(k => o.put("lastkey", JsonEncoder.encode(k)))
-      sigKey.foreach(k => o.put("sigkeys", JsonEncoder.encode(k)))
       prekeys.foreach(ks => o.put("prekeys", JsonEncoder.arr(ks)))
     }
     Request.Put(relativePath = clientPath(id), body = data)
@@ -335,7 +330,7 @@ object OtrClient extends DerivedLogTag {
     import scala.collection.JavaConverters._
 
     private def getClients(json: JSONArray): Seq[Client] =
-      JsonDecoder.array(json, (arr, i) => Try(arr.getJSONObject(i)).map(Client.Decoder(_)).toOption).flatten
+      JsonDecoder.array(json, (arr, i) => Try(arr.getJSONObject(i)).map(ClientsResponse.Decoder(_)).toOption).flatten
 
     private def getUserClients(domain: String, json: JSONObject): Map[QualifiedId, Seq[Client]] =
       json.keySet.asScala.toSeq.flatMap { userId =>
@@ -360,20 +355,22 @@ object OtrClient extends DerivedLogTag {
 
   object ClientsResponse {
 
-    def client(implicit js: JSONObject): Client =
-      Client(
-        decodeId[ClientId]('id),
-        'label,
-        'model,
-        decodeOptUtcDate('time).map(_.instant),
-        opt[Location]('location),
-        'address,
-        devType = decodeOptString('class).fold(OtrClientType.PHONE)(OtrClientType.fromDeviceClass)
-      )
+    implicit object Decoder extends JsonDecoder[Client] {
+      override def apply(implicit js: JSONObject): Client = {
+        Client(
+          id = decodeId[ClientId]('id),
+          label = 'label,
+          model = 'model,
+          deviceClass = decodeOptString('class).fold(DeviceClass.Phone)(DeviceClass.apply),
+          deviceType = decodeOptString('type).map(DeviceType.apply),
+          regTime = decodeOptUtcDate('time).map(_.instant)
+        )
+      }
+    }
 
     def unapply(content: ResponseContent): Option[Seq[Client]] = content match {
-      case JsonObjectResponse(js) => Try(Seq(client(js))).toOption
-      case JsonArrayResponse(arr) => Try(JsonDecoder.array(arr, { (arr, i) => client(arr.getJSONObject(i)) })).toOption
+      case JsonObjectResponse(js) => Try(Seq(Decoder(js))).toOption
+      case JsonArrayResponse(arr) => Try(JsonDecoder.array(arr, { (arr, i) => Decoder(arr.getJSONObject(i)) })).toOption
       case _ => None
     }
   }

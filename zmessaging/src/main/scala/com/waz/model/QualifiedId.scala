@@ -4,7 +4,9 @@ import com.waz.utils.JsonDecoder.opt
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 
-final case class QualifiedId(id: UserId, domain: String)
+final case class QualifiedId(id: UserId, domain: String) {
+  def hasDomain: Boolean = domain.nonEmpty
+}
 
 object QualifiedId {
   def apply(userId: UserId): QualifiedId = QualifiedId(userId, "")
