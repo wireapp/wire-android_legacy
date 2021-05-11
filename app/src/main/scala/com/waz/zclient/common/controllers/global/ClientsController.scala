@@ -20,8 +20,8 @@ package com.waz.zclient.common.controllers.global
 import java.util.Locale
 
 import android.content.Context
-import com.waz.api.OtrClientType
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.{ConvId, UserId}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.service.messages.MessagesService
@@ -127,12 +127,12 @@ object ClientsController {
   private val BoldSuffix = "]]"
   private val Separator = " "
 
-  def getDeviceClassName(otrType: OtrClientType)(implicit context: Context): String = {
-    import OtrClientType._
+  def getDeviceClassName(otrType: DeviceClass)(implicit context: Context): String = {
+    import DeviceClass._
     getString(otrType match {
-      case DESKTOP  => R.string.otr__participant__device_class__desktop
-      case PHONE    => R.string.otr__participant__device_class__phone
-      case TABLET   => R.string.otr__participant__device_class__tablet
+      case Desktop  => R.string.otr__participant__device_class__desktop
+      case Phone    => R.string.otr__participant__device_class__phone
+      case Tablet   => R.string.otr__participant__device_class__tablet
       case _        => R.string.otr__participant__device_class__unknown
     })
   }

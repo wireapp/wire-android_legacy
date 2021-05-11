@@ -111,18 +111,8 @@ class OtrClientsServiceImpl(selfId:    UserId,
     updateUserClients(Map(user -> clients), replace).map(_.head)
 
   override def updateUserClients(ucs: Map[UserId, Seq[Client]], replace: Boolean): Future[Set[UserClients]] = {
-    // request clients location sync if some location has no name
-    // location will be present only for self clients, but let's check that just to be explicit
-    def needsLocationSync(selfId: UserId, uss: Traversable[UserClients]): Boolean = {
-      val needsSync = uss.filter(_.clients.values.exists(_.regLocation.exists(!_.hasName)))
-      needsSync.nonEmpty && needsSync.exists(_.user == selfId)
-    }
-
     verbose(l"updateUserClients(${ucs.map { case (id, cs) => id -> cs.size }}, $replace)")
-    for {
-      updated <- storage.updateClients(ucs, replace)
-      _       <- if (needsLocationSync(selfId, updated)) sync.syncClientsLocation() else Future.successful({})
-    } yield updated
+    storage.updateClients(ucs, replace)
   }
 
   def onCurrentClientRemoved(): Future[Option[(UserClients, UserClients)]] = storage.update(selfId, _ - clientId)

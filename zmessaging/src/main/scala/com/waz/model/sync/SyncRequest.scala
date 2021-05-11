@@ -76,7 +76,6 @@ object SyncRequest {
   final case object SyncConnections      extends BaseRequest(Cmd.SyncConnections)
   final case object SyncSelfClients      extends BaseRequest(Cmd.SyncSelfClients)
   final case object SyncSelfPermissions  extends BaseRequest(Cmd.SyncSelfPermissions)
-  final case object SyncClientsLocation  extends BaseRequest(Cmd.SyncClientLocation)
   final case object SyncTeam             extends BaseRequest(Cmd.SyncTeam)
   final case object SyncTeamData         extends BaseRequest(Cmd.SyncTeamData)
   final case object SyncProperties       extends BaseRequest(Cmd.SyncProperties)
@@ -264,7 +263,7 @@ object SyncRequest {
   }
 
   final case class SyncClients(userId: UserId) extends RequestForUser(Cmd.SyncClients)
-  
+
   final case class SyncClientsBatch(ids: Set[QualifiedId]) extends BaseRequest(Cmd.SyncClientsBatch) {
     override def merge(req: SyncRequest) = mergeHelper[SyncClientsBatch](req) { other =>
       if (other.ids.subsetOf(ids)) Merged(this)
@@ -448,7 +447,6 @@ object SyncRequest {
           case Cmd.SyncSelfPermissions       => SyncSelfPermissions
           case Cmd.SyncClients               => SyncClients(userId)
           case Cmd.SyncClientsBatch          => SyncClientsBatch(decodeQualifiedIds('qualifiableIds).toSet)
-          case Cmd.SyncClientLocation        => SyncClientsLocation
           case Cmd.SyncPreKeys               => SyncPreKeys(userId, decodeClientIdSeq('clients).toSet)
           case Cmd.PostClientLabel           => PostClientLabel(decodeId[ClientId]('client), 'label)
           case Cmd.PostLiking                => PostLiking(convId, JsonDecoder[Liking]('liking))
@@ -595,7 +593,7 @@ object SyncRequest {
           o.put("key", key)
           o.put("value", value)
         case PostFolders | SyncFolders | SyncSelf | SyncTeam | SyncTeamData | DeleteAccount | SyncConversations | SyncConnections |
-             SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | SyncLegalHoldRequest | Unknown => () // nothing to do
+             SyncSelfClients | SyncSelfPermissions  | SyncProperties | SyncLegalHoldRequest | Unknown => () // nothing to do
         case DeleteGroupConversation(teamId, rConvId)  =>
           o.put("teamId", teamId.str)
           o.put("rConv", rConvId.str)

@@ -63,7 +63,7 @@ class SingleOtrClientFragment extends FragmentHelper {
 
   private lazy val typeTextView = returning(view[TextView](R.id.client_type)) { vh =>
     client
-      .map(_.devType)
+      .map(_.deviceClass)
       .map(getDeviceClassName)
       .map(_.toUpperCase())
       .onUi(t => vh.foreach(_.setText(t)))

@@ -63,7 +63,6 @@ public enum SyncCommand {
     SyncSelfPermissions("sync-self-permissions"),
     SyncClients("sync-user-clients"),
     SyncClientsBatch("sync-user-clients-batch"),
-    SyncClientLocation("sync-client-location"),
     SyncPreKeys("sync-prekeys"),
     PostAddBot("post-add-bot"),
     PostRemoveBot("post-remove-bot"),

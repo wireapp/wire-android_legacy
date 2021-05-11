@@ -1,11 +1,11 @@
 package com.waz.service
 
-import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.otr.ClientId
 import com.waz.model._
+import com.waz.model.otr.Client.DeviceClass
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -105,7 +105,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   private def createLegalHoldClientAndSession(request: LegalHoldRequest): Future[Unit] = for {
     client          <- clientsService.getOrCreateClient(selfUserId, request.clientId)
-    legalHoldClient = client.copy(devType = OtrClientType.LEGALHOLD)
+    legalHoldClient = client.copy(deviceClass = DeviceClass.LegalHold)
     _               <- clientsService.updateUserClients(selfUserId, Seq(legalHoldClient), replace = false)
     sessionId       = SessionId(selfUserId, legalHoldClient.id)
     _               <- cryptoSessionService.getOrCreateSession(sessionId, request.lastPreKey)
