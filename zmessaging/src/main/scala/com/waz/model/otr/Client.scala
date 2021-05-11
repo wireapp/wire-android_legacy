@@ -170,7 +170,7 @@ object UserClients {
     override def apply(implicit js: JSONObject): UserClients =
       new UserClients(
         decodeId[UserId]('user),
-        decodeClients(js.getJSONArray("clients")).map(c => c.id -> c)(breakOut)
+        decodeClients(js.getJSONArray("clients")).toIdMap
       )
 
     private def decodeClients(clients: JSONArray): Seq[Client] =
