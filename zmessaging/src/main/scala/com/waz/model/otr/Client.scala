@@ -120,8 +120,8 @@ object Client {
 
   implicit lazy val Decoder: JsonDecoder[Client] = new JsonDecoder[Client] {
     import JsonDecoder._
-    override def apply(implicit js: JSONObject): Client = {
-      new Client(
+    override def apply(implicit js: JSONObject): Client =
+      Client(
         id = decodeId[ClientId]('id),
         label = 'label,
         model = 'model,
@@ -130,8 +130,6 @@ object Client {
         deviceType = decodeOptString('type).map(DeviceType.apply),
         regTime = 'regTime
       )
-    }
-  }
 
   // Previously the device class was stored under "devType" and the device type was not
   // stored at all. This legacy decoder remains as a way to decode old client metadata if the
@@ -139,8 +137,8 @@ object Client {
 
   private[otr] implicit lazy val LegacyDecoder: JsonDecoder[Client] = new JsonDecoder[Client] {
     import JsonDecoder._
-    override def apply(implicit js: JSONObject): Client = {
-      new Client(
+    override def apply(implicit js: JSONObject): Client =
+      Client(
         id = decodeId[ClientId]('id),
         label = 'label,
         model ='model,
@@ -148,8 +146,6 @@ object Client {
         deviceClass = decodeOptString('devType).fold(DeviceClass.Phone)(DeviceClass.apply),
         regTime ='regTime
       )
-    }
-  }
 }
 
 final case class UserClients(user: UserId, clients: Map[ClientId, Client]) extends Identifiable[UserId] {
@@ -168,7 +164,7 @@ object UserClients {
   implicit lazy val Decoder: JsonDecoder[UserClients] = new JsonDecoder[UserClients] {
     import JsonDecoder._
     override def apply(implicit js: JSONObject): UserClients =
-      new UserClients(
+      UserClients(
         decodeId[UserId]('user),
         decodeClients(js.getJSONArray("clients")).toIdMap
       )
