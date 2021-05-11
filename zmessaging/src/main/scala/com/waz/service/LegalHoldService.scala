@@ -142,7 +142,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   // When a participant is added...
   membersStorage.onAdded.foreach { members =>
-  if (!isVerifyingLegalHold) updateLegalHoldStatus(members.map(_.convId))
+    if (!isVerifyingLegalHold) updateLegalHoldStatus(members.map(_.convId))
   }
 
   // When a participant is removed...
