@@ -262,12 +262,13 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     } yield (targetFile, bytes)
 
   def saveImageToGallery(asset: Asset): Unit = {
-    prepareAssetContentForFile(asset, createWireImageDirectory()).onComplete {
+    prepareAssetContentForFile(asset, wireImageDirectory).onComplete {
       case Success((file, bytes)) if inject[FileRestrictionList].isAllowed(file.getName) =>
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
           val contentResolver = context.getContentResolver
+          val wireImageRelativePath = wireImageDirectory.getPath.stripPrefix(context.getExternalFilesDir(null).getPath).drop(1)
           val contentValues = returning(contentValuesForAsset(asset)) {
-            _.put(MediaStore.MediaColumns.RELATIVE_PATH, wireImageRelativePath())
+            _.put(MediaStore.MediaColumns.RELATIVE_PATH, wireImageRelativePath)
           }
           val insertUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
           IoUtils.withResource(contentResolver.openOutputStream(insertUri)) { _.write(bytes) }
@@ -283,14 +284,14 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     }
   }
 
-  private def createWireImageDirectory() = returning(wireImageDirectory()) { IoUtils.createDirectory }
+  private lazy val wireImageDirectory = {
+    val parentDir =
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+        context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+      else
+        DeprecationUtils.getPicturesDirectory
 
-  private def wireImageDirectory() =
-    new File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Wire Images")
-
-  private def wireImageRelativePath(): String = {
-    val externalStorageRootDir = context.getExternalFilesDir(null).getPath
-    wireImageDirectory().getPath.stripPrefix(externalStorageRootDir).drop(1)
+    returning(new File(parentDir, "Wire Images")) { IoUtils.createDirectory }
   }
 
   def saveToDownloads(asset: Asset): Unit =
