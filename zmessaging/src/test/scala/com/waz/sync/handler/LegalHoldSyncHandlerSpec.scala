@@ -195,7 +195,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       val actualResult = result(syncHandler.syncClientsForLegalHoldVerification(convId))
 
       // Then
-      actualResult shouldEqual SyncResult.Failure
+      actualResult shouldEqual SyncResult.Failure(errorResponse)
     }
 
   }
