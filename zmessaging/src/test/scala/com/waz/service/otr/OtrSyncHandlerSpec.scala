@@ -20,6 +20,7 @@ package com.waz.service.otr
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
+import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.model._
@@ -53,266 +54,353 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
   val usersStorage       = mock[UsersStorage]
   val clientsStorage     = mock[OtrClientsStorage]
 
-  scenario("Encrypt and send message with no errors") {
-
-    val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
-    val msg = TextMessage("content", Nil, expectsReadConfirmation = false)
-
-    val otherUser = UserId("other-user-id")
-    val otherUsersClient = ClientId("other-user-client-id")
-    val content = "content".getBytes
-
-    val encryptedContent = EncryptedContent(Map(otherUser -> Map(otherUsersClient -> content)))
-
-    (convStorage.get _)
-      .expects(conv.id)
-      .returning(Future.successful(Some(conv)))
-
-    (members.getActiveUsers _)
-      .expects(conv.id)
-      .returning(Future.successful(Seq(account1Id, otherUser)))
-
-    (clientsStorage.getClients _)
-      .expects(otherUser)
-      .once()
-      .returning(Future.successful(Seq(Client(otherUsersClient, ""))))
-
-    (clientsStorage.getClients _)
-      .expects(account1Id)
-      .once()
-      .returning(Future.successful(Seq(Client(selfClientId, ""))))
-
-    (service.encryptMessage _)
-      .expects(msg, Map(account1Id -> Set.empty[ClientId], otherUser -> Set(otherUsersClient)), *, EncryptedContent.Empty)
-      .returning(Future.successful(encryptedContent))
-
-    (msgClient.postMessage _)
-      .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent), *)
-      .returning(CancellableFuture.successful(Right(MessageResponse.Success(ClientMismatch(time = RemoteInstant.Epoch)))))
-
-    (service.deleteClients _)
-      .expects(Map.empty[UserId, Seq[ClientId]])
-      .returning(Future.successful({}))
-
-    (convsService.addUnexpectedMembersToConv _)
-      .expects(conv.id, Set.empty[UserId])
-      .returning(Future.successful({}))
-
-    val sh = getSyncHandler
-    result(sh.postOtrMessage(conv.id, msg))
-  }
-
-  scenario("Can't encrypt or send message in unverified conversation") {
-    val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"), verified = Verification.UNVERIFIED)
-
-    (convStorage.get _)
-      .expects(conv.id)
-      .returning(Future.successful(Some(conv)))
-
-    val sh = getSyncHandler
-    //Send calling message to avoid triggering errors service
-    result(sh.postOtrMessage(conv.id, GenericMessage(Uid(), GenericContent.Calling("msg")))) shouldEqual Left(ErrorResponse.Unverified)
-
-  }
-
-  scenario("Unexpected users and/or clients in missing response should be updated and added to members, and previously encrypted content should be updated") {
-
-    val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
-    val msg = TextMessage("content", Seq.empty, expectsReadConfirmation = false)
-
-    val otherUser        = UserId("other-user-id")
-    val otherUsersClient = ClientId("other-user-client-1")
-    val content          = "content".getBytes
-
-    val encryptedContent1 = EncryptedContent(Map(otherUser -> Map(otherUsersClient -> content)))
-
-    val missingUser       = UserId("missing-user-id")
-    val missingUserData   = UserData(missingUser, domain = Some("domain"), name = Name("missing user"), searchKey = SearchKey.simple("missing user"))
-    val missingUserClient = ClientId("missing-user-client-1")
-    val contentForMissing = "content".getBytes
-    val missing = Map(missingUser -> Seq(missingUserClient))
-
-    val encryptedContent2 = EncryptedContent(
-      encryptedContent1.content ++
-        Map(missingUser -> Map(missingUserClient -> contentForMissing))
-    )
-
-    (convStorage.get _)
-      .expects(conv.id)
-      .twice()
-      .returning(Future.successful(Some(conv)))
-
-    var callsToActiveMembers = 0
-    (members.getActiveUsers _)
-      .expects(conv.id)
-      .twice()
-      .onCall { _: ConvId =>
-        Future.successful {
-          callsToActiveMembers += 1
-          callsToActiveMembers match {
-            case 1 =>
-              Seq(account1Id, otherUser)
-            case 2 =>
-              Seq(account1Id, otherUser, missingUser)
-            case _ => fail("Unexpected number of calls to postMessage")
-          }
-        }
-      }
-
-    (clientsStorage.getClients _)
-      .expects(otherUser)
-      .twice()
-      .returning(Future.successful(Seq(Client(otherUsersClient, ""))))
-
-    (clientsStorage.getClients _)
-      .expects(account1Id)
-      .twice()
-      .returning(Future.successful(Seq(Client(selfClientId, ""))))
-
-    (clientsStorage.getClients _)
-      .expects(missingUser)
-      .once()
-      .returning(Future.successful(Seq(Client(missingUserClient, ""))))
-
-    var callsToEncrypt = 0
-    (service.encryptMessage _)
-      .expects(msg, *, *, *)
-      .twice()
-      .onCall { (_, recipients, _, previous) =>
-        callsToEncrypt += 1
-        callsToEncrypt match {
-          case 1 =>
-            recipients shouldEqual Map(account1Id -> Set.empty[ClientId], otherUser -> Set(otherUsersClient))
-            previous shouldEqual EncryptedContent.Empty
-            Future.successful(encryptedContent1)
-          case 2 =>
-            recipients shouldEqual Map(account1Id -> Set.empty[ClientId], otherUser -> Set(otherUsersClient), missingUser -> Set(missingUserClient))
-            previous shouldEqual encryptedContent1
-            Future.successful(encryptedContent2)
-        }
-      }
-
-    var callsToPostMessage = 0
-    (msgClient.postMessage _)
-      .expects(conv.remoteId, *, *)
-      .twice()
-      .onCall { (_, msg, ignoreMissing: Boolean) =>
-        CancellableFuture.successful(Right {
-          callsToPostMessage += 1
-          ignoreMissing shouldEqual false
-          msg.sender shouldEqual selfClientId
-          callsToPostMessage match {
-            case 1 =>
-              msg.recipients shouldEqual encryptedContent1
-              MessageResponse.Failure(ClientMismatch(missing = missing, time = RemoteInstant.Max))
-            case 2 =>
-              msg.recipients shouldEqual encryptedContent2
-              MessageResponse.Success(ClientMismatch(time = RemoteInstant.Max))
-            case _ => fail("Unexpected number of calls to postMessage")
-          }
-        })
-      }
-
-    (service.deleteClients _)
-      .expects(Map.empty[UserId, Seq[ClientId]])
-      .twice()
-      .returning(Future.successful({}))
-
-    var callsToAddUnexpectedMembers = 0
-    (convsService.addUnexpectedMembersToConv _)
-      .expects(conv.id, *)
-      .twice()
-      .onCall { (_, us) =>
-        callsToAddUnexpectedMembers += 1
-        callsToAddUnexpectedMembers match {
-          case 1 => us.size shouldEqual 1
-            Future.successful(Some(SyncId()))
-          case _ => us.size shouldEqual 0
-            Future.successful(Option.empty[SyncId])
-        }
-      }
-
-    (usersStorage.listAll _)
-      .expects(Set(missingUser))
-      .once()
-      .returning(Future.successful(Vector(missingUserData)))
-
-    (clientsSyncHandler.syncClients(_ : Set[QualifiedId]))
-      .expects(Set(missingUserData.qualifiedId.get))
-      .returning(Future.successful(SyncResult.Success))
-
-    val sh = getSyncHandler
-    result(sh.postOtrMessage(conv.id, msg))
-  }
-
-  scenario("Target message to specific clients") {
-    val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
-    val msg = TextMessage("content", Nil, expectsReadConfirmation = false)
-
-    val otherUser1 = UserId("other-user-1")
-    val otherUser2 = UserId("other-user-2")
-
-    val otherClient1 = ClientId("other-client-1")
-    val otherClient2 = ClientId("other-client-2")
-
-    val content = "content".getBytes
-
-    val encryptedContent = EncryptedContent(Map(otherUser1 -> Map(otherClient1 -> content, otherClient2 -> content)))
-
-    (convStorage.get _)
-      .expects(conv.id)
-      .returning(Future.successful(Some(conv)))
-
-    (service.encryptMessage _)
-      .expects(msg, Map(otherUser1 -> Set(otherClient1), otherUser2 -> Set(otherClient2)), *, EncryptedContent.Empty)
-      .returning(Future.successful(encryptedContent))
-
-    (msgClient.postMessage _)
-      .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent), true)
-      .returning(CancellableFuture.successful(Right(MessageResponse.Success(ClientMismatch(time = RemoteInstant.Epoch)))))
-
-    (service.deleteClients _)
-      .expects(Map.empty[UserId, Seq[ClientId]])
-      .returning(Future.successful({}))
-
-    (convsService.addUnexpectedMembersToConv _)
-      .expects(conv.id, Set.empty[UserId])
-      .returning(Future.successful({}))
-
-    val sh = getSyncHandler
-    val targetRecipients = Map(otherUser1 -> Set(otherClient1), otherUser2 -> Set(otherClient2))
-    result(sh.postOtrMessage(conv.id, msg, TargetRecipients.SpecificClients(targetRecipients)))
-  }
-
-  scenario("Fetch clients through client discovery message") {
-    val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
-    val encryptedContent = EncryptedContent.Empty
-
-    val missingClients: Map[UserId, Seq[ClientId]] = Map(
-      UserId("user1") -> Seq(ClientId("client1"), ClientId("client2")),
-      UserId("user2") -> Seq(ClientId("client1"), ClientId("client2"))
-    )
-
-    (convStorage.getByRemoteId _)
-      .expects(conv.remoteId)
-      .returning(Future.successful(Some(conv)))
-
-    (msgClient.postMessage _)
-      .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent, nativePush = false), *)
-      .returning(CancellableFuture.successful(Right(MessageResponse.Success(
-        ClientMismatch(
-          missing = missingClients,
-          time = RemoteInstant.Epoch
-        )
-      ))))
-
-    val sh = getSyncHandler
-    result(sh.postClientDiscoveryMessage(conv.remoteId)) shouldEqual Right(missingClients)
-  }
-
-  def getSyncHandler = {
+  def getSyncHandler: OtrSyncHandlerImpl = {
     (push.waitProcessing _).expects().anyNumberOfTimes.returning(Future.successful({}))
-    new OtrSyncHandlerImpl(teamId, selfClientId, otrClient, msgClient, service, convsService, convStorage, users, members, errors, clientsSyncHandler, push, usersStorage, clientsStorage)
+    new OtrSyncHandlerImpl(
+      teamId,
+      selfClientId,
+      otrClient,
+      msgClient,
+      service,
+      convsService,
+      convStorage,
+      users,
+      members,
+      errors,
+      clientsSyncHandler,
+      push,
+      usersStorage,
+      clientsStorage
+    )
   }
 
+  def createTextMessage(content: String): GenericMessage =
+    TextMessage(content, Nil, expectsReadConfirmation = false)
+      .withLegalHoldStatus(Messages.LegalHoldStatus.DISABLED)
+
+  feature("Post OTR message") {
+
+    def setUpExpectationsForSucessfulEncryptAndSend(convLegalHoldStatus: ConversationData.LegalHoldStatus,
+                                                    expectedMsgLegalHoldStatus: Messages.LegalHoldStatus): (ConvId, GenericMessage) = {
+      // Given
+      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"), legalHoldStatus = convLegalHoldStatus)
+      val msg = createTextMessage("content")
+
+      val otherUser = UserId("other-user-id")
+      val otherUsersClient = ClientId("other-user-client-id")
+      val recipients = Map(account1Id -> Set.empty[ClientId], otherUser -> Set(otherUsersClient))
+
+      val content = "content".getBytes
+      val encryptedContent = EncryptedContent(Map(otherUser -> Map(otherUsersClient -> content)))
+
+      // Expectations
+      (convStorage.get _)
+        .expects(conv.id)
+        .returning(Future.successful(Some(conv)))
+
+      (members.getActiveUsers _)
+        .expects(conv.id)
+        .returning(Future.successful(Seq(account1Id, otherUser)))
+
+      (clientsStorage.getClients _)
+        .expects(otherUser)
+        .once()
+        .returning(Future.successful(Seq(Client(otherUsersClient, ""))))
+
+      (clientsStorage.getClients _)
+        .expects(account1Id)
+        .once()
+        .returning(Future.successful(Seq(Client(selfClientId, ""))))
+
+      (service.encryptMessage _)
+        .expects( msg.withLegalHoldStatus(expectedMsgLegalHoldStatus), recipients, *, EncryptedContent.Empty)
+        .returning(Future.successful(encryptedContent))
+
+      (msgClient.postMessage _)
+        .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent), *)
+        .returning(CancellableFuture.successful(Right(MessageResponse.Success(ClientMismatch(time = RemoteInstant.Epoch)))))
+
+      (service.deleteClients _)
+        .expects(Map.empty[UserId, Seq[ClientId]])
+        .returning(Future.successful({}))
+
+      (convsService.addUnexpectedMembersToConv _)
+        .expects(conv.id, Set.empty[UserId])
+        .returning(Future.successful({}))
+
+      (conv.id, msg)
+    }
+
+    scenario("Encrypt and send message with no errors") {
+      // Given
+      val syncHandler = getSyncHandler
+
+      // Expectations
+      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(ConversationData.LegalHoldStatus.Disabled, Messages.LegalHoldStatus.DISABLED)
+
+      // When
+      result(syncHandler.postOtrMessage(convId, msg))
+    }
+
+    scenario("Send enabled hint if conversation legal hold status is enabled") {
+      // Given
+      val syncHandler = getSyncHandler
+
+      // Expectations
+      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(LegalHoldStatus.Enabled, Messages.LegalHoldStatus.ENABLED)
+
+      // When
+      result(syncHandler.postOtrMessage(convId, msg))
+    }
+
+    scenario("Send enabled hint if conversation legal hold status is pending approval") {
+      // Given
+      val syncHandler = getSyncHandler
+
+      // Expectations
+      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(LegalHoldStatus.PendingApproval, Messages.LegalHoldStatus.ENABLED)
+
+      // When
+      result(syncHandler.postOtrMessage(convId, msg))
+    }
+
+    scenario("Send disabled hint if conversation legal hold status is disabled") {
+      // Given
+      val syncHandler = getSyncHandler
+
+      // Expectations
+      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(LegalHoldStatus.Disabled, Messages.LegalHoldStatus.DISABLED)
+
+      // When
+      result(syncHandler.postOtrMessage(convId, msg))
+    }
+
+    scenario("Can't encrypt or send message in unverified conversation") {
+      // Given
+      val syncHandler = getSyncHandler
+      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"), verified = Verification.UNVERIFIED)
+
+      // Send calling message to avoid triggering errors service
+      val message = GenericMessage(Uid(), GenericContent.Calling("msg"))
+
+      // Expectations
+      (convStorage.get _)
+        .expects(conv.id)
+        .returning(Future.successful(Some(conv)))
+
+      val actualResult = result(syncHandler.postOtrMessage(conv.id, message))
+
+      // Then
+      actualResult shouldEqual Left(ErrorResponse.Unverified)
+    }
+
+    scenario("Unexpected users and/or clients in missing response should be updated and added to members, and previously encrypted content should be updated") {
+      // Given
+      val syncHandler = getSyncHandler
+      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
+      val msg = createTextMessage("content")
+
+      val otherUser        = UserId("other-user-id")
+      val otherUsersClient = ClientId("other-user-client-1")
+      val content          = "content".getBytes
+
+      val encryptedContent1 = EncryptedContent(Map(otherUser -> Map(otherUsersClient -> content)))
+
+      val missingUser       = UserId("missing-user-id")
+      val missingUserData   = UserData(missingUser, domain = Some("domain"), name = Name("missing user"), searchKey = SearchKey.simple("missing user"))
+      val missingUserClient = ClientId("missing-user-client-1")
+      val contentForMissing = "content".getBytes
+      val missing = Map(missingUser -> Seq(missingUserClient))
+
+      val encryptedContent2 = EncryptedContent(
+        encryptedContent1.content ++
+          Map(missingUser -> Map(missingUserClient -> contentForMissing))
+      )
+
+      // Expectations
+      (convStorage.get _)
+        .expects(conv.id)
+        .twice()
+        .returning(Future.successful(Some(conv)))
+
+      var callsToActiveMembers = 0
+      (members.getActiveUsers _)
+        .expects(conv.id)
+        .twice()
+        .onCall { _: ConvId =>
+          Future.successful {
+            callsToActiveMembers += 1
+            callsToActiveMembers match {
+              case 1 =>
+                Seq(account1Id, otherUser)
+              case 2 =>
+                Seq(account1Id, otherUser, missingUser)
+              case _ => fail("Unexpected number of calls to postMessage")
+            }
+          }
+        }
+
+      (clientsStorage.getClients _)
+        .expects(otherUser)
+        .twice()
+        .returning(Future.successful(Seq(Client(otherUsersClient, ""))))
+
+      (clientsStorage.getClients _)
+        .expects(account1Id)
+        .twice()
+        .returning(Future.successful(Seq(Client(selfClientId, ""))))
+
+      (clientsStorage.getClients _)
+        .expects(missingUser)
+        .once()
+        .returning(Future.successful(Seq(Client(missingUserClient, ""))))
+
+      var callsToEncrypt = 0
+      (service.encryptMessage _)
+        .expects(msg, *, *, *)
+        .twice()
+        .onCall { (_, recipients, _, previous) =>
+          callsToEncrypt += 1
+          callsToEncrypt match {
+            case 1 =>
+              recipients shouldEqual Map(account1Id -> Set.empty[ClientId], otherUser -> Set(otherUsersClient))
+              previous shouldEqual EncryptedContent.Empty
+              Future.successful(encryptedContent1)
+            case 2 =>
+              recipients shouldEqual Map(account1Id -> Set.empty[ClientId], otherUser -> Set(otherUsersClient), missingUser -> Set(missingUserClient))
+              previous shouldEqual encryptedContent1
+              Future.successful(encryptedContent2)
+          }
+        }
+
+      var callsToPostMessage = 0
+      (msgClient.postMessage _)
+        .expects(conv.remoteId, *, *)
+        .twice()
+        .onCall { (_, msg, ignoreMissing: Boolean) =>
+          CancellableFuture.successful(Right {
+            callsToPostMessage += 1
+            ignoreMissing shouldEqual false
+            msg.sender shouldEqual selfClientId
+            callsToPostMessage match {
+              case 1 =>
+                msg.recipients shouldEqual encryptedContent1
+                MessageResponse.Failure(ClientMismatch(missing = missing, time = RemoteInstant.Max))
+              case 2 =>
+                msg.recipients shouldEqual encryptedContent2
+                MessageResponse.Success(ClientMismatch(time = RemoteInstant.Max))
+              case _ => fail("Unexpected number of calls to postMessage")
+            }
+          })
+        }
+
+      (service.deleteClients _)
+        .expects(Map.empty[UserId, Seq[ClientId]])
+        .twice()
+        .returning(Future.successful({}))
+
+      var callsToAddUnexpectedMembers = 0
+      (convsService.addUnexpectedMembersToConv _)
+        .expects(conv.id, *)
+        .twice()
+        .onCall { (_, us) =>
+          callsToAddUnexpectedMembers += 1
+          callsToAddUnexpectedMembers match {
+            case 1 => us.size shouldEqual 1
+              Future.successful(Some(SyncId()))
+            case _ => us.size shouldEqual 0
+              Future.successful(Option.empty[SyncId])
+          }
+        }
+
+      (usersStorage.listAll _)
+        .expects(Set(missingUser))
+        .once()
+        .returning(Future.successful(Vector(missingUserData)))
+
+      (clientsSyncHandler.syncClients(_ : Set[QualifiedId]))
+        .expects(Set(missingUserData.qualifiedId.get))
+        .returning(Future.successful(SyncResult.Success))
+
+      // When
+      result(syncHandler.postOtrMessage(conv.id, msg))
+    }
+
+    scenario("Target message to specific clients") {
+      // Given
+      val syncHandler = getSyncHandler
+      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
+      val msg = createTextMessage("content")
+
+      val otherUser1 = UserId("other-user-1")
+      val otherUser2 = UserId("other-user-2")
+
+      val otherClient1 = ClientId("other-client-1")
+      val otherClient2 = ClientId("other-client-2")
+
+      val content = "content".getBytes
+      val encryptedContent = EncryptedContent(Map(otherUser1 -> Map(otherClient1 -> content, otherClient2 -> content)))
+
+      val targetRecipients = Map(otherUser1 -> Set(otherClient1), otherUser2 -> Set(otherClient2))
+
+      // Expectations
+      (convStorage.get _)
+        .expects(conv.id)
+        .returning(Future.successful(Some(conv)))
+
+      (service.encryptMessage _)
+        .expects(msg, Map(otherUser1 -> Set(otherClient1), otherUser2 -> Set(otherClient2)), *, EncryptedContent.Empty)
+        .returning(Future.successful(encryptedContent))
+
+      (msgClient.postMessage _)
+        .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent), true)
+        .returning(CancellableFuture.successful(Right(MessageResponse.Success(ClientMismatch(time = RemoteInstant.Epoch)))))
+
+      (service.deleteClients _)
+        .expects(Map.empty[UserId, Seq[ClientId]])
+        .returning(Future.successful({}))
+
+      (convsService.addUnexpectedMembersToConv _)
+        .expects(conv.id, Set.empty[UserId])
+        .returning(Future.successful({}))
+
+      // When
+      result(syncHandler.postOtrMessage(conv.id, msg, TargetRecipients.SpecificClients(targetRecipients)))
+    }
+  }
+
+  feature("Post client discovery message") {
+
+    scenario("Successfully fetch clients") {
+      // Given
+      val syncHandler = getSyncHandler
+      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
+      val encryptedContent = EncryptedContent.Empty
+
+      val missingClients: Map[UserId, Seq[ClientId]] = Map(
+        UserId("user1") -> Seq(ClientId("client1"), ClientId("client2")),
+        UserId("user2") -> Seq(ClientId("client1"), ClientId("client2"))
+      )
+
+      // Expectations
+      (convStorage.getByRemoteId _)
+        .expects(conv.remoteId)
+        .returning(Future.successful(Some(conv)))
+
+      (msgClient.postMessage _)
+        .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent, nativePush = false), *)
+        .returning(CancellableFuture.successful(Right(MessageResponse.Success(
+          ClientMismatch(
+            missing = missingClients,
+            time = RemoteInstant.Epoch
+          )
+        ))))
+
+      // When
+      val actualResult = result(syncHandler.postClientDiscoveryMessage(conv.remoteId))
+
+      // Then
+      actualResult shouldEqual Right(missingClients)
+    }
+  }
 }
