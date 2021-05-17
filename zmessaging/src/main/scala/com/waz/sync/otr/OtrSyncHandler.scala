@@ -86,12 +86,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                              ): ErrorOr[RemoteInstant] = {
     import com.waz.utils.{RichEither, RichFutureEither}
 
-    def setLegalHoldHint(conv: ConversationData, msg: GenericMessage): GenericMessage = {
-      import Messages.LegalHoldStatus._
-      msg.withLegalHoldStatus(if (conv.isUnderLegalHold) ENABLED else DISABLED)
-    }
-
-    def encryptAndSend(message:  GenericMessage,
+    def encryptAndSend(msg:      GenericMessage,
                        external: Option[Array[Byte]] = None,
                        retries:  Int = 0,
                        previous: EncryptedContent = EncryptedContent.Empty
@@ -100,7 +95,6 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         _          <- push.waitProcessing
         Some(conv) <- convStorage.get(convId)
         _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
-        msg        =  setLegalHoldHint(conv, message)
         recipients <- clientsMap(targetRecipients, convId)
         content    <- service.encryptMessage(msg, recipients, retries > 0, previous)
         resp       <- if (content.estimatedSize < MaxContentSize) {

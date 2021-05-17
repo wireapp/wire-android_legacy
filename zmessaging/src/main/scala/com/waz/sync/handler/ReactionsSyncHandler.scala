@@ -17,6 +17,7 @@
  */
 package com.waz.sync.handler
 
+import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.Reaction
 import com.waz.model._
@@ -26,18 +27,26 @@ import com.waz.sync.otr.OtrSyncHandler
 
 import scala.concurrent.Future
 
-class ReactionsSyncHandler(service:   ReactionsService,
-                           otrSync:   OtrSyncHandler) extends DerivedLogTag {
+class ReactionsSyncHandler(service: ReactionsService,
+                           otrSync: OtrSyncHandler,
+                           convs: ConversationStorage) extends DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
   def postReaction(id: ConvId, liking: Liking): Future[SyncResult] =
-    otrSync.postOtrMessage(id, GenericMessage(Uid(), Reaction(liking.message, liking.action))).flatMap {
+    for {
+      legalHoldStatus <- convs.getLegalHoldHint(id)
+      message          = GenericMessage(Uid(), Reaction(liking.message, liking.action, legalHoldStatus))
+      result          <- postMessage(id, message, liking)
+    } yield result
+
+  private def postMessage(convId: ConvId, message: GenericMessage, liking: Liking): Future[SyncResult] =
+    otrSync.postOtrMessage(convId, message).flatMap {
       case Right(time) =>
         service
-          .updateLocalReaction(liking, time)
-          .map(_ => SyncResult.Success)
+        .updateLocalReaction(liking, time)
+        .map(_ => SyncResult.Success)
       case Left(error) =>
         Future.successful(SyncResult(error))
-    }
+  }
 }

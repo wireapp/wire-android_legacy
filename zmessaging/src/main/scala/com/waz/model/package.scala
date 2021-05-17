@@ -178,31 +178,36 @@ package object model {
 
       implicit val log: LogTag = LogTag("TextMessage")
 
-      def apply(text: String): GenericMessage = GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false))
+      def apply(text: String,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
-                expectsReadConfirmation: Boolean): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation))
+                expectsReadConfirmation: Boolean,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
                 links: Seq[LinkPreview],
-                expectsReadConfirmation: Boolean): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation))
+                expectsReadConfirmation: Boolean,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
                 links: Seq[LinkPreview],
                 quote: Option[Quote],
-                expectsReadConfirmation: Boolean): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation))
+                expectsReadConfirmation: Boolean,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation, legalHoldStatus))
 
       def apply(msg: MessageData): GenericMessage =
         GenericMessage(
           msg.id.uid,
           msg.ephemeral,
-          Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false))
+          Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false), msg.protoLegalHoldStatus)
         )
 
       def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean)] = msg.unpackContent match {

@@ -98,13 +98,16 @@ case class MessageData(override val id:   MessageId              = MessageId(),
     case _ => false
   })
 
+  lazy val protoLegalHoldStatus: Messages.LegalHoldStatus =
+    genericMsgs.lastOption.map(_.legalHoldStatus).getOrElse(Messages.LegalHoldStatus.UNKNOWN)
+
   lazy val expectsRead: Option[Boolean] = forceReadReceipts.map(_ > 0).orElse(protoReadReceipts)
 
   // used to create a copy of the message quoting the one that had its msgId changed
   def replaceQuote(quoteId: MessageId): MessageData = {
     // we assume that the reply is already valid, so we don't have to update the hash (the old one is invalid)
     val newProtos = genericMsgs.lastOption match {
-      case Some(TextMessage(text, ms, ls, Some(q), rr)) => Seq(TextMessage(text, ms, ls, Some(Quote(quoteId, None)), rr))
+      case Some(TextMessage(text, ms, ls, Some(q), rr)) => Seq(TextMessage(text, ms, ls, Some(Quote(quoteId, None)), rr, protoLegalHoldStatus))
       case _ => genericMsgs
     }
     copy(quote = Some(QuoteContent(quoteId, validity = true, None)), genericMsgs = newProtos)
@@ -187,24 +190,26 @@ case class MessageData(override val id:   MessageId              = MessageId(),
 
       val newMentions = newContent.flatMap(_.mentions)
 
-      val newProto = (genericMsgs.lastOption.flatMap {
-        _.unpack match {
+      val newProto = (genericMsgs.lastOption.flatMap { genericMsg =>
+        val legalHoldStatus = genericMsg.legalHoldStatus
+
+        genericMsg.unpack match {
             case (uid, edit: MsgEdit) =>
               edit.unpack.map { case (ref, text) =>
                 val expectsReadConfirmation =
                   if (text.proto.hasExpectsReadConfirmation) text.proto.getExpectsReadConfirmation
                   else false
-                GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links, text.unpack._4, expectsReadConfirmation)))
+                GenericMessage(uid, MsgEdit(ref, Text(contentString, newMentions, links, text.unpack._4, expectsReadConfirmation, legalHoldStatus)))
               }
             case (uid, text: Text) =>
               val expectsReadConfirmation =
                 if (text.proto.hasExpectsReadConfirmation) text.proto.getExpectsReadConfirmation
                 else false
-              Some(GenericMessage(uid, ephemeral, Text(contentString, newMentions, links, text.unpack._4, expectsReadConfirmation)))
+              Some(GenericMessage(uid, ephemeral, Text(contentString, newMentions, links, text.unpack._4, expectsReadConfirmation, legalHoldStatus)))
             case _ => None
           }
       }).getOrElse(
-        GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil, protoReadReceipts.getOrElse(false)))
+        GenericMessage(id.uid, ephemeral, Text(contentString, newMentions, Nil, protoReadReceipts.getOrElse(false), protoLegalHoldStatus))
       )
 
       if (content == newContent && genericMsgs.lastOption.contains(newProto)) None

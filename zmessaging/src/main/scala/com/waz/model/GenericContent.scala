@@ -83,11 +83,15 @@ object GenericContent {
 
   object Asset {
 
-    def apply(asset: AssetData, preview: Option[AssetData] = None, expectsReadConfirmation: Boolean): Asset = Asset {
+    def apply(asset: AssetData,
+              preview: Option[AssetData] = None,
+              expectsReadConfirmation: Boolean,
+              legalHoldStatus: LegalHoldStatus): Asset = Asset {
       val builder =
         Messages.Asset.newBuilder
           .setOriginal(Original(asset).proto)
           .setExpectsReadConfirmation(expectsReadConfirmation)
+          .setLegalHoldStatus(legalHoldStatus)
       preview.foreach(p => builder.setPreview(Preview(p).proto))
       (asset.status, asset.remoteData) match {
         case (UploadCancelled, _)         => builder.setNotUploaded(Messages.Asset.NotUploaded.CANCELLED)
@@ -99,11 +103,15 @@ object GenericContent {
       builder.build
     }
 
-    def apply(asset: UploadAsset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Asset = Asset {
+    def apply(asset: UploadAsset,
+              preview: Option[assets.Asset],
+              expectsReadConfirmation: Boolean,
+              legalHoldStatus: LegalHoldStatus): Asset = Asset {
       val builder =
         Messages.Asset.newBuilder
           .setOriginal(Original(asset).proto)
           .setExpectsReadConfirmation(expectsReadConfirmation)
+          .setLegalHoldStatus(legalHoldStatus)
       preview.foreach(p => builder.setPreview(Preview(p).proto))
       asset.status match {
         case UploadAssetStatus.Cancelled => builder.setNotUploaded(Messages.Asset.NotUploaded.CANCELLED)
@@ -113,12 +121,16 @@ object GenericContent {
       builder.build
     }
 
-    def apply(asset: assets.Asset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Asset = Asset {
+    def apply(asset: assets.Asset,
+              preview: Option[assets.Asset],
+              expectsReadConfirmation: Boolean,
+              legalHoldStatus: LegalHoldStatus): Asset = Asset {
       val builder =
         Messages.Asset.newBuilder
           .setOriginal(Original(asset).proto)
           .setUploaded(RemoteData(asset).proto)
           .setExpectsReadConfirmation(expectsReadConfirmation)
+          .setLegalHoldStatus(legalHoldStatus)
       preview.foreach(p => builder.setPreview(Preview(p).proto))
       builder.build
     }
@@ -558,7 +570,9 @@ object GenericContent {
   object Reaction {
     val HeavyBlackHeart = "\u2764\uFE0F"
 
-    def apply(msg: MessageId, action: Liking.Action): Reaction = Reaction {
+    def apply(msg: MessageId,
+              action: Liking.Action,
+              legalHoldStatus: LegalHoldStatus): Reaction = Reaction {
       Messages.Reaction.newBuilder
         .setMessageId(msg.str)
         .setEmoji(
@@ -567,6 +581,7 @@ object GenericContent {
             case Liking.Action.Unlike => ""
           }
         )
+        .setLegalHoldStatus(legalHoldStatus)
         .build
     }
 
@@ -584,10 +599,12 @@ object GenericContent {
   }
 
   object Knock {
-    def apply(expectsReadConfirmation: Boolean): Knock = Knock {
+    def apply(expectsReadConfirmation: Boolean,
+              legalHoldStatus: LegalHoldStatus): Knock = Knock {
       Messages.Knock.newBuilder
         .setHotKnock(false)
         .setExpectsReadConfirmation(expectsReadConfirmation)
+        .setLegalHoldStatus(legalHoldStatus)
         .build
     }
 
@@ -613,22 +630,35 @@ object GenericContent {
   }
 
   object Text {
-    def apply(content: String): Text =
-      apply(content, Nil, Nil, None, expectsReadConfirmation = false)
+    def apply(content: String, legalHoldStatus: LegalHoldStatus): Text =
+      apply(content, Nil, Nil, None, expectsReadConfirmation = false, legalHoldStatus)
 
-    def apply(content: String, links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text =
-      apply(content, Nil, links, None, expectsReadConfirmation)
+    def apply(content: String,
+              links: Seq[LinkPreview],
+              expectsReadConfirmation: Boolean,
+              legalHoldStatus: LegalHoldStatus): Text =
+      apply(content, Nil, links, None, expectsReadConfirmation, legalHoldStatus)
 
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], expectsReadConfirmation: Boolean): Text =
-      apply(content, mentions, links, None, expectsReadConfirmation)
+    def apply(content: String,
+              mentions: Seq[com.waz.model.Mention],
+              links: Seq[LinkPreview],
+              expectsReadConfirmation: Boolean,
+              legalHoldStatus: LegalHoldStatus): Text =
+      apply(content, mentions, links, None, expectsReadConfirmation, legalHoldStatus)
 
-    def apply(content: String, mentions: Seq[com.waz.model.Mention], links: Seq[LinkPreview], quote: Option[Quote], expectsReadConfirmation: Boolean): Text = Text {
+    def apply(content: String,
+              mentions: Seq[com.waz.model.Mention],
+              links: Seq[LinkPreview],
+              quote: Option[Quote],
+              expectsReadConfirmation: Boolean,
+              legalHoldStatus: LegalHoldStatus): Text = Text {
       val builder =
         Messages.Text.newBuilder
           .setContent(content)
           .addAllMentions(mentions.map(Mention(_).proto).asJava)
           .addAllLinkPreview(links.map(_.proto).asJava)
           .setExpectsReadConfirmation(expectsReadConfirmation)
+          .setLegalHoldStatus(legalHoldStatus)
       quote.foreach(q => builder.setQuote(q.proto))
       builder.build
     }
@@ -746,13 +776,19 @@ object GenericContent {
   }
 
   object Location {
-    def apply(lon: Float, lat: Float, name: String, zoom: Int, expectsReadConfirmation: Boolean): Location = Location {
+    def apply(lon: Float,
+              lat: Float,
+              name: String,
+              zoom: Int,
+              expectsReadConfirmation: Boolean,
+              legalHoldStatus: LegalHoldStatus): Location = Location {
       Messages.Location.newBuilder
         .setLongitude(lon)
         .setLatitude(lat)
         .setName(name)
         .setZoom(zoom)
         .setExpectsReadConfirmation(expectsReadConfirmation)
+        .setLegalHoldStatus(legalHoldStatus)
         .build
     }
 

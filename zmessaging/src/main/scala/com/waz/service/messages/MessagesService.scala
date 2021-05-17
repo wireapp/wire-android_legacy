@@ -217,18 +217,21 @@ class MessagesServiceImpl(selfUserId:      UserId,
 
   override def addTextMessage(convId: ConvId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[MessageData] = {
     verbose(l"addTextMessage($convId, ${content.length}, $mentions, $exp)")
-    val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
-    val id = MessageId()
-    val gm = GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, expectsReadReceipt.selfSettings))
-    updater.addLocalMessage(
-      MessageData(
-        id, convId, tpe, selfUserId,
-        content = ct,
-        genericMsgs = Seq(gm),
-        forceReadReceipts = expectsReadReceipt.convSetting
-      ),
-      exp = exp
-    ) // FIXME: links
+
+    convs.storage.getLegalHoldHint(convId).flatMap { legalHoldStatus =>
+      val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
+      val id = MessageId()
+      val gm = GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, expectsReadReceipt.selfSettings, legalHoldStatus))
+      updater.addLocalMessage(
+        MessageData(
+          id, convId, tpe, selfUserId,
+          content = ct,
+          genericMsgs = Seq(gm),
+          forceReadReceipts = expectsReadReceipt.convSetting
+        ),
+        exp = exp
+      ) // FIXME: links
+    }
   }
 
   override def addReplyMessage(quote: MessageId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
@@ -242,17 +245,19 @@ class MessagesServiceImpl(selfUserId:      UserId,
         val localTime = LocalInstant.Now
         replyHashing.hashMessage(original).flatMap { hash =>
           verbose(l"hash before sending: $hash, original time: ${original.time}")
-          updater.addLocalMessage(
-            MessageData(
-              id, original.convId, tpe, selfUserId,
-              content = ct,
-              genericMsgs = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash))), expectsReadReceipt.selfSettings))),
-              quote = Some(QuoteContent(quote, validity = true, hash = Some(hash))),
-              forceReadReceipts = expectsReadReceipt.convSetting
-            ),
-            exp = exp,
-            localTime = localTime
-          ).map(Option(_))
+          convs.storage.getLegalHoldHint(original.convId).flatMap { legalHoldStatus =>
+            updater.addLocalMessage(
+              MessageData(
+                id, original.convId, tpe, selfUserId,
+                content = ct,
+                genericMsgs = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash))), expectsReadReceipt.selfSettings, legalHoldStatus))),
+                quote = Some(QuoteContent(quote, validity = true, hash = Some(hash))),
+                forceReadReceipts = expectsReadReceipt.convSetting
+              ),
+              exp = exp,
+              localTime = localTime
+            ).map(Option(_))
+          }
         }
         .recover {
           case e@(_:IllegalArgumentException|_:replyHashing.MissingAssetException) =>
@@ -285,17 +290,21 @@ class MessagesServiceImpl(selfUserId:      UserId,
       case _: Asset.Audio => Message.Type.AUDIO_ASSET
       case _              => Message.Type.ANY_ASSET
     }
-    val msgData = MessageData(
-      msgId,
-      convId,
-      tpe,
-      selfUserId,
-      content = Seq(),
-      genericMsgs = Seq(GenericMessage(msgId.uid, GenericAsset(asset, None, expectsReadConfirmation = expectsReadReceipt.selfSettings))),
-      forceReadReceipts = expectsReadReceipt.convSetting,
-      assetId = Some(asset.id)
-    )
-    updater.addLocalMessage(msgData, exp = exp)
+
+    convs.storage.getLegalHoldHint(convId).flatMap { legalHoldStatus =>
+      val msgData = MessageData(
+        msgId,
+        convId,
+        tpe,
+        selfUserId,
+        content = Seq(),
+        genericMsgs = Seq(GenericMessage(msgId.uid, GenericAsset(asset, None, expectsReadConfirmation = expectsReadReceipt.selfSettings, legalHoldStatus))),
+        forceReadReceipts = expectsReadReceipt.convSetting,
+        assetId = Some(asset.id)
+      )
+      updater.addLocalMessage(msgData, exp = exp)
+    }
+
   }
 
   override def addRenameConversationMessage(convId: ConvId, from: UserId, name: Name) = {

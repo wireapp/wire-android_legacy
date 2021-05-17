@@ -99,6 +99,10 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 
   def isUnderLegalHold: Boolean = legalHoldStatus != LegalHoldStatus.Disabled
 
+  def messageLegalHoldStatus: Messages.LegalHoldStatus =
+    if (isUnderLegalHold) Messages.LegalHoldStatus.ENABLED
+    else Messages.LegalHoldStatus.DISABLED
+
   val isTeamOnly: Boolean = accessRole match {
     case Some(TEAM) if access.contains(Access.INVITE) => true
     case _ => false

@@ -44,6 +44,8 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def apply[A](f: GenMap[ConvId, ConversationData] => A): Future[A]
 
   def findGroupConversations(prefix: SearchKey, self: UserId, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]]
+
+  def getLegalHoldHint(convId: ConvId): Future[Messages.LegalHoldStatus]
 }
 
 class ConversationStorageImpl(storage: ZmsDatabase)
@@ -110,5 +112,10 @@ class ConversationStorageImpl(storage: ZmsDatabase)
 
   private def findByRemoteId(remoteId: RConvId) = find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId)(_), identity)
   private def findByRemoteIds(remoteIds: Set[RConvId]) = find(c => remoteIds.contains(c.remoteId), ConversationDataDao.findByRemoteIds(remoteIds)(_), identity)
+
+  override def getLegalHoldHint(convId: ConvId): Future[Messages.LegalHoldStatus] = get(convId).map {
+    case Some(conv) => conv.messageLegalHoldStatus
+    case None       => Messages.LegalHoldStatus.UNKNOWN
+  }
 }
 
