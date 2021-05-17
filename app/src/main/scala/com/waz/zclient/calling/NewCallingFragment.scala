@@ -29,7 +29,7 @@ import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.FragmentHelper
-import com.waz.zclient.calling.CallingFragment.{MaxAllVideoPreviews, MaxTopSpeakerVideoPreviews, NbParticipantsOneOneCall}
+import com.waz.zclient.calling.NewCallingFragment.{MaxAllVideoPreviews, MaxTopSpeakerVideoPreviews, NbParticipantsOneOneCall}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
@@ -345,7 +345,15 @@ class NewCallingFragment extends FragmentHelper {
     videoUsers.map { participant => viewMap.getOrElse(participant, createView(participant)) }
   }
 
-
 }
+
+object NewCallingFragment {
+  val Tag: String = getClass.getSimpleName
+  val MaxAllVideoPreviews = 12
+  val MaxTopSpeakerVideoPreviews = 4
+  val NbParticipantsOneOneCall: Int = 2
+  def apply(): NewCallingFragment = new NewCallingFragment()
+}
+
 
 
