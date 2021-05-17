@@ -28,7 +28,7 @@ import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.utils.returning
-import com.waz.zclient.FragmentHelper
+import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.calling.NewCallingFragment.{MaxAllVideoPreviews, MaxTopSpeakerVideoPreviews, NbParticipantsOneOneCall}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
@@ -42,6 +42,7 @@ import com.wire.signals.Signal
 import com.xuliwen.zoom.ZoomLayout
 import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 import Threading.Implicits.Ui
+
 
 class NewCallingFragment extends FragmentHelper {
 
@@ -165,7 +166,7 @@ class NewCallingFragment extends FragmentHelper {
   private def disableZooming(): Unit = zoomLayout.foreach(_.setEnabled(false))
 
   private def displayPinchToZoomIndication(): Unit =
-    Toast.makeText(getContext, R.string.calling_ping_to_zoom_message, Toast.LENGTH_LONG).show()
+    Toast.makeText(getContext, R.string.calling_pinch_to_zoom_message, Toast.LENGTH_LONG).show()
 
   private def manageVideoPreview(): Unit = {
     Signal.zip(callController.isSelfViewVisible, callController.videoSendState).onUi {
