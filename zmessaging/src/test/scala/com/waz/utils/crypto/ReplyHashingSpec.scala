@@ -21,6 +21,7 @@ import java.math.BigInteger
 
 import com.waz.api.Message
 import com.waz.model.GenericContent.{Location, Text}
+import com.waz.model.Messages.LegalHoldStatus
 import com.waz.model._
 import com.waz.service.assets.{Asset, AssetStorage, BlobDetails, NoEncryption}
 import com.waz.specs.AndroidFreeSpec
@@ -111,8 +112,8 @@ class ReplyHashingSpec extends AndroidFreeSpec {
     scenario("hash locations") {
       val msg1Id = MessageId("msg1")
       val msg2Id = MessageId("msg2")
-      val msg1 = MessageData(id = msg1Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg1Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false))))
-      val msg2 = MessageData(id = msg2Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg2Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false))))
+      val msg1 = MessageData(id = msg1Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg1Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))))
+      val msg2 = MessageData(id = msg2Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg2Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))))
 
       (assetStorage.loadAll _).expects(*).once.returning(Future.successful(Nil))
 
@@ -144,8 +145,8 @@ class ReplyHashingSpec extends AndroidFreeSpec {
 
       val msg1 = MessageData(id = msg1Id, msgType = Message.Type.IMAGE_ASSET, time = timestamp1, assetId = Some(assetId1))
       val msg2 = MessageData(id = msg2Id, msgType = Message.Type.IMAGE_ASSET, time = timestamp2, assetId = Some(assetId2))
-      val msg3 = MessageData(id = msg3Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg3Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false))))
-      val msg4 = MessageData(id = msg4Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg4Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false))))
+      val msg3 = MessageData(id = msg3Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg3Id.uid, Location(location1._2, location1._1, "", 0, expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))))
+      val msg4 = MessageData(id = msg4Id, msgType = Message.Type.LOCATION, time = timestamp1, genericMsgs = Seq(GenericMessage(msg4Id.uid, Location(location2._2, location2._1, "", 0, expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))))
       val msg5 = MessageData(id = msg5Id, msgType = Message.Type.TEXT, time = timestamp2, genericMsgs = Seq(GenericMessage(msg5Id.uid, Text("This has **markdown**"))))
       val msg6 = MessageData(id = msg6Id, msgType = Message.Type.TEXT, time = timestamp2, genericMsgs = Seq(GenericMessage(msg2Id.uid, Text("بغداد"))))
 

@@ -179,7 +179,7 @@ package object model {
       implicit val log: LogTag = LogTag("TextMessage")
 
       def apply(text: String,
-                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+                legalHoldStatus: Messages.LegalHoldStatus = Messages.LegalHoldStatus.UNKNOWN): GenericMessage =
         GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false, legalHoldStatus))
 
       def apply(text: String,

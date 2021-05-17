@@ -75,15 +75,13 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
   }
 
   def createTextMessage(content: String): GenericMessage =
-    TextMessage(content, Nil, expectsReadConfirmation = false)
-      .withLegalHoldStatus(Messages.LegalHoldStatus.DISABLED)
+    TextMessage(content, Nil, expectsReadConfirmation = false, Messages.LegalHoldStatus.UNKNOWN)
 
   feature("Post OTR message") {
 
-    def setUpExpectationsForSucessfulEncryptAndSend(convLegalHoldStatus: ConversationData.LegalHoldStatus,
-                                                    expectedMsgLegalHoldStatus: Messages.LegalHoldStatus): (ConvId, GenericMessage) = {
+    def setUpExpectationsForSucessfulEncryptAndSend(): (ConvId, GenericMessage) = {
       // Given
-      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"), legalHoldStatus = convLegalHoldStatus)
+      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
       val msg = createTextMessage("content")
 
       val otherUser = UserId("other-user-id")
@@ -113,7 +111,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .returning(Future.successful(Seq(Client(selfClientId, ""))))
 
       (service.encryptMessage _)
-        .expects( msg.withLegalHoldStatus(expectedMsgLegalHoldStatus), recipients, *, EncryptedContent.Empty)
+        .expects( msg, recipients, *, EncryptedContent.Empty)
         .returning(Future.successful(encryptedContent))
 
       (msgClient.postMessage _)
@@ -136,40 +134,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       val syncHandler = getSyncHandler
 
       // Expectations
-      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(ConversationData.LegalHoldStatus.Disabled, Messages.LegalHoldStatus.DISABLED)
-
-      // When
-      result(syncHandler.postOtrMessage(convId, msg))
-    }
-
-    scenario("Send enabled hint if conversation legal hold status is enabled") {
-      // Given
-      val syncHandler = getSyncHandler
-
-      // Expectations
-      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(LegalHoldStatus.Enabled, Messages.LegalHoldStatus.ENABLED)
-
-      // When
-      result(syncHandler.postOtrMessage(convId, msg))
-    }
-
-    scenario("Send enabled hint if conversation legal hold status is pending approval") {
-      // Given
-      val syncHandler = getSyncHandler
-
-      // Expectations
-      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(LegalHoldStatus.PendingApproval, Messages.LegalHoldStatus.ENABLED)
-
-      // When
-      result(syncHandler.postOtrMessage(convId, msg))
-    }
-
-    scenario("Send disabled hint if conversation legal hold status is disabled") {
-      // Given
-      val syncHandler = getSyncHandler
-
-      // Expectations
-      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(LegalHoldStatus.Disabled, Messages.LegalHoldStatus.DISABLED)
+      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend()
 
       // When
       result(syncHandler.postOtrMessage(convId, msg))

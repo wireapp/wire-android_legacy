@@ -25,6 +25,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent.{MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.GenericMessage.TextMessage
+import com.waz.model.Messages.LegalHoldStatus
 import com.waz.model._
 import com.waz.service.UserService
 import com.waz.service.push.{NotificationServiceImpl, NotificationUiController, PushService}
@@ -474,16 +475,16 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       val likedMessageId = MessageId("message")
 
-      val like1Content = GenericMessage(Uid("like1-id"), Reaction(likedMessageId, Liking.Action.Like))
+      val like1Content = GenericMessage(Uid("like1-id"), Reaction(likedMessageId, Liking.Action.Like, LegalHoldStatus.UNKNOWN))
       val like1Event = GenericMessageEvent(rConvId, like1EventTime, from, like1Content)
 
-      val unlikeContent = GenericMessage(Uid("unlike-id"), Reaction(likedMessageId, Liking.Action.Unlike))
+      val unlikeContent = GenericMessage(Uid("unlike-id"), Reaction(likedMessageId, Liking.Action.Unlike, LegalHoldStatus.UNKNOWN))
       val unlikeEvent = GenericMessageEvent(rConvId, unlikeEventTime, from, unlikeContent)
 
-      val like2Content = GenericMessage(Uid("like2-id"), Reaction(likedMessageId, Liking.Action.Like))
+      val like2Content = GenericMessage(Uid("like2-id"), Reaction(likedMessageId, Liking.Action.Like, LegalHoldStatus.UNKNOWN))
       val like2Event = GenericMessageEvent(rConvId, like2EventTime, from, like2Content)
 
-      val otherLikeContent = GenericMessage(Uid("like3-id"), Reaction(likedMessageId, Liking.Action.Like))
+      val otherLikeContent = GenericMessage(Uid("like3-id"), Reaction(likedMessageId, Liking.Action.Like, LegalHoldStatus.UNKNOWN))
       val otherLikeEvent = GenericMessageEvent(rConvId, otherEventTime, from2, otherLikeContent)
 
       val originalMessage =

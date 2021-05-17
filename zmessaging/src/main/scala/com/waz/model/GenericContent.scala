@@ -630,7 +630,8 @@ object GenericContent {
   }
 
   object Text {
-    def apply(content: String, legalHoldStatus: LegalHoldStatus): Text =
+    def apply(content: String,
+              legalHoldStatus: LegalHoldStatus = LegalHoldStatus.UNKNOWN): Text =
       apply(content, Nil, Nil, None, expectsReadConfirmation = false, legalHoldStatus)
 
     def apply(content: String,
