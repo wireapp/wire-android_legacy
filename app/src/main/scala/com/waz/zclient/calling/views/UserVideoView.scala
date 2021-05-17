@@ -102,12 +102,8 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   protected def registerHandler(view: View): Unit = {
     allVideoStates.onUi {
-      case VideoState.Paused | VideoState.Stopped =>
-        view.fadeOut()
-        profilePictureImageView.setVisible(true)
-      case _                                      =>
-        view.fadeIn()
-        profilePictureImageView.setVisible(false)
+      case VideoState.Paused | VideoState.Stopped => view.fadeOut()
+      case _ => view.fadeIn()
     }
 
     Signal.zip(callController.isFullScreenEnabled, allVideoStates).onUi {

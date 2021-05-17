@@ -127,7 +127,7 @@ class NewCallingFragment extends FragmentHelper {
         case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false, true, activeParticipantsWithVideo) =>
           refreshVideoGrid(grid, selfParticipant, activeParticipantsWithVideo, infos, participants, isVideoBeingSent, true)
         case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false, false, _) =>
-          refreshVideoGrid(grid, selfParticipant, videoUsers, infos, participants, isVideoBeingSent, false)
+          refreshVideoGrid(grid, selfParticipant, participants.toSeq, infos, participants, isVideoBeingSent, false)
         case _ =>
       }
     }
