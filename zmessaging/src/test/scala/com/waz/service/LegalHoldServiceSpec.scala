@@ -634,8 +634,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
 
     def createMessage(status: Messages.LegalHoldStatus): GenericMessage =
-      GenericMessage(Uid("messageId"), None, Text("Hello!"))
-        .withLegalHoldStatus(status)
+      GenericMessage(Uid("messageId"), None, Text("Hello!", legalHoldStatus = status))
 
     def createEvent(convId: RConvId, message: GenericMessage): GenericMessageEvent =
       GenericMessageEvent(

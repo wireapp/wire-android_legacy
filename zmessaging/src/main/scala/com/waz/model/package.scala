@@ -76,27 +76,6 @@ package object model {
       case _                                   => LegalHoldStatus.UNKNOWN
     }
 
-    def withLegalHoldStatus(status: LegalHoldStatus): GenericMessage = {
-      update {
-        case reaction: GenericContent.Reaction   => GenericContent.Reaction(reaction, status)
-        case knock: GenericContent.Knock         => GenericContent.Knock(knock, status)
-        case text: GenericContent.Text           => GenericContent.Text(text, status)
-        case location: GenericContent.Location   => GenericContent.Location(location, status)
-        case asset: GenericContent.Asset         => GenericContent.Asset(asset, status)
-        case composite: GenericContent.Composite => GenericContent.Composite(composite, status)
-        case other                               => other
-      }
-    }
-
-    def update(transform: GenericContent[_] => GenericContent[_]): GenericMessage = {
-      val (expiration, content) = unpack._2 match {
-        case ephemeral: Ephemeral => ephemeral.unpack
-        case content => (None, content)
-      }
-
-      GenericMessage(Uid(proto.getMessageId), expiration, transform(content))
-    }
-
     def unpackContent: GenericContent[_] = unpack match {
       case (_, eph: Ephemeral) => eph.unpack._2
       case (_, content)        => content
