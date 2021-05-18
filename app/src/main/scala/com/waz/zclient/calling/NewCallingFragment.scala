@@ -124,10 +124,10 @@ class NewCallingFragment extends FragmentHelper {
     videoGrid.foreach { grid =>
 
       Signal.zip(videoGridInfo, callController.isFullScreenEnabled, callController.showTopSpeakers, callController.longTermActiveParticipantsWithVideo()).foreach {
-        case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false, true, activeParticipantsWithVideo) =>
-          refreshVideoGrid(grid, selfParticipant, activeParticipantsWithVideo, infos, participants, isVideoBeingSent, true)
-        case ((selfParticipant, videoUsers, infos, participants, isVideoBeingSent), false, false, _) =>
-          refreshVideoGrid(grid, selfParticipant, participants.toSeq, infos, participants, isVideoBeingSent, false)
+        case ((selfParticipant, videoUsers, infos, participants), false, true, activeParticipantsWithVideo) =>
+          refreshVideoGrid(grid, selfParticipant, activeParticipantsWithVideo, infos, participants, true)
+        case ((selfParticipant, videoUsers, infos, participants), false, false, _) =>
+          refreshVideoGrid(grid, selfParticipant, participants.toSeq, infos, participants, false)
         case _ =>
       }
     }
@@ -216,7 +216,6 @@ class NewCallingFragment extends FragmentHelper {
                                videoUsers: Seq[Participant],
                                infos: Seq[CallParticipantInfo],
                                participants: Set[Participant],
-                               isVideoBeingSent: Boolean,
                                showTopSpeakers: Boolean
                               ): Unit = {
 
@@ -224,7 +223,7 @@ class NewCallingFragment extends FragmentHelper {
 
       viewMap.get(selfParticipant).foreach { selfView =>
         previewCardView.foreach { cardView =>
-          if (!showTopSpeakers && views.size == 2 && participants.size == 2 && isVideoBeingSent) {
+          if (!showTopSpeakers && views.size == 2 && participants.size == 2) {
             verbose(l"Showing card preview")
             grid.removeView(selfView)
             selfView.setLayoutParams(
@@ -253,8 +252,7 @@ class NewCallingFragment extends FragmentHelper {
         }.take(MaxTopSpeakerVideoPreviews)
       else
         views.filter {
-          case _: SelfVideoView if views.size == 2 && participants.size == 2 && isVideoBeingSent => false
-          case _: SelfVideoView if views.size > 1 && !isVideoBeingSent => false
+          case _: SelfVideoView if views.size == 2 && participants.size == 2  => false
           case _ => true
         }.sortWith {
           case (_: SelfVideoView, _) => true
@@ -309,19 +307,12 @@ class NewCallingFragment extends FragmentHelper {
     viewMap = Map.empty
   }
 
-  private lazy val isVideoBeingSent =
-    Signal.zip(callController.allVideoReceiveStates, callController.selfParticipant).map {
-      case (videoStates, self) => !videoStates.get(self).contains(VideoState.Stopped)
-    }
-
   private lazy val videoGridInfo = Signal.zip(
     callController.selfParticipant,
     callController.videoUsers,
     callController.participantInfos,
-    callController.allParticipants,
-    isVideoBeingSent
+    callController.allParticipants
   )
-
 
   private def refreshViews(videoUsers: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
 

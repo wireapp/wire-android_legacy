@@ -245,7 +245,14 @@ class CallController(implicit inj: Injector, cxt: WireContext)
 
   private lazy val lastControlsClick = Signal[(Boolean, Instant)]() //true = show controls and set timer, false = hide controls
 
-  lazy val controlsVisible =
+  lazy val controlsVisible = if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+    (for {
+      Some(est)    <- currentCall.map(_.estabTime)
+      (show, last) <- lastControlsClick.orElse(Signal.const((true, clock.instant())))
+      display      <- if (show) ClockSignal(3.seconds).map(c => last.max(est.instant).until(c).asScala <= 3.seconds)
+      else Signal.const(false)
+    } yield display).orElse(Signal.const(true))
+  else
     (for {
       true         <- isVideoCall
       Some(est)    <- currentCall.map(_.estabTime)
