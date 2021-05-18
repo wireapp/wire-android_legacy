@@ -1596,5 +1596,8 @@
     <string name="legal_hold_request_dialog_wrong_password_error">Wrong password</string>
     <string name="legal_hold_all_subjects_title">LEGAL HOLD SUBJECTS</string>
     <string name="legal_hold_device_name">Legal Hold</string>
+    <string name="legal_hold_deactivated_dialog_title">Legal Hold Deactivated</string>
+    <string name="legal_hold_deactivated_dialog_message">Future messages will not be recorded.</string>
+    <string name="legal_hold_activated_dialog_title">Legal Hold is Active</string>
 </resources>
 
