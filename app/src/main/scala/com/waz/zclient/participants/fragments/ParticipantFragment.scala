@@ -222,7 +222,7 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
           R.anim.slide_out_to_bottom_pick_user)
         .replace(
           R.id.fl__participant__container,
-          LegalHoldInfoFragment.newInstance(R.string.legal_hold_conversation_info_message, Some(convId)),
+          LegalHoldInfoFragment.newInstance(Some(convId)),
           LegalHoldInfoFragment.Tag
         )
         .addToBackStack(LegalHoldInfoFragment.Tag)

@@ -23,7 +23,7 @@ class SelfUserLegalHoldInfoActivity extends BaseActivity {
     getSupportFragmentManager.beginTransaction()
       .replace(
         R.id.legal_hold_info_fragment_container_layout,
-        LegalHoldInfoFragment.newInstance(R.string.legal_hold_self_user_info_message, None)
+        LegalHoldInfoFragment.newInstance(None)
       ).commit()
 
   override def finish(): Unit = {

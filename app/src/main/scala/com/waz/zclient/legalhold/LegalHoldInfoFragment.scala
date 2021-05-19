@@ -51,10 +51,13 @@ class LegalHoldInfoFragment extends FragmentHelper {
     super.onDetach()
   }
 
-  private def setMessage(): Unit =
-    infoMessageTextView.foreach { textView =>
-      getIntArg(ARG_MESSAGE_RES_ID).foreach(textView.setText)
+  private def setMessage(): Unit = {
+    val message = getStringArg(ARG_CONV_ID) match {
+      case Some(_) => R.string.legal_hold_conversation_info_message
+      case None    => R.string.legal_hold_self_user_info_message
     }
+    infoMessageTextView.foreach(_.setText(message))
+  }
 
   private def setUpRecyclerView(): Unit =
     subjectsRecyclerView.foreach { recyclerView =>
@@ -67,13 +70,11 @@ object LegalHoldInfoFragment {
 
   val Tag = "LegalHoldInfoFragment"
   private val MAX_PARTICIPANTS = 4
-  val ARG_MESSAGE_RES_ID = "legalHoldInfo_messageResId_Arg"
   val ARG_CONV_ID = "legalHoldInfo_convId_Arg"
 
-  def newInstance(messageResId: Int, convId: Option[ConvId]): LegalHoldInfoFragment =
+  def newInstance(convId: Option[ConvId]): LegalHoldInfoFragment =
     returning(new LegalHoldInfoFragment()) { frag =>
       val args = returning(new Bundle()) { b =>
-        b.putInt(ARG_MESSAGE_RES_ID, messageResId)
         convId.foreach(id => b.putString(ARG_CONV_ID, id.str))
       }
       frag.setArguments(args)
