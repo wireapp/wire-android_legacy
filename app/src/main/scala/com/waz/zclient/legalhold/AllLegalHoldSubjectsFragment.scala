@@ -3,21 +3,27 @@ package com.waz.zclient.legalhold
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
+import com.waz.model.UserId
 import com.waz.utils.returning
 import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.views.PickableElement
-import com.waz.zclient.pages.BaseFragment
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
+import com.wire.signals.Signal
 
-class AllLegalHoldSubjectsFragment extends BaseFragment[LegalHoldSubjectsContainer]()
-  with FragmentHelper {
+class AllLegalHoldSubjectsFragment extends FragmentHelper {
 
-  private lazy val legalHoldController = inject[LegalHoldController]
+  private lazy val legalHoldController    = inject[LegalHoldController]
+  private lazy val conversationController = inject[ConversationController]
 
-  private lazy val users = getContainer.legalHoldUsers.map(_.toSet)
+  private lazy val users: Signal[Seq[UserId]] =
+    for {
+      convId <- conversationController.currentConvId
+      users  <- legalHoldController.legalHoldUsers(convId)
+    } yield users
 
-  private lazy val adapter = returning(new LegalHoldUsersAdapter(users)) {
+  private lazy val adapter = returning(new LegalHoldUsersAdapter(users.map(_.toSet))) {
     _.onClick.pipeTo(legalHoldController.onLegalHoldSubjectClick)
   }
 
