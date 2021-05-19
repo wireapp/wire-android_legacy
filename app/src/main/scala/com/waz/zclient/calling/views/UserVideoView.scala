@@ -70,7 +70,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   protected val participantInfo: Signal[Option[CallParticipantInfo]] =
     for {
       isGroup <- callController.isGroupCall
-      infos   <- if (isGroup) callController.participantInfos else Signal.const(Vector.empty)
+      infos   <- if (isGroup) callController.participantsInfo else Signal.const(Vector.empty)
     } yield infos.find(_.id == participant.userId)
 
   protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>

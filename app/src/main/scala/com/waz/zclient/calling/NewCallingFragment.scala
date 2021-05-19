@@ -124,11 +124,20 @@ class NewCallingFragment extends FragmentHelper {
 
     videoGrid.foreach { grid =>
 
-      Signal.zip(videoGridInfo, callController.isFullScreenEnabled, callController.showTopSpeakers, callController.longTermActiveParticipantsWithVideo()).foreach {
-        case ((selfParticipant, videoUsers, infos, participants), false, true, activeParticipantsWithVideo) =>
-          refreshVideoGrid(grid, selfParticipant, activeParticipantsWithVideo, infos, participants, true)
-        case ((selfParticipant, videoUsers, infos, participants), false, false, _) =>
-          refreshVideoGrid(grid, selfParticipant, participants.toSeq, infos, participants, false)
+      Signal.zip(
+        callController.selfParticipant,
+        callController.participantsInfo,
+        callController.allParticipants,
+        //callController.isFullScreenEnabled,
+        callController.showTopSpeakers,
+        callController.longTermActiveParticipants()
+      ).foreach {
+        case (selfParticipant, participantsInfo, participants,// false,
+         true, activeParticipants) =>
+          refreshVideoGrid(grid, selfParticipant, activeParticipants, participantsInfo, participants, true)
+        case (selfParticipant, participantsInfo, participants, //false,
+         false, _) =>
+          refreshVideoGrid(grid, selfParticipant, participants.toSeq, participantsInfo, participants, false)
         case _ =>
       }
     }
@@ -215,20 +224,19 @@ class NewCallingFragment extends FragmentHelper {
     .commit
 
 
-
   private def refreshVideoGrid(grid: GridLayout,
                                selfParticipant: Participant,
-                               videoUsers: Seq[Participant],
-                               infos: Seq[CallParticipantInfo],
-                               participants: Set[Participant],
+                               participantsToShow: Seq[Participant],
+                               info: Seq[CallParticipantInfo],
+                               allParticipants: Set[Participant],
                                showTopSpeakers: Boolean
                               ): Unit = {
 
-    val views = refreshViews(videoUsers, selfParticipant)
+    val views = refreshViews(participantsToShow, selfParticipant)
 
       viewMap.get(selfParticipant).foreach { selfView =>
         previewCardView.foreach { cardView =>
-          if (!showTopSpeakers && views.size == 2 && participants.size == 2) {
+          if (!showTopSpeakers && views.size == 2 && allParticipants.size == 2) {
             verbose(l"Showing card preview")
             grid.removeView(selfView)
             selfView.setLayoutParams(
@@ -247,7 +255,7 @@ class NewCallingFragment extends FragmentHelper {
         }
       }
 
-    val infoMap = infos.toIdMap
+    val infoMap = info.toIdMap
 
     val gridViews =
       if (showTopSpeakers)
@@ -257,7 +265,7 @@ class NewCallingFragment extends FragmentHelper {
         }.take(MaxTopSpeakerVideoPreviews)
       else
         views.filter {
-          case _: SelfVideoView if views.size == 2 && participants.size == 2  => false
+          case _: SelfVideoView if views.size == 2 && allParticipants.size == 2  => false
           case _ => true
         }.sortWith {
           case (_: SelfVideoView, _) => true
@@ -299,25 +307,18 @@ class NewCallingFragment extends FragmentHelper {
 
     val viewsToRemove = viewMap.filter {
       case (participant, selfView) if participant == selfParticipant => !gridViews.contains(selfView)
-      case (participant, _) => !videoUsers.contains(participant)
+      case (participant, _) => !participantsToShow.contains(participant)
     }
 
     viewsToRemove.foreach { case (_, view) => grid.removeView(view) }
 
-    viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) }
+    viewMap = viewMap.filter { case (participant, _) => participantsToShow.contains(participant) }
   }
 
   private def clearVideoGrid(): Unit = {
     videoGrid.foreach(_.removeAllViews())
     viewMap = Map.empty
   }
-
-  private lazy val videoGridInfo = Signal.zip(
-    callController.selfParticipant,
-    callController.videoUsers,
-    callController.participantInfos,
-    callController.allParticipants
-  )
 
   private def refreshViews(videoUsers: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
 

@@ -127,6 +127,16 @@ class CallController(implicit inj: Injector, cxt: WireContext)
         }
     }
 
+  def longTermActiveParticipants(): Signal[Seq[Participant]] =
+    Signal.zip(activeSpeakers, allParticipants).map {
+      case (activeSpeakers, allParticipants) =>
+        allParticipants.filter { participant =>
+          activeSpeakers.exists { speaker =>
+            participant.clientId == speaker.clientId && participant.userId == speaker.userId && speaker.longTermAudioLevel > 0
+          }
+        }.toSeq
+    }
+
   lazy val videoUsers =
     Signal.zip(allVideoReceiveStates, selfParticipant, isVideoCall, isCallIncoming).map {
       case (videoStates, self, videoCall, incoming) =>
@@ -152,10 +162,10 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     allVideoReceiveStates.map(_.groupBy(_._1.userId).mapValues(_.values.toSet))
   }
 
-  lazy val orderedParticipantInfos: Signal[Vector[CallParticipantInfo]] =
-    participantInfos.map(_.sortBy(_.displayName.toLowerCase))
+  lazy val orderedParticipantsInfo: Signal[Vector[CallParticipantInfo]] =
+    participantsInfo.map(_.sortBy(_.displayName.toLowerCase))
 
-  lazy val participantInfos: Signal[Vector[CallParticipantInfo]] =
+  lazy val participantsInfo: Signal[Vector[CallParticipantInfo]] =
     for {
       cZms         <- callingZms
       participants <- allParticipants.map(_.toSeq)

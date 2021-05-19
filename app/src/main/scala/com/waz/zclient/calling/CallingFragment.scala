@@ -173,7 +173,7 @@ class CallingFragment extends FragmentHelper {
   private lazy val videoGridInfo = Signal.zip(
     controller.selfParticipant,
     controller.videoUsers,
-    controller.participantInfos,
+    controller.participantsInfo,
     controller.allParticipants,
     isVideoBeingSent
   )
