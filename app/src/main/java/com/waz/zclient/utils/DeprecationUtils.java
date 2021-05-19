@@ -111,5 +111,9 @@ public class DeprecationUtils {
     public static File getPicturesDirectory() {
         return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
     }
+
+    public static File getDownloadsDirectory() {
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+    }
 }
 
