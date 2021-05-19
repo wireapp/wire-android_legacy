@@ -20,6 +20,7 @@ class LegalHoldController(implicit injector: Injector)
   private lazy val userPreferences  = inject[Signal[UserPreferences]]
 
   val showingLegalHoldInfo: SourceStream[Boolean] = EventStream[Boolean]
+  val onShowConversationLegalHoldInfo: SourceStream[Unit] = EventStream[Unit]
 
   val onLegalHoldSubjectClick: SourceStream[UserId] = EventStream[UserId]
   val onAllLegalHoldSubjectsClick: SourceStream[Unit] = EventStream[Unit]

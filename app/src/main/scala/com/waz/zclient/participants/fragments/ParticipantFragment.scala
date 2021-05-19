@@ -96,6 +96,8 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
             Future.successful((new GuestOptionsFragment, GuestOptionsFragment.Tag))
           case Some(SingleParticipantFragment.DevicesTab.str) =>
             Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.DevicesTab.str)), SingleParticipantFragment.Tag))
+          case Some(LegalHoldInfoFragment.Tag) =>
+            createLegalHoldInfoFragment.map((_, LegalHoldInfoFragment.Tag))
           case _ =>
             participantsController.isGroupOrBot.head.map {
               case true if getStringArg(UserToOpenArg).isEmpty =>
@@ -121,7 +123,6 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       case _ =>
     }
 
-    headerFragment.onLegalHoldClick.onUi { _ => openLegalHoldInfoScreen() }
     legalHoldController.onLegalHoldSubjectClick.onUi { userId => showUser(userId, forLegalHold = true) }
     legalHoldController.onAllLegalHoldSubjectsClick.onUi { _ => showAllLegalHoldSubjects() }
   }
@@ -212,8 +213,8 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       .addToBackStack(tag)
       .commit
 
-  private def openLegalHoldInfoScreen(): Unit =
-    participantsController.conv.map(_.id).head.foreach(convId =>
+  def openLegalHoldInfoScreen(): Unit =
+    createLegalHoldInfoFragment.foreach(frag =>
       getChildFragmentManager.beginTransaction
         .setCustomAnimations(
           R.anim.slide_in_from_bottom_pick_user,
@@ -222,12 +223,14 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
           R.anim.slide_out_to_bottom_pick_user)
         .replace(
           R.id.fl__participant__container,
-          LegalHoldInfoFragment.newInstance(Some(convId)),
-          LegalHoldInfoFragment.Tag
+          frag, LegalHoldInfoFragment.Tag
         )
         .addToBackStack(LegalHoldInfoFragment.Tag)
         .commit
     )
+
+  private def createLegalHoldInfoFragment: Future[LegalHoldInfoFragment] =
+    participantsController.conv.head.map(conv => LegalHoldInfoFragment.newInstance(Some(conv.id)))
 
   private def showAllLegalHoldSubjects(): Unit =
     withSlideAnimation(getChildFragmentManager.beginTransaction)
