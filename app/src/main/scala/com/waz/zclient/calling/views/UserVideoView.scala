@@ -29,12 +29,11 @@ import com.waz.model.Picture
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.utils.returning
-import com.waz.zclient.ViewHelper
+import com.waz.zclient.{BuildConfig, R, ViewHelper}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.wire.signals.{EventStream, Signal}
-import com.waz.zclient.R
 import com.waz.zclient.utils.RichView
 import com.waz.threading.Threading._
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -87,7 +86,10 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     case _ =>
   }
 
-  Signal.zip(
+
+  if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+    callController.controlsVisible.map { it => !it }.onUi(participantInfoCardView.setVisible)
+  else  Signal.zip(
     callController.isGroupCall,
     callController.controlsVisible,
     callController.showTopSpeakers,
