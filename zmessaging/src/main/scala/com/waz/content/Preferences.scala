@@ -25,6 +25,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.media.manager.context.IntensityLevel
+import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -40,6 +41,7 @@ import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 trait Preferences {
 
@@ -182,6 +184,12 @@ object Preferences {
       implicit lazy val LegalHoldRequestCodec = apply[Option[LegalHoldRequest]](
         { d =>  d.fold("")(r => LegalHoldRequest.Encoder(r).toString) },
         { s => if (s.isEmpty) None else Some(LegalHoldRequest.Decoder(new JSONObject(s))) },
+        defaultVal = None
+      )
+
+      implicit lazy val LegalHoldStatusCodec = apply[Option[LegalHoldStatus]](
+        { d =>  d.fold("")(r => r.value.toString) },
+        { s => if (s.isEmpty) None else Try(Integer.parseInt(s)).map(LegalHoldStatus(_)).toOption },
         defaultVal = None
       )
     }
@@ -424,4 +432,6 @@ object UserPreferences {
   lazy val AppLockTimeout: PrefKey[Option[FiniteDuration]] = PrefKey[Option[FiniteDuration]]("app_lock_timeout", customDefault = None)
 
   lazy val LegalHoldRequest: PrefKey[Option[LegalHoldRequest]] = PrefKey[Option[LegalHoldRequest]]("legal_hold_request", customDefault = None)
+  lazy val LegalHoldDisclosureType: PrefKey[Option[LegalHoldStatus]] =
+    PrefKey[Option[LegalHoldStatus]]("legal_hold_disclosure_type", customDefault = None)
 }

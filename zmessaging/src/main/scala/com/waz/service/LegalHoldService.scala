@@ -3,6 +3,7 @@ package com.waz.service
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
+import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.otr.ClientId
 import com.waz.model._
 import com.waz.model.otr.Client.DeviceClass
@@ -51,10 +52,10 @@ class LegalHoldServiceImpl(selfUserId: UserId,
       storeLegalHoldRequest(request)
 
     case LegalHoldEnableEvent(userId) if userId == selfUserId =>
-      deleteLegalHoldRequest()
+      onLegalHoldApprovedFromAnotherDevice()
 
     case LegalHoldDisableEvent(userId) if userId == selfUserId =>
-      deleteLegalHoldRequest()
+      onLegalHoldDisabled()
 
     case _ =>
       Future.successful({})
@@ -73,6 +74,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   } yield legalHoldSubjects
 
   private lazy val legalHoldRequestPref = userPrefs(UserPreferences.LegalHoldRequest)
+  private lazy val legalHoldDisclosurePref = userPrefs(UserPreferences.LegalHoldDisclosureType)
 
   override def legalHoldRequest: Signal[Option[LegalHoldRequest]] = legalHoldRequestPref.signal
 
@@ -115,6 +117,16 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     _ <- clientsService.removeClients(selfUserId, Seq(clientId))
     _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, clientId))
   } yield ()
+
+  private def onLegalHoldApprovedFromAnotherDevice(): Future[Unit] = for {
+    _ <- deleteLegalHoldRequest()
+    _ <- legalHoldDisclosurePref := Some(LegalHoldStatus.Enabled)
+  } yield()
+
+  private def onLegalHoldDisabled(): Future[Unit] = for {
+    _ <- deleteLegalHoldRequest()
+    _ <- legalHoldDisclosurePref := Some(LegalHoldStatus.Disabled)
+  } yield()
 
   def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit] =
     legalHoldRequestPref := Some(request)
