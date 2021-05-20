@@ -1,7 +1,5 @@
 package com.waz.service
 
-import java.util.concurrent.TimeUnit
-
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
@@ -181,7 +179,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                           appendSystemMessage(curr)
                         else
                           Future.successful(())
-                      }
+      }
     } yield ()
   }
 
@@ -190,10 +188,11 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     // that gave us the legal hold hint.
     val adjustedTime = messageTime.map(_ - 5.millis)
 
-    for {
-      _ <- if (conv.isUnderLegalHold) messagesService.addLegalHoldEnabledMessage(conv.id, adjustedTime)
-      else messagesService.addLegalHoldDisabledMessage(conv.id, adjustedTime)
-    } yield ()
+    (if (conv.isUnderLegalHold)
+      messagesService.addLegalHoldEnabledMessage(conv.id, adjustedTime)
+    else
+      messagesService.addLegalHoldDisabledMessage(conv.id, adjustedTime)
+    ).map(_ => ())
   }
 
   private def clientsInConv(convId: ConvId): Signal[Set[Client]] = {
