@@ -122,22 +122,23 @@ class NewCallingFragment extends FragmentHelper {
       }
     }
 
-    videoGrid.foreach { grid =>
+    val participantsData = Signal.zip(
+      callController.selfParticipant,
+      callController.participantsInfo,
+      callController.allParticipants,
+      callController.longTermActiveParticipants()
+    )
 
+    videoGrid.foreach { grid =>
       Signal.zip(
-        callController.selfParticipant,
-        callController.participantsInfo,
-        callController.allParticipants,
-        //callController.isFullScreenEnabled,
-        callController.showTopSpeakers,
-        callController.longTermActiveParticipants()
+        participantsData,
+        callController.isFullScreenEnabled,
+        callController.showTopSpeakers
       ).foreach {
-        case (selfParticipant, participantsInfo, participants,// false,
-         true, activeParticipants) =>
-          refreshVideoGrid(grid, selfParticipant, activeParticipants, participantsInfo, participants, true)
-        case (selfParticipant, participantsInfo, participants, //false,
-         false, _) =>
-          refreshVideoGrid(grid, selfParticipant, participants.toSeq, participantsInfo, participants, false)
+        case ((selfParticipant, participantsInfo, participants, activeParticipants), false, true)
+        => refreshVideoGrid(grid, selfParticipant, activeParticipants, participantsInfo, participants, true)
+        case ((selfParticipant, participantsInfo, participants, _), false, false)
+        => refreshVideoGrid(grid, selfParticipant, participants.toSeq, participantsInfo, participants, false)
         case _ =>
       }
     }
@@ -149,7 +150,7 @@ class NewCallingFragment extends FragmentHelper {
 
     Signal.zip(
       callController.showTopSpeakers,
-      callController.longTermActiveParticipantsWithVideo().map(_.size > 0),
+      callController.longTermActiveParticipants().map(_.size > 0),
       callController.controlsVisible,
       callController.isGroupCall
     ).onUi {
@@ -234,26 +235,7 @@ class NewCallingFragment extends FragmentHelper {
 
     val views = refreshViews(participantsToShow, selfParticipant)
 
-      viewMap.get(selfParticipant).foreach { selfView =>
-        previewCardView.foreach { cardView =>
-          if (!showTopSpeakers && views.size == 2 && allParticipants.size == 2) {
-            verbose(l"Showing card preview")
-            grid.removeView(selfView)
-            selfView.setLayoutParams(
-              new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-              )
-            )
-            cardView.addView(selfView)
-            cardView.setVisibility(View.VISIBLE)
-          } else {
-            verbose(l"Hiding card preview")
-            cardView.removeAllViews()
-            cardView.setVisibility(View.GONE)
-          }
-        }
-      }
+    manageFloatingSelfPreview(grid, selfParticipant, showTopSpeakers, views.size, allParticipants.size)
 
     val infoMap = info.toIdMap
 
@@ -315,12 +297,7 @@ class NewCallingFragment extends FragmentHelper {
     viewMap = viewMap.filter { case (participant, _) => participantsToShow.contains(participant) }
   }
 
-  private def clearVideoGrid(): Unit = {
-    videoGrid.foreach(_.removeAllViews())
-    viewMap = Map.empty
-  }
-
-  private def refreshViews(videoUsers: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
+  private def refreshViews(participantsToShow: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
 
     def createView(participant: Participant): UserVideoView = returning {
       if (participant == selfParticipant) new SelfVideoView(getContext, selfParticipant)
@@ -337,10 +314,47 @@ class NewCallingFragment extends FragmentHelper {
       }
     }
 
-    if (videoUsers.contains(selfParticipant)) callController.isSelfViewVisible ! true
+    if (participantsToShow.contains(selfParticipant)) callController.isSelfViewVisible ! true
     else callController.isSelfViewVisible ! false
 
-    videoUsers.map { participant => viewMap.getOrElse(participant, createView(participant)) }
+    participantsToShow.map { participant => viewMap.getOrElse(participant, createView(participant)) }
+  }
+
+
+  private def clearVideoGrid(): Unit = {
+    videoGrid.foreach(_.removeAllViews())
+    viewMap = Map.empty
+  }
+
+  private def manageFloatingSelfPreview(grid: GridLayout, selfParticipant: Participant, showTopSpeakers: Boolean, viewsCount: Int, ParticipantsCount: Int): Unit = {
+    viewMap.get(selfParticipant).foreach { selfView =>
+      previewCardView.foreach { cardView =>
+        if (!showTopSpeakers && viewsCount == 2 && ParticipantsCount == 2) {
+          showFloatingSelfPreview(grid, selfView, cardView)
+        } else {
+          hideFloatingSelfPreview(cardView)
+        }
+      }
+    }
+  }
+
+  private def showFloatingSelfPreview(grid: GridLayout, selfVideoView: UserVideoView, cardView: CardView): Unit = {
+    verbose(l"Showing card preview")
+    grid.removeView(selfVideoView)
+    selfVideoView.setLayoutParams(
+      new FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+      )
+    )
+    cardView.addView(selfVideoView)
+    cardView.setVisibility(View.VISIBLE)
+  }
+
+  private def hideFloatingSelfPreview(cardView: CardView): Unit = {
+    verbose(l"Hiding card preview")
+    cardView.removeAllViews()
+    cardView.setVisibility(View.GONE)
   }
 
 }
