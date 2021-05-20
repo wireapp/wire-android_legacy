@@ -3,11 +3,9 @@ package com.waz.service
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.Client.DeviceClass
-import com.waz.model.otr.{Client, ClientId, UserClients}
+import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
@@ -44,7 +42,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                            convsStorage: ConversationStorage,
                            membersStorage: MembersStorage,
                            cryptoSessionService: CryptoSessionService,
-                           sync: SyncServiceHandle) extends LegalHoldService with DerivedLogTag {
+                           sync: SyncServiceHandle) extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
 
