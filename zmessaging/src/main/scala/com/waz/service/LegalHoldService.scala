@@ -1,5 +1,7 @@
 package com.waz.service
 
+import java.util.concurrent.TimeUnit
+
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
@@ -8,6 +10,7 @@ import com.waz.model._
 import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.EventScheduler.Stage
+import com.waz.service.messages.MessagesService
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.sync.SyncServiceHandle
@@ -17,6 +20,7 @@ import com.wire.cryptobox.CryptoBox
 import com.wire.signals.Signal
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.Try
 
 trait LegalHoldService {
@@ -43,7 +47,8 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                            convsStorage: ConversationStorage,
                            membersStorage: MembersStorage,
                            cryptoSessionService: CryptoSessionService,
-                           sync: SyncServiceHandle) extends LegalHoldService {
+                           sync: SyncServiceHandle,
+                           messagesService: MessagesService) extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -157,11 +162,38 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     convIds    <- convsStorage.contents.map(_.keys)
     legalHolds <- Signal.sequence(convIds.map(convId => legalHold(convId).map(convId -> _)).toSeq: _*)
   } yield legalHolds.toMap).foreach { legalHoldMap =>
-    convsStorage.updateAll2(legalHoldMap.keys, { conv =>
-      val detectedLegalHoldDevice = legalHoldMap(conv.id)
-      if (conv.isUnderLegalHold != detectedLegalHoldDevice) conv.withNewLegalHoldStatus(detectedLegalHoldDevice)
-      else conv
-    })
+    updateConvsAndPostSystemMsgsIfNeeded(legalHoldMap)
+  }
+
+  private def updateConvsAndPostSystemMsgsIfNeeded(legalHoldMap: Map[ConvId, Boolean]): Future[Unit] = {
+    for {
+      updatedConvs <- convsStorage.updateAll2(legalHoldMap.keys, { conv =>
+                        val detectedLegalHoldDevice = legalHoldMap(conv.id)
+                        // Only update if needed.
+                        if (conv.isUnderLegalHold != detectedLegalHoldDevice)
+                          conv.withNewLegalHoldStatus(detectedLegalHoldDevice)
+                        else
+                          conv
+                      })
+      _            <- Future.traverse(updatedConvs) { case (prev, curr) =>
+                        // Only if a change change occurred.
+                        if (prev.isUnderLegalHold != curr.isUnderLegalHold)
+                          appendSystemMessage(curr)
+                        else
+                          Future.successful(())
+                      }
+    } yield ()
+  }
+
+  private def appendSystemMessage(conv: ConversationData, messageTime: Option[RemoteInstant] = None): Future[Unit] = {
+    // We want to display the system message before the otr message
+    // that gave us the legal hold hint.
+    val adjustedTime = messageTime.map(_ - 5.millis)
+
+    for {
+      _ <- if (conv.isUnderLegalHold) messagesService.addLegalHoldEnabledMessage(conv.id, adjustedTime)
+      else messagesService.addLegalHoldDisabledMessage(conv.id, adjustedTime)
+    } yield ()
   }
 
   private def clientsInConv(convId: ConvId): Signal[Set[Client]] = {
@@ -176,20 +208,22 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (_, events) =>
     Future.traverse(events) {
-      case GenericMessageEvent(convId, _, _, content) =>
-        updateStatusFromMessageHint(convId, content.legalHoldStatus)
+      case GenericMessageEvent(convId, time, _, content) =>
+        updateStatusFromMessageHint(convId, content.legalHoldStatus, time)
       case _ =>
         Future.successful(())
     }
   }
 
   private def updateStatusFromMessageHint(convId: RConvId,
-                                          messageStatus: Messages.LegalHoldStatus): Future[Unit] = {
+                                          messageStatus: Messages.LegalHoldStatus,
+                                          time: RemoteInstant): Future[Unit] = {
     (for {
-      Some(conv)   <- convsStorage.getByRemoteId(convId)
-      Some(update) = statusUpdate(conv, messageStatus)
-      _            <- convsStorage.update(conv.id, update)
-      _            <- verifyLegalHold(convId)
+      Some(conv)             <- convsStorage.getByRemoteId(convId)
+      Some(update)            = statusUpdate(conv, messageStatus)
+      Some((_, updatedConv)) <- convsStorage.update(conv.id, update)
+      _                      <- appendSystemMessage(updatedConv, Some(time))
+      _                      <- verifyLegalHold(convId)
     } yield ()).fallbackTo(Future.successful(()))
   }
 

@@ -9,6 +9,7 @@ import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model._
 import com.waz.service.EventScheduler.{Sequential, Stage}
+import com.waz.service.messages.MessagesService
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.specs.AndroidFreeSpec
@@ -38,6 +39,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   private val membersStorage = mock[MembersStorage]
   private val cryptoSessionService = mock[CryptoSessionService]
   private val sync = mock[SyncServiceHandle]
+  private val messagesService = mock[MessagesService]
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -64,7 +66,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       convsStorage,
       membersStorage,
       cryptoSessionService,
-      sync
+      sync,
+      messagesService
     )
   }
 

@@ -27,6 +27,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
 import com.waz.model.otr.ClientId
 import com.waz.model.{Mention, MessageId, _}
+import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.assets.UploadAsset
 import com.waz.service.conversation.ConversationsContentUpdater
@@ -39,6 +40,7 @@ import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
 import com.wire.signals.{EventStream, RefreshingSignal, Signal}
+import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -75,6 +77,9 @@ trait MessagesService {
   def addDeviceStartMessages(convs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
   def addOtrVerifiedMessage(convId: ConvId): Future[Option[MessageData]]
   def addOtrUnverifiedMessage(convId: ConvId, users: Seq[UserId], change: VerificationChange): Future[Option[MessageData]]
+
+  def addLegalHoldEnabledMessage(convId: ConvId, time: Option[RemoteInstant]): Future[Option[MessageData]]
+  def addLegalHoldDisabledMessage(convId: ConvId, time: Option[RemoteInstant]): Future[Option[MessageData]]
 
   def retryMessageSending(conv: ConvId, msgId: MessageId): Future[Option[SyncId]]
   def updateMessageState(convId: ConvId, messageId: MessageId, state: Message.Status): Future[Option[MessageData]]
@@ -438,6 +443,18 @@ class MessagesServiceImpl(selfUserId:      UserId,
     }
     verbose(l"addOtrUnverifiedMessage($convId, $users, $change), msgType is $msgType")
     updater.addLocalSentMessage(MessageData(MessageId(), convId, msgType, selfUserId, members = users.toSet)) map { Some(_) }
+  }
+
+  override def addLegalHoldEnabledMessage(convId: ConvId, time: Option[RemoteInstant]): Future[Option[MessageData]] = {
+    val serverTime = time.getOrElse(RemoteInstant(now(clock)))
+    val message = MessageData(MessageId(), convId, Message.Type.LEGALHOLD_ENABLED, selfUserId, time = serverTime)
+    updater.addLocalSentMessage(message, Some(serverTime)).map(Some(_))
+  }
+
+  override def addLegalHoldDisabledMessage(convId: ConvId, time: Option[RemoteInstant]): Future[Option[MessageData]] = {
+    val serverTime = time.getOrElse(RemoteInstant(now(clock)))
+    val message = MessageData(MessageId(), convId, Message.Type.LEGALHOLD_DISABLED, selfUserId, time = serverTime)
+    updater.addLocalSentMessage(message, Some(serverTime)).map(Some(_))
   }
 
   override def retryMessageSending(conv: ConvId, msgId: MessageId) =
