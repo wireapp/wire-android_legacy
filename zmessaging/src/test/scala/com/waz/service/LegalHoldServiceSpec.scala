@@ -23,6 +23,7 @@ import com.wire.cryptobox.PreKey
 import com.wire.signals.{CancellableFuture, EventStream, Signal}
 import org.threeten.bp.Instant
 
+import scala.concurrent.duration._
 import scala.concurrent.Future
 
 class LegalHoldServiceSpec extends AndroidFreeSpec {
@@ -537,7 +538,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       // Given
       val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Disabled)
       val message = createMessage(Messages.LegalHoldStatus.ENABLED)
-      val event = createEvent(conv.remoteId, message)
+      val time = RemoteInstant(Instant.now())
+      val event = createEvent(conv.remoteId, message, time)
 
       // Expectations
       (convsStorage.getByRemoteId _)
@@ -551,10 +553,16 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .expects(conv.id, *)
         .once()
         .onCall { (_, updater) =>
-          updatedStatus = updater(conv).legalHoldStatus
-          // We don't care about the return value
-          Future.successful((None))
+          val updatedConv = updater(conv)
+          updatedStatus = updatedConv.legalHoldStatus
+          Future.successful(Some(conv, updatedConv))
         }
+
+      // Note: the return value is not important.
+      (messagesService.addLegalHoldEnabledMessage _)
+        .expects(conv.id, Some(time - 5.millis))
+        .once()
+        .returning(Future.successful(None))
 
       (sync.syncClientsForLegalHold _)
         .expects(conv.remoteId)
@@ -574,7 +582,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       // Given
       val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Enabled)
       val message = createMessage(Messages.LegalHoldStatus.DISABLED)
-      val event = createEvent(conv.remoteId, message)
+      val time = RemoteInstant(Instant.now())
+      val event = createEvent(conv.remoteId, message, time)
 
       // Expectations
       (convsStorage.getByRemoteId _)
@@ -588,10 +597,16 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .expects(conv.id, *)
         .once()
         .onCall { (_, updater) =>
-          updatedStatus = updater(conv).legalHoldStatus
-          // We don't care about the return value
-          Future.successful((None))
+          val updatedConv = updater(conv)
+          updatedStatus = updatedConv.legalHoldStatus
+          Future.successful(Some(conv, updatedConv))
         }
+
+      // Note: the return value is not important.
+      (messagesService.addLegalHoldDisabledMessage _)
+        .expects(conv.id, Some(time - 5.millis))
+        .once()
+        .returning(Future.successful(None))
 
       (sync.syncClientsForLegalHold _)
         .expects(conv.remoteId)
@@ -667,10 +682,12 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     def createMessage(status: Messages.LegalHoldStatus): GenericMessage =
       GenericMessage(Uid("messageId"), None, Text("Hello!", legalHoldStatus = status))
 
-    def createEvent(convId: RConvId, message: GenericMessage): GenericMessageEvent =
+    def createEvent(convId: RConvId,
+                    message: GenericMessage,
+                    time: RemoteInstant = RemoteInstant(Instant.now())): GenericMessageEvent =
       GenericMessageEvent(
         convId,
-        RemoteInstant(Instant.now()),
+        time,
         UserId("senderId"),
         message
       )
