@@ -121,7 +121,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         retry      <- resp.flatMapFuture {
                         case MessageResponse.Failure(ClientMismatch(_, missing, _, _)) if retries < 3 =>
                           warn(l"a message response failure with client mismatch with $missing, self client id is: $selfClientId")
-                          clientsSyncHandler.syncClients(missing.keys.map(QualifiedId.apply).toSet).flatMap { syncResult =>
+                          syncClients(missing.keys.toSet).flatMap { syncResult =>
                             val err = SyncResult.unapply(syncResult)
                             if (err.isDefined) error(l"syncClients for missing clients failed: $err")
                             encryptAndSend(msg, external, retries + 1, content)
@@ -217,7 +217,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
               s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries: $missing"
             )))
           case _ =>
-            clientsSyncHandler.syncClients(missing.keys.map(QualifiedId.apply).toSet).flatMap { syncResult =>
+            syncClients(missing.keys.toSet).flatMap { syncResult =>
               SyncResult.unapply(syncResult) match {
                 case None                 => onRetry(missing.keySet)
                 case Some(_) if retry < 3 => onRetry(currentRecipients)
@@ -273,6 +273,14 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       case Right(messageResponse) =>
         Right(messageResponse.missing)
     }
+  }
+
+  private def syncClients(users: Set[UserId]): Future[SyncResult] = {
+    for {
+      users  <- usersStorage.listAll(users)
+      qIds   =  users.map(user => user.qualifiedId.getOrElse(QualifiedId(user.id))).toSet
+      result <- clientsSyncHandler.syncClients(qIds)
+    } yield result
   }
 
 }

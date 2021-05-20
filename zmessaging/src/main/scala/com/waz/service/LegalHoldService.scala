@@ -4,12 +4,13 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec.LegalHoldRequestCodec
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.ConversationData.LegalHoldStatus
-import com.waz.model.otr.ClientId
 import com.waz.model._
 import com.waz.model.otr.Client.DeviceClass
+import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
+import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.LegalHoldClient
 import com.waz.sync.handler.LegalHoldError
 import com.wire.cryptobox.CryptoBox
@@ -29,6 +30,8 @@ trait LegalHoldService {
   def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit]
   def approveRequest(request: LegalHoldRequest,
                      password: Option[String]): Future[Either[LegalHoldError, Unit]]
+  def messageEventStage: Stage.Atomic
+  def updateLegalHoldStatusAfterFetchingClients(): Unit
 }
 
 class LegalHoldServiceImpl(selfUserId: UserId,
@@ -39,7 +42,8 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                            clientsStorage: OtrClientsStorage,
                            convsStorage: ConversationStorage,
                            membersStorage: MembersStorage,
-                           cryptoSessionService: CryptoSessionService) extends LegalHoldService {
+                           cryptoSessionService: CryptoSessionService,
+                           sync: SyncServiceHandle) extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -133,6 +137,80 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   def deleteLegalHoldRequest(): Future[Unit] =
     legalHoldRequestPref := None
+
+
+  // --------------------------------------------------------------
+  // Legal hold status & verification
+
+  // The status should be recomputed when the participant client list changes.
+  // There are two ways we do this, 1) reacting to changes in the db due to normal
+  // client discovery, and 2) explicitly syncing with the backend discover legal hold
+  // devices. While 2) is ongoing, we prevent 1) from occurring, so we don't try to
+  // compute the status with incomplete data.
+
+  // To prevent update the legal hold status if we are still gathering
+  // information about which clients were added/deleted.
+  private val isVerifyingLegalHold = Signal(false)
+
+  (for {
+    false      <- isVerifyingLegalHold
+    convIds    <- convsStorage.contents.map(_.keys)
+    legalHolds <- Signal.sequence(convIds.map(convId => legalHold(convId).map(convId -> _)).toSeq: _*)
+  } yield legalHolds.toMap).foreach { legalHoldMap =>
+    convsStorage.updateAll2(legalHoldMap.keys, { conv =>
+      val detectedLegalHoldDevice = legalHoldMap(conv.id)
+      if (conv.isUnderLegalHold != detectedLegalHoldDevice) conv.withNewLegalHoldStatus(detectedLegalHoldDevice)
+      else conv
+    })
+  }
+
+  private def clientsInConv(convId: ConvId): Signal[Set[Client]] = {
+    for {
+      members <- membersStorage.activeMembers(convId)
+      clients <- Signal.sequence(members.map(uId => clientsStorage.optSignal(uId)).toSeq: _*)
+    } yield clients.flatMap(_.fold(Set.empty[Client])(_.clients.values.toSet)).toSet
+  }
+
+  private def legalHold(convId: ConvId): Signal[Boolean] =
+    clientsInConv(convId).map(_.exists(_.isLegalHoldDevice))
+
+  override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (_, events) =>
+    Future.traverse(events) {
+      case GenericMessageEvent(convId, _, _, content) =>
+        updateStatusFromMessageHint(convId, content.legalHoldStatus)
+      case _ =>
+        Future.successful(())
+    }
+  }
+
+  private def updateStatusFromMessageHint(convId: RConvId,
+                                          messageStatus: Messages.LegalHoldStatus): Future[Unit] = {
+    (for {
+      Some(conv)   <- convsStorage.getByRemoteId(convId)
+      Some(update) = statusUpdate(conv, messageStatus)
+      _            <- convsStorage.update(conv.id, update)
+      _            <- verifyLegalHold(convId)
+    } yield ()).fallbackTo(Future.successful(()))
+  }
+
+  private def statusUpdate(conv: ConversationData,
+                           messageStatus: Messages.LegalHoldStatus): Option[ConversationData => ConversationData] =
+    (conv.isUnderLegalHold, messageStatus) match {
+      case (false, Messages.LegalHoldStatus.ENABLED) =>
+        Some(_.withNewLegalHoldStatus(detectedLegalHoldDevice = true))
+      case (true, Messages.LegalHoldStatus.DISABLED) =>
+        Some(_.withNewLegalHoldStatus(detectedLegalHoldDevice = false))
+      case _ =>
+        None
+    }
+
+  private def verifyLegalHold(convId: RConvId): Future[Unit] = {
+    isVerifyingLegalHold ! true
+    sync.syncClientsForLegalHold(convId).map(_ => ())
+  }
+
+  // This will cause the status updater signal to run again.
+  override def updateLegalHoldStatusAfterFetchingClients(): Unit = isVerifyingLegalHold ! false
 
 }
 

@@ -1,21 +1,28 @@
 package com.waz.sync.handler
 
+import com.waz.content.{OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{TeamId, UserId}
-import com.waz.service.LegalHoldService
-import com.waz.sync.SyncResult
+import com.waz.model.{RConvId, TeamId, UserId}
+import com.waz.service.{LegalHoldService, UserService}
+import com.waz.sync.{SyncRequestService, SyncResult}
 import com.waz.sync.client.LegalHoldClient
+import com.waz.sync.otr.OtrSyncHandler
 
 import scala.concurrent.Future
 
 trait LegalHoldSyncHandler {
   def syncLegalHoldRequest(): Future[SyncResult]
+  def syncClientsForLegalHoldVerification(convId: RConvId): Future[SyncResult]
 }
 
 class LegalHoldSyncHandlerImpl(teamId: Option[TeamId],
                                userId: UserId,
-                               client: LegalHoldClient,
-                               service: LegalHoldService) extends LegalHoldSyncHandler with DerivedLogTag {
+                               apiClient: LegalHoldClient,
+                               legalHoldService: LegalHoldService,
+                               userService: UserService,
+                               clientsStorage: OtrClientsStorage,
+                               otrSync: OtrSyncHandler,
+                               syncRequestService: SyncRequestService) extends LegalHoldSyncHandler with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -23,11 +30,32 @@ class LegalHoldSyncHandlerImpl(teamId: Option[TeamId],
     case None =>
       Future.successful(SyncResult.Success)
     case Some(teamId) =>
-      client.fetchLegalHoldRequest(teamId, userId).future.flatMap {
+      apiClient.fetchLegalHoldRequest(teamId, userId).future.flatMap {
         case Left(error)          => Future.successful(SyncResult.Failure(error))
-        case Right(None)          => service.deleteLegalHoldRequest().map(_ => SyncResult.Success)
-        case Right(Some(request)) => service.storeLegalHoldRequest(request).map(_ => SyncResult.Success)
+        case Right(None)          => legalHoldService.deleteLegalHoldRequest().map(_ => SyncResult.Success)
+        case Right(Some(request)) => legalHoldService.storeLegalHoldRequest(request).map(_ => SyncResult.Success)
       }
+  }
+
+  override def syncClientsForLegalHoldVerification(convId: RConvId): Future[SyncResult] = {
+    otrSync.postClientDiscoveryMessage(convId).flatMap {
+      case Left(errorResponse) =>
+        Future.successful(SyncResult.Failure(errorResponse))
+      case Right(clientList) =>
+        val userIds = clientList.keys.toSet
+
+        for {
+          id1            <- userService.syncIfNeeded(userIds)
+          id2            <- userService.syncClients(userIds)
+          allIds         =  Set(id1, Some(id2)).collect { case Some(id) => id }
+          _              <- syncRequestService.await(allIds)
+        } yield {
+          SyncResult.Success
+        }
+    }.map { result =>
+      legalHoldService.updateLegalHoldStatusAfterFetchingClients()
+      result
+    }
   }
 
 }

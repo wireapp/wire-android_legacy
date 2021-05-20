@@ -83,6 +83,9 @@ object SyncRequest {
   final case object SyncFolders          extends BaseRequest(Cmd.SyncFolders)
   final case object SyncLegalHoldRequest extends BaseRequest(Cmd.SyncLegalHoldRequest)
 
+  final case class SyncClientsForLegalHold(convId: RConvId)
+    extends BaseRequest(Cmd.SyncClientsForLegalHold)
+
   final case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
     override val mergeKey: Any = (cmd, userId)
   }
@@ -465,6 +468,7 @@ object SyncRequest {
           case Cmd.DeleteGroupConv           => DeleteGroupConversation(teamId, rConvId)
           case Cmd.PostTrackingId            => PostTrackingId(trackingId)
           case Cmd.SyncLegalHoldRequest      => SyncLegalHoldRequest
+          case Cmd.SyncClientsForLegalHold   => SyncClientsForLegalHold(rConvId)
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -599,6 +603,8 @@ object SyncRequest {
           o.put("rConv", rConvId.str)
         case PostTrackingId(trackingId) =>
           o.put("trackingId", trackingId.str)
+        case SyncClientsForLegalHold(convId) =>
+          o.put("rConv", convId.str)
       }
     }
   }
