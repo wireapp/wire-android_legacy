@@ -61,11 +61,13 @@ class ConversationsSyncHandler(selfUserId:          UserId,
   import Threading.Implicits.Background
   import com.waz.sync.handler.ConversationsSyncHandler._
 
-  // optimization: same team conversations use default roles so we don't have to ask the backend
+  // optimization: same team conversations and private conversations use default roles so we don't have to ask the backend
   private def loadConversationRoles(resps: Seq[ConversationResponse]) = {
-    val (teamResps, nonTeamResps) = resps.partition(r => r.team.isDefined && r.team == teamId)
+    val (otherTeamResps, teamAndPrivResps) = resps.partition(r => r.team.isDefined && r.team != teamId)
     rolesService.defaultRoles.head.flatMap { defRoles =>
-      conversationsClient.loadConversationRoles(nonTeamResps.map(_.id).toSet).map(_ ++ teamResps.map(r => r.id -> defRoles).toMap)
+      conversationsClient
+        .loadConversationRoles(otherTeamResps.map(_.id).toSet, defRoles)
+        .map(_ ++ teamAndPrivResps.map(r => r.id -> defRoles).toMap)
     }
   }
 

@@ -294,10 +294,13 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   // ask the backend for the roles and only then update the conversations
   private def updateConversation(response: ConversationResponse): Future[(Seq[ConversationData], Seq[ConversationData])] =
-    client.loadConversationRoles(Set(response.id)).flatMap(roles => updateConversations(Seq(response), roles))
+    for {
+      defRoles <- rolesService.defaultRoles.head
+      roles    <- client.loadConversationRoles(Set(response.id), defRoles)
+    } yield updateConversations(Seq(response), roles)
 
   private def findExistingId(responses: Seq[ConversationResponse]): Future[Seq[(ConvId, ConversationResponse)]] = convsStorage { convsById =>
-    def byRemoteId(id: RConvId) = convsById.values.find(_.remoteId == id)
+    val convsByRId = convsById.values.map(conv => conv.remoteId -> conv).toMap
 
     responses.map { resp =>
       val newId =
@@ -306,10 +309,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         else
           ConvId(resp.id.str)
 
-      val matching = byRemoteId(resp.id).orElse {
+      val matching = convsByRId.get(resp.id).orElse {
         convsById.get(newId).orElse {
           if (isOneToOne(resp.convType)) None
-          else byRemoteId(ConversationsService.generateTempConversationId(resp.members.keySet + selfUserId))
+          else convsByRId.get(ConversationsService.generateTempConversationId(resp.members.keySet + selfUserId))
         }
       }
 
