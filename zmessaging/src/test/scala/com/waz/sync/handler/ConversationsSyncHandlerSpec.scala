@@ -60,7 +60,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
     (convService.remoteIds _).expects().anyNumberOfTimes().returning(storageResponse)
 
     (rolesService.defaultRoles _).expects().anyNumberOfTimes().returning(Signal.const(Set.empty[ConversationRole]))
-    (conversationsClient.loadConversationRoles _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty[RConvId, Set[ConversationRole]]))
+    (conversationsClient.loadConversationRoles _).expects(*,*).anyNumberOfTimes().returning(Future.successful(Map.empty[RConvId, Set[ConversationRole]]))
     (convService.updateConversationsWithDeviceStartMessage _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
 
     (convService.deleteConversation _).expects(conv3.remoteId).once().returning(Future.successful(()))
