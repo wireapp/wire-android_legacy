@@ -24,7 +24,7 @@ import com.wire.signals.{CancellableFuture, EventStream, Signal}
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 
 class LegalHoldServiceSpec extends AndroidFreeSpec {
 
@@ -427,11 +427,23 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         existsLegalHoldDevice = true
       )
 
+      val done = Promise[Unit]()
+
+      (messagesService.addLegalHoldEnabledMessage _)
+          .expects(convSignal.currentValue.get.id, None)
+          .once()
+        .onCall { (_, _) =>
+          done.success(())
+          // Note: return value is not important.
+          Future.successful(None)
+        }
+
       // When (the service is initialized, it updates the legal hold status)
       createService(setUpInitExpectations = false)
 
       // Then
       result(convSignal.filter(_.isUnderLegalHold).head)
+      result(done.future)
     }
 
     scenario("from enabled to disabled") {
@@ -441,11 +453,23 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         existsLegalHoldDevice = false
       )
 
+      val done = Promise[Unit]()
+
+      (messagesService.addLegalHoldDisabledMessage _)
+        .expects(convSignal.currentValue.get.id, None)
+        .once()
+        .onCall { (_, _) =>
+          done.success(())
+          // Note: return value is not important.
+          Future.successful(None)
+        }
+
       // When (the service is initialized, it updates the legal hold status)
       createService(setUpInitExpectations = false)
 
       // Then
       result(convSignal.filter(!_.isUnderLegalHold).head)
+      result(done.future)
     }
 
     def setUpExpectationsForConversationUpdate(legalHoldStatus: ConversationData.LegalHoldStatus,
@@ -490,9 +514,9 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .expects(*, *)
         .once()
         .onCall { (_, updater) =>
-          convSignal.mutate(updater)
-          // The return value is not important.
-          Future.successful(Seq())
+          val updatedConv = updater(convData)
+          convSignal ! updatedConv
+          Future.successful(Seq((convData, updatedConv)))
         }
 
       convSignal
