@@ -82,12 +82,6 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
 
   })
 
-  def reset(unreadPos: Int): Unit = {
-    verbose(l"reset $unreadPos")
-    queuedScroll = None
-    onListLoaded ! unreadPos
-  }
-
   def onPagedListChanged(): Unit = {
     verbose(l"onPagedListChanged")
     queuedScroll.foreach(processScroll)

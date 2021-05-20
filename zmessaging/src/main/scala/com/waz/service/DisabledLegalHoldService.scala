@@ -34,5 +34,5 @@ class DisabledLegalHoldService extends LegalHoldService {
 
   override def deleteLegalHoldRequest(): Future[Unit] = Future.successful(())
 
-  override def updateLegalHoldStatusAfterFetchingClients(clients: Seq[UserClients]): Future[Unit] = Future.successful(())
+  override def updateLegalHoldStatusAfterFetchingClients(): Unit = Future.successful(())
 }

@@ -24,14 +24,16 @@ import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.{Build, Environment}
 import android.provider.MediaStore
-import android.provider.MediaStore.{Downloads, MediaColumns}
+import android.provider.MediaStore.MediaColumns
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.{Gravity, View}
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDialog
+import android.Manifest.permission.{READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE}
 import com.waz.content.MessagesStorage
 import com.waz.content.UserPreferences.DownloadImagesAlways
+import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.permissions.PermissionsService
@@ -60,7 +62,7 @@ import org.threeten.bp.Duration
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
-import scala.util.Success
+import scala.util.{Success, Try}
 
 class AssetsController(implicit context: Context, inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag { controller =>
@@ -228,7 +230,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       noAppFoundLabel.setVisibility(View.GONE)
       openButton.setAlpha(1f)
       openButton.setOnClickListener(new View.OnClickListener() {
-        def onClick(v: View) = {
+        def onClick(v: View): Unit = {
           context.startActivity(intent)
           dialog.dismiss()
         }
@@ -241,7 +243,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     }
 
     saveButton.setOnClickListener(new View.OnClickListener() {
-      def onClick(v: View) = {
+      def onClick(v: View): Unit = {
         dialog.dismiss()
         saveToDownloads(asset)
       }
@@ -250,71 +252,72 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     dialog.show()
   }
 
-  private def prepareAssetContentForFile(asset: Asset, targetDir: File): Future[(File, Array[Byte])] =
+  private def prepareAssetContentForFile(asset: Asset, targetDir: File): Future[(File, Array[Byte])] = try {
     for {
       permissions <- permissions.head
-      _           <- permissions.ensurePermissions(ListSet(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE))
+      _           <- permissions.ensurePermissions(ListSet(WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE))
       assets      <- assets.head
       assetInput  <- assets.loadContent(asset).future
       bytes       <- Future.fromTry(assetInput.toByteArray)
       // even if the asset input is a file it has to be copied to the "target file", visible from the outside
       targetFile  =  getTargetFile(asset, targetDir)
     } yield (targetFile, bytes)
+  } catch {
+    case exception: Exception => Future.failed(exception)
+  }
 
-  def saveImageToGallery(asset: Asset): Unit = {
-    prepareAssetContentForFile(asset, createWireImageDirectory()).onComplete {
-      case Success((file, bytes)) if inject[FileRestrictionList].isAllowed(file.getName) =>
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-          val contentResolver = context.getContentResolver
-          val contentValues = returning(contentValuesForAsset(asset)) {
-            _.put(MediaStore.MediaColumns.RELATIVE_PATH, wireImageRelativePath())
+  def saveImageToGallery(asset: Asset): Unit = saveAsset(asset, ImageType)
+
+  def saveToDownloads(asset: Asset): Unit = saveAsset(asset, FileType)
+
+  private lazy val fileRestrictionList = inject[FileRestrictionList]
+
+  private def saveAsset(asset: Asset, assetType: AssetType): Unit =
+    wireDirectory(assetType).map { targetDir =>
+      prepareAssetContentForFile(asset, targetDir).onComplete {
+        case Success((file, bytes)) if fileRestrictionList.isAllowed(file.getName) =>
+          if (UseNewDownloadsApi)
+            saveAssetWithNewApi(assetType, targetDir, asset, bytes)
+          else
+            saveAssetWithOldApi(file, asset, bytes)
+
+          val messageId = assetType match {
+            case ImageType => R.string.message_bottom_menu_action_save_ok
+            case FileType  => R.string.content__file__action__save_completed
           }
-          val insertUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-          IoUtils.withResource(contentResolver.openOutputStream(insertUri)) { _.write(bytes) }
-        } else {
-          IoUtils.writeBytesToFile(file, bytes)
+          showToast(messageId)
+          MediaScannerConnection.scanFile(context, Array(file.toString), Array(file.getName), null)
+        case _ =>
+          showToast(R.string.content__file__action__save_error)
+      }
+    }.getOrElse(showToast(R.string.content__file__action__save_error))
+
+  private def saveAssetWithNewApi(assetType: AssetType, targetDir: File, asset: Asset, bytes: Array[Byte]): Unit = {
+    val contentResolver = context.getContentResolver
+    val insertUri = assetType match {
+      case ImageType =>
+        val wireRelativePath = targetDir.getPath.stripPrefix(context.getExternalFilesDir(null).getPath).drop(1)
+        val contentValues = returning(contentValuesForAsset(asset)) {
+          _.put(MediaStore.MediaColumns.RELATIVE_PATH, wireRelativePath)
         }
-        val uri = URIWrapper.fromFile(file)
-        imageNotifications.showImageSavedNotification(asset.id, uri)
-        showToast(R.string.message_bottom_menu_action_save_ok)
-        MediaScannerConnection.scanFile(context, Array(file.toString), Array(file.getName), null)
-      case _             =>
-        showToast(R.string.content__file__action__save_error)
+        contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+      case FileType =>
+        val contentValues = contentValuesForAsset(asset)
+        contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
     }
+    IoUtils.withResource(contentResolver.openOutputStream(insertUri)) { _.write(bytes) }
   }
 
-  private def createWireImageDirectory() = returning(wireImageDirectory()) { IoUtils.createDirectory }
-
-  private def wireImageDirectory() =
-    new File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "Wire Images")
-
-  private def wireImageRelativePath(): String = {
-    val externalStorageRootDir = context.getExternalFilesDir(null).getPath
-    wireImageDirectory().getPath.stripPrefix(externalStorageRootDir).drop(1)
+  private def saveAssetWithOldApi(file: File, asset: Asset, bytes: Array[Byte]): Unit = {
+    IoUtils.writeBytesToFile(file, bytes)
+    DeprecationUtils.addCompletedDownload(
+      context,
+      asset.name,
+      asset.mime.orDefault.str,
+      URIWrapper.fromFile(file).getPath,
+      asset.size
+    )
   }
-
-  def saveToDownloads(asset: Asset): Unit =
-    prepareAssetContentForFile(asset, context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)).onComplete {
-      case Success((file, bytes)) if inject[FileRestrictionList].isAllowed(file.getName) =>
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-          val contentResolver = context.getContentResolver
-          val insertUri = contentResolver.insert(Downloads.EXTERNAL_CONTENT_URI, contentValuesForAsset(asset))
-          IoUtils.withResource(contentResolver.openOutputStream(insertUri)) { _.write(bytes) }
-        } else {
-          IoUtils.writeBytesToFile(file, bytes)
-          DeprecationUtils.addCompletedDownload(
-            context,
-            asset.name,
-            asset.mime.orDefault.str,
-            URIWrapper.fromFile(file).getPath,
-            asset.size
-          )
-        }
-        showToast(R.string.content__file__action__save_completed)
-        MediaScannerConnection.scanFile(context, Array(file.toString), Array(file.getName), null)
-      case _ =>
-        showToast(R.string.content__file__action__save_error)
-    }
 
   private def contentValuesForAsset(asset: Asset) =
     returning(new ContentValues) { cv =>
@@ -393,4 +396,34 @@ object AssetsController {
 
   def fileTypeCanBeOpened(context: Context, intent: Intent): Boolean =
     context.getPackageManager.queryIntentActivities(intent, 0).size > 0
+
+  val UseNewDownloadsApi: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+
+  sealed trait AssetType
+  case object ImageType extends AssetType
+  case object FileType extends AssetType
+
+  def wireDirectory(assetType: AssetType)(implicit context: Context, tag: LogTag): Option[File] = {
+    val parentDir = (assetType, UseNewDownloadsApi) match {
+      case (ImageType, true)  => context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+      case (ImageType, false) => DeprecationUtils.getPicturesDirectory
+      case (FileType, true)   => context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+      case (FileType, false)  => DeprecationUtils.getDownloadsDirectory
+    }
+
+    assetType match {
+      case ImageType =>
+        val subDir = new File(parentDir, "Wire Images")
+        // if the subdirectory already exists, nothing will happen
+        Try(IoUtils.createDirectory(subDir))
+          .recover {
+            case ex => error(l"Failure when creating a subdirectory ${subDir.getAbsolutePath}", ex)
+          }
+        verbose(l"wire image directory: ${subDir.getAbsolutePath}, exists: ${subDir.exists()}")
+        // in case we can't create the subdirectory, we will use the parent one
+        if (subDir.exists()) Some(subDir) else Some(parentDir)
+      case FileType =>
+        Some(parentDir) // for downloads we use the parent directory directly
+    }
+  }
 }

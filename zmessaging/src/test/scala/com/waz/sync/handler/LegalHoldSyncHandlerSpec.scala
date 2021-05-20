@@ -154,16 +154,8 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
         .once().
         returning(Future.successful(Set(SyncResult.Success, SyncResult.Success)))
 
-      val userClients1 = UserClients(user1, Map(client1.id -> client1))
-      val userClients2 = UserClients(user2, Map(client2.id -> client2))
-
-      (clientsStorage.getAll _)
-        .expects(Set(user1, user2))
-        .once()
-        .returning(Future.successful(Seq(Some(userClients1), Some(userClients2))))
-
       (service.updateLegalHoldStatusAfterFetchingClients _)
-        .expects(Seq(userClients1, userClients2))
+        .expects()
         .once()
         .returning(Future.successful(()))
 
@@ -187,7 +179,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
         .returning(CancellableFuture.successful(Left(errorResponse)))
 
       (service.updateLegalHoldStatusAfterFetchingClients _)
-        .expects(Seq.empty)
+        .expects()
         .once()
         .returning(Future.successful(()))
 

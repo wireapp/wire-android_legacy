@@ -59,6 +59,7 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 
 import scala.util.Success
 import com.waz.threading.Threading._
+import com.waz.zclient.legalhold.LegalHoldController
 
 class ConversationSelectorFragment extends FragmentHelper with OnBackPressedListener {
 
@@ -350,12 +351,23 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
 
   private val conversationId = Signal[ConvId]()
   private lazy val convController = inject[ConversationController]
+  private lazy val legalHoldController = inject[LegalHoldController]
 
   (for {
     cid      <- conversationId
     convName <- convController.conversationName(cid)
   } yield convName).onUi { convName =>
     view.nameView.setText(convName.str)
+  }
+
+  (for {
+    cid      <- conversationId
+    lhActive <- legalHoldController.isLegalHoldActive(cid)
+  } yield lhActive).map {
+    case true  => Some(R.drawable.ic_legal_hold_active)
+    case false => None
+  }.onUi { iconRes =>
+    view.nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, iconRes.getOrElse(0), 0)
   }
 
   def setConversation(convId: ConvId, checked: Boolean): Unit = {

@@ -1,6 +1,8 @@
 package com.waz.zclient.legalhold
 
+import com.waz.content.UserPreferences
 import com.waz.model.AccountData.Password
+import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.{ConvId, LegalHoldRequest, UserId}
 import com.waz.service.LegalHoldService
 import com.waz.sync.handler.LegalHoldError
@@ -15,6 +17,7 @@ class LegalHoldController(implicit injector: Injector)
   import com.waz.threading.Threading.Implicits.Background
 
   private lazy val legalHoldService = inject[Signal[LegalHoldService]]
+  private lazy val userPreferences  = inject[Signal[UserPreferences]]
 
   val showingLegalHoldInfo: SourceStream[Boolean] = EventStream[Boolean]
 
@@ -34,6 +37,16 @@ class LegalHoldController(implicit injector: Injector)
     legalHoldService.flatMap(_.legalHoldRequest)
 
   val hasPendingRequest: Signal[Boolean] = legalHoldRequest.map(_.isDefined)
+
+  val legalHoldDisclosureType: Signal[Option[LegalHoldStatus]] =
+    userPreferences.flatMap(_.preference(UserPreferences.LegalHoldDisclosureType).signal)
+
+  def clearLegalHoldDisclosureType: Future[Unit] =
+    for {
+      prefs <- userPreferences.head
+      pref  =  prefs.preference(UserPreferences.LegalHoldDisclosureType)
+      _     <- pref := None
+    } yield()
 
   def getFingerprint(request: LegalHoldRequest): Future[Option[String]] =
     legalHoldService.head.map(_.getFingerprint(request))

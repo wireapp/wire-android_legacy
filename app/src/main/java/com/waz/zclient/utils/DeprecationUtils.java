@@ -20,6 +20,7 @@ package com.waz.zclient.utils;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.os.Environment;
 import android.os.PowerManager;
 import android.os.Vibrator;
 import android.telephony.PhoneNumberUtils;
@@ -32,6 +33,8 @@ import android.view.WindowManager;
 import androidx.core.app.NotificationCompat;
 import androidx.core.view.ViewCompat;
 import android.os.Build;
+
+import java.io.File;
 
 @SuppressWarnings("Deprecation")
 /*
@@ -103,6 +106,14 @@ public class DeprecationUtils {
         }
 
         window.setSoftInputMode(mode);
+    }
+
+    public static File getPicturesDirectory() {
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+    }
+
+    public static File getDownloadsDirectory() {
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
     }
 }
 
