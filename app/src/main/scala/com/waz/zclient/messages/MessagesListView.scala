@@ -26,7 +26,7 @@ import android.view.WindowManager
 import androidx.recyclerview.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, Dim2, MessageData}
+import com.waz.model.{Dim2, MessageData}
 import com.waz.service.assets.AssetStatus
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -77,23 +77,18 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int)
   setLayoutManager(layoutManager)
   setAdapter(adapter)
 
-  private var prevConv = Option.empty[ConvId]
   messagePagedListController.pagedListData.onUi { case (data, PagedListWrapper(pl), messageToReveal) =>
     pl.addWeakCallback(null, plCallback)
     adapter.convInfo = data
     adapter.submitList(pl)
 
     val dataSource = pl.getDataSource.asInstanceOf[MessageDataSource]
-    val unread = dataSource.positionForMessage(data.lastRead).filter(_ >= 0)
-    val toReveal = messageToReveal.flatMap(mtr => dataSource.positionForMessage(mtr).filter(_ >= 0))
-
-    if (!prevConv.contains(data.convId)) {
-      scrollController.reset(toReveal.orElse(unread).getOrElse(0))
-      prevConv = Some(data.convId)
-    } else {
-      scrollController.onPagedListReplaced(pl)
-      toReveal.foreach(scrollController.scrollToPositionRequested ! _)
-    }
+    messageToReveal
+      .flatMap(mtr => dataSource.positionForMessage(mtr).filter(_ >= 0))
+      .foreach { position =>
+        scrollController.onPagedListReplaced(pl)
+        scrollController.scrollToPositionRequested ! position
+      }
   }
 
   scrollController.reachedQueuedScroll.filter(_.force).onUi { _ =>

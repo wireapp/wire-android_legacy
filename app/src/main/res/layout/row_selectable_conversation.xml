@@ -38,7 +38,7 @@
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/ttv__conversation_name"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:paddingLeft="@dimen/wire__padding__16"

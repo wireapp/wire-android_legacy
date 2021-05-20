@@ -161,7 +161,7 @@ class GlobalModuleImpl(val context:             AContext,
   lazy val accountsStorage:     AccountStorage                   = wire[AccountStorageImpl]
 
   val generalCacheDir = new File(context.getExternalCacheDir, s"general_cache")
-  IoUtils.createDirectory(generalCacheDir )
+  IoUtils.createDirectory(generalCacheDir)
 
   lazy val generalFileCache =
     new GeneralFileCacheImpl(generalCacheDir)(Threading.Background)

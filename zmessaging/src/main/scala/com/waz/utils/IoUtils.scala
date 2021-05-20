@@ -40,9 +40,8 @@ object IoUtils {
     override def initialValue(): Array[Byte] = new Array[Byte](8096)
   }
 
-  def createDirectory(file: File): Unit =
-    if (!file.mkdirs() && !file.isDirectory)
-      throw FileSystemError(s"Can not create directory: $file")
+  def createDirectory(file: File): Boolean =
+    !file.mkdirs() && !file.isDirectory
 
   def copy(in: InputStream, out: OutputStream): Long = {
     try {

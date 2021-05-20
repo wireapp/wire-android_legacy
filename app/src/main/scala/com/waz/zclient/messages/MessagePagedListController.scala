@@ -91,7 +91,7 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
     _                       =  verbose(l"cursor changed")
     list                    =  PagedListWrapper(getPagedList(cursor))
     lastRead                <- convController.currentConv.map(_.lastRead)
-    messageToReveal         <- messageActionsController.messageToReveal.map(_.map(_.id))
+    messageToReveal         <- messageActionsController.messageToReveal
   } yield (MessageAdapterData(cId, lastRead, isGroup, canHaveLink, z.selfUserId, z.teamId), list, messageToReveal)
 }
 
