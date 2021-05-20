@@ -254,7 +254,7 @@
     <dimen name="framework_confirmation_menu_button_corner_radius">@dimen/button__corner_radius</dimen>
     <dimen name="framework_confirmation_menu_button_height">40dp</dimen>
     <dimen name="framework_confirmation_menu_button_padding_top">24dp</dimen>
-    <dimen name="framework_confirmation_menu_button_padding_bottom">0dp</dimen>
+    <dimen name="framework_confirmation_menu_button_padding_bottom">8dp</dimen>
     <dimen name="framework_confirmation_menu_button_space_between">8dp</dimen>
     <dimen name="framework_confirmation_menu_button_max_width">204dp</dimen>
     <dimen name="framework__checkbox__dimension">24dp</dimen>

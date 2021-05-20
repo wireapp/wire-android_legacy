@@ -20,6 +20,7 @@ package com.waz.zclient.controllers.confirmation;
 public interface ConfirmationCallback {
     void positiveButtonClicked(boolean checkboxIsSelected);
     void negativeButtonClicked();
+    default void neutralButtonClicked() {}
     void canceled();
     void onHideAnimationEnd(boolean confirmed, boolean canceled, boolean checkboxIsSelected);
 }
