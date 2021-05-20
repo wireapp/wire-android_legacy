@@ -76,27 +76,6 @@ package object model {
       case _                                   => LegalHoldStatus.UNKNOWN
     }
 
-    def withLegalHoldStatus(status: LegalHoldStatus): GenericMessage = {
-      update {
-        case reaction: GenericContent.Reaction   => GenericContent.Reaction(reaction, status)
-        case knock: GenericContent.Knock         => GenericContent.Knock(knock, status)
-        case text: GenericContent.Text           => GenericContent.Text(text, status)
-        case location: GenericContent.Location   => GenericContent.Location(location, status)
-        case asset: GenericContent.Asset         => GenericContent.Asset(asset, status)
-        case composite: GenericContent.Composite => GenericContent.Composite(composite, status)
-        case other                               => other
-      }
-    }
-
-    def update(transform: GenericContent[_] => GenericContent[_]): GenericMessage = {
-      val (expiration, content) = unpack._2 match {
-        case ephemeral: Ephemeral => ephemeral.unpack
-        case content => (None, content)
-      }
-
-      GenericMessage(Uid(proto.getMessageId), expiration, transform(content))
-    }
-
     def unpackContent: GenericContent[_] = unpack match {
       case (_, eph: Ephemeral) => eph.unpack._2
       case (_, content)        => content
@@ -178,31 +157,36 @@ package object model {
 
       implicit val log: LogTag = LogTag("TextMessage")
 
-      def apply(text: String): GenericMessage = GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false))
+      def apply(text: String,
+                legalHoldStatus: Messages.LegalHoldStatus = Messages.LegalHoldStatus.UNKNOWN): GenericMessage =
+        GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
-                expectsReadConfirmation: Boolean): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation))
+                expectsReadConfirmation: Boolean,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
                 links: Seq[LinkPreview],
-                expectsReadConfirmation: Boolean): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation))
+                expectsReadConfirmation: Boolean,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
                 links: Seq[LinkPreview],
                 quote: Option[Quote],
-                expectsReadConfirmation: Boolean): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation))
+                expectsReadConfirmation: Boolean,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation, legalHoldStatus))
 
       def apply(msg: MessageData): GenericMessage =
         GenericMessage(
           msg.id.uid,
           msg.ephemeral,
-          Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false))
+          Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false), msg.protoLegalHoldStatus)
         )
 
       def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean)] = msg.unpackContent match {

@@ -45,7 +45,7 @@ object MessageDataMigration {
         forEachRow(db.query("Messages", Array("_id", "hot"), "msg_type = 'Knock'", null, null, null, null)) { c =>
           stmt.clearBindings()
           val id = c.getString(0)
-          val gms = Seq(GenericMessage(Uid(id), Knock(false)))
+          val gms = Seq(GenericMessage(Uid(id), Knock(false, Messages.LegalHoldStatus.UNKNOWN)))
 
           dst.Protos.bind(gms, 1, stmt)
           stmt.bindString(2, id)

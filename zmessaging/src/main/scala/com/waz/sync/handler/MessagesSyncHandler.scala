@@ -221,7 +221,7 @@ class MessagesSyncHandler(selfUserId: UserId,
       case _ if msg.isAssetMessage =>
         Cancellable(UploadTaskKey(msg.assetId.get))(uploadAsset(conv, msg)).future.map(_.map((_, msg.id)))
       case KNOCK =>
-        otrSync.postOtrMessage(conv.id, GenericMessage(msg.id.uid, msg.ephemeral, Knock(msg.expectsRead.getOrElse(false)))).map(_.map((_, msg.id)))
+        otrSync.postOtrMessage(conv.id, GenericMessage(msg.id.uid, msg.ephemeral, Knock(msg.expectsRead.getOrElse(false), conv.messageLegalHoldStatus))).map(_.map((_, msg.id)))
       case TEXT | TEXT_EMOJI_ONLY =>
         postTextMessage().map(_.map(data => (data.time, data.id)))
       case RICH_MEDIA =>
@@ -279,7 +279,7 @@ class MessagesSyncHandler(selfUserId: UserId,
             GenericMessage(
               msg.id.uid,
               msg.ephemeral,
-              GAsset(rawAsset, None, expectsReadConfirmation = msg.expectsRead.contains(true))
+              GAsset(rawAsset, None, expectsReadConfirmation = msg.expectsRead.contains(true), conv.messageLegalHoldStatus)
             ),
             rawAsset.id
           )
@@ -303,7 +303,7 @@ class MessagesSyncHandler(selfUserId: UserId,
               proto = GenericMessage(
                 msg.id.uid,
                 msg.ephemeral,
-                GAsset(uploadAssetOriginal, Some(previewAsset), expectsReadConfirmation = false)
+                GAsset(uploadAssetOriginal, Some(previewAsset), expectsReadConfirmation = false, conv.messageLegalHoldStatus)
               )
               _ <- postAssetMessage(proto, uploadAssetOriginal.id)
             } yield Some(previewAsset)
@@ -322,7 +322,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         proto = GenericMessage(
           msg.id.uid,
           msg.ephemeral,
-          GAsset(asset, previewAsset, expectsReadConfirmation = msg.expectsRead.contains(true))
+          GAsset(asset, previewAsset, expectsReadConfirmation = msg.expectsRead.contains(true), conv.messageLegalHoldStatus)
         )
         _ <- postAssetMessage(proto, asset.id)
       } yield time
@@ -378,7 +378,7 @@ class MessagesSyncHandler(selfUserId: UserId,
       }
       genericAsset <- uploadAsset.status match {
         case assetStatus if assetStatus == statusToPost =>
-          Future.successful(GAsset(uploadAsset.asInstanceOf[UploadAsset], uploadAssetPreview, expectsReadConfirmation = false))
+          Future.successful(GAsset(uploadAsset.asInstanceOf[UploadAsset], uploadAssetPreview, expectsReadConfirmation = false, conv.messageLegalHoldStatus))
         case assetStatus =>
           Future.failed(FailedExpectationsError(s"We expect uploaded asset status $statusToPost. Got $assetStatus."))
       }
