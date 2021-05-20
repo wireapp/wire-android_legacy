@@ -40,9 +40,7 @@ class LegalHoldSyncHandlerImpl(teamId: Option[TeamId],
   override def syncClientsForLegalHoldVerification(convId: RConvId): Future[SyncResult] = {
     otrSync.postClientDiscoveryMessage(convId).flatMap {
       case Left(errorResponse) =>
-        legalHoldService.updateLegalHoldStatusAfterFetchingClients(Seq.empty).map { _ =>
-          SyncResult.Failure(errorResponse)
-        }
+        Future.successful(SyncResult.Failure(errorResponse))
       case Right(clientList) =>
         val userIds = clientList.keys.toSet
 
@@ -51,11 +49,12 @@ class LegalHoldSyncHandlerImpl(teamId: Option[TeamId],
           id2            <- userService.syncClients(userIds)
           allIds         =  Set(id1, Some(id2)).collect { case Some(id) => id }
           _              <- syncRequestService.await(allIds)
-          allUserClients <- clientsStorage.getAll(userIds).map(_.collect { case Some(clients) => clients})
         } yield {
-          legalHoldService.updateLegalHoldStatusAfterFetchingClients(allUserClients)
           SyncResult.Success
         }
+    }.map { result =>
+      legalHoldService.updateLegalHoldStatusAfterFetchingClients()
+      result
     }
   }
 
