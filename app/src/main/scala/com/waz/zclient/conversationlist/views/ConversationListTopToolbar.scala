@@ -94,6 +94,8 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
+  import NormalTopToolbar._
+
   private val drawable = new TeamIconDrawable
 
   private val profileButton = returning(findById[ImageView](R.id.conversation_list_settings)) { button =>
@@ -140,8 +142,8 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
     pendingApproval <- legalHoldController.hasPendingRequest
   } yield (legalHoldActive, pendingApproval))
     .map {
-      case (true, _)     => (Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_active)), "Active")
-      case (false, true) => (Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_pending)), "Pending approval")
+      case (true, _)     => (Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_active)), LegalHoldActive)
+      case (false, true) => (Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_pending)), LegalHoldPendingApproval)
       case _             => (None, "")
     }
     .onUi { params =>
@@ -159,6 +161,10 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
     profileButton.setImageDrawable(if (loading) getDrawable(R.drawable.list_row_chathead_loading) else drawable)
 }
 
+object NormalTopToolbar {
+  val LegalHoldActive = "Active"
+  val LegalHoldPendingApproval = "Pending approval"
+}
 
 class ArchiveTopToolbar(override val context: Context, override val attrs: AttributeSet, override val defStyleAttr: Int)
   extends ConversationListTopToolbar(context, attrs, defStyleAttr){
