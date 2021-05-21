@@ -870,6 +870,7 @@
     <string name="otr__participant__device_header">Wire gives every device a unique fingerprint. Compare them with %1$s and verify your conversation.</string>
     <string name="otr__participant__device_header__no_devices">%1$s is using an old version of Wire. No devices are shown here.</string>
     <string name="otr__participant__device_header__link_text">_Why verify conversations?_</string>
+    <string name="otr__participant__device_class__unknown">Unknown</string>
     <string name="otr__participant__device_class__phone">Phone</string>
     <string name="otr__participant__device_class__tablet">Tablet</string>
     <string name="otr__participant__device_class__desktop">Desktop computer</string>
