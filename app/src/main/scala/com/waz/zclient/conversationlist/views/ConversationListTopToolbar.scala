@@ -140,14 +140,15 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
     pendingApproval <- legalHoldController.hasPendingRequest
   } yield (legalHoldActive, pendingApproval))
     .map {
-      case (true, _)     => Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_active))
-      case (false, true) => Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_pending))
-      case _             => None
+      case (true, _)     => (Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_active)), "Active")
+      case (false, true) => (Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_pending)), "Pending approval")
+      case _             => (None, "")
     }
-    .onUi {
-      case Some(drawable) => legalHoldIndicatorButton.setVisible(true)
-                             legalHoldIndicatorButton.setImageDrawable(drawable)
-      case None           => legalHoldIndicatorButton.setVisibility(View.INVISIBLE)
+    .onUi { params =>
+      val (drawable, contentDesc) = params
+      legalHoldIndicatorButton.setVisibility(if (drawable.isDefined) View.VISIBLE else View.INVISIBLE)
+      drawable.foreach(legalHoldIndicatorButton.setImageDrawable)
+      legalHoldIndicatorButton.setContentDescription(contentDesc)
     }
 
   def setIndicatorVisible(visible: Boolean): Unit = settingsIndicator.setVisible(visible)
