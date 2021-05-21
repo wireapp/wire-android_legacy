@@ -57,10 +57,10 @@ class ConversationStorageImpl(storage: ZmsDatabase)
 
   onAdded.foreach { cs => updateSearchKey(cs)}
 
-  def setLegalHoldEnabledStatus(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] =
+  def setUnknownVerification(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] =
     update(convId, { c => c.copy(verified = if (c.verified == Verification.UNVERIFIED) UNKNOWN else c.verified) })
 
-  def acknowledgeLegalHold(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] = {
+  def setLegalHoldEnabledStatus(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] = {
     import LegalHoldStatus._
     update(convId, { conv =>
       if (conv.legalHoldStatus == PendingApproval) conv.copy(legalHoldStatus = Enabled)
