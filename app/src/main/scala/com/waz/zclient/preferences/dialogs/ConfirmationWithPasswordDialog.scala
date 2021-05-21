@@ -4,7 +4,7 @@ import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.inputmethod.EditorInfo
-import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
+import android.view.{KeyEvent, LayoutInflater, WindowManager}
 import android.widget.{EditText, TextView}
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -12,6 +12,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.waz.model.AccountData.Password
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.EventStream
@@ -40,6 +41,7 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
     })
   }
 
+  private lazy val messageTextView = findById[TypefaceTextView](root, R.id.confirmation_with_password_message_text_view)
   private lazy val textInputLayout = findById[TextInputLayout](root, R.id.confirmation_with_password_text_input_layout)
 
   private lazy val forgotPasswordButton = returning(findById[TextView](root, R.id.confirmation_with_password_forgot_password_button)) {
@@ -62,17 +64,14 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
   def negativeButtonText: Int
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
-    if(isSSO){
-      findById[View](root, R.id.confirmation_with_password_scrollview).setVisible(false)
-    }
     passwordEditText.setVisible(!isSSO)
     textInputLayout.setVisible(!isSSO)
     forgotPasswordButton.setVisible(!isSSO)
+    messageTextView.setText(message)
     errorMessage.foreach(textInputLayout.setError)
     new AlertDialog.Builder(getActivity)
       .setView(root)
       .setTitle(title)
-      .setMessage(message)
       .setPositiveButton(positiveButtonText, dialogClickListener)
       .setNegativeButton(negativeButtonText, dialogClickListener)
       .create
