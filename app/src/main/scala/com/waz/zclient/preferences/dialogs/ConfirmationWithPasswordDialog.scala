@@ -13,6 +13,7 @@ import com.waz.model.AccountData.Password
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.EventStream
@@ -25,8 +26,14 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.confirmation_with_password_dialog, null)
 
   private def providePassword(password: Option[Password]): Unit = {
+    KeyboardUtils.hideKeyboard(textInputLayout)
     onAccept ! password
     dismiss() // if the password is wrong a new dialog will appear
+  }
+
+  private def onNegativeClick(): Unit = {
+    KeyboardUtils.hideKeyboard(textInputLayout)
+    onDecline ! (())
   }
 
   private lazy val passwordEditText = returning(findById[EditText](root, R.id.confirmation_with_password_edit_text)) { v =>
@@ -51,12 +58,12 @@ abstract class ConfirmationWithPasswordDialog extends DialogFragment with Fragme
   private lazy val dialogClickListener = new DialogInterface.OnClickListener {
     override def onClick(dialog: DialogInterface, which: Int): Unit = which match {
       case DialogInterface.BUTTON_POSITIVE => providePassword(if (isSSO) None else Some(Password(passwordEditText.getText.toString)))
-      case DialogInterface.BUTTON_NEGATIVE => onDecline ! (())
+      case DialogInterface.BUTTON_NEGATIVE => onNegativeClick()
       case _ =>
     }
   }
 
-  def isSSO : Boolean
+  def isSSO: Boolean
   def errorMessage: Option[String]
   def title: String
   def message: String
