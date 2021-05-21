@@ -183,7 +183,7 @@ object ParticipantOtrDeviceAdapter {
 
       ViewUtils.getView[ImageView](itemView, R.id.iv__row_otr_icon).setImageResource(
         if (client.isLegalHoldDevice) {
-          textView.setContentDescription(itemView.context.getString(R.string.pref_devices_device_legal_hold))
+          textView.setContentDescription(itemView.context.getString(R.string.legal_hold_device_content_description))
           R.drawable.ic_legal_hold_active
         } else if (client.verified == Verification.VERIFIED) {
           textView.setContentDescription("Device " + itemView.context.getString(R.string.pref_devices_device_verified))

@@ -539,7 +539,7 @@
     <string name="pref_devices_device_id">ID: %1$s</string>
     <string name="pref_devices_device_verified">Verified</string>
     <string name="pref_devices_device_not_verified">Not verified</string>
-    <string name="pref_devices_device_legal_hold">Legal Hold device</string>
+    <string name="legal_hold_device_content_description">Legal Hold device</string>
     <string name="pref_devices_warning_summary">If you don\'t recognize a device above, remove it and reset your passcode.</string>
     <string name="pref_devices_device_screen_title">Device details</string>
     <string name="pref_devices_device_fingerprint_category_title">Key Fingerprint</string>
