@@ -130,10 +130,11 @@ object ClientsController {
   def getDeviceClassName(otrType: DeviceClass)(implicit context: Context): String = {
     import DeviceClass._
     getString(otrType match {
-      case Desktop  => R.string.otr__participant__device_class__desktop
-      case Phone    => R.string.otr__participant__device_class__phone
-      case Tablet   => R.string.otr__participant__device_class__tablet
-      case _        => R.string.otr__participant__device_class__unknown
+      case Desktop   => R.string.otr__participant__device_class__desktop
+      case Phone     => R.string.otr__participant__device_class__phone
+      case Tablet    => R.string.otr__participant__device_class__tablet
+      case LegalHold => R.string.otr__participant__device_class__legal_hold
+      case _         => R.string.otr__participant__device_class__unknown
     })
   }
 
