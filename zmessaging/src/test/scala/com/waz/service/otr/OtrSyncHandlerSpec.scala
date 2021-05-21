@@ -17,7 +17,7 @@
  */
 package com.waz.service.otr
 
-import com.waz.api.Verification
+import com.waz.api.{ErrorType, Verification}
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.model.ConversationData.LegalHoldStatus
@@ -138,6 +138,30 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
       // When
       result(syncHandler.postOtrMessage(convId, msg))
+    }
+
+    scenario("Can't encrypt or send message in unapproved legal hold conversation") {
+      // Given
+      val syncHandler = getSyncHandler
+      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"), legalHoldStatus = LegalHoldStatus.PendingApproval)
+
+      // Send calling message to avoid triggering errors service
+      val message = GenericMessage(Uid(), GenericContent.Calling("msg"))
+
+      // Expectations
+      (convStorage.get _)
+        .expects(conv.id)
+        .returning(Future.successful(Some(conv)))
+
+      (errors.addUnapprovedLegalHoldStatusError _)
+        .expects(conv.id, MessageId(message.proto.getMessageId))
+        .once()
+        .returning(Future.successful(ErrorData(Uid(), ErrorType.CANNOT_SEND_MESSAGE_TO_UNAPPROVED_LEGAL_HOLD_CONVERSATION)))
+
+      val actualResult = result(syncHandler.postOtrMessage(conv.id, message))
+
+      // Then
+      actualResult shouldEqual Left(ErrorResponse.UnapprovedLegalHold)
     }
 
     scenario("Can't encrypt or send message in unverified conversation") {

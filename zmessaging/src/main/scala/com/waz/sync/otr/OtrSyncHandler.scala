@@ -23,6 +23,7 @@ import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE.{error, _}
+import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.GenericContent.{ClientAction, External}
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -94,6 +95,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       for {
         _          <- push.waitProcessing
         Some(conv) <- convStorage.get(convId)
+        _          =  if (conv.legalHoldStatus == LegalHoldStatus.PendingApproval) throw UnapprovedLegalHoldException
         _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
         recipients <- clientsMap(targetRecipients, convId)
         content    <- service.encryptMessage(msg, recipients, retries > 0, previous)
@@ -136,6 +138,9 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       case UnverifiedException =>
         if (!message.proto.hasCalling) errors.addConvUnverifiedError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.Unverified)
+      case UnapprovedLegalHoldException =>
+        errors.addUnapprovedLegalHoldStatusError(convId, MessageId(message.proto.getMessageId))
+        Left(ErrorResponse.UnapprovedLegalHold)
       case NonFatal(e) =>
         Left(ErrorResponse.internalError(e.getMessage))
     }.mapRight(_.mismatch.time)
@@ -288,6 +293,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 object OtrSyncHandler {
 
   final case object UnverifiedException extends Exception
+  final case object UnapprovedLegalHoldException extends Exception
 
   final case class OtrMessage(sender:         ClientId,
                               recipients:     EncryptedContent,
