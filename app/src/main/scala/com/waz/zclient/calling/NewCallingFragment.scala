@@ -62,7 +62,7 @@ class NewCallingFragment extends FragmentHelper {
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_calling, container, false)) { v =>
-      callController.theme(t => v.asInstanceOf[ThemeControllingFrameLayout].theme ! Some(t))
+      callController.theme.foreach(t => v.asInstanceOf[ThemeControllingFrameLayout].theme ! Some(t))
     }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
@@ -159,13 +159,12 @@ class NewCallingFragment extends FragmentHelper {
     }
   }
 
-  private def displayFullScreenModeIndication(): Unit ={
-    callController.isGroupCall.onChanged {
+  private def displayFullScreenModeIndication(): Unit =
+    callController.isGroupCall.onChanged.foreach {
       case true =>
         Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG).show()
       case _ =>
     }
-  }
 
   private def observeParticipantsCount(): Unit = {
     callController.allParticipants.map(_.size).onUi {
