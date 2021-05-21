@@ -52,7 +52,6 @@ class FullScreenVideoFragment extends FragmentHelper {
     initUserVideoView()
     initVideoZoomLayout()
     initVideoContainer()
-    minimizeVideoWhenNotAvailable()
   }
 
   override def onResume(): Unit = {
@@ -109,11 +108,6 @@ class FullScreenVideoFragment extends FragmentHelper {
     controller.isFullScreenEnabled.onUi { isFullScreenEnabled =>
       fullScreenVideoContainer.foreach(_.setVisible(isFullScreenEnabled))
     }
-  }
-
-  def minimizeVideoWhenNotAvailable() = controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
-    case VideoState.Started | VideoState.ScreenShare =>
-    case _ => minimizeVideo()
   }
 
   def minimizeVideo(): Unit = {
