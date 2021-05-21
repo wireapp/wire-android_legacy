@@ -33,6 +33,7 @@ import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, SpinnerController, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.zclient.legalhold.LegalHoldController
 import com.waz.zclient.utils._
 
 class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
@@ -54,6 +55,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val selfUserId             = inject[Signal[UserId]]
   private lazy val clientsController      = inject[ClientsController]
   private lazy val spinnerController      = inject[SpinnerController]
+  private lazy val legalHoldController    = inject[LegalHoldController]
   private lazy val memberIsJustSelf       = users.memberIsJustSelf(message)
   private lazy val affectedUserName       = message.map(_.userId).flatMap(users.displayName)
 
@@ -74,6 +76,7 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
     case OTR_VERIFIED                                                      => Some(R.drawable.shield_full)
     case OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED              => Some(R.drawable.shield_half)
     case SESSION_RESET                                                     => Some(R.drawable.ic_iconographyemail)
+    case LEGALHOLD_ENABLED | LEGALHOLD_DISABLED                            => Some(R.drawable.ic_legal_hold_active)
     case STARTED_USING_DEVICE                                              => None
     case _                                                                 => None
   }).onUi {
@@ -138,6 +141,10 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
         case (_, Some(Name(ext))) => getString(R.string.file_restrictions__sender_error, ext)
         case _                    => getString(R.string.file_restrictions__sender_error, "")
       }
+    case LEGALHOLD_ENABLED =>
+      Signal.const(getString(R.string.content__otr__legalhold_enabled__message))
+    case LEGALHOLD_DISABLED =>
+      Signal.const(getString(R.string.content__otr__legalhold_disabled__message))
     case _ =>
       Signal.const("")
   }
@@ -158,6 +165,8 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
             .foreach(_ => spinnerController.hideSpinner())(Threading.Ui)
         case (OTR_IDENTITY_CHANGED, _, _) =>
           browserController.openDecryptionError2()
+        case (LEGALHOLD_ENABLED, _, _) =>
+          legalHoldController.onShowConversationLegalHoldInfo ! (())
         case _ =>
           info(l"unhandled help link click for $msg")
       }

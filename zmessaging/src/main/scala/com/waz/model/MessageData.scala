@@ -155,7 +155,8 @@ case class MessageData(override val id:   MessageId              = MessageId(),
    */
   lazy val isSystemMessage: Boolean = msgType match {
     case RENAME | CONNECT_REQUEST | CONNECT_ACCEPTED | MEMBER_JOIN | MEMBER_LEAVE | MISSED_CALL |
-         SUCCESSFUL_CALL | MESSAGE_TIMER | READ_RECEIPTS_ON | READ_RECEIPTS_OFF | RESTRICTED_FILE => true
+         SUCCESSFUL_CALL | MESSAGE_TIMER | READ_RECEIPTS_ON | READ_RECEIPTS_OFF | RESTRICTED_FILE |
+         LEGALHOLD_ENABLED | LEGALHOLD_DISABLED => true
     case _ => false
   }
 
@@ -361,6 +362,8 @@ object MessageData extends DerivedLogTag {
     case Message.Type.MESSAGE_TIMER        => "MessageTimer"
     case Message.Type.COMPOSITE            => "Composite"
     case Message.Type.RESTRICTED_FILE      => "RestrictedFile"
+    case Message.Type.LEGALHOLD_ENABLED    => "LegalHoldEnabled"
+    case Message.Type.LEGALHOLD_DISABLED   => "LegalHoldDisabled"
   }
 
   implicit object MessageDataDao extends Dao[MessageData, MessageId] with StorageCodecs {

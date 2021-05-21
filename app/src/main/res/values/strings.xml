@@ -221,6 +221,9 @@
     <string name="content__otr__your_unverified_device__message">[[YOU]] UNVERIFIED ONE OF _YOUR DEVICES_</string>
     <string name="content__otr__new_member__message">NEW PEOPLE JOINED. _VERIFY DEVICES_</string>
 
+    <string name="content__otr__legalhold_enabled__message">This conversation is under legal hold ・ _LEARN MORE_</string>
+    <string name="content__otr__legalhold_disabled__message">Legal hold deactivated for this conversation</string>
+
     <!-- File transfer -->
     <string name="content__file__status__default">%1$s</string>
     <string name="content__file__status__uploading__minimized">UPLOADING&#8230;</string>

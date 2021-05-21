@@ -9,6 +9,7 @@ import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.model._
 import com.waz.service.EventScheduler.{Sequential, Stage}
+import com.waz.service.messages.MessagesService
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.specs.AndroidFreeSpec
@@ -22,7 +23,8 @@ import com.wire.cryptobox.PreKey
 import com.wire.signals.{CancellableFuture, EventStream, Signal}
 import org.threeten.bp.Instant
 
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{Future, Promise}
 
 class LegalHoldServiceSpec extends AndroidFreeSpec {
 
@@ -38,6 +40,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   private val membersStorage = mock[MembersStorage]
   private val cryptoSessionService = mock[CryptoSessionService]
   private val sync = mock[SyncServiceHandle]
+  private val messagesService = mock[MessagesService]
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -64,7 +67,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       convsStorage,
       membersStorage,
       cryptoSessionService,
-      sync
+      sync,
+      messagesService
     )
   }
 
@@ -423,11 +427,23 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         existsLegalHoldDevice = true
       )
 
+      val done = Promise[Unit]()
+
+      (messagesService.addLegalHoldEnabledMessage _)
+          .expects(convSignal.currentValue.get.id, None)
+          .once()
+        .onCall { (_, _) =>
+          done.success(())
+          // Note: return value is not important.
+          Future.successful(None)
+        }
+
       // When (the service is initialized, it updates the legal hold status)
       createService(setUpInitExpectations = false)
 
       // Then
       result(convSignal.filter(_.isUnderLegalHold).head)
+      result(done.future)
     }
 
     scenario("from enabled to disabled") {
@@ -437,11 +453,23 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         existsLegalHoldDevice = false
       )
 
+      val done = Promise[Unit]()
+
+      (messagesService.addLegalHoldDisabledMessage _)
+        .expects(convSignal.currentValue.get.id, None)
+        .once()
+        .onCall { (_, _) =>
+          done.success(())
+          // Note: return value is not important.
+          Future.successful(None)
+        }
+
       // When (the service is initialized, it updates the legal hold status)
       createService(setUpInitExpectations = false)
 
       // Then
       result(convSignal.filter(!_.isUnderLegalHold).head)
+      result(done.future)
     }
 
     def setUpExpectationsForConversationUpdate(legalHoldStatus: ConversationData.LegalHoldStatus,
@@ -486,9 +514,9 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .expects(*, *)
         .once()
         .onCall { (_, updater) =>
-          convSignal.mutate(updater)
-          // The return value is not important.
-          Future.successful(Seq())
+          val updatedConv = updater(convData)
+          convSignal ! updatedConv
+          Future.successful(Seq((convData, updatedConv)))
         }
 
       convSignal
@@ -534,7 +562,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       // Given
       val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Disabled)
       val message = createMessage(Messages.LegalHoldStatus.ENABLED)
-      val event = createEvent(conv.remoteId, message)
+      val time = RemoteInstant(Instant.now())
+      val event = createEvent(conv.remoteId, message, time)
 
       // Expectations
       (convsStorage.getByRemoteId _)
@@ -548,10 +577,16 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .expects(conv.id, *)
         .once()
         .onCall { (_, updater) =>
-          updatedStatus = updater(conv).legalHoldStatus
-          // We don't care about the return value
-          Future.successful((None))
+          val updatedConv = updater(conv)
+          updatedStatus = updatedConv.legalHoldStatus
+          Future.successful(Some(conv, updatedConv))
         }
+
+      // Note: the return value is not important.
+      (messagesService.addLegalHoldEnabledMessage _)
+        .expects(conv.id, Some(time - 5.millis))
+        .once()
+        .returning(Future.successful(None))
 
       (sync.syncClientsForLegalHold _)
         .expects(conv.remoteId)
@@ -571,7 +606,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       // Given
       val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Enabled)
       val message = createMessage(Messages.LegalHoldStatus.DISABLED)
-      val event = createEvent(conv.remoteId, message)
+      val time = RemoteInstant(Instant.now())
+      val event = createEvent(conv.remoteId, message, time)
 
       // Expectations
       (convsStorage.getByRemoteId _)
@@ -585,10 +621,16 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .expects(conv.id, *)
         .once()
         .onCall { (_, updater) =>
-          updatedStatus = updater(conv).legalHoldStatus
-          // We don't care about the return value
-          Future.successful((None))
+          val updatedConv = updater(conv)
+          updatedStatus = updatedConv.legalHoldStatus
+          Future.successful(Some(conv, updatedConv))
         }
+
+      // Note: the return value is not important.
+      (messagesService.addLegalHoldDisabledMessage _)
+        .expects(conv.id, Some(time - 5.millis))
+        .once()
+        .returning(Future.successful(None))
 
       (sync.syncClientsForLegalHold _)
         .expects(conv.remoteId)
@@ -664,10 +706,12 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     def createMessage(status: Messages.LegalHoldStatus): GenericMessage =
       GenericMessage(Uid("messageId"), None, Text("Hello!", legalHoldStatus = status))
 
-    def createEvent(convId: RConvId, message: GenericMessage): GenericMessageEvent =
+    def createEvent(convId: RConvId,
+                    message: GenericMessage,
+                    time: RemoteInstant = RemoteInstant(Instant.now())): GenericMessageEvent =
       GenericMessageEvent(
         convId,
-        RemoteInstant(Instant.now()),
+        time,
         UserId("senderId"),
         message
       )
