@@ -134,6 +134,7 @@ object ClientsController {
       case Phone     => R.string.otr__participant__device_class__phone
       case Tablet    => R.string.otr__participant__device_class__tablet
       case LegalHold => R.string.otr__participant__device_class__legal_hold
+      case _         => R.string.otr__participant__device_class__unknown
     })
   }
 
