@@ -117,7 +117,6 @@ object ParticipantOtrDeviceAdapter {
       case DeviceClass.Phone     => R.string.otr__participant__device_class__phone
       case DeviceClass.Tablet    => R.string.otr__participant__device_class__tablet
       case DeviceClass.LegalHold => R.string.otr__participant__device_class__legal_hold
-      case _                     => R.string.otr__participant__device_class__unknown
     }
   )
 
