@@ -150,6 +150,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case ErrorData(_, ErrorType.CANNOT_ADD_USER_TO_FULL_CONVERSATION, userIds, _, Some(convId), _, _, _, _) => Future.successful(())
     case ErrorData(_, ErrorType.CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION, _, _, Some(conv), _, _, _, _) =>
       convsStorage.setUnknownVerification(conv)
+    case ErrorData(_, ErrorType.CANNOT_SEND_MESSAGE_TO_UNAPPROVED_LEGAL_HOLD_CONVERSATION, _, _, Some(conv), _, _, _, _) =>
+      for {
+        _ <- convsStorage.setLegalHoldEnabledStatus(conv)
+        _ <- convsStorage.setUnknownVerification(conv)
+      } yield ()
   }
 
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {

@@ -418,7 +418,8 @@ class MainPhoneFragment extends FragmentHelper
       case CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION |
            RECORDING_FAILURE |
            CANNOT_SEND_ASSET_FILE_NOT_FOUND |
-           CANNOT_SEND_ASSET_TOO_LARGE => // Handled in ConversationFragment
+           CANNOT_SEND_ASSET_TOO_LARGE |
+           CANNOT_SEND_MESSAGE_TO_UNAPPROVED_LEGAL_HOLD_CONVERSATION => // Handled in ConversationFragment
       case CANNOT_DELETE_GROUP_CONVERSATION => //Handled in ConversationListManagerFragment
       case _ =>
         LogUI.error(l"Unexpected error ${error.errType}")

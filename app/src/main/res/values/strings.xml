@@ -382,6 +382,15 @@
     <string name="conversation__degraded_confirmation__negative_action_self">Show your devices</string>
     <string name="conversation_degraded_confirmation__header__you">You</string>
 
+    <string name="conversation__legal_hold_confirmation__header">The conversation is now subject to legal hold.</string>
+    <plurals name="conversation__legal_hold_confirmation__message">
+        <item quantity="one">Do you still want to send your message?</item>
+        <item quantity="other">Do you still want to send your messages?</item>
+    </plurals>
+    <string name="conversation__legal_hold_confirmation__negative_action">What is legal hold?</string>
+    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices…</string>
+    <string name="conversation__legal_hold_confirmation__positive_action">Send anyway</string>
+
     <!-- Picture selection confirmation -->
     <string name="confirmation_menu__confirm_done">OK</string>
     <string name="confirmation_menu__cancel">CANCEL</string>

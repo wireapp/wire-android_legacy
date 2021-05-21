@@ -22,7 +22,7 @@ import com.waz.api.Verification
 import com.waz.api.Verification.UNKNOWN
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.ConversationData.ConversationDataDao
+import com.waz.model.ConversationData.{ConversationDataDao, LegalHoldStatus}
 import com.waz.model.ConversationData.ConversationType.Group
 import com.waz.model._
 import com.waz.service.SearchKey
@@ -34,6 +34,7 @@ import scala.concurrent.Future
 
 trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def setUnknownVerification(convId: ConvId): Future[Option[(ConversationData, ConversationData)]]
+  def setLegalHoldEnabledStatus(convId: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def getByRemoteIds(remoteId: Traversable[RConvId]): Future[Seq[ConvId]]
   def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]]
   def getByRemoteIds2(remoteIds: Set[RConvId]): Future[Map[RConvId, ConversationData]]
@@ -56,8 +57,16 @@ class ConversationStorageImpl(storage: ZmsDatabase)
 
   onAdded.foreach { cs => updateSearchKey(cs)}
 
-  def setUnknownVerification(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] =
+  def setLegalHoldEnabledStatus(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] =
     update(convId, { c => c.copy(verified = if (c.verified == Verification.UNVERIFIED) UNKNOWN else c.verified) })
+
+  def acknowledgeLegalHold(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] = {
+    import LegalHoldStatus._
+    update(convId, { conv =>
+      if (conv.legalHoldStatus == PendingApproval) conv.copy(legalHoldStatus = Enabled)
+      else conv
+    })
+  }
 
   onUpdated.foreach { cs =>
     updateSearchKey(cs.collect {

@@ -46,6 +46,7 @@ trait ErrorsService {
   def addAssetTooLargeError(convId: ConvId, messageId: MessageId): Future[ErrorData]
   def addAssetFileNotFoundError(assetId: AssetId): Future[Option[ErrorData]]
   def addConvUnverifiedError(conv: ConvId, message: MessageId): Future[ErrorData]
+  def addUnapprovedLegalHoldStatusError(conv: ConvId, message: MessageId): Future[ErrorData]
 }
 
 class ErrorsServiceImpl(userId:    UserId,
@@ -130,6 +131,25 @@ class ErrorsServiceImpl(userId:    UserId,
       }
       errors += (err.id -> err)
       errorsStorage.put(err.id, err)
+    }
+  }
+
+  def addUnapprovedLegalHoldStatusError(conv: ConvId, message: MessageId): Future[ErrorData] = {
+    val errorType = ErrorType.CANNOT_SEND_MESSAGE_TO_UNAPPROVED_LEGAL_HOLD_CONVERSATION
+    init.flatMap { _ =>
+      val existingError = errors.find {
+        case (_, data) => data.convId.contains(conv) && data.errType == errorType
+      }
+
+      val error = existingError.fold {
+        ErrorData(Uid(), errorType, convId = Some(conv), messages = Seq(message))
+      } {
+        case (_, data) =>
+          data.copy(messages = data.messages :+ message)
+      }
+
+      errors += (error.id -> error)
+      errorsStorage.put(error.id, error)
     }
   }
 }
