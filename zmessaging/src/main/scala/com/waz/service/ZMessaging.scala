@@ -69,9 +69,9 @@ class ZMessagingFactory(global: GlobalModule) {
   def credentialsClient(urlCreator: UrlCreator, httpClient: HttpClient, authRequestInterceptor: AuthRequestInterceptor) =
     new CredentialsUpdateClientImpl()(urlCreator, httpClient, authRequestInterceptor)
 
-  def cryptobox(userId: UserId, storage: StorageModule) = new CryptoBoxServiceImpl(global.context, userId, global.metadata, storage.userPrefs)
+  def cryptobox(userId: UserId, storage: StorageModule): CryptoBoxService = new CryptoBoxServiceImpl(global.context, userId, global.metadata, storage.userPrefs)
 
-  def zmessaging(teamId: Option[TeamId], clientId: ClientId, accountManager: AccountManager, storage: StorageModule, cryptoBox: CryptoBoxServiceImpl) = wire[ZMessaging]
+  def zmessaging(teamId: Option[TeamId], clientId: ClientId, accountManager: AccountManager, storage: StorageModule, cryptoBox: CryptoBoxService) = wire[ZMessaging]
 }
 
 trait Assets2Module {
@@ -103,7 +103,7 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val assetsStorage: AssetStorage         = new AssetStorageImpl(context, db2, Threading.IO)
 }
 
-class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: AccountManager, val storage: StorageModule, val cryptoBox: CryptoBoxServiceImpl) extends DerivedLogTag {
+class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: AccountManager, val storage: StorageModule, val cryptoBox: CryptoBoxService) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   val clock = ZMessaging.clock

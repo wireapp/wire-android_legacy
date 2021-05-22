@@ -39,7 +39,7 @@ trait CryptoSessionService {
   def remoteFingerprint(sid: SessionId): Signal[Option[Array[Byte]]]
 }
 
-class CryptoSessionServiceImpl(cryptoBox: CryptoBoxServiceImpl)
+class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
   extends CryptoSessionService with DerivedLogTag {
 
   private implicit val dis: DispatchQueue = Threading.Background
