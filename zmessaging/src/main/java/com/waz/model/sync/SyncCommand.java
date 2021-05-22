@@ -81,6 +81,7 @@ public enum SyncCommand {
     SyncClientsForLegalHold("sync-clients-for-legal-hold"),
     DeleteGroupConv("delete-group-conv"),
     PostTrackingId("post-tracking-id"),
+    PostClientCapabilities("post-client-capabilities"),
 
     Unknown("unknown");
 

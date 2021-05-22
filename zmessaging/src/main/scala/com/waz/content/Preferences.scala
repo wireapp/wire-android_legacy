@@ -434,4 +434,6 @@ object UserPreferences {
   lazy val LegalHoldRequest: PrefKey[Option[LegalHoldRequest]] = PrefKey[Option[LegalHoldRequest]]("legal_hold_request", customDefault = None)
   lazy val LegalHoldDisclosureType: PrefKey[Option[LegalHoldStatus]] =
     PrefKey[Option[LegalHoldStatus]]("legal_hold_disclosure_type", customDefault = None)
+
+  lazy val ShouldPostClientCapabilities: PrefKey[Boolean] = PrefKey[Boolean]("should_post_client_capabilities", customDefault = true)
 }

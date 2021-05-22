@@ -19,7 +19,7 @@ package com.waz.service.otr
 
 import com.waz.log.LogSE._
 import com.waz.api.Verification
-import com.waz.content.UserPreferences.LastSelfClientsSyncRequestedTime
+import com.waz.content.UserPreferences.{LastSelfClientsSyncRequestedTime, ShouldPostClientCapabilities}
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
@@ -62,6 +62,13 @@ class OtrClientsServiceImpl(selfId:    UserId,
   import com.waz.threading.Threading.Implicits.Background
 
   override lazy val lastSelfClientsSyncPref: Preferences.Preference[Long] = userPrefs.preference(LastSelfClientsSyncRequestedTime)
+
+  private lazy val shouldPostClientCapabilities = userPrefs.preference(ShouldPostClientCapabilities)
+
+  shouldPostClientCapabilities.signal.foreach {
+    case true  => sync.postClientCapabilities().flatMap(_ => shouldPostClientCapabilities := false)
+    case false => ()
+  }
 
   accounts.accountState(selfId).foreach {
     case _: Active => requestSyncIfNeeded()

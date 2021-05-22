@@ -37,8 +37,8 @@ trait OtrClientsSyncHandler {
   def syncClients(users: Set[QualifiedId]): Future[SyncResult]
   def syncClients(user: UserId): Future[SyncResult]
   def postLabel(id: ClientId, label: String): Future[SyncResult]
+  def postCapabilities(): Future[SyncResult]
   def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult]
-
   def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]]
 }
 
@@ -157,6 +157,12 @@ class OtrClientsSyncHandlerImpl(context:    Context,
 
   override def postLabel(id: ClientId, label: String): Future[SyncResult] =
     netClient.postClientLabel(id, label).future map {
+      case Right(_)  => Success
+      case Left(err) => SyncResult(err)
+    }
+
+  override def postCapabilities(): Future[SyncResult] =
+    netClient.postClientCapabilities(selfClient).future.map {
       case Right(_)  => Success
       case Left(err) => SyncResult(err)
     }
