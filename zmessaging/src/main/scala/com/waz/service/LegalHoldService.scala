@@ -23,7 +23,7 @@ import scala.util.Try
 
 trait LegalHoldService {
   def legalHoldEventStage: Stage.Atomic
-  def isLegalHoldActive(userId: UserId): Signal[Boolean]
+  def isLegalHoldActiveForSelfUser: Signal[Boolean]
   def isLegalHoldActive(conversationId: ConvId): Signal[Boolean]
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]]
   def legalHoldRequest: Signal[Option[LegalHoldRequest]]
@@ -71,7 +71,9 @@ class LegalHoldServiceImpl(selfUserId: UserId,
       Future.successful({})
   }
 
-  override def isLegalHoldActive(userId: UserId): Signal[Boolean] =
+  override def isLegalHoldActiveForSelfUser: Signal[Boolean] = isLegalHoldActive(selfUserId)
+
+  private def isLegalHoldActive(userId: UserId): Signal[Boolean] =
     clientsStorage.optSignal(userId).map(_.fold(false)(_.clients.values.exists(_.isLegalHoldDevice)))
 
   override def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] =

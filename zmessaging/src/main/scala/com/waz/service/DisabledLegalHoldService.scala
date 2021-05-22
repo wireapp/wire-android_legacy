@@ -17,7 +17,7 @@ class DisabledLegalHoldService extends LegalHoldService {
 
   override def messageEventStage: Stage.Atomic = EventScheduler.Stage[Event]((_, _) => successful(()))
 
-  override def isLegalHoldActive(userId: UserId): Signal[Boolean] = Signal.const(false)
+  override def isLegalHoldActiveForSelfUser(): Signal[Boolean] = Signal.const(false)
 
   override def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] = Signal.const(false)
 

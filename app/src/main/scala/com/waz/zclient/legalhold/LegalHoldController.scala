@@ -25,8 +25,8 @@ class LegalHoldController(implicit injector: Injector)
   val onLegalHoldSubjectClick: SourceStream[UserId] = EventStream[UserId]
   val onAllLegalHoldSubjectsClick: SourceStream[Unit] = EventStream[Unit]
 
-  def isLegalHoldActive(userId: UserId): Signal[Boolean] =
-    legalHoldService.flatMap(_.isLegalHoldActive(userId))
+  val isLegalHoldActiveForSelfUser: Signal[Boolean] =
+    legalHoldService.flatMap(_.isLegalHoldActiveForSelfUser)
 
   def isLegalHoldActive(conversationId: ConvId): Signal[Boolean] =
     legalHoldService.flatMap(_.isLegalHoldActive(conversationId))
