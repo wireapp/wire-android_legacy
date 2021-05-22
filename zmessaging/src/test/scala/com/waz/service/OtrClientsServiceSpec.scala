@@ -43,9 +43,6 @@ class OtrClientsServiceSpec extends AndroidFreeSpec {
 
       // When (the service subscribes to the preference upon init)
       createService()
-
-      // Then
-      result(userPrefs(ShouldPostClientCapabilities).apply()) shouldEqual false
     }
 
     scenario("it does not post capabilities if not needed") {

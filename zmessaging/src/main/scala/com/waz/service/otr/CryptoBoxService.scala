@@ -38,7 +38,15 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import scala.util.Try
 
-class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataService, userPrefs: UserPreferences) extends DerivedLogTag {
+trait CryptoBoxService {
+  val sessions: CryptoSessionService
+  def generatePreKeysIfNeeded(remainingKeys: Seq[Int]): Future[Seq[PreKey]]
+}
+
+class CryptoBoxServiceImpl(context: Context,
+                           userId: UserId,
+                           metadata: MetaDataService,
+                           userPrefs: UserPreferences) extends CryptoBoxService with DerivedLogTag {
   import CryptoBoxService._
   private implicit val dispatcher: DispatchQueue = DispatchQueue(DispatchQueue.Serial, Threading.IO)
 
@@ -50,7 +58,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
 
   private var _cryptoBox = Option.empty[CryptoBox]
 
-  lazy val sessions = new CryptoSessionServiceImpl(this)
+  override lazy val sessions = new CryptoSessionServiceImpl(this)
 
   def cryptoBox = Future {
     _cryptoBox.orElse {
@@ -98,7 +106,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
     }
   }
 
-  def generatePreKeysIfNeeded(remainingKeys: Seq[Int]): Future[Seq[PreKey]] = {
+  override def generatePreKeysIfNeeded(remainingKeys: Seq[Int]): Future[Seq[PreKey]] = {
 
     val remaining = remainingKeys.filter(_ <= CryptoBox.MAX_PREKEY_ID)
 

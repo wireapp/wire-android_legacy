@@ -20,7 +20,8 @@ package com.waz.sync.otr
 import android.content.Context
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.OtrClientsStorage
+import com.waz.content.{OtrClientsStorage, UserPreferences}
+import com.waz.content.UserPreferences.ShouldPostClientCapabilities
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.model.{QualifiedId, UserId}
@@ -42,13 +43,12 @@ trait OtrClientsSyncHandler {
   def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]]
 }
 
-class OtrClientsSyncHandlerImpl(context:    Context,
-                                selfId:     UserId,
+class OtrClientsSyncHandlerImpl(selfId:     UserId,
                                 selfClient: ClientId,
                                 netClient:  OtrClient,
                                 otrClients: OtrClientsService,
-                                storage:    OtrClientsStorage,
-                                cryptoBox:  CryptoBoxService)
+                                cryptoBox:  CryptoBoxService,
+                                userPrefs:  UserPreferences)
   extends OtrClientsSyncHandler
     with DerivedLogTag { self =>
 
@@ -162,9 +162,9 @@ class OtrClientsSyncHandlerImpl(context:    Context,
     }
 
   override def postCapabilities(): Future[SyncResult] =
-    netClient.postClientCapabilities(selfClient).future.map {
-      case Right(_)  => Success
-      case Left(err) => SyncResult(err)
+    netClient.postClientCapabilities(selfClient).future.flatMap {
+      case Right(_)  => (userPrefs.preference(ShouldPostClientCapabilities) := false).map(_ => Success)
+      case Left(err) => (userPrefs.preference(ShouldPostClientCapabilities) := true).map(_ => SyncResult(err))
     }
 
   override def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult] = syncSessions(clients).map {

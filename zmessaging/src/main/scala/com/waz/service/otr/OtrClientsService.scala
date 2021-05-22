@@ -63,10 +63,8 @@ class OtrClientsServiceImpl(selfId:    UserId,
 
   override lazy val lastSelfClientsSyncPref: Preferences.Preference[Long] = userPrefs.preference(LastSelfClientsSyncRequestedTime)
 
-  private lazy val shouldPostClientCapabilities = userPrefs.preference(ShouldPostClientCapabilities)
-
-  shouldPostClientCapabilities.signal.foreach {
-    case true  => sync.postClientCapabilities().flatMap(_ => shouldPostClientCapabilities := false)
+  userPrefs.preference(ShouldPostClientCapabilities).signal.foreach {
+    case true  => sync.postClientCapabilities()
     case false => ()
   }
 

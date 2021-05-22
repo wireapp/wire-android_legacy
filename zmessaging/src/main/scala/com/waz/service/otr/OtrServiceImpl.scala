@@ -77,7 +77,7 @@ trait OtrService {
 class OtrServiceImpl(selfUserId:     UserId,
                      clientId:       ClientId,
                      clients:        OtrClientsService,
-                     cryptoBox:      CryptoBoxService,
+                     cryptoBox:      CryptoBoxServiceImpl,
                      users:          => UserService, // lazy, bcs otherwise we'd have a circular dependency
                      members:        MembersStorage,
                      sync:           SyncServiceHandle,
