@@ -94,7 +94,7 @@ class CryptoBoxServiceImpl(context: Context,
     _cryptoBox = None
   }
 
-  def createClient(id: ClientId = ClientId()): Future[Option[(Client, PreKey, Seq[PreKey])]] = apply { cb =>
+  override def createClient(id: ClientId = ClientId()): Future[Option[(Client, PreKey, Seq[PreKey])]] = apply { cb =>
     val (lastKey, keys) = (cb.newLastPreKey(), cb.newPreKeys(0, PreKeysCount))
     (lastPreKeyId := keys.last.id).map { _ =>
       val client = Client(
