@@ -154,9 +154,9 @@ case class MessageData(override val id:   MessageId              = MessageId(),
    *
    */
   lazy val isSystemMessage: Boolean = msgType match {
-    case RENAME | CONNECT_REQUEST | CONNECT_ACCEPTED | MEMBER_JOIN | MEMBER_LEAVE | MISSED_CALL |
-         SUCCESSFUL_CALL | MESSAGE_TIMER | READ_RECEIPTS_ON | READ_RECEIPTS_OFF | RESTRICTED_FILE |
-         LEGALHOLD_ENABLED | LEGALHOLD_DISABLED => true
+    case RENAME | CONNECT_REQUEST | CONNECT_ACCEPTED | MEMBER_JOIN | MEMBER_LEAVE |
+         MEMBER_LEAVE_DUE_TO_LEGAL_HOLD | MISSED_CALL | SUCCESSFUL_CALL | MESSAGE_TIMER |
+         READ_RECEIPTS_ON | READ_RECEIPTS_OFF | RESTRICTED_FILE | LEGALHOLD_ENABLED | LEGALHOLD_DISABLED => true
     case _ => false
   }
 
@@ -329,41 +329,42 @@ object MessageData extends DerivedLogTag {
   import GenericMessage._
 
   implicit lazy val MessageTypeCodec: EnumCodec[Message.Type, String] = EnumCodec.injective {
-    case Message.Type.TEXT                 => "Text"
-    case Message.Type.TEXT_EMOJI_ONLY      => "TextEmojiOnly"
-    case Message.Type.IMAGE_ASSET          => "Asset"
-    case Message.Type.ANY_ASSET            => "AnyAsset"
-    case Message.Type.VIDEO_ASSET          => "VideoAsset"
-    case Message.Type.AUDIO_ASSET          => "AudioAsset"
-    case Message.Type.KNOCK                => "Knock"
-    case Message.Type.MEMBER_JOIN          => "MemberJoin"
-    case Message.Type.MEMBER_LEAVE         => "MemberLeave"
-    case Message.Type.READ_RECEIPTS_ON     => "ReadReceiptsOn"
-    case Message.Type.READ_RECEIPTS_OFF    => "ReadReceiptsOff"
-    case Message.Type.CONNECT_REQUEST      => "ConnectRequest"
-    case Message.Type.CONNECT_ACCEPTED     => "ConnectAccepted"
-    case Message.Type.RENAME               => "Rename"
-    case Message.Type.MISSED_CALL          => "MissedCall"
-    case Message.Type.SUCCESSFUL_CALL      => "SuccessfulCall"
-    case Message.Type.RICH_MEDIA           => "RichMedia"
-    case Message.Type.OTR_ERROR            => "OtrFailed"
-    case Message.Type.OTR_ERROR_FIXED      => "OtrFixed"
-    case Message.Type.OTR_IDENTITY_CHANGED => "OtrIdentityChanged"
-    case Message.Type.SESSION_RESET        => "SessionReset"
-    case Message.Type.OTR_VERIFIED         => "OtrVerified"
-    case Message.Type.OTR_UNVERIFIED       => "OtrUnverified"
-    case Message.Type.OTR_DEVICE_ADDED     => "OtrDeviceAdded"
-    case Message.Type.OTR_MEMBER_ADDED     => "OtrMemberAdded"
-    case Message.Type.STARTED_USING_DEVICE => "StartedUsingDevice"
-    case Message.Type.HISTORY_LOST         => "HistoryLost"
-    case Message.Type.LOCATION             => "Location"
-    case Message.Type.UNKNOWN              => "Unknown"
-    case Message.Type.RECALLED             => "Recalled"
-    case Message.Type.MESSAGE_TIMER        => "MessageTimer"
-    case Message.Type.COMPOSITE            => "Composite"
-    case Message.Type.RESTRICTED_FILE      => "RestrictedFile"
-    case Message.Type.LEGALHOLD_ENABLED    => "LegalHoldEnabled"
-    case Message.Type.LEGALHOLD_DISABLED   => "LegalHoldDisabled"
+    case Message.Type.TEXT                           => "Text"
+    case Message.Type.TEXT_EMOJI_ONLY                => "TextEmojiOnly"
+    case Message.Type.IMAGE_ASSET                    => "Asset"
+    case Message.Type.ANY_ASSET                      => "AnyAsset"
+    case Message.Type.VIDEO_ASSET                    => "VideoAsset"
+    case Message.Type.AUDIO_ASSET                    => "AudioAsset"
+    case Message.Type.KNOCK                          => "Knock"
+    case Message.Type.MEMBER_JOIN                    => "MemberJoin"
+    case Message.Type.MEMBER_LEAVE                   => "MemberLeave"
+    case Message.Type.MEMBER_LEAVE_DUE_TO_LEGAL_HOLD => "MemberLeaveDueToLegalHold"
+    case Message.Type.READ_RECEIPTS_ON               => "ReadReceiptsOn"
+    case Message.Type.READ_RECEIPTS_OFF              => "ReadReceiptsOff"
+    case Message.Type.CONNECT_REQUEST                => "ConnectRequest"
+    case Message.Type.CONNECT_ACCEPTED               => "ConnectAccepted"
+    case Message.Type.RENAME                         => "Rename"
+    case Message.Type.MISSED_CALL                    => "MissedCall"
+    case Message.Type.SUCCESSFUL_CALL                => "SuccessfulCall"
+    case Message.Type.RICH_MEDIA                     => "RichMedia"
+    case Message.Type.OTR_ERROR                      => "OtrFailed"
+    case Message.Type.OTR_ERROR_FIXED                => "OtrFixed"
+    case Message.Type.OTR_IDENTITY_CHANGED           => "OtrIdentityChanged"
+    case Message.Type.SESSION_RESET                  => "SessionReset"
+    case Message.Type.OTR_VERIFIED                   => "OtrVerified"
+    case Message.Type.OTR_UNVERIFIED                 => "OtrUnverified"
+    case Message.Type.OTR_DEVICE_ADDED               => "OtrDeviceAdded"
+    case Message.Type.OTR_MEMBER_ADDED               => "OtrMemberAdded"
+    case Message.Type.STARTED_USING_DEVICE           => "StartedUsingDevice"
+    case Message.Type.HISTORY_LOST                   => "HistoryLost"
+    case Message.Type.LOCATION                       => "Location"
+    case Message.Type.UNKNOWN                        => "Unknown"
+    case Message.Type.RECALLED                       => "Recalled"
+    case Message.Type.MESSAGE_TIMER                  => "MessageTimer"
+    case Message.Type.COMPOSITE                      => "Composite"
+    case Message.Type.RESTRICTED_FILE                => "RestrictedFile"
+    case Message.Type.LEGALHOLD_ENABLED              => "LegalHoldEnabled"
+    case Message.Type.LEGALHOLD_DISABLED             => "LegalHoldDisabled"
   }
 
   implicit object MessageDataDao extends Dao[MessageData, MessageId] with StorageCodecs {

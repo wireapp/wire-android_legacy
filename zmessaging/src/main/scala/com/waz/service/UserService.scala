@@ -185,7 +185,7 @@ class UserServiceImpl(selfUserId:        UserId,
       _             <- membersStorage.removeAll(members.map(_.id).toSet)
       memberInConvs =  members.groupBy(_.convId)
       _             <- Future.traverse(memberInConvs) {
-                         case (convId, ms) => messages.addMemberLeaveMessage(convId, selfUserId, ms.map(_.userId).toSet)
+                         case (convId, ms) => messages.addMemberLeaveMessage(convId, selfUserId, ms.map(_.userId).toSet, reason = None)
                        }
       _             <- usersStorage.updateAll2(ids, _.copy(deleted = true))
     } yield ()

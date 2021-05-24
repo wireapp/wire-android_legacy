@@ -195,10 +195,10 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
               lastSentEventTime(convId).flatMap { time =>
                 // we don't have that exact system message but there still might be another message of the same type
                 messagesStorage.getLastSystemMessage(convId, msg.msgType, time).flatMap {
-                  case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) && m.members == msg.members && !m.isLocal =>
+                  case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE || m.msgType == Message.Type.MEMBER_LEAVE_DUE_TO_LEGAL_HOLD) && m.members == msg.members && !m.isLocal =>
                     // we have a duplicate, do nothing
                     Future.successful(None)
-                  case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE) && m.isLocal =>
+                  case Some(m) if (m.msgType == Message.Type.MEMBER_JOIN || m.msgType == Message.Type.MEMBER_LEAVE || m.msgType == Message.Type.MEMBER_LEAVE_DUE_TO_LEGAL_HOLD) && m.isLocal =>
                     updateMessage(m.id)(_.copy(members = m.members ++ msg.members, localTime = m.localTime))
                   case Some(m) if m.isLocal =>
                     messagesStorage.remove(m.id).flatMap(_ => messagesStorage.addMessage(msg.copy(localTime = m.localTime))).map(Some(_))

@@ -66,7 +66,7 @@ trait MessagesService {
 
   //TODO forceCreate is a hacky workaround for a bug where previous system messages are not marked as SENT. Do NOT use!
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false): Future[Option[MessageData]]
-  def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId]): Future[Unit]
+  def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId], reason: Option[MemberLeaveReason]): Future[Unit]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: Name): Future[Option[MessageData]]
   def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]]
   def addReceiptModeChangeMessage(convId: ConvId, from: UserId, receiptMode: Int): Future[Option[MessageData]]
@@ -419,10 +419,15 @@ class MessagesServiceImpl(selfUserId:      UserId,
         Future.successful(())
     }
 
-  override def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId]): Future[Unit] = {
-    val newMessage = MessageData(MessageId(), convId, Message.Type.MEMBER_LEAVE, remover, members = users)
+  override def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId], reason: Option[MemberLeaveReason]): Future[Unit] = {
+    val messageType = reason match {
+      case Some(MemberLeaveReason.LegalHoldPolicyConflict) => Message.Type.MEMBER_LEAVE_DUE_TO_LEGAL_HOLD
+      case _                                               => Message.Type.MEMBER_LEAVE
+    }
+
+    val newMessage = MessageData(MessageId(), convId, messageType, remover, members = users)
     def update(msg: MessageData) = msg.copy(members = msg.members ++ users)
-    updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_LEAVE, update, newMessage).map(_ => ())
+    updater.updateOrCreateLocalMessage(convId, messageType, update, newMessage).map(_ => ())
   }
 
 

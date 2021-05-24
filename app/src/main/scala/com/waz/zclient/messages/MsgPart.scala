@@ -80,7 +80,7 @@ object MsgPart {
       case VIDEO_ASSET => VideoAsset
       case AUDIO_ASSET => AudioAsset
       case LOCATION => Location
-      case MEMBER_JOIN | MEMBER_LEAVE => if (isOneToOne) Empty else MemberChange //Member change information is not very interesting in One-To-One conversations
+      case MEMBER_JOIN | MEMBER_LEAVE | MEMBER_LEAVE_DUE_TO_LEGAL_HOLD => if (isOneToOne) Empty else MemberChange //Member change information is not very interesting in One-To-One conversations
       case CONNECT_REQUEST => ConnectRequest
       case OTR_ERROR | OTR_ERROR_FIXED | OTR_DEVICE_ADDED | OTR_IDENTITY_CHANGED | OTR_UNVERIFIED |
            OTR_VERIFIED | HISTORY_LOST | STARTED_USING_DEVICE | OTR_MEMBER_ADDED | RESTRICTED_FILE |

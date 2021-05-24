@@ -418,9 +418,11 @@ object ConversationListRow {
           getString(R.string.conversation_list__added, memberName)
         case Message.Type.MEMBER_JOIN =>
           getString(R.string.conversation_list__added, memberName)
-        case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
+        case Message.Type.MEMBER_LEAVE |
+             Message.Type.MEMBER_LEAVE_DUE_TO_LEGAL_HOLD if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
           getString(R.string.conversation_list__left_you, senderName)
-        case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) =>
+        case Message.Type.MEMBER_LEAVE |
+             Message.Type.MEMBER_LEAVE_DUE_TO_LEGAL_HOLD if members.exists(_.id == selfId) =>
           getString(R.string.conversation_list__removed_you, senderName)
         case _ =>
           ""

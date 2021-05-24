@@ -127,7 +127,12 @@ case class TypingEvent(convId: RConvId, time: RemoteInstant, from: UserId, isTyp
 case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], users: Map[UserId, ConversationRole], firstEvent: Boolean = false)
   extends MessageEvent with ConversationStateEvent with ConversationEvent
 
-case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId]) extends MessageEvent with ConversationStateEvent
+case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], reason: Option[MemberLeaveReason]) extends MessageEvent with ConversationStateEvent
+
+final case class MemberLeaveReason(value: String) extends AnyVal
+object MemberLeaveReason {
+  val LegalHoldPolicyConflict = MemberLeaveReason("legalhold-policy-conflict")
+}
 
 case class MemberUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, state: ConversationState) extends ConversationStateEvent
 
@@ -272,7 +277,7 @@ object ConversationEvent extends DerivedLogTag {
         case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeName('name)(d.get))
         case "conversation.member-join"          =>
           MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeUserIdsWithRoles('users)(d.get), decodeString('id).startsWith("1."))
-        case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get))
+        case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeOptString('reason)(d.get).map(MemberLeaveReason(_)))
         case "conversation.member-update"        => MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get))
         case "conversation.connect-request"      => ConnectRequestEvent('conversation, time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeName('name)(d.get), decodeOptString('email)(d.get))
         case "conversation.typing"               => TypingEvent('conversation, time, 'from, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))

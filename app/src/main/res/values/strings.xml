@@ -179,6 +179,11 @@
     <string name="content__system__other_was_removed">%1$s was removed</string>
     <string name="content__system__someone_was_removed">Someone was removed</string>
 
+    <string name="content__system__legalhold_conflict__you_were_removed">[[You]] were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__someone_was_removed">Someone was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__other_was_removed">%1$s was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__others_were_removed">%1$s were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+
     <!-- Create conversation -->
     <string name="content__system__you_started_conversation">You started the conversation</string>
     <string name="content__system__other_started_conversation">%1$s started the conversation</string>
@@ -221,7 +226,7 @@
     <string name="content__otr__your_unverified_device__message">[[YOU]] UNVERIFIED ONE OF _YOUR DEVICES_</string>
     <string name="content__otr__new_member__message">NEW PEOPLE JOINED. _VERIFY DEVICES_</string>
 
-    <string name="content__otr__legalhold_enabled__message">This conversation is under legal hold ・ _LEARN MORE_</string>
+    <string name="content__otr__legalhold_enabled__message">This conversation is under legal hold. _LEARN MORE_</string>
     <string name="content__otr__legalhold_disabled__message">Legal hold deactivated for this conversation</string>
 
     <!-- File transfer -->

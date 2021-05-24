@@ -148,7 +148,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val selfMember = ConversationMemberData(selfUserId, convId, ConversationRole.AdminRole)
 
       val events = Seq(
-        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(selfUserId))
+        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(selfUserId), reason = None)
       )
       (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
 
@@ -167,7 +167,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
       (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
       (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(convData)))
-      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, Set(selfUserId)).atLeastOnce().returning(
+      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, Set(selfUserId), *).atLeastOnce().returning(
         Future.successful(())
       )
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(convData)))
@@ -198,7 +198,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
       val removerId = UserId()
       val events = Seq(
-        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), removerId, Seq(selfUserId))
+        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), removerId, Seq(selfUserId), reason = None)
       )
 
       (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
@@ -212,7 +212,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
       (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
       (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(convData)))
-      (messages.addMemberLeaveMessage _).expects(convId, removerId, Set(selfUserId)).atLeastOnce().returning(
+      (messages.addMemberLeaveMessage _).expects(convId, removerId, Set(selfUserId), *).atLeastOnce().returning(
         Future.successful(())
       )
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(convData)))
@@ -244,7 +244,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
       val otherUserId = UserId()
       val events = Seq(
-        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(otherUserId))
+        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(otherUserId), reason = None)
       )
 
       (users.syncIfNeeded _).expects(Set(otherUserId), *).anyNumberOfTimes().returning(Future.successful(None))
@@ -260,7 +260,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (messages.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(convData)))
-      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, Set(otherUserId)).atLeastOnce().returning(
+      (messages.addMemberLeaveMessage _).expects(convId, selfUserId, Set(otherUserId), *).atLeastOnce().returning(
         Future.successful(())
       )
       (membersStorage.getActiveUsers _).expects(convId).anyNumberOfTimes().returning(
@@ -796,21 +796,21 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
           case _ => None
         }
       }
-      (messages.addMemberLeaveMessage _).expects(convId, *, *).anyNumberOfTimes().returning(Future.successful(()))
+      (messages.addMemberLeaveMessage _).expects(convId, *, *, *).anyNumberOfTimes().returning(Future.successful(()))
 
       val service = this.service
 
       result(service.conversationName(convId).head) shouldEqual Name(List(user2, user3).map(_.name).mkString(", "))
 
       result(service.convStateEventProcessingStage.apply(rConvId, Seq(
-        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(user3.id))
+        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(user3.id), reason = None)
       )))
       awaitAllTasks
       result(members.head.map(_.size)) shouldEqual 2
       result(service.conversationName(convId).head) shouldEqual user2.name
 
       result(service.convStateEventProcessingStage.apply(rConvId, Seq(
-        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(user2.id))
+        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(user2.id), reason = None)
       )))
       awaitAllTasks
       result(members.head.map(_.size)) shouldEqual 1
@@ -872,7 +872,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
           case _ => None
         }
       }
-      (messages.addMemberLeaveMessage _).expects(convId, *, *).anyNumberOfTimes().returning(Future.successful(()))
+      (messages.addMemberLeaveMessage _).expects(convId, *, *, *).anyNumberOfTimes().returning(Future.successful(()))
 
       val service = this.service
 
