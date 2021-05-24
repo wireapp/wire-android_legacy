@@ -147,7 +147,7 @@ object QuickReplyContentAdapter {
           context.getString(R.string.notification__message__one_to_one__shared_picture)
         case RENAME =>
           StringUtils.capitalise(context.getString(R.string.notification__message__group__renamed_conversation, message.contentString))
-        case MEMBER_LEAVE =>
+        case MEMBER_LEAVE | MEMBER_LEAVE_DUE_TO_LEGAL_HOLD =>
           StringUtils.capitalise(context.getString(R.string.notification__message__group__remove))
         case MEMBER_JOIN =>
           StringUtils.capitalise(context.getString(R.string.notification__message__group__add))

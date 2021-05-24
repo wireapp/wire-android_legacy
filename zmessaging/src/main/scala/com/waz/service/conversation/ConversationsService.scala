@@ -222,12 +222,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _          <- if (selfAdded && conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
       } yield ()
 
-    case MemberLeaveEvent(_, time, from, userIds) =>
+    case MemberLeaveEvent(_, time, from, userIds, reason) =>
       val userIdSet = userIds.toSet
       for {
         syncId         <- users.syncIfNeeded(userIdSet -- Set(selfUserId))
         _              <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
-        _              <- deleteMembers(conv.id, userIdSet, Some(from), sendSystemMessage = true)
+        _              <- deleteMembers(conv.id, userIdSet, Some(from), reason, sendSystemMessage = true)
         selfUserLeaves =  userIdSet.contains(selfUserId)
         _              <- if (selfUserLeaves) content.setConvActive(conv.id, active = false) else Future.successful(())
                           // if the user removed themselves from another device, archived on this device
@@ -371,7 +371,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       usersLeft     <- membersStorage.getByUsers(activeUsers.flatMap(_._2).toSet).map(_.map(_.userId).toSet)
       usersRemoved  =  activeUsers.map { case (cId, uIds) => cId -> (uIds -- usersLeft) }.filter(_._2.nonEmpty)
       _             <- Future.traverse(usersRemoved) {
-                         case (cId, uIds) => messages.addMemberLeaveMessage(cId, UserId(), uIds) // UserId() == unknown remover
+                         case (cId, uIds) => messages.addMemberLeaveMessage(cId, UserId(), uIds, reason = None) // UserId() == unknown remover
                        }
       _             <- Future.traverse(usersRemoved) {
                          case (cId, _) => renameConversationIfNeeded(cId, activeUsers(cId))
@@ -397,13 +397,17 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _       <- deleteMembers(convId, userIds, remover = None, sendSystemMessage = false)
     } yield ()
 
-  private def deleteMembers(convId: ConvId, toRemove: Set[UserId], remover: Option[UserId], sendSystemMessage: Boolean): Future[Unit] =
+  private def deleteMembers(convId: ConvId,
+                            toRemove: Set[UserId],
+                            remover: Option[UserId],
+                            reason: Option[MemberLeaveReason] = None,
+                            sendSystemMessage: Boolean): Future[Unit] =
     for {
       _              <- membersStorage.remove(convId, toRemove)
       _              <- renameConversationIfNeeded(convId, toRemove)
       isGroup        <- if (sendSystemMessage) isGroupConversation(convId) else Future.successful(false)
       _              <- if (isGroup)
-                          messages.addMemberLeaveMessage(convId, remover.getOrElse(UserId()), toRemove) // UserId() == unknown remover
+                          messages.addMemberLeaveMessage(convId, remover.getOrElse(UserId()), toRemove, reason) // UserId() == unknown remover
                         else
                           Future.successful(())
       stillInTeam    <- membersStorage.getByUsers(toRemove).map(_.map(_.userId).toSet)

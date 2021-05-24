@@ -112,7 +112,9 @@ class MessageEventProcessor(selfUserId:           UserId,
         RichMessage(MessageData(id, conv.id, READ_RECEIPTS_OFF, from, time = time, localTime = event.localTime))
       case ConversationReceiptModeEvent(_, time, from, receiptMode) if receiptMode > 0 =>
         RichMessage(MessageData(id, conv.id, READ_RECEIPTS_ON, from, time = time, localTime = event.localTime))
-      case MemberLeaveEvent(_, time, from, userIds) =>
+      case MemberLeaveEvent(_, time, from, userIds, Some(MemberLeaveReason.LegalHoldPolicyConflict)) =>
+        RichMessage(MessageData(id, conv.id, MEMBER_LEAVE_DUE_TO_LEGAL_HOLD, from, members = userIds.toSet, time = time, localTime = event.localTime))
+      case MemberLeaveEvent(_, time, from, userIds, _) =>
         RichMessage(MessageData(id, conv.id, MEMBER_LEAVE, from, members = userIds.toSet, time = time, localTime = event.localTime))
       case OtrErrorEvent(_, time, from, IdentityChangedError(_, sender)) =>
         RichMessage(MessageData(id, conv.id, OTR_IDENTITY_CHANGED, from, error = Some(ErrorContent(sender, OtrError.ERROR_CODE_IDENTITY_CHANGED)), time = time, localTime = event.localTime))
