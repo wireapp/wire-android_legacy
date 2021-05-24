@@ -299,6 +299,11 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline = createEventPipeline()
       userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
+      (sync.syncClients(_: UserId))
+        .expects(*)
+        .anyNumberOfTimes()
+        .returning(Future.successful(SyncId("syncId")))
+
       // When
       result(pipeline.apply(Seq(LegalHoldEnableEvent(UserId("someOtherUser")))))
 
@@ -322,6 +327,11 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       // Given
       val pipeline = createEventPipeline()
       userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+
+      (sync.syncClients(_: UserId))
+        .expects(*)
+        .anyNumberOfTimes()
+        .returning(Future.successful(SyncId("syncId")))
 
       // When
       result(pipeline.apply(Seq(LegalHoldDisableEvent(UserId("someOtherUser")))))
