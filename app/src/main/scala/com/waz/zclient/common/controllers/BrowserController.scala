@@ -129,6 +129,8 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
   def openInvalidEmailHelp(): Try[Unit] = openUrl(getString(R.string.url_invalid_email_help))
 
   def openAboutSetTeamEmail(): Try[Unit] = openUrl(getString(R.string.url_teams_set_email_about))
+
+  def openAboutLegalHold(): Try[Unit] = openUrl(getString(R.string.url_legal_hold_about))
 }
 
 object BrowserController {
