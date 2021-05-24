@@ -53,6 +53,7 @@ trait OtrClient {
   def deleteClient(id: ClientId, password: Option[Password]): ErrorOrResponse[Unit]
   def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client]
   def postClientLabel(id: ClientId, label: String): ErrorOrResponse[Unit]
+  def postClientCapabilities(id: ClientId): ErrorOrResponse[Unit]
   def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None): ErrorOrResponse[Unit]
   def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse]
 }
@@ -175,6 +176,17 @@ class OtrClientImpl(implicit
       .executeSafe
   }
 
+  override def postClientCapabilities(id: ClientId): ErrorOrResponse[Unit] = {
+    val data = JsonEncoder { o =>
+      o.put("capabilities", JsonEncoder.arrString(ClientCapabilities))
+    }
+
+    Request.Put(relativePath = clientPath(id), body = data)
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
   override def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None): ErrorOrResponse[Unit] = {
     val data = JsonEncoder { o =>
       lastKey.foreach(k => o.put("lastkey", JsonEncoder.encode(k)))
@@ -216,6 +228,8 @@ object OtrClient extends DerivedLogTag {
   def userPreKeysPath(user: UserId) = s"/users/$user/prekeys"
   def userClientsPath(user: UserId) = s"/users/$user/clients"
   def clientPreKeyPath(user: UserId, client: ClientId) = s"/users/$user/prekeys/$client"
+
+  val ClientCapabilities: Seq[String] = Seq("legalhold-implicit-consent")
 
   import JsonDecoder._
 

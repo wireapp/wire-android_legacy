@@ -105,6 +105,7 @@ trait SyncServiceHandle {
   def syncSelfClients(): Future[SyncId]
   def syncSelfPermissions(): Future[SyncId]
   def postClientLabel(id: ClientId, label: String): Future[SyncId]
+  def postClientCapabilities(): Future[SyncId]
   def syncClients(user: UserId): Future[SyncId]
   def syncClients(users: Set[QualifiedId]): Future[SyncId]
   def syncProperties(): Future[SyncId]
@@ -209,6 +210,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncSelfClients() = addRequest(SyncSelfClients, priority = Priority.Critical)
   def syncSelfPermissions() = addRequest(SyncSelfPermissions, priority = Priority.High)
   def postClientLabel(id: ClientId, label: String) = addRequest(PostClientLabel(id, label))
+  def postClientCapabilities(): Future[SyncId] = addRequest(PostClientCapabilities)
   def syncClients(user: UserId) = addRequest(SyncClients(user))
   def syncClients(users: Set[QualifiedId]) = addRequest(SyncClientsBatch(users))
   def syncPreKeys(user: UserId, clients: Set[ClientId]) = addRequest(SyncPreKeys(user, clients))
@@ -324,6 +326,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostTrackingId(trackingId)                      => zms.trackingSync.postNewTrackingId(trackingId)
           case SyncLegalHoldRequest                            => zms.legalHoldSync.syncLegalHoldRequest()
           case SyncClientsForLegalHold(convId)                 => zms.legalHoldSync.syncClientsForLegalHoldVerification(convId)
+          case PostClientCapabilities                          => zms.otrClientsSync.postCapabilities()
           case Unknown                                         => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))

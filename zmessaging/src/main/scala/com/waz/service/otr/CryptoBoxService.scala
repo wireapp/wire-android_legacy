@@ -38,7 +38,20 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import scala.util.Try
 
-class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataService, userPrefs: UserPreferences) extends DerivedLogTag {
+trait CryptoBoxService {
+  val sessions: CryptoSessionService
+  def cryptoBox: Future[Option[CryptoBox]]
+  def apply[A](f: CryptoBox => Future[A]): Future[Option[A]]
+  def deleteCryptoBox(): Future[Unit]
+  def close(): Future[Unit]
+  def createClient(id: ClientId = ClientId()): Future[Option[(Client, PreKey, Seq[PreKey])]]
+  def generatePreKeysIfNeeded(remainingKeys: Seq[Int]): Future[Seq[PreKey]]
+}
+
+class CryptoBoxServiceImpl(context: Context,
+                           userId: UserId,
+                           metadata: MetaDataService,
+                           userPrefs: UserPreferences) extends CryptoBoxService with DerivedLogTag {
   import CryptoBoxService._
   private implicit val dispatcher: DispatchQueue = DispatchQueue(DispatchQueue.Serial, Threading.IO)
 
@@ -50,9 +63,9 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
 
   private var _cryptoBox = Option.empty[CryptoBox]
 
-  lazy val sessions = new CryptoSessionServiceImpl(this)
+  override lazy val sessions = new CryptoSessionServiceImpl(this)
 
-  def cryptoBox = Future {
+  override def cryptoBox: Future[Option[CryptoBox]] = Future {
     _cryptoBox.orElse {
       returning(load) { _cryptoBox = _ }
     }
@@ -64,24 +77,24 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
     CryptoBox.open(cryptoBoxDir.getAbsolutePath)
   } .toOption
 
-  def apply[A](f: CryptoBox => Future[A]): Future[Option[A]] = cryptoBox flatMap {
+  override def apply[A](f: CryptoBox => Future[A]): Future[Option[A]] = cryptoBox flatMap {
     case None => Future successful None
     case Some(cb) => f(cb) map (Some(_))
   }
 
-  def deleteCryptoBox() = Future {
+  override def deleteCryptoBox(): Future[Unit] = Future {
     _cryptoBox.foreach(_.close())
     _cryptoBox = None
     IoUtils.deleteRecursively(cryptoBoxDir)
     verbose(l"cryptobox directory deleted")
   }
 
-  def close() = Future {
+  override def close(): Future[Unit] = Future {
     _cryptoBox.foreach(_.close())
     _cryptoBox = None
   }
 
-  def createClient(id: ClientId = ClientId()) = apply { cb =>
+  override def createClient(id: ClientId = ClientId()): Future[Option[(Client, PreKey, Seq[PreKey])]] = apply { cb =>
     val (lastKey, keys) = (cb.newLastPreKey(), cb.newPreKeys(0, PreKeysCount))
     (lastPreKeyId := keys.last.id).map { _ =>
       val client = Client(
@@ -98,7 +111,7 @@ class CryptoBoxService(context: Context, userId: UserId, metadata: MetaDataServi
     }
   }
 
-  def generatePreKeysIfNeeded(remainingKeys: Seq[Int]): Future[Seq[PreKey]] = {
+  override def generatePreKeysIfNeeded(remainingKeys: Seq[Int]): Future[Seq[PreKey]] = {
 
     val remaining = remainingKeys.filter(_ <= CryptoBox.MAX_PREKEY_ID)
 
