@@ -349,6 +349,8 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
     with Injectable
     with DerivedLogTag {
 
+  import SelectableConversationRowViewHolder._
+
   private val conversationId = Signal[ConvId]()
   private lazy val convController = inject[ConversationController]
   private lazy val legalHoldController = inject[LegalHoldController]
@@ -364,10 +366,11 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
     cid      <- conversationId
     lhActive <- legalHoldController.isLegalHoldActive(cid)
   } yield lhActive).map {
-    case true  => Some(R.drawable.ic_legal_hold_active)
-    case false => None
-  }.onUi { iconRes =>
+    case true  => (Some(R.drawable.ic_legal_hold_active), LegalHoldLocator)
+    case false => (None, "")
+  }.onUi { case (iconRes, contentDesc) =>
     view.nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, iconRes.getOrElse(0), 0)
+    view.nameView.setContentDescription(contentDesc)
   }
 
   def setConversation(convId: ConvId, checked: Boolean): Unit = {
@@ -376,6 +379,10 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
     view.checkBox.setTag(convId)
     conversationId ! convId
   }
+}
+
+object SelectableConversationRowViewHolder {
+  val LegalHoldLocator = "Legal hold active"
 }
 
 class SelectableConversationRow(context: Context, checkBoxListener: CompoundButton.OnCheckedChangeListener) extends LinearLayout(context, null, 0) {
