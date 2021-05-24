@@ -330,6 +330,36 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()).isEmpty shouldBe false
     }
 
+    scenario("it syncs clients when legal hold is enabled for another user") {
+      // Given
+      val otherUserId = UserId("someOtherUser")
+      val pipeline = createEventPipeline()
+
+      // Expectation
+      (sync.syncClients(_: UserId))
+          .expects(otherUserId)
+          .once()
+          .returning(Future.successful(SyncId("syncId")))
+
+      // When
+      result(pipeline.apply(Seq(LegalHoldEnableEvent(otherUserId))))
+    }
+
+    scenario("it syncs clients when legal hold is disabled for another user") {
+      // Given
+      val otherUserId = UserId("someOtherUser")
+      val pipeline = createEventPipeline()
+
+      // Expectation
+      (sync.syncClients(_: UserId))
+        .expects(otherUserId)
+        .once()
+        .returning(Future.successful(SyncId("syncId")))
+
+      // When
+      result(pipeline.apply(Seq(LegalHoldDisableEvent(otherUserId))))
+    }
+
   }
 
   feature("Approve legal hold request") {

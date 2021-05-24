@@ -58,11 +58,14 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     case LegalHoldRequestEvent(userId, request) if userId == selfUserId =>
       storeLegalHoldRequest(request)
 
-    case LegalHoldEnableEvent(userId) if userId == selfUserId =>
-      onLegalHoldApprovedFromAnotherDevice()
+    case LegalHoldEnableEvent(userId) =>
+      if (userId == selfUserId) onLegalHoldApprovedFromAnotherDevice()
+      else sync.syncClients(userId).map(_ => ())
 
-    case LegalHoldDisableEvent(userId) if userId == selfUserId =>
-      onLegalHoldDisabled()
+
+    case LegalHoldDisableEvent(userId) =>
+      if (userId == selfUserId) onLegalHoldDisabled()
+      else  sync.syncClients(userId).map(_ => ())
 
     case _ =>
       Future.successful({})
