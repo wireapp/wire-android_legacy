@@ -22,7 +22,9 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.waz.model.{ConversationRole, UserId}
 import com.waz.zclient.R
+import com.waz.zclient.common.views.LinkTextView
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.wire.signals.{EventStream, SourceStream}
 
 class UnconnectedParticipantAdapter(userId:      UserId,
                                     isGuest:     Boolean,
@@ -31,11 +33,14 @@ class UnconnectedParticipantAdapter(userId:      UserId,
                                     isGroup:     Boolean,
                                     isWireless:  Boolean,
                                     userName:    String,
-                                    userHandle:  String)(implicit context: Context)
+                                    userHandle:  String,
+                                    linkedText: Option[(String, Int)] = None)(implicit context: Context)
   extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless) {
   import BaseSingleParticipantAdapter._
   import UnconnectedParticipantAdapter._
 
+
+  val onLinkedTextClicked: SourceStream[Unit] = EventStream[Unit]
 
   def set(timerText:       Option[String],
           participantRole: Option[ConversationRole] = None,
@@ -50,26 +55,40 @@ class UnconnectedParticipantAdapter(userId:      UserId,
     case UserName =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_user_name_row, parent,false)
       UserNameViewHolder(view)
+    case LinkedInfo =>
+      val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_linked_info_row, parent,false)
+      LinkedInfoViewHolder(view)
     case _ =>
       super.onCreateViewHolder(parent, viewType)
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
-    case h: UserNameViewHolder => h.bind(userName, userHandle)
-    case _                     => super.onBindViewHolder(holder, position)
+    case h: UserNameViewHolder   => h.bind(userName, userHandle)
+    case h: LinkedInfoViewHolder => linkedText.foreach { case (text, color) => h.bind(text, color, { onLinkedTextClicked ! (())} ) }
+    case _                       => super.onBindViewHolder(holder, position)
   }
 
-  override def getItemCount: Int = super.getItemCount + 1
+  override def getItemCount: Int =
+    super.getItemCount + (if (linkedText.isDefined) 2 else 1)
 
   override def getItemId(position: Int): Long = getItemViewType(position) match {
     case Header     => 0L
     case GroupAdmin => 1L
     case UserName   => 2L
+    case LinkedInfo => 3L
   }
 
+  /*
+  The order is:
+    UserName
+    Header
+    GroupAdmin (optional)
+    LinkedInfo (optional)
+   */
   override def getItemViewType(position: Int): Int =
     if (position == 0) UserName
     else if (position == 2 && isGroupAdminViewVisible) GroupAdmin
+    else if (linkedText.isDefined && position == getItemCount - 1) LinkedInfo
     else Header
 }
 
@@ -82,6 +101,14 @@ object UnconnectedParticipantAdapter {
       this.userName.setText(userName)
       this.userHandle.setText(userHandle)
       view.setContentDescription(s"User: $userName")
+    }
+  }
+
+  case class LinkedInfoViewHolder(view: View) extends ViewHolder(view) {
+    private lazy val linkTextView = view.findViewById[LinkTextView](R.id.participant_linked_info_text_view)
+
+    def bind(text: String, color: Int, action: => Unit): Unit = {
+      linkTextView.setTextWithLink(text, color)(action)
     }
   }
 }
