@@ -33,7 +33,7 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.{ParticipantsAdapter, ParticipantsController}
-import com.waz.zclient.utils.ContextUtils.{getString, showToast}
+import com.waz.zclient.utils.ContextUtils.showToast
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{ErrorsController, FragmentHelper, R, SpinnerController}
