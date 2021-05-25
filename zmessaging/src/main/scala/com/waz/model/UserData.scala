@@ -62,7 +62,9 @@ final case class UserData(override val id:       UserId,
                           permissions:           PermissionsMasks       = (0,0),
                           createdBy:             Option[UserId]         = None) extends Identifiable[UserId] {
 
-  lazy val isConnected: Boolean         = ConnectionStatus.isConnected(connection)
+  lazy val isConnected: Boolean = ConnectionStatus.isConnected(connection)
+  lazy val isBlocked: Boolean   = ConnectionStatus.isBlocked(connection)
+
   lazy val hasEmailOrPhone: Boolean     = email.isDefined || phone.isDefined
   lazy val isSelf: Boolean              = connection == ConnectionStatus.Self
   lazy val isAcceptedOrPending: Boolean = connection == ConnectionStatus.Accepted || connection == ConnectionStatus.PendingFromOther || connection == ConnectionStatus.PendingFromUser
@@ -172,7 +174,8 @@ object UserData {
 
     def apply(code: String) = codeMap.getOrElse(code, Unconnected)
 
-    def isConnected(status: ConnectionStatus) = status == Accepted || status == Blocked || status == Self
+    def isConnected(status: ConnectionStatus): Boolean = status == Accepted || status == Blocked || status == Self
+    def isBlocked(status: ConnectionStatus): Boolean = status == Blocked
   }
 
   // used for testing only

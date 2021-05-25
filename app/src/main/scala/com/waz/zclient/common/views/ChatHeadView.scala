@@ -130,7 +130,7 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     val greyScale = !(user.isConnected || user.isSelf || user.isWireBot || teamMember) && attributes.greyScaleOnConnected
     val initials = NameParts.parseFrom(user.name).initials
     val icon =
-      if (user.connection == ConnectionStatus.Blocked)
+      if (user.isBlocked)
         Some(OverlayIcon.Blocked)
       else if (pendingConnectionStatuses.contains(user.connection) && attributes.showWaiting && !user.isWireBot)
         Some(OverlayIcon.Waiting)
