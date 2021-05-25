@@ -34,6 +34,7 @@ import com.waz.zclient.ui.utils.{ColorUtils, TypefaceUtils}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 import com.wire.signals.ext.ClockSignal
+import com.waz.threading.Threading._
 
 trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
 
@@ -60,17 +61,17 @@ trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
       case false => Signal const Left(originalColor)
     }
 
-    typeface { textView.setTypeface }
-    color {
+    typeface.onUi { textView.setTypeface }
+    color.onUi {
       case Left(csl) => textView.setTextColor(csl)
       case Right(ac) => textView.setTextColor(ac.color)
     }
   }
 
-  def ephemeralDrawable(drawable: Drawable) =
+  def ephemeralDrawable(drawable: Drawable): Signal[Drawable] =
     for {
       hide <- expired
-      acc <- accentController.accentColor
+      acc  <- accentController.accentColor
     } yield
       if (hide) new ColorDrawable(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(getContext), acc.color))
       else drawable
@@ -113,7 +114,7 @@ trait EphemeralIndicatorPartView
     angle <- timerAngle
   } yield (ephemeral, angle)
 
-  state.on(Threading.Ui) { _ => invalidate() }
+  state.onUi { _ => invalidate() }
   setWillNotDraw(false)
 
   override def onDraw(canvas: Canvas): Unit = state.currentValue match {

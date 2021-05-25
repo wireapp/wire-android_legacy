@@ -1,12 +1,18 @@
 package com.waz.zclient.security.actions
 
 import android.content.Context
+import androidx.fragment.app.FragmentActivity
+import com.waz.zclient.legalhold.LegalHoldApprovalHandler
 import com.waz.zclient.security.SecurityChecklist
 
 import scala.concurrent.Future
+import scala.util.Try
 
-class ShowLegalHoldApprovalAction(implicit context: Context) extends SecurityChecklist.Action {
+class ShowLegalHoldApprovalAction(legalHoldApprovalHandler: LegalHoldApprovalHandler)(implicit context: Context)
+  extends SecurityChecklist.Action {
 
-  //TODO: display a pop up
-  override def execute(): Future[Unit] = Future.successful(())
+  override def execute(): Future[Unit] =
+    Try(context.asInstanceOf[FragmentActivity])
+      .toOption
+      .fold(Future.successful(()))(legalHoldApprovalHandler.showDialog)
 }

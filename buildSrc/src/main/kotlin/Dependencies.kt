@@ -5,7 +5,7 @@ import org.gradle.api.JavaVersion
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.68."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.69."
     const val COMPILE_SDK_VERSION = 30
     const val TARGET_SDK_VERSION = 30
     const val MIN_SDK_VERSION = 24
@@ -78,8 +78,6 @@ object Versions {
     const val ANDROIDX_TEST_JUNIT = "1.1.1"
     const val ROBOLECTRIC = "5.0.0_r2-robolectric-1"
 
-    //dev
-    const val STETHO = "1.5.0"
 }
 
 object BuildDependencies {
@@ -184,15 +182,12 @@ object TestDependencies {
     val robolectric = "org.robolectric:android-all:${Versions.ROBOLECTRIC}"
 }
 
-object DevDependencies {
-    val stetho = "com.facebook.stetho:stetho:${Versions.STETHO}"
-}
 
 object LegacyDependencies {
     const val SCALA_MAJOR_VERSION = "2.11"
     const val SCALA_VERSION = SCALA_MAJOR_VERSION.plus(".12")
     // signals
-    const val WIRE_SIGNALS = "0.4.0"
+    const val WIRE_SIGNALS = "0.4.2"
     const val WIRE_SIGNALS_EXTENSIONS = "0.4.0"
 
     //build

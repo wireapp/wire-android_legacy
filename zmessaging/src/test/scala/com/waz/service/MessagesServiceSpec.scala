@@ -102,6 +102,9 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.addMessage _).expects(*).anyNumberOfTimes().onCall { msg: MessageData => Future.successful(msg) }
     (replyHashing.hashMessage _).expects(*).once().onCall { _: MessageData => Future.successful(Sha256("sbc")) }
 
+    (convs.storage _).expects().anyNumberOfTimes().returning(convsStorage)
+    (convsStorage.getLegalHoldHint _).expects(convId).anyNumberOfTimes().returning(Future.successful(Messages.LegalHoldStatus.UNKNOWN))
+
     var originalMsgId = MessageId()
 
     val quote = service.addTextMessage(convId, "aaa", expectsReadReceipt = AllDisabled).flatMap { msg1 =>

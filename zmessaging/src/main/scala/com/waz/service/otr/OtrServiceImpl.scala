@@ -49,7 +49,6 @@ trait OtrService {
   def sessions: CryptoSessionService // only for tests
 
   def resetSession(conv: ConvId, user: UserId, client: ClientId): Future[SyncId]
-  def decryptCloudMessage(data: Array[Byte], mac: Array[Byte]): Future[Option[JSONObject]]
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]]
   def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any]
   def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]]
@@ -94,7 +93,7 @@ class OtrServiceImpl(selfUserId:     UserId,
     // request self clients sync to update prekeys on backend
     // we've just created a session from message, this means that some user had to obtain our prekey from backend (so we can upload it)
     // using signal and sync interval parameter to limit requests to one an hour
-    Signal.from(sessions.onCreateFromMessage).throttle(15.seconds) { _ => clients.requestSyncIfNeeded(1.hour) }
+    Signal.from(sessions.onCreateFromMessage).throttle(15.seconds).foreach { _ => clients.requestSyncIfNeeded(1.hour) }
   }
 
   override def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent] = {
@@ -170,19 +169,6 @@ class OtrServiceImpl(selfUserId:     UserId,
       _ <- sync.syncPreKeys(user, Set(client))
       syncId <- sync.postSessionReset(conv, user, client)
     } yield syncId
-
-  def decryptCloudMessage(data: Array[Byte], mac: Array[Byte]): Future[Option[JSONObject]] = clients.getSelfClient map {
-    case Some(client @ Client(_, _, _, _, _, _, Some(key), _, _)) =>
-      verbose(l"decrypting gcm for client $client")
-      if (hmacSha256(key, data).toSeq != mac.toSeq) {
-        warn(l"gcm MAC doesn't match")
-        None
-      } else
-        Try(new JSONObject(new String(AESUtils.decrypt(key.encKey, data), "utf8"))).toOption
-    case c =>
-      warn(l"can not decrypt gcm, no signaling key found: $c")
-      None
-  }
 
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
     val msgData = msg.toByteArray

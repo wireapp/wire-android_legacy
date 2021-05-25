@@ -180,7 +180,7 @@ abstract class LruFileCache[K] extends BaseFileCache[K] {
     .filter { size =>
       verbose(l"Current cache size: ${asSize(size)}")
       size > directorySizeThreshold
-    } { size =>
+    }.foreach { size =>
       var shouldBeCleared = size - directorySizeThreshold
       verbose(l"Cache directory size threshold reached. Current size: ${asSize(size)}. Should be cleared: ${asSize(shouldBeCleared)}")
       cacheDirectory

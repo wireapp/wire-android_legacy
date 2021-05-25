@@ -31,6 +31,7 @@ import com.wire.signals.SerialDispatchQueue
 import com.wire.signals.Signal
 import org.threeten.bp.Instant
 import com.waz.model.GenericContent.Quote
+import com.waz.model.Messages.LegalHoldStatus
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -180,7 +181,7 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec with DerivedLog
     result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
 
     val events = Seq(
-      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil, expectsReadConfirmation = false))
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil, expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
     )
 
     result(service.conversationOrderEventsStage.apply(rConvId, events))
@@ -208,13 +209,13 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec with DerivedLog
 
     // false positive check: don't unarchive because of a standard text message
     val events1 = Seq(
-      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil, expectsReadConfirmation = false))
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil, expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
     )
     result(service.conversationOrderEventsStage.apply(rConvId, events1))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
 
     val events2 = Seq(
-      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Seq(Mention(Some(selfUserId), 6, 11)), expectsReadConfirmation = false))
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Seq(Mention(Some(selfUserId), 6, 11)), expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
     )
     result(service.conversationOrderEventsStage.apply(rConvId, events2))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(false)
@@ -246,13 +247,13 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec with DerivedLog
 
     // false positive check: don't unarchive because of a standard text message
     val events1 = Seq(
-      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil, expectsReadConfirmation = false))
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil, expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
     )
     result(service.conversationOrderEventsStage.apply(rConvId, events1))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
 
     val events2 = Seq(
-      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Nil, Nil, Some(Quote(msgId, None)), expectsReadConfirmation = false))
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Nil, Nil, Some(Quote(msgId, None)), expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
     )
     result(service.conversationOrderEventsStage.apply(rConvId, events2))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(false)
@@ -283,9 +284,9 @@ class ConversationOrderEventsServiceSpec extends AndroidFreeSpec with DerivedLog
     result(storage.get(convId)).map(_.archived) shouldEqual Some(true)
 
     val events = Seq(
-      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil, expectsReadConfirmation = false)),
-      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Seq(Mention(Some(selfUserId), 6, 11)), expectsReadConfirmation = false)),
-      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(3), UserId(), GenericMessage.TextMessage("hello @user", Nil, Nil, Some(Quote(msgId, None)), expectsReadConfirmation = false))
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(1), UserId(), GenericMessage.TextMessage("hello", Nil, expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN)),
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(2), UserId(), GenericMessage.TextMessage("hello @user", Seq(Mention(Some(selfUserId), 6, 11)), expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN)),
+      GenericMessageEvent(rConvId: RConvId,  RemoteInstant.ofEpochMilli(3), UserId(), GenericMessage.TextMessage("hello @user", Nil, Nil, Some(Quote(msgId, None)), expectsReadConfirmation = false, LegalHoldStatus.UNKNOWN))
     )
     result(pipeline.apply(events))
     result(storage.get(convId)).map(_.archived) shouldEqual Some(true)

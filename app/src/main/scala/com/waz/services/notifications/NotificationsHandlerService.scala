@@ -42,8 +42,8 @@ class NotificationsHandlerService extends FutureService with ServiceHelper with 
 
   override protected def onIntent(intent: Intent, id: Int): Future[Any] = wakeLock.async {
 
-    val account = Option(intent.getStringExtra(ExtraAccountId)).map(UserId)
-    val conversation = Option(intent.getStringExtra(ExtraConvId)).map(ConvId)
+    val account = Option(intent.getStringExtra(ExtraAccountId)).map(UserId(_))
+    val conversation = Option(intent.getStringExtra(ExtraConvId)).map(ConvId(_))
     val instantReplyContent = Option(RemoteInput.getResultsFromIntent(intent)).map(_.getCharSequence(InstantReplyKey))
 
     Option(ZMessaging.currentAccounts) match {

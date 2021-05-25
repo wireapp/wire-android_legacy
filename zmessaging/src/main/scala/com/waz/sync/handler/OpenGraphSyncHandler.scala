@@ -145,7 +145,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
             case (_, p) => p
           }
 
-          val gm = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated, quote, rr))
+          val gm = GenericMessage(msg.id.uid, msg.ephemeral, Text(content, mentions, updated, quote, rr, msg.protoLegalHoldStatus))
 
           updateIfNotEdited(msg, _.copy(genericMsgs = Seq(gm))) map { _ => if (errors.isEmpty) Right(gm) else Left(errors) }
         }
@@ -166,7 +166,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
       val content = ContentForUpload(s"open_graph_image_${prev.proto.getPermanentUrl}", Content.File(Mime.Image.Jpg, imageFile))
       val encryption = AES_CBC_Encryption.random
       for {
-        rawAsset <- assets.createAndSaveUploadAsset(content, encryption, public = false, retention, Some(messageId)).toCancellable
+        rawAsset <- assets.createAndSaveUploadAsset(content, encryption, public = false, retention, Some(messageId)).lift
         asset <- assets.uploadAsset(rawAsset.id)
       } yield asset
     }
@@ -183,7 +183,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
       }
       result = imageAsset.right.map { asset =>
         val assetId = asset.map(_.id)
-        val messagesAsset = asset.map(Asset.apply(_, None, expectsReadConfirmation = false))
+        val messagesAsset = asset.map(Asset.apply(_, None, expectsReadConfirmation = false, Messages.LegalHoldStatus.UNKNOWN))
         val permanentUri = meta.permanentUrl.map(url => URI.parse(url.toString))
         val preview = LinkPreview(
           uri = URI.parse(prev.proto.getUrl),

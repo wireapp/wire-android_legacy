@@ -30,7 +30,7 @@ import android.widget.{AbsListView, FrameLayout, ImageView, TextView}
 import androidx.annotation.Nullable
 import androidx.appcompat.widget.{ActionMenuView, Toolbar}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
-import com.waz.api.ErrorType
+import com.waz.api.{ErrorType, Verification}
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
@@ -131,7 +131,7 @@ class ConversationFragment extends FragmentHelper {
   private var assetIntentsManager: Option[AssetIntentsManager] = None
 
   private lazy val loadingIndicatorView = returning(view[LoadingIndicatorView](R.id.lbv__conversation__loading_indicator)) { vh =>
-    accentColor.map(_.color)(c => vh.foreach(_.setColor(c)))
+    accentColor.map(_.color).foreach(c => vh.foreach(_.setColor(c)))
   }
 
   private var containerPreview: ViewGroup = _
@@ -795,6 +795,8 @@ class ConversationFragment extends FragmentHelper {
       errorsController.dismissSyncError(err.id)
     case ErrorType.CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION =>
       err.convId.foreach(onErrorCanNotSentMessageToUnverifiedConversation(err, _))
+    case ErrorType.CANNOT_SEND_MESSAGE_TO_UNAPPROVED_LEGAL_HOLD_CONVERSATION =>
+      err.convId.foreach(onErrorCanNotSentMessageToUnapprovedLegalHoldConversation(err, _))
     case errType =>
       error(l"Unhandled onSyncError: $errType")
   }
@@ -865,6 +867,62 @@ class ConversationFragment extends FragmentHelper {
         confirmationController.requestConfirmation(request, IConfirmationController.CONVERSATION)
       }
     }
+
+  private def onErrorCanNotSentMessageToUnapprovedLegalHoldConversation(err: ErrorData, convId: ConvId) = {
+    for {
+      currentConvId <- convController.currentConvId.head
+      isUnverified    <- convController.currentConv.head.map(_.verified == Verification.UNVERIFIED)
+    } yield {
+      if (convId == currentConvId && navigationController.getCurrentPage == Page.MESSAGE_STREAM) {
+        keyboardController.hideKeyboardIfVisible()
+
+        val header = getString(R.string.conversation__legal_hold_confirmation__header)
+
+        val messageCount = Math.max(1, err.messages.size)
+        val message = getQuantityString(R.plurals.conversation__legal_hold_confirmation__message, messageCount)
+
+        val negativeButton = getString(R.string.conversation__legal_hold_confirmation__negative_action)
+        val positiveButton = getString(R.string.conversation__legal_hold_confirmation__positive_action)
+
+        val callback = new ConfirmationCallback {
+          override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = {
+            messagesController.retryMessageSending(err.messages)
+            errorsController.dismissSyncError(err.id)
+          }
+
+          override def negativeButtonClicked(): Unit = {
+            inject[LegalHoldController].onShowConversationLegalHoldInfo ! (())
+          }
+
+          override def neutralButtonClicked(): Unit = {
+            participantsController.onShowParticipants ! None
+          }
+
+          override def canceled(): Unit = {}
+
+          override def onHideAnimationEnd(confirmed: Boolean, canceled: Boolean, checkboxIsSelected: Boolean): Unit = {}
+        }
+
+        var request =
+          new ConfirmationRequest.Builder()
+            .withHeader(header)
+            .withMessage(message)
+            .withNegativeButton(negativeButton)
+            .withPositiveButton(positiveButton)
+            .withCancelButton()
+            .withConfirmationCallback(callback)
+            .withBackgroundImage(R.drawable.degradation_overlay)
+            .withWireTheme(inject[ThemeController].getThemeDependentOptionsTheme)
+
+        if (isUnverified) {
+          val neutralButton = getString(R.string.conversation__legal_hold_confirmation__neutral_action)
+          request = request.withNeutralButton(neutralButton)
+        }
+
+        confirmationController.requestConfirmation(request.build, IConfirmationController.CONVERSATION)
+      }
+    }
+  }
 
   private val slidingPaneObserver = new SlidingPaneObserver {
     override def onPanelSlide(panel: View, slideOffset: Float): Unit = {}

@@ -25,9 +25,9 @@ import com.waz.threading.Threading
 import com.waz.utils.compareAndSet
 import org.scalatest.{FeatureSpec, Matchers, OptionValues, RobolectricTests}
 import org.threeten.bp.Instant
-import com.waz.testutils.Implicits._
 import com.waz.testutils.Matchers._
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 import org.scalatest.junit.JUnitRunner
 
 import scala.annotation.tailrec
@@ -37,6 +37,7 @@ import scala.concurrent.duration._
 import scala.util.Random.nextInt
 
 @RunWith(classOf[JUnitRunner])
+@Config(sdk=Array(21))
 class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues with RobolectricTests {
 
   feature("Creating schedules") {
@@ -106,37 +107,6 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
     })
   }
 
-  feature("Executing schedules") {
-    scenario("Order of execution")(withFixture { env => import env._
-      randomDelay = true
-
-      42.times {
-        E('ad, 'abcd, 'bcd, 'bd, 'cd, 'bcd, 'acd) scheduledAndExecutedBy seq(intr(_A, par(_B, _C)), _D) should (
-          equal("A01,B1235,C1245,A6,C6,D0123456") or
-          equal("A01,C1245,B1235,A6,C6,D0123456"))
-      }
-    })
-
-    scenario("Failing stages")(withFixture { env => import env._
-      randomDelay = true
-
-      42.times {
-        E('adxy, 'x, 'abcd, 'bcd, 'bdy, 'cdz, 'bcd, 'acd, 'y) scheduledAndExecutedBy seq(_X, intr(_A, _Y, par(_B, _C, _Z)), _D) should (
-          equal("A0,A2,B23,C23,B46,C56,A7,C7,D0234567") or
-          equal("A0,A2,C23,B23,B46,C56,A7,C7,D0234567") or
-          equal("A0,A2,B23,C23,C56,B46,A7,C7,D0234567") or
-          equal("A0,A2,C23,B23,C56,B46,A7,C7,D0234567"))
-      }
-    })
-
-    scenario("Stack safety")(withFixture { env => import env._
-      val schedule = new EventScheduler(seq(_A, intr(_B, _C, par(_D, intr(_E, _F)), _G), _H)).createSchedule(E(1 to 100 map (_ => randomEvent):_*))
-      EventScheduler.executeSchedule(conv, schedule).await()
-
-      executed.get.flatMap(_._2) should have size numberOfScheduledEvents(schedule)
-    })
-  }
-
   feature("Defining event processing stages") {
     lazy val e1 = RenameConversationEvent(RConvId("R"), RemoteInstant(Instant.now()), UserId("u1"), Name("meep 1"))
     lazy val e2 = UnknownPropertyEvent("e2", "u1")
@@ -150,13 +120,6 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
       stage.isEligible(e2) shouldBe true
       stage.isEligible(e3) shouldBe false
       stage.isEligible(e4) shouldBe false
-    })
-
-    scenario("Processing only eligible events")(withFixture { env => import env._
-      lazy val stage = Stage[UnknownPropertyEvent](append, _.value == "u1")
-      stage(conv, Vector(e1,e2,e3,e4)).await()
-
-      processed.get shouldEqual Seq(e2)
     })
   }
 
@@ -201,12 +164,12 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
     }(breakOut)
 
     implicit class RichEvents(events: Vector[Event]) {
-      def scheduledBy(stage: Stage) = stringify(new EventScheduler(stage).createSchedule(events))
-      def scheduledAndExecutedBy(stage: Stage) = {
+      def scheduledBy(stage: Stage): String = stringify(new EventScheduler(stage).createSchedule(events))
+/*      def scheduledAndExecutedBy(stage: Stage) = {
         executed.set(Vector.empty)
         executeSchedule(conv, new EventScheduler(stage).createSchedule(events)).await()
         stringify(executed.get)
-      }
+      }*/
     }
 
     def stringify(es: Vector[(Stage, Vector[Event])]): String = es.map { case (stage, events) => s"$stage${events.mkString}" } .mkString(",")

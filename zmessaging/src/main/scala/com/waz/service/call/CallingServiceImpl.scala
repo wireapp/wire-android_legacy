@@ -184,7 +184,7 @@ class CallingServiceImpl(val accountId:       UserId,
      avs.setProxy(proxyAddress.getHostName, proxyAddress.getPort)
   }
 
-  callProfile(p => verbose(l"Call profile: ${p.calls}"))
+  callProfile.foreach(p => verbose(l"Call profile: ${p.calls}"))
 
   override val calls          = callProfile.map(_.calls).disableAutowiring() //all calls
   override val joinableCalls  = callProfile.map(_.joinableCalls).disableAutowiring() //any call a user can potentially join in the UI
@@ -200,7 +200,7 @@ class CallingServiceImpl(val accountId:       UserId,
   }
 
   Option(ZMessaging.currentAccounts).foreach(
-    _.accountsWithManagers.map(_.contains(accountId)) {
+    _.accountsWithManagers.map(_.contains(accountId)).foreach {
       case false =>
         verbose(l"Account $accountId logged out, unregistering from AVS")
         wCall.map(avs.unregisterAccount)
@@ -398,7 +398,7 @@ class CallingServiceImpl(val accountId:       UserId,
       call.copy(activeSpeakers = activeSpeakers)
     } ("onActiveSpeakersChanged")
 
-  network.networkMode.onChanged { _ =>
+  network.networkMode.onChanged.foreach { _ =>
     currentCall.head.flatMap {
       case Some(_) =>
         verbose(l"network mode changed during call - informing AVS")

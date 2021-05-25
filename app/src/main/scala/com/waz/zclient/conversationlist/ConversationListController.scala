@@ -317,10 +317,10 @@ object ConversationListController {
         convId -> otherUsers.sortBy(_.str).take(4)
       }
 
-    val updatedEntries = EventStream.zip(
+    private val updatedEntries = EventStream.zip(
       zms.membersStorage.onAdded.map(_.map(_.convId).toSet),
       zms.membersStorage.onDeleted.map(_.map(_._2).toSet)
-    ).mapAsync { convs =>
+    ).mapSync { convs =>
       zms.membersStorage.getByConvs(convs).map(entries)
     }
 

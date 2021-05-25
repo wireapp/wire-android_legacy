@@ -25,6 +25,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.media.manager.context.IntensityLevel
+import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -32,15 +33,15 @@ import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.threading.Threading
 import com.waz.utils.TrimmingLruCache.Fixed
-import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Serialized, Signal, SourceSignal}
 import com.waz.utils.{CachedStorageImpl, CirceJSONSupport, JsonDecoder, JsonEncoder, TrimmingLruCache, returning}
 import com.waz.zms.BuildConfig
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue, Signal, SourceSignal}
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 trait Preferences {
 
@@ -180,6 +181,17 @@ object Preferences {
           parser.decode(json)(decoder).right.toOption.getOrElse(Map.empty)
       }
 
+      implicit lazy val LegalHoldRequestCodec = apply[Option[LegalHoldRequest]](
+        { d =>  d.fold("")(r => LegalHoldRequest.Encoder(r).toString) },
+        { s => if (s.isEmpty) None else Some(LegalHoldRequest.Decoder(new JSONObject(s))) },
+        defaultVal = None
+      )
+
+      implicit lazy val LegalHoldStatusCodec = apply[Option[LegalHoldStatus]](
+        { d =>  d.fold("")(r => r.value.toString) },
+        { s => if (s.isEmpty) None else Try(Integer.parseInt(s)).map(LegalHoldStatus(_)).toOption },
+        defaultVal = None
+      )
     }
 
   }
@@ -385,7 +397,7 @@ object UserPreferences {
 
   //increment number to perform slow sync on particular type
   lazy val ShouldSyncConversations = PrefKey[Boolean]("should_sync_conversations_2", customDefault = true)
-  lazy val ShouldSyncInitial = PrefKey[Boolean]("should_sync_initial_2", customDefault = true)
+  lazy val shouldSyncAllOnUpdate = PrefKey[Boolean]("should_sync_all_on_update", customDefault = true)
   lazy val ShouldSyncUsers = PrefKey[Boolean]("should_sync_users_1", customDefault = true)
   lazy val ShouldSyncTeam = PrefKey[Boolean]("should_sync_team_1", customDefault = true)
   lazy val ShouldSyncFolders = PrefKey[Boolean]("should_sync_folders", customDefault = true)
@@ -418,4 +430,10 @@ object UserPreferences {
   lazy val AppLockFeatureEnabled: PrefKey[Boolean]         = PrefKey[Boolean]("app_lock_feature_enabled", customDefault = true)
   lazy val AppLockForced:  PrefKey[Boolean]                = PrefKey[Boolean]("app_lock_forced", customDefault = false)
   lazy val AppLockTimeout: PrefKey[Option[FiniteDuration]] = PrefKey[Option[FiniteDuration]]("app_lock_timeout", customDefault = None)
+
+  lazy val LegalHoldRequest: PrefKey[Option[LegalHoldRequest]] = PrefKey[Option[LegalHoldRequest]]("legal_hold_request", customDefault = None)
+  lazy val LegalHoldDisclosureType: PrefKey[Option[LegalHoldStatus]] =
+    PrefKey[Option[LegalHoldStatus]]("legal_hold_disclosure_type", customDefault = None)
+
+  lazy val ShouldPostClientCapabilities: PrefKey[Boolean] = PrefKey[Boolean]("should_post_client_capabilities", customDefault = true)
 }

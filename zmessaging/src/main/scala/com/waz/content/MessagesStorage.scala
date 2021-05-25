@@ -42,7 +42,6 @@ import scala.collection.immutable.Set
 import scala.concurrent.Future
 
 trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
-
   def onMessageSent:   SourceStream[MessageData]
   def onMessageFailed: SourceStream[(MessageData, ErrorResponse)]
 
@@ -123,7 +122,7 @@ class MessagesStorageImpl(context:     Context,
 
   def msgsFilteredIndex(conv: ConvId): Seq[ConvMessagesIndex] = filteredIndexes.get(conv).values.toSeq
 
-  onAdded { added =>
+  onAdded.foreach { added =>
     Future.traverse(added.groupBy(_.convId)) { case (convId, msgs) =>
       msgsFilteredIndex(convId).foreach(_.add(msgs))
       msgsIndex(convId).flatMap { index =>
@@ -140,7 +139,7 @@ class MessagesStorageImpl(context:     Context,
     } .recoverWithLog()
   }
 
-  onUpdated { updates =>
+  onUpdated.foreach { updates =>
     Future.traverse(updates.groupBy(_._1.convId)) { case (convId, msgs) =>{
         msgsFilteredIndex(convId).foreach(_.update(msgs))
         for {
@@ -332,9 +331,9 @@ class MessageAndLikesStorageImpl(selfUserId: UserId, messages: => MessagesStorag
 
   val onUpdate = EventStream[MessageId]() // TODO: use batching, maybe report new message data instead of just id
 
-  messages.onDeleted { ids => ids foreach { onUpdate ! _ } }
-  messages.onChanged { ms => ms foreach { m => onUpdate ! m.id }}
-  likings.onChanged { _ foreach { l => onUpdate ! l.message } }
+  messages.onDeleted.foreach { _.foreach { onUpdate ! _ } }
+  messages.onChanged.foreach { _.foreach { m => onUpdate ! m.id }}
+  likings.onChanged.foreach { _.foreach { l => onUpdate ! l.message } }
 
 
   def apply(ids: Seq[MessageId]): Future[Seq[MessageAndLikes]] = for {

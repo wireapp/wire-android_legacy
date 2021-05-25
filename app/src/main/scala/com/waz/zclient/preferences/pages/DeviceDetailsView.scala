@@ -28,7 +28,7 @@ import androidx.fragment.app.FragmentTransaction
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.ConvId
-import com.waz.model.otr.ClientId
+import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.sync.SyncResult
@@ -64,6 +64,7 @@ trait DeviceDetailsView {
   def setRemoveOnly(removeOnly: Boolean): Unit
   def setActionsVisible(visible: Boolean): Unit
   def setVerified(verified: Boolean): Unit
+  def setRemovable(removable: Boolean): Unit
 
   //TODO make a super trait for these?
   def showToast(rId: Int): Unit
@@ -127,7 +128,7 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
     resetSessionView.setVisible(!removeOnly)
   }
 
-  fingerprintView.onClickEvent{ _ =>
+  fingerprintView.onClickEvent.onUi { _ =>
     val clip = ClipData.newPlainText(getContext.getString(R.string.pref_devices_device_fingerprint_copy_description), fingerprint)
     clipboard.setPrimaryClip(clip)
     showToast(R.string.pref_devices_device_fingerprint_copy_toast)
@@ -135,6 +136,9 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
 
   override def setVerified(verified: Boolean) =
     verifiedSwitch.setChecked(verified)
+
+  override def setRemovable(removable: Boolean): Unit =
+    removeDeviceView.setVisible(removable)
 
   override def showToast(rId: Int) =
     Toast.makeText(getContext, rId, Toast.LENGTH_LONG).show()
@@ -193,16 +197,17 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
 
   private lazy val client = clientsController.selfClient(clientId).collect { case Some(c) => c }
 
-  client.map(_.model).onUi(view.setName)
+  client.map(deviceName).onUi(view.setName)
   client.map(_.displayId).onUi(view.setId)
   client.map(_.regTime.getOrElse(Instant.EPOCH)).onUi(view.setActivated)
 
   clientsController.isCurrentClient(clientId).map(!_).onUi(view.setActionsVisible)
   client.map(_.isVerified).onUi(view.setVerified)
+  client.map(canRemoveDevice).onUi(view.setRemovable)
   clientsController.selfFingerprint(clientId).onUi{ _.foreach(view.setFingerPrint) }
   clientsController.selfClientId.map(_.isEmpty).onUi(view.setRemoveOnly)
 
-  view.onVerifiedChecked { checked =>
+  view.onVerifiedChecked.onUi { checked =>
     //TODO should this be a signal? Will create a new subscription every time the view is clicked...
     for {
       userId     <- accountManager.map(_.userId)
@@ -211,7 +216,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
     } {}
   }
 
-  view.onSessionReset(_ => resetSession())
+  view.onSessionReset.onUi(_ => resetSession())
 
   private def resetSession(): Unit = {
     zms.head.flatMap { zms =>
@@ -230,7 +235,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
     }(Threading.Ui)
   }
 
-  view.onDeviceRemoved { _ =>
+  view.onDeviceRemoved.onUi { _ =>
     accountsService.accountPassword.head.map {
       case Some(p) => removeDevice(Some(p))
       case _       => showRemoveDeviceDialog()
@@ -264,8 +269,8 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   }
 
   private def showRemoveDeviceDialog(error: Option[String] = None): Unit =
-    Signal.zip(inject[PasswordController].ssoEnabled, client.map(_.model)).head.foreach { case (isSSO, name) =>
-      val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onAccept(removeDevice))
+    Signal.zip(inject[PasswordController].ssoEnabled, client.map(deviceName)).head.foreach { case (isSSO, name) =>
+      val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onAccept.onUi(removeDevice))
       context.asInstanceOf[BaseActivity]
         .getSupportFragmentManager
         .beginTransaction
@@ -274,4 +279,10 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
         .addToBackStack(RemoveDeviceDialog.FragmentTag)
         .commit
     } (Threading.Ui)
+
+  private def canRemoveDevice(client: Client): Boolean = !client.isLegalHoldDevice
+
+  private def deviceName(client: Client): String =
+    if (client.isLegalHoldDevice) getString(R.string.legal_hold_device_name)
+    else client.model
 }

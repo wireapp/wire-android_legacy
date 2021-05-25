@@ -25,10 +25,11 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, TextView}
 import androidx.annotation.StringRes
 import androidx.recyclerview.widget.RecyclerView
-import com.waz.api.{OtrClientType, Verification}
+import com.waz.api.Verification
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.Client
-import com.waz.service.ZMessaging
+import com.waz.model.otr.Client.DeviceClass
+import com.waz.service.{UserService, ZMessaging}
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -42,11 +43,11 @@ class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector,
   extends RecyclerView.Adapter[ParticipantOtrDeviceAdapter.ViewHolder]
     with Injectable
     with DerivedLogTag {
-  
+
   import ParticipantOtrDeviceAdapter._
   import Threading.Implicits.Background
 
-  private lazy val zms = inject[Signal[ZMessaging]]
+  private lazy val userService = inject[Signal[UserService]]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val accentColorController = inject[AccentColorController]
 
@@ -64,16 +65,17 @@ class ParticipantOtrDeviceAdapter(implicit context: Context, injector: Injector,
   } yield clients.fold(List.empty[Client])(_.clients.values.toList.reverse)
 
   private lazy val syncClientsRequest = for {
-    z             <- zms.head
+    userService   <- userService.head
     Some(userId)  <- participantsController.otherParticipantId.head
-  } yield z.sync.syncClients(userId)
+  } yield userService.syncClients(userId)
 
   (for {
     cs    <- clients
     user  <- participantsController.otherParticipant
     color <- accentColorController.accentColor
   } yield (cs, user.name, color)).onUi { case (cs, name, color) =>
-    devices = cs
+    val (legalHoldDevice, otherDevices) = cs.partition(_.isLegalHoldDevice)
+    devices = legalHoldDevice ::: otherDevices
     userName = name
     accentColor = color.color
     notifyDataSetChanged()
@@ -110,10 +112,11 @@ object ParticipantOtrDeviceAdapter {
   private val OTR_CLIENT_TEXT_TEMPLATE = "[[%s]]\n%s"
 
   def deviceClassName(client: Client)(implicit ctx: Context): String = ctx.getString(
-    client.devType match {
-      case OtrClientType.DESKTOP => R.string.otr__participant__device_class__desktop
-      case OtrClientType.PHONE   => R.string.otr__participant__device_class__phone
-      case OtrClientType.TABLET  => R.string.otr__participant__device_class__tablet
+    client.deviceClass match {
+      case DeviceClass.Desktop   => R.string.otr__participant__device_class__desktop
+      case DeviceClass.Phone     => R.string.otr__participant__device_class__phone
+      case DeviceClass.Tablet    => R.string.otr__participant__device_class__tablet
+      case DeviceClass.LegalHold => R.string.otr__participant__device_class__legal_hold
       case _                     => R.string.otr__participant__device_class__unknown
     }
   )
@@ -179,7 +182,10 @@ object ParticipantOtrDeviceAdapter {
       textView.setText(TextViewUtils.getBoldText(textView.getContext, clientText))
 
       ViewUtils.getView[ImageView](itemView, R.id.iv__row_otr_icon).setImageResource(
-        if (client.verified == Verification.VERIFIED) {
+        if (client.isLegalHoldDevice) {
+          textView.setContentDescription(itemView.context.getString(R.string.legal_hold_device_content_description))
+          R.drawable.ic_legal_hold_active
+        } else if (client.verified == Verification.VERIFIED) {
           textView.setContentDescription("Device " + itemView.context.getString(R.string.pref_devices_device_verified))
           R.drawable.shield_full
         } else {

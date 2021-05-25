@@ -51,18 +51,18 @@ class EphemeralMessagesService(selfUserId: UserId,
 
   private val nextExpiryTime = Signal[LocalInstant](LocalInstant.Max)
 
-  val init = removeExpired()
+  private val init = removeExpired()
 
-  nextExpiryTime {
+  nextExpiryTime.foreach {
     case LocalInstant.Max => // nothing to expire
     case time => CancellableFuture.delayed((time.toEpochMilli - LocalInstant.Now.toEpochMilli).millis) { removeExpired() }
   }
 
-  storage.onAdded { msgs =>
+  storage.onAdded.foreach { msgs =>
     updateNextExpiryTime(msgs.flatMap(_.expiryTime))
   }
 
-  storage.onUpdated { updates =>
+  storage.onUpdated.foreach { updates =>
     updateNextExpiryTime(updates.flatMap(_._2.expiryTime))
   }
 
@@ -104,12 +104,12 @@ class EphemeralMessagesService(selfUserId: UserId,
 
     msg.msgType match {
       case TEXT | TEXT_EMOJI_ONLY =>
-        msg.copy(expired = true, content = Nil, genericMsgs = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false))))
+        msg.copy(expired = true, content = Nil, genericMsgs = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false, msg.protoLegalHoldStatus))))
       case RICH_MEDIA =>
         val content = msg.content map { ct =>
           ct.copy(content = obfuscate(ct.content), openGraph = None) //TODO: asset and rich media
         }
-        msg.copy(expired = true, content = content, genericMsgs = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false)))) // TODO: obfuscate links
+        msg.copy(expired = true, content = content, genericMsgs = Seq(GenericMessage(msg.id.uid, Text(obfuscate(msg.contentString), Nil, msg.links, msg.protoQuote, expectsReadConfirmation = false, msg.protoLegalHoldStatus)))) // TODO: obfuscate links
       case VIDEO_ASSET | AUDIO_ASSET =>
         removeSource(msg)
         msg.copy(expired = true)
@@ -117,7 +117,7 @@ class EphemeralMessagesService(selfUserId: UserId,
         msg.copy(expired = true)
       case LOCATION =>
         val (name, zoom) = msg.location.fold(("", 14)) { l => (obfuscate(l.getName), l.getZoom) }
-        msg.copy(expired = true, content = Nil, genericMsgs = Seq(GenericMessage(msg.id.uid, Location(0, 0, name, zoom, expectsReadConfirmation = false))))
+        msg.copy(expired = true, content = Nil, genericMsgs = Seq(GenericMessage(msg.id.uid, Location(0, 0, name, zoom, expectsReadConfirmation = false, msg.protoLegalHoldStatus))))
       case _ =>
         msg.copy(expired = true)
     }

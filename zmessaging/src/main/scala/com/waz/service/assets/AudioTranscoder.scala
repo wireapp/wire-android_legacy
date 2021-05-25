@@ -72,7 +72,7 @@ class AudioTranscoder(tempFiles: TempFileService, context: Context) {
         m4aFile
       })
 
-      new CancellableFuture(promisedFile)
+      CancellableFuture.from(promisedFile)
     } (Threading.IO)
 
   import AudioLevels.MediaCodecCleanedUp

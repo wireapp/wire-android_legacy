@@ -26,12 +26,9 @@ trait RobolectricTests extends RobolectricSuite { self: Suite =>
 
   var testName = ""
 
-  override def useInstrumentation(name: String): Option[Boolean] =
-    if (name.startsWith("com.github") || name.startsWith("com.wire.cryptobox")) Some(false) else super.useInstrumentation(name)
-
   override def robolectricShadows: Seq[Class[_]] = Seq(classOf[ShadowApplication], classOf[ShadowAudioManager2],
-    classOf[ShadowLooper2], classOf[ShadowSQLiteConnection2], classOf[ShadowGeocoder2], classOf[ShadowCursorWindow2], classOf[ShadowFileProvider],
-    classOf[ShadowContentResolver2], classOf[ShadowMediaMetadataRetriever2])
+    classOf[ShadowLooper2], classOf[ShadowSQLiteConnection2], classOf[ShadowCursorWindow2], classOf[ShadowFileProvider],
+    classOf[ShadowMediaMetadataRetriever2])
 
   abstract override protected def runTest(testName: String, args: Args): Status = {
     this.testName = testName

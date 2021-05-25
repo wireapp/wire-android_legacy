@@ -249,6 +249,65 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
 
     }
 
+    scenario("Parse MemberLeaveEvent with reason") {
+      val rConvId = RConvId("bbe1053c-4999-4324-8a2a-851ce48c56c5")
+      val userId1 = UserId("b937e85e-3611-4e29-9bda-6fe39dfd4bd0")
+      val userId2 = UserId("b937e85e-3611-4e29-9bda-6fe39dfd4bd1")
+      val senderId = UserId("bea00721-4af0-4204-82a7-e152c9722ddc")
+      val jsonStr =
+        s"""
+           |{
+           |  "conversation": "${rConvId.str}",
+           |  "time": "2019-12-11T12:40:38.426Z",
+           |  "data": {
+           |    "user_ids": ["${userId1.str}", "${userId2.str}"],
+           |    "reason": "legalhold-policy-conflict"
+           |  },
+           |  "from": "${senderId.str}",
+           |  "type": "conversation.member-leave"
+           |}
+         """.stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      EventDecoder(jsonObject) match {
+        case ev: MemberLeaveEvent =>
+          ev.convId shouldEqual rConvId
+          ev.from shouldEqual senderId
+          ev.userIds.toSet shouldEqual Set(userId1, userId2)
+          ev.reason shouldEqual Some(MemberLeaveReason.LegalHoldPolicyConflict)
+        case e => fail(s"unexpected event: $e")
+      }
+    }
+
+    scenario("Parse MemberLeaveEvent without reason") {
+      val rConvId = RConvId("bbe1053c-4999-4324-8a2a-851ce48c56c5")
+      val userId1 = UserId("b937e85e-3611-4e29-9bda-6fe39dfd4bd0")
+      val userId2 = UserId("b937e85e-3611-4e29-9bda-6fe39dfd4bd1")
+      val senderId = UserId("bea00721-4af0-4204-82a7-e152c9722ddc")
+      val jsonStr =
+        s"""
+           |{
+           |  "conversation": "${rConvId.str}",
+           |  "time": "2019-12-11T12:40:38.426Z",
+           |  "data": {
+           |    "user_ids": ["${userId1.str}", "${userId2.str}"]
+           |  },
+           |  "from": "${senderId.str}",
+           |  "type": "conversation.member-leave"
+           |}
+         """.stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      EventDecoder(jsonObject) match {
+        case ev: MemberLeaveEvent =>
+          ev.convId shouldEqual rConvId
+          ev.from shouldEqual senderId
+          ev.userIds.toSet shouldEqual Set(userId1, userId2)
+          ev.reason shouldEqual None
+        case e => fail(s"unexpected event: $e")
+      }
+    }
+
     scenario("parse LegalHoldRequestEvent") {
       val jsonStr =
         """
@@ -268,10 +327,48 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       val jsonObject = new JSONObject(jsonStr)
       EventDecoder(jsonObject) match {
         case ev: LegalHoldRequestEvent =>
+          ev.userId shouldEqual UserId("858db163-c05d-486f-a478-cfe912e9ccde")
           ev.request.clientId.str shouldEqual "123"
           ev.request.lastPreKey.id shouldEqual 456
           ev.request.lastPreKey.data shouldEqual AESUtils.base64("oENwaFy74nagzFBlqn9nOQ==")
-        case e => fail(s"unexpected event: $e")
+        case e =>
+          fail(s"unexpected event: $e")
+      }
+    }
+
+    scenario("parse LegalHoldEnableEvent") {
+      val jsonStr =
+        """
+          |{
+          |  "id": "858db163-c05d-486f-a478-cfe912e9ccde",
+          |  "type": "user.legalhold-enable"
+          |}
+          |""".stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      EventDecoder(jsonObject) match {
+        case ev: LegalHoldEnableEvent =>
+          ev.userId shouldEqual UserId("858db163-c05d-486f-a478-cfe912e9ccde")
+        case e =>
+          fail(s"unexpected event: $e")
+      }
+    }
+
+    scenario("parse LegalHoldDisableEvent") {
+      val jsonStr =
+        """
+          |{
+          |  "id": "858db163-c05d-486f-a478-cfe912e9ccde",
+          |  "type": "user.legalhold-disable"
+          |}
+          |""".stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      EventDecoder(jsonObject) match {
+        case ev: LegalHoldDisableEvent =>
+          ev.userId shouldEqual UserId("858db163-c05d-486f-a478-cfe912e9ccde")
+        case e =>
+          fail(s"unexpected event: $e")
       }
     }
   }

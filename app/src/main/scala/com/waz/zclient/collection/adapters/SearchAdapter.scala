@@ -112,12 +112,10 @@ class SearchAdapter()(implicit context: Context, injector: Injector, eventContex
   }
 }
 
-class SearchResultRowViewHolder(view: SearchResultRowView)(implicit eventContext: EventContext) extends RecyclerView.ViewHolder(view){
+class SearchResultRowViewHolder(view: SearchResultRowView)(implicit eventContext: EventContext)
+  extends RecyclerView.ViewHolder(view){
+  def setSearchQuerySignal(contentSearchQuery: Signal[ContentSearchQuery]): Unit =
+    contentSearchQuery.foreach {view.searchedQuery ! _ }
 
-  def setSearchQuerySignal(contentSearchQuery: Signal[ContentSearchQuery]): Unit = {
-    contentSearchQuery{view.searchedQuery ! _}
-  }
-
-  def set(message: MessageAndLikes): Unit =
-    view.set(message, None)
+  def set(message: MessageAndLikes): Unit = view.set(message, None)
 }

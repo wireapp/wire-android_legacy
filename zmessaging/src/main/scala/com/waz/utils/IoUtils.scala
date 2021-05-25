@@ -40,9 +40,8 @@ object IoUtils {
     override def initialValue(): Array[Byte] = new Array[Byte](8096)
   }
 
-  def createDirectory(file: File): Unit =
-    if (!file.mkdirs() && !file.isDirectory)
-      throw FileSystemError(s"Can not create directory: $file")
+  def createDirectory(file: File): Boolean =
+    !file.mkdirs() && !file.isDirectory
 
   def copy(in: InputStream, out: OutputStream): Long = {
     try {
@@ -77,15 +76,13 @@ object IoUtils {
   def copyAsync(in: => InputStream, out: File)(implicit ec: ExecutionContext): CancellableFuture[Long] =
     copyAsync(in, new BufferedOutputStream(new FileOutputStream(out)))
 
-  def copyAsync(in: => InputStream, out: => OutputStream)(implicit ec: ExecutionContext): CancellableFuture[Long] = {
+  private def copyAsync(in: => InputStream, out: => OutputStream)(implicit ec: ExecutionContext): CancellableFuture[Long] = {
     val promise = Promise[Long]
     val cancelled = new AtomicBoolean(false)
 
     promise.trySuccess(copy(new CancellableStream(in, cancelled), out))
 
-    new CancellableFuture(promise) {
-      override def cancel(): Boolean = cancelled.compareAndSet(false, true)
-    }
+    CancellableFuture.from(promise).onCancel(cancelled.compareAndSet(false, true))
   }
 
   def writeBytesToFile(file: File, bytes: Array[Byte]): Unit =

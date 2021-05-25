@@ -22,11 +22,13 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Ephemeral, Unknown}
+import com.waz.model.Messages.LegalHoldStatus
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 
 import scala.concurrent.duration.FiniteDuration
+import scala.language.existentials
 import scala.language.implicitConversions
 
 package object model {
@@ -62,6 +64,16 @@ package object model {
     lazy val isBroadcastMessage: Boolean = proto.getContentCase.getNumber match {
       case Messages.GenericMessage.AVAILABILITY_FIELD_NUMBER => true
       case _ => false
+    }
+
+    def legalHoldStatus: LegalHoldStatus = unpackContent match {
+      case reaction: GenericContent.Reaction   => reaction.proto.getLegalHoldStatus
+      case knock: GenericContent.Knock         => knock.proto.getLegalHoldStatus
+      case text: GenericContent.Text           => text.proto.getLegalHoldStatus
+      case location: GenericContent.Location   => location.proto.getLegalHoldStatus
+      case asset: GenericContent.Asset         => asset.proto.getLegalHoldStatus
+      case composite: GenericContent.Composite => composite.proto.getLegalHoldStatus
+      case _                                   => LegalHoldStatus.UNKNOWN
     }
 
     def unpackContent: GenericContent[_] = unpack match {
@@ -145,31 +157,36 @@ package object model {
 
       implicit val log: LogTag = LogTag("TextMessage")
 
-      def apply(text: String): GenericMessage = GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false))
+      def apply(text: String,
+                legalHoldStatus: Messages.LegalHoldStatus = Messages.LegalHoldStatus.UNKNOWN): GenericMessage =
+        GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
-                expectsReadConfirmation: Boolean): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation))
+                expectsReadConfirmation: Boolean,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, Nil, expectsReadConfirmation, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
                 links: Seq[LinkPreview],
-                expectsReadConfirmation: Boolean): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation))
+                expectsReadConfirmation: Boolean,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, links, expectsReadConfirmation, legalHoldStatus))
 
       def apply(text: String,
                 mentions: Seq[com.waz.model.Mention],
                 links: Seq[LinkPreview],
                 quote: Option[Quote],
-                expectsReadConfirmation: Boolean): GenericMessage =
-        GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation))
+                expectsReadConfirmation: Boolean,
+                legalHoldStatus: Messages.LegalHoldStatus): GenericMessage =
+        GenericMessage(Uid(), Text(text, mentions, links, quote, expectsReadConfirmation, legalHoldStatus))
 
       def apply(msg: MessageData): GenericMessage =
         GenericMessage(
           msg.id.uid,
           msg.ephemeral,
-          Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false))
+          Text(msg.contentString, msg.content.flatMap(_.mentions), Nil, msg.protoQuote, msg.expectsRead.getOrElse(false), msg.protoLegalHoldStatus)
         )
 
       def unapply(msg: GenericMessage): Option[(String, Seq[com.waz.model.Mention], Seq[LinkPreview], Option[Quote], Boolean)] = msg.unpackContent match {

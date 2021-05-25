@@ -150,7 +150,7 @@ class UserServiceSpec extends AndroidFreeSpec {
       (membersStorage.removeAll _).expects(Set(member.id)).atLeastOnce().returning(
         Future.successful(())
       )
-      (messages.addMemberLeaveMessage _).expects(convId, *, Set(user1.id)).atLeastOnce().returning(
+      (messages.addMemberLeaveMessage _).expects(convId, *, Set(user1.id), *).atLeastOnce().returning(
         Future.successful(())
       )
       (usersStorage.updateAll2 _).expects(Set(user1.id), *).atLeastOnce().onCall { (_: Iterable[UserId], updater: UserData => UserData) =>

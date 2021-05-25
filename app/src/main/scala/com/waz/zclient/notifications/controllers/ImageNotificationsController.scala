@@ -46,13 +46,12 @@ class ImageNotificationsController(implicit cxt: WireContext, inj: Injector)
   val savedImageId = Signal[Option[AssetId]](None)
   val savedImageUri = Signal[URI]()
 
-  def showImageSavedNotification(imageId: AssetId, uri: URI): Unit = Option(imageId).zip(Option(uri)).foreach {
-    case (id, ur) =>
-      savedImageId ! Some(id)
-      savedImageUri ! uri
+  def showImageSavedNotification(imageId: AssetId, uri: URI): Unit = {
+    savedImageId ! Option(imageId)
+    savedImageUri ! uri
   }
 
-  def dismissImageSavedNotification() = {
+  def dismissImageSavedNotification(): Unit = {
     notManager.cancel(ZETA_SAVE_IMAGE_NOTIFICATION_ID)
     savedImageId ! None
   }

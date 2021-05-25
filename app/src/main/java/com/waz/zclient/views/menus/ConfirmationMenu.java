@@ -63,6 +63,9 @@ public class ConfirmationMenu extends LinearLayout {
     private ZetaButton positiveButton;
     private GlyphTextView cancelButton;
     private ZetaButton negativeButton;
+    private ZetaButton neutralButton;
+    private LinearLayout buttonsLayout;
+    private View buttonSeparator;
     private CheckBoxView checkBoxView;
     private ImageView headerIconView;
     private ImageView backgroundImageView;
@@ -89,6 +92,10 @@ public class ConfirmationMenu extends LinearLayout {
                     break;
                 case R.id.negative:
                     callback.negativeButtonClicked();
+                    animateToShow(false);
+                    break;
+                case R.id.neutral:
+                    callback.neutralButtonClicked();
                     animateToShow(false);
                     break;
                 case R.id.cancel:
@@ -141,9 +148,12 @@ public class ConfirmationMenu extends LinearLayout {
 
     public void setNegativeButton(String text) {
         updateText(negativeButton, text);
-        if (negativeButton.getVisibility() == GONE) {
-            ViewUtils.setMarginLeft(positiveButton, 0);
-        }
+        updateButtonsLayout();
+    }
+
+    public void setNeutralButton(String text) {
+        updateText(neutralButton, text);
+        updateButtonsLayout();
     }
 
     public void setCancelVisible(boolean visible) {
@@ -176,14 +186,29 @@ public class ConfirmationMenu extends LinearLayout {
         }
     }
 
+    // if 3 buttons are visible, show them vertically stacked.
+    // if 2 buttons are visible, show them side by side (horizontally)
+    // if 1 button is visible, it stretches to fill whole screen
+    private void updateButtonsLayout() {
+        if (neutralButton.getVisibility() == GONE) {
+            buttonsLayout.setOrientation(LinearLayout.HORIZONTAL);
+            buttonSeparator.setVisibility(negativeButton.getVisibility());
+        } else {
+            buttonsLayout.setOrientation(LinearLayout.VERTICAL);
+        }
+    }
+
     public void setButtonColor(int color) {
         positiveButton.setIsFilled(true);
         positiveButton.setAccentColor(color);
 
         negativeButton.setIsFilled(false);
         negativeButton.setAccentColor(color);
+        neutralButton.setIsFilled(false);
+        neutralButton.setAccentColor(color);
         if (optionsTheme != null && optionsTheme.getType() == OptionsTheme.Type.LIGHT) {
             negativeButton.setTextColor(color);
+            neutralButton.setTextColor(color);
         }
 
         backgroundImageView.setColorFilter(ColorUtils.injectAlpha(0.1f, color));
@@ -322,6 +347,12 @@ public class ConfirmationMenu extends LinearLayout {
         negativeButton.setText(negativeButtonText);
         negativeButton.setOnClickListener(onClickListener);
 
+        neutralButton = ViewUtils.getView(this, R.id.neutral);
+        neutralButton.setOnClickListener(onClickListener);
+
+        buttonsLayout = ViewUtils.getView(this, R.id.confirmation_menu_buttons_layout);
+        buttonSeparator = ViewUtils.getView(this, R.id.confirmation_menu_button_separator);
+
         cancelButton = ViewUtils.getView(this, R.id.cancel);
         cancelButton.setVisibility(cancelVisible ? VISIBLE : GONE);
         cancelButton.setOnClickListener(onClickListener);
@@ -352,6 +383,7 @@ public class ConfirmationMenu extends LinearLayout {
         checkBoxView.setOptionsTheme(optionsTheme);
         if (optionsTheme.getType() == OptionsTheme.Type.DARK) {
             negativeButton.setTextColor(optionsTheme.getTextColorPrimary());
+            neutralButton.setTextColor(optionsTheme.getTextColorPrimary());
         }
         setBackground(optionsTheme.getOverlayColor());
     }
@@ -367,6 +399,7 @@ public class ConfirmationMenu extends LinearLayout {
         setText(confirmationRequest.message);
         setPositiveButton(confirmationRequest.positiveButton);
         setNegativeButton(confirmationRequest.negativeButton);
+        setNeutralButton(confirmationRequest.neutralButton);
         setCancelVisible(confirmationRequest.cancelVisible);
         setIcon(confirmationRequest.headerIconRes);
         setBackgroundImage(confirmationRequest.backgroundImage);

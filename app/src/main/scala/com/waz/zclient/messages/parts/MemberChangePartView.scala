@@ -22,7 +22,7 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
 import com.waz.api.Message
-import com.waz.api.Message.Type.MEMBER_JOIN
+import com.waz.api.Message.Type.{MEMBER_JOIN, MEMBER_LEAVE_DUE_TO_LEGAL_HOLD}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageContent
 import com.waz.service.ZMessaging
@@ -38,13 +38,14 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.zclient.common.controllers.BrowserController
 
 class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
     with MessageViewPart
     with ViewHelper
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -55,8 +56,9 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
   inflate(R.layout.message_member_change_content)
 
   private lazy val zMessaging = inject[Signal[ZMessaging]]
-  private lazy val users      = inject[UsersController]
+  private lazy val users = inject[UsersController]
   private lazy val participantsController = inject[ParticipantsController]
+  private lazy val browserController = inject[BrowserController]
 
   val messageView: SystemMessageView  = findById(R.id.smv_header)
   val warningText: TextView  = findById(R.id.service_warning_text)
@@ -79,7 +81,7 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
 
   val senderName = message.map(_.userId).flatMap(users.displayName)
 
-  private val linkText = for {
+  private val linkText: Signal[(String, Message.Type)] = for {
     zms         <- zMessaging
     msg         <- message
     displayName <- senderName
@@ -96,8 +98,8 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
       case Other(name) => name == users.DefaultDeletedName.str
       case _           => false
     }
-    
-    (msg.msgType, displayName, msg.members.toSeq) match {
+
+    val string = (msg.msgType, displayName, msg.members.toSeq) match {
         //Create Conv
       case (MEMBER_JOIN, Me, _)       if msg.firstMessage && msg.name.isDefined && shorten => getQuantityString(R.plurals.content__system__with_others_only, othersCount, namesListString, othersCount.toString)
       case (MEMBER_JOIN, Me, _)       if msg.firstMessage && msg.name.isDefined            => getString(R.string.content__system__with_list_only, namesListString)
@@ -128,10 +130,17 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
       case (MEMBER_LEAVE, Other(name), _) if isOtherUserUnknown                            => getString(R.string.content__system__other_removed_someone, name)
       case (MEMBER_LEAVE, Other(name), _)                                                  => getString(R.string.content__system__other_removed_other, name, namesListString)
 
+      case (MEMBER_LEAVE_DUE_TO_LEGAL_HOLD, _, Seq(`me`))                                  => getString(R.string.content__system__legalhold_conflict__you_were_removed)
+      case (MEMBER_LEAVE_DUE_TO_LEGAL_HOLD, _, _) if isOtherUserUnknown                    => getString(R.string.content__system__legalhold_conflict__someone_was_removed)
+      case (MEMBER_LEAVE_DUE_TO_LEGAL_HOLD, _, Seq(`userId`))                              => getString(R.string.content__system__legalhold_conflict__other_was_removed, namesListString)
+      case (MEMBER_LEAVE_DUE_TO_LEGAL_HOLD, _, _)                                          => getString(R.string.content__system__legalhold_conflict__others_were_removed, namesListString)
+
       case _ =>
         warn(l"Unexpected system message format: (${msg.msgType} from $displayName with ${msg.members.toSeq})")
         ""
     }
+
+    (string, msg.msgType)
   }
 
   private val servicesPresentWarning = for {
@@ -153,20 +162,26 @@ class MemberChangePartView(context: Context, attrs: AttributeSet, style: Int)
     .map(_.map(toPx))
     .onUi(_.foreach(this.setMarginTop))
 
-  iconGlyph {
+  iconGlyph.onUi {
     case Left(i) => messageView.setIconGlyph(i)
     case Right(d) => messageView.setIcon(d)
   }
 
-  linkText.onUi { text =>
+  linkText.onUi { case (text, msgType) =>
     messageView.setTextWithLink(text, getColor(R.color.accent_blue)) {
-      participantsController.onShowParticipants ! None
+      msgType match {
+        case MEMBER_JOIN =>
+          participantsController.onShowParticipants ! None
+        case MEMBER_LEAVE_DUE_TO_LEGAL_HOLD =>
+          browserController.openAboutLegalHold
+        case _ => ()
+      }
     }
   }
 
   servicesPresentWarning.onUi { text =>
     warningText.setVisible(text.isDefined)
-    text.foreach(warningText.setText(_))
+    text.foreach(warningText.setText)
   }
 
 }

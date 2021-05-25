@@ -22,9 +22,11 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{FrameLayout, ImageButton, ImageView}
+import androidx.core.content.ContextCompat
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Availability, UserData}
 import com.waz.service.teams.TeamsService
+import com.waz.threading.Threading.Implicits.Ui
 import com.wire.signals.{EventStream, Signal, SourceStream}
 import com.waz.utils.{NameParts, returning}
 import com.waz.zclient.common.drawables.TeamIconDrawable
@@ -92,6 +94,8 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
+  import NormalTopToolbar._
+
   private val drawable = new TeamIconDrawable
 
   private val profileButton = returning(findById[ImageView](R.id.conversation_list_settings)) { button =>
@@ -100,15 +104,20 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
     button.setVisible(true)
   }
 
-  private lazy val usersController = inject[UsersController]
+  private lazy val usersController     = inject[UsersController]
+  private lazy val legalHoldController = inject[LegalHoldController]
 
   private val settingsIndicator = findById[CircleView](R.id.conversation_list_settings_indicator)
 
   private val legalHoldIndicatorButton = returning(findById[ImageButton](R.id.conversation_list_toolbar_image_button_legal_hold)) { button =>
-    button.onClick { legalHoldIndicatorClick ! (()) }
+    button.onClick {
+      legalHoldController.hasPendingRequest.head.foreach { isPending =>
+        legalHoldIndicatorClick ! isPending
+      }
+    }
   }
 
-  val legalHoldIndicatorClick: SourceStream[Unit] = EventStream[Unit]()
+  val legalHoldIndicatorClick: SourceStream[Boolean] = EventStream[Boolean]()
 
   separatorDrawable.setDuration(0)
   separatorDrawable.setMinMax(0.0f, 1.0f)
@@ -129,10 +138,20 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
 
   (for {
     selfUser        <- usersController.selfUser
-    legalHoldActive <- inject[LegalHoldController].isLegalHoldActive(selfUser.id)
-  } yield legalHoldActive)
-    .map(if(_) View.VISIBLE else View.INVISIBLE)
-    .onUi(legalHoldIndicatorButton.setVisibility)
+    legalHoldActive <- legalHoldController.isLegalHoldActive(selfUser.id)
+    pendingApproval <- legalHoldController.hasPendingRequest
+  } yield (legalHoldActive, pendingApproval))
+    .map {
+      case (true, _)     => (Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_active)), LegalHoldActive)
+      case (false, true) => (Some(ContextCompat.getDrawable(context, R.drawable.ic_legal_hold_pending)), LegalHoldPendingApproval)
+      case _             => (None, "")
+    }
+    .onUi { params =>
+      val (drawable, contentDesc) = params
+      legalHoldIndicatorButton.setVisibility(if (drawable.isDefined) View.VISIBLE else View.INVISIBLE)
+      drawable.foreach(legalHoldIndicatorButton.setImageDrawable)
+      legalHoldIndicatorButton.setContentDescription(contentDesc)
+    }
 
   def setIndicatorVisible(visible: Boolean): Unit = settingsIndicator.setVisible(visible)
 
@@ -142,6 +161,10 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
     profileButton.setImageDrawable(if (loading) getDrawable(R.drawable.list_row_chathead_loading) else drawable)
 }
 
+object NormalTopToolbar {
+  val LegalHoldActive = "Active"
+  val LegalHoldPendingApproval = "Pending approval"
+}
 
 class ArchiveTopToolbar(override val context: Context, override val attrs: AttributeSet, override val defStyleAttr: Int)
   extends ConversationListTopToolbar(context, attrs, defStyleAttr){

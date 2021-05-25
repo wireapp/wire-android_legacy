@@ -27,6 +27,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
 import com.waz.model.otr.ClientId
 import com.waz.model.{Mention, MessageId, _}
+import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.assets.UploadAsset
 import com.waz.service.conversation.ConversationsContentUpdater
@@ -39,6 +40,7 @@ import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
 import com.wire.signals.{EventStream, RefreshingSignal, Signal}
+import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -64,7 +66,7 @@ trait MessagesService {
 
   //TODO forceCreate is a hacky workaround for a bug where previous system messages are not marked as SENT. Do NOT use!
   def addMemberJoinMessage(convId: ConvId, creator: UserId, users: Set[UserId], firstMessage: Boolean = false, forceCreate: Boolean = false): Future[Option[MessageData]]
-  def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId]): Future[Unit]
+  def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId], reason: Option[MemberLeaveReason]): Future[Unit]
   def addRenameConversationMessage(convId: ConvId, selfUserId: UserId, name: Name): Future[Option[MessageData]]
   def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]]
   def addReceiptModeChangeMessage(convId: ConvId, from: UserId, receiptMode: Int): Future[Option[MessageData]]
@@ -75,6 +77,9 @@ trait MessagesService {
   def addDeviceStartMessages(convs: Seq[ConversationData], selfUserId: UserId): Future[Set[MessageData]]
   def addOtrVerifiedMessage(convId: ConvId): Future[Option[MessageData]]
   def addOtrUnverifiedMessage(convId: ConvId, users: Seq[UserId], change: VerificationChange): Future[Option[MessageData]]
+
+  def addLegalHoldEnabledMessage(convId: ConvId, time: Option[RemoteInstant]): Future[Option[MessageData]]
+  def addLegalHoldDisabledMessage(convId: ConvId, time: Option[RemoteInstant]): Future[Option[MessageData]]
 
   def retryMessageSending(conv: ConvId, msgId: MessageId): Future[Option[SyncId]]
   def updateMessageState(convId: ConvId, messageId: MessageId, state: Message.Status): Future[Option[MessageData]]
@@ -217,18 +222,21 @@ class MessagesServiceImpl(selfUserId:      UserId,
 
   override def addTextMessage(convId: ConvId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[MessageData] = {
     verbose(l"addTextMessage($convId, ${content.length}, $mentions, $exp)")
-    val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
-    val id = MessageId()
-    val gm = GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, expectsReadReceipt.selfSettings))
-    updater.addLocalMessage(
-      MessageData(
-        id, convId, tpe, selfUserId,
-        content = ct,
-        genericMsgs = Seq(gm),
-        forceReadReceipts = expectsReadReceipt.convSetting
-      ),
-      exp = exp
-    ) // FIXME: links
+
+    convs.storage.getLegalHoldHint(convId).flatMap { legalHoldStatus =>
+      val (tpe, ct) = MessageData.messageContent(content, mentions, weblinkEnabled = true)
+      val id = MessageId()
+      val gm = GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, expectsReadReceipt.selfSettings, legalHoldStatus))
+      updater.addLocalMessage(
+        MessageData(
+          id, convId, tpe, selfUserId,
+          content = ct,
+          genericMsgs = Seq(gm),
+          forceReadReceipts = expectsReadReceipt.convSetting
+        ),
+        exp = exp
+      ) // FIXME: links
+    }
   }
 
   override def addReplyMessage(quote: MessageId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
@@ -242,17 +250,19 @@ class MessagesServiceImpl(selfUserId:      UserId,
         val localTime = LocalInstant.Now
         replyHashing.hashMessage(original).flatMap { hash =>
           verbose(l"hash before sending: $hash, original time: ${original.time}")
-          updater.addLocalMessage(
-            MessageData(
-              id, original.convId, tpe, selfUserId,
-              content = ct,
-              genericMsgs = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash))), expectsReadReceipt.selfSettings))),
-              quote = Some(QuoteContent(quote, validity = true, hash = Some(hash))),
-              forceReadReceipts = expectsReadReceipt.convSetting
-            ),
-            exp = exp,
-            localTime = localTime
-          ).map(Option(_))
+          convs.storage.getLegalHoldHint(original.convId).flatMap { legalHoldStatus =>
+            updater.addLocalMessage(
+              MessageData(
+                id, original.convId, tpe, selfUserId,
+                content = ct,
+                genericMsgs = Seq(GenericMessage(id.uid, Text(content, ct.flatMap(_.mentions), Nil, Some(Quote(quote, Some(hash))), expectsReadReceipt.selfSettings, legalHoldStatus))),
+                quote = Some(QuoteContent(quote, validity = true, hash = Some(hash))),
+                forceReadReceipts = expectsReadReceipt.convSetting
+              ),
+              exp = exp,
+              localTime = localTime
+            ).map(Option(_))
+          }
         }
         .recover {
           case e@(_:IllegalArgumentException|_:replyHashing.MissingAssetException) =>
@@ -285,17 +295,21 @@ class MessagesServiceImpl(selfUserId:      UserId,
       case _: Asset.Audio => Message.Type.AUDIO_ASSET
       case _              => Message.Type.ANY_ASSET
     }
-    val msgData = MessageData(
-      msgId,
-      convId,
-      tpe,
-      selfUserId,
-      content = Seq(),
-      genericMsgs = Seq(GenericMessage(msgId.uid, GenericAsset(asset, None, expectsReadConfirmation = expectsReadReceipt.selfSettings))),
-      forceReadReceipts = expectsReadReceipt.convSetting,
-      assetId = Some(asset.id)
-    )
-    updater.addLocalMessage(msgData, exp = exp)
+
+    convs.storage.getLegalHoldHint(convId).flatMap { legalHoldStatus =>
+      val msgData = MessageData(
+        msgId,
+        convId,
+        tpe,
+        selfUserId,
+        content = Seq(),
+        genericMsgs = Seq(GenericMessage(msgId.uid, GenericAsset(asset, None, expectsReadConfirmation = expectsReadReceipt.selfSettings, legalHoldStatus))),
+        forceReadReceipts = expectsReadReceipt.convSetting,
+        assetId = Some(asset.id)
+      )
+      updater.addLocalMessage(msgData, exp = exp)
+    }
+
   }
 
   override def addRenameConversationMessage(convId: ConvId, from: UserId, name: Name) = {
@@ -405,10 +419,15 @@ class MessagesServiceImpl(selfUserId:      UserId,
         Future.successful(())
     }
 
-  override def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId]): Future[Unit] = {
-    val newMessage = MessageData(MessageId(), convId, Message.Type.MEMBER_LEAVE, remover, members = users)
+  override def addMemberLeaveMessage(convId: ConvId, remover: UserId, users: Set[UserId], reason: Option[MemberLeaveReason]): Future[Unit] = {
+    val messageType = reason match {
+      case Some(MemberLeaveReason.LegalHoldPolicyConflict) => Message.Type.MEMBER_LEAVE_DUE_TO_LEGAL_HOLD
+      case _                                               => Message.Type.MEMBER_LEAVE
+    }
+
+    val newMessage = MessageData(MessageId(), convId, messageType, remover, members = users)
     def update(msg: MessageData) = msg.copy(members = msg.members ++ users)
-    updater.updateOrCreateLocalMessage(convId, Message.Type.MEMBER_LEAVE, update, newMessage).map(_ => ())
+    updater.updateOrCreateLocalMessage(convId, messageType, update, newMessage).map(_ => ())
   }
 
 
@@ -429,6 +448,18 @@ class MessagesServiceImpl(selfUserId:      UserId,
     }
     verbose(l"addOtrUnverifiedMessage($convId, $users, $change), msgType is $msgType")
     updater.addLocalSentMessage(MessageData(MessageId(), convId, msgType, selfUserId, members = users.toSet)) map { Some(_) }
+  }
+
+  override def addLegalHoldEnabledMessage(convId: ConvId, time: Option[RemoteInstant]): Future[Option[MessageData]] = {
+    val serverTime = time.getOrElse(RemoteInstant(now(clock)))
+    val message = MessageData(MessageId(), convId, Message.Type.LEGALHOLD_ENABLED, selfUserId, time = serverTime)
+    updater.addLocalSentMessage(message, Some(serverTime)).map(Some(_))
+  }
+
+  override def addLegalHoldDisabledMessage(convId: ConvId, time: Option[RemoteInstant]): Future[Option[MessageData]] = {
+    val serverTime = time.getOrElse(RemoteInstant(now(clock)))
+    val message = MessageData(MessageId(), convId, Message.Type.LEGALHOLD_DISABLED, selfUserId, time = serverTime)
+    updater.addLocalSentMessage(message, Some(serverTime)).map(Some(_))
   }
 
   override def retryMessageSending(conv: ConvId, msgId: MessageId) =

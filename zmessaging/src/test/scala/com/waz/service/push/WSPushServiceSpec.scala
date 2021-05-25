@@ -145,7 +145,7 @@ import scala.concurrent.duration._
       val responseContent = JsonObjectResponse(notification.toJson)
 
       var gotNotification = false
-      service.notifications { _ =>
+      service.notifications.foreach { _ =>
         gotNotification = true
       }
 
@@ -171,7 +171,7 @@ import scala.concurrent.duration._
       val responseContent = JsonObjectResponse(new JSONObject())
 
       var gotNotification = false
-      service.notifications { _ =>
+      service.notifications.foreach { _ =>
         gotNotification = true
       }
 

@@ -41,6 +41,7 @@ object Intents {
     val Settings = "Settings"
     val Advanced = "Advanced"
     val Devices  = "Devices"
+    val DeviceRemoval = "DeviceRemoval"
   }
 
   def CallIntent(userId: UserId, convId: ConvId, requestCode: Int = System.currentTimeMillis().toInt)(implicit context: Context) =
@@ -70,6 +71,9 @@ object Intents {
 
   def ShowDevicesIntent(implicit context: Context) =
     new Intent(context, classOf[PreferencesActivity]).putExtra(OpenPageExtra, Page.Devices)
+
+  def ShowDeviceRemovalIntent(implicit context: Context) =
+    new Intent(context, classOf[PreferencesActivity]).putExtra(OpenPageExtra, Page.DeviceRemoval)
 
   def ShowAdvancedSettingsIntent(implicit context: Context) =
     new Intent(context, classOf[PreferencesActivity]).putExtra(OpenPageExtra, Page.Advanced)
@@ -103,8 +107,8 @@ object Intents {
     def fromSharing: Boolean = Option(intent).exists(_.getBooleanExtra(FromSharingExtra, false))
 
     def startCall: Boolean = Option(intent).exists(_.getBooleanExtra(StartCallExtra, false))
-    def accountId: Option[UserId] = Option(intent).map(_.getStringExtra(AccountIdExtra)).filter(_ != null).map(UserId)
-    def convId: Option[ConvId] = Option(intent).map(_.getStringExtra(ConvIdExtra)).filter(_ != null).map(ConvId)
+    def accountId: Option[UserId] = Option(intent).map(_.getStringExtra(AccountIdExtra)).filter(_ != null).map(UserId(_))
+    def convId: Option[ConvId] = Option(intent).map(_.getStringExtra(ConvIdExtra)).filter(_ != null).map(ConvId(_))
 
     def page: Option[Page] = Option(intent).map(_.getStringExtra(OpenPageExtra)).filter(_ != null)
     def initSync: Boolean = Option(intent).exists(_.getBooleanExtra(InitSyncExtra, false))

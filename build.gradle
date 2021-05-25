@@ -58,15 +58,13 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
 }
 
 ext {
-    activeSpeakersView = true
-    zoomingGroupCall = true
-    appLockFeatureFlag = true
-    sessionReset = true
-    legalHold = false
+    largeVideoConferenceCalls = false
+    legalHold = true
 }
 
 apply from: "./scripts/avs.gradle"

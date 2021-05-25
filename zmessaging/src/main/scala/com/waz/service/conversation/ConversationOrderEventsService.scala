@@ -49,7 +49,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
       case _: ConnectRequestEvent     => true
       case _: OtrMessageEvent         => true
       case MemberJoinEvent(_, _, _, added, _, _) if added.contains(selfUserId) => true
-      case MemberLeaveEvent(_, _, _, leaving) if leaving.contains(selfUserId) => true
+      case MemberLeaveEvent(_, _, _, leaving, _) if leaving.contains(selfUserId) => true
       case GenericMessageEvent(_, _, _, gm: GenericMessage) =>
         gm.unpackContent match {
           case _: Asset               => true
@@ -77,7 +77,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
 
   private[service] def shouldUnarchive(event: ConversationEvent): Boolean =
     event match {
-      case MemberLeaveEvent(_, _, _, leaving) if leaving contains selfUserId => false
+      case MemberLeaveEvent(_, _, _, leaving, _) if leaving contains selfUserId => false
       case _ => shouldChangeOrder(event)
     }
 

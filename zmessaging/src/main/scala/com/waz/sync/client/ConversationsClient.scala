@@ -43,7 +43,7 @@ trait ConversationsClient {
   def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult]
   def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
   def loadConversations(ids: Set[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
-  def loadConversationRoles(remoteIds: Set[RConvId]): Future[Map[RConvId, Set[ConversationRole]]]
+  def loadConversationRoles(remoteIds: Set[RConvId], defRoles: Set[ConversationRole]): Future[Map[RConvId, Set[ConversationRole]]]
   def postName(convId: RConvId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]]
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
   def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit]
@@ -116,9 +116,12 @@ class ConversationsClientImpl(implicit
       .executeSafe(_.toConversationRoles)
   }
 
-  override def loadConversationRoles(remoteIds: Set[RConvId]): Future[Map[RConvId, Set[ConversationRole]]] =
+  override def loadConversationRoles(remoteIds: Set[RConvId], defRoles: Set[ConversationRole]): Future[Map[RConvId, Set[ConversationRole]]] =
     Future.sequence(
-      remoteIds.map(rConvId => loadConversationRoles(rConvId).future.collect { case Right(roles) => rConvId -> roles })
+      remoteIds.map(rConvId => loadConversationRoles(rConvId).future.map {
+        case Right(roles) => rConvId -> roles
+        case _            => rConvId -> defRoles
+      })
     ).map(_.toMap)
 
   private implicit val EventsResponseDeserializer: RawBodyDeserializer[List[ConversationEvent]] =

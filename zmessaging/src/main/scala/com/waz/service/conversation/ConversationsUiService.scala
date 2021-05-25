@@ -218,31 +218,34 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
 
   override def sendLocationMessage(convId: ConvId, l: api.MessageContent.Location): Future[Some[MessageData]] = {
     for {
-      rr  <- readReceiptSettings(convId)
-      msg <- messages.addLocationMessage(convId, Location(l.getLongitude, l.getLatitude, l.getName, l.getZoom, rr.selfSettings))
-      _   <- updateLastRead(msg)
-      _   <- sync.postMessage(msg.id, convId, msg.editTime)
+      rr              <- readReceiptSettings(convId)
+      legalHoldStatus <- convStorage.getLegalHoldHint(convId)
+      msg             <- messages.addLocationMessage(convId, Location(l.getLongitude, l.getLatitude, l.getName, l.getZoom, rr.selfSettings, legalHoldStatus))
+      _               <- updateLastRead(msg)
+      _               <- sync.postMessage(msg.id, convId, msg.editTime)
     } yield Some(msg)
   }
 
   override def updateMessage(convId: ConvId, id: MessageId, text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]] =
-    messagesStorage.update(id, {
-      case m if m.convId == convId && m.userId == selfUserId =>
-        val (tpe, ct) = MessageData.messageContent(text, mentions, weblinkEnabled = true)
-        verbose(l"updated content: ${(tpe, ct)}")
-        m.copy(
-          msgType = tpe,
-          content = ct,
-          genericMsgs = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil, m.protoQuote, m.protoReadReceipts.getOrElse(false))))),
-          state = Message.Status.PENDING,
-          editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift)
-        )
-      case m =>
-        warn(l"Can not update msg: $m")
-        m
-    }) flatMap {
-      case Some((_, m)) => sync.postMessage(m.id, m.convId, m.editTime) map { _ => Some(m) } // using PostMessage sync request to use the same logic for failures and retrying
-      case None => Future successful None
+    convStorage.getLegalHoldHint(convId).flatMap { legalHoldStatus =>
+      messagesStorage.update(id, {
+        case m if m.convId == convId && m.userId == selfUserId =>
+          val (tpe, ct) = MessageData.messageContent(text, mentions, weblinkEnabled = true)
+          verbose(l"updated content: ${(tpe, ct)}")
+          m.copy(
+            msgType = tpe,
+            content = ct,
+            genericMsgs = Seq(GenericMessage(Uid(), MsgEdit(id, GenericContent.Text(text, ct.flatMap(_.mentions), Nil, m.protoQuote, m.protoReadReceipts.getOrElse(false), legalHoldStatus)))),
+            state = Message.Status.PENDING,
+            editTime = (m.time max m.editTime) + 1.millis max LocalInstant.Now.toRemote(currentBeDrift)
+          )
+        case m =>
+          warn(l"Can not update msg: $m")
+          m
+      }) flatMap {
+        case Some((_, m)) => sync.postMessage(m.id, m.convId, m.editTime) map { _ => Some(m) } // using PostMessage sync request to use the same logic for failures and retrying
+        case None => Future successful None
+      }
     }
 
   override def deleteMessage(convId: ConvId, id: MessageId): Future[Unit] = for {
@@ -314,7 +317,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       toDelete <- if (user != selfUserId) members.getByUsers(Set(user)).map(_.isEmpty)
                   else Future.successful(false)
       _        <- if (toDelete) usersStorage.remove(user) else Future.successful(())
-      _        <- messages.addMemberLeaveMessage(conv, selfUserId, Set(user))
+      _        <- messages.addMemberLeaveMessage(conv, selfUserId, Set(user), reason = None)
       syncId   <- sync.postConversationMemberLeave(conv, user)
     } yield Option(syncId))
       .recover {

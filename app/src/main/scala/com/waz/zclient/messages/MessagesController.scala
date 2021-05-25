@@ -91,24 +91,24 @@ import scala.concurrent.Future
   @volatile
   private var lastReadTime = RemoteInstant.Epoch
 
-  currentConvIndex.flatMap(_.signals.lastReadTime) { lastReadTime = _ }
+  currentConvIndex.flatMap(_.signals.lastReadTime).foreach { lastReadTime = _ }
 
   fullyVisibleMessagesList.disableAutowiring()
 
-  def isLastSelf(id: MessageId) = lastSelfMessage.currentValue.exists(_.id == id)
+  def isLastSelf(id: MessageId): Boolean = lastSelfMessage.currentValue.exists(_.id == id)
 
   // Throttling to avoid too many requests for read receipts.
   // Ideally the sync service would do the merge but the new WorkManager doesn't allow that yet.
   private val lastReadMessages = Signal(Map[ConvId, MessageData]())
 
-  lastReadMessages.throttle(2.seconds) { messages =>
+  lastReadMessages.throttle(2.seconds).foreach { messages =>
     messages.foreach { case (conv, msg) =>
       zms.head.foreach(_.convsUi.setLastRead(conv, msg))
     }
     lastReadMessages ! Map()
   }
 
-  def onMessageRead(msg: MessageData) = {
+  def onMessageRead(msg: MessageData): Unit = {
     if (msg.isEphemeral && !msg.expired)
         zms.head.foreach(_.ephemeral.onMessageRead(msg.id))
 

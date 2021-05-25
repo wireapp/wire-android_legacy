@@ -20,12 +20,13 @@ package com.waz.zclient.participants.fragments
 import android.content.Context
 import android.os.Bundle
 import androidx.annotation.Nullable
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.threading.Threading
+import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
@@ -39,16 +40,13 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
 import com.waz.api.ConnectionStatus._
-import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.legalhold.{LegalHoldController, LegalHoldInfoFragment}
+import com.waz.zclient.legalhold.{AllLegalHoldSubjectsFragment, LegalHoldController, LegalHoldInfoFragment}
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.utils.ContextUtils
-import com.wire.signals.Signal
 
 import scala.concurrent.Future
 
-class ParticipantFragment extends ManagerFragment with ConversationScreenControllerObserver
-  with LegalHoldInfoFragment.Container {
+class ParticipantFragment extends ManagerFragment with ConversationScreenControllerObserver {
 
   import ParticipantFragment._
 
@@ -66,14 +64,9 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
   private lazy val singleImageController  = inject[ISingleImageController]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val convScreenController   = inject[IConversationScreenController]
+  private lazy val legalHoldController    = inject[LegalHoldController]
 
   private lazy val headerFragment = ParticipantHeaderFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg))
-
-  override lazy val legalHoldUsers: Signal[Seq[UserId]] =
-    for {
-      convId <- inject[ConversationController].currentConvId
-      users  <- inject[LegalHoldController].legalHoldUsers(convId)
-    } yield users
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
     if (nextAnim == 0 || getParentFragment == null)
@@ -103,6 +96,8 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
             Future.successful((new GuestOptionsFragment, GuestOptionsFragment.Tag))
           case Some(SingleParticipantFragment.DevicesTab.str) =>
             Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.DevicesTab.str)), SingleParticipantFragment.Tag))
+          case Some(LegalHoldInfoFragment.Tag) =>
+            createLegalHoldInfoFragment.map((_, LegalHoldInfoFragment.Tag))
           case _ =>
             participantsController.isGroupOrBot.head.map {
               case true if getStringArg(UserToOpenArg).isEmpty =>
@@ -123,11 +118,13 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
     bodyContainer
     participantsContainerView
 
-    participantsController.onShowUser {
+    participantsController.onShowUser.onUi {
       case Some(userId) => showUser(userId)
       case _ =>
     }
-    headerFragment.onLegalHoldClick { _ => openLegalHoldInfoScreen() }
+
+    legalHoldController.onLegalHoldSubjectClick.onUi { userId => showUser(userId, forLegalHold = true) }
+    legalHoldController.onAllLegalHoldSubjectsClick.onUi { _ => showAllLegalHoldSubjects() }
   }
 
   override def onStart(): Unit = {
@@ -175,18 +172,11 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
     }
 
   def showOtrClient(userId: UserId, clientId: ClientId): Unit =
-    getChildFragmentManager
-      .beginTransaction
-      .setCustomAnimations(
-        R.anim.fragment_animation_second_page_slide_in_from_right,
-        R.anim.fragment_animation_second_page_slide_out_to_left,
-        R.anim.fragment_animation_second_page_slide_in_from_left,
-        R.anim.fragment_animation_second_page_slide_out_to_right)
+    withSlideAnimation(getChildFragmentManager.beginTransaction)
       .add(
         R.id.fl__participant__overlay,
         SingleOtrClientFragment.newInstance(userId, clientId),
-        SingleOtrClientFragment.Tag
-      )
+        SingleOtrClientFragment.Tag)
       .addToBackStack(SingleOtrClientFragment.Tag)
       .commit
 
@@ -208,50 +198,58 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
 
   // TODO: AN-5980
   def showIntegrationDetails(service: IntegrationData, convId: ConvId, userId: UserId): Unit = {
-    getChildFragmentManager
-      .beginTransaction
-      .setCustomAnimations(
-        R.anim.fragment_animation_second_page_slide_in_from_right,
-        R.anim.fragment_animation_second_page_slide_out_to_left,
-        R.anim.fragment_animation_second_page_slide_in_from_left,
-        R.anim.fragment_animation_second_page_slide_out_to_right
-      )
+    withSlideAnimation(getChildFragmentManager.beginTransaction)
       .replace(
         R.id.fl__participant__overlay,
         IntegrationDetailsFragment.newRemovingInstance(service, convId, userId),
-        IntegrationDetailsFragment.Tag
-      )
+        IntegrationDetailsFragment.Tag)
       .addToBackStack(IntegrationDetailsFragment.Tag)
       .commit
   }
 
   private def openUserProfileFragment(fragment: Fragment, tag: String) =
-    getChildFragmentManager.beginTransaction
-      .setCustomAnimations(
-        R.anim.fragment_animation_second_page_slide_in_from_right,
-        R.anim.fragment_animation_second_page_slide_out_to_left,
-        R.anim.fragment_animation_second_page_slide_in_from_left,
-        R.anim.fragment_animation_second_page_slide_out_to_right)
+    withSlideAnimation(getChildFragmentManager.beginTransaction)
       .replace(R.id.fl__participant__container, fragment, tag)
       .addToBackStack(tag)
       .commit
 
-  private def openLegalHoldInfoScreen(): Unit =
-    getChildFragmentManager.beginTransaction
-      .setCustomAnimations(
-        R.anim.slide_in_from_bottom_pick_user,
-        R.anim.open_new_conversation__thread_list_out,
-        R.anim.open_new_conversation__thread_list_in,
-        R.anim.slide_out_to_bottom_pick_user)
-      .replace(
-        R.id.fl__participant__container,
-        LegalHoldInfoFragment.newInstance(R.string.legal_hold_conversation_info_message),
-        LegalHoldInfoFragment.TAG
-      )
-      .addToBackStack(LegalHoldInfoFragment.TAG)
+  def openLegalHoldInfoScreen(): Unit =
+    createLegalHoldInfoFragment.foreach(frag =>
+      getChildFragmentManager.beginTransaction
+        .setCustomAnimations(
+          R.anim.slide_in_from_bottom_pick_user,
+          R.anim.open_new_conversation__thread_list_out,
+          R.anim.open_new_conversation__thread_list_in,
+          R.anim.slide_out_to_bottom_pick_user)
+        .replace(
+          R.id.fl__participant__container,
+          frag, LegalHoldInfoFragment.Tag
+        )
+        .addToBackStack(LegalHoldInfoFragment.Tag)
+        .commit
+    )
+
+  private def createLegalHoldInfoFragment: Future[LegalHoldInfoFragment] =
+    participantsController.conv.head.map(conv => LegalHoldInfoFragment.newInstance(Some(conv.id)))
+
+  private def showAllLegalHoldSubjects(): Unit =
+    withSlideAnimation(getChildFragmentManager.beginTransaction)
+      .replace(R.id.fl__participant__container,
+        AllLegalHoldSubjectsFragment.newInstance(),
+        AllLegalHoldSubjectsFragment.Tag)
+      .addToBackStack(AllLegalHoldSubjectsFragment.Tag)
       .commit
 
-  private def showUser(userId: UserId): Unit = usersController.syncUserAndCheckIfDeleted(userId).foreach {
+  private def withSlideAnimation(transaction: FragmentTransaction): FragmentTransaction =
+    returning(transaction) {
+      _.setCustomAnimations(
+        R.anim.fragment_animation_second_page_slide_in_from_right,
+        R.anim.fragment_animation_second_page_slide_out_to_left,
+        R.anim.fragment_animation_second_page_slide_in_from_left,
+        R.anim.fragment_animation_second_page_slide_out_to_right)
+    }
+
+  private def showUser(userId: UserId, forLegalHold: Boolean = false): Unit = usersController.syncUserAndCheckIfDeleted(userId).foreach {
     case (Some(user), None) =>
       ContextUtils.showToast(getString(R.string.participant_was_removed_from_team, user.name.str))
     case (None, None) =>
@@ -267,7 +265,9 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
         isTeamMember <- userAccountsController.isTeamMember(userId).head
       } userOpt match {
         case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
-          openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+          import SingleParticipantFragment._
+          val tabToOpen = if (forLegalHold) Some(DevicesTab.str) else None
+          openUserProfileFragment(SingleParticipantFragment.newInstance(tabToOpen), Tag)
 
         case Some(user) if user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
           import PendingConnectRequestFragment._

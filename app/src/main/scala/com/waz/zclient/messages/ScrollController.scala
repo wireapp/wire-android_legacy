@@ -29,7 +29,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.threading.Threading._
 
-class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, layoutManager: MessagesListLayoutManager)(implicit ec: EventContext)
+class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, layoutManager: MessagesListLayoutManager)
+                      (implicit ec: EventContext)
   extends DerivedLogTag {
 
   private var lastVisiblePosition = 0
@@ -46,16 +47,16 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
 
   val reachedQueuedScroll: SourceStream[Scroll] = EventStream[Scroll]
 
-  val onScroll: EventStream[Scroll] = EventStream.zip(
+  EventStream.zip(
     onListLoaded.map { pos => Scroll(pos, smooth = false, force = true) },
     onScrollToBottomRequested.filter(_ => queuedScroll.isEmpty).map { _ => BottomScroll(smooth = false) },
     onListHeightChanged.filter(_ => shouldScrollToBottom && lastVisiblePosition == LastMessageIndex).map { _ => BottomScroll(smooth = false) },
     onListHeightChanged.filter(_ => !shouldScrollToBottom && queuedScroll.nonEmpty).map { _ => queuedScroll.get },
     onMessageAdded.filter(_ => !dragging && queuedScroll.isEmpty && lastVisiblePosition == LastMessageIndex).map { _ => BottomScroll(smooth = false) },
     scrollToPositionRequested.map { pos => Scroll(pos, smooth = false, force = true) }
-  )
+  ).onUi(processScroll)
 
-  adapter.onScrollRequested(scrollToPositionRequested ! _._2)
+  adapter.onScrollRequested.map(_._2).pipeTo(scrollToPositionRequested)
 
   view.addOnScrollListener(new OnScrollListener {
     override def onScrollStateChanged(recyclerView: RecyclerView, newState: Int): Unit =
@@ -80,14 +81,6 @@ class ScrollController(adapter: MessagesPagedListAdapter, view: RecyclerView, la
     }
 
   })
-
-  onScroll.onUi(processScroll)
-
-  def reset(unreadPos: Int): Unit = {
-    verbose(l"reset $unreadPos")
-    queuedScroll = None
-    onListLoaded ! unreadPos
-  }
 
   def onPagedListChanged(): Unit = {
     verbose(l"onPagedListChanged")

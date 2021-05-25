@@ -1,51 +1,234 @@
 package com.waz.service
 
-import com.waz.api.OtrClientType
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{PropertiesStorage, PropertyValue}
+import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
+import com.waz.model.ConversationData.LegalHoldStatus
+import com.waz.model.ConversationData.LegalHoldStatus.{Disabled, Enabled, PendingApproval}
+import com.waz.model.GenericContent.Text
+import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.otr.{Client, ClientId, UserClients}
-import com.waz.model.{LegalHoldRequest, LegalHoldRequestEvent, UserId}
+import com.waz.model._
 import com.waz.service.EventScheduler.{Sequential, Stage}
-import com.waz.service.LegalHoldService._
+import com.waz.service.messages.MessagesService
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr.{CryptoSessionService, OtrClientsService}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.SyncResult
-import com.waz.sync.handler.{LegalHoldError, LegalHoldSyncHandler}
+import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.LegalHoldClient
+import com.waz.sync.handler.LegalHoldError
+import com.waz.testutils.TestUserPreferences
 import com.waz.utils.JsonEncoder
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
-import com.wire.signals.Signal
+import com.wire.signals.{CancellableFuture, EventStream, Signal}
+import org.threeten.bp.Instant
 
-import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.concurrent.{Future, Promise}
 
 class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   import LegalHoldServiceSpec._
 
   private val selfUserId = UserId("selfUserId")
-  private val storage = mock[PropertiesStorage]
-  private val syncHandler = mock[LegalHoldSyncHandler]
+  private val teamId = TeamId("teamId")
+  private val userPrefs = new TestUserPreferences()
+  private val apiClient = mock[LegalHoldClient]
   private val clientsService = mock[OtrClientsService]
+  private val clientsStorage = mock[OtrClientsStorage]
+  private val convsStorage = mock[ConversationStorage]
+  private val membersStorage = mock[MembersStorage]
   private val cryptoSessionService = mock[CryptoSessionService]
-
-  var service: LegalHoldServiceImpl = _
+  private val sync = mock[SyncServiceHandle]
+  private val messagesService = mock[MessagesService]
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
-    service = new LegalHoldServiceImpl(selfUserId, storage, syncHandler, clientsService, cryptoSessionService)
+    userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
+  }
+
+  def createService(setUpInitExpectations: Boolean = true): LegalHoldServiceImpl = {
+    if (setUpInitExpectations) {
+      // The service subscribes to a signal upon initialization,
+      // so we need to mock this to keep tests happy.
+      (convsStorage.contents _)
+        .expects()
+        .once()
+        .returning(Signal(Map.empty))
+    }
+
+    new LegalHoldServiceImpl(
+      selfUserId,
+      Some(teamId),
+      userPrefs,
+      apiClient,
+      clientsService,
+      clientsStorage,
+      convsStorage,
+      membersStorage,
+      cryptoSessionService,
+      sync,
+      messagesService
+    )
+  }
+
+  // Helpers
+
+  def mockUserDevices(userId: UserId, deviceTypes: Seq[DeviceClass]): Unit = {
+    val clients = deviceTypes.map { deviceType =>
+      val clientId = ClientId()
+      clientId -> Client(clientId, "", deviceClass = deviceType)
+    }
+
+    (clientsStorage.optSignal _)
+      .expects(userId)
+      .once()
+      .returning(Signal.const(Some(UserClients(userId, clients.toMap))))
+  }
+
+  def mockConversation(convId: ConvId, legalHoldStatus: LegalHoldStatus): Unit =
+    (convsStorage.optSignal _)
+      .expects(convId)
+      .once()
+      .returning(Signal.const(Some(ConversationData(convId, legalHoldStatus = legalHoldStatus))))
+
+  def createEventPipeline(): EventPipeline = {
+    val service = createService()
+    val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldEventStage))
+    new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+  }
+
+  // Tests
+
+  feature("Is legal hold active for user") {
+
+    scenario("with a legal hold device") {
+      // Given
+      val service = createService()
+      val userId = UserId("user1")
+      mockUserDevices(userId, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(userId).future)
+
+      // Then
+      actualResult shouldBe true
+    }
+
+    scenario("without a legal hold device") {
+      // Given
+      val service = createService()
+      val userId = UserId("user1")
+      mockUserDevices(userId, Seq(DeviceClass.Phone))
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(userId).future)
+
+      // Then
+      actualResult shouldBe false
+    }
+  }
+
+  feature("Is legal hold active for a conversation") {
+
+    scenario("for a conversation with enabled legal hold status") {
+      // Given
+      val service = createService()
+      val convId = ConvId("conv1")
+      mockConversation(convId, LegalHoldStatus.Enabled)
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(convId).future)
+
+      // Then
+      actualResult shouldBe true
+    }
+
+    scenario("for a conversation with pending legal hold status") {
+      // Given
+      val service = createService()
+      val convId = ConvId("conv1")
+      mockConversation(convId, LegalHoldStatus.PendingApproval)
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(convId).future)
+
+      // Then
+      actualResult shouldBe true
+    }
+
+    scenario("for a conversation with disabled legal hold status") {
+      // Given
+      val service = createService()
+      val convId = ConvId("conv1")
+      mockConversation(convId, LegalHoldStatus.Disabled)
+
+      // When
+      val actualResult = result(service.isLegalHoldActive(convId).future)
+
+      // Then
+      actualResult shouldBe false
+    }
+  }
+
+  feature("Legal hold users in a conversation") {
+
+    scenario("that contains legal hold subjects") {
+      // Given
+      val service = createService()
+      val convId = ConvId("conv1")
+      val user1 = UserId("user1")
+      val user2 = UserId("user2")
+      val user3 = UserId("user3")
+
+      (membersStorage.activeMembers _)
+        .expects(convId)
+        .once()
+        .returning(Signal.const(Set(user1, user2, user3)))
+
+      mockUserDevices(user1, Seq(DeviceClass.Phone))
+      mockUserDevices(user2, Seq(DeviceClass.Desktop, DeviceClass.LegalHold))
+      mockUserDevices(user3, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
+
+      // when
+      val actualResult = result(service.legalHoldUsers(convId).future)
+
+      // Then
+      actualResult.toSet shouldEqual Set(user2, user3)
+    }
+
+    scenario("that does not contain any legal hold subjects") {
+      // Given
+      val service = createService()
+      val convId = ConvId("conv1")
+      val user1 = UserId("user1")
+      val user2 = UserId("user2")
+      val user3 = UserId("user3")
+
+      (membersStorage.activeMembers _)
+        .expects(convId)
+        .once()
+        .returning(Signal.const(Set(user1, user2, user3)))
+
+      mockUserDevices(user1, Seq(DeviceClass.Phone))
+      mockUserDevices(user2, Seq(DeviceClass.Desktop, DeviceClass.Phone))
+      mockUserDevices(user3, Seq(DeviceClass.Phone, DeviceClass.Desktop))
+
+      // when
+      val actualResult = result(service.legalHoldUsers(convId).future)
+
+      // Then
+      actualResult shouldBe empty
+    }
+
   }
 
   feature("Fetch the legal hold request") {
 
     scenario("legal hold request exists") {
       // Given
-      val value = JsonEncoder.encode[LegalHoldRequest](legalHoldRequest).toString
-
-      (storage.optSignal _)
-        .expects(LegalHoldRequestKey)
-        .once()
-        .returning(Signal.const(Some(PropertyValue(LegalHoldRequestKey, value))))
+      val service = createService()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
       // When
       val fetchedResult = result(service.legalHoldRequest.head)
@@ -58,10 +241,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
 
     scenario("legal hold request does not exist") {
-      (storage.optSignal _)
-        .expects(LegalHoldRequestKey)
-        .once()
-        .returning(Signal.const(None))
+      val service = createService()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, None)
 
       // When
       val fetchedResult = result(service.legalHoldRequest.head)
@@ -75,124 +256,155 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     scenario("it processes the legal hold request event") {
       // Given
-      val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
-      val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+      val pipeline = createEventPipeline()
       val event = LegalHoldRequestEvent(selfUserId, legalHoldRequest)
-
-      // Then
-      (storage.save _)
-        .expects(PropertyValue(LegalHoldRequestKey, encodedLegalHoldRequest))
-        .once()
-        .returning(Future.successful({}))
 
       // When
       result(pipeline.apply(Seq(event)))
+
+      // Then
+      val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
+      storedLegalHoldRequest.isDefined shouldBe true
+      storedLegalHoldRequest.get.clientId shouldEqual legalHoldRequest.clientId
+      storedLegalHoldRequest.get.lastPreKey.id shouldEqual legalHoldRequest.lastPreKey.id
+      storedLegalHoldRequest.get.lastPreKey.data shouldEqual legalHoldRequest.lastPreKey.data
     }
 
     scenario("it ignores a legal hold request event not for the self user") {
       // Given
-      val scheduler = new EventScheduler(Stage(Sequential)(service.legalHoldRequestEventStage))
-      val pipeline  = new EventPipelineImpl(Vector.empty, scheduler.enqueue)
-      val event = LegalHoldRequestEvent(targetUserId = UserId("someOtherUser"), legalHoldRequest)
-
-      // Then
-      (storage.save _)
-        .expects( PropertyValue(LegalHoldRequestKey, encodedLegalHoldRequest))
-        .never()
+      val pipeline = createEventPipeline()
+      val event = LegalHoldRequestEvent(UserId("someOtherUser"), legalHoldRequest)
 
       // When
       result(pipeline.apply(Seq(event)))
-    }
-  }
-
-  feature("Sync legal hold request") {
-
-    scenario("it succeeds if legal hold request exists") {
-      (syncHandler.fetchLegalHoldRequest _ )
-        .expects()
-        .once()
-        .returning(Future.successful(Right(Some(legalHoldRequest))))
-
-      (storage.save _)
-        .expects(PropertyValue(LegalHoldRequestKey, encodedLegalHoldRequest))
-        .once()
-        .returning(Future.successful({}))
-
-      // When
-      val actualResult = result(service.syncLegalHoldRequest())
 
       // Then
-      actualResult shouldEqual SyncResult.Success
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()) shouldBe None
     }
 
-    scenario("it succeeds if legal hold does not exist") {
-      (syncHandler.fetchLegalHoldRequest _ )
-        .expects()
-        .once()
-        .returning(Future.successful(Right(None)))
-
-      (storage.deleteByKey _)
-        .expects(LegalHoldRequestKey)
-        .once()
-        .returning(Future.successful({}))
-
-      // When
-      val actualResult = result(service.syncLegalHoldRequest())
-
-      // Then
-      actualResult shouldEqual SyncResult.Success
-    }
-
-    scenario("it fails if an error occurs") {
+    scenario("it deletes an existing legal hold request when legal hold is enabled") {
       // Given
-      val error = ErrorResponse(400, "", "")
-
-      (syncHandler.fetchLegalHoldRequest _ )
-        .expects()
-        .once()
-        .returning(Future.successful(Left(error)))
+      val pipeline = createEventPipeline()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
       // When
-      val actualResult = result(service.syncLegalHoldRequest())
+      result(pipeline.apply(Seq(LegalHoldEnableEvent(selfUserId))))
 
       // Then
-      actualResult shouldEqual SyncResult.Failure(error)
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()) shouldBe None
     }
+
+    scenario("it does not delete an existing legal hold request when legal hold is enabled for another user") {
+      // Given
+      val pipeline = createEventPipeline()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+
+      (sync.syncClients(_: UserId))
+        .expects(*)
+        .anyNumberOfTimes()
+        .returning(Future.successful(SyncId("syncId")))
+
+      // When
+      result(pipeline.apply(Seq(LegalHoldEnableEvent(UserId("someOtherUser")))))
+
+      // Then
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()).isEmpty shouldBe false
+    }
+
+    scenario("it deletes an existing legal hold request when legal hold is disabled") {
+      // Given
+      val pipeline = createEventPipeline()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+
+      // When
+      result(pipeline.apply(Seq(LegalHoldDisableEvent(selfUserId))))
+
+      // Then
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()) shouldBe None
+    }
+
+    scenario("it does not delete an existing legal hold request when legal hold is disabled for another user") {
+      // Given
+      val pipeline = createEventPipeline()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+
+      (sync.syncClients(_: UserId))
+        .expects(*)
+        .anyNumberOfTimes()
+        .returning(Future.successful(SyncId("syncId")))
+
+      // When
+      result(pipeline.apply(Seq(LegalHoldDisableEvent(UserId("someOtherUser")))))
+
+      // Then
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()).isEmpty shouldBe false
+    }
+
+    scenario("it syncs clients when legal hold is enabled for another user") {
+      // Given
+      val otherUserId = UserId("someOtherUser")
+      val pipeline = createEventPipeline()
+
+      // Expectation
+      (sync.syncClients(_: UserId))
+          .expects(otherUserId)
+          .once()
+          .returning(Future.successful(SyncId("syncId")))
+
+      // When
+      result(pipeline.apply(Seq(LegalHoldEnableEvent(otherUserId))))
+    }
+
+    scenario("it syncs clients when legal hold is disabled for another user") {
+      // Given
+      val otherUserId = UserId("someOtherUser")
+      val pipeline = createEventPipeline()
+
+      // Expectation
+      (sync.syncClients(_: UserId))
+        .expects(otherUserId)
+        .once()
+        .returning(Future.successful(SyncId("syncId")))
+
+      // When
+      result(pipeline.apply(Seq(LegalHoldDisableEvent(otherUserId))))
+    }
+
   }
 
   feature("Approve legal hold request") {
 
     scenario("It creates a client and and approves the request") {
+      // Given
+      val service = createService()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+
       mockClientAndSessionCreation()
 
       // Approve the request.
-      (syncHandler.approveRequest _)
-        .expects(Some("password"))
+      (apiClient.approveRequest _)
+        .expects(teamId, selfUserId, Some("password"))
         .once()
-        .returning(Future.successful(Right({})))
-
-      // Then pending request is deleted.
-      (storage.deleteByKey _)
-        .expects(LegalHoldRequestKey)
-        .once()
-        .returning(Future.successful({}))
+        .returning(CancellableFuture.successful(Right({})))
 
       // When
       val actualResult = result(service.approveRequest(legalHoldRequest, Some("password")))
 
       // Then
       actualResult.isRight shouldBe true
+      result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply()) shouldBe None
     }
 
     scenario("It deletes the client if approval failed") {
       // Given
+      val service = createService()
       val client = mockClientAndSessionCreation()
 
       // Approve the request.
-      (syncHandler.approveRequest _)
-        .expects(Some("password"))
+      (apiClient.approveRequest _)
+        .expects(teamId, selfUserId, Some("password"))
         .once()
-        .returning(Future.successful(Left(LegalHoldError.InvalidPassword)))
+        .returning(CancellableFuture.successful(Left(ErrorResponse(400, "", "access-denied"))))
 
       // Delete client.
       (clientsService.removeClients _ )
@@ -215,7 +427,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
 
     def mockClientAndSessionCreation(): Client = {
-      val client = Client(legalHoldRequest.clientId, "", devType = OtrClientType.LEGALHOLD)
+      val client = Client(legalHoldRequest.clientId, "", deviceClass = DeviceClass.LegalHold)
 
       // Create the client.
       (clientsService.getOrCreateClient _)
@@ -226,7 +438,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         })
 
       // Saving the client.
-      (clientsService.updateUserClients _)
+      (clientsService.updateUserClients(_: UserId, _: Seq[Client], _: Boolean))
         .expects(selfUserId, Seq(client), false)
         .once()
         .returning(Future.successful {
@@ -245,6 +457,307 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
 
   }
+
+  feature("Update legal hold status") {
+
+    scenario("from disabled to enabled") {
+      // Expectations
+      val convSignal = setUpExpectationsForConversationUpdate(
+        legalHoldStatus = ConversationData.LegalHoldStatus.Disabled,
+        existsLegalHoldDevice = true
+      )
+
+      val done = Promise[Unit]()
+
+      (messagesService.addLegalHoldEnabledMessage _)
+          .expects(convSignal.currentValue.get.id, None)
+          .once()
+        .onCall { (_, _) =>
+          done.success(())
+          // Note: return value is not important.
+          Future.successful(None)
+        }
+
+      // When (the service is initialized, it updates the legal hold status)
+      createService(setUpInitExpectations = false)
+
+      // Then
+      result(convSignal.filter(_.isUnderLegalHold).head)
+      result(done.future)
+    }
+
+    scenario("from enabled to disabled") {
+      // Expectations
+      val convSignal = setUpExpectationsForConversationUpdate(
+        legalHoldStatus = ConversationData.LegalHoldStatus.Enabled,
+        existsLegalHoldDevice = false
+      )
+
+      val done = Promise[Unit]()
+
+      (messagesService.addLegalHoldDisabledMessage _)
+        .expects(convSignal.currentValue.get.id, None)
+        .once()
+        .onCall { (_, _) =>
+          done.success(())
+          // Note: return value is not important.
+          Future.successful(None)
+        }
+
+      // When (the service is initialized, it updates the legal hold status)
+      createService(setUpInitExpectations = false)
+
+      // Then
+      result(convSignal.filter(!_.isUnderLegalHold).head)
+      result(done.future)
+    }
+
+    def setUpExpectationsForConversationUpdate(legalHoldStatus: ConversationData.LegalHoldStatus,
+                                               existsLegalHoldDevice: Boolean): Signal[ConversationData] = {
+      import DeviceClass._
+
+      // Given
+      val user1 = UserId("user1")
+      val user2 = UserId("user2")
+      val client1 = Client(ClientId("client1"), "", deviceClass = Phone)
+      val client2 = Client(ClientId("client2"), "", deviceClass = if (existsLegalHoldDevice) LegalHold else Phone)
+      val convId = ConvId("conv1")
+      val convData = ConversationData(convId, legalHoldStatus = legalHoldStatus)
+      val convSignal = Signal(convData)
+
+      // Get the list of all conversations
+      (convsStorage.contents _)
+        .expects()
+        .once()
+        .returning(Signal.const(Map(convId -> convData)))
+
+      // Get the active users of the conversations.
+      (membersStorage.activeMembers _)
+        .expects(convId)
+        .once()
+        .returning(Signal.const(Set(user1, user2)))
+
+      // Get the clients for user 1
+      (clientsStorage.optSignal _)
+        .expects(user1)
+        .once()
+        .returning(Signal.const(Some(UserClients(user1, Map(client1.id -> client1)))))
+
+      // Get the clients for user 2
+      (clientsStorage.optSignal _)
+        .expects(user2)
+        .once()
+        .returning(Signal.const(Some(UserClients(user2, Map(client2.id -> client2)))))
+
+      // Finally update the conversation.
+      (convsStorage.updateAll2 _)
+        .expects(*, *)
+        .once()
+        .onCall { (_, updater) =>
+          val updatedConv = updater(convData)
+          convSignal ! updatedConv
+          Future.successful(Seq((convData, updatedConv)))
+        }
+
+      convSignal
+    }
+
+  }
+
+  feature("it calculates correct legal hold status") {
+
+    scenario("existing status is disabled") {
+      assert(existingStatus = Disabled, detectedLegalHoldDevice = true, expectation = PendingApproval)
+      assert(existingStatus = Disabled, detectedLegalHoldDevice = false, expectation = Disabled)
+    }
+
+    scenario("existing status is pending approval") {
+      assert(existingStatus = PendingApproval, detectedLegalHoldDevice = true, expectation = PendingApproval)
+      assert(existingStatus = PendingApproval, detectedLegalHoldDevice = false, expectation = Disabled)
+    }
+
+    scenario("existing status is enabled") {
+      assert(existingStatus = Enabled, detectedLegalHoldDevice = true, expectation = Enabled)
+      assert(existingStatus = Enabled, detectedLegalHoldDevice = false, expectation = Disabled)
+    }
+
+    def assert(existingStatus: LegalHoldStatus,
+               detectedLegalHoldDevice: Boolean,
+               expectation: LegalHoldStatus): Unit = {
+      // Given
+      val conv = ConversationData(legalHoldStatus = existingStatus)
+
+      // When
+      val result = conv.withNewLegalHoldStatus(detectedLegalHoldDevice)
+
+      // Then
+      result.legalHoldStatus shouldEqual expectation
+    }
+
+  }
+
+  feature("Generic message hints") {
+
+    scenario("it triggers client sync if it discovers legal hold to be enabled") {
+      // Given
+      val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Disabled)
+      val message = createMessage(Messages.LegalHoldStatus.ENABLED)
+      val time = RemoteInstant(Instant.now())
+      val event = createEvent(conv.remoteId, message, time)
+
+      // Expectations
+      (convsStorage.getByRemoteId _)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(Some(conv)))
+
+      var updatedStatus: LegalHoldStatus = conv.legalHoldStatus
+
+      (convsStorage.update _)
+        .expects(conv.id, *)
+        .once()
+        .onCall { (_, updater) =>
+          val updatedConv = updater(conv)
+          updatedStatus = updatedConv.legalHoldStatus
+          Future.successful(Some(conv, updatedConv))
+        }
+
+      // Note: the return value is not important.
+      (messagesService.addLegalHoldEnabledMessage _)
+        .expects(conv.id, Some(time - 5.millis))
+        .once()
+        .returning(Future.successful(None))
+
+      (sync.syncClientsForLegalHold _)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(SyncId("syncId")))
+
+      // When
+      val service = createService()
+      val pipeline = createMessageEventPipeline(service)
+      result(pipeline.apply(Seq(event)))
+
+      // Then
+      updatedStatus shouldEqual LegalHoldStatus.PendingApproval
+    }
+
+    scenario("it triggers client sync if it discovers legal hold to be disabled") {
+      // Given
+      val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Enabled)
+      val message = createMessage(Messages.LegalHoldStatus.DISABLED)
+      val time = RemoteInstant(Instant.now())
+      val event = createEvent(conv.remoteId, message, time)
+
+      // Expectations
+      (convsStorage.getByRemoteId _)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(Some(conv)))
+
+      var updatedStatus: LegalHoldStatus = conv.legalHoldStatus
+
+      (convsStorage.update _)
+        .expects(conv.id, *)
+        .once()
+        .onCall { (_, updater) =>
+          val updatedConv = updater(conv)
+          updatedStatus = updatedConv.legalHoldStatus
+          Future.successful(Some(conv, updatedConv))
+        }
+
+      // Note: the return value is not important.
+      (messagesService.addLegalHoldDisabledMessage _)
+        .expects(conv.id, Some(time - 5.millis))
+        .once()
+        .returning(Future.successful(None))
+
+      (sync.syncClientsForLegalHold _)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(SyncId("syncId")))
+
+      // When
+      val service = createService()
+      val pipeline = createMessageEventPipeline(service)
+      result(pipeline.apply(Seq(event)))
+
+      // Then
+      updatedStatus shouldEqual LegalHoldStatus.Disabled
+    }
+
+    scenario("it does not trigger client sync if current status and hint are both enabled") {
+      // Given
+      val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Enabled)
+      val message = createMessage(Messages.LegalHoldStatus.ENABLED)
+      val event = createEvent(conv.remoteId, message)
+
+      // Expectations
+      (convsStorage.getByRemoteId _)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(Some(conv)))
+
+      (convsStorage.update _)
+        .expects(conv.id, *)
+        .never()
+
+      (sync.syncClientsForLegalHold _)
+        .expects(conv.remoteId)
+        .never()
+
+      // When
+      val service = createService()
+      val pipeline = createMessageEventPipeline(service)
+      result(pipeline.apply(Seq(event)))
+    }
+
+    scenario("it does not trigger client sync if current status and hint are both disabled") {
+      // Given
+      val conv = ConversationData(ConvId("convId"), RConvId("convId"), legalHoldStatus = Disabled)
+      val message = createMessage(Messages.LegalHoldStatus.DISABLED)
+      val event = createEvent(conv.remoteId, message)
+
+      // Expectations
+      (convsStorage.getByRemoteId _)
+        .expects(conv.remoteId)
+        .once()
+        .returning(Future.successful(Some(conv)))
+
+      (convsStorage.update _)
+        .expects(conv.id, *)
+        .never()
+
+      (sync.syncClientsForLegalHold _)
+        .expects(conv.remoteId)
+        .never()
+
+      // When
+      val service = createService()
+      val pipeline = createMessageEventPipeline(service)
+      result(pipeline.apply(Seq(event)))
+    }
+
+    def createMessageEventPipeline(service: LegalHoldServiceImpl): EventPipeline = {
+      val scheduler = new EventScheduler(Stage(Sequential)(service.messageEventStage))
+      new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+    }
+
+    def createMessage(status: Messages.LegalHoldStatus): GenericMessage =
+      GenericMessage(Uid("messageId"), None, Text("Hello!", legalHoldStatus = status))
+
+    def createEvent(convId: RConvId,
+                    message: GenericMessage,
+                    time: RemoteInstant = RemoteInstant(Instant.now())): GenericMessageEvent =
+      GenericMessageEvent(
+        convId,
+        time,
+        UserId("senderId"),
+        message
+      )
+
+  }
+
 }
 
 object LegalHoldServiceSpec {

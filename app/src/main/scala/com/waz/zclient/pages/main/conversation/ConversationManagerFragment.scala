@@ -53,6 +53,7 @@ import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.views.ConversationFragment
 import com.waz.zclient.{FragmentHelper, R}
 import com.waz.threading.Threading._
+import com.waz.zclient.legalhold.{LegalHoldController, LegalHoldInfoFragment}
 
 class ConversationManagerFragment extends FragmentHelper
   with ConversationScreenControllerObserver
@@ -73,6 +74,7 @@ class ConversationManagerFragment extends FragmentHelper
   private lazy val createConvController   = inject[CreateConversationController]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val keyboard               = inject[KeyboardController]
+  private lazy val legalHoldController    = inject[LegalHoldController]
 
   private var subs = Set.empty[com.wire.signals.Subscription]
 
@@ -176,6 +178,18 @@ class ConversationManagerFragment extends FragmentHelper
     subs += screenController.hideSketch.onUi { dest =>
       hideFragment(DrawingFragment.Tag)
       if (dest == CAMERA_PREVIEW_VIEW) cameraController.closeCamera(CameraContext.MESSAGE)
+    }
+
+    subs += legalHoldController.onShowConversationLegalHoldInfo.onUi { _ =>
+      findChildFragment[ParticipantFragment](ParticipantFragment.TAG) match {
+        case Some(fragment) => fragment.openLegalHoldInfoScreen()
+        case None =>
+          // open ParticipantFragment to display info screen
+          keyboard.hideKeyboardIfVisible()
+          navigationController.setRightPage(Page.PARTICIPANT, ConversationManagerFragment.Tag)
+          val page = Some(LegalHoldInfoFragment.Tag)
+          showFragment(ParticipantFragment.newInstance(page), ParticipantFragment.TAG)
+      }
     }
   }
 

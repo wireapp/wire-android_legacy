@@ -45,18 +45,18 @@ class MessageIndexStorage(context: Context, storage: ZmsDatabase, messagesStorag
   private def entry(m: MessageData) =
     MessageContentIndexEntry(m.id, m.convId, ContentSearchQuery.transliterated(m.contentString), m.time)
 
-  messagesStorage.onAdded { added =>
+  messagesStorage.onAdded.foreach { added =>
     insertAll(added.filter(m => TextMessageTypes.contains(m.msgType) && !m.isEphemeral).map(entry))
   }
 
-  messagesStorage.onUpdated { updated =>
+  messagesStorage.onUpdated.foreach { updated =>
     val entries = updated.collect { case (_, m) if TextMessageTypes.contains(m.msgType) && !m.isEphemeral => entry(m) }
     //FTS tables ignore UNIQUE or PKEY constraints so we have to force the replace
     removeAll(entries.map(_.messageId))
     insertAll(entries)
   }
 
-  messagesStorage.onDeleted { removed =>
+  messagesStorage.onDeleted.foreach { removed =>
     if (removed.nonEmpty) removeAll(removed)
   }
 

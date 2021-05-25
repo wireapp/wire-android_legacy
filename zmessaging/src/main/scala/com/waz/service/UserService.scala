@@ -31,7 +31,7 @@ import com.waz.service.assets.{AssetService, AssetStorage, Content, ContentForUp
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
-import com.waz.sync.SyncServiceHandle
+import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
 import com.waz.threading.Threading
@@ -56,6 +56,7 @@ trait UserService {
 
   def getSelfUser: Future[Option[UserData]]
   def findUser(id: UserId): Future[Option[UserData]]
+  def qualifiedId(userId: UserId): Future[QualifiedId]
   def getOrCreateUser(id: UserId): Future[UserData]
   def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]]
   def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan): Future[Option[SyncId]]
@@ -86,6 +87,10 @@ trait UserService {
 
   def storeAvailabilities(availabilities: Map[UserId, Availability]): Future[Seq[(UserData, UserData)]]
   def updateSelfPicture(content: Content): Future[Unit]
+
+  def syncClients(userId: UserId): Future[SyncId]
+  def syncClients(userIds: Set[UserId]): Future[SyncId]
+  def syncClients(convId: ConvId): Future[SyncId]
 }
 
 class UserServiceImpl(selfUserId:        UserId,
@@ -123,7 +128,7 @@ class UserServiceImpl(selfUserId:        UserId,
     membersIds   <- membersStorage.activeMembers(convId)
   } yield membersIds
 
-  currentConvMembers(syncIfNeeded(_))
+  currentConvMembers.foreach(syncIfNeeded(_))
 
   override lazy val userNames: Signal[Map[UserId, Name]] = {
     val added = usersStorage.onAdded.map(_.map(user => user.id -> user.name).toMap)
@@ -142,7 +147,7 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   //Update user data for other accounts
-  accounts.accountsWithManagers.map(_ - selfUserId)(userIds => syncIfNeeded(userIds))
+  accounts.accountsWithManagers.map(_ - selfUserId).foreach(syncIfNeeded(_))
 
   override val selfUser: Signal[UserData] = usersStorage.optSignal(selfUserId) flatMap {
     case Some(data) => Signal.const(data)
@@ -180,7 +185,7 @@ class UserServiceImpl(selfUserId:        UserId,
       _             <- membersStorage.removeAll(members.map(_.id).toSet)
       memberInConvs =  members.groupBy(_.convId)
       _             <- Future.traverse(memberInConvs) {
-                         case (convId, ms) => messages.addMemberLeaveMessage(convId, selfUserId, ms.map(_.userId).toSet)
+                         case (convId, ms) => messages.addMemberLeaveMessage(convId, selfUserId, ms.map(_.userId).toSet, reason = None)
                        }
       _             <- usersStorage.updateAll2(ids, _.copy(deleted = true))
     } yield ()
@@ -197,9 +202,12 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def findUser(id: UserId): Future[Option[UserData]] = usersStorage.get(id)
 
+  override def qualifiedId(userId: UserId): Future[QualifiedId] =
+    findUser(userId).map(_.flatMap(_.qualifiedId).getOrElse(QualifiedId(userId)))
+
   override def getOrCreateUser(id: UserId) = usersStorage.getOrCreate(id, {
     sync.syncUsers(Set(id))
-    UserData(id, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None)
+    UserData(id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None)
   })
 
   override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =
@@ -358,6 +366,19 @@ class UserServiceImpl(selfUserId:        UserId,
       case Some((p, u)) if p != u => sync(u).map(_ => {})
       case _ => Future.successful({})
     })
+
+  override def syncClients(userId: UserId): Future[SyncId] =
+    sync.syncClients(userId)
+
+  override def syncClients(userIds: Set[UserId]): Future[SyncId] =
+    for {
+      users  <- usersStorage.listAll(userIds)
+      qIds   =  users.map(user => user.qualifiedId.getOrElse(QualifiedId(user.id))).toSet
+      syncId <- sync.syncClients(qIds)
+    } yield (syncId)
+
+  override def syncClients(convId: ConvId): Future[SyncId] =
+    membersStorage.getActiveUsers(convId).flatMap(userIds => syncClients(userIds.toSet))
 }
 
 object UserService {
@@ -385,7 +406,7 @@ class ExpiredUsersService(push:         PushService,
   private var timers = Map[UserId, CancellableFuture[Unit]]()
 
   //if a given user is removed from all conversations, drop the timer
-  members.onDeleted(_.foreach { m =>
+  members.onDeleted.foreach(_.foreach { m =>
     members.getByUsers(Set(m._1)).map(_.isEmpty).map {
       case true =>
         timers.get(m._1).foreach(_.cancel())
@@ -397,7 +418,8 @@ class ExpiredUsersService(push:         PushService,
   (for {
     membersIds <- users.currentConvMembers
     members    <- Signal.sequence(membersIds.map(usersStorage.signal).toSeq: _*)
-  } yield members.filter(_.expiresAt.isDefined).toSet){ wireless =>
+    wireless   =  members.filter(_.expiresAt.isDefined).toSet
+  } yield wireless).foreach { wireless =>
     push.beDrift.head.map { drift =>
       val woTimer = wireless.filter(u => (wireless.map(_.id) -- timers.keySet).contains(u.id))
       woTimer.foreach { u =>

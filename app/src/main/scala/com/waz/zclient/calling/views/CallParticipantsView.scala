@@ -50,4 +50,6 @@ class CallParticipantsView(val context: Context, val attrs: AttributeSet, val de
   setAdapter(adapter)
 
   def setMaxRows(maxRows: Int): Unit = adapter.setMaxRows(maxRows)
+
+  def hideParticipants(): Unit = adapter.hideParticipants()
 }

@@ -76,13 +76,13 @@ class NotificationServiceImpl(selfUserId:      UserId,
 
   private val schedulePushNotificationsToUi = Signal(false)
 
-  Signal.zip(schedulePushNotificationsToUi, pushService.processing).onChanged {
+  Signal.zip(schedulePushNotificationsToUi, pushService.processing).onChanged.foreach {
     case (true, false) =>
       pushNotificationsToUi().map { _ => schedulePushNotificationsToUi ! false }
     case _ =>
   }
 
-  uiController.notificationsSourceVisible { sources =>
+  uiController.notificationsSourceVisible.foreach { sources =>
     sources.get(selfUserId).map(Some(_)).foreach(dismissNotifications)
   }
 
@@ -107,8 +107,8 @@ class NotificationServiceImpl(selfUserId:      UserId,
   override val messageNotificationEventsStage = EventScheduler.Stage[ConversationEvent]({ (c, events) =>
     object Deleted {
       def unapply(event: GenericMessageEvent): Option[NotId] = event.content.unpackContent match {
-        case d: MsgDeleted => Some(NotId(d.unpack._2))
-        case r: MsgRecall  => Some(NotId(r.unpack))
+        case d: MsgDeleted => Some(d.unpack._2.toNotificationId)
+        case r: MsgRecall  => Some(r.unpack.toNotificationId)
         case _             => None
       }
     }
@@ -261,7 +261,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
           tpe.map { tp =>
             verbose(l"quoteIds: $quoteIds, message: $msg")
             NotificationData(
-              id              = NotId(msg.id),
+              id              = msg.id.toNotificationId,
               msg             = if (msg.isEphemeral) "" else msg.contentString, msg.convId,
               user            = msg.userId,
               msgType         = tp,

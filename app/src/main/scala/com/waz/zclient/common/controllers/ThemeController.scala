@@ -37,7 +37,7 @@ import scala.concurrent.duration._
 
 class ThemeController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
-  
+
   import Threading.Implicits.Background
 
   val optionsDarkTheme:  OptionsTheme = new OptionsDarkTheme(context)
@@ -96,17 +96,17 @@ trait ThemedView extends View with ViewHelper {
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
-    getThemeFromParent(this)(currentTheme ! _)
+    getThemeFromParent(this).foreach(currentTheme ! _)
   }
 
-  private def getThemeFromParent(view: View): Signal[Option[Theme]] = {
+  @scala.annotation.tailrec
+  private def getThemeFromParent(view: View): Signal[Option[Theme]] =
     view.getParent match {
       case v: ThemeControllingView => v.theme
       case v: ThemedView => v.currentTheme
       case v: View => getThemeFromParent(v)
       case _ => Signal.const(None)
     }
-  }
 }
 
 object ThemeController {

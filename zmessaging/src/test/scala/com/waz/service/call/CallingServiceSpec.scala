@@ -246,7 +246,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint3 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal) && c.endTime.isEmpty), _.isEmpty)
 
       var terminatingPhaseEntered = false
-      service.currentCall.map(_.map(_.state)) {
+      service.currentCall.map(_.map(_.state)).foreach {
         case Some(Terminating) => terminatingPhaseEntered = true
         case _ =>
       }
@@ -409,7 +409,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint2 = callCheckpoint(_.get(_1to1Conv.id).exists(c => c.convId == _1to1Conv.id && c.state == Ended && c.endReason.contains(AvsClosedReason.Normal)), _.isEmpty)
 
       var terminatingPhaseEntered = false
-      service.currentCall.map(_.map(_.state)) {
+      service.currentCall.map(_.map(_.state)).foreach {
         case Some(Terminating) => terminatingPhaseEntered = true
         case _ =>
       }
@@ -871,7 +871,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint3 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == OtherCalling) && cur.exists(_.allParticipants.isEmpty))
 
       var terminatingPhaseEntered = false
-      service.currentCall.map(_.map(_.state)) {
+      service.currentCall.map(_.map(_.state)).foreach {
         case Some(Terminating) => terminatingPhaseEntered = true
         case _ =>
       }
@@ -911,7 +911,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint3 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == OtherCalling) && cur.exists(_.allParticipants.isEmpty))
 
       var terminatingPhaseEntered = false
-      service.currentCall.map(_.map(_.state)) {
+      service.currentCall.map(_.map(_.state)).foreach {
         case Some(Terminating) => terminatingPhaseEntered = true
         case _ =>
       }

@@ -52,7 +52,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R, ViewHolder}
 import com.waz.threading.Threading._
-import com.waz.zclient.legalhold.SelfUserLegalHoldInfoActivity
+import com.waz.zclient.legalhold.{LegalHoldApprovalHandler, SelfUserLegalHoldInfoActivity}
 
 /**
   * Due to how we use the NormalConversationListFragment - it gets replaced by the ArchiveConversationListFragment or
@@ -132,12 +132,12 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
     subs += userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
-    subs += adapter.onConversationClick { conv =>
+    subs += adapter.onConversationClick.onUi { conv =>
       verbose(l"handleItemClick, switching conv to $conv")
       conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
     }
 
-    subs += adapter.onConversationLongClick { conv =>
+    subs += adapter.onConversationLongClick.onUi { conv =>
       if (Set(Group, OneToOne, WaitForConnection).contains(conv.convType))
         screenController.showConversationMenu(true, conv.id)
     }
@@ -164,7 +164,7 @@ class ArchiveListFragment extends ConversationListFragment with OnBackPressedLis
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
-    topToolbar.foreach(toolbar => subs += toolbar.onRightButtonClick(_ => Option(getContainer).foreach(_.closeArchive())))
+    topToolbar.foreach(toolbar => subs += toolbar.onRightButtonClick.onUi(_ => Option(getContainer).foreach(_.closeArchive())))
   }
 
   override def onBackPressed() = {
@@ -216,7 +216,10 @@ class NormalConversationFragment extends ConversationListFragment {
       case (count, clients, rrChanged) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0 || rrChanged))
     }
     vh.foreach({ toolbar =>
-      subs += toolbar.legalHoldIndicatorClick.onUi(_ => showLegalHoldInfo())
+      subs += toolbar.legalHoldIndicatorClick.onUi {
+        case true  => showLegalHoldApprovalAction()
+        case false => showLegalHoldInfo()
+      }
     })
   }
 
@@ -240,7 +243,7 @@ class NormalConversationFragment extends ConversationListFragment {
     }.onUi(visibility => vh.foreach(_.setVisibility(visibility)))
   }
 
-  override def onViewCreated(v: View, savedInstanceState: Bundle) = {
+  override def onViewCreated(v: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
 
     subs += loading.onUi {
@@ -251,7 +254,7 @@ class NormalConversationFragment extends ConversationListFragment {
     }
 
     topToolbar.foreach { toolbar =>
-      subs += toolbar.onRightButtonClick { _ =>
+      subs += toolbar.onRightButtonClick.onUi { _ =>
         getActivity.startActivityForResult(PreferencesActivity.getDefaultIntent(getContext), PreferencesActivity.SwitchAccountCode)
       }
     }
@@ -311,6 +314,9 @@ class NormalConversationFragment extends ConversationListFragment {
       waitingAccount ! Some(UserId(data.getStringExtra(PreferencesActivity.SwitchAccountExtra)))
     }
   }
+
+  private def showLegalHoldApprovalAction(): Unit =
+    inject[LegalHoldApprovalHandler].showDialog(getActivity)
 
   private def showLegalHoldInfo(): Unit = {
     startActivity(SelfUserLegalHoldInfoActivity.newIntent(getActivity))

@@ -76,7 +76,7 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
       zms.messagesStorage.onUpdated.map(_.exists { case (prev, updated) =>
         updated.convId == convId &&  !MessagesPagedListAdapter.areMessageContentsTheSame(prev, updated)
       }),
-      zms.reactionsStorage.onChanged.map(_.map(_.message)).mapAsync { msgs: Seq[MessageId] =>
+      zms.reactionsStorage.onChanged.map(_.map(_.message)).mapSync { msgs: Seq[MessageId] =>
         zms.messagesStorage.getMessages(msgs: _*).map(_.flatten.exists(_.convId == convId))
       }
     ).filter(identity)
@@ -91,7 +91,7 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
     _                       =  verbose(l"cursor changed")
     list                    =  PagedListWrapper(getPagedList(cursor))
     lastRead                <- convController.currentConv.map(_.lastRead)
-    messageToReveal         <- messageActionsController.messageToReveal.map(_.map(_.id))
+    messageToReveal         <- messageActionsController.messageToReveal
   } yield (MessageAdapterData(cId, lastRead, isGroup, canHaveLink, z.selfUserId, z.teamId), list, messageToReveal)
 }
 

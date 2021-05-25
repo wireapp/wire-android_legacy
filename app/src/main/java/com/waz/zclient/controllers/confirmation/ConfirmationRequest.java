@@ -20,6 +20,7 @@ package com.waz.zclient.controllers.confirmation;
 import android.text.TextUtils;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.Nullable;
 
 import com.waz.zclient.ui.theme.OptionsTheme;
 
@@ -28,6 +29,8 @@ public class ConfirmationRequest {
     public String message;
     public String positiveButton;
     public String negativeButton;
+    @Nullable
+    public String neutralButton;
     public boolean cancelVisible;
     public String checkboxLabel;
     public boolean checkboxSelectedByDefault;
@@ -64,6 +67,11 @@ public class ConfirmationRequest {
 
         public Builder withNegativeButton(String negativeButton) {
             confirmationRequest.negativeButton = negativeButton;
+            return this;
+        }
+
+        public Builder withNeutralButton(String neutralButton) {
+            confirmationRequest.neutralButton = neutralButton;
             return this;
         }
 

@@ -54,29 +54,29 @@ class VerificationStateUpdater(selfUserId:     UserId,
     addMessagesAfterVerificationUpdate(update.convUpdates, update.convUsers, update.changes) map { _ => Unit }
   }
 
-  clientsStorage.getClients(selfUserId).map{ clients =>
+  clientsStorage.getClients(selfUserId).map { clients =>
     onClientsChanged(Map(selfUserId -> (UserClients(selfUserId, clients.toIdMap), ClientAdded)))
   }
 
-  clientsStorage.onAdded { ucs =>
+  clientsStorage.onAdded.foreach { ucs =>
     verbose(l"clientsStorage.onAdded: $ucs")
     onClientsChanged(ucs.map { uc => uc.user -> (uc, ClientAdded)} (breakOut))
   }
 
-  clientsStorage.onUpdated { updates =>
+  clientsStorage.onUpdated.foreach { updates =>
     verbose(l"clientsStorage.onUpdated: $updates")
     onClientsChanged(updates.map {
       case update @ (_, uc) => uc.user -> (uc, VerificationChange(update))
     } (breakOut))
   }
 
-  membersStorage.onAdded{ members =>
+  membersStorage.onAdded.foreach { members =>
     Serialized.future(SerializationKey.toString()) {
       updateConversations(members.map(_.convId).distinct, members.map { member => member.userId -> MemberAdded } (breakOut))
     }
   }
 
-  membersStorage.onDeleted{ members =>
+  membersStorage.onDeleted.foreach { members =>
     Serialized.future(SerializationKey.toString()) {
       updateConversations(members.map(_._2).distinct, members.map { _._1 -> Other } (breakOut))
     }

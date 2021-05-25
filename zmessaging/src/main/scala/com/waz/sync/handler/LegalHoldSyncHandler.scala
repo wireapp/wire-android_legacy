@@ -1,39 +1,61 @@
 package com.waz.sync.handler
 
-import com.waz.api.impl.ErrorResponse
+import com.waz.content.{OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{LegalHoldRequest, TeamId, UserId}
+import com.waz.model.{RConvId, TeamId, UserId}
+import com.waz.service.{LegalHoldService, UserService}
+import com.waz.sync.{SyncRequestService, SyncResult}
 import com.waz.sync.client.LegalHoldClient
+import com.waz.sync.otr.OtrSyncHandler
 
 import scala.concurrent.Future
 
 trait LegalHoldSyncHandler {
-  def fetchLegalHoldRequest(): Future[Either[ErrorResponse, Option[LegalHoldRequest]]]
-  def approveRequest(password: Option[String]): Future[Either[LegalHoldError, Unit]]
+  def syncLegalHoldRequest(): Future[SyncResult]
+  def syncClientsForLegalHoldVerification(convId: RConvId): Future[SyncResult]
 }
 
-class LegalHoldSyncHandlerImpl(teamId: Option[TeamId], userId: UserId, client: LegalHoldClient)
-  extends LegalHoldSyncHandler with DerivedLogTag {
+class LegalHoldSyncHandlerImpl(teamId: Option[TeamId],
+                               userId: UserId,
+                               apiClient: LegalHoldClient,
+                               legalHoldService: LegalHoldService,
+                               userService: UserService,
+                               clientsStorage: OtrClientsStorage,
+                               otrSync: OtrSyncHandler,
+                               syncRequestService: SyncRequestService) extends LegalHoldSyncHandler with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
-  override def fetchLegalHoldRequest(): Future[Either[ErrorResponse, Option[LegalHoldRequest]]] = teamId match {
-    case None         => Future.successful(Right(None))
-    case Some(teamId) => client.fetchLegalHoldRequest(teamId, userId).future
+  override def syncLegalHoldRequest(): Future[SyncResult] = teamId match {
+    case None =>
+      Future.successful(SyncResult.Success)
+    case Some(teamId) =>
+      apiClient.fetchLegalHoldRequest(teamId, userId).future.flatMap {
+        case Left(error)          => Future.successful(SyncResult.Failure(error))
+        case Right(None)          => legalHoldService.deleteLegalHoldRequest().map(_ => SyncResult.Success)
+        case Right(Some(request)) => legalHoldService.storeLegalHoldRequest(request).map(_ => SyncResult.Success)
+      }
   }
 
-  override def approveRequest(password: Option[String]): Future[Either[LegalHoldError, Unit]] = teamId match {
-    case None =>
-      Future.successful(Left(LegalHoldError.NotInTeam))
-    case Some(teamId) =>
-      client.approveRequest(teamId, userId, password).future.map {
-        case Left(ErrorResponse(_, _, label)) if label == "access-denied" || label == "invalid-payload" =>
-          Left(LegalHoldError.InvalidPassword)
-        case Left(_) =>
-          Left(LegalHoldError.InvalidResponse)
-        case Right(_) =>
-          Right(())
-      }
+  override def syncClientsForLegalHoldVerification(convId: RConvId): Future[SyncResult] = {
+    otrSync.postClientDiscoveryMessage(convId).flatMap {
+      case Left(errorResponse) =>
+        Future.successful(SyncResult.Failure(errorResponse))
+      case Right(clientList) =>
+        val userIds = clientList.keys.toSet
+
+        for {
+          id1            <- userService.syncIfNeeded(userIds)
+          id2            <- userService.syncClients(userIds)
+          allIds         =  Set(id1, Some(id2)).collect { case Some(id) => id }
+          _              <- syncRequestService.await(allIds)
+        } yield {
+          SyncResult.Success
+        }
+    }.map { result =>
+      legalHoldService.updateLegalHoldStatusAfterFetchingClients()
+      result
+    }
   }
 
 }

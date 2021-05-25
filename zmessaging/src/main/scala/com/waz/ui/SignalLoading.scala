@@ -24,6 +24,7 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.ui.SignalLoader.{LoaderHandle, LoadingReference, ZmsLoaderHandle}
+import com.waz.utils.returning
 import com.wire.signals.Signal
 
 import scala.ref.{ReferenceQueue, WeakReference}
@@ -55,7 +56,9 @@ abstract class SignalLoader[A](handle: LoaderHandle[A])(implicit ui: UiModule)
   extends LoaderSubscription with DerivedLogTag {
   import ui.eventContext
 
-  ui.onStarted { _ => SignalLoader.dropQueue() }
+  returning(ui.onStarted.foreach { _ => SignalLoader.dropQueue() }) {
+    _.disablePauseWithContext()
+  }
 
   val ref = new LoadingReference(this, handle)
 

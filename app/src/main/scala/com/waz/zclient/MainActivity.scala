@@ -463,7 +463,7 @@ class MainActivity extends BaseActivity
     verbose(l"handleIntent: ${RichIntent(intent)}")
 
     if (intent.initSync)
-      userPreferences.head.foreach { prefs => prefs(ShouldSyncInitial) := true }
+      userPreferences.head.foreach { prefs => prefs(shouldSyncAllOnUpdate) := true }
 
     def clearIntent(): Unit = {
       intent.clearExtras()
@@ -534,7 +534,7 @@ class MainActivity extends BaseActivity
     } (Threading.Ui)
   }
 
-  def manageDevices(): Unit = startActivity(ShowDevicesIntent(this))
+  def manageDevices(): Unit = startActivity(ShowDeviceRemovalIntent(this))
 
   def dismissOtrDeviceLimitFragment(): Unit = withFragmentOpt(OtrDeviceLimitFragment.Tag)(_.foreach(removeFragment))
 

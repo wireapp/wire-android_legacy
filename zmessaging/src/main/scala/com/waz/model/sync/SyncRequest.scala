@@ -69,52 +69,55 @@ object SyncRequest {
 
   import sync.{SyncCommand => Cmd}
 
-  case object Unknown              extends BaseRequest(Cmd.Unknown)
-  case object SyncSelf             extends BaseRequest(Cmd.SyncSelf)
-  case object DeleteAccount        extends BaseRequest(Cmd.DeleteAccount)
-  case object SyncConversations    extends BaseRequest(Cmd.SyncConversations)
-  case object SyncConnections      extends BaseRequest(Cmd.SyncConnections)
-  case object SyncSelfClients      extends BaseRequest(Cmd.SyncSelfClients)
-  case object SyncSelfPermissions  extends BaseRequest(Cmd.SyncSelfPermissions)
-  case object SyncClientsLocation  extends BaseRequest(Cmd.SyncClientLocation)
-  case object SyncTeam             extends BaseRequest(Cmd.SyncTeam)
-  case object SyncTeamData         extends BaseRequest(Cmd.SyncTeamData)
-  case object SyncProperties       extends BaseRequest(Cmd.SyncProperties)
-  case object PostFolders          extends BaseRequest(Cmd.PostFolders)
-  case object SyncFolders          extends BaseRequest(Cmd.SyncFolders)
-  case object SyncLegalHoldRequest extends BaseRequest(Cmd.SyncLegalHoldRequest)
+  final case object Unknown                extends BaseRequest(Cmd.Unknown)
+  final case object SyncSelf               extends BaseRequest(Cmd.SyncSelf)
+  final case object DeleteAccount          extends BaseRequest(Cmd.DeleteAccount)
+  final case object SyncConversations      extends BaseRequest(Cmd.SyncConversations)
+  final case object SyncConnections        extends BaseRequest(Cmd.SyncConnections)
+  final case object SyncSelfClients        extends BaseRequest(Cmd.SyncSelfClients)
+  final case object SyncSelfPermissions    extends BaseRequest(Cmd.SyncSelfPermissions)
+  final case object SyncTeam               extends BaseRequest(Cmd.SyncTeam)
+  final case object SyncTeamData           extends BaseRequest(Cmd.SyncTeamData)
+  final case object SyncProperties         extends BaseRequest(Cmd.SyncProperties)
+  final case object PostFolders            extends BaseRequest(Cmd.PostFolders)
+  final case object SyncFolders            extends BaseRequest(Cmd.SyncFolders)
+  final case object SyncLegalHoldRequest   extends BaseRequest(Cmd.SyncLegalHoldRequest)
+  final case object PostClientCapabilities extends BaseRequest(Cmd.PostClientCapabilities)
 
-  case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
+  final case class SyncClientsForLegalHold(convId: RConvId)
+    extends BaseRequest(Cmd.SyncClientsForLegalHold)
+
+  final case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
     override val mergeKey: Any = (cmd, userId)
   }
 
-  case class PostSelf(data: UserInfo) extends BaseRequest(Cmd.PostSelf) {
-    override def merge(req: SyncRequest) = mergeHelper[PostSelf](req)(Merged(_))
+  final case class PostSelf(data: UserInfo) extends BaseRequest(Cmd.PostSelf) {
+    override def merge(req: SyncRequest): MergeResult[PostSelf] = mergeHelper[PostSelf](req)(Merged(_))
   }
 
-  case class RegisterPushToken(token: PushToken) extends BaseRequest(Cmd.RegisterPushToken) {
-    override def merge(req: SyncRequest) = mergeHelper[RegisterPushToken](req) { r =>
+  final case class RegisterPushToken(token: PushToken) extends BaseRequest(Cmd.RegisterPushToken) {
+    override def merge(req: SyncRequest): MergeResult[RegisterPushToken] = mergeHelper[RegisterPushToken](req) { r =>
       Merged(this.copy(token = r.token))
     }
   }
 
-  case class DeletePushToken(token: PushToken) extends BaseRequest(Cmd.DeletePushToken) {
+  final case class DeletePushToken(token: PushToken) extends BaseRequest(Cmd.DeletePushToken) {
     override val mergeKey: Any = (cmd, token)
   }
 
-  case class SyncSearchResults(users: Set[UserId]) extends BaseRequest(Cmd.SyncSearchResults) {
+  final case class SyncSearchResults(users: Set[UserId]) extends BaseRequest(Cmd.SyncSearchResults) {
+    override def toString: String = s"SyncSearchResults(${users.size} users: ${users.take(5)}...)"
 
-    override def toString = s"SyncSearchResults(${users.size} users: ${users.take(5)}...)"
-
-    override def merge(req: SyncRequest): MergeResult[SyncRequest.SyncSearchResults] = mergeHelper[SyncSearchResults](req) { other =>
-      if (other.users.subsetOf(users)) Merged(this)
-      else {
-        val union = users ++ other.users
-        if (union.size <= UsersClient.IdsCountThreshold) Merged(SyncSearchResults(union))
-        else if (union.size == users.size + other.users.size) Unchanged
-        else Updated(other.copy(other.users -- users))
+    override def merge(req: SyncRequest): MergeResult[SyncRequest.SyncSearchResults] =
+      mergeHelper[SyncSearchResults](req) { other =>
+        if (other.users.subsetOf(users)) Merged(this)
+        else {
+          val union = users ++ other.users
+          if (union.size <= UsersClient.IdsCountThreshold) Merged(SyncSearchResults(union))
+          else if (union.size == users.size + other.users.size) Unchanged
+          else Updated(other.copy(other.users -- users))
+        }
       }
-    }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
       case SyncSearchResults(us) => users.subsetOf(us)
@@ -122,56 +125,58 @@ object SyncRequest {
     }
   }
 
-  case class SyncSearchQuery(query: SearchQuery) extends BaseRequest(Cmd.SyncSearchQuery) {
+  final case class SyncSearchQuery(query: SearchQuery) extends BaseRequest(Cmd.SyncSearchQuery) {
     override val mergeKey: Any = (cmd, query)
   }
 
-  case class ExactMatchHandle(handle: Handle) extends BaseRequest(Cmd.ExactMatchHandle) {
+  final case class ExactMatchHandle(handle: Handle) extends BaseRequest(Cmd.ExactMatchHandle) {
     override val mergeKey: Any = (cmd, handle)
   }
 
-  case class SyncRichMedia(messageId: MessageId) extends BaseRequest(Cmd.SyncRichMedia) {
+  final case class SyncRichMedia(messageId: MessageId) extends BaseRequest(Cmd.SyncRichMedia) {
     override val mergeKey: Any = (cmd, messageId)
   }
 
-  case class PostSelfPicture(assetId: UploadAssetId) extends BaseRequest(Cmd.PostSelfPicture) {
-    override def merge(req: SyncRequest) = mergeHelper[PostSelfPicture](req)(Merged(_))
+  final case class PostSelfPicture(assetId: UploadAssetId) extends BaseRequest(Cmd.PostSelfPicture) {
+    override def merge(req: SyncRequest): MergeResult[PostSelfPicture] = mergeHelper[PostSelfPicture](req)(Merged(_))
   }
 
-  case class PostSelfName(name: Name) extends BaseRequest(Cmd.PostSelfName) {
-    override def merge(req: SyncRequest) = mergeHelper[PostSelfName](req)(Merged(_))
+  final case class PostSelfName(name: Name) extends BaseRequest(Cmd.PostSelfName) {
+    override def merge(req: SyncRequest): MergeResult[PostSelfName] = mergeHelper[PostSelfName](req)(Merged(_))
   }
 
-  case class PostSelfAccentColor(color: AccentColor) extends BaseRequest(Cmd.PostSelfAccentColor) {
-    override def merge(req: SyncRequest) = mergeHelper[PostSelfAccentColor](req)(Merged(_))
+  final case class PostSelfAccentColor(color: AccentColor) extends BaseRequest(Cmd.PostSelfAccentColor) {
+    override def merge(req: SyncRequest): MergeResult[PostSelfAccentColor] = mergeHelper[PostSelfAccentColor](req)(Merged(_))
   }
 
-  case class PostAvailability(availability: Availability) extends BaseRequest(Cmd.PostAvailability) {
+  final case class PostAvailability(availability: Availability) extends BaseRequest(Cmd.PostAvailability) {
     override val mergeKey: Any = (cmd, availability.id)
   }
 
-  case class PostConv(convId:       ConvId,
-                      users:        Set[UserId],
-                      name:         Option[Name],
-                      team:         Option[TeamId],
-                      access:       Set[Access],
-                      accessRole:   AccessRole,
-                      receiptMode:  Option[Int],
-                      defaultRole:  ConversationRole
-                     ) extends RequestForConversation(Cmd.PostConv) with Serialized {
-    override def merge(req: SyncRequest) = mergeHelper[PostConv](req)(Merged(_))
+  final case class PostConv(convId:       ConvId,
+                            users:        Set[UserId],
+                            name:         Option[Name],
+                            team:         Option[TeamId],
+                            access:       Set[Access],
+                            accessRole:   AccessRole,
+                            receiptMode:  Option[Int],
+                            defaultRole:  ConversationRole
+                           ) extends RequestForConversation(Cmd.PostConv) with Serialized {
+    override def merge(req: SyncRequest): MergeResult[PostConv] = mergeHelper[PostConv](req)(Merged(_))
   }
 
-  case class PostConvReceiptMode(convId: ConvId, receiptMode: Int)
+  final case class PostConvReceiptMode(convId: ConvId, receiptMode: Int)
     extends RequestForConversation(Cmd.PostConvReceiptMode) with Serialized {
-    override def merge(req: SyncRequest) = mergeHelper[PostConvReceiptMode](req)(Merged(_))
+    override def merge(req: SyncRequest): MergeResult[PostConvReceiptMode] = mergeHelper[PostConvReceiptMode](req)(Merged(_))
   }
 
-  case class PostConvName(convId: ConvId, name: Name) extends RequestForConversation(Cmd.PostConvName) with Serialized {
-    override def merge(req: SyncRequest) = mergeHelper[PostConvName](req)(Merged(_))
+  final case class PostConvName(convId: ConvId, name: Name)
+    extends RequestForConversation(Cmd.PostConvName) with Serialized {
+    override def merge(req: SyncRequest): MergeResult[PostConvName] = mergeHelper[PostConvName](req)(Merged(_))
   }
 
-  case class PostConvState(convId: ConvId, state: ConversationState) extends RequestForConversation(Cmd.PostConvState) with Serialized {
+  final case class PostConvState(convId: ConvId, state: ConversationState)
+    extends RequestForConversation(Cmd.PostConvState) with Serialized {
 
     private def mergeConvState(o: ConversationState, n: ConversationState) = {
       val a = if (o.archiveTime.exists(t => n.archiveTime.forall(_.isBefore(t)))) o else n
@@ -180,39 +185,45 @@ object SyncRequest {
       ConversationState(a.archived, a.archiveTime, m.muted, m.muteTime, m.mutedStatus)
     }
 
-    override def merge(req: SyncRequest) = mergeHelper[PostConvState](req)(other => Merged(copy(state = mergeConvState(state, other.state))))
+    override def merge(req: SyncRequest): MergeResult[PostConvState] =
+      mergeHelper[PostConvState](req)(other => Merged(copy(state = mergeConvState(state, other.state))))
   }
 
-  case class PostConvRole(convId: ConvId, userId: UserId, newRole: ConversationRole, origRole: ConversationRole)
+  final case class PostConvRole(convId: ConvId, userId: UserId, newRole: ConversationRole, origRole: ConversationRole)
     extends RequestForConversation(Cmd.PostConvRole) with Serialized {
     override val mergeKey: Any = (cmd, convId, userId)
-    override def merge(req: SyncRequest) = mergeHelper[PostConvRole](req)(Merged(_))
+    override def merge(req: SyncRequest): MergeResult[PostConvRole] = mergeHelper[PostConvRole](req)(Merged(_))
   }
 
-  case class PostLastRead(convId: ConvId, time: RemoteInstant) extends RequestForConversation(Cmd.PostLastRead) {
+  final case class PostLastRead(convId: ConvId, time: RemoteInstant)
+    extends RequestForConversation(Cmd.PostLastRead) {
     override val mergeKey: Any = (cmd, convId)
-    override def merge(req: SyncRequest) = mergeHelper[PostLastRead](req)(Merged(_))
+    override def merge(req: SyncRequest): MergeResult[PostLastRead] = mergeHelper[PostLastRead](req)(Merged(_))
   }
 
-  case class PostTrackingId(trackingId: TrackingId) extends BaseRequest(Cmd.PostTrackingId) {
+  final case class PostTrackingId(trackingId: TrackingId)
+    extends BaseRequest(Cmd.PostTrackingId) {
     override val mergeKey: Any = trackingId
     override def merge(req: SyncRequest): MergeResult[PostTrackingId] = mergeHelper[PostTrackingId](req)(Merged(_))
   }
 
-  case class PostCleared(convId: ConvId, time: RemoteInstant) extends RequestForConversation(Cmd.PostCleared) with Serialized {
+  final case class PostCleared(convId: ConvId, time: RemoteInstant)
+    extends RequestForConversation(Cmd.PostCleared) with Serialized {
     override val mergeKey: Any = (cmd, convId)
-    override def merge(req: SyncRequest) = mergeHelper[PostCleared](req) { other =>
+    override def merge(req: SyncRequest): MergeResult[PostCleared] = mergeHelper[PostCleared](req) { other =>
       Merged(PostCleared(convId, time max other.time))
     }
   }
 
-  case class PostTypingState(convId: ConvId, isTyping: Boolean) extends RequestForConversation(Cmd.PostTypingState) with Serialized {
-    override def merge(req: SyncRequest) = mergeHelper[PostTypingState](req)(Merged(_))
+  final case class PostTypingState(convId: ConvId, isTyping: Boolean)
+    extends RequestForConversation(Cmd.PostTypingState) with Serialized {
+    override def merge(req: SyncRequest): MergeResult[PostTypingState] = mergeHelper[PostTypingState](req)(Merged(_))
   }
 
-  case class PostMessage(convId: ConvId, messageId: MessageId, editTime: RemoteInstant) extends RequestForConversation(Cmd.PostMessage) with Serialized {
-    override val mergeKey = (cmd, convId, messageId)
-    override def merge(req: SyncRequest) = mergeHelper[PostMessage](req) { r =>
+  final case class PostMessage(convId: ConvId, messageId: MessageId, editTime: RemoteInstant)
+    extends RequestForConversation(Cmd.PostMessage) with Serialized {
+    override val mergeKey: Any = (cmd, convId, messageId)
+    override def merge(req: SyncRequest): MergeResult[PostMessage] = mergeHelper[PostMessage](req) { r =>
       // those requests are merged if message was edited multiple times (or unsent message was edited before sync is finished)
       // editTime == Instant.EPOCH is a special value, it marks initial message sync, we need to preserve that info
       // sync handler will check editTime and will just upload regular message (with current content) instead of an edit if it's EPOCH
@@ -221,39 +232,57 @@ object SyncRequest {
     }
   }
 
-  case class PostOpenGraphMeta(convId: ConvId, messageId: MessageId, editTime: RemoteInstant) extends RequestForConversation(Cmd.PostOpenGraphMeta) {
-    override val mergeKey = (cmd, convId, messageId)
-    override def merge(req: SyncRequest) = mergeHelper[PostOpenGraphMeta](req)(r => Merged(PostOpenGraphMeta(convId, messageId, editTime max r.editTime)))
+  final case class PostOpenGraphMeta(convId: ConvId, messageId: MessageId, editTime: RemoteInstant)
+    extends RequestForConversation(Cmd.PostOpenGraphMeta) {
+    override val mergeKey: Any = (cmd, convId, messageId)
+    override def merge(req: SyncRequest): MergeResult[PostOpenGraphMeta] =
+      mergeHelper[PostOpenGraphMeta](req)(r => Merged(PostOpenGraphMeta(convId, messageId, editTime max r.editTime)))
   }
 
-  case class PostReceipt(convId: ConvId, messages: Seq[MessageId], userId: UserId, tpe: ReceiptType) extends RequestForConversation(Cmd.PostReceipt) {
-    override val mergeKey = (cmd, messages, userId, tpe)
+  final case class PostReceipt(convId: ConvId, messages: Seq[MessageId], userId: UserId, tpe: ReceiptType)
+    extends RequestForConversation(Cmd.PostReceipt) {
+    override val mergeKey: Any = (cmd, messages, userId, tpe)
   }
 
-  case class PostDeleted(convId: ConvId, messageId: MessageId) extends RequestForConversation(Cmd.PostDeleted) {
-    override val mergeKey = (cmd, convId, messageId)
+  final case class PostDeleted(convId: ConvId, messageId: MessageId)
+    extends RequestForConversation(Cmd.PostDeleted) {
+    override val mergeKey: Any = (cmd, convId, messageId)
   }
 
-  case class PostRecalled(convId: ConvId, msg: MessageId, recalledId: MessageId) extends RequestForConversation(Cmd.PostRecalled) {
-    override val mergeKey = (cmd, convId, msg, recalledId)
+  final case class PostRecalled(convId: ConvId, msg: MessageId, recalledId: MessageId)
+    extends RequestForConversation(Cmd.PostRecalled) {
+    override val mergeKey: Any = (cmd, convId, msg, recalledId)
   }
 
-  case class PostAssetStatus(convId: ConvId, messageId: MessageId, exp: Option[FiniteDuration], status: UploadAssetStatus) extends RequestForConversation(Cmd.PostAssetStatus) with Serialized {
-    override val mergeKey = (cmd, convId, messageId)
-    override def merge(req: SyncRequest) = mergeHelper[PostAssetStatus](req)(Merged(_))
+  final case class PostAssetStatus(convId: ConvId, messageId: MessageId, exp: Option[FiniteDuration], status: UploadAssetStatus)
+    extends RequestForConversation(Cmd.PostAssetStatus) with Serialized {
+    override val mergeKey: Any = (cmd, convId, messageId)
+    override def merge(req: SyncRequest): MergeResult[PostAssetStatus] = mergeHelper[PostAssetStatus](req)(Merged(_))
   }
 
-  case class SyncConvLink(convId: ConvId) extends RequestForConversation(Cmd.SyncConvLink)
+  final case class SyncConvLink(convId: ConvId) extends RequestForConversation(Cmd.SyncConvLink)
 
-  case class PostClientLabel(id: ClientId, label: String) extends BaseRequest(Cmd.PostClientLabel) {
-    override val mergeKey = (cmd, id)
+  final case class PostClientLabel(id: ClientId, label: String) extends BaseRequest(Cmd.PostClientLabel) {
+    override val mergeKey: Any = (cmd, id)
   }
 
-  case class SyncClients(userId: UserId) extends RequestForUser(Cmd.SyncClients)
+  final case class SyncClients(userId: UserId) extends RequestForUser(Cmd.SyncClients)
 
-  case class SyncPreKeys(userId: UserId, clients: Set[ClientId]) extends RequestForUser(Cmd.SyncPreKeys) {
+  final case class SyncClientsBatch(ids: Set[QualifiedId]) extends BaseRequest(Cmd.SyncClientsBatch) {
+    override def merge(req: SyncRequest) = mergeHelper[SyncClientsBatch](req) { other =>
+      if (other.ids.subsetOf(ids)) Merged(this)
+      else Merged(SyncClientsBatch(ids ++ other.ids))
+    }
 
-    override def merge(req: SyncRequest) = mergeHelper[SyncPreKeys](req) { other =>
+    override def isDuplicateOf(req: SyncRequest): Boolean = req match {
+      case SyncClientsBatch(us) => ids.subsetOf(us)
+      case _ => false
+    }
+  }
+
+  final case class SyncPreKeys(userId: UserId, clients: Set[ClientId]) extends RequestForUser(Cmd.SyncPreKeys) {
+
+    override def merge(req: SyncRequest): MergeResult[SyncPreKeys] = mergeHelper[SyncPreKeys](req) { other =>
       if (other.clients.subsetOf(clients)) Merged(this)
       else Merged(SyncPreKeys(userId, clients ++ other.clients))
     }
@@ -264,34 +293,37 @@ object SyncRequest {
     }
   }
 
-  case class PostAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId) extends BaseRequest(Cmd.PostAddBot) {
-    override val mergeKey = (cmd, cId, iId)
+  final case class PostAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId) extends BaseRequest(Cmd.PostAddBot) {
+    override val mergeKey: Any = (cmd, cId, iId)
   }
 
-  case class PostRemoveBot(cId: ConvId, botId: UserId) extends BaseRequest(Cmd.PostRemoveBot) {
-    override val mergeKey = (cmd, cId, botId)
+  final case class PostRemoveBot(cId: ConvId, botId: UserId) extends BaseRequest(Cmd.PostRemoveBot) {
+    override val mergeKey: Any = (cmd, cId, botId)
   }
 
-  case class PostLiking(convId: ConvId, liking: Liking) extends RequestForConversation(Cmd.PostLiking) {
-    override val mergeKey = (cmd, convId, liking.id)
+  final case class PostLiking(convId: ConvId, liking: Liking) extends RequestForConversation(Cmd.PostLiking) {
+    override val mergeKey: Any = (cmd, convId, liking.id)
   }
 
-  case class PostButtonAction(messageId: MessageId, buttonId: ButtonId, senderId: UserId) extends BaseRequest(Cmd.PostButtonAction) {
+  final case class PostButtonAction(messageId: MessageId, buttonId: ButtonId, senderId: UserId)
+    extends BaseRequest(Cmd.PostButtonAction) {
     override val mergeKey: Any = (cmd, messageId, buttonId)
   }
 
-  case class PostSessionReset(convId: ConvId, userId: UserId, client: ClientId) extends RequestForConversation(Cmd.PostSessionReset) {
+  final case class PostSessionReset(convId: ConvId, userId: UserId, client: ClientId)
+    extends RequestForConversation(Cmd.PostSessionReset) {
     override val mergeKey: Any = (cmd, convId, userId, client)
   }
 
-  case class PostConnection(userId: UserId, name: Name, message: String) extends RequestForUser(Cmd.PostConnection)
+  final case class PostConnection(userId: UserId, name: Name, message: String) extends RequestForUser(Cmd.PostConnection)
 
-  case class PostConnectionStatus(userId: UserId, status: Option[ConnectionStatus]) extends RequestForUser(Cmd.PostConnectionStatus) {
-    override def merge(req: SyncRequest) = mergeHelper[PostConnectionStatus](req)(Merged(_)) // always use incoming request value
+  final case class PostConnectionStatus(userId: UserId, status: Option[ConnectionStatus])
+    extends RequestForUser(Cmd.PostConnectionStatus) {
+    override def merge(req: SyncRequest): MergeResult[PostConnectionStatus] =
+      mergeHelper[PostConnectionStatus](req)(Merged(_)) // always use incoming request value
   }
 
-  case class SyncUser(users: Set[UserId]) extends BaseRequest(Cmd.SyncUser) {
-
+  final case class SyncUser(users: Set[UserId]) extends BaseRequest(Cmd.SyncUser) {
     override def toString = s"SyncUser(${users.size} users: ${users.take(5)}...)"
 
     override def merge(req: SyncRequest): MergeResult[SyncRequest.SyncUser] = mergeHelper[SyncUser](req) { other =>
@@ -310,17 +342,17 @@ object SyncRequest {
     }
   }
 
-  case class SyncConversation(convs: Set[ConvId]) extends BaseRequest(Cmd.SyncConversation) {
-
-    override def merge(req: SyncRequest) = mergeHelper[SyncConversation](req) { other =>
-      if (other.convs.subsetOf(convs)) Merged(this)
-      else {
-        val union = convs ++ other.convs
-        if (union.size <= ConversationsClient.IdsCountThreshold) Merged(SyncConversation(union))
-        else if (union.size == convs.size + other.convs.size) Unchanged
-        else Updated(other.copy(other.convs -- convs))
+  final case class SyncConversation(convs: Set[ConvId]) extends BaseRequest(Cmd.SyncConversation) {
+    override def merge(req: SyncRequest): MergeResult[SyncConversation] =
+      mergeHelper[SyncConversation](req) { other =>
+        if (other.convs.subsetOf(convs)) Merged(this)
+        else {
+          val union = convs ++ other.convs
+          if (union.size <= ConversationsClient.IdsCountThreshold) Merged(SyncConversation(union))
+          else if (union.size == convs.size + other.convs.size) Unchanged
+          else Updated(other.copy(other.convs -- convs))
+        }
       }
-    }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
       case SyncConversation(cs) => convs.subsetOf(cs)
@@ -328,8 +360,9 @@ object SyncRequest {
     }
   }
 
-  case class PostConvJoin(convId: ConvId, users: Set[UserId], conversationRole: ConversationRole) extends RequestForConversation(Cmd.PostConvJoin) with Serialized {
-    override def merge(req: SyncRequest) =
+  final case class PostConvJoin(convId: ConvId, users: Set[UserId], conversationRole: ConversationRole)
+    extends RequestForConversation(Cmd.PostConvJoin) with Serialized {
+    override def merge(req: SyncRequest): MergeResult[PostConvJoin] =
       mergeHelper[PostConvJoin](req) { other => Merged(PostConvJoin(convId, users ++ other.users, conversationRole)) }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
@@ -339,23 +372,23 @@ object SyncRequest {
   }
 
   // leave endpoint on backend accepts only one user as parameter (no way to remove multiple users at once)
-  case class PostConvLeave(convId: ConvId, user: UserId) extends RequestForConversation(Cmd.PostConvLeave) with Serialized {
-    override val mergeKey = (cmd, convId, user)
+  final case class PostConvLeave(convId: ConvId, user: UserId) extends RequestForConversation(Cmd.PostConvLeave) with Serialized {
+    override val mergeKey: Any = (cmd, convId, user)
   }
 
-  case class PostStringProperty(key: PropertyKey, value: String) extends BaseRequest(Cmd.PostStringProperty) {
+  final case class PostStringProperty(key: PropertyKey, value: String) extends BaseRequest(Cmd.PostStringProperty) {
     override def mergeKey: Any = (cmd, key)
   }
 
-  case class PostBoolProperty(key: PropertyKey, value: Boolean) extends BaseRequest(Cmd.PostBoolProperty) {
+  final case class PostBoolProperty(key: PropertyKey, value: Boolean) extends BaseRequest(Cmd.PostBoolProperty) {
     override def mergeKey: Any = (cmd, key)
   }
 
-  case class PostIntProperty(key: PropertyKey, value: Int) extends BaseRequest(Cmd.PostIntProperty) {
+  final case class PostIntProperty(key: PropertyKey, value: Int) extends BaseRequest(Cmd.PostIntProperty) {
     override def mergeKey: Any = (cmd, key)
   }
 
-  case class DeleteGroupConversation(teamId: TeamId, convId: RConvId) extends BaseRequest(Cmd.DeleteGroupConv)
+  final case class DeleteGroupConversation(teamId: TeamId, convId: RConvId) extends BaseRequest(Cmd.DeleteGroupConv)
 
   private def mergeHelper[A <: SyncRequest : ClassTag](other: SyncRequest)(f: A => MergeResult[A]): MergeResult[A] = other match {
     case req: A if req.mergeKey == other.mergeKey => f(req)
@@ -417,7 +450,7 @@ object SyncRequest {
           case Cmd.SyncSelfClients           => SyncSelfClients
           case Cmd.SyncSelfPermissions       => SyncSelfPermissions
           case Cmd.SyncClients               => SyncClients(userId)
-          case Cmd.SyncClientLocation        => SyncClientsLocation
+          case Cmd.SyncClientsBatch          => SyncClientsBatch(decodeQualifiedIds('qualifiableIds).toSet)
           case Cmd.SyncPreKeys               => SyncPreKeys(userId, decodeClientIdSeq('clients).toSet)
           case Cmd.PostClientLabel           => PostClientLabel(decodeId[ClientId]('client), 'label)
           case Cmd.PostLiking                => PostLiking(convId, JsonDecoder[Liking]('liking))
@@ -436,6 +469,8 @@ object SyncRequest {
           case Cmd.DeleteGroupConv           => DeleteGroupConversation(teamId, rConvId)
           case Cmd.PostTrackingId            => PostTrackingId(trackingId)
           case Cmd.SyncLegalHoldRequest      => SyncLegalHoldRequest
+          case Cmd.SyncClientsForLegalHold   => SyncClientsForLegalHold(rConvId)
+          case Cmd.PostClientCapabilities    => PostClientCapabilities
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -547,7 +582,10 @@ object SyncRequest {
         case PostSessionReset(_, user, client) =>
           o.put("client", client.str)
           o.put("user", user)
-        case SyncClients(user) => o.put("user", user.str)
+        case SyncClients(user) =>
+          o.put("user", user.str)
+        case SyncClientsBatch(ids) =>
+          o.put("qualifiableIds", ids.map(QualifiedId.Encoder(_)))
         case SyncPreKeys(user, clients) =>
           o.put("user", user.str)
           o.put("clients", arrString(clients.toSeq map (_.str)))
@@ -561,12 +599,14 @@ object SyncRequest {
           o.put("key", key)
           o.put("value", value)
         case PostFolders | SyncFolders | SyncSelf | SyncTeam | SyncTeamData | DeleteAccount | SyncConversations | SyncConnections |
-             SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | SyncLegalHoldRequest | Unknown => () // nothing to do
+             SyncSelfClients | SyncSelfPermissions  | SyncProperties | SyncLegalHoldRequest | PostClientCapabilities | Unknown => () // nothing to do
         case DeleteGroupConversation(teamId, rConvId)  =>
           o.put("teamId", teamId.str)
           o.put("rConv", rConvId.str)
         case PostTrackingId(trackingId) =>
           o.put("trackingId", trackingId.str)
+        case SyncClientsForLegalHold(convId) =>
+          o.put("rConv", convId.str)
       }
     }
   }

@@ -63,7 +63,7 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
     hide <- hideContent
   } yield !hide && noW).on(Threading.Ui)(imageIcon.setVisible)
 
-  onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
+  onClicked.onUi { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
 
   message.map(_.assetId).onUi { aId =>
     verbose(l"message asset id => $aId")

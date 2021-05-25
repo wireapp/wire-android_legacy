@@ -54,7 +54,7 @@ class LegalHoldClientImpl(implicit
   override def fetchLegalHoldRequest(teamId: TeamId,
                                      userId: UserId): ErrorOrResponse[Option[LegalHoldRequest]] =
     Request.Get(relativePath = path(teamId, userId))
-      .withResultType[Option[LegalHoldRequest]]
+      .withResultType[Option[LegalHoldRequest]](responseDeserializerFrom(bodyDeserializerFrom(Deserializer)))
       .withErrorType[ErrorResponse]
       .executeSafe
 
@@ -63,7 +63,7 @@ class LegalHoldClientImpl(implicit
                               password: Option[String]): ErrorOrResponse[Unit] =
     Request.Put(
       relativePath = approvePath(teamId, userId),
-      body = JsonEncoder { _.put("password", password) }
+      body = JsonEncoder { _.put("password", password.getOrElse("")) }
     )
     .withResultType[Unit]
     .withErrorType[ErrorResponse]

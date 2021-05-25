@@ -19,7 +19,7 @@ package com.waz.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.NetworkMode
-import com.waz.content.UserPreferences.{SelfClient, ShouldSyncConversations, ShouldSyncInitial}
+import com.waz.content.UserPreferences.{SelfClient, ShouldSyncConversations, shouldSyncAllOnUpdate}
 import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -55,6 +55,7 @@ trait SyncServiceHandle {
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId]
   def syncFolders(): Future[SyncId]
   def syncLegalHoldRequest(): Future[SyncId]
+  def syncClientsForLegalHold(convId: RConvId): Future[SyncId]
 
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncId]
   def postRemoveBot(cId: ConvId, botId: UserId): Future[SyncId]
@@ -104,8 +105,9 @@ trait SyncServiceHandle {
   def syncSelfClients(): Future[SyncId]
   def syncSelfPermissions(): Future[SyncId]
   def postClientLabel(id: ClientId, label: String): Future[SyncId]
+  def postClientCapabilities(): Future[SyncId]
   def syncClients(user: UserId): Future[SyncId]
-  def syncClientsLocation(): Future[SyncId]
+  def syncClients(users: Set[QualifiedId]): Future[SyncId]
   def syncProperties(): Future[SyncId]
 
   def syncPreKeys(user: UserId, clients: Set[ClientId]): Future[SyncId]
@@ -124,7 +126,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   import Threading.Implicits.Background
   import com.waz.model.sync.SyncRequest._
 
-  private val shouldSyncAll           = userPreferences(ShouldSyncInitial)
+  private val shouldSyncAll           = userPreferences(shouldSyncAllOnUpdate)
   private val shouldSyncConversations = userPreferences(ShouldSyncConversations)
   private val isRegistered = userPreferences(SelfClient).signal.map {
     case Registered(_) => true
@@ -159,6 +161,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority) = addRequest(SyncRichMedia(id), priority = priority)
   def syncFolders(): Future[SyncId] = addRequest(SyncFolders)
   def syncLegalHoldRequest(): Future[SyncId] = addRequest(SyncLegalHoldRequest)
+  def syncClientsForLegalHold(convId: RConvId): Future[SyncId] = addRequest(SyncClientsForLegalHold(convId))
 
   def postSelfUser(info: UserInfo) = addRequest(PostSelf(info))
   def postSelfPicture(picture: UploadAssetId) = addRequest(PostSelfPicture(picture))
@@ -207,8 +210,9 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncSelfClients() = addRequest(SyncSelfClients, priority = Priority.Critical)
   def syncSelfPermissions() = addRequest(SyncSelfPermissions, priority = Priority.High)
   def postClientLabel(id: ClientId, label: String) = addRequest(PostClientLabel(id, label))
+  def postClientCapabilities(): Future[SyncId] = addRequest(PostClientCapabilities)
   def syncClients(user: UserId) = addRequest(SyncClients(user))
-  def syncClientsLocation() = addRequest(SyncClientsLocation)
+  def syncClients(users: Set[QualifiedId]) = addRequest(SyncClientsBatch(users))
   def syncPreKeys(user: UserId, clients: Set[ClientId]) = addRequest(SyncPreKeys(user, clients))
   def syncProperties(): Future[SyncId] = addRequest(SyncProperties, forceRetry = true)
 
@@ -263,7 +267,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
         req match {
           case SyncSelfClients                                 => zms.otrClientsSync.syncClients(accountId)
           case SyncClients(user)                               => zms.otrClientsSync.syncClients(user)
-          case SyncClientsLocation                             => zms.otrClientsSync.syncClientsLocation()
+          case SyncClientsBatch(users)                         => zms.otrClientsSync.syncClients(users)
           case SyncPreKeys(user, clients)                      => zms.otrClientsSync.syncPreKeys(Map(user -> clients.toSeq))
           case PostClientLabel(id, label)                      => zms.otrClientsSync.postLabel(id, label)
           case SyncConversation(convs)                         => zms.conversationSync.syncConversations(convs)
@@ -320,7 +324,9 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostFolders                                     => zms.foldersSyncHandler.postFolders()
           case SyncFolders                                     => zms.foldersSyncHandler.syncFolders()
           case PostTrackingId(trackingId)                      => zms.trackingSync.postNewTrackingId(trackingId)
-          case SyncLegalHoldRequest                            => zms.legalHold.syncLegalHoldRequest()
+          case SyncLegalHoldRequest                            => zms.legalHoldSync.syncLegalHoldRequest()
+          case SyncClientsForLegalHold(convId)                 => zms.legalHoldSync.syncClientsForLegalHoldVerification(convId)
+          case PostClientCapabilities                          => zms.otrClientsSync.postCapabilities()
           case Unknown                                         => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))

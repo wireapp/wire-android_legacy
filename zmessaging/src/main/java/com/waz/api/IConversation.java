@@ -64,4 +64,5 @@ public interface IConversation extends UiObservable {
         NON_ACTIVATED, //"wireless" users may join the conversation
         PRIVATE        //for 1:1 conversations
     }
+
 }

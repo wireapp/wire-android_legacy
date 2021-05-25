@@ -111,7 +111,7 @@ class SingleParticipantFragment extends FragmentHelper {
       }
     }
 
-    subs += adapter.onHeaderClick { _ => inject[BrowserController].openOtrLearnWhy() }
+    subs += adapter.onHeaderClick.onUi { _ => inject[BrowserController].openOtrLearnWhy() }
   }
 
   private def initDevicesView(): Unit = returning(view[RecyclerView](R.id.devices_recycler_view)) { vh =>

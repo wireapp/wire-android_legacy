@@ -91,7 +91,7 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
         lastMessageFromSelf ! MessageDataDao.lastFromSelf(convId, selfUserId)
       }
     }.map { _ =>
-      Signal.zip(signals.unreadCount, signals.failedCount, signals.lastMissedCall, signals.incomingKnock).throttle(500.millis) {
+      Signal.zip(signals.unreadCount, signals.failedCount, signals.lastMissedCall, signals.incomingKnock).throttle(500.millis).foreach {
         case (unread, failed, missed, knock) =>
           convs.update(convId, _.copy(incomingKnockMessage = knock, missedCallMessage = missed, unreadCount = unread, failedCount = failed))
       }

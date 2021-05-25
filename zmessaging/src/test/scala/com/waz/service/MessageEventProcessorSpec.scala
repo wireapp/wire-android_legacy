@@ -145,7 +145,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       clock.advance(1.second) //conv will have time EPOCH, needs to be later than that
       testRound(MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, membersAdded.map(_ -> ConversationRole.AdminRole).toMap))
       clock.advance(1.second)
-      testRound(MemberLeaveEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded))
+      testRound(MemberLeaveEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, reason = None))
       clock.advance(1.second)
       testRound(RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, Name("new name")))
     }

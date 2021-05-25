@@ -45,6 +45,10 @@ public class KeyboardUtils {
         }
     }
 
+    public static void hideKeyboard(View view) {
+        getInputMethodManager(view.getContext()).hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
     public static boolean showKeyboard(Activity activity) {
         if (activity != null && activity.getCurrentFocus() != null) {
             getInputMethodManager(activity).showSoftInput(activity.getCurrentFocus(), InputMethodManager.SHOW_IMPLICIT);

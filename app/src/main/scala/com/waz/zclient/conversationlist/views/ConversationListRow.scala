@@ -203,7 +203,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       verbose(l"Outdated avatar info")
   }
 
-  badge.onClickEvent {
+  badge.onClickEvent.onUi {
     case ConversationBadge.IncomingCall =>
       (zms.map(_.selfUserId).currentValue, conversationData.map(_.id)) match {
         case (Some(acc), Some(cId)) => inject[CallStartController].startCall(acc, cId, forceOption = true)
@@ -418,9 +418,11 @@ object ConversationListRow {
           getString(R.string.conversation_list__added, memberName)
         case Message.Type.MEMBER_JOIN =>
           getString(R.string.conversation_list__added, memberName)
-        case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
+        case Message.Type.MEMBER_LEAVE |
+             Message.Type.MEMBER_LEAVE_DUE_TO_LEGAL_HOLD if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
           getString(R.string.conversation_list__left_you, senderName)
-        case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) =>
+        case Message.Type.MEMBER_LEAVE |
+             Message.Type.MEMBER_LEAVE_DUE_TO_LEGAL_HOLD if members.exists(_.id == selfId) =>
           getString(R.string.conversation_list__removed_you, senderName)
         case _ =>
           ""

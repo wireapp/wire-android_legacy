@@ -127,7 +127,12 @@ case class TypingEvent(convId: RConvId, time: RemoteInstant, from: UserId, isTyp
 case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], users: Map[UserId, ConversationRole], firstEvent: Boolean = false)
   extends MessageEvent with ConversationStateEvent with ConversationEvent
 
-case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId]) extends MessageEvent with ConversationStateEvent
+case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], reason: Option[MemberLeaveReason]) extends MessageEvent with ConversationStateEvent
+
+final case class MemberLeaveReason(value: String) extends AnyVal
+object MemberLeaveReason {
+  val LegalHoldPolicyConflict = MemberLeaveReason("legalhold-policy-conflict")
+}
 
 case class MemberUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, state: ConversationState) extends ConversationStateEvent
 
@@ -230,11 +235,13 @@ object Event {
         case "user.connection" => connectionEvent(js.getJSONObject("connection"), JsonDecoder.opt('user, _.getJSONObject("user")) flatMap (JsonDecoder.decodeOptName('name)(_)))
         case "user.push-remove" => gcmTokenRemoveEvent(js.getJSONObject("token"))
         case "user.delete" => UserDeleteEvent(user = 'id)
-        case "user.client-add" => OtrClientAddEvent(OtrClient.ClientsResponse.client(js.getJSONObject("client")))
+        case "user.client-add" => OtrClientAddEvent(OtrClient.ClientsResponse.Decoder(js.getJSONObject("client")))
         case "user.client-remove" => OtrClientRemoveEvent(decodeId[ClientId]('id)(js.getJSONObject("client"), implicitly))
         case "user.properties-set" => PropertyEvent.Decoder(js)
         case "user.properties-delete" => PropertyEvent.Decoder(js)
         case "user.legalhold-request" => LegalHoldRequestEvent(decodeId[UserId]('id), LegalHoldRequest.Decoder(js))
+        case "user.legalhold-enable" => LegalHoldEnableEvent(decodeId[UserId]('id))
+        case "user.legalhold-disable" => LegalHoldDisableEvent(decodeId[UserId]('id))
         case _ =>
           error(l"unhandled event: $js")
           UnknownEvent(js)
@@ -270,7 +277,7 @@ object ConversationEvent extends DerivedLogTag {
         case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeName('name)(d.get))
         case "conversation.member-join"          =>
           MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeUserIdsWithRoles('users)(d.get), decodeString('id).startsWith("1."))
-        case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get))
+        case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeOptString('reason)(d.get).map(MemberLeaveReason(_)))
         case "conversation.member-update"        => MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get))
         case "conversation.connect-request"      => ConnectRequestEvent('conversation, time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeName('name)(d.get), decodeOptString('email)(d.get))
         case "conversation.typing"               => TypingEvent('conversation, time, 'from, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))
@@ -461,4 +468,6 @@ object PropertyEvent {
 }
 
 sealed trait LegalHoldEvent extends UserEvent
-case class LegalHoldRequestEvent(targetUserId: UserId, request: LegalHoldRequest) extends LegalHoldEvent
+case class LegalHoldRequestEvent(userId: UserId, request: LegalHoldRequest) extends LegalHoldEvent
+case class LegalHoldEnableEvent(userId: UserId) extends LegalHoldEvent
+case class LegalHoldDisableEvent(userId: UserId) extends LegalHoldEvent

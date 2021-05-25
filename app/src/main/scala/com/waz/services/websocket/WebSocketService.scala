@@ -142,7 +142,7 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
   private lazy val global              = inject[GlobalModule]
 
   private lazy val webSocketActiveSubscription =
-    Signal.zip(controller.accountWebsocketStates, global.network.networkMode) {
+    Signal.zip(controller.accountWebsocketStates, global.network.networkMode).foreach {
       case ((zmsWithWSActive, zmsWithWSInactive), networkMode) if NetworkModeService.isOnlineMode(networkMode) =>
         toggleWSPushServices(zmsWithWSActive, zmsWithWSInactive, stopIfNeeded = true)
       case ((zmsWithWSActive, zmsWithWSInactive), _) =>

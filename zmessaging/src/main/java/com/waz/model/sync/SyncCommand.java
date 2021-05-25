@@ -62,7 +62,7 @@ public enum SyncCommand {
     SyncSelfClients("sync-clients"),   // sync user clients, register current client and update prekeys when needed
     SyncSelfPermissions("sync-self-permissions"),
     SyncClients("sync-user-clients"),
-    SyncClientLocation("sync-client-location"),
+    SyncClientsBatch("sync-user-clients-batch"),
     SyncPreKeys("sync-prekeys"),
     PostAddBot("post-add-bot"),
     PostRemoveBot("post-remove-bot"),
@@ -78,8 +78,10 @@ public enum SyncCommand {
     PostFolders("post-folders-favorites"),
     SyncFolders("sync-folders"),
     SyncLegalHoldRequest("sync-legal-hold-request"),
+    SyncClientsForLegalHold("sync-clients-for-legal-hold"),
     DeleteGroupConv("delete-group-conv"),
     PostTrackingId("post-tracking-id"),
+    PostClientCapabilities("post-client-capabilities"),
 
     Unknown("unknown");
 

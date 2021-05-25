@@ -17,17 +17,12 @@
  */
 package com.waz
 
-import java.util.concurrent.TimeoutException
-
-import org.robolectric.Robolectric
-import org.scalactic.source
+import android.app.Application
+import org.robolectric.RuntimeEnvironment
+import org.scalatest.Informing
 import org.scalatest.time.Span
-import org.scalatest.{Informer, Informing}
 
-import scala.annotation.tailrec
-import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Success, Try}
 
 trait RobolectricUtils { self: Informing =>
 
@@ -35,54 +30,7 @@ trait RobolectricUtils { self: Informing =>
 
   implicit def spanCanBeUsedAsTimeout: Span => Timeout = _.totalNanos.nanos
 
-  def context = Robolectric.application
-  implicit def testContext = Robolectric.application
-
-  @tailrec
-  final def withDelay[T](body: => T, startAt: Long = System.currentTimeMillis(), delay: FiniteDuration = 100.millis)(implicit timeout: Timeout = 5.seconds): T = {
-    Try(body) match {
-      case Success(value) => value
-      case failure =>
-        if (System.currentTimeMillis() - startAt > timeout.toMillis) failure.get else {
-          Thread.sleep(delay.toMillis)
-          Robolectric.runBackgroundTasks()
-          Robolectric.runUiThreadTasksIncludingDelayedTasks()
-          withDelay(body, startAt, delay)(timeout)
-        }
-    }
-  }
-
-  def awaitUi(cond: => Boolean, msg: => String = "", interval: FiniteDuration = 100.millis)(implicit timeout: Timeout = 5.seconds) = {
-    val end = System.currentTimeMillis() + timeout.toMillis
-    while (!cond && end > System.currentTimeMillis()) {
-      Thread.sleep(interval.toMillis, (interval.toNanos % 1000000).toInt)
-      Robolectric.runBackgroundTasks()
-      Robolectric.runUiThreadTasksIncludingDelayedTasks()
-    }
-    if (!cond) {
-      val m = msg
-      if (m.isEmpty) throw new TimeoutException(s"awaitUi timed out after: $timeout")
-      else throw new TimeoutException(m + s" [timed out after: $timeout]")
-    }
-  }
-
-  def awaitUi(duration: FiniteDuration): Unit = {
-    val end = System.currentTimeMillis() + duration.toMillis
-    while (end > System.currentTimeMillis()) {
-      Thread.sleep(100L)
-      Robolectric.runBackgroundTasks()
-      Robolectric.runUiThreadTasksIncludingDelayedTasks()
-    }
-  }
-
-  def awaitUiFuture[A](future: Future[A])(implicit timeout: Timeout = 5.seconds): Try[A] = {
-    awaitUi(future.isCompleted)
-    future.value.get
-  }
+  def context: Application = RuntimeEnvironment.application
+  implicit def testContext: Application = RuntimeEnvironment.application
 }
 
-object RobolectricUtils extends RobolectricUtils with Informing {
-  override protected def info: Informer = new Informer {
-    override def apply(message: String, payload: Option[Any])(implicit pos: source.Position): Unit = println(message)
-  }
-}

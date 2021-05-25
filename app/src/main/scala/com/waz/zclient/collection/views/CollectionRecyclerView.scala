@@ -34,6 +34,7 @@ import com.waz.zclient.collection.controllers.{CollectionController, CollectionS
 import com.waz.zclient.collection.fragments.CollectionFragment
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversation.collections.CollectionItemDecorator
+import com.waz.threading.Threading._
 
 class CollectionRecyclerView(context: Context, attrs: AttributeSet, style: Int)
   extends RecyclerView(context, attrs, style) with ViewHelper with DerivedLogTag {
@@ -60,7 +61,7 @@ class CollectionRecyclerView(context: Context, attrs: AttributeSet, style: Int)
 
     addItemDecoration(collectionItemDecorator)
 
-    scrollController.onScroll { case Scroll(pos, smooth) =>
+    scrollController.onScroll.onUi { case Scroll(pos, smooth) =>
       verbose(l"Scrolling to pos: $pos, smooth: $smooth")
       val scrollTo = math.min(adapter.getItemCount - 1, pos)
       if (smooth) {

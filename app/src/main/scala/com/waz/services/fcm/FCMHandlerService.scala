@@ -104,7 +104,7 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
   }
 
   private def getTargetAccount(data: Map[String, String]): Option[UserId] = {
-    data.get(UserKey).map(UserId)
+    data.get(UserKey).map(UserId(_))
   }
 
   /**

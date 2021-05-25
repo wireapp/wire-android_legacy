@@ -61,8 +61,8 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   private lazy val userPrefsController  = inject[IUserPreferencesController]
   private lazy val clipboard            = inject[ClipboardUtils]
   private lazy val replyController      = inject[ReplyController]
-  private lazy val screenController = inject[ScreenController]
-  private lazy val externalFileSharing = inject[ExternalFileSharing]
+  private lazy val screenController     = inject[ScreenController]
+  private lazy val externalFileSharing  = inject[ExternalFileSharing]
 
   private lazy val assetsController     = inject[AssetsController]
 
@@ -73,11 +73,11 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   val onDeleteConfirmed = EventStream[(MessageData, Boolean)]() // Boolean == isRecall(true) or localDelete(false)
   val onAssetSaved = EventStream[AssetData]()
 
-  val messageToReveal = Signal[Option[MessageData]](None)
+  val messageToReveal = Signal(Option.empty[MessageId])
 
   private var dialog = Option.empty[OptionsMenu]
 
-  onMessageAction {
+  onMessageAction.foreach {
     case (MessageAction.Copy, message)             => copyMessage(message)
     case (MessageAction.DeleteGlobal, message)     => recallMessage(message)
     case (MessageAction.DeleteLocal, message)      => deleteMessage(message)
@@ -229,11 +229,8 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       }
   }
 
-  private def revealMessageInConversation(message: MessageData) = {
-    zms.head.flatMap(z => z.messagesStorage.get(message.id)).onComplete {
-      case Success(msg) =>  messageToReveal ! msg
-      case _ =>
-    }
+  private def revealMessageInConversation(message: MessageData): Unit = {
+    messageToReveal ! Some(message.id)
   }
 }
 

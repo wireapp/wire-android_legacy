@@ -323,8 +323,7 @@ object NotificationManagerWrapper {
             error(l"Failed to add `ping from them` (${getString(R.string.wire_ping_name)}) to the external notification folder", ex)
         }
 
-      accountChannels { channels =>
-
+      accountChannels.foreach { channels =>
         notificationManager.getNotificationChannels.asScala.filter { ch =>
           !channels.flatMap(_.channels).exists(_.id == ch.getId) && !Set(OngoingNotificationsChannelId, IncomingCallNotificationsChannelId).contains(ch.getId)
         }.foreach(ch => notificationManager.deleteNotificationChannel(ch.getId))

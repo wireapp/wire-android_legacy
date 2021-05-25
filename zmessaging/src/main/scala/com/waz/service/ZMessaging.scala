@@ -69,7 +69,7 @@ class ZMessagingFactory(global: GlobalModule) {
   def credentialsClient(urlCreator: UrlCreator, httpClient: HttpClient, authRequestInterceptor: AuthRequestInterceptor) =
     new CredentialsUpdateClientImpl()(urlCreator, httpClient, authRequestInterceptor)
 
-  def cryptobox(userId: UserId, storage: StorageModule) = new CryptoBoxService(global.context, userId, global.metadata, storage.userPrefs)
+  def cryptobox(userId: UserId, storage: StorageModule): CryptoBoxService = new CryptoBoxServiceImpl(global.context, userId, global.metadata, storage.userPrefs)
 
   def zmessaging(teamId: Option[TeamId], clientId: ClientId, accountManager: AccountManager, storage: StorageModule, cryptoBox: CryptoBoxService) = wire[ZMessaging]
 }
@@ -325,12 +325,13 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         genericMsgs.eventProcessingStage,
         foldersService.eventProcessingStage,
         propertiesService.eventProcessor,
-        legalHold.legalHoldRequestEventStage
+        legalHold.legalHoldEventStage,
+        legalHold.messageEventStage
       )
     )
   }
 
-  private lazy val blockStreamsWhenProcessing = push.processing(messagesStorage.blockStreams)
+  private lazy val blockStreamsWhenProcessing = push.processing.foreach(messagesStorage.blockStreams)
 
   // force loading of services which should run on start
   {

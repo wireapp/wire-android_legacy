@@ -78,9 +78,10 @@ class PreferencesActivity extends BaseActivity
       backStackNavigator.setup(findViewById(R.id.content).asInstanceOf[ViewGroup])
 
       getIntent.page match {
-        case Some(Page.Devices)  => backStackNavigator.goTo(DevicesBackStackKey())
-        case Some(Page.Advanced) => backStackNavigator.goTo(AdvancedBackStackKey())
-        case _                   => backStackNavigator.goTo(ProfileBackStackKey())
+        case Some(Page.Devices)       => backStackNavigator.goTo(DevicesBackStackKey.newInstance())
+        case Some(Page.DeviceRemoval) => backStackNavigator.goTo(DevicesBackStackKey.newInstance(removeOnly = true))
+        case Some(Page.Advanced)      => backStackNavigator.goTo(AdvancedBackStackKey())
+        case _                        => backStackNavigator.goTo(ProfileBackStackKey())
       }
 
       Signal.zip(backStackNavigator.currentState, ZMessaging.currentAccounts.accountsWithManagers.map(_.toSeq.length)).onUi{

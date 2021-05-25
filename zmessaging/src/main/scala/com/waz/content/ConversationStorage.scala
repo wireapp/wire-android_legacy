@@ -22,7 +22,7 @@ import com.waz.api.Verification
 import com.waz.api.Verification.UNKNOWN
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.ConversationData.ConversationDataDao
+import com.waz.model.ConversationData.{ConversationDataDao, LegalHoldStatus}
 import com.waz.model.ConversationData.ConversationType.Group
 import com.waz.model._
 import com.waz.service.SearchKey
@@ -34,6 +34,7 @@ import scala.concurrent.Future
 
 trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def setUnknownVerification(convId: ConvId): Future[Option[(ConversationData, ConversationData)]]
+  def setLegalHoldEnabledStatus(convId: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def getByRemoteIds(remoteId: Traversable[RConvId]): Future[Seq[ConvId]]
   def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]]
   def getByRemoteIds2(remoteIds: Set[RConvId]): Future[Map[RConvId, ConversationData]]
@@ -44,6 +45,8 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def apply[A](f: GenMap[ConvId, ConversationData] => A): Future[A]
 
   def findGroupConversations(prefix: SearchKey, self: UserId, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]]
+
+  def getLegalHoldHint(convId: ConvId): Future[Messages.LegalHoldStatus]
 }
 
 class ConversationStorageImpl(storage: ZmsDatabase)
@@ -52,12 +55,20 @@ class ConversationStorageImpl(storage: ZmsDatabase)
 
   import com.waz.threading.Threading.Implicits.Background
 
-  onAdded { cs => updateSearchKey(cs)}
+  onAdded.foreach { cs => updateSearchKey(cs)}
 
-  def setUnknownVerification(convId: ConvId) =
+  def setUnknownVerification(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] =
     update(convId, { c => c.copy(verified = if (c.verified == Verification.UNVERIFIED) UNKNOWN else c.verified) })
 
-  onUpdated { cs =>
+  def setLegalHoldEnabledStatus(convId: ConvId): Future[Option[(ConversationData, ConversationData)]] = {
+    import LegalHoldStatus._
+    update(convId, { conv =>
+      if (conv.legalHoldStatus == PendingApproval) conv.copy(legalHoldStatus = Enabled)
+      else conv
+    })
+  }
+
+  onUpdated.foreach { cs =>
     updateSearchKey(cs.collect {
       case (p, c) if p.name != c.name || (p.convType == Group) != (c.convType == Group) || (c.name.nonEmpty && c.searchKey.isEmpty) => c
     })
@@ -110,5 +121,10 @@ class ConversationStorageImpl(storage: ZmsDatabase)
 
   private def findByRemoteId(remoteId: RConvId) = find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId)(_), identity)
   private def findByRemoteIds(remoteIds: Set[RConvId]) = find(c => remoteIds.contains(c.remoteId), ConversationDataDao.findByRemoteIds(remoteIds)(_), identity)
+
+  override def getLegalHoldHint(convId: ConvId): Future[Messages.LegalHoldStatus] = get(convId).map {
+    case Some(conv) => conv.messageLegalHoldStatus
+    case None       => Messages.LegalHoldStatus.UNKNOWN
+  }
 }
 

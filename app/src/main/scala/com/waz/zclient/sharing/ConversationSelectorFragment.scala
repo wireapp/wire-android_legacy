@@ -59,6 +59,7 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 
 import scala.util.Success
 import com.waz.threading.Threading._
+import com.waz.zclient.legalhold.LegalHoldController
 
 class ConversationSelectorFragment extends FragmentHelper with OnBackPressedListener {
 
@@ -78,7 +79,7 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
   private lazy val multiPicker = getBooleanArg(MultiPickerArgumentKey)
 
   private lazy val adapter = returning(new ConversationSelectorAdapter(getContext, filterText, multiPicker)) { a =>
-    onClickEvent { _ =>
+    onClickEvent.onUi { _ =>
       a.selectedConversations.head.map { convs =>
         sharingController.onContentShared(getActivity, convs)
         if (multiPicker) showToast(R.string.multi_share_toast_sending, long = false)
@@ -199,7 +200,7 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
       list.setAdapter(adapter)
     }
 
-    accountTabs.map(_.onTabClick.map(a => Some(a.id))(accounts.setAccount)).foreach(subs += _)
+    accountTabs.map(_.onTabClick.map(a => Some(a.id)).foreach(accounts.setAccount)).foreach(subs += _)
 
     sendButton.foreach(_.onClick {
       if (!adapter.selectedConversations.currentValue.forall(_.isEmpty)) {
@@ -348,8 +349,11 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
     with Injectable
     with DerivedLogTag {
 
+  import SelectableConversationRowViewHolder._
+
   private val conversationId = Signal[ConvId]()
   private lazy val convController = inject[ConversationController]
+  private lazy val legalHoldController = inject[LegalHoldController]
 
   (for {
     cid      <- conversationId
@@ -358,12 +362,27 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
     view.nameView.setText(convName.str)
   }
 
+  (for {
+    cid      <- conversationId
+    lhActive <- legalHoldController.isLegalHoldActive(cid)
+  } yield lhActive).map {
+    case true  => (Some(R.drawable.ic_legal_hold_active), LegalHoldLocator)
+    case false => (None, "")
+  }.onUi { case (iconRes, contentDesc) =>
+    view.nameView.setCompoundDrawablesWithIntrinsicBounds(0, 0, iconRes.getOrElse(0), 0)
+    view.nameView.setContentDescription(contentDesc)
+  }
+
   def setConversation(convId: ConvId, checked: Boolean): Unit = {
     view.checkBox.setTag(null)
     view.checkBox.setChecked(checked)
     view.checkBox.setTag(convId)
     conversationId ! convId
   }
+}
+
+object SelectableConversationRowViewHolder {
+  val LegalHoldLocator = "Legal hold active"
 }
 
 class SelectableConversationRow(context: Context, checkBoxListener: CompoundButton.OnCheckedChangeListener) extends LinearLayout(context, null, 0) {
