@@ -87,6 +87,7 @@ object BaseSingleParticipantAdapter {
   val GroupAdmin   = 2
   val ReadReceipts = 3
   val UserName     = 4
+  val LinkedInfo   = 5
 
   case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val imageView            = view.findViewById[ChatHeadView](R.id.chathead)

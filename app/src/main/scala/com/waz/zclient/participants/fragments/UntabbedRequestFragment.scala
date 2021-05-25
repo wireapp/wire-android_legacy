@@ -1,9 +1,11 @@
 package com.waz.zclient.participants.fragments
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
-import com.waz.model.{ConversationRole, UserId}
+import com.waz.model.UserData.ConnectionStatus
+import com.waz.model.{ConversationRole, UserData, UserId}
 import com.waz.service.ZMessaging
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
@@ -18,6 +20,8 @@ import com.waz.zclient.utils.StringUtils
 
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
+
+import scala.concurrent.Future
 
 abstract class UntabbedRequestFragment extends SingleParticipantFragment {
   import Threading.Implicits.Ui
@@ -49,8 +53,9 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
         isExternal    =  !user.isWireBot && user.isExternal(zms.teamId)
         isDarkTheme   <- inject[ThemeController].darkThemeSet.head
         isWireless    =  user.expiresAt.isDefined
-      } yield (user, isGuest, isExternal, isDarkTheme, isGroup, isWireless)).foreach {
-        case (user, isGuest, isExternal, isDarkTheme, isGroup, isWireless) =>
+        linkedText    <- linkedText(user)
+      } yield (user, isGuest, isExternal, isDarkTheme, isGroup, isWireless, linkedText)).foreach {
+        case (user, isGuest, isExternal, isDarkTheme, isGroup, isWireless, linkedText) =>
           val formattedHandle = StringUtils.formatHandle(user.handle.map(_.string).getOrElse(""))
           val participantRole = participantsController.participants.map(_.get(userToConnectId))
           val selfRole =
@@ -59,14 +64,21 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
             else
               Signal.const(Option.empty[ConversationRole])
 
-          val adapter = new UnconnectedParticipantAdapter(user.id, isGuest, isExternal, isDarkTheme, isGroup, isWireless, user.name, formattedHandle)
+          val adapter = new UnconnectedParticipantAdapter(user.id, isGuest, isExternal, isDarkTheme,
+            isGroup, isWireless, user.name, formattedHandle, linkedText)
           subs += Signal.zip(timerText, participantRole, selfRole).onUi {
             case (tt, pRole, sRole) => adapter.set(tt, pRole, sRole)
           }
           subs += adapter.onParticipantRoleChange.on(Threading.Background)(participantsController.setRole(user.id, _))
+          subs += adapter.onLinkedTextClicked.onUi(_ => onLinkedTextClick())
           vh.foreach(_.setAdapter(adapter))
       }
   }
+
+  protected def linkedText(user: UserData): Future[Option[(String, Int)]] =
+    Future.successful(Option.empty)
+
+  protected def onLinkedTextClick(): Unit = { }
 
   override def onBackPressed(): Boolean = {
     inject[IPickUserController].hideUserProfile()
