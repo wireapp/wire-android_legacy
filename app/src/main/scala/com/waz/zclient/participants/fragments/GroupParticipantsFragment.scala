@@ -195,7 +195,7 @@ class GroupParticipantsFragment extends FragmentHelper {
         ctx,
         getString(R.string.legal_hold_participant_missing_consent_alert_title),
         getString(R.string.legal_hold_participant_missing_consent_alert_message),
-        getString(R.string.legal_hold_participant_missing_consent_alert_positive_button),
+        getString(android.R.string.ok),
         getString(R.string.legal_hold_participant_missing_consent_alert_negative_button),
         positiveAction = null,
         negativeAction = new DialogInterface.OnClickListener {

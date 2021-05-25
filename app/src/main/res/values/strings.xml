@@ -1619,7 +1619,6 @@
 
     <string name="legal_hold_participant_missing_consent_alert_title">Guests cannot be added</string>
     <string name="legal_hold_participant_missing_consent_alert_message">Due to legal hold, only team members can be added to this conversation.</string>
-    <string name="legal_hold_participant_missing_consent_alert_positive_button">OK</string>
     <string name="legal_hold_participant_missing_consent_alert_negative_button">LEARN MORE</string>
 </resources>
 
