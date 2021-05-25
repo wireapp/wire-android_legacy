@@ -53,7 +53,6 @@ trait UserSearchService {
   def syncSearchResults(query: SearchQuery): Unit
   def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit]
   def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit
-  def updateExactMatch(info: UserInfo): Unit
 }
 
 class UserSearchServiceImpl(selfUserId:           UserId,
@@ -74,7 +73,6 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   import com.waz.service.UserSearchService._
   import timeouts.search._
 
-  private val exactMatchUser = Signal(Option.empty[UserData])
   private val userSearchResult = Signal(IndexedSeq.empty[UserData])
 
   private lazy val isExternal = userPrefs(SelfPermissions).apply()
@@ -209,7 +207,6 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     val query = SearchQuery(queryStr)
 
     userSearchResult ! IndexedSeq.empty[UserData]
-    exactMatchUser ! None // reset the exact match to None on any query change
 
     syncSearchResults(query)
 
@@ -248,17 +245,11 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   def syncSearchResults(query: SearchQuery): Unit = if (!query.isEmpty) sync.syncSearchQuery(query)
 
   private def directoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
-    for {
-      dir   <- if (!query.isEmpty)
-                 userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
-               else Signal.const(IndexedSeq.empty[UserData])
-      _     =  verbose(l"directory search results: $dir")
-      exact <- exactMatchUser.orElse(Signal.const(None))
-      _     =  verbose(l"exact match: $exact")
-    } yield (dir, exact) match {
-      case (_, None)           => dir
-      case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
-    }
+    returning {
+      if (!query.isEmpty)
+        userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
+      else Signal.const(IndexedSeq.empty[UserData])
+    } { dir =>  verbose(l"directory search results: $dir") }
 
   override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] =
     usersStorage.contents.head.flatMap { usersInStorage =>
@@ -269,11 +260,6 @@ class UserSearchServiceImpl(selfUserId:           UserId,
           usersInStorage(u.id).picture.isDefined
       }
       val allUsers = (local.map(u => usersInStorage(u.id)) ++ remote.map(UserData(_))).toIndexedSeq
-
-      val handle = Handle(query.str)
-      if (!allUsers.exists(_.handle.contains(handle)))
-        sync.exactMatchHandle(handle)
-
       userSearchResult ! allUsers
 
       if (remote.nonEmpty)
@@ -288,13 +274,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       case (info, None)         => user.updated(info)
     }
     userSearchResult.mutate(_.map(userUpdate))
-    exactMatchUser.mutate(_.map(userUpdate))
   }
-
-  override def updateExactMatch(info: UserInfo): Unit =
-    usersStorage.get(info.id)
-      .collect { case None => UserData(info) }
-      .foreach(user => exactMatchUser ! Some(user))
 
   private def topPeople = {
     def messageCount(u: UserData) =

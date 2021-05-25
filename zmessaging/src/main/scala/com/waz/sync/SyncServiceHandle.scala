@@ -42,7 +42,6 @@ import scala.concurrent.duration._
 trait SyncServiceHandle {
   def syncSearchResults(ids: Set[UserId]): Future[SyncId]
   def syncSearchQuery(query: SearchQuery): Future[SyncId]
-  def exactMatchHandle(handle: Handle): Future[SyncId]
   def syncUsers(ids: Set[UserId]): Future[SyncId]
   def syncSelfUser(): Future[SyncId]
   def deleteAccount(): Future[SyncId]
@@ -147,7 +146,6 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncSearchResults(users: Set[UserId]) = addRequest(SyncSearchResults(users))
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
   def syncUsers(ids: Set[UserId]) = addRequest(SyncUser(ids))
-  def exactMatchHandle(handle: Handle) = addRequest(ExactMatchHandle(handle), priority = Priority.High)
   def syncSelfUser() = addRequest(SyncSelf, priority = Priority.High)
   def deleteAccount() = addRequest(DeleteAccount)
   def syncConversations(ids: Set[ConvId], dependsOn: Option[SyncId]) =
@@ -276,7 +274,6 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case SyncUser(u)                                     => zms.usersSync.syncUsers(u.toSeq: _*)
           case SyncSearchResults(u)                            => zms.usersSync.syncSearchResults(u.toSeq: _*)
           case SyncSearchQuery(query)                          => zms.usersearchSync.syncSearchQuery(query)
-          case ExactMatchHandle(query)                         => zms.usersearchSync.exactMatchHandle(query)
           case SyncRichMedia(messageId)                        => zms.richmediaSync.syncRichMedia(messageId)
           case DeletePushToken(token)                          => zms.gcmSync.deleteGcmToken(token)
           case PostConnection(userId, name, message)           => zms.connectionsSync.postConnection(userId, name, message)

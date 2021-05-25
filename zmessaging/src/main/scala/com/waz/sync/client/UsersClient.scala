@@ -35,7 +35,6 @@ import scala.util.Right
 trait UsersClient {
   def loadUser(id: UserId): ErrorOrResponse[Option[UserInfo]]
   def loadUsers(ids: Seq[UserId]): ErrorOrResponse[Seq[UserInfo]]
-  def loadByHandle(handle: Handle): ErrorOrResponse[Option[UserInfo]]
   def loadSelf(): ErrorOrResponse[UserInfo]
   def loadRichInfo(user: UserId): ErrorOrResponse[Seq[UserField]]
   def updateSelf(info: UserInfo): ErrorOrResponse[Unit]
@@ -83,17 +82,6 @@ class UsersClientImpl(implicit
       CancellableFuture.lift(result)
     }
   }
-
-  override def loadByHandle(handle: Handle): ErrorOrResponse[Option[UserInfo]] =
-    Request.Get(
-      relativePath = UsersPath,
-      queryParameters = queryParameters("handles" -> handle.string.toLowerCase)
-    )
-      .withResultType[Seq[UserInfo]]
-      .withErrorType[ErrorResponse]
-      .execute
-      .map(res => Right(res.headOption))
-      .recover { case e: ErrorResponse => Left(e) }
 
   override def loadSelf(): ErrorOrResponse[UserInfo] = {
     Request.Get(relativePath = SelfPath)
