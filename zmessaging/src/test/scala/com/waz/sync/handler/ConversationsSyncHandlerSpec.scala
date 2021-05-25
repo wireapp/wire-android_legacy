@@ -1,5 +1,7 @@
 package com.waz.sync.handler
 
+import com.waz.api.ErrorType
+import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, MessagesStorage}
 import com.waz.model._
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdater, ConversationsService}
@@ -66,6 +68,35 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
     (convService.deleteConversation _).expects(conv3.remoteId).once().returning(Future.successful(()))
     val handler = createHandler
     result(handler.syncConversations())
+  }
+
+  scenario("It reports missing legal hold consent error") {
+    // Given
+    val handler = createHandler
+    val convId = ConvId("convId")
+    val members = Set(UserId("userId"))
+    val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
+
+    // Mock
+    (convs.convById _)
+      .expects(convId)
+      .once()
+      .returning(Future.successful(Some(ConversationData(convId))))
+    
+    (conversationsClient.postMemberJoin _)
+        .expects(*, *, *)
+        .once()
+        .returning(CancellableFuture.successful(Left(errorResponse)))
+
+    // Expectation
+    val errorType = ErrorType.CANNOT_ADD_PARTICIPANT_WITH_MISSING_LEGAL_HOLD_CONSENT
+    (convService.onMemberAddFailed _)
+        .expects(convId, members, Some(errorType), errorResponse)
+        .once()
+        .returning(Future.successful(()))
+
+    // When
+    result(handler.postConversationMemberJoin(convId, members, ConversationRole.MemberRole))
   }
 
 }
