@@ -1,10 +1,8 @@
 package com.waz.zclient.participants.fragments
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
-import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{ConversationRole, UserData, UserId}
 import com.waz.service.ZMessaging
 import com.wire.signals.CancellableFuture
