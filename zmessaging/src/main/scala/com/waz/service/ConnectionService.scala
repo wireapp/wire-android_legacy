@@ -114,7 +114,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
 
         val userId = convToUser(conv.id)
         val user   = eventMap(userId).user
-        val hidden = user.connection == ConnectionStatus.Ignored || user.connection == ConnectionStatus.Blocked || user.connection == ConnectionStatus.Cancelled
+        val hidden = user.isBlocked || user.connection == ConnectionStatus.Ignored || user.connection == ConnectionStatus.Cancelled
 
         //TODO For some reasons we are loosing convType after getOrCreateOneToOneConversations. Flow is very messy and should be refactored.
         val convType = getConvTypeForUser(user)
@@ -135,7 +135,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
         } map { _ =>
           val userId = convToUser(conv.id)
           val user = eventMap(userId).user
-          val hidden = user.connection == ConnectionStatus.Ignored || user.connection == ConnectionStatus.Blocked || user.connection == ConnectionStatus.Cancelled
+          val hidden = user.isBlocked || user.connection == ConnectionStatus.Ignored || user.connection == ConnectionStatus.Cancelled
           if (conv.hidden && !hidden) sync.syncConversations(Set(conv.id))
           conv
         }

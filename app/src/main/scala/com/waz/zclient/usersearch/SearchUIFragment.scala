@@ -460,7 +460,7 @@ object SearchUIFragment {
   private val PERFORM_SEARCH_DELAY = 500.millis
 
   import ConnectionStatus._
-  private val connectionsForOpenProfile = Set(PendingFromUser, Blocked, Ignored, Cancelled, Unconnected)
+  private val connectionsForOpenProfile = Set(PendingFromUser, Blocked, BlockedDueToMissingLegalHoldConsent, Ignored, Cancelled, Unconnected)
 
   def newInstance(): SearchUIFragment = new SearchUIFragment
 
