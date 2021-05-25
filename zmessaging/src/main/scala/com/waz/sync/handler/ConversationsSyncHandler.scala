@@ -132,11 +132,12 @@ class ConversationsSyncHandler(selfUserId:          UserId,
 
   def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncResult] = withConversation(id) { conv =>
     def post(users: Set[UserId]) = conversationsClient.postMemberJoin(conv.remoteId, users, defaultRole).future flatMap {
-      case Left(resp @ ErrorResponse(403, _, label)) =>
-        val errTpe = label match {
-          case "not-connected"    => Some(ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION)
-          case "too-many-members" => Some(ErrorType.CANNOT_ADD_USER_TO_FULL_CONVERSATION)
-          case _ => None
+      case Left(resp @ ErrorResponse(status, _, label)) =>
+        val errTpe = (status, label) match {
+          case (403, "not-connected")             => Some(ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION)
+          case (403, "too-many-members")          => Some(ErrorType.CANNOT_ADD_USER_TO_FULL_CONVERSATION)
+          case (412, "missing-legalhold-consent") => Some(ErrorType.CANNOT_ADD_PARTICIPANT_WITH_MISSING_LEGAL_HOLD_CONSENT)
+          case _                                  => None
         }
         convService
           .onMemberAddFailed(id, users, errTpe, resp)

@@ -18,13 +18,14 @@
 
 package com.waz.zclient.participants.fragments
 
-import android.content.Context
+import android.content.{Context, DialogInterface}
 import android.os.Bundle
 import androidx.annotation.Nullable
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.api.NetworkMode
-import com.waz.service.{IntegrationsService, NetworkModeService}
+import com.waz.api.{ErrorType, NetworkMode}
+import com.waz.model.ErrorData
+import com.waz.service.{IntegrationsService, NetworkModeService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.wire.signals._
@@ -35,18 +36,21 @@ import com.waz.zclient.participants.{ParticipantsAdapter, ParticipantsController
 import com.waz.zclient.utils.ContextUtils.showToast
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
-import com.waz.zclient.{FragmentHelper, R, SpinnerController}
+import com.waz.zclient.{ErrorsController, FragmentHelper, R, SpinnerController}
 import com.waz.threading.Threading._
+import com.waz.zclient.common.controllers.BrowserController
 
 class GroupParticipantsFragment extends FragmentHelper {
 
   implicit def ctx: Context = getActivity
   import Threading.Implicits.Ui
 
+  private lazy val zms                    = inject[Signal[ZMessaging]]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val convScreenController   = inject[IConversationScreenController]
   private lazy val integrationsService    = inject[Signal[IntegrationsService]]
   private lazy val spinnerController      = inject[SpinnerController]
+  private lazy val errorsController       = inject[ErrorsController]
 
   private lazy val participantsView = view[RecyclerView](R.id.pgv__participants)
 
@@ -123,6 +127,8 @@ class GroupParticipantsFragment extends FragmentHelper {
   override def onViewCreated(view: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
 
+    zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
+
     participantsView.foreach { v =>
       v.setAdapter(participantsAdapter)
       v.setLayoutManager(new LinearLayoutManager(getActivity))
@@ -181,6 +187,25 @@ class GroupParticipantsFragment extends FragmentHelper {
   override def onBackPressed(): Boolean = {
     super.onBackPressed()
     participantsAdapter.onBackPressed()
+  }
+
+  private def handleSyncError(err: ErrorData): Unit = err.errType match {
+    case ErrorType.CANNOT_ADD_PARTICIPANT_WITH_MISSING_LEGAL_HOLD_CONSENT =>
+      ViewUtils.showAlertDialog(
+        ctx,
+        getString(R.string.legal_hold_participant_missing_consent_alert_title),
+        getString(R.string.legal_hold_participant_missing_consent_alert_message),
+        getString(android.R.string.ok),
+        getString(R.string.legal_hold_participant_missing_consent_alert_negative_button),
+        positiveAction = null,
+        negativeAction = new DialogInterface.OnClickListener {
+          override def onClick(dialog: DialogInterface, which: Int): Unit =
+            inject[BrowserController].openAboutLegalHold()
+        }
+      )
+      errorsController.dismissSyncError(err.id)
+    case _ =>
+      ()
   }
 
 }
