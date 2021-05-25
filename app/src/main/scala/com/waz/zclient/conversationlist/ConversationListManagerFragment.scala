@@ -309,12 +309,13 @@ class ConversationListManagerFragment extends Fragment
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
 
-          case BLOCKED =>
+          case BLOCKED | BLOCKED_DUE_TO_MISSING_LEGAL_HOLD_CONSENT =>
             show(
               BlockedUserFragment.newInstance(userId, userRequester),
               BlockedUserFragment.Tag
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
+
           case _ => //
         }
       case _ => //
