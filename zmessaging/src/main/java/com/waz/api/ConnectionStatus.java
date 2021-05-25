@@ -8,7 +8,8 @@ public enum ConnectionStatus {
     BLOCKED("blocked"),
     IGNORED("ignored"),
     SELF("self"),
-    CANCELLED("cancelled");
+    CANCELLED("cancelled"),
+    BLOCKED_DUE_TO_MISSING_LEGAL_HOLD_CONSENT("missing-legalhold-consent");
 
     public String code;
 
