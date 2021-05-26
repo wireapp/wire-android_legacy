@@ -61,7 +61,7 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
       case Left(resp @ ErrorResponse(412, _, "missing-legalhold-consent")) =>
         warn(l"got error: $resp")
         errorsService
-          .addErrorWhenActive(ErrorData(ErrorType.CANNOT_CONNECT_USER_WITH_MISSING_LEGAL_HOLD_CONSENT, resp))
+          .addErrorWhenActive(ErrorData(ErrorType.CANNOT_CONNECT_USER_WITH_MISSING_LEGAL_HOLD_CONSENT, resp, userId))
           .map(_ => SyncResult(resp))
       case Left(error) =>
         Future.successful(SyncResult(error))
