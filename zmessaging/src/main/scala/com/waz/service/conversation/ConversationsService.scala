@@ -155,6 +155,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _ <- convsStorage.setLegalHoldEnabledStatus(conv)
         _ <- convsStorage.setUnknownVerification(conv)
       } yield ()
+    case ErrorData(_, ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT, _, _, Some(convId), _, _, _, _) =>
+      deleteTempConversation(convId)
   }
 
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {

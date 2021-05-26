@@ -211,13 +211,23 @@ class ConversationsSyncHandler(selfUserId:          UserId,
             }
           }
         }
-      case Left(resp@ErrorResponse(403, msg, "not-connected")) =>
+      case Left(resp@ErrorResponse(status, _, label)) =>
         warn(l"got error: $resp")
-        errorsService
-          .addErrorWhenActive(ErrorData(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER, resp, convId))
-          .map(_ => SyncResult(resp))
-      case Left(error) =>
-        Future.successful(SyncResult(error))
+
+        val errorType = (status, label) match {
+          case (403, "not-connected") =>
+            Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER)
+          case (412, "missing-legalhold-consent") =>
+            Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT)
+          case _ =>
+            None
+        }
+
+        errorType.fold(Future.successful(SyncResult(resp))) { errorType =>
+          errorsService
+            .addErrorWhenActive(ErrorData(errorType, resp, convId))
+            .map(_ => SyncResult(resp))
+        }
     }
   }
 

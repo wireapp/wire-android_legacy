@@ -20,7 +20,7 @@ package com.waz.zclient.views
 import java.io.File
 
 import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
-import android.content.Intent
+import android.content.{DialogInterface, Intent}
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
@@ -30,6 +30,7 @@ import android.widget.{AbsListView, FrameLayout, ImageView, TextView}
 import androidx.annotation.Nullable
 import androidx.appcompat.widget.{ActionMenuView, Toolbar}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
+import com.waz.api.ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT
 import com.waz.api.{ErrorType, Verification}
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.ConversationData.ConversationType
@@ -47,7 +48,7 @@ import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.GlobalCameraController
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.global.KeyboardController
-import com.waz.zclient.common.controllers.{ScreenController, ThemeController, UserAccountsController}
+import com.waz.zclient.common.controllers.{BrowserController, ScreenController, ThemeController, UserAccountsController}
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation.{ConfirmationCallback, ConfirmationRequest, IConfirmationController}
 import com.waz.zclient.controllers.drawing.IDrawingController
@@ -797,6 +798,20 @@ class ConversationFragment extends FragmentHelper {
       err.convId.foreach(onErrorCanNotSentMessageToUnverifiedConversation(err, _))
     case ErrorType.CANNOT_SEND_MESSAGE_TO_UNAPPROVED_LEGAL_HOLD_CONVERSATION =>
       err.convId.foreach(onErrorCanNotSentMessageToUnapprovedLegalHoldConversation(err, _))
+    case CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT =>
+      ViewUtils.showAlertDialog(
+        getContext,
+        R.string.legal_hold_participant_missing_consent_alert_title,
+        R.string.legal_hold_participant_missing_consent_alert_message,
+        android.R.string.ok,
+        R.string.legal_hold_participant_missing_consent_alert_negative_button,
+        null,
+        new DialogInterface.OnClickListener {
+          override def onClick(dialog: DialogInterface, which: Int): Unit =
+            inject[BrowserController].openAboutLegalHold()
+        }
+      )
+      errorsController.dismissSyncError(err.id)
     case errType =>
       error(l"Unhandled onSyncError: $errType")
   }

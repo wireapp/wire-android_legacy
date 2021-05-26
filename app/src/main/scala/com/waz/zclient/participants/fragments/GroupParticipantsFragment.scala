@@ -197,8 +197,8 @@ class GroupParticipantsFragment extends FragmentHelper {
         getString(R.string.legal_hold_participant_missing_consent_alert_message),
         getString(android.R.string.ok),
         getString(R.string.legal_hold_participant_missing_consent_alert_negative_button),
-        positiveAction = null,
-        negativeAction = new DialogInterface.OnClickListener {
+        null,
+        new DialogInterface.OnClickListener {
           override def onClick(dialog: DialogInterface, which: Int): Unit =
             inject[BrowserController].openAboutLegalHold()
         }
