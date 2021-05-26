@@ -100,16 +100,15 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   // Tests
 
-  feature("Is legal hold active for user") {
+  feature("Is legal hold active for self user") {
 
     scenario("with a legal hold device") {
       // Given
       val service = createService()
-      val userId = UserId("user1")
-      mockUserDevices(userId, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
+      mockUserDevices(selfUserId, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
 
       // When
-      val actualResult = result(service.isLegalHoldActive(userId).future)
+      val actualResult = result(service.isLegalHoldActiveForSelfUser.future)
 
       // Then
       actualResult shouldBe true
@@ -118,11 +117,10 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("without a legal hold device") {
       // Given
       val service = createService()
-      val userId = UserId("user1")
-      mockUserDevices(userId, Seq(DeviceClass.Phone))
+      mockUserDevices(selfUserId, Seq(DeviceClass.Phone))
 
       // When
-      val actualResult = result(service.isLegalHoldActive(userId).future)
+      val actualResult = result(service.isLegalHoldActiveForSelfUser.future)
 
       // Then
       actualResult shouldBe false
