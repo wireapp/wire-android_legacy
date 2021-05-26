@@ -805,13 +805,16 @@ class ConversationFragment extends FragmentHelper {
         R.string.legal_hold_participant_missing_consent_alert_message,
         android.R.string.ok,
         R.string.legal_hold_participant_missing_consent_alert_negative_button,
-        null,
+        new DialogInterface.OnClickListener {
+          override def onClick(dialog: DialogInterface, which: Int): Unit =
+            errorsController.dismissSyncError(err.id).map(_ => getActivity.onBackPressed())
+        },
         new DialogInterface.OnClickListener {
           override def onClick(dialog: DialogInterface, which: Int): Unit =
             inject[BrowserController].openAboutLegalHold()
-        }
+        },
+        false
       )
-      errorsController.dismissSyncError(err.id)
     case errType =>
       error(l"Unhandled onSyncError: $errType")
   }
