@@ -43,11 +43,13 @@ class UserSearchClientImpl(implicit
 
   override def search(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse] = {
     verbose(l"search($query, $limit)")
+    val params =
+      if (query.hasDomain)
+        queryParameters("q" -> query.query, "domain" -> query.domain, "size" -> limit)
+      else
+        queryParameters("q" -> query.query, "size" -> limit)
     Request
-      .Get(
-        relativePath = SearchPath,
-        queryParameters = queryParameters("q" -> query.str, "size" -> limit)
-      )
+      .Get(relativePath = SearchPath, queryParameters = params)
       .withResultType[UserSearchResponse]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -57,7 +59,7 @@ class UserSearchClientImpl(implicit
 object UserSearchClient extends DerivedLogTag {
   val SearchPath = "/search/contacts"
 
-  val DefaultLimit = 10
+  val DefaultLimit = 15
 
   // Response types
 

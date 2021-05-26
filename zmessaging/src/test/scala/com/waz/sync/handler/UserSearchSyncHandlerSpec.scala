@@ -28,12 +28,12 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
   feature("Sync Search Query request") {
 
     scenario("Given search query is synced, when contacts request is successful, then update search results") {
-      val searchQuery = SearchQuery("Test query", handleOnly = false)
+      val searchQuery = SearchQuery("Test query", "", handleOnly = false)
       val documents = Seq(dummyUser)
       val results = UserSearchResponse(took = 13, found = 2, returned = 2, documents = documents)
 
       (userSearchClient.search(_: SearchQuery, _: Int)).expects(searchQuery, *).once().returning(CancellableFuture.successful(Right(results)))
-      (userSearch.updateSearchResults(_: SearchQuery, _: UserSearchClient.UserSearchResponse)).expects(searchQuery, results).once().returning(Future.successful(Unit))
+      (userSearch.updateSearchResults(_: UserSearchClient.UserSearchResponse)).expects(results).once().returning(Future.successful(Unit))
 
       result(initHandler().syncSearchQuery(searchQuery)) shouldEqual SyncResult.Success
 
@@ -43,7 +43,7 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
 
       val timeoutError = ErrorResponse(ErrorResponse.ConnectionErrorCode, s"Request failed with timeout", "connection-error")
 
-      val searchQuery = SearchQuery("Test query", handleOnly = false)
+      val searchQuery = SearchQuery("Test query", "", handleOnly = false)
 
       (userSearchClient.search(_: SearchQuery, _: Int)).expects(searchQuery, *).once().returning(CancellableFuture.successful(Left(timeoutError)))
 

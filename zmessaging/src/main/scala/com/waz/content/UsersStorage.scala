@@ -21,7 +21,7 @@ import android.content.Context
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
 import com.waz.model._
-import com.waz.service.SearchKey
+import com.waz.service.{SearchKey, SearchQuery}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils._
 import com.wire.signals._
@@ -31,7 +31,7 @@ import scala.concurrent.Future
 
 trait UsersStorage extends CachedStorage[UserId, UserData] {
   def getByTeam(team: Set[TeamId]): Future[Set[UserData]]
-  def searchByTeam(team: TeamId, prefix: SearchKey, handleOnly: Boolean): Future[Set[UserData]]
+  def searchByTeam(team: TeamId, query: SearchQuery): Future[Set[UserData]]
   def listAll(ids: Traversable[UserId]): Future[Vector[UserData]]
   def listSignal(ids: Traversable[UserId]): Signal[Vector[UserData]]
   def listUsersByConnectionStatus(p: Set[ConnectionStatus]): Future[Map[UserId, UserData]]
@@ -64,12 +64,12 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase)
       db   => UserDataDao.findByConnectionStatus(Set(ConnectionStatus.Accepted, ConnectionStatus.PendingFromOther, ConnectionStatus.PendingFromUser))(db),
       user => (user.id, user))
 
-  override def getByTeam(teams: Set[TeamId]) =
+  override def getByTeam(teams: Set[TeamId]): Future[Set[UserData]] =
     find(data => data.teamId.exists(id => teams.contains(id)), UserDataDao.findForTeams(teams)(_), identity)
 
-  override def findUsersForService(id: IntegrationId) =
+  override def findUsersForService(id: IntegrationId): Future[Set[UserData]] =
     find(_.integrationId.contains(id), UserDataDao.findService(id)(_), identity).map(_.toSet)
 
-  override def searchByTeam(team: TeamId, prefix: SearchKey, handleOnly: Boolean): Future[Set[UserData]] =
-    storage(UserDataDao.search(prefix, handleOnly, Some(team))(_)).future
+  override def searchByTeam(team: TeamId, query: SearchQuery): Future[Set[UserData]] =
+    storage(UserDataDao.search(SearchKey(query.query), query.domain, query.handleOnly, Some(team))(_)).future
 }
