@@ -56,8 +56,10 @@ class NewCallingFragment extends FragmentHelper {
   private lazy val zoomLayout               = view[ZoomLayout](R.id.zoom_layout)
   private lazy val videoGrid                = view[GridLayout](R.id.video_grid)
   private var viewMap                       = Map[Participant, UserVideoView]()
-  private var videoPreview: VideoPreview    = _
-
+  private lazy val videoPreview             = new VideoPreview(getContext) { preview =>
+    preview.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+    preview.setElevation(0)
+  }
 
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -135,10 +137,10 @@ class NewCallingFragment extends FragmentHelper {
         callController.isFullScreenEnabled,
         callController.showTopSpeakers
       ).foreach {
-        case ((selfParticipant, participantsInfo, participants, activeParticipants), false, true)
-        => refreshVideoGrid(grid, selfParticipant, activeParticipants, participantsInfo, participants, true)
-        case ((selfParticipant, participantsInfo, participants, _), false, false)
-        => refreshVideoGrid(grid, selfParticipant, participants.toSeq, participantsInfo, participants, false)
+        case ((selfParticipant, participantsInfo, participants, activeParticipants), false, true) =>
+          refreshVideoGrid(grid, selfParticipant, activeParticipants, participantsInfo, participants, true)
+        case ((selfParticipant, participantsInfo, participants, _), false, false) =>
+          refreshVideoGrid(grid, selfParticipant, participants.toSeq, participantsInfo, participants, false)
         case _ =>
       }
     }
@@ -185,7 +187,6 @@ class NewCallingFragment extends FragmentHelper {
   private def manageVideoPreview(): Unit = {
     Signal.zip(callController.isSelfViewVisible, callController.videoSendState).onUi {
       case (false, VideoState.Started | VideoState.ScreenShare | VideoState.BadConnection) =>
-        initVideoPreview()
         stopVideoPreview()
         startVideoPreview()
         attachVideoPreviewToParentLayout()
@@ -195,12 +196,6 @@ class NewCallingFragment extends FragmentHelper {
       case (true, _) =>
         detachVideoPreviewFromParentLayout()
     }
-  }
-
-  private def initVideoPreview(): Unit = {
-    videoPreview = new VideoPreview(getContext)
-    videoPreview.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-    videoPreview.setElevation(0)
   }
 
   private def stopVideoPreview(): Unit = callController.setVideoPreview(null)

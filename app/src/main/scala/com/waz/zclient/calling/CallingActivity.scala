@@ -20,7 +20,6 @@ package com.waz.zclient.calling
 import android.content.{Context, Intent}
 import android.os.{Build, Bundle}
 import android.view.WindowManager
-import androidx.fragment.app.Fragment
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.zclient._
@@ -31,15 +30,14 @@ import com.waz.zclient.utils.DeprecationUtils
 
 class CallingActivity extends BaseActivity {
   private lazy val controller    = inject[CallController]
-  private var fragment: Fragment = _
+  private lazy val fragment =
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) NewCallingFragment()
+    else CallingFragment()
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
     setContentView(R.layout.calling_layout)
-
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) fragment = NewCallingFragment()
-    else fragment = CallingFragment()
 
     getSupportFragmentManager
       .beginTransaction()

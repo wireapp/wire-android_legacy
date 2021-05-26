@@ -88,7 +88,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
 
   if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
-    callController.controlsVisible.map { it => !it }.onUi(participantInfoCardView.setVisible)
+    callController.controlsVisible.map { !_ }.onUi(participantInfoCardView.setVisible)
   else  Signal.zip(
     callController.isGroupCall,
     callController.controlsVisible,
