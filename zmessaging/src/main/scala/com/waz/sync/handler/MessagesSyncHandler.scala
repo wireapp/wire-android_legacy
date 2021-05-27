@@ -105,7 +105,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         }
 
         otrSync
-          .postOtrMessage(conv.id, msg, TargetRecipients.SpecificUsers(recipients), nativePush = false, isHidden = true)
+          .postOtrMessage(conv.id, msg, TargetRecipients.SpecificUsers(recipients), isHidden = true, nativePush = false)
           .map(SyncResult(_))
       case None =>
         successful(Failure("conversation not found"))
@@ -119,8 +119,8 @@ class MessagesSyncHandler(selfUserId: UserId,
                     msg.convId,
                     GenericMessage(Uid(), ButtonAction(buttonId.str, messageId.str)),
                     TargetRecipients.SpecificUsers(Set(senderId)),
-                    enforceIgnoreMissing = true,
-                    isHidden = true)
+                    isHidden = true,
+                    enforceIgnoreMissing = true)
         _      <- result.fold(_ => service.setButtonError(messageId, buttonId), _ => Future.successful(()))
       } yield SyncResult(result)
     }

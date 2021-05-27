@@ -48,9 +48,9 @@ trait OtrSyncHandler {
   def postOtrMessage(convId:                ConvId,
                      message:               GenericMessage,
                      targetRecipients:      TargetRecipients = ConversationParticipants,
+                     isHidden:              Boolean,
                      nativePush:            Boolean = true,
-                     enforceIgnoreMissing:  Boolean = false,
-                     isHidden:              Boolean
+                     enforceIgnoreMissing:  Boolean = false
                     ): ErrorOr[RemoteInstant]
 
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
@@ -83,9 +83,9 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
   override def postOtrMessage(convId:                ConvId,
                               message:               GenericMessage,
                               targetRecipients:      TargetRecipients = ConversationParticipants,
+                              isHidden:              Boolean,
                               nativePush:            Boolean = true,
-                              enforceIgnoreMissing:  Boolean = false,
-                              isHidden:              Boolean
+                              enforceIgnoreMissing:  Boolean = false
                              ): ErrorOr[RemoteInstant] = {
     import com.waz.utils.{RichEither, RichFutureEither}
 
