@@ -79,9 +79,9 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
   feature("Post OTR message") {
 
-    def setUpExpectationsForSucessfulEncryptAndSend(): (ConvId, GenericMessage) = {
+    def setUpExpectationsForSucessfulEncryptAndSend(legalHoldStatus: LegalHoldStatus = LegalHoldStatus.Disabled): (ConvId, GenericMessage) = {
       // Given
-      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
+      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"), legalHoldStatus = legalHoldStatus)
       val msg = createTextMessage("content")
 
       val otherUser = UserId("other-user-id")
@@ -138,6 +138,17 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
       // When
       result(syncHandler.postOtrMessage(convId, msg))
+    }
+
+    scenario("Encrypt and send hidden message in unapproved legal hold conversation with no errors") {
+      // Given
+      val syncHandler = getSyncHandler
+
+      // Expectations
+      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(LegalHoldStatus.PendingApproval)
+
+      // When
+      result(syncHandler.postOtrMessage(convId, msg, ignoreLegalHoldStatus = true))
     }
 
     scenario("Can't encrypt or send message in unapproved legal hold conversation") {
