@@ -130,7 +130,7 @@ class CallingFragment extends FragmentHelper {
     controller.allParticipants.map(_.size).onUi {
       case NbParticipantsOneOneCall =>
         zoomLayout.foreach(_.setEnabled(true))
-        Toast.makeText(getContext, R.string.calling_screenshare_zooming_message, Toast.LENGTH_LONG).show()
+        Toast.makeText(getContext, R.string.calling_pinch_to_zoom_message, Toast.LENGTH_LONG).show()
       case _ => zoomLayout.foreach(_.setEnabled(false))
     }
 
@@ -173,7 +173,7 @@ class CallingFragment extends FragmentHelper {
   private lazy val videoGridInfo = Signal.zip(
     controller.selfParticipant,
     controller.videoUsers,
-    controller.participantInfos,
+    controller.participantsInfo,
     controller.allParticipants,
     isVideoBeingSent
   )

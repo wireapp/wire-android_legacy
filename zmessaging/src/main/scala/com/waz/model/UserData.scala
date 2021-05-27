@@ -62,7 +62,9 @@ final case class UserData(override val id:       UserId,
                           permissions:           PermissionsMasks       = (0,0),
                           createdBy:             Option[UserId]         = None) extends Identifiable[UserId] {
 
-  lazy val isConnected: Boolean         = ConnectionStatus.isConnected(connection)
+  lazy val isConnected: Boolean = ConnectionStatus.isConnected(connection)
+  lazy val isBlocked: Boolean   = ConnectionStatus.isBlocked(connection)
+
   lazy val hasEmailOrPhone: Boolean     = email.isDefined || phone.isDefined
   lazy val isSelf: Boolean              = connection == ConnectionStatus.Self
   lazy val isAcceptedOrPending: Boolean = connection == ConnectionStatus.Accepted || connection == ConnectionStatus.PendingFromOther || connection == ConnectionStatus.PendingFromUser
@@ -168,11 +170,19 @@ object UserData {
     val Self = SELF
     val Cancelled = CANCELLED
 
-    val codeMap = Seq(Unconnected, PendingFromOther, PendingFromUser, Accepted, Blocked, Ignored, Self, Cancelled).map(v => v.code -> v).toMap
+    // One side is a legal hold subject, but the other does not consent to legal hold exposure.
+    val BlockedDueToMissingLegalHoldConsent = BLOCKED_DUE_TO_MISSING_LEGAL_HOLD_CONSENT
+
+    val codeMap = Seq(Unconnected, PendingFromOther, PendingFromUser, Accepted, Blocked, Ignored, Self, Cancelled, BlockedDueToMissingLegalHoldConsent).map(v => v.code -> v).toMap
 
     def apply(code: String) = codeMap.getOrElse(code, Unconnected)
 
-    def isConnected(status: ConnectionStatus) = status == Accepted || status == Blocked || status == Self
+    def isConnected(status: ConnectionStatus): Boolean = status == Accepted || status == Blocked || status == Self
+
+    def isBlocked(status: ConnectionStatus): Boolean = status match {
+      case Blocked | BlockedDueToMissingLegalHoldConsent => true
+      case _                                             => false
+    }
   }
 
   // used for testing only
@@ -271,7 +281,10 @@ object UserData {
                 |    ) AND (${Rel.name} = '${Rel(Relation.First)}' OR ${Rel.name} = '${Rel(Relation.Second)}' OR ${Rel.name} = '${Rel(Relation.Third)}')
                 |  ) OR ${Handle.name} LIKE ?
                 |) AND ${Deleted.name} = 0
-                |  AND ${Conn.name} != '${Conn(ConnectionStatus.Accepted)}' AND ${Conn.name} != '${Conn(ConnectionStatus.Blocked)}' AND ${Conn.name} != '${Conn(ConnectionStatus.Self)}'
+                |  AND ${Conn.name} != '${Conn(ConnectionStatus.Accepted)}'
+                |  AND ${Conn.name} != '${Conn(ConnectionStatus.Blocked)}'
+                |  AND ${Conn.name} != '${Conn(ConnectionStatus.BlockedDueToMissingLegalHoldConsent)}'
+                |  AND ${Conn.name} != '${Conn(ConnectionStatus.Self)}'
               """.stripMargin,
         Array(s"${query.asciiRepresentation}%", s"% ${query.asciiRepresentation}%", s"%${query.asciiRepresentation}%"))
     }

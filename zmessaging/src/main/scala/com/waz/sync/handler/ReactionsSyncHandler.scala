@@ -41,7 +41,7 @@ class ReactionsSyncHandler(service: ReactionsService,
     } yield result
 
   private def postMessage(convId: ConvId, message: GenericMessage, liking: Liking): Future[SyncResult] =
-    otrSync.postOtrMessage(convId, message).flatMap {
+    otrSync.postOtrMessage(convId, message, isHidden = true).flatMap {
       case Right(time) =>
         service
         .updateLocalReaction(liking, time)

@@ -29,7 +29,10 @@ import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.DeprecationUtils
 
 class CallingActivity extends BaseActivity {
-  private lazy val controller = inject[CallController]
+  private lazy val controller    = inject[CallController]
+  private lazy val fragment =
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) NewCallingFragment()
+    else CallingFragment()
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
@@ -38,7 +41,7 @@ class CallingActivity extends BaseActivity {
 
     getSupportFragmentManager
       .beginTransaction()
-      .replace(R.id.calling_layout, CallingFragment(), CallingFragment.Tag)
+      .replace(R.id.calling_layout, fragment, fragment.getTag)
       .commit
 
     controller.shouldHideCallingUi.onUi { _ => finish()}

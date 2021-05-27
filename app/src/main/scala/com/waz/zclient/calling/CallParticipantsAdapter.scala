@@ -67,7 +67,7 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
     shouldHideParticipants = true
   }
 
-  callController.orderedParticipantInfos.onUi { v =>
+  callController.orderedParticipantsInfo.onUi { v =>
     numOfParticipants = v.size
     items = maxRows.filter(_ < numOfParticipants).fold(v)(m => v.take(m - 1))
     notifyDataSetChanged()

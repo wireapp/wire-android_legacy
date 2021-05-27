@@ -100,16 +100,15 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
   // Tests
 
-  feature("Is legal hold active for user") {
+  feature("Is legal hold active for self user") {
 
     scenario("with a legal hold device") {
       // Given
       val service = createService()
-      val userId = UserId("user1")
-      mockUserDevices(userId, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
+      mockUserDevices(selfUserId, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
 
       // When
-      val actualResult = result(service.isLegalHoldActive(userId).future)
+      val actualResult = result(service.isLegalHoldActiveForSelfUser.future)
 
       // Then
       actualResult shouldBe true
@@ -118,14 +117,66 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     scenario("without a legal hold device") {
       // Given
       val service = createService()
-      val userId = UserId("user1")
-      mockUserDevices(userId, Seq(DeviceClass.Phone))
+      mockUserDevices(selfUserId, Seq(DeviceClass.Phone))
 
       // When
-      val actualResult = result(service.isLegalHoldActive(userId).future)
+      val actualResult = result(service.isLegalHoldActiveForSelfUser.future)
 
       // Then
       actualResult shouldBe false
+    }
+  }
+
+  feature("legal hold request sync") {
+
+    scenario("stores the request if exists") {
+      //Given
+      val service = createService()
+
+      //When
+      await(service.onLegalHoldRequestSynced(Some(legalHoldRequest)))
+
+      //Then
+      val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
+      storedLegalHoldRequest.isDefined shouldBe true
+      storedLegalHoldRequest.get.clientId shouldEqual legalHoldRequest.clientId
+      storedLegalHoldRequest.get.lastPreKey.id shouldEqual legalHoldRequest.lastPreKey.id
+      storedLegalHoldRequest.get.lastPreKey.data shouldEqual legalHoldRequest.lastPreKey.data
+    }
+
+    scenario("deletes request and notifies active state if no request exists but LH is active") {
+      //Given
+      val service = createService()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+      userPrefs.setValue(UserPreferences.LegalHoldDisclosureType, None)
+      mockUserDevices(selfUserId, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
+
+      //When
+      await(service.onLegalHoldRequestSynced(None))
+
+      //Then
+      val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
+      storedLegalHoldRequest.isDefined shouldBe false
+      val storedDisclosureType = result(userPrefs.preference(UserPreferences.LegalHoldDisclosureType).apply())
+      storedDisclosureType.isDefined shouldBe true
+      storedDisclosureType.get.value shouldBe LegalHoldStatus.Enabled.value
+    }
+
+    scenario("deletes request and does not change state if no request exists and LH is  not active") {
+      //Given
+      val service = createService()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+      userPrefs.setValue(UserPreferences.LegalHoldDisclosureType, None)
+      mockUserDevices(selfUserId, Seq(DeviceClass.Phone))
+
+      //When
+      await(service.onLegalHoldRequestSynced(None))
+
+      //Then
+      val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
+      storedLegalHoldRequest.isDefined shouldBe false
+      val storedDisclosureType = result(userPrefs.preference(UserPreferences.LegalHoldDisclosureType).apply())
+      storedDisclosureType.isDefined shouldBe false
     }
   }
 

@@ -163,11 +163,32 @@ public class ViewUtils {
                                               @StringRes int negativeButton,
                                               DialogInterface.OnClickListener positiveAction,
                                               DialogInterface.OnClickListener negativeAction) {
+        return showAlertDialog(
+            context,
+            title,
+            message,
+            positiveButton,
+            negativeButton,
+            positiveAction,
+            negativeAction,
+            true
+        );
+    }
+
+    public static AlertDialog showAlertDialog(Context context,
+                                              @StringRes int title,
+                                              @StringRes int message,
+                                              @StringRes int positiveButton,
+                                              @StringRes int negativeButton,
+                                              DialogInterface.OnClickListener positiveAction,
+                                              DialogInterface.OnClickListener negativeAction,
+                                              boolean cancelable) {
         AlertDialog dialog = new AlertDialog.Builder(context)
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton(positiveButton, positiveAction)
             .setNegativeButton(negativeButton, negativeAction)
+            .setCancelable(cancelable)
             .create();
         dialog.show();
         return dialog;

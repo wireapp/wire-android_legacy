@@ -140,7 +140,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
         (includeSelf || selfUserId != user.id) &&
           !user.isWireBot &&
           user.expiresAt.isEmpty &&
-          user.connection != ConnectionStatus.Blocked
+          !user.isBlocked
       }
 
       def cmpHandle(u: UserData, fn: String => Boolean) = u.handle match {
@@ -174,7 +174,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
           !user.deleted &&
           user.expiresAt.isEmpty &&
           user.matchesQuery(query) &&
-          (showBlockedUsers || (user.connection != ConnectionStatus.Blocked))
+          (showBlockedUsers || !user.isBlocked)
       }.toIndexedSeq
 
       sortUsers(included, query)

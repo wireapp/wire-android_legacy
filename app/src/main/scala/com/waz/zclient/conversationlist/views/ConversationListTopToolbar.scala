@@ -137,8 +137,7 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
   }
 
   (for {
-    selfUser        <- usersController.selfUser
-    legalHoldActive <- legalHoldController.isLegalHoldActive(selfUser.id)
+    legalHoldActive <- legalHoldController.isLegalHoldActiveForSelfUser
     pendingApproval <- legalHoldController.hasPendingRequest
   } yield (legalHoldActive, pendingApproval))
     .map {

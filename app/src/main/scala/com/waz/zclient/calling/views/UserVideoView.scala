@@ -23,19 +23,21 @@ import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.{FrameLayout, ImageView, TextView}
 import androidx.cardview.widget.CardView
+import com.bumptech.glide.request.RequestOptions
 import com.waz.avs.{VideoPreview, VideoRenderer}
+import com.waz.model.Picture
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.utils.returning
-import com.waz.zclient.ViewHelper
+import com.waz.zclient.{BuildConfig, R, ViewHelper}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.wire.signals.{EventStream, Signal}
-import com.waz.zclient.R
 import com.waz.zclient.utils.RichView
 import com.waz.threading.Threading._
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.ui.animation.interpolators.penner.Quad.EaseOut
 
 abstract class UserVideoView(context: Context, val participant: Participant) extends FrameLayout(context, null, 0) with ViewHelper {
@@ -54,6 +56,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   private val pausedText              = findById[TextView](R.id.paused_text_view)
   private val participantInfoCardView = findById[CardView](R.id.participant_info_card_view)
   private val stateMessageText        = callController.stateMessageText(participant)
+  private val profilePictureImageView = findById[ImageView](R.id.profile_picture_image_view)
 
   stateMessageText.onUi(msg => pausedText.setText(msg.getOrElse("")))
 
@@ -67,7 +70,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   protected val participantInfo: Signal[Option[CallParticipantInfo]] =
     for {
       isGroup <- callController.isGroupCall
-      infos   <- if (isGroup) callController.participantInfos else Signal.const(Vector.empty)
+      infos   <- if (isGroup) callController.participantsInfo else Signal.const(Vector.empty)
     } yield infos.find(_.id == participant.userId)
 
   protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
@@ -78,7 +81,15 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  Signal.zip(
+  participantInfo.onUi {
+    case Some(p) if (p.picture.isDefined) => setProfilePicture(p.picture.get)
+    case _ =>
+  }
+
+
+  if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+    callController.controlsVisible.map { !_ }.onUi(participantInfoCardView.setVisible)
+  else  Signal.zip(
     callController.isGroupCall,
     callController.controlsVisible,
     callController.showTopSpeakers,
@@ -154,5 +165,11 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     setBackgroundColor(getColor(R.color.black))
     getChildAt(1).setMargin(0, 0, 0, 0)
   }
+
+  private def setProfilePicture(picture: Picture): Unit =
+    WireGlide(context)
+      .load(picture)
+      .apply(new RequestOptions().circleCrop())
+      .into(profilePictureImageView)
 
 }

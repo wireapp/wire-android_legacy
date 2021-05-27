@@ -79,9 +79,9 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
   feature("Post OTR message") {
 
-    def setUpExpectationsForSucessfulEncryptAndSend(): (ConvId, GenericMessage) = {
+    def setUpExpectationsForSucessfulEncryptAndSend(legalHoldStatus: LegalHoldStatus = LegalHoldStatus.Disabled): (ConvId, GenericMessage) = {
       // Given
-      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"))
+      val conv = ConversationData(ConvId("conv-id"), RConvId("r-conv-id"), legalHoldStatus = legalHoldStatus)
       val msg = createTextMessage("content")
 
       val otherUser = UserId("other-user-id")
@@ -137,7 +137,18 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend()
 
       // When
-      result(syncHandler.postOtrMessage(convId, msg))
+      result(syncHandler.postOtrMessage(convId, msg, isHidden = false))
+    }
+
+    scenario("Encrypt and send hidden message in unapproved legal hold conversation with no errors") {
+      // Given
+      val syncHandler = getSyncHandler
+
+      // Expectations
+      val (convId, msg) = setUpExpectationsForSucessfulEncryptAndSend(LegalHoldStatus.PendingApproval)
+
+      // When
+      result(syncHandler.postOtrMessage(convId, msg, isHidden = true))
     }
 
     scenario("Can't encrypt or send message in unapproved legal hold conversation") {
@@ -158,7 +169,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .once()
         .returning(Future.successful(ErrorData(Uid(), ErrorType.CANNOT_SEND_MESSAGE_TO_UNAPPROVED_LEGAL_HOLD_CONVERSATION)))
 
-      val actualResult = result(syncHandler.postOtrMessage(conv.id, message))
+      val actualResult = result(syncHandler.postOtrMessage(conv.id, message, isHidden = false))
 
       // Then
       actualResult shouldEqual Left(ErrorResponse.UnapprovedLegalHold)
@@ -177,7 +188,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .expects(conv.id)
         .returning(Future.successful(Some(conv)))
 
-      val actualResult = result(syncHandler.postOtrMessage(conv.id, message))
+      val actualResult = result(syncHandler.postOtrMessage(conv.id, message, isHidden = false))
 
       // Then
       actualResult shouldEqual Left(ErrorResponse.Unverified)
@@ -312,7 +323,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .returning(Future.successful(SyncResult.Success))
 
       // When
-      result(syncHandler.postOtrMessage(conv.id, msg))
+      result(syncHandler.postOtrMessage(conv.id, msg, isHidden = false))
     }
 
     scenario("Target message to specific clients") {
@@ -354,7 +365,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .returning(Future.successful({}))
 
       // When
-      result(syncHandler.postOtrMessage(conv.id, msg, TargetRecipients.SpecificClients(targetRecipients)))
+      result(syncHandler.postOtrMessage(conv.id, msg, TargetRecipients.SpecificClients(targetRecipients), isHidden = false))
     }
   }
 
