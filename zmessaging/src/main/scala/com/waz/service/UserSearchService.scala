@@ -37,6 +37,8 @@ import scala.collection.immutable.Set
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
+import com.waz.zms.BuildConfig
+
 final case class SearchResults(top:   IndexedSeq[UserData]         = IndexedSeq.empty,
                                local: IndexedSeq[UserData]         = IndexedSeq.empty,
                                convs: IndexedSeq[ConversationData] = IndexedSeq.empty,
@@ -196,13 +198,17 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   override def search(queryStr: String): Signal[SearchResults] = {
     val query = SearchQuery(queryStr)
 
-    if (query.hasDomain)
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (query.hasDomain)
+        search(query)
+      else
+        userService.selfUser.map(_.domain.getOrElse("")).flatMap {
+          case domain if domain.nonEmpty => search(query.withDomain(domain))
+          case _ => search(query)
+        }
+    } else {
       search(query)
-    else
-      userService.selfUser.map(_.domain.getOrElse("")).flatMap {
-        case domain if domain.nonEmpty => search(query.withDomain(domain))
-        case _ => search(query)
-      }
+    }
   }
 
   private def search(query: SearchQuery): Signal[SearchResults] = {

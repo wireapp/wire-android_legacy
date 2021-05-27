@@ -26,6 +26,7 @@ import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
+import com.waz.zms.BuildConfig
 
 trait UserSearchClient {
   def search(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse]
@@ -44,7 +45,7 @@ class UserSearchClientImpl(implicit
   override def search(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse] = {
     verbose(l"search($query, $limit)")
     val params =
-      if (query.hasDomain)
+      if (BuildConfig.FEDERATION_USER_DISCOVERY && query.hasDomain)
         queryParameters("q" -> query.query, "domain" -> query.domain, "size" -> limit)
       else
         queryParameters("q" -> query.query, "size" -> limit)
