@@ -23,9 +23,12 @@
     android:layout_height="match_parent">
 
     <ImageView
-        android:id="@+id/image_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:id="@+id/profile_picture_image_view"
+        android:layout_width="@dimen/profile__image__width_small"
+        android:layout_height="@dimen/profile__image__height_small"
+        android:layout_gravity="center"
+        android:elevation="0dp"
+        />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/participant_info_card_view"
@@ -35,7 +38,8 @@
         android:layout_margin="@dimen/calling_participant_info_card_margin"
         app:cardBackgroundColor="@color/white_16"
         app:cardCornerRadius="@dimen/calling_participant_info_card_corner_radius"
-        app:cardElevation="@dimen/calling_participant_info_card_corner_elevation">
+        app:cardElevation="@dimen/calling_participant_info_card_corner_elevation"
+        android:elevation="1dp">
 
 
         <LinearLayout
@@ -74,7 +78,8 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:elevation="1dp">
 
 
         <com.waz.zclient.ui.text.TypefaceTextView

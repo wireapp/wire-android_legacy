@@ -59,12 +59,13 @@
             android:layout_marginBottom="@dimen/wire__margin__20"/>
 
         <TextView
+            android:id="@+id/no_active_speakers_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:fontFamily="sans-serif"
             android:textColor="@color/white"
-            android:text="@string/calling_no_active_speaker" />
+            android:text="@string/calling_no_active_video_speakers" />
     </LinearLayout>
 
     <androidx.cardview.widget.CardView
@@ -72,9 +73,10 @@
         android:layout_width="@dimen/calling_preview_card_width"
         android:layout_height="@dimen/calling_preview_card_height"
         android:layout_gravity="end|top"
-        android:layout_marginTop="@dimen/wire__padding__regular"
-        android:layout_marginEnd="@dimen/wire__padding__regular"
+        android:layout_marginTop="@dimen/wire__margin__huge"
+        android:layout_marginEnd="@dimen/wire__margin__24"
         app:cardCornerRadius="@dimen/calling_preview_card_radius"
+        app:cardElevation="4dp"
         android:visibility="gone"
         android:elevation="1dp"
         />
