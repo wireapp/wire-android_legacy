@@ -79,7 +79,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                     Future successful SyncResult.Success
                   case Right(proto) =>
                     verbose(l"updated link previews: $proto")
-                    otrSync.postOtrMessage(conv.id, proto) map {
+                    otrSync.postOtrMessage(conv.id, proto, isHidden = false) map {
                       case Left(err) => SyncResult(err)
                       case Right(_)  => SyncResult.Success
                     }

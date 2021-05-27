@@ -45,11 +45,12 @@ import scala.concurrent.Future.successful
 import scala.util.control.NonFatal
 
 trait OtrSyncHandler {
-  def postOtrMessage(convId:               ConvId,
-                     message:              GenericMessage,
-                     targetRecipients:     TargetRecipients = ConversationParticipants,
-                     nativePush:           Boolean = true,
-                     enforceIgnoreMissing: Boolean = false
+  def postOtrMessage(convId:                ConvId,
+                     message:               GenericMessage,
+                     targetRecipients:      TargetRecipients = ConversationParticipants,
+                     isHidden:              Boolean,
+                     nativePush:            Boolean = true,
+                     enforceIgnoreMissing:  Boolean = false
                     ): ErrorOr[RemoteInstant]
 
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
@@ -79,11 +80,24 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
   import OtrSyncHandler._
   import com.waz.threading.Threading.Implicits.Background
 
-  override def postOtrMessage(convId:               ConvId,
-                              message:              GenericMessage,
-                              targetRecipients:     TargetRecipients = ConversationParticipants,
-                              nativePush:           Boolean = true,
-                              enforceIgnoreMissing: Boolean = false
+  /**
+   * Post an otr message to a conversation.
+   *
+   * @param convId The id conversation to post the message to.
+   * @param message The message being posted.
+   * @param targetRecipients Who should receive the message.
+   * @param isHidden Whether the message is a hidden message. As a rule of thumb, if it doesn't
+   *                 occupy a row in the message list, then it is hidden.
+   * @param nativePush
+   * @param enforceIgnoreMissing When missing clients should be ignored.
+   * @return
+   */
+  override def postOtrMessage(convId:                ConvId,
+                              message:               GenericMessage,
+                              targetRecipients:      TargetRecipients = ConversationParticipants,
+                              isHidden:              Boolean,
+                              nativePush:            Boolean = true,
+                              enforceIgnoreMissing:  Boolean = false
                              ): ErrorOr[RemoteInstant] = {
     import com.waz.utils.{RichEither, RichFutureEither}
 
@@ -95,7 +109,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       for {
         _          <- push.waitProcessing
         Some(conv) <- convStorage.get(convId)
-        _          =  if (conv.legalHoldStatus == LegalHoldStatus.PendingApproval) throw UnapprovedLegalHoldException
+        _          =  if (!isHidden && conv.legalHoldStatus == LegalHoldStatus.PendingApproval) throw UnapprovedLegalHoldException
         _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
         recipients <- clientsMap(targetRecipients, convId)
         content    <- service.encryptMessage(msg, recipients, retries > 0, previous)

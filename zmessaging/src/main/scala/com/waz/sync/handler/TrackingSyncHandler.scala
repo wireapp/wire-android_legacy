@@ -16,7 +16,8 @@ class TrackingSyncHandler(selfUserId: UserId, otrSync: OtrSyncHandler) {
       .postOtrMessage(
         ConvId(selfUserId.str),
         GenericMessage(Uid(), DataTransfer(trackingId)),
-        TargetRecipients.SpecificUsers(Set(selfUserId))
+        TargetRecipients.SpecificUsers(Set(selfUserId)),
+        isHidden = true
       )
       .map(SyncResult(_))
 }
