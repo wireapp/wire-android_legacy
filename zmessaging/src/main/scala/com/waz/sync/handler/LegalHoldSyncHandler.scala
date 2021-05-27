@@ -31,9 +31,8 @@ class LegalHoldSyncHandlerImpl(teamId: Option[TeamId],
       Future.successful(SyncResult.Success)
     case Some(teamId) =>
       apiClient.fetchLegalHoldRequest(teamId, userId).future.flatMap {
-        case Left(error)          => Future.successful(SyncResult.Failure(error))
-        case Right(None)          => legalHoldService.deleteLegalHoldRequest().map(_ => SyncResult.Success)
-        case Right(Some(request)) => legalHoldService.storeLegalHoldRequest(request).map(_ => SyncResult.Success)
+        case Left(error)    => Future.successful(SyncResult.Failure(error))
+        case Right(request) => legalHoldService.onLegalHoldRequestSynced(request).map(_ => SyncResult.Success)
       }
   }
 

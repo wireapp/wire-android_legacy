@@ -17,12 +17,14 @@
  */
 package com.waz.sync.handler
 
+import com.waz.api.ErrorType
+import com.waz.api.impl.ErrorResponse
 import com.waz.log.LogSE._
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.{Name, UserId}
-import com.waz.service.ConnectionService
+import com.waz.model.{ErrorData, Name, UserId}
+import com.waz.service.{ConnectionService, ErrorsService}
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConnectionsClient
@@ -33,7 +35,8 @@ import scala.concurrent.Future
 
 class ConnectionsSyncHandler(usersStorage:      UsersStorage,
                              connectionService: ConnectionService,
-                             connectionsClient: ConnectionsClient) extends DerivedLogTag {
+                             connectionsClient: ConnectionsClient,
+                             errorsService:       ErrorsService) extends DerivedLogTag {
 
   import Threading.Implicits.Background
 
@@ -55,6 +58,11 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
         connectionService
           .handleUserConnectionEvents(Seq(event))
           .map(_ => Success)
+      case Left(resp @ ErrorResponse(412, _, "missing-legalhold-consent")) =>
+        warn(l"got error: $resp")
+        errorsService
+          .addErrorWhenActive(ErrorData(ErrorType.CANNOT_CONNECT_USER_WITH_MISSING_LEGAL_HOLD_CONSENT, resp, userId))
+          .map(_ => SyncResult(resp))
       case Left(error) =>
         Future.successful(SyncResult(error))
     }

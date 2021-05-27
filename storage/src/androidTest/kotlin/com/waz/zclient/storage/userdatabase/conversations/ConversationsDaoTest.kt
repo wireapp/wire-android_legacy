@@ -72,7 +72,8 @@ class ConversationsDaoTest : IntegrationTest() {
                     link = it.link,
                     unreadMentionsCount = it.unreadMentionsCount,
                     unreadQuoteCount = it.unreadQuoteCount,
-                    receiptMode = it.receiptMode
+                    receiptMode = it.receiptMode,
+                    legalHoldStatus = it.legalHoldStatus
                 )
             )
         }
@@ -144,7 +145,8 @@ class ConversationsDaoTest : IntegrationTest() {
             link = data.link,
             unreadMentionsCount = data.unreadMentionsCount,
             unreadQuoteCount = data.unreadQuoteCount,
-            receiptMode = data.receiptMode
+            receiptMode = data.receiptMode,
+            legalHoldStatus = data.legalHoldStatus
         )
     }
 

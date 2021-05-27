@@ -39,7 +39,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
 
   feature("Fetching a legal hold request") {
 
-    scenario("It fetches and stores the legal hold request if it exists") {
+    scenario("It fetches the request and notifies the service if it exists") {
       // Given
       val syncHandler = createSyncHandler(Some("team1"), "user1")
 
@@ -48,8 +48,8 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
         .once()
         .returning(CancellableFuture.successful(Right(Some(legalHoldRequest))))
 
-      (service.storeLegalHoldRequest _)
-        .expects(legalHoldRequest)
+      (service.onLegalHoldRequestSynced _)
+        .expects(Some(legalHoldRequest))
         .once()
         .returning(Future.successful({}))
 
@@ -60,7 +60,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       actualResult shouldBe SyncResult.Success
     }
 
-    scenario("It deletes the existing legal hold request if none fetched") {
+    scenario("It fetches the request and notifies the service if none fetched") {
       // Given
       val syncHandler = createSyncHandler(Some("team1"), "user1")
 
@@ -69,8 +69,8 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
         .once()
         .returning(CancellableFuture.successful(Right(None)))
 
-      (service.deleteLegalHoldRequest _)
-        .expects()
+      (service.onLegalHoldRequestSynced _)
+        .expects(None)
         .once()
         .returning(Future.successful({}))
 

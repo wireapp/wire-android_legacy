@@ -1,12 +1,14 @@
 package com.waz.zclient.participants.fragments
 
+import android.content.DialogInterface
 import android.os.Bundle
-import com.waz.api.ConnectionStatus
-import com.waz.model.UserId
+import com.waz.api.{ConnectionStatus, ErrorType}
+import com.waz.model.{ErrorData, UserId}
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.waz.zclient.R
-import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.{ErrorsController, R}
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.messages.UsersController
@@ -14,18 +16,50 @@ import com.waz.zclient.pages.main.conversation.controller.IConversationScreenCon
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.threading.Threading._
+import com.waz.zclient.utils.ViewUtils
+import com.wire.signals.Signal
 
 class PendingConnectRequestFragment extends UntabbedRequestFragment {
   import Threading.Implicits.Ui
 
+  private lazy val zms                  = inject[Signal[ZMessaging]]
   private lazy val usersController      = inject[UsersController]
   private lazy val convController       = inject[ConversationController]
   private lazy val accountsController   = inject[UserAccountsController]
   private lazy val convScreenController = inject[IConversationScreenController]
+  private lazy val errorsController     = inject[ErrorsController]
 
   private lazy val isIgnoredConnection = usersController.user(userToConnectId).map(_.connection == ConnectionStatus.IGNORED)
 
   override protected val Tag: String = PendingConnectRequestFragment.Tag
+
+  override def onCreate(savedInstanceState: Bundle): Unit = {
+    super.onCreate(savedInstanceState)
+    zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
+  }
+
+  private def handleSyncError(err: ErrorData): Unit = err.errType match {
+    case ErrorType.CANNOT_CONNECT_USER_WITH_MISSING_LEGAL_HOLD_CONSENT =>
+      ViewUtils.showAlertDialog(
+        getContext,
+        R.string.legal_hold_cannot_connect_alert_title,
+        R.string.legal_hold_cannot_connect_alert_message,
+        android.R.string.ok,
+        R.string.legal_hold_cannot_connect_alert_negative_button,
+        new DialogInterface.OnClickListener {
+          override def onClick(dialog: DialogInterface, which: Int): Unit = {
+            errorsController.dismissSyncError(err.id).map(_ => getActivity.onBackPressed())
+          }
+        },
+        new DialogInterface.OnClickListener {
+          override def onClick(dialog: DialogInterface, which: Int): Unit =
+            inject[BrowserController].openAboutLegalHold()
+        },
+        false
+      )
+    case _ =>
+      ()
+  }
 
   override protected lazy val footerCallback = new FooterMenuCallback {
     override def onLeftActionClicked(): Unit =

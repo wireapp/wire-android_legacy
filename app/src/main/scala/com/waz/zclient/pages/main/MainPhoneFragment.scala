@@ -421,6 +421,7 @@ class MainPhoneFragment extends FragmentHelper
            CANNOT_SEND_ASSET_TOO_LARGE |
            CANNOT_SEND_MESSAGE_TO_UNAPPROVED_LEGAL_HOLD_CONVERSATION => // Handled in ConversationFragment
       case CANNOT_DELETE_GROUP_CONVERSATION => //Handled in ConversationListManagerFragment
+      case CANNOT_CONNECT_USER_WITH_MISSING_LEGAL_HOLD_CONSENT => // Handled in PendingConnectRequestFragment
       case _ =>
         LogUI.error(l"Unexpected error ${error.errType}")
     }
