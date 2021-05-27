@@ -129,10 +129,6 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, query)
   }
 
-  final case class ExactMatchHandle(handle: Handle) extends BaseRequest(Cmd.ExactMatchHandle) {
-    override val mergeKey: Any = (cmd, handle)
-  }
-
   final case class SyncRichMedia(messageId: MessageId) extends BaseRequest(Cmd.SyncRichMedia) {
     override val mergeKey: Any = (cmd, messageId)
   }
@@ -415,7 +411,6 @@ object SyncRequest {
           case Cmd.SyncConvLink              => SyncConvLink('conv)
           case Cmd.SyncSearchQuery           => SyncSearchQuery(SearchQuery.fromCacheKey(decodeString('queryCacheKey)))
           case Cmd.SyncSearchResults         => SyncSearchResults(users)
-          case Cmd.ExactMatchHandle          => ExactMatchHandle(Handle(decodeString('handle)))
           case Cmd.PostConv                  => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
           case Cmd.PostConvName              => PostConvName(convId, 'name)
           case Cmd.PostConvReceiptMode       => PostConvReceiptMode(convId, 'receipt_mode)
@@ -510,7 +505,6 @@ object SyncRequest {
           putId("message", messageId)
           putId("button", buttonId)
           putId("sender", senderId)
-        case ExactMatchHandle(handle)         => o.put("handle", handle.string)
         case SyncTeamMember(userId)           => o.put("user", userId.str)
         case DeletePushToken(token)           => putId("token", token)
         case RegisterPushToken(token)         => putId("token", token)
