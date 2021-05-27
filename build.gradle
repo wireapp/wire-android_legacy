@@ -63,7 +63,7 @@ allprojects {
 }
 
 ext {
-    largeVideoConferenceCalls = false
+    largeVideoConferenceCalls = true
     legalHold = true
 }
 
