@@ -28,6 +28,8 @@ final case class SearchQuery private (query: String, domain: String, handleOnly:
 
   def hasDomain: Boolean = domain.nonEmpty
 
+  def withDomain(domain: String): SearchQuery = copy(domain = domain)
+
   lazy val cacheKey: String = {
     val prefix = if (handleOnly) SearchQuery.recommendedHandlePrefix else SearchQuery.recommendedPrefix
     if (domain.isEmpty) s"$prefix$query" else s"$prefix$query@$domain"

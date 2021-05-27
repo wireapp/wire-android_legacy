@@ -37,11 +37,10 @@ import scala.collection.immutable.Set
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class SearchResults(top:   IndexedSeq[UserData]         = IndexedSeq.empty,
-                         local: IndexedSeq[UserData]         = IndexedSeq.empty,
-                         convs: IndexedSeq[ConversationData] = IndexedSeq.empty,
-                         dir:   IndexedSeq[UserData]         = IndexedSeq.empty) { //directory (backend search)
-
+final case class SearchResults(top:   IndexedSeq[UserData]         = IndexedSeq.empty,
+                               local: IndexedSeq[UserData]         = IndexedSeq.empty,
+                               convs: IndexedSeq[ConversationData] = IndexedSeq.empty,
+                               dir:   IndexedSeq[UserData]         = IndexedSeq.empty) { //directory (backend search)
   def isEmpty: Boolean = top.isEmpty && local.isEmpty && convs.isEmpty && dir.isEmpty
 }
 
@@ -195,8 +194,19 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   }
 
   override def search(queryStr: String): Signal[SearchResults] = {
-    verbose(l"search($queryStr)")
     val query = SearchQuery(queryStr)
+
+    if (query.hasDomain)
+      search(query)
+    else
+      userService.selfUser.map(_.domain.getOrElse("")).flatMap {
+        case domain if domain.nonEmpty => search(query.withDomain(domain))
+        case _ => search(query)
+      }
+  }
+
+  private def search(query: SearchQuery): Signal[SearchResults] = {
+    verbose(l"search($query)")
 
     userSearchResult ! IndexedSeq.empty[UserData]
 
