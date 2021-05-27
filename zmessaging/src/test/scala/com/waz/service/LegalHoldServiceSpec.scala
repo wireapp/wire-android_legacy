@@ -134,7 +134,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val service = createService()
 
       //When
-      service.onLegalHoldRequestSynced(Some(legalHoldRequest))
+      await(service.onLegalHoldRequestSynced(Some(legalHoldRequest)))
 
       //Then
       val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
@@ -152,7 +152,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       mockUserDevices(selfUserId, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
 
       //When
-      service.onLegalHoldRequestSynced(None)
+      await(service.onLegalHoldRequestSynced(None))
 
       //Then
       val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
@@ -170,7 +170,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       mockUserDevices(selfUserId, Seq(DeviceClass.Phone))
 
       //When
-      service.onLegalHoldRequestSynced(None)
+      await(service.onLegalHoldRequestSynced(None))
 
       //Then
       val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
