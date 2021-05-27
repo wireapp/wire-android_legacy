@@ -80,6 +80,18 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
   import OtrSyncHandler._
   import com.waz.threading.Threading.Implicits.Background
 
+  /**
+   * Post an otr message to a conversation.
+   *
+   * @param convId The id conversation to post the message to.
+   * @param message The message being posted.
+   * @param targetRecipients Who should receive the message.
+   * @param isHidden Whether the message is a hidden message. As a rule of thumb, if it doesn't
+   *                 occupy a row in the message list, then it is hidden.
+   * @param nativePush
+   * @param enforceIgnoreMissing When missing clients should be ignored.
+   * @return
+   */
   override def postOtrMessage(convId:                ConvId,
                               message:               GenericMessage,
                               targetRecipients:      TargetRecipients = ConversationParticipants,
