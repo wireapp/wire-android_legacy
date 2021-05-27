@@ -67,7 +67,7 @@ class ClearedSyncHandler(selfUserId:   UserId,
           Future.successful(Failure(s"No conversation found for id: $convId"))
         case Some(conv) =>
           val msg = GenericMessage(Uid(), Cleared(conv.remoteId, time))
-          otrSync.postOtrMessage(ConvId(selfUserId.str), msg, ignoreLegalHoldStatus = true) flatMap (_.fold(e => Future.successful(SyncResult(e)), { _ =>
+          otrSync.postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true) flatMap (_.fold(e => Future.successful(SyncResult(e)), { _ =>
             if (archive) convSync.postConversationState(conv.id, ConversationState(archived = Some(true), archiveTime = Some(time)))
             else Future.successful(Success)
           }))

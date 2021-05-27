@@ -50,7 +50,7 @@ trait OtrSyncHandler {
                      targetRecipients:      TargetRecipients = ConversationParticipants,
                      nativePush:            Boolean = true,
                      enforceIgnoreMissing:  Boolean = false,
-                     ignoreLegalHoldStatus: Boolean = false
+                     isHidden:              Boolean
                     ): ErrorOr[RemoteInstant]
 
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
@@ -85,7 +85,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                               targetRecipients:      TargetRecipients = ConversationParticipants,
                               nativePush:            Boolean = true,
                               enforceIgnoreMissing:  Boolean = false,
-                              ignoreLegalHoldStatus: Boolean = false
+                              isHidden:              Boolean
                              ): ErrorOr[RemoteInstant] = {
     import com.waz.utils.{RichEither, RichFutureEither}
 
@@ -97,7 +97,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       for {
         _          <- push.waitProcessing
         Some(conv) <- convStorage.get(convId)
-        _          =  if (!ignoreLegalHoldStatus && conv.legalHoldStatus == LegalHoldStatus.PendingApproval) throw UnapprovedLegalHoldException
+        _          =  if (!isHidden && conv.legalHoldStatus == LegalHoldStatus.PendingApproval) throw UnapprovedLegalHoldException
         _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
         recipients <- clientsMap(targetRecipients, convId)
         content    <- service.encryptMessage(msg, recipients, retries > 0, previous)

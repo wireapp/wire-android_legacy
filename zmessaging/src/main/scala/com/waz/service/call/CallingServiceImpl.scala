@@ -511,7 +511,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
   private def sendCallMessage(wCall: WCall, convId: ConvId, msg: GenericMessage, targetRecipients: TargetRecipients, ctx: Pointer): Unit = {
     verbose(l"Sending msg on behalf of avs: convId: $convId")
-    otrSyncHandler.postOtrMessage(convId, msg, targetRecipients, ignoreLegalHoldStatus = true).map {
+    otrSyncHandler.postOtrMessage(convId, msg, targetRecipients, isHidden = true).map {
       case Right(_) =>
         updateActiveCall(_.copy(outstandingMsg = None))("sendCallMessage/verified")
         avs.onHttpResponse(wCall, 200, "", ctx)

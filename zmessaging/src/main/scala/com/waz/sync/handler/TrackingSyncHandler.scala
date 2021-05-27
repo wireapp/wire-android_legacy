@@ -17,7 +17,7 @@ class TrackingSyncHandler(selfUserId: UserId, otrSync: OtrSyncHandler) {
         ConvId(selfUserId.str),
         GenericMessage(Uid(), DataTransfer(trackingId)),
         TargetRecipients.SpecificUsers(Set(selfUserId)),
-        ignoreLegalHoldStatus = true
+        isHidden = true
       )
       .map(SyncResult(_))
 }
