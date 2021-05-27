@@ -101,6 +101,7 @@ final case class UserData(override val id:       UserId,
 
   def updated(user: UserSearchEntry): UserData = copy(
     name      = user.name,
+    domain    = if (user.qualifiedId.hasDomain) Some(user.qualifiedId.domain) else None,
     teamId    = user.teamId,
     searchKey = SearchKey(user.name),
     accent    = user.colorId.getOrElse(accent),
@@ -192,7 +193,8 @@ object UserData {
 
   def apply(entry: UserSearchEntry): UserData =
     UserData(
-      id        = entry.id,
+      id        = entry.qualifiedId.id,
+      domain    = Some(entry.qualifiedId.domain),
       teamId    = entry.teamId,
       name      = entry.name,
       accent    = entry.colorId.getOrElse(0),

@@ -1,6 +1,7 @@
 package com.waz.sync.handler
 
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.{QualifiedId, UserId}
 import com.waz.service.{SearchQuery, UserSearchService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
@@ -17,7 +18,7 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
   private val userSearchClient = mock[UserSearchClient]
 
   private val dummyUser = User(
-    id = "d9700541-9b05-47b5-b85f-4a195593af71",
+    qualified_id = QualifiedId(UserId("d9700541-9b05-47b5-b85f-4a195593af71"), "staging.zinfra.io"),
     name = "ma",
     handle = Some("ma75"),
     accent_id = None,

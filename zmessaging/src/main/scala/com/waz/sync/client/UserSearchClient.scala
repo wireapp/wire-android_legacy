@@ -20,6 +20,7 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
+import com.waz.model.QualifiedId
 import com.waz.service.SearchQuery
 import com.waz.sync.client.UserSearchClient.{DefaultLimit, UserSearchResponse}
 import com.waz.utils.CirceJSONSupport
@@ -64,10 +65,23 @@ object UserSearchClient extends DerivedLogTag {
 
   // Response types
 
-  case class UserSearchResponse(took: Int, found: Int, returned: Int, documents: Seq[UserSearchResponse.User])
+  final case class UserSearchResponse(
+    took:      Int,
+    found:     Int,
+    returned:  Int,
+    documents: Seq[UserSearchResponse.User]
+  )
 
   object UserSearchResponse {
-    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int], team: Option[String], assets: Option[Seq[Asset]])
-    case class Asset(key: String, size: String, `type`: String)
+    final case class User(
+      qualified_id: QualifiedId,
+      name:         String,
+      handle:       Option[String],
+      accent_id:    Option[Int],
+      team:         Option[String],
+      assets:       Option[Seq[Asset]]
+    )
+
+    final case class Asset(key: String, size: String, `type`: String)
   }
 }

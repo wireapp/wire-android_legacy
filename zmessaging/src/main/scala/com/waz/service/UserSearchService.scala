@@ -262,16 +262,17 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   override def updateSearchResults(results: UserSearchResponse): Future[Unit] =
     usersStorage.contents.head.flatMap { usersInStorage =>
       val (local, remote) = unapply(results).partition { u =>
+        val userId = u.qualifiedId.id
         // a bit hacky way to check if all steps of fetching data were already performed for that user
-        usersInStorage.contains(u.id) &&
-          usersInStorage(u.id).name != Name.Empty &&
-          usersInStorage(u.id).picture.isDefined
+        usersInStorage.contains(userId) &&
+          usersInStorage(userId).name != Name.Empty &&
+          usersInStorage(userId).picture.isDefined
       }
-      val allUsers = (local.map(u => usersInStorage(u.id)) ++ remote.map(UserData(_))).toIndexedSeq
+      val allUsers = (local.map(u => usersInStorage(u.qualifiedId.id)) ++ remote.map(UserData(_))).toIndexedSeq
       userSearchResult ! allUsers
 
       if (remote.nonEmpty)
-        sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
+        sync.syncSearchResults(remote.map(_.qualifiedId.id).toSet).map(_ => ())
       else
         Future.successful(())
     }
@@ -309,12 +310,18 @@ object UserSearchService {
   /**
     * Model object extracted from `UserSearchResponse`.
     */
-  case class UserSearchEntry(id: UserId, name: Name, colorId: Option[Int], handle: Handle, teamId: Option[TeamId])
+  final case class UserSearchEntry(
+    qualifiedId: QualifiedId,
+    name:        Name,
+    colorId:     Option[Int],
+    handle:      Handle,
+    teamId:      Option[TeamId]
+  )
 
   object UserSearchEntry {
     def apply(searchUser: UserSearchResponse.User): UserSearchEntry = {
       import searchUser._
-      UserSearchEntry(UserId(id),
+      UserSearchEntry(qualified_id,
                       Name(name),
                       accent_id,
                       handle.fold(Handle.Empty)(Handle(_)),
