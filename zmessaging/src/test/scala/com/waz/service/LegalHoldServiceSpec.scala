@@ -127,6 +127,59 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
   }
 
+  feature("legal hold request sync") {
+
+    scenario("stores the request if exists") {
+      //Given
+      val service = createService()
+
+      //When
+      service.onLegalHoldRequestSynced(Some(legalHoldRequest))
+
+      //Then
+      val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
+      storedLegalHoldRequest.isDefined shouldBe true
+      storedLegalHoldRequest.get.clientId shouldEqual legalHoldRequest.clientId
+      storedLegalHoldRequest.get.lastPreKey.id shouldEqual legalHoldRequest.lastPreKey.id
+      storedLegalHoldRequest.get.lastPreKey.data shouldEqual legalHoldRequest.lastPreKey.data
+    }
+
+    scenario("deletes request and notifies active state if no request exists but LH is active") {
+      //Given
+      val service = createService()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+      userPrefs.setValue(UserPreferences.LegalHoldDisclosureType, None)
+      mockUserDevices(selfUserId, Seq(DeviceClass.Phone, DeviceClass.LegalHold))
+
+      //When
+      service.onLegalHoldRequestSynced(None)
+
+      //Then
+      val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
+      storedLegalHoldRequest.isDefined shouldBe false
+      val storedDisclosureType = result(userPrefs.preference(UserPreferences.LegalHoldDisclosureType).apply())
+      storedDisclosureType.isDefined shouldBe true
+      storedDisclosureType.get.value shouldBe LegalHoldStatus.Enabled.value
+    }
+
+    scenario("deletes request and does not change state if no request exists and LH is  not active") {
+      //Given
+      val service = createService()
+      userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
+      userPrefs.setValue(UserPreferences.LegalHoldDisclosureType, None)
+      mockUserDevices(selfUserId, Seq(DeviceClass.Phone))
+
+      //When
+      service.onLegalHoldRequestSynced(None)
+
+      //Then
+      val storedLegalHoldRequest = result(userPrefs.preference(UserPreferences.LegalHoldRequest).apply())
+      storedLegalHoldRequest.isDefined shouldBe false
+      val storedDisclosureType = result(userPrefs.preference(UserPreferences.LegalHoldDisclosureType).apply())
+      storedDisclosureType.isDefined shouldBe false
+    }
+  }
+
   feature("Is legal hold active for a conversation") {
 
     scenario("for a conversation with enabled legal hold status") {

@@ -91,7 +91,8 @@ class UsersDaoTest : IntegrationTest() {
             managedBy = data.managedBy,
             selfPermission = data.selfPermission,
             copyPermission = data.copyPermission,
-            createdBy = data.createdBy
+            createdBy = data.createdBy,
+            domain = data.domain
         )
     }
 

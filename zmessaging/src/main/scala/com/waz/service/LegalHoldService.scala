@@ -28,8 +28,7 @@ trait LegalHoldService {
   def legalHoldUsers(conversationId: ConvId): Signal[Seq[UserId]]
   def legalHoldRequest: Signal[Option[LegalHoldRequest]]
   def getFingerprint(request: LegalHoldRequest): Option[String]
-  def deleteLegalHoldRequest(): Future[Unit]
-  def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit]
+  def onLegalHoldRequestSynced(request: Option[LegalHoldRequest]): Future[Unit]
   def approveRequest(request: LegalHoldRequest,
                      password: Option[String]): Future[Either[LegalHoldError, Unit]]
   def messageEventStage: Stage.Atomic
@@ -140,10 +139,22 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     _ <- legalHoldDisclosurePref := Some(LegalHoldStatus.Disabled)
   } yield()
 
-  def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit] =
+  override def onLegalHoldRequestSynced(request: Option[LegalHoldRequest]): Future[Unit] =
+    request match {
+      case Some(request) => storeLegalHoldRequest(request)
+      case None =>
+        for {
+          _        <- deleteLegalHoldRequest()
+          isActive <- isLegalHoldActiveForSelfUser.head
+          _        <- if (isActive) legalHoldDisclosurePref := Some(LegalHoldStatus.Enabled)
+                      else Future.successful(())
+        } yield ()
+    }
+
+  private def storeLegalHoldRequest(request: LegalHoldRequest): Future[Unit] =
     legalHoldRequestPref := Some(request)
 
-  def deleteLegalHoldRequest(): Future[Unit] =
+  private def deleteLegalHoldRequest(): Future[Unit] =
     legalHoldRequestPref := None
 
 
