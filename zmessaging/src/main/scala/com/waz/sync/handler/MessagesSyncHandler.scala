@@ -74,7 +74,7 @@ class MessagesSyncHandler(selfUserId: UserId,
       case Some(conv) =>
         val msg = GenericMessage(Uid(), MsgDeleted(conv.remoteId, msgId))
         otrSync
-          .postOtrMessage(ConvId(selfUserId.str), msg)
+          .postOtrMessage(ConvId(selfUserId.str), msg, ignoreLegalHoldStatus = true)
           .map(SyncResult(_))
       case None =>
         successful(Failure("conversation not found"))
@@ -84,7 +84,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     convs.convById(convId) flatMap {
       case Some(conv) =>
         val msg = GenericMessage(msgId.uid, MsgRecall(recalled))
-        otrSync.postOtrMessage(conv.id, msg).flatMap {
+        otrSync.postOtrMessage(conv.id, msg, ignoreLegalHoldStatus = true).flatMap {
           case Left(e) => successful(SyncResult(e))
           case Right(time) =>
             msgContent
@@ -105,7 +105,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         }
 
         otrSync
-          .postOtrMessage(conv.id, msg, TargetRecipients.SpecificUsers(recipients), nativePush = false)
+          .postOtrMessage(conv.id, msg, TargetRecipients.SpecificUsers(recipients), nativePush = false, ignoreLegalHoldStatus = true)
           .map(SyncResult(_))
       case None =>
         successful(Failure("conversation not found"))
@@ -119,7 +119,8 @@ class MessagesSyncHandler(selfUserId: UserId,
                     msg.convId,
                     GenericMessage(Uid(), ButtonAction(buttonId.str, messageId.str)),
                     TargetRecipients.SpecificUsers(Set(senderId)),
-                    enforceIgnoreMissing = true)
+                    enforceIgnoreMissing = true,
+                    ignoreLegalHoldStatus = true)
         _      <- result.fold(_ => service.setButtonError(messageId, buttonId), _ => Future.successful(()))
       } yield SyncResult(result)
     }

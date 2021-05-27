@@ -45,11 +45,12 @@ import scala.concurrent.Future.successful
 import scala.util.control.NonFatal
 
 trait OtrSyncHandler {
-  def postOtrMessage(convId:               ConvId,
-                     message:              GenericMessage,
-                     targetRecipients:     TargetRecipients = ConversationParticipants,
-                     nativePush:           Boolean = true,
-                     enforceIgnoreMissing: Boolean = false
+  def postOtrMessage(convId:                ConvId,
+                     message:               GenericMessage,
+                     targetRecipients:      TargetRecipients = ConversationParticipants,
+                     nativePush:            Boolean = true,
+                     enforceIgnoreMissing:  Boolean = false,
+                     ignoreLegalHoldStatus: Boolean = false
                     ): ErrorOr[RemoteInstant]
 
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
@@ -79,11 +80,12 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
   import OtrSyncHandler._
   import com.waz.threading.Threading.Implicits.Background
 
-  override def postOtrMessage(convId:               ConvId,
-                              message:              GenericMessage,
-                              targetRecipients:     TargetRecipients = ConversationParticipants,
-                              nativePush:           Boolean = true,
-                              enforceIgnoreMissing: Boolean = false
+  override def postOtrMessage(convId:                ConvId,
+                              message:               GenericMessage,
+                              targetRecipients:      TargetRecipients = ConversationParticipants,
+                              nativePush:            Boolean = true,
+                              enforceIgnoreMissing:  Boolean = false,
+                              ignoreLegalHoldStatus: Boolean = false
                              ): ErrorOr[RemoteInstant] = {
     import com.waz.utils.{RichEither, RichFutureEither}
 
@@ -95,7 +97,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       for {
         _          <- push.waitProcessing
         Some(conv) <- convStorage.get(convId)
-        _          =  if (conv.legalHoldStatus == LegalHoldStatus.PendingApproval) throw UnapprovedLegalHoldException
+        _          =  if (!ignoreLegalHoldStatus && conv.legalHoldStatus == LegalHoldStatus.PendingApproval) throw UnapprovedLegalHoldException
         _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
         recipients <- clientsMap(targetRecipients, convId)
         content    <- service.encryptMessage(msg, recipients, retries > 0, previous)
