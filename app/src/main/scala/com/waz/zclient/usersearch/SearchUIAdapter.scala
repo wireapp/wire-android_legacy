@@ -232,7 +232,7 @@ object SearchUIAdapter {
 
     def bind(item: ConnectionViewItem): Unit = {
       this.userData = Some(item.user)
-      view.setUserData(item.user, item.selfTeamId)
+      view.setUserData(item.user)
     }
   }
 

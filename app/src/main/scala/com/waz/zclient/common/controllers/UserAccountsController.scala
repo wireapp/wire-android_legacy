@@ -59,7 +59,7 @@ class UserAccountsController(implicit injector: Injector, context: Context)
   lazy val onAccountLoggedOut: EventStream[(UserId, LogoutReason)] = accountsService.onAccountLoggedOut
   private var numberOfLoggedInAccounts = 0
 
-  lazy val currentUser = for {
+  lazy val currentUser: Signal[Option[UserData]] = for {
     zms     <- zms
     account <- accountsService.activeAccount
     user    <- account.map(_.id).fold(Signal.const(Option.empty[UserData]))(accId => zms.usersStorage.signal(accId).map(Some(_)))

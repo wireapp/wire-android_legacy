@@ -122,7 +122,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         mergedResult += SectionViewItem(ContactsSection, 0, teamName)
 
         val contactsSection = contactsList.zipWithIndex.map { case (user, index) =>
-          ConnectionViewItem(index, user, team.map(_.id), connected = true)
+          ConnectionViewItem(index, user, connected = true)
         }
 
         val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
@@ -155,7 +155,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         mergedResult += SectionViewItem(DirectorySection, 0)
         //directoryResults needs to be zipped with Index not directoryExternalMembers here
         mergedResult ++= directoryResults.zipWithIndex.map { case (user, index) =>
-          ConnectionViewItem(index, user, team.map(_.id), connected = false)
+          ConnectionViewItem(index, user, connected = false)
         }
       }
     }
