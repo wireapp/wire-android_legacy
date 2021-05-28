@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UsersBackUpModel(
     val id: String,
-    val domain: String?,
+    val domain: String? = null,
     val teamId: String? = null,
     val name: String = String.empty(),
     val email: String? = null,
