@@ -125,13 +125,13 @@ object SearchController {
   object SearchUserListState {
     case object NoUsers extends SearchUserListState
     case object NoUsersFound extends SearchUserListState
-    case class Users(us: SearchResults) extends SearchUserListState
+    final case class Users(us: SearchResults) extends SearchUserListState
 
     case object NoServices extends SearchUserListState
     case object NoServicesFound extends SearchUserListState
     case object LoadingServices extends SearchUserListState
-    case class Services(ss: Seq[IntegrationData]) extends SearchUserListState
-    case class Error(err: ErrorResponse) extends SearchUserListState
+    final case class Services(ss: Seq[IntegrationData]) extends SearchUserListState
+    final case class Error(err: ErrorResponse) extends SearchUserListState
   }
 
   sealed trait Tab

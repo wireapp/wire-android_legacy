@@ -69,7 +69,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
   protected lazy val selfId                 = inject[Signal[UserId]]
 
   private var items               = List.empty[Either[ParticipantData, Int]]
-  private var teamId              = Option.empty[TeamId]
+  private var teamDefined         = false
   private var convName            = Option.empty[String]
   private var readReceiptsEnabled = false
   private var convVerified        = false
@@ -159,8 +159,8 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       notifyDataSetChanged()
   }
 
-  team.onUi { tId =>
-    teamId = tId
+  team.map(_.isDefined).onUi { isTeamDefined =>
+    teamDefined = isTeamDefined
     notifyDataSetChanged()
   }
 
@@ -214,16 +214,16 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       h.bind(allParticipantsCount)
     case (Left(userData), h: ParticipantRowViewHolder) if userData.isAdmin =>
       val lastRow = maxParticipants.forall(n => if (userData.isAdmin) adminsCount <= n else membersCount <= n) && items.lift(position + 1).forall(_.isRight)
-      h.bind(userData, teamId, lastRow, createSubtitle, showArrow)
+      h.bind(userData, lastRow, createSubtitle, showArrow)
     case (Left(userData), h: ParticipantRowViewHolder) =>
       val lastRow = maxParticipants.forall(membersCount <= _) && items.lift(position + 1).forall(_.isRight)
-      h.bind(userData, teamId, lastRow, createSubtitle, showArrow)
+      h.bind(userData, lastRow, createSubtitle, showArrow)
     case (Right(ReadReceipts), h: ReadReceiptsViewHolder) =>
       h.bind(readReceiptsEnabled)
     case (Right(ConversationName), h: ConversationNameViewHolder) =>
-      convName.foreach(name => h.bind(name, convVerified, teamId.isDefined))
+      convName.foreach(name => h.bind(name, convVerified, teamDefined))
     case (Right(ConversationNameReadOnly), h: ConversationNameViewHolder) =>
-      convName.foreach(name => h.bind(name, convVerified, teamId.isDefined))
+      convName.foreach(name => h.bind(name, convVerified, teamDefined))
     case (Right(MembersSeparator), h: SeparatorViewHolder) =>
       h.setId(R.id.members_section)
       h.setEmptySection()
@@ -360,7 +360,6 @@ object ParticipantsAdapter {
     view.onClick(userId.foreach(onClick ! _))
 
     def bind(participant:    ParticipantData,
-             teamId:         Option[TeamId],
              lastRow:        Boolean,
              createSubtitle: Option[UserData => String],
              showArrow:      Boolean): Unit = {
@@ -373,8 +372,8 @@ object ParticipantsAdapter {
         userId = Some(participant.userData.id)
       }
       createSubtitle match {
-        case Some(f) => view.setUserData(participant.userData, teamId, createSubtitle = f)
-        case None    => view.setUserData(participant.userData, teamId)
+        case Some(f) => view.setUserData(participant.userData, createSubtitle = f)
+        case None    => view.setUserData(participant.userData)
       }
       view.setSeparatorVisible(!lastRow)
       view.setContentDescription(s"${if (participant.isAdmin) "Admin" else "Member"}: ${participant.userData.name}")
