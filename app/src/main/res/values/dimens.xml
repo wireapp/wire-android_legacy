@@ -551,8 +551,10 @@
     <dimen name="next_indicator_size">12dp</dimen>
     <dimen name="participant_initials_text_size">64sp</dimen>
     <dimen name="backup_export_icon_size">80dp</dimen>
-    <dimen name="calling_preview_card_width">160dp</dimen>
-    <dimen name="calling_preview_card_height">120dp</dimen>
+    <dimen name="calling_preview_card_width">80dp</dimen>
+    <dimen name="calling_preview_card_height">104dp</dimen>
+    <dimen name="calling_preview_card_new_width">160dp</dimen>
+    <dimen name="calling_preview_card_new_height">120dp</dimen>
     <dimen name="calling_preview_card_radius">8dp</dimen>
     <dimen name="call_control_icon_size">16dp</dimen>
     <dimen name="hangup_call_icon_size">20dp</dimen>

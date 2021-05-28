@@ -19,7 +19,7 @@ package com.waz.zclient.calling
 
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{FrameLayout, LinearLayout, TextView, Toast}
+import android.widget.{FrameLayout, LinearLayout, Toast}
 import androidx.cardview.widget.CardView
 import androidx.gridlayout.widget.GridLayout
 import com.waz.avs.VideoPreview
@@ -51,7 +51,6 @@ class NewCallingFragment extends FragmentHelper {
   private lazy val themeController          = inject[ThemeController]
   private lazy val previewCardView          = view[CardView](R.id.preview_card_view)
   private lazy val noActiveSpeakersLayout   = view[LinearLayout](R.id.no_active_speakers_layout)
-  private lazy val noActiveSpeakersText     = view[TextView](R.id.no_active_speakers_text)
   private lazy val parentLayout             = view[FrameLayout](R.id.parent_layout)
   private lazy val zoomLayout               = view[ZoomLayout](R.id.zoom_layout)
   private lazy val videoGrid                = view[GridLayout](R.id.video_grid)
@@ -63,7 +62,7 @@ class NewCallingFragment extends FragmentHelper {
 
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
-    returning(inflater.inflate(R.layout.fragment_calling, container, false)) { v =>
+    returning(inflater.inflate(R.layout.fragment_new_calling, container, false)) { v =>
       callController.theme.foreach(t => v.asInstanceOf[ThemeControllingFrameLayout].theme ! Some(t))
     }
 
@@ -147,8 +146,6 @@ class NewCallingFragment extends FragmentHelper {
   }
 
   private def initNoActiveSpeakersLayout(): Unit = {
-
-    noActiveSpeakersText.foreach(_.setText(getString(R.string.calling_no_active_speakers)))
 
     Signal.zip(
       callController.showTopSpeakers,
