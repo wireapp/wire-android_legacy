@@ -86,6 +86,16 @@
             android:visibility="gone" />
 
         <ImageView
+            android:id="@+id/federated_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="@dimen/wire__padding__small"
+            android:layout_marginEnd="@dimen/wire__padding__small"
+            android:src="@drawable/ic_icon_federated_user"
+            android:visibility="gone" />
+
+        <ImageView
             android:id="@+id/external_image_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

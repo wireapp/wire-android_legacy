@@ -18,13 +18,12 @@
 package com.waz.zclient.usersearch.listitems
 
 import com.waz.model
-import com.waz.model.{TeamId, UserData}
+import com.waz.model.UserData
 
-case class ConnectionViewItem(override val index: Int,
-                              user:               UserData,
-                              selfTeamId:         Option[TeamId],
-                              connected:          Boolean
-                             ) extends SearchViewItem {
+final case class ConnectionViewItem(override val index: Int,
+                                    user:               UserData,
+                                    connected:          Boolean
+                                   ) extends SearchViewItem {
   import SearchViewItem._
   import SectionViewItem._
 

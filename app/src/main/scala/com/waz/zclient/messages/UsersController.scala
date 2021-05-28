@@ -144,12 +144,11 @@ class UsersController(implicit injector: Injector, context: Context)
 
   def selfUser: Signal[UserData] = selfUserId.flatMap(user)
 
-  def conv(msg: MessageData) = {
+  def conv(msg: MessageData): Signal[ConversationData] =
     for {
       zms  <- zms
       conv <- zms.convsStorage.signal(msg.convId)
     } yield conv
-  }
 
   def connectToUser(userId: UserId): Future[Option[ConversationData]] = {
     import Threading.Implicits.Background
