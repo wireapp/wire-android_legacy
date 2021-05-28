@@ -1,31 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?><!--
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2021 Wire Swiss GmbH
+
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
+
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 -->
 <com.waz.zclient.common.controllers.ThemeControllingFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/parent_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+             android:layout_height="match_parent"
+             xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.xuliwen.zoom.ZoomLayout
         android:id="@+id/zoom_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="1dp"
         app:double_click_zoom="1.0"
         app:max_zoom="10.0"
-        app:min_zoom="1.0">
+        app:min_zoom="1.0"
+        android:elevation="1dp">
 
         <androidx.gridlayout.widget.GridLayout
             android:id="@+id/video_grid"
@@ -40,48 +46,51 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:elevation="1dp"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="gone"
+        android:elevation="1dp">
 
         <ProgressBar
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginBottom="@dimen/wire__margin__20"
             android:indeterminate="true"
-            android:indeterminateTint="@color/white" />
+            android:indeterminateTint="@color/white"
+            android:layout_marginBottom="@dimen/wire__margin__20"/>
 
         <TextView
+            android:id="@+id/no_active_speakers_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:fontFamily="sans-serif"
-            android:text="@string/calling_no_active_video_speakers"
-            android:textColor="@color/white" />
+            android:textColor="@color/white"
+            android:text="@string/calling_no_active_speakers" />
     </LinearLayout>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/preview_card_view"
-        android:layout_width="@dimen/calling_preview_card_width"
-        android:layout_height="@dimen/calling_preview_card_height"
+        android:layout_width="@dimen/calling_preview_card_new_width"
+        android:layout_height="@dimen/calling_preview_card_new_height"
         android:layout_gravity="end|top"
-        android:layout_marginTop="@dimen/wire__padding__regular"
-        android:layout_marginEnd="@dimen/wire__padding__regular"
-        android:elevation="1dp"
+        android:layout_marginTop="@dimen/wire__margin__huge"
+        android:layout_marginEnd="@dimen/wire__margin__24"
+        app:cardCornerRadius="@dimen/calling_preview_card_radius"
+        app:cardElevation="4dp"
         android:visibility="gone"
-        app:cardCornerRadius="@dimen/calling_preview_card_radius" />
+        android:elevation="1dp"
+        />
 
     <FrameLayout
         android:id="@+id/controls_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="2dp" />
+        android:elevation="2dp"/>
 
     <FrameLayout
         android:id="@+id/full_screen_video_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="1dp" />
+        android:elevation="1dp"/>
 
 </com.waz.zclient.common.controllers.ThemeControllingFrameLayout>
