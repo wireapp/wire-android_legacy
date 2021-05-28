@@ -33,10 +33,6 @@
         app:min_zoom="1.0"
         android:elevation="1dp">
 
-        <androidx.recyclerview.widget.RecyclerView
-            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            app:spanCount="2"/>
-
         <androidx.gridlayout.widget.GridLayout
             android:id="@+id/video_grid"
             android:layout_width="match_parent"
