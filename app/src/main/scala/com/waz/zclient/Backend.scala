@@ -23,7 +23,11 @@ import com.waz.utils.SafeBase64
 object Backend {
 
   lazy val byName: Map[String, BackendConfig] =
-    Seq(StagingBackend,QaBackend,ProdBackend).map(b => b.environment -> b).toMap
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      Seq(StagingBackend, QaBackend, ProdBackend, AntaBackend, BellaBackend, ChalaBackend).map(b => b.environment -> b).toMap
+    } else {
+      Seq(StagingBackend, QaBackend, ProdBackend).map(b => b.environment -> b).toMap
+    }
 
   private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
   val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
@@ -72,5 +76,38 @@ object Backend {
     accountsUrl = BuildConfig.ACCOUNTS_URL,
     websiteUrl = BuildConfig.WEBSITE_URL,
     ProdFirebaseOptions,
+    certPin)
+
+  val AntaBackend = BackendConfig(
+    environment = "anta",
+    baseUrl = "https://nginz-https.anta.wire.link",
+    websocketUrl = "https://nginz-ssl.anta.wire.link/await",
+    blacklistHost = None,
+    teamsUrl = "https://teams.anta.wire.link",
+    accountsUrl = "https://account.anta.wire.link",
+    websiteUrl = "https://wire.com",
+    StagingFirebaseOptions,
+    certPin)
+
+  val BellaBackend = BackendConfig(
+    environment = "bella",
+    baseUrl = "https://nginz-https.bella.wire.link",
+    websocketUrl = "https://nginz-ssl.bella.wire.link/await",
+    blacklistHost = None,
+    teamsUrl = "https://teams.bella.wire.link",
+    accountsUrl = "https://account.bella.wire.link",
+    websiteUrl = "https://wire.com",
+    StagingFirebaseOptions,
+    certPin)
+
+  val ChalaBackend = BackendConfig(
+    environment = "chala",
+    baseUrl = "https://nginz-https.chala.wire.link",
+    websocketUrl = "https://nginz-ssl.chala.wire.link/await",
+    blacklistHost = None,
+    teamsUrl = "https://teams.chala.wire.link",
+    accountsUrl = "https://account.chala.wire.link",
+    websiteUrl = "https://wire.com",
+    StagingFirebaseOptions,
     certPin)
 }
