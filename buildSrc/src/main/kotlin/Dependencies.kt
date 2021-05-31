@@ -48,6 +48,7 @@ object Versions {
     const val ANDROIDX_ROOM = "2.2.2"
     const val ANDROIDX_BIOMETRIC = "1.0.1"
     const val ANDROIDX_ANNOTATION = "1.0.0"
+    const val ANDROIDX_VIEWPAGER_2 = "1.0.0"
     const val PLAY_SERVICES = "17.0.0"
     const val PLAY_SERVICES_BASE = "17.1.0"
     const val FIREBASE_MESSAGING = "20.1.0"
@@ -113,6 +114,7 @@ object BuildDependencies {
         "biometric" to "androidx.biometric:biometric:${Versions.ANDROIDX_BIOMETRIC}",
         "workManager" to "androidx.work:work-runtime:${Versions.WORK_MANAGER}",
         "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}"
+        "viewPager2" to "androidx.viewpager2:viewpager2:${Versions.ANDROIDX_VIEWPAGER_2}"
     ))
     val playServices = PlayServicesDependencyMap(mapOf(
         "base" to "com.google.android.gms:play-services-base:${Versions.PLAY_SERVICES_BASE}",
