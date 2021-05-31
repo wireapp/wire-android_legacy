@@ -18,6 +18,7 @@ android {
         }
 
         buildConfigField 'boolean', 'LEGAL_HOLD_ENABLED', "$legalHold"
+        buildConfigField 'boolean', 'FEDERATION_USER_DISCOVERY', "$federationUserDiscovery"
     }
 
     externalNativeBuild {

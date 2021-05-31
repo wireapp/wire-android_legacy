@@ -127,6 +127,7 @@ android {
 
         //Feature Flags
         buildConfigField 'boolean', 'LARGE_VIDEO_CONFERENCE_CALLS', "$largeVideoConferenceCalls"
+        buildConfigField 'boolean', 'FEDERATION_USER_DISCOVERY', "$federationUserDiscovery"
     }
 
     packagingOptions {

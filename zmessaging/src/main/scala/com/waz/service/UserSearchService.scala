@@ -37,11 +37,12 @@ import scala.collection.immutable.Set
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class SearchResults(top:   IndexedSeq[UserData]         = IndexedSeq.empty,
-                         local: IndexedSeq[UserData]         = IndexedSeq.empty,
-                         convs: IndexedSeq[ConversationData] = IndexedSeq.empty,
-                         dir:   IndexedSeq[UserData]         = IndexedSeq.empty) { //directory (backend search)
+import com.waz.zms.BuildConfig
 
+final case class SearchResults(top:   IndexedSeq[UserData]         = IndexedSeq.empty,
+                               local: IndexedSeq[UserData]         = IndexedSeq.empty,
+                               convs: IndexedSeq[ConversationData] = IndexedSeq.empty,
+                               dir:   IndexedSeq[UserData]         = IndexedSeq.empty) { //directory (backend search)
   def isEmpty: Boolean = top.isEmpty && local.isEmpty && convs.isEmpty && dir.isEmpty
 }
 
@@ -49,9 +50,9 @@ trait UserSearchService {
   def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults]
   def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[SearchResults]
   def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]]
-  def search(queryStr: String = ""): Signal[SearchResults]
+  def search(queryStr: String): Signal[SearchResults]
   def syncSearchResults(query: SearchQuery): Unit
-  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit]
+  def updateSearchResults(results: UserSearchResponse): Future[Unit]
   def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit
 }
 
@@ -83,7 +84,6 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     lazy val knownUsers = membersStorage.getByUsers(searchResults.map(_.id).toSet).map(_.map(_.userId).toSet)
     isExternal.flatMap {
       case true if teamId.isDefined =>
-        verbose(l"filterForExternal1 Q: $query, RES: ${searchResults.map(_.name)}) with partner = true and teamId")
         for {
           Some(self)    <- userService.getSelfUser
           filteredUsers <- knownUsers.map(knownUsersIds =>
@@ -91,14 +91,13 @@ class UserSearchServiceImpl(selfUserId:           UserId,
                            )
         } yield filteredUsers
       case false if teamId.isDefined =>
-        verbose(l"filterForExternal2 Q: $query, RES: ${searchResults.map(_.name)}) with partner = false and teamId")
         knownUsers.map { knownUsersIds =>
           searchResults.filter { u =>
             u.createdBy.contains(selfUserId) ||
             knownUsersIds.contains(u.id) ||
               u.teamId != teamId ||
               (u.teamId == teamId && !u.isExternal(teamId)) ||
-              u.handle.exists(_.exactMatchQuery(query.str))
+              u.exactMatchQuery(query)
           }
         }
       case _ => Future.successful(searchResults)
@@ -111,14 +110,8 @@ class UserSearchServiceImpl(selfUserId:           UserId,
 
   override def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults] =
     for {
-      localResults      <- filterForExternal(
-        query,
-        searchLocal(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly)))
-      )
-      remoteResults     <- filterForExternal(
-        query,
-        directoryResults(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly)))
-      )
+      localResults  <- filterForExternal(query, searchLocal(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly))))
+      remoteResults <- filterForExternal(query, directoryResults(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly))))
     } yield SearchResults(local = localResults, dir = remoteResults)
 
   override def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[SearchResults] =
@@ -181,12 +174,12 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   private def sortUsers(results: IndexedSeq[UserData], query: SearchQuery): IndexedSeq[UserData] = {
     def toLower(str: String) = Locales.transliterate(str).toLowerCase
 
-    lazy val toLowerSymbolStripped = toLower(query.str)
+    lazy val toLowerSymbolStripped = toLower(query.query)
 
     def bucket(u: UserData): Int =
       if (query.isEmpty) 0
       else if (query.handleOnly) {
-        if (u.handle.exists(_.exactMatchQuery(query.str))) 0 else 1
+        if (u.handle.exists(_.exactMatchQuery(query.query))) 0 else 1
       } else {
         val userName = toLower(u.name)
         if (userName == toLowerSymbolStripped) 0 else if (userName.startsWith(toLowerSymbolStripped)) 1 else 2
@@ -202,9 +195,24 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     }
   }
 
-  override def search(queryStr: String = ""): Signal[SearchResults] = {
-    verbose(l"search($queryStr)")
+  override def search(queryStr: String): Signal[SearchResults] = {
     val query = SearchQuery(queryStr)
+
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (query.hasDomain)
+        search(query)
+      else
+        userService.selfUser.map(_.domain.getOrElse("")).flatMap {
+          case domain if domain.nonEmpty => search(query.withDomain(domain))
+          case _ => search(query)
+        }
+    } else {
+      search(query)
+    }
+  }
+
+  private def search(query: SearchQuery): Signal[SearchResults] = {
+    verbose(l"search($query)")
 
     userSearchResult ! IndexedSeq.empty[UserData]
 
@@ -215,7 +223,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
 
     val conversations: Signal[IndexedSeq[ConversationData]] =
       if (!query.isEmpty)
-        Signal.from(convsStorage.findGroupConversations(SearchKey(query.str), selfUserId, Int.MaxValue, handleOnly = query.handleOnly))
+        Signal.from(convsStorage.findGroupConversations(SearchKey(query.query), selfUserId, Int.MaxValue, handleOnly = query.handleOnly))
           .map(_.filter(conv => teamId.forall(conv.team.contains)).distinct.toIndexedSeq)
           .flatMap { convs =>
             val gConvs = convs.map { c =>
@@ -251,19 +259,20 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       else Signal.const(IndexedSeq.empty[UserData])
     } { dir =>  verbose(l"directory search results: $dir") }
 
-  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] =
+  override def updateSearchResults(results: UserSearchResponse): Future[Unit] =
     usersStorage.contents.head.flatMap { usersInStorage =>
       val (local, remote) = unapply(results).partition { u =>
+        val userId = u.qualifiedId.id
         // a bit hacky way to check if all steps of fetching data were already performed for that user
-        usersInStorage.contains(u.id) &&
-          usersInStorage(u.id).name != Name.Empty &&
-          usersInStorage(u.id).picture.isDefined
+        usersInStorage.contains(userId) &&
+          usersInStorage(userId).name != Name.Empty &&
+          usersInStorage(userId).picture.isDefined
       }
-      val allUsers = (local.map(u => usersInStorage(u.id)) ++ remote.map(UserData(_))).toIndexedSeq
+      val allUsers = (local.map(u => usersInStorage(u.qualifiedId.id)) ++ remote.map(UserData(_))).toIndexedSeq
       userSearchResult ! allUsers
 
       if (remote.nonEmpty)
-        sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
+        sync.syncSearchResults(remote.map(_.qualifiedId.id).toSet).map(_ => ())
       else
         Future.successful(())
     }
@@ -301,12 +310,18 @@ object UserSearchService {
   /**
     * Model object extracted from `UserSearchResponse`.
     */
-  case class UserSearchEntry(id: UserId, name: Name, colorId: Option[Int], handle: Handle, teamId: Option[TeamId])
+  final case class UserSearchEntry(
+    qualifiedId: QualifiedId,
+    name:        Name,
+    colorId:     Option[Int],
+    handle:      Handle,
+    teamId:      Option[TeamId]
+  )
 
   object UserSearchEntry {
     def apply(searchUser: UserSearchResponse.User): UserSearchEntry = {
       import searchUser._
-      UserSearchEntry(UserId(id),
+      UserSearchEntry(qualified_id,
                       Name(name),
                       accent_id,
                       handle.fold(Handle.Empty)(Handle(_)),

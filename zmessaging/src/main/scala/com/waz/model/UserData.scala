@@ -101,6 +101,7 @@ final case class UserData(override val id:       UserId,
 
   def updated(user: UserSearchEntry): UserData = copy(
     name      = user.name,
+    domain    = if (user.qualifiedId.hasDomain) Some(user.qualifiedId.domain) else None,
     teamId    = user.teamId,
     searchKey = SearchKey(user.name),
     accent    = user.colorId.getOrElse(accent),
@@ -135,18 +136,17 @@ final case class UserData(override val id:       UserId,
   def isInTeam(otherTeamId: Option[TeamId]): Boolean = teamId.isDefined && teamId == otherTeamId
 
   def matchesQuery(query: SearchQuery): Boolean =
-      handle.exists(_.startsWithQuery(query.str)) ||
+    query.domain == domain.getOrElse("") &&
+      (handle.exists(_.startsWithQuery(query.query)) ||
         (!query.handleOnly &&
-          (SearchKey(query.str).isAtTheStartOfAnyWordIn(searchKey) ||
-           email.exists(e => query.str.trim.equalsIgnoreCase(e.str))
+          (SearchKey(query.query).isAtTheStartOfAnyWordIn(searchKey) ||
+           email.exists(e => query.query.trim.equalsIgnoreCase(e.str))
           )
         )
+      )
 
-  def matchesQuery(query: Option[SearchKey] = None, handleOnly: Boolean = false): Boolean = query match {
-    case Some(q) =>
-      this.handle.map(_.string).contains(q.asciiRepresentation.toLowerCase) || (!handleOnly && q.isAtTheStartOfAnyWordIn(this.searchKey))
-    case _ => true
-  }
+  def exactMatchQuery(query: SearchQuery): Boolean =
+    query.domain == domain.getOrElse("") && handle.exists(_.exactMatchQuery(query.query))
 }
 
 trait Picture
@@ -193,7 +193,8 @@ object UserData {
 
   def apply(entry: UserSearchEntry): UserData =
     UserData(
-      id        = entry.id,
+      id        = entry.qualifiedId.id,
+      domain    = Some(entry.qualifiedId.domain),
       teamId    = entry.teamId,
       name      = entry.name,
       accent    = entry.colorId.getOrElse(0),
@@ -293,7 +294,7 @@ object UserData {
       iterating(db.query(table.name, null, whereClause, args, null, null,
         s"case when ${Conn.name} = '${Conn(ConnectionStatus.Accepted)}' then 0 when ${Rel.name} != '${Relation.Other.name}' then 1 else 2 end ASC, ${Name.name} ASC"))
 
-    def search(prefix: SearchKey, handleOnly: Boolean, teamId: Option[TeamId])(implicit db: DB): Set[UserData] = {
+    def search(prefix: SearchKey, domain: String, handleOnly: Boolean, teamId: Option[TeamId])(implicit db: DB): Set[UserData] = {
       val select = s"SELECT u.* FROM ${table.name} u WHERE "
       val handleCondition =
         if (handleOnly){
@@ -304,9 +305,10 @@ object UserData {
              |     OR u.${SKey.name} LIKE '% ${SKey(prefix)}%'
              |     OR u.${Handle.name} LIKE '%${prefix.asciiRepresentation}%')""".stripMargin
         }
-      val teamCondition = teamId.map(tId => s"AND u.${TeamId.name} = '$tId'")
+      val teamCondition = teamId.map(tId => s" AND u.${TeamId.name} = '$tId'").getOrElse("")
+      val domainCondition = if (domain.nonEmpty) s" AND u.${Domain.name} = '$domain'" else ""
 
-      list(db.rawQuery(select + " " + handleCondition + teamCondition.map(qu => s" $qu").getOrElse(""))).toSet
+      list(db.rawQuery(select + " " + handleCondition + teamCondition + domainCondition)).toSet
     }
 
     def findForTeams(teams: Set[TeamId])(implicit db: DB) = iteratingMultiple(findInSet(TeamId, teams.map(Option(_))))

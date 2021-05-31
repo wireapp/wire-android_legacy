@@ -123,7 +123,7 @@ class TeamsServiceImpl(selfUser:           UserId,
       )
 
       def load =
-        if (!query.isEmpty) userStorage.searchByTeam(tId, SearchKey(query.str), query.handleOnly)
+        if (!query.isEmpty) userStorage.searchByTeam(tId, query)
         else userStorage.getByTeam(Set(tId))
 
       def userMatches(data: UserData) = data.isInTeam(teamId) && data.matchesQuery(query)

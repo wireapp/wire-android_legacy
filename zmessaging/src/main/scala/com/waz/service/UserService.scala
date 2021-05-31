@@ -220,7 +220,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def updateUsers(entries: Seq[UserSearchEntry]) = {
     def updateOrAdd(entry: UserSearchEntry) = (_: Option[UserData]).fold(UserData(entry))(_.updated(entry))
-    usersStorage.updateOrCreateAll(entries.map(entry => entry.id -> updateOrAdd(entry)).toMap)
+    usersStorage.updateOrCreateAll(entries.map(entry => entry.qualifiedId.id -> updateOrAdd(entry)).toMap)
   }
 
   override def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]] = Serialized.future(s"syncRichInfoNow $id") {

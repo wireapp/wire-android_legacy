@@ -1,6 +1,7 @@
 package com.waz.sync.handler
 
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.{QualifiedId, UserId}
 import com.waz.service.{SearchQuery, UserSearchService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
@@ -17,7 +18,7 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
   private val userSearchClient = mock[UserSearchClient]
 
   private val dummyUser = User(
-    id = "d9700541-9b05-47b5-b85f-4a195593af71",
+    qualified_id = QualifiedId(UserId("d9700541-9b05-47b5-b85f-4a195593af71"), "staging.zinfra.io"),
     name = "ma",
     handle = Some("ma75"),
     accent_id = None,
@@ -28,12 +29,12 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
   feature("Sync Search Query request") {
 
     scenario("Given search query is synced, when contacts request is successful, then update search results") {
-      val searchQuery = SearchQuery("Test query", handleOnly = false)
+      val searchQuery = SearchQuery("Test query", "", handleOnly = false)
       val documents = Seq(dummyUser)
       val results = UserSearchResponse(took = 13, found = 2, returned = 2, documents = documents)
 
       (userSearchClient.search(_: SearchQuery, _: Int)).expects(searchQuery, *).once().returning(CancellableFuture.successful(Right(results)))
-      (userSearch.updateSearchResults(_: SearchQuery, _: UserSearchClient.UserSearchResponse)).expects(searchQuery, results).once().returning(Future.successful(Unit))
+      (userSearch.updateSearchResults(_: UserSearchClient.UserSearchResponse)).expects(results).once().returning(Future.successful(Unit))
 
       result(initHandler().syncSearchQuery(searchQuery)) shouldEqual SyncResult.Success
 
@@ -43,7 +44,7 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
 
       val timeoutError = ErrorResponse(ErrorResponse.ConnectionErrorCode, s"Request failed with timeout", "connection-error")
 
-      val searchQuery = SearchQuery("Test query", handleOnly = false)
+      val searchQuery = SearchQuery("Test query", "", handleOnly = false)
 
       (userSearchClient.search(_: SearchQuery, _: Int)).expects(searchQuery, *).once().returning(CancellableFuture.successful(Left(timeoutError)))
 

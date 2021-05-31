@@ -23,8 +23,8 @@ import com.waz.utils.Locales
 
 final class SearchKey private (val asciiRepresentation: String) extends Serializable {
   private[this] lazy val pattern = compile(s"(.+ )?${quote(asciiRepresentation.toLowerCase)}.*")
-  def isAtTheStartOfAnyWordIn(other: SearchKey) = pattern.matcher(other.asciiRepresentation.toLowerCase).matches
-  def isEmpty = asciiRepresentation.isEmpty
+  def isAtTheStartOfAnyWordIn(other: SearchKey): Boolean = pattern.matcher(other.asciiRepresentation.toLowerCase).matches
+  def isEmpty: Boolean = asciiRepresentation.isEmpty
 
   override def equals(any: Any): Boolean = any match {
     case other: SearchKey => other.asciiRepresentation.equalsIgnoreCase(asciiRepresentation)
