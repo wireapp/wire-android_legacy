@@ -903,20 +903,22 @@ class ConversationFragment extends FragmentHelper {
         val positiveButton = getString(R.string.conversation__legal_hold_confirmation__positive_action)
 
         val callback = new ConfirmationCallback {
-          override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = {
-            messagesController.retryMessageSending(err.messages)
-            errorsController.dismissSyncError(err.id)
-          }
+          override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = for {
+            _ <- errorsController.dismissSyncError(err.id)
+            _ <- messagesController.retryMessageSending(err.messages)
+          } yield ()
 
-          override def negativeButtonClicked(): Unit = {
-            inject[LegalHoldController].onShowConversationLegalHoldInfo ! (())
-          }
+          override def negativeButtonClicked(): Unit = for {
+            _ <- errorsController.dismissSyncError(err.id)
+            _  = inject[LegalHoldController].onShowConversationLegalHoldInfo ! (())
+          } yield ()
 
-          override def neutralButtonClicked(): Unit = {
-            participantsController.onShowParticipants ! None
-          }
+          override def neutralButtonClicked(): Unit = for {
+            _ <- errorsController.dismissSyncError(err.id)
+            _  = participantsController.onShowParticipants ! None
+          } yield ()
 
-          override def canceled(): Unit = {}
+          override def canceled(): Unit = errorsController.dismissSyncError(err.id)
 
           override def onHideAnimationEnd(confirmed: Boolean, canceled: Boolean, checkboxIsSelected: Boolean): Unit = {}
         }
