@@ -20,7 +20,6 @@ object Config {
 
 val configModule: Module = module {
     factory { HostUrlConfig(Config.websiteUrl()) }
-    factory { AppVersionNameConfig(Config.versionName()) }
     factory { AppDetailsConfig("${Config.versionCode()} ${Config.versionName()}") }
     factory { AccountUrlConfig(Config.accountsUrl()) }
     factory { DeveloperOptionsConfig(Config.developerSettingsEnabled()) }
@@ -28,7 +27,6 @@ val configModule: Module = module {
 }
 
 data class DeveloperOptionsConfig(val isDeveloperSettingsEnabled: Boolean) : ConfigItem()
-data class AppVersionNameConfig(val versionName: String) : ConfigItem()
 data class AppDetailsConfig(val versionDetails: String) : ConfigItem()
 data class AccountUrlConfig(val url: String) : ConfigItem()
 data class HostUrlConfig(val url: String) : ConfigItem()

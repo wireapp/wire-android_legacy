@@ -26,11 +26,6 @@ import scala.concurrent.Future
 
 package object client {
 
-  def userAgent(appVersion: String = "*", zmsVersion: String = "*"): String = {
-    import android.os.Build._
-    s"Wire/$appVersion (zms $zmsVersion; Android ${VERSION.RELEASE}; $MANUFACTURER $MODEL)"
-  }
-
   //TODO Use only one from this two.
   type ErrorOr[T] = Future[Either[ErrorResponse, T]]
   type ErrorOrResponse[T] = CancellableFuture[Either[ErrorResponse, T]]

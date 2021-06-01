@@ -17,24 +17,15 @@
  */
 package com.waz.znet2
 
-import com.waz.service.MetaDataService
 import okhttp3.{Interceptor, Response}
 
-class OkHttpUserAgentInterceptor(metadata: MetaDataService) extends Interceptor {
+class OkHttpUserAgentInterceptor extends Interceptor {
 
-  private val WireUserAgent = {
-    val androidVersion = metadata.androidVersion
-    val wireVersion = metadata.versionName
-    val okHttpDefaultUserAgent = okhttp3.internal.Version.userAgent()
-
-    s"Android $androidVersion / Wire $wireVersion / HttpLibrary $okHttpDefaultUserAgent"
-  }
-
-  override def intercept(chain: Interceptor.Chain): Response = 
+  override def intercept(chain: Interceptor.Chain): Response =
     chain.proceed(
-      if (Option(chain.request.header("User-Agent")).isDefined) 
+      if (Option(chain.request.header("User-Agent")).isEmpty)
         chain.request
-      else 
-        chain.request.newBuilder.header("User-Agent", WireUserAgent).build
+      else
+        chain.request.newBuilder().removeHeader("User-Agent").build()
     )
 }

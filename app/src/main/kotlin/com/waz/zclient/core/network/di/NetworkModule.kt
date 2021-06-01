@@ -24,7 +24,6 @@ import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClien
 import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClientForToken
 import com.waz.zclient.core.network.di.NetworkDependencyProvider.retrofit
 import com.waz.zclient.core.network.pinning.CertificatePinnerFactory
-import com.waz.zclient.core.network.useragent.UserAgentConfig
 import com.waz.zclient.core.network.useragent.UserAgentInterceptor
 import com.waz.zclient.storage.db.GlobalDatabase
 import okhttp3.OkHttpClient
@@ -96,9 +95,8 @@ val networkModule: Module = module {
     single { AccessTokenLocalDataSource(get(), get<GlobalDatabase>().activeAccountsDao()) }
     single { AccessTokenMapper() }
     single { RefreshTokenMapper() }
-    single { UserAgentInterceptor(get()) }
+    single { UserAgentInterceptor() }
     single { CustomBackendInterceptor(get()) }
-    factory { UserAgentConfig(get()) }
     single { AccessTokenRepository(get(), get(), get(), get()) }
     single { AccessTokenAuthenticator(get(), get()) }
     single { AccessTokenInterceptor(get()) }
