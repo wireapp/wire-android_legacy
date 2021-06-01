@@ -150,6 +150,28 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(_ != Success).getOrElse(Success) }
   }
 
+  def postQualifiedConversationMemberJoin(id: ConvId, members: Set[QualifiedId], defaultRole: ConversationRole): Future[SyncResult] =
+    withConversation(id) { conv =>
+      def post(users: Set[QualifiedId]) =
+        conversationsClient.postQualifiedMemberJoin(conv.remoteId, users, defaultRole).future flatMap {
+          case Left(resp @ ErrorResponse(status, _, label)) =>
+            val errTpe = (status, label) match {
+              case (403, "not-connected")             => Some(ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION)
+              case (403, "too-many-members")          => Some(ErrorType.CANNOT_ADD_USER_TO_FULL_CONVERSATION)
+              case (412, "missing-legalhold-consent") => Some(ErrorType.CANNOT_ADD_PARTICIPANT_WITH_MISSING_LEGAL_HOLD_CONSENT)
+              case _                                  => None
+            }
+            convService
+              .onMemberAddFailed(id, users.map(_.id), errTpe, resp)
+              .map(_ => SyncResult(resp))
+          case resp =>
+            verbose(l"postConversationMemberJoin($id, $members, $defaultRole): $resp")
+            postConvRespHandler(resp)
+        }
+
+      Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(_ != Success).getOrElse(Success) }
+    }
+
   def postConversationMemberLeave(id: ConvId, user: UserId): Future[SyncResult] =
     if (user != selfUserId) postConv(id) { conv => conversationsClient.postMemberLeave(conv.remoteId, user) }
     else withConversation(id) { conv =>
@@ -211,6 +233,58 @@ class ConversationsSyncHandler(selfUserId:          UserId,
             }
           }
         }
+      case Left(resp@ErrorResponse(status, _, label)) =>
+        warn(l"got error: $resp")
+
+        val errorType = (status, label) match {
+          case (403, "not-connected") =>
+            Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER)
+          case (412, "missing-legalhold-consent") =>
+            Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT)
+          case _ =>
+            None
+        }
+
+        errorType.fold(Future.successful(SyncResult(resp))) { errorType =>
+          errorsService
+            .addErrorWhenActive(ErrorData(errorType, resp, convId))
+            .map(_ => SyncResult(resp))
+        }
+    }
+  }
+
+
+  def postQualifiedConversation(convId:      ConvId,
+                                users:       Set[QualifiedId],
+                                name:        Option[Name],
+                                team:        Option[TeamId],
+                                access:      Set[Access],
+                                accessRole:  AccessRole,
+                                receiptMode: Option[Int],
+                                defaultRole: ConversationRole
+                               ): Future[SyncResult] = {
+    debug(l"postQualifiedConversation($convId, $users, $name, $defaultRole)")
+
+    val initState = ConversationInitState(
+      users                 = Set.empty, // TODO: for now we add all users after we created the conv, it will change in the future
+      name                  = name,
+      team                  = team,
+      access                = access,
+      accessRole            = accessRole,
+      receiptMode           = receiptMode,
+      conversationRole      = defaultRole
+    )
+
+    conversationsClient.postConversation(initState).future.flatMap {
+      case Right(response) =>
+        convService.updateRemoteId(convId, response.id).flatMap { _ =>
+          loadConversationRoles(Seq(response)).flatMap { roles =>
+            convService.updateConversationsWithDeviceStartMessage(Seq(response), roles).flatMap { _ =>
+              postQualifiedConversationMemberJoin(convId, users, defaultRole)
+            }
+          }
+        }
+
       case Left(resp@ErrorResponse(status, _, label)) =>
         warn(l"got error: $resp")
 

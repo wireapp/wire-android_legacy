@@ -135,9 +135,6 @@ final case class UserData(override val id:       UserId,
 
   def isInTeam(otherTeamId: Option[TeamId]): Boolean = teamId.isDefined && teamId == otherTeamId
 
-  def isFederated(selfDomain: String): Boolean =
-    domain.getOrElse("") != selfDomain
-
   def matchesQuery(query: SearchQuery): Boolean =
     handle.exists(_.startsWithQuery(query.query)) ||
       (!query.handleOnly &&

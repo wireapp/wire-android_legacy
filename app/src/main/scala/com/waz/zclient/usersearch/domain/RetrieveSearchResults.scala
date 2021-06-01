@@ -29,6 +29,9 @@ import com.waz.zclient.{Injectable, Injector}
 
 import scala.collection.mutable
 import com.waz.threading.Threading._
+import com.waz.zclient.messages.UsersController
+
+import com.waz.zclient.BuildConfig
 
 class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventContext) extends Injectable
   with DerivedLogTag {
@@ -36,12 +39,12 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   import SearchViewItem._
   import SectionViewItem._
 
-  private val userAccountsController    = inject[UserAccountsController]
-  private val searchController          = inject[SearchController]
+  private val userAccountsController = inject[UserAccountsController]
+  private val searchController       = inject[SearchController]
+  private lazy val usersController   = inject[UsersController]
 
   private var collapsedContacts         = true
   private var collapsedGroups           = true
-
   private var team                      = Option.empty[TeamData]
   private var topUsers                  = Seq.empty[UserData]
   private var localResults              = Seq.empty[UserData]
@@ -152,12 +155,16 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       }
 
       if (directoryExternalMembers.nonEmpty) {
-        val federatedDomain = (directoryExternalMembers.headOption, currentUser.flatMap(_.domain)) match {
-          case (Some(user), Some(currentDomain)) if user.isFederated(currentDomain) => user.domain
-          case _ => None
-        }
+        if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+          val federatedDomain = (directoryExternalMembers.headOption, currentUser.flatMap(_.domain)) match {
+            case (Some(user), Some(selfDomain)) if usersController.isFederated(user, selfDomain) => user.domain
+            case _ => None
+          }
 
-        mergedResult += SectionViewItem(DirectorySection, 0, federatedDomain = federatedDomain)
+          mergedResult += SectionViewItem(DirectorySection, 0, federatedDomain = federatedDomain)
+        } else {
+          mergedResult += SectionViewItem(DirectorySection, 0)
+        }
         //directoryResults needs to be zipped with Index not directoryExternalMembers here
         mergedResult ++= directoryResults.zipWithIndex.map { case (user, index) =>
           ConnectionViewItem(index, user, connected = false)

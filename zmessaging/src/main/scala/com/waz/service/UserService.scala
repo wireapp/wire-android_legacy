@@ -208,14 +208,25 @@ class UserServiceImpl(selfUserId:        UserId,
     findUser(userId).map(_.flatMap(_.qualifiedId).getOrElse(QualifiedId(userId)))
 
   override def getOrCreateUser(id: UserId): Future[UserData] =
-    usersStorage.getOrCreate(id, {
-      sync.syncUsers(Set(id))
-      UserData(
-        id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected,
-        searchKey = SearchKey.Empty, handle = None
-      )
-    })
-
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      qualifiedId(id).flatMap { qId =>
+        usersStorage.getOrCreate(id, {
+          sync.syncQualifiedUsers(Set(qId))
+          UserData(
+            id, if (qId.hasDomain) Some(qId.domain) else None, None, Name.Empty, None, None,
+            connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None
+          )
+        })
+      }
+    } else {
+      usersStorage.getOrCreate(id, {
+        sync.syncUsers(Set(id))
+        UserData(
+          id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected,
+          searchKey = SearchKey.Empty, handle = None
+        )
+      })
+    }
 
   override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =
     usersStorage.update(id, { _.updateConnectionStatus(status, time, message)}).map {

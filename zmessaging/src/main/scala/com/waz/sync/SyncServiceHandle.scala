@@ -44,6 +44,7 @@ trait SyncServiceHandle {
   def syncQualifiedSearchResults(qIds: Set[QualifiedId]): Future[SyncId]
   def syncSearchQuery(query: SearchQuery): Future[SyncId]
   def syncUsers(ids: Set[UserId]): Future[SyncId]
+  def syncQualifiedUsers(qIds: Set[QualifiedId]): Future[SyncId]
   def syncSelfUser(): Future[SyncId]
   def deleteAccount(): Future[SyncId]
   def syncConversations(ids: Set[ConvId] = Set.empty, dependsOn: Option[SyncId] = None): Future[SyncId]
@@ -71,7 +72,9 @@ trait SyncServiceHandle {
   def postAssetStatus(id: MessageId, conv: ConvId, exp: Option[FiniteDuration], status: UploadAssetStatus): Future[SyncId]
   def postLiking(id: ConvId, liking: Liking): Future[SyncId]
   def postConnection(user: UserId, name: Name, message: String): Future[SyncId]
+  def postQualifiedConnection(qId: QualifiedId, name: Name, message: String): Future[SyncId]
   def postConnectionStatus(user: UserId, status: ConnectionStatus): Future[SyncId]
+  def postQualifiedConnectionStatus(qId: QualifiedId, status: ConnectionStatus): Future[SyncId]
   def postReceiptMode(id: ConvId, receiptMode: Int): Future[SyncId]
   def postConversationName(id: ConvId, name: Name): Future[SyncId]
   def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncId]
@@ -86,6 +89,15 @@ trait SyncServiceHandle {
                        receiptMode: Option[Int],
                        defaultRole: ConversationRole
                       ): Future[SyncId]
+  def postQualifiedConversation(id:          ConvId,
+                                users:       Set[QualifiedId],
+                                name:        Option[Name],
+                                team:        Option[TeamId],
+                                access:      Set[Access],
+                                accessRole:  AccessRole,
+                                receiptMode: Option[Int],
+                                defaultRole: ConversationRole
+                               ): Future[SyncId]
   def postConversationRole(id: ConvId, member: UserId, newRole: ConversationRole, origRole: ConversationRole): Future[SyncId]
   def postLastRead(id: ConvId, time: RemoteInstant): Future[SyncId]
   def postCleared(id: ConvId, time: RemoteInstant): Future[SyncId]
@@ -148,6 +160,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncQualifiedSearchResults(qIds: Set[QualifiedId]) = addRequest(SyncQualifiedSearchResults(qIds))
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
   def syncUsers(ids: Set[UserId]) = addRequest(SyncUser(ids))
+  def syncQualifiedUsers(qIds: Set[QualifiedId]) = addRequest(SyncQualifiedUsers(qIds))
   def syncSelfUser() = addRequest(SyncSelf, priority = Priority.High)
   def deleteAccount() = addRequest(DeleteAccount)
   def syncConversations(ids: Set[ConvId], dependsOn: Option[SyncId]) =
@@ -173,7 +186,9 @@ class AndroidSyncServiceHandle(account:         UserId,
   def postRecalled(conv: ConvId, msg: MessageId, recalled: MessageId) = addRequest(PostRecalled(conv, msg, recalled))
   def postAssetStatus(id: MessageId, conv: ConvId, exp: Option[FiniteDuration], status: UploadAssetStatus) = addRequest(PostAssetStatus(conv, id, exp, status))
   def postConnection(user: UserId, name: Name, message: String) = addRequest(PostConnection(user, name, message))
+  def postQualifiedConnection(qId: QualifiedId, name: Name, message: String) = addRequest(PostQualifiedConnection(qId, name, message))
   def postConnectionStatus(user: UserId, status: ConnectionStatus) = addRequest(PostConnectionStatus(user, Some(status)))
+  def postQualifiedConnectionStatus(qId: QualifiedId, status: ConnectionStatus) = addRequest(PostQualifiedConnectionStatus(qId, Some(status)))
   def postTypingState(conv: ConvId, typing: Boolean) = addRequest(PostTypingState(conv, typing))
   def postConversationName(id: ConvId, name: Name) = addRequest(PostConvName(id, name))
   def postConversationState(id: ConvId, state: ConversationState) = addRequest(PostConvState(id, state))
@@ -188,6 +203,15 @@ class AndroidSyncServiceHandle(account:         UserId,
                        receiptMode: Option[Int],
                        defaultRole: ConversationRole): Future[SyncId] =
     addRequest(PostConv(id, users, name, team, access, accessRole, receiptMode, defaultRole))
+  def postQualifiedConversation(id: ConvId,
+                                users: Set[QualifiedId],
+                                name: Option[Name],
+                                team: Option[TeamId],
+                                access: Set[Access],
+                                accessRole: AccessRole,
+                                receiptMode: Option[Int],
+                                defaultRole: ConversationRole): Future[SyncId] =
+    addRequest(PostQualifiedConv(id, users, name, team, access, accessRole, receiptMode, defaultRole))
   def postReceiptMode(id: ConvId, receiptMode: Int): Future[SyncId] = addRequest(PostConvReceiptMode(id, receiptMode))
   def postConversationRole(id: ConvId, member: UserId, newRole: ConversationRole, origRole: ConversationRole): Future[SyncId] = addRequest(PostConvRole(id, member, newRole, origRole))
   def postLiking(id: ConvId, liking: Liking): Future[SyncId] = addRequest(PostLiking(id, liking))
@@ -274,13 +298,16 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case SyncConversations                               => zms.conversationSync.syncConversations()
           case SyncConvLink(conv)                              => zms.conversationSync.syncConvLink(conv)
           case SyncUser(u)                                     => zms.usersSync.syncUsers(u.toSeq: _*)
+          case SyncQualifiedUsers(qIds)                        => zms.usersSync.syncQualifiedUsers(qIds)
           case SyncSearchResults(u)                            => zms.usersSync.syncSearchResults(u.toSeq: _*)
           case SyncQualifiedSearchResults(qIds)                => zms.usersSync.syncQualifiedSearchResults(qIds)
           case SyncSearchQuery(query)                          => zms.usersearchSync.syncSearchQuery(query)
           case SyncRichMedia(messageId)                        => zms.richmediaSync.syncRichMedia(messageId)
           case DeletePushToken(token)                          => zms.gcmSync.deleteGcmToken(token)
           case PostConnection(userId, name, message)           => zms.connectionsSync.postConnection(userId, name, message)
+          case PostQualifiedConnection(qId, name, message)     => zms.connectionsSync.postQualifiedConnection(qId, name, message)
           case PostConnectionStatus(userId, status)            => zms.connectionsSync.postConnectionStatus(userId, status)
+          case PostQualifiedConnectionStatus(qId, status)      => zms.connectionsSync.postQualifiedConnectionStatus(qId, status)
           case SyncTeam                                        => zms.teamsSync.syncTeam()
           case SyncTeamData                                    => zms.teamsSync.syncTeamData()
           case SyncTeamMember(userId)                          => zms.teamsSync.syncMember(userId)
@@ -311,6 +338,8 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostConvLeave(convId, u)                        => zms.conversationSync.postConversationMemberLeave(convId, u)
           case PostConv(convId, u, name, team, access, accessRole, receiptMode, defRole) =>
             zms.conversationSync.postConversation(convId, u, name, team, access, accessRole, receiptMode, defRole)
+          case PostQualifiedConv(convId, u, name, team, access, accessRole, receiptMode, defRole) =>
+            zms.conversationSync.postQualifiedConversation(convId, u, name, team, access, accessRole, receiptMode, defRole)
           case PostConvName(convId, name)                      => zms.conversationSync.postConversationName(convId, name)
           case PostConvReceiptMode(convId, receiptMode)        => zms.conversationSync.postConversationReceiptMode(convId, receiptMode)
           case PostConvState(convId, state)                    => zms.conversationSync.postConversationState(convId, state)

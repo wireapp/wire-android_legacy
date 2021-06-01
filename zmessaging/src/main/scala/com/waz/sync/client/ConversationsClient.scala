@@ -49,6 +49,7 @@ trait ConversationsClient {
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
   def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit]
   def postMemberJoin(conv: RConvId, members: Set[UserId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]]
+  def postQualifiedMemberJoin(conv: RConvId, members: Set[QualifiedId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]]
   def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]]
   def createLink(conv: RConvId): ErrorOrResponse[Link]
   def removeLink(conv: RConvId): ErrorOrResponse[Unit]
@@ -162,6 +163,16 @@ class ConversationsClientImpl(implicit
     Request.Post(
       relativePath = membersPath(conv),
       body = Json("users" -> Json(members), "conversation_role" -> defaultRole.label)
+    )
+      .withResultType[Option[List[ConversationEvent]]]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.collect { case (event: MemberJoinEvent) :: Nil => event })
+  }
+
+  override def postQualifiedMemberJoin(conv: RConvId, members: Set[QualifiedId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]] = {
+    Request.Post(
+      relativePath = qualifiedMembersPath(conv),
+      body = Json("qualified_users" -> QualifiedId.encode(members), "conversation_role" -> defaultRole.label)
     )
       .withResultType[Option[List[ConversationEvent]]]
       .withErrorType[ErrorResponse]
@@ -301,7 +312,7 @@ object ConversationsClient {
   def receiptModePath(id: RConvId) = s"$ConversationsPath/${id.str}/receipt-mode"
   def rolesPath(id: RConvId) = s"$ConversationsPath/${id.str}/roles"
   def membersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members"
-
+  def qualifiedMembersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members/v2"
 
   case class ConversationInitState(users:            Set[UserId],
                                    name:             Option[Name] = None,

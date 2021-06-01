@@ -35,6 +35,8 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
   protected lazy val userToConnectId        = UserId(getArguments.getString(ArgumentUserId))
   protected lazy val removeMemberPermission = participantsController.selfRole.map(_.canRemoveGroupMember)
 
+  protected lazy val userToConnect = participantsController.getUser(userToConnectId)
+
   override protected def initViews(savedInstanceState: Bundle): Unit = {
     initDetailsView()
     initFooterMenu()
@@ -45,9 +47,9 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
 
     (for {
         zms           <- inject[Signal[ZMessaging]].head
-        Some(user)    <- participantsController.getUser(userToConnectId)
+        Some(user)    <- userToConnect
         isGroup       <- participantsController.isGroup.head
-        isFederated   <- super.isFederated(user)
+        isFederated   <- usersController.isFederated(user)
         isGuest       =  !user.isWireBot && user.isGuest(zms.teamId)
         isExternal    =  !user.isWireBot && user.isExternal(zms.teamId)
         isDarkTheme   <- inject[ThemeController].darkThemeSet.head

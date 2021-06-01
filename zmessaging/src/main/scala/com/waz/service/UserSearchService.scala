@@ -270,9 +270,13 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       val allUsers = (local.map(u => usersInStorage(u.qualifiedId.id)) ++ remote.map(UserData(_))).toIndexedSeq
       userSearchResult ! allUsers
 
-      if (remote.nonEmpty)
-        sync.syncSearchResults(remote.map(_.qualifiedId.id).toSet).map(_ => ())
-      else
+      if (remote.nonEmpty) {
+        if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+          sync.syncQualifiedSearchResults(remote.map(_.qualifiedId).toSet).map(_ => ())
+        } else {
+          sync.syncSearchResults(remote.map(_.qualifiedId.id).toSet).map(_ => ())
+        }
+      } else
         Future.successful(())
     }
 

@@ -493,6 +493,31 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     }
   }
 
+  feature("Create a group conversation with qualified users") {
+
+    scenario("Create a group conversation with the creator and two users") {
+      val teamId = TeamId()
+      val convName = Name("conv")
+      val conv = ConversationData(team = Some(teamId), name = Some(convName))
+      val syncId = SyncId()
+      val domain = "chala.wire.link"
+      val self = UserData.withName(selfUserId, "self").copy(domain = Some(domain))
+      val user1 = UserData("user1").copy(domain = Some(domain))
+      val user2 = UserData("user2").copy(domain = Some(domain))
+      val users = Set(self, user1, user2)
+
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, users.map(_.id), *, *, *, *, *, *).once().returning(Future.successful(conv))
+      (messages.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))
+      (sync.postQualifiedConversation _).expects(*, users.map(_.qualifiedId.get), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+
+      val convsUi = createConvsUi(Some(teamId))
+      val (data, sId) = result(convsUi.createQualifiedGroupConversation(name = convName, members = users.map(_.qualifiedId.get), defaultRole = ConversationRole.MemberRole))
+      data shouldEqual conv
+      sId shouldEqual syncId
+    }
+  }
+
+
   feature("Update conversation") {
     scenario("Parse conversation response") {
       val creatorId = UserId("bea00721-4af0-4204-82a7-e152c9722ddc")

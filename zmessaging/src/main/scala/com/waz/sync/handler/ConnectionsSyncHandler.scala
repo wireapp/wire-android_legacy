@@ -66,6 +66,9 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
         Future.successful(SyncResult(error))
     }
 
+  def postQualifiedConnection(qId: QualifiedId, name: Name, message: String): Future[SyncResult] =
+    postConnection(qId.id, name, message) // TODO: qualified connections will be implemented later
+
   def postConnectionStatus(userId: UserId, status: Option[ConnectionStatus]): Future[SyncResult] = usersStorage.get(userId).flatMap {
     case Some(user) => connectionsClient.updateConnection(userId, status getOrElse user.connection).future.flatMap {
       case Right(Some(event)) =>
@@ -85,4 +88,7 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
     case None =>
       Future.successful(Retry(s"No user found for id: $userId"))
   }
+
+  def postQualifiedConnectionStatus(qId: QualifiedId, status: Option[ConnectionStatus]): Future[SyncResult] =
+    postConnectionStatus(qId.id, status) // TODO: qualified connections will be implemented later
 }

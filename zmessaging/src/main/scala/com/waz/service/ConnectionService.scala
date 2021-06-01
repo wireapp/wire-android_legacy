@@ -34,6 +34,7 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
 import com.wire.signals.Serialized
 import com.waz.utils.RichWireInstant
+import com.waz.zms.BuildConfig
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -90,7 +91,17 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       user.connection == ConnectionStatus.PendingFromUser
     }
 
-    sync.syncUsers(toSync.map(_._1.id)(breakOut)).flatMap { _ =>
+    val syncFuture =
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val (qualified, nonQualified) = toSync.map(_._1).partition(_.qualifiedId.isDefined)
+        val syncQualified    = if (qualified.nonEmpty) sync.syncQualifiedUsers(qualified.flatMap(_.qualifiedId)) else Future.successful(SyncId())
+        val syncNonQualified = if (nonQualified.nonEmpty) sync.syncUsers(nonQualified.map(_.id)) else Future.successful(SyncId())
+        syncQualified.flatMap(_ => syncNonQualified)
+      } else {
+        sync.syncUsers(toSync.map(_._1.id)(breakOut))
+      }
+
+    syncFuture.flatMap { _ =>
       updateConversationsForConnections(users.map(u => ConnectionEventInfo(u._1, fromSync(u._1.id), u._2))).map(_ => ())
     }
   }
