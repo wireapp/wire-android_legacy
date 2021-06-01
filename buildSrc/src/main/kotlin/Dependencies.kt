@@ -113,7 +113,7 @@ object BuildDependencies {
         "roomCompiler" to "androidx.room:room-compiler:${Versions.ANDROIDX_ROOM}",
         "biometric" to "androidx.biometric:biometric:${Versions.ANDROIDX_BIOMETRIC}",
         "workManager" to "androidx.work:work-runtime:${Versions.WORK_MANAGER}",
-        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}"
+        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}",
         "viewPager2" to "androidx.viewpager2:viewpager2:${Versions.ANDROIDX_VIEWPAGER_2}"
     ))
     val playServices = PlayServicesDependencyMap(mapOf(
