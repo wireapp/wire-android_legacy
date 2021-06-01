@@ -24,27 +24,17 @@
              android:layout_height="match_parent"
              xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <com.xuliwen.zoom.ZoomLayout
-        android:id="@+id/zoom_layout"
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:elevation="1dp"
-        app:double_click_zoom="1.0"
-        app:max_zoom="10.0"
-        app:min_zoom="1.0">
+        android:layout_height="wrap_content" />
 
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/pager"
-            android:orientation="vertical">
-
-            <androidx.gridlayout.widget.GridLayout
-                android:id="@+id/video_grid"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:columnCount="2"
-                app:orientation="horizontal" />
-        </androidx.viewpager2.widget.ViewPager2>
-    </com.xuliwen.zoom.ZoomLayout>
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
     <LinearLayout
         android:id="@+id/no_active_speakers_layout"
