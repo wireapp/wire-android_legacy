@@ -65,6 +65,11 @@ object SyncRequest {
     override val mergeKey = (cmd, userId)
   }
 
+  sealed abstract class RequestForQualifiedUser(cmd: SyncCommand) extends BaseRequest(cmd) {
+    val qualifiedId: QualifiedId
+    override val mergeKey = (cmd, qualifiedId)
+  }
+
   sealed trait Serialized extends SyncRequest
 
   import sync.{SyncCommand => Cmd}
@@ -121,6 +126,25 @@ object SyncRequest {
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
       case SyncSearchResults(us) => users.subsetOf(us)
+      case _ => false
+    }
+  }
+
+  final case class SyncQualifiedSearchResults(qIds: Set[QualifiedId]) extends BaseRequest(Cmd.SyncQualifiedSearchResults) {
+    override def toString: String = s"SyncQualifiedSearchResults(${qIds.size} qIds: ${qIds.take(5)}...)"
+
+    override def merge(req: SyncRequest): MergeResult[SyncRequest.SyncQualifiedSearchResults] =
+      mergeHelper[SyncQualifiedSearchResults](req) { other =>
+        if (other.qIds.subsetOf(qIds)) Merged(this)
+        else {
+          val union = qIds ++ other.qIds
+          if (union.size == qIds.size + other.qIds.size) Unchanged
+          else Updated(other.copy(other.qIds -- qIds))
+        }
+      }
+
+    override def isDuplicateOf(req: SyncRequest): Boolean = req match {
+      case SyncQualifiedSearchResults(us) => qIds.subsetOf(us)
       case _ => false
     }
   }
@@ -402,6 +426,7 @@ object SyncRequest {
       def teamId = decodeId[TeamId]('teamId)
       def users = decodeUserIdSeq('users).toSet
       def trackingId = decodeId[TrackingId]('trackingId)
+      def qualifiedId = decodeQualifiedId('qualifiedId)
       val cmd = js.getString("cmd")
 
       try {
@@ -411,6 +436,7 @@ object SyncRequest {
           case Cmd.SyncConvLink              => SyncConvLink('conv)
           case Cmd.SyncSearchQuery           => SyncSearchQuery(SearchQuery.fromCacheKey(decodeString('queryCacheKey)))
           case Cmd.SyncSearchResults         => SyncSearchResults(users)
+          case Cmd.SyncQualifiedSearchResults => SyncQualifiedSearchResults(decodeQualifiedIds('qualified_ids).toSet)
           case Cmd.PostConv                  => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
           case Cmd.PostConvName              => PostConvName(convId, 'name)
           case Cmd.PostConvReceiptMode       => PostConvReceiptMode(convId, 'receipt_mode)
@@ -445,7 +471,7 @@ object SyncRequest {
           case Cmd.SyncSelfClients           => SyncSelfClients
           case Cmd.SyncSelfPermissions       => SyncSelfPermissions
           case Cmd.SyncClients               => SyncClients(userId)
-          case Cmd.SyncClientsBatch          => SyncClientsBatch(decodeQualifiedIds('qualifiableIds).toSet)
+          case Cmd.SyncClientsBatch          => SyncClientsBatch(decodeQualifiedIds('qualified_ids).toSet)
           case Cmd.SyncPreKeys               => SyncPreKeys(userId, decodeClientIdSeq('clients).toSet)
           case Cmd.PostClientLabel           => PostClientLabel(decodeId[ClientId]('client), 'label)
           case Cmd.PostLiking                => PostLiking(convId, JsonDecoder[Liking]('liking))
@@ -491,6 +517,8 @@ object SyncRequest {
       req match {
         case SyncUser(users)                  => o.put("users", arrString(users.toSeq map (_.str)))
         case SyncSearchResults(users)         => o.put("users", arrString(users.toSeq map (_.str)))
+        case SyncQualifiedSearchResults(qIds) =>
+          o.put("qualified_ids", qIds.map(QualifiedId.Encoder(_)))
         case SyncConversation(convs)          => o.put("convs", arrString(convs.toSeq map (_.str)))
         case SyncConvLink(conv)               => o.put("conv", conv.str)
         case SyncSearchQuery(queryCacheKey)   => o.put("queryCacheKey", queryCacheKey.cacheKey)
@@ -522,7 +550,8 @@ object SyncRequest {
           putId("message", msg)
           putId("recalled", recalled)
 
-        case PostConnectionStatus(_, status)  => status foreach { status => o.put("status", status.code) }
+        case PostConnectionStatus(_, status)  => status.foreach { status => o.put("status", status.code) }
+
         case PostConvJoin(_, users, conversationRole)           =>
           o.put("users", arrString(users.toSeq map (_.str)))
           o.put("conversation_role", conversationRole.label)
@@ -578,8 +607,8 @@ object SyncRequest {
           o.put("user", user)
         case SyncClients(user) =>
           o.put("user", user.str)
-        case SyncClientsBatch(ids) =>
-          o.put("qualifiableIds", ids.map(QualifiedId.Encoder(_)))
+        case SyncClientsBatch(qIds) =>
+          o.put("qualified_ids", qIds.map(QualifiedId.Encoder(_)))
         case SyncPreKeys(user, clients) =>
           o.put("user", user.str)
           o.put("clients", arrString(clients.toSeq map (_.str)))

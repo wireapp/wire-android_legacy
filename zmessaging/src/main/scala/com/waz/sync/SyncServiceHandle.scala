@@ -41,6 +41,7 @@ import scala.concurrent.duration._
 
 trait SyncServiceHandle {
   def syncSearchResults(ids: Set[UserId]): Future[SyncId]
+  def syncQualifiedSearchResults(qIds: Set[QualifiedId]): Future[SyncId]
   def syncSearchQuery(query: SearchQuery): Future[SyncId]
   def syncUsers(ids: Set[UserId]): Future[SyncId]
   def syncSelfUser(): Future[SyncId]
@@ -144,6 +145,7 @@ class AndroidSyncServiceHandle(account:         UserId,
     service.addRequest(account, req, priority, dependsOn, forceRetry, delay)
 
   def syncSearchResults(users: Set[UserId]) = addRequest(SyncSearchResults(users))
+  def syncQualifiedSearchResults(qIds: Set[QualifiedId]) = addRequest(SyncQualifiedSearchResults(qIds))
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
   def syncUsers(ids: Set[UserId]) = addRequest(SyncUser(ids))
   def syncSelfUser() = addRequest(SyncSelf, priority = Priority.High)
@@ -273,6 +275,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case SyncConvLink(conv)                              => zms.conversationSync.syncConvLink(conv)
           case SyncUser(u)                                     => zms.usersSync.syncUsers(u.toSeq: _*)
           case SyncSearchResults(u)                            => zms.usersSync.syncSearchResults(u.toSeq: _*)
+          case SyncQualifiedSearchResults(qIds)                => zms.usersSync.syncQualifiedSearchResults(qIds)
           case SyncSearchQuery(query)                          => zms.usersearchSync.syncSearchQuery(query)
           case SyncRichMedia(messageId)                        => zms.richmediaSync.syncRichMedia(messageId)
           case DeletePushToken(token)                          => zms.gcmSync.deleteGcmToken(token)

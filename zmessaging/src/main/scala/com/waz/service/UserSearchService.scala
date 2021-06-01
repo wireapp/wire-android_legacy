@@ -199,7 +199,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     val query = SearchQuery(queryStr)
 
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      if (query.hasDomain)
+      if (query.hasDomain || query.isEmpty)
         search(query)
       else
         userService.selfUser.map(_.domain.getOrElse("")).flatMap {
