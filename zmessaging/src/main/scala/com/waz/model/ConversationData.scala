@@ -201,7 +201,7 @@ object ConversationData {
     val Disabled = LegalHoldStatus(0)
     val Enabled = LegalHoldStatus(2)
 
-    @deprecated("'PendingApproval' status shouldn't be used, it will be treated as 'Enabled'")
+    @deprecated("'PendingApproval' status is no longer used. Existing occurrences should be treated as 'Enabled'")
     val PendingApproval = LegalHoldStatus(1)
   }
 
