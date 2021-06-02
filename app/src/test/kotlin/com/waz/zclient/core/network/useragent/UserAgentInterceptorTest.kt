@@ -28,16 +28,10 @@ class UserAgentInterceptorTest : UnitTest() {
         `when`(chain.request()).thenReturn(initialRequest)
         `when`(initialRequest.header(USER_AGENT_HEADER_KEY)).thenReturn(null)
 
-        val requestBuilder = mock(Request.Builder::class.java)
-        `when`(initialRequest.newBuilder()).thenReturn(requestBuilder)
-
-        val request = mock(Request::class.java)
-        `when`(requestBuilder.build()).thenReturn(request)
-
         userAgentInterceptor.intercept(chain)
 
-        verify(chain).proceed(request)
-        verify(requestBuilder, never()).removeHeader(USER_AGENT_HEADER_KEY)
+        verify(chain).proceed(initialRequest)
+        verify(initialRequest, never()).newBuilder()
     }
 
     @Test
