@@ -154,6 +154,7 @@ object Client {
 final case class UserClients(user: UserId, clients: Map[ClientId, Client]) extends Identifiable[UserId] {
   override val id: UserId = user
   def -(clientId: ClientId): UserClients = UserClients(user, clients - clientId)
+  def containsLegalHoldDevice: Boolean = clients.values.exists(_.isLegalHoldDevice)
 }
 
 object UserClients {
