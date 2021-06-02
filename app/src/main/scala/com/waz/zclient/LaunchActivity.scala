@@ -58,7 +58,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
   /// Presents a dialog to select backend.
   private def showDialog(callback: BackendConfig => Unit): Unit = {
     val environments = Backend.byName
-    val items: Array[CharSequence] = environments.keys.toArray
+    val items: Array[CharSequence] = environments.keys.toSeq.sorted.toArray
 
     val builder = new AlertDialog.Builder(this)
     builder.setTitle("Select Backend")
