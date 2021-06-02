@@ -180,7 +180,8 @@ class NewCallingFragment extends FragmentHelper {
   }
 
   private def initCallingGridViewPager(): Unit = {
-    val callingGridAdapter = new CallingGridAdapter(this)
+    implicit val fragment = this
+    val callingGridAdapter = new CallingGridAdapter
     viewPager.foreach(_.setAdapter(callingGridAdapter))
   }
 

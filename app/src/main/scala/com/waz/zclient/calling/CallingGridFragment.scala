@@ -20,6 +20,7 @@ package com.waz.zclient.calling
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.gridlayout.widget.GridLayout
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading.Implicits.Ui
@@ -34,6 +35,8 @@ import com.wire.signals.Signal
 import com.xuliwen.zoom.ZoomLayout
 import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 import com.waz.zclient.R
+import com.waz.zclient.calling.CallingGridFragment.PAGINATION_BUNDLE_KEY
+import com.waz.zclient.calling.CallingGridAdapter.MAX_PARTICIPANTS_PER_PAGE
 
 
 class CallingGridFragment extends FragmentHelper {
@@ -42,6 +45,7 @@ class CallingGridFragment extends FragmentHelper {
   private lazy val zoomLayout               = view[ZoomLayout](R.id.zoom_layout)
   private lazy val videoGrid                = view[GridLayout](R.id.video_grid)
   private var viewMap                       = Map[Participant, UserVideoView]()
+  private var pageNumber: Int               = 0
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_calling_grid, container, false)
@@ -49,6 +53,7 @@ class CallingGridFragment extends FragmentHelper {
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
 
+    initPageNumber()
     initZoomLayout()
     initCallingGrid()
     observeParticipantsCount()
@@ -57,6 +62,13 @@ class CallingGridFragment extends FragmentHelper {
   override def onDestroyView(): Unit = {
     clearVideoGrid()
     super.onDestroyView()
+  }
+
+  private def initPageNumber(): Unit = {
+    val bundle = this.getArguments
+    if (bundle != null) {
+      pageNumber = bundle.getInt(PAGINATION_BUNDLE_KEY)
+    }
   }
 
   private def initZoomLayout(): Unit = {
@@ -90,7 +102,12 @@ class CallingGridFragment extends FragmentHelper {
         case ((selfParticipant, participantsInfo, participants, activeParticipants), false, true) =>
           refreshVideoGrid(grid, selfParticipant, activeParticipants, participantsInfo, participants, true)
         case ((selfParticipant, participantsInfo, participants, _), false, false) =>
-          refreshVideoGrid(grid, selfParticipant, participants.toSeq, participantsInfo, participants, false)
+
+          val startIndex = pageNumber * MAX_PARTICIPANTS_PER_PAGE
+          val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE
+          val participantsToShow = participants.slice(startIndex, endIndex).toSeq
+
+          refreshVideoGrid(grid, selfParticipant, participantsToShow, participantsInfo, participants, false)
         case _ =>
       }
     }
@@ -217,9 +234,18 @@ class CallingGridFragment extends FragmentHelper {
     videoGrid.foreach(_.removeAllViews())
     viewMap = Map.empty
   }
+
 }
 
+object CallingGridFragment {
+  val Tag = classOf[CallingGridFragment].getName
+  val PAGINATION_BUNDLE_KEY = "pagination"
 
-
+  def newInstance(pageNumber: Int): Fragment = returning(new CallingGridFragment) {
+    _.setArguments(returning(new Bundle) { bundle =>
+      bundle.putInt(PAGINATION_BUNDLE_KEY, pageNumber)
+    })
+  }
+}
 
 
