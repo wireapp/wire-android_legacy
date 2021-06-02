@@ -17,15 +17,33 @@
  */
 package com.waz.zclient.calling
 
+import android.content.Context
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.calling.controllers.CallController
+import com.wire.signals.EventContext
+import com.waz.zclient.calling.CallingGridAdapter.MAX_PARTICIPANTS_PER_PAGE
 
-class CallingGridAdapter(fragment: Fragment) extends FragmentStateAdapter(fragment) {
+class CallingGridAdapter(implicit context: Context, eventContext: EventContext, inj: Injector, fragment: Fragment)
+  extends FragmentStateAdapter(fragment) with Injectable with DerivedLogTag {
 
-  override def getItemCount(): Int = 3
+  private lazy val callController = inject[CallController]
+  val numberOfParticipants = callController.allParticipants.map(_.size).currentValue.getOrElse(0)
 
-  override def createFragment(position: Int): Fragment = new CallingGridFragment()
+  override def getItemCount(): Int = if (numberOfParticipants == 0) 0
+  else (numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE) + 1
+
+  override def createFragment(position: Int): Fragment = CallingGridFragment.newInstance(numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE)
+
 }
+
+object CallingGridAdapter {
+  val MAX_PARTICIPANTS_PER_PAGE = 2
+}
+
+
 
 
 
