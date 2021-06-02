@@ -229,6 +229,8 @@ object OtrClient extends DerivedLogTag {
   def userClientsPath(user: UserId) = s"/users/$user/clients"
   def clientPreKeyPath(user: UserId, client: ClientId) = s"/users/$user/prekeys/$client"
 
+  // If you change this, don't forget to set the 'ShouldPostClientCapabilities' user preference
+  // to true so that the updated client with inform the backend.
   val ClientCapabilities: Seq[String] = Seq("legalhold-implicit-consent")
 
   import JsonDecoder._
