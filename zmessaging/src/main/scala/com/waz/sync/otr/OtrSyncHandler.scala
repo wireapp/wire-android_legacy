@@ -141,7 +141,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                             err                = SyncResult.unapply(syncResult)
                             _                  = err.foreach { err => error(l"syncClients for missing clients failed: $err") }
                             needsConfirmation <- needsLegalHoldConfirmation(conv, isHidden, missing.keys.toSet)
-                            _                  = if (needsConfirmation) throw UnapprovedLegalHoldException
+                            _                  = if (needsConfirmation) throw LegalHoldDiscoveredException
                             result            <- encryptAndSend(msg, external, retries + 1, content)
                           } yield result
                         case _: MessageResponse.Failure =>
@@ -169,7 +169,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       case UnverifiedException =>
         if (!message.proto.hasCalling) errors.addConvUnverifiedError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.Unverified)
-      case UnapprovedLegalHoldException =>
+      case LegalHoldDiscoveredException =>
         errors.addUnapprovedLegalHoldStatusError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.UnapprovedLegalHold)
       case NonFatal(e) =>
@@ -324,7 +324,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 object OtrSyncHandler {
 
   final case object UnverifiedException extends Exception
-  final case object UnapprovedLegalHoldException extends Exception
+  final case object LegalHoldDiscoveredException extends Exception
 
   final case class OtrMessage(sender:         ClientId,
                               recipients:     EncryptedContent,
