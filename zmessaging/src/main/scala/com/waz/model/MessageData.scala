@@ -602,21 +602,16 @@ object MessageData extends DerivedLogTag {
   private val UTF_16_CHARSET  = Charset.forName("UTF-16")
 
   private def encode(text: String) = {
-    if (text == null) {
+    val bytes = UTF_16_CHARSET.encode(text).array
+    /**
+     * UTF-16BE,first two bytes with 0xFEFF
+     * UTF-16LE,first two bytes with 0xFFFE
+     */
+    if (bytes.length < 3 || bytes.slice(2, bytes.length).forall(_ == 0))
       Array.empty[Byte]
-    }
     else {
-      val bytes = UTF_16_CHARSET.encode(text).array
-      /**
-       * UTF-16BE,first two bytes with 0xFEFF
-       * UTF-16LE,first two bytes with 0xFFFE
-       */
-      if (bytes.length < 3 || bytes.slice(2, bytes.length).forall(_ == 0))
-        Array.empty[Byte]
-      else {
-        val index = (text.length + 1) * 2
-        bytes.slice(2, index)
-      }
+      val index = (text.length + 1) * 2
+      bytes.slice(2, index)
     }
   }
 
