@@ -311,6 +311,7 @@ object GlobalPreferences {
   lazy val V31AssetsEnabledKey = PrefKey[Boolean]("PREF_V31_ASSETS_ENABLED")
   lazy val WsForegroundKey = PrefKey[Boolean]("websocket_foreground_service_enabled_1", customDefault = false)
   lazy val CheckedForPlayServices = PrefKey[Boolean]("checked_for_google_play_services", customDefault = false)
+  lazy val CheckedWebSocketConfig = PrefKey[Boolean]("checked_web_socket_config", customDefault = false)
   lazy val SkipTerminatingState = PrefKey[Boolean]("skip_terminating_state") //for calling
 
   lazy val PushEnabledKey = PrefKey[Boolean]("PUSH_ENABLED", customDefault = true)

@@ -479,12 +479,21 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         verbose(l"never checked for play services")
         googleApi.isGooglePlayServicesAvailable.head.foreach { gpsAvailable =>
           for {
-            _ <- prefs(GlobalPreferences.WsForegroundKey) := !gpsAvailable
+            _ <- if (!gpsAvailable) prefs(GlobalPreferences.WsForegroundKey) := true
+                 else updateWebSocketForBuildConfig(prefs)
             _ <- prefs(GlobalPreferences.CheckedForPlayServices) := true
           } yield ()
         }
-      case true =>
+      case true => updateWebSocketForBuildConfig(prefs)
     }
+
+  private def updateWebSocketForBuildConfig(prefs: GlobalPreferences): Future[Unit] =
+    for {
+      checked <- prefs(GlobalPreferences.CheckedWebSocketConfig).apply()
+      _       <- if (!checked && BuildConfig.KEEP_WEBSOCKET_ON) prefs(GlobalPreferences.WsForegroundKey) := true
+                 else Future.successful(())
+      _       <- prefs(GlobalPreferences.CheckedWebSocketConfig) := true
+    } yield ()
 
   override def onTerminate(): Unit = {
     controllerFactory.tearDown()
