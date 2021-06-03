@@ -45,6 +45,8 @@ class UserServiceSpec extends AndroidFreeSpec {
     UserData("friend user 1"), UserData("friend user 2"), UserData("some other friend")
   )
 
+  private val Domain = "staging.zinfra.io"
+
   val accountsService = mock[AccountsService]
   val accountsStrg    = mock[AccountStorage]
   val usersStorage    = mock[UsersStorage]
@@ -135,6 +137,20 @@ class UserServiceSpec extends AndroidFreeSpec {
 
       val service = getService
       result(service.syncUser(user1.id)) shouldEqual Some(user1)
+    }
+
+    scenario("check if a qualified user exists") {
+      val qUser1 = user1.copy(domain = Some(Domain))
+      val qId = qUser1.qualifiedId.get
+      val userInfo = UserInfo(user1.id, domain = Some(Domain))
+
+      (usersClient.loadQualifiedUser _).expects(qId).anyNumberOfTimes().returning(
+        CancellableFuture.successful(Right(Option(userInfo)))
+      )
+      (usersStorage.updateOrCreateAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Set(qUser1)))
+
+      val service = getService
+      result(service.syncQualifiedUser(qId)) shouldEqual Some(qUser1)
     }
 
     scenario("delete user locally if it the client says it's removed") {

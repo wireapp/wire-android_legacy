@@ -23,20 +23,19 @@ import com.waz.log.LogSE._
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.{ErrorData, Name, UserId}
+import com.waz.model.{ErrorData, Name, QualifiedId, UserId}
 import com.waz.service.{ConnectionService, ErrorsService}
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConnectionsClient
 import com.waz.threading.Threading
-import com.wire.signals.EventContext
 
 import scala.concurrent.Future
 
 class ConnectionsSyncHandler(usersStorage:      UsersStorage,
                              connectionService: ConnectionService,
                              connectionsClient: ConnectionsClient,
-                             errorsService:       ErrorsService) extends DerivedLogTag {
+                             errorsService:     ErrorsService) extends DerivedLogTag {
 
   import Threading.Implicits.Background
 
@@ -52,7 +51,7 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
   }
 
   def postConnection(userId: UserId, name: Name, message: String): Future[SyncResult] =
-    connectionsClient.createConnection(userId, name, message).future flatMap {
+    connectionsClient.createConnection(userId, name, message).future.flatMap {
       case Right(event) =>
         verbose(l"postConnection($userId) success: $event")
         connectionService
@@ -67,7 +66,7 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
         Future.successful(SyncResult(error))
     }
 
-  def postConnectionStatus(userId: UserId, status: Option[ConnectionStatus]): Future[SyncResult] = usersStorage.get(userId) flatMap {
+  def postConnectionStatus(userId: UserId, status: Option[ConnectionStatus]): Future[SyncResult] = usersStorage.get(userId).flatMap {
     case Some(user) => connectionsClient.updateConnection(userId, status getOrElse user.connection).future.flatMap {
       case Right(Some(event)) =>
         connectionService.handleUserConnectionEvents(Seq(event)).map(_ => Success)

@@ -32,7 +32,7 @@ import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Serialized}
+import com.wire.signals.Serialized
 import com.waz.utils.RichWireInstant
 
 import scala.collection.breakOut
@@ -84,8 +84,13 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       .map { users => (users.map(u => (u, lastEvents(u.id).lastUpdated)), fromSync) }
   }.flatMap { case (users, fromSync) =>
     verbose(l"syncing $users and fromSync: $fromSync")
-    val toSync = users filter { case (user, _) => user.connection == ConnectionStatus.Accepted || user.connection == ConnectionStatus.PendingFromOther || user.connection == ConnectionStatus.PendingFromUser }
-    sync.syncUsers(toSync.map(_._1.id)(breakOut)) flatMap { _ =>
+    val toSync = users.filter { case (user, _) =>
+      user.connection == ConnectionStatus.Accepted ||
+      user.connection == ConnectionStatus.PendingFromOther ||
+      user.connection == ConnectionStatus.PendingFromUser
+    }
+
+    sync.syncUsers(toSync.map(_._1.id)(breakOut)).flatMap { _ =>
       updateConversationsForConnections(users.map(u => ConnectionEventInfo(u._1, fromSync(u._1.id), u._2))).map(_ => ())
     }
   }
