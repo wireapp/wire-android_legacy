@@ -30,7 +30,13 @@ class CallingGridAdapter(implicit context: Context, eventContext: EventContext, 
   extends FragmentStateAdapter(fragment) with Injectable with DerivedLogTag {
 
   private lazy val callController = inject[CallController]
-  val numberOfParticipants = callController.allParticipants.map(_.size).currentValue.getOrElse(0)
+
+  var numberOfParticipants = callController.allParticipants.map(_.size).currentValue.getOrElse(0)
+
+  callController.allParticipants.map(_.size).onChanged.foreach { number =>
+    numberOfParticipants = number
+    notifyDataSetChanged()
+  }
 
   override def getItemCount(): Int = if (numberOfParticipants == 0) 0
   else (numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE) + 1
