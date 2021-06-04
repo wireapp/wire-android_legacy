@@ -86,15 +86,7 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 
   def withNewLegalHoldStatus(detectedLegalHoldDevice: Boolean): ConversationData = {
     import LegalHoldStatus._
-
-    val status = (legalHoldStatus, detectedLegalHoldDevice) match {
-      case (Disabled, true) => PendingApproval
-      case (PendingApproval, false) => Disabled
-      case (Enabled, false) => Disabled
-      case (existingStatus, _) => existingStatus
-    }
-
-    copy(legalHoldStatus = status)
+    copy(legalHoldStatus = if (detectedLegalHoldDevice) Enabled else Disabled)
   }
 
   def isUnderLegalHold: Boolean = legalHoldStatus != LegalHoldStatus.Disabled
@@ -207,8 +199,11 @@ object ConversationData {
   final case class LegalHoldStatus(value: Int)
   object LegalHoldStatus {
     val Disabled = LegalHoldStatus(0)
-    val PendingApproval = LegalHoldStatus(1)
     val Enabled = LegalHoldStatus(2)
+
+    // TODO: Delete at end of 2021.
+    @deprecated("'PendingApproval' status is no longer used. Existing occurrences should be treated as 'Enabled'")
+    val PendingApproval = LegalHoldStatus(1)
   }
 
   def getAccessAndRoleForGroupConv(teamOnly: Boolean, teamId: Option[TeamId]): (Set[Access], AccessRole) = {

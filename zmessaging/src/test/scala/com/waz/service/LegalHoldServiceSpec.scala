@@ -618,13 +618,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   feature("it calculates correct legal hold status") {
 
     scenario("existing status is disabled") {
-      assert(existingStatus = Disabled, detectedLegalHoldDevice = true, expectation = PendingApproval)
+      assert(existingStatus = Disabled, detectedLegalHoldDevice = true, expectation = Enabled)
       assert(existingStatus = Disabled, detectedLegalHoldDevice = false, expectation = Disabled)
-    }
-
-    scenario("existing status is pending approval") {
-      assert(existingStatus = PendingApproval, detectedLegalHoldDevice = true, expectation = PendingApproval)
-      assert(existingStatus = PendingApproval, detectedLegalHoldDevice = false, expectation = Disabled)
     }
 
     scenario("existing status is enabled") {
@@ -690,7 +685,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       result(pipeline.apply(Seq(event)))
 
       // Then
-      updatedStatus shouldEqual LegalHoldStatus.PendingApproval
+      updatedStatus shouldEqual LegalHoldStatus.Enabled
     }
 
     scenario("it triggers client sync if it discovers legal hold to be disabled") {
