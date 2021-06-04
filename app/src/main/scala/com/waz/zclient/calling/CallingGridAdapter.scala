@@ -33,15 +33,11 @@ class CallingGridAdapter(implicit context: Context, eventContext: EventContext, 
 
   var numberOfParticipants = callController.allParticipants.map(_.size).currentValue.getOrElse(0)
 
-  callController.allParticipants.map(_.size).onChanged.foreach { number =>
-    numberOfParticipants = number
-    notifyDataSetChanged()
-  }
-
   override def getItemCount(): Int = if (numberOfParticipants == 0) 0
+  else if (numberOfParticipants % MAX_PARTICIPANTS_PER_PAGE == 0) numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE
   else (numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE) + 1
 
-  override def createFragment(position: Int): Fragment = CallingGridFragment.newInstance(numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE)
+  override def createFragment(position: Int): Fragment = CallingGridFragment.newInstance(position)
 
 }
 
