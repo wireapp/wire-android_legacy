@@ -3,7 +3,6 @@ package com.waz.zclient.storage.db.users.migration
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.waz.zclient.storage.db.users.migration.MigrationUtils.addColumn
 
 private const val TABLE = "Conversations"
 private const val COLUMN = "legal_hold_status"
