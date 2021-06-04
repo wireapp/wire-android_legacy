@@ -183,6 +183,10 @@ class NewCallingFragment extends FragmentHelper {
     implicit val fragment = this
     val callingGridAdapter = new CallingGridAdapter
     viewPager.foreach(_.setAdapter(callingGridAdapter))
+
+    callController.allParticipants.map(_.size).onUi { _ =>
+      callingGridAdapter.notifyDataSetChanged()
+    }
   }
 
 }

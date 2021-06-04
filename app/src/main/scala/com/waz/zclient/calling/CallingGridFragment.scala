@@ -37,6 +37,7 @@ import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 import com.waz.zclient.R
 import com.waz.zclient.calling.CallingGridFragment.PAGINATION_BUNDLE_KEY
 import com.waz.zclient.calling.CallingGridAdapter.MAX_PARTICIPANTS_PER_PAGE
+import com.waz.zclient.utils.RichView
 
 
 class CallingGridFragment extends FragmentHelper {
@@ -57,6 +58,7 @@ class CallingGridFragment extends FragmentHelper {
     initZoomLayout()
     initCallingGrid()
     observeParticipantsCount()
+    initClickForRootView()
   }
 
   override def onDestroyView(): Unit = {
@@ -104,7 +106,7 @@ class CallingGridFragment extends FragmentHelper {
         case ((selfParticipant, participantsInfo, participants, _), false, false) =>
 
           val startIndex = pageNumber * MAX_PARTICIPANTS_PER_PAGE
-          val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE
+          val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE - 1
           val participantsToShow = participants.slice(startIndex, endIndex).toSeq
 
           refreshVideoGrid(grid, selfParticipant, participantsToShow, participantsInfo, participants, false)
@@ -233,6 +235,10 @@ class CallingGridFragment extends FragmentHelper {
   private def clearVideoGrid(): Unit = {
     videoGrid.foreach(_.removeAllViews())
     viewMap = Map.empty
+  }
+
+  private def initClickForRootView(): Unit = getView.onClick {
+    callController.controlsClick(true)
   }
 
 }
