@@ -164,7 +164,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
           !user.isWireBot &&
           !user.deleted &&
           user.expiresAt.isEmpty &&
-          user.matchesQuery(query) &&
+          (query.isEmpty || user.matchesQuery(query)) &&
           (showBlockedUsers || !user.isBlocked)
       }.toIndexedSeq
 
