@@ -24,7 +24,7 @@ import com.waz.log.LogSE._
 import com.waz.utils.returning
 
 final case class SearchQuery private (query: String, domain: String, handleOnly: Boolean) {
-  val isEmpty: Boolean = query.isEmpty && domain.isEmpty
+  val isEmpty: Boolean = query.isEmpty
 
   def hasDomain: Boolean = domain.nonEmpty
 

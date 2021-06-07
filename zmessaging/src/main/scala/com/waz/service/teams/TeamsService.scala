@@ -126,7 +126,7 @@ class TeamsServiceImpl(selfUser:           UserId,
         if (!query.isEmpty) userStorage.searchByTeam(tId, query)
         else userStorage.getByTeam(Set(tId))
 
-      def userMatches(data: UserData) = data.isInTeam(teamId) && data.matchesQuery(query)
+      def userMatches(data: UserData) = data.isInTeam(teamId) && (query.isEmpty || data.matchesQuery(query))
 
       new AggregatingSignal[Seq[ContentChange[UserId, UserData]], Set[UserData]](
         () => load,

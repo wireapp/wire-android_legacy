@@ -87,7 +87,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
 
   val filter = Signal("")
 
-  protected lazy val users = for {
+  protected lazy val users: Signal[Vector[ParticipantData]] = for {
     selfId       <- selfId
     usersStorage <- usersStorage
     tId          <- team
@@ -96,7 +96,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     f            <- filter
   } yield
     users
-      .filter(_.matchesQuery(SearchQuery(f)))
+      .filter(u => f.isEmpty || u.matchesQuery(SearchQuery(f)))
       .map(user => ParticipantData(
         user,
         user.isGuest(tId) && !user.isWireBot,
@@ -105,7 +105,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       ))
       .sortBy(_.userData.name.str)
 
-  protected lazy val positions = for {
+  protected lazy val positions: Signal[List[Either[ParticipantData, Int]]] = for {
     tId               <- team
     users             <- users
     currentConv       <- convController.currentConv
@@ -490,7 +490,7 @@ class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle:  Option
   extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle) {
   import ParticipantsAdapter._
 
-  override protected lazy val users = for {
+  override protected lazy val users: Signal[Vector[ParticipantData]] = for {
     selfId       <- selfId
     usersStorage <- usersStorage
     tId          <- team
@@ -504,7 +504,7 @@ class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle:  Option
       isSelf  = user.id == selfId
     )).sortBy(_.userData.name.str)
 
-  override protected lazy val positions = users.map { us =>
+  override protected lazy val positions: Signal[List[Either[ParticipantData, Int]]] = users.map { us =>
     val people = us.toList.filterNot(_.userData.isWireBot)
     if (people.isEmpty) List(Right(NoResultsInfo)) else people.map(data => Left(data))
   }
