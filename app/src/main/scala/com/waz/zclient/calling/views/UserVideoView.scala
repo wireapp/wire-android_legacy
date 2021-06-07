@@ -44,7 +44,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   protected lazy val callController: CallController = inject[CallController]
   protected lazy val accentColorController = inject[AccentColorController]
 
-  inflate(R.layout.video_call_info_view)
+  inflate(R.layout.video_call_info_view).setId(R.id.participant_tile)
 
   def shouldShowInfo: Signal[Boolean]
 
