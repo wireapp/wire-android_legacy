@@ -24,11 +24,6 @@
     >
 
     <ImageView
-        android:id="@+id/participant_tile"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-    <ImageView
         android:id="@+id/profile_picture_image_view"
         android:layout_width="@dimen/profile__image__width_small"
         android:layout_height="@dimen/profile__image__height_small"
