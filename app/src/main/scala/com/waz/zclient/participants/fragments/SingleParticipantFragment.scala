@@ -41,6 +41,7 @@ import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView, StringUtils}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.Instant
+import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -130,9 +131,13 @@ class SingleParticipantFragment extends FragmentHelper {
   }
 
   protected def isFederated(user: UserData): Future[Boolean] =
-    userAccountsController.currentUser.head.map {
-      case Some(self) => user.isFederated(self.domain.getOrElse(""))
-      case None => false
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      userAccountsController.currentUser.head.map {
+        case Some(self) => user.isFederated(self.domain.getOrElse(""))
+        case None => false
+      }
+    } else {
+      Future.successful(false)
     }
 
   protected def initDetailsView() : Unit = returning( view[RecyclerView](R.id.details_recycler_view) ) { vh =>
