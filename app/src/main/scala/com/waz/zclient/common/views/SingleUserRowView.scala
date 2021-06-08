@@ -153,6 +153,15 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     case _ =>
   }
 
+  private val isFederated = Signal(false)
+
+  isFederated.onUi(federatedIndicator.setVisible)
+  Signal.zip(chosenCurrentTheme, isFederated).onUi {
+    case (Theme.Light, true) => federatedIndicator.setImageResource(R.drawable.ic_icon_federated_user_light_theme)
+    case (Theme.Dark, true)  => federatedIndicator.setImageResource(R.drawable.ic_icon_federated_user_dark_theme)
+    case _ =>
+  }
+
   def setTitle(text: String, isSelf: Boolean): Unit = {
     nameView.setText(text)
     youText.setVisible(isSelf)
@@ -196,7 +205,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
       setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
       setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
       if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-        setIsFederated(userData.isFederated(self.domain.getOrElse("")))
+        isFederated ! userData.isFederated(self.domain.getOrElse(""))
       }
     }(Threading.Ui)
   }
@@ -204,8 +213,6 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisible(guest)
 
   private def setIsExternal(external: Boolean): Unit = externalIndicator.setVisible(external)
-
-  private def setIsFederated(federated: Boolean): Unit = federatedIndicator.setVisible(federated)
 
   def setIntegration(integration: IntegrationData): Unit = {
     chathead.setIntegration(integration)
@@ -229,6 +236,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     separator.setBackgroundColor(getStyledColor(R.attr.thinDividerColor, inject[ThemeController].getTheme(theme)))
     setBackground(backgroundDrawable)
     checkbox.setButtonDrawable(returning(getDrawable(checkboxDrawable))(_.setLevel(1)))
+    currentTheme ! Some(theme)
   }
 
   def setAvailability(availability: Availability): Unit =
