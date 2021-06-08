@@ -92,7 +92,7 @@ class ClientSpec extends AndroidFreeSpec {
            |      "class": "${client.deviceClass.value}",
            |      "type": "${client.deviceType.get.value}",
            |      "regTime": ${client.regTime.get.toEpochMilli},
-           |      "isTemporary": true
+           |      "isTemporary": ${client.isTemporary}
            |    }
            |  ]
            |}
@@ -177,7 +177,7 @@ class ClientSpec extends AndroidFreeSpec {
             |      "class": "${client.deviceClass.value}",
             |      "type": "${client.deviceType.get.value}",
             |      "regTime": ${client.regTime.get.toEpochMilli},
-            |      "isTemporary": true
+            |      "isTemporary": ${client.isTemporary}
             |    }
             |  ]
             |}""".stripMargin
