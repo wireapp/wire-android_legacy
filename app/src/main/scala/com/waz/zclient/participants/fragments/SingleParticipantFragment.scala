@@ -24,7 +24,7 @@ import android.widget.TextView
 import androidx.annotation.Nullable
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
-import com.waz.model.UserField
+import com.waz.model.{UserData, UserField}
 import com.waz.service.ZMessaging
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
@@ -129,6 +129,12 @@ class SingleParticipantFragment extends FragmentHelper {
     }
   }
 
+  protected def isFederated(user: UserData): Future[Boolean] =
+    userAccountsController.currentUser.head.map {
+      case Some(self) => user.isFederated(self.domain.getOrElse(""))
+      case None => false
+    }
+
   protected def initDetailsView() : Unit = returning( view[RecyclerView](R.id.details_recycler_view) ) { vh =>
     subs += visibleTab.onUi {
       case DetailsTab => vh.foreach(_.setVisible(true))
@@ -144,6 +150,7 @@ class SingleParticipantFragment extends FragmentHelper {
       zms                <- inject[Signal[ZMessaging]].head
       user               <- participantsController.otherParticipant.head
       isGroup            <- participantsController.isGroup.head
+      isFederated        <- this.isFederated(user)
       isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
       isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
       isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
@@ -151,9 +158,9 @@ class SingleParticipantFragment extends FragmentHelper {
       _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
       isDarkTheme        <- inject[ThemeController].darkThemeSet.head
       isWireless         =  user.expiresAt.isDefined
-    } yield (user.id, user.email, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame)).foreach {
-      case (userId, emailAddress, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame) =>
-        val adapter = new SingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless)
+    } yield (user.id, user.email, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame, isFederated)).foreach {
+      case (userId, emailAddress, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame, isFederated) =>
+        val adapter = new SingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated)
         val emailUserField = emailAddress match {
           case Some(email) => Seq(UserField(getString(R.string.user_profile_email_field_name), email.toString()))
           case None        => Seq.empty

@@ -1151,6 +1151,7 @@
     <string name="participant_tab_guest_indicator_label">Guest</string>
     <string name="participant_tab_external_indicator_label">EXTERNAL</string>
     <string name="participant_tab_group_admin_indicator_label">GROUP ADMIN</string>
+    <string name="federated_indicator">FEDERATED</string>
 
     <string name="availability_none">None</string>
     <string name="availability_available">Available</string>

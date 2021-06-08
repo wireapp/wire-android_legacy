@@ -77,6 +77,36 @@
 
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/federated_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginTop="@dimen/wire__padding__8"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/federated_indicator_icon"
+            android:layout_width="@dimen/guest_badge_size"
+            android:layout_height="@dimen/guest_badge_size"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_icon_federated_user_light_theme"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingStart="@dimen/wire__padding__small"
+            android:paddingEnd="@dimen/wire__padding__small"
+            android:textColor="?wirePrimaryTextColor"
+            android:textSize="@dimen/wire__text_size__smaller"
+            android:text="@string/federated_indicator"
+            app:w_font="@string/wire__typeface__medium"/>
+
+    </LinearLayout>
+
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/expiration_time"
         android:layout_width="wrap_content"

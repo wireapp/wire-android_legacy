@@ -31,9 +31,10 @@ final class SingleParticipantAdapter(userId:      UserId,
                                      isExternal:  Boolean,
                                      isDarkTheme: Boolean,
                                      isGroup:     Boolean,
-                                     isWireless:  Boolean
+                                     isWireless:  Boolean,
+                                     isFederated: Boolean
                                     )(implicit context: Context)
-  extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless) {
+  extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated) {
   import BaseSingleParticipantAdapter._
   import SingleParticipantAdapter._
 
