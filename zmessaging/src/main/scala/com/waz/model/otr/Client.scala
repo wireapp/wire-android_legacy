@@ -61,6 +61,7 @@ object ClientId {
  * @param deviceClass - The class of the client
  * @param deviceType - The type of client, for the self user only
  * @param regTime - When the client was registered, for the self user only
+ * @param isTemporary - This should be true for the self user legal hold device before successful legal hold approval.
  */
 final case class Client(override val id: ClientId,
                         label:           String = "",
@@ -68,11 +69,13 @@ final case class Client(override val id: ClientId,
                         verified:        Verification = Verification.UNKNOWN,
                         deviceClass:     DeviceClass = DeviceClass.Phone,
                         deviceType:      Option[DeviceType] = None,
-                        regTime:         Option[Instant] = None) extends Identifiable[ClientId] {
+                        regTime:         Option[Instant] = None,
+                        isTemporary:     Boolean = false) extends Identifiable[ClientId] {
 
   lazy val isVerified: Boolean = verified == Verification.VERIFIED
 
-  def isLegalHoldDevice: Boolean = deviceClass == DeviceClass.LegalHold || deviceType.contains(DeviceType.LegalHold)
+  def isLegalHoldDevice: Boolean =
+    (deviceClass == DeviceClass.LegalHold || deviceType.contains(DeviceType.LegalHold)) && !isTemporary
 
   def updated(c: Client): Client =
     copy(
@@ -81,7 +84,8 @@ final case class Client(override val id: ClientId,
       verified     = c.verified.orElse(verified),
       deviceClass  = if (c.deviceClass == DeviceClass.Phone) deviceClass else c.deviceClass,
       deviceType   = c.deviceType.orElse(deviceType),
-      regTime      = c.regTime.orElse(regTime)
+      regTime      = c.regTime.orElse(regTime),
+      isTemporary  = c.isTemporary
   )
 }
 
@@ -113,6 +117,7 @@ object Client {
       o.put("class", v.deviceClass.value)
       v.deviceType.foreach { d => o.put("type", d.value) }
       v.regTime.foreach { t => o.put("regTime", t.toEpochMilli) }
+      o.put("isTemporary", v.isTemporary)
     }
   }
 
@@ -132,7 +137,8 @@ object Client {
         verified = decodeOptString('verification).fold(Verification.UNKNOWN)(Verification.valueOf),
         deviceClass = DeviceClass(js.getString("class")),
         deviceType = decodeOptString('type).map(DeviceType.apply),
-        regTime = 'regTime
+        regTime = 'regTime,
+        isTemporary = decodeOptBoolean('isTemporary).getOrElse(false)
       )
 
     // Previously the device class was stored under "devType" and the device type was not
