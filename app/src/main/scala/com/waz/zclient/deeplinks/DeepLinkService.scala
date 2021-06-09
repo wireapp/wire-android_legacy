@@ -103,6 +103,8 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
         Future.successful(DoNotOpenDeepLink(deepLink, UserLoggedIn))
       case (_, _, DeepLink.CustomBackendToken(_)) =>
         Future.successful(OpenDeepLink(token))
+      case (_, _, DeepLink.JoinConversationToken(_, _)) =>
+        Future.successful(OpenDeepLink(token))
       case _ =>
         Future.successful(OpenDeepLink(token))
     }

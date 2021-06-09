@@ -197,6 +197,10 @@ class MainPhoneFragment extends FragmentHelper
         showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
         deepLinkService.deepLink ! None
 
+      case OpenDeepLink(JoinConversationToken(key, code), _) =>
+        //TODO: Join conversation & open it
+        deepLinkService.deepLink ! None
+
       case DoNotOpenDeepLink(User, reason) =>
         verbose(l"do not open, user deep link error. Reason: $reason")
         showErrorDialog(R.string.deep_link_user_error_title, R.string.deep_link_user_error_message)
