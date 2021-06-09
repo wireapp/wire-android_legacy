@@ -1264,6 +1264,8 @@
     <string name="loading_services">Loading services…</string>
     <string name="empty_services_list">Services are helpers that can improve your workflow. To enable them, ask your administrator.</string>
     <string name="empty_services_list_admin">Services are helpers that can improve your workflow.</string>
+    <string name="empty_services_content_description">No services found</string>
+    <string name="empty_search_content_description">No users found</string>
 
     <string name="create_group_conversation">Create group</string>
     <string name="create_guest_room_conversation">Create guest room</string>
@@ -1425,6 +1427,10 @@
     <string name="participant_search_title">PARTICIPANTS</string>
     <string name="generic_service_warning">Services have access to the content of this conversation</string>
     <string name="add_services_button_text">Manage services</string>
+    <string name="empty_search_button_text">Learn more</string>
+
+    <string name="empty_search_text1">Find people in Wire by name or @username</string>
+    <string name="empty_search_text2">Find people from another domain by @username@domainname</string>
 
     <string name="mention_symbol" translatable="false">\@</string>
 

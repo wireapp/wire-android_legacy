@@ -156,7 +156,8 @@
                 android:layout_height="@dimen/services_warning_icon_height"
                 android:layout_marginBottom="@dimen/wire__padding__16"
                 android:layout_gravity="center_horizontal"
-                android:visibility="gone"/>
+                android:visibility="gone"
+                android:contentDescription="@string/empty_services_content_description" />
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/pickuser__error_text"
@@ -181,6 +182,61 @@
                 android:layout_gravity="center_horizontal"
                 app:w_font="@string/wire__typeface__medium"
                 android:text="@string/add_services_button_text"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__regular_small"
+                android:gravity="center"
+                android:background="@drawable/invite_button_background"
+                android:visibility="gone"
+                />
+
+            <ImageView
+                android:id="@+id/empty_search_icon"
+                android:layout_width="@dimen/empty_search_icon_width"
+                android:layout_height="@dimen/empty_search_icon_height"
+                android:layout_marginBottom="@dimen/wire__padding__16"
+                android:layout_gravity="center_horizontal"
+                android:src="@drawable/ic_icon_empty_search"
+                android:visibility="gone"
+                android:contentDescription="@string/empty_search_content_description" />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/empty_search_text1"
+                android:layout_width="@dimen/empty_search_text_width"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                app:w_font="@string/wire__typeface__medium"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                android:gravity="center"
+                android:text="@string/empty_search_text1"
+                android:visibility="gone"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/empty_search_text2"
+                android:layout_width="@dimen/empty_search_text_width"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                app:w_font="@string/wire__typeface__medium"
+                android:textColor="@color/white"
+                android:textSize="@dimen/wire__text_size__small"
+                android:gravity="center"
+                android:text="@string/empty_search_text2"
+                android:visibility="gone"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/empty_search_button"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:paddingTop="@dimen/wire__padding__4"
+                android:paddingBottom="@dimen/wire__padding__4"
+                android:layout_marginTop="@dimen/wire__padding__16"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                app:w_font="@string/wire__typeface__medium"
+                android:text="@string/empty_search_button_text"
                 android:textColor="@color/white"
                 android:textSize="@dimen/wire__text_size__regular_small"
                 android:gravity="center"

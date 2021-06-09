@@ -68,6 +68,8 @@ import scala.concurrent.duration._
 import com.waz.zclient.usersearch.SearchUIFragment._
 import com.waz.threading.Threading._
 
+import com.waz.zclient.BuildConfig
+
 class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper
   with SearchUIAdapter.Callback {
@@ -160,25 +162,77 @@ class SearchUIFragment extends BaseFragment[Container]
     vh.onClick(_ => onManageServicesClicked())
   }
 
-  private lazy val errorMessageView = returning(view[TypefaceTextView](R.id.pickuser__error_text)) { vh =>
+  private lazy val emptySearchIcon = returning(view[ImageView](R.id.empty_search_icon)) { vh =>
     subs += searchController.searchUserOrServices.map {
-      case SearchUserListState.Services(_) | SearchUserListState.Users(_) => View.GONE
-      case _ => View.VISIBLE
+      case SearchUserListState.NoUsersFound => View.VISIBLE
+      case _ => View.GONE
+    }.onUi(vis => vh.foreach(_.setVisibility(vis)))
+  }
+
+  private lazy val emptySearchText1 = returning(view[TypefaceTextView](R.id.empty_search_text1)) { vh =>
+    subs += searchController.searchUserOrServices.map {
+      case SearchUserListState.NoUsersFound => View.VISIBLE
+      case _ => View.GONE
+    }.onUi(vis => vh.foreach(_.setVisibility(vis)))
+  }
+
+  private lazy val emptySearchText2 = returning(view[TypefaceTextView](R.id.empty_search_text2)) { vh =>
+    subs += searchController.searchUserOrServices.map {
+      case SearchUserListState.NoUsersFound => View.VISIBLE
+      case _ => View.GONE
+    }.onUi(vis => vh.foreach(_.setVisibility(vis)))
+  }
+
+  private lazy val emptySearchButton = returning(view[TypefaceTextView](R.id.empty_search_button)) { vh =>
+    subs += searchController.searchUserOrServices.map {
+      case SearchUserListState.NoUsersFound => View.VISIBLE
+      case _ => View.GONE
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
 
-    subs += (for {
-      isAdmin <- userAccountsController.isAdmin
-      res     <- searchController.searchUserOrServices
-    } yield res match {
-      case SearchUserListState.NoUsers               => R.string.new_conv_no_contacts
-      case SearchUserListState.NoUsersFound          => R.string.new_conv_no_results
-      case SearchUserListState.NoServices if isAdmin => R.string.empty_services_list_admin
-      case SearchUserListState.NoServices            => R.string.empty_services_list
-      case SearchUserListState.NoServicesFound       => R.string.no_matches_found
-      case SearchUserListState.LoadingServices       => R.string.loading_services
-      case SearchUserListState.Error(_)              => R.string.generic_error_header
-      case _                                         => R.string.empty_string //TODO more informative header?
-    }).onUi(txt => vh.foreach(_.setText(txt)))
+    vh.onClick(_ => browser.openHelp())
+  }
+
+  private lazy val errorMessageView = returning(view[TypefaceTextView](R.id.pickuser__error_text)) { vh =>
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      subs += searchController.searchUserOrServices.map {
+        case SearchUserListState.Services(_) |
+             SearchUserListState.Users(_) |
+             SearchUserListState.NoUsers |
+             SearchUserListState.NoUsersFound => View.GONE
+        case _ => View.VISIBLE
+      }.onUi(vis => vh.foreach(_.setVisibility(vis)))
+
+      subs += (for {
+        isAdmin <- userAccountsController.isAdmin
+        res     <- searchController.searchUserOrServices
+      } yield res match {
+        case SearchUserListState.NoServices if isAdmin => R.string.empty_services_list_admin
+        case SearchUserListState.NoServices => R.string.empty_services_list
+        case SearchUserListState.NoServicesFound => R.string.no_matches_found
+        case SearchUserListState.LoadingServices => R.string.loading_services
+        case SearchUserListState.Error(_) => R.string.generic_error_header
+        case _ => R.string.empty_string //TODO more informative header?
+      }).onUi(txt => vh.foreach(_.setText(txt)))
+    } else {
+      subs += searchController.searchUserOrServices.map {
+        case SearchUserListState.Services(_) | SearchUserListState.Users(_) => View.GONE
+        case _ => View.VISIBLE
+      }.onUi(vis => vh.foreach(_.setVisibility(vis)))
+
+      subs += (for {
+        isAdmin <- userAccountsController.isAdmin
+        res     <- searchController.searchUserOrServices
+      } yield res match {
+        case SearchUserListState.NoUsers => R.string.new_conv_no_contacts
+        case SearchUserListState.NoUsersFound => R.string.new_conv_no_results
+        case SearchUserListState.NoServices if isAdmin => R.string.empty_services_list_admin
+        case SearchUserListState.NoServices => R.string.empty_services_list
+        case SearchUserListState.NoServicesFound => R.string.no_matches_found
+        case SearchUserListState.LoadingServices => R.string.loading_services
+        case SearchUserListState.Error(_) => R.string.generic_error_header
+        case _ => R.string.empty_string //TODO more informative header?
+      }).onUi(txt => vh.foreach(_.setText(txt)))
+    }
   }
 
   private lazy val emptyListButton = returning(view[RelativeLayout](R.id.empty_list_button)) { v =>
@@ -239,6 +293,13 @@ class SearchUIFragment extends BaseFragment[Container]
     errorMessageView
     toolbarTitle
     emptyServicesButton
+
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      emptySearchIcon
+      emptySearchText1
+      emptySearchText2
+      emptySearchButton
+    }
 
     // Use constant style for left side start ui
     startUiToolbar.foreach(_.setVisibility(View.VISIBLE))
