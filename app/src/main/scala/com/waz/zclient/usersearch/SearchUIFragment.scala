@@ -177,8 +177,8 @@ class SearchUIFragment extends BaseFragment[Container]
   }
 
   private lazy val emptySearchText2 = returning(view[TypefaceTextView](R.id.empty_search_text2)) { vh =>
-    subs += searchController.searchUserOrServices.map {
-      case SearchUserListState.NoUsersFound => View.VISIBLE
+    subs += searchController.searchUserOrServices.zip(userAccountsController.isTeam).map {
+      case (SearchUserListState.NoUsersFound, true) => View.VISIBLE
       case _ => View.GONE
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
   }

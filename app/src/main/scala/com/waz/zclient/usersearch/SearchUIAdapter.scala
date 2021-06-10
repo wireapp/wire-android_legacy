@@ -279,16 +279,25 @@ object SearchUIAdapter {
 
     private implicit val context: Context = sectionHeaderView.getContext
 
-    def bind(item: SectionViewItem): Unit = sectionHeaderView.setText(
-      item.section match {
-        case TopUsersSection                                => getString(R.string.people_picker__top_users_header_title)
-        case GroupConversationsSection if item.name.isEmpty => getString(R.string.people_picker__search_result_conversations_header_title)
-        case GroupConversationsSection                      => getString(R.string.people_picker__search_result_team_conversations_header_title, item.name)
-        case ContactsSection                                => getString(R.string.people_picker__search_result_connections_searched_header_title)
-        case DirectorySection                               => getString(R.string.people_picker__search_result_others_header_title)
-        case IntegrationsSection                            => getString(R.string.integrations_picker__section_title)
+    def bind(item: SectionViewItem): Unit = {
+      val title = item match {
+        case SectionViewItem(TopUsersSection, _, _, _) =>
+          getString(R.string.people_picker__top_users_header_title)
+        case SectionViewItem(GroupConversationsSection, _, Name.Empty, _) =>
+          getString(R.string.people_picker__search_result_conversations_header_title)
+        case SectionViewItem(GroupConversationsSection, _, name, _) =>
+          getString(R.string.people_picker__search_result_team_conversations_header_title, name.str)
+        case SectionViewItem(ContactsSection, _, _, _) =>
+          getString(R.string.people_picker__search_result_connections_searched_header_title)
+        case SectionViewItem(DirectorySection, _, _, None) =>
+          getString(R.string.people_picker__search_result_others_header_title)
+        case SectionViewItem(DirectorySection, _, _, Some(domain)) =>
+          getString(R.string.people_picker__search_result_others_header_federated, domain)
+        case SectionViewItem(IntegrationsSection, _, _, _) =>
+          getString(R.string.integrations_picker__section_title)
       }
-    )
+      sectionHeaderView.setText(title)
+    }
   }
 }
 
