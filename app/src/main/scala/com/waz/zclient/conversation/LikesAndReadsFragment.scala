@@ -186,7 +186,7 @@ class LikesAndReadsFragment extends FragmentHelper {
 
   private var readTimestamps = Map.empty[UserId, RemoteInstant]
 
-  private def createSubtitle(user: UserData): String =
+  private def createSubtitle(user: UserData, isFederated: Boolean): String =
     readTimestamps.get(user.id).fold("")(time => SameDayTimeStamp(time.instant).string)
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
