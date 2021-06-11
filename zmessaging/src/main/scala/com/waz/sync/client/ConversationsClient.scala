@@ -56,6 +56,7 @@ trait ConversationsClient {
   def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
   def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
+  def getJoinConversationOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse]
 }
 
 class ConversationsClientImpl(implicit
@@ -253,11 +254,23 @@ class ConversationsClientImpl(implicit
       .withErrorType[ErrorResponse]
       .executeSafe
   }
+
+  override def getJoinConversationOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse] = {
+    verbose(l"getJoinConversationOverview($key, $code)")
+    Request.Get(
+      relativePath = JoinConversationPath,
+      queryParameters("key" -> key, "code" -> code)
+    )
+      .withResultType[ConversationOverviewResponse]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 }
 
 object ConversationsClient {
   val ConversationsPath = "/conversations"
   val ConversationIdsPath = "/conversations/ids"
+  val JoinConversationPath = "/conversations/join"
   val ConversationsPageSize = 100
   val ConversationIdsPageSize = 1000
   val IdsCountThreshold = 32
@@ -385,6 +398,16 @@ object ConversationsClient {
       case NonFatal(e) =>
         warn(l"couldn't parse events response", e)
         None
+    }
+  }
+
+  case class ConversationOverviewResponse(id: RConvId, name: String)
+
+  object ConversationOverviewResponse extends DerivedLogTag {
+    import com.waz.utils.JsonDecoder._
+    implicit lazy val Decoder: JsonDecoder[ConversationOverviewResponse] = new JsonDecoder[ConversationOverviewResponse] {
+      override def apply(implicit js: JSONObject): ConversationOverviewResponse =
+        ConversationOverviewResponse(decodeRConvId('id), decodeString('name))
     }
   }
 }
