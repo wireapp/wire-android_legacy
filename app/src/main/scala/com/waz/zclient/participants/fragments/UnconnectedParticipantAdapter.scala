@@ -34,11 +34,11 @@ class UnconnectedParticipantAdapter(userId:      UserId,
                                     isWireless:  Boolean,
                                     userName:    String,
                                     userHandle:  String,
+                                    isFederated: Boolean,
                                     linkedText: Option[(String, Int)] = None)(implicit context: Context)
-  extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless) {
+  extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated) {
   import BaseSingleParticipantAdapter._
   import UnconnectedParticipantAdapter._
-
 
   val onLinkedTextClicked: SourceStream[Unit] = EventStream[Unit]
 

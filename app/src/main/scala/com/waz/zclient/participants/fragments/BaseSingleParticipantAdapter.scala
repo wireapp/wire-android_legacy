@@ -32,13 +32,15 @@ import com.waz.zclient.paintcode.GuestIcon
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils._
 import com.waz.zclient.{Injectable, R}
+import com.waz.zclient.BuildConfig
 
 class BaseSingleParticipantAdapter(userId:      UserId,
                                    isGuest:     Boolean,
                                    isExternal:  Boolean,
                                    isDarkTheme: Boolean,
                                    isGroup:     Boolean,
-                                   isWireless:  Boolean
+                                   isWireless:  Boolean,
+                                   isFederated: Boolean
                                   )(implicit context: Context)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import BaseSingleParticipantAdapter._
@@ -63,7 +65,11 @@ class BaseSingleParticipantAdapter(userId:      UserId,
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
     case h: ParticipantHeaderRowViewHolder =>
-      h.bind(userId, isGuest, isExternal, isGroup && participantRole.contains(ConversationRole.AdminRole), timerText, isDarkTheme, hasInformation)
+      h.bind(
+        userId, isGuest, isExternal,
+        isGroup && participantRole.contains(ConversationRole.AdminRole),
+        timerText, isDarkTheme, hasInformation, isFederated
+      )
     case h: GroupAdminViewHolder =>
       h.bind(onParticipantRoleChange, participantRole.contains(ConversationRole.AdminRole))
   }
@@ -89,9 +95,10 @@ object BaseSingleParticipantAdapter {
   val UserName     = 4
   val LinkedInfo   = 5
 
-  case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
+  final case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val imageView            = view.findViewById[ChatHeadView](R.id.chathead)
     private lazy val guestIndication      = view.findViewById[LinearLayout](R.id.guest_indicator)
+    private lazy val federatedIndication  = view.findViewById[LinearLayout](R.id.federated_indicator)
     private lazy val guestIndicatorIcon   = view.findViewById[ImageView](R.id.guest_indicator_icon)
     private lazy val externalIndication   = view.findViewById[LinearLayout](R.id.external_indicator)
     private lazy val groupAdminIndication = view.findViewById[LinearLayout](R.id.group_admin_indicator)
@@ -106,7 +113,8 @@ object BaseSingleParticipantAdapter {
              isGroupAdmin:   Boolean,
              timerText:      Option[String],
              isDarkTheme:    Boolean,
-             hasInformation: Boolean
+             hasInformation: Boolean,
+             isFederated:    Boolean
             )(implicit context: Context): Unit = {
       this.userId = Some(userId)
 
@@ -114,6 +122,10 @@ object BaseSingleParticipantAdapter {
       guestIndication.setVisible(isGuest)
       externalIndication.setVisible(isExternal)
       groupAdminIndication.setVisible(isGroupAdmin)
+
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        federatedIndication.setVisible(isFederated)
+      }
 
       val color = if (isDarkTheme) R.color.wire__text_color_primary_dark_selector else R.color.wire__text_color_primary_light_selector
       guestIndicatorIcon.setImageDrawable(GuestIcon(color))
