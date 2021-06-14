@@ -31,7 +31,11 @@ class CallingGridAdapter(implicit context: Context, eventContext: EventContext, 
 
   private lazy val callController = inject[CallController]
 
-  var numberOfParticipants = callController.allParticipants.map(_.size).currentValue.getOrElse(0)
+  var numberOfParticipants = 0
+
+  callController.allParticipants.map(_.size).onChanged.foreach { it =>
+    numberOfParticipants = it
+  }
 
   override def getItemCount(): Int = if (numberOfParticipants == 0) 0
   else if (numberOfParticipants % MAX_PARTICIPANTS_PER_PAGE == 0) numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE
@@ -39,6 +43,7 @@ class CallingGridAdapter(implicit context: Context, eventContext: EventContext, 
 
   override def createFragment(position: Int): Fragment = CallingGridFragment.newInstance(position)
 
+  override def getItemId(position: Int): Long = position
 }
 
 object CallingGridAdapter {
