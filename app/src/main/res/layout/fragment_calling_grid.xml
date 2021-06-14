@@ -17,20 +17,32 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.xuliwen.zoom.ZoomLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/zoom_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:elevation="1dp"
-    app:double_click_zoom="1.0"
-    app:max_zoom="10.0"
-    app:min_zoom="1.0">
+    android:layout_height="match_parent">
 
-    <androidx.gridlayout.widget.GridLayout
-        android:id="@+id/video_grid"
+    <com.xuliwen.zoom.ZoomLayout
+        android:id="@+id/zoom_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:columnCount="2"
-        app:orientation="horizontal" />
-</com.xuliwen.zoom.ZoomLayout>
+        android:elevation="1dp"
+        app:double_click_zoom="1.0"
+        app:max_zoom="10.0"
+        app:min_zoom="1.0">
+
+        <androidx.gridlayout.widget.GridLayout
+            android:id="@+id/video_grid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:columnCount="2"
+            app:orientation="horizontal" />
+    </com.xuliwen.zoom.ZoomLayout>
+
+    <FrameLayout
+        android:id="@+id/full_screen_video_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="1dp" />
+
+</FrameLayout>

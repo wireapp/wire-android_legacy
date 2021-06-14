@@ -106,7 +106,7 @@ class CallingGridFragment extends FragmentHelper {
         case ((selfParticipant, participantsInfo, participants, _), false, false) =>
 
           val startIndex = pageNumber * MAX_PARTICIPANTS_PER_PAGE
-          val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE - 1
+          val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE
           val participantsToShow = participants.slice(startIndex, endIndex).toSeq
 
           refreshVideoGrid(grid, selfParticipant, participantsToShow, participantsInfo, participants, false)

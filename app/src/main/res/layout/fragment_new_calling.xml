@@ -82,10 +82,4 @@
         android:layout_height="match_parent"
         android:elevation="2dp"/>
 
-    <FrameLayout
-        android:id="@+id/full_screen_video_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:elevation="1dp"/>
-
 </com.waz.zclient.common.controllers.ThemeControllingFrameLayout>
