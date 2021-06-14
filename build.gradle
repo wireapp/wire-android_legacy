@@ -64,7 +64,6 @@ allprojects {
 
 ext {
     largeVideoConferenceCalls = true
-    legalHold = true
     federationUserDiscovery = true
 }
 
