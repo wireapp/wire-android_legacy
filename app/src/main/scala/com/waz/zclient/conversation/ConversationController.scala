@@ -414,6 +414,9 @@ class ConversationController(implicit injector: Injector, context: Context)
   def getGuestroomInfo(key: String, code: String): Future[Either[ErrorResponse, GuestRoomInfo]] =
     conversations.head.flatMap(_.getGuestroomInfo(key, code))
 
+  def joinConversation(key: String, code: String): Future[JoinConversationResult] =
+    conversations.head.flatMap(_.joinConversation(key, code))
+
   object messages {
 
     val ActivityTimeout = 3.seconds

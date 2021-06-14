@@ -27,7 +27,8 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.FragmentManager
 import com.waz.content.UserPreferences.{CrashesAndAnalyticsRequestShown, TrackingEnabled}
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.model.{ConvId, ConversationOverview, ErrorData, ExistingConversation, Uid}
+import com.waz.model.GuestRoomInfo.{ExistingConversation, Overview}
+import com.waz.model.{ConvId, ErrorData, JoinConversationResult, Uid}
 import com.waz.permissions.PermissionsService
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{AccountManager, GlobalModule, NetworkModeService, ZMessaging}
@@ -194,7 +195,10 @@ class MainPhoneFragment extends FragmentHelper
       case OpenDeepLink(JoinConversationToken(key, code), _) =>
         conversationController.getGuestroomInfo(key, code).foreach {
           case Right(ExistingConversation(convData)) => openConversationFromDeepLink(convData.id)
-          case Right(ConversationOverview(name))     => /*TODO show confirmation pop up*/
+          case Right(Overview(name))                 => confirmJoiningNewConversation(name).foreach {
+                                                          case true  => joinConversation(key, code)
+                                                          case false =>
+                                                        }
           case Left(errorResponse)                   => /*TODO show error pop up*/
         }
         deepLinkService.deepLink ! None
@@ -222,6 +226,27 @@ class MainPhoneFragment extends FragmentHelper
 
     CancellableFuture.delay(750.millis).map { _ =>
       conversationController.switchConversation(convId)
+    }
+  }
+
+  private def confirmJoiningNewConversation(convName: String): Future[Boolean] =
+    accentColorController.accentColor.head.flatMap(color =>
+      //TODO: copies aren't final, we're probably gonna have titles too..
+      showConfirmationDialog(
+        null,
+        getString(R.string.join_conversation_confirmation_message, convName),
+        color
+      )
+    )
+
+  private def joinConversation(key: String, code: String): Future[Unit] = {
+    import JoinConversationResult._
+    //TODO: copies aren't final, we're probably gonna have titles too..
+    conversationController.joinConversation(key, code).flatMap {
+      case Success            => /*TODO Open new conv. */ Future.successful(())
+      case CannotJoin         => showErrorDialog(headerText = null, msg = getString(R.string.join_conversation_cannot_join_error))
+      case MemberLimitReached => showErrorDialog(headerText = null, msg = getString(R.string.join_conversation_member_limit_reached_error))
+      case GeneralError(_)    => showGenericErrorDialog()
     }
   }
 

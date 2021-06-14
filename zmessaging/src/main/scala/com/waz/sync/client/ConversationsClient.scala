@@ -30,6 +30,7 @@ import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
+import com.wire.signals.CancellableFuture
 import org.json
 import org.json.JSONObject
 
@@ -57,6 +58,7 @@ trait ConversationsClient {
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
   def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
   def getGuestroomOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse]
+  def postJoinConversation(key: String, code: String): ErrorOrResponse[Unit]
 }
 
 class ConversationsClientImpl(implicit
@@ -262,6 +264,17 @@ class ConversationsClientImpl(implicit
       queryParameters("key" -> key, "code" -> code)
     )
       .withResultType[ConversationOverviewResponse]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  override def postJoinConversation(key: String, code: String): ErrorOrResponse[Unit] = {
+    verbose(l"postJoinConversation($key, $code)")
+    Request.Post(
+      relativePath = JoinConversationPath,
+      body = Json("key" -> key, "code" -> code)
+    )
+      .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }

@@ -75,6 +75,7 @@ trait ConversationsService {
   def deleteMembersFromConversations(members: Set[UserId]): Future[Unit]
   def remoteIds: Future[Set[RConvId]]
   def getGuestroomInfo(key: String, code: String): ErrorOr[GuestRoomInfo]
+  def joinConversation(key: String, code: String): Future[JoinConversationResult]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -673,16 +674,28 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _        <- sync.postConversationRole(convId, userId, newRole, origRole.getOrElse(ConversationRole.MemberRole))
     } yield ()
 
-  override def getGuestroomInfo(key: String, code: String): ErrorOr[GuestRoomInfo] =
+  override def getGuestroomInfo(key: String, code: String): ErrorOr[GuestRoomInfo] = {
+    import GuestRoomInfo._
     client.getGuestroomOverview(key, code).future.flatMap {
       case Right(ConversationOverviewResponse(rConvId, name)) =>
         convsStorage.getByRemoteId(rConvId).map {
           case Some(conversationData) => Right(ExistingConversation(conversationData))
-          case None                   => Right(ConversationOverview(name))
+          case None                   => Right(Overview(name))
         }
 
       case Left(error) => Future.successful(Left(error))
     }
+  }
+
+  override def joinConversation(key: String, code: String): Future[JoinConversationResult] = {
+    import JoinConversationResult._
+    client.postJoinConversation(key, code).future.map {
+      case Right(_)                                          => Success
+      case Left(ErrorResponse(_, _, "no-conversation-code")) => CannotJoin
+      case Left(ErrorResponse(_, _, "too-many-members"))     => MemberLimitReached
+      case Left(error)                                       => GeneralError(error)
+    }
+  }
 }
 
 object ConversationsService {
