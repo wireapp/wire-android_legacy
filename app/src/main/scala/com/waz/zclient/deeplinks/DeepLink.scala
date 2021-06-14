@@ -23,6 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.log.LogUI._
+import com.waz.utils.wrappers.{URI => WireURI}
 
 import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
@@ -33,19 +34,21 @@ object DeepLink extends DerivedLogTag {
   case object SSOLogin extends DeepLink
   case object User extends DeepLink
   case object Conversation extends DeepLink
+  case object JoinConversation extends DeepLink
   case object Access extends DeepLink
 
   sealed trait Token
   case class SSOLoginToken(token: String) extends Token
   case class UserToken(userId: UserId) extends Token
   case class ConversationToken(conId: ConvId) extends Token
+  case class JoinConversationToken(key: String, code: String) extends Token
   case class CustomBackendToken(url: URL) extends Token
 
   case class UserTokenInfo(connected: Boolean, currentTeamMember: Boolean, self: Boolean = false)
 
   case class RawToken(value: String) extends AnyVal
 
-  def getAll: Seq[DeepLink] = Seq(SSOLogin, User, Conversation, Access)
+  def getAll: Seq[DeepLink] = Seq(SSOLogin, User, Conversation, JoinConversation, Access)
 }
 
 object DeepLinkParser {
@@ -59,6 +62,7 @@ object DeepLinkParser {
     case DeepLink.SSOLogin => "start-sso"
     case DeepLink.User => "user"
     case DeepLink.Conversation => "conversation"
+    case DeepLink.JoinConversation => "conversation-join"
     case DeepLink.Access => "access"
   }
 
@@ -69,11 +73,16 @@ object DeepLinkParser {
       .map { link =>
         val prefix = s"$Scheme://${hostBy(link)}/"
         if (str.length > prefix.length && str.startsWith(prefix))
-          Some(link -> RawToken(str.substring(prefix.length)))
+          Some(link -> rawToken(link, str, prefix))
         else
           None
       }
       .collectFirst { case Some(res) => res }
+  }
+
+  private def rawToken(link: DeepLink, str: String, prefix: String): RawToken = link match {
+    case JoinConversation => RawToken(str)
+    case _                => RawToken(str.substring(prefix.length))
   }
 
   def parseToken(link: DeepLink, raw: RawToken): Option[Token] = link match {
@@ -94,6 +103,23 @@ object DeepLinkParser {
         res <- UuidRegex.findFirstIn(raw.value)
         convId = ConvId(res)
       } yield ConversationToken(convId)
+
+    case DeepLink.JoinConversation =>
+      Try(WireURI.parse(raw.value)) match {
+        case Failure(exception) =>
+          warn(l"Couldn't parse join conversation deep link.", exception)
+          None
+
+        case Success(uri) =>
+          val key = uri.getQueryParameter("key")
+          val code = uri.getQueryParameter("code")
+          (Option(key), Option(code)) match {
+            case (Some(keyStr), Some(codeStr)) => Some(JoinConversationToken(key = keyStr, code = codeStr))
+            case _ =>
+              warn(l"Couldn't parse join conversation queries (key = $key, code = $code)")
+              None
+          }
+      }
 
     case DeepLink.Access =>
       Try(new URI(raw.value)) match {
