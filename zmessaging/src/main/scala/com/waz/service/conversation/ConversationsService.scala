@@ -74,7 +74,7 @@ trait ConversationsService {
   def conversationName(convId: ConvId): Signal[Name]
   def deleteMembersFromConversations(members: Set[UserId]): Future[Unit]
   def remoteIds: Future[Set[RConvId]]
-  def getJoinConversationInfo(key: String, code: String): ErrorOr[JoinConversationInfo]
+  def getGuestroomInfo(key: String, code: String): ErrorOr[GuestRoomInfo]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -673,8 +673,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _        <- sync.postConversationRole(convId, userId, newRole, origRole.getOrElse(ConversationRole.MemberRole))
     } yield ()
 
-  override def getJoinConversationInfo(key: String, code: String): ErrorOr[JoinConversationInfo] =
-    client.getJoinConversationOverview(key, code).future.flatMap {
+  override def getGuestroomInfo(key: String, code: String): ErrorOr[GuestRoomInfo] =
+    client.getGuestroomOverview(key, code).future.flatMap {
       case Right(ConversationOverviewResponse(rConvId, name)) =>
         convsStorage.getByRemoteId(rConvId).map {
           case Some(conversationData) => Right(ExistingConversation(conversationData))

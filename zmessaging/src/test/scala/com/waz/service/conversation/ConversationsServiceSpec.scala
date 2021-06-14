@@ -897,7 +897,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     }
   }
 
-  feature("Join Conversation") {
+  feature("Join Guestroom Conversation") {
 
     scenario("Parse conversation overview response") {
       val rConvId = RConvId("remote-conv-id")
@@ -918,13 +918,13 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     }
   }
 
-  scenario("Get conversation info for already joined conversation") {
+  scenario("Get guestroom info for already joined conversation") {
     val key = "join_key"
     val code = "join_code"
     val convName = "Services Squad Conv"
     val response = ConversationOverviewResponse(rConvId, convName)
 
-    (convsClient.getJoinConversationOverview _)
+    (convsClient.getGuestroomOverview _)
       .expects(key, code)
       .anyNumberOfTimes()
       .returning(CancellableFuture.successful(Right(response)))
@@ -935,18 +935,18 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       .anyNumberOfTimes()
       .returning(Future.successful(Some(conversationData)))
 
-    val convInfo = result(service.getJoinConversationInfo(key, code))
+    val convInfo = result(service.getGuestroomInfo(key, code))
 
     convInfo shouldBe Right(ExistingConversation(conversationData))
   }
 
-  scenario("Get conversation info for new conversation") {
+  scenario("Get guestroom info for new conversation") {
     val key = "join_key"
     val code = "join_code"
     val convName = "Services Squad Conv"
     val response = ConversationOverviewResponse(rConvId, convName)
 
-    (convsClient.getJoinConversationOverview _)
+    (convsClient.getGuestroomOverview _)
       .expects(key, code)
       .anyNumberOfTimes()
       .returning(CancellableFuture.successful(Right(response)))
@@ -956,17 +956,17 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       .anyNumberOfTimes()
       .returning(Future.successful(None))
 
-    val convInfo = result(service.getJoinConversationInfo(key, code))
+    val convInfo = result(service.getGuestroomInfo(key, code))
 
     convInfo shouldBe Right(ConversationOverview(convName))
   }
 
-  scenario("Get conversation info returns error") {
+  scenario("Get guestroom info returns error") {
     val key = "join_key"
     val code = "join_code"
     val error = ErrorResponse.InternalError
 
-    (convsClient.getJoinConversationOverview _)
+    (convsClient.getGuestroomOverview _)
       .expects(key, code)
       .anyNumberOfTimes()
       .returning(CancellableFuture.successful(Left(error)))
@@ -975,7 +975,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       .expects(rConvId)
       .never()
 
-    val convInfo = result(service.getJoinConversationInfo(key, code))
+    val convInfo = result(service.getGuestroomInfo(key, code))
 
     convInfo shouldBe Left(error)
   }

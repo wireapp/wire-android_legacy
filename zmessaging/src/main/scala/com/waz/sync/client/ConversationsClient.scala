@@ -56,7 +56,7 @@ trait ConversationsClient {
   def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
   def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
-  def getJoinConversationOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse]
+  def getGuestroomOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse]
 }
 
 class ConversationsClientImpl(implicit
@@ -255,8 +255,8 @@ class ConversationsClientImpl(implicit
       .executeSafe
   }
 
-  override def getJoinConversationOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse] = {
-    verbose(l"getJoinConversationOverview($key, $code)")
+  override def getGuestroomOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse] = {
+    verbose(l"getGuestroomOverview($key, $code)")
     Request.Get(
       relativePath = JoinConversationPath,
       queryParameters("key" -> key, "code" -> code)

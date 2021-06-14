@@ -411,8 +411,8 @@ class ConversationController(implicit injector: Injector, context: Context)
 
   convChanged.onUi { ev => convChangedCallbackSet.foreach(callback => callback.callback(ev)) }
 
-  def getJoinConversationInfo(key: String, code: String): Future[Either[ErrorResponse, JoinConversationInfo]] =
-    conversations.head.flatMap(_.getJoinConversationInfo(key, code))
+  def getGuestroomInfo(key: String, code: String): Future[Either[ErrorResponse, GuestRoomInfo]] =
+    conversations.head.flatMap(_.getGuestroomInfo(key, code))
 
   object messages {
 

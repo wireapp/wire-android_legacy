@@ -192,7 +192,7 @@ class MainPhoneFragment extends FragmentHelper
         deepLinkService.deepLink ! None
 
       case OpenDeepLink(JoinConversationToken(key, code), _) =>
-        conversationController.getJoinConversationInfo(key, code).foreach {
+        conversationController.getGuestroomInfo(key, code).foreach {
           case Right(ExistingConversation(convData)) => openConversationFromDeepLink(convData.id)
           case Right(ConversationOverview(name))     => /*TODO show confirmation pop up*/
           case Left(errorResponse)                   => /*TODO show error pop up*/
