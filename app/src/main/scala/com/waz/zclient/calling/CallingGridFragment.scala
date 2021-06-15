@@ -253,5 +253,3 @@ object CallingGridFragment {
     })
   }
 }
-
-
