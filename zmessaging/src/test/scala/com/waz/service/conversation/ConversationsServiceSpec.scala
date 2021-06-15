@@ -937,7 +937,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
     val convInfo = result(service.getGuestroomInfo(key, code))
 
-    convInfo shouldBe Right(ExistingConversation(conversationData))
+    convInfo shouldBe Right(GuestRoomInfo.ExistingConversation(conversationData))
   }
 
   scenario("Get guestroom info for new conversation") {
@@ -958,7 +958,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
     val convInfo = result(service.getGuestroomInfo(key, code))
 
-    convInfo shouldBe Right(ConversationOverview(convName))
+    convInfo shouldBe Right(GuestRoomInfo.Overview(convName))
   }
 
   scenario("Get guestroom info returns error") {
