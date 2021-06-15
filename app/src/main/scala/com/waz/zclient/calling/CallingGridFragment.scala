@@ -132,7 +132,7 @@ class CallingGridFragment extends FragmentHelper {
     Toast.makeText(getContext, R.string.calling_pinch_to_zoom_message, Toast.LENGTH_LONG).show()
 
 
-  private def showFullScreenVideo(participant: Participant): Unit = getChildFragmentManager
+  private def showFullScreenVideo(participant: Participant): Unit = getParentFragment.getChildFragmentManager
     .beginTransaction
     .replace(R.id.full_screen_video_container, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
     .commit

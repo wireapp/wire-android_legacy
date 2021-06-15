@@ -17,12 +17,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
 
-    <com.xuliwen.zoom.ZoomLayout
+    <com.xuliwen.zoom.ZoomLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/zoom_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -38,11 +35,3 @@
             app:columnCount="2"
             app:orientation="horizontal" />
     </com.xuliwen.zoom.ZoomLayout>
-
-    <FrameLayout
-        android:id="@+id/full_screen_video_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:elevation="1dp" />
-
-</FrameLayout>
