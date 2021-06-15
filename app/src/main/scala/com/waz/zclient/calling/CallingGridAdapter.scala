@@ -46,7 +46,7 @@ class CallingGridAdapter(implicit context: Context, eventContext: EventContext, 
 }
 
 object CallingGridAdapter {
-  val MAX_PARTICIPANTS_PER_PAGE = 2
+  val MAX_PARTICIPANTS_PER_PAGE = 8
 }
 
 
