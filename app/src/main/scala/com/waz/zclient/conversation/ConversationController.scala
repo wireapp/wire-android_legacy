@@ -22,7 +22,6 @@ import java.net.URI
 import android.content.Context
 import android.graphics.{Bitmap, BitmapFactory}
 import com.waz.api
-import com.waz.api.impl.ErrorResponse
 import com.waz.api.{IConversation, Verification}
 import com.waz.content.{ConversationStorage, OtrClientsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -411,8 +410,11 @@ class ConversationController(implicit injector: Injector, context: Context)
 
   convChanged.onUi { ev => convChangedCallbackSet.foreach(callback => callback.callback(ev)) }
 
-  def getGuestroomInfo(key: String, code: String): Future[Either[ErrorResponse, GuestRoomInfo]] =
+  def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]] =
     conversations.head.flatMap(_.getGuestroomInfo(key, code))
+
+  def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Unit]] =
+    conversations.head.flatMap(_.joinConversation(key, code))
 
   object messages {
 

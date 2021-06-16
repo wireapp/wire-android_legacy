@@ -1625,5 +1625,10 @@
     <string name="legal_hold_cannot_connect_alert_title">Cannot connect to this user</string>
     <string name="legal_hold_cannot_connect_alert_message">You cannot connect to this user due to legal hold.</string>
     <string name="legal_hold_cannot_connect_alert_negative_button">LEARN MORE</string>
+
+    <!-- Join Conversation via Deep Link -->
+    <string name="join_conversation_confirmation_message">You are about to join the guestroom conversation \"%s\" with your account.</string>
+    <string name="join_conversation_cannot_join_error">You cannot be added to this group conversation.</string>
+    <string name="join_conversation_member_limit_reached_error">You cannot be added to this guestroom because the limit is reached.</string>
 </resources>
 

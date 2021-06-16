@@ -25,6 +25,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.ConversationData.{ConversationType, Link, getAccessAndRoleForGroupConv}
+import com.waz.model.GuestRoomStateError.{GeneralError, MemberLimitReached, NotAllowed}
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service._
@@ -74,7 +75,8 @@ trait ConversationsService {
   def conversationName(convId: ConvId): Signal[Name]
   def deleteMembersFromConversations(members: Set[UserId]): Future[Unit]
   def remoteIds: Future[Set[RConvId]]
-  def getGuestroomInfo(key: String, code: String): ErrorOr[GuestRoomInfo]
+  def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]]
+  def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Unit]]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -673,16 +675,32 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _        <- sync.postConversationRole(convId, userId, newRole, origRole.getOrElse(ConversationRole.MemberRole))
     } yield ()
 
-  override def getGuestroomInfo(key: String, code: String): ErrorOr[GuestRoomInfo] =
+  override def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]] = {
+    import GuestRoomInfo._
     client.getGuestroomOverview(key, code).future.flatMap {
       case Right(ConversationOverviewResponse(rConvId, name)) =>
         convsStorage.getByRemoteId(rConvId).map {
           case Some(conversationData) => Right(ExistingConversation(conversationData))
-          case None                   => Right(ConversationOverview(name))
+          case None                   => Right(Overview(name))
         }
-
-      case Left(error) => Future.successful(Left(error))
+      case Left(ErrorResponse(_, _, "no-conversation-code")) => Future.successful(Left(NotAllowed))
+      case Left(ErrorResponse(_, _, "too-many-members"))     => Future.successful(Left(MemberLimitReached))
+      case Left(error) =>
+        warn(l"getGuestRoomInfo(key: $key, code: $code) error: $error")
+        Future.successful(Left(GeneralError))
     }
+  }
+
+  override def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Unit]] = {
+    client.postJoinConversation(key, code).future.map {
+      case Right(_)                                          => Right(())
+      case Left(ErrorResponse(_, _, "no-conversation-code")) => Left(NotAllowed)
+      case Left(ErrorResponse(_, _, "too-many-members"))     => Left(MemberLimitReached)
+      case Left(error) =>
+        warn(l"joinConversation(key: $key, code: $code) error: $error")
+        Left(GeneralError)
+    }
+  }
 }
 
 object ConversationsService {
