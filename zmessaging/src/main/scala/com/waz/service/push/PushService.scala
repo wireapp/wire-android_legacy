@@ -100,7 +100,7 @@ class PushServiceImpl(selfUserId:           UserId,
   implicit val logTag: LogTag = accountTag[PushServiceImpl](selfUserId)
   private implicit val dispatcher = SerialDispatchQueue(name = "PushService")
 
-  override val onHistoryLost = new SourceSignal[Instant]
+  override val onHistoryLost = SourceSignal[Instant]()
   override val processing = Signal(false)
 
   override def waitProcessing =

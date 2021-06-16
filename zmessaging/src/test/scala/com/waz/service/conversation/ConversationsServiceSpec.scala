@@ -123,7 +123,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   (membersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream())
   (membersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream())
   (selectedConv.selectedConversationId _).expects().anyNumberOfTimes().returning(Signal.const(None))
-  (push.onHistoryLost _).expects().anyNumberOfTimes().returning(new SourceSignal[Instant])
+  (push.onHistoryLost _).expects().anyNumberOfTimes().returning(SourceSignal[Instant]())
   (errors.onErrorDismissed _).expects(*).anyNumberOfTimes().returning(CancellableFuture.successful(()))
 
   (sync.syncTeam _).expects(*).anyNumberOfTimes().returning(Future.successful(SyncId()))
