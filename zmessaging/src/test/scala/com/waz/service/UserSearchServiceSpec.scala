@@ -238,7 +238,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val expected = ids('g, 'h)
       val query = SearchQuery("fr")
 
-      val querySignal = new SourceSignal[Option[IndexedSeq[UserData]]]()
+      val querySignal = SourceSignal[Option[IndexedSeq[UserData]]]()
       val queryResults = IndexedSeq.empty[UserData]
 
       (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(expected.map(key => key -> users(key)).toMap))
@@ -282,7 +282,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
                           connectedUsers: Set[UserId] = Set()): PreparedSearch = {
       val convId = ConvId("e7969e91-366d-4ec5-9d85-4e8a4f9d53e6")
 
-      val querySignal = new SourceSignal[Option[Vector[UserId]]]()
+      val querySignal = SourceSignal[Option[Vector[UserId]]]()
       val queryResults = Vector.empty[UserId]
 
       (usersStorage.get _).stubs(*).onCall { id: UserId =>
