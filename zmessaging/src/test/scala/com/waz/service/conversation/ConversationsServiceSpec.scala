@@ -22,6 +22,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.ConversationData.ConversationType
+import com.waz.model.GuestRoomStateError.{GeneralError, MemberLimitReached, NotAllowed}
 import com.waz.model.{ConversationData, ConversationRole, _}
 import com.waz.service._
 import com.waz.service.assets.{AssetService, UriHelper}
@@ -961,7 +962,45 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     convInfo shouldBe Right(GuestRoomInfo.Overview(convName))
   }
 
-  scenario("Get guestroom info returns error") {
+  scenario("Get guestroom info returns NotAllowed when client returns no-conversation-code") {
+    val key = "join_key"
+    val code = "join_code"
+    val error = ErrorResponse(404, "error", "no-conversation-code")
+
+    (convsClient.getGuestroomOverview _)
+      .expects(key, code)
+      .anyNumberOfTimes()
+      .returning(CancellableFuture.successful(Left(error)))
+
+    (convsStorage.getByRemoteId _)
+      .expects(rConvId)
+      .never()
+
+    val convInfo = result(service.getGuestroomInfo(key, code))
+
+    convInfo shouldBe Left(NotAllowed)
+  }
+
+  scenario("Get guestroom info returns MemberLimitReached when client returns too-many-members") {
+    val key = "join_key"
+    val code = "join_code"
+    val error = ErrorResponse(404, "error", "too-many-members")
+
+    (convsClient.getGuestroomOverview _)
+      .expects(key, code)
+      .anyNumberOfTimes()
+      .returning(CancellableFuture.successful(Left(error)))
+
+    (convsStorage.getByRemoteId _)
+      .expects(rConvId)
+      .never()
+
+    val convInfo = result(service.getGuestroomInfo(key, code))
+
+    convInfo shouldBe Left(MemberLimitReached)
+  }
+
+  scenario("Get guestroom info returns GeneralError when client returns another error") {
     val key = "join_key"
     val code = "join_code"
     val error = ErrorResponse.InternalError
@@ -977,7 +1016,66 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
     val convInfo = result(service.getGuestroomInfo(key, code))
 
-    convInfo shouldBe Left(error)
+    convInfo shouldBe Left(GeneralError)
+  }
+
+  scenario("Join conversation with key and code") {
+    val key = "join_key"
+    val code = "join_code"
+
+    (convsClient.postJoinConversation _)
+      .expects(key, code)
+      .anyNumberOfTimes()
+      .returning(CancellableFuture.successful(Right(())))
+
+    val convInfo = result(service.joinConversation(key, code))
+
+    convInfo shouldBe Right(())
+  }
+
+  scenario("Join conversation returns NotAllowed when client returns no-conversation-code") {
+    val key = "join_key"
+    val code = "join_code"
+    val error = ErrorResponse(404, "error", "no-conversation-code")
+
+    (convsClient.postJoinConversation _)
+      .expects(key, code)
+      .anyNumberOfTimes()
+      .returning(CancellableFuture.successful(Left(error)))
+
+    val convInfo = result(service.joinConversation(key, code))
+
+    convInfo shouldBe Left(NotAllowed)
+  }
+
+  scenario("Join conversation returns MemberLimitReached when client returns too-many-members") {
+    val key = "join_key"
+    val code = "join_code"
+    val error = ErrorResponse(404, "error", "too-many-members")
+
+    (convsClient.postJoinConversation _)
+      .expects(key, code)
+      .anyNumberOfTimes()
+      .returning(CancellableFuture.successful(Left(error)))
+
+    val convInfo = result(service.joinConversation(key, code))
+
+    convInfo shouldBe Left(MemberLimitReached)
+  }
+
+  scenario("Join conversation returns GeneralError when client returns another error") {
+    val key = "join_key"
+    val code = "join_code"
+    val error = ErrorResponse.InternalError
+
+    (convsClient.postJoinConversation _)
+      .expects(key, code)
+      .anyNumberOfTimes()
+      .returning(CancellableFuture.successful(Left(error)))
+
+    val convInfo = result(service.joinConversation(key, code))
+
+    convInfo shouldBe Left(GeneralError)
   }
 
 }

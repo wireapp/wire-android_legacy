@@ -27,8 +27,9 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.FragmentManager
 import com.waz.content.UserPreferences.{CrashesAndAnalyticsRequestShown, TrackingEnabled}
 import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.model.GuestRoomStateError.{GeneralError, MemberLimitReached, NotAllowed}
 import com.waz.model.GuestRoomInfo.{ExistingConversation, Overview}
-import com.waz.model.{ConvId, ErrorData, JoinConversationResult, Uid}
+import com.waz.model.{ConvId, ErrorData, GuestRoomStateError, Uid}
 import com.waz.permissions.PermissionsService
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{AccountManager, GlobalModule, NetworkModeService, ZMessaging}
@@ -199,7 +200,7 @@ class MainPhoneFragment extends FragmentHelper
                                                           case true  => joinConversation(key, code)
                                                           case false =>
                                                         }
-          case Left(errorResponse)                   => /*TODO show error pop up*/
+          case Left(error) => showGuestRoomErrorDialog(error)
         }
         deepLinkService.deepLink ! None
 
@@ -240,15 +241,19 @@ class MainPhoneFragment extends FragmentHelper
     )
 
   private def joinConversation(key: String, code: String): Future[Unit] = {
-    import JoinConversationResult._
-    //TODO: copies aren't final, we're probably gonna have titles too..
     conversationController.joinConversation(key, code).flatMap {
-      case Success            => /*TODO Open new conv. */ Future.successful(())
-      case CannotJoin         => showErrorDialog(headerText = null, msg = getString(R.string.join_conversation_cannot_join_error))
-      case MemberLimitReached => showErrorDialog(headerText = null, msg = getString(R.string.join_conversation_member_limit_reached_error))
-      case GeneralError(_)    => showGenericErrorDialog()
+      case Right(_)    => /*TODO Open new conv. */ Future.successful(())
+      case Left(error) => showGuestRoomErrorDialog(error)
     }
   }
+
+  //TODO: copies aren't final, we're probably gonna have titles too..
+  private def showGuestRoomErrorDialog(error: GuestRoomStateError): Future[Unit] =
+    error match {
+      case NotAllowed         => showErrorDialog(headerText = null, msg = getString(R.string.join_conversation_cannot_join_error))
+      case MemberLimitReached => showErrorDialog(headerText = null, msg = getString(R.string.join_conversation_member_limit_reached_error))
+      case GeneralError       => showGenericErrorDialog()
+    }
 
   private def initShortcutDestinations(): Unit = {
     //Only for internal builds for now, will be for production when approved by QA.
