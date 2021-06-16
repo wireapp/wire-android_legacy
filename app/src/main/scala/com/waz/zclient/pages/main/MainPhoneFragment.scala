@@ -27,7 +27,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.FragmentManager
 import com.waz.content.UserPreferences.{CrashesAndAnalyticsRequestShown, TrackingEnabled}
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.model.{ErrorData, Uid}
+import com.waz.model.{ConvId, ConversationOverview, ErrorData, ExistingConversation, Uid}
 import com.waz.permissions.PermissionsService
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{AccountManager, GlobalModule, NetworkModeService, ZMessaging}
@@ -183,13 +183,7 @@ class MainPhoneFragment extends FragmentHelper
         deepLinkService.deepLink ! None
 
       case OpenDeepLink(ConversationToken(convId), _) =>
-        pickUserController.hideUserProfile()
-        participantsController.onLeaveParticipants ! true
-        participantsController.selectedParticipant ! None
-
-        CancellableFuture.delay(750.millis).map { _ =>
-          conversationController.switchConversation(convId)
-        }
+        openConversationFromDeepLink(convId)
         deepLinkService.deepLink ! None
 
       case DoNotOpenDeepLink(Conversation, reason) =>
@@ -198,7 +192,11 @@ class MainPhoneFragment extends FragmentHelper
         deepLinkService.deepLink ! None
 
       case OpenDeepLink(JoinConversationToken(key, code), _) =>
-        //TODO: Join conversation & open it
+        conversationController.getGuestroomInfo(key, code).foreach {
+          case Right(ExistingConversation(convData)) => openConversationFromDeepLink(convData.id)
+          case Right(ConversationOverview(name))     => /*TODO show confirmation pop up*/
+          case Left(errorResponse)                   => /*TODO show error pop up*/
+        }
         deepLinkService.deepLink ! None
 
       case DoNotOpenDeepLink(User, reason) =>
@@ -214,6 +212,16 @@ class MainPhoneFragment extends FragmentHelper
         deepLinkService.deepLink ! None
 
       case _ =>
+    }
+  }
+
+  private def openConversationFromDeepLink(convId: ConvId): Unit = {
+    pickUserController.hideUserProfile()
+    participantsController.onLeaveParticipants ! true
+    participantsController.selectedParticipant ! None
+
+    CancellableFuture.delay(750.millis).map { _ =>
+      conversationController.switchConversation(convId)
     }
   }
 

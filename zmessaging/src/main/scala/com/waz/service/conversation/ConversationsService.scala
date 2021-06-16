@@ -31,7 +31,7 @@ import com.waz.service._
 import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.{NotificationService, PushService}
-import com.waz.sync.client.ConversationsClient.ConversationResponse
+import com.waz.sync.client.ConversationsClient.{ConversationOverviewResponse, ConversationResponse}
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
@@ -74,6 +74,7 @@ trait ConversationsService {
   def conversationName(convId: ConvId): Signal[Name]
   def deleteMembersFromConversations(members: Set[UserId]): Future[Unit]
   def remoteIds: Future[Set[RConvId]]
+  def getGuestroomInfo(key: String, code: String): ErrorOr[GuestRoomInfo]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -557,7 +558,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       else Future.successful(())
     }
 
-  def onMemberAddFailed(conv: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse) =
+  def onMemberAddFailed(conv: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse): Future[Unit] =
     for {
       _ <- err.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, conv, users)).map(_ => ()))
       _ <- membersStorage.remove(conv, users)
@@ -588,12 +589,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   override def isGroupConversation(convId: ConvId): Future[Boolean] = groupConversation(convId).head
 
-  def isWithService(convId: ConvId) =
+  def isWithService(convId: ConvId): Future[Boolean] =
     membersStorage.getActiveUsers(convId)
       .flatMap(usersStorage.getAll)
       .map(_.flatten.exists(_.isWireBot))
 
-  def setToTeamOnly(convId: ConvId, teamOnly: Boolean) =
+  def setToTeamOnly(convId: ConvId, teamOnly: Boolean): ErrorOr[Unit] =
     teamId match {
       case None => Future.successful(Left(ErrorResponse.internalError("Private accounts can't be set to team-only or guest room access modes")))
       case Some(_) =>
@@ -618,7 +619,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         }
     }
 
-  override def createLink(convId: ConvId) =
+  override def createLink(convId: ConvId): ErrorOr[Link] =
     (for {
       Some(conv) <- content.convById(convId) if conv.isGuestRoom || conv.isWirelessLegacy
       modeResp   <- if (conv.isWirelessLegacy) setToTeamOnly(convId, teamOnly = false) else Future.successful(Right({})) //upgrade legacy convs
@@ -637,7 +638,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
           Left(ErrorResponse.internalError("Unable to create link for conversation"))
       }
 
-  override def removeLink(convId: ConvId) =
+  override def removeLink(convId: ConvId): ErrorOr[Unit] =
     (for {
       Some(conv) <- content.convById(convId)
       resp       <- client.removeLink(conv.remoteId).future
@@ -671,6 +672,17 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _        <- membersStorage.updateOrCreate(convId, userId, newRole)
       _        <- sync.postConversationRole(convId, userId, newRole, origRole.getOrElse(ConversationRole.MemberRole))
     } yield ()
+
+  override def getGuestroomInfo(key: String, code: String): ErrorOr[GuestRoomInfo] =
+    client.getGuestroomOverview(key, code).future.flatMap {
+      case Right(ConversationOverviewResponse(rConvId, name)) =>
+        convsStorage.getByRemoteId(rConvId).map {
+          case Some(conversationData) => Right(ExistingConversation(conversationData))
+          case None                   => Right(ConversationOverview(name))
+        }
+
+      case Left(error) => Future.successful(Left(error))
+    }
 }
 
 object ConversationsService {

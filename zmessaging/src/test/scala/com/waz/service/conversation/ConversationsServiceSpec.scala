@@ -18,6 +18,7 @@
 package com.waz.service.conversation
 
 import com.waz.api.Message
+import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.ConversationData.ConversationType
@@ -28,8 +29,8 @@ import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.{NotificationService, PushService}
 import com.waz.service.teams.{TeamsService, TeamsServiceImpl}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.client.ConversationsClient
-import com.waz.sync.client.ConversationsClient.ConversationResponse
+import com.waz.sync.client.{ConversationsClient, ErrorOr, ErrorOrResponse}
+import com.waz.sync.client.ConversationsClient.{ConversationOverviewResponse, ConversationResponse}
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
 import com.wire.signals.{CancellableFuture, EventStream, Signal, SourceSignal}
@@ -894,6 +895,89 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       result(members.head.map(_.head.userId)) shouldEqual selfUserId
       result(service.conversationName(convId).head) shouldEqual user2.name
     }
+  }
+
+  feature("Join Guestroom Conversation") {
+
+    scenario("Parse conversation overview response") {
+      val rConvId = RConvId("remote-conv-id")
+      val convName = "Test Squad Meeting"
+      val jsonStr =
+        s"""
+           |{
+           | "id": "${rConvId.str}",
+           | "name": "$convName"
+           |}
+        """.stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      val response: ConversationOverviewResponse = ConversationOverviewResponse.Decoder(jsonObject)
+
+      response.id shouldBe rConvId
+      response.name shouldBe convName
+    }
+  }
+
+  scenario("Get guestroom info for already joined conversation") {
+    val key = "join_key"
+    val code = "join_code"
+    val convName = "Services Squad Conv"
+    val response = ConversationOverviewResponse(rConvId, convName)
+
+    (convsClient.getGuestroomOverview _)
+      .expects(key, code)
+      .anyNumberOfTimes()
+      .returning(CancellableFuture.successful(Right(response)))
+
+    val conversationData = ConversationData()
+    (convsStorage.getByRemoteId _)
+      .expects(rConvId)
+      .anyNumberOfTimes()
+      .returning(Future.successful(Some(conversationData)))
+
+    val convInfo = result(service.getGuestroomInfo(key, code))
+
+    convInfo shouldBe Right(ExistingConversation(conversationData))
+  }
+
+  scenario("Get guestroom info for new conversation") {
+    val key = "join_key"
+    val code = "join_code"
+    val convName = "Services Squad Conv"
+    val response = ConversationOverviewResponse(rConvId, convName)
+
+    (convsClient.getGuestroomOverview _)
+      .expects(key, code)
+      .anyNumberOfTimes()
+      .returning(CancellableFuture.successful(Right(response)))
+
+    (convsStorage.getByRemoteId _)
+      .expects(rConvId)
+      .anyNumberOfTimes()
+      .returning(Future.successful(None))
+
+    val convInfo = result(service.getGuestroomInfo(key, code))
+
+    convInfo shouldBe Right(ConversationOverview(convName))
+  }
+
+  scenario("Get guestroom info returns error") {
+    val key = "join_key"
+    val code = "join_code"
+    val error = ErrorResponse.InternalError
+
+    (convsClient.getGuestroomOverview _)
+      .expects(key, code)
+      .anyNumberOfTimes()
+      .returning(CancellableFuture.successful(Left(error)))
+
+    (convsStorage.getByRemoteId _)
+      .expects(rConvId)
+      .never()
+
+    val convInfo = result(service.getGuestroomInfo(key, code))
+
+    convInfo shouldBe Left(error)
   }
 
 }
