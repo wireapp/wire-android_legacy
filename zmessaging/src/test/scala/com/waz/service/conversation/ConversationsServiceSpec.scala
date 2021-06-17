@@ -1019,18 +1019,18 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     convInfo shouldBe Left(GeneralError)
   }
 
-  scenario("Join conversation with key and code") {
+  scenario("Join conversation returns None when client returns None") {
     val key = "join_key"
     val code = "join_code"
 
     (convsClient.postJoinConversation _)
       .expects(key, code)
       .anyNumberOfTimes()
-      .returning(CancellableFuture.successful(Right(())))
+      .returning(CancellableFuture.successful(Right(None)))
 
     val convInfo = result(service.joinConversation(key, code))
 
-    convInfo shouldBe Right(())
+    convInfo shouldBe Right(None)
   }
 
   scenario("Join conversation returns NotAllowed when client returns no-conversation-code") {

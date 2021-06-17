@@ -58,7 +58,7 @@ trait ConversationsClient {
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
   def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
   def getGuestroomOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse]
-  def postJoinConversation(key: String, code: String): ErrorOrResponse[Unit]
+  def postJoinConversation(key: String, code: String): ErrorOrResponse[Option[MemberJoinEvent]]
 }
 
 class ConversationsClientImpl(implicit
@@ -268,13 +268,22 @@ class ConversationsClientImpl(implicit
       .executeSafe
   }
 
-  override def postJoinConversation(key: String, code: String): ErrorOrResponse[Unit] = {
+  private implicit val MemberJoinEventDeserializer: RawBodyDeserializer[Option[MemberJoinEvent]] =
+    RawBodyDeserializer[JSONObject].map { json =>
+      val convEvent = EventsResponse.unapply(JsonObjectResponse(json)).get
+      convEvent match {
+        case event: MemberJoinEvent => Some(event)
+        case _                      => None
+      }
+    }
+
+  override def postJoinConversation(key: String, code: String): ErrorOrResponse[Option[MemberJoinEvent]] = {
     verbose(l"postJoinConversation($key, $code)")
     Request.Post(
       relativePath = JoinConversationPath,
       body = Json("key" -> key, "code" -> code)
     )
-      .withResultType[Unit]
+      .withResultType[Option[MemberJoinEvent]]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
@@ -405,6 +414,17 @@ object ConversationsClient {
         case JsonObjectResponse(js) if js.has("events") => Some(array[ConversationEvent](js.getJSONArray("events")).toList)
         case JsonArrayResponse(js) => Some(array[ConversationEvent](js).toList)
         case JsonObjectResponse(js) => Some(List(implicitly[JsonDecoder[ConversationEvent]].apply(js)))
+        case _ => None
+      }
+    } catch {
+      case NonFatal(e) =>
+        warn(l"couldn't parse events response", e)
+        None
+    }
+
+    def unapply(response: ResponseContent): Option[ConversationEvent] = try {
+      response match {
+        case JsonObjectResponse(js) => Some(implicitly[JsonDecoder[ConversationEvent]].apply(js))
         case _ => None
       }
     } catch {
