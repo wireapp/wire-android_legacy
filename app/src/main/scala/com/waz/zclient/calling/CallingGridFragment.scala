@@ -36,7 +36,7 @@ import com.xuliwen.zoom.ZoomLayout
 import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 import com.waz.zclient.R
 import com.waz.zclient.calling.CallingGridFragment.PAGINATION_BUNDLE_KEY
-import com.waz.zclient.calling.CallingGridAdapter.MAX_PARTICIPANTS_PER_PAGE
+import com.waz.zclient.calling.AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE
 import com.waz.zclient.utils.RichView
 
 
@@ -67,13 +67,12 @@ class CallingGridFragment extends FragmentHelper {
   }
 
   private def initPageNumber(): Unit = {
-    val bundle = this.getArguments
-    if (bundle != null) {
+    Option(getArguments).foreach { bundle =>
       pageNumber = bundle.getInt(PAGINATION_BUNDLE_KEY)
     }
   }
 
-  private def initZoomLayout(): Unit = {
+  private def initZoomLayout(): Unit =
     zoomLayout.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
 
       override def onDoubleTap(): Unit = {}
@@ -84,7 +83,6 @@ class CallingGridFragment extends FragmentHelper {
 
       override def onScaleGestureBegin(): Unit = {}
     }))
-  }
 
   private def initCallingGrid(): Unit = {
 
@@ -115,14 +113,13 @@ class CallingGridFragment extends FragmentHelper {
     }
   }
 
-  private def observeParticipantsCount(): Unit = {
+  private def observeParticipantsCount(): Unit =
     callController.allParticipants.map(_.size).onUi {
       case NbParticipantsOneOneCall =>
         enableZooming()
         displayPinchToZoomIndication()
       case _ => disableZooming()
     }
-  }
 
   private def enableZooming(): Unit = zoomLayout.foreach(_.setEnabled(true))
 
@@ -166,7 +163,6 @@ class CallingGridFragment extends FragmentHelper {
           case (v1, v2) =>
             infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
         }.take(MaxAllVideoPreviews)
-
 
     gridViews.zipWithIndex.foreach { case (userVideoView, index) =>
       val (row, col, span, width) = index match {
@@ -230,7 +226,6 @@ class CallingGridFragment extends FragmentHelper {
 
     participantsToShow.map { participant => viewMap.getOrElse(participant, createView(participant)) }
   }
-
 
   private def clearVideoGrid(): Unit = {
     videoGrid.foreach(_.removeAllViews())
