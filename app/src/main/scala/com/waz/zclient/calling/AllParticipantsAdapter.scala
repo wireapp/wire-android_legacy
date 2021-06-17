@@ -24,18 +24,16 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.calling.controllers.CallController
 import com.wire.signals.EventContext
-import com.waz.zclient.calling.CallingGridAdapter.MAX_PARTICIPANTS_PER_PAGE
+import com.waz.zclient.calling.AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE
 
-class CallingGridAdapter(implicit context: Context, eventContext: EventContext, inj: Injector, fragment: Fragment)
+class AllParticipantsAdapter(implicit context: Context, eventContext: EventContext, inj: Injector, fragment: Fragment)
   extends FragmentStateAdapter(fragment) with Injectable with DerivedLogTag {
 
-  private lazy val callController = inject[CallController]
+  private val callController = inject[CallController]
 
-  var numberOfParticipants : Int = callController.allParticipants.map(_.size).currentValue.getOrElse(0)
+  var numberOfParticipants : Int = 0
 
-  callController.allParticipants.map(_.size).onChanged.foreach { it =>
-    numberOfParticipants = it
-  }
+  callController.allParticipants.map(_.size).foreach { numberOfParticipants = _ }
 
   override def getItemCount(): Int = if (numberOfParticipants == 0) 0
   else if (numberOfParticipants % MAX_PARTICIPANTS_PER_PAGE == 0) numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE
@@ -45,6 +43,6 @@ class CallingGridAdapter(implicit context: Context, eventContext: EventContext, 
 
 }
 
-object CallingGridAdapter {
+object AllParticipantsAdapter {
   val MAX_PARTICIPANTS_PER_PAGE = 8
 }
