@@ -40,17 +40,20 @@ import androidx.viewpager2.widget.ViewPager2
 
 class NewCallingFragment extends FragmentHelper {
 
-  private lazy val controlsFragment         = ControlsFragment.newInstance
-  private lazy val callController           = inject[CallController]
-  private lazy val previewCardView          = view[CardView](R.id.preview_card_view)
-  private lazy val noActiveSpeakersLayout   = view[LinearLayout](R.id.no_active_speakers_layout)
-  private lazy val parentLayout             = view[FrameLayout](R.id.parent_layout)
-  private lazy val viewPager                = view[ViewPager2](R.id.view_pager)
-  private lazy val videoPreview             = new VideoPreview(getContext) { preview =>
+  implicit val fragment = this
+
+  private lazy val controlsFragment          = ControlsFragment.newInstance
+  private lazy val callController            = inject[CallController]
+  private lazy val previewCardView           = view[CardView](R.id.preview_card_view)
+  private lazy val noActiveSpeakersLayout    = view[LinearLayout](R.id.no_active_speakers_layout)
+  private lazy val parentLayout              = view[FrameLayout](R.id.parent_layout)
+  private lazy val viewPager                 = view[ViewPager2](R.id.view_pager)
+  private lazy val allParticipantsAdapter    = new AllParticipantsAdapter()
+  private lazy val activeParticipantsAdapter = new ActiveParticipantsAdapter()
+  private lazy val videoPreview              = new VideoPreview(getContext) { preview =>
     preview.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     preview.setElevation(0)
   }
-
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_new_calling, container, false)) { v =>
@@ -181,10 +184,6 @@ class NewCallingFragment extends FragmentHelper {
   }
 
   private def initCallingGridViewPager(): Unit = {
-    implicit val fragment = this
-
-    val allParticipantsAdapter = new AllParticipantsAdapter()
-    val activeParticipantsAdapter = new ActiveParticipantsAdapter()
 
     Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)).onUi {
       case (false, _) =>
