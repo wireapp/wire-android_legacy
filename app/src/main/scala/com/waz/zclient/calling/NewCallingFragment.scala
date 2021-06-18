@@ -183,13 +183,14 @@ class NewCallingFragment extends FragmentHelper {
   private def initCallingGridViewPager(): Unit = {
     implicit val fragment = this
 
+    val allParticipantsAdapter = new AllParticipantsAdapter()
+    val activeParticipantsAdapter = new ActiveParticipantsAdapter()
+
     Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)).onUi {
       case (false, _) =>
-        val allParticipantsAdapter = new AllParticipantsAdapter()
         viewPager.foreach(_.setAdapter(allParticipantsAdapter))
         allParticipantsAdapter.notifyDataSetChanged()
       case (true, _) =>
-        val activeParticipantsAdapter = new ActiveParticipantsAdapter()
         viewPager.foreach(_.setAdapter(activeParticipantsAdapter))
         activeParticipantsAdapter.notifyDataSetChanged()
     }
