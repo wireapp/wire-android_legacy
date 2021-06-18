@@ -699,7 +699,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
-  override def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]] = {
+  override def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]] =
     client.postJoinConversation(key, code).future.flatMap {
       case Right(Some(event: MemberJoinEvent)) =>
         for {
@@ -715,7 +715,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         warn(l"joinConversation(key: $key, code: $code) error: $error")
         Future.successful(Left(GeneralError))
     }
-  }
 }
 
 object ConversationsService {
