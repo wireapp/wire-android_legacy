@@ -242,8 +242,9 @@ class MainPhoneFragment extends FragmentHelper
 
   private def joinConversation(key: String, code: String): Future[Unit] = {
     conversationController.joinConversation(key, code).flatMap {
-      case Right(_)    => /*TODO Open new conv. */ Future.successful(())
-      case Left(error) => showGuestRoomErrorDialog(error)
+      case Right(Some(convId)) => Future.successful(openConversationFromDeepLink(convId))
+      case Right(None)         => showGenericErrorDialog()
+      case Left(error)         => showGuestRoomErrorDialog(error)
     }
   }
 

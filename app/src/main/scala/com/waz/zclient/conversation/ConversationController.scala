@@ -413,7 +413,7 @@ class ConversationController(implicit injector: Injector, context: Context)
   def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]] =
     conversations.head.flatMap(_.getGuestroomInfo(key, code))
 
-  def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Unit]] =
+  def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]] =
     conversations.head.flatMap(_.joinConversation(key, code))
 
   object messages {

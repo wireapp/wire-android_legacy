@@ -37,16 +37,15 @@ import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.wire.signals.{AggregatingSignal, EventContext, Signal}
+import com.wire.signals.{AggregatingSignal, Signal}
 
 import scala.collection.{breakOut, mutable}
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
-import scala.util.control.{NoStackTrace, NonFatal}
+import scala.util.control.NonFatal
 
 trait ConversationsService {
   def convStateEventProcessingStage: EventScheduler.Stage.Atomic
-  def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
   def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
   def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]]
   def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit]
@@ -76,7 +75,7 @@ trait ConversationsService {
   def deleteMembersFromConversations(members: Set[UserId]): Future[Unit]
   def remoteIds: Future[Set[RConvId]]
   def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]]
-  def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Unit]]
+  def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -167,7 +166,16 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       } yield ()
   }
 
-  def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {
+  /**
+   *
+   * @param ev event to process
+   * @param selfUserId user id of the current user
+   * @param retryCount number of retries so far
+   * @param selfRequested true if this method is triggered by ourselves,
+   *                      false if it is triggered by an event via backend.
+   * @return
+   */
+  private def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0, selfRequested: Boolean = false) = ev match {
     case CreateConversationEvent(_, time, from, data) =>
       updateConversation(data).flatMap { case (_, created) => Future.traverse(created) { created =>
         messages.addConversationStartMessage(
@@ -186,7 +194,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         case None if retryCount > 3 => successful(())
         case None =>
           ev match {
-            case MemberJoinEvent(_, time, from, ids, us, _) if from != selfUserId =>
+            case MemberJoinEvent(_, time, from, ids, us, _) if selfRequested || from != selfUserId =>
               // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
               val membersWithRoles = us ++ ids.map(_ -> ConversationRole.MemberRole).toMap
               // this happens when we are added to group conversation
@@ -691,16 +699,22 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
-  override def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Unit]] = {
-    client.postJoinConversation(key, code).future.map {
-      case Right(_)                                          => Right(())
-      case Left(ErrorResponse(_, _, "no-conversation-code")) => Left(NotAllowed)
-      case Left(ErrorResponse(_, _, "too-many-members"))     => Left(MemberLimitReached)
+  override def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]] =
+    client.postJoinConversation(key, code).future.flatMap {
+      case Right(Some(event: MemberJoinEvent)) =>
+        for {
+          _     <- processConversationEvent(event, selfUserId, selfRequested = true)
+          conv  <- convsStorage.getByRemoteId(event.convId)
+        } yield Right(conv.map(_.id))
+
+      case Right(_) => Future.successful(Right(None))
+
+      case Left(ErrorResponse(_, _, "no-conversation-code")) => Future.successful(Left(NotAllowed))
+      case Left(ErrorResponse(_, _, "too-many-members"))     => Future.successful(Left(MemberLimitReached))
       case Left(error) =>
         warn(l"joinConversation(key: $key, code: $code) error: $error")
-        Left(GeneralError)
+        Future.successful(Left(GeneralError))
     }
-  }
 }
 
 object ConversationsService {
