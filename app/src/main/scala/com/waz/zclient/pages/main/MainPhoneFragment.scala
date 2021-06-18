@@ -232,10 +232,11 @@ class MainPhoneFragment extends FragmentHelper
 
   private def confirmJoiningNewConversation(convName: String): Future[Boolean] =
     accentColorController.accentColor.head.flatMap(color =>
-      //TODO: copies aren't final, we're probably gonna have titles too..
       showConfirmationDialog(
         null,
         getString(R.string.join_conversation_confirmation_message, convName),
+        R.string.join_conversation_confirmation_join_button_text,
+        R.string.join_conversation_confirmation_cancel_button_text,
         color
       )
     )
@@ -248,12 +249,17 @@ class MainPhoneFragment extends FragmentHelper
     }
   }
 
-  //TODO: copies aren't final, we're probably gonna have titles too..
   private def showGuestRoomErrorDialog(error: GuestRoomStateError): Future[Unit] =
     error match {
-      case NotAllowed         => showErrorDialog(headerText = null, msg = getString(R.string.join_conversation_cannot_join_error))
-      case MemberLimitReached => showErrorDialog(headerText = null, msg = getString(R.string.join_conversation_member_limit_reached_error))
-      case GeneralError       => showGenericErrorDialog()
+      case NotAllowed =>
+        showErrorDialog(
+          headerText = getString(R.string.join_conversation_conversation_join_error_title),
+          msg = getString(R.string.join_conversation_invalid_link_error_message))
+      case MemberLimitReached =>
+        showErrorDialog(
+          headerText = getString(R.string.join_conversation_conversation_join_error_title),
+          msg = getString(R.string.join_conversation_member_limit_reached_error_message))
+      case GeneralError => showGenericErrorDialog()
     }
 
   private def initShortcutDestinations(): Unit = {
