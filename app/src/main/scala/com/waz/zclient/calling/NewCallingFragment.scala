@@ -36,24 +36,30 @@ import com.waz.zclient.utils.RichView
 import com.wire.signals.Signal
 import Threading.Implicits.Ui
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.{TabLayout, TabLayoutMediator}
 
 
 class NewCallingFragment extends FragmentHelper {
 
   implicit val fragment = this
-
   private lazy val controlsFragment          = ControlsFragment.newInstance
   private lazy val callController            = inject[CallController]
   private lazy val previewCardView           = view[CardView](R.id.preview_card_view)
   private lazy val noActiveSpeakersLayout    = view[LinearLayout](R.id.no_active_speakers_layout)
   private lazy val parentLayout              = view[FrameLayout](R.id.parent_layout)
   private lazy val viewPager                 = view[ViewPager2](R.id.view_pager)
+  private lazy val tabLayout                 = view[TabLayout](R.id.tab_layout)
   private lazy val allParticipantsAdapter    = new AllParticipantsAdapter()
   private lazy val activeParticipantsAdapter = new ActiveParticipantsAdapter()
   private lazy val videoPreview              = new VideoPreview(getContext) { preview =>
     preview.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     preview.setElevation(0)
   }
+
+  private lazy val tabLayoutMediator: TabLayoutMediator =
+    new TabLayoutMediator(tabLayout.get, viewPager.get, new TabLayoutMediator.TabConfigurationStrategy() {
+      override def onConfigureTab(tab: TabLayout.Tab, position: Int): Unit = {}
+    })
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_new_calling, container, false)) { v =>
@@ -191,13 +197,17 @@ class NewCallingFragment extends FragmentHelper {
     Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)).onUi {
       case (false, _) =>
         viewPager.foreach(_.setAdapter(allParticipantsAdapter))
+        showPaginationDots()
         allParticipantsAdapter.notifyDataSetChanged()
       case (true, _) =>
         viewPager.foreach(_.setAdapter(activeParticipantsAdapter))
+        hidePaginationDots()
         activeParticipantsAdapter.notifyDataSetChanged()
     }
   }
 
+  private def showPaginationDots(): Unit = tabLayoutMediator.attach()
+  private def hidePaginationDots(): Unit = tabLayoutMediator.detach()
 }
 
 object NewCallingFragment {
