@@ -158,7 +158,7 @@ class NewCallingFragment extends FragmentHelper {
         val selfVideoView = new SelfVideoView(getContext, selfParticipant)
 
         previewCardView.foreach { cardView =>
-          if (!showTopSpeakers && participantsCount == 2 ) {
+          if (!showTopSpeakers && participantsCount == 2) {
             showFloatingSelfPreview(selfVideoView, cardView)
           } else {
             hideFloatingSelfPreview(cardView)
@@ -189,25 +189,28 @@ class NewCallingFragment extends FragmentHelper {
     cardView.setVisibility(View.GONE)
   }
 
-  private def initCallingGridViewPager(): Unit = {
-
-    val allParticipantsAdapter = new AllParticipantsAdapter()
-    val activeParticipantsAdapter = new ActiveParticipantsAdapter()
-
-    Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)).onUi {
-      case (false, _) =>
+  private def initCallingGridViewPager(): Unit =
+    Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)
+    ).onUi {
+      case (false, size) =>
+        if (size > AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE) showPaginationDots() else hidePaginationDots()
         viewPager.foreach(_.setAdapter(allParticipantsAdapter))
-        showPaginationDots()
         allParticipantsAdapter.notifyDataSetChanged()
+        attachTabLayoutToViewPager()
       case (true, _) =>
         viewPager.foreach(_.setAdapter(activeParticipantsAdapter))
-        hidePaginationDots()
         activeParticipantsAdapter.notifyDataSetChanged()
+        detachTabLayoutFromViewPager()
+        hidePaginationDots()
     }
-  }
 
-  private def showPaginationDots(): Unit = tabLayoutMediator.attach()
-  private def hidePaginationDots(): Unit = tabLayoutMediator.detach()
+  private def attachTabLayoutToViewPager(): Unit = tabLayoutMediator.attach()
+
+  private def detachTabLayoutFromViewPager(): Unit = tabLayoutMediator.detach()
+
+  private def showPaginationDots(): Unit = tabLayout.foreach(_.setVisible(true))
+
+  private def hidePaginationDots(): Unit = tabLayout.foreach(_.setVisible(false))
 }
 
 object NewCallingFragment {

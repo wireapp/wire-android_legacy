@@ -32,16 +32,17 @@
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:elevation="1dp"
-        android:layout_gravity="center|right"
+        android:layout_gravity="center_vertical|end"
         app:tabBackground="@drawable/pagination_tab_selector"
         app:tabGravity="center"
         app:tabIndicatorHeight="0dp"
         app:tabSelectedTextColor="@android:color/transparent"
         app:tabTextColor="@android:color/transparent"
         android:orientation="vertical"
+        android:rotation="90"
         />
 
     <LinearLayout
