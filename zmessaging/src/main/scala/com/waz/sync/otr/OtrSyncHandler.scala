@@ -23,7 +23,6 @@ import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE.{error, _}
-import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.GenericContent.{ClientAction, External}
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -112,7 +111,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
         recipients <- clientsMap(targetRecipients, convId)
         content    <- service.encryptMessage(msg, recipients, retries > 0, previous)
-        resp       <- if (content.estimatedSize < MaxContentSize) {
+        resp       <- if (external.isDefined || content.estimatedSize < MaxContentSize) {
                         val (shouldIgnoreMissingClients, targetUsers) = missingClientsStrategy(targetRecipients) match {
                           case DoNotIgnoreMissingClients                    => (false, None)
                           case IgnoreMissingClientsExceptFromUsers(userIds) => (false, Some(userIds))

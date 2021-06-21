@@ -39,7 +39,7 @@ import scala.concurrent.Future
 import scala.util.Try
 
 trait CryptoBoxService {
-  val sessions: CryptoSessionService
+  def sessions: CryptoSessionService
   def cryptoBox: Future[Option[CryptoBox]]
   def apply[A](f: CryptoBox => Future[A]): Future[Option[A]]
   def deleteCryptoBox(): Future[Unit]
