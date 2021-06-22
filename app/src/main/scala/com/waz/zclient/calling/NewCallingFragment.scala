@@ -193,10 +193,10 @@ class NewCallingFragment extends FragmentHelper {
     Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)
     ).onUi {
       case (false, size) =>
-        if (size > AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE) showPaginationDots() else hidePaginationDots()
         viewPager.foreach(_.setAdapter(allParticipantsAdapter))
         allParticipantsAdapter.notifyDataSetChanged()
         attachTabLayoutToViewPager()
+        if (size > AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE) showPaginationDots() else hidePaginationDots()
       case (true, _) =>
         viewPager.foreach(_.setAdapter(activeParticipantsAdapter))
         activeParticipantsAdapter.notifyDataSetChanged()
