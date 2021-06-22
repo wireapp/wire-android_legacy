@@ -36,24 +36,30 @@ import com.waz.zclient.utils.RichView
 import com.wire.signals.Signal
 import Threading.Implicits.Ui
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.{TabLayout, TabLayoutMediator}
 
 
 class NewCallingFragment extends FragmentHelper {
 
   implicit val fragment = this
-
   private lazy val controlsFragment          = ControlsFragment.newInstance
   private lazy val callController            = inject[CallController]
   private lazy val previewCardView           = view[CardView](R.id.preview_card_view)
   private lazy val noActiveSpeakersLayout    = view[LinearLayout](R.id.no_active_speakers_layout)
   private lazy val parentLayout              = view[FrameLayout](R.id.parent_layout)
   private lazy val viewPager                 = view[ViewPager2](R.id.view_pager)
+  private lazy val tabLayout                 = view[TabLayout](R.id.tab_layout)
   private lazy val allParticipantsAdapter    = new AllParticipantsAdapter()
   private lazy val activeParticipantsAdapter = new ActiveParticipantsAdapter()
   private lazy val videoPreview              = new VideoPreview(getContext) { preview =>
     preview.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     preview.setElevation(0)
   }
+
+  private lazy val tabLayoutMediator: TabLayoutMediator =
+    new TabLayoutMediator(tabLayout.get, viewPager.get, new TabLayoutMediator.TabConfigurationStrategy() {
+      override def onConfigureTab(tab: TabLayout.Tab, position: Int): Unit = {}
+    })
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_new_calling, container, false)) { v =>
@@ -152,7 +158,7 @@ class NewCallingFragment extends FragmentHelper {
         val selfVideoView = new SelfVideoView(getContext, selfParticipant)
 
         previewCardView.foreach { cardView =>
-          if (!showTopSpeakers && participantsCount == 2 ) {
+          if (!showTopSpeakers && participantsCount == 2) {
             showFloatingSelfPreview(selfVideoView, cardView)
           } else {
             hideFloatingSelfPreview(cardView)
@@ -183,18 +189,28 @@ class NewCallingFragment extends FragmentHelper {
     cardView.setVisibility(View.GONE)
   }
 
-  private def initCallingGridViewPager(): Unit = {
-
-    Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)).onUi {
-      case (false, _) =>
+  private def initCallingGridViewPager(): Unit =
+    Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)
+    ).onUi {
+      case (false, size) =>
         viewPager.foreach(_.setAdapter(allParticipantsAdapter))
         allParticipantsAdapter.notifyDataSetChanged()
+        attachTabLayoutToViewPager()
+        if (size > AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE) showPaginationDots() else hidePaginationDots()
       case (true, _) =>
         viewPager.foreach(_.setAdapter(activeParticipantsAdapter))
         activeParticipantsAdapter.notifyDataSetChanged()
+        detachTabLayoutFromViewPager()
+        hidePaginationDots()
     }
-  }
 
+  private def attachTabLayoutToViewPager(): Unit = tabLayoutMediator.attach()
+
+  private def detachTabLayoutFromViewPager(): Unit = tabLayoutMediator.detach()
+
+  private def showPaginationDots(): Unit = tabLayout.foreach(_.setVisible(true))
+
+  private def hidePaginationDots(): Unit = tabLayout.foreach(_.setVisible(false))
 }
 
 object NewCallingFragment {

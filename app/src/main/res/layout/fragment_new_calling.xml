@@ -23,19 +23,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tab_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:elevation="1dp" />
-
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:elevation="1dp"
         android:orientation="vertical" />
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:elevation="1dp"
+        android:layout_gravity="center_vertical|end"
+        app:tabBackground="@drawable/pagination_tab_selector"
+        app:tabGravity="center"
+        app:tabIndicatorHeight="0dp"
+        app:tabSelectedTextColor="@android:color/transparent"
+        app:tabTextColor="@android:color/transparent"
+        android:orientation="vertical"
+        android:rotation="90"
+        />
 
     <LinearLayout
         android:id="@+id/no_active_speakers_layout"
