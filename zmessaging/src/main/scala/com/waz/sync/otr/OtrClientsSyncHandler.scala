@@ -17,10 +17,9 @@
  */
 package com.waz.sync.otr
 
-import android.content.Context
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{OtrClientsStorage, UserPreferences}
+import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.ShouldPostClientCapabilities
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.{Client, ClientId}
@@ -29,7 +28,8 @@ import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr._
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.Success
-import com.waz.sync.client.OtrClient
+import com.waz.sync.client.{ErrorOr, OtrClient}
+import com.wire.cryptobox.PreKey
 
 import scala.collection.immutable.Map
 import scala.concurrent.Future
@@ -173,21 +173,56 @@ class OtrClientsSyncHandlerImpl(selfId:     UserId,
   }
 
   override def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]] =
-    netClient.loadPreKeys(clients).future
-      .flatMap {
-        case Left(error) => Future.successful(Some(error))
-        case Right(us)   =>
-          for {
-            _       <- otrClients.updateUserClients(
-                         us.map { case (uId, cs) => uId -> cs.map { case (id, _) => Client(id, "") } }, replace = false
-                       )
-            prekeys =  us.flatMap { case (u, cs) => cs map { case (c, p) => (SessionId(u, c), p)} }
-            _       <- Future.traverse(prekeys) { case (id, p) => sessions.getOrCreateSession(id, p) }
-            _       <- VerificationStateUpdater.awaitUpdated(selfId)
-          } yield None
-      }.recover {
-        case e: Throwable => Some(ErrorResponse.internalError(e.getMessage))
-      }
+    loadPreKeys(clients).flatMap {
+      case Left(error) => Future.successful(Some(error))
+      case Right(us)   =>
+        for {
+          _       <- otrClients.updateUserClients(
+                       us.map { case (uId, cs) => uId -> cs.map { case (id, _) => Client(id) } }, replace = false
+                     )
+          prekeys =  us.flatMap { case (u, cs) => cs map { case (c, p) => (SessionId(u, c), p)} }
+          _       <- Future.traverse(prekeys) { case (id, p) => sessions.getOrCreateSession(id, p) }
+          _       <- VerificationStateUpdater.awaitUpdated(selfId)
+        } yield None
+    }.recover {
+      case e: Throwable => Some(ErrorResponse.internalError(e.getMessage))
+    }
 
+  private def loadPreKeys(clients: Map[UserId, Seq[ClientId]]) = {
+    import OtrClientsSyncHandlerImpl.LoadPreKeysMaxClients
+
+    def mapSize(map: Map[UserId, Seq[ClientId]]): Int = map.values.map(_.size).sum
+    def load(map: Map[UserId, Seq[ClientId]]): ErrorOr[Map[UserId, Seq[(ClientId, PreKey)]]] = netClient.loadPreKeys(map).future
+
+    // request accepts up to 128 clients, we should make sure not to send more
+    if (mapSize(clients) < LoadPreKeysMaxClients) load(clients)
+    else {
+      // we divide the original map into a list of chunks, each with at most 127 clients
+      val chunks =
+        clients.foldLeft(List(Map.empty[UserId, Seq[ClientId]])) { case (acc, (userId, clientIds)) =>
+          val currentMap = acc.head
+          if (mapSize(currentMap) + clientIds.size < LoadPreKeysMaxClients)
+            (currentMap + (userId -> clientIds)) :: acc.tail
+          else
+            Map(userId -> clientIds) :: acc
+        }
+
+      // for each chunk we load the prekeys separately and then add them together (unless there's an error response)
+      Future
+        .sequence(chunks.map(load))
+        .map { responses =>
+          responses.find(_.isLeft).getOrElse {
+            Right {
+              responses
+                .collect { case Right(prekeys) => prekeys }
+                .reduce[Map[UserId, Seq[(ClientId, PreKey)]]] { case (p1, p2) => p1 ++ p2 }
+            }
+          }
+        }
+    }
+  }
 }
 
+object OtrClientsSyncHandlerImpl {
+  val LoadPreKeysMaxClients = 128
+}

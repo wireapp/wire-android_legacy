@@ -57,6 +57,7 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_128_TO
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_129_TO_130
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_130_TO_131
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_131_TO_132
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_132_TO_133
 import com.waz.zclient.storage.db.users.model.UsersEntity
 import com.waz.zclient.storage.db.users.service.UsersDao
 
@@ -106,7 +107,7 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun buttonsDao(): ButtonsDao
 
     companion object {
-        const val VERSION = 132
+        const val VERSION = 133
 
         @JvmStatic
         val migrations = arrayOf(
@@ -114,7 +115,8 @@ abstract class UserDatabase : RoomDatabase() {
             USER_DATABASE_MIGRATION_128_TO_129,
             USER_DATABASE_MIGRATION_129_TO_130,
             USER_DATABASE_MIGRATION_130_TO_131,
-            USER_DATABASE_MIGRATION_131_TO_132
+            USER_DATABASE_MIGRATION_131_TO_132,
+            USER_DATABASE_MIGRATION_132_TO_133
         )
     }
 }

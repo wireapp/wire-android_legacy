@@ -30,6 +30,7 @@ import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
+import com.wire.signals.CancellableFuture
 import org.json
 import org.json.JSONObject
 
@@ -56,6 +57,8 @@ trait ConversationsClient {
   def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
   def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
+  def getGuestroomOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse]
+  def postJoinConversation(key: String, code: String): ErrorOrResponse[Option[MemberJoinEvent]]
 }
 
 class ConversationsClientImpl(implicit
@@ -253,11 +256,43 @@ class ConversationsClientImpl(implicit
       .withErrorType[ErrorResponse]
       .executeSafe
   }
+
+  override def getGuestroomOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse] = {
+    verbose(l"getGuestroomOverview($key, $code)")
+    Request.Get(
+      relativePath = JoinConversationPath,
+      queryParameters("key" -> key, "code" -> code)
+    )
+      .withResultType[ConversationOverviewResponse]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
+  private implicit val MemberJoinEventDeserializer: RawBodyDeserializer[Option[MemberJoinEvent]] =
+    RawBodyDeserializer[JSONObject].map { json =>
+      val convEvent = EventsResponse.unapply(JsonObjectResponse(json)).get
+      convEvent match {
+        case event: MemberJoinEvent => Some(event)
+        case _                      => None
+      }
+    }
+
+  override def postJoinConversation(key: String, code: String): ErrorOrResponse[Option[MemberJoinEvent]] = {
+    verbose(l"postJoinConversation($key, $code)")
+    Request.Post(
+      relativePath = JoinConversationPath,
+      body = Json("key" -> key, "code" -> code)
+    )
+      .withResultType[Option[MemberJoinEvent]]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
 }
 
 object ConversationsClient {
   val ConversationsPath = "/conversations"
   val ConversationIdsPath = "/conversations/ids"
+  val JoinConversationPath = "/conversations/join"
   val ConversationsPageSize = 100
   val ConversationIdsPageSize = 1000
   val IdsCountThreshold = 32
@@ -385,6 +420,27 @@ object ConversationsClient {
       case NonFatal(e) =>
         warn(l"couldn't parse events response", e)
         None
+    }
+
+    def unapply(response: ResponseContent): Option[ConversationEvent] = try {
+      response match {
+        case JsonObjectResponse(js) => Some(implicitly[JsonDecoder[ConversationEvent]].apply(js))
+        case _ => None
+      }
+    } catch {
+      case NonFatal(e) =>
+        warn(l"couldn't parse events response", e)
+        None
+    }
+  }
+
+  case class ConversationOverviewResponse(id: RConvId, name: String)
+
+  object ConversationOverviewResponse extends DerivedLogTag {
+    import com.waz.utils.JsonDecoder._
+    implicit lazy val Decoder: JsonDecoder[ConversationOverviewResponse] = new JsonDecoder[ConversationOverviewResponse] {
+      override def apply(implicit js: JSONObject): ConversationOverviewResponse =
+        ConversationOverviewResponse(decodeRConvId('id), decodeString('name))
     }
   }
 }

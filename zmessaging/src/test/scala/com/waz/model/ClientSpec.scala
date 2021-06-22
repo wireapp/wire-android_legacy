@@ -73,7 +73,8 @@ class ClientSpec extends AndroidFreeSpec {
       verified = Verification.VERIFIED,
       deviceClass = DeviceClass.Tablet,
       deviceType = Some(DeviceType.Temporary),
-      regTime = Some(Instant.now())
+      regTime = Some(Instant.now()),
+      isTemporary = true
     )
 
     scenario("Deserialize client from JSON") {
@@ -90,7 +91,8 @@ class ClientSpec extends AndroidFreeSpec {
            |      "verification": "${client.verified.name}",
            |      "class": "${client.deviceClass.value}",
            |      "type": "${client.deviceType.get.value}",
-           |      "regTime": ${client.regTime.get.toEpochMilli}
+           |      "regTime": ${client.regTime.get.toEpochMilli},
+           |      "isTemporary": ${client.isTemporary}
            |    }
            |  ]
            |}
@@ -113,6 +115,7 @@ class ClientSpec extends AndroidFreeSpec {
       decodedClient.deviceClass shouldEqual client.deviceClass
       decodedClient.deviceType shouldEqual client.deviceType
       decodedClient.regTime shouldEqual client.regTime
+      decodedClient.isTemporary shouldEqual true
     }
 
     scenario("Deserialize client from legacy JSON") {
@@ -151,6 +154,7 @@ class ClientSpec extends AndroidFreeSpec {
       decodedClient.deviceClass shouldEqual client.deviceClass
       decodedClient.deviceType shouldEqual None
       decodedClient.regTime shouldEqual client.regTime
+      decodedClient.isTemporary shouldEqual false
     }
 
     scenario("Serialize client to JSON") {
@@ -172,7 +176,8 @@ class ClientSpec extends AndroidFreeSpec {
             |      "verification": "${client.verified.name}",
             |      "class": "${client.deviceClass.value}",
             |      "type": "${client.deviceType.get.value}",
-            |      "regTime": ${client.regTime.get.toEpochMilli}
+            |      "regTime": ${client.regTime.get.toEpochMilli},
+            |      "isTemporary": ${client.isTemporary}
             |    }
             |  ]
             |}""".stripMargin

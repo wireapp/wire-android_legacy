@@ -29,7 +29,7 @@ class PermissionsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   val service = new PermissionsService()
 
-  val requestInput  = new SourceSignal[ListSet[Permission]]
+  val requestInput  = SourceSignal[ListSet[Permission]]()
 
   //Some system permission we haven't yet discovered
   val systemState = Signal(ListSet(

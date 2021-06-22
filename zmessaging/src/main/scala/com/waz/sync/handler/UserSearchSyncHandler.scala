@@ -19,38 +19,21 @@ package com.waz.sync.handler
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.Handle
 import com.waz.service.{SearchQuery, UserSearchService}
 import com.waz.sync.SyncResult
-import com.waz.sync.client.{UserSearchClient, UsersClient}
+import com.waz.sync.client.UserSearchClient
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
 
 class UserSearchSyncHandler(userSearch:  UserSearchService,
-                            client:      UserSearchClient,
-                            usersClient: UsersClient
-                           )
-  extends DerivedLogTag {
-
+                            client:      UserSearchClient) extends DerivedLogTag {
   import Threading.Implicits.Background
 
   def syncSearchQuery(query: SearchQuery): Future[SyncResult] = client.search(query).future.map {
     case Right(results) =>
       debug(l"syncSearchQuery got: ${results.documents.map(_.team)}")
-      userSearch.updateSearchResults(query, results)
-      SyncResult.Success
-    case Left(error) =>
-      SyncResult(error)
-  }
-
-  def exactMatchHandle(handle: Handle): Future[SyncResult] = usersClient.loadByHandle(handle).future.map {
-    case Right(Some(user)) =>
-      debug(l"exactMatchHandle, got: ${user.id} for the handle $handle")
-      userSearch.updateExactMatch(user)
-      SyncResult.Success
-    case Right(None) =>
-      debug(l"exactMatchHandle, No user id for the handle $handle")
+      userSearch.updateSearchResults(results)
       SyncResult.Success
     case Left(error) =>
       SyncResult(error)

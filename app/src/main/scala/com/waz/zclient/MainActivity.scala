@@ -295,7 +295,7 @@ class MainActivity extends BaseActivity
 
   def startFirstFragment(): Unit = {
     verbose(l"startFirstFragment, intent: ${RichIntent(getIntent)}")
-    account.head.flatMap {
+    account.head.foreach {
       case Some(am) =>
         am.getOrRegisterClient().map {
           case Right(Registered(_)) =>

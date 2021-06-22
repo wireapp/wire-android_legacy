@@ -64,7 +64,7 @@ allprojects {
 
 ext {
     largeVideoConferenceCalls = false
-    legalHold = true
+    federationUserDiscovery = false
 }
 
 apply from: "./scripts/avs.gradle"

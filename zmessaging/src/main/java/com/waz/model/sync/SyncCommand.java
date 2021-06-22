@@ -33,6 +33,7 @@ public enum SyncCommand {
     SyncConvLink("sync-conv-link"),
     SyncSearchQuery("sync-search"),
     SyncSearchResults("sync-search-results"),
+    SyncQualifiedSearchResults("sync-qualified-search-results"),
     SyncProperties("sync-properties"),
     ExactMatchHandle("exact-match"),
     PostConv("post-conv"),

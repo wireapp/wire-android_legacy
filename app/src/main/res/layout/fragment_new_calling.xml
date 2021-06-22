@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2021 Wire Swiss GmbH
@@ -19,44 +18,49 @@
 
 -->
 <com.waz.zclient.common.controllers.ThemeControllingFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/parent_layout"
     android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
 
-    <com.xuliwen.zoom.ZoomLayout
-        android:id="@+id/zoom_layout"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:double_click_zoom="1.0"
-        app:max_zoom="10.0"
-        app:min_zoom="1.0"
-        android:elevation="1dp">
+        android:elevation="1dp"
+        android:orientation="vertical" />
 
-        <androidx.gridlayout.widget.GridLayout
-            android:id="@+id/video_grid"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:columnCount="2"
-            app:orientation="horizontal" />
-    </com.xuliwen.zoom.ZoomLayout>
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:elevation="1dp"
+        android:layout_gravity="center_vertical|end"
+        app:tabBackground="@drawable/pagination_tab_selector"
+        app:tabGravity="center"
+        app:tabIndicatorHeight="0dp"
+        app:tabSelectedTextColor="@android:color/transparent"
+        app:tabTextColor="@android:color/transparent"
+        android:orientation="vertical"
+        android:rotation="90"
+        />
 
     <LinearLayout
         android:id="@+id/no_active_speakers_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:elevation="1dp"
         android:orientation="vertical"
-        android:visibility="gone"
-        android:elevation="1dp">
+        android:visibility="gone">
 
         <ProgressBar
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginBottom="@dimen/wire__margin__20"
             android:indeterminate="true"
-            android:indeterminateTint="@color/white"
-            android:layout_marginBottom="@dimen/wire__margin__20"/>
+            android:indeterminateTint="@color/white" />
 
         <TextView
             android:id="@+id/no_active_speakers_text"
@@ -64,8 +68,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:fontFamily="sans-serif"
-            android:textColor="@color/white"
-            android:text="@string/calling_no_active_speakers" />
+            android:text="@string/calling_no_active_speakers"
+            android:textColor="@color/white" />
     </LinearLayout>
 
     <androidx.cardview.widget.CardView
@@ -75,22 +79,21 @@
         android:layout_gravity="end|top"
         android:layout_marginTop="@dimen/wire__margin__huge"
         android:layout_marginEnd="@dimen/wire__margin__24"
-        app:cardCornerRadius="@dimen/calling_preview_card_radius"
-        app:cardElevation="4dp"
-        android:visibility="gone"
         android:elevation="1dp"
-        />
+        android:visibility="gone"
+        app:cardCornerRadius="@dimen/calling_preview_card_radius"
+        app:cardElevation="4dp" />
 
     <FrameLayout
         android:id="@+id/controls_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="2dp"/>
+        android:elevation="2dp" />
 
     <FrameLayout
         android:id="@+id/full_screen_video_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="1dp"/>
+        android:elevation="1dp" />
 
 </com.waz.zclient.common.controllers.ThemeControllingFrameLayout>

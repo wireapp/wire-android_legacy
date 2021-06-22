@@ -82,7 +82,7 @@ class MessageDataSpec extends AndroidFreeSpec {
   // Usefulness of these tests is limited: the default charset for Java and Scala is UTF-16.
   // Only when we're actually on Android, the default charset becomes UTF-8.
   feature("Adjust mentions") {
-   scenario("Adjust a mention in a Latin text to UTF-16") {
+   scenario("Adjust a mention in a Latin text to UTF-16 for sent message") {
       val handle = "@user"
       val text = s"aaa $handle bbb"
       val start = text.indexOf(handle)
@@ -92,7 +92,17 @@ class MessageDataSpec extends AndroidFreeSpec {
       adjusted shouldEqual mentions
     }
 
-    scenario("Adjust two mentions in a Latin text to UTF-16"){
+    scenario("Adjust a mention in a Latin text to UTF-16 for received message") {
+      val handle = "@user"
+      val text = s"aaa $handle bbb"
+      val start = text.indexOf(handle)
+      val mention = Mention(Some(UserId()), start, handle.length)
+      val mentions = Seq(mention)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = false)
+      adjusted shouldEqual mentions
+    }
+
+    scenario("Adjust two mentions in a Latin text to UTF-16 for sent message") {
       val handle1 = "@user1"
       val handle2 = "@user2"
       val text = s"Aaa $handle1 aaa $handle2 aaa"
@@ -103,13 +113,76 @@ class MessageDataSpec extends AndroidFreeSpec {
       adjusted shouldEqual mentions
     }
 
-    scenario("Adjust a mention with an emoji to UTF-16") {
+    scenario("Adjust two mentions in a Latin text to UTF-16 for received message") {
+      val handle1 = "@user1"
+      val handle2 = "@user2"
+      val text = s"Aaa $handle1 aaa $handle2 aaa"
+      val mention1 = Mention(Some(UserId()), text.indexOf(handle1), handle1.length)
+      val mention2 = Mention(Some(UserId()), text.indexOf(handle2), handle2.length)
+      val mentions = Seq(mention1, mention2)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = false)
+      adjusted shouldEqual mentions
+    }
+
+    scenario("Adjust a mention with an emoji to UTF-16 for sent message") {
       val handle = "@user"
       val text = s"aaa 😁 $handle bbb"
       val start = text.indexOf(handle)
       val mention = Mention(Some(UserId()), start, handle.length)
       val mentions = Seq(mention)
       val adjusted = MessageData.adjustMentions(text, mentions, forSending = true)
+      adjusted shouldEqual mentions
+    }
+
+    scenario("Adjust a mention with an emoji to UTF-16 for received message") {
+      val handle = "@user"
+      val text = s"aaa 😁 $handle bbb"
+      val start = text.indexOf(handle)
+      val mention = Mention(Some(UserId()), start, handle.length)
+      val mentions = Seq(mention)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = false)
+      adjusted shouldEqual mentions
+    }
+
+    scenario("Adjust a mention in Chinese text to UTF-16 for sent message") {
+      val handle = "@孔鹏飞"
+      val text = s"aaa $handle bbb"
+      val start = text.indexOf(handle)
+      val mention = Mention(Some(UserId()), start, handle.length)
+      val mentions = Seq(mention)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = true)
+      adjusted shouldEqual mentions
+    }
+
+    scenario("Adjust a mention in Chinese text to UTF-16 for received message") {
+      val handle = "@孔鹏飞"
+      val text = s"aaa $handle bbb"
+      val start = text.indexOf(handle)
+      val mention = Mention(Some(UserId()), start, handle.length)
+      val mentions = Seq(mention)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = false)
+      adjusted shouldEqual mentions
+    }
+
+    scenario("Adjust two mentions in Chinese text to UTF-16 for sent message") {
+      val handle1 = "@孔鹏飞"
+      val handle2 = "@王芳"
+      val text = s"Aaa $handle1 aaa $handle2 aaa"
+      val mention1 = Mention(Some(UserId()), text.indexOf(handle1), handle1.length)
+      val mention2 = Mention(Some(UserId()), text.indexOf(handle2), handle2.length)
+      val mentions = Seq(mention1, mention2)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = true)
+      adjusted shouldEqual mentions
+    }
+
+    scenario("Adjust two mentions in Chinese text to UTF-16 for received message") {
+      val handle1 = "@孔鹏飞"
+      val handle2 = "@王芳"
+      val text = s"Aaa $handle1 aaa $handle2 aaa"
+      val mention1 = Mention(Some(UserId()), text.indexOf(handle1), handle1.length)
+      val mention2 = Mention(Some(UserId()), text.indexOf(handle2), handle2.length)
+      val mentions = Seq(mention1, mention2)
+      val adjusted = MessageData.adjustMentions(text, mentions, forSending = false)
       adjusted shouldEqual mentions
     }
   }

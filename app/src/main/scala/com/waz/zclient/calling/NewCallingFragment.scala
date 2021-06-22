@@ -21,45 +21,45 @@ import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout, Toast}
 import androidx.cardview.widget.CardView
-import androidx.gridlayout.widget.GridLayout
 import com.waz.avs.VideoPreview
 import com.waz.service.call.Avs.VideoState
-import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.{FragmentHelper, R}
-import com.waz.zclient.calling.NewCallingFragment.{MaxAllVideoPreviews, MaxTopSpeakerVideoPreviews, NbParticipantsOneOneCall}
 import com.waz.zclient.calling.controllers.CallController
-import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
-import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
-import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}
+import com.waz.zclient.calling.views.{SelfVideoView, UserVideoView}
+import com.waz.zclient.common.controllers.ThemeControllingFrameLayout
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityPolicyChecker
-import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.wire.signals.Signal
-import com.xuliwen.zoom.ZoomLayout
-import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 import Threading.Implicits.Ui
+import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.{TabLayout, TabLayoutMediator}
 
 
 class NewCallingFragment extends FragmentHelper {
 
-  private lazy val controlsFragment         = ControlsFragment.newInstance
-  private lazy val callController           = inject[CallController]
-  private lazy val themeController          = inject[ThemeController]
-  private lazy val previewCardView          = view[CardView](R.id.preview_card_view)
-  private lazy val noActiveSpeakersLayout   = view[LinearLayout](R.id.no_active_speakers_layout)
-  private lazy val parentLayout             = view[FrameLayout](R.id.parent_layout)
-  private lazy val zoomLayout               = view[ZoomLayout](R.id.zoom_layout)
-  private lazy val videoGrid                = view[GridLayout](R.id.video_grid)
-  private var viewMap                       = Map[Participant, UserVideoView]()
-  private lazy val videoPreview             = new VideoPreview(getContext) { preview =>
+  implicit val fragment = this
+  private lazy val controlsFragment          = ControlsFragment.newInstance
+  private lazy val callController            = inject[CallController]
+  private lazy val previewCardView           = view[CardView](R.id.preview_card_view)
+  private lazy val noActiveSpeakersLayout    = view[LinearLayout](R.id.no_active_speakers_layout)
+  private lazy val parentLayout              = view[FrameLayout](R.id.parent_layout)
+  private lazy val viewPager                 = view[ViewPager2](R.id.view_pager)
+  private lazy val tabLayout                 = view[TabLayout](R.id.tab_layout)
+  private lazy val allParticipantsAdapter    = new AllParticipantsAdapter()
+  private lazy val activeParticipantsAdapter = new ActiveParticipantsAdapter()
+  private lazy val videoPreview              = new VideoPreview(getContext) { preview =>
     preview.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     preview.setElevation(0)
   }
 
+  private lazy val tabLayoutMediator: TabLayoutMediator =
+    new TabLayoutMediator(tabLayout.get, viewPager.get, new TabLayoutMediator.TabConfigurationStrategy() {
+      override def onConfigureTab(tab: TabLayout.Tab, position: Int): Unit = {}
+    })
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_new_calling, container, false)) { v =>
@@ -71,13 +71,12 @@ class NewCallingFragment extends FragmentHelper {
 
     runSecurityPolicyChecker()
     initCallingOverlay()
-    initZoomLayout()
-    initVideoGrid()
     initNoActiveSpeakersLayout()
     displayFullScreenModeIndication()
-    observeParticipantsCount()
     manageVideoPreview()
     initClickForRootView()
+    manageFloatingSelfPreview()
+    initCallingGridViewPager()
 
   }
 
@@ -88,11 +87,6 @@ class NewCallingFragment extends FragmentHelper {
       case _ => super.onBackPressed()
     }
 
-  override def onDestroyView(): Unit = {
-    clearVideoGrid()
-    super.onDestroyView()
-  }
-
   private def runSecurityPolicyChecker(): Unit =
     callController.isCallIncoming.head.foreach {
       if (_) inject[SecurityPolicyChecker].run(getActivity)
@@ -102,48 +96,6 @@ class NewCallingFragment extends FragmentHelper {
     .beginTransaction
     .replace(R.id.controls_layout, controlsFragment, ControlsFragment.Tag)
     .commit
-
-  private def initZoomLayout(): Unit = {
-    zoomLayout.foreach(_.setZoomLayoutGestureListener(new ZoomLayoutGestureListener() {
-
-      override def onDoubleTap(): Unit = {}
-
-      override def onSingleTap(): Unit = callController.controlsClick(true)
-
-      override def onScrollBegin(): Unit = {}
-
-      override def onScaleGestureBegin(): Unit = {}
-    }))
-  }
-
-  private def initVideoGrid(): Unit = {
-    callController.theme.map(themeController.getTheme).foreach { theme =>
-      videoGrid.foreach {
-        _.setBackgroundColor(getStyledColor(R.attr.wireBackgroundColor, theme))
-      }
-    }
-
-    val participantsData = Signal.zip(
-      callController.selfParticipant,
-      callController.participantsInfo,
-      callController.allParticipants,
-      callController.longTermActiveParticipants()
-    )
-
-    videoGrid.foreach { grid =>
-      Signal.zip(
-        participantsData,
-        callController.isFullScreenEnabled,
-        callController.showTopSpeakers
-      ).foreach {
-        case ((selfParticipant, participantsInfo, participants, activeParticipants), false, true) =>
-          refreshVideoGrid(grid, selfParticipant, activeParticipants, participantsInfo, participants, true)
-        case ((selfParticipant, participantsInfo, participants, _), false, false) =>
-          refreshVideoGrid(grid, selfParticipant, participants.toSeq, participantsInfo, participants, false)
-        case _ =>
-      }
-    }
-  }
 
   private def initNoActiveSpeakersLayout(): Unit = {
 
@@ -164,22 +116,6 @@ class NewCallingFragment extends FragmentHelper {
         Toast.makeText(getContext, R.string.calling_double_tap_enter_fullscreen_message, Toast.LENGTH_LONG).show()
       case _ =>
     }
-
-  private def observeParticipantsCount(): Unit = {
-    callController.allParticipants.map(_.size).onUi {
-      case NbParticipantsOneOneCall =>
-        enableZooming()
-        displayPinchToZoomIndication()
-      case _ => disableZooming()
-    }
-  }
-
-  private def enableZooming(): Unit = zoomLayout.foreach(_.setEnabled(true))
-
-  private def disableZooming(): Unit = zoomLayout.foreach(_.setEnabled(false))
-
-  private def displayPinchToZoomIndication(): Unit =
-    Toast.makeText(getContext, R.string.calling_pinch_to_zoom_message, Toast.LENGTH_LONG).show()
 
   private def manageVideoPreview(): Unit = {
     Signal.zip(callController.isSelfViewVisible, callController.videoSendState).onUi {
@@ -210,128 +146,33 @@ class NewCallingFragment extends FragmentHelper {
     callController.controlsClick(true)
   }
 
-  private def showFullScreenVideo(participant: Participant): Unit = getChildFragmentManager
-    .beginTransaction
-    .replace(R.id.full_screen_video_container, FullScreenVideoFragment.newInstance(participant), FullScreenVideoFragment.Tag)
-    .commit
+  private def manageFloatingSelfPreview(): Unit = {
 
+    Signal.zip(
+      callController.selfParticipant,
+      callController.showTopSpeakers,
+      callController.allParticipants.map(_.size)
+    ).foreach {
+      case (selfParticipant, showTopSpeakers, participantsCount) =>
 
-  private def refreshVideoGrid(grid: GridLayout,
-                               selfParticipant: Participant,
-                               participantsToShow: Seq[Participant],
-                               info: Seq[CallParticipantInfo],
-                               allParticipants: Set[Participant],
-                               showTopSpeakers: Boolean
-                              ): Unit = {
+        val selfVideoView = new SelfVideoView(getContext, selfParticipant)
 
-    val views = refreshViews(participantsToShow, selfParticipant)
-
-    manageFloatingSelfPreview(grid, selfParticipant, showTopSpeakers, views.size, allParticipants.size)
-
-    val infoMap = info.toIdMap
-
-    val gridViews =
-      if (showTopSpeakers)
-        views.sortWith {
-          case (v1, v2) =>
-            infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
-        }.take(MaxTopSpeakerVideoPreviews)
-      else
-        views.filter {
-          case _: SelfVideoView if views.size == 2 && allParticipants.size == 2  => false
-          case _ => true
-        }.sortWith {
-          case (_: SelfVideoView, _) => true
-          case (_, _: SelfVideoView) => false
-          case (v1, v2) =>
-            infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
-        }.take(MaxAllVideoPreviews)
-
-
-    gridViews.zipWithIndex.foreach { case (userVideoView, index) =>
-      val (row, col, span, width) = index match {
-        case 0 if gridViews.size == 2 => (0, 0, 2, 0)
-        case 0 => (0, 0, 1, 0)
-        case 1 if gridViews.size == 2 => (1, 0, 2, 0)
-        case 1 => (0, 1, 1, 0)
-        // The max number of columns is 2 and the max number of rows is undefined
-        // if the index of the video preview is even, display it in row n/2, column 1 , span 1 , width match_parent(0)
-        case n if n % 2 != 0 => (n / 2, 1, 1, 0)
-        // else if the gridViews size is n+1 , display it in row n/2, column 0 , span 2, , width view size / 2
-        case n if gridViews.size == n + 1 => (n / 2, 0, 2, grid.getWidth / 2)
-        // else display it in row n/2, column 0 , span 1, , width match_parent(0)
-        case n => (n / 2, 0, 1, 0)
-      }
-
-      val columnAlignment = width match {
-        case 0 => GridLayout.FILL
-        case _ => GridLayout.CENTER
-      }
-
-      userVideoView.setLayoutParams(returning(new GridLayout.LayoutParams()) { params =>
-        params.width = width
-        params.height = 0
-        params.rowSpec = GridLayout.spec(row, 1, GridLayout.FILL, 1f)
-        params.columnSpec = GridLayout.spec(col, span, columnAlignment, 1f)
-      })
-
-      if (Option(userVideoView.getParent).isEmpty) grid.addView(userVideoView)
-    }
-
-    val viewsToRemove = viewMap.filter {
-      case (participant, selfView) if participant == selfParticipant => !gridViews.contains(selfView)
-      case (participant, _) => !participantsToShow.contains(participant)
-    }
-
-    viewsToRemove.foreach { case (_, view) => grid.removeView(view) }
-
-    viewMap = viewMap.filter { case (participant, _) => participantsToShow.contains(participant) }
-  }
-
-  private def refreshViews(participantsToShow: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
-
-    def createView(participant: Participant): UserVideoView = returning {
-      if (participant == selfParticipant) new SelfVideoView(getContext, selfParticipant)
-      else new OtherVideoView(getContext, participant)
-    } { userView =>
-      viewMap = viewMap.updated(participant, userView)
-      userView.onDoubleClick.onUi { _ =>
-        callController.allParticipants.map(_.size > 2).head.foreach {
-          case true =>
-            showFullScreenVideo(participant)
-            clearVideoGrid()
-          case false =>
+        previewCardView.foreach { cardView =>
+          if (!showTopSpeakers && participantsCount == 2) {
+            showFloatingSelfPreview(selfVideoView, cardView)
+          } else {
+            hideFloatingSelfPreview(cardView)
+          }
         }
-      }
-    }
-
-    if (participantsToShow.contains(selfParticipant)) callController.isSelfViewVisible ! true
-    else callController.isSelfViewVisible ! false
-
-    participantsToShow.map { participant => viewMap.getOrElse(participant, createView(participant)) }
-  }
-
-
-  private def clearVideoGrid(): Unit = {
-    videoGrid.foreach(_.removeAllViews())
-    viewMap = Map.empty
-  }
-
-  private def manageFloatingSelfPreview(grid: GridLayout, selfParticipant: Participant, showTopSpeakers: Boolean, viewsCount: Int, ParticipantsCount: Int): Unit = {
-    viewMap.get(selfParticipant).foreach { selfView =>
-      previewCardView.foreach { cardView =>
-        if (!showTopSpeakers && viewsCount == 2 && ParticipantsCount == 2) {
-          showFloatingSelfPreview(grid, selfView, cardView)
-        } else {
-          hideFloatingSelfPreview(cardView)
-        }
-      }
+      case _ =>
     }
   }
 
-  private def showFloatingSelfPreview(grid: GridLayout, selfVideoView: UserVideoView, cardView: CardView): Unit = {
+
+  private def showFloatingSelfPreview(selfVideoView: UserVideoView, cardView: CardView): Unit = {
     verbose(l"Showing card preview")
-    grid.removeView(selfVideoView)
+    // Todo: find a solution to remove the selfVideoPreview from from CallingGridFragment
+    // grid.removeView(selfVideoView)
     selfVideoView.setLayoutParams(
       new FrameLayout.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -348,6 +189,28 @@ class NewCallingFragment extends FragmentHelper {
     cardView.setVisibility(View.GONE)
   }
 
+  private def initCallingGridViewPager(): Unit =
+    Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)
+    ).onUi {
+      case (false, size) =>
+        viewPager.foreach(_.setAdapter(allParticipantsAdapter))
+        allParticipantsAdapter.notifyDataSetChanged()
+        attachTabLayoutToViewPager()
+        if (size > AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE) showPaginationDots() else hidePaginationDots()
+      case (true, _) =>
+        viewPager.foreach(_.setAdapter(activeParticipantsAdapter))
+        activeParticipantsAdapter.notifyDataSetChanged()
+        detachTabLayoutFromViewPager()
+        hidePaginationDots()
+    }
+
+  private def attachTabLayoutToViewPager(): Unit = tabLayoutMediator.attach()
+
+  private def detachTabLayoutFromViewPager(): Unit = tabLayoutMediator.detach()
+
+  private def showPaginationDots(): Unit = tabLayout.foreach(_.setVisible(true))
+
+  private def hidePaginationDots(): Unit = tabLayout.foreach(_.setVisible(false))
 }
 
 object NewCallingFragment {

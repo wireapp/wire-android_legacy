@@ -20,12 +20,14 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
+import com.waz.model.QualifiedId
 import com.waz.service.SearchQuery
 import com.waz.sync.client.UserSearchClient.{DefaultLimit, UserSearchResponse}
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
+import com.waz.zms.BuildConfig
 
 trait UserSearchClient {
   def search(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse]
@@ -43,11 +45,13 @@ class UserSearchClientImpl(implicit
 
   override def search(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse] = {
     verbose(l"search($query, $limit)")
+    val params =
+      if (BuildConfig.FEDERATION_USER_DISCOVERY && query.hasDomain)
+        queryParameters("q" -> query.query, "domain" -> query.domain, "size" -> limit)
+      else
+        queryParameters("q" -> query.query, "size" -> limit)
     Request
-      .Get(
-        relativePath = SearchPath,
-        queryParameters = queryParameters("q" -> query.str, "size" -> limit)
-      )
+      .Get(relativePath = SearchPath, queryParameters = params)
       .withResultType[UserSearchResponse]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -57,14 +61,27 @@ class UserSearchClientImpl(implicit
 object UserSearchClient extends DerivedLogTag {
   val SearchPath = "/search/contacts"
 
-  val DefaultLimit = 10
+  val DefaultLimit = 15
 
   // Response types
 
-  case class UserSearchResponse(took: Int, found: Int, returned: Int, documents: Seq[UserSearchResponse.User])
+  final case class UserSearchResponse(
+    took:      Int,
+    found:     Int,
+    returned:  Int,
+    documents: Seq[UserSearchResponse.User]
+  )
 
   object UserSearchResponse {
-    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int], team: Option[String], assets: Option[Seq[Asset]])
-    case class Asset(key: String, size: String, `type`: String)
+    final case class User(
+      qualified_id: QualifiedId,
+      name:         String,
+      handle:       Option[String],
+      accent_id:    Option[Int],
+      team:         Option[String],
+      assets:       Option[Seq[Asset]]
+    )
+
+    final case class Asset(key: String, size: String, `type`: String)
   }
 }

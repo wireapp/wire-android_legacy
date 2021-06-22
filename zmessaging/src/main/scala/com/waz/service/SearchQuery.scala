@@ -21,29 +21,43 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogShow
 import com.waz.model.Handle
 import com.waz.log.LogSE._
+import com.waz.utils.returning
 
-case class SearchQuery private (str: String, handleOnly: Boolean) {
-  val isEmpty: Boolean = str.isEmpty
+final case class SearchQuery private (query: String, domain: String, handleOnly: Boolean) {
+  val isEmpty: Boolean = query.isEmpty
 
-  lazy val cacheKey: String = (if (handleOnly) SearchQuery.recommendedHandlePrefix else SearchQuery.recommendedPrefix) + str
+  def hasDomain: Boolean = domain.nonEmpty
+
+  def withDomain(domain: String): SearchQuery = copy(domain = domain)
+
+  lazy val cacheKey: String = {
+    val prefix = if (handleOnly) SearchQuery.recommendedHandlePrefix else SearchQuery.recommendedPrefix
+    if (domain.isEmpty) s"$prefix$query" else s"$prefix$query@$domain"
+  }
 }
 
 object SearchQuery {
-  val Empty = SearchQuery("", handleOnly = false)
+  val Empty: SearchQuery = SearchQuery("", "", handleOnly = false)
 
-  val recommendedPrefix = "##recommended##"
-  val recommendedHandlePrefix = "##recommendedhandle##"
+  private val recommendedPrefix = "##recommended##"
+  private val recommendedHandlePrefix = "##recommendedhandle##"
 
-  implicit val SearchQueryLogShow: LogShow[SearchQuery] = LogShow.create(sq => s"SearchQuery(${sq.str}, ${sq.handleOnly})")
+  implicit val SearchQueryLogShow: LogShow[SearchQuery] = LogShow.create(sq => s"SearchQuery(${sq.query}, ${sq.handleOnly})")
 
-  def apply(str: String): SearchQuery =
-    if (Handle.isHandle(str)) {
-      verbose(l"SearchQuery.apply, str: $str, is handle")(LogTag("SearchQuery"))
-      SearchQuery(Handle.stripSymbol(str), handleOnly = true)
-    } else {
-      verbose(l"SearchQuery.apply, str: $str, not a handle")(LogTag("SearchQuery"))
-      SearchQuery(str, handleOnly = false)
+  def apply(str: String): SearchQuery = {
+    val isHandle = Handle.isHandle(str)
+    val query = if (isHandle) Handle.stripSymbol(str) else str
+    val (queryWithoutDomain, domain) =
+      if (query.contains("@")) {
+        val split = query.split("@")
+        (split(0).trim, split(1).trim) // the domain shouldn't contain the @ sign, so we can assume there are only two elements in the split
+      } else
+        (query.trim, "")
+
+    returning(SearchQuery(queryWithoutDomain, domain, isHandle)) { sq =>
+      verbose(l"SearchQuery.apply, str: $str, search query: $sq")(LogTag("SearchQuery"))
     }
+  }
 
   def fromCacheKey(key: String): SearchQuery =
     if (key.startsWith(recommendedPrefix)) SearchQuery(key.substring(recommendedPrefix.length))

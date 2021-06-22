@@ -70,7 +70,7 @@ class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
     }
 
   def deleteSession(id: SessionId): Future[Unit] = dispatch(id) { cb =>
-    verbose(l"FIX deleteSession($id)")
+    verbose(l"deleteSession($id)")
     cb.foreach(_.deleteSession(id.toString))
   }
 

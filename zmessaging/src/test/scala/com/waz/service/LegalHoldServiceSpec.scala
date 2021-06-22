@@ -438,6 +438,25 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
         .once()
         .returning(CancellableFuture.successful(Right({})))
 
+      val legalHoldClient = Client(
+        legalHoldRequest.clientId,
+        deviceClass = DeviceClass.LegalHold,
+        isTemporary = true
+      )
+
+      (clientsService.getClient _)
+        .expects(selfUserId, legalHoldClient.id)
+        .once()
+        .returning(Future.successful(Some(legalHoldClient)))
+
+      val permanentLegalHoldClient = legalHoldClient.copy(isTemporary = false)
+      val userClients = UserClients(selfUserId, Map(permanentLegalHoldClient.id -> permanentLegalHoldClient))
+
+      (clientsService.updateUserClients(_: UserId, _: Seq[Client], _: Boolean))
+        .expects(selfUserId, Seq(permanentLegalHoldClient), false)
+        .once()
+        .returning(Future.successful(userClients))
+
       // When
       val actualResult = result(service.approveRequest(legalHoldRequest, Some("password")))
 
@@ -478,7 +497,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
     }
 
     def mockClientAndSessionCreation(): Client = {
-      val client = Client(legalHoldRequest.clientId, "", deviceClass = DeviceClass.LegalHold)
+      val client = Client(legalHoldRequest.clientId, "", deviceClass = DeviceClass.LegalHold, isTemporary = true)
 
       // Create the client.
       (clientsService.getOrCreateClient _)
@@ -618,13 +637,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   feature("it calculates correct legal hold status") {
 
     scenario("existing status is disabled") {
-      assert(existingStatus = Disabled, detectedLegalHoldDevice = true, expectation = PendingApproval)
+      assert(existingStatus = Disabled, detectedLegalHoldDevice = true, expectation = Enabled)
       assert(existingStatus = Disabled, detectedLegalHoldDevice = false, expectation = Disabled)
-    }
-
-    scenario("existing status is pending approval") {
-      assert(existingStatus = PendingApproval, detectedLegalHoldDevice = true, expectation = PendingApproval)
-      assert(existingStatus = PendingApproval, detectedLegalHoldDevice = false, expectation = Disabled)
     }
 
     scenario("existing status is enabled") {
@@ -690,7 +704,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       result(pipeline.apply(Seq(event)))
 
       // Then
-      updatedStatus shouldEqual LegalHoldStatus.PendingApproval
+      updatedStatus shouldEqual LegalHoldStatus.Enabled
     }
 
     scenario("it triggers client sync if it discovers legal hold to be disabled") {

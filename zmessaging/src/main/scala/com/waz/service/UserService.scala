@@ -31,13 +31,14 @@ import com.waz.service.assets.{AssetService, AssetStorage, Content, ContentForUp
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
-import com.waz.sync.{SyncRequestService, SyncServiceHandle}
+import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.wire.signals._
-import com.waz.utils.wrappers.AndroidURIUtil
+
+import com.waz.zms.BuildConfig
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -64,6 +65,7 @@ trait UserService {
   def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]]
   def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]]
   def syncUser(userId: UserId): Future[Option[UserData]]
+  def syncQualifiedUser(qId: QualifiedId): Future[Option[UserData]]
   def acceptedOrBlockedUsers: Signal[Map[UserId, UserData]]
 
   def updateSyncedUsers(users: Seq[UserInfo], timestamp: LocalInstant = LocalInstant.Now): Future[Set[UserData]]
@@ -205,10 +207,15 @@ class UserServiceImpl(selfUserId:        UserId,
   override def qualifiedId(userId: UserId): Future[QualifiedId] =
     findUser(userId).map(_.flatMap(_.qualifiedId).getOrElse(QualifiedId(userId)))
 
-  override def getOrCreateUser(id: UserId) = usersStorage.getOrCreate(id, {
-    sync.syncUsers(Set(id))
-    UserData(id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None)
-  })
+  override def getOrCreateUser(id: UserId): Future[UserData] =
+    usersStorage.getOrCreate(id, {
+      sync.syncUsers(Set(id))
+      UserData(
+        id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected,
+        searchKey = SearchKey.Empty, handle = None
+      )
+    })
+
 
   override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =
     usersStorage.update(id, { _.updateConnectionStatus(status, time, message)}).map {
@@ -220,7 +227,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def updateUsers(entries: Seq[UserSearchEntry]) = {
     def updateOrAdd(entry: UserSearchEntry) = (_: Option[UserData]).fold(UserData(entry))(_.updated(entry))
-    usersStorage.updateOrCreateAll(entries.map(entry => entry.id -> updateOrAdd(entry)).toMap)
+    usersStorage.updateOrCreateAll(entries.map(entry => entry.qualifiedId.id -> updateOrAdd(entry)).toMap)
   }
 
   override def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]] = Serialized.future(s"syncRichInfoNow $id") {
@@ -240,6 +247,16 @@ class UserServiceImpl(selfUserId:        UserId,
         updateSyncedUsers(Seq(info)).map(_.headOption)
       case Right(None) =>
         deleteUsers(Set(userId)).map(_ => None)
+    }
+
+  override def syncQualifiedUser(qId: QualifiedId): Future[Option[UserData]] =
+    usersClient.loadQualifiedUser(qId).future.flatMap {
+      case Left(e) =>
+        Future.failed(e)
+      case Right(Some(info)) =>
+        updateSyncedUsers(Seq(info)).map(_.headOption)
+      case Right(None) =>
+        deleteUsers(Set(qId.id)).map(_ => None)
     }
 
   def syncSelfNow: Future[Option[UserData]] = Serialized.future(s"syncSelfNow $selfUserId") {

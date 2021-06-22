@@ -185,8 +185,8 @@ class SearchUIFragment extends BaseFragment[Container]
     subs += (for {
       zms         <- zms
       permissions <- userAccountsController.selfPermissions.orElse(Signal.const(Set.empty[UserPermissions.Permission]))
-      members <- zms.teams.searchTeamMembers(SearchQuery.Empty).orElse(Signal.const(Set.empty[UserData]))
-      searching <- searchController.filter.map(_.nonEmpty)
+      members     <- zms.teams.searchTeamMembers(SearchQuery.Empty).orElse(Signal.const(Set.empty[UserData]))
+      searching   <- searchController.filter.map(_.nonEmpty)
      } yield
        zms.teamId.nonEmpty && permissions(UserPermissions.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching
     ).onUi(visible => v.foreach(_.setVisible(visible)))

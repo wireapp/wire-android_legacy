@@ -27,7 +27,9 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.FragmentManager
 import com.waz.content.UserPreferences.{CrashesAndAnalyticsRequestShown, TrackingEnabled}
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.model.{ErrorData, Uid}
+import com.waz.model.GuestRoomStateError.{GeneralError, MemberLimitReached, NotAllowed}
+import com.waz.model.GuestRoomInfo.{ExistingConversation, Overview}
+import com.waz.model.{ConvId, ErrorData, GuestRoomStateError, Uid}
 import com.waz.permissions.PermissionsService
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{AccountManager, GlobalModule, NetworkModeService, ZMessaging}
@@ -183,18 +185,23 @@ class MainPhoneFragment extends FragmentHelper
         deepLinkService.deepLink ! None
 
       case OpenDeepLink(ConversationToken(convId), _) =>
-        pickUserController.hideUserProfile()
-        participantsController.onLeaveParticipants ! true
-        participantsController.selectedParticipant ! None
-
-        CancellableFuture.delay(750.millis).map { _ =>
-          conversationController.switchConversation(convId)
-        }
+        openConversationFromDeepLink(convId)
         deepLinkService.deepLink ! None
 
       case DoNotOpenDeepLink(Conversation, reason) =>
         verbose(l"do not open, conversation deep link error. Reason: $reason")
         showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
+        deepLinkService.deepLink ! None
+
+      case OpenDeepLink(JoinConversationToken(key, code), _) =>
+        conversationController.getGuestroomInfo(key, code).foreach {
+          case Right(ExistingConversation(convData)) => openConversationFromDeepLink(convData.id)
+          case Right(Overview(name))                 => confirmJoiningNewConversation(name).foreach {
+                                                          case true  => joinConversation(key, code)
+                                                          case false =>
+                                                        }
+          case Left(error) => showGuestRoomErrorDialog(error)
+        }
         deepLinkService.deepLink ! None
 
       case DoNotOpenDeepLink(User, reason) =>
@@ -212,6 +219,48 @@ class MainPhoneFragment extends FragmentHelper
       case _ =>
     }
   }
+
+  private def openConversationFromDeepLink(convId: ConvId): Unit = {
+    pickUserController.hideUserProfile()
+    participantsController.onLeaveParticipants ! true
+    participantsController.selectedParticipant ! None
+
+    CancellableFuture.delay(750.millis).map { _ =>
+      conversationController.switchConversation(convId)
+    }
+  }
+
+  private def confirmJoiningNewConversation(convName: String): Future[Boolean] =
+    accentColorController.accentColor.head.flatMap(color =>
+      showConfirmationDialog(
+        null,
+        getString(R.string.join_conversation_confirmation_message, convName),
+        R.string.join_conversation_confirmation_join_button_text,
+        R.string.join_conversation_confirmation_cancel_button_text,
+        color
+      )
+    )
+
+  private def joinConversation(key: String, code: String): Future[Unit] = {
+    conversationController.joinConversation(key, code).flatMap {
+      case Right(Some(convId)) => Future.successful(openConversationFromDeepLink(convId))
+      case Right(None)         => showGenericErrorDialog()
+      case Left(error)         => showGuestRoomErrorDialog(error)
+    }
+  }
+
+  private def showGuestRoomErrorDialog(error: GuestRoomStateError): Future[Unit] =
+    error match {
+      case NotAllowed =>
+        showErrorDialog(
+          headerText = getString(R.string.join_conversation_conversation_join_error_title),
+          msg = getString(R.string.join_conversation_invalid_link_error_message))
+      case MemberLimitReached =>
+        showErrorDialog(
+          headerText = getString(R.string.join_conversation_conversation_join_error_title),
+          msg = getString(R.string.join_conversation_member_limit_reached_error_message))
+      case GeneralError => showGenericErrorDialog()
+    }
 
   private def initShortcutDestinations(): Unit = {
     //Only for internal builds for now, will be for production when approved by QA.

@@ -30,13 +30,13 @@ import com.waz.sync.SyncResult
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.threading.Threading
-import com.wire.signals.EventContext
 
 import scala.concurrent.Future
 
 trait UsersSyncHandler {
   def syncUsers(ids: UserId*): Future[SyncResult]
   def syncSearchResults(ids: UserId*): Future[SyncResult]
+  def syncQualifiedSearchResults(qIds: Set[QualifiedId]): Future[SyncResult]
   def syncSelfUser(): Future[SyncResult]
   def postSelfName(name: Name): Future[SyncResult]
   def postSelfAccentColor(color: AccentColor): Future[SyncResult]
@@ -58,14 +58,15 @@ class UsersSyncHandlerImpl(userService:      UserService,
   import UsersSyncHandler._
   import Threading.Implicits.Background
 
-  override def syncUsers(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.flatMap {
-    case Right(users) =>
+  override def syncUsers(ids: UserId*): Future[SyncResult] =
+    usersClient.loadUsers(ids).future.flatMap {
+      case Right(users) =>
         userService.updateSyncedUsers(users).map(_ => SyncResult.Success)
-    case Left(error) =>
+      case Left(error) =>
         Future.successful(SyncResult(error))
-  }
+    }
 
-  override def syncSearchResults(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.flatMap {
+  private def syncSearchResults(response: Either[ErrorResponse, Seq[UserInfo]]) = response match {
     case Right(users) if teamId.isEmpty =>
       searchService.updateSearchResults(users.map(u => u.id -> (u, None)).toMap)
       Future.successful(SyncResult.Success)
@@ -77,6 +78,12 @@ class UsersSyncHandlerImpl(userService:      UserService,
     case Left(error)  =>
       Future.successful(SyncResult(error))
   }
+
+  override def syncSearchResults(ids: UserId*): Future[SyncResult] =
+    usersClient.loadUsers(ids).future.flatMap(syncSearchResults)
+
+  override def syncQualifiedSearchResults(qIds: Set[QualifiedId]): Future[SyncResult] =
+    usersClient.loadQualifiedUsers(qIds).future.flatMap(syncSearchResults)
 
   def syncSelfUser(): Future[SyncResult] = usersClient.loadSelf().future flatMap {
     case Right(user) =>

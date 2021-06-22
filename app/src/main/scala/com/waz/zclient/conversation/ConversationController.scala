@@ -34,7 +34,7 @@ import com.waz.service.conversation.{ConversationsService, ConversationsUiServic
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
-import com.wire.signals.{Serialized, EventStream, Signal, SourceStream}
+import com.wire.signals.{EventStream, Serialized, Signal, SourceStream}
 import com.waz.utils.{returning, _}
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -409,6 +409,12 @@ class ConversationController(implicit injector: Injector, context: Context)
   def removeConvChangedCallback(callback: Callback[ConversationChange]): Unit = convChangedCallbackSet -= callback
 
   convChanged.onUi { ev => convChangedCallbackSet.foreach(callback => callback.callback(ev)) }
+
+  def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]] =
+    conversations.head.flatMap(_.getGuestroomInfo(key, code))
+
+  def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]] =
+    conversations.head.flatMap(_.joinConversation(key, code))
 
   object messages {
 

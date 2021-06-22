@@ -97,8 +97,15 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     _      <- createLegalHoldClientAndSession(request)
     result <- postApproval(password)
     _      <- result match {
-      case Left(_) => deleteLegalHoldClientAndSession(request.clientId)
-      case Right(_) => deleteLegalHoldRequest()
+      case Left(_) =>
+        deleteLegalHoldClientAndSession(request.clientId)
+      case Right(_) =>
+        for {
+          Some(client)    <- clientsService.getClient(selfUserId, request.clientId)
+          legalHoldClient = client.copy(isTemporary = false)
+          _               <- clientsService.updateUserClients(selfUserId, Seq(legalHoldClient), replace = false)
+          _               <- deleteLegalHoldRequest()
+        } yield ()
     }
   } yield result
 
@@ -118,7 +125,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   private def createLegalHoldClientAndSession(request: LegalHoldRequest): Future[Unit] = for {
     client          <- clientsService.getOrCreateClient(selfUserId, request.clientId)
-    legalHoldClient = client.copy(deviceClass = DeviceClass.LegalHold)
+    legalHoldClient = client.copy(deviceClass = DeviceClass.LegalHold, isTemporary = true)
     _               <- clientsService.updateUserClients(selfUserId, Seq(legalHoldClient), replace = false)
     sessionId       = SessionId(selfUserId, legalHoldClient.id)
     _               <- cryptoSessionService.getOrCreateSession(sessionId, request.lastPreKey)

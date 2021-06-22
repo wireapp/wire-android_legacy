@@ -29,7 +29,7 @@ trait UiEventContext {
   private[ui] var createCount = 0
   private[ui] var startCount = 0
 
-  val onStarted = new SourceSignal[Boolean]()
+  val onStarted = SourceSignal[Boolean]()
 
   def onStart(): Unit = {
     Threading.assertUiThread()

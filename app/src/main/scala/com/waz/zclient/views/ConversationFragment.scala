@@ -32,15 +32,14 @@ import androidx.appcompat.widget.{ActionMenuView, Toolbar}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT
 import com.waz.api.{ErrorType, Verification}
-import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.content.GlobalPreferences
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
-import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
-import com.wire.signals.{EventStreamWithAuxSignal, Signal}
+import com.waz.threading.Threading._
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{returning, returningF}
 import com.waz.zclient.Intents.ShowDevicesIntent
@@ -82,11 +81,11 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.e2ee.ShieldView
 import com.waz.zclient.{ErrorsController, FragmentHelper, R}
+import com.wire.signals.{CancellableFuture, EventStreamWithAuxSignal, Signal}
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import com.waz.threading.Threading._
 
 class ConversationFragment extends FragmentHelper {
   import ConversationFragment._
@@ -107,7 +106,6 @@ class ConversationFragment extends FragmentHelper {
   private lazy val callStartController    = inject[CallStartController]
   private lazy val accountsController     = inject[UserAccountsController]
   private lazy val globalPrefs            = inject[GlobalPreferences]
-  private lazy val userPrefs              = inject[Signal[UserPreferences]]
   private lazy val replyController        = inject[ReplyController]
   private lazy val accentColor            = inject[Signal[AccentColor]]
   private lazy val legalHoldController    = inject[LegalHoldController]
@@ -215,12 +213,10 @@ class ConversationFragment extends FragmentHelper {
 
     (for {
       (convId, isConvActive)   <- convController.currentConv.map(c => (c.id, c.isActive))
-      isGroup                  <- convController.groupConversation(convId)
       participantsNumber       <- convController.convMembers(convId).map(_.size)
       selfUserId               <- zms.map(_.selfUserId)
       call                     <- callController.currentCallOpt
-      isCallActive              = call.exists(_.convId == convId) && call.exists(_.selfParticipant.userId == selfUserId)
-      isTeam                   <- accountsController.isTeam
+      isCallActive             = call.exists(_.convId == convId) && call.exists(_.selfParticipant.userId == selfUserId)
     } yield {
       if (isCallActive || !isConvActive || participantsNumber <= 1) Option.empty[Int]
       else Some(R.menu.conversation_header_menu_video)
@@ -425,9 +421,9 @@ class ConversationFragment extends FragmentHelper {
 
     cursorView.foreach { v =>
 
-      subs += Signal.zip(v.mentionSearchResults, accountsController.teamId, inject[ThemeController].currentTheme).onUi {
-        case (data, teamId, theme) =>
-          mentionCandidatesAdapter.setData(data, teamId, theme)
+      subs += Signal.zip(v.mentionSearchResults, inject[ThemeController].currentTheme).onUi {
+        case (data, theme) =>
+          mentionCandidatesAdapter.setData(data, theme)
           mentionsList.foreach(_.scrollToPosition(data.size - 1))
       }
 
@@ -903,20 +899,22 @@ class ConversationFragment extends FragmentHelper {
         val positiveButton = getString(R.string.conversation__legal_hold_confirmation__positive_action)
 
         val callback = new ConfirmationCallback {
-          override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = {
-            messagesController.retryMessageSending(err.messages)
-            errorsController.dismissSyncError(err.id)
-          }
+          override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = for {
+            _ <- errorsController.dismissSyncError(err.id)
+            _ <- messagesController.retryMessageSending(err.messages)
+          } yield ()
 
-          override def negativeButtonClicked(): Unit = {
-            inject[LegalHoldController].onShowConversationLegalHoldInfo ! (())
-          }
+          override def negativeButtonClicked(): Unit = for {
+            _ <- errorsController.dismissSyncError(err.id)
+            _  = inject[LegalHoldController].onShowConversationLegalHoldInfo ! (())
+          } yield ()
 
-          override def neutralButtonClicked(): Unit = {
-            participantsController.onShowParticipants ! None
-          }
+          override def neutralButtonClicked(): Unit = for {
+            _ <- errorsController.dismissSyncError(err.id)
+            _  = participantsController.onShowParticipants ! None
+          } yield ()
 
-          override def canceled(): Unit = {}
+          override def canceled(): Unit = errorsController.dismissSyncError(err.id)
 
           override def onHideAnimationEnd(confirmed: Boolean, canceled: Boolean, checkboxIsSelected: Boolean): Unit = {}
         }

@@ -25,27 +25,27 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.ConversationData.{ConversationType, Link, getAccessAndRoleForGroupConv}
+import com.waz.model.GuestRoomStateError.{GeneralError, MemberLimitReached, NotAllowed}
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service._
 import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.{NotificationService, PushService}
-import com.waz.sync.client.ConversationsClient.ConversationResponse
+import com.waz.sync.client.ConversationsClient.{ConversationOverviewResponse, ConversationResponse}
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.wire.signals.{AggregatingSignal, EventContext, Signal}
+import com.wire.signals.{AggregatingSignal, Signal}
 
 import scala.collection.{breakOut, mutable}
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
-import scala.util.control.{NoStackTrace, NonFatal}
+import scala.util.control.NonFatal
 
 trait ConversationsService {
   def convStateEventProcessingStage: EventScheduler.Stage.Atomic
-  def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
   def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
   def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]]
   def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit]
@@ -74,6 +74,8 @@ trait ConversationsService {
   def conversationName(convId: ConvId): Signal[Name]
   def deleteMembersFromConversations(members: Set[UserId]): Future[Unit]
   def remoteIds: Future[Set[RConvId]]
+  def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]]
+  def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -164,7 +166,16 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       } yield ()
   }
 
-  def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {
+  /**
+   *
+   * @param ev event to process
+   * @param selfUserId user id of the current user
+   * @param retryCount number of retries so far
+   * @param selfRequested true if this method is triggered by ourselves,
+   *                      false if it is triggered by an event via backend.
+   * @return
+   */
+  private def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0, selfRequested: Boolean = false) = ev match {
     case CreateConversationEvent(_, time, from, data) =>
       updateConversation(data).flatMap { case (_, created) => Future.traverse(created) { created =>
         messages.addConversationStartMessage(
@@ -183,7 +194,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         case None if retryCount > 3 => successful(())
         case None =>
           ev match {
-            case MemberJoinEvent(_, time, from, ids, us, _) if from != selfUserId =>
+            case MemberJoinEvent(_, time, from, ids, us, _) if selfRequested || from != selfUserId =>
               // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
               val membersWithRoles = us ++ ids.map(_ -> ConversationRole.MemberRole).toMap
               // this happens when we are added to group conversation
@@ -557,7 +568,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       else Future.successful(())
     }
 
-  def onMemberAddFailed(conv: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse) =
+  def onMemberAddFailed(conv: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse): Future[Unit] =
     for {
       _ <- err.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, conv, users)).map(_ => ()))
       _ <- membersStorage.remove(conv, users)
@@ -588,12 +599,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   override def isGroupConversation(convId: ConvId): Future[Boolean] = groupConversation(convId).head
 
-  def isWithService(convId: ConvId) =
+  def isWithService(convId: ConvId): Future[Boolean] =
     membersStorage.getActiveUsers(convId)
       .flatMap(usersStorage.getAll)
       .map(_.flatten.exists(_.isWireBot))
 
-  def setToTeamOnly(convId: ConvId, teamOnly: Boolean) =
+  def setToTeamOnly(convId: ConvId, teamOnly: Boolean): ErrorOr[Unit] =
     teamId match {
       case None => Future.successful(Left(ErrorResponse.internalError("Private accounts can't be set to team-only or guest room access modes")))
       case Some(_) =>
@@ -618,7 +629,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         }
     }
 
-  override def createLink(convId: ConvId) =
+  override def createLink(convId: ConvId): ErrorOr[Link] =
     (for {
       Some(conv) <- content.convById(convId) if conv.isGuestRoom || conv.isWirelessLegacy
       modeResp   <- if (conv.isWirelessLegacy) setToTeamOnly(convId, teamOnly = false) else Future.successful(Right({})) //upgrade legacy convs
@@ -637,7 +648,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
           Left(ErrorResponse.internalError("Unable to create link for conversation"))
       }
 
-  override def removeLink(convId: ConvId) =
+  override def removeLink(convId: ConvId): ErrorOr[Unit] =
     (for {
       Some(conv) <- content.convById(convId)
       resp       <- client.removeLink(conv.remoteId).future
@@ -671,6 +682,39 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _        <- membersStorage.updateOrCreate(convId, userId, newRole)
       _        <- sync.postConversationRole(convId, userId, newRole, origRole.getOrElse(ConversationRole.MemberRole))
     } yield ()
+
+  override def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]] = {
+    import GuestRoomInfo._
+    client.getGuestroomOverview(key, code).future.flatMap {
+      case Right(ConversationOverviewResponse(rConvId, name)) =>
+        convsStorage.getByRemoteId(rConvId).map {
+          case Some(conversationData) => Right(ExistingConversation(conversationData))
+          case None                   => Right(Overview(name))
+        }
+      case Left(ErrorResponse(_, _, "no-conversation-code")) => Future.successful(Left(NotAllowed))
+      case Left(ErrorResponse(_, _, "too-many-members"))     => Future.successful(Left(MemberLimitReached))
+      case Left(error) =>
+        warn(l"getGuestRoomInfo(key: $key, code: $code) error: $error")
+        Future.successful(Left(GeneralError))
+    }
+  }
+
+  override def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]] =
+    client.postJoinConversation(key, code).future.flatMap {
+      case Right(Some(event: MemberJoinEvent)) =>
+        for {
+          _     <- processConversationEvent(event, selfUserId, selfRequested = true)
+          conv  <- convsStorage.getByRemoteId(event.convId)
+        } yield Right(conv.map(_.id))
+
+      case Right(_) => Future.successful(Right(None))
+
+      case Left(ErrorResponse(_, _, "no-conversation-code")) => Future.successful(Left(NotAllowed))
+      case Left(ErrorResponse(_, _, "too-many-members"))     => Future.successful(Left(MemberLimitReached))
+      case Left(error) =>
+        warn(l"joinConversation(key: $key, code: $code) error: $error")
+        Future.successful(Left(GeneralError))
+    }
 }
 
 object ConversationsService {

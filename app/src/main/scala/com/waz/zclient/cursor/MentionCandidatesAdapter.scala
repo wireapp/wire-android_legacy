@@ -20,23 +20,20 @@ package com.waz.zclient.cursor
 import androidx.recyclerview.widget.RecyclerView
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.model.{TeamId, UserData}
+import com.waz.model.UserData
 import com.wire.signals.{EventStream, SourceStream}
 import com.waz.zclient.R
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.views.SingleUserRowView
 
 class MentionCandidatesAdapter extends RecyclerView.Adapter[MentionCandidateViewHolder] {
-
   private var _data = Seq[UserData]()
-  private var _teamId = Option.empty[TeamId]
   private var _theme: Theme = Theme.Light
 
   val onUserClicked: SourceStream[UserData] = EventStream()
 
-  def setData(data: Seq[UserData], teamId: Option[TeamId], theme: Theme): Unit = {
+  def setData(data: Seq[UserData], theme: Theme): Unit = {
     _data = data
-    _teamId = teamId
     _theme = theme
 
     notifyDataSetChanged()
@@ -55,7 +52,7 @@ class MentionCandidatesAdapter extends RecyclerView.Adapter[MentionCandidateView
   }
 
   override def onBindViewHolder(holder: MentionCandidateViewHolder, position: Int): Unit = {
-    holder.bind(getItem(position), _teamId)
+    holder.bind(getItem(position))
   }
 
   override def getItemId(position: Int): Long = getItem(position).id.str.hashCode
@@ -68,8 +65,8 @@ class MentionCandidateViewHolder(v: View, onUserClick: UserData => Unit) extends
     override def onClick(v: View): Unit = userData.foreach(onUserClick(_))
   })
 
-  def bind(userData: UserData, teamId: Option[TeamId]): Unit = {
+  def bind(userData: UserData): Unit = {
     this.userData = Some(userData)
-    v.asInstanceOf[SingleUserRowView].setUserData(userData, teamId)
+    v.asInstanceOf[SingleUserRowView].setUserData(userData)
   }
 }

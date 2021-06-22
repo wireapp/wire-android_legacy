@@ -124,9 +124,11 @@ android {
         buildConfigField 'String',  'FILE_RESTRICTION_LIST',         "\"$buildtimeConfiguration.configuration.file_restriction_list\""
         buildConfigField 'String',  'COUNTLY_SERVER_URL',            "\"$buildtimeConfiguration.configuration.countly_server_url\""
         buildConfigField 'String',  'COUNTLY_APP_KEY',               "\"$buildtimeConfiguration.configuration.countly_app_key\""
+        buildConfigField 'boolean', 'KEEP_WEBSOCKET_ON',             "$buildtimeConfiguration.configuration.keep_websocket_on"
 
         //Feature Flags
         buildConfigField 'boolean', 'LARGE_VIDEO_CONFERENCE_CALLS', "$largeVideoConferenceCalls"
+        buildConfigField 'boolean', 'FEDERATION_USER_DISCOVERY', "$federationUserDiscovery"
     }
 
     packagingOptions {
@@ -271,8 +273,7 @@ android {
         }
 
         test {
-            java.srcDirs += ['src/test/java', 'src/test/kotlin']
-            scala.srcDirs += ['src/test/scala']
+            java.srcDirs += ['src/test/java', 'src/test/kotlin', 'src/test/scala']
         }
     }
 
@@ -351,6 +352,8 @@ dependencies {
     implementation(BuildDependencies.androidX.workManager) {
         exclude group: 'androidx.room', module: 'room-runtime'
     }
+
+    implementation BuildDependencies.androidX.viewPager2
 
     // Play services
     implementation BuildDependencies.playServices.base

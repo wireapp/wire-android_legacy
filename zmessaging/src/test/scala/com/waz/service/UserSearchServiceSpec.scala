@@ -223,6 +223,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         .expects(*, *, *, *).once().returning(Future.successful(expected.map(users).toVector))
 
       (userService.acceptedOrBlockedUsers _).expects().returns(Signal.const(Map.empty[UserId, UserData]))
+      (userService.selfUser _).expects().anyNumberOfTimes().returning(Signal.const(users(id('me))))
       (messagesStorage.countLaterThan _).expects(*, *).repeated(3).returning(Future.successful(1L))
       (usersStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserData]]())
       (usersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserData, UserData)]]())
@@ -237,10 +238,11 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val expected = ids('g, 'h)
       val query = SearchQuery("fr")
 
-      val querySignal = new SourceSignal[Option[IndexedSeq[UserData]]]()
+      val querySignal = SourceSignal[Option[IndexedSeq[UserData]]]()
       val queryResults = IndexedSeq.empty[UserData]
 
       (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(expected.map(key => key -> users(key)).toMap))
+      (userService.selfUser _).expects().anyNumberOfTimes().returning(Signal.const(users(id('me))))
 
       (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
 
@@ -280,7 +282,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
                           connectedUsers: Set[UserId] = Set()): PreparedSearch = {
       val convId = ConvId("e7969e91-366d-4ec5-9d85-4e8a4f9d53e6")
 
-      val querySignal = new SourceSignal[Option[Vector[UserId]]]()
+      val querySignal = SourceSignal[Option[Vector[UserId]]]()
       val queryResults = Vector.empty[UserId]
 
       (usersStorage.get _).stubs(*).onCall { id: UserId =>
@@ -290,6 +292,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         .stubs(*, *, *, *).returning(Future.successful(Vector.empty[UserData]))
       (userService.acceptedOrBlockedUsers _).stubs().returning(Signal.const(users.filterKeys(connectedUsers.contains)))
       (userService.getSelfUser _).stubs().onCall(_ => Future.successful(users.get(selfId)))
+      (userService.selfUser _).expects().anyNumberOfTimes().returning(Signal.const(users(selfId)))
 
       (convsStorage.findGroupConversations _).stubs(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
 

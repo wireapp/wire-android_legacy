@@ -14,7 +14,7 @@ class LegalHoldUsersAdapter(userIds: Signal[Set[UserId]], maxParticipants: Optio
 
   private var numUsers = 0
 
-  override protected lazy val users = for {
+  override protected lazy val users: Signal[Vector[ParticipantData]] = for {
     selfId       <- selfId
     usersStorage <- usersStorage
     teamId       <- team
@@ -22,7 +22,7 @@ class LegalHoldUsersAdapter(userIds: Signal[Set[UserId]], maxParticipants: Optio
     users        <- usersStorage.listSignal(userIds.toList)
     filter       <- filter
   } yield
-    users.filter(_.matchesQuery(SearchQuery(filter)))
+    users.filter(user => filter.isEmpty || user.matchesQuery(SearchQuery(filter)))
       .map(user => ParticipantData(
         user,
         isGuest = user.isGuest(teamId),
@@ -30,7 +30,7 @@ class LegalHoldUsersAdapter(userIds: Signal[Set[UserId]], maxParticipants: Optio
         isSelf = user.id == selfId
       )).sortBy(_.userData.name.str)
 
-  override protected lazy val positions =
+  override protected lazy val positions: Signal[List[Either[ParticipantData, Int]]] =
     for {
       users   <- users
       toShow   = maxParticipants.fold(users.toList)(max => users.toList.take(max))

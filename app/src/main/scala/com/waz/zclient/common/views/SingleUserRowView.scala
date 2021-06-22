@@ -26,21 +26,23 @@ import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import androidx.appcompat.widget.AppCompatCheckBox
 import com.waz.model.otr.ClientId
-import com.waz.model.{Availability, IntegrationData, TeamId, UserData, UserId}
+import com.waz.model.{Availability, IntegrationData, UserData, UserId}
+import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.utils.returning
+import com.waz.zclient.BuildConfig
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
+import com.waz.zclient.common.controllers.{ThemeController, ThemedView, UserAccountsController}
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon}
+import com.waz.zclient.ui.animation.interpolators.penner.Quad.EaseOut
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{GuestUtils, StringUtils, _}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.ui.animation.interpolators.penner.Quad.EaseOut
 import com.wire.signals.{EventStream, Signal, SourceStream}
 import org.threeten.bp.Instant
 
@@ -51,8 +53,9 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   inflate(R.layout.single_user_row_view)
 
-  protected lazy val callController: CallController = inject[CallController]
-  protected lazy val accentColorController          = inject[AccentColorController]
+  private lazy val callController                   = inject[CallController]
+  private lazy val accentColorController            = inject[AccentColorController]
+  private lazy val selfData                         = inject[UserAccountsController].currentUser
   private lazy val chathead                         = findById[ChatHeadView](R.id.chathead)
   private lazy val nameView                         = findById[TypefaceTextView](R.id.name_text)
   private lazy val subtitleView                     = findById[TypefaceTextView](R.id.username_text)
@@ -68,6 +71,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val auxContainer                     = findById[ViewGroup](R.id.aux_container)
   private lazy val guestIndicator                   = returning(findById[ImageView](R.id.guest_image_view))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
   private lazy val externalIndicator                = findById[ImageView](R.id.external_image_view)
+  private lazy val federatedIndicator               = findById[ImageView](R.id.federated_image_view)
 
   private lazy val youTextString                    = getString(R.string.content__system__you).capitalize
   private lazy val youText                          = returning(findById[TypefaceTextView](R.id.you_text))(_.setText(s"($youTextString)"))
@@ -149,6 +153,15 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     case _ =>
   }
 
+  private val isFederated = Signal(false)
+
+  isFederated.onUi(federatedIndicator.setVisible)
+  Signal.zip(chosenCurrentTheme, isFederated).onUi {
+    case (Theme.Light, true) => federatedIndicator.setImageResource(R.drawable.ic_icon_federated_user_light_theme)
+    case (Theme.Dark, true)  => federatedIndicator.setImageResource(R.drawable.ic_icon_federated_user_dark_theme)
+    case _ =>
+  }
+
   def setTitle(text: String, isSelf: Boolean): Unit = {
     nameView.setText(text)
     youText.setVisible(isSelf)
@@ -163,7 +176,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   def setChecked(checked: Boolean): Unit = checkbox.setChecked(checked)
 
-  private def setVerified(verified: Boolean) = verifiedShield.setVisible(verified)
+  private def setVerified(verified: Boolean): Unit = verifiedShield.setVisible(verified)
 
   def showArrow(show: Boolean): Unit = nextIndicator.setVisible(show)
 
@@ -181,15 +194,20 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   def setUserData(userData:       UserData,
-                  teamId:         Option[TeamId],
                   createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
-    chathead.setUserData(userData, userData.isInTeam(teamId))
     setTitle(userData.name, userData.isSelf)
-    setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
     setVerified(userData.isVerified)
     setSubtitle(createSubtitle(userData))
-    setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
-    setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
+    selfData.future.collect { case Some(self) =>
+      val teamId = self.teamId
+      chathead.setUserData(userData, userData.isInTeam(teamId))
+      setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
+      setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
+      setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        isFederated ! userData.isFederated(self.domain.getOrElse(""))
+      }
+    }(Threading.Ui)
   }
 
   private def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisible(guest)
@@ -218,6 +236,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     separator.setBackgroundColor(getStyledColor(R.attr.thinDividerColor, inject[ThemeController].getTheme(theme)))
     setBackground(backgroundDrawable)
     checkbox.setButtonDrawable(returning(getDrawable(checkboxDrawable))(_.setLevel(1)))
+    currentTheme ! Some(theme)
   }
 
   def setAvailability(availability: Availability): Unit =

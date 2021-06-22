@@ -229,7 +229,6 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
 
   private implicit val ctx = context
   private lazy val themeController = inject[ThemeController]
-  private lazy val teamId = inject[Signal[Option[TeamId]]]
   private lazy val currentUserController = inject[UserAccountsController]
 
   private val searchController = new SearchController()
@@ -241,7 +240,6 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   setHasStableIds(true)
 
   private var results = Seq.empty[(Either[UserData, IntegrationData], Boolean)]
-  private var team    = Option.empty[TeamId]
 
   val onSelectionChanged = EventStream[(Either[UserId, (ProviderId, IntegrationId)], Boolean)]()
 
@@ -249,11 +247,9 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
     res           <- searchResults
     currentUser   <- currentUserController.currentUser
     usersSelected <- usersSelected
-    _teamId       <- teamId
     servsSelected <- servicesSelected
-  } yield (_teamId, res, usersSelected, servsSelected, currentUser)).onUi {
-    case (teamId, res, usersSelected, servsSelected, currentUser) =>
-      team = teamId
+  } yield (res, usersSelected, servsSelected, currentUser)).onUi {
+    case (res, usersSelected, servsSelected, currentUser) =>
       val prev = this.results
 
       import AddUserListState._
@@ -264,7 +260,7 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
       }
 
       val directoryTeamMembers = currentUser.map(_.teamId) match {
-        case Some(_)      => directoryResults.filter(_.teamId == teamId)
+        case Some(teamId) => directoryResults.filter(_.teamId == teamId)
         case None         => Nil
       }
 
@@ -323,14 +319,14 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   }
 
 
-  override def getItemId(position: Int) = results(position) match {
+  override def getItemId(position: Int): Long = results(position) match {
     case (Left(user), _)         => user.id.str.hashCode
     case (Right(integration), _) => integration.id.str.hashCode
   }
 
   override def onBindViewHolder(holder: SelectableRowViewHolder, position: Int): Unit = results(position) match {
-    case (Left(user), selected) => holder.bind(user, team, selected = selected)
-    case (Right(integration), selected) => holder.bind(integration, selected = selected)
+    case (Left(user), selected)          => holder.bind(user, selected = selected)
+    case (Right(integration), selected)  => holder.bind(integration, selected = selected)
   }
 }
 
@@ -344,13 +340,13 @@ case class SelectableRowViewHolder(v: SingleUserRowView) extends RecyclerView.Vi
 
   var selectable: Option[Either[UserData, IntegrationData]] = None
 
-  def bind(user: UserData, teamId: Option[TeamId], selected: Boolean) = {
+  def bind(user: UserData, selected: Boolean): Unit = {
     this.selectable = Some(Left(user))
-    v.setUserData(user, teamId)
+    v.setUserData(user)
     v.setChecked(selected)
   }
 
-  def bind(integration: IntegrationData, selected: Boolean) = {
+  def bind(integration: IntegrationData, selected: Boolean): Unit = {
     this.selectable = Some(Right(integration))
     v.setIntegration(integration)
     v.setChecked(selected)

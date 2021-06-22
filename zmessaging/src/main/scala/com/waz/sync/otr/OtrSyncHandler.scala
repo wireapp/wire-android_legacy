@@ -23,7 +23,6 @@ import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE.{error, _}
-import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.GenericContent.{ClientAction, External}
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -109,11 +108,10 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       for {
         _          <- push.waitProcessing
         Some(conv) <- convStorage.get(convId)
-        _          =  if (!isHidden && conv.legalHoldStatus == LegalHoldStatus.PendingApproval) throw UnapprovedLegalHoldException
         _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
         recipients <- clientsMap(targetRecipients, convId)
         content    <- service.encryptMessage(msg, recipients, retries > 0, previous)
-        resp       <- if (content.estimatedSize < MaxContentSize) {
+        resp       <- if (external.isDefined || content.estimatedSize < MaxContentSize) {
                         val (shouldIgnoreMissingClients, targetUsers) = missingClientsStrategy(targetRecipients) match {
                           case DoNotIgnoreMissingClients                    => (false, None)
                           case IgnoreMissingClientsExceptFromUsers(userIds) => (false, Some(userIds))
@@ -137,22 +135,40 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         retry      <- resp.flatMapFuture {
                         case MessageResponse.Failure(ClientMismatch(_, missing, _, _)) if retries < 3 =>
                           warn(l"a message response failure with client mismatch with $missing, self client id is: $selfClientId")
-                          syncClients(missing.keys.toSet).flatMap { syncResult =>
-                            val err = SyncResult.unapply(syncResult)
-                            if (err.isDefined) error(l"syncClients for missing clients failed: $err")
-                            encryptAndSend(msg, external, retries + 1, content)
-                          }
+                          for {
+                            syncResult        <- syncClients(missing.keys.toSet)
+                            err                = SyncResult.unapply(syncResult)
+                            _                  = err.foreach { err => error(l"syncClients for missing clients failed: $err") }
+                            needsConfirmation <- needsLegalHoldConfirmation(conv, isHidden, missing.keys.toSet)
+                            _                  = if (needsConfirmation) throw LegalHoldDiscoveredException
+                            result            <- encryptAndSend(msg, external, retries + 1, content)
+                          } yield result
                         case _: MessageResponse.Failure =>
                           successful(Left(internalError(s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries")))
                         case resp => Future.successful(Right(resp))
                       }
       } yield retry
 
+    def needsLegalHoldConfirmation(conv: ConversationData,
+                                   isMessageHidden: Boolean,
+                                   usersWithMissingClients: Set[UserId]): Future[Boolean] = {
+      if (isMessageHidden || conv.isUnderLegalHold) {
+        Future.successful(false)
+      } else {
+        clientsStorage.getAll(usersWithMissingClients).map {
+          _.exists {
+            case Some(userClients) => userClients.containsLegalHoldDevice
+            case None => false
+          }
+        }
+      }
+    }
+
     encryptAndSend(message).recover {
       case UnverifiedException =>
         if (!message.proto.hasCalling) errors.addConvUnverifiedError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.Unverified)
-      case UnapprovedLegalHoldException =>
+      case LegalHoldDiscoveredException =>
         errors.addUnapprovedLegalHoldStatusError(convId, MessageId(message.proto.getMessageId))
         Left(ErrorResponse.UnapprovedLegalHold)
       case NonFatal(e) =>
@@ -307,7 +323,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
 object OtrSyncHandler {
 
   final case object UnverifiedException extends Exception
-  final case object UnapprovedLegalHoldException extends Exception
+  final case object LegalHoldDiscoveredException extends Exception
 
   final case class OtrMessage(sender:         ClientId,
                               recipients:     EncryptedContent,

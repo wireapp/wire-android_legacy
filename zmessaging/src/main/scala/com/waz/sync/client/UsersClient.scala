@@ -35,7 +35,10 @@ import scala.util.Right
 trait UsersClient {
   def loadUser(id: UserId): ErrorOrResponse[Option[UserInfo]]
   def loadUsers(ids: Seq[UserId]): ErrorOrResponse[Seq[UserInfo]]
-  def loadByHandle(handle: Handle): ErrorOrResponse[Option[UserInfo]]
+
+  def loadQualifiedUser(qId: QualifiedId): ErrorOrResponse[Option[UserInfo]]
+  def loadQualifiedUsers(qIds: Set[QualifiedId]): ErrorOrResponse[Seq[UserInfo]]
+
   def loadSelf(): ErrorOrResponse[UserInfo]
   def loadRichInfo(user: UserId): ErrorOrResponse[Seq[UserField]]
   def updateSelf(info: UserInfo): ErrorOrResponse[Unit]
@@ -70,6 +73,20 @@ class UsersClientImpl(implicit
         case e: ErrorResponse => Left(e)
       }
 
+  override def loadQualifiedUser(qId: QualifiedId): ErrorOrResponse[Option[UserInfo]] =
+    Request.Get(relativePath = qualifiedPath(qId))
+      .withResultType[UserInfo]
+      .withErrorType[ErrorResponse]
+      .execute
+      .map {
+        case res if res.deleted => Right(None)
+        case res => Right(Some(res))
+      }
+      .recover {
+        case e: ErrorResponse if e.code == ErrorResponse.NotFound => Right(None)
+        case e: ErrorResponse => Left(e)
+      }
+
   override def loadUsers(ids: Seq[UserId]): ErrorOrResponse[Seq[UserInfo]] = {
     if (ids.isEmpty) CancellableFuture.successful(Right(Vector()))
     else {
@@ -84,16 +101,14 @@ class UsersClientImpl(implicit
     }
   }
 
-  override def loadByHandle(handle: Handle): ErrorOrResponse[Option[UserInfo]] =
-    Request.Get(
-      relativePath = UsersPath,
-      queryParameters = queryParameters("handles" -> handle.string.toLowerCase)
-    )
-      .withResultType[Seq[UserInfo]]
-      .withErrorType[ErrorResponse]
-      .execute
-      .map(res => Right(res.headOption))
-      .recover { case e: ErrorResponse => Left(e) }
+  override def loadQualifiedUsers(qIds: Set[QualifiedId]): ErrorOrResponse[Seq[UserInfo]] =
+    if (qIds.isEmpty)
+      CancellableFuture.successful(Right(Vector()))
+    else
+      Request.Post(relativePath = ListUsersPath, body = ListUsersRequest(qIds.toSeq).encode)
+        .withResultType[Seq[UserInfo]]
+        .withErrorType[ErrorResponse]
+        .executeSafe
 
   override def loadSelf(): ErrorOrResponse[UserInfo] = {
     Request.Get(relativePath = SelfPath)
@@ -136,19 +151,36 @@ class UsersClientImpl(implicit
 
 object UsersClient {
   val UsersPath = "/users"
+  val ListUsersPath = "/list-users"
   val SelfPath = "/self"
   def RichInfoPath(user: UserId) = s"$UsersPath/${user.str}/rich-info"
   val ConnectionsPath = "/self/connections"
   val SearchablePath = "/self/searchable"
   val IdsCountThreshold = 64
 
-  def usersPath(user: UserId) = s"$UsersPath/${user.str}"
+  def usersPath(user: UserId): String = s"$UsersPath/${user.str}"
+  def qualifiedPath(qId: QualifiedId): String = s"$UsersPath/${qId.domain}/${qId.id}"
 
   case class DeleteAccount(password: Option[String])
 
   implicit lazy val DeleteAccountEncoder: JsonEncoder[DeleteAccount] = new JsonEncoder[DeleteAccount] {
     override def apply(v: DeleteAccount): JSONObject = JsonEncoder { o =>
       v.password foreach (o.put("password", _))
+    }
+  }
+
+  final case class ListUsersRequest(qIds: Seq[QualifiedId]) {
+    def encode: JSONObject = JsonEncoder { o =>
+      o.put(
+        "qualified_ids",
+        JsonEncoder.array(qIds) { case (arr, qid) => arr.put(QualifiedId.Encoder(qid)) }
+      )
+    }
+  }
+
+  object ListClientsRequest {
+    implicit object Encoder extends JsonEncoder[ListUsersRequest] {
+      override def apply(request: ListUsersRequest): JSONObject = request.encode
     }
   }
 }

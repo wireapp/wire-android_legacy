@@ -104,11 +104,13 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     val member2 = UserData(UserId(), None, teamId, Name("rick2"), handle = Some(Handle()), searchKey = SearchKey.simple("rick2"))
     val member2Updated = member2.copy(name = Name("user2"), searchKey = SearchKey.simple("user2"))
 
-    (userStorage.searchByTeam _).expects(teamId.get, SearchKey.simple("user"), false).once().returning(Future.successful(Set(member1)))
+    val query = SearchQuery("user")
+
+    (userStorage.searchByTeam _).expects(teamId.get, query).once().returning(Future.successful(Set(member1)))
 
     val service = createService
 
-    val res = service.searchTeamMembers(SearchQuery("user")).disableAutowiring() //disable autowiring to prevent multiple loads
+    val res = service.searchTeamMembers(query).disableAutowiring() //disable autowiring to prevent multiple loads
     result(res.filter(_ == Set(member1)).head)
 
     userStorageOnUpdated ! Seq(member2 -> member2Updated)
