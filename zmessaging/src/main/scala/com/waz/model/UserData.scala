@@ -139,12 +139,10 @@ final case class UserData(override val id:       UserId,
     domain.getOrElse("") != selfDomain
 
   def matchesQuery(query: SearchQuery): Boolean =
-    query.domain == domain.getOrElse("") &&
-      (handle.exists(_.startsWithQuery(query.query)) ||
-        (!query.handleOnly &&
-          (SearchKey(query.query).isAtTheStartOfAnyWordIn(searchKey) ||
-           email.exists(e => query.query.trim.equalsIgnoreCase(e.str))
-          )
+    handle.exists(_.startsWithQuery(query.query)) ||
+      (!query.handleOnly &&
+        (SearchKey(query.query).isAtTheStartOfAnyWordIn(searchKey) ||
+         email.exists(e => query.query.trim.equalsIgnoreCase(e.str))
         )
       )
 
