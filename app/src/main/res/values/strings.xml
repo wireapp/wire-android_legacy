@@ -1632,6 +1632,6 @@
     <string name="join_conversation_confirmation_cancel_button_text">Cancel</string>
     <string name="join_conversation_conversation_join_error_title">You could not join the conversation</string>
     <string name="join_conversation_invalid_link_error_message">The conversation link is invalid.</string>
-    <string name="join_conversation_member_limit_reached_error_message">You cannot be added to this guestroom because the limit is reached.</string>
+    <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
 </resources>
 
