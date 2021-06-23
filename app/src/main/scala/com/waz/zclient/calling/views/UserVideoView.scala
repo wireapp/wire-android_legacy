@@ -81,11 +81,12 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  participantInfo.onUi {
-    case Some(p) if (p.picture.isDefined) => setProfilePicture(p.picture.get)
-    case _ =>
+  if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
+    participantInfo.onUi {
+      case Some(p) if (p.picture.isDefined) => setProfilePicture(p.picture.get)
+      case _ =>
+    }
   }
-
 
   if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
     callController.controlsVisible.map { !_ }.onUi(participantInfoCardView.setVisible)
