@@ -147,7 +147,7 @@ final case class UserData(override val id:       UserId,
       )
 
   def exactMatchQuery(query: SearchQuery): Boolean =
-    query.domain == domain.getOrElse("") && handle.exists(_.exactMatchQuery(query.query))
+    handle.exists(_.exactMatchQuery(query.query))
 }
 
 trait Picture
