@@ -95,9 +95,9 @@ class UserSearchServiceImpl(selfUserId:           UserId,
           searchResults.filter { u =>
             u.createdBy.contains(selfUserId) ||
             knownUsersIds.contains(u.id) ||
-              u.teamId != teamId ||
-              (u.teamId == teamId && !u.isExternal(teamId)) ||
-              u.exactMatchQuery(query)
+            u.teamId != teamId ||
+            (u.teamId == teamId && !u.isExternal(teamId)) ||
+            u.exactMatchQuery(query)
           }
         }
       case _ => Future.successful(searchResults)
@@ -253,11 +253,10 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   def syncSearchResults(query: SearchQuery): Unit = if (!query.isEmpty) sync.syncSearchQuery(query)
 
   private def directoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
-    returning {
-      if (!query.isEmpty)
-        userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
-      else Signal.const(IndexedSeq.empty[UserData])
-    } { dir =>  verbose(l"directory search results: $dir") }
+    if (!query.isEmpty)
+      userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
+    else
+      Signal.const(IndexedSeq.empty[UserData])
 
   override def updateSearchResults(results: UserSearchResponse): Future[Unit] =
     usersStorage.contents.head.flatMap { usersInStorage =>
