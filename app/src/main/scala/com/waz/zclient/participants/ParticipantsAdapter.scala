@@ -497,9 +497,9 @@ object ParticipantsAdapter {
 
 }
 
-final class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle:  Option[(UserData, Boolean) => String] = None)
-                          (implicit context: Context, injector: Injector, eventContext: EventContext)
-  extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle) {
+final class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle: Option[UserData => String] = None)
+                                (implicit context: Context, injector: Injector, eventContext: EventContext)
+  extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle.map(f => { (u: UserData, _: Boolean) => f(u) })) {
   import ParticipantsAdapter._
 
   override protected lazy val users: Signal[Vector[ParticipantData]] = for {
