@@ -50,6 +50,8 @@ import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.util.control.NonFatal
 
+import com.waz.zms.BuildConfig
+
 trait ConversationsUiService {
   import ConversationsUiService._
 
@@ -372,7 +374,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       Future successful None
   }
 
-  override def getOrCreateOneToOneConversation(other: UserId) = {
+  override def getOrCreateOneToOneConversation(other: UserId): Future[ConversationData] = {
 
     def createReal1to1() =
       convsContent.convById(ConvId(other.str)) flatMap {
@@ -410,34 +412,49 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
         }
       }
 
-    def createFake1To1(tId: TeamId) = {
+    def createFake1To1(tId: TeamId, otherUser: Option[UserData], isFederated: Boolean) = {
       verbose(l"Checking for 1:1 conversation with user: $other")
       (for {
-        allConvs   <- this.members.getByUsers(Set(other)).map(_.map(_.convId))
-        allMembers <- this.members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))
-        onlyUs     =  allMembers.groupBy { case (c, _) => c }.map { case (cid, us) => cid -> us.map(_._2).toSet }.collect { case (c, us) if us == Set(other, selfUserId) => c }
-        convs      <- convStorage.getAll(onlyUs).map(_.flatten)
+        allConvs    <- this.members.getByUsers(Set(other)).map(_.map(_.convId))
+        allMembers  <- this.members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))
+        onlyUs      =  allMembers.groupBy { case (c, _) => c }
+                                 .map     { case (cid, us) => cid -> us.map(_._2).toSet }
+                                 .collect { case (c, us) if us == Set(other, selfUserId) => c }
+        convs       <- convStorage.getAll(onlyUs).map(_.flatten)
       } yield {
-        verbose(l"allConvs size: ${allConvs.size}")
-        verbose(l"allMembers size: ${allMembers.size}")
-        verbose(l"OnlyUs convs size: ${onlyUs.size}")
         if (convs.size > 1)
           warn(l"Found ${convs.size} available team conversations with user: $other, returning first conversation found")
-        else verbose(l"Found ${convs.size} convs with other user: $other")
-        convs.find(c => c.team.contains(tId) && c.name.isEmpty)
+        convs.headOption
       }).flatMap {
-        case Some(conv) => Future.successful(conv)
-        case _ => createAndPostConversation(ConvId(), None, Set(other), defaultRole = ConversationRole.AdminRole).map(_._1)
+        case Some(conv) =>
+          Future.successful(conv)
+        case _ if isFederated =>
+          val qualifiedIdSet = otherUser.flatMap(_.qualifiedId).toSet
+          createAndPostQualifiedConversation(ConvId(), None, qualifiedIdSet, defaultRole = ConversationRole.AdminRole).map(_._1)
+        case _ =>
+          createAndPostConversation(ConvId(), None, Set(other), defaultRole = ConversationRole.AdminRole).map(_._1)
       }
     }
 
     teamId match {
       case Some(tId) =>
         for {
-          user <- usersStorage.get(other)
-          conv <- if (user.exists(_.isGuest(tId))) createReal1to1() else createFake1To1(tId)
+          otherUser   <- usersStorage.get(other)
+          selfUser    <- usersStorage.get(selfUserId)
+          isFederated =  if (BuildConfig.FEDERATION_USER_DISCOVERY)
+                           (selfUser.flatMap(_.domain), otherUser) match {
+                             case (Some(selfDomain), Some(user)) => user.domain.exists(_ != selfDomain)
+                             case _ => false
+                           }
+                         else false
+          isGuest     =  otherUser.exists(_.isGuest(tId))
+          conv        <- if (isGuest && !isFederated)
+                           createReal1to1()
+                         else
+                           createFake1To1(tId, otherUser, isFederated)
         } yield conv
-      case None => createReal1to1()
+      case None =>
+        createReal1to1()
     }
   }
 
