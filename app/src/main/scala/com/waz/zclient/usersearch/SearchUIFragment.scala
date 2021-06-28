@@ -169,14 +169,14 @@ class SearchUIFragment extends BaseFragment[Container]
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
   }
 
-  private lazy val emptySearchText1 = returning(view[TypefaceTextView](R.id.empty_search_text1)) { vh =>
+  private lazy val emptySearchSameDomainText = returning(view[TypefaceTextView](R.id.empty_search_same_domain_text)) { vh =>
     subs += searchController.searchUserOrServices.map {
       case SearchUserListState.NoUsersFound => View.VISIBLE
       case _ => View.GONE
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
   }
 
-  private lazy val emptySearchText2 = returning(view[TypefaceTextView](R.id.empty_search_text2)) { vh =>
+  private lazy val emptySearchOtherDomainsText = returning(view[TypefaceTextView](R.id.empty_search_other_domains_text)) { vh =>
     subs += searchController.searchUserOrServices.zip(userAccountsController.isTeam).map {
       case (SearchUserListState.NoUsersFound, true) => View.VISIBLE
       case _ => View.GONE
@@ -296,8 +296,8 @@ class SearchUIFragment extends BaseFragment[Container]
 
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
       emptySearchIcon
-      emptySearchText1
-      emptySearchText2
+      emptySearchSameDomainText
+      emptySearchOtherDomainsText
       emptySearchButton
     }
 
