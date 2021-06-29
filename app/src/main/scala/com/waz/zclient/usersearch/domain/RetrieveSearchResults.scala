@@ -152,7 +152,12 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       }
 
       if (directoryExternalMembers.nonEmpty) {
-        mergedResult += SectionViewItem(DirectorySection, 0)
+        val federatedDomain = (directoryExternalMembers.headOption, currentUser.flatMap(_.domain)) match {
+          case (Some(user), Some(currentDomain)) if user.isFederated(currentDomain) => user.domain
+          case _ => None
+        }
+
+        mergedResult += SectionViewItem(DirectorySection, 0, federatedDomain = federatedDomain)
         //directoryResults needs to be zipped with Index not directoryExternalMembers here
         mergedResult ++= directoryResults.zipWithIndex.map { case (user, index) =>
           ConnectionViewItem(index, user, connected = false)
