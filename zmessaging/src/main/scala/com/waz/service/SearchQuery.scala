@@ -17,13 +17,13 @@
  */
 package com.waz.service
 
-import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow
 import com.waz.model.Handle
 import com.waz.log.LogSE._
 import com.waz.utils.returning
 
-final case class SearchQuery private (query: String, domain: String, handleOnly: Boolean) {
+final case class SearchQuery private[service] (query: String, domain: String, handleOnly: Boolean) {
   val isEmpty: Boolean = query.isEmpty
 
   def hasDomain: Boolean = domain.nonEmpty
@@ -36,13 +36,13 @@ final case class SearchQuery private (query: String, domain: String, handleOnly:
   }
 }
 
-object SearchQuery {
+object SearchQuery extends DerivedLogTag {
   val Empty: SearchQuery = SearchQuery("", "", handleOnly = false)
 
   private val recommendedPrefix = "##recommended##"
   private val recommendedHandlePrefix = "##recommendedhandle##"
 
-  implicit val SearchQueryLogShow: LogShow[SearchQuery] = LogShow.create(sq => s"SearchQuery(${sq.query}, ${sq.handleOnly})")
+  implicit val SearchQueryLogShow: LogShow[SearchQuery] = LogShow.create(sq => s"SearchQuery(${sq.query}, ${sq.domain}, ${sq.handleOnly})")
 
   def apply(str: String): SearchQuery = {
     val isHandle = Handle.isHandle(str)
@@ -50,12 +50,15 @@ object SearchQuery {
     val (queryWithoutDomain, domain) =
       if (query.contains("@")) {
         val split = query.split("@")
-        (split(0).trim, split(1).trim) // the domain shouldn't contain the @ sign, so we can assume there are only two elements in the split
+        if (split.size > 1)
+          (split(0).trim, split(1).trim) // the domain shouldn't contain the @ sign, so we can assume there are only two elements in the split
+        else
+          (split(0).trim, "")
       } else
         (query.trim, "")
 
     returning(SearchQuery(queryWithoutDomain, domain, isHandle)) { sq =>
-      verbose(l"SearchQuery.apply, str: $str, search query: $sq")(LogTag("SearchQuery"))
+      verbose(l"SearchQuery.apply, str: $str, search query: $sq")
     }
   }
 
