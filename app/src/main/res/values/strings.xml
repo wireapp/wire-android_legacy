@@ -1430,8 +1430,8 @@
     <string name="add_services_button_text">Manage services</string>
     <string name="empty_search_button_text">Learn more</string>
 
-    <string name="empty_search_text1">Find people in Wire by name or @username</string>
-    <string name="empty_search_text2">Find people from another domain by @username@domainname</string>
+    <string name="empty_search_same_domain_text">Find people in Wire by name or @username</string>
+    <string name="empty_search_other_domains_text">Find people from another domain by @username@domainname</string>
 
     <string name="mention_symbol" translatable="false">\@</string>
 
