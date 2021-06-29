@@ -26,7 +26,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.CallParticipantsView
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 import com.waz.threading.Threading._
 
 class CallParticipantsFragment extends FragmentHelper {
@@ -44,7 +44,8 @@ class CallParticipantsFragment extends FragmentHelper {
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
-    controller.isVideoCall.onUi {
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
+    else controller.isVideoCall.onUi {
       case true => getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
       case false => getView.setBackgroundColor(Color.TRANSPARENT)
     }
