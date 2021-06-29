@@ -37,6 +37,7 @@ import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
+import com.waz.zms.BuildConfig
 import com.wire.signals.{AggregatingSignal, Signal}
 
 import scala.collection.{breakOut, mutable}
@@ -76,6 +77,10 @@ trait ConversationsService {
   def remoteIds: Future[Set[RConvId]]
   def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]]
   def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]]
+
+  def fake1To1Conversations: Signal[Seq[ConversationData]]
+  def isFake1To1(convId: ConvId): Future[Boolean]
+  def onlyFake1To1ConvUsers: Signal[Seq[UserData]]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -715,6 +720,30 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         warn(l"joinConversation(key: $key, code: $code) error: $error")
         Future.successful(Left(GeneralError))
     }
+
+  private lazy val fake1To1s =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      for {
+        convs            <- convsStorage.contents.map(_.values.filter(c => c.convType == ConversationType.Group && c.name.isEmpty))
+        convsWithMembers <- Signal.sequence(convs.map(c => membersStorage.activeMembers(c.id).map((c, _))).toSeq: _*)
+        fakes            = convsWithMembers.filter { case (_, ms) => ms.size == 2 && ms.contains(selfUserId) }
+      } yield fakes
+    } else {
+      Signal.const(Seq.empty[(ConversationData, Set[UserId])])
+    }
+
+  override lazy val fake1To1Conversations: Signal[Seq[ConversationData]] = fake1To1s.map(_.map(_._1))
+
+  override def isFake1To1(convId: ConvId): Future[Boolean] = fake1To1s.head.map(_.exists(_._1.id == convId))
+
+  override lazy val onlyFake1To1ConvUsers: Signal[Seq[UserData]] =
+    for {
+      fake1To1Convs     <- fake1To1s
+      userIds           =  fake1To1Convs.flatMap(_._2).toSet
+      acceptedOrBlocked <- users.acceptedOrBlockedUsers.map(_.keySet)
+      fake1To1UserIds   =  userIds -- acceptedOrBlocked
+      fake1To1Users     <- usersStorage.listSignal(fake1To1UserIds)
+    } yield fake1To1Users
 }
 
 object ConversationsService {
