@@ -33,8 +33,9 @@ import scala.concurrent.Future
 class TeamConversationSpec extends AndroidFreeSpec {
   import ConversationRole._
 
-  val self         = UserId()
+  val selfId       = UserId()
   val team         = Some(TeamId("team"))
+  val selfUser     = UserData(selfId, None, team, Name("self"), searchKey = SearchKey.simple("self"))
   val userStorage  = mock[UsersStorage]
   val members      = mock[MembersStorage]
   val convsContent = mock[ConversationsContentUpdater]
@@ -48,16 +49,17 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val otherUserId = UserId("otherUser")
       val otherUser = UserData(otherUserId, None, team, Name("other"), searchKey = SearchKey.simple("other"))
 
-      val existingConv = ConversationData(creator = self, convType = Group, team = team)
+      val existingConv = ConversationData(creator = selfId, convType = Group, team = team)
 
       (userStorage.get _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
+      (userStorage.get _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
       )))
 
       (members.getByConvs _).expects(Set(existingConv.id)).once().returning(Future.successful(IndexedSeq(
-        ConversationMemberData(self,        existingConv.id, AdminRole),
+        ConversationMemberData(selfId,        existingConv.id, AdminRole),
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
       )))
 
@@ -71,26 +73,27 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val otherUser = UserData(otherUserId, None, team, Name("other"), searchKey = SearchKey.simple("other"))
 
       val name = Some(Name("Conv Name"))
-      val existingConv = ConversationData(creator = self, name = name, convType = Group, team = team)
+      val existingConv = ConversationData(creator = selfId, name = name, convType = Group, team = team)
 
       (userStorage.get _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
+      (userStorage.get _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
       )))
 
       (members.getByConvs _).expects(Set(existingConv.id)).once().returning(Future.successful(IndexedSeq(
-        ConversationMemberData(self,      existingConv.id, AdminRole),
+        ConversationMemberData(selfId,      existingConv.id, AdminRole),
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
       )))
 
       (convsStorage.getAll _).expects(Seq(existingConv.id)).once().returning(Future.successful(Seq(Some(existingConv))))
       (convsContent.createConversationWithMembers _)
-        .expects(*, *, Group, self, Set(otherUserId), ConversationRole.AdminRole, None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, 0).once().onCall {
+        .expects(*, *, Group, selfId, Set(otherUserId), ConversationRole.AdminRole, None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, 0).once().onCall {
         (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
       }
-      (messages.addConversationStartMessage _).expects(*, self, Set(otherUserId), None, *, None).once().returning(Future.successful({}))
+      (messages.addConversationStartMessage _).expects(*, selfId, Set(otherUserId), None, *, None).once().returning(Future.successful({}))
       (sync.postConversation _)
         .expects(*, Set(otherUserId), None, team, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, Some(0), *)
         .once()
@@ -108,18 +111,19 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val otherUserId = UserId("otherUser")
       val otherUser = UserData(otherUserId, None, Some(TeamId("different_team")), Name("other"), searchKey = SearchKey.simple("other"), connection = ConnectionStatus.Ignored)
 
-      val expectedConv = ConversationData(ConvId("otherUser"), creator = self, convType = OneToOne, team = None)
+      val expectedConv = ConversationData(ConvId("otherUser"), creator = selfId, convType = OneToOne, team = None)
 
       (userStorage.get _).expects(otherUserId).twice().returning(Future.successful(Some(otherUser)))
+      (userStorage.get _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
       (convsContent.createConversationWithMembers _)
-        .expects(ConvId("otherUser"), *, Incoming, otherUserId, Set(self), ConversationRole.AdminRole, None, true, Set(Access.PRIVATE), AccessRole.PRIVATE, 0).once().onCall {
+        .expects(ConvId("otherUser"), *, Incoming, otherUserId, Set(selfId), ConversationRole.AdminRole, None, true, Set(Access.PRIVATE), AccessRole.PRIVATE, 0).once().onCall {
         (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
       }
 
-      (messages.addMemberJoinMessage _).expects(ConvId("otherUser"), otherUserId, Set(self), true, false).once().returning(Future.successful(null))
+      (messages.addMemberJoinMessage _).expects(ConvId("otherUser"), otherUserId, Set(selfId), true, false).once().returning(Future.successful(null))
 
       val conv = result(initService.getOrCreateOneToOneConversation(otherUserId))
       conv.id shouldEqual ConvId("otherUser")
@@ -127,5 +131,5 @@ class TeamConversationSpec extends AndroidFreeSpec {
   }
 
   def initService: ConversationsUiService =
-    new ConversationsUiServiceImpl(self, team, null, userStorage, messages, null, null, members, convsContent, convsStorage, null, null, sync, null, null, null, null, null, null)
+    new ConversationsUiServiceImpl(selfId, team, null, userStorage, messages, null, null, members, convsContent, convsStorage, null, null, sync, null, null, null, null, null, null)
 }

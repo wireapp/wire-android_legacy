@@ -374,57 +374,57 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       Future successful None
   }
 
-  override def getOrCreateOneToOneConversation(other: UserId): Future[ConversationData] = {
+  override def getOrCreateOneToOneConversation(otherUserId: UserId): Future[ConversationData] = {
 
     def createReal1to1() =
-      convsContent.convById(ConvId(other.str)) flatMap {
+      convsContent.convById(ConvId(otherUserId.str)) flatMap {
         case Some(conv) => Future.successful(conv)
-        case _ => usersStorage.get(other).flatMap {
+        case _ => usersStorage.get(otherUserId).flatMap {
           case Some(u) if u.connection == ConnectionStatus.Ignored =>
             for {
               conv <- convsContent.createConversationWithMembers(
-                        convId      = ConvId(other.str),
+                        convId      = ConvId(otherUserId.str),
                         remoteId    = u.conversation.getOrElse(RConvId()),
                         convType    = ConversationType.Incoming,
-                        creator     = other,
+                        creator     = otherUserId,
                         name        = None,
                         members     = Set(selfUserId),
                         hidden      = true,
                         defaultRole = ConversationRole.AdminRole
                       )
-              _    <- messages.addMemberJoinMessage(conv.id, other, Set(selfUserId), firstMessage = true)
-              _    <- u.connectionMessage.fold(Future.successful(conv))(messages.addConnectRequestMessage(conv.id, other, selfUserId, _, u.name).map(_ => conv))
+              _    <- messages.addMemberJoinMessage(conv.id, otherUserId, Set(selfUserId), firstMessage = true)
+              _    <- u.connectionMessage.fold(Future.successful(conv))(messages.addConnectRequestMessage(conv.id, otherUserId, selfUserId, _, u.name).map(_ => conv))
             } yield conv
           case _ =>
             for {
-              _    <- sync.postConversation(ConvId(other.str), Set(other), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
+              _    <- sync.postConversation(ConvId(otherUserId.str), Set(otherUserId), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
               conv <- convsContent.createConversationWithMembers(
-                        convId      = ConvId(other.str),
+                        convId      = ConvId(otherUserId.str),
                         remoteId    = RConvId(),
                         convType    = ConversationType.OneToOne,
                         creator     = selfUserId,
                         name        = None,
-                        members     = Set(other),
+                        members     = Set(otherUserId),
                         defaultRole = ConversationRole.AdminRole
                       )
-              _    <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(other), firstMessage = true)
+              _    <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(otherUserId), firstMessage = true)
             } yield conv
         }
       }
 
     def createFake1To1(tId: TeamId, otherUser: Option[UserData], isFederated: Boolean) = {
-      verbose(l"Checking for 1:1 conversation with user: $other")
+      verbose(l"Checking for 1:1 conversation with user: $otherUserId")
       (for {
-        allConvs    <- this.members.getByUsers(Set(other)).map(_.map(_.convId))
+        allConvs    <- this.members.getByUsers(Set(otherUserId)).map(_.map(_.convId))
         allMembers  <- this.members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))
         onlyUs      =  allMembers.groupBy { case (c, _) => c }
                                  .map     { case (cid, us) => cid -> us.map(_._2).toSet }
-                                 .collect { case (c, us) if us == Set(other, selfUserId) => c }
+                                 .collect { case (c, us) if us == Set(otherUserId, selfUserId) => c }
         convs       <- convStorage.getAll(onlyUs).map(_.flatten)
       } yield {
         if (convs.size > 1)
-          warn(l"Found ${convs.size} available team conversations with user: $other, returning first conversation found")
-        convs.headOption
+          warn(l"Found ${convs.size} available team conversations with user: $otherUserId, returning first conversation found")
+        convs.find(_.name.isEmpty) // if we already have a conv with that person but it's named, we prefer to create a new one
       }).flatMap {
         case Some(conv) =>
           Future.successful(conv)
@@ -432,14 +432,14 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
           val qualifiedIdSet = otherUser.flatMap(_.qualifiedId).toSet
           createAndPostQualifiedConversation(ConvId(), None, qualifiedIdSet, defaultRole = ConversationRole.AdminRole).map(_._1)
         case _ =>
-          createAndPostConversation(ConvId(), None, Set(other), defaultRole = ConversationRole.AdminRole).map(_._1)
+          createAndPostConversation(ConvId(), None, Set(otherUserId), defaultRole = ConversationRole.AdminRole).map(_._1)
       }
     }
 
     teamId match {
       case Some(tId) =>
         for {
-          otherUser   <- usersStorage.get(other)
+          otherUser   <- usersStorage.get(otherUserId)
           selfUser    <- usersStorage.get(selfUserId)
           isFederated =  if (BuildConfig.FEDERATION_USER_DISCOVERY)
                            (selfUser.flatMap(_.domain), otherUser) match {
