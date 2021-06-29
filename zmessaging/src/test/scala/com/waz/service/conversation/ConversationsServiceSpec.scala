@@ -506,8 +506,8 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val user2 = UserData("user2").copy(domain = Some(domain))
       val users = Set(self, user1, user2)
 
-      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, users.map(_.id), *, *, *, *, *, *).once().returning(Future.successful(conv))
-      (messages.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set.empty[UserId], *, *, *, *, *, *).once().returning(Future.successful(conv))
+      (messages.addConversationStartMessage _).expects(*, selfUserId, Set.empty[UserId], *, *, *).once().returning(Future.successful(()))
       (sync.postQualifiedConversation _).expects(*, users.map(_.qualifiedId.get), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
