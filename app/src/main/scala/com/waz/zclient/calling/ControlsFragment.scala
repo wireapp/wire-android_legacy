@@ -31,7 +31,7 @@ import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, Contro
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 import com.wire.signals.{Signal, Subscription}
 
 class ControlsFragment extends FragmentHelper {
@@ -93,6 +93,17 @@ class ControlsFragment extends FragmentHelper {
       }
     }
 
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+      Signal.zip(
+        controller.isCallEstablished,
+        controller.isGroupCall,
+        controller.isFullScreenEnabled,
+        controller.allParticipants.map(_.size > 2)
+      ).onUi {
+        case (true, true, false, true) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
+        case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
+      }
+    else
       Signal.zip(
         controller.isCallEstablished,
         controller.isGroupCall,
