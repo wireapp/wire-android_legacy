@@ -44,10 +44,11 @@ class CallParticipantsFragment extends FragmentHelper {
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
-    else controller.isVideoCall.onUi {
+    controller.isVideoCall.onUi {
       case true => getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
-      case false => getView.setBackgroundColor(Color.TRANSPARENT)
+      case false =>
+        if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
+        else getView.setBackgroundColor(Color.TRANSPARENT)
     }
   }
 
