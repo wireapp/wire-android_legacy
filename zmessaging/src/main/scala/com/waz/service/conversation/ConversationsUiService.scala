@@ -126,7 +126,7 @@ object ConversationsUiService {
 class ConversationsUiServiceImpl(selfUserId:        UserId,
                                  teamId:            Option[TeamId],
                                  assets:            AssetService,
-                                 usersStorage:      UsersStorage,
+                                 userService:       UserService,
                                  messages:          MessagesService,
                                  messagesStorage:   MessagesStorage,
                                  messagesContent:   MessagesContentUpdater,
@@ -302,29 +302,39 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
   override def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]]
     = messages.addRestrictedFileMessage(convId, from, extension)
 
-  override def addConversationMembers(conv: ConvId, users: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
+  override def addConversationMembers(conv: ConvId, userIds: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
     (for {
-      true      <- canModifyMembers(conv)
-      contacted <- members.getByUsers(users)
-      toSync    =  users -- contacted.map(_.userId).toSet
-      _         <- sync.syncUsers(toSync) // data of users found through Search UI is not yet in db
-      added     <- members.updateOrCreateAll(conv, users.map(_ -> defaultRole).toMap) if added.nonEmpty
-      _         <- messages.addMemberJoinMessage(conv, selfUserId, added.map(_.userId))
-      syncId    <- sync.postConversationMemberJoin(conv, added.map(_.userId), defaultRole)
+      true                      <- canModifyMembers(conv)
+      contacted                 <- members.getByUsers(userIds)
+      toSync                    =  userIds -- contacted.map(_.userId).toSet
+      usersToSync               <- userService.findUsers(toSync.toSeq)
+      qUsersToSync              <- Future.sequence(usersToSync.flatten.map(user => userService.isFederated(user).map((user, _))))
+      (qualified, nonQualified) =  qUsersToSync.partition(_._2)
+      _                         <- if (qualified.nonEmpty)
+                                     sync.syncQualifiedUsers(qualified.flatMap(_._1.qualifiedId).toSet)
+                                   else
+                                     Future.successful(())
+      _                         <- if (nonQualified.nonEmpty)
+                                     sync.syncUsers(nonQualified.map(_._1.id).toSet)
+                                   else
+                                     Future.successful(())
+      added                     <- members.updateOrCreateAll(conv, userIds.map(_ -> defaultRole).toMap) if added.nonEmpty
+      _                         <- messages.addMemberJoinMessage(conv, selfUserId, added.map(_.userId))
+      syncId                    <- sync.postConversationMemberJoin(conv, added.map(_.userId), defaultRole)
     } yield Option(syncId))
       .recover {
         case NonFatal(e) =>
-          warn(l"Failed to add members: $users to conv: $conv", e)
+          warn(l"Failed to add members: $userIds to conv: $conv", e)
           Option.empty[SyncId]
       }
 
-  override def removeConversationMember(conv: ConvId, user: UserId) = {
+  override def removeConversationMember(conv: ConvId, user: UserId): Future[Option[SyncId]] = {
     (for {
       true     <- canModifyMembers(conv)
       Some(_)  <- members.remove(conv, user)
       toDelete <- if (user != selfUserId) members.getByUsers(Set(user)).map(_.isEmpty)
                   else Future.successful(false)
-      _        <- if (toDelete) usersStorage.remove(user) else Future.successful(())
+      _        <- if (toDelete) userService.deleteUsers(Set(user)) else Future.successful(())
       _        <- messages.addMemberLeaveMessage(conv, selfUserId, Set(user), reason = None)
       syncId   <- sync.postConversationMemberLeave(conv, user)
     } yield Option(syncId))
@@ -379,7 +389,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     def createReal1to1() =
       convsContent.convById(ConvId(otherUserId.str)) flatMap {
         case Some(conv) => Future.successful(conv)
-        case _ => usersStorage.get(otherUserId).flatMap {
+        case _ => userService.findUser(otherUserId).flatMap {
           case Some(u) if u.connection == ConnectionStatus.Ignored =>
             for {
               conv <- convsContent.createConversationWithMembers(
@@ -439,8 +449,8 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     teamId match {
       case Some(tId) =>
         for {
-          otherUser   <- usersStorage.get(otherUserId)
-          selfUser    <- usersStorage.get(selfUserId)
+          otherUser   <- userService.findUser(otherUserId)
+          selfUser    <- userService.findUser(selfUserId)
           isFederated =  if (BuildConfig.FEDERATION_USER_DISCOVERY)
                            (selfUser.flatMap(_.domain), otherUser) match {
                              case (Some(selfDomain), Some(user)) => user.domain.exists(_ != selfDomain)

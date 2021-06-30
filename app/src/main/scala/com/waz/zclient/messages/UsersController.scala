@@ -34,8 +34,6 @@ import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 
-import com.waz.zclient.BuildConfig
-
 class UsersController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
 
@@ -149,26 +147,10 @@ class UsersController(implicit injector: Injector, context: Context)
   def isFederated(user: UserData, selfDomain: String): Boolean = user.domain.exists(_ != selfDomain)
 
   def isFederated(user: UserData): Future[Boolean] =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      import Threading.Implicits.Background
-      selfUser.head.map(_.domain).map {
-        case None => false
-        case Some(selfDomain) => isFederated(user, selfDomain)
-      }
-    } else {
-      Future.successful(false)
-    }
+    userService.head.flatMap(_.isFederated(user))(Threading.Background)
 
   def isFederated(id: UserId): Future[Boolean] =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      import Threading.Implicits.Background
-      userOpt(id).head.flatMap {
-        case None       => Future.successful(false)
-        case Some(user) => isFederated(user)
-      }
-    } else {
-      Future.successful(false)
-    }
+    userService.head.flatMap(_.isFederated(id))(Threading.Background)
 
   def conv(msg: MessageData): Signal[ConversationData] =
     for {
