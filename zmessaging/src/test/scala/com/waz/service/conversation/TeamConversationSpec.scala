@@ -52,7 +52,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val existingConv = ConversationData(creator = selfId, convType = Group, team = team)
 
       (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (users.findUser _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
+      (users.isFederated(_: UserId)).expects(otherUserId).once().returning(Future.successful(false))
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
@@ -76,7 +76,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val existingConv = ConversationData(creator = selfId, name = name, convType = Group, team = team)
 
       (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (users.findUser _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
+      (users.isFederated(_: UserId)).expects(otherUserId).once().returning(Future.successful(false))
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
@@ -111,10 +111,8 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val otherUserId = UserId("otherUser")
       val otherUser = UserData(otherUserId, None, Some(TeamId("different_team")), Name("other"), searchKey = SearchKey.simple("other"), connection = ConnectionStatus.Ignored)
 
-      val expectedConv = ConversationData(ConvId("otherUser"), creator = selfId, convType = OneToOne, team = None)
-
       (users.findUser _).expects(otherUserId).twice().returning(Future.successful(Some(otherUser)))
-      (users.findUser _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
+      (users.isFederated(_: UserId)).expects(otherUserId).once().returning(Future.successful(false))
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
       (convsContent.createConversationWithMembers _)

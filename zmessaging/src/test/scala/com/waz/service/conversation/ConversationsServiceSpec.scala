@@ -47,7 +47,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   private lazy val messages       = mock[MessagesService]
   private lazy val msgStorage     = mock[MessagesStorage]
   private lazy val membersStorage = mock[MembersStorage]
-  private lazy val users          = mock[UserService]
+  private lazy val userService    = mock[UserService]
   private lazy val sync           = mock[SyncServiceHandle]
   private lazy val push           = mock[PushService]
   private lazy val usersStorage   = mock[UsersStorage]
@@ -75,7 +75,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   val teamsStorage                = mock[TeamsStorage]
   val errorsService               = mock[ErrorsService]
 
-  private val selfUserId = UserId("user1")
+  private val selfUserId = UserId("selfUser")
   private val convId = ConvId("conv_id1")
   private val rConvId = RConvId("r_conv_id1")
 
@@ -83,7 +83,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     None,
     selfUserId,
     push,
-    users,
+    userService,
     usersStorage,
     membersStorage,
     convsStorage,
@@ -106,7 +106,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
   private def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
     new ConversationsUiServiceImpl(
-      selfUserId, teamId, assets, users, messages, msgStorage,
+      selfUserId, teamId, assets, userService, messages, msgStorage,
       msgUpdater, membersStorage, content, convsStorage, network,
       service, sync, convsClient, accounts, tracking, errors, uriHelper,
       properties
@@ -152,7 +152,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(selfUserId), reason = None)
       )
-      (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
 
       // check if the self is still in any conversation (they are - with self)
       (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
@@ -173,7 +173,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         Future.successful(())
       )
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(convData)))
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(Map.empty))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(Map.empty))
 
       // EXPECT
       (content.updateConversationState _).expects(where { (id, state) =>
@@ -203,7 +203,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), removerId, Seq(selfUserId), reason = None)
       )
 
-      (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
       (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
         Future.successful(IndexedSeq(ConversationMemberData(selfUserId, convId, ConversationRole.AdminRole)))
       )
@@ -218,7 +218,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         Future.successful(())
       )
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(convData)))
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(Map.empty))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(Map.empty))
       (membersStorage.getActiveUsers _).expects(convId).anyNumberOfTimes().returning(
         Future.successful(IndexedSeq(removerId))
       )
@@ -249,7 +249,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(otherUserId), reason = None)
       )
 
-      (users.syncIfNeeded _).expects(Set(otherUserId), *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(Set(otherUserId), *).anyNumberOfTimes().returning(Future.successful(None))
       (membersStorage.getByUsers _).expects(Set(otherUserId)).anyNumberOfTimes().returning(
         Future.successful(IndexedSeq(ConversationMemberData(otherUserId, convId, ConversationRole.MemberRole)))
       )
@@ -441,7 +441,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       }
       (membersStorage.getActiveUsers _).expects(convId).anyNumberOfTimes().returning(Future.successful(Seq.empty))
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(Some(conversationData)))
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(Map.empty))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(Map.empty))
 
 
       //EXPECT
@@ -465,6 +465,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set.empty[UserId], *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, Set.empty[UserId], *, *, *).once().returning(Future.successful(()))
       (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+      (userService.findUsers _).expects(Seq.empty).once().returning(Future.successful(Seq.empty))
 
       val convsUi = createConvsUi(Some(teamId))
       val (data, sId) = result(convsUi.createGroupConversation(name = convName, defaultRole = ConversationRole.MemberRole))
@@ -485,6 +486,8 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, users.map(_.id), *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))
       (sync.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+      (userService.findUsers _).expects(Seq(self.id, user1.id, user2.id)).once().returning(Future.successful(Seq(Some(self), Some(user1), Some(user2))))
+      (userService.isFederated(_: UserData)).expects(*).anyNumberOfTimes().returning(Future.successful(false))
 
       val convsUi = createConvsUi(Some(teamId))
       val (data, sId) = result(convsUi.createGroupConversation(name = convName, members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
@@ -495,7 +498,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
   feature("Create a group conversation with qualified users") {
 
-    scenario("Create a group conversation with the creator and two users") {
+    scenario("Create a group conversation with the creator and two users, both contacted") {
       val teamId = TeamId()
       val convName = Name("conv")
       val conv = ConversationData(team = Some(teamId), name = Some(convName))
@@ -505,13 +508,52 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val user1 = UserData("user1").copy(domain = Some(domain))
       val user2 = UserData("user2").copy(domain = Some(domain))
       val users = Set(self, user1, user2)
+      val member1 = ConversationMemberData(user1.id, conv.id, ConversationRole.MemberRole)
+      val member2 = ConversationMemberData(user2.id, conv.id, ConversationRole.MemberRole)
 
-      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set.empty[UserId], *, *, *, *, *, *).once().returning(Future.successful(conv))
-      (messages.addConversationStartMessage _).expects(*, selfUserId, Set.empty[UserId], *, *, *).once().returning(Future.successful(()))
-      (sync.postQualifiedConversation _).expects(*, users.map(_.qualifiedId.get), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set(selfUserId), *, *, *, *, *, *).once().returning(Future.successful(conv))
+      (messages.addConversationStartMessage _).expects(*, selfUserId, Set(selfUserId), *, *, *).once().returning(Future.successful(()))
+      (sync.postConversation _).expects(*, Set(selfUserId), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+      (userService.findUsers _).expects(Seq(self.id, user1.id, user2.id)).once().returning(Future.successful(Seq(Some(self), Some(user1), Some(user2))))
+      (userService.isFederated(_: UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData => Future.successful(user.id != selfUserId) }
+      (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1, member2)))
+      (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
+      (convsStorage.optSignal _).expects(conv.id).anyNumberOfTimes().returning(Signal.const(Some(conv)))
+
+      //(userService.findUsers _).expects(Seq(user1.id, user2.id)).once().returning(Future.successful(Seq(Some(user1), Some(user2))))
+      //(sync.syncQualifiedUsers _).expects(Set(user1.qualifiedId.get, user2.qualifiedId.get)).once().returning(Future.successful(SyncId()))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createQualifiedGroupConversation(name = convName, members = users.map(_.qualifiedId.get), defaultRole = ConversationRole.MemberRole))
+      val (data, sId) = result(convsUi.createGroupConversation(name = convName, members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
+      data shouldEqual conv
+      sId shouldEqual syncId
+    }
+
+    scenario("Create a group conversation with the creator and two users, one uncontacted") {
+      val teamId = TeamId()
+      val convName = Name("conv")
+      val conv = ConversationData(team = Some(teamId), name = Some(convName))
+      val syncId = SyncId()
+      val domain = "chala.wire.link"
+      val self = UserData.withName(selfUserId, "self").copy(domain = Some(domain))
+      val user1 = UserData("user1").copy(domain = Some(domain))
+      val user2 = UserData("user2").copy(domain = Some(domain))
+      val users = Set(self, user1, user2)
+      val member1 = ConversationMemberData(user1.id, conv.id, ConversationRole.MemberRole)
+
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set(selfUserId), *, *, *, *, *, *).once().returning(Future.successful(conv))
+      (messages.addConversationStartMessage _).expects(*, selfUserId, Set(selfUserId), *, *, *).once().returning(Future.successful(()))
+      (sync.postConversation _).expects(*, Set(selfUserId), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+      (userService.findUsers _).expects(Seq(self.id, user1.id, user2.id)).once().returning(Future.successful(Seq(Some(self), Some(user1), Some(user2))))
+      (userService.isFederated(_: UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData => Future.successful(user.id != selfUserId) }
+      (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1)))
+      (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
+      (convsStorage.optSignal _).expects(conv.id).anyNumberOfTimes().returning(Signal.const(Some(conv)))
+      (userService.findUsers _).expects(Seq(user2.id)).once().returning(Future.successful(Seq(Some(user2))))
+      (sync.syncQualifiedUsers _).expects(Set(user2.qualifiedId.get)).once().returning(Future.successful(SyncId()))
+
+      val convsUi = createConvsUi(Some(teamId))
+      val (data, sId) = result(convsUi.createGroupConversation(name = convName, members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
       data shouldEqual conv
       sId shouldEqual syncId
     }
@@ -612,7 +654,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         Future.successful(userIds.map(uId => ConversationMemberData(uId, convId, AdminRole)).toIndexedSeq)
       }
 
-      (users.syncIfNeeded _).expects(*, *).returning(Future.successful(Option(SyncId())))
+      (userService.syncIfNeeded _).expects(*, *).returning(Future.successful(Option(SyncId())))
 
       (messages.addDeviceStartMessages _).expects(*, *).onCall{ (convs: Seq[ConversationData], selfUserId: UserId) =>
         convs.headOption.flatMap(_.name) should be (Some(Name("conv")))
@@ -662,7 +704,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val userNames = Map(selfUserId -> self.name, user2.id -> user2.name)
 
       (convsStorage.optSignal _).expects(convId).anyNumberOfTimes().returning(Signal.const(Some(conv)))
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
 
       result(service.conversationName(convId).head) shouldEqual user2.name
     }
@@ -686,7 +728,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         ))
       )
       (membersStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream())
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
 
       result(service.conversationName(convId).head) shouldEqual user2.name
     }
@@ -711,7 +753,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         ))
       )
       (membersStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream())
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
 
       result(service.conversationName(convId).head) shouldEqual name
     }
@@ -737,7 +779,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         ))
       )
       (membersStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream())
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
 
       val generatedName = Name(List(user2, user3).map(_.name).mkString(", "))
       result(service.conversationName(convId).head) shouldEqual generatedName
@@ -764,7 +806,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         ))
       )
       (membersStorage.onChanged _).expects().anyNumberOfTimes().returning(EventStream())
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
 
       result(service.conversationName(convId).head) shouldEqual user3.name
     }
@@ -795,8 +837,8 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (membersStorage.getActiveUsers _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head.map(_.map(_.userId)) }
       (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head }
       (membersStorage.onChanged _).expects().anyNumberOfTimes().onCall(_ => EventStream.from(membersOnChanged))
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
-      (users.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+      (userService.syncIfNeeded _).expects(*, *).anyNumberOfTimes().returning(Future.successful(None))
       (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes().returning(convSignal.head)
       (membersStorage.remove(_: ConvId, _:Iterable[UserId])).expects(convId, *).anyNumberOfTimes().onCall { (_: ConvId, userIds: Iterable[UserId]) =>
         members.head.map { ms =>
@@ -871,7 +913,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (membersStorage.getActiveUsers _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head.map(_.map(_.userId)) }
       (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head }
       (membersStorage.onChanged _).expects().anyNumberOfTimes().onCall(_ => EventStream.from(membersOnChanged))
-      (users.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
+      (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
       (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes().returning(convSignal.head)
       (membersStorage.remove(_: ConvId, _:Iterable[UserId])).expects(convId, *).anyNumberOfTimes().onCall { (_: ConvId, userIds: Iterable[UserId]) =>
         members.head.map { ms =>
@@ -887,7 +929,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         members.head.map(_.filter(m => userIds.contains(m.userId)))
       }
       (usersStorage.updateAll2 _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Seq.empty))
-      (users.deleteUsers _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
+      (userService.deleteUsers _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
 
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(convSignal.head)
       (content.updateConversationName _).expects(convId, *).once().onCall { (_: ConvId, name: Name) =>
@@ -907,7 +949,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
       val teamsService: TeamsService =
         new TeamsServiceImpl(
-          selfUserId, Some(teamId), teamsStorage, users, usersStorage, convsStorage, membersStorage,
+          selfUserId, Some(teamId), teamsStorage, userService, usersStorage, convsStorage, membersStorage,
           content, service, sync, requests, userPrefs, errorsService, rolesService
         )
 
