@@ -334,7 +334,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       Some(_)  <- members.remove(conv, user)
       toDelete <- if (user != selfUserId) members.getByUsers(Set(user)).map(_.isEmpty)
                   else Future.successful(false)
-      _        <- if (toDelete) userService.deleteUsers(Set(user)) else Future.successful(())
+      _        <- if (toDelete) userService.deleteUsers(Set(user), sendLeaveMessage = false) else Future.successful(())
       _        <- messages.addMemberLeaveMessage(conv, selfUserId, Set(user), reason = None)
       syncId   <- sync.postConversationMemberLeave(conv, user)
     } yield Option(syncId))

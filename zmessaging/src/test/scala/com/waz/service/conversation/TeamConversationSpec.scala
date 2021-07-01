@@ -23,7 +23,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{ConversationMemberData, _}
-import com.waz.service.SearchKey
+import com.waz.service.{SearchKey, UserService}
 import com.waz.service.messages.MessagesService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
@@ -36,7 +36,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
   val selfId       = UserId()
   val team         = Some(TeamId("team"))
   val selfUser     = UserData(selfId, None, team, Name("self"), searchKey = SearchKey.simple("self"))
-  val userStorage  = mock[UsersStorage]
+  val users        = mock[UserService]
   val members      = mock[MembersStorage]
   val convsContent = mock[ConversationsContentUpdater]
   val convsStorage = mock[ConversationStorage]
@@ -51,8 +51,8 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
       val existingConv = ConversationData(creator = selfId, convType = Group, team = team)
 
-      (userStorage.get _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (userStorage.get _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
+      (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
+      (users.findUser _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
@@ -75,8 +75,8 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val name = Some(Name("Conv Name"))
       val existingConv = ConversationData(creator = selfId, name = name, convType = Group, team = team)
 
-      (userStorage.get _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (userStorage.get _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
+      (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
+      (users.findUser _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
@@ -113,8 +113,8 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
       val expectedConv = ConversationData(ConvId("otherUser"), creator = selfId, convType = OneToOne, team = None)
 
-      (userStorage.get _).expects(otherUserId).twice().returning(Future.successful(Some(otherUser)))
-      (userStorage.get _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
+      (users.findUser _).expects(otherUserId).twice().returning(Future.successful(Some(otherUser)))
+      (users.findUser _).expects(selfId).once().returning(Future.successful(Some(selfUser)))
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
       (convsContent.createConversationWithMembers _)
@@ -131,5 +131,5 @@ class TeamConversationSpec extends AndroidFreeSpec {
   }
 
   def initService: ConversationsUiService =
-    new ConversationsUiServiceImpl(selfId, team, null, userStorage, messages, null, null, members, convsContent, convsStorage, null, null, sync, null, null, null, null, null, null)
+    new ConversationsUiServiceImpl(selfId, team, null, users , messages, null, null, members, convsContent, convsStorage, null, null, sync, null, null, null, null, null, null)
 }

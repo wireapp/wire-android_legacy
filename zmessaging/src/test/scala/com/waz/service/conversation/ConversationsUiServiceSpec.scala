@@ -22,7 +22,7 @@ import com.waz.model._
 import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.PushService
-import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService}
+import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
 import com.waz.sync.SyncServiceHandle
@@ -35,7 +35,7 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
 
   val selfUserId = UserId()
   val push =            mock[PushService]
-  val usersStorage =    mock[UsersStorage]
+  val users =           mock[UserService]
   val convsStorage =    mock[ConversationStorage]
   val content =         mock[ConversationsContentUpdater]
   val convsService =    mock[ConversationsService]
@@ -57,7 +57,7 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
 
   private def getService(teamId: Option[TeamId] = None): ConversationsUiService = {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs)
-    new ConversationsUiServiceImpl(selfUserId, teamId, assetService, usersStorage, messages, messagesStorage,
+    new ConversationsUiServiceImpl(selfUserId, teamId, assetService, users, messages, messagesStorage,
       msgContent, members, content, convsStorage, network, convsService, sync, client,
       accounts, tracking, errors, uriHelper, properties)
   }

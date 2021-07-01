@@ -106,7 +106,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
   private def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
     new ConversationsUiServiceImpl(
-      selfUserId, teamId, assets, usersStorage, messages, msgStorage,
+      selfUserId, teamId, assets, users, messages, msgStorage,
       msgUpdater, membersStorage, content, convsStorage, network,
       service, sync, convsClient, accounts, tracking, errors, uriHelper,
       properties
@@ -887,7 +887,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         members.head.map(_.filter(m => userIds.contains(m.userId)))
       }
       (usersStorage.updateAll2 _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Seq.empty))
-      (users.deleteUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (users.deleteUsers _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
 
       (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(convSignal.head)
       (content.updateConversationName _).expects(convId, *).once().onCall { (_: ConvId, name: Name) =>
