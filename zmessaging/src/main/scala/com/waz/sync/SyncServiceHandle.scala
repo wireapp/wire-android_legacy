@@ -78,6 +78,7 @@ trait SyncServiceHandle {
   def postReceiptMode(id: ConvId, receiptMode: Int): Future[SyncId]
   def postConversationName(id: ConvId, name: Name): Future[SyncId]
   def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncId]
+  def postQualifiedConversationMemberJoin(id: ConvId, members: Set[QualifiedId], defaultRole: ConversationRole): Future[SyncId]
   def postConversationMemberLeave(id: ConvId, member: UserId): Future[SyncId]
   def postConversationState(id: ConvId, state: ConversationState): Future[SyncId]
   def postConversation(id:          ConvId,
@@ -192,7 +193,10 @@ class AndroidSyncServiceHandle(account:         UserId,
   def postTypingState(conv: ConvId, typing: Boolean) = addRequest(PostTypingState(conv, typing))
   def postConversationName(id: ConvId, name: Name) = addRequest(PostConvName(id, name))
   def postConversationState(id: ConvId, state: ConversationState) = addRequest(PostConvState(id, state))
-  def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole) = addRequest(PostConvJoin(id, members, defaultRole))
+  def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncId] =
+    addRequest(PostConvJoin(id, members, defaultRole))
+  def postQualifiedConversationMemberJoin(id: ConvId, members: Set[QualifiedId], defaultRole: ConversationRole): Future[SyncId] =
+    addRequest(PostQualifiedConvJoin(id, members, defaultRole))
   def postConversationMemberLeave(id: ConvId, member: UserId) = addRequest(PostConvLeave(id, member))
   def postConversation(id: ConvId,
                        users: Set[UserId],
@@ -335,6 +339,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostMessage(convId, messageId, time)            => zms.messagesSync.postMessage(convId, messageId, time)
           case PostAssetStatus(cid, mid, exp, status)          => zms.messagesSync.postAssetStatus(cid, mid, exp, status)
           case PostConvJoin(convId, u, role)                   => zms.conversationSync.postConversationMemberJoin(convId, u, role)
+          case PostQualifiedConvJoin(convId, u, role)          => zms.conversationSync.postQualifiedConversationMemberJoin(convId, u, role)
           case PostConvLeave(convId, u)                        => zms.conversationSync.postConversationMemberLeave(convId, u)
           case PostConv(convId, u, name, team, access, accessRole, receiptMode, defRole) =>
             zms.conversationSync.postConversation(convId, u, name, team, access, accessRole, receiptMode, defRole)

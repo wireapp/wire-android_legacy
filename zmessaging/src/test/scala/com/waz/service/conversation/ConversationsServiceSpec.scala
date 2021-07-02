@@ -108,7 +108,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     new ConversationsUiServiceImpl(
       selfUserId, teamId, assets, userService, messages, msgStorage,
       msgUpdater, membersStorage, content, convsStorage, network,
-      service, sync, convsClient, accounts, tracking, errors, uriHelper,
+      service, sync, requests, convsClient, accounts, tracking, errors, uriHelper,
       properties
     )
   }
@@ -544,12 +544,20 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set(selfUserId), *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, Set(selfUserId), *, *, *).once().returning(Future.successful(()))
       (sync.postConversation _).expects(*, Set(selfUserId), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
-      (userService.findUsers _).expects(Seq(self.id, user1.id, user2.id)).once().returning(Future.successful(Seq(Some(self), Some(user1), Some(user2))))
+      (userService.findUsers _).expects(*).anyNumberOfTimes().onCall { userIds: Seq[UserId] =>
+        Future.successful {
+          userIds.map { id =>
+            if (id == selfUserId) Some(self)
+            else if (id == user1.id) Some(user1)
+            else if (id == user2.id) Some(user2)
+            else None
+          }
+        }
+      }
       (userService.isFederated(_: UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData => Future.successful(user.id != selfUserId) }
       (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1)))
       (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
       (convsStorage.optSignal _).expects(conv.id).anyNumberOfTimes().returning(Signal.const(Some(conv)))
-      (userService.findUsers _).expects(Seq(user2.id)).once().returning(Future.successful(Seq(Some(user2))))
       (sync.syncQualifiedUsers _).expects(Set(user2.qualifiedId.get)).once().returning(Future.successful(SyncId()))
 
       val convsUi = createConvsUi(Some(teamId))

@@ -37,7 +37,6 @@ import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.wire.signals._
-
 import com.waz.zms.BuildConfig
 
 import scala.collection.breakOut
@@ -68,7 +67,6 @@ trait UserService {
   def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]]
   def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]]
   def syncUser(userId: UserId): Future[Option[UserData]]
-  def syncQualifiedUser(qId: QualifiedId): Future[Option[UserData]]
   def acceptedOrBlockedUsers: Signal[Map[UserId, UserData]]
 
   def updateSyncedUsers(users: Seq[UserInfo], timestamp: LocalInstant = LocalInstant.Now): Future[Set[UserData]]
@@ -258,25 +256,27 @@ class UserServiceImpl(selfUserId:        UserId,
     }
   }
 
-  override def syncUser(userId: UserId): Future[Option[UserData]] =
-    usersClient.loadUser(userId).future.flatMap {
-      case Left(e) =>
-        Future.failed(e)
-      case Right(Some(info)) =>
-        updateSyncedUsers(Seq(info)).map(_.headOption)
-      case Right(None) =>
-        deleteUsers(Set(userId)).map(_ => None)
-    }
+  override def syncUser(userId: UserId): Future[Option[UserData]] = {
+    val updateResult =
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        for {
+          Some(user) <- findUser(userId)
+          federated  <- isFederated(user)
+          res        <- ((federated, user.qualifiedId) match {
+                          case (true, Some(qId)) => usersClient.loadQualifiedUser(qId)
+                          case _                 => usersClient.loadUser(userId)
+                        }).future
+        } yield res
+      } else {
+          usersClient.loadUser(userId).future
+      }
 
-  override def syncQualifiedUser(qId: QualifiedId): Future[Option[UserData]] =
-    usersClient.loadQualifiedUser(qId).future.flatMap {
-      case Left(e) =>
-        Future.failed(e)
-      case Right(Some(info)) =>
-        updateSyncedUsers(Seq(info)).map(_.headOption)
-      case Right(None) =>
-        deleteUsers(Set(qId.id)).map(_ => None)
+    updateResult.flatMap {
+      case Left(e)           => Future.failed(e)
+      case Right(Some(info)) => updateSyncedUsers(Seq(info)).map(_.headOption)
+      case Right(None)       => deleteUsers(Set(userId)).map(_ => None)
     }
+  }
 
   def syncSelfNow: Future[Option[UserData]] = Serialized.future(s"syncSelfNow $selfUserId") {
     usersClient.loadSelf().future.flatMap {

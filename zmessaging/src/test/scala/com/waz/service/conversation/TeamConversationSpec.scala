@@ -18,30 +18,53 @@
 package com.waz.service.conversation
 
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.content.{ConversationStorage, MembersStorage, UsersStorage}
+import com.waz.content.{ButtonsStorage, ConversationStorage, MembersStorage, MessagesStorage, MsgDeletionStorage, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{ConversationMemberData, _}
-import com.waz.service.{SearchKey, UserService}
-import com.waz.service.messages.MessagesService
+import com.waz.service.assets.{AssetService, UriHelper}
+import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService, SearchKey, UserService}
+import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.ConversationsClient
+import com.waz.sync.{SyncRequestService, SyncServiceHandle}
+import com.waz.testutils.TestGlobalPreferences
 
 import scala.concurrent.Future
 
 class TeamConversationSpec extends AndroidFreeSpec {
   import ConversationRole._
 
-  val selfId       = UserId()
-  val team         = Some(TeamId("team"))
-  val selfUser     = UserData(selfId, None, team, Name("self"), searchKey = SearchKey.simple("self"))
-  val users        = mock[UserService]
-  val members      = mock[MembersStorage]
-  val convsContent = mock[ConversationsContentUpdater]
-  val convsStorage = mock[ConversationStorage]
-  val sync         = mock[SyncServiceHandle]
-  val messages     = mock[MessagesService]
+  val selfId          = UserId()
+  val team            = Some(TeamId("team"))
+  val selfUser        = UserData(selfId, None, team, Name("self"), searchKey = SearchKey.simple("self"))
+  val users           = mock[UserService]
+  val members         = mock[MembersStorage]
+  val convsContent    = mock[ConversationsContentUpdater]
+  val convsStorage    = mock[ConversationStorage]
+  val convsService    = mock[ConversationsService]
+  val sync            = mock[SyncServiceHandle]
+  val requests        = mock[SyncRequestService]
+  val messages        = mock[MessagesService]
+  val messagesStorage = mock[MessagesStorage]
+  val deletions       = mock[MsgDeletionStorage]
+  val assetService    = mock[AssetService]
+  val network         = mock[NetworkModeService]
+  val properties      = mock[PropertiesService]
+  val buttons         = mock[ButtonsStorage]
+  val client          = mock[ConversationsClient]
+  val errors          = mock[ErrorsService]
+  val uriHelper       = mock[UriHelper]
+
+  val prefs = new TestGlobalPreferences()
+
+  def initService: ConversationsUiService = {
+    val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs)
+    new ConversationsUiServiceImpl(selfId, team, assetService, users, messages, messagesStorage,
+      msgContent, members, convsContent, convsStorage, network, convsService, sync, requests, client,
+      accounts, tracking, errors, uriHelper, properties)
+  }
 
   feature("Creating team conversations") {
 
@@ -99,6 +122,8 @@ class TeamConversationSpec extends AndroidFreeSpec {
         .once()
         .returning(Future.successful(SyncId()))
 
+      (convsService.generateTempConversationId _).expects(*).anyNumberOfTimes().returning(RConvId())
+
       val conv = result(initService.getOrCreateOneToOneConversation(otherUserId))
       conv shouldNot equal(existingConv)
     }
@@ -127,7 +152,4 @@ class TeamConversationSpec extends AndroidFreeSpec {
       conv.id shouldEqual ConvId("otherUser")
     }
   }
-
-  def initService: ConversationsUiService =
-    new ConversationsUiServiceImpl(selfId, team, null, users , messages, null, null, members, convsContent, convsStorage, null, null, sync, null, null, null, null, null, null)
 }

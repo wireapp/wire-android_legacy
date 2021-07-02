@@ -81,6 +81,8 @@ trait ConversationsService {
   def fake1To1Conversations: Signal[Seq[ConversationData]]
   def isFake1To1(convId: ConvId): Future[Boolean]
   def onlyFake1To1ConvUsers: Signal[Seq[UserData]]
+
+  def generateTempConversationId(users: Set[UserId]): RConvId
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -341,7 +343,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       val matching = convsByRId.get(resp.id).orElse {
         convsById.get(newId).orElse {
           if (isOneToOne(resp.convType)) None
-          else convsByRId.get(ConversationsService.generateTempConversationId(resp.members.keySet + selfUserId))
+          else convsByRId.get(generateTempConversationId(resp.members.keySet))
         }
       }
 
@@ -744,16 +746,16 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       fake1To1UserIds   =  userIds -- acceptedOrBlocked
       fake1To1Users     <- usersStorage.listSignal(fake1To1UserIds)
     } yield fake1To1Users
+
+  /**
+   * Generate temp ConversationID to identify conversations which don't have a RConvId yet
+   */
+  override def generateTempConversationId(users: Set[UserId]): RConvId =
+    RConvId((users + selfUserId).toSeq.map(_.toString).sorted.foldLeft("")(_ + _))
 }
 
 object ConversationsService {
   import scala.concurrent.duration._
 
   val RetryBackoff = new ExponentialBackoff(500.millis, 3.seconds)
-
-  /**
-   * Generate temp ConversationID to identify conversations which don't have a RConvId yet
-   */
-  def generateTempConversationId(users: Set[UserId]): RConvId =
-    RConvId(users.toSeq.map(_.toString).sorted.foldLeft("")(_ + _))
 }

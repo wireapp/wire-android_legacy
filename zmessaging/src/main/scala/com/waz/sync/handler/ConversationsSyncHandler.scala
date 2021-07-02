@@ -130,8 +130,8 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       }
     }
 
-  def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncResult] = withConversation(id) { conv =>
-    def post(users: Set[UserId]) = conversationsClient.postMemberJoin(conv.remoteId, users, defaultRole).future flatMap {
+  private def handleMemberJoinResponse(id: ConvId, users: Set[UserId], response: Either[ErrorResponse, Option[MemberJoinEvent]]) =
+    response match {
       case Left(resp @ ErrorResponse(status, _, label)) =>
         val errTpe = (status, label) match {
           case (403, "not-connected")             => Some(ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION)
@@ -143,31 +143,26 @@ class ConversationsSyncHandler(selfUserId:          UserId,
           .onMemberAddFailed(id, users, errTpe, resp)
           .map(_ => SyncResult(resp))
       case resp =>
-        verbose(l"postConversationMemberJoin($id, $members, $defaultRole): $resp")
         postConvRespHandler(resp)
     }
 
-    Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(_ != Success).getOrElse(Success) }
-  }
+  def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncResult] =
+    withConversation(id) { conv =>
+      def post(users: Set[UserId]) =
+        conversationsClient
+          .postMemberJoin(conv.remoteId, users, defaultRole).future
+          .flatMap(handleMemberJoinResponse(id, members, _))
+
+      Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(_ != Success).getOrElse(Success) }
+    }
 
   def postQualifiedConversationMemberJoin(id: ConvId, members: Set[QualifiedId], defaultRole: ConversationRole): Future[SyncResult] =
     withConversation(id) { conv =>
+      verbose(l"FED here!")
       def post(users: Set[QualifiedId]) =
-        conversationsClient.postQualifiedMemberJoin(conv.remoteId, users, defaultRole).future flatMap {
-          case Left(resp @ ErrorResponse(status, _, label)) =>
-            val errTpe = (status, label) match {
-              case (403, "not-connected")             => Some(ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION)
-              case (403, "too-many-members")          => Some(ErrorType.CANNOT_ADD_USER_TO_FULL_CONVERSATION)
-              case (412, "missing-legalhold-consent") => Some(ErrorType.CANNOT_ADD_PARTICIPANT_WITH_MISSING_LEGAL_HOLD_CONSENT)
-              case _                                  => None
-            }
-            convService
-              .onMemberAddFailed(id, users.map(_.id), errTpe, resp)
-              .map(_ => SyncResult(resp))
-          case resp =>
-            verbose(l"postConversationMemberJoin($id, $members, $defaultRole): $resp")
-            postConvRespHandler(resp)
-        }
+        conversationsClient
+          .postQualifiedMemberJoin(conv.remoteId, users, defaultRole).future
+          .flatMap(handleMemberJoinResponse(id, members.map(_.id), _))
 
       Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(_ != Success).getOrElse(Success) }
     }

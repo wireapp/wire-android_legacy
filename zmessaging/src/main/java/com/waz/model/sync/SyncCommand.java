@@ -56,6 +56,7 @@ public enum SyncCommand {
     PostDeleted("post-deleted"),
     PostRecalled("post-recalled"),
     PostConvJoin("post-conv-join"),
+    PostQualifiedConvJoin("post-qualified-conv-join"),
     PostConvLeave("post-conv-leave"),
     PostConnection("post-connection"),
     PostQualifiedConnection("post-qualified-connection"),
