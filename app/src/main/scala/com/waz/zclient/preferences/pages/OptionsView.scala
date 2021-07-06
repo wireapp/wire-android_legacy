@@ -25,7 +25,7 @@ import android.provider.Settings
 import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
-import android.widget.LinearLayout
+import android.widget.{LinearLayout, TextView}
 import com.waz.content.UserPreferences._
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.service.{UiLifeCycle, ZMessaging}
@@ -73,6 +73,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   private lazy val passwordController = inject[PasswordController]
 
+  private val callsCategoryTitle      = findById[TextView](R.id.pref_options_calls_category_title)
   private val vbrSwitch               = findById[SwitchPreference](R.id.preferences_vbr)
   private val vibrationSwitch         = findById[SwitchPreference](R.id.preferences_vibration)
   private val darkThemeSwitch         = findById[SwitchPreference](R.id.preferences_dark_theme)
@@ -127,6 +128,12 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
     hideScreenContentSwitch.setVisible(false)
     hideScreenContentSwitch.pref.foreach(_ := true)
+  }
+
+  if (BuildConfig.FORCE_CONSTANT_BITRATE_CALLS) {
+    callsCategoryTitle.setVisible(false)
+    vbrSwitch.setVisible(false)
+    vbrSwitch.pref.foreach(_ := false)
   }
 
   private def openNotificationSettings(channelId: String): Unit = {
