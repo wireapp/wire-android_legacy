@@ -118,7 +118,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
         hasPerms          <- inject[PermissionsService].requestAllPermissions(if (curWithVideo) ListSet(CAMERA, RECORD_AUDIO) else ListSet(RECORD_AUDIO)) //check or request permissions
         _                 <-
           if (hasPerms)
-            newCallZms.calling.startCall(newCallConv.id, curWithVideo, forceOption)
+            newCallZms.calling.startCall(newCallConv.id, curWithVideo, forceOption, BuildConfig.FORCE_CONSTANT_BITRATE_CALLS)
           else showPermissionsErrorDialog(
             R.string.calling__cannot_start__title,
             if (curWithVideo) R.string.calling__cannot_start__no_camera_permission__message else R.string.calling__cannot_start__no_permission__message
