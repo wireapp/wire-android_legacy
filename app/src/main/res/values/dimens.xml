@@ -574,6 +574,9 @@
     <dimen name="services_warning_text_width">204dp</dimen>
     <dimen name="user_part_view_bot_size">12dp</dimen>
     <dimen name="conversation_list__badge__icon_size">14dp</dimen>
+    <dimen name="empty_search_icon_width">48dp</dimen>
+    <dimen name="empty_search_icon_height">48dp</dimen>
+    <dimen name="empty_search_text_width">204dp</dimen>
 
     <dimen name="empty_likes_reads_icon_size">140dp</dimen>
     <dimen name="empty_likes_reads_text_width">224dp</dimen>

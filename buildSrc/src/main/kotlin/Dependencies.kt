@@ -5,7 +5,7 @@ import org.gradle.api.JavaVersion
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.70."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.71."
     const val COMPILE_SDK_VERSION = 30
     const val TARGET_SDK_VERSION = 30
     const val MIN_SDK_VERSION = 24
@@ -189,8 +189,8 @@ object LegacyDependencies {
     const val SCALA_MAJOR_VERSION = "2.11"
     const val SCALA_VERSION = SCALA_MAJOR_VERSION.plus(".12")
     // signals
-    const val WIRE_SIGNALS = "0.5.2"
-    const val WIRE_SIGNALS_EXTENSIONS = "0.5.2"
+    const val WIRE_SIGNALS = "1.0.0"
+    const val WIRE_SIGNALS_EXTENSIONS = "1.0.0"
 
     //build
     val scalaLibrary = "org.scala-lang:scala-library:$SCALA_VERSION"

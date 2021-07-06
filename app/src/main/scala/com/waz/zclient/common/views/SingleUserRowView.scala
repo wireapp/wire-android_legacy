@@ -194,10 +194,9 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   def setUserData(userData:       UserData,
-                  createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
+                  createSubtitle: (UserData, Boolean) => String = SingleUserRowView.defaultSubtitle): Unit = {
     setTitle(userData.name, userData.isSelf)
     setVerified(userData.isVerified)
-    setSubtitle(createSubtitle(userData))
     selfData.future.collect { case Some(self) =>
       val teamId = self.teamId
       chathead.setUserData(userData, userData.isInTeam(teamId))
@@ -205,7 +204,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
       setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
       setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
       if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-        isFederated ! userData.isFederated(self.domain.getOrElse(""))
+        val federated = userData.isFederated(self.domain.getOrElse(""))
+        isFederated ! federated
+        setSubtitle(createSubtitle(userData, federated))
+      } else {
+        setSubtitle(createSubtitle(userData, false))
       }
     }(Threading.Ui)
   }
@@ -255,9 +258,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 }
 
 object SingleUserRowView {
-  def defaultSubtitle(user: UserData)(implicit context: Context): String = {
-    val handle = user.handle.map(h => StringUtils.formatHandle(h.string))
+  def defaultSubtitle(user: UserData, isFederated: Boolean)(implicit context: Context): String = {
+    lazy val handle: String =
+      user.handle.fold("")(h => StringUtils.formatHandle(h.string)) +
+        (if (isFederated) "@" + user.domain.getOrElse("") else "")
     val expiration = user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now))
-    expiration.orElse(handle).getOrElse("")
+    expiration.getOrElse(handle)
   }
 }

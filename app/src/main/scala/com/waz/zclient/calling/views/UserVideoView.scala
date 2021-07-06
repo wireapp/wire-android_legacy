@@ -156,15 +156,18 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   def showActiveSpeakerFrame(color: Int): Unit = {
     val border = new GradientDrawable()
-    border.setColor(getColor(R.color.black))
+    border.setColor(getColor(R.color.calling_tile_background))
     border.setStroke(1, color)
     setBackground(border)
     getChildAt(1).setMargin(3, 3, 3, 3)
   }
 
   def hideActiveSpeakerFrame(): Unit = {
-    setBackgroundColor(getColor(R.color.black))
-    getChildAt(1).setMargin(0, 0, 0, 0)
+   val border = new GradientDrawable()
+    border.setColor(getColor(R.color.calling_tile_background))
+    border.setStroke(1, getColor(R.color.black))
+    setBackground(border)
+    getChildAt(1).setMargin(1, 1, 1, 1)
   }
 
   private def setProfilePicture(picture: Picture): Unit =

@@ -32,6 +32,8 @@
             android:id="@+id/video_grid"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@color/black"
             app:columnCount="2"
-            app:orientation="horizontal" />
+            app:orientation="horizontal"
+            />
     </com.xuliwen.zoom.ZoomLayout>
