@@ -129,7 +129,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   (errors.onErrorDismissed _).expects(*).anyNumberOfTimes().returning(CancellableFuture.successful(()))
 
   (sync.syncTeam _).expects(*).anyNumberOfTimes().returning(Future.successful(SyncId()))
-  (sync.syncUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(SyncId()))
+  (userService.syncUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Option(SyncId())))
   (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
 
   feature("Archive conversation") {
@@ -519,9 +519,18 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1, member2)))
       (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
       (convsStorage.optSignal _).expects(conv.id).anyNumberOfTimes().returning(Signal.const(Some(conv)))
-
-      //(userService.findUsers _).expects(Seq(user1.id, user2.id)).once().returning(Future.successful(Seq(Some(user1), Some(user2))))
-      //(sync.syncQualifiedUsers _).expects(Set(user1.qualifiedId.get, user2.qualifiedId.get)).once().returning(Future.successful(SyncId()))
+      (membersStorage.updateOrCreateAll(_: ConvId, _: Map[UserId, ConversationRole]))
+        .expects(conv.id, Map(user1.id -> ConversationRole.MemberRole, user2.id -> ConversationRole.MemberRole))
+        .once()
+        .returning(Future.successful(Set(member1, member2)))
+      (messages.addMemberJoinMessage _)
+        .expects(conv.id, selfUserId, Set(user1.id, user2.id), *, *)
+        .once()
+        .returning(Future.successful(None))
+      (sync.postQualifiedConversationMemberJoin _)
+        .expects(conv.id, Set(user1.qualifiedId.get, user2.qualifiedId.get), *)
+        .once()
+        .returning(Future.successful(SyncId()))
 
       val convsUi = createConvsUi(Some(teamId))
       val (data, sId) = result(convsUi.createGroupConversation(name = convName, members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
@@ -540,6 +549,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val user2 = UserData("user2").copy(domain = Some(domain))
       val users = Set(self, user1, user2)
       val member1 = ConversationMemberData(user1.id, conv.id, ConversationRole.MemberRole)
+      val member2 = ConversationMemberData(user2.id, conv.id, ConversationRole.MemberRole)
 
       (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set(selfUserId), *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, Set(selfUserId), *, *, *).once().returning(Future.successful(()))
@@ -558,7 +568,18 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1)))
       (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
       (convsStorage.optSignal _).expects(conv.id).anyNumberOfTimes().returning(Signal.const(Some(conv)))
-      (sync.syncQualifiedUsers _).expects(Set(user2.qualifiedId.get)).once().returning(Future.successful(SyncId()))
+      (membersStorage.updateOrCreateAll(_: ConvId, _: Map[UserId, ConversationRole]))
+        .expects(conv.id, Map(user1.id -> ConversationRole.MemberRole, user2.id -> ConversationRole.MemberRole))
+        .once()
+        .returning(Future.successful(Set(member1, member2)))
+      (messages.addMemberJoinMessage _)
+        .expects(conv.id, selfUserId, Set(user1.id, user2.id), *, *)
+        .once()
+        .returning(Future.successful(None))
+      (sync.postQualifiedConversationMemberJoin _)
+        .expects(conv.id, Set(user1.qualifiedId.get, user2.qualifiedId.get), *)
+        .once()
+        .returning(Future.successful(SyncId()))
 
       val convsUi = createConvsUi(Some(teamId))
       val (data, sId) = result(convsUi.createGroupConversation(name = convName, members = users.map(_.id), defaultRole = ConversationRole.MemberRole))

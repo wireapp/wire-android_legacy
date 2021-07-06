@@ -82,27 +82,17 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     verbose(l"lastEvents: $lastEvents, fromSync: $fromSync")
 
     usersStorage.updateOrCreateAll2(lastEvents.map(_._2.to), { case (uId, user) => updateOrCreate(lastEvents(uId))(user) })
-      .map { users => (users.map(u => (u, lastEvents(u.id).lastUpdated)), fromSync) }
-  }.flatMap { case (users, fromSync) =>
-    verbose(l"syncing $users and fromSync: $fromSync")
-    val toSync = users.filter { case (user, _) =>
+      .map { us => (us.map(u => (u, lastEvents(u.id).lastUpdated)), fromSync) }
+  }.flatMap { case (us, fromSync) =>
+    verbose(l"syncing $us and fromSync: $fromSync")
+    val toSync = us.filter { case (user, _) =>
       user.connection == ConnectionStatus.Accepted ||
       user.connection == ConnectionStatus.PendingFromOther ||
       user.connection == ConnectionStatus.PendingFromUser
     }
 
-    val syncFuture =
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-        val (qualified, nonQualified) = toSync.map(_._1).partition(_.qualifiedId.isDefined)
-        val syncQualified    = if (qualified.nonEmpty) sync.syncQualifiedUsers(qualified.flatMap(_.qualifiedId)) else Future.successful(SyncId())
-        val syncNonQualified = if (nonQualified.nonEmpty) sync.syncUsers(nonQualified.map(_.id)) else Future.successful(SyncId())
-        syncQualified.flatMap(_ => syncNonQualified)
-      } else {
-        sync.syncUsers(toSync.map(_._1.id)(breakOut))
-      }
-
-    syncFuture.flatMap { _ =>
-      updateConversationsForConnections(users.map(u => ConnectionEventInfo(u._1, fromSync(u._1.id), u._2))).map(_ => ())
+    users.syncUsers(toSync.map(_._1.id)).flatMap { _ =>
+      updateConversationsForConnections(us.map(u => ConnectionEventInfo(u._1, fromSync(u._1.id), u._2))).map(_ => ())
     }
   }
 

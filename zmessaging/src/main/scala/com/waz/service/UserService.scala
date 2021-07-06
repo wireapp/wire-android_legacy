@@ -63,6 +63,7 @@ trait UserService {
   def getOrCreateUser(id: UserId): Future[UserData]
   def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]]
   def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan): Future[Option[SyncId]]
+  def syncUsers(userIds: Set[UserId]): Future[Option[SyncId]]
   def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None): Future[Option[UserData]]
   def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]]
   def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]]
@@ -121,10 +122,12 @@ class UserServiceImpl(selfUserId:        UserId,
     shouldSync <- shouldSyncUsers()
   } if (shouldSync) {
     verbose(l"Syncing user data to get team ids")
-    usersStorage.list()
-      .flatMap(users => sync.syncUsers(users.map(_.id).toSet))
-      .flatMap(_ => shouldSyncUsers := false)
-    }
+    for {
+      userMap <- usersStorage.contents.head
+      _       <- syncUsers(userMap.keySet)
+      _       <- shouldSyncUsers := false
+    } yield ()
+  }
 
   override val currentConvMembers = for {
     Some(convId) <- selectedConv.selectedConversationId
@@ -214,25 +217,13 @@ class UserServiceImpl(selfUserId:        UserId,
     findUser(userId).map(_.flatMap(_.qualifiedId).getOrElse(QualifiedId(userId)))
 
   override def getOrCreateUser(id: UserId): Future[UserData] =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      qualifiedId(id).flatMap { qId =>
-        usersStorage.getOrCreate(id, {
-          sync.syncQualifiedUsers(Set(qId))
-          UserData(
-            id, if (qId.hasDomain) Some(qId.domain) else None, None, Name.Empty, None, None,
-            connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None
-          )
-        })
-      }
-    } else {
-      usersStorage.getOrCreate(id, {
-        sync.syncUsers(Set(id))
-        UserData(
-          id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected,
-          searchKey = SearchKey.Empty, handle = None
-        )
-      })
-    }
+    usersStorage.getOrCreate(id, {
+      syncUsers(Set(id))
+      UserData(
+        id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected,
+        searchKey = SearchKey.Empty, handle = None
+      )
+    })
 
   override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =
     usersStorage.update(id, { _.updateConnectionStatus(status, time, message)}).map {
@@ -318,16 +309,60 @@ class UserServiceImpl(selfUserId:        UserId,
   /**
    * Schedules user data sync if user with given id doesn't exist or has old timestamp.
   */
-
   override def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan): Future[Option[SyncId]] =
-    usersStorage.listAll(userIds).flatMap { found =>
-      val newIds = userIds -- found.map(_.id)
-      val offset = LocalInstant.Now - olderThan
-      val existing = found.filter(u => !u.isConnected && (u.teamId.isEmpty || u.teamId != teamId) && u.syncTimestamp.forall(_.isBefore(offset)))
-      val toSync = newIds ++ existing.map(_.id)
-      verbose(l"syncIfNeeded for users; new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size})")
-      if (toSync.nonEmpty) sync.syncUsers(toSync).map(Some(_))(Threading.Background) else Future.successful(None)
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      for {
+        found                 <- usersStorage.listAll(userIds)
+        foundMap              =  found.toIdMap
+        newIds                =  userIds -- foundMap.keySet
+        offset                =  LocalInstant.Now - olderThan
+        existing              =  foundMap.filter {
+                                   case (_, u) => !u.isConnected && (u.teamId.isEmpty || u.teamId != teamId) && u.syncTimestamp.forall(_.isBefore(offset))
+                                 }
+        toSync                =  newIds ++ existing.keySet
+        qualified             =  existing.collect { case (id, u) if u.qualifiedId.nonEmpty => id -> u.qualifiedId }
+        nonQualified          =  toSync -- qualified.keySet
+        _                     =  verbose(l"syncIfNeeded for users; new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size}) (qualified: ${qualified.size})")
+        syncId1               <- if (qualified.nonEmpty)
+                                   sync.syncQualifiedUsers(qualified.flatMap(_._2).toSet).map(Option(_))
+                                 else
+                                   Future.successful(None)
+        syncId2               <- if (nonQualified.nonEmpty)
+                                   sync.syncUsers(nonQualified).map(Option(_))
+                                 else
+                                   Future.successful(None)
+      } yield syncId2.orElse(syncId1)
+    } else {
+      usersStorage.listAll(userIds).flatMap { found =>
+        val newIds   = userIds -- found.map(_.id)
+        val offset   = LocalInstant.Now - olderThan
+        val existing = found.filter(u => !u.isConnected && (u.teamId.isEmpty || u.teamId != teamId) && u.syncTimestamp.forall(_.isBefore(offset)))
+        val toSync   = newIds ++ existing.map(_.id)
+        verbose(l"syncIfNeeded for users; new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size})")
+        if (toSync.nonEmpty) sync.syncUsers(toSync).map(Some(_)) else Future.successful(None)
+      }
     }
+
+  def syncUsers(userIds: Set[UserId]): Future[Option[SyncId]] = {
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      for {
+        found                 <- usersStorage.listAll(userIds)
+        qualified             =  found.collect { case u if u.qualifiedId.nonEmpty => u.id -> u.qualifiedId }.toMap
+        syncId1               <- if (qualified.nonEmpty)
+                                   sync.syncQualifiedUsers(qualified.flatMap(_._2).toSet).map(Option(_))
+                                 else
+                                   Future.successful(None)
+        nonQualified          =  userIds -- qualified.keySet
+        syncId2               <- if (nonQualified.nonEmpty)
+                                   sync.syncUsers(nonQualified).map(Option(_))
+                                 else
+                                   Future.successful(None)
+      } yield syncId2.orElse(syncId1)
+    } else {
+      if (userIds.nonEmpty) sync.syncUsers(userIds).map(Some(_))
+      else Future.successful(None)
+    }
+  }
 
   override def updateSyncedUsers(users: Seq[UserInfo], syncTime: LocalInstant = LocalInstant.Now): Future[Set[UserData]] = {
     verbose(l"update synced ${users.size} users")
@@ -480,7 +515,7 @@ class ExpiredUsersService(push:         PushService,
       woTimer.foreach { u =>
         val delay = LocalInstant.Now.toRemote(drift).remainingUntil(u.expiresAt.get + 10.seconds)
         timers += u.id -> CancellableFuture.delay(delay).map { _ =>
-          sync.syncUsers(Set(u.id))
+          users.syncUser(u.id)
           timers -= u.id
         }
       }

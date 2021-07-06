@@ -111,9 +111,6 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
 
   scenario("Wireless member added to conversation also triggers a timer") {
     val conv = ConvId("conv")
-
-    currentConv ! Some(conv)
-
     val wirelessUser = UserData("wireless").copy(id = UserId("wirelessUser"), expiresAt = Some(RemoteInstant(clock.instant()) - 10.seconds + 200.millis))
 
     val convUsers = Set(
@@ -123,23 +120,25 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
 
     val activeMembers = Signal(convUsers.map(_.id))
 
+    val finished = EventStream[Unit]()
+    (users.syncUsers _).expects(*).once().onCall { (us: Set[UserId]) =>
+      if (!us.contains(wirelessUser.id)) fail("Called sync for wrong user")
+      finished ! {}
+      Future.successful(Option(SyncId()))
+    }
+
     (users.currentConvMembers _).expects().anyNumberOfTimes().returning(activeMembers)
     (usersStorage.signal _).expects(*).anyNumberOfTimes().onCall { id: UserId =>
       (convUsers + wirelessUser).find(_.id == id).map(Signal.const).getOrElse(Signal.empty[UserData])
     }
+
+    currentConv ! Some(conv)
 
     getService //trigger creation of service
 
     activeMembers.mutate(_ + wirelessUser.id)
 
     awaitAllTasks
-
-    val finished = EventStream[Unit]()
-    (sync.syncUsers _).expects(*).once().onCall { (us: Set[UserId]) =>
-      if (!us.contains(wirelessUser.id)) fail("Called sync for wrong user")
-      finished ! {}
-      Future.successful(SyncId())
-    }
 
     result(finished.next)
   }
