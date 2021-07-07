@@ -88,7 +88,7 @@ class CreateConversationController(implicit inj: Injector)
       shouldFullConv <- inject[GlobalPreferences].preference(ShouldCreateFullConversation).apply()
       userIds        <-
         if (userIds.isEmpty && integrationIds.isEmpty && shouldFullConv)
-          z.usersStorage.list().map(
+          z.usersStorage.values.map(
             _.filter(u => (u.isConnected || (u.teamId.isDefined && u.teamId == z.teamId)) && u.id != z.selfUserId)
               .map(_.id).toSet
               .take(ConversationController.MaxParticipants - 1)

@@ -37,7 +37,7 @@ import scala.concurrent.duration._
 
 trait CacheStorage extends CachedStorage[CacheKey, CacheEntryData]
 
-class CacheStorageImpl(storage: Database, context: Context)
+final class CacheStorageImpl(storage: Database, context: Context)
   extends CachedStorageImpl[CacheKey, CacheEntryData](new EntryCache(context), storage)(CacheEntryDao, LogTag("CacheStorage"))
     with CacheStorage
     with DerivedLogTag {

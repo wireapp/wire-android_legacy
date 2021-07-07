@@ -27,6 +27,7 @@ import com.waz.utils.TrimmingLruCache.Fixed
 import com.wire.signals.{AggregatingSignal, Signal}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
+import scala.collection.immutable
 import scala.concurrent.Future
 
 trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberData] {
@@ -49,14 +50,17 @@ trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberD
   def updateOrCreate(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit]
 }
 
-class MembersStorageImpl(context: Context, storage: ZmsDatabase)
-  extends CachedStorageImpl[(UserId, ConvId), ConversationMemberData](new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationMemberDataDao, LogTag("MembersStorage_Cached"))
-    with MembersStorage with DerivedLogTag {
+final class MembersStorageImpl(context: Context, storage: ZmsDatabase)
+  extends CachedStorageImpl[(UserId, ConvId), ConversationMemberData](
+    new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationMemberDataDao, LogTag("MembersStorage_Cached")
+  ) with MembersStorage with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
-  def getByConv(conv: ConvId) = find(_.convId == conv, ConversationMemberDataDao.findForConv(conv)(_), identity)
+  override def getByConv(conv: ConvId): Future[IndexedSeq[ConversationMemberData]] =
+    find(_.convId == conv, ConversationMemberDataDao.findForConv(conv)(_), identity)
 
-  def getByUser(user: UserId) = find(_.userId == user, ConversationMemberDataDao.findForUser(user)(_), identity)
+  def getByUser(user: UserId): Future[IndexedSeq[ConversationMemberData]] =
+    find(_.userId == user, ConversationMemberDataDao.findForUser(user)(_), identity)
 
   override def activeMembers(conv: ConvId): Signal[Set[UserId]] = {
     def onConvMemberChanged(conv: ConvId) =

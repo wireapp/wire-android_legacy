@@ -139,7 +139,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
       teamId          =  z.teamId.getOrElse(TeamId("n/a"))
       teamSize        <- z.teamId.fold(Future.successful(0))(tId => z.usersStorage.getByTeam(Set(tId)).map(_.size))
       userAccountType <- getSelfAccountType
-      contacts        <- z.usersStorage.list().map(_.count(!_.isSelf))
+      contacts        <- z.usersStorage.values.map(_.count(!_.isSelf))
     } yield {
       val predefinedFields = new util.HashMap[String, String]()
       val customFields = new util.HashMap[String, String]()

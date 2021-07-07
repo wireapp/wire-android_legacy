@@ -325,7 +325,7 @@ object ConversationListController {
     }
 
     val members = new AggregatingSignal[Map[ConvId, Seq[UserId]], Map[ConvId, Seq[UserId]]](
-      () => zms.membersStorage.list().map(entries),
+      () => zms.membersStorage.values.map(entries),
       updatedEntries,
       _ ++ _
     )

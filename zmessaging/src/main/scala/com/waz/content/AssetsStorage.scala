@@ -35,9 +35,10 @@ trait AssetsStorage extends CachedStorage[AssetId, AssetData] {
   def mergeOrCreateAsset(newData: Option[AssetData]): Future[Option[AssetData]]
 }
 
-class AssetsStorageImpl(context: Context, storage: Database)
-  extends CachedStorageImpl[AssetId, AssetData](new TrimmingLruCache(context, Fixed(100)), storage)(AssetDataDao, LogTag("AssetsStorage"))
-    with AssetsStorage {
+final class AssetsStorageImpl(context: Context, storage: Database)
+  extends CachedStorageImpl[AssetId, AssetData](
+    new TrimmingLruCache(context, Fixed(100)), storage)(AssetDataDao, LogTag("AssetsStorage")
+  ) with AssetsStorage {
 
   import com.waz.threading.Threading.Implicits.Background
 

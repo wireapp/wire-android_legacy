@@ -129,9 +129,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       removeTeamMembers <- userPrefs.preference(UserPreferences.RemoveUncontactedTeamMembers).apply()
     } if (removeTeamMembers)
       for {
-        members  <- membersStorage.contents.map(_.keys.map(_._1)).head
-        users    <- usersStorage.contents.map(_.withFilter(!_._2.deleted).map(_._1)).head
-        toRemove =  users.toSet -- members.toSet
+        members  <- membersStorage.keySet
+        users    <- usersStorage.values.map(_.filterNot(_.deleted).map(_.id))
+        toRemove =  users.toSet -- members.map(_._1)
         _        <- if (toRemove.nonEmpty) usersStorage.updateAll2(toRemove, _.copy(deleted = true))
                     else Future.successful(())
         _        <- userPrefs.setValue(UserPreferences.RemoveUncontactedTeamMembers, false)
@@ -147,7 +147,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     // TODO: this is just very basic implementation creating empty message
     // This should be updated to include information about possibly missed changes
     // this message will be shown rarely (when notifications stream skips data)
-    convsStorage.list().flatMap(messages.addHistoryLostMessages(_, selfUserId))
+    convsStorage.values.flatMap(messages.addHistoryLostMessages(_, selfUserId))
   }
 
   errors.onErrorDismissed {
@@ -419,7 +419,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                      })
     } yield ()
 
-  override def remoteIds: Future[Set[RConvId]] = convsStorage.list.map(_.map(_.remoteId).toSet)
+  override def remoteIds: Future[Set[RConvId]] = convsStorage.values.map(_.map(_.remoteId).toSet)
 
   private def deleteMembers(convId: ConvId): Future[Unit] =
     for {

@@ -15,9 +15,10 @@ trait ButtonsStorage extends CachedStorage[(MessageId, ButtonId), ButtonData] {
   def deleteAllForMessage(messageId: MessageId): Future[Unit]
 }
 
-class ButtonsStorageImpl(context: Context, storage: Database)
-  extends CachedStorageImpl[ButtonDataDaoId, ButtonData](new TrimmingLruCache(context, Fixed(MessagesStorage.cacheSize)), storage)(ButtonDataDao, LogTag("ButtonsStorage"))
-    with ButtonsStorage with DerivedLogTag {
+final class ButtonsStorageImpl(context: Context, storage: Database)
+  extends CachedStorageImpl[ButtonDataDaoId, ButtonData](
+    new TrimmingLruCache(context, Fixed(MessagesStorage.cacheSize)), storage)(ButtonDataDao, LogTag("ButtonsStorage")
+  ) with ButtonsStorage with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   override def findByMessage(messageId: MessageId): Future[Seq[ButtonData]] =

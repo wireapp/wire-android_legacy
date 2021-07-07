@@ -20,37 +20,38 @@ package com.waz.testutils
 import com.waz.content.Preferences.{PrefKey, Preference}
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue}
+
+import scala.concurrent.Future
 
 //TODO make Global and User preferences traits so that we don't have to override them both.
 class TestGlobalPreferences extends GlobalPreferences(null, null) {
-  override implicit val dispatcher = SerialDispatchQueue(name = "TestGlobalPreferenceQueue")
+  override implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "TestGlobalPreferenceQueue")
 
   private var values = Map.empty[String, String]
 
   override def buildPreference[A: PrefCodec](key: PrefKey[A]): Preference[A] =
     Preference[A](this, key)
 
-  override protected def getValue[A: PrefCodec](key: PrefKey[A]) =
+  override protected def getValue[A: PrefCodec](key: PrefKey[A]): Future[A] =
     dispatcher(values.get(key.str).map(implicitly[PrefCodec[A]].decode).getOrElse(key.default))
 
-  override def setValue[A: PrefCodec](key: PrefKey[A], value: A) =
+  override def setValue[A: PrefCodec](key: PrefKey[A], value: A): Future[Unit] =
     dispatcher(values += (key.str -> implicitly[PrefCodec[A]].encode(value)))
 
-  def print() = dispatcher(println(values))
+  def print(): CancellableFuture[Unit] = dispatcher(println(values))
 }
 
 class TestUserPreferences extends UserPreferences(null, null) {
+  override implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "TestUserPreferenceQueue")
 
-  override implicit val dispatcher = SerialDispatchQueue(name = "TestUserPreferenceQueue")
+  private var valuesMap = Map.empty[String, String]
 
-  private var values = Map.empty[String, String]
+  override protected def getValue[A: PrefCodec](key: PrefKey[A]): Future[A] =
+    dispatcher(valuesMap.get(key.str).map(implicitly[PrefCodec[A]].decode).getOrElse(key.default))
 
-  override protected def getValue[A: PrefCodec](key: PrefKey[A]) =
-    dispatcher(values.get(key.str).map(implicitly[PrefCodec[A]].decode).getOrElse(key.default))
+  override def setValue[A: PrefCodec](key: PrefKey[A], value: A): Future[Unit] =
+    dispatcher(valuesMap += (key.str -> implicitly[PrefCodec[A]].encode(value)))
 
-  override def setValue[A: PrefCodec](key: PrefKey[A], value: A) =
-    dispatcher(values += (key.str -> implicitly[PrefCodec[A]].encode(value)))
-
-  def print() = dispatcher(println(values))
+  def print(): CancellableFuture[Unit] = dispatcher(println(valuesMap))
 }

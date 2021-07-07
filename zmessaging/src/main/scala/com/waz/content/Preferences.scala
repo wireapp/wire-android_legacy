@@ -229,7 +229,7 @@ class GlobalPreferences(context: Context, val prefs: SharedPreferences) extends 
     }).asInstanceOf[A]
   }
 
-  override protected def buildPreference[A: PrefCodec](key: PrefKey[A]) =
+  override protected def buildPreference[A: PrefCodec](key: PrefKey[A]): Preference[A] =
     new Preference[A](this, key) {
 
       //No need to update the signal. The SharedPreferences Listener will do this for us.
@@ -277,8 +277,9 @@ class GlobalPreferences(context: Context, val prefs: SharedPreferences) extends 
   * Per-user preference storage in user db.
   */
 class UserPreferences(context: Context, storage: ZmsDatabase)
-  extends CachedStorageImpl[String, KeyValueData](new TrimmingLruCache(context, Fixed(128)), storage)(KeyValueDataDao, LogTag("KeyValueStorage_Cached"))
-    with Preferences {
+  extends CachedStorageImpl[String, KeyValueData](
+    new TrimmingLruCache(context, Fixed(128)), storage)(KeyValueDataDao, LogTag("KeyValueStorage_Cached")
+  ) with Preferences {
 
   override protected implicit val dispatcher: DispatchQueue = Threading.Background
   override protected implicit val logTag: LogTag = LogTag[UserPreferences]

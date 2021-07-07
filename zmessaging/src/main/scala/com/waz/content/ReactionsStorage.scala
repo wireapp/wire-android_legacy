@@ -38,10 +38,10 @@ trait ReactionsStorage extends CachedStorage[(MessageId, UserId), Liking] {
   def likes(msg:MessageId): Signal[Likes]
 }
 
-class ReactionsStorageImpl(context: Context, storage: Database)
-  extends CachedStorageImpl[(MessageId, UserId), Liking](new TrimmingLruCache(context, Fixed(MessagesStorage.cacheSize)), storage)(LikingDao, LogTag("LikingStorage"))
-    with ReactionsStorage
-    with DerivedLogTag {
+final class ReactionsStorageImpl(context: Context, storage: Database)
+  extends CachedStorageImpl[(MessageId, UserId), Liking](
+    new TrimmingLruCache(context, Fixed(MessagesStorage.cacheSize)), storage)(LikingDao, LogTag("LikingStorage")
+  ) with ReactionsStorage with DerivedLogTag {
 
   import ReactionsStorageImpl._
 

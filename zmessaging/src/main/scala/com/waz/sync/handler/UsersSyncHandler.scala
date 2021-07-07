@@ -135,7 +135,7 @@ class UsersSyncHandlerImpl(userService:      UserService,
     val gm = GenericMessage(Uid(), GenericContent.AvailabilityStatus(availability))
     for {
       Some(self)     <- userService.getSelfUser
-      users          <- usersStorage.list()
+      users          <- usersStorage.values
       (team, others) = users.filterNot(u => u.deleted || u.isWireBot).partition(_.isInTeam(self.teamId))
       recipients     = (List(self.id) ++
                         team.filter(_.id != self.id).map(_.id).toList.sorted ++

@@ -164,7 +164,7 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
 
   private def calculateAccountManagers() =
     (for {
-      ids      <- storage.list().map(_.map(_.id).toSet)
+      ids      <- storage.keySet
       managers <- Future.sequence(ids.map(createAccountManager(_, None, None)))
       _        <- Serialized.future(AccountManagersKey)(Future(accountManagers ! managers.flatten))
      } yield ()).recoverWith {
