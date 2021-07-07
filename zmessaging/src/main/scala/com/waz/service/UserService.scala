@@ -510,7 +510,7 @@ class ExpiredUsersService(push:         PushService,
     members    <- Signal.sequence(membersIds.map(usersStorage.signal).toSeq: _*)
     wireless   =  members.filter(_.expiresAt.isDefined).toSet
   } yield wireless).foreach { wireless =>
-    push.beDrift.head.map { drift =>
+    push.beDrift.head.foreach { drift =>
       val woTimer = wireless.filter(u => (wireless.map(_.id) -- timers.keySet).contains(u.id))
       woTimer.foreach { u =>
         val delay = LocalInstant.Now.toRemote(drift).remainingUntil(u.expiresAt.get + 10.seconds)
