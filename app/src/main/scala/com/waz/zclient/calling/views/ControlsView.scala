@@ -20,7 +20,7 @@ package com.waz.zclient.calling.views
 import android.Manifest.permission.{CAMERA, RECORD_AUDIO}
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.{Bitmap, Canvas, Paint, RectF}
+import android.graphics.{Bitmap, Canvas, Paint, PorterDuff, PorterDuffColorFilter, RectF}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.GridLayout
@@ -267,7 +267,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
         p.reset()
         p.setFlags(Paint.ANTI_ALIAS_FLAG)
         p.setStyle(Paint.Style.FILL)
-        p.setColor(color)
+        p.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_ATOP))
       }
       val bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth, drawable.getIntrinsicHeight, Bitmap.Config.ARGB_8888)
       val c = new Canvas(bitmap)
