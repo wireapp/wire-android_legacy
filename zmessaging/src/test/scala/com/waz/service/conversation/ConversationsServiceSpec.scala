@@ -658,6 +658,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val convId = ConvId(rConvId.str)
       val response = ConversationResponse(
         rConvId,
+        None,
         Some(Name("conv")),
         from,
         ConversationType.Group,

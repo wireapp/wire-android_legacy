@@ -357,6 +357,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     returning(prev.getOrElse(ConversationData(id = newLocalId, hidden = isOneToOne(resp.convType) && resp.members.size <= 1))
       .copy(
         remoteId        = resp.id,
+        domain          = resp.domain,
         name            = resp.name.filterNot(_.isEmpty),
         creator         = resp.creator,
         convType        = prev.map(_.convType).filter(oldType => isOneToOne(oldType) && resp.convType != ConversationType.OneToOne).getOrElse(resp.convType),
