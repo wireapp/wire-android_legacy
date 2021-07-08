@@ -62,7 +62,8 @@ case class ConversationData(override val id:      ConvId                 = ConvI
                             accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
                             link:                 Option[Link]           = None,
                             receiptMode:          Option[Int]            = None,  //Some(1) if both users have RR enabled in a 1-to-1 convo
-                            legalHoldStatus:      LegalHoldStatus        = LegalHoldStatus.Disabled
+                            legalHoldStatus:      LegalHoldStatus        = LegalHoldStatus.Disabled,
+                            domain:               Option[String]         = None
                            ) extends Identifiable[ConvId] {
   def getName(): String = name.fold("")(_.str) // still used in Java
 
@@ -251,6 +252,7 @@ object ConversationData {
     val UnreadQuotesCount   = int('unread_quote_count)(_.unreadCount.quotes)
     val ReceiptMode         = opt(int('receipt_mode))(_.receiptMode)
     val LegalHoldStatus     = int[LegalHoldStatus]('legal_hold_status, _.value, ConversationData.LegalHoldStatus.apply)(_.legalHoldStatus)
+    val Domain              = opt(text('domain))(_.domain)
 
     private def getVerification(name: String): Verification =
       Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)
@@ -291,7 +293,8 @@ object ConversationData {
       UnreadMentionsCount,
       UnreadQuotesCount,
       ReceiptMode,
-      LegalHoldStatus
+      LegalHoldStatus,
+      Domain
     )
 
     override def apply(implicit cursor: DBCursor): ConversationData =
@@ -324,7 +327,8 @@ object ConversationData {
         AccessRole,
         Link,
         ReceiptMode,
-        LegalHoldStatus
+        LegalHoldStatus,
+        Domain
       )
 
     import com.waz.model.ConversationData.ConversationType._

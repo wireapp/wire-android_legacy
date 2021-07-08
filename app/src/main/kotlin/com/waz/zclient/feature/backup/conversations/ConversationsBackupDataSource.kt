@@ -43,7 +43,8 @@ data class ConversationsBackUpModel(
     val unreadMentionsCount: Int = 0,
     val unreadQuoteCount: Int = 0,
     val receiptMode: Int? = null,
-    val legalHoldStatus: Int = 0
+    val legalHoldStatus: Int = 0,
+    val domain: String? = null
 )
 
 class ConversationsBackupMapper : BackUpDataMapper<ConversationsBackUpModel, ConversationsEntity> {
@@ -81,7 +82,8 @@ class ConversationsBackupMapper : BackUpDataMapper<ConversationsBackUpModel, Con
         unreadMentionsCount = entity.unreadMentionsCount,
         unreadQuoteCount = entity.unreadQuoteCount,
         receiptMode = entity.receiptMode,
-        legalHoldStatus = entity.legalHoldStatus
+        legalHoldStatus = entity.legalHoldStatus,
+        domain = entity.domain
     )
 
     override fun toEntity(model: ConversationsBackUpModel) = ConversationsEntity(
@@ -118,7 +120,8 @@ class ConversationsBackupMapper : BackUpDataMapper<ConversationsBackUpModel, Con
         unreadMentionsCount = model.unreadMentionsCount,
         unreadQuoteCount = model.unreadQuoteCount,
         receiptMode = model.receiptMode,
-        legalHoldStatus = model.legalHoldStatus
+        legalHoldStatus = model.legalHoldStatus,
+        domain = model.domain
     )
 }
 

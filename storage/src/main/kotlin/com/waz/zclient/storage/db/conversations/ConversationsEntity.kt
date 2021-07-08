@@ -113,5 +113,8 @@ data class ConversationsEntity(
     val receiptMode: Int?,
 
     @ColumnInfo(name = "legal_hold_status")
-    val legalHoldStatus: Int
+    val legalHoldStatus: Int,
+
+    @ColumnInfo(name = "domain")
+    val domain: String?
 )
