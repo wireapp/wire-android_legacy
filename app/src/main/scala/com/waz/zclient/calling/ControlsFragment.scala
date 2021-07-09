@@ -52,9 +52,12 @@ class ControlsFragment extends FragmentHelper {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
+
     controller.allVideoReceiveStates.map(_.values.exists(Set(VideoState.Started, VideoState.ScreenShare).contains)).onUi {
-      case true => getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
-      case false => getView.setBackgroundColor(Color.TRANSPARENT)
+      case true  => getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
+      case false =>
+        if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
+        else getView.setBackgroundColor(Color.TRANSPARENT)
     }
   }
 
