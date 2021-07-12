@@ -188,7 +188,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         messages.addConversationStartMessage(
           created.id,
           from,
-          (data.members.keySet + selfUserId).filter(_ != from),
+          (data.memberIds + selfUserId).filter(_ != from),
           created.name,
           readReceiptsAllowed = created.readReceiptsAllowed,
           time = Some(time)
@@ -235,10 +235,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case MemberJoinEvent(_, _, _, _, _, ids, us, _) =>
       // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
       val membersWithRoles = us.map { case (qId, role) => qId.id -> role } ++ ids.map(_ -> ConversationRole.MemberRole).toMap
-      val selfAdded = membersWithRoles.keySet.contains(selfUserId)//we were re-added to a group and in the meantime might have missed events
+      val selfAdded = membersWithRoles.keySet.contains(selfUserId) //we were re-added to a group and in the meantime might have missed events
       for {
         convSync   <- if (selfAdded) sync.syncConversations(Set(conv.id)).map(Option(_)) else Future.successful(None)
-        syncId     <- users.syncIfNeeded(membersWithRoles.keySet)
+        syncId     <- users.syncIfNeeded(membersWithRoles.keySet, qIds = us.keySet.filter(_.hasDomain))
         _          <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
         _          <- membersStorage.updateOrCreateAll(conv.id, membersWithRoles)
         _          <- if (selfAdded) content.setConvActive(conv.id, active = true) else successful(None)
@@ -326,7 +326,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   private def updateConversation(response: ConversationResponse): Future[(Seq[ConversationData], Seq[ConversationData])] =
     for {
       defRoles <- rolesService.defaultRoles.head
-      roles    <- client.loadConversationRoles(Set(response.id), defRoles)
+      // @todo: for now we have no way to check conversation roles on a federated backend
+      roles    <- if (!response.hasDomain)
+                    client.loadConversationRoles(Set(response.id), defRoles)
+                  else
+                    Future.successful(Map(response.id -> defRoles))
       results  <- updateConversations(Seq(response), roles)
     } yield results
 
@@ -336,14 +340,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     responses.map { resp =>
       val newId =
         if (isOneToOne(resp.convType))
-          resp.members.keys.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str))
+          resp.memberIds.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str))
         else
           ConvId(resp.id.str)
 
       val matching = convsByRId.get(resp.id).orElse {
         convsById.get(newId).orElse {
           if (isOneToOne(resp.convType)) None
-          else convsByRId.get(generateTempConversationId(resp.members.keySet))
+          else convsByRId.get(generateTempConversationId(resp.memberIds))
         }
       }
 
@@ -390,7 +394,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     for {
       convs         <- content.convsByRemoteId(responses.map(_.id).toSet)
       toUpdate      =  responses.map(c => (c.id, c.members)).flatMap {
-                         case (remoteId, members) => convs.get(remoteId).map(c => c.id -> (members + (c.creator -> ConversationRole.AdminRole)))
+                         case (remoteId, members) =>
+                           val userIdsWithRoles = members.map { case (qId, role) => qId.id -> role }
+                           convs.get(remoteId).map(c => c.id -> (userIdsWithRoles + (c.creator -> ConversationRole.AdminRole)))
                        }.toMap
       activeUsers   <- membersStorage.getActiveUsers2(convs.map(_._2.id).toSet)
       _             <- membersStorage.setAll(toUpdate)
@@ -490,7 +496,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       (convs, created) <- updateConversationData(responses)
       _                <- updateRoles(convs.map(data => data.id -> data.remoteId).toMap, roles)
       _                <- updateMembers(responses)
-      _                <- users.syncIfNeeded(responses.flatMap(_.members.keys).toSet)
+      _                <- users.syncIfNeeded(responses.flatMap(_.memberIds).toSet, qIds = responses.flatMap(_.qualifiedMemberIds).toSet)
     } yield (convs.toSeq, created)
 
   def updateRemoteId(id: ConvId, remoteId: RConvId): Future[Unit] =

@@ -66,8 +66,10 @@ class ConversationsSyncHandler(selfUserId:      UserId,
   private def loadConversationRoles(resps: Seq[ConversationResponse]) = {
     val (otherTeamResps, teamAndPrivResps) = resps.partition(r => r.team.isDefined && r.team != teamId)
     rolesService.defaultRoles.head.flatMap { defRoles =>
+      // @todo: for now we have no way to check conversation roles on a federated backend
+      val convIds = otherTeamResps.filterNot(_.hasDomain).map(_.id).toSet
       convClient
-        .loadConversationRoles(otherTeamResps.map(_.id).toSet, defRoles)
+        .loadConversationRoles(convIds, defRoles)
         .map(_ ++ teamAndPrivResps.map(r => r.id -> defRoles).toMap)
     }
   }

@@ -118,8 +118,8 @@ class ConversationsClientImpl(implicit
   override def loadQualifiedConversations(ids: Set[RConvQualifiedId]): ErrorOrResponse[Seq[ConversationResponse]] = {
     Request
       .Post(
-        relativePath = ConversationsPath,
-        queryParameters = queryParameters("qualified_ids" -> RConvQualifiedId.encode(ids))
+        relativePath = ListConversationsPath,
+        body = Json("qualified_ids" -> RConvQualifiedId.encode(ids))
       )
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
@@ -379,10 +379,13 @@ object ConversationsClient {
                                         accessRole:   Option[AccessRole],
                                         link:         Option[Link],
                                         messageTimer: Option[FiniteDuration],
-                                        members:      Map[UserId, ConversationRole],
+                                        members:      Map[QualifiedId, ConversationRole],
                                         receiptMode:  Option[Int]
                                        ) {
     lazy val qualifiedId: Option[RConvQualifiedId] = domain.map(RConvQualifiedId(id, _))
+    def hasDomain: Boolean = domain.nonEmpty
+    lazy val memberIds: Set[UserId] = members.keySet.map(_.id)
+    lazy val qualifiedMemberIds: Set[QualifiedId] = members.keySet.filter(_.hasDomain)
   }
 
   object ConversationResponse extends DerivedLogTag {
@@ -394,8 +397,8 @@ object ConversationsClient {
         verbose(l"ConversationResponse: ${js.toString}")
         val members = js.getJSONObject("members")
         val state = ConversationState.Decoder(members.getJSONObject("self"))
-        val selfRole = (state.target, state.conversationRole) match {
-          case (Some(id), Some(role)) => Map(id -> role)
+        val selfRole: Map[QualifiedId, ConversationRole] = (state.target, state.conversationRole) match {
+          case (Some(id), Some(role)) => Map(QualifiedId(id) -> role)
           case _                      => Map.empty
         }
 
@@ -419,7 +422,7 @@ object ConversationsClient {
           'access_role,
           'link,
           decodeOptLong('message_timer).map(EphemeralDuration(_)),
-          decodeUserIdsWithRoles('others)(members) ++ selfRole,
+          decodeQualifiedIdsWithRoles('others)(members) ++ selfRole,
           decodeOptInt('receipt_mode)
         )
       }
