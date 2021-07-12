@@ -309,6 +309,9 @@
     <string name="incoming__controls__ongoing__flip">FLIP</string>
     <string name="ongoing__poor_connection_message">VIDEO STOPPED DUE TO POOR CONNECTION</string>
     <string name="calling__self_preview_unavailable_long">CAMERA NOT AVAILABLE</string>
+    <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
+    <string name="incoming__controls__ongoing__camera">CAMERA</string>
+    <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
 
     <string name="calling__header__joining">Connecting…</string>
     <string name="calling__header__outgoing_subtitle">Ringing…</string>
