@@ -136,7 +136,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
           button.set(drawActiveSpeaker, R.string.incoming__controls__ongoing__speaker, speaker)
         case (false, false) =>
           button.setActivated(false)
-          button.set(drawActiveSpeaker, R.string.incoming__controls__ongoing__speaker, speaker)
+          button.set(drawInactiveSpeaker, R.string.incoming__controls__ongoing__speaker, speaker)
         case (_, true) =>
           button.set(drawFlip, R.string.incoming__controls__ongoing__flip_camera, flip)
           button.setActivated(false)
