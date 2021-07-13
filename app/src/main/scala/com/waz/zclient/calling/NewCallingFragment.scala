@@ -195,8 +195,13 @@ class NewCallingFragment extends FragmentHelper {
       case (false, size) =>
         viewPager.foreach(_.setAdapter(allParticipantsAdapter))
         allParticipantsAdapter.notifyDataSetChanged()
-        attachTabLayoutToViewPager()
-        if (size > AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE) showPaginationDots() else hidePaginationDots()
+        if (size > AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE) {
+          attachTabLayoutToViewPager()
+          showPaginationDots()
+        } else {
+          detachTabLayoutFromViewPager()
+          hidePaginationDots()
+        }
       case (true, _) =>
         viewPager.foreach(_.setAdapter(activeParticipantsAdapter))
         activeParticipantsAdapter.notifyDataSetChanged()
