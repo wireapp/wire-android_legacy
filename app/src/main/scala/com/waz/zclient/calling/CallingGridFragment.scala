@@ -22,6 +22,8 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.gridlayout.widget.GridLayout
+import com.waz.model.UserId
+import com.waz.model.otr.ClientId
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.threading.Threading._
@@ -87,7 +89,8 @@ class CallingGridFragment extends FragmentHelper {
   private def initCallingGrid(): Unit = {
 
     val participantsData = Signal.zip(
-      callController.selfParticipant,
+      callController.selfParticipant.map(_.userId),
+      callController.selfParticipant.map(_.clientId),
       callController.participantsInfo,
       callController.allParticipants,
       callController.longTermActiveParticipants()
@@ -99,15 +102,15 @@ class CallingGridFragment extends FragmentHelper {
         callController.isFullScreenEnabled,
         callController.showTopSpeakers
       ).foreach {
-        case ((selfParticipant, participantsInfo, participants, activeParticipants), false, true) =>
-          refreshVideoGrid(grid, selfParticipant, activeParticipants, participantsInfo, participants, true)
-        case ((selfParticipant, participantsInfo, participants, _), false, false) =>
+        case ((selfUserId,selfClientId, participantsInfo, participants, activeParticipants), false, true) =>
+          refreshVideoGrid(grid, selfUserId,selfClientId, activeParticipants, participantsInfo, participants, true)
+        case ((selfUserId,selfClientId, participantsInfo, participants, _), false, false) =>
 
           val startIndex = pageNumber * MAX_PARTICIPANTS_PER_PAGE
           val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE
           val participantsToShow = participants.slice(startIndex, endIndex).toSeq
 
-          refreshVideoGrid(grid, selfParticipant, participantsToShow, participantsInfo, participants, false)
+          refreshVideoGrid(grid, selfUserId,selfClientId, participantsToShow, participantsInfo, participants, false)
         case _ =>
       }
     }
@@ -136,14 +139,15 @@ class CallingGridFragment extends FragmentHelper {
 
 
   private def refreshVideoGrid(grid: GridLayout,
-                               selfParticipant: Participant,
+                               selfUserId : UserId,
+                               selfClientId : ClientId,
                                participantsToShow: Seq[Participant],
                                info: Seq[CallParticipantInfo],
                                allParticipants: Set[Participant],
                                showTopSpeakers: Boolean
                               ): Unit = {
 
-    val views = refreshViews(participantsToShow, selfParticipant)
+    val views = refreshViews(participantsToShow, selfUserId, selfClientId)
 
     val infoMap = info.toIdMap
 
@@ -195,7 +199,8 @@ class CallingGridFragment extends FragmentHelper {
     }
 
     val viewsToRemove = viewMap.filter {
-      case (participant, selfView) if participant == selfParticipant => !gridViews.contains(selfView)
+      case (participant, selfView)
+        if ((participant.userId == selfUserId) && (participant.clientId == selfClientId)) => !gridViews.contains(selfView)
       case (participant, _) => !participantsToShow.contains(participant)
     }
 
@@ -204,10 +209,11 @@ class CallingGridFragment extends FragmentHelper {
     viewMap = viewMap.filter { case (participant, _) => participantsToShow.contains(participant) }
   }
 
-  private def refreshViews(participantsToShow: Seq[Participant], selfParticipant: Participant): Seq[UserVideoView] = {
+  private def refreshViews(participantsToShow: Seq[Participant], selfUserId: UserId, selfClientId: ClientId): Seq[UserVideoView] = {
 
     def createView(participant: Participant): UserVideoView = returning {
-      if (participant == selfParticipant) new SelfVideoView(getContext, selfParticipant)
+      if (participant.userId == selfUserId & participant.clientId == selfClientId)
+        new SelfVideoView(getContext, new Participant(userId = selfUserId, clientId = selfClientId))
       else new OtherVideoView(getContext, participant)
     } { userView =>
       viewMap = viewMap.updated(participant, userView)
@@ -221,7 +227,8 @@ class CallingGridFragment extends FragmentHelper {
       }
     }
 
-    if (participantsToShow.contains(selfParticipant)) callController.isSelfViewVisible ! true
+    if (!participantsToShow.filter(_.userId == selfUserId).filter(_.clientId == selfClientId).isEmpty)
+      callController.isSelfViewVisible ! true
     else callController.isSelfViewVisible ! false
 
     participantsToShow.map { participant => viewMap.getOrElse(participant, createView(participant)) }
