@@ -171,8 +171,6 @@ class NewCallingFragment extends FragmentHelper {
 
   private def showFloatingSelfPreview(selfVideoView: UserVideoView, cardView: CardView): Unit = {
     verbose(l"Showing card preview")
-    // Todo: find a solution to remove the selfVideoPreview from from CallingGridFragment
-    // grid.removeView(selfVideoView)
     selfVideoView.setLayoutParams(
       new FrameLayout.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
