@@ -186,7 +186,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
     val callingZms    = await(controller.callingZms.head)
 
     if (audioGranted)
-      callingZms.calling.startCall(callingConvId, await(controller.isVideoCall.head))
+      callingZms.calling.startCall(callingConvId, await(controller.isVideoCall.head), BuildConfig.FORCE_CONSTANT_BITRATE_CALLS)
     else
       showPermissionsErrorDialog(R.string.calling__cannot_start__title,
         R.string.calling__cannot_start__no_permission__message,

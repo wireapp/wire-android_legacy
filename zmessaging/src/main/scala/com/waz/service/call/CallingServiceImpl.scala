@@ -100,9 +100,12 @@ trait CallingService {
     * @param forceOption used to ignore the current calls video send state (useful for when a user joins a video call using the audio button, for example)
     *                    //TODO we could turn isVideo into an Option[Boolean], where defined = force, and undefined means use current call state
     */
-  def startCall(convId: ConvId, isVideo: Boolean = false, forceOption: Boolean = false): Future[Unit]
+  def startCall(convId: ConvId,
+                isVideo: Boolean = false,
+                forceOption: Boolean = false,
+                forceConstantBitRate: Boolean = false): Future[Unit]
 
-  def continueDegradedCall(): Unit
+  def continueDegradedCall(forceConstantBitRate: Boolean = false): Unit
 
   def setCallMuted(muted: Boolean): Unit
 
@@ -421,7 +424,10 @@ class CallingServiceImpl(val accountId:       UserId,
       }
     }
 
-  override def startCall(convId: ConvId, isVideo: Boolean = false, forceOption: Boolean = false) =
+  override def startCall(convId: ConvId,
+                         isVideo: Boolean = false,
+                         forceOption: Boolean = false,
+                         forceConstantBitRate: Boolean = false) =
     Serialized.future(self.accountId.str) {
       verbose(l"startCall $convId, isVideo: $isVideo, forceOption: $forceOption")
       (for {
@@ -430,6 +436,7 @@ class CallingServiceImpl(val accountId:       UserId,
         profile                  <- callProfile.head
         isGroup                  <- convsService.isGroupConversation(convId)
         vbr                      <- userPrefs.preference(UserPreferences.VBREnabled).apply()
+        useConstantBitRate       = forceConstantBitRate || !vbr
         convSize                 <- convsService.activeMembersData(conv.id).map(_.size).head
         callType =
           if (isVideo) Avs.WCallType.Video
@@ -445,7 +452,7 @@ class CallingServiceImpl(val accountId:       UserId,
                 call.state match {
                   case OtherCalling =>
                     verbose(l"Answering call")
-                    avs.answerCall(w, conv.remoteId, callType, !vbr)
+                    avs.answerCall(w, conv.remoteId, callType, useConstantBitRate)
                     updateActiveCall(_.updateCallState(SelfJoining))("startCall/OtherCalling")
                     setCallMuted(muted = isGroup)
                     if (forceOption)
@@ -461,7 +468,7 @@ class CallingServiceImpl(val accountId:       UserId,
                 case Some(call) if !Set[CallState](Ended, Terminating)(call.state) =>
                   Future.successful {
                     verbose(l"Joining an ongoing background call")
-                    avs.answerCall(w, conv.remoteId, callType, !vbr)
+                    avs.answerCall(w, conv.remoteId, callType, useConstantBitRate)
                     val active = call.updateCallState(SelfJoining).copy(joinedTime = None, estabTime = None) // reset previous call state if exists
                     callProfile.mutate(_.copy(calls = profile.calls + (convId -> active)))
                     setCallMuted(muted = true)
@@ -470,7 +477,7 @@ class CallingServiceImpl(val accountId:       UserId,
                   }
                 case _ =>
                   verbose(l"No active call, starting new call")
-                  avs.startCall(w, conv.remoteId, callType, convType, !vbr).map {
+                  avs.startCall(w, conv.remoteId, callType, convType, useConstantBitRate).map {
                     case 0 =>
                       //Assume that when a video call starts, sendingVideo will be true. From here on, we can then listen to state handler
                       val newCall = CallInfo(
@@ -493,12 +500,12 @@ class CallingServiceImpl(val accountId:       UserId,
       }
     }
 
-  override def continueDegradedCall() =
+  override def continueDegradedCall(forceConstantBitRate: Boolean = false) =
     currentCall.head.map {
       case Some(info) =>
         (info.outstandingMsg, info.state) match {
           case (Some(message), _)   => convs.storage.setUnknownVerification(info.convId).map(_ => sendOutstandingCallMessage(info.convId, message))
-          case (None, OtherCalling) => convs.storage.setUnknownVerification(info.convId).map(_ => startCall(info.convId))
+          case (None, OtherCalling) => convs.storage.setUnknownVerification(info.convId).map(_ => startCall(info.convId, forceConstantBitRate = forceConstantBitRate))
           case _                    => error(l"Tried resending message on invalid info: ${info.convId} in state ${info.state}")
         }
       case None => warn(l"Tried to continue degraded call without a current active call")

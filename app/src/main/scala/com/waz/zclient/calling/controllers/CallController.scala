@@ -196,7 +196,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   val flowManager = callingZms.map(_.flowmanager)
 
   def continueDegradedCall(): Unit = callingServiceAndCurrentConvId.head.map {
-    case (cs, _) => cs.continueDegradedCall()
+    case (cs, _) => cs.continueDegradedCall(BuildConfig.FORCE_CONSTANT_BITRATE_CALLS)
   }
 
   val captureDevices = flowManager.flatMap(fm => Signal.from(fm.getVideoCaptureDevices))
