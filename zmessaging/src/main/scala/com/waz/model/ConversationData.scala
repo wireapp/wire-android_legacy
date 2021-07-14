@@ -34,45 +34,48 @@ import org.json.JSONArray
 import scala.concurrent.duration._
 import scala.util.Try
 
-case class ConversationData(override val id:      ConvId                 = ConvId(),
-                            remoteId:             RConvId                = RConvId(),
-                            name:                 Option[Name]           = None,
-                            creator:              UserId                 = UserId(),
-                            convType:             ConversationType       = ConversationType.Group,
-                            team:                 Option[TeamId]         = None,
-                            lastEventTime:        RemoteInstant          = RemoteInstant.Epoch,
-                            isActive:             Boolean                = true,
-                            lastRead:             RemoteInstant          = RemoteInstant.Epoch,
-                            muted:                MuteSet                = MuteSet.AllAllowed,
-                            muteTime:             RemoteInstant          = RemoteInstant.Epoch,
-                            archived:             Boolean                = false,
-                            archiveTime:          RemoteInstant          = RemoteInstant.Epoch,
-                            cleared:              Option[RemoteInstant]  = None,
-                            generatedName:        Name                   = Name.Empty, // deprecated
-                            searchKey:            Option[SearchKey]      = None,
-                            unreadCount:          UnreadCount            = UnreadCount(0, 0, 0, 0, 0),
-                            failedCount:          Int                    = 0,
-                            missedCallMessage:    Option[MessageId]      = None,
-                            incomingKnockMessage: Option[MessageId]      = None,
-                            hidden:               Boolean                = false,
-                            verified:             Verification           = Verification.UNKNOWN,
-                            localEphemeral:       Option[FiniteDuration] = None,
-                            globalEphemeral:      Option[FiniteDuration] = None,
-                            access:               Set[Access]            = Set.empty,
-                            accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
-                            link:                 Option[Link]           = None,
-                            receiptMode:          Option[Int]            = None,  //Some(1) if both users have RR enabled in a 1-to-1 convo
-                            legalHoldStatus:      LegalHoldStatus        = LegalHoldStatus.Disabled
-                           ) extends Identifiable[ConvId] {
+final case class ConversationData(override val id:      ConvId                 = ConvId(),
+                                  remoteId:             RConvId                = RConvId(),
+                                  name:                 Option[Name]           = None,
+                                  creator:              UserId                 = UserId(),
+                                  convType:             ConversationType       = ConversationType.Group,
+                                  team:                 Option[TeamId]         = None,
+                                  lastEventTime:        RemoteInstant          = RemoteInstant.Epoch,
+                                  isActive:             Boolean                = true,
+                                  lastRead:             RemoteInstant          = RemoteInstant.Epoch,
+                                  muted:                MuteSet                = MuteSet.AllAllowed,
+                                  muteTime:             RemoteInstant          = RemoteInstant.Epoch,
+                                  archived:             Boolean                = false,
+                                  archiveTime:          RemoteInstant          = RemoteInstant.Epoch,
+                                  cleared:              Option[RemoteInstant]  = None,
+                                  generatedName:        Name                   = Name.Empty, // deprecated
+                                  searchKey:            Option[SearchKey]      = None,
+                                  unreadCount:          UnreadCount            = UnreadCount(0, 0, 0, 0, 0),
+                                  failedCount:          Int                    = 0,
+                                  missedCallMessage:    Option[MessageId]      = None,
+                                  incomingKnockMessage: Option[MessageId]      = None,
+                                  hidden:               Boolean                = false,
+                                  verified:             Verification           = Verification.UNKNOWN,
+                                  localEphemeral:       Option[FiniteDuration] = None,
+                                  globalEphemeral:      Option[FiniteDuration] = None,
+                                  access:               Set[Access]            = Set.empty,
+                                  accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
+                                  link:                 Option[Link]           = None,
+                                  receiptMode:          Option[Int]            = None,  //Some(1) if both users have RR enabled in a 1-to-1 convo
+                                  legalHoldStatus:      LegalHoldStatus        = LegalHoldStatus.Disabled,
+                                  domain:               Option[String]         = None
+                                 ) extends Identifiable[ConvId] {
+  lazy val qualifiedId: Option[RConvQualifiedId] = domain.map(RConvQualifiedId(remoteId, _))
+
   def getName(): String = name.fold("")(_.str) // still used in Java
 
-  def withFreshSearchKey = copy(searchKey = freshSearchKey)
-  def savedOrFreshSearchKey = searchKey.orElse(freshSearchKey)
-  def freshSearchKey = if (convType == ConversationType.Group) name.map(SearchKey(_)) else None
+  def withFreshSearchKey: ConversationData = copy(searchKey = freshSearchKey)
+  def savedOrFreshSearchKey: Option[SearchKey] = searchKey.orElse(freshSearchKey)
+  def freshSearchKey: Option[SearchKey] = if (convType == ConversationType.Group) name.map(SearchKey(_)) else None
 
-  lazy val completelyCleared = cleared.exists(!_.isBefore(lastEventTime))
+  lazy val completelyCleared: Boolean = cleared.exists(!_.isBefore(lastEventTime))
 
-  lazy val isManaged = team.map(_ => false) //can be returned to parameter list when we need it.
+  lazy val isManaged: Option[Boolean] = team.map(_ => false) //can be returned to parameter list when we need it.
 
   lazy val ephemeralExpiration: Option[EphemeralDuration] = (globalEphemeral, localEphemeral) match {
     case (Some(d), _) => Some(ConvExpiry(d)) //global ephemeral takes precedence over local
@@ -80,9 +83,9 @@ case class ConversationData(override val id:      ConvId                 = ConvI
     case _ => None
   }
 
-  def withLastRead(time: RemoteInstant) = copy(lastRead = lastRead max time)
+  def withLastRead(time: RemoteInstant): ConversationData = copy(lastRead = lastRead max time)
 
-  def withCleared(time: RemoteInstant) = copy(cleared = Some(cleared.fold(time)(_ max time)))
+  def withCleared(time: RemoteInstant): ConversationData = copy(cleared = Some(cleared.fold(time)(_ max time)))
 
   def withNewLegalHoldStatus(detectedLegalHoldDevice: Boolean): ConversationData = {
     import LegalHoldStatus._
@@ -251,6 +254,7 @@ object ConversationData {
     val UnreadQuotesCount   = int('unread_quote_count)(_.unreadCount.quotes)
     val ReceiptMode         = opt(int('receipt_mode))(_.receiptMode)
     val LegalHoldStatus     = int[LegalHoldStatus]('legal_hold_status, _.value, ConversationData.LegalHoldStatus.apply)(_.legalHoldStatus)
+    val Domain              = opt(text('domain))(_.domain)
 
     private def getVerification(name: String): Verification =
       Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)
@@ -291,7 +295,8 @@ object ConversationData {
       UnreadMentionsCount,
       UnreadQuotesCount,
       ReceiptMode,
-      LegalHoldStatus
+      LegalHoldStatus,
+      Domain
     )
 
     override def apply(implicit cursor: DBCursor): ConversationData =
@@ -324,7 +329,8 @@ object ConversationData {
         AccessRole,
         Link,
         ReceiptMode,
-        LegalHoldStatus
+        LegalHoldStatus,
+        Domain
       )
 
     import com.waz.model.ConversationData.ConversationType._

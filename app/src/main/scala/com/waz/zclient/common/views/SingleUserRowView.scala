@@ -35,7 +35,8 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.controllers.{ThemeController, ThemedView, UserAccountsController}
+import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
+import com.waz.zclient.messages.UsersController
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon}
 import com.waz.zclient.ui.animation.interpolators.penner.Quad.EaseOut
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -55,7 +56,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   private lazy val callController                   = inject[CallController]
   private lazy val accentColorController            = inject[AccentColorController]
-  private lazy val selfData                         = inject[UserAccountsController].currentUser
+  private lazy val usersController                  = inject[UsersController]
   private lazy val chathead                         = findById[ChatHeadView](R.id.chathead)
   private lazy val nameView                         = findById[TypefaceTextView](R.id.name_text)
   private lazy val subtitleView                     = findById[TypefaceTextView](R.id.username_text)
@@ -197,20 +198,23 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
                   createSubtitle: (UserData, Boolean) => String = SingleUserRowView.defaultSubtitle): Unit = {
     setTitle(userData.name, userData.isSelf)
     setVerified(userData.isVerified)
-    selfData.future.collect { case Some(self) =>
+
+    usersController.selfUser.head.foreach { self =>
       val teamId = self.teamId
       chathead.setUserData(userData, userData.isInTeam(teamId))
       setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
       setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
       setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-        val federated = userData.isFederated(self.domain.getOrElse(""))
+    }(Threading.Ui)
+
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      usersController.isFederated(userData).foreach { federated =>
         isFederated ! federated
         setSubtitle(createSubtitle(userData, federated))
-      } else {
-        setSubtitle(createSubtitle(userData, false))
-      }
-    }(Threading.Ui)
+      }(Threading.Ui)
+    } else {
+      setSubtitle(createSubtitle(userData, false))
+    }
   }
 
   private def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisible(guest)

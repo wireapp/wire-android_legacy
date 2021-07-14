@@ -36,7 +36,8 @@ data class ConversationsTestData(
     val unreadMentionsCount: Int,
     val unreadQuoteCount: Int,
     val receiptMode: Int?,
-    val legalHoldStatus: Int
+    val legalHoldStatus: Int,
+    val domain: String?
 )
 
 object ConversationsTestDataProvider : TestDataProvider<ConversationsTestData>() {
@@ -74,6 +75,7 @@ object ConversationsTestDataProvider : TestDataProvider<ConversationsTestData>()
         unreadMentionsCount = 0,
         unreadQuoteCount = 0,
         receiptMode = null,
-        legalHoldStatus = 0
+        legalHoldStatus = 0,
+        domain = "staging"
     )
 }

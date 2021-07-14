@@ -105,7 +105,7 @@ class UsersClientImpl(implicit
     if (qIds.isEmpty)
       CancellableFuture.successful(Right(Vector()))
     else
-      Request.Post(relativePath = ListUsersPath, body = ListUsersRequest(qIds.toSeq).encode)
+      Request.Post(relativePath = ListUsersPath, body = ListUsersRequest(qIds).encode)
         .withResultType[Seq[UserInfo]]
         .withErrorType[ErrorResponse]
         .executeSafe
@@ -169,12 +169,9 @@ object UsersClient {
     }
   }
 
-  final case class ListUsersRequest(qIds: Seq[QualifiedId]) {
-    def encode: JSONObject = JsonEncoder { o =>
-      o.put(
-        "qualified_ids",
-        JsonEncoder.array(qIds) { case (arr, qid) => arr.put(QualifiedId.Encoder(qid)) }
-      )
+  final case class ListUsersRequest(qIds: Set[QualifiedId]) {
+    def encode: JSONObject = JsonEncoder {
+      _.put("qualified_ids", QualifiedId.encode(qIds))
     }
   }
 

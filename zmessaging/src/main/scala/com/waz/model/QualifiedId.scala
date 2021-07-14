@@ -2,7 +2,7 @@ package com.waz.model
 
 import com.waz.utils.JsonDecoder.opt
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import org.json.JSONObject
+import org.json.{JSONArray, JSONObject}
 
 final case class QualifiedId(id: UserId, domain: String) {
   def hasDomain: Boolean = domain.nonEmpty
@@ -28,4 +28,7 @@ object QualifiedId {
 
   def decodeOpt(s: Symbol)(implicit js: JSONObject): Option[QualifiedId] =
     opt(s, js => decode(js.getJSONObject(s.name)))
+
+  def encode(qIds: Set[QualifiedId]): JSONArray =
+      JsonEncoder.array(qIds) { case (arr, qid) => arr.put(QualifiedId.Encoder(qid)) }
 }

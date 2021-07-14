@@ -156,9 +156,10 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
       connected <- userService.acceptedOrBlockedUsers.map(_.values)
+      fake1To1s <- conversationsService.onlyFake1To1ConvUsers
       members   <- teamId.fold(Signal.const(Set.empty[UserData]))(_ => teamsService.searchTeamMembers(query))
     } yield {
-      val included = (connected.toSet ++ members).filter { user =>
+      val included = (connected.toSet ++ fake1To1s.toSet ++ members).filter { user =>
         !excluded.contains(user.id) &&
           selfUserId != user.id &&
           !user.isWireBot &&
@@ -270,9 +271,13 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       val allUsers = (local.map(u => usersInStorage(u.qualifiedId.id)) ++ remote.map(UserData(_))).toIndexedSeq
       userSearchResult ! allUsers
 
-      if (remote.nonEmpty)
-        sync.syncSearchResults(remote.map(_.qualifiedId.id).toSet).map(_ => ())
-      else
+      if (remote.nonEmpty) {
+        if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+          sync.syncQualifiedSearchResults(remote.map(_.qualifiedId).toSet).map(_ => ())
+        } else {
+          sync.syncSearchResults(remote.map(_.qualifiedId.id).toSet).map(_ => ())
+        }
+      } else
         Future.successful(())
     }
 

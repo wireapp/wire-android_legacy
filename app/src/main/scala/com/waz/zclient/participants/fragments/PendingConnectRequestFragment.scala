@@ -11,7 +11,6 @@ import com.waz.zclient.{ErrorsController, R}
 import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
-import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
@@ -23,7 +22,6 @@ class PendingConnectRequestFragment extends UntabbedRequestFragment {
   import Threading.Implicits.Ui
 
   private lazy val zms                  = inject[Signal[ZMessaging]]
-  private lazy val usersController      = inject[UsersController]
   private lazy val convController       = inject[ConversationController]
   private lazy val accountsController   = inject[UserAccountsController]
   private lazy val convScreenController = inject[IConversationScreenController]

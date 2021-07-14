@@ -6,7 +6,6 @@ import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.views.ZetaButton
@@ -17,8 +16,7 @@ import com.waz.threading.Threading._
 class ConnectRequestFragment extends UntabbedRequestFragment {
   import com.waz.threading.Threading.Implicits.Ui
 
-  private lazy val usersController = inject[UsersController]
-  private lazy val accentColor     = inject[AccentColorController].accentColor.map(_.color)
+  private lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
 
   override protected val layoutId: Int = R.layout.fragment_participants_connect
 

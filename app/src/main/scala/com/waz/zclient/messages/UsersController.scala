@@ -144,6 +144,14 @@ class UsersController(implicit injector: Injector, context: Context)
 
   def selfUser: Signal[UserData] = selfUserId.flatMap(user)
 
+  def isFederated(user: UserData, selfDomain: String): Boolean = user.domain.exists(_ != selfDomain)
+
+  def isFederated(user: UserData): Future[Boolean] =
+    userService.head.flatMap(_.isFederated(user))(Threading.Background)
+
+  def isFederated(id: UserId): Future[Boolean] =
+    userService.head.flatMap(_.isFederated(id))(Threading.Background)
+
   def conv(msg: MessageData): Signal[ConversationData] =
     for {
       zms  <- zms
