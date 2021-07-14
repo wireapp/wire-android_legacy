@@ -27,7 +27,7 @@ import com.waz.service.call.CallInfo.Participant
 import com.wire.signals.Signal
 import com.waz.threading.Threading._
 import com.waz.utils.returning
-import com.waz.zclient.R
+import com.waz.zclient.{BuildConfig, R}
 
 class SelfVideoView(context: Context, participant: Participant)
   extends UserVideoView(context, participant) with DerivedLogTag {
@@ -38,7 +38,8 @@ class SelfVideoView(context: Context, participant: Participant)
     accentColorController.accentColor.map(_.color),
     callController.isFullScreenEnabled,
     callController.showTopSpeakers,
-    callController.videoUsers.map(_.size > 2)
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) callController.allParticipants.map(_.size > 2)
+    else callController.videoUsers.map(_.size > 2)
   ).onUi {
     case (false, true, color, false, false, true)  => {
       updateAudioIndicator(R.drawable.ic_unmuted_video_grid, color, true)
