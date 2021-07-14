@@ -102,7 +102,7 @@ trait ConversationsUiService {
                               defaultRole: ConversationRole = ConversationRole.MemberRole
                              ): Future[(ConversationData, SyncId)]
   def createConvWithFederatedUser(name:        Name,
-                                  qId:        QualifiedId,
+                                  qId:         QualifiedId,
                                   teamOnly:    Boolean = false,
                                   receiptMode: Int = 0,
                                   defaultRole: ConversationRole = ConversationRole.MemberRole
@@ -300,31 +300,28 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
   override def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]]
     = messages.addRestrictedFileMessage(convId, from, extension)
 
-  private def partitionForFederated(userIds: Set[UserId]) =
+  private def partitionForQualified(userIds: Set[UserId]) =
     for {
-      users                 <- userService.findUsers(userIds.toSeq)
-      usersAndFederation    <- Future.sequence(users.flatten.map(user => userService.isFederated(user).map((user, _))))
-      (federated, standard) =  usersAndFederation.partition(_._2)
-    } yield (federated.flatMap(_._1.qualifiedId).toSet, standard.map(_._1.id).toSet)
+      users        <- userService.findUsers(userIds.toSeq)
+      qualified    =  users.collect { case Some(u) if u.qualifiedId.nonEmpty => u.id -> u.qualifiedId }.toMap
+      nonQualified =  userIds -- qualified.keySet
+    } yield (qualified.values.flatten.toSet, nonQualified)
 
   override def addConversationMembers(conv: ConvId, userIds: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
     (for {
       true                  <- canModifyMembers(conv)
       contacted             <- members.getByUsers(userIds)
-      contactedIds          =  contacted.map(_.userId).toSet
-      (federated, standard) <- partitionForFederated(userIds)
-      federatedToSync       =  federated.filterNot(qId => contactedIds.contains(qId.id))
-      _                     <- if (federatedToSync.nonEmpty) sync.syncQualifiedUsers(federatedToSync) else Future.successful(())
-      standardToSync        =  standard -- contactedIds
-      _                     <- if (standardToSync.nonEmpty) sync.syncUsers(standardToSync) else Future.successful(())
+      toSync                =  userIds -- contacted.map(_.userId).toSet
+      _                     <- if (toSync.nonEmpty) userService.syncUsers(toSync) else Future.successful(())
       _                     <- members.updateOrCreateAll(conv, userIds.map(_ -> defaultRole).toMap)
       _                     <- messages.addMemberJoinMessage(conv, selfUserId, userIds)
-      syncId1               <- if (federated.nonEmpty)
-                                 sync.postQualifiedConversationMemberJoin(conv, federated, defaultRole).map(Option(_))
+      (qIds, nonQIds)       <- partitionForQualified(userIds)
+      syncId1               <- if (qIds.nonEmpty)
+                                 sync.postQualifiedConversationMemberJoin(conv, qIds, defaultRole).map(Option(_))
                                else
                                  Future.successful(None)
-      syncId2               <- if (standard.nonEmpty)
-                                 sync.postConversationMemberJoin(conv, standard, defaultRole).map(Option(_))
+      syncId2               <- if (nonQIds.nonEmpty)
+                                 sync.postConversationMemberJoin(conv, nonQIds, defaultRole).map(Option(_))
                                else
                                  Future.successful(None)
     } yield syncId2.orElse(syncId1))
@@ -479,6 +476,13 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
         createReal1to1()
     }
   }
+
+  private def partitionForFederated(userIds: Set[UserId]) =
+    for {
+      users                 <- userService.findUsers(userIds.toSeq)
+      usersAndFederation    <- Future.sequence(users.flatten.map(user => userService.isFederated(user).map((user, _))))
+      (federated, standard) =  usersAndFederation.partition(_._2)
+    } yield (federated.flatMap(_._1.qualifiedId).toSet, standard.map(_._1.id).toSet)
 
   override def createGroupConversation(name:        Name,
                                        members:     Set[UserId]      = Set.empty,
