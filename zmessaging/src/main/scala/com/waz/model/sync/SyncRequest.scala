@@ -431,6 +431,19 @@ object SyncRequest {
     }
   }
 
+  final case class PostQualifiedConvJoin(convId: ConvId, users: Set[QualifiedId], conversationRole: ConversationRole)
+    extends RequestForConversation(Cmd.PostQualifiedConvJoin) with Serialized {
+    override def merge(req: SyncRequest): MergeResult[PostQualifiedConvJoin] =
+      mergeHelper[PostQualifiedConvJoin](req) {
+        other => Merged(PostQualifiedConvJoin(convId, users ++ other.users, conversationRole))
+      }
+
+    override def isDuplicateOf(req: SyncRequest): Boolean = req match {
+      case PostQualifiedConvJoin(`convId`, us, _) => users.subsetOf(us)
+      case _ => false
+    }
+  }
+
   // leave endpoint on backend accepts only one user as parameter (no way to remove multiple users at once)
   final case class PostConvLeave(convId: ConvId, user: UserId) extends RequestForConversation(Cmd.PostConvLeave) with Serialized {
     override val mergeKey: Any = (cmd, convId, user)
@@ -498,6 +511,7 @@ object SyncRequest {
           case Cmd.PostRecalled              => PostRecalled(convId, messageId, decodeId[MessageId]('recalled))
           case Cmd.PostAssetStatus           => PostAssetStatus(convId, messageId, decodeOptLong('ephemeral).map(_.millis), Codec[UploadAssetStatus, Int].deserialize(decodeInt('status)))
           case Cmd.PostConvJoin              => PostConvJoin(convId, users, 'conversation_role)
+          case Cmd.PostQualifiedConvJoin     => PostQualifiedConvJoin(convId, decodeQualifiedIds('users).toSet, 'conversation_role)
           case Cmd.PostConvLeave             => PostConvLeave(convId, userId)
           case Cmd.PostConnection            => PostConnection(userId, 'name, 'message)
           case Cmd.PostQualifiedConnection   => PostQualifiedConnection(qualifiedId, 'name, 'message)
@@ -602,8 +616,11 @@ object SyncRequest {
           o.put("qualifiedId", QualifiedId.Encoder(qId))
           status.foreach { status => o.put("status", status.code) }
 
-        case PostConvJoin(_, users, conversationRole)           =>
+        case PostConvJoin(_, users, conversationRole) =>
           o.put("users", arrString(users.toSeq map (_.str)))
+          o.put("conversation_role", conversationRole.label)
+        case PostQualifiedConvJoin(_, users, conversationRole) =>
+          o.put("users", users.map(QualifiedId.Encoder(_)))
           o.put("conversation_role", conversationRole.label)
         case PostConvLeave(_, user)           => putId("user", user)
         case PostOpenGraphMeta(_, messageId, time) =>
