@@ -106,8 +106,8 @@ class MessageEventProcessor(selfUserId:           UserId,
         RichMessage(MessageData(id, conv.id, RENAME, from, name = Some(name), time = time, localTime = event.localTime))
       case MessageTimerEvent(_, time, from, duration) =>
         RichMessage(MessageData(id, conv.id, MESSAGE_TIMER, from, time = time, duration = duration, localTime = event.localTime))
-      case MemberJoinEvent(_, time, from, userIds, users, firstEvent) =>
-        RichMessage(MessageData(id, conv.id, MEMBER_JOIN, from, members = (users.keys ++ userIds).toSet, time = time, localTime = event.localTime, firstMessage = firstEvent))
+      case MemberJoinEvent(_, _, time, from, _, userIds, users, firstEvent) =>
+        RichMessage(MessageData(id, conv.id, MEMBER_JOIN, from, members = (users.keys.map(_.id) ++ userIds).toSet, time = time, localTime = event.localTime, firstMessage = firstEvent))
       case ConversationReceiptModeEvent(_, time, from, 0) =>
         RichMessage(MessageData(id, conv.id, READ_RECEIPTS_OFF, from, time = time, localTime = event.localTime))
       case ConversationReceiptModeEvent(_, time, from, receiptMode) if receiptMode > 0 =>

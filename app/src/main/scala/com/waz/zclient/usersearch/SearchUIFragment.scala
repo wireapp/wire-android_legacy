@@ -67,8 +67,8 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import com.waz.zclient.usersearch.SearchUIFragment._
 import com.waz.threading.Threading._
-
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.messages.UsersController
 
 class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper
@@ -398,7 +398,7 @@ class SearchUIFragment extends BaseFragment[Container]
       _       <- storage.getOrCreate(user.id, user)
     } yield doStuff
 
-    def tryOpenConversation() = conversationCreationInProgress.head.foreach {
+    def tryOpenConversation(): Unit = conversationCreationInProgress.head.foreach {
       case false =>
         checkStorageAndThen {
           spinner.showSpinner(true)
@@ -411,6 +411,13 @@ class SearchUIFragment extends BaseFragment[Container]
             }
         }
       case true =>
+    }
+
+    def showUserProfile(): Unit = {
+      conversationScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
+      checkStorageAndThen {
+        pickUserController.showUserProfile(user.id, false)
+      }
     }
 
     import ConnectionStatus._
@@ -427,10 +434,13 @@ class SearchUIFragment extends BaseFragment[Container]
           getContainer.showIncomingPendingConnectRequest(ConvId(user.id.str))
         }
       case (_, connection) if connectionsForOpenProfile.contains(connection) =>
-        conversationScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
-        checkStorageAndThen {
-          pickUserController.showUserProfile(user.id, false)
-        }
+        if (BuildConfig.FEDERATION_USER_DISCOVERY)
+          inject[UsersController].isFederated(user).foreach {
+            case true  => tryOpenConversation()
+            case false => showUserProfile()
+          }
+        else
+          showUserProfile()
 
       case (teamId, connection) =>
         warn(l"Unhandled connection type. The UI shouldn't display such entry. teamId: $teamId, connection type: $connection")

@@ -35,10 +35,9 @@ import com.waz.service.ZMessaging.currentBeDrift
 import com.waz.service._
 import com.waz.service.assets.{AES_CBC_Encryption, AssetService, ContentForUpload, UploadAsset, UriHelper}
 import com.waz.service.assets.Asset.Video
-import com.waz.service.conversation.ConversationsService.generateTempConversationId
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.tracking.{ContributionEvent, TrackingService}
-import com.waz.sync.SyncServiceHandle
+import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
@@ -102,12 +101,12 @@ trait ConversationsUiService {
                               receiptMode: Int = 0,
                               defaultRole: ConversationRole = ConversationRole.MemberRole
                              ): Future[(ConversationData, SyncId)]
-  def createQualifiedGroupConversation(name:        Name,
-                                       members:     Set[QualifiedId] = Set.empty,
-                                       teamOnly:    Boolean = false,
-                                       receiptMode: Int = 0,
-                                       defaultRole: ConversationRole = ConversationRole.MemberRole
-                                      ): Future[(ConversationData, SyncId)]
+  def createConvWithFederatedUser(name:        Name,
+                                  qId:         QualifiedId,
+                                  teamOnly:    Boolean = false,
+                                  receiptMode: Int = 0,
+                                  defaultRole: ConversationRole = ConversationRole.MemberRole
+                                 ): Future[(ConversationData, SyncId)]
 
   def assetUploadCancelled : EventStream[Mime]
   def assetUploadFailed    : EventStream[ErrorResponse]
@@ -124,7 +123,7 @@ object ConversationsUiService {
 class ConversationsUiServiceImpl(selfUserId:        UserId,
                                  teamId:            Option[TeamId],
                                  assets:            AssetService,
-                                 usersStorage:      UsersStorage,
+                                 userService:       UserService,
                                  messages:          MessagesService,
                                  messagesStorage:   MessagesStorage,
                                  messagesContent:   MessagesContentUpdater,
@@ -134,6 +133,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                  network:           NetworkModeService,
                                  convs:             ConversationsService,
                                  sync:              SyncServiceHandle,
+                                 syncRequests:      SyncRequestService,
                                  client:            ConversationsClient,
                                  accounts:          AccountsService,
                                  tracking:          TrackingService,
@@ -300,29 +300,44 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
   override def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]]
     = messages.addRestrictedFileMessage(convId, from, extension)
 
-  override def addConversationMembers(conv: ConvId, users: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
+  private def partitionForQualified(userIds: Set[UserId]) =
+    for {
+      users        <- userService.findUsers(userIds.toSeq)
+      qualified    =  users.collect { case Some(u) if u.qualifiedId.nonEmpty => u.id -> u.qualifiedId }.toMap
+      nonQualified =  userIds -- qualified.keySet
+    } yield (qualified.values.flatten.toSet, nonQualified)
+
+  override def addConversationMembers(conv: ConvId, userIds: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
     (for {
-      true      <- canModifyMembers(conv)
-      contacted <- members.getByUsers(users)
-      toSync    =  users -- contacted.map(_.userId).toSet
-      _         <- sync.syncUsers(toSync) // data of users found through Search UI is not yet in db
-      added     <- members.updateOrCreateAll(conv, users.map(_ -> defaultRole).toMap) if added.nonEmpty
-      _         <- messages.addMemberJoinMessage(conv, selfUserId, added.map(_.userId))
-      syncId    <- sync.postConversationMemberJoin(conv, added.map(_.userId), defaultRole)
-    } yield Option(syncId))
+      true                  <- canModifyMembers(conv)
+      contacted             <- members.getByUsers(userIds)
+      toSync                =  userIds -- contacted.map(_.userId).toSet
+      _                     <- if (toSync.nonEmpty) userService.syncUsers(toSync) else Future.successful(())
+      _                     <- members.updateOrCreateAll(conv, userIds.map(_ -> defaultRole).toMap)
+      _                     <- messages.addMemberJoinMessage(conv, selfUserId, userIds)
+      (qIds, nonQIds)       <- partitionForQualified(userIds)
+      syncId1               <- if (qIds.nonEmpty)
+                                 sync.postQualifiedConversationMemberJoin(conv, qIds, defaultRole).map(Option(_))
+                               else
+                                 Future.successful(None)
+      syncId2               <- if (nonQIds.nonEmpty)
+                                 sync.postConversationMemberJoin(conv, nonQIds, defaultRole).map(Option(_))
+                               else
+                                 Future.successful(None)
+    } yield syncId2.orElse(syncId1))
       .recover {
         case NonFatal(e) =>
-          warn(l"Failed to add members: $users to conv: $conv", e)
+          warn(l"Failed to add members: $userIds to conv: $conv", e)
           Option.empty[SyncId]
       }
 
-  override def removeConversationMember(conv: ConvId, user: UserId) = {
+  override def removeConversationMember(conv: ConvId, user: UserId): Future[Option[SyncId]] = {
     (for {
       true     <- canModifyMembers(conv)
       Some(_)  <- members.remove(conv, user)
       toDelete <- if (user != selfUserId) members.getByUsers(Set(user)).map(_.isEmpty)
                   else Future.successful(false)
-      _        <- if (toDelete) usersStorage.remove(user) else Future.successful(())
+      _        <- if (toDelete) userService.deleteUsers(Set(user), sendLeaveMessage = false) else Future.successful(())
       _        <- messages.addMemberLeaveMessage(conv, selfUserId, Set(user), reason = None)
       syncId   <- sync.postConversationMemberLeave(conv, user)
     } yield Option(syncId))
@@ -334,11 +349,14 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
   }
 
   private def canModifyMembers(convId: ConvId) =
-    for {
-      selfActive    <- members.isActiveMember(convId, selfUserId)
-      isGroup       <- convs.isGroupConversation(convId)
-      isWithService <- convs.isWithService(convId)
-    } yield selfActive && (isGroup || isWithService)
+    members.isActiveMember(convId, selfUserId).flatMap {
+      case false => Future.successful(false)
+      case true  =>
+        convs.isGroupConversation(convId).flatMap {
+          case true  => Future.successful(true)
+          case false => convs.isWithService(convId)
+        }
+    }
 
   override def leaveConversation(conv: ConvId) = {
     verbose(l"leaveConversation($conv)")
@@ -349,7 +367,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     } yield {}
   }
 
-  override def clearConversation(id: ConvId): Future[Option[ConversationData]] = convsContent.convById(id) flatMap {
+  override def clearConversation(id: ConvId): Future[Option[ConversationData]] = convsContent.convById(id).flatMap {
     case Some(conv) if conv.convType == ConversationType.Group || conv.convType == ConversationType.OneToOne =>
       verbose(l"clearConversation($conv)")
 
@@ -372,90 +390,126 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       Future successful None
   }
 
-  override def getOrCreateOneToOneConversation(other: UserId) = {
+  override def getOrCreateOneToOneConversation(otherUserId: UserId): Future[ConversationData] = {
 
     def createReal1to1() =
-      convsContent.convById(ConvId(other.str)) flatMap {
+      convsContent.convById(ConvId(otherUserId.str)) flatMap {
         case Some(conv) => Future.successful(conv)
-        case _ => usersStorage.get(other).flatMap {
+        case _ => userService.findUser(otherUserId).flatMap {
           case Some(u) if u.connection == ConnectionStatus.Ignored =>
             for {
               conv <- convsContent.createConversationWithMembers(
-                        convId      = ConvId(other.str),
+                        convId      = ConvId(otherUserId.str),
                         remoteId    = u.conversation.getOrElse(RConvId()),
                         convType    = ConversationType.Incoming,
-                        creator     = other,
+                        creator     = otherUserId,
                         name        = None,
                         members     = Set(selfUserId),
                         hidden      = true,
                         defaultRole = ConversationRole.AdminRole
                       )
-              _    <- messages.addMemberJoinMessage(conv.id, other, Set(selfUserId), firstMessage = true)
-              _    <- u.connectionMessage.fold(Future.successful(conv))(messages.addConnectRequestMessage(conv.id, other, selfUserId, _, u.name).map(_ => conv))
+              _    <- messages.addMemberJoinMessage(conv.id, otherUserId, Set(selfUserId), firstMessage = true)
+              _    <- u.connectionMessage.fold(Future.successful(conv))(messages.addConnectRequestMessage(conv.id, otherUserId, selfUserId, _, u.name).map(_ => conv))
             } yield conv
           case _ =>
             for {
-              _    <- sync.postConversation(ConvId(other.str), Set(other), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
+              _    <- sync.postConversation(ConvId(otherUserId.str), Set(otherUserId), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
               conv <- convsContent.createConversationWithMembers(
-                        convId      = ConvId(other.str),
+                        convId      = ConvId(otherUserId.str),
                         remoteId    = RConvId(),
                         convType    = ConversationType.OneToOne,
                         creator     = selfUserId,
                         name        = None,
-                        members     = Set(other),
+                        members     = Set(otherUserId),
                         defaultRole = ConversationRole.AdminRole
                       )
-              _    <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(other), firstMessage = true)
+              _    <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(otherUserId), firstMessage = true)
             } yield conv
         }
       }
 
-    def createFake1To1(tId: TeamId) = {
-      verbose(l"Checking for 1:1 conversation with user: $other")
+    def createFake1To1(tId: TeamId, otherUser: Option[UserData], isFederated: Boolean) = {
+      verbose(l"Checking for 1:1 conversation with user: $otherUserId")
       (for {
-        allConvs   <- this.members.getByUsers(Set(other)).map(_.map(_.convId))
-        allMembers <- this.members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))
-        onlyUs     =  allMembers.groupBy { case (c, _) => c }.map { case (cid, us) => cid -> us.map(_._2).toSet }.collect { case (c, us) if us == Set(other, selfUserId) => c }
-        convs      <- convStorage.getAll(onlyUs).map(_.flatten)
+        allConvs    <- this.members.getByUsers(Set(otherUserId)).map(_.map(_.convId))
+        allMembers  <- this.members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))
+        onlyUs      =  allMembers.groupBy { case (c, _) => c }
+                                 .map     { case (cid, us) => cid -> us.map(_._2).toSet }
+                                 .collect { case (c, us) if us == Set(otherUserId, selfUserId) => c }
+        convs       <- convStorage.getAll(onlyUs).map(_.flatten)
       } yield {
-        verbose(l"allConvs size: ${allConvs.size}")
-        verbose(l"allMembers size: ${allMembers.size}")
-        verbose(l"OnlyUs convs size: ${onlyUs.size}")
         if (convs.size > 1)
-          warn(l"Found ${convs.size} available team conversations with user: $other, returning first conversation found")
-        else verbose(l"Found ${convs.size} convs with other user: $other")
-        convs.find(c => c.team.contains(tId) && c.name.isEmpty)
+          warn(l"Found ${convs.size} available team conversations with user: $otherUserId, returning first conversation found")
+        convs.find(_.name.isEmpty) // if we already have a conv with that person but it's named, we prefer to create a new one
       }).flatMap {
-        case Some(conv) => Future.successful(conv)
-        case _ => createAndPostConversation(ConvId(), None, Set(other), defaultRole = ConversationRole.AdminRole).map(_._1)
+        case Some(conv) =>
+          Future.successful(conv)
+        case _ if isFederated =>
+          (otherUser.flatMap(_.qualifiedId) match {
+            case Some(qId) => createAndPostConvWithFederatedUser(ConvId(), None, qId, defaultRole = ConversationRole.AdminRole)
+            case None      => Future.failed(new IllegalStateException(s"A federated user without a qualified id: $otherUser"))
+          }).map(_._1)
+        case _ =>
+          val tempRConvId = convs.generateTempConversationId(Set(otherUserId))
+          createAndPostConversation(
+            ConvId(),
+            name        = None,
+            members     = Set(otherUserId),
+            defaultRole = ConversationRole.AdminRole,
+            tempRConvId = tempRConvId
+          ).map(_._1)
       }
     }
 
     teamId match {
       case Some(tId) =>
         for {
-          user <- usersStorage.get(other)
-          conv <- if (user.exists(_.isGuest(tId))) createReal1to1() else createFake1To1(tId)
+          otherUser   <- userService.findUser(otherUserId)
+          isFederated <- userService.isFederated(otherUserId)
+          isGuest     =  otherUser.exists(_.isGuest(tId))
+          conv        <- if (isGuest && !isFederated)
+                           createReal1to1()
+                         else
+                           createFake1To1(tId, otherUser, isFederated)
         } yield conv
-      case None => createReal1to1()
+      case None =>
+        createReal1to1()
     }
   }
 
+  private def partitionForFederated(userIds: Set[UserId]) =
+    for {
+      users                 <- userService.findUsers(userIds.toSeq)
+      usersAndFederation    <- Future.sequence(users.flatten.map(user => userService.isFederated(user).map((user, _))))
+      (federated, standard) =  usersAndFederation.partition(_._2)
+    } yield (federated.flatMap(_._1.qualifiedId).toSet, standard.map(_._1.id).toSet)
+
   override def createGroupConversation(name:        Name,
-                                       members:     Set[UserId] = Set.empty,
-                                       teamOnly:    Boolean = false,
-                                       receiptMode: Int = 0,
+                                       members:     Set[UserId]      = Set.empty,
+                                       teamOnly:    Boolean          = false,
+                                       receiptMode: Int              = 0,
                                        defaultRole: ConversationRole = ConversationRole.MemberRole
                                       ): Future[(ConversationData, SyncId)] =
-    createAndPostConversation(ConvId(), Some(name), members, teamOnly, receiptMode, defaultRole)
+    for {
+      (federated, standard) <- partitionForFederated(members)
+      tempRConvId           =  convs.generateTempConversationId(members)
+      (conv, syncId)        <- createAndPostConversation(ConvId(), Some(name), standard, teamOnly, receiptMode, defaultRole, tempRConvId)
+      _                     <- syncRequests.await(syncId)
+      // @todo: The next step involves again partitioning for qualified users
+      //        I decided not to optimize it yet as the way to add qualified users to conversations will change again
+      _                      <- if (federated.nonEmpty) {
+                                   addConversationMembers(conv.id, federated.map(_.id), defaultRole)
+                                } else
+                                   Future.successful(())
+    } yield (conv, syncId)
 
-  override def createQualifiedGroupConversation(name:        Name,
-                                                members:     Set[QualifiedId] = Set.empty,
-                                                teamOnly:    Boolean = false,
-                                                receiptMode: Int = 0,
-                                                defaultRole: ConversationRole = ConversationRole.MemberRole
-                                               ): Future[(ConversationData, SyncId)] =
-    createAndPostQualifiedConversation(ConvId(), Some(name), members, teamOnly, receiptMode, defaultRole)
+  override def createConvWithFederatedUser(name:        Name,
+                                           qId:         QualifiedId,
+                                           teamOnly:    Boolean = false,
+                                           receiptMode: Int = 0,
+                                           defaultRole: ConversationRole = ConversationRole.MemberRole
+                                          ): Future[(ConversationData, SyncId)] =
+    createAndPostConvWithFederatedUser(ConvId(), Some(name), qId, teamOnly, receiptMode, defaultRole)
 
   private def createConversation(id:          ConvId,
                                  name:        Option[Name],
@@ -463,11 +517,13 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                  access:      Set[Access],
                                  accessRole:  AccessRole,
                                  receiptMode: Int,
-                                 defaultRole: ConversationRole): Future[ConversationData] =
+                                 defaultRole: ConversationRole,
+                                 tempRConvId: RConvId
+                                ): Future[ConversationData] =
     for {
       conv <- convsContent.createConversationWithMembers(
                 convId      = id,
-                remoteId    = generateTempConversationId(members + selfUserId),
+                remoteId    = tempRConvId,
                 convType    = ConversationType.Group,
                 creator     = selfUserId,
                 members     = members,
@@ -486,27 +542,28 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                         members:     Set[UserId] = Set.empty,
                                         teamOnly:    Boolean = false,
                                         receiptMode: Int = 0,
-                                        defaultRole: ConversationRole
+                                        defaultRole: ConversationRole,
+                                        tempRConvId: RConvId
                                        ): Future[(ConversationData, SyncId)] = {
     val (ac, ar) = getAccessAndRoleForGroupConv(teamOnly, teamId)
     for {
-      conv   <- createConversation(id, name, members, ac, ar, receiptMode, defaultRole)
+      conv   <- createConversation(id, name, members, ac, ar, receiptMode, defaultRole, tempRConvId)
       syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar, Some(receiptMode), defaultRole)
     } yield (conv, syncId)
   }
 
-  private def createAndPostQualifiedConversation(id:          ConvId,
+  private def createAndPostConvWithFederatedUser(id:          ConvId,
                                                  name:        Option[Name],
-                                                 members:     Set[QualifiedId] = Set.empty,
+                                                 qId:         QualifiedId,
                                                  teamOnly:    Boolean = false,
                                                  receiptMode: Int = 0,
                                                  defaultRole: ConversationRole
                                                 ): Future[(ConversationData, SyncId)] = {
-    val (ac, ar)  = getAccessAndRoleForGroupConv(teamOnly, teamId)
-    val memberIds = members.map(_.id)
+    val (ac, ar)    = getAccessAndRoleForGroupConv(teamOnly, teamId)
+    val tempRConvId = convs.generateTempConversationId(Set(qId.id))
     for {
-      conv   <- createConversation(id, name, memberIds, ac, ar, receiptMode, defaultRole)
-      syncId <- sync.postQualifiedConversation(id, members, conv.name, teamId, ac, ar, Some(receiptMode), defaultRole)
+      conv   <- createConversation(id, name, Set.empty, ac, ar, receiptMode, defaultRole, tempRConvId)
+      syncId <- sync.postQualifiedConversation(id, Set(qId), conv.name, teamId, ac, ar, Some(receiptMode), defaultRole)
     } yield (conv, syncId)
   }
 

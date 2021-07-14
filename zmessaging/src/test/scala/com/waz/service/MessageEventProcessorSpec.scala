@@ -101,7 +101,15 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       )
 
       clock.advance(5.seconds)
-      val event = MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, membersAdded.map(_ -> ConversationRole.AdminRole).toMap)
+      val event = MemberJoinEvent(
+        conv.remoteId,
+        None,
+        RemoteInstant(clock.instant()),
+        sender,
+        None,
+        membersAdded,
+        membersAdded.map(id => QualifiedId(id) -> ConversationRole.AdminRole).toMap
+      )
 
       (storage.hasSystemMessage _).expects(conv.id, event.time, MEMBER_JOIN, sender).returning(Future.successful(false))
       (storage.getLastSentMessage _).expects(conv.id).anyNumberOfTimes().returning(Future.successful(None))
@@ -143,7 +151,15 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
         result(processor.processEvents(conv, isGroup = false, Seq(event))) shouldEqual Set.empty
 
       clock.advance(1.second) //conv will have time EPOCH, needs to be later than that
-      testRound(MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, membersAdded.map(_ -> ConversationRole.AdminRole).toMap))
+      testRound(MemberJoinEvent(
+        conv.remoteId,
+        None,
+        RemoteInstant(clock.instant()),
+        sender,
+        None,
+        membersAdded,
+        membersAdded.map(id => QualifiedId(id) -> ConversationRole.AdminRole).toMap
+      ))
       clock.advance(1.second)
       testRound(MemberLeaveEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, reason = None))
       clock.advance(1.second)

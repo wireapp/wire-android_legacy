@@ -78,6 +78,7 @@ trait SyncServiceHandle {
   def postReceiptMode(id: ConvId, receiptMode: Int): Future[SyncId]
   def postConversationName(id: ConvId, name: Name): Future[SyncId]
   def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncId]
+  def postQualifiedConversationMemberJoin(id: ConvId, members: Set[QualifiedId], defaultRole: ConversationRole): Future[SyncId]
   def postConversationMemberLeave(id: ConvId, member: UserId): Future[SyncId]
   def postConversationState(id: ConvId, state: ConversationState): Future[SyncId]
   def postConversation(id:          ConvId,
@@ -159,7 +160,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncSearchResults(users: Set[UserId]) = addRequest(SyncSearchResults(users))
   def syncQualifiedSearchResults(qIds: Set[QualifiedId]) = addRequest(SyncQualifiedSearchResults(qIds))
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
-  def syncUsers(ids: Set[UserId]) = addRequest(SyncUser(ids))
+  def syncUsers(ids: Set[UserId]): Future[SyncId] = addRequest(SyncUser(ids))
   def syncQualifiedUsers(qIds: Set[QualifiedId]) = addRequest(SyncQualifiedUsers(qIds))
   def syncSelfUser() = addRequest(SyncSelf, priority = Priority.High)
   def deleteAccount() = addRequest(DeleteAccount)
@@ -192,7 +193,10 @@ class AndroidSyncServiceHandle(account:         UserId,
   def postTypingState(conv: ConvId, typing: Boolean) = addRequest(PostTypingState(conv, typing))
   def postConversationName(id: ConvId, name: Name) = addRequest(PostConvName(id, name))
   def postConversationState(id: ConvId, state: ConversationState) = addRequest(PostConvState(id, state))
-  def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole) = addRequest(PostConvJoin(id, members, defaultRole))
+  def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncId] =
+    addRequest(PostConvJoin(id, members, defaultRole))
+  def postQualifiedConversationMemberJoin(id: ConvId, members: Set[QualifiedId], defaultRole: ConversationRole): Future[SyncId] =
+    addRequest(PostQualifiedConvJoin(id, members, defaultRole))
   def postConversationMemberLeave(id: ConvId, member: UserId) = addRequest(PostConvLeave(id, member))
   def postConversation(id: ConvId,
                        users: Set[UserId],
@@ -245,22 +249,30 @@ class AndroidSyncServiceHandle(account:         UserId,
   override def performFullSync(): Future[Unit] = {
     verbose(l"performFullSync")
     for {
-      id1     <- syncSelfUser()
-      id2     <- syncSelfClients()
-      id3     <- syncSelfPermissions()
-      id4     <- syncTeam()
-      id5     <- syncConversations()
-      id6     <- syncConnections()
-      id7     <- syncProperties()
-      userIds <- usersStorage.list().map(_.map(_.id).toSet)
-      id8     <- syncUsers(userIds)
-      id9     <- syncFolders()
-      id10    <- syncLegalHoldRequest()
-      _       =  verbose(l"waiting for full sync to finish...")
-      _       <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8, id9, id10))
-      _       =  verbose(l"... and done")
+      id1        <- syncSelfUser()
+      id2        <- syncSelfClients()
+      id3        <- syncSelfPermissions()
+      id4        <- syncTeam()
+      id5        <- syncConversations()
+      id6        <- syncConnections()
+      id7        <- syncProperties()
+      (id8, id9) <- syncUsers()
+      id10       <- syncFolders()
+      id11       <- syncLegalHoldRequest()
+      _          =  verbose(l"waiting for full sync to finish...")
+      _          <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8, id9, id10, id11))
+      _          =  verbose(l"... and done")
     } yield ()
   }
+
+  private def syncUsers(): Future[(SyncId, SyncId)] =
+    for {
+      userMap      <- usersStorage.contents.head
+      qualified    =  userMap.collect { case (id, u) if u.qualifiedId.nonEmpty => id -> u.qualifiedId }
+      id1          <- syncQualifiedUsers(qualified.flatMap(_._2).toSet)
+      nonQualified =  userMap.keySet -- qualified.keySet
+      id2          <- syncUsers(nonQualified)
+    } yield (id1, id2)
 
   override def deleteGroupConversation(teamId: TeamId, rConvId: RConvId) = {
     addRequest(DeleteGroupConversation(teamId, rConvId)).recoverWith {
@@ -335,6 +347,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostMessage(convId, messageId, time)            => zms.messagesSync.postMessage(convId, messageId, time)
           case PostAssetStatus(cid, mid, exp, status)          => zms.messagesSync.postAssetStatus(cid, mid, exp, status)
           case PostConvJoin(convId, u, role)                   => zms.conversationSync.postConversationMemberJoin(convId, u, role)
+          case PostQualifiedConvJoin(convId, u, role)          => zms.conversationSync.postQualifiedConversationMemberJoin(convId, u, role)
           case PostConvLeave(convId, u)                        => zms.conversationSync.postConversationMemberLeave(convId, u)
           case PostConv(convId, u, name, team, access, accessRole, receiptMode, defRole) =>
             zms.conversationSync.postConversation(convId, u, name, team, access, accessRole, receiptMode, defRole)
