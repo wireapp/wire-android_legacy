@@ -33,16 +33,9 @@ class SendConnectRequestFragment extends UntabbedRequestFragment {
       for {
         Some(user)  <- userToConnect
         isFederated <- usersCtrl.isFederated(user)
-        conv        <- if (isFederated) {
-                         user.qualifiedId match {
-                           case Some(qId) =>
-                             convCtrl.createQualifiedGroupConversation(user.name, Set(qId), false, false)
-                                     .map(Option(_))
-                           case None =>
-                             Future.successful(None)
-                         }
-                       } else {
-                         usersCtrl.connectToUser(user.id)
+        conv        <- (isFederated, user.qualifiedId) match {
+                         case (true, Some(qId)) => convCtrl.createConvWithFederatedUser(user.name, qId, false, false).map(Option(_))
+                         case _                 => usersCtrl.connectToUser(user.id)
                        }
         _           <- conv.fold(
                          Future.successful(pickUserCtrl.hideUserProfile())

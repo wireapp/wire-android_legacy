@@ -156,9 +156,10 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
       connected <- userService.acceptedOrBlockedUsers.map(_.values)
+      fake1To1s <- conversationsService.onlyFake1To1ConvUsers
       members   <- teamId.fold(Signal.const(Set.empty[UserData]))(_ => teamsService.searchTeamMembers(query))
     } yield {
-      val included = (connected.toSet ++ members).filter { user =>
+      val included = (connected.toSet ++ fake1To1s.toSet ++ members).filter { user =>
         !excluded.contains(user.id) &&
           selfUserId != user.id &&
           !user.isWireBot &&

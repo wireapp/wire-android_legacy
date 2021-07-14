@@ -184,7 +184,8 @@ class TeamsServiceImpl(selfUser:           UserId,
       _          <- onTeamUpdated(team)
       oldMembers <- userStorage.getByTeam(Set(team.id))
       _          <- userStorage.updateAll2(oldMembers.map(_.id) -- memberIds, _.copy(deleted = true))
-      _          <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
+      syncId     <- userService.syncUsers(memberIds)
+      _          <- syncId.fold(Future.successful(()))(sId => syncRequestService.await(sId).map(_ => ()))
       _          <- userStorage.updateAll2(memberIds, _.copy(teamId = teamId, deleted = false))
       _          <- Future.sequence(members.map(onMemberSynced))
       _          <- rolesService.setDefaultRoles(roles)
@@ -218,9 +219,10 @@ class TeamsServiceImpl(selfUser:           UserId,
   private def onMembersJoined(members: Set[UserId]) = {
     verbose(l"onMembersJoined: members: $members")
     for {
-      _ <- sync.syncUsers(members).flatMap(syncRequestService.await)
-      _ <- sync.syncTeam().flatMap(syncRequestService.await)
-      _ <- userStorage.updateAll2(members, _.copy(teamId = teamId, deleted = false))
+      syncId <- if (members.nonEmpty) userService.syncUsers(members) else Future.successful(None)
+      _      <- syncId.fold(Future.successful(()))(sId => syncRequestService.await(sId).map(_ => ()))
+      _      <- sync.syncTeam().flatMap(syncRequestService.await)
+      _      <- userStorage.updateAll2(members, _.copy(teamId = teamId, deleted = false))
     } yield {}
   }
 
@@ -229,9 +231,12 @@ class TeamsServiceImpl(selfUser:           UserId,
     if (members.contains(selfUser)) {
       warn(l"Self user removed from team")
       Future.successful {}
-    } else
+    } else if (members.nonEmpty) {
     // remove users from convs before deleting them so we still have their data when generating system messages
       convsService.deleteMembersFromConversations(members).flatMap(_ => userService.deleteUsers(members))
+    } else {
+      Future.successful(())
+    }
   }
 
   //So far, a member update just means we need to check the permissions for that user, and we only care about permissions
