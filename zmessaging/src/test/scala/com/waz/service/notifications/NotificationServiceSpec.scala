@@ -527,11 +527,12 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   feature ("Conversation state events") {
 
     scenario("Group creation events") {
+      val domain = "anta"
       val generatedMessageId = MessageId()
       val event = CreateConversationEvent(rConvId, RemoteInstant(clock.instant()), from, ConversationResponse(
-        rConvId, Some(Name("conv")), from, ConversationType.Group, None, MuteSet.AllAllowed,
+        rConvId, None, Some(Name("conv")), from, ConversationType.Group, None, MuteSet.AllAllowed,
         RemoteInstant.Epoch, archived = false, RemoteInstant.Epoch, Set.empty, None, None, None,
-        Map(account1Id -> MemberRole, from -> AdminRole), None
+        Map(QualifiedId(account1Id, domain) -> MemberRole, QualifiedId(from, domain) -> AdminRole), None
       ))
 
       val memberJoinMsg = MessageData(

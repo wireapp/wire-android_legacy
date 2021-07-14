@@ -124,8 +124,15 @@ case class SessionReset(convId: RConvId, time: RemoteInstant, from: UserId, send
 
 case class TypingEvent(convId: RConvId, time: RemoteInstant, from: UserId, isTyping: Boolean) extends ConversationEvent
 
-case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], users: Map[UserId, ConversationRole], firstEvent: Boolean = false)
-  extends MessageEvent with ConversationStateEvent with ConversationEvent
+case class MemberJoinEvent(convId:     RConvId,
+                           convDomain: Option[String],
+                           time:       RemoteInstant,
+                           from:       UserId,
+                           fromDomain: Option[String],
+                           userIds:    Seq[UserId],
+                           users:      Map[QualifiedId, ConversationRole],
+                           firstEvent: Boolean = false)
+  extends MessageEvent with ConversationStateEvent
 
 case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], reason: Option[MemberLeaveReason]) extends MessageEvent with ConversationStateEvent
 
@@ -259,12 +266,35 @@ object UserConnectionEvent {
 object ConversationEvent extends DerivedLogTag {
 
   import OtrErrorEvent._
-  import ConversationRole.decodeUserIdsWithRoles
+  import ConversationRole.decodeQualifiedIdsWithRoles
 
   def unapply(e: ConversationEvent): Option[(RConvId, RemoteInstant, UserId)] =
     Some((e.convId, e.time, e.from))
 
   implicit lazy val ConversationEventDecoder: JsonDecoder[ConversationEvent] = new JsonDecoder[ConversationEvent] {
+    private def decodeMemberJoinEvent(data: JSONObject, time: RemoteInstant)(implicit js: JSONObject): MemberJoinEvent = {
+      val (convId, convDomain) =
+        RConvQualifiedId.decodeOpt('qualified_conversation)
+          .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
+          .getOrElse((RConvId('conversation), None))
+
+      val (from, fromDomain) =
+        QualifiedId.decodeOpt('qualified_from)
+          .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
+          .getOrElse((UserId('from), None))
+
+      MemberJoinEvent(
+        convId,
+        convDomain,
+        time,
+        from,
+        fromDomain,
+        decodeUserIdSeq('user_ids)(data),
+        decodeQualifiedIdsWithRoles('users)(data),
+        decodeString('id).startsWith("1.")
+      )
+    }
+
     override def apply(implicit js: JSONObject): ConversationEvent = Try {
 
       lazy val d = if (js.has("data") && !js.isNull("data")) Try(js.getJSONObject("data")).toOption else None
@@ -275,8 +305,7 @@ object ConversationEvent extends DerivedLogTag {
         case "conversation.create"               => CreateConversationEvent('conversation, time, 'from, JsonDecoder[ConversationResponse]('data))
         case "conversation.delete"               => DeleteConversationEvent('conversation, time, 'from)
         case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeName('name)(d.get))
-        case "conversation.member-join"          =>
-          MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeUserIdsWithRoles('users)(d.get), decodeString('id).startsWith("1."))
+        case "conversation.member-join"          => decodeMemberJoinEvent(d.get, time)
         case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeOptString('reason)(d.get).map(MemberLeaveReason(_)))
         case "conversation.member-update"        => MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get))
         case "conversation.connect-request"      => ConnectRequestEvent('conversation, time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeName('name)(d.get), decodeOptString('email)(d.get))

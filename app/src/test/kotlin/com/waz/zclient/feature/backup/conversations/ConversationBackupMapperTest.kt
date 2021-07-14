@@ -53,7 +53,8 @@ class ConversationBackupMapperTest : UnitTest() {
             unreadMentionsCount = data.unreadMentionsCount,
             unreadQuoteCount = data.unreadQuoteCount,
             receiptMode = data.receiptMode,
-            legalHoldStatus = data.legalHoldStatus
+            legalHoldStatus = data.legalHoldStatus,
+            domain = data.domain
         )
 
         val model = backupMapper.fromEntity(entity)
@@ -128,7 +129,8 @@ class ConversationBackupMapperTest : UnitTest() {
             unreadMentionsCount = data.unreadMentionsCount,
             unreadQuoteCount = data.unreadQuoteCount,
             receiptMode = data.receiptMode,
-            legalHoldStatus = data.legalHoldStatus
+            legalHoldStatus = data.legalHoldStatus,
+            domain = data.domain
         )
 
         val entity = backupMapper.toEntity(model)

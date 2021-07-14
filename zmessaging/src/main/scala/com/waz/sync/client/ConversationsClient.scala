@@ -41,9 +41,10 @@ import scala.util.control.NonFatal
 
 trait ConversationsClient {
   import ConversationsClient._
-  def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult]
   def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
+  def loadQualifiedConversations(start: Option[RConvQualifiedId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
   def loadConversations(ids: Set[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
+  def loadQualifiedConversations(ids: Set[RConvQualifiedId]): ErrorOrResponse[Seq[ConversationResponse]]
   def loadConversationRoles(remoteIds: Set[RConvId], defRoles: Set[ConversationRole]): Future[Map[RConvId, Set[ConversationRole]]]
   def postName(convId: RConvId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]]
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
@@ -57,6 +58,7 @@ trait ConversationsClient {
   def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit]
   def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
+  def postQualifiedConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
   def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
   def getGuestroomOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse]
   def postJoinConversation(key: String, code: String): ErrorOrResponse[Option[MemberJoinEvent]]
@@ -82,17 +84,6 @@ class ConversationsClientImpl(implicit
       ConversationsResult(ids, hasMore)
     }
 
-  override def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult] = {
-    Request
-      .Get(
-        relativePath = ConversationIdsPath,
-        queryParameters = queryParameters("size" -> ConversationIdsPageSize, "start" -> start)
-      )
-      .withResultType[ConversationsResult]
-      .withErrorType[ErrorResponse]
-      .executeSafe
-  }
-
   override def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] = {
     Request
       .Get(
@@ -104,9 +95,32 @@ class ConversationsClientImpl(implicit
       .executeSafe
   }
 
+  override def loadQualifiedConversations(start: Option[RConvQualifiedId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] = {
+    Request
+      .Post(
+        relativePath = ListConversationsPath,
+        queryParameters = queryParameters("size" -> limit, "start_id" -> start)
+      )
+      .withResultType[ConversationsResult]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
   override def loadConversations(ids: Set[RConvId]): ErrorOrResponse[Seq[ConversationResponse]] = {
     Request
       .Get(relativePath = ConversationsPath, queryParameters = queryParameters("ids" -> ids.mkString(",")))
+      .withResultType[ConversationsResult]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .map(_.map(_.conversations))
+  }
+
+  override def loadQualifiedConversations(ids: Set[RConvQualifiedId]): ErrorOrResponse[Seq[ConversationResponse]] = {
+    Request
+      .Post(
+        relativePath = ListConversationsPath,
+        body = Json("qualified_ids" -> RConvQualifiedId.encode(ids))
+      )
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -249,9 +263,17 @@ class ConversationsClientImpl(implicit
       .executeSafe
   }
 
-  def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
+  override def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
     verbose(l"postConversation($state)")
     Request.Post(relativePath = ConversationsPath, body = state)
+      .withResultType[ConversationsResult]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.conversations.head)
+  }
+
+  override def postQualifiedConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
+    verbose(l"postQualifiedConversation($state)")
+    Request.Post(relativePath = QualifiedConversationsPath, body = state)
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe(_.conversations.head)
@@ -302,7 +324,8 @@ class ConversationsClientImpl(implicit
 
 object ConversationsClient {
   val ConversationsPath = "/conversations"
-  val ConversationIdsPath = "/conversations/ids"
+  val ListConversationsPath = "/list-conversations"
+  val QualifiedConversationsPath = "/conversations/one2one"
   val JoinConversationPath = "/conversations/join"
   val ConversationsPageSize = 100
   val ConversationIdsPageSize = 1000
@@ -314,19 +337,21 @@ object ConversationsClient {
   def membersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members"
   def qualifiedMembersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members/v2"
 
-  case class ConversationInitState(users:            Set[UserId],
-                                   name:             Option[Name] = None,
-                                   team:             Option[TeamId],
-                                   access:           Set[Access],
-                                   accessRole:       AccessRole,
-                                   receiptMode:      Option[Int],
-                                   conversationRole: ConversationRole
-                                  )
+  final case class ConversationInitState(users:            Set[UserId],
+                                         qualifiedUsers:   Set[QualifiedId],
+                                         name:             Option[Name] = None,
+                                         team:             Option[TeamId],
+                                         access:           Set[Access],
+                                         accessRole:       AccessRole,
+                                         receiptMode:      Option[Int],
+                                         conversationRole: ConversationRole
+                                        )
 
   object ConversationInitState {
     implicit lazy val Encoder: JsonEncoder[ConversationInitState] = new JsonEncoder[ConversationInitState] {
       override def apply(state: ConversationInitState): JSONObject = JsonEncoder { o =>
-        o.put("users", Json(state.users))
+        if (state.users.nonEmpty) o.put("users", Json(state.users))
+        if (state.qualifiedUsers.nonEmpty) o.put("qualified_users", QualifiedId.encode(state.qualifiedUsers))
         state.name.foreach(o.put("name", _))
         state.team.foreach(t => o.put("team", returning(new json.JSONObject()) { o =>
           o.put("teamid", t.str)
@@ -340,22 +365,28 @@ object ConversationsClient {
     }
   }
 
-  case class ConversationResponse(id:           RConvId,
-                                  name:         Option[Name],
-                                  creator:      UserId,
-                                  convType:     ConversationType,
-                                  team:         Option[TeamId],
-                                  muted:        MuteSet,
-                                  mutedTime:    RemoteInstant,
-                                  archived:     Boolean,
-                                  archivedTime: RemoteInstant,
-                                  access:       Set[Access],
-                                  accessRole:   Option[AccessRole],
-                                  link:         Option[Link],
-                                  messageTimer: Option[FiniteDuration],
-                                  members:      Map[UserId, ConversationRole],
-                                  receiptMode:  Option[Int]
-                                 )
+  final case class ConversationResponse(id:           RConvId,
+                                        domain:       Option[String],
+                                        name:         Option[Name],
+                                        creator:      UserId,
+                                        convType:     ConversationType,
+                                        team:         Option[TeamId],
+                                        muted:        MuteSet,
+                                        mutedTime:    RemoteInstant,
+                                        archived:     Boolean,
+                                        archivedTime: RemoteInstant,
+                                        access:       Set[Access],
+                                        accessRole:   Option[AccessRole],
+                                        link:         Option[Link],
+                                        messageTimer: Option[FiniteDuration],
+                                        members:      Map[QualifiedId, ConversationRole],
+                                        receiptMode:  Option[Int]
+                                       ) {
+    lazy val qualifiedId: Option[RConvQualifiedId] = domain.map(RConvQualifiedId(id, _))
+    def hasDomain: Boolean = domain.nonEmpty
+    lazy val memberIds: Set[UserId] = members.keySet.map(_.id)
+    lazy val qualifiedMemberIds: Set[QualifiedId] = members.keySet.filter(_.hasDomain)
+  }
 
   object ConversationResponse extends DerivedLogTag {
     import ConversationRole._
@@ -366,13 +397,19 @@ object ConversationsClient {
         verbose(l"ConversationResponse: ${js.toString}")
         val members = js.getJSONObject("members")
         val state = ConversationState.Decoder(members.getJSONObject("self"))
-        val selfRole = (state.target, state.conversationRole) match {
-          case (Some(id), Some(role)) => Map(id -> role)
+        val selfRole: Map[QualifiedId, ConversationRole] = (state.target, state.conversationRole) match {
+          case (Some(id), Some(role)) => Map(QualifiedId(id) -> role)
           case _                      => Map.empty
         }
 
+        val (id, domain) =
+          RConvQualifiedId.decodeOpt('qualified_id)
+            .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
+            .getOrElse((JsonDecoder.decodeRConvId('id), None))
+
         ConversationResponse(
-          'id,
+          id,
+          domain,
           'name,
           'creator,
           'type,
@@ -385,16 +422,16 @@ object ConversationsClient {
           'access_role,
           'link,
           decodeOptLong('message_timer).map(EphemeralDuration(_)),
-          decodeUserIdsWithRoles('others)(members) ++ selfRole,
+          decodeQualifiedIdsWithRoles('others)(members) ++ selfRole,
           decodeOptInt('receipt_mode)
         )
       }
     }
 
-    case class ConversationsResult(conversations: Seq[ConversationResponse], hasMore: Boolean)
+    final case class ConversationsResult(conversations: Seq[ConversationResponse], hasMore: Boolean)
   }
 
-  case class ConvRole(conversation_role: String, actions: Seq[String]) {
+  final case class ConvRole(conversation_role: String, actions: Seq[String]) {
     def toConversationRole: ConversationRole = ConversationRole(conversation_role, actions.flatMap(a => ConversationAction.allActions.find(_.name == a)).toSet)
   }
 
@@ -405,7 +442,7 @@ object ConversationsClient {
     }
   }
 
-  case class ConvRoles(conversation_roles: Seq[ConvRole]) {
+  final case class ConvRoles(conversation_roles: Seq[ConvRole]) {
     def toConversationRoles: Set[ConversationRole] = conversation_roles.map(_.toConversationRole).toSet
   }
 
@@ -445,7 +482,7 @@ object ConversationsClient {
     }
   }
 
-  case class ConversationOverviewResponse(id: RConvId, name: String)
+  final case class ConversationOverviewResponse(id: RConvId, name: String)
 
   object ConversationOverviewResponse extends DerivedLogTag {
     import com.waz.utils.JsonDecoder._
