@@ -24,7 +24,7 @@ import com.waz.avs.VideoRenderer
 import com.waz.service.call.CallInfo.Participant
 import com.waz.utils.returning
 import com.waz.threading.Threading._
-import com.waz.zclient.R
+import com.waz.zclient.{BuildConfig, R}
 import com.wire.signals.Signal
 
 class OtherVideoView(context: Context, participant: Participant) extends UserVideoView(context, participant) {
@@ -35,7 +35,8 @@ class OtherVideoView(context: Context, participant: Participant) extends UserVid
     accentColorController.accentColor.map(_.color),
     callController.isFullScreenEnabled,
     callController.showTopSpeakers,
-    callController.videoUsers.map(_.size > 2)
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) callController.allParticipants.map(_.size > 2)
+    else callController.videoUsers.map(_.size > 2)
   ).onUi {
     case (Some(false), true, color, false, false, true) => {
       updateAudioIndicator(R.drawable.ic_unmuted_video_grid, color, true)
