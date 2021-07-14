@@ -81,7 +81,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   returning(findById[CallControlButtonView](R.id.mute_call)) { button =>
     controller.isCallEstablished.onUi(button.setEnabled)
 
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
+    if (BuildConfig.CALLING_UI_BUTTONS) {
 
       controller.isMuted.map(!_).onUi(button.setActivated)
 
@@ -115,7 +115,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
     isVideoBeingSent.onUi(button.setActivated)
     controller.isCallEstablished.onUi(button.setEnabled)
 
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
+    if (BuildConfig.CALLING_UI_BUTTONS) {
       isVideoBeingSent.map {
         case true => Some(drawActiveCamera _)
         case false => Some(drawInactiveCamera _)
@@ -129,7 +129,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   returning(findById[CallControlButtonView](R.id.speaker_flip_call)) { button =>
     controller.isCallEstablished.onUi(button.setEnabled)
 
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
+    if (BuildConfig.CALLING_UI_BUTTONS) {
       Signal.zip(controller.speakerButton.buttonState, isVideoBeingSent).onUi {
         case (true, false) =>
           button.setActivated(true)
