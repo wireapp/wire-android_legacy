@@ -109,7 +109,6 @@ class CallingGridFragment extends FragmentHelper {
 
           val startIndex = pageNumber * MAX_PARTICIPANTS_PER_PAGE
           val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE
-          var participantsToShow = participants.slice(startIndex, endIndex).toSeq
 
           val participantsToShow = (participants.slice(startIndex, endIndex), size) match {
             case (ps, 2) => ps.filter(_.clientId != selfClientId)
