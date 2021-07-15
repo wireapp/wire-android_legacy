@@ -95,7 +95,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
   def dismissNotifications(forConvs: Option[Set[ConvId]] = None): Future[Unit] = {
     verbose(l"dismissNotifications: $forConvs")
     for {
-      nots <- storage.list().map(_.toSet)
+      nots <- storage.values.map(_.toSet)
       toRemove = forConvs match {
         case None        => nots
         case Some(convs) => nots.filter(n => convs.contains(n.conv))
@@ -116,7 +116,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
     if (events.nonEmpty) {
       for {
         (undoneLikes, likes) <- getReactionChanges(events)
-        currentNotifications <- storage.list().map(_.toSet)
+        currentNotifications <- storage.values.map(_.toSet)
         msgNotifications     <- getMessageNotifications(c, events)
 
         (afterEditsApplied, beforeEditsApplied) = applyEdits(currentNotifications ++ msgNotifications, events)
@@ -204,8 +204,8 @@ class NotificationServiceImpl(selfUserId:      UserId,
     }
   }
 
-  private def pushNotificationsToUi(): Future[Unit] = storage.list().map {
-    case Nil    => Future.successful(())
+  private def pushNotificationsToUi(): Future[Unit] = storage.values.map {
+    case v if v.isEmpty => Future.successful(())
     case toShow =>
       verbose(l"pushNotificationsToUi, toShow: ${toShow.size}")
       (for {

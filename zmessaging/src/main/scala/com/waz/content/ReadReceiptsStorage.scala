@@ -33,9 +33,13 @@ trait ReadReceiptsStorage extends CachedStorage[ReadReceipt.Id, ReadReceipt] {
   def removeAllForMessages(message: Set[MessageId]): Future[Unit]
 }
 
-class ReadReceiptsStorageImpl(context: Context, storage: Database, msgStorage: MessagesStorage, msgService: MessagesService)
-  extends CachedStorageImpl[ReadReceipt.Id, ReadReceipt](new TrimmingLruCache(context, Fixed(ReadReceiptsStorage.cacheSize)), storage)(ReadReceiptDao, LogTag("ReadReceiptsStorage"))
-  with ReadReceiptsStorage {
+final class ReadReceiptsStorageImpl(context: Context,
+                                    storage: Database,
+                                    msgStorage: MessagesStorage,
+                                    msgService: MessagesService)
+  extends CachedStorageImpl[ReadReceipt.Id, ReadReceipt](
+    new TrimmingLruCache(context, Fixed(ReadReceiptsStorage.cacheSize)), storage)(ReadReceiptDao, LogTag("ReadReceiptsStorage")
+  ) with ReadReceiptsStorage {
   import com.waz.threading.Threading.Implicits.Background
 
   msgStorage.onDeleted.foreach { ids => removeAllForMessages(ids.toSet) }

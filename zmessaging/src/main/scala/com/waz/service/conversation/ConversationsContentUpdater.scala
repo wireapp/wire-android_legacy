@@ -243,7 +243,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
       } yield ()
 
     for {
-      convs      <- storage.list()
+      convs      <- storage.values
       duplicates =  convs.groupBy(_.remoteId).filter(_._2.size > 1).map(_._2.map(_.id))
       convIds    =  duplicates.flatten.toSet
       users      <- usersStorage.listAll(convIds.map(id => UserId(id.str)))
@@ -276,7 +276,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
       Future.successful({})
     } else
       for {
-        convs        <- storage.list()
+        convs        <- storage.values
         mentionsOnly =  convs.filter(_.onlyMentionsAllowed).map(_.id)
         _            <- storage.updateAll2(mentionsOnly, _.copy(muted = MuteSet.AllMuted))
         _            <- syncHandler.syncConversations()

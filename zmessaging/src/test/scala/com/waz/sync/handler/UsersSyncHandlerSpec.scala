@@ -52,8 +52,8 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       val user2 = UserData("user2").copy(connection = Blocked)
       val user3 = UserData("user3").copy(connection = Unconnected)
       val user4 = UserData("user4").copy(connection = PendingFromOther)
-      (usersStorage.list _).expects().anyNumberOfTimes().returning(
-        Future.successful(Seq(user1, user2, user3, user4))
+      (usersStorage.values _).expects().anyNumberOfTimes().returning(
+        Future.successful(Vector(user1, user2, user3, user4))
       )
 
       // then
@@ -79,8 +79,8 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Blocked)
       val user3 = UserData("user3").copy(teamId = Some(teamId), connection = Unconnected)
       val user4 = UserData("user4").copy(teamId = Some(teamId), connection = PendingFromOther)
-      (usersStorage.list _).expects().anyNumberOfTimes().returning(
-        Future.successful(Seq(user1, user2, user3, user4))
+      (usersStorage.values _).expects().anyNumberOfTimes().returning(
+        Future.successful(Vector(user1, user2, user3, user4))
       )
 
       // then
@@ -108,8 +108,8 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       val user4 = UserData("user4").copy(teamId = Some(teamId), connection = PendingFromOther)
       val user5 = UserData("user5").copy(connection = Accepted)
       val user6 = UserData("user6").copy(connection = Unconnected)
-      (usersStorage.list _).expects().anyNumberOfTimes().returning(
-        Future.successful(Seq(user1, user2, user3, user4, user5, user6))
+      (usersStorage.values _).expects().anyNumberOfTimes().returning(
+        Future.successful(Vector(user1, user2, user3, user4, user5, user6))
       )
 
       // then
@@ -135,8 +135,8 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted)
       val user3 = UserData("user3").copy(connection = Accepted)
       val user4 = UserData("user4").copy(connection = Accepted)
-      (usersStorage.list _).expects().anyNumberOfTimes().returning(
-        Future.successful(Seq(user1, user2, user3, user4))
+      (usersStorage.values _).expects().anyNumberOfTimes().returning(
+        Future.successful(Vector(user1, user2, user3, user4))
       )
 
       // then
@@ -163,8 +163,8 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
       val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted)
       val user3 = UserData("user3").copy(connection = Accepted)
       val user4 = UserData("user4").copy(connection = Accepted)
-      (usersStorage.list _).expects().anyNumberOfTimes().returning(
-        Future.successful(Seq(user1, user2, user3, user4))
+      (usersStorage.values _).expects().anyNumberOfTimes().returning(
+        Future.successful(Vector(user1, user2, user3, user4))
       )
 
       // then

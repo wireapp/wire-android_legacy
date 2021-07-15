@@ -62,14 +62,14 @@ class ErrorsServiceImpl(userId:    UserId,
 
   private val errors = new mutable.HashMap[Uid, ErrorData]()
 
-  private val init = errorsStorage.list() map { es =>
-    errors ++= es.map(e => e.id -> e)(breakOut)
+  private val init = errorsStorage.values.map { es =>
+    errors ++= es.toIdMap
 
-    errorsStorage.onChanged.on(Threading.Background) { es =>
-      errors ++= es.map(e => e.id -> e)(breakOut)
+    errorsStorage.onChanged.foreach { es =>
+      errors ++= es.toIdMap
     }
 
-    errorsStorage.onDeleted.on(Threading.Background) { errors --= _ }
+    errorsStorage.onDeleted.foreach { errors --= _ }
 
     errors
   }
@@ -91,8 +91,8 @@ class ErrorsServiceImpl(userId:    UserId,
           Future.successful({})
       }
 
-  def dismissAllErrors(): Future[Unit] = errorsStorage.list() flatMap { errors =>
-    Future.sequence(errors map dismissed) flatMap { _ => delete(errors: _*) }
+  def dismissAllErrors(): Future[Unit] = errorsStorage.values.flatMap { errors =>
+    Future.sequence(errors.map(dismissed)).flatMap { _ => delete(errors: _*) }
   }
 
   private def dismissed(error: ErrorData) = Future {

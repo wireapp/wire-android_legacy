@@ -82,14 +82,14 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount]
 }
 
-class MessagesStorageImpl(context:     Context,
-                          storage:     ZmsDatabase,
-                          selfUserId:  UserId,
-                          convs:       ConversationStorage,
-                          users:       UsersStorage,
-                          msgAndLikes: => MessageAndLikesStorage,
-                          timeouts:    Timeouts,
-                          tracking:    TrackingService)
+final class MessagesStorageImpl(context:     Context,
+                                storage:     ZmsDatabase,
+                                selfUserId:  UserId,
+                                convs:       ConversationStorage,
+                                users:       UsersStorage,
+                                msgAndLikes: => MessageAndLikesStorage,
+                                timeouts:    Timeouts,
+                                tracking:    TrackingService)
   extends CachedStorageImpl[MessageId, MessageData](
     new TrimmingLruCache[MessageId, Option[MessageData]](context, Fixed(MessagesStorage.cacheSize)),
     storage

@@ -114,7 +114,7 @@ class GlobalReportingService(context: Context, cache: CacheService, metadata: Me
   val ZUsersReporter = Reporter("ZUsers", { writer =>
     val current = ZMessaging.currentAccounts.activeAccount.currentValue.flatten
     writer.println(l"current: $current".buildMessageSafe)
-    storage.list() map { all =>
+    storage.values.map { all =>
       all.filter(!current.contains(_)).foreach { u =>
         writer.println(l"$u".buildMessageSafe)
       }

@@ -82,7 +82,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
       newFolders      <- Future.sequence(folders.map { case RemoteFolderData(data, rConvIds) =>
         conversationStorage.getByRemoteIds(rConvIds).map(ids => data.id -> (data, ids.toSet))
       }).map(_.toMap)
-      currentFolders  <- foldersStorage.list().map(_.toIdMap)
+      currentFolders  <- foldersStorage.values.map(_.toIdMap)
       foldersToDelete =  currentFolders.keySet -- newFolders.keySet
       _               <- Future.sequence(foldersToDelete.map(removeFolder(_, false)))
       foldersToAdd    =  newFolders.filterKeys(id => !currentFolders.contains(id)).values
@@ -154,7 +154,8 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   override def folder(folderId: FolderId): Signal[Option[FolderData]] =
     foldersStorage.optSignal(folderId)
 
-  override def addFolder(folderName: Name, uploadAllChanges: Boolean): Future[FolderId] = addFolder(folderName, FolderData.CustomFolderType, uploadAllChanges)
+  override def addFolder(folderName: Name, uploadAllChanges: Boolean): Future[FolderId] =
+    addFolder(folderName, FolderData.CustomFolderType, uploadAllChanges)
 
   private def addFolder(folderName: Name, folderType: Int, uploadAllChanges: Boolean): Future[FolderId] = for {
     folder    <- Future.successful(FolderData(name = folderName, folderType = folderType))
@@ -187,7 +188,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   private def postFoldersIfNeeded(shouldUpload: Boolean) =
     if (shouldUpload) sync.postFolders() else Future.successful(())
 
-  override def folders: Future[Seq[FolderData]] = foldersStorage.list()
+  override def folders: Future[Seq[FolderData]] = foldersStorage.values
 
   override val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = {
     val changesStream: EventStream[(Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]])] =
@@ -199,8 +200,8 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
       )
 
     def loadAll = for {
-      folders <- foldersStorage.list()
-      folderConvs <- Future.sequence(folders.map(folder => conversationFoldersStorage.findForFolder(folder.id).map(convIds => folder.id -> convIds)))
+      folderIds   <- foldersStorage.keySet
+      folderConvs <- Future.sequence(folderIds.map(folderId => conversationFoldersStorage.findForFolder(folderId).map(convIds => folderId -> convIds)))
     } yield folderConvs.toMap
 
     new AggregatingSignal[(Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]]), Map[FolderId, Set[ConvId]]](

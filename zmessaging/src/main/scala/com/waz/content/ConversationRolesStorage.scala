@@ -31,7 +31,7 @@ trait ConversationRolesStorage extends CachedStorage[(String, String, ConvId), C
   def getRolesByConvId(convId: ConvId): Future[Set[ConversationRole]]
 }
 
-class ConversationRolesStorageImpl(context: Context, storage: ZmsDatabase)
+final class ConversationRolesStorageImpl(context: Context, storage: ZmsDatabase)
   extends CachedStorageImpl[(String, String, ConvId), ConversationRoleAction](
     new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationRoleActionDao, LogTag("ConversationRolesStorage_Cached")
   ) with ConversationRolesStorage {

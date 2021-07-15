@@ -49,9 +49,10 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def getLegalHoldHint(convId: ConvId): Future[Messages.LegalHoldStatus]
 }
 
-class ConversationStorageImpl(storage: ZmsDatabase)
-  extends CachedStorageImpl[ConvId, ConversationData](new UnlimitedLruCache(), storage)(ConversationDataDao, LogTag("ConversationStorage_Cached"))
-    with ConversationStorage with DerivedLogTag {
+final class ConversationStorageImpl(storage: ZmsDatabase)
+  extends CachedStorageImpl[ConvId, ConversationData](
+    new UnlimitedLruCache(), storage)(ConversationDataDao, LogTag("ConversationStorage_Cached")
+  ) with ConversationStorage with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -70,9 +71,9 @@ class ConversationStorageImpl(storage: ZmsDatabase)
   }
 
   private val init = for {
-    convs   <- super.list()
+    convs   <- super.keySet
     updater = (c: ConversationData) => c.copy(searchKey = c.savedOrFreshSearchKey)
-    _       <- updateAll2(convs.map(_.id), updater)
+    _       <- updateAll2(convs, updater)
   } yield {
     verbose(l"Caching ${convs.size} conversations")
   }
@@ -98,7 +99,7 @@ class ConversationStorageImpl(storage: ZmsDatabase)
     }
   }
 
-  override def list: Future[Vector[ConversationData]] = init flatMap { _ => contents.head.map(_.values.toVector)  }
+  override final def values: Future[Vector[ConversationData]] = init.flatMap { _ => contents.head.map(_.values.toVector)  }
 
   def updateLocalId(oldId: ConvId, newId: ConvId) =
     updateLocalIds(Map(oldId -> newId)).map(_.headOption)

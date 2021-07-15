@@ -26,6 +26,7 @@ import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
 trait NotificationStorage extends CachedStorage[NotId, NotificationData]
 
-class NotificationStorageImpl(context: Context, storage: Database)
-  extends CachedStorageImpl[NotId, NotificationData](new TrimmingLruCache(context, Fixed(128)), storage)(NotificationDataDao, LogTag("NotificationStorage"))
-    with NotificationStorage
+final class NotificationStorageImpl(context: Context, storage: Database)
+  extends CachedStorageImpl[NotId, NotificationData](
+    new TrimmingLruCache(context, Fixed(128)), storage)(NotificationDataDao, LogTag("NotificationStorage")
+  ) with NotificationStorage

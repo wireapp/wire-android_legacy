@@ -33,9 +33,14 @@ import com.waz.utils._
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-class MessageIndexStorage(context: Context, storage: ZmsDatabase, messagesStorage: MessagesStorage, loader: MessageAndLikesStorage, conversationStorage: ConversationStorage)
-  extends CachedStorageImpl[MessageId, MessageContentIndexEntry](new TrimmingLruCache(context, Fixed(MessageContentIndex.MaxSearchResults)), storage)(MessageContentIndexDao, LogTag("MessageIndexStorage_Cached"))
-    with DerivedLogTag {
+final class MessageIndexStorage(context:             Context,
+                                storage:             ZmsDatabase,
+                                messagesStorage:     MessagesStorage,
+                                loader:              MessageAndLikesStorage,
+                                conversationStorage: ConversationStorage)
+  extends CachedStorageImpl[MessageId, MessageContentIndexEntry](
+    new TrimmingLruCache(context, Fixed(MessageContentIndex.MaxSearchResults)), storage)(MessageContentIndexDao, LogTag("MessageIndexStorage_Cached")
+  ) with DerivedLogTag {
 
   import MessageIndexStorage._
   import MessageContentIndex.TextMessageTypes

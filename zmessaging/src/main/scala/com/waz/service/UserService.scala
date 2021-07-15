@@ -123,9 +123,9 @@ class UserServiceImpl(selfUserId:        UserId,
   } if (shouldSync) {
     verbose(l"Syncing user data to get team ids")
     for {
-      userMap <- usersStorage.contents.head
-      _       <- syncUsers(userMap.keySet)
-      _       <- shouldSyncUsers := false
+      users <- usersStorage.keySet
+      _     <- syncUsers(users)
+      _     <- shouldSyncUsers := false
     } yield ()
   }
 
@@ -143,7 +143,7 @@ class UserServiceImpl(selfUserId:        UserId,
       case (o, n) if o.name != n.name => n.id -> n.name
     }.toMap).filter(_.nonEmpty)
 
-    def initialLoad = usersStorage.list().map(_.map(user => user.id -> user.name).toMap)
+    def initialLoad = usersStorage.values.map(_.map(user => user.id -> user.name).toMap)
 
     new AggregatingSignal[Map[UserId, Name], Map[UserId, Name]](
       () => initialLoad,

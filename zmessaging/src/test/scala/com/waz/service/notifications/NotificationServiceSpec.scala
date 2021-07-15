@@ -86,7 +86,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   (pushService.processing _).expects().anyNumberOfTimes().onCall(_ => processing)
 
-  (storage.list _).expects().anyNumberOfTimes().onCall { _ => storedNotifications.head.map(_.toSeq) }
+  (storage.values _).expects().anyNumberOfTimes().onCall { _ => storedNotifications.head.map(_.toVector) }
   (storage.removeAll _).expects(*).anyNumberOfTimes().onCall { toRemove: Iterable[NotId] =>
     Future.successful[Unit] { storedNotifications.mutate { _.filterNot(n => toRemove.toSet.contains(n.id)) }; }
   }
