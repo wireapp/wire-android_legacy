@@ -111,9 +111,12 @@ class CallingGridFragment extends FragmentHelper {
           val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE
           var participantsToShow = participants.slice(startIndex, endIndex).toSeq
 
-          if (size == 2) participantsToShow = participantsToShow.filter(_.clientId != selfClientId)
+          val participantsToShow = (participants.slice(startIndex, endIndex), size) match {
+            case (ps, 2) => ps.filter(_.clientId != selfClientId)
+            case (ps, _) => ps
+          }
 
-          refreshVideoGrid(grid, selfUserId, selfClientId, participantsToShow, participantsInfo, participants, false)
+          refreshVideoGrid(grid, selfUserId, selfClientId, participantsToShow.toSeq, participantsInfo, participants, false)
         case _ =>
       }
     }
