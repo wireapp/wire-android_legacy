@@ -100,17 +100,22 @@ class CallingGridFragment extends FragmentHelper {
       Signal.zip(
         participantsData,
         callController.isFullScreenEnabled,
-        callController.showTopSpeakers
+        callController.showTopSpeakers,
+        callController.allParticipants.map(_.size)
       ).foreach {
-        case ((selfUserId, selfClientId, participantsInfo, participants, activeParticipants), false, true) =>
+        case ((selfUserId, selfClientId, participantsInfo, participants, activeParticipants), false, true, _) =>
           refreshVideoGrid(grid, selfUserId, selfClientId, activeParticipants, participantsInfo, participants, true)
-        case ((selfUserId, selfClientId, participantsInfo, participants, _), false, false) =>
+        case ((selfUserId, selfClientId, participantsInfo, participants, _), false, false, size) =>
 
           val startIndex = pageNumber * MAX_PARTICIPANTS_PER_PAGE
           val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE
-          val participantsToShow = participants.slice(startIndex, endIndex).toSeq
 
-          refreshVideoGrid(grid, selfUserId, selfClientId, participantsToShow, participantsInfo, participants, false)
+          val participantsToShow = (participants.slice(startIndex, endIndex), size) match {
+            case (ps, 2) => ps.filter(_.clientId != selfClientId)
+            case (ps, _) => ps
+          }
+
+          refreshVideoGrid(grid, selfUserId, selfClientId, participantsToShow.toSeq, participantsInfo, participants, false)
         case _ =>
       }
     }
