@@ -51,18 +51,17 @@ trait ConversationsContentUpdater {
   def updateConversationState(id: ConvId, state: ConversationState): Future[Option[(ConversationData, ConversationData)]]
   def updateAccessMode(id: ConvId, access: Set[Access], accessRole: Option[AccessRole], link: Option[ConversationData.Link] = None): Future[Option[(ConversationData, ConversationData)]]
 
-  def createConversationWithMembers(convId:      ConvId,
-                                    remoteId:    RConvId,
-                                    convType:    ConversationType,
-                                    creator:     UserId,
-                                    members:     Set[UserId],
-                                    defaultRole: ConversationRole,
-                                    name:        Option[Name],
-                                    hidden:      Boolean = false,
-                                    access:      Set[Access] = Set(Access.PRIVATE),
-                                    accessRole:  AccessRole = AccessRole.PRIVATE,
-                                    receiptMode: Int = 0
-                                   ): Future[ConversationData]
+  def createConversation(convId:      ConvId,
+                         remoteId:    RConvId,
+                         convType:    ConversationType,
+                         creator:     UserId,
+                         defaultRole: ConversationRole,
+                         name:        Option[Name],
+                         hidden:      Boolean = false,
+                         access:      Set[Access] = Set(Access.PRIVATE),
+                         accessRole:  AccessRole = AccessRole.PRIVATE,
+                         receiptMode: Int = 0
+                        ): Future[ConversationData]
 }
 
 class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
@@ -169,18 +168,17 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   override def setConversationHidden(id: ConvId, hidden: Boolean) = storage.update(id, _.copy(hidden = hidden))
 
-  override def createConversationWithMembers(convId:      ConvId,
-                                             remoteId:    RConvId,
-                                             convType:    ConversationType,
-                                             creator:     UserId,
-                                             members:     Set[UserId],
-                                             defaultRole: ConversationRole,
-                                             name:        Option[Name],
-                                             hidden:      Boolean = false,
-                                             access:      Set[Access] = Set(Access.PRIVATE),
-                                             accessRole:  AccessRole = AccessRole.PRIVATE,
-                                             receiptMode: Int = 0
-                                            ): Future[ConversationData] =
+  override def createConversation(convId:      ConvId,
+                                  remoteId:    RConvId,
+                                  convType:    ConversationType,
+                                  creator:     UserId,
+                                  defaultRole: ConversationRole,
+                                  name:        Option[Name],
+                                  hidden:      Boolean = false,
+                                  access:      Set[Access] = Set(Access.PRIVATE),
+                                  accessRole:  AccessRole = AccessRole.PRIVATE,
+                                  receiptMode: Int = 0
+                                 ): Future[ConversationData] =
     for {
       conv <- storage.insert(
         ConversationData(
@@ -195,7 +193,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           accessRole    = Some(accessRole),
           receiptMode   = Some(receiptMode)
         ))
-      _  <- membersStorage.updateOrCreateAll(convId, Map(creator -> ConversationRole.AdminRole) ++ members.map(_ -> defaultRole))
+      _  <- membersStorage.updateOrCreate(convId, creator, ConversationRole.AdminRole)
     } yield conv
 
   override def hideIncomingConversation(user: UserId) = storage.update(ConvId(user.str), { conv =>

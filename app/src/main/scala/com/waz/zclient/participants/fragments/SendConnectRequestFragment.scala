@@ -34,7 +34,7 @@ class SendConnectRequestFragment extends UntabbedRequestFragment {
         Some(user)  <- userToConnect
         isFederated <- usersCtrl.isFederated(user)
         conv        <- (isFederated, user.qualifiedId) match {
-                         case (true, Some(qId)) => convCtrl.createConvWithFederatedUser(user.name, qId, false, false).map(Option(_))
+                         case (true, Some(qId)) => convCtrl.createConvWithFederatedUser(qId, false, false).map(Option(_))
                          case _                 => usersCtrl.connectToUser(user.id)
                        }
         _           <- conv.fold(

@@ -222,7 +222,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   private def processUpdateEvent(conv: ConversationData, ev: ConversationEvent) = ev match {
     case DeleteConversationEvent(_, time, from) => (for {
       _ <- notificationService.displayNotificationForDeletingConversation(from, time, conv)
-      _ <- deleteConversation(conv)
+      _ <- deleteConversation(conv.id)
     } yield ()).recoverWith {
       case e: Exception => error(l"error while processing DeleteConversationEvent", e)
       Future.successful(())
@@ -523,7 +523,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   override def deleteConversation(rConvId: RConvId): Future[Unit] = {
     content.convByRemoteId(rConvId) flatMap {
-      case Some(conv) => deleteConversation(conv)
+      case Some(conv) => deleteConversation(conv.id)
       case None =>
         verbose(l"Conversation w/ remote id $rConvId not found. Ignoring deletion.")
         Future.successful(())
@@ -556,9 +556,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     // For those who don't, we create the name from first four members' names.
     else Name(userNames.map(_.str).sorted.mkString(", "))
 
-  private def deleteConversation(convData: ConversationData): Future[Unit] = (for {
-      convMessageIds <- messages.findMessageIds(convData.id)
-      convId         =  convData.id
+  private def deleteConversation(convId: ConvId): Future[Unit] = (for {
+      convMessageIds <- messages.findMessageIds(convId)
       assetIds       <- messages.getAssetIds(convMessageIds)
       _              <- assetService.deleteAll(assetIds)
       _              <- convsStorage.remove(convId)
@@ -567,7 +566,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _              <- receiptsStorage.removeAllForMessages(convMessageIds)
       _              <- checkCurrentConversationDeleted(convId)
       _              <- foldersService.removeConversationFromAll(convId, uploadAllChanges = false)
-      _              <- rolesService.removeByConvId(convData.id)
+      _              <- rolesService.removeByConvId(convId)
     } yield ()).recoverWith {
       case ex: Exception =>
         error(l"error while deleting conversation", ex)
@@ -580,13 +579,25 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       else Future.successful(())
     }
 
-  def onMemberAddFailed(conv: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse): Future[Unit] =
-    for {
-      _ <- err.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, conv, users)).map(_ => ()))
-      _ <- membersStorage.remove(conv, users)
-      _ <- messages.removeLocalMemberJoinMessage(conv, users)
-      _ =  error(l"onMembersAddFailed($conv, $users, $err, $resp)")
+  def onMemberAddFailed(convId: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse): Future[Unit] = {
+    def deleteEmptyConversation(): Future[Unit] = for {
+      Some(conv) <- convsStorage.get(convId)
+      syncId     <- teamId.map(tId => sync.deleteGroupConversation(tId, conv.remoteId)).getOrElse { sync.postConversationMemberLeave(convId, selfUserId) }
+      _          <- syncReqService.await(syncId)
+      // @todo rewrite the errors functionality so that it doesn't depend on data from the storage and the conv can be deleted without waiting
+      _          <- errors.getErrors.filter(_.isEmpty).head
+      _          <- deleteConversation(convId)
     } yield ()
+
+    for {
+      _       <- err.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, convId, users)).map(_ => ()))
+      _       =  error(l"onMembersAddFailed($convId, $users, $err, $resp)")
+      _       <- membersStorage.remove(convId, users)
+      _       <- messages.removeLocalMemberJoinMessage(convId, users)
+      members <- membersStorage.getActiveUsers(convId)
+      _       <- if ((members.toSet - selfUserId).isEmpty) deleteEmptyConversation() else Future.successful(())
+    } yield ()
+  }
 
   def onUpdateRoleFailed(conv: ConvId, user: UserId, newRole: ConversationRole, origRole: ConversationRole, resp: ErrorResponse): Future[Unit] =
     for {
@@ -727,7 +738,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         warn(l"joinConversation(key: $key, code: $code) error: $error")
         Future.successful(Left(GeneralError))
     }
-  
+
   override lazy val onlyFake1To1ConvUsers: Signal[Seq[UserData]] =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
       for {
