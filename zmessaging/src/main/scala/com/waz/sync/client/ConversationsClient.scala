@@ -96,10 +96,12 @@ class ConversationsClientImpl(implicit
   }
 
   override def loadQualifiedConversations(start: Option[RConvQualifiedId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] = {
+    val jsonBody = Json("size" -> limit)
+    start.foreach(startId => jsonBody.put("start_id", RConvQualifiedId.Encoder(startId)))
     Request
       .Post(
         relativePath = ListConversationsPath,
-        queryParameters = queryParameters("size" -> limit, "start_id" -> start)
+        body = jsonBody
       )
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
