@@ -85,9 +85,7 @@ object DeepLinkParser {
     case _ =>
       val tokenStr = str.substring(prefix.length).trim
       RawToken(
-        if (tokenStr.startsWith("/?"))
-          tokenStr.substring(2)
-        else if (tokenStr.startsWith("?") || tokenStr.startsWith("/"))
+        if (tokenStr.startsWith("/?") || tokenStr.startsWith("/"))
           tokenStr.substring(1)
         else
           tokenStr

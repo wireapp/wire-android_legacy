@@ -62,7 +62,7 @@ class DeepLinkParserTest extends JUnitSuite {
 
     val parsedLink = DeepLinkParser.parseLink(deepLink)
 
-    val expectedToken = RawToken(s"config=$customBackendUrl")
+    val expectedToken = RawToken(s"?config=$customBackendUrl")
     assert(parsedLink.contains((DeepLink.Access, expectedToken)))
   }
 
