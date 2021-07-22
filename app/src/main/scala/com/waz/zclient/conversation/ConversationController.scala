@@ -21,6 +21,7 @@ import java.net.URI
 
 import android.content.Context
 import android.graphics.{Bitmap, BitmapFactory}
+import android.widget.Toast
 import com.waz.api
 import com.waz.api.{IConversation, Verification}
 import com.waz.content.{ConversationStorage, OtrClientsStorage}
@@ -45,7 +46,7 @@ import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.Callback
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -233,14 +234,31 @@ class ConversationController(implicit injector: Injector, context: Context)
     }
 
   def sendAssetMessage(content: ContentForUpload): Future[Option[MessageData]] =
-    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
+    if (isAssetMessageSendingDisabled) {
+      showAssetSendingDisabledMessage()
+      Future.successful(None)
+    } else {
+      convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
+    }
 
-  def sendAssetMessage(content:  ContentForUpload,
-                       exp:      Option[Option[FiniteDuration]]): Future[Option[MessageData]] =
-    convsUiwithCurrentConv((ui, id) =>
-      accentColorController.accentColor.head.flatMap(color =>
-        ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp))
-    )
+  def sendAssetMessage(content: ContentForUpload,
+                       exp:     Option[Option[FiniteDuration]]): Future[Option[MessageData]] = {
+    if (isAssetMessageSendingDisabled) {
+      showAssetSendingDisabledMessage()
+      Future.successful(None)
+    } else {
+      convsUiwithCurrentConv((ui, id) =>
+        accentColorController.accentColor.head.flatMap(color =>
+          ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp))
+      )
+    }
+  }
+
+  private def isAssetMessageSendingDisabled: Boolean =
+    !BuildConfig.ENABLE_ASSET_MESSAGE_SENDING
+
+  def showAssetSendingDisabledMessage(): Unit =
+    Toast.makeText(context, R.string.asset_upload_error__sending_disabled, Toast.LENGTH_LONG).show()
 
   // NOTE: Rotating makes sense only for images, but at this point we accept any content. If it's
   // not an image, `currentRotation` will return 0 and the method will return the original content.
@@ -261,22 +279,30 @@ class ConversationController(implicit injector: Injector, context: Context)
       Try(BitmapFactory.decodeFile(path, BitmapOptions)).map { bmp => toJpg(rotate(bmp, cr)) }
   }(Threading.ImageDispatcher)
 
-  private def sendAssetMessage(convs:    Seq[ConvId],
-                               content:  ContentForUpload,
-                               exp:      Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] =
-    for {
-      ui    <- convsUi.head
-      color <- accentColorController.accentColor.head
-      msgs  <- Future.traverse(convs) { id =>
-                 ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp)
-               }
-    } yield msgs
+  private def sendAssetMessage(convs: Seq[ConvId],
+                               content: ContentForUpload,
+                               exp: Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] =
+    if (isAssetMessageSendingDisabled) {
+      showAssetSendingDisabledMessage()
+      Future.successful(Seq.empty)
+    } else {
+      for {
+        ui    <- convsUi.head
+        color <- accentColorController.accentColor.head
+        msgs  <- Future.traverse(convs) { id =>
+                   ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp)
+                 }
+      } yield msgs
+    }
 
   def sendAssetMessage(bitmap: Bitmap, assetName: String): Future[Option[MessageData]] =
     for {
       img     <- Future { AssetInput.toJpg(bitmap) }(Threading.Background)
       content =  ContentForUpload(assetName, img)
-      data    <- convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
+      data    <- if (isAssetMessageSendingDisabled) {
+        showAssetSendingDisabledMessage()
+        Future.successful(None)
+      } else { convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content)) }
     } yield data
 
   def sendAssetMessage(uri:      URI,
@@ -296,18 +322,23 @@ class ConversationController(implicit injector: Injector, context: Context)
   def sendAssetMessages(uris:     Seq[URI],
                         exp:      Option[Option[FiniteDuration]],
                         convs:    Seq[ConvId]): Future[Unit] =
-    for {
-      ui        <- convsUi.head
-      color     <- accentColorController.accentColor.head
-      names     <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(uri -> _)) }
-      contents  =  names.collect { case (uri, name) if fileRestrictions.isAllowed(name) => ContentForUpload(name,  Content.Uri(uri)) }
-      _         <- if (contents.nonEmpty)
-                     Future.traverse(convs) { id =>
-                       ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp)
-                     }
-                   else
-                     Future.successful(())
-    } yield ()
+    if (isAssetMessageSendingDisabled) {
+      showAssetSendingDisabledMessage()
+      Future.successful(())
+    } else {
+      for {
+        ui        <- convsUi.head
+        color     <- accentColorController.accentColor.head
+        names     <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(uri -> _)) }
+        contents  =  names.collect { case (uri, name) if fileRestrictions.isAllowed(name) => ContentForUpload(name,  Content.Uri(uri)) }
+        _         <- if (contents.nonEmpty)
+          Future.traverse(convs) { id =>
+            ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp)
+          }
+        else
+          Future.successful(())
+      } yield ()
+    }
 
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendLocationMessage(id, location))

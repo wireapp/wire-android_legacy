@@ -925,6 +925,7 @@
     <string name="conversation_toolbar__call_audio">Audio call</string>
 
     <!-- Asset upload errors -->
+    <string name="asset_upload_error__sending_disabled">Sending files is disabled for this app</string>
     <string name="asset_upload_error__not_found__title">File not found</string>
     <string name="asset_upload_error__not_found__message">Unable to retrieve the specified file</string>
     <string name="asset_upload_error__not_found__button">OK</string>
