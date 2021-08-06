@@ -2,7 +2,9 @@ package com.waz.service.teams
 
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AppLockFeatureConfig, FileSharingFeatureConfig}
+import com.waz.model.{AppLockFeatureConfig, FeatureConfigUpdateEvent, FileSharingFeatureConfig}
+import com.waz.service.{EventPipeline, EventPipelineImpl, EventScheduler}
+import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.handler.FeatureConfigsSyncHandler
 import com.waz.testutils.TestUserPreferences
@@ -16,6 +18,11 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   private val syncHandler = mock[FeatureConfigsSyncHandler]
 
   private def createService: FeatureConfigsService = new FeatureConfigsServiceImpl(syncHandler, userPrefs)
+
+  def createEventPipeline(service: FeatureConfigsService): EventPipeline = {
+    val scheduler = new EventScheduler(Stage(Sequential)(service.eventProcessingStage))
+    new EventPipelineImpl(Vector.empty, scheduler.enqueue)
+  }
 
   scenario("Fetch the AppLock feature config and set properties") {
     userPrefs.setValue(AppLockEnabled, false)
@@ -66,6 +73,21 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     // When
     result(service.updateFileSharing())
+
+    // Then
+    result(userPrefs(FileSharingFeatureEnabled).apply()) shouldEqual false
+  }
+
+  scenario("Process update event for FileSharing feature config") {
+    // Given
+    val service = createService
+    val pipeline = createEventPipeline(service)
+    val event = FeatureConfigUpdateEvent("fileSharing", "{ \"status\": \"disabled\" }")
+
+    userPrefs.setValue(FileSharingFeatureEnabled, true)
+
+    // When
+    result(pipeline.apply(Seq(event)))
 
     // Then
     result(userPrefs(FileSharingFeatureEnabled).apply()) shouldEqual false
