@@ -22,7 +22,7 @@ import com.waz.content.UserPreferences._
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.service.teams.FeatureFlagsService
+import com.waz.service.teams.FeatureConfigsService
 import com.waz.service.{AccountsService, UserService}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.AESUtils.{EncryptedBytes, decryptWithAlias, encryptWithAlias}
@@ -40,7 +40,7 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
   private lazy val accounts               = inject[AccountsService]
   private lazy val prefs                  = inject[Signal[UserPreferences]]
   private lazy val userAccountsController = inject[UserAccountsController]
-  private lazy val featureFlags           = inject[Signal[FeatureFlagsService]]
+  private lazy val featureConfigs         = inject[Signal[FeatureConfigsService]]
   private lazy val customPassword         = prefs.map(_.preference(UserPreferences.CustomPassword))
   private lazy val customPasswordIv       = prefs.map(_.preference(UserPreferences.CustomPasswordIv))
   private lazy val sodiumHandler          = inject[SodiumHandler]
@@ -50,7 +50,7 @@ class PasswordController(implicit inj: Injector) extends Injectable with Derived
       inject[Signal[UserService]].head.foreach(_.clearAccountPassword())
     case false =>
       userAccountsController.isTeam.head.foreach {
-        case true  => featureFlags.head.foreach(_.updateAppLock())
+        case true  => featureConfigs.head.foreach(_.updateAppLock())
         case false =>
       }
   }

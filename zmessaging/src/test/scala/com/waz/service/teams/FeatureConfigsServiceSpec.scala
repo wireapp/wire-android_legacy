@@ -2,28 +2,28 @@ package com.waz.service.teams
 
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AppLockFeatureFlag, FileSharingFeatureFlag}
+import com.waz.model.{AppLockFeatureConfig, FileSharingFeatureConfig}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.handler.FeatureFlagsSyncHandler
+import com.waz.sync.handler.FeatureConfigsSyncHandler
 import com.waz.testutils.TestUserPreferences
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class FeatureFlagsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
+class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   private val userPrefs = new TestUserPreferences
-  private val syncHandler = mock[FeatureFlagsSyncHandler]
+  private val syncHandler = mock[FeatureConfigsSyncHandler]
 
-  private def createService: FeatureFlagsService = new FeatureFlagsServiceImpl(syncHandler, userPrefs)
+  private def createService: FeatureConfigsService = new FeatureConfigsServiceImpl(syncHandler, userPrefs)
 
-  scenario("Fetch the AppLock feature flag and set properties") {
+  scenario("Fetch the AppLock feature config and set properties") {
     userPrefs.setValue(AppLockEnabled, false)
     userPrefs.setValue(AppLockForced, false)
     userPrefs.setValue(AppLockTimeout, Some(30.seconds))
 
     (syncHandler.fetchAppLock _).expects().anyNumberOfTimes().returning(
-      Future.successful(AppLockFeatureFlag(enabled = true, forced = true, timeout = Some(10.seconds)))
+      Future.successful(AppLockFeatureConfig(enabled = true, forced = true, timeout = Some(10.seconds)))
     )
 
     val service = createService
@@ -34,7 +34,7 @@ class FeatureFlagsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     result(userPrefs(AppLockTimeout).apply()) shouldEqual Some(10.seconds)
   }
 
-  scenario("When the AppLock feature flag is disabled, set the Disabled feature flag") {
+  scenario("When the AppLock feature config is disabled, set the Disabled feature flag") {
     // The name here is a bit confusing.
     // "AppLockEnabled" in case of the property tells if the feature is on.
     // "enabled" in case of the feature flag tells if the feature flag (set in the backend) interferes with the feature settings.
@@ -43,25 +43,25 @@ class FeatureFlagsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     userPrefs.setValue(AppLockTimeout, Some(30.seconds))
 
     (syncHandler.fetchAppLock _).expects().anyNumberOfTimes().returning(
-      Future.successful(AppLockFeatureFlag.Disabled)
+      Future.successful(AppLockFeatureConfig.Disabled)
     )
 
     val service = createService
     result(service.updateAppLock())
 
-    result(userPrefs(AppLockEnabled).apply()) shouldEqual AppLockFeatureFlag.Disabled.enabled
-    result(userPrefs(AppLockForced).apply()) shouldEqual AppLockFeatureFlag.Disabled.forced
-    result(userPrefs(AppLockTimeout).apply()) shouldEqual AppLockFeatureFlag.Disabled.timeout
+    result(userPrefs(AppLockEnabled).apply()) shouldEqual AppLockFeatureConfig.Disabled.enabled
+    result(userPrefs(AppLockForced).apply()) shouldEqual AppLockFeatureConfig.Disabled.forced
+    result(userPrefs(AppLockTimeout).apply()) shouldEqual AppLockFeatureConfig.Disabled.timeout
   }
 
-  scenario("Fetch the FileSharing feature flag and set properties") {
+  scenario("Fetch the FileSharing feature config and set properties") {
     // Given
     val service = createService
     userPrefs.setValue(FileSharingFeatureEnabled, true)
 
     // Mock
     (syncHandler.fetchFileSharing _).expects().anyNumberOfTimes().returning(
-      Future.successful(FileSharingFeatureFlag(enabled = false))
+      Future.successful(FileSharingFeatureConfig("disabled"))
     )
 
     // When
