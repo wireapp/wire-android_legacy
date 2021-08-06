@@ -2,13 +2,14 @@ package com.waz.sync.handler
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{AppLockFeatureFlag, TeamId}
+import com.waz.model.{AppLockFeatureFlag, FileSharingFeatureFlag, TeamId}
 import com.waz.sync.client.FeatureFlagsClient
 
 import scala.concurrent.Future
 
 trait FeatureFlagsSyncHandler {
   def fetchAppLock(): Future[AppLockFeatureFlag]
+  def fetchFileSharing(): Future[FileSharingFeatureFlag]
 }
 
 class FeatureFlagsSyncHandlerImpl(teamId: Option[TeamId], client: FeatureFlagsClient)
@@ -27,4 +28,13 @@ class FeatureFlagsSyncHandlerImpl(teamId: Option[TeamId], client: FeatureFlagsCl
           appLock
       }
   }
+
+  override def fetchFileSharing(): Future[FileSharingFeatureFlag] =
+    client.getFileSharing().map {
+      case Left(err) =>
+        error(l"Unable to fetch FileSharing feature flag: $err")
+        FileSharingFeatureFlag.Default
+      case Right(fileSharing) =>
+        fileSharing
+    }
 }

@@ -2,7 +2,7 @@ package com.waz.service.teams
 
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.AppLockFeatureFlag
+import com.waz.model.{AppLockFeatureFlag, FileSharingFeatureFlag}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.handler.FeatureFlagsSyncHandler
 import com.waz.testutils.TestUserPreferences
@@ -14,6 +14,8 @@ class FeatureFlagsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   private val userPrefs = new TestUserPreferences
   private val syncHandler = mock[FeatureFlagsSyncHandler]
+
+  private def createService: FeatureFlagsService = new FeatureFlagsServiceImpl(syncHandler, userPrefs)
 
   scenario("Fetch the AppLock feature flag and set properties") {
     userPrefs.setValue(AppLockEnabled, false)
@@ -52,5 +54,21 @@ class FeatureFlagsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     result(userPrefs(AppLockTimeout).apply()) shouldEqual AppLockFeatureFlag.Disabled.timeout
   }
 
-  private def createService: FeatureFlagsService = new FeatureFlagsServiceImpl(syncHandler, userPrefs)
+  scenario("Fetch the FileSharing feature flag and set properties") {
+    // Given
+    val service = createService
+    userPrefs.setValue(FileSharingFeatureEnabled, true)
+
+    // Mock
+    (syncHandler.fetchFileSharing _).expects().anyNumberOfTimes().returning(
+      Future.successful(FileSharingFeatureFlag(enabled = false))
+    )
+
+    // When
+    result(service.updateFileSharing())
+
+    // Then
+    result(userPrefs(FileSharingFeatureEnabled).apply()) shouldEqual false
+  }
+
 }

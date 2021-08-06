@@ -10,6 +10,7 @@ import scala.concurrent.Future
 
 trait FeatureFlagsService {
   def updateAppLock(): Future[Unit]
+  def updateFileSharing(): Future[Unit]
 }
 
 class FeatureFlagsServiceImpl(syncHandler: FeatureFlagsSyncHandler,
@@ -27,5 +28,12 @@ class FeatureFlagsServiceImpl(syncHandler: FeatureFlagsSyncHandler,
                  else if (appLock.forced) userPrefs(AppLockEnabled) := true
                  else Future.successful(())
       _       <- userPrefs(AppLockTimeout) := appLock.timeout
+    } yield ()
+
+  override def updateFileSharing(): Future[Unit] =
+    for {
+      fileSharing <- syncHandler.fetchFileSharing()
+      _           =  verbose(l"FileSharing feature flag : $fileSharing")
+      _           <- userPrefs(FileSharingFeatureEnabled) := fileSharing.enabled
     } yield ()
 }
