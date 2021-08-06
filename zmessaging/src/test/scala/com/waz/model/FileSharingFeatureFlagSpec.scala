@@ -20,7 +20,7 @@ class FileSharingFeatureFlagSpec extends AndroidFreeSpec {
       val fileSharingFeatureFlag: FileSharingFeatureFlag = JsonDecoder.decode[FileSharingFeatureFlag](json)
 
       // Then
-      fileSharingFeatureFlag.enabled shouldEqual true
+      fileSharingFeatureFlag.isEnabled shouldEqual true
     }
 
     scenario("Deserializing a disabled flag") {
@@ -36,7 +36,7 @@ class FileSharingFeatureFlagSpec extends AndroidFreeSpec {
       val fileSharingFeatureFlag: FileSharingFeatureFlag = JsonDecoder.decode[FileSharingFeatureFlag](json)
 
       // Then
-      fileSharingFeatureFlag.enabled shouldEqual false
+      fileSharingFeatureFlag.isEnabled shouldEqual false
     }
 
     scenario("Deserializing an error (empty json object)") {
