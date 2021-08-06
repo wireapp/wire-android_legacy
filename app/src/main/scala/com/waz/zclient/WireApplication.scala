@@ -329,6 +329,8 @@ object WireApplication extends DerivedLogTag {
     bind [UiTrackingController]    to new UiTrackingController()
 
     bind[MessagePagedListController] to new MessagePagedListController()
+
+    bind [FeatureFlagsController] to new FeatureFlagsController()
   }
 
   def clearOldVideoFiles(context: Context): Unit = {

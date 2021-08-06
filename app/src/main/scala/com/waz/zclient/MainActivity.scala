@@ -39,7 +39,7 @@ import com.waz.zclient.Intents.{RichIntent, _}
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
-import com.waz.zclient.common.controllers.{BrowserController, SharingController, UserAccountsController}
+import com.waz.zclient.common.controllers.{BrowserController, FeatureFlagsController, SharingController, UserAccountsController}
 import com.waz.zclient.common.fragments.ConnectivityFragment
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -91,6 +91,7 @@ class MainActivity extends BaseActivity
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
   private lazy val usersController        = inject[UsersController]
+  private lazy val featureFlagsController = inject[FeatureFlagsController]
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
@@ -235,6 +236,7 @@ class MainActivity extends BaseActivity
       }
     }
 
+    featureFlagsController.startUpdatingFlagsWhenEnteringForeground()
   }
 
   private def initTracking: Future[Unit] =
