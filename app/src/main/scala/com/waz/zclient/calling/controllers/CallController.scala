@@ -244,14 +244,24 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     case _ => Signal.const[Option[UserData]](None)
   }
 
-  val memberForPicture: Signal[Option[UserId]] = isGroupCall.flatMap {
-    case true  => Signal.const(None)
-    case false =>
-      for {
-        self   <- callingZms.map(_.selfUserId)
-        member <- conversationMembers.map(_.find(m => m._1 != self).map(_._1))
-      } yield member
-  }
+  val memberForPicture: Signal[Option[UserId]] =
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+      Signal.zip(isCallIncoming, videoSendState).flatMap {
+        case (true, VideoState.Started) => Signal.const(None)
+        case _ => for {
+          self <- callingZms.map(_.selfUserId)
+          member <- conversationMembers.map(_.find(m => m._1 != self).map(_._1))
+        } yield member
+      }
+     else
+      isGroupCall.flatMap {
+        case true => Signal.const(None)
+        case false =>
+          for {
+            self <- callingZms.map(_.selfUserId)
+            member <- conversationMembers.map(_.find(m => m._1 != self).map(_._1))
+          } yield member
+      }
 
   private lazy val lastControlsClick = Signal[(Boolean, Instant)]() //true = show controls and set timer, false = hide controls
 
