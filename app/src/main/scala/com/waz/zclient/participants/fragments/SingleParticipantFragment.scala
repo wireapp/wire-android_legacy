@@ -24,7 +24,7 @@ import android.widget.TextView
 import androidx.annotation.Nullable
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
-import com.waz.model.UserField
+import com.waz.model.{ConversationRole, UserField}
 import com.waz.service.ZMessaging
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
@@ -166,7 +166,7 @@ class SingleParticipantFragment extends FragmentHelper {
           participantsController.otherParticipant.map(_.fields),
           timerText,
           readReceipts,
-          participantsController.participants.map(_(userId)),
+          participantsController.participants.map(_.getOrElse(userId, ConversationRole.MemberRole)),
           participantsController.selfRole
         ).onUi {
           case (fields, tt, rr, pRole, sRole) if isTeamTheSame =>

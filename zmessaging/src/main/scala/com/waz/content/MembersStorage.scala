@@ -18,7 +18,6 @@
 package com.waz.content
 
 import android.content.Context
-import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao
@@ -27,7 +26,6 @@ import com.waz.utils.TrimmingLruCache.Fixed
 import com.wire.signals.{AggregatingSignal, Signal}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
-import scala.collection.immutable
 import scala.concurrent.Future
 
 trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberData] {
@@ -97,8 +95,13 @@ final class MembersStorageImpl(context: Context, storage: ZmsDatabase)
   override def updateOrCreateAll(conv: ConvId, user: UserId, role: ConversationRole): Future[Option[ConversationMemberData]] =
     updateOrCreateAll(conv, Map(user -> role)).map(_.headOption)
 
-  override def remove(conv: ConvId, users: Iterable[UserId]): Future[Set[ConversationMemberData]] =
-    getAll(users.map(_ -> conv)).flatMap(toBeRemoved => removeAll(users.map(_ -> conv)).map(_ => toBeRemoved.flatten.toSet))
+  override def remove(conv: ConvId, users: Iterable[UserId]): Future[Set[ConversationMemberData]] = {
+    val keys = users.map(_ -> conv)
+    for {
+      toBeRemoved <- getAll(keys)
+      _           <- removeAll(keys)
+    } yield toBeRemoved.flatten.toSet
+  }
 
   override def remove(conv: ConvId, user: UserId): Future[Option[ConversationMemberData]] =
     remove(conv, Set(user)).map(_.headOption)
