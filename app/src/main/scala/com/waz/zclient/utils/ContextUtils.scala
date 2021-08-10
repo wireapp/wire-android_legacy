@@ -353,4 +353,11 @@ object ContextUtils {
       color
     ).foreach(onConfirm)
   }
+
+  def showFileSharingRestrictionInfoDialog(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    showInfoDialog(
+      title = getString(R.string.file_sharing_restriction_info_dialog_title),
+      msg = getString(R.string.file_sharing_restriction_info_dialog_message)
+    ).foreach(onConfirm)
+  }
 }

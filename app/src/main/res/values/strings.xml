@@ -1646,5 +1646,9 @@
     <string name="join_conversation_conversation_join_error_title">You could not join the conversation</string>
     <string name="join_conversation_invalid_link_error_message">The conversation link is invalid.</string>
     <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
+
+    <!-- File sharing feature config change info dialog -->
+    <string name="file_sharing_restriction_info_dialog_title">File sharing restrictions</string>
+    <string name="file_sharing_restriction_info_dialog_message">The team admin changed the following features:\n\nSharing and receiving files of any type is disabled</string>
 </resources>
 
