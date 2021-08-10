@@ -28,7 +28,7 @@ import com.waz.service.push._
 import com.waz.services.ZMessagingService
 import com.waz.services.fcm.FCMHandlerService._
 import com.waz.threading.Threading
-import com.waz.utils.JsonDecoder
+import com.waz.utils.{JsonDecoder, returning}
 import com.waz.zclient.WireApplication
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security._
@@ -99,9 +99,11 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
     Option(remoteMessage.getData).map(_.asScala.toMap)
   }
 
-  private def isSenderKnown(globalModule: GlobalModule, pushSenderId: String): Boolean = {
-    globalModule.backend.pushSenderId == pushSenderId
-  }
+  private def isSenderKnown(globalModule: GlobalModule, pushSenderId: String): Boolean =
+    returning(globalModule.backend.pushSenderId == pushSenderId) {
+      case false => warn(l"A remote message from an unknown sender: $pushSenderId (our sender is ${globalModule.backend.pushSenderId})")
+      case _ =>
+    }
 
   private def getTargetAccount(data: Map[String, String]): Option[UserId] = {
     data.get(UserKey).map(UserId(_))
