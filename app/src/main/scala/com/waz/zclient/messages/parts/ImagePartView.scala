@@ -55,7 +55,13 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
   private val obfuscationContainer = findById[View](R.id.obfuscation_container)
   private val restrictionContainer = findById[View](R.id.restriction_container)
 
-  onClicked.onUi { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
+  onClicked.onUi { _ =>
+    viewState.head.foreach { state =>
+      if (state != AssetPartViewState.Restricted) {
+        message.head.map(assets.showSingleImage(_, this))(Threading.Ui)
+      }
+    }(Threading.Ui)
+  }
 
   (for {
     msg <- message
