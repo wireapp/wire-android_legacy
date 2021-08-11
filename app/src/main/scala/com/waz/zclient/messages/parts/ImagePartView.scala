@@ -57,15 +57,21 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
 
   onClicked.onUi { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
 
-  message.map(_.assetId).onUi { aId =>
+  (for {
+    msg <- message
+    state <- viewState
+  } yield (msg.assetId, state)).onUi { assetIdAndState =>
+    val (aId, state) = assetIdAndState
     verbose(l"message asset id => $aId")
-
-    aId.foreach { a =>
-      WireGlide(getContext)
-        .load(a)
-        .apply(new RequestOptions().fitCenter())
-        .transition(DrawableTransitionOptions.withCrossFade())
-        .into(imageView)
+    
+    if (state != AssetPartViewState.Restricted) {
+      aId.foreach { a =>
+        WireGlide(getContext)
+          .load(a)
+          .apply(new RequestOptions().fitCenter())
+          .transition(DrawableTransitionOptions.withCrossFade())
+          .into(imageView)
+      }
     }
   }
 
