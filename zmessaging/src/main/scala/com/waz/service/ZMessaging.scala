@@ -325,7 +325,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         foldersService.eventProcessingStage,
         propertiesService.eventProcessor,
         legalHold.legalHoldEventStage,
-        legalHold.messageEventStage
+        legalHold.messageEventStage,
+        featureConfigs.eventProcessingStage
       )
     )
   }

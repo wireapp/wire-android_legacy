@@ -249,6 +249,7 @@ object Event {
         case "user.legalhold-request" => LegalHoldRequestEvent(decodeId[UserId]('id), LegalHoldRequest.Decoder(js))
         case "user.legalhold-enable" => LegalHoldEnableEvent(decodeId[UserId]('id))
         case "user.legalhold-disable" => LegalHoldDisableEvent(decodeId[UserId]('id))
+        case "feature-config.update" => FeatureConfigUpdateEvent('name, 'data)
         case _ =>
           error(l"unhandled event: $js")
           UnknownEvent(js)
@@ -500,3 +501,6 @@ sealed trait LegalHoldEvent extends UserEvent
 case class LegalHoldRequestEvent(userId: UserId, request: LegalHoldRequest) extends LegalHoldEvent
 case class LegalHoldEnableEvent(userId: UserId) extends LegalHoldEvent
 case class LegalHoldDisableEvent(userId: UserId) extends LegalHoldEvent
+
+sealed trait FeatureConfigEvent extends Event
+case class FeatureConfigUpdateEvent(name: String, data: String) extends FeatureConfigEvent
