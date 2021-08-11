@@ -20,6 +20,8 @@ package com.waz.zclient.messages.parts.assets
 import android.view.View.OnLayoutChangeListener
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
+import com.waz.content.UserPreferences
+import com.waz.content.UserPreferences.FileSharingFeatureEnabled
 import com.waz.model.{Dim2, MessageContent}
 import com.waz.service.assets.{AssetStatus, DownloadAssetStatus, ImageDetails, UploadAssetStatus, VideoDetails}
 import com.waz.service.messages.MessageAndLikes
@@ -35,6 +37,7 @@ import com.waz.zclient.messages.parts.{EphemeralIndicatorPartView, EphemeralPart
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.zclient.messages.parts.assets.AssetPart.AssetPartViewState
 
 trait AssetPart extends View with ClickableViewPart with ViewHelper with EphemeralPartView { self =>
   val controller = inject[AssetsController]
@@ -57,9 +60,23 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
   val completed = deliveryState.map(_ == DeliveryState.Complete)
   val accentColorController = inject[AccentColorController]
   val previewAssetId = controller.assetPreviewId(assetId)
-  protected val showDots: Signal[Boolean] = deliveryState.map(state => state == OtherUploading)
 
   lazy val assetBackground = new AssetBackground(showDots, expired, accentColorController.accentColor)
+
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
+  private lazy val restricted = userPrefs.flatMap(_.preference(FileSharingFeatureEnabled).signal.map(isAllowed => !isAllowed))
+  private val showDots: Signal[Boolean] = deliveryState.map(state => state == OtherUploading)
+
+  lazy val viewState: Signal[AssetPartViewState] = for {
+    isRestricted <- restricted
+    isExpired <- expired
+    isLoading <- showDots
+  } yield {
+    if (isRestricted) AssetPartViewState.Restricted
+    else if (isExpired) AssetPartViewState.Obfuscated
+    else if (isLoading) AssetPartViewState.Loaded
+    else AssetPartViewState.Loaded
+  }
 
   //toggle content visibility to show only progress dot background if other side is uploading asset
   val hideContent = for {
@@ -70,6 +87,19 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
   onInflated()
 
   def onInflated(): Unit
+}
+
+object AssetPart {
+
+  final case class AssetPartViewState(value: Int)
+
+  object AssetPartViewState {
+    val Restricted = AssetPartViewState(0)
+    val Obfuscated = AssetPartViewState(1)
+    val Loading = AssetPartViewState(2)
+    val Loaded = AssetPartViewState(3)
+  }
+
 }
 
 trait ActionableAssetPart extends AssetPart {
