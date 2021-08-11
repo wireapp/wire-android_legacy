@@ -3,18 +3,19 @@ package com.waz.service.teams
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.sync.handler.FeatureFlagsSyncHandler
+import com.waz.sync.handler.FeatureConfigsSyncHandler
 import com.waz.log.LogSE._
 
 import scala.concurrent.Future
 
-trait FeatureFlagsService {
+trait FeatureConfigsService {
   def updateAppLock(): Future[Unit]
+  def updateFileSharing(): Future[Unit]
 }
 
-class FeatureFlagsServiceImpl(syncHandler: FeatureFlagsSyncHandler,
-                              userPrefs: UserPreferences)
-  extends FeatureFlagsService with DerivedLogTag {
+class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
+                                userPrefs: UserPreferences)
+  extends FeatureConfigsService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   override def updateAppLock(): Future[Unit] =
@@ -27,5 +28,12 @@ class FeatureFlagsServiceImpl(syncHandler: FeatureFlagsSyncHandler,
                  else if (appLock.forced) userPrefs(AppLockEnabled) := true
                  else Future.successful(())
       _       <- userPrefs(AppLockTimeout) := appLock.timeout
+    } yield ()
+
+  override def updateFileSharing(): Future[Unit] =
+    for {
+      fileSharing <- syncHandler.fetchFileSharing()
+      _           =  verbose(l"FileSharing feature flag : $fileSharing")
+      _           <- userPrefs(FileSharingFeatureEnabled) := fileSharing.isEnabled
     } yield ()
 }

@@ -36,7 +36,7 @@ import com.waz.service.media._
 import com.waz.service.messages._
 import com.waz.service.otr._
 import com.waz.service.push._
-import com.waz.service.teams.{FeatureFlagsService, FeatureFlagsServiceImpl, TeamsService, TeamsServiceImpl}
+import com.waz.service.teams.{FeatureConfigsService, FeatureConfigsServiceImpl, TeamsService, TeamsServiceImpl}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync._
 import com.waz.sync.client._
@@ -191,7 +191,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val usersClient        = new UsersClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val convClient         = new ConversationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val teamClient         = new TeamsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
-  lazy val featureFlagsClient = new FeatureFlagsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val featureConfigsClient = new FeatureConfigsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val pushNotificationsClient: PushNotificationsClient = new PushNotificationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val gcmClient          = new PushTokenClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val typingClient       = new TypingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
@@ -225,7 +225,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val convsUi: ConversationsUiService            = wire[ConversationsUiServiceImpl]
   lazy val selectedConv: SelectedConversationService  = wire[SelectedConversationServiceImpl]
   lazy val teams: TeamsService                        = wire[TeamsServiceImpl]
-  lazy val featureFlags: FeatureFlagsService          = wire[FeatureFlagsServiceImpl]
+  lazy val featureConfigs: FeatureConfigsService      = wire[FeatureConfigsServiceImpl]
   lazy val integrations: IntegrationsService          = wire[IntegrationsServiceImpl]
   lazy val messages: MessagesServiceImpl              = wire[MessagesServiceImpl]
   lazy val verificationUpdater                        = wire[VerificationStateUpdater]
@@ -253,7 +253,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val usersSync: UsersSyncHandler                = wire[UsersSyncHandlerImpl]
   lazy val conversationSync                           = wire[ConversationsSyncHandler]
   lazy val teamsSync:       TeamsSyncHandler          = wire[TeamsSyncHandlerImpl]
-  lazy val featureFlagsSync: FeatureFlagsSyncHandler  = wire[FeatureFlagsSyncHandlerImpl]
+  lazy val featureConfigsSync: FeatureConfigsSyncHandler  = wire[FeatureConfigsSyncHandlerImpl]
   lazy val connectionsSync                            = wire[ConnectionsSyncHandler]
   lazy val gcmSync                                    = wire[PushTokenSyncHandler]
   lazy val typingSync                                 = wire[TypingSyncHandler]
