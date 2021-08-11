@@ -36,6 +36,7 @@ import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.zclient.messages.parts.assets.AssetPart.AssetPartViewState
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
@@ -68,7 +69,30 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
     }
   }
 
-  hideContent.onUi { hide => imageView.setVisible(!hide) }
+  viewState.onUi {
+    case AssetPartViewState.Restricted =>
+      restrictionContainer.setVisible(true)
+      obfuscationContainer.setVisible(false)
+      imageView.setVisible(false)
+
+    case AssetPartViewState.Obfuscated =>
+      restrictionContainer.setVisible(false)
+      obfuscationContainer.setVisible(true)
+      imageView.setVisible(false)
+
+    case AssetPartViewState.Loading =>
+      restrictionContainer.setVisible(false)
+      obfuscationContainer.setVisible(false)
+      imageView.setVisible(false)
+
+    case AssetPartViewState.Loaded =>
+      restrictionContainer.setVisible(false)
+      obfuscationContainer.setVisible(false)
+      imageView.setVisible(true)
+
+    case unknown =>
+      info(l"Unknown AssetPartViewState: $unknown")
+  }
 
   override def onInflated(): Unit = {}
 }

@@ -61,11 +61,11 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
   val accentColorController = inject[AccentColorController]
   val previewAssetId = controller.assetPreviewId(assetId)
 
-  lazy val assetBackground = new AssetBackground(showDots, expired, accentColorController.accentColor)
+  lazy val assetBackground = new AssetBackground(viewState, accentColorController.accentColor)
 
   private lazy val userPrefs = inject[Signal[UserPreferences]]
   private lazy val restricted = userPrefs.flatMap(_.preference(FileSharingFeatureEnabled).signal.map(isAllowed => !isAllowed))
-  private val showDots: Signal[Boolean] = deliveryState.map(state => state == OtherUploading)
+  protected val showDots: Signal[Boolean] = deliveryState.map(state => state == OtherUploading)
 
   lazy val viewState: Signal[AssetPartViewState] = for {
     isRestricted <- restricted
@@ -179,8 +179,10 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
     maxW <- maxWidth
     maxH <- maxHeight
     Dim2(imW, imH) <- imageDim
+    state <- viewState
   } yield {
-    val heightToWidth = imH.toDouble / imW.toDouble
+    val heightToWidth = if (state == AssetPartViewState.Restricted) 9.0 / 16.0
+                        else imH.toDouble / imW.toDouble
 
     val height = heightToWidth * maxW
 

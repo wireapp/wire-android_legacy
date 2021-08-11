@@ -23,13 +23,14 @@ import com.waz.model.AccentColor
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.views.ProgressDotsDrawable
+import com.waz.zclient.messages.parts.assets.AssetPart.AssetPartViewState
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.ColorUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Offset
 import com.waz.zclient.{R, WireContext}
 
-class AssetBackground(showDots: Signal[Boolean], expired: Signal[Boolean], accent: Signal[AccentColor])(implicit context: WireContext, eventContext: EventContext) extends Drawable with Drawable.Callback {
+class AssetBackground(viewState: Signal[AssetPartViewState], accent: Signal[AccentColor])(implicit context: WireContext, eventContext: EventContext) extends Drawable with Drawable.Callback {
   private val cornerRadius = toPx(4)
   private val defColor = getColor(R.color.light_graphite_8)
 
@@ -45,17 +46,20 @@ class AssetBackground(showDots: Signal[Boolean], expired: Signal[Boolean], accen
   private var _padding = Offset.Empty
 
   (for {
-    dots <- showDots
-    pad <- padding
-    exp <- expired
+    state <- viewState
     acc <- accent
-  } yield (dots, pad, exp, acc)).on(Threading.Ui) {
-    case (dots, pad, exp, acc) =>
-      _showDots = dots
+    pad <- padding
+  } yield (state, acc, pad)).on(Threading.Ui) {
+    case (state, acc, pad) =>
+      _showDots = state == AssetPartViewState.Loading
       _padding = pad
 
-      if (exp) backgroundPaint.setColor(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(context), acc.color))
-      else backgroundPaint.setColor(defColor)
+      if (state == AssetPartViewState.Obfuscated) {
+        val backgroundColor = ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(context), acc.color)
+        backgroundPaint.setColor(backgroundColor)
+      } else {
+        backgroundPaint.setColor(defColor)
+      }
 
       invalidateSelf()
   }
