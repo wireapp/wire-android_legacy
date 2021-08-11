@@ -27,7 +27,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.wire.signals.{Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
@@ -37,7 +36,6 @@ import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
-import com.waz.utils.returning
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
@@ -55,13 +53,6 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
   private val imageIcon = findById[View](R.id.image_icon)
 
   private val imageView = findById[ImageView](R.id.image)
-
-  val noWifi: SourceSignal[Boolean] = returning(Signal(false)){ _.disableAutowiring() }
-
-  (for {
-    noW  <- noWifi
-    hide <- hideContent
-  } yield !hide && noW).on(Threading.Ui)(imageIcon.setVisible)
 
   onClicked.onUi { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
 
@@ -104,10 +95,6 @@ class WifiWarningPartView(context: Context, attrs: AttributeSet, style: Int) ext
     this.setVisible(false) //setVisible(true) is called for all view parts shortly before setting...
   }
 
-  override def onAttachedToWindow(): Unit = {
-    super.onAttachedToWindow()
-    imagePart.foreach(_.noWifi.on(Threading.Ui)(this.setVisible))
-  }
 }
 
 
