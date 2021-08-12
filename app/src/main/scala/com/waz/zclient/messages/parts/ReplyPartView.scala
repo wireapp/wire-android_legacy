@@ -24,6 +24,7 @@ import android.view.{View, ViewGroup}
 import android.widget.{ImageView, LinearLayout, TextView}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message
+import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.assets.Asset
@@ -58,6 +59,11 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
   def this(context: Context) = this(context, null, 0)
 
   private lazy val assetsController = inject[AssetsController]
+
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
+  lazy val isFileSharingRestricted: Signal[Boolean] = userPrefs
+    .flatMap(_.preference(UserPreferences.FileSharingFeatureEnabled).signal)
+    .map(isEnabled => !isEnabled)
 
   setOrientation(LinearLayout.HORIZONTAL)
   inflate(R.layout.message_reply_content_outer)
@@ -187,10 +193,19 @@ class ImageReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   override def tpe: MsgPart = Reply(Image)
 
   private val imageView = findById[ImageView](R.id.image)
+  private val restrictionContainer = findById[View](R.id.restriction_container)
 
-  quotedMessage.map(_.assetId).onUi {
-    case Some(aid: AssetId) => WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
-    case _ => WireGlide(context).clear(imageView)
+  Signal.zip(quotedMessage.map(_.assetId), isFileSharingRestricted).onUi {
+    case (Some(aid: AssetId), false) =>
+      imageView.setVisibility(View.VISIBLE)
+      restrictionContainer.setVisibility(View.GONE)
+      WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
+    case (_, true) =>
+      imageView.setVisibility(View.GONE)
+      restrictionContainer.setVisibility(View.VISIBLE)
+      WireGlide(context).clear(imageView)
+    case _ =>
+      WireGlide(context).clear(imageView)
   }
 }
 
