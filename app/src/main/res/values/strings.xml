@@ -1647,8 +1647,11 @@
     <string name="join_conversation_invalid_link_error_message">The conversation link is invalid.</string>
     <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
 
-    <!-- File sharing feature config change info dialog -->
+    <!-- File sharing feature config -->
     <string name="file_sharing_restriction_info_dialog_title">File sharing restrictions</string>
     <string name="file_sharing_restriction_info_dialog_message">The team admin changed the following features:\n\nSharing and receiving files of any type is disabled</string>
+
+    <string name="file_sharing_restriction_info_image">RECEIVING PICTURES RESTRICTED</string>
+
 </resources>
 
