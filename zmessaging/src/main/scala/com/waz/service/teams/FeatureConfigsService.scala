@@ -56,6 +56,17 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       _           <- storeFileSharing(fileSharing)
     } yield ()
 
-  private def storeFileSharing(fileSharing: FileSharingFeatureConfig): Future[Unit] =
-    userPrefs(FileSharingFeatureEnabled) := fileSharing.isEnabled
+  private def storeFileSharing(fileSharing: FileSharingFeatureConfig): Future[Unit] = {
+    for {
+      existingValue <- userPrefs(FileSharingFeatureEnabled).apply()
+      newValue      =  fileSharing.isEnabled
+      _             <- userPrefs(FileSharingFeatureEnabled) := newValue
+                       // Inform of new restrictions.
+      _             <- if (existingValue && !newValue) userPrefs(ShouldInformFileSharingRestriction) := true
+                       // Don't inform if restrictions are gone.
+                       else if (newValue) userPrefs(ShouldInformFileSharingRestriction) := false
+                       else Future.successful(())
+    } yield ()
+  }
+
 }

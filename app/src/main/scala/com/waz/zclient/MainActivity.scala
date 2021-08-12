@@ -236,6 +236,16 @@ class MainActivity extends BaseActivity
       }
     }
 
+    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformFileSharingRestriction).signal).onUi { shouldInform =>
+      if (shouldInform) {
+        showFileSharingRestrictionInfoDialog { _ =>
+          userPreferences.head.foreach { prefs =>
+            prefs(UserPreferences.ShouldInformFileSharingRestriction) := false
+          }
+        }
+      }
+    }
+
     featureConfigsController.startUpdatingFlagsWhenEnteringForeground()
   }
 

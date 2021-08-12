@@ -440,4 +440,5 @@ object UserPreferences {
   lazy val ShouldPostClientCapabilities: PrefKey[Boolean] = PrefKey[Boolean]("should_post_client_capabilities", customDefault = true)
 
   lazy val FileSharingFeatureEnabled: PrefKey[Boolean] = PrefKey[Boolean]("file_sharing_feature_enabled", customDefault = true)
+  lazy val ShouldInformFileSharingRestriction: PrefKey[Boolean] = PrefKey[Boolean]("should_inform_file_sharing_restriction", customDefault = false)
 }
