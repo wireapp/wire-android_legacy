@@ -26,8 +26,10 @@ import android.widget.{FrameLayout, ImageButton, ImageView, TextView}
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message.Type
+import com.waz.content.UserPreferences
 import com.waz.model.{AssetId, GeneralAssetId, MessageData}
 import com.waz.service.assets.{Asset, GeneralAsset}
+import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.glide.WireGlide
@@ -38,6 +40,7 @@ import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichTextView, RichView}
 import com.waz.zclient.{R, ViewHelper}
+import com.wire.signals.Signal
 
 class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends FrameLayout(context, attrs, defStyle) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -52,6 +55,11 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
   private val container = findById[ViewGroup](R.id.reply_container)
 
   private var onClose: () => Unit = () => {}
+
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
+  lazy val isFileSharingRestricted: Signal[Boolean] = userPrefs
+    .flatMap(_.preference(UserPreferences.FileSharingFeatureEnabled).signal)
+    .map(isEnabled => !isEnabled)
 
   closeButton.onClick(onClose())
 
@@ -105,17 +113,19 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
     }
     setStartIcon(drawMethod)
 
-    imageAsset match {
-      case Some(a: AssetId) =>
-        WireGlide(context)
-          .load(a)
-          .apply(new RequestOptions().transform(new CenterCrop(), new RoundedCorners(10)))
-          .into(image)
-        image.setVisibility(View.VISIBLE)
-      case _ =>
-        WireGlide(context).clear(image)
-        image.setVisibility(View.GONE)
-    }
+    isFileSharingRestricted.head.foreach { isRestricted =>
+      imageAsset match {
+        case Some(a: AssetId) if !isRestricted =>
+          WireGlide(context)
+            .load(a)
+            .apply(new RequestOptions().transform(new CenterCrop(), new RoundedCorners(10)))
+            .into(image)
+          image.setVisibility(View.VISIBLE)
+        case _ =>
+          WireGlide(context).clear(image)
+          image.setVisibility(View.GONE)
+      }
+    }(Threading.Ui)
   }
 
   private def setStartIcon(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit]): Unit =
