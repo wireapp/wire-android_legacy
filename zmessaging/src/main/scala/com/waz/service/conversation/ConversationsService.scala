@@ -181,7 +181,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
    * @return
    */
   private def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0, selfRequested: Boolean = false) = ev match {
-    case CreateConversationEvent(_, time, from, data) =>
+    case CreateConversationEvent(_, _, time, from, _, data) =>
       updateConversation(data).flatMap { case (_, created) => Future.traverse(created) { created =>
         messages.addConversationStartMessage(
           created.id,
@@ -220,7 +220,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   private def processUpdateEvent(conv: ConversationData, ev: ConversationEvent) = ev match {
-    case DeleteConversationEvent(_, time, from) => (for {
+    case DeleteConversationEvent(_, _, time, from, _) => (for {
       _ <- notificationService.displayNotificationForDeletingConversation(from, time, conv)
       _ <- deleteConversation(conv.id)
     } yield ()).recoverWith {
@@ -228,7 +228,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       Future.successful(())
     }
 
-    case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
+    case RenameConversationEvent(_, _, _, _, _, name) => content.updateConversationName(conv.id, name)
 
     case MemberJoinEvent(_, _, _, _, _, ids, us, _) =>
       // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
@@ -245,7 +245,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _          <- if (selfAdded && conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
       } yield ()
 
-    case MemberLeaveEvent(_, time, from, userIds, reason) =>
+    case MemberLeaveEvent(_, _, time, from, _, userIds, reason) =>
       val userIdSet = userIds.toSet
       for {
         syncId         <- users.syncIfNeeded(userIdSet -- Set(selfUserId))
@@ -260,7 +260,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                             Future.successful(None)
       } yield ()
 
-    case MemberUpdateEvent(_, _, userId, state) =>
+    case MemberUpdateEvent(_, _, _, userId, _, state) =>
       for {
         _      <- content.updateConversationState(conv.id, state)
         _      <- (state.target, state.conversationRole) match {
@@ -271,24 +271,24 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _      <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
       } yield ()
 
-    case ConnectRequestEvent(_, _, from, _, recipient, _, _) =>
+    case ConnectRequestEvent(_, _, _, from, _, _, recipient, _, _) =>
       membersStorage.updateOrCreateAll(conv.id, Map(from -> ConversationRole.AdminRole, recipient -> ConversationRole.AdminRole)).flatMap { added =>
         users.syncIfNeeded(added.map(_.userId))
       }
 
-    case ConversationAccessEvent(_, _, _, access, accessRole) =>
+    case ConversationAccessEvent(_, _, _, _, _, access, accessRole) =>
       content.updateAccessMode(conv.id, access, Some(accessRole))
 
-    case ConversationCodeUpdateEvent(_, _, _, l) =>
+    case ConversationCodeUpdateEvent(_, _, _, _, _, l) =>
       convsStorage.update(conv.id, _.copy(link = Some(l)))
 
-    case ConversationCodeDeleteEvent(_, _, _) =>
+    case ConversationCodeDeleteEvent(_, _, _, _, _) =>
       convsStorage.update(conv.id, _.copy(link = None))
 
-    case ConversationReceiptModeEvent(_, _, _, receiptMode) =>
+    case ConversationReceiptModeEvent(_, _, _, _, _, receiptMode) =>
       content.updateReceiptMode(conv.id, receiptMode = receiptMode)
 
-    case MessageTimerEvent(_, _, _, duration) =>
+    case MessageTimerEvent(_, _, _, _, _, duration) =>
       convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
 
     case _ => successful(())

@@ -230,7 +230,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (_, events) =>
     Future.traverse(events) {
-      case GenericMessageEvent(convId, time, _, content) =>
+      case GenericMessageEvent(convId, _, time, _, _, content) =>
         updateStatusFromMessageHint(convId, content.legalHoldStatus, time)
       case _ =>
         Future.successful(())

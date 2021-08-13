@@ -143,7 +143,7 @@ class PushServiceImpl(selfUserId:           UserId,
                 verbose(l"Ignoring duplicate message")
                 notificationStorage.remove(row.index)
               case Left(error) =>
-                val e = OtrErrorEvent(otrEvent.convId, otrEvent.time, otrEvent.from, error)
+                val e = OtrErrorEvent(otrEvent.convId, otrEvent.convDomain, otrEvent.time, otrEvent.from, otrEvent.fromDomain, error)
                 verbose(l"Got error when decrypting: $e")
                 tracking.msgDecryptionFailed(otrEvent.convId, this.selfUserId)
                 notificationStorage.writeError(row.index, e)
@@ -159,6 +159,7 @@ class PushServiceImpl(selfUserId:           UserId,
   private def processDecryptedRows(): Future[Unit] = {
     def decodeRow(event: PushNotificationEvent) =
       if(event.plain.isDefined && isOtrEventJson(event.event)) {
+        verbose(l"JSN otr event: ${event.event.toString(2)}")
         verbose(l"decodeRow($event) for an otr event")
         val msg = GenericMessage(event.plain.get)
         val msgEvent = ConversationEvent.ConversationEventDecoder(event.event)

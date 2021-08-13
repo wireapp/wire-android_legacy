@@ -816,8 +816,10 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
                     time: RemoteInstant = RemoteInstant(Instant.now())): GenericMessageEvent =
       GenericMessageEvent(
         convId,
+        None,
         time,
         UserId("senderId"),
+        None,
         message
       )
 

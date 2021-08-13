@@ -72,7 +72,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val conv = ConversationData(ConvId("conv"), RConvId("r_conv"), None, UserId("creator"), ConversationType.OneToOne)
 
       clock.advance(5.seconds)
-      val event = GenericMessageEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, GenericMessage(Uid("uid"), Text(text)))
+      val event = GenericMessageEvent(conv.remoteId, None, RemoteInstant(clock.instant()), sender, None, GenericMessage(Uid("uid"), Text(text)))
 
       (storage.updateOrCreate _).expects(*, *, *).onCall { (_, _, creator) => Future.successful(creator)}
       (storage.get _).expects(*).once().returns(Future.successful(None))
@@ -161,9 +161,9 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
         membersAdded.map(id => QualifiedId(id) -> ConversationRole.AdminRole).toMap
       ))
       clock.advance(1.second)
-      testRound(MemberLeaveEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, reason = None))
+      testRound(MemberLeaveEvent(conv.remoteId, None, RemoteInstant(clock.instant()), sender, None, membersAdded, reason = None))
       clock.advance(1.second)
-      testRound(RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, Name("new name")))
+      testRound(RenameConversationEvent(conv.remoteId, None, RemoteInstant(clock.instant()), sender, None, Name("new name")))
     }
 
     scenario("System message events are overridden if only local version is present") {
@@ -174,7 +174,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val localMsg = MessageData(MessageId(), conv.id, RENAME, selfUserId, time = RemoteInstant(clock.instant()), localTime = LocalInstant(clock.instant()), state = Status.PENDING)
 
       clock.advance(1.second) //some time later, we get the response from the backend
-      val event = RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), selfUserId, Name("new name"))
+      val event = RenameConversationEvent(conv.remoteId, None, RemoteInstant(clock.instant()), selfUserId, None, Name("new name"))
 
       (storage.hasSystemMessage _).expects(conv.id, event.time, RENAME, selfUserId).returning(Future.successful(false))
       (storage.getLastSentMessage _).expects(conv.id).anyNumberOfTimes().returning(Future.successful(None))
@@ -228,10 +228,10 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       }
 
       clock.advance(5.seconds)
-      val originalEvent = GenericMessageEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, GenericMessage(messageId, originalAsset))
+      val originalEvent = GenericMessageEvent(conv.remoteId, None, RemoteInstant(clock.instant()), sender, None, GenericMessage(messageId, originalAsset))
 
       clock.advance(5.seconds)
-      val uploadEvent = GenericMessageEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, GenericMessage(messageId, uploadAsset))
+      val uploadEvent = GenericMessageEvent(conv.remoteId, None, RemoteInstant(clock.instant()), sender, None, GenericMessage(messageId, uploadAsset))
 
       // Expectations
 
@@ -333,5 +333,5 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
   }
 
   private def event(convId: RConvId, sender: UserId, uid: String, composite: Composite) =
-    GenericMessageEvent(convId, RemoteInstant(clock.instant()), sender, GenericMessage(Uid(uid), composite))
+    GenericMessageEvent(convId, None, RemoteInstant(clock.instant()), sender, None, GenericMessage(Uid(uid), composite))
 }

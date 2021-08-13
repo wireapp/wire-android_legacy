@@ -98,8 +98,10 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   override def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent] = {
     val conv = otrMsg.convId
+    val convDomain = otrMsg.convDomain
     val time = otrMsg.time
     val from = otrMsg.from
+    val fromDomain = otrMsg.fromDomain
     val sender = otrMsg.sender
     val extData = otrMsg.externalData
     val localTime = otrMsg.localTime
@@ -113,21 +115,21 @@ class OtrServiceImpl(selfUserId:     UserId,
           decodeExternal(key, Some(sha), extData) match {
             case None =>
               error(l"External message could not be decoded External($key, $sha), data: $extData")
-              Some(OtrErrorEvent(conv, time, from, DecryptionError("symmetric decryption failed", Some(OtrError.ERROR_CODE_SYMMETRIC_DECRYPTION_FAILED), from, sender)))
+              Some(OtrErrorEvent(conv, convDomain, time, from, fromDomain, DecryptionError("symmetric decryption failed", Some(OtrError.ERROR_CODE_SYMMETRIC_DECRYPTION_FAILED), from, sender)))
             case Some(msg :GenericMessage) =>
               msg.unpackContent match {
                 case calling: Calling =>
-                  Some(CallMessageEvent(conv, time, from, sender, calling.unpack)) //call messages need sender client id
+                  Some(CallMessageEvent(conv, convDomain, time, from, fromDomain, sender, calling.unpack)) //call messages need sender client id
                 case _ =>
-                  Some(GenericMessageEvent(conv, time, from, msg).withLocalTime(localTime))
+                  Some(GenericMessageEvent(conv, convDomain, time, from, fromDomain, msg).withLocalTime(localTime))
               }
           }
-        case _: SessionReset =>
-          Some(SessionReset(conv, time, from, sender))
+        case ClientAction.SessionReset =>
+          Some(SessionReset(conv, convDomain, time, from, fromDomain, sender))
         case calling: Calling =>
-          Some(CallMessageEvent(conv, time, from, sender, calling.unpack)) //call messages need sender client id
+          Some(CallMessageEvent(conv, convDomain, time, from, fromDomain, sender, calling.unpack)) //call messages need sender client id
         case _ =>
-          Some(GenericMessageEvent(conv, time, from, genericMsg).withLocalTime(localTime))
+          Some(GenericMessageEvent(conv, convDomain, time, from, fromDomain, genericMsg).withLocalTime(localTime))
       }
     }
   }
