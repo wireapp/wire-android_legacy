@@ -106,7 +106,6 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
       info(l"Unknown AssetPartViewState: $unknown")
   }
 
-  override def onInflated(): Unit = {}
 }
 
 class WifiWarningPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
