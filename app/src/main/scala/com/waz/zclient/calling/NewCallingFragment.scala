@@ -151,9 +151,10 @@ class NewCallingFragment extends FragmentHelper {
     Signal.zip(
       callController.selfParticipant,
       callController.showTopSpeakers,
-      callController.allParticipants.map(_.size)
+      callController.allParticipants.map(_.size),
+      callController.isCallEstablished
     ).foreach {
-      case (selfParticipant, showTopSpeakers, participantsCount) =>
+      case (selfParticipant, showTopSpeakers, participantsCount, true) =>
 
         val selfVideoView = new SelfVideoView(getContext, selfParticipant)
 
