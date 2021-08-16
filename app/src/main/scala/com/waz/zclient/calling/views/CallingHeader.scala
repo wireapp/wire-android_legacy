@@ -47,9 +47,8 @@ class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleA
   controller.subtitleText.onUi(subtitleView.setText)
   controller.conversationName.onUi(nameView.setText(_))
 
-  Signal.zip(controller.isCallEstablished, vbrSettingsEnabled, controller.isGroupCall, controller.cbrEnabled).map {
-    case (true, _, false, Some(true)) => getString(R.string.audio_message_constant_bit_rate)
-    case (true, false, false, Some(false)) => getString(R.string.audio_message_variable_bit_rate)
+  Signal.zip(controller.isCallEstablished, controller.isGroupCall, controller.cbrEnabled).map {
+    case (true, false, Some(true)) => getString(R.string.audio_message_constant_bit_rate)
     case _ => ""
   }.onUi(bitRateModeView.setText)
 }
