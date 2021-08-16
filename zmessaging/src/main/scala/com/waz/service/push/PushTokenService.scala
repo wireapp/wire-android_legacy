@@ -178,7 +178,7 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
         error(l"Failed action on google APIs, probably due to server connectivity error, will retry again", ex)
         for {
           _ <- CancellableFuture.delay(ResetBackoff.delay(attempts)).future
-          _ <- network.networkMode.filter(_ != NetworkMode.OFFLINE).head
+          _ <- network.isOnline.onTrue
           t <- retry(f, attempts + 1)
         } yield t
     })(_.failed.foreach(throw _))

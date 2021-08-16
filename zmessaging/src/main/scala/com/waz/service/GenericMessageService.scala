@@ -93,8 +93,7 @@ class GenericMessageService(selfUserId: UserId,
           buttonConfirmations += msgId -> buttonId
         case dt: DataTransfer if from == selfUserId =>
           newTrackingIds += dt.unpack
-        case unknown =>
-          warn(l"An unknown event content is being processed: $unknown")
+        case _ =>
       }
     }
   }

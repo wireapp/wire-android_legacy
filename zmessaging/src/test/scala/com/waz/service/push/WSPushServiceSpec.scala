@@ -22,6 +22,7 @@ import java.net.URL
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Uid, UserId}
+import com.waz.service.NetworkModeService
 import com.waz.service.push.WSPushServiceImpl.RequestCreator
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.AuthenticationManager.AccessToken
@@ -42,6 +43,7 @@ import scala.concurrent.duration._
   private val accessTokenProvider = mock[AccessTokenProvider]
   private val webSocketFactory = mock[WebSocketFactory]
   private val webSocket = mock[WebSocket]
+  private val network = mock[NetworkModeService]
 
   private val accessTokenSuccess = Future.successful(Right(AccessToken("token", "type")))
   private val accessTokenError = Future.successful(Left(ErrorResponse.InternalError))
@@ -54,7 +56,7 @@ import scala.concurrent.duration._
                                   requestCreator:      RequestCreator = _ => httpRequest,
                                   webSocketFactory:    WebSocketFactory = webSocketFactory,
                                   backoff:             Backoff = ExponentialBackoff.constantBackof(100.millis)) = {
-    new WSPushServiceImpl(userId, accessTokenProvider, requestCreator, webSocketFactory, backoff)
+    new WSPushServiceImpl(userId, accessTokenProvider, requestCreator, webSocketFactory, network, backoff)
   }
 
   feature("WSPushService") {
