@@ -38,7 +38,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages._
-import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
+import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.ui.text.{LinkTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getString, getStyledColor}
@@ -82,7 +82,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
     case Reply(Location)   => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
     case Reply(AudioAsset) => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
     case Reply(VideoAsset) => Some(inflate(R.layout.message_reply_content_video, addToParent = false))
-    case Reply(FileAsset)  => Some(inflate(R.layout.message_reply_content_file, addToParent = false))
+    case Reply(FileAsset)  => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
     case Reply(Unknown)    => Some(inflate(R.layout.message_reply_content_unknown, addToParent = false))
     case _ => None
   }
@@ -229,23 +229,19 @@ class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
   override def tpe: MsgPart = Reply(FileAsset)
 
   private lazy val textView = findById[TypefaceTextView](R.id.text)
-  private lazy val restrictionText = findById[TypefaceTextView](R.id.restriction_text)
 
-  private lazy val restrictionIcon = returning(findById[GenericStyleKitView](R.id.restricted_file_icon)) { view =>
-    view.setOnDraw(drawFileBlocked)
-    view.setColor(getStyledColor(R.attr.wirePrimaryTextColor))
+  private lazy val restrictionText = returning(findById[TypefaceTextView](R.id.restriction_text)) { view =>
+    view.setText((R.string.file_sharing_restriction_info_file))
   }
 
   quotedAsset.map(_.map(_.name).getOrElse("")).onUi(textView.setText)
 
   isFileSharingRestricted.onUi {
     case true =>
-      textView.setStartCompoundDrawable(None)
-      restrictionIcon.setVisibility(View.VISIBLE)
+      textView.setStartCompoundDrawable(Some(drawFileBlocked))
       restrictionText.setVisibility(View.VISIBLE)
     case false =>
       textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
-      restrictionIcon.setVisibility(View.GONE)
       restrictionText.setVisibility(View.GONE)
   }
 
