@@ -32,6 +32,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
   import MessageEvent._
 
   feature("Event parsing") {
+
     scenario("parse UserConnectionEvent") {
 
       Given("some json data")

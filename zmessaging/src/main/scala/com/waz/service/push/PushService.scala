@@ -159,7 +159,6 @@ class PushServiceImpl(selfUserId:           UserId,
   private def processDecryptedRows(): Future[Unit] = {
     def decodeRow(event: PushNotificationEvent) =
       if(event.plain.isDefined && isOtrEventJson(event.event)) {
-        verbose(l"JSN otr event: ${event.event.toString(2)}")
         verbose(l"decodeRow($event) for an otr event")
         val msg = GenericMessage(event.plain.get)
         val msgEvent = ConversationEvent.ConversationEventDecoder(event.event)
