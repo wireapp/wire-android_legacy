@@ -33,6 +33,7 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.glide.WireGlide
+import com.waz.zclient.messages.parts.assets.FileAssetPartView
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.ui.text.LinkTextView
@@ -71,27 +72,30 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
   def setMessage(messageData: MessageData, asset: Option[GeneralAsset], senderName: String): Unit = {
     setSender(senderName, messageData.isEdited)
 
-    messageData.msgType match {
-      case Type.TEXT | Type.TEXT_EMOJI_ONLY | Type.RICH_MEDIA =>
-        set(messageData.contentString, bold = false, None, None)
-      case Type.LOCATION =>
-        set(messageData.location.map(_.getName).getOrElse(getString(R.string.reply_message_type_location)), bold = true, Some(WireStyleKit.drawLocation), None)
-      case Type.VIDEO_ASSET =>
-        set(getString(R.string.reply_message_type_video), bold = true, Some(WireStyleKit.drawVideocall), messageData.assetId)
-      case Type.IMAGE_ASSET =>
-        set(getString(R.string.reply_message_type_image), bold = true, Some(WireStyleKit.drawImage), messageData.assetId)
-      case Type.AUDIO_ASSET =>
-        set(getString(R.string.reply_message_type_audio), bold = true, Some(WireStyleKit.drawVoiceMemo), None)
-      case Type.ANY_ASSET =>
-        val assetName = asset match {
-          case Some(a: Asset) => a.name
-          case _ => getString(R.string.reply_message_type_asset)
-        }
+    isFileSharingRestricted.head.foreach { isRestricted =>
+      messageData.msgType match {
+        case Type.TEXT | Type.TEXT_EMOJI_ONLY | Type.RICH_MEDIA =>
+          set(messageData.contentString, bold = false, None, None)
+        case Type.LOCATION =>
+          set(messageData.location.map(_.getName).getOrElse(getString(R.string.reply_message_type_location)), bold = true, Some(WireStyleKit.drawLocation), None)
+        case Type.VIDEO_ASSET =>
+          set(getString(R.string.reply_message_type_video), bold = true, Some(WireStyleKit.drawVideocall), messageData.assetId)
+        case Type.IMAGE_ASSET =>
+          set(getString(R.string.reply_message_type_image), bold = true, Some(WireStyleKit.drawImage), messageData.assetId)
+        case Type.AUDIO_ASSET =>
+          set(getString(R.string.reply_message_type_audio), bold = true, Some(WireStyleKit.drawVoiceMemo), None)
+        case Type.ANY_ASSET =>
+          val assetName = asset match {
+            case Some(a: Asset) => a.name
+            case _ => getString(R.string.reply_message_type_asset)
+          }
 
-        set(assetName, bold = true, Some(WireStyleKit.drawFile), None)
-      case _ =>
-      // Other types shouldn't be able to be replied to
-    }
+          set(assetName, bold = true, Some(if (isRestricted) drawFileBlocked else WireStyleKit.drawFile), None)
+        case _ =>
+        // Other types shouldn't be able to be replied to
+      }
+    }(Threading.Ui)
+
   }
 
   private def setSender(name: String, edited: Boolean): Unit = {
@@ -130,6 +134,9 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
 
   private def setStartIcon(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit]): Unit =
     contentText.setStartCompoundDrawable(drawMethod)
+
+  private def drawFileBlocked(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    FileAssetPartView.drawBitmap(canvas, targetFrame, color, R.attr.fileBlocked)(getContext)
 }
 
 object ReplyView {
