@@ -20,7 +20,6 @@ package com.waz.zclient.messages.parts.assets
 import java.util.Locale
 
 import android.content.Context
-import android.graphics.{Bitmap, Canvas, Paint, PorterDuff, PorterDuffColorFilter, RectF}
 import android.text.format.Formatter
 import android.util.AttributeSet
 import android.view.View
@@ -34,9 +33,9 @@ import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.messages.parts.assets.DeliveryState._
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{ContextUtils, RichView}
+import com.waz.zclient.utils.{RichView, StyleKitMethods}
 import com.waz.threading.Threading._
-import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
+import com.waz.zclient.paintcode.GenericStyleKitView
 
 class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with ActionableAssetPart with FileLayoutAssetPart with HighlightViewPart { self =>
@@ -55,7 +54,7 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   private val restrictedFileNameTextView: TextView = findById(R.id.restricted_file_name)
 
   returning(findById[GenericStyleKitView](R.id.restricted_file_icon)) { view =>
-    view.setOnDraw(drawFileBlocked)
+    view.setOnDraw(StyleKitMethods().drawFileBlocked)
     view.setColor(getStyledColor(R.attr.wirePrimaryTextColor))
   }
 
@@ -139,30 +138,4 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
     }
   }
 
-  private def drawFileBlocked(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
-    FileAssetPartView.drawBitmap(canvas, targetFrame, color, R.attr.fileBlocked)(getContext)
-
 }
-
-object FileAssetPartView {
-
-  def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int)(implicit context: Context): Unit =
-    ContextUtils.getStyledDrawable(resourceId, context.getTheme).foreach { drawable =>
-      val paint = returning(new Paint) { p =>
-        p.reset()
-        p.setFlags(Paint.ANTI_ALIAS_FLAG)
-        p.setStyle(Paint.Style.FILL)
-        p.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_ATOP))
-      }
-      val width = targetFrame.width().toInt
-      val height = targetFrame.height().toInt
-      val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-      val c = new Canvas(bitmap)
-      drawable.setBounds(0, 0, c.getWidth, c.getHeight)
-      drawable.draw(c)
-      canvas.drawBitmap(bitmap, targetFrame.left, targetFrame.top, paint)
-    }
-
-}
-
-

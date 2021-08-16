@@ -33,13 +33,12 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.glide.WireGlide
-import com.waz.zclient.messages.parts.assets.FileAssetPartView
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.ui.text.LinkTextView
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{RichTextView, RichView}
+import com.waz.zclient.utils.{RichTextView, RichView, StyleKitMethods}
 import com.waz.zclient.{R, ViewHelper}
 import com.wire.signals.Signal
 
@@ -90,7 +89,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
             case _ => getString(R.string.reply_message_type_asset)
           }
 
-          set(assetName, bold = true, Some(if (isRestricted) drawFileBlocked else WireStyleKit.drawFile), None)
+          set(assetName, bold = true, Some(if (isRestricted) StyleKitMethods().drawFileBlocked else WireStyleKit.drawFile), None)
         case _ =>
         // Other types shouldn't be able to be replied to
       }
@@ -134,9 +133,6 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
 
   private def setStartIcon(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit]): Unit =
     contentText.setStartCompoundDrawable(drawMethod)
-
-  private def drawFileBlocked(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
-    FileAssetPartView.drawBitmap(canvas, targetFrame, color, R.attr.fileBlocked)(getContext)
 }
 
 object ReplyView {

@@ -18,7 +18,7 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
-import android.graphics.{Canvas, RectF, Typeface}
+import android.graphics.Typeface
 import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
 import android.widget.{ImageView, LinearLayout, TextView}
@@ -43,12 +43,11 @@ import com.waz.zclient.ui.text.{LinkTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getString, getStyledColor}
 import com.waz.zclient.utils.Time.DateTimeStamp
-import com.waz.zclient.utils.{RichTextView, RichView}
+import com.waz.zclient.utils.{RichTextView, RichView, StyleKitMethods}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 import com.waz.threading.Threading._
 import com.waz.utils.returning
-import com.waz.zclient.messages.parts.assets.FileAssetPartView
 
 abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
@@ -238,15 +237,12 @@ class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
   isFileSharingRestricted.onUi {
     case true =>
-      textView.setStartCompoundDrawable(Some(drawFileBlocked))
+      textView.setStartCompoundDrawable(Some(StyleKitMethods().drawFileBlocked))
       restrictionText.setVisibility(View.VISIBLE)
     case false =>
       textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
       restrictionText.setVisibility(View.GONE)
   }
-
-  private def drawFileBlocked(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
-    FileAssetPartView.drawBitmap(canvas, targetFrame, color, R.attr.fileBlocked)(getContext)
 
 }
 
