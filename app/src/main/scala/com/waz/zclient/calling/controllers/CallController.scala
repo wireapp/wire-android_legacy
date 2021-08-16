@@ -246,8 +246,9 @@ class CallController(implicit inj: Injector, cxt: WireContext)
 
   val memberForPicture: Signal[Option[UserId]] =
     if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
-      Signal.zip(isCallIncoming, videoSendState).flatMap {
-        case (true, VideoState.Started) => Signal.const(None)
+      Signal.zip(isCallEstablished, videoSendState).flatMap {
+        case (true, _) => Signal.const(None)
+        case (false, VideoState.Started) => Signal.const(None)
         case _ => fetchMember()
       }
      else

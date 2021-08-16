@@ -232,8 +232,7 @@ class CallingGridFragment extends FragmentHelper {
       }
     }
 
-    if (!participantsToShow.filter(_.clientId == selfClientId).isEmpty)
-      callController.isSelfViewVisible ! true
+    if (participantsToShow.exists(_.clientId == selfClientId)) callController.isSelfViewVisible ! true
     else callController.isSelfViewVisible ! false
 
     participantsToShow.map { participant => viewMap.getOrElse(participant, createView(participant)) }
