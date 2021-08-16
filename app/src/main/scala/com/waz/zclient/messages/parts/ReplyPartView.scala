@@ -18,7 +18,7 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
-import android.graphics.Typeface
+import android.graphics.{Canvas, RectF, Typeface}
 import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
 import android.widget.{ImageView, LinearLayout, TextView}
@@ -38,7 +38,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages._
-import com.waz.zclient.paintcode.WireStyleKit
+import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.ui.text.{LinkTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getString, getStyledColor}
@@ -48,6 +48,7 @@ import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 import com.waz.threading.Threading._
 import com.waz.utils.returning
+import com.waz.zclient.messages.parts.assets.FileAssetPartView
 
 abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
@@ -81,7 +82,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
     case Reply(Location)   => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
     case Reply(AudioAsset) => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
     case Reply(VideoAsset) => Some(inflate(R.layout.message_reply_content_video, addToParent = false))
-    case Reply(FileAsset)  => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
+    case Reply(FileAsset)  => Some(inflate(R.layout.message_reply_content_file, addToParent = false))
     case Reply(Unknown)    => Some(inflate(R.layout.message_reply_content_unknown, addToParent = false))
     case _ => None
   }
@@ -228,9 +229,29 @@ class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
   override def tpe: MsgPart = Reply(FileAsset)
 
   private lazy val textView = findById[TypefaceTextView](R.id.text)
+  private lazy val restrictionText = findById[TypefaceTextView](R.id.restriction_text)
+
+  private lazy val restrictionIcon = returning(findById[GenericStyleKitView](R.id.restricted_file_icon)) { view =>
+    view.setOnDraw(drawFileBlocked)
+    view.setColor(getStyledColor(R.attr.wirePrimaryTextColor))
+  }
 
   quotedAsset.map(_.map(_.name).getOrElse("")).onUi(textView.setText)
-  textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
+
+  isFileSharingRestricted.onUi {
+    case true =>
+      textView.setStartCompoundDrawable(None)
+      restrictionIcon.setVisibility(View.VISIBLE)
+      restrictionText.setVisibility(View.VISIBLE)
+    case false =>
+      textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
+      restrictionIcon.setVisibility(View.GONE)
+      restrictionText.setVisibility(View.GONE)
+  }
+
+  private def drawFileBlocked(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    FileAssetPartView.drawBitmap(canvas, targetFrame, color, R.attr.fileBlocked)(getContext)
+
 }
 
 class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {

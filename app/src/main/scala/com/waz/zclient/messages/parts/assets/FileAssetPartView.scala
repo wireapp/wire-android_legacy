@@ -140,9 +140,13 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   private def drawFileBlocked(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
-    drawBitmap(canvas, targetFrame, color, R.attr.fileBlocked)
+    FileAssetPartView.drawBitmap(canvas, targetFrame, color, R.attr.fileBlocked)(getContext)
 
-  private def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int): Unit =
+}
+
+object FileAssetPartView {
+
+  def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int)(implicit context: Context): Unit =
     ContextUtils.getStyledDrawable(resourceId, context.getTheme).foreach { drawable =>
       val paint = returning(new Paint) { p =>
         p.reset()
@@ -150,13 +154,15 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
         p.setStyle(Paint.Style.FILL)
         p.setColorFilter(new PorterDuffColorFilter(color, PorterDuff.Mode.SRC_ATOP))
       }
-      val bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth, drawable.getIntrinsicHeight, Bitmap.Config.ARGB_8888)
+      val width = targetFrame.width().toInt
+      val height = targetFrame.height().toInt
+      val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
       val c = new Canvas(bitmap)
       drawable.setBounds(0, 0, c.getWidth, c.getHeight)
       drawable.draw(c)
       canvas.drawBitmap(bitmap, targetFrame.left, targetFrame.top, paint)
     }
-}
 
+}
 
 
