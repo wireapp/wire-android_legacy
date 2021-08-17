@@ -46,9 +46,9 @@ class SerialProcessingQueueSpec extends AndroidFreeSpec with Matchers with Scala
       val convId = RConvId()
       val future = queue.enqueue(
         Seq(
-          TypingEvent(convId, RemoteInstant(Instant.now()), UserId(), isTyping = true),
-          TypingEvent(convId, RemoteInstant(Instant.now()), UserId(), isTyping = true),
-          TypingEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), isTyping = true)
+          TypingEvent(convId, None, RemoteInstant(Instant.now()), UserId(), None, isTyping = true),
+          TypingEvent(convId, None, RemoteInstant(Instant.now()), UserId(), None, isTyping = true),
+          TypingEvent(RConvId(), None, RemoteInstant(Instant.now()), UserId(), None, isTyping = true)
         )
       )
 

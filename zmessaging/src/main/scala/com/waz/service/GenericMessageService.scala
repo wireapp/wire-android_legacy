@@ -70,7 +70,7 @@ class GenericMessageService(selfUserId: UserId,
 
   private def updateCaches(events: Seq[GenericMessageEvent]): Unit = {
     clearCaches()
-    events.foreach { case GenericMessageEvent(_, time, from, content) =>
+    events.foreach { case GenericMessageEvent(_, _, time, from, _, content) =>
       content.unpackContent match {
         case r: Reaction =>
           val (msg, action) = r.unpack
