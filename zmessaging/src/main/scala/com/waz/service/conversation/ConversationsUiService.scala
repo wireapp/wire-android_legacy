@@ -78,7 +78,7 @@ trait ConversationsUiService {
 
   def addRestrictedFileMessage(convId: ConvId, from: Option[UserId] = None, extension: Option[String] = None): Future[Option[MessageData]]
 
-  def addConversationMembers(conv: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]]
+  def addConversationMembers(conv: ConvId, members: Set[UserId], defaultRole: ConversationRole, enforceModifyMembers: Boolean = false): Future[Option[SyncId]]
   def removeConversationMember(conv: ConvId, user: UserId): Future[Option[SyncId]]
 
   def leaveConversation(conv: ConvId): Future[Unit]
@@ -306,9 +306,12 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       nonQualified =  userIds -- qualified.keySet
     } yield (qualified.values.flatten.toSet, nonQualified)
 
-  override def addConversationMembers(conv: ConvId, userIds: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
+  override def addConversationMembers(conv:                 ConvId,
+                                      userIds:              Set[UserId],
+                                      defaultRole:          ConversationRole,
+                                      enforceModifyMembers: Boolean = false): Future[Option[SyncId]] =
     (for {
-      true                  <- canModifyMembers(conv)
+      true                  <- if (enforceModifyMembers) Future.successful(true) else canModifyMembers(conv)
       contacted             <- members.getByUsers(userIds)
       toSync                =  userIds -- contacted.map(_.userId).toSet
       _                     <- if (toSync.nonEmpty) userService.syncUsers(toSync) else Future.successful(())
@@ -357,7 +360,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
         }
     }
 
-  override def leaveConversation(conv: ConvId) = {
+  override def leaveConversation(conv: ConvId): Future[Unit] = {
     verbose(l"leaveConversation($conv)")
     for {
       _ <- convsContent.setConvActive(conv, active = false)
@@ -481,7 +484,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     for {
       (conv, syncId)        <- createAndPostConversation(ConvId(), name, Set.empty, teamOnly, receiptMode, defaultRole, tempRConvId)
       _                     <- syncRequests.await(syncId)
-      _                     <- addConversationMembers(conv.id, members, defaultRole)
+      _                     <- addConversationMembers(conv.id, members, defaultRole, enforceModifyMembers = true)
     } yield (conv, syncId)
   }
 
