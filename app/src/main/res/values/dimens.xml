@@ -690,4 +690,5 @@
 
     <dimen name="blocked_file_icon_size">24dp</dimen>
     <dimen name="blocked_file_icon_size_small">16dp</dimen>
+    <dimen name="blocked_file_icon_size_large">32dp</dimen>
 </resources>

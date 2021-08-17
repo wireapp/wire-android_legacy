@@ -30,6 +30,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
+import com.waz.content.UserPreferences
+import com.waz.content.UserPreferences.FileSharingFeatureEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -53,6 +55,9 @@ trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedL
   protected lazy val civZms = inject[Signal[ZMessaging]]
   protected lazy val messageActions = inject[MessageActionsController]
   protected lazy val collectionController = inject[CollectionController]
+
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
+  lazy val restricted = userPrefs.flatMap(_.preference(FileSharingFeatureEnabled).signal.map(isAllowed => !isAllowed))
 
   val messageData: SourceSignal[MessageData] = Signal()
 
