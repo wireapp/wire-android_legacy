@@ -7,6 +7,7 @@ import com.waz.zclient.storage.db.accountdata.AccessTokenConverter
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsDao
 import com.waz.zclient.storage.db.accountdata.GLOBAL_DATABASE_MIGRATION_24_25
 import com.waz.zclient.storage.db.accountdata.GLOBAL_DATABASE_MIGRATION_25_26
+import com.waz.zclient.storage.db.accountdata.GLOBAL_DATABASE_MIGRATION_26_27
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
 import com.waz.zclient.storage.db.accountdata.SsoIdConverter
 import com.waz.zclient.storage.db.cache.CacheEntryDao
@@ -28,9 +29,13 @@ abstract class GlobalDatabase : RoomDatabase() {
 
     companion object {
         const val DB_NAME = "ZGlobal.db"
-        const val VERSION = 26
+        const val VERSION = 27
 
         @JvmStatic
-        val migrations = arrayOf(GLOBAL_DATABASE_MIGRATION_24_25, GLOBAL_DATABASE_MIGRATION_25_26)
+        val migrations = arrayOf(
+            GLOBAL_DATABASE_MIGRATION_24_25,
+            GLOBAL_DATABASE_MIGRATION_25_26,
+            GLOBAL_DATABASE_MIGRATION_26_27
+        )
     }
 }

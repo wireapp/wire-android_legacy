@@ -310,7 +310,7 @@ object OtrService {
 
   val EncryptionFailedMsg = "\uD83D\uDCA3".getBytes("utf8")
 
-  case class SessionId(user: UserId, client: ClientId) {
+  final case class SessionId(user: UserId, client: ClientId) {
     override def toString: String = s"${user}_$client"
   }
 
