@@ -29,7 +29,6 @@ import com.waz.api.Message.Type
 import com.waz.content.UserPreferences
 import com.waz.model.{AssetId, GeneralAssetId, MessageData}
 import com.waz.service.assets.{Asset, GeneralAsset}
-import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.glide.WireGlide
@@ -42,9 +41,13 @@ import com.waz.zclient.utils.{RichTextView, RichView, StyleKitMethods}
 import com.waz.zclient.{R, ViewHelper}
 import com.wire.signals.Signal
 
+import scala.concurrent.Future
+
 class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends FrameLayout(context, attrs, defStyle) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
+
+  import com.waz.threading.Threading.Implicits.Ui
 
   inflate(R.layout.reply_view)
 
@@ -57,9 +60,10 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
   private var onClose: () => Unit = () => {}
 
   private lazy val userPrefs = inject[Signal[UserPreferences]]
-  lazy val isFileSharingRestricted: Signal[Boolean] = userPrefs
-    .flatMap(_.preference(UserPreferences.FileSharingFeatureEnabled).signal)
-    .map(isEnabled => !isEnabled)
+  private def isFileSharingRestricted: Future[Boolean] =
+    userPrefs.head
+      .flatMap(_.preference(UserPreferences.FileSharingFeatureEnabled).apply())
+      .map(isEnabled => !isEnabled)
 
   closeButton.onClick(onClose())
 
@@ -71,7 +75,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
   def setMessage(messageData: MessageData, asset: Option[GeneralAsset], senderName: String): Unit = {
     setSender(senderName, messageData.isEdited)
 
-    isFileSharingRestricted.head.foreach { isRestricted =>
+    isFileSharingRestricted.foreach { isRestricted =>
       messageData.msgType match {
         case Type.TEXT | Type.TEXT_EMOJI_ONLY | Type.RICH_MEDIA =>
           set(messageData.contentString, bold = false, None, None)
@@ -93,7 +97,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
         case _ =>
         // Other types shouldn't be able to be replied to
       }
-    }(Threading.Ui)
+    }
 
   }
 
@@ -116,7 +120,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
     }
     setStartIcon(drawMethod)
 
-    isFileSharingRestricted.head.foreach { isRestricted =>
+    isFileSharingRestricted.foreach { isRestricted =>
       imageAsset match {
         case Some(a: AssetId) if !isRestricted =>
           WireGlide(context)
@@ -128,7 +132,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
           WireGlide(context).clear(image)
           image.setVisibility(View.GONE)
       }
-    }(Threading.Ui)
+    }
   }
 
   private def setStartIcon(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit]): Unit =
