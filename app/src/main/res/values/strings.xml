@@ -1652,6 +1652,7 @@
     <string name="file_sharing_restriction_info_dialog_message">The team admin changed the following features:\n\nSharing and receiving files of any type is disabled</string>
 
     <string name="file_sharing_restriction_info_image">RECEIVING PICTURES RESTRICTED</string>
+    <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS RESTRICTED</string>
 
 </resources>
 
