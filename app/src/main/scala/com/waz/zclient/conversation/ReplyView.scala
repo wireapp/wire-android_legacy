@@ -75,30 +75,30 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
   def setMessage(messageData: MessageData, asset: Option[GeneralAsset], senderName: String): Unit = {
     setSender(senderName, messageData.isEdited)
 
-    isFileSharingRestricted.foreach { isRestricted =>
-      messageData.msgType match {
-        case Type.TEXT | Type.TEXT_EMOJI_ONLY | Type.RICH_MEDIA =>
-          set(messageData.contentString, bold = false, None, None)
-        case Type.LOCATION =>
-          set(messageData.location.map(_.getName).getOrElse(getString(R.string.reply_message_type_location)), bold = true, Some(WireStyleKit.drawLocation), None)
-        case Type.VIDEO_ASSET =>
-          set(getString(R.string.reply_message_type_video), bold = true, Some(WireStyleKit.drawVideocall), messageData.assetId)
-        case Type.IMAGE_ASSET =>
-          set(getString(R.string.reply_message_type_image), bold = true, Some(WireStyleKit.drawImage), messageData.assetId)
-        case Type.AUDIO_ASSET =>
-          set(getString(R.string.reply_message_type_audio), bold = true, Some(WireStyleKit.drawVoiceMemo), None)
-        case Type.ANY_ASSET =>
-          val assetName = asset match {
-            case Some(a: Asset) => a.name
-            case _ => getString(R.string.reply_message_type_asset)
-          }
+    messageData.msgType match {
+      case Type.TEXT | Type.TEXT_EMOJI_ONLY | Type.RICH_MEDIA =>
+        set(messageData.contentString, bold = false, None, None)
+      case Type.LOCATION =>
+        set(messageData.location.map(_.getName).getOrElse(getString(R.string.reply_message_type_location)), bold = true, Some(WireStyleKit.drawLocation), None)
+      case Type.VIDEO_ASSET =>
+        set(getString(R.string.reply_message_type_video), bold = true, Some(WireStyleKit.drawVideocall), messageData.assetId)
+      case Type.IMAGE_ASSET =>
+        set(getString(R.string.reply_message_type_image), bold = true, Some(WireStyleKit.drawImage), messageData.assetId)
+      case Type.AUDIO_ASSET =>
+        set(getString(R.string.reply_message_type_audio), bold = true, Some(WireStyleKit.drawVoiceMemo), None)
+      case Type.ANY_ASSET =>
+        val assetName = asset match {
+          case Some(a: Asset) => a.name
+          case _ => getString(R.string.reply_message_type_asset)
+        }
 
+        isFileSharingRestricted.foreach { isRestricted =>
           set(assetName, bold = true, Some(if (isRestricted) StyleKitMethods().drawFileBlocked else WireStyleKit.drawFile), None)
-        case _ =>
-        // Other types shouldn't be able to be replied to
-      }
-    }
+        }
 
+      case _ =>
+      // Other types shouldn't be able to be replied to
+    }
   }
 
   private def setSender(name: String, edited: Boolean): Unit = {
