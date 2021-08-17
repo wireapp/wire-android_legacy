@@ -29,7 +29,6 @@ import com.waz.api.Message.Type
 import com.waz.content.UserPreferences
 import com.waz.model.{AssetId, GeneralAssetId, MessageData}
 import com.waz.service.assets.{Asset, GeneralAsset}
-import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.glide.WireGlide
