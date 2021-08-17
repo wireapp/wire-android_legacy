@@ -327,6 +327,13 @@
         <item name="callIconDisabledActivatedColor">@color/graphite_40</item>
         <item name="callMutedIcon">@drawable/ic_muted_overlay_light_theme</item>
         <item name="callUnmutedIcon">@drawable/ic_unmuted_overlay_light_theme</item>
+        <item name="callActiveMicrophone">@drawable/ic_microphone_active</item>
+        <item name="callInactiveMicrophone">@drawable/ic_microphone_inactive</item>
+        <item name="callActiveCamera">@drawable/ic_camera_active</item>
+        <item name="callInactiveCamera">@drawable/ic_camera_inactive</item>
+        <item name="callActiveSpeaker">@drawable/ic_speaker_active</item>
+        <item name="callInactiveSpeaker">@drawable/ic_speaker_inactive</item>
+        <item name="callFlip">@drawable/ic_flip</item>
 
         <!-- OTR -->
         <item name="otrClientLink">@style/otr_client__link__light</item>
