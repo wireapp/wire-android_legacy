@@ -43,7 +43,7 @@ import com.waz.zclient.ui.text.{LinkTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getString, getStyledColor}
 import com.waz.zclient.utils.Time.DateTimeStamp
-import com.waz.zclient.utils.{RichTextView, RichView}
+import com.waz.zclient.utils.{RichTextView, RichView, StyleKitMethods}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 import com.waz.threading.Threading._
@@ -229,8 +229,21 @@ class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
+  private lazy val restrictionText = returning(findById[TypefaceTextView](R.id.restriction_text)) { view =>
+    view.setText((R.string.file_sharing_restriction_info_file))
+  }
+
   quotedAsset.map(_.map(_.name).getOrElse("")).onUi(textView.setText)
-  textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
+
+  isFileSharingRestricted.onUi {
+    case true =>
+      textView.setStartCompoundDrawable(Some(StyleKitMethods().drawFileBlocked))
+      restrictionText.setVisibility(View.VISIBLE)
+    case false =>
+      textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
+      restrictionText.setVisibility(View.GONE)
+  }
+
 }
 
 class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {

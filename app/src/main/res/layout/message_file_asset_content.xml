@@ -18,77 +18,164 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:id="@+id/content"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:baselineAligned="false"
-              android:orientation="horizontal"
-              android:layout_marginEnd="@dimen/content__padding_right"
-              android:layout_marginStart="@dimen/content__padding_left"
-              android:paddingEnd="@dimen/wire__padding__12"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginEnd="@dimen/content__padding_right"
+    android:layout_marginStart="@dimen/content__padding_left"
+    android:paddingEnd="@dimen/wire__padding__12"
     >
 
-    <FrameLayout
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        >
-
-        <com.waz.zclient.messages.parts.assets.AssetActionButton
-            android:id="@+id/action_button"
-            android:layout_width="@dimen/content__audio_message__button__size"
-            android:layout_height="@dimen/content__audio_message__button__size"
-            android:layout_gravity="center"
-            android:layout_margin="@dimen/wire__padding__12"
-            android:textColor="@color/white"
-            android:textSize="@dimen/content__audio_message__glyph_size"
-            app:isFileType="true"
-            />
-
-        <!--TODO incorporate this into the action button-->
-        <com.waz.zclient.ui.text.GlyphTextView
-            android:id="@+id/done_indicator"
-            android:layout_width="@dimen/content__audio_message__download_done_indicator__size"
-            android:layout_height="@dimen/content__audio_message__download_done_indicator__size"
-            android:layout_gravity="center"
-            android:layout_marginStart="@dimen/content__audio_message__download_done_indicator__offset_left"
-            android:layout_marginTop="@dimen/content__audio_message__download_done_indicator__offset_top"
-            android:background="?messageStreamFileDownloadDoneIndicatorBackground"
-            android:gravity="center"
-            android:text="@string/glyph__check"
-            android:textColor="?wirePrimaryTextColorReverted"
-            android:textSize="@dimen/wire__text_size__tiny"
-            />
-
-    </FrameLayout>
+    <!-- Content  -->
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_weight="1"
-        android:orientation="vertical"
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
         >
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/file_name"
-            style="?attr/messageStreamSubtitleStrong"
+        <FrameLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ellipsize="middle"
-            app:w_font="@string/wire__typeface__light"
-            android:maxLines="1"
-            />
+            android:layout_height="match_parent"
+            >
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/file_info"
-            style="?messageStreamSubtitleNoColor"
-            android:layout_width="wrap_content"
+            <com.waz.zclient.messages.parts.assets.AssetActionButton
+                android:id="@+id/action_button"
+                android:layout_width="@dimen/content__audio_message__button__size"
+                android:layout_height="@dimen/content__audio_message__button__size"
+                android:layout_gravity="center"
+                android:layout_margin="@dimen/wire__padding__12"
+                android:textColor="@color/white"
+                android:textSize="@dimen/content__audio_message__glyph_size"
+                app:isFileType="true"
+                />
+
+            <!--TODO incorporate this into the action button-->
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:id="@+id/done_indicator"
+                android:layout_width="@dimen/content__audio_message__download_done_indicator__size"
+                android:layout_height="@dimen/content__audio_message__download_done_indicator__size"
+                android:layout_gravity="center"
+                android:layout_marginStart="@dimen/content__audio_message__download_done_indicator__offset_left"
+                android:layout_marginTop="@dimen/content__audio_message__download_done_indicator__offset_top"
+                android:background="?messageStreamFileDownloadDoneIndicatorBackground"
+                android:gravity="center"
+                android:text="@string/glyph__check"
+                android:textColor="?wirePrimaryTextColorReverted"
+                android:textSize="@dimen/wire__text_size__tiny"
+                />
+
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            app:w_font="@string/wire__typeface__light"
-            />
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            >
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/file_name"
+                style="?attr/messageStreamSubtitleStrong"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="middle"
+                app:w_font="@string/wire__typeface__light"
+                android:maxLines="1"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/file_info"
+                style="?messageStreamSubtitleNoColor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:w_font="@string/wire__typeface__light"
+                />
+
+        </LinearLayout>
 
     </LinearLayout>
 
-</LinearLayout>
+    <!-- Obfuscation container  -->
+
+    <FrameLayout
+        android:id="@+id/obfuscation_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/glyph__file"
+            android:textColor="@color/graphite_40"
+            android:textSize="@dimen/wire__icon_button__text_size"/>
+    </FrameLayout>
+
+    <!-- The restriction container -->
+
+    <FrameLayout
+        android:id="@+id/restriction_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="start"
+            android:orientation="horizontal">
+
+            <com.waz.zclient.paintcode.GenericStyleKitView
+                android:id="@+id/restricted_file_icon"
+                android:layout_width="@dimen/blocked_file_icon_size"
+                android:layout_height="@dimen/blocked_file_icon_size"
+                android:layout_gravity="center"
+                android:layout_margin="@dimen/wire__padding__12"
+                />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:id="@+id/restricted_file_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:layout_marginBottom="@dimen/wire__padding__2"
+                    android:textColor="?wirePrimaryTextColor"
+                    android:textSize="@dimen/wire__text_size__small"
+                    android:maxLines="1"
+                    android:ellipsize="middle"
+                    app:w_font="@string/wire__typeface__medium" />
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:text="@string/file_sharing_restriction_info_file"
+                    android:textColor="?wireSecondaryTextColor"
+                    android:textSize="@dimen/wire__text_size__small"
+                    app:w_font="@string/wire__typeface__light"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</FrameLayout>
+
+

@@ -144,6 +144,9 @@
     <!-- Audio message -->
     <attr name="audioMessageDuration" format="reference" />
 
+    <!-- File message -->
+    <attr name="fileBlocked" format="reference" />
+
     <!-- Giphy -->
     <attr name="giphyControl" format="reference" />
     <attr name="giphyError" format="reference" />
