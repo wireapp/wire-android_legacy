@@ -19,8 +19,11 @@ package com.waz.zclient.messages.parts.assets
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.{FrameLayout, SeekBar}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.service.assets.AssetStatus
 import com.waz.service.assets.Asset.{Audio, Video}
 import com.waz.threading.Threading
@@ -32,18 +35,53 @@ import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.{RichSeekBar, RichView, StringUtils}
 import org.threeten.bp.Duration
 import com.waz.threading.Threading._
+import com.waz.zclient.log.LogUI.info
+import com.waz.zclient.messages.parts.assets.AssetPart.AssetPartViewState
 
 class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
-  extends FrameLayout(context, attrs, style) with PlayableAsset with FileLayoutAssetPart with HighlightViewPart {
-  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  extends FrameLayout(context, attrs, style)
+    with PlayableAsset
+    with FileLayoutAssetPart
+    with HighlightViewPart
+    with DerivedLogTag {
 
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.AudioAsset
 
+  private val content = findById[View](R.id.content)
+  private val obfuscationContainer = findById[View](R.id.obfuscation_container)
+  private val restrictionContainer = findById[View](R.id.restriction_container)
+
   private val progressBar: SeekBar = findById(R.id.progress)
 
   accentColorController.accentColor.map(_.color).onUi(progressBar.setColor)
+
+  viewState.onUi {
+    case AssetPartViewState.Restricted =>
+      restrictionContainer.setVisibility(View.VISIBLE)
+      obfuscationContainer.setVisibility(View.GONE)
+      content.setVisibility(View.GONE)
+
+    case AssetPartViewState.Obfuscated =>
+      restrictionContainer.setVisibility(View.GONE)
+      obfuscationContainer.setVisibility(View.VISIBLE)
+      content.setVisibility(View.GONE)
+
+    case AssetPartViewState.Loading =>
+      restrictionContainer.setVisibility(View.GONE)
+      obfuscationContainer.setVisibility(View.GONE)
+      content.setVisibility(View.GONE)
+
+    case AssetPartViewState.Loaded =>
+      restrictionContainer.setVisibility(View.GONE)
+      obfuscationContainer.setVisibility(View.GONE)
+      content.setVisibility(View.VISIBLE)
+
+    case unknown =>
+      info(l"Unknown AssetPartViewState: $unknown")
+  }
 
   private val details = asset.map(_.details)
   private val duration = details.map {
@@ -54,10 +92,12 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   duration.onUi(progressBar.setMax)
 
-  private val readyToPlay = details.map {
-    case _: Video => true
-    case _: Audio => true
-    case _        => false
+  private val readyToPlay = for {
+    assetDetails <- details
+    state        <- viewState
+  } yield {
+    if (state == AssetPartViewState.Restricted) false
+    else assetDetails.isInstanceOf[Video] || assetDetails.isInstanceOf[Audio]
   }
 
   private val progressInMillis = for {

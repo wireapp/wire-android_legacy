@@ -111,5 +111,4 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
     durationView.setMargin(p.l, p.t, p.r, p.b)
   }
 
-  override def onInflated(): Unit = ()
 }

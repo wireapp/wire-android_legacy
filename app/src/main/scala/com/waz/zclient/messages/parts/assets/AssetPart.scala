@@ -18,14 +18,13 @@
 package com.waz.zclient.messages.parts.assets
 
 import android.view.View.OnLayoutChangeListener
-import android.view.{View, ViewGroup}
+import android.view.View
 import android.widget.{FrameLayout, TextView}
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.FileSharingFeatureEnabled
 import com.waz.model.{Dim2, MessageContent}
 import com.waz.service.assets.{AssetStatus, DownloadAssetStatus, ImageDetails, UploadAssetStatus, VideoDetails}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.AssetsController
@@ -78,15 +77,6 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
     else AssetPartViewState.Loaded
   }
 
-  //toggle content visibility to show only progress dot background if other side is uploading asset
-  val hideContent = for {
-    exp <- expired
-    st <- deliveryState
-  } yield exp || st == OtherUploading
-
-  onInflated()
-
-  def onInflated(): Unit
 }
 
 object AssetPart {
@@ -141,16 +131,9 @@ trait PlayableAsset extends ActionableAssetPart {
 }
 
 trait FileLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
-  private lazy val content: ViewGroup = findById[ViewGroup](R.id.content)
-  //For file and audio assets - we can hide the whole content
-  //For images and video, we don't want the view to collapse (since they use merge tags), so we let them hide their content separately
+  private lazy val container = findById[FrameLayout](R.id.container)
 
-  override def onInflated(): Unit = {
-    content.setBackground(assetBackground)
-    hideContent.map(!_).on(Threading.Ui) { v =>
-      (0 until content.getChildCount).foreach(content.getChildAt(_).setVisible(v))
-    }
-  }
+  container.setBackground(assetBackground)
 }
 
 trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {

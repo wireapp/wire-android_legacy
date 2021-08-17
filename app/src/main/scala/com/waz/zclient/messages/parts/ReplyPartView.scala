@@ -263,9 +263,16 @@ class AudioReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   override def tpe: MsgPart = Reply(AudioAsset)
 
   private lazy val textView = findById[TypefaceTextView](R.id.text)
+  private lazy val restrictionText = findById[TypefaceTextView](R.id.restriction_text)
 
   textView.setText(R.string.reply_message_type_audio)
   textView.setStartCompoundDrawable(Some(WireStyleKit.drawVoiceMemo))
+
+  restrictionText.setText(R.string.file_sharing_restriction_info_audio)
+
+  isFileSharingRestricted.onUi { isRestricted =>
+    restrictionText.setVisibility(if (isRestricted) View.VISIBLE else View.GONE)
+  }
 }
 
 class UnknownReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {

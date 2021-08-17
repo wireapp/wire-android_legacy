@@ -1653,6 +1653,7 @@
 
     <string name="file_sharing_restriction_info_image">RECEIVING PICTURES RESTRICTED</string>
     <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS RESTRICTED</string>
+    <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES RESTRICTED</string>
 
 </resources>
 
