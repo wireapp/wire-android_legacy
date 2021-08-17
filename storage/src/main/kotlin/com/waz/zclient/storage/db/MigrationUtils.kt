@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.users.migration
+package com.waz.zclient.storage.db
 
 import androidx.sqlite.db.SupportSQLiteDatabase
 import android.util.Log

@@ -33,18 +33,20 @@ import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder}
   * Any information that needs to be deregistered can be kept here (e.g., de-registered cookies, tokens, clients etc)
   */
 
-case class AccountData(id:           UserId              = UserId(),
-                       teamId:       Option[TeamId]      = None,
-                       cookie:       Cookie              = Cookie(""), //defaults for tests
-                       accessToken:  Option[AccessToken] = None,
-                       pushToken:    Option[PushToken]   = None,
-                       password:     Option[Password]    = None, //password never saved to database
-                       ssoId:        Option[SSOId]       = None
-                      ) extends Identifiable[UserId] {
+final case class AccountData(id:           UserId              = UserId(),
+                             domain:       Option[String]      = None,
+                             teamId:       Option[TeamId]      = None,
+                             cookie:       Cookie              = Cookie(""), //defaults for tests
+                             accessToken:  Option[AccessToken] = None,
+                             pushToken:    Option[PushToken]   = None,
+                             password:     Option[Password]    = None, //password never saved to database
+                             ssoId:        Option[SSOId]       = None
+                            ) extends Identifiable[UserId] {
 
   override def toString: String =
     s"""AccountData:
        | id:              $id
+       | domain:          $domain
        | teamId:          $teamId
        | cookie:          $cookie
        | accessToken:     $accessToken
@@ -56,13 +58,13 @@ case class AccountData(id:           UserId              = UserId(),
 
 object AccountData {
 
-  case class Password(str: String) {
+  final case class Password(str: String) extends AnyVal {
     override def toString: String = str
   }
 
   //Labels can be used to revoke all cookies for a given client
   //TODO save labels and use them for cleanup later
-  case class Label(str: String) {
+  final case class Label(str: String) extends AnyVal {
     override def toString: String = str
   }
 
@@ -76,8 +78,8 @@ object AccountData {
   }
 
   implicit object AccountDataDao extends Dao[AccountData, UserId] {
-    val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.id)
-
+    val Id             = id[UserId]('_id, "PRIMARY KEY").apply(_.id)
+    val Domain         = opt(text('domain))(_.domain)
     val TeamId         = opt(id[TeamId]('team_id)).apply(_.teamId)
     val Cookie         = text[Cookie]('cookie, _.str, AuthenticationManager.Cookie)(_.cookie)
     val Token          = opt(text[AccessToken]('access_token, JsonEncoder.encodeString[AccessToken], JsonDecoder.decode[AccessToken]))(_.accessToken)
@@ -85,22 +87,22 @@ object AccountData {
     val SSOId          = opt(json[SSOId]('sso_id))(_.ssoId)
 
     override val idCol = Id
-    override val table = Table("ActiveAccounts", Id, TeamId, Cookie, Token, RegisteredPush, SSOId)
+    override val table = Table("ActiveAccounts", Id, Domain, TeamId, Cookie, Token, RegisteredPush, SSOId)
 
-    override def apply(implicit cursor: DBCursor): AccountData = AccountData(Id, TeamId, Cookie, Token, RegisteredPush, None, SSOId)
+    override def apply(implicit cursor: DBCursor): AccountData = AccountData(Id, Domain, TeamId, Cookie, Token, RegisteredPush, None, SSOId)
   }
 }
 
-
-case class PhoneNumber(str: String) extends AnyVal {
+final case class PhoneNumber(str: String) extends AnyVal {
   override def toString: String = str
 }
+
 object PhoneNumber extends (String => PhoneNumber) {
   implicit def IsOrdered: Ordering[PhoneNumber] = currentLocaleOrdering.on(_.str)
   implicit val Encoder: JsonEncoder[PhoneNumber] = JsonEncoder.build(p => js => js.put("phone", p.str))
   implicit val Decoder: JsonDecoder[PhoneNumber] = JsonDecoder.lift(implicit js => PhoneNumber(JsonDecoder.decodeString('phone)))
 }
 
-case class ConfirmationCode(str: String) extends AnyVal {
+final case class ConfirmationCode(str: String) extends AnyVal {
   override def toString: String = str
 }

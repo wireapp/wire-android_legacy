@@ -3,7 +3,8 @@ package com.waz.zclient.storage.db.users.migration
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.waz.zclient.storage.db.users.migration.MigrationUtils.addColumn
+import com.waz.zclient.storage.db.MigrationUtils
+import com.waz.zclient.storage.db.MigrationUtils.addColumn
 
 val USER_DATABASE_MIGRATION_129_TO_130 = object : Migration(129, 130) {
     override fun migrate(database: SupportSQLiteDatabase) {

@@ -45,6 +45,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Right, Success}
 
 class AccountManager(val userId:  UserId,
+                     domain:      Option[String],
                      val teamId:  Option[TeamId],
                      val global:  GlobalModule,
                      accounts:    AccountsService,
