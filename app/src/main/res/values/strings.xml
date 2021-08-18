@@ -1647,10 +1647,10 @@
     <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
 
     <!-- File sharing feature config -->
-    <string name="file_sharing_restriction_info_dialog_title">File sharing restrictions</string>
-    <string name="file_sharing_restriction_info_dialog_message">The team admin changed the following features:\n\nSharing and receiving files of any type is disabled</string>
+    <string name="file_sharing_restriction_info_dialog_title">There has been a change in Wire</string>
+    <string name="file_sharing_restriction_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
 
-    <string name="file_sharing_restriction_info_image">RECEIVING PICTURES RESTRICTED</string>
+    <string name="file_sharing_restriction_info_image">RECEIVING IMAGES RESTRICTED</string>
     <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS RESTRICTED</string>
     <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES RESTRICTED</string>
     <string name="file_sharing_restriction_info_file">RECEIVING FILES RESTRICTED</string>
