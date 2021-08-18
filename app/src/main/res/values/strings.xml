@@ -1654,6 +1654,7 @@
     <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS RESTRICTED</string>
     <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES RESTRICTED</string>
     <string name="file_sharing_restriction_info_file">RECEIVING FILES RESTRICTED</string>
+    <string name="file_sharing_restriction_info_generic">FILE SHARING RESTRICTED</string>
 
 </resources>
 
