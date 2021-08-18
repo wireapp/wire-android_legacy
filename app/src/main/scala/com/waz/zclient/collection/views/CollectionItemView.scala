@@ -198,6 +198,7 @@ class CollectionFileAssetPartView(context: Context, attrs: AttributeSet, style: 
     import Threading.Implicits.Ui
     for {
       false <- expired.head
+      false <- restricted.head
     } assetActionButton.callOnClick()
   }
 
