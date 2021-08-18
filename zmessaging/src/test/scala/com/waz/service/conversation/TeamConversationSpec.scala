@@ -28,7 +28,7 @@ import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService, Se
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
-import com.waz.sync.{SyncRequestService, SyncServiceHandle}
+import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.testutils.TestGlobalPreferences
 
 import scala.concurrent.Future
@@ -111,16 +111,19 @@ class TeamConversationSpec extends AndroidFreeSpec {
       )))
 
       (convsStorage.getAll _).expects(Seq(existingConv.id)).once().returning(Future.successful(Seq(Some(existingConv))))
-      (convsContent.createConversationWithMembers _)
-        .expects(*, *, Group, selfId, Set(otherUserId), ConversationRole.AdminRole, None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, 0).once().onCall {
-        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
+      (convsContent.createConversation _)
+        .expects(*, *, Group, selfId, ConversationRole.AdminRole, None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, 0).once().onCall {
+        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
       }
-      (messages.addConversationStartMessage _).expects(*, selfId, Set(otherUserId), None, *, None).once().returning(Future.successful({}))
+      (messages.addConversationStartMessage _).expects(*, selfId, *, None, *, None).once().returning(Future.successful({}))
       (sync.postConversation _)
-        .expects(*, Set(otherUserId), None, team, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, Some(0), *)
+        .expects(*, *, None, team, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, Some(0), *)
         .once()
         .returning(Future.successful(SyncId()))
+      (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
+      (members.isActiveMember _).expects(*, *).anyNumberOfTimes().returning(Future.successful(true))
+      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
 
       (convsService.generateTempConversationId _).expects(*).anyNumberOfTimes().returning(RConvId())
 
@@ -140,9 +143,9 @@ class TeamConversationSpec extends AndroidFreeSpec {
       (users.isFederated(_: UserId)).expects(otherUserId).once().returning(Future.successful(false))
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
-      (convsContent.createConversationWithMembers _)
-        .expects(ConvId("otherUser"), *, Incoming, otherUserId, Set(selfId), ConversationRole.AdminRole, None, true, Set(Access.PRIVATE), AccessRole.PRIVATE, 0).once().onCall {
-        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, us: Set[UserId], _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
+      (convsContent.createConversation _)
+        .expects(ConvId("otherUser"), *, Incoming, otherUserId, ConversationRole.AdminRole, None, true, Set(Access.PRIVATE), AccessRole.PRIVATE, 0).once().onCall {
+        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
       }
 

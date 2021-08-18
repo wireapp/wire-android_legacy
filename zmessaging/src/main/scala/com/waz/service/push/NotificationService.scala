@@ -134,9 +134,9 @@ class NotificationServiceImpl(selfUserId:      UserId,
 
   override val connectionNotificationEventStage = EventScheduler.Stage[Event]({ (_, events) =>
     val toShow = events.collect {
-      case UserConnectionEvent(_, _, userId, msg, ConnectionStatus.PendingFromOther, time, _) =>
+      case UserConnectionEvent(_, _, _, userId, msg, ConnectionStatus.PendingFromOther, time, _) =>
         NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time)
-      case UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, _) =>
+      case UserConnectionEvent(_, _, _, userId, _, ConnectionStatus.Accepted, time, _) =>
         NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time)
     }
 
@@ -307,7 +307,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
   private def getReactionChanges(events: Vector[Event]) = {
     object Reacted {
       def unapply(event: GenericMessageEvent): Option[Liking] = event match {
-        case GenericMessageEvent(_, time, from, gm: GenericMessage) if from != selfUserId =>
+        case GenericMessageEvent(_, _, time, from, _, gm: GenericMessage) if from != selfUserId =>
           gm.unpackContent match {
             case r: Reaction =>
               val (msg, action) = r.unpack

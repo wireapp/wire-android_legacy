@@ -82,7 +82,7 @@
         android:elevation="1dp"
         android:visibility="gone"
         app:cardCornerRadius="@dimen/calling_preview_card_radius"
-        app:cardElevation="4dp" />
+         />
 
     <FrameLayout
         android:id="@+id/controls_layout"

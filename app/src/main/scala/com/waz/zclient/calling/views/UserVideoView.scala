@@ -70,7 +70,8 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   protected val participantInfo: Signal[Option[CallParticipantInfo]] =
     for {
       isGroup <- callController.isGroupCall
-      infos   <- if (isGroup) callController.participantsInfo else Signal.const(Vector.empty)
+      infos   <- if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) callController.participantsInfo
+                 else { if (isGroup) callController.participantsInfo else Signal.const(Vector.empty)}
     } yield infos.find(_.id == participant.userId)
 
   protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
@@ -82,8 +83,8 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   }
 
   if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
-    participantInfo.onUi {
-      case Some(p) if (p.picture.isDefined) => setProfilePicture(p.picture.get)
+    Signal.zip(participantInfo, callController.isCallEstablished).onUi {
+      case (Some(p), true) if (p.picture.isDefined) => setProfilePicture(p.picture.get)
       case _ =>
     }
   }

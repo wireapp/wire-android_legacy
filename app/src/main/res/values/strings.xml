@@ -946,7 +946,6 @@
 
     <!-- Audio bit rate mode -->
     <string name="audio_message_constant_bit_rate">CONSTANT BIT RATE</string>
-    <string name="audio_message_variable_bit_rate">VARIABLE BIT RATE</string>
 
     <!-- no contacts -->
     <string name="no_conversation_in_list__header">No conversations yet</string>

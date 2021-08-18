@@ -186,6 +186,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
   private def handleMemberJoinResponse(id: ConvId, users: Set[UserId], response: Either[ErrorResponse, Option[MemberJoinEvent]]) =
     response match {
       case Left(resp @ ErrorResponse(status, _, label)) =>
+
         val errTpe = (status, label) match {
           case (403, "not-connected")             => Some(ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION)
           case (403, "too-many-members")          => Some(ErrorType.CANNOT_ADD_USER_TO_FULL_CONVERSATION)
@@ -201,22 +202,20 @@ class ConversationsSyncHandler(selfUserId:      UserId,
 
   def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncResult] =
     withConversation(id) { conv =>
-      def post(users: Set[UserId]) =
-        convClient
-          .postMemberJoin(conv.remoteId, users, defaultRole).future
-          .flatMap(handleMemberJoinResponse(id, members, _))
-
-      Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(_ != Success).getOrElse(Success) }
+      val grouped = members.grouped(PostMembersLimit)
+      for {
+        responses   <- Future.traverse(grouped)(convClient.postMemberJoin(conv.remoteId, _, defaultRole).future)
+        syncResults <- Future.traverse(responses)(handleMemberJoinResponse(id, members, _))
+      } yield syncResults.find(_ != Success).getOrElse(Success)
     }
 
   def postQualifiedConversationMemberJoin(id: ConvId, members: Set[QualifiedId], defaultRole: ConversationRole): Future[SyncResult] =
     withConversation(id) { conv =>
-      def post(users: Set[QualifiedId]) =
-        convClient
-          .postQualifiedMemberJoin(conv.remoteId, users, defaultRole).future
-          .flatMap(handleMemberJoinResponse(id, members.map(_.id), _))
-
-      Future.traverse(members.grouped(PostMembersLimit))(post) map { _.find(_ != Success).getOrElse(Success) }
+      val grouped = members.grouped(PostMembersLimit)
+      for {
+        responses   <- Future.traverse(grouped)(convClient.postQualifiedMemberJoin(conv.remoteId, _, defaultRole).future)
+        syncResults <- Future.traverse(responses)(handleMemberJoinResponse(id, members.map(_.id), _))
+      } yield syncResults.find(_ != Success).getOrElse(Success)
     }
 
   def postConversationMemberLeave(id: ConvId, user: UserId): Future[SyncResult] =

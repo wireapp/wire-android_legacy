@@ -108,9 +108,9 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
   }
 
   feature("Defining event processing stages") {
-    lazy val e1 = RenameConversationEvent(RConvId("R"), RemoteInstant(Instant.now()), UserId("u1"), Name("meep 1"))
+    lazy val e1 = RenameConversationEvent(RConvId("R"), None, RemoteInstant(Instant.now()), UserId("u1"), None, Name("meep 1"))
     lazy val e2 = UnknownPropertyEvent("e2", "u1")
-    lazy val e3 = RenameConversationEvent(RConvId("R"), RemoteInstant(Instant.now()), UserId("u2"), Name("meep 2"))
+    lazy val e3 = RenameConversationEvent(RConvId("R"), None, RemoteInstant(Instant.now()), UserId("u2"), None, Name("meep 2"))
     lazy val e4 = UnknownPropertyEvent("e4", "u2")
 
     scenario("Eligibility check")(withFixture { env => import env._
@@ -158,10 +158,13 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
     }
 
     def E(es: Symbol*): Vector[Event] = es.zipWithIndex.map {
-      case (user, uid) => new UnknownPropertyEvent(uid.toString, user.name) {
-        override def toString = key
-      }
+      case (user, uid) => UnknownPropertyEvent(uid.toString, user.name)
     }(breakOut)
+
+    def toString(event: Event): String = event match {
+      case ev: UnknownPropertyEvent => ev.key
+      case ev => ev.toString
+    }
 
     implicit class RichEvents(events: Vector[Event]) {
       def scheduledBy(stage: Stage): String = stringify(new EventScheduler(stage).createSchedule(events))
@@ -172,11 +175,12 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
       }*/
     }
 
-    def stringify(es: Vector[(Stage, Vector[Event])]): String = es.map { case (stage, events) => s"$stage${events.mkString}" } .mkString(",")
+    def stringify(es: Vector[(Stage, Vector[Event])]): String =
+      es.map { case (stage, events) => s"$stage${events.mkString}" } .mkString(",")
 
     def stringify(schedule: Schedule): String = schedule match {
       case NOP => "-"
-      case Leaf(stage, events) => s"$stage${events.mkString}"
+      case Leaf(stage, events) => s"$stage${events.map(toString).mkString}"
       case Branch(strat, scheds) => s"${strat.toString.take(3).toLowerCase}(${scheds.map(stringify).mkString(",")})"
     }
 

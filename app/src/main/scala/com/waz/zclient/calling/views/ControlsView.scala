@@ -79,21 +79,34 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   // first row
   returning(findById[CallControlButtonView](R.id.mute_call)) { button =>
-    controller.isCallEstablished.onUi(button.setEnabled)
 
     if (BuildConfig.CALLING_UI_BUTTONS) {
-
+      button.setEnabled(true)
       controller.isMuted.map(!_).onUi(button.setActivated)
 
-      controller.isMuted.map {
-        case true => Some(drawInactiveMicrophone _)
-        case false => Some(drawActiveMicrophone _)
+      if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+        controller.isMuted.map {
+          case true => Some(drawInactiveMicrophone _)
+          case false => Some(drawActiveMicrophone _)
+        }.onUi {
+          case Some(drawFunction) => button.set(drawFunction, R.string.incoming__controls__ongoing__microphone, mute)
+          case _ =>
+        }
+
+      else
+        Signal.zip(controller.isMuted, controller.isVideoCall, themeController.currentTheme).map {
+        case (true, false, Theme.Light) => Some(drawInactiveMicrophoneLight _)
+        case (true, _, _) => Some(drawInactiveMicrophone _)
+        case (false, false, Theme.Light) => Some(drawActiveMicrophoneLight _)
+        case (false, _, _) => Some(drawActiveMicrophone _)
+        case _ => None
       }.onUi {
         case Some(drawFunction) => button.set(drawFunction, R.string.incoming__controls__ongoing__microphone, mute)
         case _ =>
       }
     }
     else {
+      controller.isCallEstablished.onUi(button.setEnabled)
       controller.isMuted.onUi(button.setActivated)
 
       Signal.zip(controller.isVideoCall, controller.isMuted, themeController.currentTheme).map {
@@ -113,9 +126,11 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   returning(findById[CallControlButtonView](R.id.video_call)) { button =>
     isVideoBeingSent.onUi(button.setActivated)
-    controller.isCallEstablished.onUi(button.setEnabled)
 
     if (BuildConfig.CALLING_UI_BUTTONS) {
+      button.setEnabled(true)
+
+      if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
       isVideoBeingSent.map {
         case true => Some(drawActiveCamera _)
         case false => Some(drawInactiveCamera _)
@@ -123,13 +138,32 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
         case Some(drawFunction) => button.set(drawFunction, R.string.incoming__controls__ongoing__camera, video)
         case _ =>
       }
-    } else button.set(WireStyleKit.drawVideocall, R.string.incoming__controls__ongoing__video, video)
+
+      else
+        Signal.zip(isVideoBeingSent, controller.isVideoCall, themeController.currentTheme).map {
+          case (true, false, Theme.Light) => Some(drawActiveCameraLight _)
+          case (true, _, _) => Some(drawActiveCamera _)
+          case (false, false, Theme.Light) => Some(drawInactiveCameraLight _)
+          case (false, _, _) => Some(drawInactiveCamera _)
+          case _ => None
+        }.onUi {
+          case Some(drawFunction) => button.set(drawFunction, R.string.incoming__controls__ongoing__camera, video)
+          case _ =>
+        }
+
+    } else {
+      controller.isCallEstablished.onUi(button.setEnabled)
+      button.set(WireStyleKit.drawVideocall, R.string.incoming__controls__ongoing__video, video)
+    }
+
   }
 
   returning(findById[CallControlButtonView](R.id.speaker_flip_call)) { button =>
-    controller.isCallEstablished.onUi(button.setEnabled)
 
     if (BuildConfig.CALLING_UI_BUTTONS) {
+      button.setEnabled(true)
+
+      if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
       Signal.zip(controller.speakerButton.buttonState, isVideoBeingSent).onUi {
         case (true, false) =>
           button.setActivated(true)
@@ -141,8 +175,32 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
           button.set(drawFlip, R.string.incoming__controls__ongoing__flip_camera, flip)
           button.setActivated(false)
       }
+
+      else
+        Signal.zip(controller.speakerButton.buttonState, isVideoBeingSent, controller.isVideoCall, themeController.currentTheme).onUi {
+          case (true, false, false, Theme.Light) =>
+            button.setActivated(true)
+            button.set(drawActiveSpeakerLight, R.string.incoming__controls__ongoing__speaker, speaker)
+          case (true, false, _, _) =>
+            button.setActivated(true)
+            button.set(drawActiveSpeaker, R.string.incoming__controls__ongoing__speaker, speaker)
+          case (false, false, false, Theme.Light) =>
+            button.setActivated(false)
+            button.set(drawInactiveSpeakerLight, R.string.incoming__controls__ongoing__speaker, speaker)
+          case (false, false, _ , _) =>
+            button.setActivated(false)
+            button.set(drawInactiveSpeaker, R.string.incoming__controls__ongoing__speaker, speaker)
+          case (_, true,  false, Theme.Light) =>
+            button.set(drawFlipLight, R.string.incoming__controls__ongoing__flip_camera, flip)
+            button.setActivated(false)
+          case (_, true, _, _) =>
+            button.set(drawFlip, R.string.incoming__controls__ongoing__flip_camera, flip)
+            button.setActivated(false)
+        }
+
     }
     else {
+      controller.isCallEstablished.onUi(button.setEnabled)
       isVideoBeingSent.onUi {
         case true =>
           button.set(WireStyleKit.drawFlip, R.string.incoming__controls__ongoing__flip, flip)
@@ -249,6 +307,29 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   private def drawFlip(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
     drawBitmap(canvas, targetFrame, whiteColor, R.attr.callFlip, darkTheme)
 
+  ////TODO to be removed when large conf calling is relased
+
+  private def drawActiveMicrophoneLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame, color, R.attr.callActiveMicrophone, lightTheme)
+
+  private def drawInactiveMicrophoneLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame,color, R.attr.callInactiveMicrophone, lightTheme)
+
+  private def drawActiveCameraLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame, color, R.attr.callActiveCamera, lightTheme)
+
+  private def drawInactiveCameraLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame, color, R.attr.callInactiveCamera, lightTheme)
+
+  private def drawActiveSpeakerLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame, color, R.attr.callActiveSpeaker, lightTheme)
+
+  private def drawInactiveSpeakerLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame, color, R.attr.callInactiveSpeaker, lightTheme)
+
+  private def drawFlipLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
+    drawBitmap(canvas, targetFrame, color, R.attr.callFlip, lightTheme)
+
   private def drawMuteLight(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
     drawBitmap(canvas, targetFrame, color, R.attr.callMutedIcon, lightTheme)
 
@@ -260,6 +341,8 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   private def drawUnmuteDark(canvas: Canvas, targetFrame: RectF, resizing: WireStyleKit.ResizingBehavior, color: Int): Unit =
     drawBitmap(canvas, targetFrame, color, R.attr.callUnmutedIcon, darkTheme)
+
+  ////End
 
   private def drawBitmap(canvas: Canvas, targetFrame: RectF, color: Int, resourceId: Int, theme: Resources#Theme): Unit =
     ContextUtils.getStyledDrawable(resourceId, theme).foreach { drawable =>

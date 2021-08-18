@@ -26,7 +26,7 @@ import com.waz.model.UserId
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service.push.WSPushServiceImpl.RequestCreator
-import com.waz.service.BackendConfig
+import com.waz.service.{BackendConfig, NetworkModeService}
 import com.waz.sync.client.{AccessTokenProvider, PushNotificationEncoded}
 import com.waz.sync.client.PushNotificationsClient.NotificationsResponseEncoded
 import com.wire.signals.{CancellableFuture, SerialDispatchQueue}
@@ -57,7 +57,9 @@ object WSPushServiceImpl {
             clientId: ClientId,
             backend: BackendConfig,
             webSocketFactory: WebSocketFactory,
-            accessTokenProvider: AccessTokenProvider): WSPushServiceImpl = {
+            accessTokenProvider: AccessTokenProvider,
+            networkModeService: NetworkModeService
+           ): WSPushServiceImpl = {
 
     val requestCreator = (token: AccessToken) => {
       val webSocketUri = if(backend.websocketUrl.getPath.startsWith("/await")) backend.websocketUrl
@@ -79,6 +81,7 @@ object WSPushServiceImpl {
       accessTokenProvider,
       requestCreator,
       webSocketFactory,
+      networkModeService,
       ExponentialBackoff.standardBackoff
     )
   }
@@ -88,6 +91,7 @@ class WSPushServiceImpl(userId:              UserId,
                         accessTokenProvider: AccessTokenProvider,
                         requestCreator:      RequestCreator,
                         webSocketFactory:    WebSocketFactory,
+                        networkModeService:  NetworkModeService,
                         backoff:             Backoff = ExponentialBackoff.standardBackoff) extends WSPushService {
 
   private implicit val logTag: LogTag = accountTag[WSPushServiceImpl](userId)
@@ -118,13 +122,16 @@ class WSPushServiceImpl(userId:              UserId,
   private def webSocketProcessEngine(initialDelay: FiniteDuration): Subscription = {
     verbose(l"Constructing WebSocket engine subscription.")
 
-    val request = CancellableFuture.delay(initialDelay).future.flatMap { _ =>
-      info(l"Opening WebSocket... ${showString({if (retryCount.get() == 0) "" else s"Retry count: ${retryCount.get()}"})}")
-      accessTokenProvider.currentToken()
-    }.flatMap {
-      case Left(errorResponse) => Future.failed(errorResponse)
-      case Right(token)        => Future.successful(requestCreator(token))
-    }
+    val request = for {
+      _     <- CancellableFuture.delay(initialDelay).future
+      _     <- networkModeService.isOnline.onTrue
+      _     =  info(l"Opening WebSocket... ${showString({if (retryCount.get() == 0) "" else s"Retry count: ${retryCount.get()}"})}")
+      token <- accessTokenProvider.currentToken()
+      resp  <- token match {
+                 case Left(errorResponse) => Future.failed(errorResponse)
+                 case Right(token) => Future.successful(requestCreator(token))
+               }
+    } yield resp
 
     request.onFailure { case errorResponse =>
       error(l"Error while opening WebSocket: $errorResponse")
