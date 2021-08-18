@@ -91,6 +91,7 @@ val GLOBAL_DATABASE_MIGRATION_25_26 = object : Migration(25, 26) {
     }
 }
 
+@Suppress("MagicNumber")
 val GLOBAL_DATABASE_MIGRATION_26_27 = object : Migration(26, 27) {
     override fun migrate(database: SupportSQLiteDatabase) {
         MigrationUtils.addColumn(
