@@ -39,7 +39,7 @@ import com.waz.zclient.Intents.{RichIntent, _}
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
-import com.waz.zclient.common.controllers.{BrowserController, SharingController, UserAccountsController}
+import com.waz.zclient.common.controllers.{BrowserController, FeatureConfigsController, SharingController, UserAccountsController}
 import com.waz.zclient.common.fragments.ConnectivityFragment
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -80,17 +80,18 @@ class MainActivity extends BaseActivity
 
   import Threading.Implicits.Ui
 
-  private lazy val zms                    = inject[Signal[ZMessaging]]
-  private lazy val account                = inject[Signal[Option[AccountManager]]]
-  private lazy val accountsService        = inject[AccountsService]
-  private lazy val sharingController      = inject[SharingController]
-  private lazy val accentColorController  = inject[AccentColorController]
-  private lazy val conversationController = inject[ConversationController]
-  private lazy val userAccountsController = inject[UserAccountsController]
-  private lazy val spinnerController      = inject[SpinnerController]
-  private lazy val passwordController     = inject[PasswordController]
-  private lazy val deepLinkService        = inject[DeepLinkService]
-  private lazy val usersController        = inject[UsersController]
+  private lazy val zms                      = inject[Signal[ZMessaging]]
+  private lazy val account                  = inject[Signal[Option[AccountManager]]]
+  private lazy val accountsService          = inject[AccountsService]
+  private lazy val sharingController        = inject[SharingController]
+  private lazy val accentColorController    = inject[AccentColorController]
+  private lazy val conversationController   = inject[ConversationController]
+  private lazy val userAccountsController   = inject[UserAccountsController]
+  private lazy val spinnerController        = inject[SpinnerController]
+  private lazy val passwordController       = inject[PasswordController]
+  private lazy val deepLinkService          = inject[DeepLinkService]
+  private lazy val usersController          = inject[UsersController]
+  private lazy val featureConfigsController = inject[FeatureConfigsController]
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
@@ -234,7 +235,7 @@ class MainActivity extends BaseActivity
         }
       }
     }
-
+    featureConfigsController.startUpdatingFlagsWhenEnteringForeground()
   }
 
   private def initTracking: Future[Unit] =

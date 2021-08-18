@@ -4,7 +4,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.JsonDecoder
 import scala.concurrent.duration._
 
-class AppLockFeatureFlagSpec extends AndroidFreeSpec {
+class AppLockFeatureConfigSpec extends AndroidFreeSpec {
 
   feature("Deserialization form JSON") {
 
@@ -20,7 +20,7 @@ class AppLockFeatureFlagSpec extends AndroidFreeSpec {
           |}
           |""".stripMargin
 
-      val appLockFeatureFlag: AppLockFeatureFlag = JsonDecoder.decode[AppLockFeatureFlag](json)
+      val appLockFeatureFlag: AppLockFeatureConfig = JsonDecoder.decode[AppLockFeatureConfig](json)
 
       appLockFeatureFlag.enabled shouldEqual true
       appLockFeatureFlag.forced shouldEqual true
@@ -35,16 +35,16 @@ class AppLockFeatureFlagSpec extends AndroidFreeSpec {
           |}
           |""".stripMargin
 
-      val appLockFeatureFlag: AppLockFeatureFlag = JsonDecoder.decode[AppLockFeatureFlag](json)
+      val appLockFeatureFlag: AppLockFeatureConfig = JsonDecoder.decode[AppLockFeatureConfig](json)
 
-      appLockFeatureFlag shouldEqual AppLockFeatureFlag.Disabled
+      appLockFeatureFlag shouldEqual AppLockFeatureConfig.Disabled
     }
 
     scenario("Deserializing an error (empty json object)") {
       val json = "{}"
-      val appLockFeatureFlag: AppLockFeatureFlag = JsonDecoder.decode[AppLockFeatureFlag](json)
+      val appLockFeatureFlag: AppLockFeatureConfig = JsonDecoder.decode[AppLockFeatureConfig](json)
 
-      appLockFeatureFlag shouldEqual AppLockFeatureFlag.Default
+      appLockFeatureFlag shouldEqual AppLockFeatureConfig.Default
     }
   }
 }

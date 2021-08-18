@@ -2,18 +2,18 @@ package com.waz.service.teams
 
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.AppLockFeatureFlag
+import com.waz.model.AppLockFeatureConfig
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.handler.FeatureFlagsSyncHandler
+import com.waz.sync.handler.FeatureConfigsSyncHandler
 import com.waz.testutils.TestUserPreferences
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class FeatureFlagsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
+class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   private val userPrefs = new TestUserPreferences
-  private val syncHandler = mock[FeatureFlagsSyncHandler]
+  private val syncHandler = mock[FeatureConfigsSyncHandler]
 
   scenario("Fetch the AppLock feature flag and set properties") {
     userPrefs.setValue(AppLockEnabled, false)
@@ -21,7 +21,7 @@ class FeatureFlagsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     userPrefs.setValue(AppLockTimeout, Some(30.seconds))
 
     (syncHandler.fetchAppLock _).expects().anyNumberOfTimes().returning(
-      Future.successful(AppLockFeatureFlag(enabled = true, forced = true, timeout = Some(10.seconds)))
+      Future.successful(AppLockFeatureConfig(enabled = true, forced = true, timeout = Some(10.seconds)))
     )
 
     val service = createService
@@ -41,16 +41,16 @@ class FeatureFlagsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     userPrefs.setValue(AppLockTimeout, Some(30.seconds))
 
     (syncHandler.fetchAppLock _).expects().anyNumberOfTimes().returning(
-      Future.successful(AppLockFeatureFlag.Disabled)
+      Future.successful(AppLockFeatureConfig.Disabled)
     )
 
     val service = createService
     result(service.updateAppLock())
 
-    result(userPrefs(AppLockEnabled).apply()) shouldEqual AppLockFeatureFlag.Disabled.enabled
-    result(userPrefs(AppLockForced).apply()) shouldEqual AppLockFeatureFlag.Disabled.forced
-    result(userPrefs(AppLockTimeout).apply()) shouldEqual AppLockFeatureFlag.Disabled.timeout
+    result(userPrefs(AppLockEnabled).apply()) shouldEqual AppLockFeatureConfig.Disabled.enabled
+    result(userPrefs(AppLockForced).apply()) shouldEqual AppLockFeatureConfig.Disabled.forced
+    result(userPrefs(AppLockTimeout).apply()) shouldEqual AppLockFeatureConfig.Disabled.timeout
   }
 
-  private def createService: FeatureFlagsService = new FeatureFlagsServiceImpl(syncHandler, userPrefs)
+  private def createService: FeatureConfigsService = new FeatureConfigsServiceImpl(syncHandler, userPrefs)
 }

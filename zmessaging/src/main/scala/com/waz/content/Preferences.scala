@@ -438,4 +438,6 @@ object UserPreferences {
     PrefKey[Option[LegalHoldStatus]]("legal_hold_disclosure_type", customDefault = None)
 
   lazy val ShouldPostClientCapabilities: PrefKey[Boolean] = PrefKey[Boolean]("should_post_client_capabilities", customDefault = true)
+
+  lazy val ConferenceCallingFeatureEnabled: PrefKey[Boolean] = PrefKey[Boolean]("conference_calling_feature_enabled", customDefault = true)
 }
