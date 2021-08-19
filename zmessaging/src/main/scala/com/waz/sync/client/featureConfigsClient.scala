@@ -17,7 +17,6 @@ class FeatureConfigsClientImpl(implicit
                                urlCreator: UrlCreator,
                                httpClient: HttpClient,
                                authRequestInterceptor: AuthRequestInterceptor) extends FeatureConfigsClient {
-
   import FeatureConfigsClient._
   import HttpClient.dsl._
   import HttpClient.AutoDerivationOld._
