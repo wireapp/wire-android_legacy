@@ -55,8 +55,6 @@
 
     <item name="content" type="id"/>
 
-    <item name="collection_image_view" type="id"/>
-
     <item name="admins_section" type="id" />
     <item name="members_section" type="id" />
     <item name="options_section" type="id" />

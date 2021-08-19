@@ -18,12 +18,13 @@
 package com.waz.zclient.messages.parts.assets
 
 import android.view.View.OnLayoutChangeListener
-import android.view.{View, ViewGroup}
+import android.view.View
 import android.widget.{FrameLayout, TextView}
+import com.waz.content.UserPreferences
+import com.waz.content.UserPreferences.FileSharingFeatureEnabled
 import com.waz.model.{Dim2, MessageContent}
 import com.waz.service.assets.{AssetStatus, DownloadAssetStatus, ImageDetails, UploadAssetStatus, VideoDetails}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.Threading
 import com.wire.signals.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.AssetsController
@@ -35,6 +36,7 @@ import com.waz.zclient.messages.parts.{EphemeralIndicatorPartView, EphemeralPart
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
+import com.waz.zclient.messages.parts.assets.AssetPart.AssetPartViewState
 
 trait AssetPart extends View with ClickableViewPart with ViewHelper with EphemeralPartView { self =>
   val controller = inject[AssetsController]
@@ -57,19 +59,37 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
   val completed = deliveryState.map(_ == DeliveryState.Complete)
   val accentColorController = inject[AccentColorController]
   val previewAssetId = controller.assetPreviewId(assetId)
+
+  lazy val assetBackground = new AssetBackground(viewState, accentColorController.accentColor)
+
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
+  private lazy val restricted = userPrefs.flatMap(_.preference(FileSharingFeatureEnabled).signal.map(isAllowed => !isAllowed))
   protected val showDots: Signal[Boolean] = deliveryState.map(state => state == OtherUploading)
 
-  lazy val assetBackground = new AssetBackground(showDots, expired, accentColorController.accentColor)
+  lazy val viewState: Signal[AssetPartViewState] = for {
+    isRestricted <- restricted
+    isExpired <- expired
+    isLoading <- showDots
+  } yield {
+    if (isRestricted) AssetPartViewState.Restricted
+    else if (isExpired) AssetPartViewState.Obfuscated
+    else if (isLoading) AssetPartViewState.Loaded
+    else AssetPartViewState.Loaded
+  }
 
-  //toggle content visibility to show only progress dot background if other side is uploading asset
-  val hideContent = for {
-    exp <- expired
-    st <- deliveryState
-  } yield exp || st == OtherUploading
+}
 
-  onInflated()
+object AssetPart {
 
-  def onInflated(): Unit
+  final case class AssetPartViewState(value: Int)
+
+  object AssetPartViewState {
+    val Restricted = AssetPartViewState(0)
+    val Obfuscated = AssetPartViewState(1)
+    val Loading = AssetPartViewState(2)
+    val Loaded = AssetPartViewState(3)
+  }
+
 }
 
 trait ActionableAssetPart extends AssetPart {
@@ -111,16 +131,9 @@ trait PlayableAsset extends ActionableAssetPart {
 }
 
 trait FileLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
-  private lazy val content: ViewGroup = findById[ViewGroup](R.id.content)
-  //For file and audio assets - we can hide the whole content
-  //For images and video, we don't want the view to collapse (since they use merge tags), so we let them hide their content separately
+  private lazy val container = findById[FrameLayout](R.id.container)
 
-  override def onInflated(): Unit = {
-    content.setBackground(assetBackground)
-    hideContent.map(!_).on(Threading.Ui) { v =>
-      (0 until content.getChildCount).foreach(content.getChildAt(_).setVisible(v))
-    }
-  }
+  container.setBackground(assetBackground)
 }
 
 trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
@@ -149,8 +162,10 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
     maxW <- maxWidth
     maxH <- maxHeight
     Dim2(imW, imH) <- imageDim
+    state <- viewState
   } yield {
-    val heightToWidth = imH.toDouble / imW.toDouble
+    val heightToWidth = if (state == AssetPartViewState.Restricted) 9.0 / 16.0
+                        else imH.toDouble / imW.toDouble
 
     val height = heightToWidth * maxW
 

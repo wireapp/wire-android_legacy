@@ -3,7 +3,7 @@ package com.waz.model
 import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.JsonDecoder
 
-class ConferenceCallingFeatureConfigSpec extends AndroidFreeSpec {
+class FileSharingFeatureConfigSpec extends AndroidFreeSpec {
 
   feature("Deserialization form JSON") {
 
@@ -17,10 +17,10 @@ class ConferenceCallingFeatureConfigSpec extends AndroidFreeSpec {
           |""".stripMargin
 
       // When
-      val conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig = JsonDecoder.decode[ConferenceCallingFeatureConfig](json)
+      val fileSharingFeatureConfig: FileSharingFeatureConfig = JsonDecoder.decode[FileSharingFeatureConfig](json)
 
       // Then
-      conferenceCallingFeatureConfig.isEnabled shouldEqual true
+      fileSharingFeatureConfig.isEnabled shouldEqual true
     }
 
     scenario("Deserializing a disabled config") {
@@ -33,10 +33,10 @@ class ConferenceCallingFeatureConfigSpec extends AndroidFreeSpec {
           |""".stripMargin
 
       // When
-      val conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig = JsonDecoder.decode[ConferenceCallingFeatureConfig](json)
+      val fileSharingFeatureConfig: FileSharingFeatureConfig = JsonDecoder.decode[FileSharingFeatureConfig](json)
 
       // Then
-      conferenceCallingFeatureConfig.isEnabled shouldEqual false
+      fileSharingFeatureConfig.isEnabled shouldEqual false
     }
 
     scenario("Deserializing an error (empty json object)") {
@@ -44,10 +44,11 @@ class ConferenceCallingFeatureConfigSpec extends AndroidFreeSpec {
       val json = "{}"
 
       // When
-      val conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig = JsonDecoder.decode[ConferenceCallingFeatureConfig](json)
+      val fileSharingFeatureConfig: FileSharingFeatureConfig = JsonDecoder.decode[FileSharingFeatureConfig](json)
 
       // Then
-      conferenceCallingFeatureConfig shouldEqual ConferenceCallingFeatureConfig.Default
+      fileSharingFeatureConfig shouldEqual FileSharingFeatureConfig.Default
     }
   }
+
 }

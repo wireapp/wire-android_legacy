@@ -24,6 +24,7 @@ import android.view.{View, ViewGroup}
 import android.widget.{ImageView, LinearLayout, TextView}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message
+import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.assets.Asset
@@ -38,11 +39,11 @@ import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MsgPart._
 import com.waz.zclient.messages._
 import com.waz.zclient.paintcode.WireStyleKit
-import com.waz.zclient.ui.text.{GlyphTextView, LinkTextView, TypefaceTextView}
+import com.waz.zclient.ui.text.{LinkTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getString, getStyledColor}
 import com.waz.zclient.utils.Time.DateTimeStamp
-import com.waz.zclient.utils.{RichTextView, RichView}
+import com.waz.zclient.utils.{RichTextView, RichView, StyleKitMethods}
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 import com.waz.threading.Threading._
@@ -59,6 +60,11 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
 
   private lazy val assetsController = inject[AssetsController]
 
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
+  lazy val isFileSharingRestricted: Signal[Boolean] = userPrefs
+    .flatMap(_.preference(UserPreferences.FileSharingFeatureEnabled).signal)
+    .map(isEnabled => !isEnabled)
+
   setOrientation(LinearLayout.HORIZONTAL)
   inflate(R.layout.message_reply_content_outer)
 
@@ -74,7 +80,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
     case Reply(Image)      => Some(inflate(R.layout.message_reply_content_image,    addToParent = false))
     case Reply(Location)   => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
     case Reply(AudioAsset) => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
-    case Reply(VideoAsset) => Some(inflate(R.layout.message_reply_content_image, addToParent = false))
+    case Reply(VideoAsset) => Some(inflate(R.layout.message_reply_content_video, addToParent = false))
     case Reply(FileAsset)  => Some(inflate(R.layout.message_reply_content_generic, addToParent = false))
     case Reply(Unknown)    => Some(inflate(R.layout.message_reply_content_unknown, addToParent = false))
     case _ => None
@@ -187,10 +193,19 @@ class ImageReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   override def tpe: MsgPart = Reply(Image)
 
   private val imageView = findById[ImageView](R.id.image)
+  private val restrictionContainer = findById[View](R.id.restriction_container)
 
-  quotedMessage.map(_.assetId).onUi {
-    case Some(aid: AssetId) => WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
-    case _ => WireGlide(context).clear(imageView)
+  Signal.zip(quotedMessage.map(_.assetId), isFileSharingRestricted).onUi {
+    case (Some(aid: AssetId), false) =>
+      imageView.setVisibility(View.VISIBLE)
+      restrictionContainer.setVisibility(View.GONE)
+      WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
+    case (_, true) =>
+      imageView.setVisibility(View.GONE)
+      restrictionContainer.setVisibility(View.VISIBLE)
+      WireGlide(context).clear(imageView)
+    case _ =>
+      WireGlide(context).clear(imageView)
   }
 }
 
@@ -214,8 +229,21 @@ class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
 
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
+  private lazy val restrictionText = returning(findById[TypefaceTextView](R.id.restriction_text)) { view =>
+    view.setText((R.string.file_sharing_restriction_info_file))
+  }
+
   quotedAsset.map(_.map(_.name).getOrElse("")).onUi(textView.setText)
-  textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
+
+  isFileSharingRestricted.onUi {
+    case true =>
+      textView.setStartCompoundDrawable(Some(StyleKitMethods().drawFileBlocked))
+      restrictionText.setVisibility(View.VISIBLE)
+    case false =>
+      textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
+      restrictionText.setVisibility(View.GONE)
+  }
+
 }
 
 class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -225,14 +253,20 @@ class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   override def tpe: MsgPart = Reply(VideoAsset)
 
   private val imageView = findById[ImageView](R.id.image)
-  private val imageIcon = findById[GlyphTextView](R.id.image_icon)
+  private val restrictionContainer = findById[View](R.id.restriction_container)
 
-  quotedAsset.map(_.flatMap(_.preview)).onUi {
-    case Some(aid: AssetId) => WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
-    case _ => WireGlide(context).clear(imageView)
+  Signal.zip(quotedAsset.map(_.flatMap(_.preview)), isFileSharingRestricted).onUi {
+    case (Some(aid: AssetId), false) =>
+      imageView.setVisibility(View.VISIBLE)
+      restrictionContainer.setVisibility(View.GONE)
+      WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
+    case (_, true) =>
+      imageView.setVisibility(View.GONE)
+      restrictionContainer.setVisibility(View.VISIBLE)
+      WireGlide(context).clear(imageView)
+    case _ =>
+      WireGlide(context).clear(imageView)
   }
-
-  imageIcon.setVisibility(View.VISIBLE)
 }
 
 class AudioReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -242,9 +276,16 @@ class AudioReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   override def tpe: MsgPart = Reply(AudioAsset)
 
   private lazy val textView = findById[TypefaceTextView](R.id.text)
+  private lazy val restrictionText = findById[TypefaceTextView](R.id.restriction_text)
 
   textView.setText(R.string.reply_message_type_audio)
   textView.setStartCompoundDrawable(Some(WireStyleKit.drawVoiceMemo))
+
+  restrictionText.setText(R.string.file_sharing_restriction_info_audio)
+
+  isFileSharingRestricted.onUi { isRestricted =>
+    restrictionText.setVisibility(if (isRestricted) View.VISIBLE else View.GONE)
+  }
 }
 
 class UnknownReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {

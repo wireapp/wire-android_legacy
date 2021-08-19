@@ -26,6 +26,7 @@ import android.widget.{FrameLayout, ImageButton, ImageView, TextView}
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message.Type
+import com.waz.content.UserPreferences
 import com.waz.model.{AssetId, GeneralAssetId, MessageData}
 import com.waz.service.assets.{Asset, GeneralAsset}
 import com.waz.utils.returning
@@ -36,12 +37,17 @@ import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.ui.text.LinkTextView
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{RichTextView, RichView}
+import com.waz.zclient.utils.{RichTextView, RichView, StyleKitMethods}
 import com.waz.zclient.{R, ViewHelper}
+import com.wire.signals.Signal
+
+import scala.concurrent.Future
 
 class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends FrameLayout(context, attrs, defStyle) with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
+
+  import com.waz.threading.Threading.Implicits.Ui
 
   inflate(R.layout.reply_view)
 
@@ -52,6 +58,12 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
   private val container = findById[ViewGroup](R.id.reply_container)
 
   private var onClose: () => Unit = () => {}
+
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
+  private def isFileSharingRestricted: Future[Boolean] =
+    userPrefs.head
+      .flatMap(_.preference(UserPreferences.FileSharingFeatureEnabled).apply())
+      .map(isEnabled => !isEnabled)
 
   closeButton.onClick(onClose())
 
@@ -80,7 +92,10 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
           case _ => getString(R.string.reply_message_type_asset)
         }
 
-        set(assetName, bold = true, Some(WireStyleKit.drawFile), None)
+        isFileSharingRestricted.foreach { isRestricted =>
+          set(assetName, bold = true, Some(if (isRestricted) StyleKitMethods().drawFileBlocked else WireStyleKit.drawFile), None)
+        }
+
       case _ =>
       // Other types shouldn't be able to be replied to
     }
@@ -105,16 +120,18 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
     }
     setStartIcon(drawMethod)
 
-    imageAsset match {
-      case Some(a: AssetId) =>
-        WireGlide(context)
-          .load(a)
-          .apply(new RequestOptions().transform(new CenterCrop(), new RoundedCorners(10)))
-          .into(image)
-        image.setVisibility(View.VISIBLE)
-      case _ =>
-        WireGlide(context).clear(image)
-        image.setVisibility(View.GONE)
+    isFileSharingRestricted.foreach { isRestricted =>
+      imageAsset match {
+        case Some(a: AssetId) if !isRestricted =>
+          WireGlide(context)
+            .load(a)
+            .apply(new RequestOptions().transform(new CenterCrop(), new RoundedCorners(10)))
+            .into(image)
+          image.setVisibility(View.VISIBLE)
+        case _ =>
+          WireGlide(context).clear(image)
+          image.setVisibility(View.GONE)
+      }
     }
   }
 

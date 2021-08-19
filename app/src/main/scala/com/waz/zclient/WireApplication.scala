@@ -193,7 +193,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[ConversationFoldersStorage]]    to inject[Signal[ZMessaging]].map(_.conversationFoldersStorage)
     bind [Signal[FoldersService]]                to inject[Signal[ZMessaging]].map(_.foldersService)
     bind [Signal[TeamsService]]                  to inject[Signal[ZMessaging]].map(_.teams)
-    bind [Signal[FeatureConfigsService]]           to inject[Signal[ZMessaging]].map(_.featureFlags)
+    bind [Signal[FeatureConfigsService]]         to inject[Signal[ZMessaging]].map(_.featureConfigs)
     bind [Signal[MessageIndexStorage]]           to inject[Signal[ZMessaging]].map(_.messagesIndexStorage)
     bind [Signal[ConnectionService]]             to inject[Signal[ZMessaging]].map(_.connection)
     bind [Signal[ButtonsStorage]]                to inject[Signal[ZMessaging]].map(_.buttonsStorage)
@@ -330,7 +330,7 @@ object WireApplication extends DerivedLogTag {
 
     bind[MessagePagedListController] to new MessagePagedListController()
 
-    bind[FeatureConfigsController] to new FeatureConfigsController()
+    bind [FeatureConfigsController] to new FeatureConfigsController()
   }
 
   def clearOldVideoFiles(context: Context): Unit = {

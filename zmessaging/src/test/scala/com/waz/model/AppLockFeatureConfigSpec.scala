@@ -8,7 +8,7 @@ class AppLockFeatureConfigSpec extends AndroidFreeSpec {
 
   feature("Deserialization form JSON") {
 
-    scenario("Deserializing an enabled flag") {
+    scenario("Deserializing an enabled config") {
       val json =
         """
           |{
@@ -20,14 +20,14 @@ class AppLockFeatureConfigSpec extends AndroidFreeSpec {
           |}
           |""".stripMargin
 
-      val appLockFeatureFlag: AppLockFeatureConfig = JsonDecoder.decode[AppLockFeatureConfig](json)
+      val appLockFeatureConfig: AppLockFeatureConfig = JsonDecoder.decode[AppLockFeatureConfig](json)
 
-      appLockFeatureFlag.enabled shouldEqual true
-      appLockFeatureFlag.forced shouldEqual true
-      appLockFeatureFlag.timeout shouldEqual Some(60.seconds)
+      appLockFeatureConfig.enabled shouldEqual true
+      appLockFeatureConfig.forced shouldEqual true
+      appLockFeatureConfig.timeout shouldEqual Some(60.seconds)
     }
 
-    scenario("Deserializing a disabled flag") {
+    scenario("Deserializing a disabled config") {
       val json =
         """
           |{
@@ -35,16 +35,16 @@ class AppLockFeatureConfigSpec extends AndroidFreeSpec {
           |}
           |""".stripMargin
 
-      val appLockFeatureFlag: AppLockFeatureConfig = JsonDecoder.decode[AppLockFeatureConfig](json)
+      val appLockFeatureConfig: AppLockFeatureConfig = JsonDecoder.decode[AppLockFeatureConfig](json)
 
-      appLockFeatureFlag shouldEqual AppLockFeatureConfig.Disabled
+      appLockFeatureConfig shouldEqual AppLockFeatureConfig.Disabled
     }
 
     scenario("Deserializing an error (empty json object)") {
       val json = "{}"
-      val appLockFeatureFlag: AppLockFeatureConfig = JsonDecoder.decode[AppLockFeatureConfig](json)
+      val appLockFeatureConfig: AppLockFeatureConfig = JsonDecoder.decode[AppLockFeatureConfig](json)
 
-      appLockFeatureFlag shouldEqual AppLockFeatureConfig.Default
+      appLockFeatureConfig shouldEqual AppLockFeatureConfig.Default
     }
   }
 }

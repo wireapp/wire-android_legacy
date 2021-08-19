@@ -15,7 +15,12 @@ class FeatureConfigsController(implicit inj: Injector) extends Injectable with D
 
   def startUpdatingFlagsWhenEnteringForeground(): Unit =
     inject[ActivityLifecycleCallback].appInBackground.map(_._1).foreach {
-      case false => featureConfigs.head.foreach(_.updateConferenceCalling())
+      case false => {
+        featureConfigs.head.foreach { item =>
+           item updateConferenceCalling()
+           item updateFileSharing()
+        }
+      }
       case true  => ()
     }
 

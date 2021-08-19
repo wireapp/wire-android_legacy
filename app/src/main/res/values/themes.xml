@@ -166,6 +166,9 @@
         <!-- Audio message -->
         <item name="audioMessageDuration">@style/audio_message_duration__dark</item>
 
+        <!-- File message -->
+        <item name="fileBlocked">@drawable/ic_file_blocked</item>
+
         <!-- Giphy -->
         <item name="giphyControl">@style/giphy_control_button__dark</item>
         <item name="giphyKeyword">@style/giphy_keyword__dark</item>
@@ -345,6 +348,9 @@
 
         <!-- Audio message -->
         <item name="audioMessageDuration">@style/audio_message_duration__light</item>
+
+        <!-- File message -->
+        <item name="fileBlocked">@drawable/ic_file_blocked</item>
 
         <!-- Giphy -->
         <item name="giphyControl">@style/giphy_control_button__light</item>

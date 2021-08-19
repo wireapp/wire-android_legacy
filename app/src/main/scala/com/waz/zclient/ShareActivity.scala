@@ -26,6 +26,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import androidx.core.app.ShareCompat
+import com.waz.content.UserPreferences.FileSharingFeatureEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Mime
 import com.waz.permissions.PermissionsService
@@ -60,6 +61,21 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     inject[AccountsService].accountManagers.map(_.isEmpty).onUi(cm.animateToShow)
   }
 
+  private lazy val fileSharingProhibitedPrompt = returning(findById[ConfirmationMenu](R.id.cm__conversation_list__file_sharing_prohibited_prompt)) { cm =>
+    cm.setCallback(new TwoButtonConfirmationCallback() {
+      override def positiveButtonClicked(checkboxIsSelected: Boolean): Unit = finish()
+      override def negativeButtonClicked(): Unit = {}
+      override def onHideAnimationEnd(confirmed: Boolean, canceled: Boolean, checkboxIsSelected: Boolean): Unit = {}
+    })
+
+    inject[AccentColorController].accentColor.map(_.color).onUi(cm.setButtonColor)
+
+    (for {
+      Some(zms)            <- inject[AccountsService].activeZms
+      isFileSharingEnabled <- zms.userPrefs.preference(FileSharingFeatureEnabled).signal
+    } yield !isFileSharingEnabled).onUi(cm.animateToShow)
+  }
+
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.main_share)
@@ -74,6 +90,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
         )
         .commit
     confirmationMenu
+    fileSharingProhibitedPrompt
   }
 
   override def onStart(): Unit = {

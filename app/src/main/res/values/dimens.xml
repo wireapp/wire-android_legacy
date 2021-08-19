@@ -687,4 +687,8 @@
     <dimen name="welcome_title_line_spacing_extra">8sp</dimen>
 
     <dimen name="legal_hold_info_image_size">64dp</dimen>
+
+    <dimen name="blocked_file_icon_size">24dp</dimen>
+    <dimen name="blocked_file_icon_size_small">16dp</dimen>
+    <dimen name="blocked_file_icon_size_large">32dp</dimen>
 </resources>

@@ -80,17 +80,17 @@ class MainActivity extends BaseActivity
 
   import Threading.Implicits.Ui
 
-  private lazy val zms                      = inject[Signal[ZMessaging]]
-  private lazy val account                  = inject[Signal[Option[AccountManager]]]
-  private lazy val accountsService          = inject[AccountsService]
-  private lazy val sharingController        = inject[SharingController]
-  private lazy val accentColorController    = inject[AccentColorController]
-  private lazy val conversationController   = inject[ConversationController]
-  private lazy val userAccountsController   = inject[UserAccountsController]
-  private lazy val spinnerController        = inject[SpinnerController]
-  private lazy val passwordController       = inject[PasswordController]
-  private lazy val deepLinkService          = inject[DeepLinkService]
-  private lazy val usersController          = inject[UsersController]
+  private lazy val zms                    = inject[Signal[ZMessaging]]
+  private lazy val account                = inject[Signal[Option[AccountManager]]]
+  private lazy val accountsService        = inject[AccountsService]
+  private lazy val sharingController      = inject[SharingController]
+  private lazy val accentColorController  = inject[AccentColorController]
+  private lazy val conversationController = inject[ConversationController]
+  private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val spinnerController      = inject[SpinnerController]
+  private lazy val passwordController     = inject[PasswordController]
+  private lazy val deepLinkService        = inject[DeepLinkService]
+  private lazy val usersController        = inject[UsersController]
   private lazy val featureConfigsController = inject[FeatureConfigsController]
 
   override def onAttachedToWindow(): Unit = {
@@ -235,6 +235,17 @@ class MainActivity extends BaseActivity
         }
       }
     }
+
+    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformFileSharingRestriction).signal).onUi { shouldInform =>
+      if (shouldInform) {
+        showFileSharingRestrictionInfoDialog { _ =>
+          userPreferences.head.foreach { prefs =>
+            prefs(UserPreferences.ShouldInformFileSharingRestriction) := false
+          }
+        }
+      }
+    }
+
     featureConfigsController.startUpdatingFlagsWhenEnteringForeground()
   }
 

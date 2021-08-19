@@ -18,42 +18,124 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:id="@+id/content"
-              android:orientation="horizontal"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:layout_marginEnd="@dimen/content__padding_right"
-              android:layout_marginStart="@dimen/content__padding_left">
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginEnd="@dimen/content__padding_right"
+    android:layout_marginStart="@dimen/content__padding_left">
 
-    <com.waz.zclient.messages.parts.assets.AssetActionButton
-        android:id="@+id/action_button"
-        android:layout_width="@dimen/content__audio_message__button__size"
-        android:layout_height="@dimen/content__audio_message__button__size"
-        android:layout_gravity="center"
-        android:layout_margin="@dimen/wire__padding__12"
-        android:textColor="@color/white"
-        android:textSize="@dimen/content__audio_message__glyph_size"
-        app:isFileType="false"
-        />
+    <!-- Content  -->
 
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/duration"
-        style="?audioMessageDuration"
-        android:layout_width="@dimen/content__audio_message__duration_width"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical|start"
-        app:w_font="@string/wire__typeface__light"
-        />
+    <LinearLayout android:id="@+id/content"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <SeekBar
-        android:id="@+id/progress"
+        <com.waz.zclient.messages.parts.assets.AssetActionButton
+            android:id="@+id/action_button"
+            android:layout_width="@dimen/content__audio_message__button__size"
+            android:layout_height="@dimen/content__audio_message__button__size"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/wire__padding__12"
+            android:textColor="@color/white"
+            android:textSize="@dimen/content__audio_message__glyph_size"
+            app:isFileType="false"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/duration"
+            style="?audioMessageDuration"
+            android:layout_width="@dimen/content__audio_message__duration_width"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical|start"
+            app:w_font="@string/wire__typeface__light"
+            />
+
+        <SeekBar
+            android:id="@+id/progress"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:maxHeight="@dimen/content__audio_message__view_height"
+            android:minHeight="@dimen/loading_bar__stroke_width"
+            />
+
+    </LinearLayout>
+
+    <!-- Obfuscation container  -->
+
+    <FrameLayout
+        android:id="@+id/obfuscation_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:maxHeight="@dimen/content__audio_message__view_height"
-        android:minHeight="@dimen/loading_bar__stroke_width"
-        />
+        android:visibility="gone">
 
-</LinearLayout>
+        <com.waz.zclient.ui.text.GlyphTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/glyph__microphone_on"
+            android:textColor="@color/graphite_40"
+            android:textSize="@dimen/wire__icon_button__text_size"/>
+    </FrameLayout>
+
+    <!-- The restriction container -->
+
+    <FrameLayout
+        android:id="@+id/restriction_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="start"
+            android:orientation="horizontal">
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="@dimen/wire__padding__12"
+                android:text="@string/glyph__microphone_on"
+                android:textColor="?wirePrimaryTextColor"
+                android:textSize="@dimen/content__audio_message__glyph_size"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:layout_marginBottom="@dimen/wire__padding__2"
+                    android:text="@string/reply_message_type_audio"
+                    android:textColor="?wirePrimaryTextColor"
+                    android:textSize="@dimen/wire__text_size__small"
+                    app:w_font="@string/wire__typeface__medium"/>
+
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:text="@string/file_sharing_restriction_info_audio"
+                    android:textColor="?wireSecondaryTextColor"
+                    android:textSize="@dimen/wire__text_size__small"
+                    app:w_font="@string/wire__typeface__light"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</FrameLayout>
