@@ -9,8 +9,8 @@ import org.json.JSONObject
 
 trait FeatureConfigsClient {
   def getAppLock(teamId: TeamId): ErrorOrResponse[AppLockFeatureConfig]
-  def getFileSharing(): ErrorOrResponse[FileSharingFeatureConfig]
   def getConferenceCalling(): ErrorOrResponse[ConferenceCallingFeatureConfig]
+  def getFileSharing(): ErrorOrResponse[FileSharingFeatureConfig]
 }
 
 class FeatureConfigsClientImpl(implicit
@@ -30,15 +30,15 @@ class FeatureConfigsClientImpl(implicit
       .withErrorType[ErrorResponse]
       .executeSafe
 
-  override def getFileSharing(): ErrorOrResponse[FileSharingFeatureConfig] =
-    Request.Get(relativePath =  fileSharingPath)
-    .withResultType[FileSharingFeatureConfig]
-    .withErrorType[ErrorResponse]
-    .executeSafe
-
   override def getConferenceCalling(): ErrorOrResponse[ConferenceCallingFeatureConfig] =
-    Request.Get(relativePath =  conferenceCallingPath)
+    Request.Get(relativePath = conferenceCallingPath)
       .withResultType[ConferenceCallingFeatureConfig]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+
+  override def getFileSharing(): ErrorOrResponse[FileSharingFeatureConfig] =
+    Request.Get(relativePath = fileSharingPath)
+      .withResultType[FileSharingFeatureConfig]
       .withErrorType[ErrorResponse]
       .executeSafe
 }
@@ -47,6 +47,6 @@ object FeatureConfigsClient {
   def appLockPath(teamId: TeamId): String = s"/teams/${teamId.str}/features/appLock"
 
   val basePath: String = "/feature-configs"
-  val fileSharingPath: String = s"$basePath/fileSharing"
   val conferenceCallingPath: String = s"$basePath/conferenceCalling"
+  val fileSharingPath: String = s"$basePath/fileSharing"
 }
