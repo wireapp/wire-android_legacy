@@ -372,6 +372,27 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
           fail(s"unexpected event: $e")
       }
     }
+
+    scenario("parse FeatureConfigUpdateEvent") {
+      val jsonStr =
+        """
+          |{
+          |  "type": "feature-config.update",
+          |  "name": "fileSharing",
+          |  "data": {"status":"enabled"}
+          |}
+          |""".stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      EventDecoder(jsonObject) match {
+        case ev: FeatureConfigUpdateEvent =>
+          ev.name shouldEqual "fileSharing"
+          ev.data shouldEqual "{\"status\":\"enabled\"}"
+
+        case e =>
+          fail(s"unexpected event: $e")
+      }
+    }
   }
 }
 

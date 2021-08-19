@@ -30,6 +30,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.threading.Threading._
+import com.waz.zclient.messages.parts.assets.AssetPart.AssetPartViewState
 
 class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with ImageLayoutAssetPart with HighlightViewPart {
@@ -39,40 +40,75 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   override val tpe: MsgPart = MsgPart.VideoAsset
 
   private val controls = findById[View](R.id.controls)
-  private val image = findById[ImageView](R.id.image)
   private val assetController = inject[AssetsController]
+
+  private val image = findById[ImageView](R.id.image)
+  private val obfuscationContainer = findById[View](R.id.obfuscation_container)
+  private val restrictionContainer = findById[View](R.id.restriction_container)
 
   assetController.openVideoProgress.onUi {
     case true  => assetActionButton.startEndlessProgress()
     case false => assetActionButton.clearProgress()
   }
 
-  hideContent.map(!_).onUi { visible =>
-    controls.setVisible(visible)
-    image.setVisible(visible)
+  viewState.onUi {
+    case AssetPartViewState.Restricted =>
+      restrictionContainer.setVisible(true)
+      obfuscationContainer.setVisible(false)
+      image.setVisible(false)
+      controls.setVisible(false)
+
+    case AssetPartViewState.Obfuscated =>
+      restrictionContainer.setVisible(false)
+      obfuscationContainer.setVisible(true)
+      image.setVisible(false)
+      controls.setVisible(false)
+
+    case AssetPartViewState.Loading =>
+      restrictionContainer.setVisible(false)
+      obfuscationContainer.setVisible(false)
+      image.setVisible(false)
+      controls.setVisible(false)
+
+    case AssetPartViewState.Loaded =>
+      restrictionContainer.setVisible(false)
+      obfuscationContainer.setVisible(false)
+      image.setVisible(true)
+      controls.setVisible(true)
+
+    case unknown =>
+      info(l"Unknown AssetPartViewState: $unknown")
   }
 
-  previewAssetId.onUi {
-    case Some(aId) => WireGlide(context).load(aId).into(image)
-    case _         => WireGlide(context).clear(image)
+  (for {
+    assetId <- previewAssetId
+    state   <- viewState
+  } yield (assetId, state)).onUi {
+    case (Some(aId), state) if state != AssetPartViewState.Restricted =>
+      WireGlide(context).load(aId).into(image)
+    case _ =>
+      WireGlide(context).clear(image)
   }
 
   assetActionButton.onClick {
-    assetStatus.map(_._1).currentValue.foreach {
-      case UploadAssetStatus.Failed       => message.currentValue.foreach(retr => { println(retr);  controller.retry(retr)})
-      case UploadAssetStatus.InProgress   => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get, m))
-      case DownloadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelDownload(m.assetId.get))
-      case AssetStatus.Done               => {
-        assetController.openVideoProgress ! true
-        asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
+    viewState.head.foreach { state =>
+      if (state != AssetPartViewState.Restricted) {
+        assetStatus.map(_._1).currentValue.foreach {
+          case UploadAssetStatus.Failed       => message.currentValue.foreach(retr => { println(retr);  controller.retry(retr)})
+          case UploadAssetStatus.InProgress   => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get, m))
+          case DownloadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelDownload(m.assetId.get))
+          case AssetStatus.Done               => {
+            assetController.openVideoProgress ! true
+            asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
+          }
+          case status                         => error(l"Unhandled asset status: $status")
+        }
       }
-      case status                         => error(l"Unhandled asset status: $status")
-    }
+    }(Threading.Ui)
   }
 
   padding.onUi { p =>
     durationView.setMargin(p.l, p.t, p.r, p.b)
   }
 
-  override def onInflated(): Unit = ()
 }

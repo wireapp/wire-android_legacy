@@ -44,7 +44,7 @@ import com.waz.service.assets._
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation._
 import com.waz.service.messages.MessagesService
-import com.waz.service.teams.{FeatureFlagsService, TeamsService}
+import com.waz.service.teams.{FeatureConfigsService, TeamsService}
 import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
@@ -193,7 +193,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[ConversationFoldersStorage]]    to inject[Signal[ZMessaging]].map(_.conversationFoldersStorage)
     bind [Signal[FoldersService]]                to inject[Signal[ZMessaging]].map(_.foldersService)
     bind [Signal[TeamsService]]                  to inject[Signal[ZMessaging]].map(_.teams)
-    bind [Signal[FeatureFlagsService]]           to inject[Signal[ZMessaging]].map(_.featureFlags)
+    bind [Signal[FeatureConfigsService]]         to inject[Signal[ZMessaging]].map(_.featureConfigs)
     bind [Signal[MessageIndexStorage]]           to inject[Signal[ZMessaging]].map(_.messagesIndexStorage)
     bind [Signal[ConnectionService]]             to inject[Signal[ZMessaging]].map(_.connection)
     bind [Signal[ButtonsStorage]]                to inject[Signal[ZMessaging]].map(_.buttonsStorage)
@@ -329,6 +329,8 @@ object WireApplication extends DerivedLogTag {
     bind [UiTrackingController]    to new UiTrackingController()
 
     bind[MessagePagedListController] to new MessagePagedListController()
+
+    bind [FeatureConfigsController] to new FeatureConfigsController()
   }
 
   def clearOldVideoFiles(context: Context): Unit = {

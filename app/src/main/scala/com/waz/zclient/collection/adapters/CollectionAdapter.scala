@@ -194,7 +194,8 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
       case otherType => CollectionItemViewHolder(inflateCollectionView(otherType, parent))
     }
 
-  private def inflateCollectionImageView(parent: ViewGroup) = new CollectionImageView(context)
+  private def inflateCollectionImageView(parent: ViewGroup) =
+    ViewHelper.inflate[CollectionImageView](R.layout.collection_message_image_content, parent, addToParent = false)
 
   private def inflateCollectionView(viewType: Int, parent: ViewGroup) = {
     viewType match {
@@ -379,7 +380,7 @@ object Header {
 object CollectionAdapter {
   // TODO: Investigate why we can derive the log tag.
   private implicit val logTag: LogTag = LogTag[CollectionAdapter.type]
-  
+
   val VIEW_TYPE_IMAGE = 0
   val VIEW_TYPE_FILE = 1
   val VIEW_TYPE_LINK_PREVIEW = 2
@@ -403,7 +404,7 @@ object CollectionAdapter {
   class CollectionRecyclerNotifier(contentType: ContentType, adapter: CollectionAdapter)
     extends RecyclerNotifier
       with DerivedLogTag {
-    
+
     override def notifyDataSetChanged(): Unit = {
       if (adapter.contentMode.currentValue.contains(contentType)) {
         debug(l"Will notifyDataSetChanged. contentType: $contentType, current mode is: ${adapter.contentMode.currentValue}")

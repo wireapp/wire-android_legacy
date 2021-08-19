@@ -80,4 +80,18 @@
         app:positive="@string/sharing__user_not_logged_in__dialog__confirm"
         />
 
+    <!--
+        Dialog for when file sharing is prohibited
+    -->
+    <com.waz.zclient.views.menus.ConfirmationMenu
+        android:id="@+id/cm__conversation_list__file_sharing_prohibited_prompt"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:visibility="gone"
+        app:header="@string/sharing__file_sharing_prohibited__dialog__title"
+        app:text="@string/sharing__file_sharing_prohibited__dialog__message"
+        app:positive="@string/sharing__file_sharing_prohibited__dialog__confirm"
+        />
+
 </merge>

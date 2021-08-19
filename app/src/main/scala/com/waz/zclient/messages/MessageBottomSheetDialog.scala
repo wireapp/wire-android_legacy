@@ -20,6 +20,7 @@ package com.waz.zclient.messages
 
 import android.content.Context
 import com.waz.api.Message
+import com.waz.content.UserPreferences.FileSharingFeatureEnabled
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetStatus
@@ -89,6 +90,9 @@ object MessageBottomSheetDialog {
       case None => false
     }
 
+  def isFileSharingEnabled(zms: ZMessaging): Signal[Boolean] =
+    zms.userPrefs(FileSharingFeatureEnabled).signal
+
   //TODO: Remove glyphId
   abstract class MessageAction(val resId: Int, val glyphResId: Int, val stringId: Int) extends MenuItem {
 
@@ -106,10 +110,12 @@ object MessageBottomSheetDialog {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] = {
         if (msg.isEphemeral) Signal.const(false)
         else msg.msgType match {
-          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | IMAGE_ASSET           =>
+          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA =>
             Signal.const(true)
+          case IMAGE_ASSET =>
+            isFileSharingEnabled(zms)
           case ANY_ASSET | AUDIO_ASSET | VIDEO_ASSET =>
-            isAssetDataReady(msg.assetId.get, assets)
+            Signal.and(isFileSharingEnabled(zms), isAssetDataReady(msg.assetId.get, assets))
           case _ =>
             Signal.const(false)
         }
@@ -178,19 +184,22 @@ object MessageBottomSheetDialog {
     }
 
     case object Save extends MessageAction(R.id.message_bottom_menu_item_save, R.string.glyph__download, R.string.message_bottom_menu_action_save) {
-      override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] =
-        msg.msgType match {
+      override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] = {
+        val result = msg.msgType match {
           case IMAGE_ASSET => Signal.const(zms.selfUserId == msg.userId || !msg.isEphemeral)
           case AUDIO_ASSET | VIDEO_ASSET if zms.selfUserId == msg.userId || !msg.isEphemeral => isAssetDataReady(msg.assetId.get, assets)
           case _ => Signal const false
         }
+
+        Signal.and(result, isFileSharingEnabled(zms))
+      }
     }
 
     case object OpenFile extends MessageAction(R.id.message_bottom_menu_item_open_file, R.string.glyph__file, R.string.message_bottom_menu_action_open) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] = {
         msg.msgType match {
           case ANY_ASSET if !msg.isEphemeral && !p.collection =>
-            isAssetDataReady(msg.assetId.get, assets)
+            Signal.and(isFileSharingEnabled(zms), isAssetDataReady(msg.assetId.get, assets))
           case _ =>
             Signal const false
         }
