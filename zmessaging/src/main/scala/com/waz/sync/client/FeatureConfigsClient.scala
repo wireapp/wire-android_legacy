@@ -1,7 +1,7 @@
 package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.{AppLockFeatureConfig, FileSharingFeatureConfig, TeamId}
+import com.waz.model.{AppLockFeatureConfig, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig, TeamId}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
@@ -10,6 +10,7 @@ import org.json.JSONObject
 trait FeatureConfigsClient {
   def getAppLock(teamId: TeamId): ErrorOrResponse[AppLockFeatureConfig]
   def getFileSharing(): ErrorOrResponse[FileSharingFeatureConfig]
+  def getSelfDeletingMessages(): ErrorOrResponse[SelfDeletingMessagesFeatureConfig]
 }
 
 class FeatureConfigsClientImpl(implicit
@@ -34,6 +35,12 @@ class FeatureConfigsClientImpl(implicit
     .withResultType[FileSharingFeatureConfig]
     .withErrorType[ErrorResponse]
     .executeSafe
+
+  override def getSelfDeletingMessages(): ErrorOrResponse[SelfDeletingMessagesFeatureConfig] =
+    Request.Get(relativePath =  fileSharingPath)
+    .withResultType[SelfDeletingMessagesFeatureConfig]
+    .withErrorType[ErrorResponse]
+    .executeSafe
 }
 
 object FeatureConfigsClient {
@@ -41,5 +48,6 @@ object FeatureConfigsClient {
 
   val basePath: String = "/feature-configs"
   val fileSharingPath: String = s"$basePath/fileSharing"
+  val selfDeletingMessages: String = s"$basePath/selfDeletingMessages"
 
 }
