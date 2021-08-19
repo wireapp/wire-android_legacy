@@ -45,8 +45,8 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       _       <- userPrefs(AppLockFeatureEnabled) := appLock.enabled
       _       <- userPrefs(AppLockForced)  := appLock.forced
       _       <- if (!appLock.enabled) userPrefs(AppLockEnabled) := false
-      else if (appLock.forced) userPrefs(AppLockEnabled) := true
-      else Future.successful(())
+                 else if (appLock.forced) userPrefs(AppLockEnabled) := true
+                 else Future.successful(())
       _       <- userPrefs(AppLockTimeout) := appLock.timeout
     } yield ()
 
@@ -62,11 +62,11 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       existingValue <- userPrefs(FileSharingFeatureEnabled).apply()
       newValue      =  fileSharing.isEnabled
       _             <- userPrefs(FileSharingFeatureEnabled) := newValue
-      // Inform of new restrictions.
+                    // Inform of new restrictions.
       _             <- if (existingValue && !newValue) userPrefs(ShouldInformFileSharingRestriction) := true
-      // Don't inform if restrictions are gone.
-      else if (newValue) userPrefs(ShouldInformFileSharingRestriction) := false
-      else Future.successful(())
+                       // Don't inform if restrictions are gone.
+                       else if (newValue) userPrefs(ShouldInformFileSharingRestriction) := false
+                       else Future.successful(())
     } yield ()
   }
 
@@ -74,7 +74,7 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
   override def updateConferenceCalling(): Future[Unit] =
     for {
       conferenceCalling <- syncHandler.fetchConferenceCalling()
-      _           <- storeConferenceCallingConfig(conferenceCalling)
+      _                 <- storeConferenceCallingConfig(conferenceCalling)
     } yield ()
 
   private def storeConferenceCallingConfig(conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig): Future[Unit] =
