@@ -57,7 +57,7 @@ class OtrClientsSyncHandlerImpl(selfId:     UserId,
   private lazy val sessions = cryptoBox.sessions
 
   private def hasSession(user: UserId, client: ClientId) =
-    sessions.getSession(SessionId(user, client)).map(_.isDefined)
+    sessions.getSession(SessionId(user, None, client)).map(_.isDefined)
 
   private def withoutSession(userId: UserId, clients: Iterable[ClientId]) =
     Future.traverse(clients) { client =>
@@ -180,7 +180,7 @@ class OtrClientsSyncHandlerImpl(selfId:     UserId,
           _       <- otrClients.updateUserClients(
                        us.map { case (uId, cs) => uId -> cs.map { case (id, _) => Client(id) } }, replace = false
                      )
-          prekeys =  us.flatMap { case (u, cs) => cs map { case (c, p) => (SessionId(u, c), p)} }
+          prekeys =  us.flatMap { case (u, cs) => cs map { case (c, p) => (SessionId(u, None, c), p)} }
           _       <- Future.traverse(prekeys) { case (id, p) => sessions.getOrCreateSession(id, p) }
           _       <- VerificationStateUpdater.awaitUpdated(selfId)
         } yield None

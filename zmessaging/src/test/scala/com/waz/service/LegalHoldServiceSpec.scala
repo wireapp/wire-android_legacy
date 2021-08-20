@@ -485,7 +485,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
       // Delete session.
       (cryptoSessionService.deleteSession _)
-        .expects(SessionId(selfUserId, client.id))
+        .expects(SessionId(selfUserId, None, client.id))
         .once()
         .returning(Future.successful({}))
 
@@ -517,7 +517,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
       // Creating the crypto session.
       (cryptoSessionService.getOrCreateSession _)
-        .expects(SessionId(selfUserId, client.id), legalHoldRequest.lastPreKey)
+        .expects(SessionId(selfUserId, None, client.id), legalHoldRequest.lastPreKey)
         .once()
         // To make testing simpler, just return none since
         // we don't actually need to use the crypto session.

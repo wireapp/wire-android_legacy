@@ -127,13 +127,13 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     client          <- clientsService.getOrCreateClient(selfUserId, request.clientId)
     legalHoldClient = client.copy(deviceClass = DeviceClass.LegalHold, isTemporary = true)
     _               <- clientsService.updateUserClients(selfUserId, Seq(legalHoldClient), replace = false)
-    sessionId       = SessionId(selfUserId, legalHoldClient.id)
+    sessionId       = SessionId(selfUserId, None, legalHoldClient.id)
     _               <- cryptoSessionService.getOrCreateSession(sessionId, request.lastPreKey)
   } yield ()
 
   private def deleteLegalHoldClientAndSession(clientId: ClientId): Future[Unit] = for {
     _ <- clientsService.removeClients(selfUserId, Seq(clientId))
-    _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, clientId))
+    _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, None, clientId))
   } yield ()
 
   private def onLegalHoldApprovedFromAnotherDevice(): Future[Unit] = for {

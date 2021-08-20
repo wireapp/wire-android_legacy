@@ -36,10 +36,10 @@ import com.waz.sync.client.OtrClient.EncryptedContent
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
+import com.waz.zms.BuildConfig
 import com.wire.cryptobox.CryptoException
 import com.wire.signals.Signal
 import javax.crypto.Mac
-import org.json.JSONObject
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -75,6 +75,7 @@ trait OtrService {
 }
 
 class OtrServiceImpl(selfUserId:     UserId,
+                     currentDomain:  Option[String],
                      clientId:       ClientId,
                      clients:        OtrClientsService,
                      cryptoBox:      CryptoBoxService,
@@ -144,7 +145,7 @@ class OtrServiceImpl(selfUserId:     UserId,
   override def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter)
       : Future[Either[OtrError, Unit]] =
     clients.getOrCreateClient(ev.from, ev.sender) flatMap { _ =>
-      sessions.decryptMessage(SessionId(ev.from, ev.sender), ev.ciphertext, eventWriter)
+      sessions.decryptMessage(SessionId(ev, currentDomain), ev.ciphertext, eventWriter)
         .map(Right(_))
         .recoverWith {
           case e: CryptoException =>
@@ -166,7 +167,7 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   def resetSession(conv: ConvId, user: UserId, client: ClientId): Future[SyncId] =
     for {
-      _ <- sessions.deleteSession(SessionId(user, client)).recover { case _ => () }
+      _ <- sessions.deleteSession(SessionId(user, None, client)).recover { case _ => () }
       _ <- clientsStorage.updateVerified(user, client, verified = false)
       _ <- sync.syncPreKeys(user, Set(client))
       syncId <- sync.postSessionReset(conv, user, client)
@@ -175,7 +176,7 @@ class OtrServiceImpl(selfUserId:     UserId,
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
     val msgData = msg.toByteArray
 
-    sessions.withSession(SessionId(user, client)) { session =>
+    sessions.withSession(SessionId(user, None, client)) { session =>
       EncryptedContent(Map(user -> Map(client -> session.encrypt(msgData))))
     }
   }
@@ -248,7 +249,7 @@ class OtrServiceImpl(selfUserId:     UserId,
           Future successful Some(clientId -> bytes)
         case None =>
           verbose(l"encrypt for client: $clientId")
-          sessions.withSession(SessionId(user, clientId)) { session => clientId -> session.encrypt(msgData) }.recover {
+          sessions.withSession(SessionId(user, None, clientId)) { session => clientId -> session.encrypt(msgData) }.recover {
             case e: Throwable =>
               if (useFakeOnError) Some(clientId -> EncryptionFailedMsg) else None
           }
@@ -259,7 +260,7 @@ class OtrServiceImpl(selfUserId:     UserId,
     case (user, cs) =>
       for {
         removalResult <- clients.removeClients(user, cs)
-        _             <- Future.traverse(cs) { c => sessions.deleteSession(SessionId(user, c)) }
+        _             <- Future.traverse(cs) { c => sessions.deleteSession(SessionId(user, None, c)) }
         _             <- if (removalResult.exists(_._2.clients.isEmpty))
                            users.syncUser(user)
                          else
@@ -269,7 +270,7 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
     if (userId == selfUserId && cId == clientId) Signal.from(cryptoBox(cb => Future.successful(cb.getLocalFingerprint)))
-    else cryptoBox.sessions.remoteFingerprint(SessionId(userId, cId))
+    else cryptoBox.sessions.remoteFingerprint(SessionId(userId, None, cId))
 
   def encryptAssetDataCBC(key: AESKey, data: LocalData): Future[(Sha256, LocalData, EncryptionAlgorithm)] = {
     import Threading.Implicits.Background
@@ -308,17 +309,34 @@ class OtrServiceImpl(selfUserId:     UserId,
 
 object OtrService {
 
-  val EncryptionFailedMsg = "\uD83D\uDCA3".getBytes("utf8")
+  val EncryptionFailedMsg: Array[Byte] = "\uD83D\uDCA3".getBytes("utf8")
 
-  final case class SessionId(user: UserId, client: ClientId) {
-    override def toString: String = s"${user}_$client"
+  final case class SessionId(userId: UserId, domain: Option[String], clientId: ClientId) {
+    override def toString: String = domain match {
+      case Some(d) if BuildConfig.FEDERATION_USER_DISCOVERY => s"${userId}_${d}_$clientId"
+      case _ => s"${userId}_$clientId"
+    }
   }
 
-  def hmacSha256(key: SignalingKey, data: Array[Byte]) = {
+  object SessionId {
+    def apply(ev: OtrEvent, currentDomain: Option[String]): SessionId =
+     if (BuildConfig.FEDERATION_USER_DISCOVERY && ev.fromDomain.isDefined && currentDomain.isDefined && ev.fromDomain != currentDomain)
+        SessionId(ev.from, ev.fromDomain, ev.sender)
+      else
+        SessionId(ev.from, None, ev.sender)
+
+    def apply(qId: QualifiedId, clientId: ClientId, currentDomain: Option[String]): SessionId =
+      if (BuildConfig.FEDERATION_USER_DISCOVERY && qId.hasDomain && currentDomain.isDefined && !currentDomain.contains(qId.domain))
+        SessionId(qId.id, Some(qId.domain), clientId)
+      else
+        SessionId(qId.id, None, clientId)
+  }
+
+  def hmacSha256(key: SignalingKey, data: Array[Byte]): Array[Byte] = {
     val mac = Mac.getInstance("HmacSHA256")
     mac.init(key.mac)
     mac.doFinal(data)
   }
 
-  def sizeWithPaddingAndIV(size: Long) = size + (32L - (size % 16L))
+  def sizeWithPaddingAndIV(size: Long): Long = size + (32L - (size % 16L))
 }

@@ -45,7 +45,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Right, Success}
 
 class AccountManager(val userId:  UserId,
-                     domain:      Option[String],
+                     val domain:  Option[String],
                      val teamId:  Option[TeamId],
                      val global:  GlobalModule,
                      accounts:    AccountsService,
@@ -139,7 +139,7 @@ class AccountManager(val userId:  UserId,
         if (userId == uId && selfClientId.contains(cId))
           Signal.from(cryptoBox(Future successful _.getLocalFingerprint))
         else
-          cryptoBox.sessions.remoteFingerprint(SessionId(uId, cId))
+          cryptoBox.sessions.remoteFingerprint(SessionId(uId, None, cId))
     } yield fingerprint
 
   def getOrRegisterClient(): ErrorOr[ClientRegistrationState] = {
