@@ -246,8 +246,8 @@ class MainActivity extends BaseActivity
       }
     }
     userPreferences.flatMap(_.preference(UserPreferences.ShouldInformSelfDeletingMessagesChanged).signal).onUi { shouldInform =>
-      if (!shouldInform) return
-      for {
+      if (!shouldInform) {}
+      else for {
         prefs                     <- userPreferences.head
         isFeatureEnabled          <- prefs.preference(AreSelfDeletingMessagesEnabled).apply()
         enforcedTimeoutInSeconds  <- prefs.preference(SelfDeletingMessagesEnforcedTimeout).apply()
