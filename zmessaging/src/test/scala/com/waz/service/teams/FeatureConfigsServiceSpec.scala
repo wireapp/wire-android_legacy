@@ -99,7 +99,7 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     userPrefs.setValue(ConferenceCallingFeatureEnabled, true)
 
     // Mock
-    (syncHandler.fetchConferenceCalling() _).expects().anyNumberOfTimes().returning(
+    (syncHandler.fetchConferenceCalling _).expects().anyNumberOfTimes().returning(
       Future.successful(ConferenceCallingFeatureConfig("disabled"))
     )
 
