@@ -38,6 +38,7 @@ import com.waz.sync.otr.OtrSyncHandler.MissingClientsStrategy._
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients._
 import com.waz.utils.crypto.AESUtils
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
@@ -265,30 +266,30 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         successful(Left(err))
     }
 
-  override def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult] = {
+  override def postSessionReset(convId: ConvId, userId: UserId, clientId: ClientId): Future[SyncResult] = {
 
     val msg = GenericMessage(Uid(), ClientAction.SessionReset)
 
     val convData = convStorage.get(convId).flatMap {
-      case None => convStorage.get(ConvId(user.str))
+      case None => convStorage.get(ConvId(userId.str))
       case conv => successful(conv)
     }
 
-    def msgContent = service.encryptTargetedMessage(user, client, msg).flatMap {
+    def msgContent = service.encryptTargetedMessage(userId, clientId, msg).flatMap {
       case Some(ct) => successful(Some(ct))
       case None =>
         for {
-          _       <- clientsSyncHandler.syncSessions(Map(user -> Seq(client)))
-          content <- service.encryptTargetedMessage(user, client, msg)
+          _       <- clientsSyncHandler.syncSessions(Map(userId -> Seq(clientId)))
+          content <- service.encryptTargetedMessage(userId, clientId, msg)
         } yield content
     }
 
     convData.flatMap {
       case None =>
-        successful(Failure(s"conv not found: $convId, for user: $user in postSessionReset"))
+        successful(Failure(s"conv not found: $convId, for user: $userId in postSessionReset"))
       case Some(conv) =>
         msgContent.flatMap {
-          case None => successful(Failure(s"session not found for $user, $client"))
+          case None => successful(Failure(s"session not found for $userId, $clientId"))
           case Some(content) =>
             msgClient
               .postMessage(conv.remoteId, OtrMessage(selfClientId, content), ignoreMissing = true).future
