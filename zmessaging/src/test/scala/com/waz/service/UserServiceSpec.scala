@@ -30,6 +30,7 @@ import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
 import com.waz.testutils.TestUserPreferences
 import com.wire.signals.{CancellableFuture, Signal, SourceSignal}
 import com.waz.threading.Threading
+import com.waz.zms.BuildConfig
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -144,17 +145,19 @@ class UserServiceSpec extends AndroidFreeSpec {
     }
 
     scenario("check if a federated user exists") {
-      val qId = federatedUser.qualifiedId.get
-      val userInfo = UserInfo(federatedUser.id, domain = Some(OtherDomain))
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val qId = federatedUser.qualifiedId.get
+        val userInfo = UserInfo(federatedUser.id, domain = Some(OtherDomain))
 
-      (usersClient.loadQualifiedUser _).expects(qId).anyNumberOfTimes().returning(
-        CancellableFuture.successful(Right(Option(userInfo)))
-      )
-      (usersStorage.get _).expects(federatedUser.id).anyNumberOfTimes().returning(Future.successful(Option(federatedUser)))
-      (usersStorage.updateOrCreateAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Set(federatedUser)))
+        (usersClient.loadQualifiedUser _).expects(qId).anyNumberOfTimes().returning(
+          CancellableFuture.successful(Right(Option(userInfo)))
+        )
+        (usersStorage.get _).expects(federatedUser.id).anyNumberOfTimes().returning(Future.successful(Option(federatedUser)))
+        (usersStorage.updateOrCreateAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Set(federatedUser)))
 
-      val service = getService
-      result(service.syncUser(federatedUser.id)) shouldEqual Some(federatedUser)
+        val service = getService
+        result(service.syncUser(federatedUser.id)) shouldEqual Some(federatedUser)
+      }
     }
 
     scenario("delete user locally if it the client says it's removed") {
