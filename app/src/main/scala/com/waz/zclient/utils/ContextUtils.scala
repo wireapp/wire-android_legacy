@@ -360,4 +360,17 @@ object ContextUtils {
       msg = getString(R.string.file_sharing_restriction_info_dialog_message)
     ).foreach(onConfirm)
   }
+
+  def showSelfDeletingMessagesConfigsChangeInfoDialog(isEnabled: Boolean, enforcedTimeoutInSeconds: Int)(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    val message = (isEnabled, enforcedTimeoutInSeconds) match {
+      case (true, 0 )       => getString(R.string.self_deleting_messages_change_info_dialog_message_enabled)
+      case (true, seconds)  => getString(R.string.self_deleting_messages_change_info_dialog_message_enabled_enforced, seconds.toString)
+      case (false, _)       => getString(R.string.self_deleting_messages_change_info_dialog_message_disabled)
+    }
+
+    showInfoDialog(
+      title = getString(R.string.self_deleting_messages_change_info_dialog_title),
+      msg = message
+    ).foreach(onConfirm)
+  }
 }
