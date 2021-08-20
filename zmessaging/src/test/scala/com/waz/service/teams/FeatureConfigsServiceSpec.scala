@@ -93,4 +93,21 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     result(userPrefs(FileSharingFeatureEnabled).apply()) shouldEqual false
   }
 
+  scenario("Process update event for SelfDeletingMessages feature config") {
+    // Given
+    val service = createService
+    val pipeline = createEventPipeline(service)
+    val event = FeatureConfigUpdateEvent("selfDeletingMessages", "{ \"status\": \"true\", \"enforcedSeconds\": 60 }")
+
+    userPrefs.setValue(AreSelfDeletingMessagesEnabled, false)
+    userPrefs.setValue(SelfDeletingMessagesEnforcedTimeout, 0)
+
+    // When
+    result(pipeline.apply(Seq(event)))
+
+    // Then
+    result(userPrefs(AreSelfDeletingMessagesEnabled).apply()) shouldEqual true
+    result(userPrefs(SelfDeletingMessagesEnforcedTimeout).apply()) shouldEqual 60
+  }
+
 }
