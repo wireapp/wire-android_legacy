@@ -19,7 +19,7 @@ class FeatureConfigsController(implicit inj: Injector) extends Injectable with D
       case true => ()
     }
 
-  private def updateFlags(configsService: FeatureConfigsService)() {
+  private def updateFlags(configsService: FeatureConfigsService)(): Unit = {
     configsService.updateFileSharing()
     configsService.updateSelfDeletingMessages()
   }
