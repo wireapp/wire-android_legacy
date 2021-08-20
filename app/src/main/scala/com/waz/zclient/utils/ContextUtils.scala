@@ -360,4 +360,21 @@ object ContextUtils {
       msg = getString(R.string.file_sharing_restriction_info_dialog_message)
     ).foreach(onConfirm)
   }
+
+  def showConferenceCallingRestrictedDialog(color: AccentColor)(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    showConfirmationDialog(
+      title = getString(R.string.conference_calling_restriction_dialog_title),
+      msg = getString(R.string.conference_calling_restriction_dialog_description),
+      positiveRes = R.string.conference_calling_restriction_dialog_positive_button,
+      negativeRes = R.string.conference_calling_restriction_dialog_negative_button,
+      color
+    ).foreach(onConfirm)
+  }
+
+  def showPlanUpgradedInfoDialog(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    showInfoDialog(
+      title = getString(R.string.upgraded_plan_dialog_title),
+      msg = getString(R.string.upgraded_plan_dialog_description)
+    ).foreach(onConfirm)
+  }
 }
