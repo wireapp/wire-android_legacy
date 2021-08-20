@@ -3,9 +3,7 @@ package com.waz.model
 import com.waz.utils.JsonDecoder
 import org.json.JSONObject
 
-
 final case class SelfDeletingMessagesFeatureConfig(status: String, seconds: Int) {
-
 
   def isEnabled: Boolean = status == "enabled"
 
