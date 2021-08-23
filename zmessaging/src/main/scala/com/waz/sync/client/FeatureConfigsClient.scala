@@ -37,7 +37,7 @@ class FeatureConfigsClientImpl(implicit
     .executeSafe
 
   override def getSelfDeletingMessages(): ErrorOrResponse[SelfDeletingMessagesFeatureConfig] =
-    Request.Get(relativePath =  fileSharingPath)
+    Request.Get(relativePath =  selfDeletingMessages)
     .withResultType[SelfDeletingMessagesFeatureConfig]
     .withErrorType[ErrorResponse]
     .executeSafe
