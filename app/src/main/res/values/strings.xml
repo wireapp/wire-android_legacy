@@ -1648,7 +1648,8 @@
 
     <!-- File sharing feature config -->
     <string name="file_sharing_restriction_info_dialog_title">There has been a change in Wire</string>
-    <string name="file_sharing_restriction_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
+    <string name="file_sharing_enabled_info_dialog_message">Sharing and receiving files of any type is now enabled.</string>
+    <string name="file_sharing_disabled_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
 
     <string name="file_sharing_restriction_info_image">RECEIVING IMAGES RESTRICTED</string>
     <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS RESTRICTED</string>

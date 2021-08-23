@@ -238,10 +238,12 @@ class MainActivity extends BaseActivity
 
     userPreferences.flatMap(_.preference(UserPreferences.ShouldInformFileSharingRestriction).signal).onUi { shouldInform =>
       if (shouldInform) {
-        showFileSharingRestrictionInfoDialog { _ =>
-          userPreferences.head.foreach { prefs =>
-            prefs(UserPreferences.ShouldInformFileSharingRestriction) := false
-          }
+        userPreferences.head.flatMap(_(UserPreferences.FileSharingFeatureEnabled).apply()).foreach { isEnabled =>
+          showFileSharingRestrictionInfoDialog(isEnabled, { _ =>
+            userPreferences.head.foreach { prefs =>
+              prefs(UserPreferences.ShouldInformFileSharingRestriction) := false
+            }
+          })
         }
       }
     }
