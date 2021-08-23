@@ -252,9 +252,11 @@ class MainActivity extends BaseActivity
   private def observeTeamUpgrade(): Unit = {
     userPreferences.flatMap(_.preference(UserPreferences.ShouldInformPlanUpgradedToEnterprise).signal).onUi { shouldInform =>
       if (shouldInform) {
-        showPlanUpgradedInfoDialog { _ =>
-          userPreferences.head.foreach { prefs =>
-            prefs(UserPreferences.ShouldInformPlanUpgradedToEnterprise) := false
+        accentColorController.accentColor.head.foreach { accentColor =>
+          showPlanUpgradedInfoDialog(accentColor) { _ =>
+            userPreferences.head.foreach { prefs =>
+              prefs(UserPreferences.ShouldInformPlanUpgradedToEnterprise) := false
+            }
           }
         }
       }
