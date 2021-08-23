@@ -131,6 +131,19 @@ class UserServiceImpl(selfUserId:        UserId,
     } yield ()
   }
 
+  private lazy val shouldMigrateToFederation = userPrefs.preference(UserPreferences.ShouldMigrateToFederation)
+
+  for {
+    shouldMigrate <- if (BuildConfig.FEDERATION_USER_DISCOVERY) shouldMigrateToFederation() else Future.successful(false)
+  } if (shouldMigrate && currentDomain.isDefined) {
+    verbose(l"Migrating users to federation")
+    for {
+      userIds <- usersStorage.keySet
+      _       <- usersStorage.updateAll2(userIds, { user => if (user.domain.isEmpty) user.copy(domain = currentDomain) else user })
+      _       <- shouldMigrateToFederation := false
+    } yield ()
+  }
+
   override val currentConvMembers = for {
     Some(convId) <- selectedConv.selectedConversationId
     membersIds   <- membersStorage.activeMembers(convId)
