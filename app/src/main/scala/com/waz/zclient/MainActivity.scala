@@ -245,8 +245,20 @@ class MainActivity extends BaseActivity
         }
       }
     }
-
+    observeTeamUpgrade()
     featureConfigsController.startUpdatingFlagsWhenEnteringForeground()
+  }
+
+  private def observeTeamUpgrade(): Unit = {
+    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformPlanUpgradedToEnterprise).signal).onUi { shouldInform =>
+      if (shouldInform) {
+        showPlanUpgradedInfoDialog { _ =>
+          userPreferences.head.foreach { prefs =>
+            prefs(UserPreferences.ShouldInformPlanUpgradedToEnterprise) := false
+          }
+        }
+      }
+    }
   }
 
   private def initTracking: Future[Unit] =
@@ -285,16 +297,6 @@ class MainActivity extends BaseActivity
     deepLinkService.checkDeepLink(intent)
     intent.setData(null)
     setIntent(intent)
-
-    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformPlanUpgradedToEnterprise).signal).onUi { shouldInform =>
-      if (shouldInform) {
-        showPlanUpgradedInfoDialog { _ =>
-          userPreferences.head.foreach { prefs =>
-            prefs(UserPreferences.ShouldInformPlanUpgradedToEnterprise) := false
-          }
-        }
-      }
-    }
   }
 
   override protected def onResume(): Unit = {

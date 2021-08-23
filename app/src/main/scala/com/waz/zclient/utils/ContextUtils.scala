@@ -23,11 +23,13 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.provider.Settings
 import android.text.format.Formatter
+import android.text.method.LinkMovementMethod
 import android.util.{AttributeSet, TypedValue}
-import android.widget.Toast
+import android.widget.{TextView, Toast}
 import androidx.annotation.StyleableRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.text.HtmlCompat
 import com.waz.model.{AccentColor, Availability}
 import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason}
 import com.waz.utils.returning
@@ -181,15 +183,17 @@ object ContextUtils {
                     (implicit context: Context): Future[Boolean] = {
 
     val p = Promise[Boolean]()
-    new AlertDialog.Builder(context)
+    val dialog: AlertDialog = new AlertDialog.Builder(context)
       .setTitle(title)
-      .setMessage(msg)
+      .setMessage(HtmlCompat.fromHtml(msg, HtmlCompat.FROM_HTML_MODE_LEGACY))
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
         override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(true))
       })
       .setCancelable(false)
       .create
-      .show()
+    dialog.show()
+    val messageTextView = dialog.findViewById(android.R.id.message).asInstanceOf[TextView]
+    messageTextView.setMovementMethod(LinkMovementMethod.getInstance())
     p.future
   }
 
@@ -246,7 +250,7 @@ object ContextUtils {
 
     val builder = new AlertDialog.Builder(context)
       .setTitle(title)
-      .setMessage(msg)
+      .setMessage(HtmlCompat.fromHtml(msg, HtmlCompat.FROM_HTML_MODE_LEGACY))
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
         override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(Some(true)))
       })
@@ -267,7 +271,8 @@ object ContextUtils {
 
     dialog.show()
     setButtonAccentColors(dialog, color)
-
+    val messageTextView = dialog.findViewById(android.R.id.message).asInstanceOf[TextView]
+    messageTextView.setMovementMethod(LinkMovementMethod.getInstance())
     p.future
   }
 

@@ -384,7 +384,7 @@ class ConversationFragment extends FragmentHelper {
         conversationType          <- convController.currentConvType.head
         isConferenceCallingRestricted <- isConferenceCallingRestricted
       } yield
-        if(conversationType== ConversationType.Group && isConferenceCallingRestricted)
+        if(conversationType == ConversationType.Group && isConferenceCallingRestricted)
           displayConferenceCallingRestrictionDialog()
         else {
           callStartController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call, forceOption = true)
@@ -400,8 +400,7 @@ class ConversationFragment extends FragmentHelper {
     def displayConferenceCallingRestrictionDialog(): Unit = {
       accentColorController.accentColor.head.foreach { accentColor =>
         showConferenceCallingRestrictedDialog(accentColor) { didConfirm =>
-          if (didConfirm) inject[BrowserController].openPlayStoreListing()
-
+          if (didConfirm) inject[BrowserController].openWirePricing()
         }
       }
     }
