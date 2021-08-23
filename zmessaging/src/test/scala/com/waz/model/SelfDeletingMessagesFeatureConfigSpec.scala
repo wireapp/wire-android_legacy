@@ -3,8 +3,6 @@ package com.waz.model
 import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.JsonDecoder
 
-import java.nio.charset.IllegalCharsetNameException
-
 class SelfDeletingMessagesFeatureConfigSpec extends AndroidFreeSpec {
 
   feature("Deserialization form JSON") {
