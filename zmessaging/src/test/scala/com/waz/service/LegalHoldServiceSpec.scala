@@ -480,7 +480,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
       // Delete client.
       (clientsService.removeClients _ )
-        .expects(selfUserId, Seq(client.id))
+        .expects(selfUserId, Set(client.id))
         .once()
         // We don't care about the return type.
         .returning(Future.successful(None))

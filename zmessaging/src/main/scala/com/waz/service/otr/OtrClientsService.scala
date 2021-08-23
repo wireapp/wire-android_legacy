@@ -46,7 +46,7 @@ trait OtrClientsService {
   def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean): Future[UserClients]
   def updateUserClients(ucs: Map[UserId, Seq[Client]], replace: Boolean): Future[Set[UserClients]]
   def onCurrentClientRemoved(): Future[Option[(UserClients, UserClients)]]
-  def removeClients(user: UserId, clients: Seq[ClientId]): Future[Option[(UserClients, UserClients)]]
+  def removeClients(user: UserId, clients: Set[ClientId]): Future[Option[(UserClients, UserClients)]]
   def updateClientLabel(id: ClientId, label: String): Future[Option[SyncId]]
   def selfClient: Signal[Client]
   def getSelfClient: Future[Option[Client]]
@@ -81,7 +81,7 @@ class OtrClientsServiceImpl(selfId:    UserId,
           id <- sync.syncPreKeys(selfId, Set(client.id))
         } yield id
       case OtrClientRemoveEvent(cId) =>
-        removeClients(selfId, Seq(cId))
+        removeClients(selfId, Set(cId))
     }
   }
 
@@ -122,7 +122,7 @@ class OtrClientsServiceImpl(selfId:    UserId,
 
   def onCurrentClientRemoved(): Future[Option[(UserClients, UserClients)]] = storage.update(selfId, _ - clientId)
 
-  override def removeClients(user: UserId, clients: Seq[ClientId]): Future[Option[(UserClients, UserClients)]] =
+  override def removeClients(user: UserId, clients: Set[ClientId]): Future[Option[(UserClients, UserClients)]] =
     storage.update(user, { cs =>
       cs.copy(clients = cs.clients -- clients)
     })

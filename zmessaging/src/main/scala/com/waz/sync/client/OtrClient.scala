@@ -45,7 +45,7 @@ import scala.util.{Failure, Success, Try}
 trait OtrClient {
   def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]]
   def loadClientPreKey(user: UserId, client: ClientId): ErrorOrResponse[ClientKey]
-  def loadPreKeys(users: Map[UserId, Seq[ClientId]]): ErrorOrResponse[Map[UserId, Seq[ClientKey]]]
+  def loadPreKeys(users: OtrClientIdMap): ErrorOrResponse[Map[UserId, Seq[ClientKey]]]
   def loadClients(): ErrorOrResponse[Seq[Client]]
   def loadClients(user: UserId): ErrorOrResponse[Seq[Client]]
   def loadClients(users: Set[QualifiedId]): ErrorOrResponse[Map[QualifiedId, Seq[Client]]]
@@ -99,11 +99,11 @@ class OtrClientImpl(implicit
       .executeSafe
   }
 
-  override def loadPreKeys(users: Map[UserId, Seq[ClientId]]): ErrorOrResponse[Map[UserId, Seq[ClientKey]]] = {
+  override def loadPreKeys(users: OtrClientIdMap): ErrorOrResponse[Map[UserId, Seq[ClientKey]]] = {
     // TODO: request accepts up to 128 clients, we should make sure not to send more
     val data = JsonEncoder { o =>
-      users.foreach { case (u, cs) =>
-        o.put(u.str, JsonEncoder.arrString(cs.map(_.str)))
+      users.entries.foreach { case (u, cs) =>
+        o.put(u.str, JsonEncoder.arrString(cs.map(_.str).toSeq))
       }
     }
 
@@ -401,43 +401,33 @@ object OtrClient extends DerivedLogTag {
   sealed trait MessageResponse {
     def mismatch: ClientMismatch
 
-    def deleted: Map[UserId, Seq[ClientId]] =
-      mismatch.deleted
+    def deleted: OtrClientIdMap = mismatch.deleted
 
-    def missing: Map[UserId, Seq[ClientId]] =
-      mismatch.missing
+    def missing: OtrClientIdMap = mismatch.missing
   }
+
   object MessageResponse {
     final case class Success(mismatch: ClientMismatch) extends MessageResponse
     final case class Failure(mismatch: ClientMismatch) extends MessageResponse
   }
 
-  final case class ClientMismatch(redundant: Map[UserId, Seq[ClientId]] = Map.empty,
-                                  missing:   Map[UserId, Seq[ClientId]] = Map.empty,
-                                  deleted:   Map[UserId, Seq[ClientId]] = Map.empty,
+  final case class ClientMismatch(redundant: OtrClientIdMap = OtrClientIdMap.Empty,
+                                  missing:   OtrClientIdMap = OtrClientIdMap.Empty,
+                                  deleted:   OtrClientIdMap = OtrClientIdMap.Empty,
                                   time:     RemoteInstant)
 
   object ClientMismatch {
     implicit lazy val Decoder: JsonDecoder[ClientMismatch] = new JsonDecoder[ClientMismatch] {
       import JsonDecoder._
-
-      import scala.collection.JavaConverters._
-
-      def decodeMap(key: Symbol)(implicit js: JSONObject): Map[UserId, Seq[ClientId]] =
-        if (!js.has(key.name) || js.isNull(key.name)) Map.empty
-        else {
-          val mapJs = js.getJSONObject(key.name)
-          mapJs.keys.asScala.map { key =>
-            UserId(key) -> decodeStringSeq(Symbol(key))(mapJs).map(ClientId(_))
-          }.toMap
-        }
+      import OtrClientIdMap.decodeMap
 
       override def apply(implicit js: JSONObject): ClientMismatch =
-        ClientMismatch(decodeMap('redundant),
+        ClientMismatch(
+          decodeMap('redundant),
           decodeMap('missing),
           decodeMap('deleted),
-          decodeOptUtcDate('time).map(t => RemoteInstant.ofEpochMilli(t.getTime)).getOrElse(RemoteInstant.Epoch))
+          decodeOptUtcDate('time).map(t => RemoteInstant.ofEpochMilli(t.getTime)).getOrElse(RemoteInstant.Epoch)
+        )
     }
   }
-
 }

@@ -24,7 +24,7 @@ import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.otr.ClientId
+import com.waz.model.otr.{ClientId, OtrClientIdMap}
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync._
 import com.waz.model.{AccentColor, Availability, _}
@@ -301,7 +301,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
         req match {
           case SyncSelfClients                                 => zms.otrClientsSync.syncSelfClients()
           case SyncClientsBatch(users)                         => zms.otrClientsSync.syncClients(users)
-          case SyncPreKeys(user, clients)                      => zms.otrClientsSync.syncPreKeys(Map(user -> clients.toSeq))
+          case SyncPreKeys(user, clients)                      => zms.otrClientsSync.syncPreKeys(OtrClientIdMap.from(user -> clients))
           case PostClientLabel(id, label)                      => zms.otrClientsSync.postLabel(id, label)
           case SyncConversation(convs)                         => zms.conversationSync.syncConversations(convs)
           case SyncConversations                               => zms.conversationSync.syncConversations()

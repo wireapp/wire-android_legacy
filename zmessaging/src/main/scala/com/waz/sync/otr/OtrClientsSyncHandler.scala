@@ -22,7 +22,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.ShouldPostClientCapabilities
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.otr.{Client, ClientId}
+import com.waz.model.otr.{Client, ClientId, OtrClientIdMap}
 import com.waz.model.{QualifiedId, UserId}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr._
@@ -39,8 +39,8 @@ trait OtrClientsSyncHandler {
   def syncSelfClients(): Future[SyncResult]
   def postLabel(id: ClientId, label: String): Future[SyncResult]
   def postCapabilities(): Future[SyncResult]
-  def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult]
-  def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]]
+  def syncPreKeys(clients: OtrClientIdMap): Future[SyncResult]
+  def syncSessions(clients: OtrClientIdMap): Future[Option[ErrorResponse]]
 }
 
 class OtrClientsSyncHandlerImpl(selfId:     UserId,
@@ -66,10 +66,10 @@ class OtrClientsSyncHandlerImpl(selfId:     UserId,
     } map { _.flatten.toSeq }
 
   private def updateClients(users: Map[UserId, Seq[Client]]): Future[SyncResult] = {
-    def withoutSession(): Future[Map[UserId, Seq[ClientId]]] =
+    def withoutSession(): Future[OtrClientIdMap] =
       Future.sequence(
-        users.map { case (id, clients) => self.withoutSession(id, clients.map(_.id)).map(cs => id -> cs) }
-      ).map(_.toMap)
+        users.map { case (id, clients) => self.withoutSession(id, clients.map(_.id)).map(cs => id -> cs.toSet) }
+      ).map(OtrClientIdMap(_))
 
     def syncSessionsIfNeeded() =
       for {
@@ -167,12 +167,12 @@ class OtrClientsSyncHandlerImpl(selfId:     UserId,
       case Left(err) => (userPrefs.preference(ShouldPostClientCapabilities) := true).map(_ => SyncResult(err))
     }
 
-  override def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult] = syncSessions(clients).map {
+  override def syncPreKeys(clients: OtrClientIdMap): Future[SyncResult] = syncSessions(clients).map {
     case Some(error) => SyncResult(error)
     case None        => Success
   }
 
-  override def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]] =
+  override def syncSessions(clients: OtrClientIdMap): Future[Option[ErrorResponse]] =
     loadPreKeys(clients).flatMap {
       case Left(error) => Future.successful(Some(error))
       case Right(us)   =>
@@ -188,23 +188,23 @@ class OtrClientsSyncHandlerImpl(selfId:     UserId,
       case e: Throwable => Some(ErrorResponse.internalError(e.getMessage))
     }
 
-  private def loadPreKeys(clients: Map[UserId, Seq[ClientId]]) = {
+  private def loadPreKeys(clients: OtrClientIdMap) = {
     import OtrClientsSyncHandlerImpl.LoadPreKeysMaxClients
 
-    def mapSize(map: Map[UserId, Seq[ClientId]]): Int = map.values.map(_.size).sum
-    def load(map: Map[UserId, Seq[ClientId]]): ErrorOr[Map[UserId, Seq[(ClientId, PreKey)]]] = netClient.loadPreKeys(map).future
+    def mapSize(map: OtrClientIdMap): Int = map.entries.values.map(_.size).sum
+    def load(map: OtrClientIdMap): ErrorOr[Map[UserId, Seq[(ClientId, PreKey)]]] = netClient.loadPreKeys(map).future
 
     // request accepts up to 128 clients, we should make sure not to send more
     if (mapSize(clients) < LoadPreKeysMaxClients) load(clients)
     else {
       // we divide the original map into a list of chunks, each with at most 127 clients
       val chunks =
-        clients.foldLeft(List(Map.empty[UserId, Seq[ClientId]])) { case (acc, (userId, clientIds)) =>
+        clients.entries.foldLeft(List(OtrClientIdMap.Empty)) { case (acc, (userId, clientIds)) =>
           val currentMap = acc.head
           if (mapSize(currentMap) + clientIds.size < LoadPreKeysMaxClients)
-            (currentMap + (userId -> clientIds)) :: acc.tail
+            OtrClientIdMap(currentMap.entries + (userId -> clientIds)) :: acc.tail
           else
-            Map(userId -> clientIds) :: acc
+            OtrClientIdMap.from(userId -> clientIds) :: acc
         }
 
       // for each chunk we load the prekeys separately and then add them together (unless there's an error response)

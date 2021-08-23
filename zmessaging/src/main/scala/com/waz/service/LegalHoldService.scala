@@ -134,7 +134,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   } yield ()
 
   private def deleteLegalHoldClientAndSession(clientId: ClientId): Future[Unit] = for {
-    _ <- clientsService.removeClients(selfUserId, Seq(clientId))
+    _ <- clientsService.removeClients(selfUserId, Set(clientId))
     _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, None, clientId))
   } yield ()
 

@@ -28,7 +28,7 @@ import com.waz.content.{GlobalPreferences, MembersStorage, UserPreferences, User
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.log.LogShow.SafeToLog
-import com.waz.model.otr.ClientId
+import com.waz.model.otr.{ClientId, OtrClientIdMap}
 import com.waz.model.{ConvId, RConvId, UserId, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.EventScheduler.Stage
@@ -221,7 +221,7 @@ class CallingServiceImpl(val accountId:       UserId,
       sendCallMessage(wCall, conv.id, GenericMessage(Uid(), GenericContent.Calling(msg)), recipients, ctx)
     }
 
-  private def clientsMap(avsClients: Set[AvsClient]): Map[UserId, Set[ClientId]] = {
+  private def clientsMap(avsClients: Set[AvsClient]): OtrClientIdMap = OtrClientIdMap {
     avsClients
       .groupBy(_.userid)
       .mapValues(_.map(_.clientid))
