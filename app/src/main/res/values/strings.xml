@@ -1084,7 +1084,7 @@
     <string name="ephemeral_message_footer_multiple_units">%1$s and %2$s remaining</string>
     <string name="ephemeral_message_footer_single_unit">%1$s remaining</string>
 
-    <string name="collection_header_pictures">PICTURES</string>
+    <string name="collection_header_images">IMAGES</string>
     <string name="collection_header_files">FILES</string>
     <string name="collection_header_links">LINKS</string>
     <string name="collection_header_today">TODAY</string>
