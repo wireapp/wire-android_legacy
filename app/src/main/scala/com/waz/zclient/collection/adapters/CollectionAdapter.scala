@@ -295,7 +295,7 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
 
   private def getHeaderText(headerId: HeaderId): String = {
     headerId match {
-      case HeaderId(HeaderType.Images, _, _) => getString(R.string.collection_header_pictures)
+      case HeaderId(HeaderType.Images, _, _) => getString(R.string.collection_header_images)
       case HeaderId(HeaderType.Files, _, _) => getString(R.string.collection_header_files)
       case HeaderId(HeaderType.Links, _, _) => getString(R.string.collection_header_links)
       case HeaderId(HeaderType.Today, _, _) => getString(R.string.collection_header_today)
