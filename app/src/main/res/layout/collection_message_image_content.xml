@@ -36,10 +36,24 @@
         android:cropToPadding="true"
         />
 
-    <!-- Icon -->
+    <!-- Ephemeral icon -->
 
     <com.waz.zclient.ui.text.GlyphTextView
-        android:id="@+id/icon"
+        android:id="@+id/ephemeral_icon"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="@string/glyph__picture"
+        android:textColor="?wirePrimaryTextColor"
+        android:textSize="@dimen/wire__icon_button__text_size"
+        android:visibility="invisible"
+        />
+
+    <!-- Restricted icon -->
+
+    <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/restricted_icon"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
