@@ -41,6 +41,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   private val cryptoSessionService = mock[CryptoSessionService]
   private val sync = mock[SyncServiceHandle]
   private val messagesService = mock[MessagesService]
+  private val userService = mock[UserService]
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -68,7 +69,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       membersStorage,
       cryptoSessionService,
       sync,
-      messagesService
+      messagesService,
+      userService
     )
   }
 
@@ -350,7 +352,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline = createEventPipeline()
       userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
-      (sync.syncClients(_: UserId))
+      (userService.syncClients(_: UserId))
         .expects(*)
         .anyNumberOfTimes()
         .returning(Future.successful(SyncId("syncId")))
@@ -379,7 +381,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline = createEventPipeline()
       userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
-      (sync.syncClients(_: UserId))
+      (userService.syncClients(_: UserId))
         .expects(*)
         .anyNumberOfTimes()
         .returning(Future.successful(SyncId("syncId")))
@@ -397,7 +399,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline = createEventPipeline()
 
       // Expectation
-      (sync.syncClients(_: UserId))
+      (userService.syncClients(_: UserId))
           .expects(otherUserId)
           .once()
           .returning(Future.successful(SyncId("syncId")))
@@ -412,7 +414,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline = createEventPipeline()
 
       // Expectation
-      (sync.syncClients(_: UserId))
+      (userService.syncClients(_: UserId))
         .expects(otherUserId)
         .once()
         .returning(Future.successful(SyncId("syncId")))

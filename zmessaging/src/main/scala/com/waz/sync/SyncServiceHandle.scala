@@ -119,7 +119,6 @@ trait SyncServiceHandle {
   def syncSelfPermissions(): Future[SyncId]
   def postClientLabel(id: ClientId, label: String): Future[SyncId]
   def postClientCapabilities(): Future[SyncId]
-  def syncClients(user: UserId): Future[SyncId]
   def syncClients(users: Set[QualifiedId]): Future[SyncId]
   def syncProperties(): Future[SyncId]
 
@@ -239,8 +238,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncSelfPermissions() = addRequest(SyncSelfPermissions, priority = Priority.High)
   def postClientLabel(id: ClientId, label: String) = addRequest(PostClientLabel(id, label))
   def postClientCapabilities(): Future[SyncId] = addRequest(PostClientCapabilities)
-  def syncClients(user: UserId) = addRequest(SyncClients(user))
-  def syncClients(users: Set[QualifiedId]) = addRequest(SyncClientsBatch(users))
+  def syncClients(users: Set[QualifiedId]): Future[SyncId] = addRequest(SyncClientsBatch(users))
   def syncPreKeys(user: UserId, clients: Set[ClientId]) = addRequest(SyncPreKeys(user, clients))
   def syncProperties(): Future[SyncId] = addRequest(SyncProperties, forceRetry = true)
 
@@ -301,8 +299,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
     accounts.getZms(accountId).flatMap {
       case Some(zms) =>
         req match {
-          case SyncSelfClients                                 => zms.otrClientsSync.syncClients(accountId)
-          case SyncClients(user)                               => zms.otrClientsSync.syncClients(user)
+          case SyncSelfClients                                 => zms.otrClientsSync.syncSelfClients()
           case SyncClientsBatch(users)                         => zms.otrClientsSync.syncClients(users)
           case SyncPreKeys(user, clients)                      => zms.otrClientsSync.syncPreKeys(Map(user -> clients.toSeq))
           case PostClientLabel(id, label)                      => zms.otrClientsSync.postLabel(id, label)

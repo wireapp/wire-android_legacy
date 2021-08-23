@@ -299,8 +299,6 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, id)
   }
 
-  final case class SyncClients(userId: UserId) extends RequestForUser(Cmd.SyncClients)
-
   final case class SyncClientsBatch(ids: Set[QualifiedId]) extends BaseRequest(Cmd.SyncClientsBatch) {
     override def merge(req: SyncRequest) = mergeHelper[SyncClientsBatch](req) { other =>
       if (other.ids.subsetOf(ids)) Merged(this)
@@ -528,7 +526,6 @@ object SyncRequest {
           case Cmd.PostSelf                  => PostSelf(JsonDecoder[UserInfo]('user))
           case Cmd.SyncSelfClients           => SyncSelfClients
           case Cmd.SyncSelfPermissions       => SyncSelfPermissions
-          case Cmd.SyncClients               => SyncClients(userId)
           case Cmd.SyncClientsBatch          => SyncClientsBatch(decodeQualifiedIds('qualified_ids).toSet)
           case Cmd.SyncPreKeys               => SyncPreKeys(userId, decodeClientIdSeq('clients).toSet)
           case Cmd.PostClientLabel           => PostClientLabel(decodeId[ClientId]('client), 'label)
@@ -685,8 +682,6 @@ object SyncRequest {
         case PostSessionReset(_, user, client) =>
           o.put("client", client.str)
           o.put("user", user)
-        case SyncClients(user) =>
-          o.put("user", user.str)
         case SyncClientsBatch(qIds) =>
           o.put("qualified_ids", qIds.map(QualifiedId.Encoder(_)))
         case SyncPreKeys(user, clients) =>

@@ -36,7 +36,7 @@ import scala.concurrent.Future
 
 trait OtrClientsSyncHandler {
   def syncClients(users: Set[QualifiedId]): Future[SyncResult]
-  def syncClients(user: UserId): Future[SyncResult]
+  def syncSelfClients(): Future[SyncResult]
   def postLabel(id: ClientId, label: String): Future[SyncResult]
   def postCapabilities(): Future[SyncResult]
   def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult]
@@ -108,21 +108,21 @@ class OtrClientsSyncHandlerImpl(selfId:     UserId,
     } yield res
   }
 
-  override def syncClients(userId: UserId): Future[SyncResult] =
-    ((if (userId == selfId) netClient.loadClients() else netClient.loadClients(userId)).future)
+  override def syncSelfClients(): Future[SyncResult] =
+    netClient.loadClients().future
       .flatMap {
         case Left(error)    => Future.successful(SyncResult(error))
-        case Right(clients) => updateClients(Map(userId -> clients))
+        case Right(clients) => updateClients(Map(selfId -> clients))
       }
 
   override def syncClients(users: Set[QualifiedId]): Future[SyncResult] = {
-    val (qualified, unqualified) = users.partition(_.hasDomain)
+    val (qualified, nonQualified) = users.partition(_.hasDomain)
 
     val qualifiedSync =
       if (qualified.nonEmpty) syncQualified(qualified)
       else Future.successful(SyncResult.Success)
     val unqualifiedSync =
-      if (unqualified.nonEmpty) syncUnqualified(unqualified.map(_.id))
+      if (nonQualified.nonEmpty) syncNonQualified(nonQualified.map(_.id))
       else Future.successful(SyncResult.Success)
 
     qualifiedSync.flatMap {
@@ -137,12 +137,12 @@ class OtrClientsSyncHandlerImpl(selfId:     UserId,
         updateClients(response.map { case (QualifiedId(id, _), clients) => id -> clients })
       case Left(ErrorResponse.PageNotFound) =>
         // fallback to requesting clients per user
-        syncUnqualified(users.map(_.id))
+        syncNonQualified(users.map(_.id))
       case Left(error)=>
         Future.successful(SyncResult(error))
     }
 
-  private def syncUnqualified(users: Set[UserId]): Future[SyncResult] =
+  private def syncNonQualified(users: Set[UserId]): Future[SyncResult] =
     Future
       .sequence(users.map { id => netClient.loadClients(id).future.map(id -> _) })
       .flatMap { responses =>

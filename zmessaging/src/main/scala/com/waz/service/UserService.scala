@@ -460,15 +460,14 @@ class UserServiceImpl(selfUserId:        UserId,
       case _ => Future.successful({})
     })
 
-  override def syncClients(userId: UserId): Future[SyncId] =
-    sync.syncClients(userId)
+  override def syncClients(userId: UserId): Future[SyncId] = syncClients(Set(userId))
 
   override def syncClients(userIds: Set[UserId]): Future[SyncId] =
     for {
       users  <- usersStorage.listAll(userIds)
       qIds   =  users.map(user => user.qualifiedId.getOrElse(QualifiedId(user.id))).toSet
       syncId <- sync.syncClients(qIds)
-    } yield (syncId)
+    } yield syncId
 
   override def syncClients(convId: ConvId): Future[SyncId] =
     membersStorage.getActiveUsers(convId).flatMap(userIds => syncClients(userIds.toSet))
