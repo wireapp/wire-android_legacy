@@ -344,12 +344,13 @@ public class ConfirmationMenu extends LinearLayout {
         positiveButton.setOnClickListener(onClickListener);
 
         negativeButton = ViewUtils.getView(this, R.id.negative);
+        negativeButton.setOnClickListener(onClickListener);
+
         if (negativeButtonText == null || negativeButtonText.isEmpty()) {
             negativeButton.setVisibility(GONE);
         } else {
             negativeButton.setVisibility(VISIBLE);
             negativeButton.setText(negativeButtonText);
-            negativeButton.setOnClickListener(onClickListener);
         }
 
         neutralButton = ViewUtils.getView(this, R.id.neutral);
