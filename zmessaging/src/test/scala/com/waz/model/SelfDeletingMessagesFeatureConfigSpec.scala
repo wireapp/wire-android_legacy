@@ -3,6 +3,8 @@ package com.waz.model
 import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.JsonDecoder
 
+import java.nio.charset.IllegalCharsetNameException
+
 class SelfDeletingMessagesFeatureConfigSpec extends AndroidFreeSpec {
 
   feature("Deserialization form JSON") {
@@ -13,7 +15,9 @@ class SelfDeletingMessagesFeatureConfigSpec extends AndroidFreeSpec {
         """
           |{
           |  "status": "enabled",
-          |  "enforcedTimeoutSeconds": 30
+          |  "config":{
+          |    "enforcedTimeoutSeconds": 30
+          |  }
           |}
           |""".stripMargin
 
@@ -30,7 +34,9 @@ class SelfDeletingMessagesFeatureConfigSpec extends AndroidFreeSpec {
         """
           |{
           |  "status": "enabled",
-          |  "enforcedTimeoutSeconds": 0
+          |  "config":{
+          |    "enforcedTimeoutSeconds": 0
+          |  }
           |}
           |""".stripMargin
 
@@ -48,7 +54,6 @@ class SelfDeletingMessagesFeatureConfigSpec extends AndroidFreeSpec {
         """
           |{
           |  "status": "disabled",
-          |  "enforcedTimeoutSeconds": 0
           |}
           |""".stripMargin
 
