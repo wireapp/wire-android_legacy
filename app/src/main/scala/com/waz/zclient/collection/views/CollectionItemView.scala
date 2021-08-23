@@ -123,7 +123,8 @@ class CollectionImageView(context: Context, attrs: AttributeSet, style: Int)
   override val tpe: MsgPart = MsgPart.Image
 
   private lazy val imageView = findById[ImageView](R.id.image)
-  private lazy val iconView = findById[View](R.id.icon)
+  private lazy val ephemeralIcon = findById[View](R.id.ephemeral_icon)
+  private lazy val restrictedIcon = findById[View](R.id.restricted_icon)
 
   val onClicked = EventStream[Unit]()
 
@@ -134,24 +135,26 @@ class CollectionImageView(context: Context, attrs: AttributeSet, style: Int)
   Signal.zip(messageData.map(_.assetId), ephemeralColorDrawable, restricted).onUi {
     case (Some(id: AssetId), None, false) =>
       verbose(l"Set image asset $id")
-      iconView.setVisible(false)
+      ephemeralIcon.setVisible(false)
+      restrictedIcon.setVisible(false)
       WireGlide(context)
         .load(id)
         .apply(new RequestOptions().transform(new CenterCrop(), new RoundedCorners(CornerRadius)).placeholder(new ColorDrawable(Color.TRANSPARENT)))
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(target)
     case (_, _, true) =>
-      iconView.setVisible(true)
+      ephemeralIcon.setVisible(false)
+      restrictedIcon.setVisible(true)
       WireGlide(context).clear(imageView)
     case (_, Some(ephemeralDrawable), _) =>
       verbose(l"Set ephemeral drawable")
-      iconView.setVisible(true)
+      ephemeralIcon.setVisible(true)
+      restrictedIcon.setVisible(false)
       WireGlide(context).clear(imageView)
       imageView.setImageDrawable(ephemeralDrawable)
     case _ =>
       verbose(l"Set nothing")
       WireGlide(context).clear(imageView)
-
   }
 
   this.onClick {
