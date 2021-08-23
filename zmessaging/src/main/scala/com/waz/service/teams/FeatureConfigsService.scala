@@ -61,10 +61,8 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       existingValue <- userPrefs(FileSharingFeatureEnabled).apply()
       newValue      =  fileSharing.isEnabled
       _             <- userPrefs(FileSharingFeatureEnabled) := newValue
-                       // Inform of new restrictions.
-      _             <- if (existingValue && !newValue) userPrefs(ShouldInformFileSharingRestriction) := true
-                       // Don't inform if restrictions are gone.
-                       else if (newValue) userPrefs(ShouldInformFileSharingRestriction) := false
+                       // Inform of changes.
+      _             <- if (existingValue != newValue) userPrefs(ShouldInformFileSharingRestriction) := true
                        else Future.successful(())
     } yield ()
   }
