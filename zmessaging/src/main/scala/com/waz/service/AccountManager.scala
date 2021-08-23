@@ -134,13 +134,10 @@ class AccountManager(val userId:  UserId,
   } yield ()
 
   private def qualifiedId(userId: UserId) =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY)
-      for {
-        zms  <- zmessaging
-        user <- zms.usersStorage.get(userId)
-      } yield user.flatMap(_.qualifiedId).orElse(currentDomain.map(QualifiedId(userId, _))).getOrElse(QualifiedId(userId))
-    else
-      Future.successful(QualifiedId(userId))
+    for {
+      zms  <- zmessaging
+      qId  <- zms.users.qualifiedId(userId)
+    } yield qId
 
   def fingerprintSignal(uId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
     for {

@@ -38,7 +38,6 @@ import com.waz.sync.otr.OtrSyncHandler.MissingClientsStrategy._
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients._
 import com.waz.utils.crypto.AESUtils
-import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
@@ -69,7 +68,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                          service:            OtrService,
                          convsService:       ConversationsService,
                          convStorage:        ConversationStorage,
-                         users:              UserService,
+                         userService:        UserService,
                          members:            MembersStorage,
                          errors:             ErrorsService,
                          clientsSyncHandler: OtrClientsSyncHandler,
@@ -210,7 +209,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         case Some(recp) => Future.successful(recp)
         case None =>
           for {
-            acceptedOrBlocked <- users.acceptedOrBlockedUsers.head
+            acceptedOrBlocked <- userService.acceptedOrBlockedUsers.head
             myTeam            <- teamId.fold(Future.successful(Set.empty[UserData]))(id => usersStorage.getByTeam(Set(id)))
             myTeamIds         =  myTeam.map(_.id)
           } yield acceptedOrBlocked.keySet ++ myTeamIds
@@ -311,14 +310,11 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
     }
   }
 
-  private def syncClients(users: Set[UserId]): Future[SyncResult] = {
+  private def syncClients(users: Set[UserId]): Future[SyncResult] =
     for {
-      users  <- usersStorage.listAll(users)
-      qIds   =  users.map(user => user.qualifiedId.getOrElse(QualifiedId(user.id))).toSet
+      qIds   <- userService.qualifiedIds(users)
       result <- clientsSyncHandler.syncClients(qIds)
     } yield result
-  }
-
 }
 
 object OtrSyncHandler {

@@ -166,7 +166,7 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   override def resetSession(conv: ConvId, userId: UserId, clientId: ClientId): Future[SyncId] =
     for {
-      qId    <- qualifiedId(userId)
+      qId    <- users.qualifiedId(userId)
       _      <- sessions.deleteSession(SessionId(qId, clientId, currentDomain)).recover { case _ => () }
       _      <- clientsStorage.updateVerified(userId, clientId, verified = false)
       _      <- sync.syncPreKeys(userId, Set(clientId))
@@ -175,7 +175,7 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   override def encryptTargetedMessage(userId: UserId, clientId: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
     val msgData = msg.toByteArray
-    qualifiedId(userId).flatMap { qId =>
+    users.qualifiedId(userId).flatMap { qId =>
       sessions.withSession(SessionId(qId, clientId, currentDomain)) { session =>
         EncryptedContent(Map(userId -> Map(clientId -> session.encrypt(msgData))))
       }
@@ -240,7 +240,7 @@ class OtrServiceImpl(selfUserId:     UserId,
                                 useFakeOnError: Boolean,
                                 partialResult:  Map[ClientId, Array[Byte]]
                                ): Future[(UserId, Map[ClientId, Array[Byte]])] =
-    qualifiedId(userId).flatMap { qId =>
+    users.qualifiedId(userId).flatMap { qId =>
       Future.traverse(clients) { clientId =>
         val previous = partialResult.get(clientId)
           .filter(arr => arr.nonEmpty && arr.sameElements(EncryptionFailedMsg))
@@ -263,7 +263,7 @@ class OtrServiceImpl(selfUserId:     UserId,
     case (userId, cs) =>
       for {
         removalResult <- clients.removeClients(userId, cs)
-        qId           <- qualifiedId(userId)
+        qId           <- users.qualifiedId(userId)
         _             <- Future.traverse(cs) { c => sessions.deleteSession(SessionId(qId, c, currentDomain)) }
         _             <- if (removalResult.exists(_._2.clients.isEmpty))
                            users.syncUser(userId)
@@ -305,15 +305,6 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   override def decryptAssetData(assetId: AssetId, otrKey: Option[AESKey], sha: Option[Sha256], data: Option[Array[Byte]]): Option[Array[Byte]] =
     decryptAssetDataCBC(assetId, otrKey, sha, data)
-
-  private def qualifiedId(userId: UserId) =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY)
-      for {
-        user <- users.findUser(userId)
-        qId  =  user.flatMap(_.qualifiedId)
-      } yield qId.orElse(currentDomain.map(QualifiedId(userId, _))).getOrElse(QualifiedId(userId))
-    else
-      Future.successful(QualifiedId(userId))
 }
 
 object OtrService {

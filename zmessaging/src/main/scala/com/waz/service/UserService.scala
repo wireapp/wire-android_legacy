@@ -60,6 +60,7 @@ trait UserService {
   def findUser(id: UserId): Future[Option[UserData]]
   def findUsers(ids: Seq[UserId]): Future[Seq[Option[UserData]]]
   def qualifiedId(userId: UserId): Future[QualifiedId]
+  def qualifiedIds(userIds: Set[UserId]): Future[Set[QualifiedId]]
   def getOrCreateUser(id: UserId): Future[UserData]
   def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]]
   def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan, qIds: Set[QualifiedId] = Set.empty): Future[Option[SyncId]]
@@ -98,6 +99,7 @@ trait UserService {
 }
 
 class UserServiceImpl(selfUserId:        UserId,
+                      currentDomain:     Option[String],
                       teamId:            Option[TeamId],
                       accounts:          AccountsService,
                       accsStorage:       AccountStorage,
@@ -213,8 +215,37 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def findUsers(ids: Seq[UserId]): Future[Seq[Option[UserData]]] = usersStorage.getAll(ids)
 
+  private def getOrCreateQualifiedId(userId: UserId, qualifiedId: Option[QualifiedId]) =
+    (qualifiedId, currentDomain) match {
+      case (Some(qId), _) if qId.hasDomain => qId
+      case (_, Some(domain)) =>
+        warn(l"qualifiedId($userId): Unable to find the user for the given id or the user has no specified domain - generating a new qId")
+        QualifiedId(userId, domain)
+      case _ =>
+        warn(l"qualifiedId($userId): Unable to find the user for the given id and there is no current domain")
+        QualifiedId(userId)
+    }
+
   override def qualifiedId(userId: UserId): Future[QualifiedId] =
-    findUser(userId).map(_.flatMap(_.qualifiedId).getOrElse(QualifiedId(userId)))
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      for {
+        user        <- findUser(userId)
+        qualifiedId =  user.flatMap(_.qualifiedId)
+      } yield getOrCreateQualifiedId(userId, qualifiedId)
+    } else {
+      Future.successful(QualifiedId(userId))
+    }
+
+  override def qualifiedIds(userIds: Set[UserId]): Future[Set[QualifiedId]] =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      findUsers(userIds.toSeq).map {
+        _.zip(userIds).map {
+          case (user, userId) => getOrCreateQualifiedId(userId, user.flatMap(_.qualifiedId))
+        }.toSet
+      }
+    } else {
+      Future.successful(userIds.map(QualifiedId(_)))
+    }
 
   override def getOrCreateUser(id: UserId): Future[UserData] =
     usersStorage.getOrCreate(id, {
@@ -464,8 +495,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def syncClients(userIds: Set[UserId]): Future[SyncId] =
     for {
-      users  <- usersStorage.listAll(userIds)
-      qIds   =  users.map(user => user.qualifiedId.getOrElse(QualifiedId(user.id))).toSet
+      qIds  <- qualifiedIds(userIds)
       syncId <- sync.syncClients(qIds)
     } yield syncId
 
