@@ -443,4 +443,5 @@ object UserPreferences {
   lazy val ShouldInformFileSharingRestriction: PrefKey[Boolean] = PrefKey[Boolean]("should_inform_file_sharing_restriction", customDefault = false)
   lazy val ConferenceCallingFeatureEnabled: PrefKey[Boolean] = PrefKey[Boolean]("conference_calling_feature_enabled", customDefault = false)
   lazy val ShouldInformPlanUpgradedToEnterprise: PrefKey[Boolean] = PrefKey[Boolean]("should_inform_plan_upgraded_to_enterprise", customDefault = false)
+
 }

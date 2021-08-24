@@ -776,7 +776,7 @@
     <string name="sharing__user_not_logged_in__dialog__message">Open Wire and log in to share.</string>
     <string name="sharing__user_not_logged_in__dialog__confirm">OK</string>
     <string name="sharing__file_sharing_prohibited__dialog__title">File sharing restrictions</string>
-    <string name="sharing__file_sharing_prohibited__dialog__message">This file could not be shared due to your file sharing restrictions.</string>
+    <string name="sharing__file_sharing_prohibited__dialog__message">You can not share this file because this feature is disabled.</string>
     <string name="sharing__file_sharing_prohibited__dialog__confirm">OK</string>
 
     <!-- Sync errors -->
