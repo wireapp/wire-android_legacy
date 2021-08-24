@@ -381,8 +381,8 @@ class ConversationFragment extends FragmentHelper {
     })
     def performCall(item: MenuItem): Unit = {
       for {
-        conversationType          <- convController.currentConvType.head
-        callRestricted <- isConferenceCallingRestricted
+        conversationType <- convController.currentConvType.head
+        callRestricted   <- isConferenceCallingRestricted
       } yield
         if(conversationType == ConversationType.Group && callRestricted)
           displayConferenceCallingRestrictionDialog()
