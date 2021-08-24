@@ -169,8 +169,9 @@ class CallingGridFragment extends FragmentHelper {
         }.sortWith {
           case (_: SelfVideoView, _) => true
           case (_, _: SelfVideoView) => false
-          case (v1, v2) =>
-            infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
+          case (v1, v2) if isVideoUser(infoMap(v1.participant.userId)) && !isVideoUser(infoMap(v2.participant.userId)) => true
+          case (v1, v2) if !isVideoUser(infoMap(v1.participant.userId)) && isVideoUser(infoMap(v2.participant.userId)) => false
+          case (v1, v2) => infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
         }.take(MaxAllVideoPreviews)
 
     gridViews.zipWithIndex.foreach { case (userVideoView, index) =>
@@ -213,6 +214,8 @@ class CallingGridFragment extends FragmentHelper {
 
     viewMap = viewMap.filter { case (participant, _) => participantsToShow.contains(participant) }
   }
+
+  def isVideoUser(callParticipantInfo: CallParticipantInfo): Boolean = callParticipantInfo.isVideoEnabled || callParticipantInfo.isScreenShareEnabled
 
   private def refreshViews(participantsToShow: Seq[Participant], selfUserId: UserId, selfClientId: ClientId): Seq[UserVideoView] = {
 
