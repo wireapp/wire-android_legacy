@@ -216,6 +216,6 @@
 
     <string translatable="false" name="url_play_store_listing">http://play.google.com/store/apps/details?id=com.wire</string>
 
-    <string translatable="false" name="url_wire_pricing">https://wire.com/en/pricing/</string>
+    <string translatable="false" name="url_wire_team_management">https://teams.wire.com/billing/</string>
 </resources>
 

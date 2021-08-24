@@ -400,7 +400,7 @@ class ConversationFragment extends FragmentHelper {
     def displayConferenceCallingRestrictionDialog(): Unit = {
       accentColorController.accentColor.head.foreach { accentColor =>
         showConferenceCallingRestrictedDialog(accentColor) { didConfirm =>
-          if (didConfirm) inject[BrowserController].openWirePricing()
+          if (didConfirm) inject[BrowserController].openWireTeamManagement()
         }
       }
     }

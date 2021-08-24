@@ -61,8 +61,8 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
   def openPlayStoreListing(): Unit =
     openUrl(getString(R.string.url_play_store_listing))
 
-  def openWirePricing(): Unit =
-    openUrl(getString(R.string.url_wire_pricing))
+  def openWireTeamManagement(): Unit =
+    openUrl(getString(R.string.url_wire_team_management))
 
   // Accounts
 
