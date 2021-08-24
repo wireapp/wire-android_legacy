@@ -51,7 +51,7 @@ class SelfDeletingMessagesFeatureConfigSpec extends AndroidFreeSpec {
       val json =
         """
           |{
-          |  "status": "disabled",
+          |  "status": "disabled"
           |}
           |""".stripMargin
 
