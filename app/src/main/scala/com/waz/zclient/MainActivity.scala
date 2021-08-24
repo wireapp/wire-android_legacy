@@ -245,8 +245,22 @@ class MainActivity extends BaseActivity
         }
       }
     }
-
+    observeTeamUpgrade()
     featureConfigsController.startUpdatingFlagsWhenEnteringForeground()
+  }
+
+  private def observeTeamUpgrade(): Unit = {
+    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformPlanUpgradedToEnterprise).signal).onUi { shouldInform =>
+      if (shouldInform) {
+        accentColorController.accentColor.head.foreach { accentColor =>
+          showPlanUpgradedInfoDialog(accentColor) { _ =>
+            userPreferences.head.foreach { prefs =>
+              prefs(UserPreferences.ShouldInformPlanUpgradedToEnterprise) := false
+            }
+          }
+        }
+      }
+    }
   }
 
   private def initTracking: Future[Unit] =

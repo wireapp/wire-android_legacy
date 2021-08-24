@@ -34,6 +34,11 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       verbose(l"File sharing enabled: ${fileSharing.isEnabled}")
       storeFileSharing(fileSharing)
 
+    case FeatureConfigUpdateEvent("conferenceCalling", data) =>
+      val conferenceCalling = JsonDecoder.decode[ConferenceCallingFeatureConfig](data)
+      verbose(l"Conference calling enabled: ${conferenceCalling.isEnabled}")
+      storeConferenceCallingConfig(conferenceCalling)
+
     case _ =>
       Future.successful(())
   }
@@ -77,6 +82,16 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       _                 <- storeConferenceCallingConfig(conferenceCalling)
     } yield ()
 
-  private def storeConferenceCallingConfig(conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig): Future[Unit] =
-    userPrefs(ConferenceCallingFeatureEnabled) := conferenceCallingFeatureConfig.isEnabled
+  private def storeConferenceCallingConfig(conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig): Future[Unit] = {
+    for {
+      existingValue <- userPrefs (ConferenceCallingFeatureEnabled).apply()
+      newValue      =  conferenceCallingFeatureConfig.isEnabled
+      _             <- userPrefs(ConferenceCallingFeatureEnabled) := newValue
+                    // Inform of plan upgraded.
+      _             <- if (!existingValue && newValue) userPrefs(ShouldInformPlanUpgradedToEnterprise) := true
+                       // Don't inform
+                       else if (!newValue) userPrefs(ShouldInformPlanUpgradedToEnterprise) := false
+                       else Future.successful(())
+    } yield ()
+  }
 }
