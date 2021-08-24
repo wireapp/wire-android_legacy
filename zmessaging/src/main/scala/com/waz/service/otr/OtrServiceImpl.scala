@@ -173,14 +173,12 @@ class OtrServiceImpl(selfUserId:     UserId,
       syncId <- sync.postSessionReset(conv, userId, clientId)
     } yield syncId
 
-  override def encryptTargetedMessage(userId: UserId, clientId: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
-    val msgData = msg.toByteArray
+  override def encryptTargetedMessage(userId: UserId, clientId: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] =
     users.qualifiedId(userId).flatMap { qId =>
       sessions.withSession(SessionId(qId, clientId, currentDomain)) { session =>
-        EncryptedContent(Map(userId -> Map(clientId -> session.encrypt(msgData))))
+        EncryptedContent(Map(userId -> Map(clientId -> session.encrypt(msg.toByteArray))))
       }
     }
-  }
 
   /**
     * @param message the message to be encrypted

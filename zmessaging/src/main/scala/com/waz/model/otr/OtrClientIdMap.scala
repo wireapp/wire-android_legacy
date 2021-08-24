@@ -5,7 +5,7 @@ import com.waz.utils.JsonDecoder.decodeStringSeq
 import org.json.JSONObject
 import scala.collection.JavaConverters._
 
-final case class OtrClientIdMap(entries: Map[UserId, Set[ClientId]]) {
+final case class OtrClientIdMap(entries: Map[UserId, Set[ClientId]]) extends AnyVal {
   def userIds: Set[UserId] = entries.keySet
   def isEmpty: Boolean = entries.isEmpty
   def size: Int = entries.size

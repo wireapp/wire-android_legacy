@@ -63,7 +63,7 @@ class CryptoSessionServiceImpl(cryptoBox: CryptoBoxService)
   }
 
   private def loadSession(cb: CryptoBox, id: SessionId): Option[CryptoSession] =
-    Try(cb.tryGetSession(id.toString)).toOption.orElse {
+    Try(Option(cb.tryGetSession(id.toString))).getOrElse {
       error(l"session loading failed unexpectedly, will delete session file")
       cb.deleteSession(id.toString)
       None
