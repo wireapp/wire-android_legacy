@@ -2,7 +2,7 @@ package com.waz.sync.handler
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{AppLockFeatureConfig, FileSharingFeatureConfig, TeamId}
+import com.waz.model.{AppLockFeatureConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, TeamId}
 import com.waz.sync.client.FeatureConfigsClient
 
 import scala.concurrent.Future
@@ -10,6 +10,7 @@ import scala.concurrent.Future
 trait FeatureConfigsSyncHandler {
   def fetchAppLock(): Future[AppLockFeatureConfig]
   def fetchFileSharing(): Future[FileSharingFeatureConfig]
+  def fetchConferenceCalling(): Future[ConferenceCallingFeatureConfig]
 }
 
 class FeatureConfigsSyncHandlerImpl(teamId: Option[TeamId], client: FeatureConfigsClient)
@@ -36,5 +37,14 @@ class FeatureConfigsSyncHandlerImpl(teamId: Option[TeamId], client: FeatureConfi
         FileSharingFeatureConfig.Default
       case Right(fileSharing) =>
         fileSharing
+    }
+
+  override def fetchConferenceCalling(): Future[ConferenceCallingFeatureConfig] =
+    client.getConferenceCalling().map {
+      case Left(err) =>
+        error(l"Unable to fetch ConferenceCalling feature flag: $err")
+        ConferenceCallingFeatureConfig.Default
+      case Right(conferenceCalling) =>
+        conferenceCalling
     }
 }
