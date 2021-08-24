@@ -169,7 +169,7 @@ class OtrServiceImpl(selfUserId:     UserId,
       qId    <- users.qualifiedId(userId)
       _      <- sessions.deleteSession(SessionId(qId, clientId, currentDomain)).recover { case _ => () }
       _      <- clientsStorage.updateVerified(userId, clientId, verified = false)
-      _      <- sync.syncPreKeys(userId, Set(clientId))
+      _      <- sync.syncPreKeys(qId, Set(clientId))
       syncId <- sync.postSessionReset(conv, userId, clientId)
     } yield syncId
 

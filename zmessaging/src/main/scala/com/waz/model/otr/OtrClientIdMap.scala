@@ -1,11 +1,12 @@
 package com.waz.model.otr
 
-import com.waz.model.UserId
+import com.waz.model.{QualifiedId, UserId}
 import com.waz.utils.JsonDecoder.decodeStringSeq
 import org.json.JSONObject
+
 import scala.collection.JavaConverters._
 
-final case class OtrClientIdMap(entries: Map[UserId, Set[ClientId]]) extends AnyVal {
+final case class OtrClientIdMap(entries: Map[UserId, Set[ClientId]]) {
   def userIds: Set[UserId] = entries.keySet
   def isEmpty: Boolean = entries.isEmpty
   def size: Int = entries.size
@@ -27,4 +28,17 @@ object OtrClientIdMap {
         }.toMap
       )
     }
+}
+
+final case class QOtrClientIdMap(entries: Map[QualifiedId, Set[ClientId]]) {
+  def qualifiedIds: Set[QualifiedId] = entries.keySet
+  def isEmpty: Boolean = entries.isEmpty
+  def size: Int = entries.size
+}
+
+object QOtrClientIdMap {
+  val Empty: QOtrClientIdMap = QOtrClientIdMap(Map.empty)
+
+  def apply(entries: Iterable[(QualifiedId, Set[ClientId])]): QOtrClientIdMap = QOtrClientIdMap(entries.toMap)
+  def from(entries: (QualifiedId, Set[ClientId])*): QOtrClientIdMap = QOtrClientIdMap(entries.toMap)
 }

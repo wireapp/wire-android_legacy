@@ -24,7 +24,7 @@ import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.otr.{ClientId, OtrClientIdMap}
+import com.waz.model.otr.{ClientId, OtrClientIdMap, QOtrClientIdMap}
 import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync._
 import com.waz.model.{AccentColor, Availability, _}
@@ -122,7 +122,7 @@ trait SyncServiceHandle {
   def syncClients(users: Set[QualifiedId]): Future[SyncId]
   def syncProperties(): Future[SyncId]
 
-  def syncPreKeys(user: UserId, clients: Set[ClientId]): Future[SyncId]
+  def syncPreKeys(qId: QualifiedId, clientIds: Set[ClientId]): Future[SyncId]
   def postSessionReset(conv: ConvId, user: UserId, client: ClientId): Future[SyncId]
 
   def performFullSync(): Future[Unit]
@@ -239,7 +239,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def postClientLabel(id: ClientId, label: String) = addRequest(PostClientLabel(id, label))
   def postClientCapabilities(): Future[SyncId] = addRequest(PostClientCapabilities)
   def syncClients(users: Set[QualifiedId]): Future[SyncId] = addRequest(SyncClientsBatch(users))
-  def syncPreKeys(user: UserId, clients: Set[ClientId]) = addRequest(SyncPreKeys(user, clients))
+  def syncPreKeys(qId: QualifiedId, clientIds: Set[ClientId]): Future[SyncId] = addRequest(SyncPreKeys(qId, clientIds))
   def syncProperties(): Future[SyncId] = addRequest(SyncProperties, forceRetry = true)
 
   def postSessionReset(conv: ConvId, user: UserId, client: ClientId) = addRequest(PostSessionReset(conv, user, client))
@@ -301,7 +301,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
         req match {
           case SyncSelfClients                                 => zms.otrClientsSync.syncSelfClients()
           case SyncClientsBatch(users)                         => zms.otrClientsSync.syncClients(users)
-          case SyncPreKeys(user, clients)                      => zms.otrClientsSync.syncPreKeys(OtrClientIdMap.from(user -> clients))
+          case SyncPreKeys(qId, clientIds)                     => zms.otrClientsSync.syncPreKeys(QOtrClientIdMap.from(qId -> clientIds))
           case PostClientLabel(id, label)                      => zms.otrClientsSync.postLabel(id, label)
           case SyncConversation(convs)                         => zms.conversationSync.syncConversations(convs)
           case SyncConversations                               => zms.conversationSync.syncConversations()
