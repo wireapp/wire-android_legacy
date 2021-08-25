@@ -154,7 +154,6 @@
             android:name="com.waz.zclient.calling.CallingActivity"
             android:hardwareAccelerated="true"
             android:launchMode="singleTask"
-            android:screenOrientation="portrait"
             android:showOnLockScreen="true"
             android:theme="@style/Theme.Calling"
             android:windowSoftInputMode="stateHidden" />
