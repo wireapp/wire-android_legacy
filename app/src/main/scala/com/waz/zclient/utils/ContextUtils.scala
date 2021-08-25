@@ -377,10 +377,13 @@ object ContextUtils {
     ).foreach(onConfirm)
   }
 
-  def showFileSharingRestrictionInfoDialog(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+  def showFileSharingRestrictionInfoDialog(isEnabled: Boolean, onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    val message = if (isEnabled) R.string.file_sharing_enabled_info_dialog_message
+                  else R.string.file_sharing_disabled_info_dialog_message
+
     showInfoDialog(
       title = getString(R.string.file_sharing_restriction_info_dialog_title),
-      msg = getString(R.string.file_sharing_restriction_info_dialog_message)
+      msg = getString(message)
     ).foreach(onConfirm)
   }
 
