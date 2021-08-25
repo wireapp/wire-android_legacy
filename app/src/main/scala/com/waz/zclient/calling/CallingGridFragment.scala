@@ -173,7 +173,7 @@ class CallingGridFragment extends FragmentHelper {
           case (v1, v2) if isVideoUser(infoMap(v1.participant.userId)) && !isVideoUser(infoMap(v2.participant.userId)) => true
           case (v1, v2) if !isVideoUser(infoMap(v1.participant.userId)) && isVideoUser(infoMap(v2.participant.userId)) => false
           case (v1, v2) => infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
-        }.take(MaxAllVideoPreviews)
+        }
 
     gridViews.zipWithIndex.foreach { case (userVideoView, index) =>
       val (row, col, span, width) = index match {

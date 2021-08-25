@@ -219,7 +219,7 @@ class NewCallingFragment extends FragmentHelper {
 
 object NewCallingFragment {
   val Tag: String = getClass.getSimpleName
-  val MaxAllVideoPreviews = 12
+  val MaxAllVideoPreviews = 8
   val MaxTopSpeakerVideoPreviews = 4
   val NbParticipantsOneOneCall: Int = 2
   def apply(): NewCallingFragment = new NewCallingFragment()
