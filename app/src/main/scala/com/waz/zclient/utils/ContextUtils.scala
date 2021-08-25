@@ -384,7 +384,7 @@ object ContextUtils {
     ).foreach(onConfirm)
   }
 
-  def showConferenceCallingRestrictedDialog(color: AccentColor)(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+  def showConferenceCallingUpgradeDialog(color: AccentColor)(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
     showConfirmationDialog(
       title = getString(R.string.conference_calling_restriction_dialog_title),
       msg = getString(R.string.conference_calling_restriction_dialog_description),
@@ -392,6 +392,13 @@ object ContextUtils {
       negativeRes = R.string.conference_calling_restriction_dialog_negative_button,
       color
     ).foreach(onConfirm)
+  }
+
+  def showConferenceCallingNotAccessibleDialog()(implicit ex: ExecutionContext, context: Context): Unit = {
+    showInfoDialog(
+      title = getString(R.string.feature_not_accessible_dialog_title),
+      msg = getString(R.string.feature_not_accessible_dialog_description)
+    )
   }
 
   def showPlanUpgradedInfoDialog(accentColor: AccentColor)(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {

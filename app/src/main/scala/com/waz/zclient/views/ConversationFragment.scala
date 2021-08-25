@@ -383,9 +383,13 @@ class ConversationFragment extends FragmentHelper {
       for {
         conversationType <- convController.currentConvType.head
         callRestricted   <- isConferenceCallingRestricted
+        currentUserRole  <- convController.selfRole.head
       } yield
-        if(conversationType == ConversationType.Group && callRestricted)
-          displayConferenceCallingRestrictionDialog()
+        if(conversationType == ConversationType.Group && callRestricted) {
+          if(currentUserRole == ConversationRole.AdminRole)
+            displayConferenceCallingUpgradeDialog()
+          else showConferenceCallingNotAccessibleDialog()
+        }
         else {
           callStartController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call, forceOption = true)
           cursorView.foreach(_.closeEditMessage(false))
@@ -397,11 +401,11 @@ class ConversationFragment extends FragmentHelper {
         .flatMap(_.preference(UserPreferences.ConferenceCallingFeatureEnabled).apply())
         .map(isEnabled => !isEnabled)
 
-    def displayConferenceCallingRestrictionDialog(): Unit = {
+    def displayConferenceCallingUpgradeDialog(): Unit = {
       accentColorController.accentColor.head.foreach { accentColor =>
-        showConferenceCallingRestrictedDialog(accentColor) { didConfirm =>
-          if (didConfirm) inject[BrowserController].
-            openWireTeamManagement()
+        showConferenceCallingUpgradeDialog(accentColor) { didConfirm =>
+          if (didConfirm)
+            inject[BrowserController].openWireTeamManagement()
         }
       }
     }
