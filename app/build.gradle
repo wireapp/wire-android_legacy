@@ -131,6 +131,7 @@ android {
         buildConfigField 'boolean', 'LARGE_VIDEO_CONFERENCE_CALLS', "$largeVideoConferenceCalls"
         buildConfigField 'boolean', 'CALLING_UI_BUTTONS', "$callingUiButtons"
         buildConfigField 'boolean', 'FEDERATION_USER_DISCOVERY', "$federationUserDiscovery"
+        buildConfigField 'boolean', 'CONFERENCE_CALLING_RESTRICTION', "$conferenceCallingRestriction"
     }
 
     packagingOptions {

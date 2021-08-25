@@ -2,7 +2,7 @@ package com.waz.service.teams
 
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AppLockFeatureConfig, FeatureConfigUpdateEvent, FileSharingFeatureConfig}
+import com.waz.model.{AppLockFeatureConfig, ConferenceCallingFeatureConfig, FeatureConfigUpdateEvent, FileSharingFeatureConfig}
 import com.waz.service.{EventPipeline, EventPipelineImpl, EventScheduler}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.specs.AndroidFreeSpec
@@ -91,6 +91,23 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     // Then
     result(userPrefs(FileSharingFeatureEnabled).apply()) shouldEqual false
+  }
+
+  scenario("Fetch the ConferenceCalling feature config and set properties") {
+    // Given
+    val service = createService
+    userPrefs.setValue(ConferenceCallingFeatureEnabled, true)
+
+    // Mock
+    (syncHandler.fetchConferenceCalling _).expects().anyNumberOfTimes().returning(
+      Future.successful(ConferenceCallingFeatureConfig("disabled"))
+    )
+
+    // When
+    result(service.updateConferenceCalling())
+
+    // Then
+    result(userPrefs(ConferenceCallingFeatureEnabled).apply()) shouldEqual false
   }
 
 }
