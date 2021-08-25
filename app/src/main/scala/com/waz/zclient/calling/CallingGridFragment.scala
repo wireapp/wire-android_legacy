@@ -47,7 +47,6 @@ class CallingGridFragment extends FragmentHelper {
   private lazy val callController           = inject[CallController]
   private lazy val zoomLayout               = view[ZoomLayout](R.id.zoom_layout)
   private lazy val videoGrid                = view[GridLayout](R.id.video_grid)
-  private var viewMap                       = Map[Participant, UserVideoView]()
   private var pageNumber: Int               = 0
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -152,6 +151,8 @@ class CallingGridFragment extends FragmentHelper {
                                showTopSpeakers: Boolean
                               ): Unit = {
 
+    clearVideoGrid()
+
     val views = refreshViews(participantsToShow, selfUserId, selfClientId)
 
     val infoMap = info.toIdMap
@@ -204,15 +205,6 @@ class CallingGridFragment extends FragmentHelper {
       if (Option(userVideoView.getParent).isEmpty) grid.addView(userVideoView)
     }
 
-    val viewsToRemove = viewMap.filter {
-      case (participant, selfView)
-        if participant.clientId == selfClientId => !gridViews.contains(selfView)
-      case (participant, _) => !participantsToShow.contains(participant)
-    }
-
-    viewsToRemove.foreach { case (_, view) => grid.removeView(view) }
-
-    viewMap = viewMap.filter { case (participant, _) => participantsToShow.contains(participant) }
   }
 
   def isVideoUser(callParticipantInfo: CallParticipantInfo): Boolean = callParticipantInfo.isVideoEnabled || callParticipantInfo.isScreenShareEnabled
@@ -224,7 +216,6 @@ class CallingGridFragment extends FragmentHelper {
         new SelfVideoView(getContext, Participant(userId = selfUserId, clientId = selfClientId))
       else new OtherVideoView(getContext, participant)
     } { userView =>
-      viewMap = viewMap.updated(participant, userView)
       userView.onDoubleClick.onUi { _ =>
         callController.allParticipants.map(_.size > 2).head.foreach {
           case true =>
@@ -238,12 +229,11 @@ class CallingGridFragment extends FragmentHelper {
     if (participantsToShow.exists(_.clientId == selfClientId)) callController.isSelfViewVisible ! true
     else callController.isSelfViewVisible ! false
 
-    participantsToShow.map { participant => viewMap.getOrElse(participant, createView(participant)) }
+    participantsToShow.map { participant => createView(participant) }
   }
 
   private def clearVideoGrid(): Unit = {
     videoGrid.foreach(_.removeAllViews())
-    viewMap = Map.empty
   }
 
   private def initClickForRootView(): Unit = getView.onClick {
