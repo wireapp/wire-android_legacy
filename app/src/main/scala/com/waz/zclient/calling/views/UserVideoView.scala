@@ -102,7 +102,11 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     case _                          => View.GONE
   }.onUi(participantInfoCardView.setVisibility)
 
-  private lazy val allVideoStates =  callController.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown))
+  def unMutedParticipant(participant: Participant) = participant.copy(muted = false)
+
+  private lazy val allVideoStates = if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+    callController.allVideoReceiveStates.map(_.getOrElse(unMutedParticipant(participant), VideoState.Unknown))
+  else callController.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown))
 
   protected def registerHandler(view: View): Unit = {
     allVideoStates.onUi {
