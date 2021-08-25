@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.sharing
 
+import android.R
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
@@ -33,6 +34,8 @@ import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.impl.ContentUriAssetForUpload
+import com.waz.content.UserPreferences
+import com.waz.content.UserPreferences.AreSelfDeletingMessagesEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
@@ -92,6 +95,10 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
   private lazy val accountTabs = view[AccountTabsView](R.id.account_tabs)
   private lazy val bottomContainer = view[AnimatedBottomContainer](R.id.ephemeral_container)
   private lazy val ephemeralIcon = view[EphemeralTimerButton](R.id.ephemeral_toggle)
+
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
+  private lazy val areSelfDeletingMessagesEnabled = userPrefs.flatMap { prefs => prefs(AreSelfDeletingMessagesEnabled).signal }
+  private lazy val isEphemeralButtonVisible = areSelfDeletingMessagesEnabled
 
   private lazy val sendButton = returning(view[CursorIconButton](R.id.cib__send_button)) { vh =>
     (for {
@@ -208,25 +215,27 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
       }
     })
 
-    ephemeralIcon.foreach(icon => icon.onClick {
-      bottomContainer.foreach { bc =>
-        bc.isExpanded.currentValue match {
-          case Some(true) =>
-            bc.closedAnimated()
-          case Some(false) =>
-            returning(getLayoutInflater.inflate(R.layout.ephemeral_keyboard_layout, null, false).asInstanceOf[EphemeralLayout]) { l =>
-              sharingController.ephemeralExpiration.foreach(l.setSelectedExpiration)
-              l.expirationSelected.onUi { case (exp, close) =>
-                icon.ephemeralExpiration ! exp.map(MessageExpiry)
-                sharingController.ephemeralExpiration ! exp
-                if (close) bc.closedAnimated()
+    ephemeralIcon.foreach(icon =>
+      isEphemeralButtonVisible.onUi(icon.setVisible)
+      icon.onClick {
+        bottomContainer.foreach { bc =>
+          bc.isExpanded.currentValue match {
+            case Some(true) =>
+              bc.closedAnimated()
+            case Some(false) =>
+              returning(getLayoutInflater.inflate(R.layout.ephemeral_keyboard_layout, null, false).asInstanceOf[EphemeralLayout]) { l =>
+                sharingController.ephemeralExpiration.foreach(l.setSelectedExpiration)
+                l.expirationSelected.onUi { case (exp, close) =>
+                  icon.ephemeralExpiration ! exp.map(MessageExpiry)
+                  sharingController.ephemeralExpiration ! exp
+                  if (close) bc.closedAnimated()
+                }
+                bc.addView(l)
               }
-              bc.addView(l)
-            }
-            bc.openAnimated()
-          case _ =>
+              bc.openAnimated()
+            case _ =>
+          }
         }
-      }
     })
 
     searchBox.foreach { box =>

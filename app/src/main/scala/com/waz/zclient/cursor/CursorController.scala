@@ -26,6 +26,7 @@ import android.widget.Toast
 import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
 import com.waz.api.NetworkMode
 import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
+import com.waz.content.UserPreferences.{AreSelfDeletingMessagesEnabled, SelfDeletingMessagesEnforcedTimeout}
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model._
 import com.waz.permissions.PermissionsService
@@ -90,6 +91,8 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   }
   val isEditingMessage = editingMsg.map(_.isDefined)
 
+  val areSelfDeletingMessagesEnabled = userPrefs.flatMap { prefs => prefs(AreSelfDeletingMessagesEnabled).signal }
+
   val ephemeralExp = conv.map(_.ephemeralExpiration)
   val isEphemeral  = ephemeralExp.map(_.isDefined)
 
@@ -125,8 +128,9 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
   val sendButtonVisible = Signal.zip(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage).map {
     case (emoji, empty, enabled, editing) => enabled && (emoji || !empty) && !editing
   }
-  val ephemeralBtnVisible = Signal.zip(isEditingMessage, convIsActive).flatMap {
-    case (false, true) =>
+  val ephemeralBtnVisible = Signal.zip(areSelfDeletingMessagesEnabled, isEditingMessage, convIsActive).flatMap {
+    case (false, _, _ ) => Signal.const(false)
+    case (true, false, true) =>
       isEphemeral.flatMap {
         case true => Signal.const(true)
         case _ => sendButtonVisible.map(!_)
