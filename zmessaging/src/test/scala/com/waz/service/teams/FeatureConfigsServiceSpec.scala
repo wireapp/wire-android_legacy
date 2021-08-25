@@ -2,7 +2,7 @@ package com.waz.service.teams
 
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AppLockFeatureConfig, FeatureConfigUpdateEvent, FileSharingFeatureConfig}
+import com.waz.model.{AppLockFeatureConfig, FeatureConfigUpdateEvent, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig}
 import com.waz.service.{EventPipeline, EventPipelineImpl, EventScheduler}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.specs.AndroidFreeSpec
@@ -76,6 +76,25 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     // Then
     result(userPrefs(FileSharingFeatureEnabled).apply()) shouldEqual false
+  }
+
+  scenario("Fetch the SelfDeletingMessage feature config and set properties") {
+    // Given
+    val service = createService
+    userPrefs.setValue(AreSelfDeletingMessagesEnabled, false)
+    userPrefs.setValue(SelfDeletingMessagesEnforcedTimeout, 0)
+
+    // Mock
+    (syncHandler.fetchSelfDeletingMessages _).expects().anyNumberOfTimes().returning(
+      Future.successful(SelfDeletingMessagesFeatureConfig(isEnabled = true, 60))
+    )
+
+    // When
+    result(service.updateSelfDeletingMessages())
+
+    // Then
+    result(userPrefs(AreSelfDeletingMessagesEnabled).apply()) shouldEqual true
+    result(userPrefs(SelfDeletingMessagesEnforcedTimeout).apply()) shouldEqual 60
   }
 
   scenario("Process update event for FileSharing feature config") {
