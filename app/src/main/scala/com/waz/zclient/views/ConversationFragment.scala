@@ -79,7 +79,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.e2ee.ShieldView
-import com.waz.zclient.{ErrorsController, FragmentHelper, R}
+import com.waz.zclient.{BuildConfig, ErrorsController, FragmentHelper, R}
 import com.wire.signals.{CancellableFuture, EventStreamWithAuxSignal, Signal}
 
 import scala.collection.immutable.ListSet
@@ -385,7 +385,7 @@ class ConversationFragment extends FragmentHelper {
         callRestricted   <- isConferenceCallingRestricted
         currentUserRole  <- convController.selfRole.head
       } yield
-        if(conversationType == ConversationType.Group && callRestricted) {
+        if(conversationType == ConversationType.Group && callRestricted && BuildConfig.CONFERENCE_CALLING_RESTRICTION) {
           if(currentUserRole == ConversationRole.AdminRole)
             displayConferenceCallingUpgradeDialog()
           else showConferenceCallingNotAccessibleDialog()

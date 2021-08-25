@@ -247,7 +247,10 @@ class MainActivity extends BaseActivity
         }
       }
     }
-    observeTeamUpgrade()
+
+    if(BuildConfig.CONFERENCE_CALLING_RESTRICTION)
+      observeTeamUpgrade()
+
     featureConfigsController.startUpdatingFlagsWhenEnteringForeground()
   }
 

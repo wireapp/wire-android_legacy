@@ -66,6 +66,7 @@ ext {
     largeVideoConferenceCalls = true
     callingUiButtons = true
     federationUserDiscovery = true
+    conferenceCallingRestriction = false
 }
 
 apply from: "./scripts/avs.gradle"
