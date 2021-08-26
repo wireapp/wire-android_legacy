@@ -25,7 +25,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE.{error, _}
 import com.waz.model.GenericContent.{ClientAction, External}
 import com.waz.model._
-import com.waz.model.otr.{ClientId, OtrClientIdMap, QOtrClientIdMap}
+import com.waz.model.otr.{ClientId, OtrClientIdMap, OtrMessage, QOtrClientIdMap}
 import com.waz.service.conversation.ConversationsService
 import com.waz.service.otr.OtrService
 import com.waz.service.push.PushService
@@ -319,12 +319,6 @@ object OtrSyncHandler {
 
   final case object UnverifiedException extends Exception
   final case object LegalHoldDiscoveredException extends Exception
-
-  final case class OtrMessage(sender:         ClientId,
-                              recipients:     EncryptedContent,
-                              external:       Option[Array[Byte]] = None,
-                              nativePush:     Boolean = true,
-                              report_missing: Option[Set[UserId]] = None)
 
   val MaxInlineSize  = 10 * 1024
   val MaxContentSize = 256 * 1024 // backend accepts 256KB for otr messages, but we would prefer to send less

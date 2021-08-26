@@ -24,13 +24,10 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.sync.client.OtrClient.{ClientMismatch, MessageResponse}
-import com.waz.sync.otr.OtrSyncHandler.OtrMessage
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
-import com.wire.messages.Otr
-
-import com.waz.log.LogSE._
+import com.waz.model.otr.OtrMessage
 
 trait MessagesClient {
   def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse]
@@ -64,18 +61,6 @@ object MessagesClient extends DerivedLogTag {
     if (ignoreMissing) s"$base?ignore_missing=true" else base
   }
 
-  implicit val OtrMessageSerializer: RawBodySerializer[OtrMessage] = RawBodySerializer.create { m =>
-    import scala.collection.JavaConverters._
-    val builder = Otr.NewOtrMessage.newBuilder()
-    builder.setSender(OtrClient.clientId(m.sender))
-    builder.setNativePush(m.nativePush)
-    builder.addAllRecipients(m.recipients.userEntries.toIterable.asJava)
-    m.external.foreach { ext => builder.setBlob(ByteString.copyFrom(ext)) }
-    m.report_missing.foreach { missing => builder.addAllReportMissing(missing.map(OtrClient.userId).asJava) }
 
-    val msg = builder.build()
-    val bytes = msg.toByteArray
-    RawBody(mediaType = Some(MediaType.Protobuf), () => new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
-  }
 
 }
