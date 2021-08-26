@@ -29,7 +29,8 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.waz.api.Verification
-import com.waz.content.UsersStorage
+import com.waz.content.UserPreferences.AreSelfDeletingMessagesEnabled
+import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.SearchQuery
@@ -49,7 +50,6 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.language.postfixOps
-
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
 import com.wire.signals.ext.ClockSignal
@@ -69,6 +69,8 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
   protected lazy val convController         = inject[ConversationController]
   protected lazy val themeController        = inject[ThemeController]
   protected lazy val selfId                 = inject[Signal[UserId]]
+
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
 
   private var items               = List.empty[Either[ParticipantData, Int]]
   private var teamDefined         = false
@@ -108,12 +110,13 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       .sortBy(_.userData.name.str)
 
   protected lazy val positions: Signal[List[Either[ParticipantData, Int]]] = for {
-    tId         <- team
-    users       <- users
-    currentConv <- convController.currentConv
-    convActive  =  currentConv.isActive
-    isTeamConv  =  currentConv.team.nonEmpty
-    selfRole    <- participantsController.selfRole
+    tId                 <- team
+    users               <- users
+    currentConv         <- convController.currentConv
+    convActive          =  currentConv.isActive
+    isTeamConv          =  currentConv.team.nonEmpty
+    selfRole            <- participantsController.selfRole
+    isEphemeralEnabled  <- userPrefs.flatMap { prefs => prefs(AreSelfDeletingMessagesEnabled).signal }
   } yield {
     val (bots, people)    = users.toList.partition(_.userData.isWireBot)
     val (admins, members) = people.partition(_.isAdmin)
@@ -135,7 +138,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     (if (maxParticipants.exists(_ < people.size)) List(Right(AllParticipants)) else Nil) :::
     (if (optionsAvailable) List(Right(OptionsSeparator)) else Nil) :::
     (if (convActive && !showPeopleOnly && tId.isDefined) List(Right(Notifications)) else Nil) :::
-    (if (convActive && !showPeopleOnly && selfRole.canModifyMessageTimer) List(Right(EphemeralOptions)) else Nil) :::
+    (if (convActive && !showPeopleOnly && selfRole.canModifyMessageTimer && isEphemeralEnabled) List(Right(EphemeralOptions)) else Nil) :::
     (if (convActive && !showPeopleOnly && isTeamConv && selfRole.canModifyAccess) List(Right(GuestOptions)) else Nil) :::
     (if (convActive && !showPeopleOnly && isTeamConv && selfRole.canModifyReceiptMode) List(Right(ReadReceipts)) else Nil) :::
     (if (bots.nonEmpty && !showPeopleOnly) List(Right(ServicesSeparator)) else Nil) :::
