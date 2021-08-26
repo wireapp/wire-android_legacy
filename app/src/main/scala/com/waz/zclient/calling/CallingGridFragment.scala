@@ -29,7 +29,7 @@ import com.waz.threading.Threading.Implicits.Ui
 import com.waz.threading.Threading._
 import com.waz.utils.returning
 import com.waz.zclient.FragmentHelper
-import com.waz.zclient.calling.NewCallingFragment.{MaxAllVideoPreviews, MaxTopSpeakerVideoPreviews, NbParticipantsOneOneCall}
+import com.waz.zclient.calling.NewCallingFragment.{MaxTopSpeakerVideoPreviews, NbParticipantsOneOneCall}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
