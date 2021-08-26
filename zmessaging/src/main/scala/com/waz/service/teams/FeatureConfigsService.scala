@@ -33,7 +33,10 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       val fileSharing = JsonDecoder.decode[FileSharingFeatureConfig](data)
       verbose(l"File sharing enabled: ${fileSharing.isEnabled}")
       storeFileSharing(fileSharing)
-
+    case FeatureConfigUpdateEvent("selfDeletingMessages", data) =>
+      val selfDeletingMessages = JsonDecoder.decode[SelfDeletingMessagesFeatureConfig](data)
+      verbose(l"Self deleting messages config: $selfDeletingMessages")
+      storeSelfDeletingMessages(selfDeletingMessages)
     case _ =>
       Future.successful(())
   }
