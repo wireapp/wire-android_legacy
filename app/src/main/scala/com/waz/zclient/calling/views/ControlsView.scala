@@ -100,21 +100,19 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
           case _     =>
         }
       }
-
       else {
         controller.isCallEstablished.onUi(button.setEnabled)
         controller.isCallEstablished.onUi(button.setActivated)
-
         Signal.zip(controller.isMuted, controller.isVideoCall, themeController.currentTheme).map {
-        case (true, false, Theme.Light)  => Some(drawInactiveMicrophoneLight _)
-        case (true, _, _)                => Some(drawInactiveMicrophone _)
-        case (false, false, Theme.Light) => Some(drawActiveMicrophoneLight _)
-        case (false, _, _)               => Some(drawActiveMicrophone _)
-        case _ => None
-      }.onUi {
-        case Some(drawFunction) => button.set(drawFunction, R.string.incoming__controls__ongoing__microphone, mute)
-        case _ =>
-      }
+          case (true, false, Theme.Light)  => Some(drawInactiveMicrophoneLight _)
+          case (true, _, _)                => Some(drawInactiveMicrophone _)
+          case (false, false, Theme.Light) => Some(drawActiveMicrophoneLight _)
+          case (false, _, _)               => Some(drawActiveMicrophone _)
+          case _ => None
+        }.onUi {
+          case Some(drawFunction) => button.set(drawFunction, R.string.incoming__controls__ongoing__microphone, mute)
+          case _ =>
+        }
       }
     }
     else {
