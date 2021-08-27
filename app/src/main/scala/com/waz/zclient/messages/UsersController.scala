@@ -147,7 +147,7 @@ class UsersController(implicit injector: Injector, context: Context)
   def isFederated(user: UserData, selfDomain: String): Boolean = user.domain.exists(_ != selfDomain)
 
   def isFederated(user: UserData): Future[Boolean] =
-    userService.head.flatMap(_.isFederated(user))(Threading.Background)
+    zms.head.map(z => z.selfDomain.fold(false)(domain => isFederated(user, domain)))(Threading.Background)
 
   def isFederated(id: UserId): Future[Boolean] =
     userService.head.flatMap(_.isFederated(id))(Threading.Background)

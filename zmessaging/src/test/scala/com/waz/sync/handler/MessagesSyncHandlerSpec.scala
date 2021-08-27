@@ -93,7 +93,7 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     val senderId = UserId()
 
     (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(Option(MessageData(messageId, convId = convId))))
-    (otrSync.postOtrMessage _).expects(convId, *, * ,true, *, *).returning(Future.successful(Right(RemoteInstant.Epoch)))
+    (otrSync.postOtrMessage _).expects(convId, *, true, *, *, *).returning(Future.successful(Right(RemoteInstant.Epoch)))
 
     result(getHandler.postButtonAction(messageId, buttonId, senderId)) shouldEqual SyncResult.Success
   }

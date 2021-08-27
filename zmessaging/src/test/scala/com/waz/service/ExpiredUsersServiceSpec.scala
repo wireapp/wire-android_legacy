@@ -54,9 +54,9 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
     )
     val convSignals = convUsers.map(u => u.id -> Signal.const(u)).toMap
 
-    (users.syncUser _).expects(wirelessId).once().onCall { _: UserId =>
+    (users.syncUsers _).expects(Set(wirelessId), Set.empty[QualifiedId]).once().onCall { _ =>
       finished ! {}
-      Future.successful(Some(wirelessUser))
+      Future.successful(Some(SyncId()))
     }
 
     (users.currentConvMembers _).expects().once().returning(Signal.const(convUsers.map(_.id)))
@@ -103,7 +103,7 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
     awaitAllTasks
 
     Thread.sleep(500)
-    (users.syncUser _).expects(*).never()
+    (users.syncUsers _).expects(*, *).never()
   }
 
   scenario("Wireless member added to conversation also triggers a timer") {
@@ -118,9 +118,9 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
     val activeMembers = Signal(convUsers.map(_.id))
 
     val finished = EventStream[Unit]()
-    (users.syncUser _).expects(wirelessUser.id).once().onCall { _: UserId =>
+    (users.syncUsers _).expects(Set(wirelessUser.id), Set.empty[QualifiedId]).once().onCall { _ =>
       finished ! {}
-      Future.successful(Some(wirelessUser))
+      Future.successful(Some(SyncId()))
     }
 
     (users.currentConvMembers _).expects().anyNumberOfTimes().returning(activeMembers)
@@ -139,7 +139,7 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
     result(finished.next)
   }
 
-  def getService = {
+  def getService: ExpiredUsersService = {
     (members.onDeleted _).expects().once().returning(onDeleted)
     (push.beDrift _).expects().anyNumberOfTimes().returning(Signal.const(Duration.ZERO))
 

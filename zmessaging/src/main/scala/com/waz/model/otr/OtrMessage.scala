@@ -5,10 +5,9 @@ import java.io.ByteArrayInputStream
 import com.google.protobuf.ByteString
 import com.waz.model.{QualifiedId, UserId}
 import com.waz.sync.client.OtrClient
-import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, QEncryptedContent}
+import com.waz.sync.client.OtrClient.{EncryptedContent, QEncryptedContent}
 import com.waz.znet2.http.{MediaType, RawBody, RawBodySerializer}
 import com.wire.messages.Otr
-import com.wire.messages.Otr.ClientMismatchStrategy
 import com.wire.messages.Otr.ClientMismatchStrategy.ReportOnly
 
 import scala.collection.JavaConverters._

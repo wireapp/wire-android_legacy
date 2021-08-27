@@ -130,7 +130,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       )
 
       // Expectations
-      (otrSync.postClientDiscoveryMessage _)
+      (otrSync.postClientDiscoveryMessage(_ : RConvId))
         .expects(convId)
         .once()
         .returning(CancellableFuture.successful(Right(clientList)))
@@ -173,7 +173,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       val errorResponse = ErrorResponse(400, "", "")
 
       // Expectations
-      (otrSync.postClientDiscoveryMessage _)
+      (otrSync.postClientDiscoveryMessage(_: RConvId))
         .expects(convId)
         .once()
         .returning(CancellableFuture.successful(Left(errorResponse)))

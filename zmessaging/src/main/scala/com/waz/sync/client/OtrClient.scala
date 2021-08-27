@@ -27,8 +27,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.otr.Client.{DeviceClass, DeviceType}
 import com.waz.model.otr._
-import com.waz.model.{QualifiedId, RemoteInstant, UserId}
-import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
+import com.waz.model.{QualifiedId, UserId}
+import com.waz.sync.client.OtrClient.ClientKey
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
 import com.waz.znet2.AuthRequestInterceptor
@@ -206,7 +206,7 @@ class OtrClientImpl(implicit
       .executeSafe
   }
 
-  override def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse] = {
+  override def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse] =
     Request
       .Post(
         relativePath = BroadcastPath,
@@ -220,8 +220,6 @@ class OtrClientImpl(implicit
         if (code == ResponseCode.PreconditionFailed) MessageResponse.Failure(body)
         else MessageResponse.Success(body)
       }
-
-  }
 }
 
 object OtrClient extends DerivedLogTag {
@@ -233,12 +231,17 @@ object OtrClient extends DerivedLogTag {
   val ListPrekeysPath = "/users/list-prekeys"
 
   def clientPath(id: ClientId) = s"/clients/$id"
+
   def clientKeyIdsPath(id: ClientId) = s"/clients/$id/prekeys"
+
   def userPreKeysPath(user: UserId) = s"/users/$user/prekeys"
+
   def userClientsPath(user: UserId) = s"/users/$user/clients"
+
   def clientPreKeyPath(user: UserId, client: ClientId) = s"/users/$user/prekeys/$client"
 
   def userPreKeysPath(qId: QualifiedId) = s"/users/${qId.domain}/${qId.id.str}/prekeys"
+
   def clientPreKeyPath(qId: QualifiedId, clientId: ClientId) = s"/users/${qId.domain}/${qId.id.str}/prekeys/$clientId"
 
   // If you change this, don't forget to set the 'ShouldPostClientCapabilities' user preference
@@ -279,7 +282,7 @@ object OtrClient extends DerivedLogTag {
         .setClient(clientId(c))
         .setText(ByteString.copyFrom(msg))
         .build
-    } (breakOut)
+    }(breakOut)
     Otr.UserEntry.newBuilder
       .setUser(userId(user))
       .addAllClients(clients.asJava)
@@ -290,7 +293,7 @@ object OtrClient extends DerivedLogTag {
     lazy val estimatedSize: Int = content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
 
     lazy val userEntries: Array[Otr.UserEntry] =
-      content.map { case (user, cs) => userEntry(user, cs) } (breakOut)
+      content.map { case (user, cs) => userEntry(user, cs) }(breakOut)
   }
 
   object EncryptedContent {
@@ -307,7 +310,7 @@ object OtrClient extends DerivedLogTag {
           .setDomain(domain)
           .addAllEntries(userEntries.asJava)
           .build()
-      } (breakOut)
+      }(breakOut)
   }
 
   object QEncryptedContent {
@@ -325,8 +328,11 @@ object OtrClient extends DerivedLogTag {
 
   //TODO Remove this. Introduce JSONDecoder for the Map
   type PreKeysResponse = Seq[(UserId, Seq[ClientKey])]
+
   object PreKeysResponse {
+
     import scala.collection.JavaConverters._
+
     def unapply(content: ResponseContent): Option[PreKeysResponse] = content match {
       case JsonObjectResponse(js) =>
         Try {
@@ -336,8 +342,8 @@ object OtrClient extends DerivedLogTag {
               if (cs.isNull(clientId)) None else Some(ClientId(clientId) -> PreKeyDecoder(cs.getJSONObject(clientId)))
             }
             UserId(userId) -> clients.flatten.toSeq
-          } .filter(_._2.nonEmpty).toSeq
-        } .toOption
+          }.filter(_._2.nonEmpty).toSeq
+        }.toOption
       case _ => None
     }
   }
@@ -370,6 +376,7 @@ object OtrClient extends DerivedLogTag {
         if (response.nonEmpty) ListPreKeysResponse(response) else Empty
       }
     }
+
   }
 
 
@@ -383,9 +390,11 @@ object OtrClient extends DerivedLogTag {
   }
 
   object ListClientsRequest {
+
     implicit object Encoder extends JsonEncoder[ListClientsRequest] {
       override def apply(request: ListClientsRequest): JSONObject = request.encode
     }
+
   }
 
   final case class ListClientsResponse(values: Map[QualifiedId, Seq[Client]])
@@ -417,6 +426,7 @@ object OtrClient extends DerivedLogTag {
         if (response.nonEmpty) ListClientsResponse(response) else Empty
       }
     }
+
   }
 
   object ClientsResponse {
@@ -448,36 +458,5 @@ object OtrClient extends DerivedLogTag {
     }
   }
 
-  sealed trait MessageResponse {
-    def mismatch: ClientMismatch
-
-    def deleted: OtrClientIdMap = mismatch.deleted
-
-    def missing: OtrClientIdMap = mismatch.missing
-  }
-
-  object MessageResponse {
-    final case class Success(mismatch: ClientMismatch) extends MessageResponse
-    final case class Failure(mismatch: ClientMismatch) extends MessageResponse
-  }
-
-  final case class ClientMismatch(redundant: OtrClientIdMap = OtrClientIdMap.Empty,
-                                  missing:   OtrClientIdMap = OtrClientIdMap.Empty,
-                                  deleted:   OtrClientIdMap = OtrClientIdMap.Empty,
-                                  time:     RemoteInstant)
-
-  object ClientMismatch {
-    implicit lazy val Decoder: JsonDecoder[ClientMismatch] = new JsonDecoder[ClientMismatch] {
-      import JsonDecoder._
-      import OtrClientIdMap.decodeMap
-
-      override def apply(implicit js: JSONObject): ClientMismatch =
-        ClientMismatch(
-          decodeMap('redundant),
-          decodeMap('missing),
-          decodeMap('deleted),
-          decodeOptUtcDate('time).map(t => RemoteInstant.ofEpochMilli(t.getTime)).getOrElse(RemoteInstant.Epoch)
-        )
-    }
-  }
 }
+

@@ -500,7 +500,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }
     }
 
-  override def continueDegradedCall(forceConstantBitRate: Boolean = false) =
+  override def continueDegradedCall(forceConstantBitRate: Boolean = false): Unit =
     currentCall.head.map {
       case Some(info) =>
         (info.outstandingMsg, info.state) match {
@@ -518,7 +518,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
   private def sendCallMessage(wCall: WCall, convId: ConvId, msg: GenericMessage, targetRecipients: TargetRecipients, ctx: Pointer): Unit = {
     verbose(l"Sending msg on behalf of avs: convId: $convId")
-    otrSyncHandler.postOtrMessage(convId, msg, targetRecipients, isHidden = true).map {
+    otrSyncHandler.postOtrMessage(convId, msg, isHidden = true, targetRecipients).map {
       case Right(_) =>
         updateActiveCall(_.copy(outstandingMsg = None))("sendCallMessage/verified")
         avs.onHttpResponse(wCall, 200, "", ctx)

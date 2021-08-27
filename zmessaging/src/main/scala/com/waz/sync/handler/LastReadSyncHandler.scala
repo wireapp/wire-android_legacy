@@ -45,7 +45,7 @@ class LastReadSyncHandler(selfUserId: UserId,
       case Some(conv) =>
         val msg = GenericMessage(Uid(), LastRead(conv.remoteId, time))
         otrSync
-          .postOtrMessage(ConvId(selfUserId.str), msg, TargetRecipients.SpecificUsers(Set(selfUserId)), isHidden = true)
+          .postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, TargetRecipients.SpecificUsers(Set(selfUserId)))
           .map(SyncResult(_))
       case None =>
         Future.successful(Failure(s"No conversation found for id: $convId"))

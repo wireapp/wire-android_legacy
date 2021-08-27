@@ -545,7 +545,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
           }
         }
       }
-      (userService.isFederated(_: UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData => Future.successful(user.id != selfUserId) }
+      (userService.isFederated(_: UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData => user.id != selfUserId }
       (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1, member2)))
       (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
       (convsStorage.optSignal _).expects(conv.id).anyNumberOfTimes().returning(Signal.const(Some(conv)))
@@ -595,7 +595,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
           }
         }
       }
-      (userService.isFederated(_: UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData => Future.successful(user.id != selfUserId) }
+      (userService.isFederated(_: UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData => user.id != selfUserId }
       (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1)))
       (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
       (convsStorage.optSignal _).expects(conv.id).anyNumberOfTimes().returning(Signal.const(Some(conv)))

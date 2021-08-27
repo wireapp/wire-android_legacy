@@ -41,4 +41,17 @@ object QOtrClientIdMap {
 
   def apply(entries: Iterable[(QualifiedId, Set[ClientId])]): QOtrClientIdMap = QOtrClientIdMap(entries.toMap)
   def from(entries: (QualifiedId, Set[ClientId])*): QOtrClientIdMap = QOtrClientIdMap(entries.toMap)
+
+  def decodeMap(key: Symbol)(implicit js: JSONObject): QOtrClientIdMap =
+    if (!js.has(key.name) || js.isNull(key.name)) QOtrClientIdMap.Empty
+    else {
+      val mapJs = js.getJSONObject(key.name)
+      val map = mapJs.keys.asScala.flatMap { domain =>
+        val userClientsJs = mapJs.getJSONObject(domain)
+        userClientsJs.keys.asScala.map { key =>
+          QualifiedId(UserId(key), domain) -> decodeStringSeq(Symbol(key))(userClientsJs).map(ClientId(_)).toSet
+        }
+      }.toMap
+      QOtrClientIdMap(map)
+    }
 }
