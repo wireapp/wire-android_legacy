@@ -95,7 +95,9 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
       }
 
       else {
-        button.setEnabled(true)
+        controller.isCallEstablished.onUi(button.setEnabled)
+        controller.isMuted.onUi(button.setActivated)
+
         Signal.zip(controller.isMuted, controller.isVideoCall, themeController.currentTheme).map {
         case (true, false, Theme.Light)  => Some(drawInactiveMicrophoneLight _)
         case (true, _, _)                => Some(drawInactiveMicrophone _)
