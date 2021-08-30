@@ -77,7 +77,7 @@ class UserServiceSpec extends AndroidFreeSpec {
     result(userPrefs(UserPreferences.ShouldSyncUsers) := false)
 
     new UserServiceImpl(
-      users.head.id, None, None, accountsService, accountsStrg, usersStorage, membersStorage,
+      users.head.id, if (BuildConfig.FEDERATION_USER_DISCOVERY) Some(Domain) else None, None, accountsService, accountsStrg, usersStorage, membersStorage,
       userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
       selectedConv, messages
     )

@@ -348,9 +348,9 @@ class UserServiceImpl(selfUserId:        UserId,
     }
 
   override def isFederated(user: UserData): Boolean =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      currentDomain.fold(false)(domain => user.domain.exists(_ != domain))
-    } else
+    if (BuildConfig.FEDERATION_USER_DISCOVERY)
+      user.qualifiedId.fold(false)(isFederated)
+    else
       false
 
   override def isFederated(qId: QualifiedId): Boolean =
