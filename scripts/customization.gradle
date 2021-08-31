@@ -40,12 +40,17 @@ def prepareCustomizationEnvironment() {
         throw new GradleException('Custom repo specified, but not custom folder')
     }
 
+    def clientFolder = System.getenv("CLIENT_FOLDER") ?: properties.getProperty("CLIENT_FOLDER") ?: ''
+    if (clientFolder.isEmpty()) {
+        throw new GradleException('Custom repo specified, but not client folder')
+    }
+
     def gitHubToken = System.getenv("GITHUB_API_TOKEN") ?: properties.getProperty("GITHUB_API_TOKEN") ?: ''
     if (gitHubToken.isEmpty()) {
         throw new GradleException('Custom repo specified, but no GitHub API token provided')
     }
 
-    def customDirPath = customCheckoutDir + '/' + customFolder
+    def customDirPath = customCheckoutDir + '/' + customFolder + '/' + clientFolder
     def customConfigFile = new File("$customDirPath/custom.json")
 
     // clean up
