@@ -27,7 +27,7 @@ import com.waz.model._
 import com.waz.service.ZMessaging.clock
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.wire.signals.Serialized
+import com.wire.signals.{Serialized, Signal}
 import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
@@ -103,13 +103,16 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
 
       def expiration =
         if (MessageData.EphemeralMessageTypes(msg.msgType)) {
-          def teamExpiration = userPrefs(UserPreferences.SelfDeletingMessagesEnforcedTimeout).apply()
-          convs.get(msg.convId).map(_.fold(Option.empty[EphemeralDuration])(_.ephemeralExpiration)).zip(teamExpiration).map {
-            case (_, enforcedDuration) if enforcedDuration > 0 => Some(enforcedDuration.seconds)
-            case (Some(ConvExpiry(d)), _) => Some(d)
-            case (Some(MessageExpiry(d)), _) => exp.getOrElse(Some(d))
+          def doesTeamEnablesExpiration = userPrefs(UserPreferences.AreSelfDeletingMessagesEnabled).signal
+          val conversationExpiration = Signal.from(convs.get(msg.convId).map(_.fold(Option.empty[EphemeralDuration])(_.ephemeralExpiration)))
+          def teamExpiration = userPrefs(UserPreferences.SelfDeletingMessagesEnforcedTimeout).signal
+          Signal.zip(doesTeamEnablesExpiration, conversationExpiration, teamExpiration).map {
+            case (false, _, _)                                    => None
+            case (_, _, enforcedDuration) if enforcedDuration > 0 => Some(enforcedDuration.seconds)
+            case (_, Some(ConvExpiry(d)), _)                      => Some(d)
+            case (_, Some(MessageExpiry(d)), _)                   => exp.getOrElse(Some(d))
             case _ => exp.flatten
-          }
+          }.future
         }
         else Future.successful(None)
 
