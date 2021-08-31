@@ -40,6 +40,7 @@ import com.waz.sync.otr.OtrSyncHandler
 import com.wire.signals.CancellableFuture
 import com.waz.utils.RichFuture
 import com.waz.utils.wrappers.URI
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
@@ -79,7 +80,12 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                     Future successful SyncResult.Success
                   case Right(proto) =>
                     verbose(l"updated link previews: $proto")
-                    otrSync.postOtrMessage(conv.id, proto, isHidden = false) map {
+                    val postMsg = if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+                      otrSync.postQualifiedOtrMessage(conv.id, proto, isHidden = false)
+                    } else {
+                      otrSync.postOtrMessage(conv.id, proto, isHidden = false)
+                    }
+                    postMsg.map {
                       case Left(err) => SyncResult(err)
                       case Right(_)  => SyncResult.Success
                     }

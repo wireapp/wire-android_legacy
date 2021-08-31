@@ -460,15 +460,13 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       case Right(resp) => Right(resp.missing)
     }
 
-  override def postClientDiscoveryMessage(convId: RConvQualifiedId): ErrorOr[QOtrClientIdMap] =
-    for {
-      Some(conv) <- convStorage.getByRemoteId(convId.id)
-      message    =  QualifiedOtrMessage(selfClientId, QEncryptedContent.Empty, nativePush = false)
-      response   <- msgClient.postMessage(convId, message).future
-    } yield response match {
+  override def postClientDiscoveryMessage(convId: RConvQualifiedId): ErrorOr[QOtrClientIdMap] = {
+    val message = QualifiedOtrMessage(selfClientId, QEncryptedContent.Empty, nativePush = false)
+    msgClient.postMessage(convId, message).future.map {
       case Left(error) => Left(error)
       case Right(resp) => Right(resp.missing)
     }
+  }
 
   private def syncClients(users: Set[UserId]): Future[SyncResult] =
     for {
