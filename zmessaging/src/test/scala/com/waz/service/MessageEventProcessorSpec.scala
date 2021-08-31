@@ -31,6 +31,7 @@ import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsS
 import com.waz.service.messages.{MessageEventProcessor, MessagesContentUpdater, MessagesService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.TestGlobalPreferences
+import com.waz.testutils.TestUserPreferences
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
 import com.wire.signals.{EventStream, Signal}
@@ -54,6 +55,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
   val downloadStorage   = mock[DownloadAssetStorage]
   val buttonsStorage    = mock[ButtonsStorage]
   val prefs             = new TestGlobalPreferences()
+  val userPrefs         = new TestUserPreferences()
 
   val messagesInStorage = Signal[Seq[MessageData]](Seq.empty)
   (storage.getMessages _).expects(*).atLeastOnce.onCall { ids: Traversable[MessageId] =>
@@ -301,7 +303,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
   }
 
   def getProcessor = {
-    val content = new MessagesContentUpdater(storage, convsStorage, deletions, buttonsStorage, prefs)
+    val content = new MessagesContentUpdater(storage, convsStorage, deletions, buttonsStorage, prefs, userPrefs)
 
     //TODO make VerificationStateUpdater mockable
     (otrClientsStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserClients]]())

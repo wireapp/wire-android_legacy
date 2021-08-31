@@ -29,7 +29,7 @@ import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesServiceImpl}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
-import com.waz.testutils.TestGlobalPreferences
+import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
 import com.wire.signals.{EventStream, Signal}
@@ -51,10 +51,11 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   val buttons =       mock[ButtonsStorage]
   val users =         mock[UsersStorage]
   val replyHashing =  mock[ReplyHashing]
-  lazy val prefs =         new TestGlobalPreferences()
+  lazy val prefs      = new TestGlobalPreferences()
+  lazy val userPrefs  = new TestUserPreferences()
 
   def getService = {
-    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs)
+    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs, userPrefs)
     new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, buttons, sync)
   }
 

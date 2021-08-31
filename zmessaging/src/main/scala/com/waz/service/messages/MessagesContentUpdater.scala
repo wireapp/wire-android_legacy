@@ -38,7 +38,8 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
                              convs:           ConversationStorage,
                              deletions:       MsgDeletionStorage,
                              buttonsStorage:  ButtonsStorage,
-                             prefs:           GlobalPreferences) extends DerivedLogTag {
+                             prefs:           GlobalPreferences,
+                             userPrefs:       UserPreferences) extends DerivedLogTag {
   import Threading.Implicits.Background
 
   def getMessage(msgId: MessageId) = messagesStorage.getMessage(msgId)
@@ -91,18 +92,25 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     buttonsStorage.updateOrCreateAll2(newButtons.keys, { (id, _) => newButtons(id) }).map(_ => ())
   }
   /**
-    * @param exp ConvExpiry takes precedence over one-time expiry (exp), which takes precedence over the MessageExpiry
-    */
+    * @param exp Message Expiration precedence order:
+   *            1. Team self-deleting messages feature config
+   *            2. ConvExpiry: Conversation-specific timer setting
+   *            3. One-time expiry (parameter exp),
+   *            4. Which takes precedence over the MessageExpiry
+   */
   def addLocalMessage(msg: MessageData, state: Status = Status.PENDING, exp: Option[Option[FiniteDuration]] = None, localTime: LocalInstant = LocalInstant.Now) =
     Serialized.future(s"add local message ${msg.convId}") {
 
       def expiration =
-        if (MessageData.EphemeralMessageTypes(msg.msgType))
-          convs.get(msg.convId).map(_.fold(Option.empty[EphemeralDuration])(_.ephemeralExpiration)).map {
-            case Some(ConvExpiry(d))    => Some(d)
-            case Some(MessageExpiry(d)) => exp.getOrElse(Some(d))
-            case _                      => exp.flatten
+        if (MessageData.EphemeralMessageTypes(msg.msgType)) {
+          def teamExpiration = userPrefs(UserPreferences.SelfDeletingMessagesEnforcedTimeout).apply()
+          convs.get(msg.convId).map(_.fold(Option.empty[EphemeralDuration])(_.ephemeralExpiration)).zip(teamExpiration).map {
+            case (_, enforcedDuration) if enforcedDuration > 0 => Some(enforcedDuration.seconds)
+            case (Some(ConvExpiry(d)), _) => Some(d)
+            case (Some(MessageExpiry(d)), _) => exp.getOrElse(Some(d))
+            case _ => exp.flatten
           }
+        }
         else Future.successful(None)
 
       (for {

@@ -3,7 +3,7 @@ package com.waz.service.messages
 import com.waz.content.{ButtonsStorage, ConversationStorage, MessagesStorage, MsgDeletionStorage}
 import com.waz.model.{ButtonData, ButtonId, MessageId}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.testutils.TestGlobalPreferences
+import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
 
 import scala.concurrent.Future
 
@@ -14,6 +14,7 @@ class MessagesContentUpdaterSpec extends AndroidFreeSpec {
   private lazy val deletions    =  mock[MsgDeletionStorage]
   private lazy val buttons      =  mock[ButtonsStorage]
   private lazy val prefs        =  new TestGlobalPreferences()
+  private lazy val userPrefs    =  new TestUserPreferences()
 
   scenario("Confirm a button action") {
     val messageId = MessageId()
@@ -25,7 +26,7 @@ class MessagesContentUpdaterSpec extends AndroidFreeSpec {
     (buttons.findByMessage _).expects(messageId).atLeastOnce().returning(Future.successful(Seq(buttonData)))
     (buttons.updateAll2 _).expects(Seq((messageId, buttonId)), *).atLeastOnce().returning(Future.successful(Nil))
 
-    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs)
+    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs, userPrefs)
 
     result(updater.updateButtonConfirmations(confirmation))
   }
@@ -44,7 +45,7 @@ class MessagesContentUpdaterSpec extends AndroidFreeSpec {
     (buttons.findByMessage _).expects(messageId).atLeastOnce().returning(Future.successful(Seq(buttonData1, buttonData2)))
     (buttons.updateAll2 _).expects(ids, *).atLeastOnce().returning(Future.successful(Nil))
 
-    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs)
+    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs, userPrefs)
 
     result(updater.updateButtonConfirmations(confirmation))
   }
@@ -63,7 +64,7 @@ class MessagesContentUpdaterSpec extends AndroidFreeSpec {
     (buttons.findByMessage _).expects(messageId).atLeastOnce().returning(Future.successful(Seq(buttonData1, buttonData2)))
     (buttons.updateAll2 _).expects(ids, *).atLeastOnce().returning(Future.successful(Nil))
 
-    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs)
+    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs, userPrefs)
 
     result(updater.updateButtonConfirmations(confirmation))
   }
