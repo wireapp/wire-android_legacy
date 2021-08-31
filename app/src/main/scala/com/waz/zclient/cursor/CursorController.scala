@@ -26,7 +26,7 @@ import android.widget.Toast
 import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
 import com.waz.api.NetworkMode
 import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
-import com.waz.content.UserPreferences.{AreSelfDeletingMessagesEnabled, SelfDeletingMessagesEnforcedTimeout}
+import com.waz.content.UserPreferences.AreSelfDeletingMessagesEnabled
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model._
 import com.waz.permissions.PermissionsService
