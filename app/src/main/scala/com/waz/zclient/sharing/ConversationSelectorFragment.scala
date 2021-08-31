@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.sharing
 
-import android.R
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
@@ -46,6 +45,7 @@ import com.wire.signals._
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{RichWireInstant, returning}
 import com.waz.zclient._
+import com.waz.zclient.R
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, NewContent, TextContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -217,6 +217,8 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
 
     ephemeralIcon.foreach(icon =>
       isEphemeralButtonVisible.onUi(icon.setVisible)
+    )
+    ephemeralIcon.foreach(icon =>
       icon.onClick {
         bottomContainer.foreach { bc =>
           bc.isExpanded.currentValue match {
@@ -236,7 +238,8 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
             case _ =>
           }
         }
-    })
+      }
+    )
 
     searchBox.foreach { box =>
       box.setCallback(new PickerSpannableEditText.Callback {
