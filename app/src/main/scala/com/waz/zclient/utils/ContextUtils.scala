@@ -356,7 +356,7 @@ object ContextUtils {
 
   def showFileSharingRestrictionInfoDialog(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
     showInfoDialog(
-      title = getString(R.string.file_sharing_restriction_info_dialog_title),
+      title = getString(R.string.feature_config_changed_info_dialog_title),
       msg = getString(R.string.file_sharing_restriction_info_dialog_message)
     ).foreach(onConfirm)
   }
@@ -369,7 +369,7 @@ object ContextUtils {
     }
 
     showInfoDialog(
-      title = getString(R.string.self_deleting_messages_change_info_dialog_title),
+      title = getString(R.string.feature_config_changed_info_dialog_title),
       msg = message
     ).foreach(onConfirm)
   }

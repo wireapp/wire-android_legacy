@@ -1646,8 +1646,10 @@
     <string name="join_conversation_invalid_link_error_message">The conversation link is invalid.</string>
     <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
 
+    <!-- Feature Config Changes -->
+    <string name="feature_config_changed_info_dialog_title">There has been a change in Wire</string>
+
     <!-- File sharing feature config -->
-    <string name="file_sharing_restriction_info_dialog_title">There has been a change in Wire</string>
     <string name="file_sharing_restriction_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
 
     <string name="file_sharing_restriction_info_image">RECEIVING IMAGES RESTRICTED</string>
@@ -1657,7 +1659,6 @@
     <string name="file_sharing_restriction_info_generic">FILE SHARING RESTRICTED</string>
 
     <!-- Self Deleting Messages feature config -->
-    <string name="self_deleting_messages_change_info_dialog_title">Self-deleting messages restrictions</string>
     <string name="self_deleting_messages_change_info_dialog_message_enabled">Sending of self deleting messages is enabled.</string>
     <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">Sending of self deleting messages is mandatory. The enforced timeout for deletion is %s seconds.</string>
     <string name="self_deleting_messages_change_info_dialog_message_disabled">Sending of self deleting messages is disabled.</string>
