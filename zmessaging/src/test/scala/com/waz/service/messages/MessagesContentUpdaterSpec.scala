@@ -72,7 +72,7 @@ class MessagesContentUpdaterSpec extends AndroidFreeSpec {
 
   scenario(
     """Given self deleting messages are disabled by the team,
-      | and a conversation has a global and local expiration settings
+      | and a conversation has global and local expiration settings
       |When adding new local message to a conversation with a specified expiration parameter
       |Then no expiration should be used""".stripMargin){
 
@@ -97,7 +97,7 @@ class MessagesContentUpdaterSpec extends AndroidFreeSpec {
 
   scenario(
     """Given self deleting messages are enforced by the team,
-      | and a conversation has a global and local expiration settings
+      | and a conversation has global and local expiration settings
       |When adding new local message to a conversation with a specified expiration parameter
       |Then the team enforced expiration should be used""".stripMargin){
     val conversationId = ConvId("ABC")
@@ -121,7 +121,7 @@ class MessagesContentUpdaterSpec extends AndroidFreeSpec {
 
   scenario(
     """Given self deleting messages are enabled by the team,
-      | and a conversation has a global and local expiration settings
+      | and a conversation has global and local expiration settings
       |When adding new local message to a conversation with a specified expiration parameter
       |Then the conversation timer expiration should be used""".stripMargin){
     val conversationId = ConvId("ABC")
