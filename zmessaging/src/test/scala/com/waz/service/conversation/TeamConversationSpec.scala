@@ -37,6 +37,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
   import ConversationRole._
 
   val selfId          = UserId()
+  val domain          = "chala.wire.link"
   val team            = Some(TeamId("team"))
   val selfUser        = UserData(selfId, None, team, Name("self"), searchKey = SearchKey.simple("self"))
   val users           = mock[UserService]
@@ -71,12 +72,12 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
     scenario("Create 1:1 conversation within a team with existing 1:1 conversation between the two members should return existing conversation") {
       val otherUserId = UserId("otherUser")
-      val otherUser = UserData(otherUserId, None, team, Name("other"), searchKey = SearchKey.simple("other"))
+      val otherUser = UserData(otherUserId, Some(domain), team, Name("other"), searchKey = SearchKey.simple("other"))
 
       val existingConv = ConversationData(creator = selfId, convType = Group, team = team)
 
       (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (users.isFederated(_: UserId)).expects(otherUserId).once().returning(Future.successful(false))
+      (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
@@ -94,13 +95,13 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
     scenario("Existing 1:1 conversation between two team members with NAME should not be returned") {
       val otherUserId = UserId("otherUser")
-      val otherUser = UserData(otherUserId, None, team, Name("other"), searchKey = SearchKey.simple("other"))
+      val otherUser = UserData(otherUserId, Some(domain), team, Name("other"), searchKey = SearchKey.simple("other"))
 
       val name = Some(Name("Conv Name"))
       val existingConv = ConversationData(creator = selfId, name = name, convType = Group, team = team)
 
       (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (users.isFederated(_: UserId)).expects(otherUserId).once().returning(Future.successful(false))
+      (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
@@ -138,10 +139,10 @@ class TeamConversationSpec extends AndroidFreeSpec {
     //TODO under what circumstances is the user connection status "Ignored"? What happens if you're just unconnected with that person?
     scenario("Create 1:1 conversation with a non-team member should create a real 1:1 conversation") {
       val otherUserId = UserId("otherUser")
-      val otherUser = UserData(otherUserId, None, Some(TeamId("different_team")), Name("other"), searchKey = SearchKey.simple("other"), connection = ConnectionStatus.Ignored)
+      val otherUser = UserData(otherUserId, Some(domain), Some(TeamId("different_team")), Name("other"), searchKey = SearchKey.simple("other"), connection = ConnectionStatus.Ignored)
 
       (users.findUser _).expects(otherUserId).twice().returning(Future.successful(Some(otherUser)))
-      (users.isFederated(_: UserId)).expects(otherUserId).once().returning(Future.successful(false))
+      (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
       (convsContent.createConversation _)

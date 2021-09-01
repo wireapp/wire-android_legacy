@@ -276,43 +276,4 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
       ConversationRole.MemberRole
     ))
   }
-
-
-  scenario("It reports missing legal hold consent error when creating a conversation with qualified members") {
-    // Given
-    val handler = createHandler
-    val convId = ConvId("convId")
-    val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
-
-    // Mock
-    (conversationsClient.postQualifiedConversation _)
-      .expects(*)
-      .once()
-      .returning(CancellableFuture.successful(Left(errorResponse)))
-
-    // Expectation
-    val errorType = ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT
-
-    (errorsService.addErrorWhenActive _)
-      .expects(where { data: ErrorData =>
-        data.errType == errorType &&
-          data.responseCode == 412 &&
-          data.responseLabel == "missing-legalhold-consent" &&
-          data.convId.contains(convId)
-      })
-      .once()
-      .returning(Future.successful(()))
-
-    // When (arguments are irrelevant)
-    result(handler.postQualifiedConversation(
-      convId,
-      Set(QualifiedId(UserId("userId"), "chala.wire.link")),
-      None,
-      None,
-      Set.empty,
-      AccessRole.TEAM,
-      None,
-      ConversationRole.MemberRole
-    ))
-  }
 }
