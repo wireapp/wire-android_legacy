@@ -37,7 +37,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-     />
+        android:layout_weight="0.5" />
 
     <LinearLayout
         android:id="@+id/all_speakers_layout"
@@ -79,7 +79,7 @@
 
     <com.waz.zclient.calling.views.ControlsView
         android:id="@+id/controls_grid"
-        android:layout_width="@dimen/calling__controls__max_width"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center"
         android:layout_marginStart="@dimen/wire__padding__regular"
