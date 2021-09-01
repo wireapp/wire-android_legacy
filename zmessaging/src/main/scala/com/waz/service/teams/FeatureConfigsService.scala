@@ -86,7 +86,7 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       wasEnabled        <- userPrefs(AreSelfDeletingMessagesEnabled).apply()
       lastKnownTimeout  <- userPrefs(SelfDeletingMessagesEnforcedTimeout).apply()
       isNowEnabled      =  config.isEnabled
-      newTimeout        =  config.enforcedTimeoutInSeconds
+      newTimeout        =  15
       _                 <- userPrefs(AreSelfDeletingMessagesEnabled) := isNowEnabled
       _                 <- userPrefs(SelfDeletingMessagesEnforcedTimeout) := newTimeout
       // Inform of new restrictions.
