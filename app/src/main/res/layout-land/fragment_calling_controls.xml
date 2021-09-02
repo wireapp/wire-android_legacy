@@ -47,7 +47,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:orientation="horizontal"
-        android:layout_marginBottom="@dimen/wire__padding__10"
+        android:layout_marginBottom="@dimen/wire__padding__16"
         >
 
         <Button
@@ -83,12 +83,11 @@
 
     <com.waz.zclient.calling.views.ControlsView
         android:id="@+id/controls_grid"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center"
         android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_marginEnd="@dimen/wire__padding__regular"
-        android:layout_marginBottom="@dimen/wire__padding__8"
         />
 
 </LinearLayout>
