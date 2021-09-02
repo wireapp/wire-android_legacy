@@ -215,5 +215,7 @@
     <string translatable="false" name="url_legal_hold_about">https://support.wire.com/hc/articles/360002018278-What-is-legal-hold-</string>
 
     <string translatable="false" name="url_play_store_listing">http://play.google.com/store/apps/details?id=com.wire</string>
+
+    <string translatable="false" name="url_wire_team_management">https://teams.wire.com/billing/</string>
 </resources>
 

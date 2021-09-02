@@ -9,14 +9,15 @@ import com.waz.model.{FeatureConfigEvent, FeatureConfigUpdateEvent, FileSharingF
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
 import com.waz.utils.JsonDecoder
-
 import scala.concurrent.Future
+import com.waz.model.ConferenceCallingFeatureConfig
 
 trait FeatureConfigsService {
   def eventProcessingStage: Stage.Atomic
   def updateAppLock(): Future[Unit]
   def updateFileSharing(): Future[Unit]
   def updateSelfDeletingMessages(): Future[Unit]
+  def updateConferenceCalling(): Future[Unit]
 }
 
 class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
@@ -33,10 +34,17 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       val fileSharing = JsonDecoder.decode[FileSharingFeatureConfig](data)
       verbose(l"File sharing enabled: ${fileSharing.isEnabled}")
       storeFileSharing(fileSharing)
+
     case FeatureConfigUpdateEvent("selfDeletingMessages", data) =>
       val selfDeletingMessages = JsonDecoder.decode[SelfDeletingMessagesFeatureConfig](data)
       verbose(l"Self deleting messages config: $selfDeletingMessages")
       storeSelfDeletingMessages(selfDeletingMessages)
+
+    case FeatureConfigUpdateEvent("conferenceCalling", data) =>
+      val conferenceCalling = JsonDecoder.decode[ConferenceCallingFeatureConfig](data)
+      verbose(l"Conference calling enabled: ${conferenceCalling.isEnabled}")
+      storeConferenceCallingConfig(conferenceCalling)
+
     case _ =>
       Future.successful(())
   }
@@ -65,10 +73,28 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       existingValue <- userPrefs(FileSharingFeatureEnabled).apply()
       newValue      =  fileSharing.isEnabled
       _             <- userPrefs(FileSharingFeatureEnabled) := newValue
-                       // Inform of new restrictions.
-      _             <- if (existingValue && !newValue) userPrefs(ShouldInformFileSharingRestriction) := true
-                       // Don't inform if restrictions are gone.
-                       else if (newValue) userPrefs(ShouldInformFileSharingRestriction) := false
+                       // Inform of changes.
+      _             <- if (existingValue != newValue) userPrefs(ShouldInformFileSharingRestriction) := true
+                       else Future.successful(())
+    } yield ()
+  }
+
+
+  override def updateConferenceCalling(): Future[Unit] =
+    for {
+      conferenceCalling <- syncHandler.fetchConferenceCalling()
+      _                 <- storeConferenceCallingConfig(conferenceCalling)
+    } yield ()
+
+  private def storeConferenceCallingConfig(conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig): Future[Unit] = {
+    for {
+      existingValue <- userPrefs (ConferenceCallingFeatureEnabled).apply()
+      newValue      =  conferenceCallingFeatureConfig.isEnabled
+      _             <- userPrefs(ConferenceCallingFeatureEnabled) := newValue
+                    // Inform of plan upgraded.
+      _             <- if (!existingValue && newValue) userPrefs(ShouldInformPlanUpgradedToEnterprise) := true
+                       // Don't inform
+                       else if (!newValue) userPrefs(ShouldInformPlanUpgradedToEnterprise) := false
                        else Future.successful(())
     } yield ()
   }

@@ -238,10 +238,12 @@ class MainActivity extends BaseActivity
 
     userPreferences.flatMap(_.preference(UserPreferences.ShouldInformFileSharingRestriction).signal).onUi { shouldInform =>
       if (shouldInform) {
-        showFileSharingRestrictionInfoDialog { _ =>
-          userPreferences.head.foreach { prefs =>
-            prefs(UserPreferences.ShouldInformFileSharingRestriction) := false
-          }
+        userPreferences.head.flatMap(_(UserPreferences.FileSharingFeatureEnabled).apply()).foreach { isEnabled =>
+          showFileSharingRestrictionInfoDialog(isEnabled, { _ =>
+            userPreferences.head.foreach { prefs =>
+              prefs(UserPreferences.ShouldInformFileSharingRestriction) := false
+            }
+          })
         }
       }
     }
@@ -260,7 +262,24 @@ class MainActivity extends BaseActivity
       }
     }
 
+    if(BuildConfig.CONFERENCE_CALLING_RESTRICTION)
+      observeTeamUpgrade()
+
     featureConfigsController.startUpdatingFlagsWhenEnteringForeground()
+  }
+
+  private def observeTeamUpgrade(): Unit = {
+    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformPlanUpgradedToEnterprise).signal).onUi { shouldInform =>
+      if (shouldInform) {
+        accentColorController.accentColor.head.foreach { accentColor =>
+          showPlanUpgradedInfoDialog(accentColor) { _ =>
+            userPreferences.head.foreach { prefs =>
+              prefs(UserPreferences.ShouldInformPlanUpgradedToEnterprise) := false
+            }
+          }
+        }
+      }
+    }
   }
 
   private def initTracking: Future[Unit] =

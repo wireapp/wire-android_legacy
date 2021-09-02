@@ -1084,7 +1084,7 @@
     <string name="ephemeral_message_footer_multiple_units">%1$s and %2$s remaining</string>
     <string name="ephemeral_message_footer_single_unit">%1$s remaining</string>
 
-    <string name="collection_header_pictures">PICTURES</string>
+    <string name="collection_header_images">IMAGES</string>
     <string name="collection_header_files">FILES</string>
     <string name="collection_header_links">LINKS</string>
     <string name="collection_header_today">TODAY</string>
@@ -1650,7 +1650,8 @@
     <string name="feature_config_changed_info_dialog_title">There has been a change in Wire</string>
 
     <!-- File sharing feature config -->
-    <string name="file_sharing_restriction_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
+    <string name="file_sharing_enabled_info_dialog_message">Sharing and receiving files of any type is now enabled.</string>
+    <string name="file_sharing_disabled_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
 
     <string name="file_sharing_restriction_info_image">RECEIVING IMAGES RESTRICTED</string>
     <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS RESTRICTED</string>
@@ -1662,6 +1663,20 @@
     <string name="self_deleting_messages_change_info_dialog_message_enabled">Sending of self deleting messages is enabled.</string>
     <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">Sending of self deleting messages is mandatory. The enforced timeout for deletion is %s seconds.</string>
     <string name="self_deleting_messages_change_info_dialog_message_disabled">Sending of self deleting messages is disabled.</string>
+
+    <!-- Conference Calling Restriction feature config -->
+    <string name="conference_calling_restriction_dialog_title">Upgrade to enterprise</string>
+    <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to  features such as starting conferences and more.
+    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wires pricing</a>]]></string>
+    <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
+    <string name="conference_calling_restriction_dialog_negative_button">CANCEL</string>
+
+    <string name="upgraded_plan_dialog_title">Wire enterprise</string>
+    <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
+        &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
+
+    <string name="feature_not_accessible_dialog_title">Feature not accessible</string>
+    <string name="feature_not_accessible_dialog_description">To use the conferencing feature your team admin needs to upgrade Wire</string>
 
 </resources>
 
