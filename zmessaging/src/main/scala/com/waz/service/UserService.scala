@@ -17,6 +17,7 @@
  */
 package com.waz.service
 
+import com.waz.api.impl.ErrorResponse
 import com.waz.log.LogSE._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.content._
@@ -386,17 +387,19 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   //TODO - remove and find a better flow for the settings
-  override def setEmail(email: EmailAddress, password: Password) =
-    credentialsClient.updateEmail(email).future.flatMap {
+  override def setEmail(email: EmailAddress, password: Password): ErrorOr[Unit] =
+    updateEmail(email).flatMap {
       case Right(_) => setAccountPassword(password)
       case Left(e) => Future.successful(Left(e))
     }
 
+  override def updateEmail(email: EmailAddress): ErrorOr[Unit] =
+    accounts.activeAccountManager.head.flatMap {
+      case Some(am) => am.setEmail(email)
+      case None     => Future.successful(Left[ErrorResponse, Unit](ErrorResponse.InternalError))
+    }
 
-  override def updateEmail(email: EmailAddress) =
-    credentialsClient.updateEmail(email).future
-
-  override def updatePhone(phone: PhoneNumber) =
+  override def updatePhone(phone: PhoneNumber): ErrorOr[Unit] =
     credentialsClient.updatePhone(phone).future
 
 
