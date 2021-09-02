@@ -56,8 +56,17 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   import com.waz.threading.Threading.Implicits.Ui
 
   inflate(R.layout.calling__controls__grid, this)
-  setColumnCount(3)
-  setRowCount(2)
+
+  if (ContextUtils.isInLandscape){
+    setColumnCount(7)
+    setRowCount(1)
+  }
+  else {
+    setColumnCount(3)
+    setRowCount(2)
+  }
+
+
 
   private lazy val controller  = inject[CallController]
   private lazy val permissions = inject[PermissionsService]

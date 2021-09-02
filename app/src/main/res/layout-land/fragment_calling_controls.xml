@@ -23,7 +23,8 @@
     android:layout_width="match_parent"
     android:background="@color/calling_video_overlay"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:gravity="center">
 
     <com.waz.zclient.calling.views.CallingHeader
         android:id="@+id/calling_header"
@@ -34,17 +35,20 @@
 
     <com.waz.zclient.calling.views.CallingMiddleLayout
         android:id="@+id/calling_middle"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/calling__controls__participant_list_width"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_weight="0.5" />
+        android:layout_marginBottom="@dimen/wire__padding__16"
+   />
 
     <LinearLayout
         android:id="@+id/all_speakers_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_marginBottom="@dimen/wire__padding__10"
+        >
 
         <Button
             android:id="@+id/speakers_button"
@@ -79,10 +83,12 @@
 
     <com.waz.zclient.calling.views.ControlsView
         android:id="@+id/controls_grid"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center"
         android:layout_marginStart="@dimen/wire__padding__regular"
-        android:layout_marginEnd="@dimen/wire__padding__regular"/>
+        android:layout_marginEnd="@dimen/wire__padding__regular"
+        android:layout_marginBottom="@dimen/wire__padding__8"
+        />
 
 </LinearLayout>
