@@ -2,7 +2,7 @@ package com.waz.sync.handler
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{AppLockFeatureConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, TeamId}
+import com.waz.model.{AppLockFeatureConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig, TeamId}
 import com.waz.sync.client.FeatureConfigsClient
 
 import scala.concurrent.Future
@@ -10,6 +10,7 @@ import scala.concurrent.Future
 trait FeatureConfigsSyncHandler {
   def fetchAppLock(): Future[AppLockFeatureConfig]
   def fetchFileSharing(): Future[FileSharingFeatureConfig]
+  def fetchSelfDeletingMessages(): Future[SelfDeletingMessagesFeatureConfig]
   def fetchConferenceCalling(): Future[ConferenceCallingFeatureConfig]
 }
 
@@ -37,6 +38,15 @@ class FeatureConfigsSyncHandlerImpl(teamId: Option[TeamId], client: FeatureConfi
         FileSharingFeatureConfig.Default
       case Right(fileSharing) =>
         fileSharing
+    }
+
+  override def fetchSelfDeletingMessages(): Future[SelfDeletingMessagesFeatureConfig] =
+    client.getSelfDeletingMessages().map {
+      case Left(err) =>
+        error(l"Unable to fetch SelfDeletingMessages feature flag: $err")
+        SelfDeletingMessagesFeatureConfig.Default
+      case Right(selfDeletingMessages) =>
+        selfDeletingMessages
     }
 
   override def fetchConferenceCalling(): Future[ConferenceCallingFeatureConfig] =

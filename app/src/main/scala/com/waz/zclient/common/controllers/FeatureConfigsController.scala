@@ -15,13 +15,14 @@ class FeatureConfigsController(implicit inj: Injector) extends Injectable with D
 
   def startUpdatingFlagsWhenEnteringForeground(): Unit =
     inject[ActivityLifecycleCallback].appInBackground.map(_._1).foreach { isInBackground =>
-      if (!isInBackground) {
+      if(!isInBackground){
         featureConfigs.head.foreach(updateFlags)
       }
     }
 
   private def updateFlags(configsService: FeatureConfigsService): Unit = {
     configsService.updateFileSharing()
+    configsService.updateSelfDeletingMessages()
     if(BuildConfig.CONFERENCE_CALLING_RESTRICTION)
       configsService.updateConferenceCalling()
   }

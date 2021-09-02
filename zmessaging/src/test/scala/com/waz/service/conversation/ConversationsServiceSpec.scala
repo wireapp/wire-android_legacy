@@ -70,7 +70,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
   private lazy val globalPrefs    = new TestGlobalPreferences()
   private lazy val userPrefs      = new TestUserPreferences()
-  private lazy val msgUpdater     = new MessagesContentUpdater(msgStorage, convsStorage, deletions, buttons, globalPrefs)
+  private lazy val msgUpdater     = new MessagesContentUpdater(msgStorage, convsStorage, deletions, buttons, globalPrefs, userPrefs)
 
   val teamsStorage                = mock[TeamsStorage]
   val errorsService               = mock[ErrorsService]

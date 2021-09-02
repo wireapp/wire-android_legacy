@@ -1646,8 +1646,10 @@
     <string name="join_conversation_invalid_link_error_message">The conversation link is invalid.</string>
     <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
 
+    <!-- Feature Config Changes -->
+    <string name="feature_config_changed_info_dialog_title">There has been a change in Wire</string>
+
     <!-- File sharing feature config -->
-    <string name="file_sharing_restriction_info_dialog_title">There has been a change in Wire</string>
     <string name="file_sharing_enabled_info_dialog_message">Sharing and receiving files of any type is now enabled.</string>
     <string name="file_sharing_disabled_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
 
@@ -1657,6 +1659,12 @@
     <string name="file_sharing_restriction_info_file">RECEIVING FILES RESTRICTED</string>
     <string name="file_sharing_restriction_info_generic">FILE SHARING RESTRICTED</string>
 
+    <!-- Self Deleting Messages feature config -->
+    <string name="self_deleting_messages_change_info_dialog_message_enabled">Sending of self deleting messages is enabled.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">Sending of self deleting messages is mandatory. The enforced timeout for deletion is %s seconds.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_disabled">Sending of self deleting messages is disabled.</string>
+
+    <!-- Conference Calling Restriction feature config -->
     <string name="conference_calling_restriction_dialog_title">Upgrade to enterprise</string>
     <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to  features such as starting conferences and more.
     &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wires pricing</a>]]></string>

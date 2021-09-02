@@ -5,7 +5,7 @@ import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.sync.handler.FeatureConfigsSyncHandler
 import com.waz.log.LogSE._
-import com.waz.model.{FeatureConfigEvent, FeatureConfigUpdateEvent, FileSharingFeatureConfig}
+import com.waz.model.{FeatureConfigEvent, FeatureConfigUpdateEvent, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig}
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
 import com.waz.utils.JsonDecoder
@@ -16,6 +16,7 @@ trait FeatureConfigsService {
   def eventProcessingStage: Stage.Atomic
   def updateAppLock(): Future[Unit]
   def updateFileSharing(): Future[Unit]
+  def updateSelfDeletingMessages(): Future[Unit]
   def updateConferenceCalling(): Future[Unit]
 }
 
@@ -33,6 +34,11 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       val fileSharing = JsonDecoder.decode[FileSharingFeatureConfig](data)
       verbose(l"File sharing enabled: ${fileSharing.isEnabled}")
       storeFileSharing(fileSharing)
+
+    case FeatureConfigUpdateEvent("selfDeletingMessages", data) =>
+      val selfDeletingMessages = JsonDecoder.decode[SelfDeletingMessagesFeatureConfig](data)
+      verbose(l"Self deleting messages config: $selfDeletingMessages")
+      storeSelfDeletingMessages(selfDeletingMessages)
 
     case FeatureConfigUpdateEvent("conferenceCalling", data) =>
       val conferenceCalling = JsonDecoder.decode[ConferenceCallingFeatureConfig](data)
@@ -90,6 +96,28 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
                        // Don't inform
                        else if (!newValue) userPrefs(ShouldInformPlanUpgradedToEnterprise) := false
                        else Future.successful(())
+    } yield ()
+  }
+
+  override def updateSelfDeletingMessages(): Future[Unit] = {
+    for {
+      selfDeleting <- syncHandler.fetchSelfDeletingMessages()
+      _            =  verbose(l"SelfDeletingMessages feature config: $selfDeleting")
+      _            <- storeSelfDeletingMessages(selfDeleting)
+    } yield ()
+  }
+
+  private def storeSelfDeletingMessages(config: SelfDeletingMessagesFeatureConfig): Future[Unit] = {
+    for {
+      wasEnabled        <- userPrefs(AreSelfDeletingMessagesEnabled).apply()
+      lastKnownTimeout  <- userPrefs(SelfDeletingMessagesEnforcedTimeout).apply()
+      isNowEnabled      =  config.isEnabled
+      newTimeout        =  config.enforcedTimeoutInSeconds
+      _                 <- userPrefs(AreSelfDeletingMessagesEnabled) := isNowEnabled
+      _                 <- userPrefs(SelfDeletingMessagesEnforcedTimeout) := newTimeout
+      // Inform of new restrictions.
+      _                 <- userPrefs(ShouldInformSelfDeletingMessagesChanged) :=
+        (wasEnabled != isNowEnabled || lastKnownTimeout != newTimeout)
     } yield ()
   }
 }

@@ -247,6 +247,20 @@ class MainActivity extends BaseActivity
         }
       }
     }
+    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformSelfDeletingMessagesChanged).signal).onUi { shouldInform =>
+      if (!shouldInform) {}
+      else for {
+        prefs                     <- userPreferences.head
+        isFeatureEnabled          <- prefs.preference(AreSelfDeletingMessagesEnabled).apply()
+        enforcedTimeoutInSeconds  <- prefs.preference(SelfDeletingMessagesEnforcedTimeout).apply()
+      } yield {
+        showSelfDeletingMessagesConfigsChangeInfoDialog(isFeatureEnabled, enforcedTimeoutInSeconds) { _ =>
+          userPreferences.head.foreach { prefs =>
+            prefs(UserPreferences.ShouldInformSelfDeletingMessagesChanged) := false
+          }
+        }
+      }
+    }
 
     if(BuildConfig.CONFERENCE_CALLING_RESTRICTION)
       observeTeamUpgrade()
@@ -310,7 +324,6 @@ class MainActivity extends BaseActivity
     super.onResume()
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
   }
-
 
   override def onDestroy(): Unit = {
     verbose(l"[BE]: onDestroy")
