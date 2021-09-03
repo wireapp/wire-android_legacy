@@ -27,10 +27,10 @@ import com.waz.sync.client.ConversationsClient.ConversationResponse.{Conversatio
 import com.waz.utils.JsonDecoder.{array, decodeBool}
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
+import com.waz.zms.BuildConfig
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
-import com.wire.signals.CancellableFuture
 import org.json
 import org.json.JSONObject
 
@@ -266,7 +266,7 @@ class ConversationsClientImpl(implicit
   }
 
   override def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
-    verbose(l"postConversation($state)")
+    verbose(l"postConversation($state): \n${ConversationInitState.Encoder(state).toString(2)}")
     Request.Post(relativePath = ConversationsPath, body = state)
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
@@ -352,8 +352,10 @@ object ConversationsClient {
   object ConversationInitState {
     implicit lazy val Encoder: JsonEncoder[ConversationInitState] = new JsonEncoder[ConversationInitState] {
       override def apply(state: ConversationInitState): JSONObject = JsonEncoder { o =>
-        if (state.users.nonEmpty) o.put("users", Json(state.users))
-        if (state.qualifiedUsers.nonEmpty) o.put("qualified_users", QualifiedId.encode(state.qualifiedUsers))
+        if (state.users.nonEmpty || !BuildConfig.FEDERATION_USER_DISCOVERY)
+          o.put("users", Json(state.users))
+        if (state.qualifiedUsers.nonEmpty && BuildConfig.FEDERATION_USER_DISCOVERY)
+          o.put("qualified_users", QualifiedId.encode(state.qualifiedUsers))
         state.name.foreach(o.put("name", _))
         state.team.foreach(t => o.put("team", returning(new json.JSONObject()) { o =>
           o.put("teamid", t.str)
