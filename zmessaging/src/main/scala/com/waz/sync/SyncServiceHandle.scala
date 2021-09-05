@@ -152,7 +152,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncQualifiedSearchResults(qIds: Set[QualifiedId]) = addRequest(SyncQualifiedSearchResults(qIds))
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
   def syncUsers(ids: Set[UserId]): Future[SyncId] = addRequest(SyncUser(ids))
-  def syncQualifiedUsers(qIds: Set[QualifiedId]) = addRequest(SyncQualifiedUsers(qIds))
+  def syncQualifiedUsers(qIds: Set[QualifiedId]): Future[SyncId] = addRequest(SyncQualifiedUsers(qIds))
   def syncSelfUser() = addRequest(SyncSelf, priority = Priority.High)
   def deleteAccount() = addRequest(DeleteAccount)
   def syncConversations(ids: Set[ConvId], dependsOn: Option[SyncId]) =
