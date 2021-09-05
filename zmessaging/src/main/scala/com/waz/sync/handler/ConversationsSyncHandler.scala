@@ -126,6 +126,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
       syncConversations(None, Set.empty)
     }
 
+
   private def syncQualifiedConversations(pagingState: Option[String], qIds: Set[RConvQualifiedId]): Future[SyncResult] =
     convClient.loadQualifiedConversationsIds(pagingState).future.flatMap {
       case Right(resp) =>
