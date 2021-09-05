@@ -211,32 +211,34 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   }
 
   scenario("It reports missing legal hold consent error when adding qualified participants") {
-    // Given
-    val handler = createHandler
-    val convId = ConvId("convId")
-    val members = Set(QualifiedId(UserId("userId"), "chala.wire.link"))
-    val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      // Given
+      val handler = createHandler
+      val convId = ConvId("convId")
+      val members = Set(QualifiedId(UserId("userId"), "chala.wire.link"))
+      val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
 
-    // Mock
-    (convs.convById _)
-      .expects(convId)
-      .once()
-      .returning(Future.successful(Some(ConversationData(convId))))
+      // Mock
+      (convs.convById _)
+        .expects(convId)
+        .once()
+        .returning(Future.successful(Some(ConversationData(convId))))
 
-    (conversationsClient.postQualifiedMemberJoin _)
-      .expects(*, *, *)
-      .once()
-      .returning(CancellableFuture.successful(Left(errorResponse)))
+      (conversationsClient.postQualifiedMemberJoin _)
+        .expects(*, *, *)
+        .once()
+        .returning(CancellableFuture.successful(Left(errorResponse)))
 
-    // Expectation
-    val errorType = ErrorType.CANNOT_ADD_PARTICIPANT_WITH_MISSING_LEGAL_HOLD_CONSENT
-    (convService.onMemberAddFailed _)
-      .expects(convId, members.map(_.id), Some(errorType), errorResponse)
-      .once()
-      .returning(Future.successful(()))
+      // Expectation
+      val errorType = ErrorType.CANNOT_ADD_PARTICIPANT_WITH_MISSING_LEGAL_HOLD_CONSENT
+      (convService.onMemberAddFailed _)
+        .expects(convId, members.map(_.id), Some(errorType), errorResponse)
+        .once()
+        .returning(Future.successful(()))
 
-    // When
-    result(handler.postQualifiedConversationMemberJoin(convId, members, ConversationRole.MemberRole))
+      // When
+      result(handler.postQualifiedConversationMemberJoin(convId, members, ConversationRole.MemberRole))
+    }
   }
 
   scenario("It reports missing legal hold consent error when creating conversation") {
@@ -279,40 +281,42 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
 
 
   scenario("It reports missing legal hold consent error when creating a conversation with qualified members") {
-    // Given
-    val handler = createHandler
-    val convId = ConvId("convId")
-    val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      // Given
+      val handler = createHandler
+      val convId = ConvId("convId")
+      val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
 
-    // Mock
-    (conversationsClient.postQualifiedConversation _)
-      .expects(*)
-      .once()
-      .returning(CancellableFuture.successful(Left(errorResponse)))
+      // Mock
+      (conversationsClient.postQualifiedConversation _)
+        .expects(*)
+        .once()
+        .returning(CancellableFuture.successful(Left(errorResponse)))
 
-    // Expectation
-    val errorType = ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT
+      // Expectation
+      val errorType = ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT
 
-    (errorsService.addErrorWhenActive _)
-      .expects(where { data: ErrorData =>
-        data.errType == errorType &&
-          data.responseCode == 412 &&
-          data.responseLabel == "missing-legalhold-consent" &&
-          data.convId.contains(convId)
-      })
-      .once()
-      .returning(Future.successful(()))
+      (errorsService.addErrorWhenActive _)
+        .expects(where { data: ErrorData =>
+          data.errType == errorType &&
+            data.responseCode == 412 &&
+            data.responseLabel == "missing-legalhold-consent" &&
+            data.convId.contains(convId)
+        })
+        .once()
+        .returning(Future.successful(()))
 
-    // When (arguments are irrelevant)
-    result(handler.postQualifiedConversation(
-      convId,
-      Set(QualifiedId(UserId("userId"), "chala.wire.link")),
-      None,
-      None,
-      Set.empty,
-      AccessRole.TEAM,
-      None,
-      ConversationRole.MemberRole
-    ))
+      // When (arguments are irrelevant)
+      result(handler.postQualifiedConversation(
+        convId,
+        Set(QualifiedId(UserId("userId"), "chala.wire.link")),
+        None,
+        None,
+        Set.empty,
+        AccessRole.TEAM,
+        None,
+        ConversationRole.MemberRole
+      ))
+    }
   }
 }

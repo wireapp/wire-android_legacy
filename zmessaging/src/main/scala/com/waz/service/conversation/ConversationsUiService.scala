@@ -42,6 +42,7 @@ import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
 import com.waz.utils._
+import com.waz.zms.BuildConfig
 import com.wire.signals.EventStream
 
 import scala.concurrent.Future
@@ -300,11 +301,15 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     = messages.addRestrictedFileMessage(convId, from, extension)
 
   private def partitionForQualified(userIds: Set[UserId]) =
-    for {
-      users        <- userService.findUsers(userIds.toSeq)
-      qualified    =  users.collect { case Some(u) if u.qualifiedId.nonEmpty => u.id -> u.qualifiedId }.toMap
-      nonQualified =  userIds -- qualified.keySet
-    } yield (qualified.values.flatten.toSet, nonQualified)
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      for {
+        users        <- userService.findUsers(userIds.toSeq)
+        qualified    =  users.collect { case Some(u) if u.qualifiedId.nonEmpty => u.id -> u.qualifiedId }.toMap
+        nonQualified =  userIds -- qualified.keySet
+      } yield (qualified.values.flatten.toSet, nonQualified)
+    } else {
+      Future.successful((Set.empty[QualifiedId], userIds))
+    }
 
   override def addConversationMembers(conv:                 ConvId,
                                       userIds:              Set[UserId],
