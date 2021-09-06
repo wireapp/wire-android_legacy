@@ -50,7 +50,7 @@ trait OtrService {
 
   def resetSession(conv: ConvId, user: UserId, client: ClientId): Future[SyncId]
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]]
-  def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any]
+  def deleteClients(userMap: OtrClientIdMap): Future[Any]
 
   def encryptMessageForUsers(message:        GenericMessage,
                              users:          Set[UserId],
@@ -58,7 +58,7 @@ trait OtrService {
                              partialResult:  EncryptedContent): Future[EncryptedContent]
 
   def encryptMessage(message:         GenericMessage,
-                     recipients:      Map[UserId, Set[ClientId]],
+                     recipients:      OtrClientIdMap,
                      userFakeOnError: Boolean = false,
                      partialResult:   EncryptedContent): Future[EncryptedContent]
 
@@ -166,21 +166,19 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   override def resetSession(conv: ConvId, userId: UserId, clientId: ClientId): Future[SyncId] =
     for {
-      qId    <- qualifiedId(userId)
+      qId    <- users.qualifiedId(userId)
       _      <- sessions.deleteSession(SessionId(qId, clientId, currentDomain)).recover { case _ => () }
       _      <- clientsStorage.updateVerified(userId, clientId, verified = false)
-      _      <- sync.syncPreKeys(userId, Set(clientId))
+      _      <- sync.syncPreKeys(qId, Set(clientId))
       syncId <- sync.postSessionReset(conv, userId, clientId)
     } yield syncId
 
-  override def encryptTargetedMessage(userId: UserId, clientId: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
-    val msgData = msg.toByteArray
-    qualifiedId(userId).flatMap { qId =>
+  override def encryptTargetedMessage(userId: UserId, clientId: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] =
+    users.qualifiedId(userId).flatMap { qId =>
       sessions.withSession(SessionId(qId, clientId, currentDomain)) { session =>
-        EncryptedContent(Map(userId -> Map(clientId -> session.encrypt(msgData))))
+        EncryptedContent(Map(userId -> Map(clientId -> session.encrypt(msg.toByteArray))))
       }
     }
-  }
 
   /**
     * @param message the message to be encrypted
@@ -199,12 +197,12 @@ class OtrServiceImpl(selfUserId:     UserId,
     } yield encryptedContent
   }
 
-  private def clientsMap(userIds: Set[UserId]): Future[Map[UserId, Set[ClientId]]] =
+  private def clientsMap(userIds: Set[UserId]): Future[OtrClientIdMap] =
     Future.traverse(userIds) { userId =>
       getClients(userId).map { clientIds =>
         userId -> clientIds
       }
-    }.map(_.toMap)
+    }.map(OtrClientIdMap(_))
 
   private def getClients(userId: UserId): Future[Set[ClientId]] =
     clientsStorage.getClients(userId).map { clients =>
@@ -219,14 +217,14 @@ class OtrServiceImpl(selfUserId:     UserId,
     * @param partialResult partial content encrypted in previous run, we will use that instead of encrypting again when available
     */
   override def encryptMessage(message:         GenericMessage,
-                              recipients:      Map[UserId, Set[ClientId]],
+                              recipients:      OtrClientIdMap,
                               useFakeOnError:  Boolean = false,
                               partialResult:   EncryptedContent): Future[EncryptedContent] = {
 
     val msgData = message.toByteArray
 
     for {
-      payloads <- Future.traverse(recipients) { case (userId, clientIds) =>
+      payloads <- Future.traverse(recipients.entries) { case (userId, clientIds) =>
                     val partialResultForUser = partialResult.content.getOrElse(userId, Map.empty)
                     encryptForClients(userId, clientIds, msgData, useFakeOnError, partialResultForUser)
                   }
@@ -240,7 +238,7 @@ class OtrServiceImpl(selfUserId:     UserId,
                                 useFakeOnError: Boolean,
                                 partialResult:  Map[ClientId, Array[Byte]]
                                ): Future[(UserId, Map[ClientId, Array[Byte]])] =
-    qualifiedId(userId).flatMap { qId =>
+    users.qualifiedId(userId).flatMap { qId =>
       Future.traverse(clients) { clientId =>
         val previous = partialResult.get(clientId)
           .filter(arr => arr.nonEmpty && arr.sameElements(EncryptionFailedMsg))
@@ -259,11 +257,11 @@ class OtrServiceImpl(selfUserId:     UserId,
       }.map(ms => userId -> ms.flatten.toMap)
     }
 
-  override def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any] = Future.traverse(userMap) {
+  override def deleteClients(userMap: OtrClientIdMap): Future[Any] = Future.traverse(userMap.entries) {
     case (userId, cs) =>
       for {
         removalResult <- clients.removeClients(userId, cs)
-        qId           <- qualifiedId(userId)
+        qId           <- users.qualifiedId(userId)
         _             <- Future.traverse(cs) { c => sessions.deleteSession(SessionId(qId, c, currentDomain)) }
         _             <- if (removalResult.exists(_._2.clients.isEmpty))
                            users.syncUser(userId)
@@ -305,15 +303,6 @@ class OtrServiceImpl(selfUserId:     UserId,
 
   override def decryptAssetData(assetId: AssetId, otrKey: Option[AESKey], sha: Option[Sha256], data: Option[Array[Byte]]): Option[Array[Byte]] =
     decryptAssetDataCBC(assetId, otrKey, sha, data)
-
-  private def qualifiedId(userId: UserId) =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY)
-      for {
-        user <- users.findUser(userId)
-        qId  =  user.flatMap(_.qualifiedId)
-      } yield qId.orElse(currentDomain.map(QualifiedId(userId, _))).getOrElse(QualifiedId(userId))
-    else
-      Future.successful(QualifiedId(userId))
 }
 
 object OtrService {

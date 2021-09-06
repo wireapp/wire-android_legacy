@@ -25,7 +25,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE.{error, _}
 import com.waz.model.GenericContent.{ClientAction, External}
 import com.waz.model._
-import com.waz.model.otr.ClientId
+import com.waz.model.otr.{ClientId, OtrClientIdMap, QOtrClientIdMap}
 import com.waz.service.conversation.ConversationsService
 import com.waz.service.otr.OtrService
 import com.waz.service.push.PushService
@@ -38,7 +38,6 @@ import com.waz.sync.otr.OtrSyncHandler.MissingClientsStrategy._
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients._
 import com.waz.utils.crypto.AESUtils
-import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
@@ -59,7 +58,7 @@ trait OtrSyncHandler {
                        previous:   EncryptedContent = EncryptedContent.Empty,
                        recipients: Option[Set[UserId]] = None
                       ): ErrorOr[RemoteInstant]
-  def postClientDiscoveryMessage(convId: RConvId): ErrorOr[Map[UserId, Seq[ClientId]]]
+  def postClientDiscoveryMessage(convId: RConvId): ErrorOr[OtrClientIdMap]
 }
 
 class OtrSyncHandlerImpl(teamId:             Option[TeamId],
@@ -69,7 +68,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                          service:            OtrService,
                          convsService:       ConversationsService,
                          convStorage:        ConversationStorage,
-                         users:              UserService,
+                         userService:        UserService,
                          members:            MembersStorage,
                          errors:             ErrorsService,
                          clientsSyncHandler: OtrClientsSyncHandler,
@@ -132,15 +131,15 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                         encryptAndSend(newMessage, Some(data)) //abandon retries and previous EncryptedContent
                       }
         _          <- resp.map(_.deleted).mapFuture(service.deleteClients)
-        _          <- resp.map(_.missing.keySet).mapFuture(convsService.addUnexpectedMembersToConv(conv.id, _))
+        _          <- resp.map(_.missing.userIds).mapFuture(convsService.addUnexpectedMembersToConv(conv.id, _))
         retry      <- resp.flatMapFuture {
                         case MessageResponse.Failure(ClientMismatch(_, missing, _, _)) if retries < 3 =>
                           warn(l"a message response failure with client mismatch with $missing, self client id is: $selfClientId")
                           for {
-                            syncResult        <- syncClients(missing.keys.toSet)
+                            syncResult        <- syncClients(missing.userIds)
                             err                = SyncResult.unapply(syncResult)
                             _                  = err.foreach { err => error(l"syncClients for missing clients failed: $err") }
-                            needsConfirmation <- needsLegalHoldConfirmation(conv, isHidden, missing.keys.toSet)
+                            needsConfirmation <- needsLegalHoldConfirmation(conv, isHidden, missing.userIds)
                             _                  = if (needsConfirmation) throw LegalHoldDiscoveredException
                             result            <- encryptAndSend(msg, external, retries + 1, content)
                           } yield result
@@ -184,13 +183,13 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       case SpecificClients(_)       => IgnoreMissingClients
     }
 
-  private def clientsMap(targetRecipients: TargetRecipients, convId: ConvId): Future[Map[UserId, Set[ClientId]]] = {
-    def clientIds(userIds: Set[UserId]): Future[Map[UserId, Set[ClientId]]] = {
+  private def clientsMap(targetRecipients: TargetRecipients, convId: ConvId): Future[OtrClientIdMap] = {
+    def clientIds(userIds: Set[UserId]): Future[OtrClientIdMap] = {
       Future.traverse(userIds) { userId =>
         clientsStorage.getClients(userId).map { clients =>
           userId -> clients.map(_.id).filterNot(_ == selfClientId).toSet
         }
-      }.map(_.toMap)
+      }.map(OtrClientIdMap(_))
     }
 
     targetRecipients match {
@@ -210,7 +209,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         case Some(recp) => Future.successful(recp)
         case None =>
           for {
-            acceptedOrBlocked <- users.acceptedOrBlockedUsers.head
+            acceptedOrBlocked <- userService.acceptedOrBlockedUsers.head
             myTeam            <- teamId.fold(Future.successful(Set.empty[UserData]))(id => usersStorage.getByTeam(Set(id)))
             myTeamIds         =  myTeam.map(_.id)
           } yield acceptedOrBlocked.keySet ++ myTeamIds
@@ -253,9 +252,9 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
               s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries: $missing"
             )))
           case _ =>
-            syncClients(missing.keys.toSet).flatMap { syncResult =>
+            syncClients(missing.userIds).flatMap { syncResult =>
               SyncResult.unapply(syncResult) match {
-                case None                 => onRetry(missing.keySet)
+                case None                 => onRetry(missing.userIds)
                 case Some(_) if retry < 3 => onRetry(currentRecipients)
                 case Some(err)            => successful(Left(err))
               }
@@ -279,7 +278,8 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       case Some(ct) => successful(Some(ct))
       case None =>
         for {
-          _       <- clientsSyncHandler.syncSessions(Map(userId -> Seq(clientId)))
+          qId     <- userService.qualifiedId(userId)
+          _       <- clientsSyncHandler.syncSessions(QOtrClientIdMap.from(qId -> Set(clientId)))
           content <- service.encryptTargetedMessage(userId, clientId, msg)
         } yield content
     }
@@ -298,27 +298,21 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
     }
   }
 
-  override def postClientDiscoveryMessage(convId: RConvId): Future[Either[ErrorResponse, Map[UserId, Seq[ClientId]]]] = {
+  override def postClientDiscoveryMessage(convId: RConvId): ErrorOr[OtrClientIdMap] =
     for {
       Some(conv) <- convStorage.getByRemoteId(convId)
-      message = OtrMessage(selfClientId, EncryptedContent.Empty, nativePush = false)
-      response <- msgClient.postMessage(conv.remoteId, message, ignoreMissing = false).future
+      message    =  OtrMessage(selfClientId, EncryptedContent.Empty, nativePush = false)
+      response   <- msgClient.postMessage(conv.remoteId, message, ignoreMissing = false).future
     } yield response match {
-      case Left(error) =>
-        Left(error)
-      case Right(messageResponse) =>
-        Right(messageResponse.missing)
+      case Left(error) => Left(error)
+      case Right(resp) => Right(resp.missing)
     }
-  }
 
-  private def syncClients(users: Set[UserId]): Future[SyncResult] = {
+  private def syncClients(users: Set[UserId]): Future[SyncResult] =
     for {
-      users  <- usersStorage.listAll(users)
-      qIds   =  users.map(user => user.qualifiedId.getOrElse(QualifiedId(user.id))).toSet
+      qIds   <- userService.qualifiedIds(users)
       result <- clientsSyncHandler.syncClients(qIds)
     } yield result
-  }
-
 }
 
 object OtrSyncHandler {
@@ -346,7 +340,7 @@ object OtrSyncHandler {
     final case class SpecificUsers(userIds: Set[UserId]) extends TargetRecipients
 
     /// These exact clients should receive the message.
-    final case class SpecificClients(clientsByUser: Map[UserId, Set[ClientId]]) extends TargetRecipients
+    final case class SpecificClients(clientsByUser: OtrClientIdMap) extends TargetRecipients
   }
 
   /// Describes how missing clients should be handled.

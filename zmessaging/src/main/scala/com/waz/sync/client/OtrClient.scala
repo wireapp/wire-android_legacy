@@ -43,9 +43,8 @@ import scala.collection.breakOut
 import scala.util.{Failure, Success, Try}
 
 trait OtrClient {
-  def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]]
-  def loadClientPreKey(user: UserId, client: ClientId): ErrorOrResponse[ClientKey]
-  def loadPreKeys(users: Map[UserId, Seq[ClientId]]): ErrorOrResponse[Map[UserId, Seq[ClientKey]]]
+  def loadPreKeys(users: OtrClientIdMap): ErrorOrResponse[Map[UserId, Seq[ClientKey]]]
+  def loadPreKeys(users: QOtrClientIdMap): ErrorOrResponse[Map[QualifiedId, Map[ClientId, PreKey]]]
   def loadClients(): ErrorOrResponse[Seq[Client]]
   def loadClients(user: UserId): ErrorOrResponse[Seq[Client]]
   def loadClients(users: Set[QualifiedId]): ErrorOrResponse[Map[QualifiedId, Seq[Client]]]
@@ -82,39 +81,47 @@ class OtrClientImpl(implicit
   private implicit val ListClientsResponseDeserializer: RawBodyDeserializer[ListClientsResponse] =
     RawBodyDeserializer[JSONObject].map(ListClientsResponse.Decoder(_))
 
+  private implicit val ListPreKeysResponseDeserializer: RawBodyDeserializer[ListPreKeysResponse] =
+    RawBodyDeserializer[JSONObject].map(ListPreKeysResponse.Decoder(_))
+
   private implicit val ClientDeserializer: RawBodyDeserializer[Client] =
     RawBodyDeserializer[JSONObject].map(ClientsResponse.Decoder(_))
 
-  override def loadPreKeys(user: UserId): ErrorOrResponse[Seq[ClientKey]] = {
-    Request.Get(relativePath = userPreKeysPath(user))
-      .withResultType[UserPreKeysResponse]
-      .withErrorType[ErrorResponse]
-      .executeSafe(_.keys)
-  }
-
-  override def loadClientPreKey(user: UserId, client: ClientId): ErrorOrResponse[ClientKey] = {
-    Request.Get(relativePath = clientPreKeyPath(user, client))
-      .withResultType[ClientKey]
-      .withErrorType[ErrorResponse]
-      .executeSafe
-  }
-
-  override def loadPreKeys(users: Map[UserId, Seq[ClientId]]): ErrorOrResponse[Map[UserId, Seq[ClientKey]]] = {
+  override def loadPreKeys(users: OtrClientIdMap): ErrorOrResponse[Map[UserId, Seq[ClientKey]]] = {
     // TODO: request accepts up to 128 clients, we should make sure not to send more
     val data = JsonEncoder { o =>
-      users.foreach { case (u, cs) =>
-        o.put(u.str, JsonEncoder.arrString(cs.map(_.str)))
+      users.entries.foreach { case (u, cs) =>
+        o.put(u.str, JsonEncoder.arrString(cs.map(_.str).toSeq))
       }
     }
 
-    Request.Post(relativePath = prekeysPath, body = data)
+    Request.Post(relativePath = PrekeysPath, body = data)
       .withResultType[PreKeysResponse]
       .withErrorType[ErrorResponse]
       .executeSafe(_.toMap)
   }
 
+  override def loadPreKeys(users: QOtrClientIdMap): ErrorOrResponse[Map[QualifiedId, Map[ClientId, PreKey]]] = {
+    val entries: Map[String, Map[QualifiedId, Set[ClientId]]] = users.entries.groupBy(_._1.domain)
+    val data = JsonEncoder { o =>
+      entries.foreach { case (domain, map) =>
+        val mapJson = JsonEncoder { js =>
+          map.foreach { case (QualifiedId(id, _), cs) =>
+            js.put(id.str, JsonEncoder.arrString(cs.map(_.str).toSeq))
+          }
+        }
+        o.put(domain, mapJson)
+      }
+    }
+
+    Request.Post(relativePath = ListPrekeysPath, body = data)
+      .withResultType[ListPreKeysResponse]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.values)
+  }
+
   override def loadClients(): ErrorOrResponse[Seq[Client]] = {
-    Request.Get(relativePath = clientsPath)
+    Request.Get(relativePath = ClientsPath)
       .withResultType[Seq[Client]]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -159,7 +166,7 @@ class OtrClientImpl(implicit
       password.map(_.str).foreach(o.put("password", _))
     }
 
-    Request.Post(relativePath = clientsPath, body = data)
+    Request.Post(relativePath = ClientsPath, body = data)
       .withResultType[Client]
       .withErrorType[ErrorResponse]
       .executeSafe(_.copy(verified = Verification.VERIFIED)) //TODO Maybe we can add description for this?
@@ -218,16 +225,20 @@ class OtrClientImpl(implicit
 
 object OtrClient extends DerivedLogTag {
 
-  val clientsPath = "/clients"
-  val prekeysPath = "/users/prekeys"
+  val ClientsPath = "/clients"
+  val PrekeysPath = "/users/prekeys"
   val BroadcastPath = "/broadcast/otr/messages"
   val ListClientsPath = "/users/list-clients/v2"
+  val ListPrekeysPath = "/users/list-prekeys"
 
   def clientPath(id: ClientId) = s"/clients/$id"
   def clientKeyIdsPath(id: ClientId) = s"/clients/$id/prekeys"
   def userPreKeysPath(user: UserId) = s"/users/$user/prekeys"
   def userClientsPath(user: UserId) = s"/users/$user/clients"
   def clientPreKeyPath(user: UserId, client: ClientId) = s"/users/$user/prekeys/$client"
+
+  def userPreKeysPath(qId: QualifiedId) = s"/users/${qId.domain}/${qId.id.str}/prekeys"
+  def clientPreKeyPath(qId: QualifiedId, clientId: ClientId) = s"/users/${qId.domain}/${qId.id.str}/prekeys/$clientId"
 
   // If you change this, don't forget to set the 'ShouldPostClientCapabilities' user preference
   // to true so that the updated client with inform the backend.
@@ -296,14 +307,6 @@ object OtrClient extends DerivedLogTag {
     (decodeId[ClientId]('client), JsonDecoder[PreKey]('prekey))
   }
 
-  case class UserPreKeysResponse(userId: UserId, keys: Seq[ClientKey])
-
-  object UserPreKeysResponse {
-    implicit def UserPreKeysResponseDecoder: JsonDecoder[UserPreKeysResponse] = JsonDecoder.lift { implicit js =>
-      UserPreKeysResponse('user: UserId, JsonDecoder.decodeSeq('clients)(js, ClientDecoder))
-    }
-  }
-
   //TODO Remove this. Introduce JSONDecoder for the Map
   type PreKeysResponse = Seq[(UserId, Seq[ClientKey])]
   object PreKeysResponse {
@@ -322,6 +325,37 @@ object OtrClient extends DerivedLogTag {
       case _ => None
     }
   }
+
+  final case class ListPreKeysResponse(values: Map[QualifiedId, Map[ClientId, PreKey]])
+
+  object ListPreKeysResponse {
+    val Empty: ListPreKeysResponse = ListPreKeysResponse(Map.empty)
+
+    import scala.collection.JavaConverters._
+
+    private def getPreKeys(json: JSONObject): Map[ClientId, PreKey] =
+      json.keySet.asScala.toSeq.map { clientId =>
+        ClientId(clientId) -> PreKeyDecoder(json.getJSONObject(clientId))
+      }.toMap
+
+    private def getUserPreKeys(domain: String, json: JSONObject): Map[QualifiedId, Map[ClientId, PreKey]] =
+      json.keySet.asScala.toSeq.flatMap { userId =>
+        Try(json.getJSONObject(userId)).map { preKeysJson =>
+          QualifiedId(UserId(userId), domain) -> getPreKeys(preKeysJson)
+        }.toOption
+      }.toMap
+
+    implicit object Decoder extends JsonDecoder[ListPreKeysResponse] {
+      override def apply(implicit jsMap: JSONObject): ListPreKeysResponse = {
+        val response =
+          jsMap.keySet.asScala.toSeq.flatMap { domain =>
+            Try(jsMap.getJSONObject(domain)).map(getUserPreKeys(domain, _)).getOrElse(Map.empty)
+          }.toMap
+        if (response.nonEmpty) ListPreKeysResponse(response) else Empty
+      }
+    }
+  }
+
 
   final case class ListClientsRequest(qualifiedUsers: Seq[QualifiedId]) {
     def encode: JSONObject = JsonEncoder { o =>
@@ -401,43 +435,33 @@ object OtrClient extends DerivedLogTag {
   sealed trait MessageResponse {
     def mismatch: ClientMismatch
 
-    def deleted: Map[UserId, Seq[ClientId]] =
-      mismatch.deleted
+    def deleted: OtrClientIdMap = mismatch.deleted
 
-    def missing: Map[UserId, Seq[ClientId]] =
-      mismatch.missing
+    def missing: OtrClientIdMap = mismatch.missing
   }
+
   object MessageResponse {
     final case class Success(mismatch: ClientMismatch) extends MessageResponse
     final case class Failure(mismatch: ClientMismatch) extends MessageResponse
   }
 
-  final case class ClientMismatch(redundant: Map[UserId, Seq[ClientId]] = Map.empty,
-                                  missing:   Map[UserId, Seq[ClientId]] = Map.empty,
-                                  deleted:   Map[UserId, Seq[ClientId]] = Map.empty,
+  final case class ClientMismatch(redundant: OtrClientIdMap = OtrClientIdMap.Empty,
+                                  missing:   OtrClientIdMap = OtrClientIdMap.Empty,
+                                  deleted:   OtrClientIdMap = OtrClientIdMap.Empty,
                                   time:     RemoteInstant)
 
   object ClientMismatch {
     implicit lazy val Decoder: JsonDecoder[ClientMismatch] = new JsonDecoder[ClientMismatch] {
       import JsonDecoder._
-
-      import scala.collection.JavaConverters._
-
-      def decodeMap(key: Symbol)(implicit js: JSONObject): Map[UserId, Seq[ClientId]] =
-        if (!js.has(key.name) || js.isNull(key.name)) Map.empty
-        else {
-          val mapJs = js.getJSONObject(key.name)
-          mapJs.keys.asScala.map { key =>
-            UserId(key) -> decodeStringSeq(Symbol(key))(mapJs).map(ClientId(_))
-          }.toMap
-        }
+      import OtrClientIdMap.decodeMap
 
       override def apply(implicit js: JSONObject): ClientMismatch =
-        ClientMismatch(decodeMap('redundant),
+        ClientMismatch(
+          decodeMap('redundant),
           decodeMap('missing),
           decodeMap('deleted),
-          decodeOptUtcDate('time).map(t => RemoteInstant.ofEpochMilli(t.getTime)).getOrElse(RemoteInstant.Epoch))
+          decodeOptUtcDate('time).map(t => RemoteInstant.ofEpochMilli(t.getTime)).getOrElse(RemoteInstant.Epoch)
+        )
     }
   }
-
 }

@@ -23,7 +23,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
-import com.waz.model.otr.ClientId
+import com.waz.model.otr.{ClientId, OtrClientIdMap}
 import com.waz.service.call.CallInfo.{ActiveSpeaker, Participant}
 import com.waz.service.call.Calling.{ActiveSpeakersHandler, Handle, _}
 import com.waz.utils.jna.{Size_t, Uint32_t}
@@ -49,7 +49,7 @@ trait Avs {
   def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
   def setCallMuted(wCall: WCall, muted: Boolean): Unit
   def setProxy(host: String, port: Int): Unit
-  def onClientsRequest(wCall: WCall, convId: RConvId, userClients: Map[UserId, Seq[ClientId]]): Unit
+  def onClientsRequest(wCall: WCall, convId: RConvId, userClients: OtrClientIdMap): Unit
   def onSftResponse(wCall: WCall, data: Option[Array[Byte]], ctx: Pointer): Unit
 }
 
@@ -276,10 +276,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def setProxy(host: String, port: Int): Unit =
     withAvs(wcall_set_proxy(host, port))
 
-  override def onClientsRequest(wCall: WCall, convId: RConvId, userClients: Map[UserId, Seq[ClientId]]): Unit = {
+  override def onClientsRequest(wCall: WCall, convId: RConvId, userClients: OtrClientIdMap): Unit = {
     import AvsClientList._
 
-    val clients = userClients.flatMap { case (userId, clientIds) =>
+    val clients = userClients.entries.flatMap { case (userId, clientIds) =>
       clientIds.map { clientId =>
         AvsClient(userId.str, clientId.str)
       }
