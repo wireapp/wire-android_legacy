@@ -15,6 +15,7 @@ class OtrClientsServiceSpec extends AndroidFreeSpec {
 
   private val selfUserId = UserId("selfUserId")
   private val selfClientId = ClientId("selfClientId")
+  private val currentDomain = Some("staging.zinfra.io")
   private val userPrefs = new TestUserPreferences()
   private val storage = mock[OtrClientsStorage]
   private val sync = mock[SyncServiceHandle]
@@ -22,6 +23,7 @@ class OtrClientsServiceSpec extends AndroidFreeSpec {
   private def createService(): OtrClientsServiceImpl =
     new OtrClientsServiceImpl(
       selfUserId,
+      currentDomain,
       selfClientId,
       userPrefs,
       storage,

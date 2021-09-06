@@ -3,7 +3,8 @@ package com.waz.zclient.storage.db.users.migration
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.waz.zclient.storage.db.users.migration.MigrationUtils.addColumn
+import com.waz.zclient.storage.db.MigrationUtils
+import com.waz.zclient.storage.db.MigrationUtils.addColumn
 
 private const val USER_TABLE_NAME = "Users"
 private const val DOMAIN_COLUMN_NAME = "domain"
