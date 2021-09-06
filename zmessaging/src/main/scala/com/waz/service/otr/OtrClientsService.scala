@@ -46,19 +46,20 @@ trait OtrClientsService {
   def updateUserClients(user: UserId, clients: Seq[Client], replace: Boolean): Future[UserClients]
   def updateUserClients(ucs: Map[UserId, Seq[Client]], replace: Boolean): Future[Set[UserClients]]
   def onCurrentClientRemoved(): Future[Option[(UserClients, UserClients)]]
-  def removeClients(user: UserId, clients: Seq[ClientId]): Future[Option[(UserClients, UserClients)]]
+  def removeClients(user: UserId, clients: Set[ClientId]): Future[Option[(UserClients, UserClients)]]
   def updateClientLabel(id: ClientId, label: String): Future[Option[SyncId]]
   def selfClient: Signal[Client]
   def getSelfClient: Future[Option[Client]]
   def updateUnknownToUnverified(userId: UserId): Future[Unit]
 }
 
-class OtrClientsServiceImpl(selfId:    UserId,
-                            clientId:  ClientId,
-                            userPrefs: UserPreferences,
-                            storage:   OtrClientsStorage,
-                            sync:      SyncServiceHandle,
-                            accounts:  AccountsService) extends OtrClientsService with DerivedLogTag {
+class OtrClientsServiceImpl(selfId:        UserId,
+                            currentDomain: Option[String],
+                            clientId:      ClientId,
+                            userPrefs:     UserPreferences,
+                            storage:       OtrClientsStorage,
+                            sync:          SyncServiceHandle,
+                            accounts:      AccountsService) extends OtrClientsService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   override lazy val lastSelfClientsSyncPref: Preferences.Preference[Long] = userPrefs.preference(LastSelfClientsSyncRequestedTime)
@@ -78,10 +79,10 @@ class OtrClientsServiceImpl(selfId:    UserId,
       case OtrClientAddEvent(client) =>
         for {
           _  <- updateUserClients(selfId, Seq(client), replace = false)
-          id <- sync.syncPreKeys(selfId, Set(client.id))
+          id <- sync.syncPreKeys(QualifiedId(selfId, currentDomain.getOrElse("")), Set(client.id))
         } yield id
       case OtrClientRemoveEvent(cId) =>
-        removeClients(selfId, Seq(cId))
+        removeClients(selfId, Set(cId))
     }
   }
 
@@ -122,7 +123,7 @@ class OtrClientsServiceImpl(selfId:    UserId,
 
   def onCurrentClientRemoved(): Future[Option[(UserClients, UserClients)]] = storage.update(selfId, _ - clientId)
 
-  override def removeClients(user: UserId, clients: Seq[ClientId]): Future[Option[(UserClients, UserClients)]] =
+  override def removeClients(user: UserId, clients: Set[ClientId]): Future[Option[(UserClients, UserClients)]] =
     storage.update(user, { cs =>
       cs.copy(clients = cs.clients -- clients)
     })

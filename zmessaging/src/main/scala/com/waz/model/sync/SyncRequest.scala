@@ -299,8 +299,6 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, id)
   }
 
-  final case class SyncClients(userId: UserId) extends RequestForUser(Cmd.SyncClients)
-
   final case class SyncClientsBatch(ids: Set[QualifiedId]) extends BaseRequest(Cmd.SyncClientsBatch) {
     override def merge(req: SyncRequest) = mergeHelper[SyncClientsBatch](req) { other =>
       if (other.ids.subsetOf(ids)) Merged(this)
@@ -313,15 +311,15 @@ object SyncRequest {
     }
   }
 
-  final case class SyncPreKeys(userId: UserId, clients: Set[ClientId]) extends RequestForUser(Cmd.SyncPreKeys) {
+  final case class SyncPreKeys(qualifiedId: QualifiedId, clientIds: Set[ClientId]) extends RequestForQualifiedUser(Cmd.SyncPreKeys) {
 
     override def merge(req: SyncRequest): MergeResult[SyncPreKeys] = mergeHelper[SyncPreKeys](req) { other =>
-      if (other.clients.subsetOf(clients)) Merged(this)
-      else Merged(SyncPreKeys(userId, clients ++ other.clients))
+      if (other.clientIds.subsetOf(clientIds)) Merged(this)
+      else Merged(SyncPreKeys(qualifiedId, clientIds ++ other.clientIds))
     }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
-      case SyncPreKeys(u, cs) => u == userId && clients.subsetOf(cs)
+      case SyncPreKeys(qId, cs) => qId == qualifiedId && clientIds.subsetOf(cs)
       case _ => false
     }
   }
@@ -528,9 +526,8 @@ object SyncRequest {
           case Cmd.PostSelf                  => PostSelf(JsonDecoder[UserInfo]('user))
           case Cmd.SyncSelfClients           => SyncSelfClients
           case Cmd.SyncSelfPermissions       => SyncSelfPermissions
-          case Cmd.SyncClients               => SyncClients(userId)
           case Cmd.SyncClientsBatch          => SyncClientsBatch(decodeQualifiedIds('qualified_ids).toSet)
-          case Cmd.SyncPreKeys               => SyncPreKeys(userId, decodeClientIdSeq('clients).toSet)
+          case Cmd.SyncPreKeys               => SyncPreKeys(qualifiedId, decodeClientIdSeq('clients).toSet)
           case Cmd.PostClientLabel           => PostClientLabel(decodeId[ClientId]('client), 'label)
           case Cmd.PostLiking                => PostLiking(convId, JsonDecoder[Liking]('liking))
           case Cmd.PostAddBot                => PostAddBot(decodeId[ConvId]('convId), decodeId[ProviderId]('providerId), decodeId[IntegrationId]('integrationId))
@@ -685,13 +682,11 @@ object SyncRequest {
         case PostSessionReset(_, user, client) =>
           o.put("client", client.str)
           o.put("user", user)
-        case SyncClients(user) =>
-          o.put("user", user.str)
         case SyncClientsBatch(qIds) =>
           o.put("qualified_ids", qIds.map(QualifiedId.Encoder(_)))
-        case SyncPreKeys(user, clients) =>
-          o.put("user", user.str)
-          o.put("clients", arrString(clients.toSeq map (_.str)))
+        case SyncPreKeys(qId, clients) =>
+          o.put("qualifiedId", QualifiedId.Encoder(qId))
+          o.put("clients", arrString(clients.toSeq.map(_.str)))
         case PostBoolProperty(key, value) =>
           o.put("key", key)
           o.put("value", value)

@@ -109,7 +109,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   val clock = ZMessaging.clock
 
   val global     = account.global
-  val selfUserId = account.userId
+  val selfUserId: UserId = account.userId
+  val selfDomain: Option[String] = if (BuildConfig.FEDERATION_USER_DISCOVERY) account.currentDomain else None
 
   val auth       = account.auth
   val urlCreator = global.urlCreator
