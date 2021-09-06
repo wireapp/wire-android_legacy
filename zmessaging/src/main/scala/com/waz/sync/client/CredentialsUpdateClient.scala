@@ -21,16 +21,18 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.{EmailAddress, Handle, PhoneNumber}
+import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.{AuthRequestInterceptor, http}
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
+import com.wire.signals.CancellableFuture
 import org.json.JSONObject
+import com.waz.log.LogSE._
 
 trait CredentialsUpdateClient {
-
-  def updateEmail(email: EmailAddress): ErrorOrResponse[Unit]
+  def updateEmail(email: EmailAddress, cookie: Cookie, token: AccessToken): ErrorOrResponse[Unit]
   def clearEmail(): ErrorOrResponse[Unit]
 
   def updatePhone(phone: PhoneNumber): ErrorOrResponse[Unit]
@@ -57,11 +59,25 @@ class CredentialsUpdateClientImpl(implicit
   import HttpClient.AutoDerivationOld._
   import Threading.Implicits.Background
 
-  override def updateEmail(email: EmailAddress): ErrorOrResponse[Unit] = {
-    Request.Put(relativePath = EmailPath, body = JsonEncoder { _.put("email", email.str) })
+  override def updateEmail(email: EmailAddress, cookie: Cookie, token: AccessToken): ErrorOrResponse[Unit] = {
+    val headers = Headers(token.headers ++ cookie.headers)
+    val body = JsonEncoder { _.put("email", email.str) }
+    Request.Put(relativePath = UpdateEmailPath, headers = headers, body = body)
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
+      .flatMap {
+        case Left(ErrorResponse.PageNotFound) =>
+          warn(l"Unable to use the $UpdateEmailPath endpoint, falling back to $EmailPath")
+          Request.Put(relativePath = EmailPath, body = body)
+            .withResultType[Unit]
+            .withErrorType[ErrorResponse]
+            .executeSafe
+        case Left(errorResponse) => 
+          CancellableFuture.successful(Left(errorResponse))
+        case Right(_) =>
+          CancellableFuture(Right(()))
+      }
   }
 
   override def clearEmail(): ErrorOrResponse[Unit] = {
@@ -146,6 +162,7 @@ class CredentialsUpdateClientImpl(implicit
 object CredentialsUpdateClientImpl {
   val PasswordPath = "/self/password"
   val EmailPath = "/self/email"
+  val UpdateEmailPath = "/access/self/email"
   val PhonePath = "/self/phone"
   val HandlePath = "/self/handle"
 

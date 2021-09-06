@@ -252,7 +252,15 @@ class AccountManager(val userId:  UserId,
 
   def setEmail(email: EmailAddress): ErrorOr[Unit] = {
     verbose(l"setEmail: $email")
-    credentialsClient.updateEmail(email).future
+    auth.currentToken().flatMap {
+      case Left(errorResponse) =>
+        Future.successful(Left(errorResponse))
+      case Right(token) =>
+        for {
+          cookie <- auth.cookie
+          _      <- credentialsClient.updateEmail(email, cookie, token).future
+        } yield Right(())
+    }
   }
 
   def setPassword(password: Password): ErrorOr[Unit] = {

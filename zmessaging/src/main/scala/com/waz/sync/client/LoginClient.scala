@@ -80,7 +80,7 @@ class LoginClientImpl()
 
   override def login(credentials: Credentials): ErrorOr[LoginResult] = throttled(loginNow(credentials))
 
-  override def access(cookie: Cookie, token: Option[AccessToken]) = throttled(accessNow(cookie, token))
+  override def access(cookie: Cookie, token: Option[AccessToken]): ErrorOr[LoginResult] = throttled(accessNow(cookie, token))
 
   def throttled(request: => ErrorOr[LoginResult]): ErrorOr[LoginResult] = Threading.Background {
     loginFuture = loginFuture.recover {
