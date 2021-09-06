@@ -516,7 +516,7 @@
     <!-- Options -->
     <string name="pref_options_screen_title">Options</string>
     <string name="pref_options_vbr_title">Variable Bit Rate Encoding</string>
-    <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use Constant Bitrate Encoding.</string>
+    <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use constant bitrate encoding (CBR). This setting only affects 1:1 calls; conference calls always use CBR encoding.</string>
     <string name="pref_options_alerts_category_title">Alerts</string>
     <string name="pref_options_calls_category_title">Calls</string>
     <string name="pref_options_sounds_title">Sounds</string>
