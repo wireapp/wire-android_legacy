@@ -50,8 +50,7 @@ trait OtrService {
 
   def resetSession(conv: ConvId, user: UserId, client: ClientId): Future[SyncId]
   def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]]
-  def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any]
-  def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]]
+  def deleteClients(userMap: OtrClientIdMap): Future[Any]
 
   def encryptMessageForUsers(message:        GenericMessage,
                              users:          Set[UserId],
@@ -59,7 +58,7 @@ trait OtrService {
                              partialResult:  EncryptedContent): Future[EncryptedContent]
 
   def encryptMessage(message:         GenericMessage,
-                     recipients:      Map[UserId, Set[ClientId]],
+                     recipients:      OtrClientIdMap,
                      userFakeOnError: Boolean = false,
                      partialResult:   EncryptedContent): Future[EncryptedContent]
 
@@ -90,7 +89,7 @@ class OtrServiceImpl(selfUserId:     UserId,
   import OtrService._
   import Threading.Implicits.Background
 
-  lazy val sessions = returning(cryptoBox.sessions) { sessions =>
+  override lazy val sessions: CryptoSessionService = returning(cryptoBox.sessions) { sessions =>
     // request self clients sync to update prekeys on backend
     // we've just created a session from message, this means that some user had to obtain our prekey from backend (so we can upload it)
     // using signal and sync interval parameter to limit requests to one an hour
@@ -165,21 +164,21 @@ class OtrServiceImpl(selfUserId:     UserId,
         }
     }
 
-  def resetSession(conv: ConvId, user: UserId, client: ClientId): Future[SyncId] =
+  override def resetSession(conv: ConvId, userId: UserId, clientId: ClientId): Future[SyncId] =
     for {
-      _ <- sessions.deleteSession(SessionId(user, None, client)).recover { case _ => () }
-      _ <- clientsStorage.updateVerified(user, client, verified = false)
-      _ <- sync.syncPreKeys(user, Set(client))
-      syncId <- sync.postSessionReset(conv, user, client)
+      qId    <- users.qualifiedId(userId)
+      _      <- sessions.deleteSession(SessionId(qId, clientId, currentDomain)).recover { case _ => () }
+      _      <- clientsStorage.updateVerified(userId, clientId, verified = false)
+      _      <- sync.syncPreKeys(qId, Set(clientId))
+      syncId <- sync.postSessionReset(conv, userId, clientId)
     } yield syncId
 
-  def encryptTargetedMessage(user: UserId, client: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] = {
-    val msgData = msg.toByteArray
-
-    sessions.withSession(SessionId(user, None, client)) { session =>
-      EncryptedContent(Map(user -> Map(client -> session.encrypt(msgData))))
+  override def encryptTargetedMessage(userId: UserId, clientId: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] =
+    users.qualifiedId(userId).flatMap { qId =>
+      sessions.withSession(SessionId(qId, clientId, currentDomain)) { session =>
+        EncryptedContent(Map(userId -> Map(clientId -> session.encrypt(msg.toByteArray))))
+      }
     }
-  }
 
   /**
     * @param message the message to be encrypted
@@ -193,17 +192,17 @@ class OtrServiceImpl(selfUserId:     UserId,
                                       partialResult:  EncryptedContent): Future[EncryptedContent] = {
 
     for {
-      recipients <- clientsMap(users)
+      recipients       <- clientsMap(users)
       encryptedContent <- encryptMessage(message, recipients, useFakeOnError, partialResult)
     } yield encryptedContent
   }
 
-  private def clientsMap(userIds: Set[UserId]): Future[Map[UserId, Set[ClientId]]] =
+  private def clientsMap(userIds: Set[UserId]): Future[OtrClientIdMap] =
     Future.traverse(userIds) { userId =>
       getClients(userId).map { clientIds =>
         userId -> clientIds
       }
-    }.map(_.toMap)
+    }.map(OtrClientIdMap(_))
 
   private def getClients(userId: UserId): Future[Set[ClientId]] =
     clientsStorage.getClients(userId).map { clients =>
@@ -218,14 +217,14 @@ class OtrServiceImpl(selfUserId:     UserId,
     * @param partialResult partial content encrypted in previous run, we will use that instead of encrypting again when available
     */
   override def encryptMessage(message:         GenericMessage,
-                              recipients:      Map[UserId, Set[ClientId]],
+                              recipients:      OtrClientIdMap,
                               useFakeOnError:  Boolean = false,
                               partialResult:   EncryptedContent): Future[EncryptedContent] = {
 
     val msgData = message.toByteArray
 
     for {
-      payloads <- Future.traverse(recipients) { case (userId, clientIds) =>
+      payloads <- Future.traverse(recipients.entries) { case (userId, clientIds) =>
                     val partialResultForUser = partialResult.content.getOrElse(userId, Map.empty)
                     encryptForClients(userId, clientIds, msgData, useFakeOnError, partialResultForUser)
                   }
@@ -233,44 +232,43 @@ class OtrServiceImpl(selfUserId:     UserId,
     } yield EncryptedContent(content)
   }
 
-  private def encryptForClients(user: UserId,
-                                clients: Set[ClientId],
-                                msgData: Array[Byte],
+  private def encryptForClients(userId:         UserId,
+                                clients:        Set[ClientId],
+                                msgData:        Array[Byte],
                                 useFakeOnError: Boolean,
-                                partialResult: Map[ClientId, Array[Byte]]
+                                partialResult:  Map[ClientId, Array[Byte]]
                                ): Future[(UserId, Map[ClientId, Array[Byte]])] =
+    users.qualifiedId(userId).flatMap { qId =>
+      Future.traverse(clients) { clientId =>
+        val previous = partialResult.get(clientId)
+          .filter(arr => arr.nonEmpty && arr.sameElements(EncryptionFailedMsg))
+        previous match {
+          case Some(bytes) =>
+            Future.successful(Some(clientId -> bytes))
+          case None =>
+            verbose(l"encrypt for client: $clientId")
+            sessions.withSession(SessionId(qId, clientId, currentDomain)) {
+              session => clientId -> session.encrypt(msgData)
+            }.recover {
+              case _: Throwable =>
+                if (useFakeOnError) Some(clientId -> EncryptionFailedMsg) else None
+            }
+        }
+      }.map(ms => userId -> ms.flatten.toMap)
+    }
 
-    Future.traverse(clients) { clientId =>
-      val previous = partialResult.get(clientId)
-        .filter(arr => arr.nonEmpty && arr.sameElements(EncryptionFailedMsg))
-
-      previous match {
-        case Some(bytes) =>
-          Future successful Some(clientId -> bytes)
-        case None =>
-          verbose(l"encrypt for client: $clientId")
-          sessions.withSession(SessionId(user, None, clientId)) { session => clientId -> session.encrypt(msgData) }.recover {
-            case e: Throwable =>
-              if (useFakeOnError) Some(clientId -> EncryptionFailedMsg) else None
-          }
-      }
-    }.map(ms => user -> ms.flatten.toMap)
-
-  def deleteClients(userMap: Map[UserId, Seq[ClientId]]): Future[Any] = Future.traverse(userMap) {
-    case (user, cs) =>
+  override def deleteClients(userMap: OtrClientIdMap): Future[Any] = Future.traverse(userMap.entries) {
+    case (userId, cs) =>
       for {
-        removalResult <- clients.removeClients(user, cs)
-        _             <- Future.traverse(cs) { c => sessions.deleteSession(SessionId(user, None, c)) }
+        removalResult <- clients.removeClients(userId, cs)
+        qId           <- users.qualifiedId(userId)
+        _             <- Future.traverse(cs) { c => sessions.deleteSession(SessionId(qId, c, currentDomain)) }
         _             <- if (removalResult.exists(_._2.clients.isEmpty))
-                           users.syncUser(user)
+                           users.syncUser(userId)
                          else
                            Future.successful(())
       } yield ()
   }
-
-  def fingerprintSignal(userId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
-    if (userId == selfUserId && cId == clientId) Signal.from(cryptoBox(cb => Future.successful(cb.getLocalFingerprint)))
-    else cryptoBox.sessions.remoteFingerprint(SessionId(userId, None, cId))
 
   def encryptAssetDataCBC(key: AESKey, data: LocalData): Future[(Sha256, LocalData, EncryptionAlgorithm)] = {
     import Threading.Implicits.Background

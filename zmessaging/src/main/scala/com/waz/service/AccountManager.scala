@@ -35,6 +35,7 @@ import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse, InvitationClientImpl, OtrClientImpl}
 import com.wire.signals.CancellableFuture
 import com.waz.utils._
+import com.waz.zms.BuildConfig
 import com.wire.signals._
 import com.waz.znet2.http.ResponseCode
 import com.waz.znet2.{AuthRequestInterceptor, AuthRequestInterceptorImpl}
@@ -45,7 +46,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Right, Success}
 
 class AccountManager(val userId:  UserId,
-                     val domain:  Option[String],
+                     val currentDomain:  Option[String],
                      val teamId:  Option[TeamId],
                      val global:  GlobalModule,
                      accounts:    AccountsService,
@@ -132,14 +133,23 @@ class AccountManager(val userId:  UserId,
     _        <- zms.users.updateSelfPicture(content)
   } yield ()
 
+  private def qualifiedId(userId: UserId) =
+    for {
+      zms  <- zmessaging
+      qId  <- zms.users.qualifiedId(userId)
+    } yield qId
+
   def fingerprintSignal(uId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
     for {
       selfClientId <- clientId
       fingerprint  <-
         if (userId == uId && selfClientId.contains(cId))
           Signal.from(cryptoBox(Future successful _.getLocalFingerprint))
-        else
-          cryptoBox.sessions.remoteFingerprint(SessionId(uId, None, cId))
+        else {
+          Signal.from(qualifiedId(uId)).flatMap { qId =>
+            cryptoBox.sessions.remoteFingerprint(SessionId(qId, cId, currentDomain))
+          }
+        }
     } yield fingerprint
 
   def getOrRegisterClient(): ErrorOr[ClientRegistrationState] = {

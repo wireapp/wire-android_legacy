@@ -45,7 +45,9 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                            membersStorage: MembersStorage,
                            cryptoSessionService: CryptoSessionService,
                            sync: SyncServiceHandle,
-                           messagesService: MessagesService) extends LegalHoldService {
+                           messagesService: MessagesService,
+                           userService: UserService
+                          ) extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -59,12 +61,12 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
     case LegalHoldEnableEvent(userId) =>
       if (userId == selfUserId) onLegalHoldApprovedFromAnotherDevice()
-      else sync.syncClients(userId).map(_ => ())
+      else userService.syncClients(userId).map(_ => ())
 
 
     case LegalHoldDisableEvent(userId) =>
       if (userId == selfUserId) onLegalHoldDisabled()
-      else  sync.syncClients(userId).map(_ => ())
+      else userService.syncClients(userId).map(_ => ())
 
     case _ =>
       Future.successful({})
@@ -132,7 +134,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
   } yield ()
 
   private def deleteLegalHoldClientAndSession(clientId: ClientId): Future[Unit] = for {
-    _ <- clientsService.removeClients(selfUserId, Seq(clientId))
+    _ <- clientsService.removeClients(selfUserId, Set(clientId))
     _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, None, clientId))
   } yield ()
 
