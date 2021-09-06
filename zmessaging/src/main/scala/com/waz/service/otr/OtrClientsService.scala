@@ -53,12 +53,13 @@ trait OtrClientsService {
   def updateUnknownToUnverified(userId: UserId): Future[Unit]
 }
 
-class OtrClientsServiceImpl(selfId:    UserId,
-                            clientId:  ClientId,
-                            userPrefs: UserPreferences,
-                            storage:   OtrClientsStorage,
-                            sync:      SyncServiceHandle,
-                            accounts:  AccountsService) extends OtrClientsService with DerivedLogTag {
+class OtrClientsServiceImpl(selfId:        UserId,
+                            currentDomain: Option[String],
+                            clientId:      ClientId,
+                            userPrefs:     UserPreferences,
+                            storage:       OtrClientsStorage,
+                            sync:          SyncServiceHandle,
+                            accounts:      AccountsService) extends OtrClientsService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   override lazy val lastSelfClientsSyncPref: Preferences.Preference[Long] = userPrefs.preference(LastSelfClientsSyncRequestedTime)
@@ -78,7 +79,7 @@ class OtrClientsServiceImpl(selfId:    UserId,
       case OtrClientAddEvent(client) =>
         for {
           _  <- updateUserClients(selfId, Seq(client), replace = false)
-          id <- sync.syncPreKeys(selfId, Set(client.id))
+          id <- sync.syncPreKeys(QualifiedId(selfId, currentDomain.getOrElse("")), Set(client.id))
         } yield id
       case OtrClientRemoveEvent(cId) =>
         removeClients(selfId, Set(cId))

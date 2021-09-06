@@ -25,7 +25,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE.{error, _}
 import com.waz.model.GenericContent.{ClientAction, External}
 import com.waz.model._
-import com.waz.model.otr.{ClientId, OtrClientIdMap}
+import com.waz.model.otr.{ClientId, OtrClientIdMap, QOtrClientIdMap}
 import com.waz.service.conversation.ConversationsService
 import com.waz.service.otr.OtrService
 import com.waz.service.push.PushService
@@ -278,7 +278,8 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       case Some(ct) => successful(Some(ct))
       case None =>
         for {
-          _       <- clientsSyncHandler.syncSessions(OtrClientIdMap.from(userId -> Set(clientId)))
+          qId     <- userService.qualifiedId(userId)
+          _       <- clientsSyncHandler.syncSessions(QOtrClientIdMap.from(qId -> Set(clientId)))
           content <- service.encryptTargetedMessage(userId, clientId, msg)
         } yield content
     }
