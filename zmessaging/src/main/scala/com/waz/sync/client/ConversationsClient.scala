@@ -33,6 +33,7 @@ import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json
 import org.json.JSONObject
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration

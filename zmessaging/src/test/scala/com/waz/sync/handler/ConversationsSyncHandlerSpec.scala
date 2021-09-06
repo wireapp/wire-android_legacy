@@ -11,9 +11,9 @@ import com.waz.service.{ConversationRolesService, ErrorsService, GenericMessageS
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
-import com.waz.sync.client.{ConversationsClient, ErrorOr, ErrorOrResponse}
-import com.waz.zms.BuildConfig
+import com.waz.sync.client.{ConversationsClient, ErrorOrResponse}
 import com.wire.signals.{CancellableFuture, Signal}
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
@@ -170,6 +170,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
       (conversationsClient.loadConversations(_: Option[RConvId], _: Int))
         .expects(*, *).anyNumberOfTimes().returning(backendResponse)
     }
+
     (convService.remoteIds _).expects().anyNumberOfTimes().returning(storageResponse)
 
     (rolesService.defaultRoles _).expects().anyNumberOfTimes().returning(Signal.const(Set.empty[ConversationRole]))
@@ -211,32 +212,34 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   }
 
   scenario("It reports missing legal hold consent error when adding qualified participants") {
-    // Given
-    val handler = createHandler
-    val convId = ConvId("convId")
-    val members = Set(QualifiedId(UserId("userId"), "chala.wire.link"))
-    val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      // Given
+      val handler = createHandler
+      val convId = ConvId("convId")
+      val members = Set(QualifiedId(UserId("userId"), "chala.wire.link"))
+      val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
 
-    // Mock
-    (convs.convById _)
-      .expects(convId)
-      .once()
-      .returning(Future.successful(Some(ConversationData(convId))))
+      // Mock
+      (convs.convById _)
+        .expects(convId)
+        .once()
+        .returning(Future.successful(Some(ConversationData(convId))))
 
-    (conversationsClient.postQualifiedMemberJoin _)
-      .expects(*, *, *)
-      .once()
-      .returning(CancellableFuture.successful(Left(errorResponse)))
+      (conversationsClient.postQualifiedMemberJoin _)
+        .expects(*, *, *)
+        .once()
+        .returning(CancellableFuture.successful(Left(errorResponse)))
 
-    // Expectation
-    val errorType = ErrorType.CANNOT_ADD_PARTICIPANT_WITH_MISSING_LEGAL_HOLD_CONSENT
-    (convService.onMemberAddFailed _)
-      .expects(convId, members.map(_.id), Some(errorType), errorResponse)
-      .once()
-      .returning(Future.successful(()))
+      // Expectation
+      val errorType = ErrorType.CANNOT_ADD_PARTICIPANT_WITH_MISSING_LEGAL_HOLD_CONSENT
+      (convService.onMemberAddFailed _)
+        .expects(convId, members.map(_.id), Some(errorType), errorResponse)
+        .once()
+        .returning(Future.successful(()))
 
-    // When
-    result(handler.postQualifiedConversationMemberJoin(convId, members, ConversationRole.MemberRole))
+      // When
+      result(handler.postQualifiedConversationMemberJoin(convId, members, ConversationRole.MemberRole))
+    }
   }
 
   scenario("It reports missing legal hold consent error when creating conversation") {

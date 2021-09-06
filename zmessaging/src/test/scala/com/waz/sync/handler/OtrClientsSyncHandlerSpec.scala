@@ -15,6 +15,7 @@ import com.wire.signals.CancellableFuture
 
 import scala.collection.immutable.Map
 import scala.concurrent.Future
+import com.waz.zms.BuildConfig
 
 class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
 
@@ -85,15 +86,26 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
     scenario("sync one client") {
       // Given
       val handler = createHandler()
-      val clients = QOtrClientIdMap.from(otherQualifiedId -> Set(otherClientId))
       val responsePreKey = new PreKey(0, Array[Byte](0))
-      val response: Either[ErrorResponse, Map[QualifiedId, Map[ClientId, PreKey]]] =
-        Right(Map(otherQualifiedId -> Map(otherClientId -> responsePreKey)))
       val responseUserClients = UserClients(otherUserId, Map(otherClientId -> Client(otherClientId)))
 
-      (netClient.loadPreKeys(_ : QOtrClientIdMap)).expects(clients).once().returning(
-        CancellableFuture.successful(response)
-      )
+      val qClients = QOtrClientIdMap.from(otherQualifiedId -> Set(otherClientId))
+      val clients = OtrClientIdMap.from(otherUserId -> Set(otherClientId))
+
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val response: Either[ErrorResponse, Map[QualifiedId, Map[ClientId, PreKey]]] =
+          Right(Map(otherQualifiedId -> Map(otherClientId -> responsePreKey)))
+        (netClient.loadPreKeys(_: QOtrClientIdMap)).expects(qClients).once().returning(
+          CancellableFuture.successful(response)
+        )
+      } else {
+        val response: Either[ErrorResponse, Map[UserId, Seq[(ClientId, PreKey)]]] =
+          Right(Map(otherUserId -> Seq(otherClientId -> responsePreKey)))
+        (netClient.loadPreKeys(_: OtrClientIdMap)).expects(clients).once().returning {
+          CancellableFuture.successful(response)
+        }
+      }
+
       (otrClients.updateUserClients(_: Map[UserId, Seq[Client]], _: Boolean)).expects(*, *).once().returning(
         Future.successful(Set(responseUserClients))
       )
@@ -102,7 +114,7 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
         Future.successful(Option.empty[CryptoSession])
       )
 
-      result(handler.syncSessions(clients)) shouldEqual Option.empty[ErrorResponse]
+      result(handler.syncSessions(qClients)) shouldEqual Option.empty[ErrorResponse]
     }
   }
 
@@ -116,15 +128,23 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
         }.toMap
       )
     val responsePreKey = new PreKey(0, Array[Byte](0))
-    val response: Either[ErrorResponse, Map[UserId, Seq[(ClientId, PreKey)]]] =
-      Right(Map(otherUserId -> Seq((otherClientId, responsePreKey))))
+
     val responseUserClients = UserClients(otherUserId, Map(otherClientId -> Client(otherClientId)))
 
-    (netClient.loadPreKeys(_ : QOtrClientIdMap)).expects(*).twice().onCall { cs: QOtrClientIdMap =>
-      (cs.size <  OtrClientsSyncHandlerImpl.LoadPreKeysMaxClients) shouldBe true
-      val result = cs.entries.map { case (qId, clientIds) => qId -> clientIds.map(_ -> responsePreKey).toMap }
-      val response: Either[ErrorResponse, Map[QualifiedId, Map[ClientId, PreKey]]] = Right(result)
-      CancellableFuture.successful(response)
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      (netClient.loadPreKeys(_: QOtrClientIdMap)).expects(*).twice().onCall { cs: QOtrClientIdMap =>
+        (cs.size < OtrClientsSyncHandlerImpl.LoadPreKeysMaxClients) shouldBe true
+        val result = cs.entries.map { case (qId, clientIds) => qId -> clientIds.map(_ -> responsePreKey).toMap }
+        val response: Either[ErrorResponse, Map[QualifiedId, Map[ClientId, PreKey]]] = Right(result)
+        CancellableFuture.successful(response)
+      }
+    } else {
+      (netClient.loadPreKeys(_: OtrClientIdMap)).expects(*).twice().onCall { cs: OtrClientIdMap =>
+        (cs.size < OtrClientsSyncHandlerImpl.LoadPreKeysMaxClients) shouldBe true
+        val response: Either[ErrorResponse, Map[UserId, Seq[(ClientId, PreKey)]]] =
+          Right(Map(otherUserId -> Seq((otherClientId, responsePreKey))))
+        CancellableFuture.successful(response)
+      }
     }
     (otrClients.updateUserClients(_: Map[UserId, Seq[Client]], _: Boolean)).expects(*, *).once().returning(
       Future.successful(Set(responseUserClients))
