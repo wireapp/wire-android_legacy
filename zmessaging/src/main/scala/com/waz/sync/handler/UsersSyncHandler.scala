@@ -30,6 +30,7 @@ import com.waz.sync.SyncResult
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.threading.Threading
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
@@ -70,7 +71,12 @@ class UsersSyncHandlerImpl(userService:      UserService,
     usersClient.loadUsers(ids).future.flatMap(syncUsers)
 
   override def syncQualifiedUsers(qIds: Set[QualifiedId]): Future[SyncResult] =
-    usersClient.loadQualifiedUsers(qIds).future.flatMap(syncUsers)
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      usersClient.loadQualifiedUsers(qIds).future.flatMap(syncUsers)
+    } else {
+      val ids: Array[UserId] = qIds.map(_.id).toArray
+      syncUsers(ids: _*)
+    }
 
   private def syncSearchResults(response: Either[ErrorResponse, Seq[UserInfo]]) = response match {
     case Right(users) if teamId.isEmpty =>
@@ -89,7 +95,12 @@ class UsersSyncHandlerImpl(userService:      UserService,
     usersClient.loadUsers(ids).future.flatMap(syncSearchResults)
 
   override def syncQualifiedSearchResults(qIds: Set[QualifiedId]): Future[SyncResult] =
-    usersClient.loadQualifiedUsers(qIds).future.flatMap(syncSearchResults)
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      usersClient.loadQualifiedUsers(qIds).future.flatMap(syncSearchResults)
+    } else {
+      val ids: Array[UserId] = qIds.map(_.id).toArray
+      syncSearchResults(ids: _*)
+    }
 
   def syncSelfUser(): Future[SyncResult] = usersClient.loadSelf().future flatMap {
     case Right(user) =>
