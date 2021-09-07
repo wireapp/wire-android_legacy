@@ -36,14 +36,15 @@ import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.OtrClientsService
 import com.waz.service.tracking.TrackingService
-import com.waz.service.{ErrorsService, Timeouts}
+import com.waz.service.{ErrorsService, Timeouts, UserService}
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse}
 import com.waz.sync.otr.OtrSyncHandler
-import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
+import com.waz.sync.otr.OtrSyncHandler.{QTargetRecipients, TargetRecipients}
 import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.utils._
+import com.waz.zms.BuildConfig
 import com.waz.znet2.http.ResponseCode
 import com.wire.signals.CancellableFuture
 
@@ -64,18 +65,39 @@ class MessagesSyncHandler(selfUserId: UserId,
                           uploadAssetStorage: UploadAssetStorage,
                           cache:      CacheService,
                           members:    MembersStorage,
+                          users: =>   UserService,
                           tracking:   TrackingService,
                           errors:     ErrorsService,
                           timeouts: Timeouts) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
+  private def postOtrMessage(convId: ConvId, gm: GenericMessage, isHidden: Boolean) =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      otrSync.postQualifiedOtrMessage(convId, gm, isHidden)
+    } else {
+      otrSync.postOtrMessage(convId, gm, isHidden)
+    }
+
+  private def postOtrMessage(convId: ConvId,
+                             gm: GenericMessage,
+                             isHidden: Boolean,
+                             specificUsers: Set[UserId],
+                             nativePush: Boolean,
+                             enforceIgnoreMissing: Boolean
+                            ) =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      users.qualifiedIds(specificUsers).flatMap { qIds =>
+        otrSync.postQualifiedOtrMessage(convId, gm, isHidden, QTargetRecipients.SpecificUsers(qIds), nativePush, enforceIgnoreMissing)
+      }
+    } else {
+      otrSync.postOtrMessage(convId, gm, isHidden, TargetRecipients.SpecificUsers(specificUsers), nativePush, enforceIgnoreMissing)
+    }
+
   def postDeleted(convId: ConvId, msgId: MessageId): Future[SyncResult] =
     convs.convById(convId).flatMap {
       case Some(conv) =>
         val msg = GenericMessage(Uid(), MsgDeleted(conv.remoteId, msgId))
-        otrSync
-          .postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true)
-          .map(SyncResult(_))
+        postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true).map(SyncResult(_))
       case None =>
         successful(Failure("conversation not found"))
     }
@@ -84,7 +106,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     convs.convById(convId) flatMap {
       case Some(conv) =>
         val msg = GenericMessage(msgId.uid, MsgRecall(recalled))
-        otrSync.postOtrMessage(conv.id, msg, isHidden = true).flatMap {
+        postOtrMessage(conv.id, msg, isHidden = true).flatMap {
           case Left(e) => successful(SyncResult(e))
           case Right(time) =>
             msgContent
@@ -104,9 +126,15 @@ class MessagesSyncHandler(selfUserId: UserId,
           case ReceiptType.EphemeralExpired => (GenericMessage(msgs.head.uid, MsgRecall(msgs.head)), Set(selfUserId, userId))
         }
 
-        otrSync
-          .postOtrMessage(conv.id, msg, TargetRecipients.SpecificUsers(recipients), isHidden = true, nativePush = false)
-          .map(SyncResult(_))
+        postOtrMessage(
+          conv.id,
+          msg,
+          isHidden = true,
+          recipients,
+          nativePush = false,
+          enforceIgnoreMissing = false
+        )
+        .map(SyncResult(_))
       case None =>
         successful(Failure("conversation not found"))
     }
@@ -115,12 +143,14 @@ class MessagesSyncHandler(selfUserId: UserId,
     storage.get(messageId).flatMap {
       case None      => successful(Failure("message not found"))
       case Some(msg) => for {
-        result <- otrSync.postOtrMessage(
+        result <- postOtrMessage(
                     msg.convId,
                     GenericMessage(Uid(), ButtonAction(buttonId.str, messageId.str)),
-                    TargetRecipients.SpecificUsers(Set(senderId)),
                     isHidden = true,
-                    enforceIgnoreMissing = true)
+                    Set(senderId),
+                    nativePush = false,
+                    enforceIgnoreMissing = true
+                  )
         _      <- result.fold(_ => service.setButtonError(messageId, buttonId), _ => Future.successful(()))
       } yield SyncResult(result)
     }
@@ -199,7 +229,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         }
       }.getOrElse((TextMessage(adjustedMsg), false))
 
-      otrSync.postOtrMessage(conv.id, gm, isHidden = false).flatMap {
+      postOtrMessage(conv.id, gm, isHidden = false).flatMap {
         case Right(time) if isEdit =>
           verbose(l"postOtrMessage successful for edit")
           // delete original message and create new message with edited content
@@ -222,7 +252,7 @@ class MessagesSyncHandler(selfUserId: UserId,
       case _ if msg.isAssetMessage =>
         Cancellable(UploadTaskKey(msg.assetId.get))(uploadAsset(conv, msg)).future.map(_.map((_, msg.id)))
       case KNOCK =>
-        otrSync.postOtrMessage(conv.id, GenericMessage(msg.id.uid, msg.ephemeral, Knock(msg.expectsRead.getOrElse(false), conv.messageLegalHoldStatus)), isHidden = false).map(_.map((_, msg.id)))
+        postOtrMessage(conv.id, GenericMessage(msg.id.uid, msg.ephemeral, Knock(msg.expectsRead.getOrElse(false), conv.messageLegalHoldStatus)), isHidden = false).map(_.map((_, msg.id)))
       case TEXT | TEXT_EMOJI_ONLY =>
         postTextMessage().map(_.map(data => (data.time, data.id)))
       case RICH_MEDIA =>
@@ -235,9 +265,9 @@ class MessagesSyncHandler(selfUserId: UserId,
           m.unpack match {
             case (id, loc: Location) if msg.isEphemeral =>
               val expiry = msg.ephemeral.getOrElse(Duration.Zero)
-              otrSync.postOtrMessage(conv.id, GenericMessage(id, Ephemeral(msg.ephemeral, EphemeralLocation(loc.proto, expiry))), isHidden = false).map(_.map((_, msg.id)))
+              postOtrMessage(conv.id, GenericMessage(id, Ephemeral(msg.ephemeral, EphemeralLocation(loc.proto, expiry))), isHidden = false).map(_.map((_, msg.id)))
             case _ =>
-              otrSync.postOtrMessage(conv.id, m, isHidden = false).map(_.map((_, msg.id)))
+              postOtrMessage(conv.id, m, isHidden = false).map(_.map((_, msg.id)))
           }
         }.getOrElse {
           successful(Left(internalError(s"Unexpected location message content: $msg")))
@@ -246,7 +276,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         verbose(l"post generic message")
         msg.genericMsgs.headOption match {
           case Some(proto) if !msg.isEphemeral =>
-            otrSync.postOtrMessage(conv.id, proto, isHidden = false).map(_.map((_, msg.id)))
+            postOtrMessage(conv.id, proto, isHidden = false).map(_.map((_, msg.id)))
           case Some(_) =>
             successful(Left(internalError(s"Can not send generic ephemeral message: $msg")))
           case None =>
@@ -262,7 +292,7 @@ class MessagesSyncHandler(selfUserId: UserId,
 
     def postAssetMessage(message: GenericMessage, id: GeneralAssetId): CancellableFuture[RemoteInstant] = {
       for {
-        time <- otrSync.postOtrMessage(conv.id, message, isHidden = false).flatMap { case Left(errorResponse) => Future.failed(errorResponse)
+        time <- postOtrMessage(conv.id, message, isHidden = false).flatMap { case Left(errorResponse) => Future.failed(errorResponse)
           case Right(time) => Future.successful(time)
         }.lift
         _ <- msgContent.updateMessage(msg.id)(_.copy(genericMsgs = Seq(message), time = time, assetId = Some(id))).lift
@@ -384,7 +414,7 @@ class MessagesSyncHandler(selfUserId: UserId,
           Future.failed(FailedExpectationsError(s"We expect uploaded asset status $statusToPost. Got $assetStatus."))
       }
       message = GenericMessage(mid.uid, expiration, genericAsset)
-      _ <- otrSync.postOtrMessage(conv.id, message, isHidden = false)
+      _ <- postOtrMessage(conv.id, message, isHidden = false)
       _ <- statusToPost match {
         case UploadAssetStatus.Cancelled => storage.remove(msg.id)
         case _ => Future.successful(())

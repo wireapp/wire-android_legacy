@@ -312,8 +312,8 @@ class ConversationsSyncHandler(selfUserId:      UserId,
     debug(l"postQualifiedConversation($convId, $users, $name, $defaultRole)")
 
     val initState = ConversationInitState(
-      users            = Set.empty, // TODO: for now we add all users after we created the conv, it will change in the future
-      qualifiedUsers   = users,
+      users            = Set.empty,
+      qualifiedUsers   = Set.empty,
       name             = name,
       team             = team,
       access           = access,
@@ -322,12 +322,13 @@ class ConversationsSyncHandler(selfUserId:      UserId,
       conversationRole = defaultRole
     )
 
-    convClient.postQualifiedConversation(initState).future.flatMap {
+    convClient.postConversation(initState).future.flatMap {
       case Right(response) =>
         convService.updateRemoteId(convId, response.id).flatMap { _ =>
           loadConversationRoles(Seq(response)).flatMap { roles =>
             convService.updateConversationsWithDeviceStartMessage(Seq(response), roles).flatMap { _ =>
-              postQualifiedConversationMemberJoin(convId, users, defaultRole)
+              if (users.nonEmpty) postQualifiedConversationMemberJoin(convId, users, defaultRole)
+              else Future.successful(SyncResult.Success)
             }
           }
         }

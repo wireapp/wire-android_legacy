@@ -27,9 +27,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.otr.Client.{DeviceClass, DeviceType}
 import com.waz.model.otr._
-import com.waz.model.{QualifiedId, RemoteInstant, UserId}
-import com.waz.sync.client.OtrClient.{ClientKey, MessageResponse}
-import com.waz.sync.otr.OtrSyncHandler.OtrMessage
+import com.waz.model.{QualifiedId, UserId}
+import com.waz.sync.client.OtrClient.ClientKey
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
 import com.waz.znet2.AuthRequestInterceptor
@@ -41,6 +40,8 @@ import org.json.{JSONArray, JSONObject}
 
 import scala.collection.breakOut
 import scala.util.{Failure, Success, Try}
+
+import scala.collection.JavaConverters._
 
 trait OtrClient {
   def loadPreKeys(users: OtrClientIdMap): ErrorOrResponse[Map[UserId, Seq[ClientKey]]]
@@ -61,10 +62,9 @@ class OtrClientImpl(implicit
                     urlCreator: UrlCreator,
                     httpClient: HttpClient,
                     authRequestInterceptor: AuthRequestInterceptor) extends OtrClient with DerivedLogTag {
-
   import HttpClient.AutoDerivationOld._
   import HttpClient.dsl._
-  import MessagesClient.OtrMessageSerializer
+  import OtrMessage.OtrMessageSerializer
   import OtrClient._
   import com.waz.threading.Threading.Implicits.Background
 
@@ -205,7 +205,7 @@ class OtrClientImpl(implicit
       .executeSafe
   }
 
-  override def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse] = {
+  override def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse] =
     Request
       .Post(
         relativePath = BroadcastPath,
@@ -219,12 +219,9 @@ class OtrClientImpl(implicit
         if (code == ResponseCode.PreconditionFailed) MessageResponse.Failure(body)
         else MessageResponse.Success(body)
       }
-
-  }
 }
 
 object OtrClient extends DerivedLogTag {
-
   val ClientsPath = "/clients"
   val PrekeysPath = "/users/prekeys"
   val BroadcastPath = "/broadcast/otr/messages"
@@ -236,7 +233,6 @@ object OtrClient extends DerivedLogTag {
   def userPreKeysPath(user: UserId) = s"/users/$user/prekeys"
   def userClientsPath(user: UserId) = s"/users/$user/clients"
   def clientPreKeyPath(user: UserId, client: ClientId) = s"/users/$user/prekeys/$client"
-
   def userPreKeysPath(qId: QualifiedId) = s"/users/${qId.domain}/${qId.id.str}/prekeys"
   def clientPreKeyPath(qId: QualifiedId, clientId: ClientId) = s"/users/${qId.domain}/${qId.id.str}/prekeys/$clientId"
 
@@ -261,41 +257,54 @@ object OtrClient extends DerivedLogTag {
       .setUuid(ByteString.copyFrom(userIdBytes(id)))
       .build
 
+  def qualifiedId(qId: QualifiedId): Otr.QualifiedUserId =
+    Otr.QualifiedUserId.newBuilder
+      .setId(qId.id.str)
+      .setDomain(qId.domain)
+      .build
+
   def clientId(id: ClientId): Otr.ClientId =
     Otr.ClientId.newBuilder
       .setClient(id.longId)
       .build
 
-  case class EncryptedContent(content: Map[UserId, Map[ClientId, Array[Byte]]]) {
-    import scala.collection.JavaConverters._
-    lazy val estimatedSize: Int = content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
-
-    lazy val userEntries: Array[Otr.UserEntry] = content.map { case (user, cs) =>
-      val clients = cs.map { case (c, msg) =>
-          Otr.ClientEntry.newBuilder
-            .setClient(clientId(c))
-            .setText(ByteString.copyFrom(msg))
-            .build
-      } (breakOut)
-      Otr.UserEntry.newBuilder
-        .setUser(userId(user))
-        .addAllClients(clients.asJava)
+  private def userEntry(user: UserId, cs: Map[ClientId, Array[Byte]]): Otr.UserEntry = {
+    val clients = cs.map { case (c, msg) =>
+      Otr.ClientEntry.newBuilder
+        .setClient(clientId(c))
+        .setText(ByteString.copyFrom(msg))
         .build
-    } (breakOut)
+    }(breakOut)
+    Otr.UserEntry.newBuilder
+      .setUser(userId(user))
+      .addAllClients(clients.asJava)
+      .build
+  }
+
+  final case class EncryptedContent(content: Map[UserId, Map[ClientId, Array[Byte]]]) {
+    lazy val estimatedSize: Int = content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
+    lazy val userEntries: Array[Otr.UserEntry] = content.map { case (user, cs) => userEntry(user, cs) }(breakOut)
   }
 
   object EncryptedContent {
     val Empty: EncryptedContent = EncryptedContent(Map.empty)
   }
 
-  lazy val EncryptedContentEncoder: JsonEncoder[EncryptedContent] = new JsonEncoder[EncryptedContent] {
-    override def apply(content: EncryptedContent): JSONObject = JsonEncoder { o =>
-      content.content.foreach { case (user, clients) =>
-        o.put(user.str, JsonEncoder { u =>
-          clients.foreach { case (c, msg) => u.put(c.str, AESUtils.base64(msg)) }
-        })
-      }
-    }
+  final case class QEncryptedContent(content: Map[QualifiedId, Map[ClientId, Array[Byte]]]) {
+    lazy val estimatedSize: Int =
+      content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
+    lazy val entries: Array[Otr.QualifiedUserEntry] =
+      content.groupBy(_._1.domain).map { case (domain, userContent) =>
+        val userEntries = userContent.map { case (user, cs) => userEntry(user.id, cs) }
+        Otr.QualifiedUserEntry.newBuilder
+          .setDomain(domain)
+          .addAllEntries(userEntries.asJava)
+          .build()
+      }(breakOut)
+  }
+
+  object QEncryptedContent {
+    val Empty: QEncryptedContent = QEncryptedContent(Map.empty)
   }
 
   implicit lazy val PreKeyDecoder: JsonDecoder[PreKey] = JsonDecoder.lift { implicit js =>
@@ -309,8 +318,10 @@ object OtrClient extends DerivedLogTag {
 
   //TODO Remove this. Introduce JSONDecoder for the Map
   type PreKeysResponse = Seq[(UserId, Seq[ClientKey])]
+
   object PreKeysResponse {
     import scala.collection.JavaConverters._
+
     def unapply(content: ResponseContent): Option[PreKeysResponse] = content match {
       case JsonObjectResponse(js) =>
         Try {
@@ -320,8 +331,8 @@ object OtrClient extends DerivedLogTag {
               if (cs.isNull(clientId)) None else Some(ClientId(clientId) -> PreKeyDecoder(cs.getJSONObject(clientId)))
             }
             UserId(userId) -> clients.flatten.toSeq
-          } .filter(_._2.nonEmpty).toSeq
-        } .toOption
+          }.filter(_._2.nonEmpty).toSeq
+        }.toOption
       case _ => None
     }
   }
@@ -329,9 +340,9 @@ object OtrClient extends DerivedLogTag {
   final case class ListPreKeysResponse(values: Map[QualifiedId, Map[ClientId, PreKey]])
 
   object ListPreKeysResponse {
-    val Empty: ListPreKeysResponse = ListPreKeysResponse(Map.empty)
-
     import scala.collection.JavaConverters._
+
+    val Empty: ListPreKeysResponse = ListPreKeysResponse(Map.empty)
 
     private def getPreKeys(json: JSONObject): Map[ClientId, PreKey] =
       json.keySet.asScala.toSeq.map { clientId =>
@@ -356,7 +367,6 @@ object OtrClient extends DerivedLogTag {
     }
   }
 
-
   final case class ListClientsRequest(qualifiedUsers: Seq[QualifiedId]) {
     def encode: JSONObject = JsonEncoder { o =>
       o.put(
@@ -375,9 +385,9 @@ object OtrClient extends DerivedLogTag {
   final case class ListClientsResponse(values: Map[QualifiedId, Seq[Client]])
 
   object ListClientsResponse {
-    val Empty: ListClientsResponse = ListClientsResponse(Map.empty)
-
     import scala.collection.JavaConverters._
+
+    val Empty: ListClientsResponse = ListClientsResponse(Map.empty)
 
     private def getClients(json: JSONArray): Seq[Client] =
       JsonDecoder.array(json, (arr, i) => Try(arr.getJSONObject(i)).map(ClientsResponse.Decoder(_)).toOption).flatten
@@ -404,7 +414,6 @@ object OtrClient extends DerivedLogTag {
   }
 
   object ClientsResponse {
-
     implicit object Decoder extends JsonDecoder[Client] {
       override def apply(implicit js: JSONObject): Client = {
         Client(
@@ -429,39 +438,6 @@ object OtrClient extends DerivedLogTag {
     def unapply(content: ResponseContent): Option[Seq[Int]] = content match {
       case JsonArrayResponse(arr) => Try(JsonDecoder.array(arr, _.getString(_).toInt)).toOption
       case _ => None
-    }
-  }
-
-  sealed trait MessageResponse {
-    def mismatch: ClientMismatch
-
-    def deleted: OtrClientIdMap = mismatch.deleted
-
-    def missing: OtrClientIdMap = mismatch.missing
-  }
-
-  object MessageResponse {
-    final case class Success(mismatch: ClientMismatch) extends MessageResponse
-    final case class Failure(mismatch: ClientMismatch) extends MessageResponse
-  }
-
-  final case class ClientMismatch(redundant: OtrClientIdMap = OtrClientIdMap.Empty,
-                                  missing:   OtrClientIdMap = OtrClientIdMap.Empty,
-                                  deleted:   OtrClientIdMap = OtrClientIdMap.Empty,
-                                  time:     RemoteInstant)
-
-  object ClientMismatch {
-    implicit lazy val Decoder: JsonDecoder[ClientMismatch] = new JsonDecoder[ClientMismatch] {
-      import JsonDecoder._
-      import OtrClientIdMap.decodeMap
-
-      override def apply(implicit js: JSONObject): ClientMismatch =
-        ClientMismatch(
-          decodeMap('redundant),
-          decodeMap('missing),
-          decodeMap('deleted),
-          decodeOptUtcDate('time).map(t => RemoteInstant.ofEpochMilli(t.getTime)).getOrElse(RemoteInstant.Epoch)
-        )
     }
   }
 }

@@ -23,7 +23,7 @@ import com.waz.cache.CacheService
 import com.waz.content.{MembersStorage, MessagesStorage}
 import com.waz.model._
 import com.waz.service.assets.{AssetService, AssetStorage, UploadAssetStorage}
-import com.waz.service.{ErrorsService, Timeouts}
+import com.waz.service.{ErrorsService, Timeouts, UserService}
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.OtrClientsService
@@ -32,6 +32,7 @@ import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult.Failure
 import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.sync.otr.OtrSyncHandler
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
@@ -50,10 +51,16 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
   val uploads       = mock[UploadAssetStorage]
   val cache         = mock[CacheService]
   val members       = mock[MembersStorage]
+  val users         = mock[UserService]
   val timeouts      = new Timeouts()
 
+  val domain = "chala.wire.link"
+
   def getHandler: MessagesSyncHandler = {
-    new MessagesSyncHandler(account1Id, service, msgContent, clients, otrSync, convs, storage, sync, assets, assetStorage, uploads, cache, members, tracking, errors, timeouts)
+    new MessagesSyncHandler(
+      account1Id, service, msgContent, clients, otrSync, convs, storage, sync,
+      assets, assetStorage, uploads, cache, members, users, tracking, errors, timeouts
+    )
   }
 
   scenario("post invalid message should fail immediately") {
@@ -78,7 +85,11 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     (storage.getMessage _).expects(messageId).returning(Future.successful(Option(message)))
     (convs.convById _).expects(convId).returning(Future.successful(Option(ConversationData(convId))))
 
-    (otrSync.postOtrMessage _).expects(convId, *, * ,*, *, *).returning(Future.successful(Left(connectionError)))
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      (otrSync.postQualifiedOtrMessage _).expects(convId, *, *, *, *, *).returning(Future.successful(Left(connectionError)))
+    } else {
+      (otrSync.postOtrMessage _).expects(convId, *, *, *, *, *).returning(Future.successful(Left(connectionError)))
+    }
 
     (service.messageDeliveryFailed _).expects(convId, message, connectionError).returning(Future.successful(Some(message.copy(state = Message.Status.FAILED))))
 
@@ -93,8 +104,12 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     val senderId = UserId()
 
     (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(Option(MessageData(messageId, convId = convId))))
-    (otrSync.postOtrMessage _).expects(convId, *, * ,true, *, *).returning(Future.successful(Right(RemoteInstant.Epoch)))
-
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      (users.qualifiedIds _).expects(Set(senderId)).anyNumberOfTimes().returning(Future.successful(Set(QualifiedId(senderId, domain))))
+      (otrSync.postQualifiedOtrMessage _).expects(convId, *, *, *, *, *).returning(Future.successful(Right(RemoteInstant.Epoch)))
+    } else {
+      (otrSync.postOtrMessage _).expects(convId, *, true, *, *, *).returning(Future.successful(Right(RemoteInstant.Epoch)))
+    }
     result(getHandler.postButtonAction(messageId, buttonId, senderId)) shouldEqual SyncResult.Success
   }
 
@@ -118,7 +133,12 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     val errorText = "Error"
 
     (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(Option(MessageData(messageId, convId = convId))))
-    (otrSync.postOtrMessage _).expects(convId, *, * ,*, *, *).returning(Future.successful(Left(internalError(errorText))))
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      (users.qualifiedIds _).expects(Set(senderId)).anyNumberOfTimes().returning(Future.successful(Set(QualifiedId(senderId, domain))))
+      (otrSync.postQualifiedOtrMessage _).expects(convId, *, *, *, *, *).returning(Future.successful(Left(internalError(errorText))))
+    } else {
+      (otrSync.postOtrMessage _).expects(convId, *, *, *, *, *).returning(Future.successful(Left(internalError(errorText))))
+    }
     (service.setButtonError _).expects(messageId, buttonId).once().returning(Future.successful({}))
 
     result(getHandler.postButtonAction(messageId, buttonId, senderId)) shouldEqual SyncResult.Failure(errorText)

@@ -57,7 +57,8 @@ trait UserService {
 
   def getSelfUser: Future[Option[UserData]]
   def isFederated(id: UserId): Future[Boolean]
-  def isFederated(user: UserData): Future[Boolean]
+  def isFederated(user: UserData): Boolean
+  def isFederated(qId: QualifiedId): Boolean
   def findUser(id: UserId): Future[Option[UserData]]
   def findUsers(ids: Seq[UserId]): Future[Seq[Option[UserData]]]
   def qualifiedId(userId: UserId): Future[QualifiedId]
@@ -70,6 +71,7 @@ trait UserService {
   def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]]
   def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]]
   def syncUser(userId: UserId): Future[Option[UserData]]
+  def syncUser(qId: QualifiedId): Future[Option[UserData]]
   def acceptedOrBlockedUsers: Signal[Map[UserId, UserData]]
 
   def updateSyncedUsers(users: Seq[UserInfo], timestamp: LocalInstant = LocalInstant.Now): Future[Set[UserData]]
@@ -129,19 +131,6 @@ class UserServiceImpl(selfUserId:        UserId,
       users <- usersStorage.keySet
       _     <- syncUsers(users)
       _     <- shouldSyncUsers := false
-    } yield ()
-  }
-
-  private lazy val shouldMigrateToFederation = userPrefs.preference(UserPreferences.ShouldMigrateToFederation)
-
-  for {
-    shouldMigrate <- if (BuildConfig.FEDERATION_USER_DISCOVERY) shouldMigrateToFederation() else Future.successful(false)
-  } if (shouldMigrate && currentDomain.isDefined) {
-    verbose(l"Migrating users to federation")
-    for {
-      userIds <- usersStorage.keySet
-      _       <- usersStorage.updateAll2(userIds, { user => if (user.domain.isEmpty) user.copy(domain = currentDomain) else user })
-      _       <- shouldMigrateToFederation := false
     } yield ()
   }
 
@@ -297,7 +286,7 @@ class UserServiceImpl(selfUserId:        UserId,
       if (BuildConfig.FEDERATION_USER_DISCOVERY) {
         for {
           Some(user) <- findUser(userId)
-          federated  <- isFederated(user)
+          federated  =  isFederated(user)
           res        <- ((federated, user.qualifiedId) match {
                           case (true, Some(qId)) => usersClient.loadQualifiedUser(qId)
                           case _                 => usersClient.loadUser(userId)
@@ -311,6 +300,18 @@ class UserServiceImpl(selfUserId:        UserId,
       case Left(e)           => Future.failed(e)
       case Right(Some(info)) => updateSyncedUsers(Seq(info)).map(_.headOption)
       case Right(None)       => deleteUsers(Set(userId)).map(_ => None)
+    }
+  }
+
+  override def syncUser(qId: QualifiedId): Future[Option[UserData]] = {
+    val updateResult =
+      if (isFederated(qId)) usersClient.loadQualifiedUser(qId)
+      else usersClient.loadUser(qId.id)
+
+    updateResult.future.flatMap {
+      case Left(e)           => Future.failed(e)
+      case Right(Some(info)) => updateSyncedUsers(Seq(info)).map(_.headOption)
+      case Right(None)       => deleteUsers(Set(qId.id)).map(_ => None)
     }
   }
 
@@ -333,20 +334,20 @@ class UserServiceImpl(selfUserId:        UserId,
       case _              => syncSelfNow
     }
 
-  override def isFederated(user: UserData): Future[Boolean] =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      selfUser.head.map(_.domain).map {
-        case Some(selfDomain) => user.domain.exists(_ != selfDomain)
-        case _                => false
-      }
-    } else
-      Future.successful(false)
+  override def isFederated(user: UserData): Boolean =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY)
+      user.qualifiedId.fold(false)(isFederated)
+    else
+      false
+
+  override def isFederated(qId: QualifiedId): Boolean =
+    currentDomain.fold(false)(domain => qId.domain != domain)
 
   override def isFederated(id: UserId): Future[Boolean] =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      findUser(id).flatMap {
+      findUser(id).map {
         case Some(user) => isFederated(user)
-        case _          => Future.successful(false)
+        case _          => false
       }
     } else
       Future.successful(false)

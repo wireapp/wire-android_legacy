@@ -22,7 +22,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.model.ConversationData.LegalHoldStatus
 import com.waz.model.GenericMessage.TextMessage
-import com.waz.model.otr.{Client, ClientId, OtrClientIdMap, UserClients}
+import com.waz.model.otr.{Client, ClientId, ClientMismatch, MessageResponse, OtrClientIdMap, OtrMessage, UserClients}
 import com.waz.model._
 import com.waz.model.otr.Client.DeviceClass
 import com.waz.service.conversation.ConversationsService
@@ -30,9 +30,9 @@ import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, SearchKey, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
-import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
+import com.waz.sync.client.OtrClient.EncryptedContent
 import com.waz.sync.client.{MessagesClient, OtrClient}
-import com.waz.sync.otr.OtrSyncHandler.{OtrMessage, TargetRecipients}
+import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.waz.sync.otr.{OtrClientsSyncHandler, OtrSyncHandlerImpl}
 import com.wire.signals.CancellableFuture
 
@@ -41,6 +41,7 @@ import scala.concurrent.Future
 class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
   val teamId             = Some(TeamId())
+  val domain             = "chala.wire.link"
   val selfClientId       = ClientId("client-id")
   val otrClient          = mock[OtrClient]
   val msgClient          = mock[MessagesClient]
@@ -60,6 +61,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
     new OtrSyncHandlerImpl(
       teamId,
       selfClientId,
+      Some(domain),
       otrClient,
       msgClient,
       service,
@@ -111,15 +113,15 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .once()
         .returning(Future.successful(Seq(Client(selfClientId, ""))))
 
-      (service.encryptMessage _)
+      (service.encryptMessage(_: GenericMessage, _: OtrClientIdMap, _: Boolean, _: EncryptedContent))
         .expects( msg, recipients, *, EncryptedContent.Empty)
         .returning(Future.successful(encryptedContent))
 
-      (msgClient.postMessage _)
+      (msgClient.postMessage(_: RConvId, _: OtrMessage, _: Boolean))
         .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent), *)
         .returning(CancellableFuture.successful(Right(MessageResponse.Success(ClientMismatch(time = RemoteInstant.Epoch)))))
 
-      (service.deleteClients _)
+      (service.deleteClients(_ : OtrClientIdMap))
         .expects(OtrClientIdMap.Empty)
         .returning(Future.successful({}))
 
@@ -181,17 +183,17 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .once()
         .returning(Future.successful(Seq(selfClient)))
 
-      (service.encryptMessage _)
+      (service.encryptMessage(_: GenericMessage, _: OtrClientIdMap, _: Boolean, _: EncryptedContent))
         .expects(msg, *, *, *)
         .once()
         .returning(Future.successful(encryptedContent1))
 
-      (msgClient.postMessage _)
+      (msgClient.postMessage(_: RConvId, _: OtrMessage, _: Boolean))
         .expects(conv.remoteId, *, *)
         .once()
         .returning(CancellableFuture.successful(Right(MessageResponse.Failure(ClientMismatch(missing = missing, time = RemoteInstant.Max)))))
 
-      (service.deleteClients _)
+      (service.deleteClients(_ : OtrClientIdMap))
         .expects(OtrClientIdMap.Empty)
         .once()
         .returning(Future.successful({}))
@@ -333,7 +335,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .returning(Future.successful(Seq(missingUserClient)))
 
       var callsToEncrypt = 0
-      (service.encryptMessage _)
+      (service.encryptMessage(_: GenericMessage, _: OtrClientIdMap, _: Boolean, _: EncryptedContent))
         .expects(message, *, *, *)
         .twice()
         .onCall { (_, recipients, _, previous) =>
@@ -351,7 +353,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         }
 
       var callsToPostMessage = 0
-      (msgClient.postMessage _)
+      (msgClient.postMessage(_: RConvId, _: OtrMessage, _: Boolean))
         .expects(conv.remoteId, *, *)
         .twice()
         .onCall { (_, message, ignoreMissing: Boolean) =>
@@ -371,7 +373,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
           })
         }
 
-      (service.deleteClients _)
+      (service.deleteClients(_ : OtrClientIdMap))
         .expects(OtrClientIdMap.Empty)
         .twice()
         .returning(Future.successful({}))
@@ -431,15 +433,15 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .expects(conv.id)
         .returning(Future.successful(Some(conv)))
 
-      (service.encryptMessage _)
+      (service.encryptMessage(_: GenericMessage, _: OtrClientIdMap, _: Boolean, _: EncryptedContent))
         .expects(msg, OtrClientIdMap.from(otherUser1 -> Set(otherClient1), otherUser2 -> Set(otherClient2)), *, EncryptedContent.Empty)
         .returning(Future.successful(encryptedContent))
 
-      (msgClient.postMessage _)
+      (msgClient.postMessage(_: RConvId, _: OtrMessage, _: Boolean))
         .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent), true)
         .returning(CancellableFuture.successful(Right(MessageResponse.Success(ClientMismatch(time = RemoteInstant.Epoch)))))
 
-      (service.deleteClients _)
+      (service.deleteClients(_ : OtrClientIdMap))
         .expects(OtrClientIdMap.Empty)
         .returning(Future.successful({}))
 
@@ -448,7 +450,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .returning(Future.successful({}))
 
       // When
-      result(syncHandler.postOtrMessage(conv.id, msg, TargetRecipients.SpecificClients(targetRecipients), isHidden = false))
+      result(syncHandler.postOtrMessage(conv.id, msg, isHidden = false, TargetRecipients.SpecificClients(targetRecipients)))
     }
   }
 
@@ -470,7 +472,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .expects(conv.remoteId)
         .returning(Future.successful(Some(conv)))
 
-      (msgClient.postMessage _)
+      (msgClient.postMessage(_: RConvId, _: OtrMessage, _: Boolean))
         .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent, nativePush = false), *)
         .returning(CancellableFuture.successful(Right(MessageResponse.Success(
           ClientMismatch(

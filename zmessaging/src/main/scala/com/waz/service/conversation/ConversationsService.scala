@@ -85,6 +85,7 @@ trait ConversationsService {
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
                                selfUserId:      UserId,
+                               currentDomain:   Option[String],
                                push:            PushService,
                                users:           UserService,
                                usersStorage:    UsersStorage,
@@ -137,6 +138,21 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _        <- userPrefs.setValue(UserPreferences.RemoveUncontactedTeamMembers, false)
         _        =  verbose(l"Uncontacted team members removed for the team $teamId")
       } yield ()
+
+  private lazy val shouldMigrateToFederation = userPrefs.preference(UserPreferences.ShouldMigrateToFederation)
+
+  for {
+    shouldMigrate <- if (BuildConfig.FEDERATION_USER_DISCOVERY) shouldMigrateToFederation() else Future.successful(false)
+  } if (shouldMigrate && currentDomain.isDefined) {
+    verbose(l"Migrating conversations and users to federation")
+    for {
+      convIds <- convsStorage.keySet
+      _       <- convsStorage.updateAll2(convIds, { conv => if (conv.domain.isEmpty) conv.copy(domain = currentDomain) else conv })
+      userIds <- usersStorage.keySet
+      _       <- usersStorage.updateAll2(userIds, { user => if (user.domain.isEmpty) user.copy(domain = currentDomain) else user })
+      _       <- shouldMigrateToFederation := false
+    } yield ()
+  }
 
   override val convStateEventProcessingStage: Stage.Atomic = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
     RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))

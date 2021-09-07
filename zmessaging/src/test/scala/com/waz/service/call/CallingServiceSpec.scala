@@ -1082,7 +1082,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         TargetRecipients.SpecificClients(OtrClientIdMap.from(otherUser.userId -> Set(otherUser.clientId)))
 
       (otrSyncHandler.postOtrMessage _)
-        .expects(groupConv.id, *, expectedTargetRecipients, *, *, *)
+        .expects(groupConv.id, *, *, expectedTargetRecipients, *, *)
         .once()
         .returning(Future.successful(Right(RemoteInstant(Instant.now(clock)))))
 
@@ -1095,7 +1095,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     scenario("Messages are not targeted if no target recipients are specified") {
       (otrSyncHandler.postOtrMessage _)
-        .expects(groupConv.id, *, TargetRecipients.ConversationParticipants, *, *, *)
+        .expects(groupConv.id, *, *, TargetRecipients.ConversationParticipants, *, *)
         .once()
         .returning(Future.successful(Right(RemoteInstant(Instant.now(clock)))))
 
