@@ -955,7 +955,7 @@
     <string name="default_deleted_username">Default</string>
 
     <string name="cursor__type_a_message">TYPE A MESSAGE</string>
-    <string name="cursor__ephemeral_message">TIMED MESSAGE</string>
+    <string name="cursor__ephemeral_message">SELF-DELETING MESSAGE</string>
     <string name="tooltip_record">Record Video</string>
     <string name="tooltip_camera">Add Photo</string>
     <string name="tooltip_sketch">Draw A Picture</string>
@@ -1046,7 +1046,7 @@
     <string name="usernames__take_over__keep">KEEP THIS ONE</string>
 
     <string name="ephemeral_message__timeout__off">Off</string>
-    <string name="ephemeral_message__options_header">TIMED MESSAGES</string>
+    <string name="ephemeral_message__options_header">SELF-DELETING MESSAGES</string>
 
     <string name="guests_option_on">On</string>
 
@@ -1322,9 +1322,9 @@
     <string name="open_this_conversation_to_people_outside_your_team">Open this conversation to services and people outside your team.</string>
     <string name="allow_guests">Allow guests and services</string>
     <string name="guest_options_title">Guests and services</string>
-    <string name="ephemeral_options_title">Timed messages</string>
+    <string name="ephemeral_options_title">Self-deleting messages</string>
     <string name="notifications_options_title">Notifications</string>
-    <string name="ephemeral_explanation_text">Timed messages will be turned on for all the participants in this conversation</string>
+    <string name="ephemeral_explanation_text">Self-deleting messages will be turned on for all the participants in this conversation</string>
     <string name="notifications_explanation_text">You can be notified about everything (including audio and video calls) or only when you are mentioned.</string>
     <string name="show_all_participants">Show all (%1$s)</string>
     <string name="participant_was_removed_from_team">%s was removed from team</string>
@@ -1616,12 +1616,12 @@
 
     <!-- Legal Hold -->
     <string name="legal_hold_info_title">Legal Hold</string>
-    <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and timed messages.\n\nYour conversation partners will be aware of the recording.</string>
-    <string name="legal_hold_conversation_info_message">Legal Hold has been activated for at least one person in this conversation.\n\nAll Messages will be preserved for future access, including deleted, edited, and timed messages.</string>
+    <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.\n\nYour conversation partners will be aware of the recording.</string>
+    <string name="legal_hold_conversation_info_message">Legal Hold has been activated for at least one person in this conversation.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.</string>
     <string name="legal_hold_info_list_title">Legal Hold Subjects</string>
     <string name="legal_hold_request_dialog_title">Legal Hold Requested</string>
-    <string name="legal_hold_request_dialog_message_for_sso">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and timed messages in all conversations.</string>
-    <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and timed messages in all conversations.\nEnter your password to confirm.</string>
+    <string name="legal_hold_request_dialog_message_for_sso">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.</string>
+    <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.\nEnter your password to confirm.</string>
     <string name="legal_hold_request_dialog_positive_button_text">Accept</string>
     <string name="legal_hold_request_dialog_negative_button_text">Not Now</string>
     <string name="legal_hold_request_dialog_wrong_password_error">Wrong password</string>
