@@ -18,13 +18,12 @@
 package com.waz.zclient.views
 
 import java.io.File
-
 import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.content.{DialogInterface, Intent}
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
-import android.view._
+import android.view.{MenuItem, _}
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, ImageView, TextView}
 import androidx.annotation.Nullable
@@ -32,7 +31,7 @@ import androidx.appcompat.widget.{ActionMenuView, Toolbar}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT
 import com.waz.api.{ErrorType, Verification}
-import com.waz.content.GlobalPreferences
+import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
@@ -46,7 +45,7 @@ import com.waz.zclient.Intents.ShowDevicesIntent
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.GlobalCameraController
 import com.waz.zclient.collection.controllers.CollectionController
-import com.waz.zclient.common.controllers.global.KeyboardController
+import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.common.controllers.{BrowserController, ScreenController, ThemeController, UserAccountsController}
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation.{ConfirmationCallback, ConfirmationRequest, IConfirmationController}
@@ -80,7 +79,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.e2ee.ShieldView
-import com.waz.zclient.{ErrorsController, FragmentHelper, R}
+import com.waz.zclient.{BuildConfig, ErrorsController, FragmentHelper, R}
 import com.wire.signals.{CancellableFuture, EventStreamWithAuxSignal, Signal}
 
 import scala.collection.immutable.ListSet
@@ -109,6 +108,8 @@ class ConversationFragment extends FragmentHelper {
   private lazy val replyController        = inject[ReplyController]
   private lazy val accentColor            = inject[Signal[AccentColor]]
   private lazy val legalHoldController    = inject[LegalHoldController]
+  private lazy val userPreferences        = inject[Signal[UserPreferences]]
+  private lazy val accentColorController  = inject[AccentColorController]
 
   //TODO remove use of old java controllers
   private lazy val globalLayoutController     = inject[IGlobalLayoutController]
@@ -373,12 +374,41 @@ class ConversationFragment extends FragmentHelper {
       override def onMenuItemClick(item: MenuItem): Boolean =
         item.getItemId match {
           case R.id.action_audio_call | R.id.action_video_call =>
-            callStartController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call, forceOption = true)
-            cursorView.foreach(_.closeEditMessage(false))
+            performCall(item)
             true
           case _ => false
-      }
+        }
     })
+    def performCall(item: MenuItem): Unit = {
+      for {
+        conversationType <- convController.currentConvType.head
+        callRestricted   <- isConferenceCallingRestricted
+        currentUserRole  <- convController.selfRole.head
+      } yield
+        if(conversationType == ConversationType.Group && callRestricted && BuildConfig.CONFERENCE_CALLING_RESTRICTION) {
+          if(currentUserRole == ConversationRole.AdminRole)
+            displayConferenceCallingUpgradeDialog()
+          else showConferenceCallingNotAccessibleDialog()
+        }
+        else {
+          callStartController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call, forceOption = true)
+          cursorView.foreach(_.closeEditMessage(false))
+        }
+    }
+
+    def isConferenceCallingRestricted: Future[Boolean] =
+      userPreferences.head
+        .flatMap(_.preference(UserPreferences.ConferenceCallingFeatureEnabled).apply())
+        .map(isEnabled => !isEnabled)
+
+    def displayConferenceCallingUpgradeDialog(): Unit = {
+      accentColorController.accentColor.head.foreach { accentColor =>
+        showConferenceCallingUpgradeDialog(accentColor) { didConfirm =>
+          if (didConfirm)
+            inject[BrowserController].openWireTeamManagement()
+        }
+      }
+    }
 
     toolbar.setNavigationOnClickListener(new View.OnClickListener() {
       override def onClick(v: View): Unit = {

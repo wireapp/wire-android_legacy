@@ -5,7 +5,7 @@ import org.gradle.api.JavaVersion
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.69."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.72."
     const val COMPILE_SDK_VERSION = 30
     const val TARGET_SDK_VERSION = 30
     const val MIN_SDK_VERSION = 24
@@ -31,7 +31,7 @@ object Versions {
     //build
     const val COROUTINES = "1.3.7"
     const val WORK_MANAGER = "2.0.1"
-    const val ANDROIDX_MATERIAL = "1.0.0"
+    const val ANDROIDX_MATERIAL = "1.3.0"
     const val ANDROIDX_MULTIDEX = "2.0.0"
     const val ANDROIDX_APP_COMPAT = "1.0.0"
     const val ANDROIDX_RECYCLER_VIEW = "1.0.0"
@@ -48,6 +48,7 @@ object Versions {
     const val ANDROIDX_ROOM = "2.2.2"
     const val ANDROIDX_BIOMETRIC = "1.0.1"
     const val ANDROIDX_ANNOTATION = "1.0.0"
+    const val ANDROIDX_VIEWPAGER_2 = "1.0.0"
     const val PLAY_SERVICES = "17.0.0"
     const val PLAY_SERVICES_BASE = "17.1.0"
     const val FIREBASE_MESSAGING = "20.1.0"
@@ -112,7 +113,8 @@ object BuildDependencies {
         "roomCompiler" to "androidx.room:room-compiler:${Versions.ANDROIDX_ROOM}",
         "biometric" to "androidx.biometric:biometric:${Versions.ANDROIDX_BIOMETRIC}",
         "workManager" to "androidx.work:work-runtime:${Versions.WORK_MANAGER}",
-        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}"
+        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}",
+        "viewPager2" to "androidx.viewpager2:viewpager2:${Versions.ANDROIDX_VIEWPAGER_2}"
     ))
     val playServices = PlayServicesDependencyMap(mapOf(
         "base" to "com.google.android.gms:play-services-base:${Versions.PLAY_SERVICES_BASE}",
@@ -187,8 +189,8 @@ object LegacyDependencies {
     const val SCALA_MAJOR_VERSION = "2.11"
     const val SCALA_VERSION = SCALA_MAJOR_VERSION.plus(".12")
     // signals
-    const val WIRE_SIGNALS = "0.5.2"
-    const val WIRE_SIGNALS_EXTENSIONS = "0.5.2"
+    const val WIRE_SIGNALS = "1.0.0"
+    const val WIRE_SIGNALS_EXTENSIONS = "1.0.0"
 
     //build
     val scalaLibrary = "org.scala-lang:scala-library:$SCALA_VERSION"

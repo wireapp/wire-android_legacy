@@ -40,10 +40,10 @@ trait OtrClientsStorage extends CachedStorage[UserId, UserClients] {
   def updateClients(ucs: Map[UserId, Seq[Client]], replace: Boolean = false): Future[Set[UserClients]]
 }
 
-class OtrClientsStorageImpl(userId: UserId, context: Context, storage: Database)
-  extends CachedStorageImpl[UserId, UserClients](new TrimmingLruCache(context, Fixed(2000)), storage)(UserClientsDao, LogTag("OtrClientsStorage"))
-    with OtrClientsStorage
-    with DerivedLogTag {
+final class OtrClientsStorageImpl(userId: UserId, context: Context, storage: Database)
+  extends CachedStorageImpl[UserId, UserClients](
+    new TrimmingLruCache(context, Fixed(2000)), storage)(UserClientsDao, LogTag("OtrClientsStorage")
+  ) with OtrClientsStorage with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 

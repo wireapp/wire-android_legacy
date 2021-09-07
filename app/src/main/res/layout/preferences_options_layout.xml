@@ -33,6 +33,7 @@
             android:orientation="vertical">
 
             <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/pref_options_calls_category_title"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 android:gravity="center_vertical"

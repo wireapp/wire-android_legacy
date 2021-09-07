@@ -33,6 +33,18 @@ class DeepLinkParserTest extends JUnitSuite {
   }
 
   @Test
+  def parseLink_conversation_returnsJoinConversationDeepLink(): Unit = {
+    val key = "0q1VerOvOmu33z6Zrej4"
+    val code = "WHQicv4TurzL64K-tEZs"
+    val deepLink = s"wire://conversation-join?key=$key&code=$code"
+
+    val parsedLink = DeepLinkParser.parseLink(deepLink)
+
+    val expectedToken = RawToken(deepLink) // JoinConversation should have the whole like as the token
+    assert(parsedLink.contains((DeepLink.JoinConversation, expectedToken)))
+  }
+
+  @Test
   def parseLink_user_returnsUserDeepLink(): Unit = {
     val userId = "test-user-id-1234"
     val deepLink = s"wire://user/$userId"
@@ -46,7 +58,7 @@ class DeepLinkParserTest extends JUnitSuite {
   @Test
   def parseLink_customBackend_returnsAccessDeepLink(): Unit = {
     val customBackendUrl = "test-url"
-    val deepLink = s"wire://access/?config=$customBackendUrl"
+    val deepLink = s"wire://access?config=$customBackendUrl"
 
     val parsedLink = DeepLinkParser.parseLink(deepLink)
 

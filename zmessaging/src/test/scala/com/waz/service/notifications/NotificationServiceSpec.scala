@@ -64,7 +64,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   private val conv       = ConversationData(remoteId = rConvId, id = convId)
   private val content    = TextMessage("abc")
   private val from       = UserId("User1")
-  private lazy val event = GenericMessageEvent(rConvId, lastEventTime, from, content)
+  private lazy val event = GenericMessageEvent(rConvId, None, lastEventTime, from, None, content)
 
   private val msg = MessageData(
     MessageId(content.unpack._1.str),
@@ -86,7 +86,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   (pushService.processing _).expects().anyNumberOfTimes().onCall(_ => processing)
 
-  (storage.list _).expects().anyNumberOfTimes().onCall { _ => storedNotifications.head.map(_.toSeq) }
+  (storage.values _).expects().anyNumberOfTimes().onCall { _ => storedNotifications.head.map(_.toVector) }
   (storage.removeAll _).expects(*).anyNumberOfTimes().onCall { toRemove: Iterable[NotId] =>
     Future.successful[Unit] { storedNotifications.mutate { _.filterNot(n => toRemove.toSet.contains(n.id)) }; }
   }
@@ -375,10 +375,10 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val originalContent = GenericMessage(Uid("messageId"), Text("abc"))
 
       val editContent1 = GenericMessage(Uid("edit-id-1"), MsgEdit(MessageId(originalContent.unpack._1.str), Text("def")))
-      val editEvent1 = GenericMessageEvent(rConvId, edit1EventTime, from, editContent1)
+      val editEvent1 = GenericMessageEvent(rConvId, None, edit1EventTime, from, None, editContent1)
 
       val editContent2 = GenericMessage(Uid("edit-id-2"), MsgEdit(MessageId(editContent1.unpack._1.str), Text("ghi")))
-      val editEvent2 = GenericMessageEvent(rConvId, edit2EventTime, from, editContent2)
+      val editEvent2 = GenericMessageEvent(rConvId, None, edit2EventTime, from, None, editContent2)
 
       val originalNotification = NotificationData(
         id               = NotId(originalContent.unpack._1.str),
@@ -432,13 +432,13 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       val from = UserId("User1")
       val msgContent = GenericMessage(Uid("messageId"), Text("abc"))
-      val msgEvent = GenericMessageEvent(rConvId, RemoteInstant(clock.instant()), from, msgContent)
+      val msgEvent = GenericMessageEvent(rConvId, None, RemoteInstant(clock.instant()), from, None, msgContent)
 
       val deleteContent1 = GenericMessage(Uid(), MsgDeleted(rConvId, MessageId(toBeDeletedNotif.id.str)))
-      val deleteEvent1 = GenericMessageEvent(rConvId, RemoteInstant.apply(clock.instant()), from, deleteContent1)
+      val deleteEvent1 = GenericMessageEvent(rConvId, None, RemoteInstant.apply(clock.instant()), from, None, deleteContent1)
 
       val deleteContent2 = GenericMessage(Uid(), MsgRecall(MessageId(msgContent.unpack._1.str)))
-      val deleteEvent2 = GenericMessageEvent(rConvId, RemoteInstant.apply(clock.instant()), from, deleteContent2)
+      val deleteEvent2 = GenericMessageEvent(rConvId, None, RemoteInstant.apply(clock.instant()), from, None, deleteContent2)
 
       setup(
         availability = Availability.Available,
@@ -476,16 +476,16 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val likedMessageId = MessageId("message")
 
       val like1Content = GenericMessage(Uid("like1-id"), Reaction(likedMessageId, Liking.Action.Like, LegalHoldStatus.UNKNOWN))
-      val like1Event = GenericMessageEvent(rConvId, like1EventTime, from, like1Content)
+      val like1Event = GenericMessageEvent(rConvId, None, like1EventTime, from, None, like1Content)
 
       val unlikeContent = GenericMessage(Uid("unlike-id"), Reaction(likedMessageId, Liking.Action.Unlike, LegalHoldStatus.UNKNOWN))
-      val unlikeEvent = GenericMessageEvent(rConvId, unlikeEventTime, from, unlikeContent)
+      val unlikeEvent = GenericMessageEvent(rConvId, None, unlikeEventTime, from, None, unlikeContent)
 
       val like2Content = GenericMessage(Uid("like2-id"), Reaction(likedMessageId, Liking.Action.Like, LegalHoldStatus.UNKNOWN))
-      val like2Event = GenericMessageEvent(rConvId, like2EventTime, from, like2Content)
+      val like2Event = GenericMessageEvent(rConvId, None, like2EventTime, from, None, like2Content)
 
       val otherLikeContent = GenericMessage(Uid("like3-id"), Reaction(likedMessageId, Liking.Action.Like, LegalHoldStatus.UNKNOWN))
-      val otherLikeEvent = GenericMessageEvent(rConvId, otherEventTime, from2, otherLikeContent)
+      val otherLikeEvent = GenericMessageEvent(rConvId, None, otherEventTime, from2, None, otherLikeContent)
 
       val originalMessage =
         MessageData(
@@ -527,11 +527,12 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   feature ("Conversation state events") {
 
     scenario("Group creation events") {
+      val domain = "anta"
       val generatedMessageId = MessageId()
-      val event = CreateConversationEvent(rConvId, RemoteInstant(clock.instant()), from, ConversationResponse(
-        rConvId, Some(Name("conv")), from, ConversationType.Group, None, MuteSet.AllAllowed,
+      val event = CreateConversationEvent(rConvId, None, RemoteInstant(clock.instant()), from, None, ConversationResponse(
+        rConvId, None, Some(Name("conv")), from, ConversationType.Group, None, MuteSet.AllAllowed,
         RemoteInstant.Epoch, archived = false, RemoteInstant.Epoch, Set.empty, None, None, None,
-        Map(account1Id -> MemberRole, from -> AdminRole), None
+        Map(QualifiedId(account1Id, domain) -> MemberRole, QualifiedId(from, domain) -> AdminRole), None
       ))
 
       val memberJoinMsg = MessageData(

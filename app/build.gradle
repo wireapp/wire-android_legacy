@@ -125,10 +125,13 @@ android {
         buildConfigField 'String',  'COUNTLY_SERVER_URL',            "\"$buildtimeConfiguration.configuration.countly_server_url\""
         buildConfigField 'String',  'COUNTLY_APP_KEY',               "\"$buildtimeConfiguration.configuration.countly_app_key\""
         buildConfigField 'boolean', 'KEEP_WEBSOCKET_ON',             "$buildtimeConfiguration.configuration.keep_websocket_on"
+        buildConfigField 'boolean', 'FORCE_CONSTANT_BITRATE_CALLS',  "$buildtimeConfiguration.configuration.force_constant_bitrate_calls"
 
         //Feature Flags
         buildConfigField 'boolean', 'LARGE_VIDEO_CONFERENCE_CALLS', "$largeVideoConferenceCalls"
+        buildConfigField 'boolean', 'CALLING_UI_BUTTONS', "$callingUiButtons"
         buildConfigField 'boolean', 'FEDERATION_USER_DISCOVERY', "$federationUserDiscovery"
+        buildConfigField 'boolean', 'CONFERENCE_CALLING_RESTRICTION', "$conferenceCallingRestriction"
     }
 
     packagingOptions {
@@ -352,6 +355,8 @@ dependencies {
     implementation(BuildDependencies.androidX.workManager) {
         exclude group: 'androidx.room', module: 'room-runtime'
     }
+
+    implementation BuildDependencies.androidX.viewPager2
 
     // Play services
     implementation BuildDependencies.playServices.base

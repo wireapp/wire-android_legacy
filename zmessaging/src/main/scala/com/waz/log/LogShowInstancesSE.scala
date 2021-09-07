@@ -111,7 +111,7 @@ trait LogShowInstancesSE {
 
   implicit val SessionIdLogShow: LogShow[SessionId] = createFrom { id =>
     import id._
-    l"SessionId(userId: $user | client: $client)"
+    l"SessionId(userId: $userId | domain: $domain | client: $clientId)"
   }
 
   implicit val MessageDataLogShow: LogShow[MessageData] =

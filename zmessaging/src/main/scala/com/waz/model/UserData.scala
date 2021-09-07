@@ -135,21 +135,16 @@ final case class UserData(override val id:       UserId,
 
   def isInTeam(otherTeamId: Option[TeamId]): Boolean = teamId.isDefined && teamId == otherTeamId
 
-  def isFederated(selfDomain: String): Boolean =
-    domain.getOrElse("") != selfDomain
-
   def matchesQuery(query: SearchQuery): Boolean =
-    query.domain == domain.getOrElse("") &&
-      (handle.exists(_.startsWithQuery(query.query)) ||
-        (!query.handleOnly &&
-          (SearchKey(query.query).isAtTheStartOfAnyWordIn(searchKey) ||
-           email.exists(e => query.query.trim.equalsIgnoreCase(e.str))
-          )
+    handle.exists(_.startsWithQuery(query.query)) ||
+      (!query.handleOnly &&
+        (SearchKey(query.query).isAtTheStartOfAnyWordIn(searchKey) ||
+         email.exists(e => query.query.trim.equalsIgnoreCase(e.str))
         )
       )
 
   def exactMatchQuery(query: SearchQuery): Boolean =
-    query.domain == domain.getOrElse("") && handle.exists(_.exactMatchQuery(query.query))
+    handle.exists(_.exactMatchQuery(query.query))
 }
 
 trait Picture

@@ -48,7 +48,7 @@ object DeepLink extends DerivedLogTag {
 
   case class RawToken(value: String) extends AnyVal
 
-  def getAll: Seq[DeepLink] = Seq(SSOLogin, User, Conversation, JoinConversation, Access)
+  def getAll: Seq[DeepLink] = Seq(SSOLogin, User, JoinConversation, Conversation, Access)
 }
 
 object DeepLinkParser {
@@ -68,21 +68,28 @@ object DeepLinkParser {
 
   def isDeepLink(str: String): Boolean = str.startsWith(s"$Scheme://")
 
-  def parseLink(str: String): Option[(DeepLink, RawToken)] = {
+  def parseLink(str: String): Option[(DeepLink, RawToken)] =
     getAll.view
       .map { link =>
-        val prefix = s"$Scheme://${hostBy(link)}/"
+        val prefix = s"$Scheme://${hostBy(link)}"
         if (str.length > prefix.length && str.startsWith(prefix))
           Some(link -> rawToken(link, str, prefix))
         else
           None
       }
       .collectFirst { case Some(res) => res }
-  }
 
   private def rawToken(link: DeepLink, str: String, prefix: String): RawToken = link match {
-    case JoinConversation => RawToken(str)
-    case _                => RawToken(str.substring(prefix.length))
+    case JoinConversation =>
+      RawToken(str)
+    case _ =>
+      val tokenStr = str.substring(prefix.length).trim
+      RawToken(
+        if (tokenStr.startsWith("/?") || tokenStr.startsWith("/"))
+          tokenStr.substring(1)
+        else
+          tokenStr
+      )
   }
 
   def parseToken(link: DeepLink, raw: RawToken): Option[Token] = link match {

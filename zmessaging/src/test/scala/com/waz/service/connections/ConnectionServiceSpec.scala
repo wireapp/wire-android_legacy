@@ -57,7 +57,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
     scenario("Handle connection events updates the last event time of the conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, Accepted, RemoteInstant.ofEpochMilli(1))
+      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, Accepted, RemoteInstant.ofEpochMilli(1))
       val updatedConv = getUpdatedConversation(service, event)
 
       updatedConv.lastEventTime should be(event.lastUpdated)
@@ -65,7 +65,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
     scenario("Handling an accepted connection event should return a one to one conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, Accepted, RemoteInstant.ofEpochMilli(1))
+      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, Accepted, RemoteInstant.ofEpochMilli(1))
       val updatedConv = getUpdatedConversation(service, event)
 
       updatedConv.convType should be(ConversationType.OneToOne)
@@ -73,7 +73,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
     scenario("Handling a pending from other connection event should return a wait for connection conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, PendingFromOther, RemoteInstant.ofEpochMilli(1))
+      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, PendingFromOther, RemoteInstant.ofEpochMilli(1))
 
       (messagesService.addConnectRequestMessage _).expects(*, *, *, *, *, *).once().returns(Future.successful(MessageData.Empty))
 
@@ -84,7 +84,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
     scenario("Handling a pending from user connection event should return a incoming conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, selfUserId, otherUserId, None, PendingFromUser, RemoteInstant.ofEpochMilli(1))
+      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, PendingFromUser, RemoteInstant.ofEpochMilli(1))
       val updatedConv = getUpdatedConversation(service, event)
 
       updatedConv.convType should be(WaitForConnection)
@@ -262,7 +262,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
         }.toSet)
       }
 
-      (sync.syncUsers _).expects(Set(otherUser.id)).returning(Future.successful(SyncId()))
+      (users.syncUsers _).expects(Set(otherUser.id), *).returning(Future.successful(Option(SyncId())))
       (convsStorage.getByRemoteIds2 _).expects(Set(remoteId)).twice().returning(Future.successful(Map.empty))
       (convsStorage.updateLocalIds _).expects(Map.empty[ConvId, ConvId]).returning(Future.successful(Set.empty))
       (convsStorage.updateOrCreateAll2 _).expects(*, *).onCall { (keys: Iterable[ConvId], updater: ((ConvId, Option[ConversationData]) => ConversationData)) =>
@@ -286,7 +286,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
 
       val service = createBlankService()
-      await(service.handleUserConnectionEvents(Seq(UserConnectionEvent(remoteId, selfUserId, otherUser.id, Some("Hi!"), PendingFromUser, RemoteInstant(clock.instant()), None))))
+      await(service.handleUserConnectionEvents(Seq(UserConnectionEvent(remoteId, None, selfUserId, otherUser.id, Some("Hi!"), PendingFromUser, RemoteInstant(clock.instant()), None))))
 
       previousConv.remoteId shouldEqual remoteId
 
@@ -340,7 +340,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     (messagesService.addDeviceStartMessages _).expects(*, *).anyNumberOfTimes().onCall{ (convs: Seq[ConversationData], selfUserId: UserId) =>
       Future.successful(convs.map(conv => MessageData(MessageId(), conv.id, Message.Type.STARTED_USING_DEVICE, selfUserId)).toSet)
     }
-    (sync.syncUsers _).expects(*).anyNumberOfTimes().returns(Future.successful(SyncId()))
+    (users.syncUsers _).expects(*, *).anyNumberOfTimes().returns(Future.successful(Option(SyncId())))
     new ConnectionServiceImpl(selfUserId, teamId, push, convs, convsStorage, members, messagesService, messagesStorage, users, usersStorage, sync)
   }
 }

@@ -35,7 +35,8 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.controllers.{ThemeController, ThemedView, UserAccountsController}
+import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
+import com.waz.zclient.messages.UsersController
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon}
 import com.waz.zclient.ui.animation.interpolators.penner.Quad.EaseOut
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -55,7 +56,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   private lazy val callController                   = inject[CallController]
   private lazy val accentColorController            = inject[AccentColorController]
-  private lazy val selfData                         = inject[UserAccountsController].currentUser
+  private lazy val usersController                  = inject[UsersController]
   private lazy val chathead                         = findById[ChatHeadView](R.id.chathead)
   private lazy val nameView                         = findById[TypefaceTextView](R.id.name_text)
   private lazy val subtitleView                     = findById[TypefaceTextView](R.id.username_text)
@@ -194,20 +195,26 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   def setUserData(userData:       UserData,
-                  createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
+                  createSubtitle: (UserData, Boolean) => String = SingleUserRowView.defaultSubtitle): Unit = {
     setTitle(userData.name, userData.isSelf)
     setVerified(userData.isVerified)
-    setSubtitle(createSubtitle(userData))
-    selfData.future.collect { case Some(self) =>
+
+    usersController.selfUser.head.foreach { self =>
       val teamId = self.teamId
       chathead.setUserData(userData, userData.isInTeam(teamId))
       setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
       setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
       setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-        isFederated ! userData.isFederated(self.domain.getOrElse(""))
-      }
     }(Threading.Ui)
+
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      usersController.isFederated(userData).foreach { federated =>
+        isFederated ! federated
+        setSubtitle(createSubtitle(userData, federated))
+      }(Threading.Ui)
+    } else {
+      setSubtitle(createSubtitle(userData, false))
+    }
   }
 
   private def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisible(guest)
@@ -255,9 +262,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 }
 
 object SingleUserRowView {
-  def defaultSubtitle(user: UserData)(implicit context: Context): String = {
-    val handle = user.handle.map(h => StringUtils.formatHandle(h.string))
+  def defaultSubtitle(user: UserData, isFederated: Boolean)(implicit context: Context): String = {
+    lazy val handle: String =
+      user.handle.fold("")(h => StringUtils.formatHandle(h.string)) +
+        (if (isFederated) "@" + user.domain.getOrElse("") else "")
     val expiration = user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now))
-    expiration.orElse(handle).getOrElse("")
+    expiration.getOrElse(handle)
   }
 }

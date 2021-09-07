@@ -59,7 +59,7 @@ class AuthenticationManager(id: UserId,
   import com.waz.threading.Threading.Implicits.Background
 
   private def token  = withAccount(_.accessToken)
-  private def cookie = withAccount(_.cookie)
+  def cookie: Future[Cookie] = withAccount(_.cookie)
 
   private def withAccount[A](f: AccountData => A): Future[A] = {
     accountStorage.get(id).map {
@@ -88,7 +88,7 @@ class AuthenticationManager(id: UserId,
   /**
    * Returns current token if not expired or performs access request. Failing that, the user gets logged out
    */
-  override def currentToken() = returning(Serialized.future("login-client") {
+  override def currentToken(): ErrorOr[AccessToken] = returning(Serialized.future("login-client") {
     verbose(l"currentToken")
     token.flatMap {
       case Some(token) if !isExpired(token) =>

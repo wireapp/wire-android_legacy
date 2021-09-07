@@ -35,6 +35,7 @@ import scala.concurrent.Future
 
 trait UsersSyncHandler {
   def syncUsers(ids: UserId*): Future[SyncResult]
+  def syncQualifiedUsers(qIds: Set[QualifiedId]): Future[SyncResult]
   def syncSearchResults(ids: UserId*): Future[SyncResult]
   def syncQualifiedSearchResults(qIds: Set[QualifiedId]): Future[SyncResult]
   def syncSelfUser(): Future[SyncResult]
@@ -58,13 +59,18 @@ class UsersSyncHandlerImpl(userService:      UserService,
   import UsersSyncHandler._
   import Threading.Implicits.Background
 
+  private def syncUsers(response: Either[ErrorResponse, Seq[UserInfo]]) = response match {
+    case Right(users) =>
+      userService.updateSyncedUsers(users).map(_ => SyncResult.Success)
+    case Left(error) =>
+      Future.successful(SyncResult(error))
+  }
+
   override def syncUsers(ids: UserId*): Future[SyncResult] =
-    usersClient.loadUsers(ids).future.flatMap {
-      case Right(users) =>
-        userService.updateSyncedUsers(users).map(_ => SyncResult.Success)
-      case Left(error) =>
-        Future.successful(SyncResult(error))
-    }
+    usersClient.loadUsers(ids).future.flatMap(syncUsers)
+
+  override def syncQualifiedUsers(qIds: Set[QualifiedId]): Future[SyncResult] =
+    usersClient.loadQualifiedUsers(qIds).future.flatMap(syncUsers)
 
   private def syncSearchResults(response: Either[ErrorResponse, Seq[UserInfo]]) = response match {
     case Right(users) if teamId.isEmpty =>
@@ -129,7 +135,7 @@ class UsersSyncHandlerImpl(userService:      UserService,
     val gm = GenericMessage(Uid(), GenericContent.AvailabilityStatus(availability))
     for {
       Some(self)     <- userService.getSelfUser
-      users          <- usersStorage.list()
+      users          <- usersStorage.values
       (team, others) = users.filterNot(u => u.deleted || u.isWireBot).partition(_.isInTeam(self.teamId))
       recipients     = (List(self.id) ++
                         team.filter(_.id != self.id).map(_.id).toList.sorted ++

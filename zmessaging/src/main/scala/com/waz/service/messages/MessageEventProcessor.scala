@@ -66,7 +66,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     verbose(l"processEvents: ${conv.id} isGroup:$isGroup ${events.map(_.from)}")
 
     val toProcess = events.filter {
-      case GenericMessageEvent(_, _, _, msg) if msg.isBroadcastMessage => false
+      case GenericMessageEvent(_, _, _, _, _, msg) if msg.isBroadcastMessage => false
       case e => conv.cleared.forall(_.isBefore(e.time))
     }
 
@@ -100,31 +100,31 @@ class MessageEventProcessor(selfUserId:           UserId,
                             acc:           List[RichMessage]): RichMessage = {
     lazy val id = MessageId()
     event match {
-      case ConnectRequestEvent(_, time, from, text, recipient, name, email) =>
+      case ConnectRequestEvent(_, _, time, from, _, text, recipient, name, email) =>
         RichMessage(MessageData(id, conv.id, CONNECT_REQUEST, from, content = MessageData.textContent(text), recipient = Some(recipient), email = email, name = Some(name), time = time, localTime = event.localTime))
-      case RenameConversationEvent(_, time, from, name) =>
+      case RenameConversationEvent(_, _, time, from, _, name) =>
         RichMessage(MessageData(id, conv.id, RENAME, from, name = Some(name), time = time, localTime = event.localTime))
-      case MessageTimerEvent(_, time, from, duration) =>
+      case MessageTimerEvent(_, _, time, from, _, duration) =>
         RichMessage(MessageData(id, conv.id, MESSAGE_TIMER, from, time = time, duration = duration, localTime = event.localTime))
-      case MemberJoinEvent(_, time, from, userIds, users, firstEvent) =>
-        RichMessage(MessageData(id, conv.id, MEMBER_JOIN, from, members = (users.keys ++ userIds).toSet, time = time, localTime = event.localTime, firstMessage = firstEvent))
-      case ConversationReceiptModeEvent(_, time, from, 0) =>
+      case MemberJoinEvent(_, _, time, from, _, userIds, users, firstEvent) =>
+        RichMessage(MessageData(id, conv.id, MEMBER_JOIN, from, members = (users.keys.map(_.id) ++ userIds).toSet, time = time, localTime = event.localTime, firstMessage = firstEvent))
+      case ConversationReceiptModeEvent(_, _, time, from, _, 0) =>
         RichMessage(MessageData(id, conv.id, READ_RECEIPTS_OFF, from, time = time, localTime = event.localTime))
-      case ConversationReceiptModeEvent(_, time, from, receiptMode) if receiptMode > 0 =>
+      case ConversationReceiptModeEvent(_, _, time, from, _, receiptMode) if receiptMode > 0 =>
         RichMessage(MessageData(id, conv.id, READ_RECEIPTS_ON, from, time = time, localTime = event.localTime))
-      case MemberLeaveEvent(_, time, from, userIds, Some(MemberLeaveReason.LegalHoldPolicyConflict)) =>
+      case MemberLeaveEvent(_, _, time, from, _, userIds, Some(MemberLeaveReason.LegalHoldPolicyConflict)) =>
         RichMessage(MessageData(id, conv.id, MEMBER_LEAVE_DUE_TO_LEGAL_HOLD, from, members = userIds.toSet, time = time, localTime = event.localTime))
-      case MemberLeaveEvent(_, time, from, userIds, _) =>
+      case MemberLeaveEvent(_, _, time, from, _, userIds, _) =>
         RichMessage(MessageData(id, conv.id, MEMBER_LEAVE, from, members = userIds.toSet, time = time, localTime = event.localTime))
-      case OtrErrorEvent(_, time, from, IdentityChangedError(_, sender)) =>
+      case OtrErrorEvent(_, _, time, from, _, IdentityChangedError(_, sender)) =>
         RichMessage(MessageData(id, conv.id, OTR_IDENTITY_CHANGED, from, error = Some(ErrorContent(sender, OtrError.ERROR_CODE_IDENTITY_CHANGED)), time = time, localTime = event.localTime))
-      case OtrErrorEvent(_, time, from, DecryptionError(_, code, _, sender)) =>
+      case OtrErrorEvent(_, _, time, from, _, DecryptionError(_, code, _, sender)) =>
         RichMessage(MessageData(id, conv.id, OTR_ERROR, from, error = Some(ErrorContent(sender, code.getOrElse(OtrError.ERROR_CODE_DECRYPTION_OTHER))), time = time, localTime = event.localTime))
-      case OtrErrorEvent(_, time, from, _) =>
+      case OtrErrorEvent(_, _, time, from, _, _) =>
         RichMessage(MessageData(id, conv.id, OTR_ERROR, from, time = time, localTime = event.localTime))
-      case SessionReset(_, time, from, _) =>
+      case SessionReset(_, _, time, from, _, _) =>
         RichMessage(MessageData(id, conv.id, SESSION_RESET, from, time = time, localTime = event.localTime))
-      case GenericMessageEvent(_, time, from, proto) =>
+      case GenericMessageEvent(_, _, time, from, _, proto) =>
         val (uid, msgContent) = proto.unpack
         content(acc, MessageId(uid.str), conv.id, msgContent, from, event.localTime, time, conv.receiptMode.filter(_ => isGroup), downloadAsset, proto)
       case _: CallMessageEvent =>
@@ -344,8 +344,8 @@ class MessageEventProcessor(selfUserId:           UserId,
   private def assetForEvent(event: MessageEvent) = {
     for {
       message <- event match {
-        case GenericMessageEvent(_, _, _, c) => storage.get(MessageId(c.proto.getMessageId))
-        case _                               => Future.successful(None)
+        case GenericMessageEvent(_, _, _, _, _, c) => storage.get(MessageId(c.proto.getMessageId))
+        case _                                     => Future.successful(None)
       }
       asset <- message.flatMap(_.assetId) match {
         case Some(dId: DownloadAssetId) => downloadAssetStorage.find(dId)
@@ -374,7 +374,7 @@ class MessageEventProcessor(selfUserId:           UserId,
   private def applyRecalls(convId: ConvId, toProcess: Seq[MessageEvent]) = {
     object Recall {
       def unapply(event: MessageEvent): Option[(MessageId, UserId, MessageId, RemoteInstant)] = event match {
-        case GenericMessageEvent(_, time, from, msg) =>
+        case GenericMessageEvent(_, _, time, from, _, msg) =>
           msg.unpack match {
             case (id, MsgRecall(proto)) => Some((MessageId(proto.getMessageId), from, MessageId(id.str), time))
             case _ => None
@@ -396,7 +396,7 @@ class MessageEventProcessor(selfUserId:           UserId,
   private def applyEdits(convId: ConvId, toProcess: Seq[MessageEvent]) = {
     object Edit {
       def unapply(event: MessageEvent): Option[(UserId, RemoteInstant, GenericMessage)] = event match {
-        case GenericMessageEvent(_, time, from, msg) =>
+        case GenericMessageEvent(_, _, time, from, _, msg) =>
           msg.unpackContent match {
             case edit: MsgEdit => edit.unpack.map(_ => (from, time, msg))
             case _ => None

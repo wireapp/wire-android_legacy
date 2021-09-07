@@ -23,7 +23,7 @@ import com.waz.content.GlobalPreferences.SkipTerminatingState
 import com.waz.content.{MembersStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.otr.ClientId
+import com.waz.model.otr.{ClientId, OtrClientIdMap}
 import com.waz.model.{LocalInstant, UserId, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.AvsClosedReason.{AnsweredElsewhere, Normal, StillOngoing}
@@ -1078,10 +1078,11 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
 
     scenario("Messages are targeted if target recipients are specified") {
-      val expectedTargetRecipients = TargetRecipients.SpecificClients(Map(otherUser.userId -> Set(otherUser.clientId)))
+      val expectedTargetRecipients =
+        TargetRecipients.SpecificClients(OtrClientIdMap.from(otherUser.userId -> Set(otherUser.clientId)))
 
       (otrSyncHandler.postOtrMessage _)
-        .expects(groupConv.id, *, expectedTargetRecipients, *, *, *)
+        .expects(groupConv.id, *, *, expectedTargetRecipients, *, *)
         .once()
         .returning(Future.successful(Right(RemoteInstant(Instant.now(clock)))))
 
@@ -1094,7 +1095,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     scenario("Messages are not targeted if no target recipients are specified") {
       (otrSyncHandler.postOtrMessage _)
-        .expects(groupConv.id, *, TargetRecipients.ConversationParticipants, *, *, *)
+        .expects(groupConv.id, *, *, TargetRecipients.ConversationParticipants, *, *)
         .once()
         .returning(Future.successful(Right(RemoteInstant(Instant.now(clock)))))
 

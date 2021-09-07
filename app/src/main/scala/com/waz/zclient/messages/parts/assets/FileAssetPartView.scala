@@ -25,13 +25,17 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, TextView}
 import com.waz.service.assets.{AssetStatus, UploadAssetStatus}
-import com.waz.threading.Threading
+import com.waz.utils.returning
 import com.waz.zclient.R
+import com.waz.zclient.log.LogUI._
+import com.waz.zclient.messages.parts.assets.AssetPart.AssetPartViewState
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.messages.parts.assets.DeliveryState._
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.{RichView, StyleKitMethods}
+import com.waz.threading.Threading._
+import com.waz.zclient.paintcode.GenericStyleKitView
 
 class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with ActionableAssetPart with FileLayoutAssetPart with HighlightViewPart { self =>
@@ -44,10 +48,54 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   private val fileNameView: TextView = findById(R.id.file_name)
   private val fileInfoView: TextView = findById(R.id.file_info)
 
-  asset.map(_.name).on(Threading.Ui)(fileNameView.setText)
-  assetStatus.map(_._1).map(_ == AssetStatus.Done)
+  private val content: View = findById(R.id.content)
+  private val obfuscationContainer: View = findById(R.id.obfuscation_container)
+  private val restrictionContainer: View = findById(R.id.restriction_container)
+  private val restrictedFileNameTextView: TextView = findById(R.id.restricted_file_name)
+
+  returning(findById[GenericStyleKitView](R.id.restricted_file_icon)) { view =>
+    view.setOnDraw(StyleKitMethods().drawFileBlocked)
+    view.setColor(getStyledColor(R.attr.wirePrimaryTextColor))
+  }
+
+  viewState.onUi {
+    case AssetPartViewState.Restricted =>
+      restrictionContainer.setVisibility(View.VISIBLE)
+      obfuscationContainer.setVisibility(View.GONE)
+      content.setVisibility(View.GONE)
+
+    case AssetPartViewState.Obfuscated =>
+      restrictionContainer.setVisibility(View.GONE)
+      obfuscationContainer.setVisibility(View.VISIBLE)
+      content.setVisibility(View.GONE)
+
+    case AssetPartViewState.Loading =>
+      restrictionContainer.setVisibility(View.GONE)
+      obfuscationContainer.setVisibility(View.GONE)
+      content.setVisibility(View.GONE)
+
+    case AssetPartViewState.Loaded =>
+      restrictionContainer.setVisibility(View.GONE)
+      obfuscationContainer.setVisibility(View.GONE)
+      content.setVisibility(View.VISIBLE)
+
+    case unknown =>
+      info(l"Unknown AssetPartViewState: $unknown")
+  }
+
+  asset
+    .map(_.name)
+    .onUi { fileName =>
+      fileNameView.setText(fileName)
+      restrictedFileNameTextView.setText(fileName.toUpperCase)
+    }
+
+  assetStatus
+    .map(_._1)
+    .map(_ == AssetStatus.Done)
     .map { case true => View.VISIBLE; case false => View.GONE }
-    .on(Threading.Ui)(downloadedIndicator.setVisibility)
+    .onUi(downloadedIndicator.setVisibility)
+
 
 
   val sizeAndExt = asset.map { asset =>
@@ -73,22 +121,21 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
       }
   }
 
-  text.on(Threading.Ui)(fileInfoView.setText)
+  text.onUi(fileInfoView.setText)
 
   assetActionButton.onClick {
     for {
-      s <- assetStatus.map(_._1).currentValue
-      a <- asset.currentValue
-      m <- message.currentValue
+      s     <- assetStatus.map(_._1).currentValue
+      a     <- asset.currentValue
+      m     <- message.currentValue
+      state <- viewState.currentValue
     } yield s match {
-      case AssetStatus.Done =>
+      case AssetStatus.Done if (state != AssetPartViewState.Restricted) =>
         controller.openFile(a.id)
       case UploadAssetStatus.NotStarted | UploadAssetStatus.InProgress =>
         controller.cancelUpload(a.id, m)
       case _ =>
     }
   }
+
 }
-
-
-

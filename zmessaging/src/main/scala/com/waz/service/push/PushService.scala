@@ -39,8 +39,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
-import com.wire.signals.CancellableFuture.lift
-import com.wire.signals.{CancellableFuture, EventSource, SerialDispatchQueue, Signal, SourceSignal, Serialized}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue, Signal, SourceSignal, Serialized}
 import com.waz.utils.{RichInstant, _}
 import com.waz.znet2.http.ResponseCode
 import org.json.JSONObject
@@ -143,7 +142,7 @@ class PushServiceImpl(selfUserId:           UserId,
                 verbose(l"Ignoring duplicate message")
                 notificationStorage.remove(row.index)
               case Left(error) =>
-                val e = OtrErrorEvent(otrEvent.convId, otrEvent.time, otrEvent.from, error)
+                val e = OtrErrorEvent(otrEvent.convId, otrEvent.convDomain, otrEvent.time, otrEvent.from, otrEvent.fromDomain, error)
                 verbose(l"Got error when decrypting: $e")
                 tracking.msgDecryptionFailed(otrEvent.convId, this.selfUserId)
                 notificationStorage.writeError(row.index, e)
@@ -266,12 +265,12 @@ class PushServiceImpl(selfUserId:           UserId,
           //OR on a websocket state change
           val retry = Promise[Unit]()
 
-          network.networkMode.onChanged.filter(!NetworkOff.contains(_)).next.map(_ => retry.trySuccess({}))
+          network.isOnline.onTrue.map(_ => retry.trySuccess({}))
           wsPushService.connected.onChanged.next.map(_ => retry.trySuccess({}))
 
           for {
-            _ <- CancellableFuture.delay(syncHistoryBackoff.delay(attempts))
-            _ <- lift(network.networkMode.filter(!NetworkOff.contains(_)).head)
+            _ <- CancellableFuture.delay(syncHistoryBackoff.delay(attempts)).future
+            _ <- network.isOnline.onTrue
           } yield retry.trySuccess({})
 
           retry.future.flatMap { _ => load(lastId, firstSync, attempts + 1) }
@@ -302,8 +301,6 @@ class PushServiceImpl(selfUserId:           UserId,
 }
 
 object PushService {
-  val NetworkOff = Set(UNKNOWN, OFFLINE)
-
   //These are the most important event types that generate push notifications
   val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "conversation.member-join")
 

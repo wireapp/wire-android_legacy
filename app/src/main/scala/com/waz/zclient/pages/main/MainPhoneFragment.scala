@@ -427,7 +427,7 @@ class MainPhoneFragment extends FragmentHelper
         case CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION =>
           if (error.users.size == 1)
             usersController.user(error.users.head).head
-              .map(getString(R.string.in_app_notification__sync_error__add_user__body, _))
+              .map(user => getString(R.string.in_app_notification__sync_error__add_user__body, user.name.str))
           else
             Future.successful(getString(R.string.in_app_notification__sync_error__add_multiple_user__body))
         case CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER =>

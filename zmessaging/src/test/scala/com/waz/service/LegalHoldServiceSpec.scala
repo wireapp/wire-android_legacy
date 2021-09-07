@@ -41,6 +41,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   private val cryptoSessionService = mock[CryptoSessionService]
   private val sync = mock[SyncServiceHandle]
   private val messagesService = mock[MessagesService]
+  private val userService = mock[UserService]
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -68,7 +69,8 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       membersStorage,
       cryptoSessionService,
       sync,
-      messagesService
+      messagesService,
+      userService
     )
   }
 
@@ -350,7 +352,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline = createEventPipeline()
       userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
-      (sync.syncClients(_: UserId))
+      (userService.syncClients(_: UserId))
         .expects(*)
         .anyNumberOfTimes()
         .returning(Future.successful(SyncId("syncId")))
@@ -379,7 +381,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline = createEventPipeline()
       userPrefs.setValue(UserPreferences.LegalHoldRequest, Some(legalHoldRequest))
 
-      (sync.syncClients(_: UserId))
+      (userService.syncClients(_: UserId))
         .expects(*)
         .anyNumberOfTimes()
         .returning(Future.successful(SyncId("syncId")))
@@ -397,7 +399,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline = createEventPipeline()
 
       // Expectation
-      (sync.syncClients(_: UserId))
+      (userService.syncClients(_: UserId))
           .expects(otherUserId)
           .once()
           .returning(Future.successful(SyncId("syncId")))
@@ -412,7 +414,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val pipeline = createEventPipeline()
 
       // Expectation
-      (sync.syncClients(_: UserId))
+      (userService.syncClients(_: UserId))
         .expects(otherUserId)
         .once()
         .returning(Future.successful(SyncId("syncId")))
@@ -478,14 +480,14 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
       // Delete client.
       (clientsService.removeClients _ )
-        .expects(selfUserId, Seq(client.id))
+        .expects(selfUserId, Set(client.id))
         .once()
         // We don't care about the return type.
         .returning(Future.successful(None))
 
       // Delete session.
       (cryptoSessionService.deleteSession _)
-        .expects(SessionId(selfUserId, client.id))
+        .expects(SessionId(selfUserId, None, client.id))
         .once()
         .returning(Future.successful({}))
 
@@ -517,7 +519,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
       // Creating the crypto session.
       (cryptoSessionService.getOrCreateSession _)
-        .expects(SessionId(selfUserId, client.id), legalHoldRequest.lastPreKey)
+        .expects(SessionId(selfUserId, None, client.id), legalHoldRequest.lastPreKey)
         .once()
         // To make testing simpler, just return none since
         // we don't actually need to use the crypto session.
@@ -816,8 +818,10 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
                     time: RemoteInstant = RemoteInstant(Instant.now())): GenericMessageEvent =
       GenericMessageEvent(
         convId,
+        None,
         time,
         UserId("senderId"),
+        None,
         message
       )
 

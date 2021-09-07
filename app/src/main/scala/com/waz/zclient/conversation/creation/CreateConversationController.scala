@@ -88,7 +88,7 @@ class CreateConversationController(implicit inj: Injector)
       shouldFullConv <- inject[GlobalPreferences].preference(ShouldCreateFullConversation).apply()
       userIds        <-
         if (userIds.isEmpty && integrationIds.isEmpty && shouldFullConv)
-          z.usersStorage.list().map(
+          z.usersStorage.values.map(
             _.filter(u => (u.isConnected || (u.teamId.isDefined && u.teamId == z.teamId)) && u.id != z.selfUserId)
               .map(_.id).toSet
               .take(ConversationController.MaxParticipants - 1)
@@ -99,20 +99,17 @@ class CreateConversationController(implicit inj: Injector)
       _              =  verbose(l"creating conv with  ${userIds.size} users, ${integrationIds.size} bots, shouldFullConv $shouldFullConv, teamOnly $teamOnly and readReceipts $readReceipts")
       conv           <- conversationController.createGroupConversation(Name(name.trim), userIds, teamOnly, readReceipts)
       _              <- Future.sequence(integrationIds.map { case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId)) })
-      from           <- fromScreen.head
+      _              <- fromScreen.head
     } yield conv.id
 
   def addUsersToConversation(): Future[Unit] = {
     for {
-      z              <- zms.head
       Some(convId)   <- convId.head
-      Some(conv)     <- z.convsStorage.get(convId)
       userIds        <- users.head
+      _              <- if (userIds.nonEmpty) conversationController.addMembers(convId, userIds) else Future.successful({})
       integrationIds <- integrations.head
-      _              <- if (userIds.nonEmpty) conversationController.addMembers(convId, userIds)
-                        else Future.successful({})
       _              <- Future.sequence(integrationIds.map {
-                          case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId))
+                          case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(convId, pId, iId))
                         })
     } yield ()
   }

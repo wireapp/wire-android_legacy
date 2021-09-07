@@ -40,14 +40,14 @@ class LegalHoldSyncHandlerImpl(teamId: Option[TeamId],
     otrSync.postClientDiscoveryMessage(convId).flatMap {
       case Left(errorResponse) =>
         Future.successful(SyncResult.Failure(errorResponse))
-      case Right(clientList) =>
-        val userIds = clientList.keys.toSet
+      case Right(clientsMap) =>
+        val userIds = clientsMap.userIds
 
         for {
-          id1            <- userService.syncIfNeeded(userIds)
-          id2            <- userService.syncClients(userIds)
-          allIds         =  Set(id1, Some(id2)).collect { case Some(id) => id }
-          _              <- syncRequestService.await(allIds)
+          id1    <- userService.syncIfNeeded(userIds)
+          id2    <- userService.syncClients(userIds)
+          allIds =  Set(id1, Some(id2)).collect { case Some(id) => id }
+          _      <- syncRequestService.await(allIds)
         } yield {
           SyncResult.Success
         }

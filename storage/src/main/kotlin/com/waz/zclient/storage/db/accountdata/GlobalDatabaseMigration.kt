@@ -4,6 +4,8 @@ package com.waz.zclient.storage.db.accountdata
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+import com.waz.zclient.storage.db.MigrationUtils
+
 @Suppress("MagicNumber")
 val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(24, 25) {
     override fun migrate(database: SupportSQLiteDatabase) {
@@ -24,9 +26,9 @@ val GLOBAL_DATABASE_MIGRATION_25_26 = object : Migration(25, 26) {
         val originalTableName = "Teams"
         val createTempTable = """
             CREATE TABLE IF NOT EXISTS $tempTableName (
-            _id TEXT PRIMARY KEY NOT NULL, 
-            name TEXT NOT NULL DEFAULT '', 
-            creator TEXT NOT NULL DEFAULT '', 
+            _id TEXT PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL DEFAULT '',
+            creator TEXT NOT NULL DEFAULT '',
             icon TEXT NOT NULL DEFAULT '')
             """.trimIndent()
         executeSimpleMigration(database, originalTableName, tempTableName, createTempTable)
@@ -37,14 +39,14 @@ val GLOBAL_DATABASE_MIGRATION_25_26 = object : Migration(25, 26) {
         val originalTableName = "CacheEntry"
         val createTempTable = """
             CREATE TABLE IF NOT EXISTS $tempTableName (
-            key TEXT PRIMARY KEY NOT NULL, 
-            file TEXT NOT NULL DEFAULT '', 
-            data BLOB, 
-            lastUsed INTEGER NOT NULL DEFAULT 0, 
-            timeout INTEGER NOT NULL DEFAULT 0, 
-            enc_key TEXT, 
-            path TEXT, 
-            mime TEXT NOT NULL DEFAULT '', 
+            key TEXT PRIMARY KEY NOT NULL,
+            file TEXT NOT NULL DEFAULT '',
+            data BLOB,
+            lastUsed INTEGER NOT NULL DEFAULT 0,
+            timeout INTEGER NOT NULL DEFAULT 0,
+            enc_key TEXT,
+            path TEXT,
+            mime TEXT NOT NULL DEFAULT '',
             file_name TEXT,
             length INTEGER)
             """.trimIndent()
@@ -56,10 +58,10 @@ val GLOBAL_DATABASE_MIGRATION_25_26 = object : Migration(25, 26) {
         val originalTableName = "ActiveAccounts"
         val createTempTable = """
             CREATE TABLE IF NOT EXISTS $tempTableName (
-            _id TEXT PRIMARY KEY NOT NULL, 
-            team_id TEXT, 
-            cookie TEXT NOT NULL DEFAULT '', 
-            access_token TEXT, 
+            _id TEXT PRIMARY KEY NOT NULL,
+            team_id TEXT,
+            cookie TEXT NOT NULL DEFAULT '',
+            access_token TEXT,
             registered_push TEXT,
             sso_id TEXT DEFAULT NULL)
             """.trimIndent()
@@ -86,5 +88,17 @@ val GLOBAL_DATABASE_MIGRATION_25_26 = object : Migration(25, 26) {
             execSQL(dropOldTable)
             execSQL(renameTableBack)
         }
+    }
+}
+
+@Suppress("MagicNumber")
+val GLOBAL_DATABASE_MIGRATION_26_27 = object : Migration(26, 27) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        MigrationUtils.addColumn(
+            database = database,
+            tableName = "ActiveAccounts",
+            columnName = "domain",
+            columnType = MigrationUtils.ColumnType.TEXT
+        )
     }
 }

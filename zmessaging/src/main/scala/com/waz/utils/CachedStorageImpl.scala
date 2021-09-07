@@ -234,7 +234,8 @@ trait CachedStorage[K, V <: Identifiable[K]] {
 
   def get(key: K): Future[Option[V]]
   def getOrCreate(key: K, creator: => V): Future[V]
-  def list(): Future[Seq[V]]
+  def keySet: Future[Set[K]]
+  def values: Future[Vector[V]]
   def getAll(keys: Traversable[K]): Future[Seq[Option[V]]]
 
   def update(key: K, updater: V => V): Future[Option[(V, V)]]
@@ -245,7 +246,6 @@ trait CachedStorage[K, V <: Identifiable[K]] {
 
   def updateOrCreateAll(updaters: K Map (Option[V] => V)): Future[Set[V]]
   def updateOrCreateAll2(keys: Iterable[K], updater: ((K, Option[V]) => V)): Future[Set[V]]
-
 
   def put(key: K, value: V): Future[V]
   def getRawCached(key: K): Option[V]
@@ -386,7 +386,9 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
     value.orElse(Option(cache.get(key)).flatten).fold(addInternal(key, creator))(Future.successful)
   }
 
-  def list() = db.read { dao.list(_) } // TODO: should we update cache?
+  @inline override def values: Future[Vector[V]] = contents.head.map(_.values.toVector)
+
+  @inline override final def keySet: Future[Set[K]] = contents.head.map(_.keySet)
 
   def getAll(keys: Traversable[K]): Future[Seq[Option[V]]] = if (keys.isEmpty) Future.successful(Nil) else {
     val cachedEntries = keys.flatMap { key => Option(cache.get(key)) map { value => (key, value) } }.toMap
@@ -401,8 +403,8 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
         }
       }(breakOut)
 
-      keys .map { key =>
-        returning(Option(cache.get(key)).orElse(loadedMap.get(key).orElse(cachedEntries.get(key))).getOrElse(None)) { cache.put(key, _) }
+      keys.map { key =>
+        returning(Option(cache.get(key)).orElse(loadedMap.get(key).orElse(cachedEntries.get(key))).flatten) { cache.put(key, _) }
       } (breakOut) : Vector[Option[V]]
     }
   }
@@ -521,7 +523,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
         db(delete(keys)(_)).future.map { _ => tellDeleted(keys.toVector) }
       } .flatten
 
-  def cacheIfNotPresent(key: K, value: V) = cachedOrElse(key, Future {
+  def cacheIfNotPresent(key: K, value: V): Unit = cachedOrElse(key, Future {
     Option(cache.get(key)).getOrElse { returning(Some(value))(cache.put(key, _)) }
   })
 
@@ -533,10 +535,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
       onDeleted.map(_.map(Removed(_)))
     )
 
-    def load = for {
-      values   <- db.read { dao.list(_) }
-      valueMap = values.map { v => v.id -> v }.toMap
-    } yield valueMap
+    def load = db.read(dao.list(_)).map(_.toIdMap)
 
     new AggregatingSignal[Seq[ContentChange[K, V]], Map[K, V]](() => load, changesStream, { (values, changes) =>
       val added = new mutable.HashMap[K, V]

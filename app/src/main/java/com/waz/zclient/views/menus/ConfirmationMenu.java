@@ -344,14 +344,21 @@ public class ConfirmationMenu extends LinearLayout {
         positiveButton.setOnClickListener(onClickListener);
 
         negativeButton = ViewUtils.getView(this, R.id.negative);
-        negativeButton.setText(negativeButtonText);
         negativeButton.setOnClickListener(onClickListener);
+
+        if (negativeButtonText == null || negativeButtonText.isEmpty()) {
+            negativeButton.setVisibility(GONE);
+        } else {
+            negativeButton.setVisibility(VISIBLE);
+            negativeButton.setText(negativeButtonText);
+        }
 
         neutralButton = ViewUtils.getView(this, R.id.neutral);
         neutralButton.setOnClickListener(onClickListener);
 
         buttonsLayout = ViewUtils.getView(this, R.id.confirmation_menu_buttons_layout);
         buttonSeparator = ViewUtils.getView(this, R.id.confirmation_menu_button_separator);
+        buttonSeparator.setVisibility(negativeButton.getVisibility());
 
         cancelButton = ViewUtils.getView(this, R.id.cancel);
         cancelButton.setVisibility(cancelVisible ? VISIBLE : GONE);

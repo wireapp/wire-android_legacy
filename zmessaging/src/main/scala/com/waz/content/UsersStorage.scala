@@ -40,9 +40,10 @@ trait UsersStorage extends CachedStorage[UserId, UserData] {
   def findUsersForService(id: IntegrationId): Future[Set[UserData]]
 }
 
-class UsersStorageImpl(context: Context, storage: ZmsDatabase)
-  extends CachedStorageImpl[UserId, UserData](new TrimmingLruCache(context, Fixed(2000)), storage)(UserDataDao, LogTag("UsersStorage_Cached"))
-    with UsersStorage {
+final class UsersStorageImpl(context: Context, storage: ZmsDatabase)
+  extends CachedStorageImpl[UserId, UserData](
+    new UnlimitedLruCache(), storage)(UserDataDao, LogTag("UsersStorage_Cached")
+  ) with UsersStorage {
   import com.waz.threading.Threading.Implicits.Background
 
   override def listAll(ids: Traversable[UserId]): Future[Vector[UserData]] = getAll(ids).map(_.collect { case Some(x) => x }(breakOut))

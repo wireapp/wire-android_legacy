@@ -176,6 +176,9 @@
     <!-- Calling-->
     <color name="calling_background">@color/graphite_48</color>
     <color name="calling_video_overlay">@color/black_58</color>
+    <color name="calling_pagination_selected_color">#fa72ec</color>
+    <color name="calling_tile_background">@color/graphite</color>
+
 
     <!-- Cursor-->
     <color name="cursor_edit_buttons">@color/graphite</color>

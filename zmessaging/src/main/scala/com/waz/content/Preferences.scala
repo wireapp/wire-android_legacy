@@ -229,7 +229,7 @@ class GlobalPreferences(context: Context, val prefs: SharedPreferences) extends 
     }).asInstanceOf[A]
   }
 
-  override protected def buildPreference[A: PrefCodec](key: PrefKey[A]) =
+  override protected def buildPreference[A: PrefCodec](key: PrefKey[A]): Preference[A] =
     new Preference[A](this, key) {
 
       //No need to update the signal. The SharedPreferences Listener will do this for us.
@@ -277,8 +277,9 @@ class GlobalPreferences(context: Context, val prefs: SharedPreferences) extends 
   * Per-user preference storage in user db.
   */
 class UserPreferences(context: Context, storage: ZmsDatabase)
-  extends CachedStorageImpl[String, KeyValueData](new TrimmingLruCache(context, Fixed(128)), storage)(KeyValueDataDao, LogTag("KeyValueStorage_Cached"))
-    with Preferences {
+  extends CachedStorageImpl[String, KeyValueData](
+    new TrimmingLruCache(context, Fixed(128)), storage)(KeyValueDataDao, LogTag("KeyValueStorage_Cached")
+  ) with Preferences {
 
   override protected implicit val dispatcher: DispatchQueue = Threading.Background
   override protected implicit val logTag: LogTag = LogTag[UserPreferences]
@@ -437,4 +438,16 @@ object UserPreferences {
     PrefKey[Option[LegalHoldStatus]]("legal_hold_disclosure_type", customDefault = None)
 
   lazy val ShouldPostClientCapabilities: PrefKey[Boolean] = PrefKey[Boolean]("should_post_client_capabilities", customDefault = true)
+
+  lazy val FileSharingFeatureEnabled: PrefKey[Boolean] = PrefKey[Boolean]("file_sharing_feature_enabled", customDefault = true)
+  lazy val ShouldInformFileSharingRestriction: PrefKey[Boolean] = PrefKey[Boolean]("should_inform_file_sharing_restriction", customDefault = false)
+
+  lazy val AreSelfDeletingMessagesEnabled: PrefKey[Boolean] = PrefKey[Boolean]("self_deleting_messages_enabled", customDefault = true)
+  lazy val SelfDeletingMessagesEnforcedTimeout: PrefKey[Int] = PrefKey[Int]("self_deleting_messages_enforced_timeout", customDefault = 0)
+  lazy val ShouldInformSelfDeletingMessagesChanged: PrefKey[Boolean] = PrefKey[Boolean]("self_deleting_messages_enforced_changed", customDefault = false)
+
+  lazy val ConferenceCallingFeatureEnabled: PrefKey[Boolean] = PrefKey[Boolean]("conference_calling_feature_enabled", customDefault = false)
+  lazy val ShouldInformPlanUpgradedToEnterprise: PrefKey[Boolean] = PrefKey[Boolean]("should_inform_plan_upgraded_to_enterprise", customDefault = false)
+
+  lazy val ShouldMigrateToFederation: PrefKey[Boolean] = PrefKey[Boolean]("should_migrate_to_federation", customDefault = true)
 }

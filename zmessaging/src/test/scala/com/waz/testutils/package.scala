@@ -29,6 +29,7 @@ import com.waz.utils.{CachedStorageImpl, Cleanup, Managed, returning}
 import org.scalactic.Equality
 import org.scalatest.enablers.Emptiness
 
+import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.util.Random
 
@@ -151,10 +152,9 @@ package object testutils {
     }
   }
 
-
   implicit class RichStorage[K, V <: com.waz.utils.Identifiable[K]](storage: CachedStorageImpl[K, V]) {
-    def deleteAll() = storage.list().flatMap { vs => storage.removeAll(vs.map(_.id)) }
+    def deleteAll(): Future[Unit] = storage.keySet.flatMap(storage.removeAll)
   }
 
-  def randomPhoneNumber = PhoneNumber("+0" + (Random.nextInt(9) + 1).toString + Array.fill(13)(Random.nextInt(10)).mkString)
+  def randomPhoneNumber: PhoneNumber = PhoneNumber("+0" + (Random.nextInt(9) + 1).toString + Array.fill(13)(Random.nextInt(10)).mkString)
 }

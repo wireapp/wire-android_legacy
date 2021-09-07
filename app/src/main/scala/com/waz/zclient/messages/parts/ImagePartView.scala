@@ -27,7 +27,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
-import com.wire.signals.{Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
@@ -37,7 +36,7 @@ import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
-import com.waz.utils.returning
+import com.waz.zclient.messages.parts.assets.AssetPart.AssetPartViewState
 
 class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
@@ -52,34 +51,61 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
 
   private lazy val assets = inject[AssetsController]
 
-  private val imageIcon = findById[View](R.id.image_icon)
-
   private val imageView = findById[ImageView](R.id.image)
+  private val obfuscationContainer = findById[View](R.id.obfuscation_container)
+  private val restrictionContainer = findById[View](R.id.restriction_container)
 
-  val noWifi: SourceSignal[Boolean] = returning(Signal(false)){ _.disableAutowiring() }
+  onClicked.onUi { _ =>
+    viewState.head.foreach { state =>
+      if (state != AssetPartViewState.Restricted) {
+        message.head.map(assets.showSingleImage(_, this))(Threading.Ui)
+      }
+    }(Threading.Ui)
+  }
 
   (for {
-    noW  <- noWifi
-    hide <- hideContent
-  } yield !hide && noW).on(Threading.Ui)(imageIcon.setVisible)
-
-  onClicked.onUi { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
-
-  message.map(_.assetId).onUi { aId =>
+    msg <- message
+    state <- viewState
+  } yield (msg.assetId, state)).onUi { assetIdAndState =>
+    val (aId, state) = assetIdAndState
     verbose(l"message asset id => $aId")
-
-    aId.foreach { a =>
-      WireGlide(getContext)
-        .load(a)
-        .apply(new RequestOptions().fitCenter())
-        .transition(DrawableTransitionOptions.withCrossFade())
-        .into(imageView)
+    
+    if (state != AssetPartViewState.Restricted) {
+      aId.foreach { a =>
+        WireGlide(getContext)
+          .load(a)
+          .apply(new RequestOptions().fitCenter())
+          .transition(DrawableTransitionOptions.withCrossFade())
+          .into(imageView)
+      }
     }
   }
 
-  hideContent.onUi { hide => imageView.setVisible(!hide) }
+  viewState.onUi {
+    case AssetPartViewState.Restricted =>
+      restrictionContainer.setVisible(true)
+      obfuscationContainer.setVisible(false)
+      imageView.setVisible(false)
 
-  override def onInflated(): Unit = {}
+    case AssetPartViewState.Obfuscated =>
+      restrictionContainer.setVisible(false)
+      obfuscationContainer.setVisible(true)
+      imageView.setVisible(false)
+
+    case AssetPartViewState.Loading =>
+      restrictionContainer.setVisible(false)
+      obfuscationContainer.setVisible(false)
+      imageView.setVisible(false)
+
+    case AssetPartViewState.Loaded =>
+      restrictionContainer.setVisible(false)
+      obfuscationContainer.setVisible(false)
+      imageView.setVisible(true)
+
+    case unknown =>
+      info(l"Unknown AssetPartViewState: $unknown")
+  }
+
 }
 
 class WifiWarningPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
@@ -104,10 +130,6 @@ class WifiWarningPartView(context: Context, attrs: AttributeSet, style: Int) ext
     this.setVisible(false) //setVisible(true) is called for all view parts shortly before setting...
   }
 
-  override def onAttachedToWindow(): Unit = {
-    super.onAttachedToWindow()
-    imagePart.foreach(_.noWifi.on(Threading.Ui)(this.setVisible))
-  }
 }
 
 

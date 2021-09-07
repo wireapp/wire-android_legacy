@@ -32,10 +32,12 @@ trait FoldersStorage extends CachedStorage[FolderId, FolderData] {
   def getByType(folderType: Int): Future[Seq[FolderData]]
 }
 
-class FoldersStorageImpl(context: Context, storage: Database)
-  extends CachedStorageImpl[FolderId, FolderData](new TrimmingLruCache(context, Fixed(1024)), storage)(FolderDataDao, LogTag("FolderStorage_Cached"))
-    with FoldersStorage {
-  override def getByType(folderType: Int): Future[Seq[FolderData]] = find(_.folderType == folderType, FolderDataDao.findForType(folderType)(_), identity)
+final class FoldersStorageImpl(context: Context, storage: Database)
+  extends CachedStorageImpl[FolderId, FolderData](
+    new TrimmingLruCache(context, Fixed(1024)), storage)(FolderDataDao, LogTag("FolderStorage_Cached")
+  ) with FoldersStorage {
+  override def getByType(folderType: Int): Future[Seq[FolderData]] =
+    find(_.folderType == folderType, FolderDataDao.findForType(folderType)(_), identity)
 }
 
 trait ConversationFoldersStorage extends CachedStorage[(ConvId, FolderId), ConversationFolderData] {
@@ -45,9 +47,10 @@ trait ConversationFoldersStorage extends CachedStorage[(ConvId, FolderId), Conve
   def put(convId: ConvId, folderId: FolderId): Future[Unit]
 }
 
-class ConversationFoldersStorageImpl(context: Context, storage: Database)
-  extends CachedStorageImpl[(ConvId, FolderId), ConversationFolderData](new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationFolderDataDao, LogTag("ConversationFoldersStorage"))
-    with ConversationFoldersStorage {
+final class ConversationFoldersStorageImpl(context: Context, storage: Database)
+  extends CachedStorageImpl[(ConvId, FolderId), ConversationFolderData](
+    new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationFolderDataDao, LogTag("ConversationFoldersStorage")
+  ) with ConversationFoldersStorage {
   import com.waz.threading.Threading.Implicits.Background
 
   override def findForConv(convId: ConvId): Future[Set[FolderId]] =

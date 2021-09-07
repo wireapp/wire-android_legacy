@@ -22,11 +22,11 @@ import com.waz.model._
 import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.PushService
-import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService}
+import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
-import com.waz.sync.SyncServiceHandle
-import com.waz.testutils.TestGlobalPreferences
+import com.waz.sync.{SyncRequestService, SyncServiceHandle}
+import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -35,11 +35,12 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
 
   val selfUserId = UserId()
   val push =            mock[PushService]
-  val usersStorage =    mock[UsersStorage]
+  val users =           mock[UserService]
   val convsStorage =    mock[ConversationStorage]
   val content =         mock[ConversationsContentUpdater]
   val convsService =    mock[ConversationsService]
   val sync =            mock[SyncServiceHandle]
+  val requests =        mock[SyncRequestService]
   val errors =          mock[ErrorsService]
   val uriHelper =       mock[UriHelper]
   val messages =        mock[MessagesService]
@@ -52,13 +53,12 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
   val properties =      mock[PropertiesService]
   val buttons =         mock[ButtonsStorage]
 
-
-  val prefs = new TestGlobalPreferences()
-
+  val prefs     = new TestGlobalPreferences()
+  val userPrefs = new TestUserPreferences()
   private def getService(teamId: Option[TeamId] = None): ConversationsUiService = {
-    val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs)
-    new ConversationsUiServiceImpl(selfUserId, teamId, assetService, usersStorage, messages, messagesStorage,
-      msgContent, members, content, convsStorage, network, convsService, sync, client,
+    val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs, userPrefs)
+    new ConversationsUiServiceImpl(selfUserId, teamId, assetService, users, messages, messagesStorage,
+      msgContent, members, content, convsStorage, network, convsService, sync, requests, client,
       accounts, tracking, errors, uriHelper, properties)
   }
 

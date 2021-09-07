@@ -2,7 +2,7 @@ package com.waz.sync.handler
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.OtrClientsStorage
-import com.waz.model.otr.{Client, ClientId, UserClients}
+import com.waz.model.otr.{Client, ClientId, OtrClientIdMap, UserClients}
 import com.waz.model.{LegalHoldRequest, RConvId, SyncId, TeamId, UserId}
 import com.waz.service.{LegalHoldService, UserService}
 import com.waz.specs.AndroidFreeSpec
@@ -124,13 +124,13 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       val client1 = Client(ClientId("client1"))
       val client2 = Client(ClientId("client2"))
 
-      val clientList = Map(
-        user1 -> Seq(client1.id),
-        user2 -> Seq(client2.id)
+      val clientList = OtrClientIdMap.from(
+        user1 -> Set(client1.id),
+        user2 -> Set(client2.id)
       )
 
       // Expectations
-      (otrSync.postClientDiscoveryMessage _)
+      (otrSync.postClientDiscoveryMessage(_ : RConvId))
         .expects(convId)
         .once()
         .returning(CancellableFuture.successful(Right(clientList)))
@@ -138,7 +138,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       val syncId1 = SyncId("syncId1")
 
       (userService.syncIfNeeded _)
-        .expects(Set(user1, user2), *)
+        .expects(Set(user1, user2), *, *)
         .once()
         .returning(Future.successful(Some(syncId1)))
 
@@ -173,7 +173,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       val errorResponse = ErrorResponse(400, "", "")
 
       // Expectations
-      (otrSync.postClientDiscoveryMessage _)
+      (otrSync.postClientDiscoveryMessage(_: RConvId))
         .expects(convId)
         .once()
         .returning(CancellableFuture.successful(Left(errorResponse)))

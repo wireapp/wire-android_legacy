@@ -164,7 +164,7 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
 
   private def calculateAccountManagers() =
     (for {
-      ids      <- storage.list().map(_.map(_.id).toSet)
+      ids      <- storage.keySet
       managers <- Future.sequence(ids.map(createAccountManager(_, None, None)))
       _        <- Serialized.future(AccountManagersKey)(Future(accountManagers ! managers.flatten))
      } yield ()).recoverWith {
@@ -190,7 +190,7 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
       user    <- if (account.isDefined) prefs(LoggingInUser).apply().map(_.orElse(initialUser)) else Future.successful(None)
       _       <- if (account.isDefined) prefs(LoggingInUser) := None else Future.successful(())
     } yield account.map { acc =>
-      val newManager = new AccountManager(userId, acc.teamId, global, this, user, isLogin)
+      val newManager = new AccountManager(userId, acc.domain, acc.teamId, global, this, user, isLogin)
       if (isLogin.isDefined) accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
       newManager
     }
@@ -346,12 +346,13 @@ class AccountsServiceImpl(global: GlobalModule, kotlinLogoutEnabled: Boolean = f
     storage.updateOrCreate(
       user.id,
       _.copy(
-        cookie = cookie,
+        cookie      = cookie,
+        domain      = user.domain,
         accessToken = token,
-        password = credentials.flatMap(_.maybePassword),
-        ssoId = user.ssoId
+        password    = credentials.flatMap(_.maybePassword),
+        ssoId       = user.ssoId
       ),
-      AccountData(user.id, user.teamId, cookie, token, password = credentials.flatMap(_.maybePassword), ssoId = user.ssoId)
+      AccountData(user.id, user.domain, user.teamId, cookie, token, password = credentials.flatMap(_.maybePassword), ssoId = user.ssoId)
     ).map(_ => {})
 
   override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]] =

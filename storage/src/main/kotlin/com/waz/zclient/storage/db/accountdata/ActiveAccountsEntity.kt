@@ -10,6 +10,9 @@ data class ActiveAccountsEntity(
     @PrimaryKey
     val id: String,
 
+    @ColumnInfo(name = "domain")
+    val domain: String?,
+
     @ColumnInfo(name = "team_id")
     val teamId: String?,
 

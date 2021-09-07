@@ -67,8 +67,12 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     }.map(_ => folder)
   }
 
-  (foldersStorage.list _).expects().anyNumberOfTimes().onCall { _ =>
-    Future(folders.toList)
+  (foldersStorage.values _).expects().anyNumberOfTimes().onCall { _ =>
+    Future(folders.toVector)
+  }
+
+  (foldersStorage.keySet _).expects().anyNumberOfTimes().onCall { _ =>
+    Future.successful(folders.map(_.id).toSet)
   }
 
   (foldersStorage.optSignal _).expects(*).anyNumberOfTimes().onCall { folderId: FolderId =>

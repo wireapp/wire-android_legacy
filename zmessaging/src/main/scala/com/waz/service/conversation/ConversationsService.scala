@@ -37,6 +37,7 @@ import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
+import com.waz.zms.BuildConfig
 import com.wire.signals.{AggregatingSignal, Signal}
 
 import scala.collection.{breakOut, mutable}
@@ -76,10 +77,15 @@ trait ConversationsService {
   def remoteIds: Future[Set[RConvId]]
   def getGuestroomInfo(key: String, code: String): Future[Either[GuestRoomStateError, GuestRoomInfo]]
   def joinConversation(key: String, code: String): Future[Either[GuestRoomStateError, Option[ConvId]]]
+
+  def onlyFake1To1ConvUsers: Signal[Seq[UserData]]
+
+  def generateTempConversationId(users: Set[UserId]): RConvId
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
                                selfUserId:      UserId,
+                               currentDomain:   Option[String],
                                push:            PushService,
                                users:           UserService,
                                usersStorage:    UsersStorage,
@@ -124,14 +130,29 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       removeTeamMembers <- userPrefs.preference(UserPreferences.RemoveUncontactedTeamMembers).apply()
     } if (removeTeamMembers)
       for {
-        members  <- membersStorage.contents.map(_.keys.map(_._1)).head
-        users    <- usersStorage.contents.map(_.withFilter(!_._2.deleted).map(_._1)).head
-        toRemove =  users.toSet -- members.toSet
+        members  <- membersStorage.keySet
+        users    <- usersStorage.values.map(_.filterNot(_.deleted).map(_.id))
+        toRemove =  users.toSet -- members.map(_._1)
         _        <- if (toRemove.nonEmpty) usersStorage.updateAll2(toRemove, _.copy(deleted = true))
                     else Future.successful(())
         _        <- userPrefs.setValue(UserPreferences.RemoveUncontactedTeamMembers, false)
         _        =  verbose(l"Uncontacted team members removed for the team $teamId")
       } yield ()
+
+  private lazy val shouldMigrateToFederation = userPrefs.preference(UserPreferences.ShouldMigrateToFederation)
+
+  for {
+    shouldMigrate <- if (BuildConfig.FEDERATION_USER_DISCOVERY) shouldMigrateToFederation() else Future.successful(false)
+  } if (shouldMigrate && currentDomain.isDefined) {
+    verbose(l"Migrating conversations and users to federation")
+    for {
+      convIds <- convsStorage.keySet
+      _       <- convsStorage.updateAll2(convIds, { conv => if (conv.domain.isEmpty) conv.copy(domain = currentDomain) else conv })
+      userIds <- usersStorage.keySet
+      _       <- usersStorage.updateAll2(userIds, { user => if (user.domain.isEmpty) user.copy(domain = currentDomain) else user })
+      _       <- shouldMigrateToFederation := false
+    } yield ()
+  }
 
   override val convStateEventProcessingStage: Stage.Atomic = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
     RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))
@@ -142,7 +163,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     // TODO: this is just very basic implementation creating empty message
     // This should be updated to include information about possibly missed changes
     // this message will be shown rarely (when notifications stream skips data)
-    convsStorage.list().flatMap(messages.addHistoryLostMessages(_, selfUserId))
+    convsStorage.values.flatMap(messages.addHistoryLostMessages(_, selfUserId))
   }
 
   errors.onErrorDismissed {
@@ -176,12 +197,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
    * @return
    */
   private def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0, selfRequested: Boolean = false) = ev match {
-    case CreateConversationEvent(_, time, from, data) =>
+    case CreateConversationEvent(_, _, time, from, _, data) =>
       updateConversation(data).flatMap { case (_, created) => Future.traverse(created) { created =>
         messages.addConversationStartMessage(
           created.id,
           from,
-          (data.members.keySet + selfUserId).filter(_ != from),
+          (data.memberIds + selfUserId).filter(_ != from),
           created.name,
           readReceiptsAllowed = created.readReceiptsAllowed,
           time = Some(time)
@@ -194,12 +215,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         case None if retryCount > 3 => successful(())
         case None =>
           ev match {
-            case MemberJoinEvent(_, time, from, ids, us, _) if selfRequested || from != selfUserId =>
+            case MemberJoinEvent(_, convDomain, time, from, _, ids, us, _) if selfRequested || from != selfUserId =>
               // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
-              val membersWithRoles = us ++ ids.map(_ -> ConversationRole.MemberRole).toMap
+              val membersWithRoles = us.map { case (qId, role) => qId.id -> role } ++ ids.map(_ -> ConversationRole.MemberRole).toMap
               // this happens when we are added to group conversation
               for {
-                conv       <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
+                conv       <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time, domain = convDomain))
                 _          <- membersStorage.updateOrCreateAll(conv.id, Map(from -> ConversationRole.AdminRole) ++ membersWithRoles)
                 sId        <- sync.syncConversations(Set(conv.id))
                 _          <- syncReqService.await(sId)
@@ -215,23 +236,23 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   private def processUpdateEvent(conv: ConversationData, ev: ConversationEvent) = ev match {
-    case DeleteConversationEvent(_, time, from) => (for {
+    case DeleteConversationEvent(_, _, time, from, _) => (for {
       _ <- notificationService.displayNotificationForDeletingConversation(from, time, conv)
-      _ <- deleteConversation(conv)
+      _ <- deleteConversation(conv.id)
     } yield ()).recoverWith {
       case e: Exception => error(l"error while processing DeleteConversationEvent", e)
       Future.successful(())
     }
 
-    case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
+    case RenameConversationEvent(_, _, _, _, _, name) => content.updateConversationName(conv.id, name)
 
-    case MemberJoinEvent(_, _, _, ids, us, _) =>
+    case MemberJoinEvent(_, _, _, _, _, ids, us, _) =>
       // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
-      val membersWithRoles = us ++ ids.map(_ -> ConversationRole.MemberRole).toMap
-      val selfAdded = membersWithRoles.keySet.contains(selfUserId)//we were re-added to a group and in the meantime might have missed events
+      val membersWithRoles = us.map { case (qId, role) => qId.id -> role } ++ ids.map(_ -> ConversationRole.MemberRole).toMap
+      val selfAdded = membersWithRoles.keySet.contains(selfUserId) //we were re-added to a group and in the meantime might have missed events
       for {
         convSync   <- if (selfAdded) sync.syncConversations(Set(conv.id)).map(Option(_)) else Future.successful(None)
-        syncId     <- users.syncIfNeeded(membersWithRoles.keySet)
+        syncId     <- users.syncIfNeeded(membersWithRoles.keySet, qIds = us.keySet.filter(_.hasDomain))
         _          <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
         _          <- membersStorage.updateOrCreateAll(conv.id, membersWithRoles)
         _          <- if (selfAdded) content.setConvActive(conv.id, active = true) else successful(None)
@@ -240,7 +261,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _          <- if (selfAdded && conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
       } yield ()
 
-    case MemberLeaveEvent(_, time, from, userIds, reason) =>
+    case MemberLeaveEvent(_, _, time, from, _, userIds, reason) =>
       val userIdSet = userIds.toSet
       for {
         syncId         <- users.syncIfNeeded(userIdSet -- Set(selfUserId))
@@ -255,7 +276,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                             Future.successful(None)
       } yield ()
 
-    case MemberUpdateEvent(_, _, userId, state) =>
+    case MemberUpdateEvent(_, _, _, userId, _, state) =>
       for {
         _      <- content.updateConversationState(conv.id, state)
         _      <- (state.target, state.conversationRole) match {
@@ -266,24 +287,24 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _      <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
       } yield ()
 
-    case ConnectRequestEvent(_, _, from, _, recipient, _, _) =>
+    case ConnectRequestEvent(_, _, _, from, _, _, recipient, _, _) =>
       membersStorage.updateOrCreateAll(conv.id, Map(from -> ConversationRole.AdminRole, recipient -> ConversationRole.AdminRole)).flatMap { added =>
         users.syncIfNeeded(added.map(_.userId))
       }
 
-    case ConversationAccessEvent(_, _, _, access, accessRole) =>
+    case ConversationAccessEvent(_, _, _, _, _, access, accessRole) =>
       content.updateAccessMode(conv.id, access, Some(accessRole))
 
-    case ConversationCodeUpdateEvent(_, _, _, l) =>
+    case ConversationCodeUpdateEvent(_, _, _, _, _, l) =>
       convsStorage.update(conv.id, _.copy(link = Some(l)))
 
-    case ConversationCodeDeleteEvent(_, _, _) =>
+    case ConversationCodeDeleteEvent(_, _, _, _, _) =>
       convsStorage.update(conv.id, _.copy(link = None))
 
-    case ConversationReceiptModeEvent(_, _, _, receiptMode) =>
+    case ConversationReceiptModeEvent(_, _, _, _, _, receiptMode) =>
       content.updateReceiptMode(conv.id, receiptMode = receiptMode)
 
-    case MessageTimerEvent(_, _, _, duration) =>
+    case MessageTimerEvent(_, _, _, _, _, duration) =>
       convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
 
     case _ => successful(())
@@ -319,7 +340,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   private def updateConversation(response: ConversationResponse): Future[(Seq[ConversationData], Seq[ConversationData])] =
     for {
       defRoles <- rolesService.defaultRoles.head
-      roles    <- client.loadConversationRoles(Set(response.id), defRoles)
+      // @todo: for now we have no way to check conversation roles on a federated backend
+      roles    <- if (!response.hasDomain)
+                    client.loadConversationRoles(Set(response.id), defRoles)
+                  else
+                    Future.successful(Map(response.id -> defRoles))
       results  <- updateConversations(Seq(response), roles)
     } yield results
 
@@ -329,14 +354,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     responses.map { resp =>
       val newId =
         if (isOneToOne(resp.convType))
-          resp.members.keys.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str))
+          resp.memberIds.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str))
         else
           ConvId(resp.id.str)
 
       val matching = convsByRId.get(resp.id).orElse {
         convsById.get(newId).orElse {
           if (isOneToOne(resp.convType)) None
-          else convsByRId.get(ConversationsService.generateTempConversationId(resp.members.keySet + selfUserId))
+          else convsByRId.get(generateTempConversationId(resp.memberIds))
         }
       }
 
@@ -350,6 +375,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     returning(prev.getOrElse(ConversationData(id = newLocalId, hidden = isOneToOne(resp.convType) && resp.members.size <= 1))
       .copy(
         remoteId        = resp.id,
+        domain          = resp.domain,
         name            = resp.name.filterNot(_.isEmpty),
         creator         = resp.creator,
         convType        = prev.map(_.convType).filter(oldType => isOneToOne(oldType) && resp.convType != ConversationType.OneToOne).getOrElse(resp.convType),
@@ -382,7 +408,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     for {
       convs         <- content.convsByRemoteId(responses.map(_.id).toSet)
       toUpdate      =  responses.map(c => (c.id, c.members)).flatMap {
-                         case (remoteId, members) => convs.get(remoteId).map(c => c.id -> (members + (c.creator -> ConversationRole.AdminRole)))
+                         case (remoteId, members) =>
+                           val userIdsWithRoles = members.map { case (qId, role) => qId.id -> role }
+                           convs.get(remoteId).map(c => c.id -> (userIdsWithRoles + (c.creator -> ConversationRole.AdminRole)))
                        }.toMap
       activeUsers   <- membersStorage.getActiveUsers2(convs.map(_._2.id).toSet)
       _             <- membersStorage.setAll(toUpdate)
@@ -407,7 +435,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                      })
     } yield ()
 
-  override def remoteIds: Future[Set[RConvId]] = convsStorage.list.map(_.map(_.remoteId).toSet)
+  override def remoteIds: Future[Set[RConvId]] = convsStorage.values.map(_.map(_.remoteId).toSet)
 
   private def deleteMembers(convId: ConvId): Future[Unit] =
     for {
@@ -482,7 +510,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       (convs, created) <- updateConversationData(responses)
       _                <- updateRoles(convs.map(data => data.id -> data.remoteId).toMap, roles)
       _                <- updateMembers(responses)
-      _                <- users.syncIfNeeded(responses.flatMap(_.members.keys).toSet)
+      _                <- users.syncIfNeeded(responses.flatMap(_.memberIds).toSet, qIds = responses.flatMap(_.qualifiedMemberIds).toSet)
     } yield (convs.toSeq, created)
 
   def updateRemoteId(id: ConvId, remoteId: RConvId): Future[Unit] =
@@ -511,7 +539,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   override def deleteConversation(rConvId: RConvId): Future[Unit] = {
     content.convByRemoteId(rConvId) flatMap {
-      case Some(conv) => deleteConversation(conv)
+      case Some(conv) => deleteConversation(conv.id)
       case None =>
         verbose(l"Conversation w/ remote id $rConvId not found. Ignoring deletion.")
         Future.successful(())
@@ -544,9 +572,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     // For those who don't, we create the name from first four members' names.
     else Name(userNames.map(_.str).sorted.mkString(", "))
 
-  private def deleteConversation(convData: ConversationData): Future[Unit] = (for {
-      convMessageIds <- messages.findMessageIds(convData.id)
-      convId         =  convData.id
+  private def deleteConversation(convId: ConvId): Future[Unit] = (for {
+      convMessageIds <- messages.findMessageIds(convId)
       assetIds       <- messages.getAssetIds(convMessageIds)
       _              <- assetService.deleteAll(assetIds)
       _              <- convsStorage.remove(convId)
@@ -555,7 +582,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _              <- receiptsStorage.removeAllForMessages(convMessageIds)
       _              <- checkCurrentConversationDeleted(convId)
       _              <- foldersService.removeConversationFromAll(convId, uploadAllChanges = false)
-      _              <- rolesService.removeByConvId(convData.id)
+      _              <- rolesService.removeByConvId(convId)
     } yield ()).recoverWith {
       case ex: Exception =>
         error(l"error while deleting conversation", ex)
@@ -568,13 +595,25 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       else Future.successful(())
     }
 
-  def onMemberAddFailed(conv: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse): Future[Unit] =
-    for {
-      _ <- err.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, conv, users)).map(_ => ()))
-      _ <- membersStorage.remove(conv, users)
-      _ <- messages.removeLocalMemberJoinMessage(conv, users)
-      _ =  error(l"onMembersAddFailed($conv, $users, $err, $resp)")
+  def onMemberAddFailed(convId: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse): Future[Unit] = {
+    def deleteEmptyConversation(): Future[Unit] = for {
+      Some(conv) <- convsStorage.get(convId)
+      syncId     <- teamId.map(tId => sync.deleteGroupConversation(tId, conv.remoteId)).getOrElse { sync.postConversationMemberLeave(convId, selfUserId) }
+      _          <- syncReqService.await(syncId)
+      // @todo rewrite the errors functionality so that it doesn't depend on data from the storage and the conv can be deleted without waiting
+      _          <- errors.getErrors.filter(_.isEmpty).head
+      _          <- deleteConversation(convId)
     } yield ()
+
+    for {
+      _       <- err.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, convId, users)).map(_ => ()))
+      _       =  error(l"onMembersAddFailed($convId, $users, $err, $resp)")
+      _       <- membersStorage.remove(convId, users)
+      _       <- messages.removeLocalMemberJoinMessage(convId, users)
+      members <- membersStorage.getActiveUsers(convId)
+      _       <- if ((members.toSet - selfUserId).isEmpty) deleteEmptyConversation() else Future.successful(())
+    } yield ()
+  }
 
   def onUpdateRoleFailed(conv: ConvId, user: UserId, newRole: ConversationRole, origRole: ConversationRole, resp: ErrorResponse): Future[Unit] =
     for {
@@ -715,16 +754,32 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         warn(l"joinConversation(key: $key, code: $code) error: $error")
         Future.successful(Left(GeneralError))
     }
+
+  override lazy val onlyFake1To1ConvUsers: Signal[Seq[UserData]] =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      for {
+        convs             <- convsStorage.contents.map(_.values.filter(c => c.convType == ConversationType.Group && c.name.isEmpty))
+        convsWithMembers  <- Signal.sequence(convs.map(c => membersStorage.activeMembers(c.id).map((c, _))).toSeq: _*)
+        acceptedOrBlocked <- users.acceptedOrBlockedUsers.map(_.keySet)
+        userIds           =  convsWithMembers.collect {
+                               case (_, userIds) if userIds.size == 2 && userIds.contains(selfUserId) => userIds - selfUserId
+                             }.flatten.toSet
+        fake1To1UserIds   =  userIds -- acceptedOrBlocked
+        fake1To1Users     <- usersStorage.listSignal(fake1To1UserIds)
+      } yield fake1To1Users
+    } else {
+      Signal.const(Seq.empty[UserData])
+    }
+
+  /**
+   * Generate temp ConversationID to identify conversations which don't have a RConvId yet
+   */
+  override def generateTempConversationId(users: Set[UserId]): RConvId =
+    RConvId((users + selfUserId).toSeq.map(_.toString).sorted.foldLeft("")(_ + _))
 }
 
 object ConversationsService {
   import scala.concurrent.duration._
 
   val RetryBackoff = new ExponentialBackoff(500.millis, 3.seconds)
-
-  /**
-   * Generate temp ConversationID to identify conversations which don't have a RConvId yet
-   */
-  def generateTempConversationId(users: Set[UserId]) =
-    RConvId(users.toSeq.map(_.toString).sorted.foldLeft("")(_ + _))
 }

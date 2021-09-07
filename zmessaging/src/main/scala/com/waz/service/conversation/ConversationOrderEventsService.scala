@@ -48,9 +48,9 @@ class ConversationOrderEventsService(selfUserId: UserId,
       case _: OtrErrorEvent           => true
       case _: ConnectRequestEvent     => true
       case _: OtrMessageEvent         => true
-      case MemberJoinEvent(_, _, _, added, _, _) if added.contains(selfUserId) => true
-      case MemberLeaveEvent(_, _, _, leaving, _) if leaving.contains(selfUserId) => true
-      case GenericMessageEvent(_, _, _, gm: GenericMessage) =>
+      case MemberJoinEvent(_, _, _, _, _, added, _, _) if added.contains(selfUserId) => true
+      case MemberLeaveEvent(_, _, _, _, _, leaving, _) if leaving.contains(selfUserId) => true
+      case GenericMessageEvent(_, _, _, _, _, gm: GenericMessage) =>
         gm.unpackContent match {
           case _: Asset               => true
           case _: Calling             => true
@@ -77,7 +77,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
 
   private[service] def shouldUnarchive(event: ConversationEvent): Boolean =
     event match {
-      case MemberLeaveEvent(_, _, _, leaving, _) if leaving contains selfUserId => false
+      case MemberLeaveEvent(_, _, _, _, _, leaving, _) if leaving contains selfUserId => false
       case _ => shouldChangeOrder(event)
     }
 
@@ -146,7 +146,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
 
   private def unarchiveMuted(events: Seq[ConversationEvent]): Boolean =
     events.exists {
-      case GenericMessageEvent(_, _, _, gm: GenericMessage) =>
+      case GenericMessageEvent(_, _, _, _, _, gm: GenericMessage) =>
         gm.unpackContent match {
           case _: Knock => true
           case _ => false
@@ -155,7 +155,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
     }
 
   private def hasMentions(events: Seq[ConversationEvent]): Boolean = events.exists {
-    case GenericMessageEvent(_, _, _, gm: GenericMessage) =>
+    case GenericMessageEvent(_, _, _, _, _, gm: GenericMessage) =>
       gm.unpackContent match {
         case text: Text =>
           val (_, mentions, _, _, _) = text.unpack

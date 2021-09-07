@@ -24,6 +24,7 @@ import com.waz.model._
 import com.waz.service.messages.ReactionsService
 import com.waz.sync.SyncResult
 import com.waz.sync.otr.OtrSyncHandler
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
@@ -40,13 +41,19 @@ class ReactionsSyncHandler(service: ReactionsService,
       result          <- postMessage(id, message, liking)
     } yield result
 
-  private def postMessage(convId: ConvId, message: GenericMessage, liking: Liking): Future[SyncResult] =
-    otrSync.postOtrMessage(convId, message, isHidden = true).flatMap {
+  private def postMessage(convId: ConvId, message: GenericMessage, liking: Liking): Future[SyncResult] = {
+    val postMsg = if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      otrSync.postQualifiedOtrMessage(convId, message, isHidden = false)
+    } else {
+      otrSync.postOtrMessage(convId, message, isHidden = false)
+    }
+    postMsg.flatMap {
       case Right(time) =>
         service
         .updateLocalReaction(liking, time)
         .map(_ => SyncResult.Success)
       case Left(error) =>
         Future.successful(SyncResult(error))
+  }
   }
 }

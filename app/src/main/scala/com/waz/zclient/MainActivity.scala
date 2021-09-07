@@ -39,7 +39,7 @@ import com.waz.zclient.Intents.{RichIntent, _}
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
-import com.waz.zclient.common.controllers.{BrowserController, SharingController, UserAccountsController}
+import com.waz.zclient.common.controllers.{BrowserController, FeatureConfigsController, SharingController, UserAccountsController}
 import com.waz.zclient.common.fragments.ConnectivityFragment
 import com.waz.zclient.controllers.navigation.{NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -91,6 +91,7 @@ class MainActivity extends BaseActivity
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
   private lazy val usersController        = inject[UsersController]
+  private lazy val featureConfigsController = inject[FeatureConfigsController]
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
@@ -235,6 +236,50 @@ class MainActivity extends BaseActivity
       }
     }
 
+    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformFileSharingRestriction).signal).onUi { shouldInform =>
+      if (shouldInform) {
+        userPreferences.head.flatMap(_(UserPreferences.FileSharingFeatureEnabled).apply()).foreach { isEnabled =>
+          showFileSharingRestrictionInfoDialog(isEnabled, { _ =>
+            userPreferences.head.foreach { prefs =>
+              prefs(UserPreferences.ShouldInformFileSharingRestriction) := false
+            }
+          })
+        }
+      }
+    }
+    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformSelfDeletingMessagesChanged).signal).onUi { shouldInform =>
+      if (!shouldInform) {}
+      else for {
+        prefs                     <- userPreferences.head
+        isFeatureEnabled          <- prefs.preference(AreSelfDeletingMessagesEnabled).apply()
+        enforcedTimeoutInSeconds  <- prefs.preference(SelfDeletingMessagesEnforcedTimeout).apply()
+      } yield {
+        showSelfDeletingMessagesConfigsChangeInfoDialog(isFeatureEnabled, enforcedTimeoutInSeconds) { _ =>
+          userPreferences.head.foreach { prefs =>
+            prefs(UserPreferences.ShouldInformSelfDeletingMessagesChanged) := false
+          }
+        }
+      }
+    }
+
+    if(BuildConfig.CONFERENCE_CALLING_RESTRICTION)
+      observeTeamUpgrade()
+
+    featureConfigsController.startUpdatingFlagsWhenEnteringForeground()
+  }
+
+  private def observeTeamUpgrade(): Unit = {
+    userPreferences.flatMap(_.preference(UserPreferences.ShouldInformPlanUpgradedToEnterprise).signal).onUi { shouldInform =>
+      if (shouldInform) {
+        accentColorController.accentColor.head.foreach { accentColor =>
+          showPlanUpgradedInfoDialog(accentColor) { _ =>
+            userPreferences.head.foreach { prefs =>
+              prefs(UserPreferences.ShouldInformPlanUpgradedToEnterprise) := false
+            }
+          }
+        }
+      }
+    }
   }
 
   private def initTracking: Future[Unit] =
@@ -279,7 +324,6 @@ class MainActivity extends BaseActivity
     super.onResume()
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
   }
-
 
   override def onDestroy(): Unit = {
     verbose(l"[BE]: onDestroy")

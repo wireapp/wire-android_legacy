@@ -21,15 +21,17 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
-import android.view.HapticFeedbackConstants
+import android.view.{HapticFeedbackConstants, View}
 import android.view.View.OnClickListener
 import android.webkit.URLUtil
-import android.widget.{ImageView, TextView}
+import android.widget.{FrameLayout, ImageView, TextView}
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
+import com.waz.content.UserPreferences
+import com.waz.content.UserPreferences.FileSharingFeatureEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -53,6 +55,9 @@ trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedL
   protected lazy val civZms = inject[Signal[ZMessaging]]
   protected lazy val messageActions = inject[MessageActionsController]
   protected lazy val collectionController = inject[CollectionController]
+
+  private lazy val userPrefs = inject[Signal[UserPreferences]]
+  lazy val restricted = userPrefs.flatMap(_.preference(FileSharingFeatureEnabled).signal.map(isAllowed => !isAllowed))
 
   val messageData: SourceSignal[MessageData] = Signal()
 
@@ -105,40 +110,51 @@ trait CollectionNormalItemView extends CollectionItemView with ClickableViewPart
   }
 }
 
-class CollectionImageView(context: Context) extends ImageView(context) with CollectionItemView with DerivedLogTag {
-  setId(R.id.collection_image_view)
+class CollectionImageView(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
+    with CollectionItemView
+    with DerivedLogTag {
+
+  import CollectionImageView._
+
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.Image
-  messageAndLikesResolver.onUi(set(_, None))
+
+  private lazy val imageView = findById[ImageView](R.id.image)
+  private lazy val ephemeralIcon = findById[View](R.id.ephemeral_icon)
+  private lazy val restrictedIcon = findById[View](R.id.restricted_icon)
 
   val onClicked = EventStream[Unit]()
 
-  object CollectionImageView {
-    val CornerRadius = 10
-  }
-  import CollectionImageView._
+  private lazy val target = new CustomImageViewTarget(imageView)
 
-  val padding = getResources.getDimensionPixelSize(R.dimen.collections__image_padding)
-  setCropToPadding(true)
-  setPadding(padding, padding, padding, padding)
+  messageAndLikesResolver.onUi(set(_, None))
 
-  private val target = new CustomImageViewTarget(this)
-
-  Signal.zip(messageData.map(_.assetId), ephemeralColorDrawable).onUi {
-    case (Some(id: AssetId), None) =>
+  Signal.zip(messageData.map(_.assetId), ephemeralColorDrawable, restricted).onUi {
+    case (Some(id: AssetId), None, false) =>
       verbose(l"Set image asset $id")
+      ephemeralIcon.setVisible(false)
+      restrictedIcon.setVisible(false)
       WireGlide(context)
         .load(id)
         .apply(new RequestOptions().transform(new CenterCrop(), new RoundedCorners(CornerRadius)).placeholder(new ColorDrawable(Color.TRANSPARENT)))
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(target)
-    case (_, Some(ephemeralDrawable)) =>
+    case (_, _, true) =>
+      ephemeralIcon.setVisible(false)
+      restrictedIcon.setVisible(true)
+      WireGlide(context).clear(imageView)
+    case (_, Some(ephemeralDrawable), _) =>
       verbose(l"Set ephemeral drawable")
-      WireGlide(context).clear(this)
-      setImageDrawable(ephemeralDrawable)
+      ephemeralIcon.setVisible(true)
+      restrictedIcon.setVisible(false)
+      WireGlide(context).clear(imageView)
+      imageView.setImageDrawable(ephemeralDrawable)
     case _ =>
       verbose(l"Set nothing")
-
+      WireGlide(context).clear(imageView)
   }
 
   this.onClick {
@@ -146,17 +162,24 @@ class CollectionImageView(context: Context) extends ImageView(context) with Coll
     for {
       false <- expired.head
       md <- messageData.head
+      isRestricted <- restricted.head
     } {
-      collectionController.clickedMessage ! md
-      onClicked ! (())
+      if (!isRestricted) {
+        collectionController.clickedMessage ! md
+        onClicked ! (())
+      }
     }
   }
 
   def setMessageData(messageData: MessageData, width: Int, color: Int) = {
-    this.setWidth(width)
-    this.setHeight(width)
+    imageView.setWidth(width)
+    imageView.setHeight(width)
     this.messageData ! messageData
   }
+}
+
+object CollectionImageView {
+  val CornerRadius = 10
 }
 
 class CollectionWebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends WebLinkPartView(context, attrs, style) with CollectionNormalItemView {
@@ -178,6 +201,7 @@ class CollectionFileAssetPartView(context: Context, attrs: AttributeSet, style: 
     import Threading.Implicits.Ui
     for {
       false <- expired.head
+      false <- restricted.head
     } assetActionButton.callOnClick()
   }
 

@@ -95,7 +95,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
   def dismissNotifications(forConvs: Option[Set[ConvId]] = None): Future[Unit] = {
     verbose(l"dismissNotifications: $forConvs")
     for {
-      nots <- storage.list().map(_.toSet)
+      nots <- storage.values.map(_.toSet)
       toRemove = forConvs match {
         case None        => nots
         case Some(convs) => nots.filter(n => convs.contains(n.conv))
@@ -116,7 +116,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
     if (events.nonEmpty) {
       for {
         (undoneLikes, likes) <- getReactionChanges(events)
-        currentNotifications <- storage.list().map(_.toSet)
+        currentNotifications <- storage.values.map(_.toSet)
         msgNotifications     <- getMessageNotifications(c, events)
 
         (afterEditsApplied, beforeEditsApplied) = applyEdits(currentNotifications ++ msgNotifications, events)
@@ -134,9 +134,9 @@ class NotificationServiceImpl(selfUserId:      UserId,
 
   override val connectionNotificationEventStage = EventScheduler.Stage[Event]({ (_, events) =>
     val toShow = events.collect {
-      case UserConnectionEvent(_, _, userId, msg, ConnectionStatus.PendingFromOther, time, _) =>
+      case UserConnectionEvent(_, _, _, userId, msg, ConnectionStatus.PendingFromOther, time, _) =>
         NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time)
-      case UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, _) =>
+      case UserConnectionEvent(_, _, _, userId, _, ConnectionStatus.Accepted, time, _) =>
         NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time)
     }
 
@@ -204,8 +204,8 @@ class NotificationServiceImpl(selfUserId:      UserId,
     }
   }
 
-  private def pushNotificationsToUi(): Future[Unit] = storage.list().map {
-    case Nil    => Future.successful(())
+  private def pushNotificationsToUi(): Future[Unit] = storage.values.map {
+    case v if v.isEmpty => Future.successful(())
     case toShow =>
       verbose(l"pushNotificationsToUi, toShow: ${toShow.size}")
       (for {
@@ -307,7 +307,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
   private def getReactionChanges(events: Vector[Event]) = {
     object Reacted {
       def unapply(event: GenericMessageEvent): Option[Liking] = event match {
-        case GenericMessageEvent(_, time, from, gm: GenericMessage) if from != selfUserId =>
+        case GenericMessageEvent(_, _, time, from, _, gm: GenericMessage) if from != selfUserId =>
           gm.unpackContent match {
             case r: Reaction =>
               val (msg, action) = r.unpack

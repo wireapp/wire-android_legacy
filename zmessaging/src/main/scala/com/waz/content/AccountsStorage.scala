@@ -24,4 +24,6 @@ import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
 trait AccountStorage extends CachedStorage[UserId, AccountData]
-class AccountStorageImpl(context: Context, storage: Database) extends CachedStorageImpl[UserId, AccountData](new TrimmingLruCache(context, Fixed(8)), storage)(AccountDataDao) with AccountStorage
+final class AccountStorageImpl(context: Context, storage: Database)
+  extends CachedStorageImpl[UserId, AccountData](new TrimmingLruCache(context, Fixed(8)), storage)(AccountDataDao)
+    with AccountStorage

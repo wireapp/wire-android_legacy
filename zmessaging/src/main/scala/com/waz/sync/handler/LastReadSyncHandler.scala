@@ -25,17 +25,18 @@ import com.waz.service.MetaDataService
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.otr.OtrSyncHandler
-import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
+import com.waz.sync.otr.OtrSyncHandler.{QTargetRecipients, TargetRecipients}
 import com.waz.utils.RichWireInstant
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
-class LastReadSyncHandler(selfUserId: UserId,
-                          convs: ConversationStorage,
-                          metadata: MetaDataService,
-                          msgsSync: MessagesSyncHandler,
-                          otrSync: OtrSyncHandler) extends DerivedLogTag {
-
+class LastReadSyncHandler(selfUserId:    UserId,
+                          currentDomain: Option[String],
+                          convs:         ConversationStorage,
+                          metadata:      MetaDataService,
+                          msgsSync:      MessagesSyncHandler,
+                          otrSync:       OtrSyncHandler) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   def postLastRead(convId: ConvId, time: RemoteInstant): Future[SyncResult] =
@@ -44,9 +45,14 @@ class LastReadSyncHandler(selfUserId: UserId,
         Future.successful(Success)
       case Some(conv) =>
         val msg = GenericMessage(Uid(), LastRead(conv.remoteId, time))
-        otrSync
-          .postOtrMessage(ConvId(selfUserId.str), msg, TargetRecipients.SpecificUsers(Set(selfUserId)), isHidden = true)
-          .map(SyncResult(_))
+        val postMsg =
+          if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+            val qId = currentDomain.map(QualifiedId(selfUserId, _)).getOrElse(QualifiedId(selfUserId))
+            otrSync.postQualifiedOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, QTargetRecipients.SpecificUsers(Set(qId)))
+          } else {
+            otrSync.postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, TargetRecipients.SpecificUsers(Set(selfUserId)))
+          }
+        postMsg.map(SyncResult(_))
       case None =>
         Future.successful(Failure(s"No conversation found for id: $convId"))
     }

@@ -1,7 +1,7 @@
 package com.waz.zclient.participants.fragments
 
 import android.os.Bundle
-import com.waz.model.UserId
+import com.waz.model.{QualifiedId, UserId}
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.R
@@ -31,12 +31,17 @@ class SendConnectRequestFragment extends UntabbedRequestFragment {
 
     override def onLeftActionClicked(): Unit =
       for {
-        conv <- usersCtrl.connectToUser(userToConnectId)
-        _    <- conv.fold(
-                  Future.successful(pickUserCtrl.hideUserProfile())
-                ) (c =>
-                  convCtrl.selectConv(c.id, START_CONVERSATION)
-                )
+        Some(user)  <- userToConnect
+        isFederated <- usersCtrl.isFederated(user)
+        conv        <- (isFederated, user.qualifiedId) match {
+                         case (true, Some(qId)) => convCtrl.createConvWithFederatedUser(qId, false, false).map(Option(_))
+                         case _                 => usersCtrl.connectToUser(user.id)
+                       }
+        _           <- conv.fold(
+                         Future.successful(pickUserCtrl.hideUserProfile())
+                       ) (c =>
+                         convCtrl.selectConv(c.id, START_CONVERSATION)
+                       )
       } yield onBackPressed()
 
     override def onRightActionClicked(): Unit =
@@ -72,6 +77,14 @@ object SendConnectRequestFragment {
     returning(new SendConnectRequestFragment)(fragment =>
       fragment.setArguments(returning(new Bundle) { args =>
         args.putString(ArgumentUserId, userId.str)
+        args.putString(ArgumentUserRequester, userRequester.toString)
+      })
+    )
+
+  def newInstance(qualifiedId: QualifiedId, userRequester: UserRequester): SendConnectRequestFragment =
+    returning(new SendConnectRequestFragment)(fragment =>
+      fragment.setArguments(returning(new Bundle) { args =>
+        args.putString(ArgumentUserId, qualifiedId.id.str)
         args.putString(ArgumentUserRequester, userRequester.toString)
       })
     )

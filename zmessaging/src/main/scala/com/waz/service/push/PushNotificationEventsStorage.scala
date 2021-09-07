@@ -52,10 +52,10 @@ trait PushNotificationEventsStorage extends CachedStorage[EventIndex, PushNotifi
   def getDecryptedRows(limit: Int = 50): Future[IndexedSeq[PushNotificationEvent]]
 }
 
-class PushNotificationEventsStorageImpl(context: Context, storage: Database, clientId: ClientId)
-  extends CachedStorageImpl[EventIndex, PushNotificationEvent](new TrimmingLruCache(context, Fixed(1024*1024)), storage)(PushNotificationEventsDao, LogTag("PushNotificationEvents_Cached"))
-    with PushNotificationEventsStorage
-    with DerivedLogTag {
+final class PushNotificationEventsStorageImpl(context: Context, storage: Database, clientId: ClientId)
+  extends CachedStorageImpl[EventIndex, PushNotificationEvent](
+    new TrimmingLruCache(context, Fixed(1024*1024)), storage)(PushNotificationEventsDao, LogTag("PushNotificationEvents_Cached")
+  ) with PushNotificationEventsStorage with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   override def setAsDecrypted(index: EventIndex): Future[Unit] = {
@@ -100,7 +100,7 @@ class PushNotificationEventsStorageImpl(context: Context, storage: Database, cli
     }.future.map(_ => ())
   }
 
-  def encryptedEvents: Future[Seq[PushNotificationEvent]] = list().map(_.filter(!_.decrypted))
+  def encryptedEvents: Future[Seq[PushNotificationEvent]] = values.map(_.filter(!_.decrypted))
 
   //limit amount of decrypted events we read to avoid overwhelming older phones
   def getDecryptedRows(limit: Int = 50): Future[IndexedSeq[PushNotificationEvent]] = storage.read { implicit db =>
@@ -117,7 +117,7 @@ class PushNotificationEventsStorageImpl(context: Context, storage: Database, cli
   }
 
   private def processStoredEvents(processor: () => Future[Unit]): Future[Unit] =
-    list().map { nots =>
+    values.map { nots =>
       if (nots.nonEmpty) {
         processor()
       }

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2021 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/image_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/wire__padding__8"
+    android:layout_marginBottom="@dimen/wire__padding__8">
+
+    <!-- Image -->
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="match_parent"
+        android:layout_height="88dp"/>
+
+    <!-- Restriction view -->
+
+    <LinearLayout
+        android:id="@+id/restriction_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="@dimen/wire__padding__8">
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:layout_marginEnd="@dimen/wire__padding__8"
+                android:text="@string/glyph__video"
+                android:textColor="?wirePrimaryTextColor"
+                android:textSize="@dimen/wire__icon_button__text_size"/>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textColor="?wirePrimaryTextColor"
+                app:w_font="@string/wire__typeface__medium"
+                android:text="@string/reply_message_type_video"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="?wireSecondaryTextColor"
+            android:textSize="@dimen/wire__text_size__small"
+            android:text="@string/file_sharing_restriction_info_video"/>
+
+    </LinearLayout>
+
+</FrameLayout>
+

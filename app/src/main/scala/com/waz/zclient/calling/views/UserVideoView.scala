@@ -70,7 +70,8 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   protected val participantInfo: Signal[Option[CallParticipantInfo]] =
     for {
       isGroup <- callController.isGroupCall
-      infos   <- if (isGroup) callController.participantsInfo else Signal.const(Vector.empty)
+      infos   <- if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) callController.participantsInfo
+                 else { if (isGroup) callController.participantsInfo else Signal.const(Vector.empty)}
     } yield infos.find(_.id == participant.userId)
 
   protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
@@ -81,11 +82,12 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  participantInfo.onUi {
-    case Some(p) if (p.picture.isDefined) => setProfilePicture(p.picture.get)
-    case _ =>
+  if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
+    Signal.zip(participantInfo, callController.isCallEstablished).onUi {
+      case (Some(p), true) if (p.picture.isDefined) => setProfilePicture(p.picture.get)
+      case _ =>
+    }
   }
-
 
   if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
     callController.controlsVisible.map { !_ }.onUi(participantInfoCardView.setVisible)
@@ -100,7 +102,11 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     case _                          => View.GONE
   }.onUi(participantInfoCardView.setVisibility)
 
-  private lazy val allVideoStates =  callController.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown))
+  def unMutedParticipant(participant: Participant) = participant.copy(muted = false)
+
+  private lazy val allVideoStates = if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+    callController.allVideoReceiveStates.map(_.getOrElse(unMutedParticipant(participant), VideoState.Unknown))
+  else callController.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown))
 
   protected def registerHandler(view: View): Unit = {
     allVideoStates.onUi {
@@ -155,15 +161,18 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   def showActiveSpeakerFrame(color: Int): Unit = {
     val border = new GradientDrawable()
-    border.setColor(getColor(R.color.black))
+    border.setColor(getColor(R.color.calling_tile_background))
     border.setStroke(1, color)
     setBackground(border)
     getChildAt(1).setMargin(3, 3, 3, 3)
   }
 
   def hideActiveSpeakerFrame(): Unit = {
-    setBackgroundColor(getColor(R.color.black))
-    getChildAt(1).setMargin(0, 0, 0, 0)
+   val border = new GradientDrawable()
+    border.setColor(getColor(R.color.calling_tile_background))
+    border.setStroke(1, getColor(R.color.black))
+    setBackground(border)
+    getChildAt(1).setMargin(1, 1, 1, 1)
   }
 
   private def setProfilePicture(picture: Picture): Unit =

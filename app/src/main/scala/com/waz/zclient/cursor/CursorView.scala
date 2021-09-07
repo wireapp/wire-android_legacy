@@ -29,6 +29,8 @@ import android.view._
 import android.view.inputmethod.EditorInfo._
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{EditText, LinearLayout, TextView}
+import com.waz.content.UserPreferences
+import com.waz.content.UserPreferences.FileSharingFeatureEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.UserSearchService
@@ -58,15 +60,19 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
   def this(context: Context) { this(context, null) }
 
-  import CursorView._
   import Threading.Implicits.Ui
 
   private lazy val accentColor     = inject[Signal[AccentColor]]
   private lazy val controller      = inject[CursorController]
   private lazy val replyController = inject[ReplyController]
+  private lazy val userPrefs       = inject[Signal[UserPreferences]]
+
+  private lazy val fileSharingEnabled = userPrefs.flatMap(_.preference(FileSharingFeatureEnabled).signal)
 
   setOrientation(LinearLayout.VERTICAL)
   inflate(R.layout.cursor_view_content)
+
+  loadCursorMenuItems()
 
   val cursorToolbarFrame = returning(findById[CursorToolbarContainer](R.id.cal__cursor)) { f =>
     val left = getDimenPx(R.dimen.cursor_toolbar_padding_horizontal_edge)
@@ -183,9 +189,6 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   }
 
   val cursorHeight = getDimenPx(R.dimen.new_cursor_height)
-
-  mainToolbar.cursorItems ! MainCursorItems
-  secondaryToolbar.cursorItems ! SecondaryCursorItems
 
   cursorEditText.setOnSelectionChangedListener(new OnSelectionChangedListener {
     override def onSelectionChanged(selStart: Int, selEnd: Int): Unit =
@@ -427,11 +430,36 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     super.onLayout(changed, l, t, r, b)
     controller.cursorWidth ! (r - l)
   }
+
+  private def loadCursorMenuItems() = {
+    import CursorMenuItem._
+
+    fileSharingEnabled.map {
+      case true  => Seq(Camera, Mention, Sketch, Gif, AudioMessage, VideoMessage, Ping, File, Location)
+      case false => Seq(Mention, Ping, Location)
+    }.onUi { items =>
+      val (main, secondary) = CursorView.splitCursorItems(items)
+      mainToolbar.cursorItems ! main
+      secondaryToolbar.cursorItems ! secondary
+    }
+  }
 }
 
 object CursorView {
   import CursorMenuItem._
 
-  private val MainCursorItems = Seq(Camera, Mention, Sketch, Gif, AudioMessage, More)
-  private val SecondaryCursorItems = Seq(VideoMessage, Ping, File, Location, Dummy, Less)
+  private val MaxItemsPerContainer = 5
+
+  private def splitCursorItems(items: Seq[CursorMenuItem]): (Seq[CursorMenuItem], Seq[CursorMenuItem]) = {
+    var (main, secondary) = items.splitAt(MaxItemsPerContainer)
+
+    if (secondary.nonEmpty) {
+      main = main :+ More
+      secondary = secondary ++ Seq.fill(MaxItemsPerContainer - secondary.length)(Dummy)
+      secondary = secondary :+ Less
+    }
+
+    (main, secondary)
+  }
+
 }

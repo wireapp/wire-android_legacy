@@ -30,22 +30,26 @@ import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
 import com.waz.testutils.TestUserPreferences
 import com.wire.signals.{CancellableFuture, Signal, SourceSignal}
 import com.waz.threading.Threading
+import com.waz.zms.BuildConfig
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 
 class UserServiceSpec extends AndroidFreeSpec {
 
-  private lazy val me = UserData(name = "me").updateConnectionStatus(ConnectionStatus.Self)
+  private val Domain = "staging.zinfra.io"
+  private val OtherDomain = "chala.wire.link"
+
+  private lazy val me = UserData(name = "me").updateConnectionStatus(ConnectionStatus.Self).copy(domain = Some(Domain))
   private lazy val user1 = UserData("other user 1")
+  private lazy val federatedUser = UserData("federated user").copy(domain = Some(OtherDomain))
   private lazy val meAccount = AccountData(me.id)
 
   private lazy val users = Seq(me, user1, UserData("other user 2"), UserData("some name"),
     UserData("related user 1"), UserData("related user 2"), UserData("other related"),
-    UserData("friend user 1"), UserData("friend user 2"), UserData("some other friend")
+    UserData("friend user 1"), UserData("friend user 2"), UserData("some other friend"),
+    federatedUser
   )
-
-  private val Domain = "staging.zinfra.io"
 
   val accountsService = mock[AccountsService]
   val accountsStrg    = mock[AccountStorage]
@@ -73,7 +77,7 @@ class UserServiceSpec extends AndroidFreeSpec {
     result(userPrefs(UserPreferences.ShouldSyncUsers) := false)
 
     new UserServiceImpl(
-      users.head.id, None, accountsService, accountsStrg, usersStorage, membersStorage,
+      users.head.id, if (BuildConfig.FEDERATION_USER_DISCOVERY) Some(Domain) else None, None, accountsService, accountsStrg, usersStorage, membersStorage,
       userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
       selectedConv, messages
     )
@@ -95,7 +99,7 @@ class UserServiceSpec extends AndroidFreeSpec {
       availability should not equal Availability.Busy
 
       val userService = new UserServiceImpl(
-        users.head.id, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
+        users.head.id, None, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
         userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
         selectedConv, messages
       )
@@ -133,24 +137,27 @@ class UserServiceSpec extends AndroidFreeSpec {
       (usersClient.loadUser _).expects(user1.id).anyNumberOfTimes().returning(
         CancellableFuture.successful(Right(Option(userInfo)))
       )
+      (usersStorage.get _).expects(user1.id).anyNumberOfTimes().returning(Future.successful(Option(user1)))
       (usersStorage.updateOrCreateAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Set(user1)))
 
       val service = getService
       result(service.syncUser(user1.id)) shouldEqual Some(user1)
     }
 
-    scenario("check if a qualified user exists") {
-      val qUser1 = user1.copy(domain = Some(Domain))
-      val qId = qUser1.qualifiedId.get
-      val userInfo = UserInfo(user1.id, domain = Some(Domain))
+    scenario("check if a federated user exists") {
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val qId = federatedUser.qualifiedId.get
+        val userInfo = UserInfo(federatedUser.id, domain = Some(OtherDomain))
 
-      (usersClient.loadQualifiedUser _).expects(qId).anyNumberOfTimes().returning(
-        CancellableFuture.successful(Right(Option(userInfo)))
-      )
-      (usersStorage.updateOrCreateAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Set(qUser1)))
+        (usersClient.loadQualifiedUser _).expects(qId).anyNumberOfTimes().returning(
+          CancellableFuture.successful(Right(Option(userInfo)))
+        )
+        (usersStorage.get _).expects(federatedUser.id).anyNumberOfTimes().returning(Future.successful(Option(federatedUser)))
+        (usersStorage.updateOrCreateAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Set(federatedUser)))
 
-      val service = getService
-      result(service.syncQualifiedUser(qId)) shouldEqual Some(qUser1)
+        val service = getService
+        result(service.syncUser(federatedUser.id)) shouldEqual Some(federatedUser)
+      }
     }
 
     scenario("delete user locally if it the client says it's removed") {
@@ -172,6 +179,7 @@ class UserServiceSpec extends AndroidFreeSpec {
       (usersStorage.updateAll2 _).expects(Set(user1.id), *).atLeastOnce().onCall { (_: Iterable[UserId], updater: UserData => UserData) =>
         Future.successful(Seq((user1, updater(user1))))
       }
+      (usersStorage.get _).expects(user1.id).anyNumberOfTimes().returning(Future.successful(Option(user1)))
 
       val service = getService
       result(service.syncUser(user1.id)) shouldEqual None

@@ -17,23 +17,17 @@
  */
 package com.waz.sync.client
 
-import java.io.ByteArrayInputStream
-
-import com.google.protobuf.ByteString
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.sync.client.OtrClient.{ClientMismatch, MessageResponse}
-import com.waz.sync.otr.OtrSyncHandler.OtrMessage
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
-import com.wire.messages.Otr
-
-import com.waz.log.LogSE._
+import com.waz.model.otr.{ClientMismatch, MessageResponse, OtrMessage, QClientMismatch, QMessageResponse, QualifiedOtrMessage}
 
 trait MessagesClient {
   def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse]
+  def postMessage(conv: RConvQualifiedId, content: QualifiedOtrMessage): ErrorOrResponse[QMessageResponse]
 }
 
 class MessagesClientImpl(implicit
@@ -55,6 +49,16 @@ class MessagesClientImpl(implicit
         case Response(code, _, body) if code == ResponseCode.PreconditionFailed => MessageResponse.Failure(body)
         case Response(_, _, body) => MessageResponse.Success(body)
       }
+
+  override def postMessage(conv: RConvQualifiedId, content: QualifiedOtrMessage): ErrorOrResponse[QMessageResponse] =
+    Request.Post(relativePath = qualifiedConvMessagesPath(conv), body = content)
+      .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.PreconditionFailed)
+      .withResultType[Response[QClientMismatch]]
+      .withErrorType[ErrorResponse]
+      .executeSafe {
+        case Response(code, _, body) if code == ResponseCode.PreconditionFailed => QMessageResponse.Failure(body)
+        case Response(_, _, body) => QMessageResponse.Success(body)
+      }
 }
 
 object MessagesClient extends DerivedLogTag {
@@ -64,18 +68,7 @@ object MessagesClient extends DerivedLogTag {
     if (ignoreMissing) s"$base?ignore_missing=true" else base
   }
 
-  implicit val OtrMessageSerializer: RawBodySerializer[OtrMessage] = RawBodySerializer.create { m =>
-    import scala.collection.JavaConverters._
-    val builder = Otr.NewOtrMessage.newBuilder()
-    builder.setSender(OtrClient.clientId(m.sender))
-    builder.setNativePush(m.nativePush)
-    builder.addAllRecipients(m.recipients.userEntries.toIterable.asJava)
-    m.external.foreach { ext => builder.setBlob(ByteString.copyFrom(ext)) }
-    m.report_missing.foreach { missing => builder.addAllReportMissing(missing.map(OtrClient.userId).asJava) }
-
-    val msg = builder.build()
-    val bytes = msg.toByteArray
-    RawBody(mediaType = Some(MediaType.Protobuf), () => new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
-  }
+  def qualifiedConvMessagesPath(rConvId: RConvQualifiedId): String =
+    s"/conversations/${rConvId.domain}/${rConvId.id.str}/proteus/messages"
 
 }

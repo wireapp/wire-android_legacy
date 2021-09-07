@@ -98,7 +98,8 @@
     <string name="people_picker__search_result_conversations_header_title">Groups</string>
     <string name="people_picker__search_result_team_conversations_header_title">%1$s Groups</string>
     <string name="people_picker__search_result_connections_searched_header_title">Contacts</string>
-    <string name="people_picker__search_result_others_header_title">Connect</string>
+    <string name="people_picker__search_result_others_header_title">Connect with Wire</string>
+    <string name="people_picker__search_result_others_header_federated">Connect with %1$s</string>
     <string name="people_picker__search_result__expander_title">Show all %1$s ↓</string>
     <string name="people_picker__search_people">PEOPLE</string>
     <string name="people_picker__search_services">SERVICES</string>
@@ -308,6 +309,9 @@
     <string name="incoming__controls__ongoing__flip">FLIP</string>
     <string name="ongoing__poor_connection_message">VIDEO STOPPED DUE TO POOR CONNECTION</string>
     <string name="calling__self_preview_unavailable_long">CAMERA NOT AVAILABLE</string>
+    <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
+    <string name="incoming__controls__ongoing__camera">CAMERA</string>
+    <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
 
     <string name="calling__header__joining">Connecting…</string>
     <string name="calling__header__outgoing_subtitle">Ringing…</string>
@@ -512,7 +516,7 @@
     <!-- Options -->
     <string name="pref_options_screen_title">Options</string>
     <string name="pref_options_vbr_title">Variable Bit Rate Encoding</string>
-    <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use Constant Bitrate Encoding.</string>
+    <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use constant bitrate encoding (CBR). This setting only affects 1:1 calls; conference calls always use CBR encoding.</string>
     <string name="pref_options_alerts_category_title">Alerts</string>
     <string name="pref_options_calls_category_title">Calls</string>
     <string name="pref_options_sounds_title">Sounds</string>
@@ -771,6 +775,9 @@
     <string name="sharing__user_not_logged_in__dialog__title">Please log in</string>
     <string name="sharing__user_not_logged_in__dialog__message">Open Wire and log in to share.</string>
     <string name="sharing__user_not_logged_in__dialog__confirm">OK</string>
+    <string name="sharing__file_sharing_prohibited__dialog__title">File sharing restrictions</string>
+    <string name="sharing__file_sharing_prohibited__dialog__message">You can not share this file because this feature is disabled.</string>
+    <string name="sharing__file_sharing_prohibited__dialog__confirm">OK</string>
 
     <!-- Sync errors -->
     <string name="in_app_notification__sync_error__create_group_convo__title">Unable to create</string>
@@ -939,7 +946,6 @@
 
     <!-- Audio bit rate mode -->
     <string name="audio_message_constant_bit_rate">CONSTANT BIT RATE</string>
-    <string name="audio_message_variable_bit_rate">VARIABLE BIT RATE</string>
 
     <!-- no contacts -->
     <string name="no_conversation_in_list__header">No conversations yet</string>
@@ -949,7 +955,7 @@
     <string name="default_deleted_username">Default</string>
 
     <string name="cursor__type_a_message">TYPE A MESSAGE</string>
-    <string name="cursor__ephemeral_message">TIMED MESSAGE</string>
+    <string name="cursor__ephemeral_message">SELF-DELETING MESSAGE</string>
     <string name="tooltip_record">Record Video</string>
     <string name="tooltip_camera">Add Photo</string>
     <string name="tooltip_sketch">Draw A Picture</string>
@@ -1040,7 +1046,7 @@
     <string name="usernames__take_over__keep">KEEP THIS ONE</string>
 
     <string name="ephemeral_message__timeout__off">Off</string>
-    <string name="ephemeral_message__options_header">TIMED MESSAGES</string>
+    <string name="ephemeral_message__options_header">SELF-DELETING MESSAGES</string>
 
     <string name="guests_option_on">On</string>
 
@@ -1078,7 +1084,7 @@
     <string name="ephemeral_message_footer_multiple_units">%1$s and %2$s remaining</string>
     <string name="ephemeral_message_footer_single_unit">%1$s remaining</string>
 
-    <string name="collection_header_pictures">PICTURES</string>
+    <string name="collection_header_images">IMAGES</string>
     <string name="collection_header_files">FILES</string>
     <string name="collection_header_links">LINKS</string>
     <string name="collection_header_today">TODAY</string>
@@ -1264,6 +1270,8 @@
     <string name="loading_services">Loading services…</string>
     <string name="empty_services_list">Services are helpers that can improve your workflow. To enable them, ask your administrator.</string>
     <string name="empty_services_list_admin">Services are helpers that can improve your workflow.</string>
+    <string name="empty_services_content_description">No services found</string>
+    <string name="empty_search_content_description">No users found</string>
 
     <string name="create_group_conversation">Create group</string>
     <string name="create_guest_room_conversation">Create guest room</string>
@@ -1314,9 +1322,9 @@
     <string name="open_this_conversation_to_people_outside_your_team">Open this conversation to services and people outside your team.</string>
     <string name="allow_guests">Allow guests and services</string>
     <string name="guest_options_title">Guests and services</string>
-    <string name="ephemeral_options_title">Timed messages</string>
+    <string name="ephemeral_options_title">Self-deleting messages</string>
     <string name="notifications_options_title">Notifications</string>
-    <string name="ephemeral_explanation_text">Timed messages will be turned on for all the participants in this conversation</string>
+    <string name="ephemeral_explanation_text">Self-deleting messages will be turned on for all the participants in this conversation</string>
     <string name="notifications_explanation_text">You can be notified about everything (including audio and video calls) or only when you are mentioned.</string>
     <string name="show_all_participants">Show all (%1$s)</string>
     <string name="participant_was_removed_from_team">%s was removed from team</string>
@@ -1425,6 +1433,10 @@
     <string name="participant_search_title">PARTICIPANTS</string>
     <string name="generic_service_warning">Services have access to the content of this conversation</string>
     <string name="add_services_button_text">Manage services</string>
+    <string name="empty_search_button_text">Learn more</string>
+
+    <string name="empty_search_same_domain_text">Find people in Wire by name or @username</string>
+    <string name="empty_search_other_domains_text">Find people from another domain by @username@domainname</string>
 
     <string name="mention_symbol" translatable="false">\@</string>
 
@@ -1604,12 +1616,12 @@
 
     <!-- Legal Hold -->
     <string name="legal_hold_info_title">Legal Hold</string>
-    <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and timed messages.\n\nYour conversation partners will be aware of the recording.</string>
-    <string name="legal_hold_conversation_info_message">Legal Hold has been activated for at least one person in this conversation.\n\nAll Messages will be preserved for future access, including deleted, edited, and timed messages.</string>
+    <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.\n\nYour conversation partners will be aware of the recording.</string>
+    <string name="legal_hold_conversation_info_message">Legal Hold has been activated for at least one person in this conversation.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.</string>
     <string name="legal_hold_info_list_title">Legal Hold Subjects</string>
     <string name="legal_hold_request_dialog_title">Legal Hold Requested</string>
-    <string name="legal_hold_request_dialog_message_for_sso">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and timed messages in all conversations.</string>
-    <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and timed messages in all conversations.\nEnter your password to confirm.</string>
+    <string name="legal_hold_request_dialog_message_for_sso">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.</string>
+    <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.\nEnter your password to confirm.</string>
     <string name="legal_hold_request_dialog_positive_button_text">Accept</string>
     <string name="legal_hold_request_dialog_negative_button_text">Not Now</string>
     <string name="legal_hold_request_dialog_wrong_password_error">Wrong password</string>
@@ -1633,5 +1645,38 @@
     <string name="join_conversation_conversation_join_error_title">You could not join the conversation</string>
     <string name="join_conversation_invalid_link_error_message">The conversation link is invalid.</string>
     <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
+
+    <!-- Feature Config Changes -->
+    <string name="feature_config_changed_info_dialog_title">There has been a change in Wire</string>
+
+    <!-- File sharing feature config -->
+    <string name="file_sharing_enabled_info_dialog_message">Sharing and receiving files of any type is now enabled.</string>
+    <string name="file_sharing_disabled_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
+
+    <string name="file_sharing_restriction_info_image">RECEIVING IMAGES RESTRICTED</string>
+    <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS RESTRICTED</string>
+    <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES RESTRICTED</string>
+    <string name="file_sharing_restriction_info_file">RECEIVING FILES RESTRICTED</string>
+    <string name="file_sharing_restriction_info_generic">FILE SHARING RESTRICTED</string>
+
+    <!-- Self Deleting Messages feature config -->
+    <string name="self_deleting_messages_change_info_dialog_message_enabled">Sending of self deleting messages is enabled.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">Sending of self deleting messages is mandatory. The enforced timeout for deletion is %s seconds.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_disabled">Sending of self deleting messages is disabled.</string>
+
+    <!-- Conference Calling Restriction feature config -->
+    <string name="conference_calling_restriction_dialog_title">Upgrade to enterprise</string>
+    <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to  features such as starting conferences and more.
+    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wires pricing</a>]]></string>
+    <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
+    <string name="conference_calling_restriction_dialog_negative_button">CANCEL</string>
+
+    <string name="upgraded_plan_dialog_title">Wire enterprise</string>
+    <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
+        &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
+
+    <string name="feature_not_accessible_dialog_title">Feature not accessible</string>
+    <string name="feature_not_accessible_dialog_description">To use the conferencing feature your team admin needs to upgrade Wire</string>
+
 </resources>
 

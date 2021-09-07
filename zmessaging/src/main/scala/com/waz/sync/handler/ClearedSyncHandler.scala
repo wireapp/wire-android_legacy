@@ -28,6 +28,7 @@ import com.waz.service.conversation.ConversationsContentUpdaterImpl
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.otr.OtrSyncHandler
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
@@ -67,7 +68,13 @@ class ClearedSyncHandler(selfUserId:   UserId,
           Future.successful(Failure(s"No conversation found for id: $convId"))
         case Some(conv) =>
           val msg = GenericMessage(Uid(), Cleared(conv.remoteId, time))
-          otrSync.postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true) flatMap (_.fold(e => Future.successful(SyncResult(e)), { _ =>
+          val postMsg =
+            if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+              otrSync.postQualifiedOtrMessage(ConvId(selfUserId.str), msg, isHidden = true)
+            } else {
+              otrSync.postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true)
+            }
+          postMsg.flatMap(_.fold(e => Future.successful(SyncResult(e)), { _ =>
             if (archive) convSync.postConversationState(conv.id, ConversationState(archived = Some(true), archiveTime = Some(time)))
             else Future.successful(Success)
           }))

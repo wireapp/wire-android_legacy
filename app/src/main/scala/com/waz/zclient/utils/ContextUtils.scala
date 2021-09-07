@@ -23,11 +23,15 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.provider.Settings
 import android.text.format.Formatter
+import android.text.method.LinkMovementMethod
+import android.text.style.{URLSpan, UnderlineSpan}
+import android.text.{Spannable, TextPaint}
 import android.util.{AttributeSet, TypedValue}
-import android.widget.Toast
+import android.widget.{TextView, Toast}
 import androidx.annotation.StyleableRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.text.HtmlCompat
 import com.waz.model.{AccentColor, Availability}
 import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason}
 import com.waz.utils.returning
@@ -176,20 +180,36 @@ object ContextUtils {
     p.future
   }
 
-  /// Dialog with title, message and ok.
-  def showInfoDialog(title: String, msg: String, positiveRes: Int = android.R.string.ok)
-                    (implicit context: Context): Future[Boolean] = {
+  def removeUnderlines(spannable: Spannable): Spannable = {
+    for (u <- spannable.getSpans(0, spannable.length, classOf[URLSpan])) {
+      spannable.setSpan(new UnderlineSpan() {
+        override def updateDrawState(tp: TextPaint): Unit = {
+          tp.setUnderlineText(false)
+        }
+      }, spannable.getSpanStart(u), spannable.getSpanEnd(u), 0)
+    }
+    spannable
+  }
 
+  /// Dialog with title, message and ok.
+  def showInfoDialog(title: String, msg: String, positiveRes: Int = android.R.string.ok, accentColor: AccentColor = null)
+                    (implicit context: Context): Future[Boolean] = {
+    val spannable: Spannable = HtmlCompat.fromHtml(msg, HtmlCompat.FROM_HTML_MODE_LEGACY).asInstanceOf[Spannable]
+    val newSpannable = removeUnderlines(spannable)
     val p = Promise[Boolean]()
-    new AlertDialog.Builder(context)
+    val dialog: AlertDialog = new AlertDialog.Builder(context)
       .setTitle(title)
-      .setMessage(msg)
+      .setMessage(newSpannable)
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
         override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(true))
       })
       .setCancelable(false)
       .create
-      .show()
+    dialog.show()
+    val messageTextView = dialog.findViewById(android.R.id.message).asInstanceOf[TextView]
+    messageTextView.setMovementMethod(LinkMovementMethod.getInstance())
+    if(accentColor != null)
+      messageTextView.setLinkTextColor(accentColor.color)
     p.future
   }
 
@@ -243,10 +263,11 @@ object ContextUtils {
                              color: AccentColor)
                             (implicit context: Context): Future[Option[Boolean]] = {
     val p = Promise[Option[Boolean]]()
-
+    val spannable: Spannable = HtmlCompat.fromHtml(msg, HtmlCompat.FROM_HTML_MODE_LEGACY).asInstanceOf[Spannable]
+    val newSpannable = removeUnderlines(spannable)
     val builder = new AlertDialog.Builder(context)
       .setTitle(title)
-      .setMessage(msg)
+      .setMessage(newSpannable)
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
         override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(Some(true)))
       })
@@ -267,7 +288,9 @@ object ContextUtils {
 
     dialog.show()
     setButtonAccentColors(dialog, color)
-
+    val messageTextView = dialog.findViewById(android.R.id.message).asInstanceOf[TextView]
+    messageTextView.setMovementMethod(LinkMovementMethod.getInstance())
+    messageTextView.setLinkTextColor(color.color)
     p.future
   }
 
@@ -351,6 +374,54 @@ object ContextUtils {
       positiveRes = R.string.call_error_unsupported_version_button_ok,
       negativeRes = R.string.call_error_unsupported_version_button_dismiss,
       color
+    ).foreach(onConfirm)
+  }
+
+  def showFileSharingRestrictionInfoDialog(isEnabled: Boolean, onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    val message = if (isEnabled) R.string.file_sharing_enabled_info_dialog_message
+                  else R.string.file_sharing_disabled_info_dialog_message
+
+    showInfoDialog(
+      title = getString(R.string.feature_config_changed_info_dialog_title),
+      msg = getString(message)
+    ).foreach(onConfirm)
+  }
+
+  def showConferenceCallingUpgradeDialog(color: AccentColor)(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    showConfirmationDialog(
+      title = getString(R.string.conference_calling_restriction_dialog_title),
+      msg = getString(R.string.conference_calling_restriction_dialog_description),
+      positiveRes = R.string.conference_calling_restriction_dialog_positive_button,
+      negativeRes = R.string.conference_calling_restriction_dialog_negative_button,
+      color
+    ).foreach(onConfirm)
+  }
+
+  def showConferenceCallingNotAccessibleDialog()(implicit ex: ExecutionContext, context: Context): Unit = {
+    showInfoDialog(
+      title = getString(R.string.feature_not_accessible_dialog_title),
+      msg = getString(R.string.feature_not_accessible_dialog_description)
+    )
+  }
+
+  def showPlanUpgradedInfoDialog(accentColor: AccentColor)(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    showInfoDialog(
+      title = getString(R.string.upgraded_plan_dialog_title),
+      msg = getString(R.string.upgraded_plan_dialog_description),
+      accentColor = accentColor
+    ).foreach(onConfirm)
+  }
+
+  def showSelfDeletingMessagesConfigsChangeInfoDialog(isEnabled: Boolean, enforcedTimeoutInSeconds: Int)(onConfirm: Boolean => Unit)(implicit ex: ExecutionContext, context: Context): Unit = {
+    val message = (isEnabled, enforcedTimeoutInSeconds) match {
+      case (true, 0 )       => getString(R.string.self_deleting_messages_change_info_dialog_message_enabled)
+      case (true, seconds)  => getString(R.string.self_deleting_messages_change_info_dialog_message_enabled_enforced, seconds.toString)
+      case (false, _)       => getString(R.string.self_deleting_messages_change_info_dialog_message_disabled)
+    }
+
+    showInfoDialog(
+      title = getString(R.string.feature_config_changed_info_dialog_title),
+      msg = message
     ).foreach(onConfirm)
   }
 }

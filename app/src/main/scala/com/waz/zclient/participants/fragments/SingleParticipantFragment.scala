@@ -24,7 +24,7 @@ import android.widget.TextView
 import androidx.annotation.Nullable
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
-import com.waz.model.{UserData, UserField}
+import com.waz.model.{ConversationRole, UserField}
 import com.waz.service.ZMessaging
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
@@ -41,11 +41,11 @@ import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView, StringUtils}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.Instant
-import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
+import com.waz.zclient.messages.UsersController
 import com.wire.signals.ext.ClockSignal
 
 class SingleParticipantFragment extends FragmentHelper {
@@ -56,6 +56,7 @@ class SingleParticipantFragment extends FragmentHelper {
   protected lazy val participantsController = inject[ParticipantsController]
   protected lazy val userAccountsController = inject[UserAccountsController]
   protected lazy val navigationController   = inject[INavigationController]
+  protected lazy val usersController        = inject[UsersController]
 
   protected var subs = Set.empty[Subscription]
 
@@ -130,16 +131,6 @@ class SingleParticipantFragment extends FragmentHelper {
     }
   }
 
-  protected def isFederated(user: UserData): Future[Boolean] =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      userAccountsController.currentUser.head.map {
-        case Some(self) => user.isFederated(self.domain.getOrElse(""))
-        case None => false
-      }
-    } else {
-      Future.successful(false)
-    }
-
   protected def initDetailsView() : Unit = returning( view[RecyclerView](R.id.details_recycler_view) ) { vh =>
     subs += visibleTab.onUi {
       case DetailsTab => vh.foreach(_.setVisible(true))
@@ -155,7 +146,7 @@ class SingleParticipantFragment extends FragmentHelper {
       zms                <- inject[Signal[ZMessaging]].head
       user               <- participantsController.otherParticipant.head
       isGroup            <- participantsController.isGroup.head
-      isFederated        <- this.isFederated(user)
+      isFederated        <- usersController.isFederated(user)
       isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
       isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
       isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
@@ -175,7 +166,7 @@ class SingleParticipantFragment extends FragmentHelper {
           participantsController.otherParticipant.map(_.fields),
           timerText,
           readReceipts,
-          participantsController.participants.map(_(userId)),
+          participantsController.participants.map(_.getOrElse(userId, ConversationRole.MemberRole)),
           participantsController.selfRole
         ).onUi {
           case (fields, tt, rr, pRole, sRole) if isTeamTheSame =>

@@ -3,7 +3,7 @@ package com.waz.zclient.storage.db.users.migration
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.waz.zclient.storage.db.users.migration.MigrationUtils.recreateAndTryMigrate
+import com.waz.zclient.storage.db.MigrationUtils.recreateAndTryMigrate
 
 val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
     override fun migrate(database: SupportSQLiteDatabase) {
@@ -51,29 +51,29 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
             $primaryKey TEXT PRIMARY KEY NOT NULL,
             teamId TEXT,
             name TEXT NOT NULL DEFAULT '',
-            email TEXT, 
-            phone TEXT, 
-            tracking_id TEXT, 
-            picture TEXT, 
-            accent INTEGER NOT NULL DEFAULT 0, 
-            $searchKey TEXT NOT NULL DEFAULT '', 
-            connection TEXT NOT NULL DEFAULT '', 
-            conn_timestamp INTEGER NOT NULL DEFAULT 0, 
-            conn_msg TEXT, 
-            conversation TEXT, 
-            relation TEXT NOT NULL DEFAULT '', 
-            timestamp INTEGER, 
-            verified TEXT, 
-            deleted INTEGER NOT NULL DEFAULT 0, 
-            availability INTEGER NOT NULL DEFAULT 0, 
-            handle TEXT, 
-            provider_id TEXT, 
-            integration_id TEXT, 
-            expires_at INTEGER, 
-            managed_by TEXT, 
-            self_permissions INTEGER NOT NULL DEFAULT 0, 
-            copy_permissions INTEGER NOT NULL DEFAULT 0, 
-            created_by TEXT 
+            email TEXT,
+            phone TEXT,
+            tracking_id TEXT,
+            picture TEXT,
+            accent INTEGER NOT NULL DEFAULT 0,
+            $searchKey TEXT NOT NULL DEFAULT '',
+            connection TEXT NOT NULL DEFAULT '',
+            conn_timestamp INTEGER NOT NULL DEFAULT 0,
+            conn_msg TEXT,
+            conversation TEXT,
+            relation TEXT NOT NULL DEFAULT '',
+            timestamp INTEGER,
+            verified TEXT,
+            deleted INTEGER NOT NULL DEFAULT 0,
+            availability INTEGER NOT NULL DEFAULT 0,
+            handle TEXT,
+            provider_id TEXT,
+            integration_id TEXT,
+            expires_at INTEGER,
+            managed_by TEXT,
+            self_permissions INTEGER NOT NULL DEFAULT 0,
+            copy_permissions INTEGER NOT NULL DEFAULT 0,
+            created_by TEXT
        )""".trimIndent()
 
         val conversationIdIndex = "CREATE INDEX IF NOT EXISTS Conversation_id on $originalTableName ($primaryKey)"
@@ -128,23 +128,23 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
                 archive_time INTEGER NOT NULL DEFAULT 0,
                 cleared INTEGER,
                 generated_name TEXT NOT NULL DEFAULT '',
-                $searchKey TEXT, 
-                unread_count INTEGER NOT NULL DEFAULT 0, 
-                unsent_count INTEGER NOT NULL DEFAULT 0, 
-                hidden INTEGER NOT NULL DEFAULT 0, 
+                $searchKey TEXT,
+                unread_count INTEGER NOT NULL DEFAULT 0,
+                unsent_count INTEGER NOT NULL DEFAULT 0,
+                hidden INTEGER NOT NULL DEFAULT 0,
                 missed_call TEXT,
-                incoming_knock TEXT, 
-                verified TEXT, 
+                incoming_knock TEXT,
+                verified TEXT,
                 ephemeral INTEGER,
                 global_ephemeral INTEGER,
                 unread_call_count INTEGER NOT NULL DEFAULT 0,
                 unread_ping_count INTEGER NOT NULL DEFAULT 0,
-                access TEXT, 
-                access_role TEXT, 
-                link TEXT, 
-                unread_mentions_count INTEGER NOT NULL DEFAULT 0, 
-                unread_quote_count INTEGER NOT NULL DEFAULT 0, 
-                receipt_mode INTEGER 
+                access TEXT,
+                access_role TEXT,
+                link TEXT,
+                unread_mentions_count INTEGER NOT NULL DEFAULT 0,
+                unread_quote_count INTEGER NOT NULL DEFAULT 0,
+                receipt_mode INTEGER
                 )""".trimIndent()
         val conversationSearchKeyIndex = """
             CREATE INDEX IF NOT EXISTS Conversation_search_key on $originalTableName ($searchKey)
@@ -165,8 +165,8 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val userId = "user_id"
         val createTempTable = """
                 CREATE TABLE $tempTableName (
-                $userId TEXT NOT NULL DEFAULT '', 
-                $convid TEXT NOT NULL DEFAULT '', 
+                $userId TEXT NOT NULL DEFAULT '',
+                $convid TEXT NOT NULL DEFAULT '',
                 role TEXT NOT NULL DEFAULT '',
                 PRIMARY KEY ($userId, $convid));
                 )""".trimIndent()
@@ -193,15 +193,15 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
                 CREATE TABLE $tempTableName (
                 _id TEXT PRIMARY KEY NOT NULL,
                 $convId TEXT NOT NULL DEFAULT '',
-                msg_type TEXT NOT NULL DEFAULT '', 
+                msg_type TEXT NOT NULL DEFAULT '',
                 user_id TEXT NOT NULL DEFAULT '',
                 content TEXT,
-                protos BLOB, 
-                $time INTEGER NOT NULL DEFAULT 0, 
-                local_time INTEGER NOT NULL DEFAULT 0, 
+                protos BLOB,
+                $time INTEGER NOT NULL DEFAULT 0,
+                local_time INTEGER NOT NULL DEFAULT 0,
                 first_msg INTEGER NOT NULL DEFAULT 0,
-                members TEXT, 
-                recipient TEXT, 
+                members TEXT,
+                recipient TEXT,
                 email TEXT,
                 name TEXT,
                 msg_state TEXT NOT NULL DEFAULT '',
@@ -268,12 +268,12 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
                 CREATE TABLE $tempTableName (
                 _id TEXT PRIMARY KEY NOT NULL,
                 err_type TEXT NOT NULL DEFAULT '',
-                users TEXT NOT NULL DEFAULT '', 
-                messages TEXT NOT NULL DEFAULT '', 
-                conv_id TEXT, 
-                res_code INTEGER NOT NULL DEFAULT 0, 
-                res_msg TEXT NOT NULL DEFAULT '', 
-                res_label TEXT NOT NULL DEFAULT '', 
+                users TEXT NOT NULL DEFAULT '',
+                messages TEXT NOT NULL DEFAULT '',
+                conv_id TEXT,
+                res_code INTEGER NOT NULL DEFAULT 0,
+                res_msg TEXT NOT NULL DEFAULT '',
+                res_label TEXT NOT NULL DEFAULT '',
                 time INTEGER NOT NULL DEFAULT 0
                 )""".trimIndent()
 
@@ -290,7 +290,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "NotificationData"
         val createTempTable = """
             CREATE TABLE $tempTableName (
-            _id TEXT PRIMARY KEY NOT NULL, 
+            _id TEXT PRIMARY KEY NOT NULL,
             data TEXT NOT NULL DEFAULT ''
             )""".trimIndent()
 
@@ -307,7 +307,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "ContactHashes"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             _id TEXT PRIMARY KEY NOT NULL, 
+             _id TEXT PRIMARY KEY NOT NULL,
              hashes TEXT
              )""".trimIndent()
 
@@ -325,8 +325,8 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val contact = "contact"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             user TEXT NOT NULL DEFAULT '', 
-             $contact TEXT NOT NULL DEFAULT '', 
+             user TEXT NOT NULL DEFAULT '',
+             $contact TEXT NOT NULL DEFAULT '',
              PRIMARY KEY (user, contact)
              )""".trimIndent()
 
@@ -346,7 +346,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "Clients"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             _id TEXT PRIMARY KEY NOT NULL, 
+             _id TEXT PRIMARY KEY NOT NULL,
              data TEXT NOT NULL DEFAULT ''
              )""".trimIndent()
 
@@ -363,10 +363,10 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "Likings"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             message_id TEXT NOT NULL DEFAULT '', 
-             user_id TEXT NOT NULL DEFAULT '', 
-             timestamp INTEGER NOT NULL DEFAULT 0, 
-             action INTEGER NOT NULL DEFAULT 0, 
+             message_id TEXT NOT NULL DEFAULT '',
+             user_id TEXT NOT NULL DEFAULT '',
+             timestamp INTEGER NOT NULL DEFAULT 0,
+             action INTEGER NOT NULL DEFAULT 0,
              PRIMARY KEY (message_id, user_id)
              )""".trimIndent()
 
@@ -384,10 +384,10 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val sorting = "sort_key"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             _id TEXT PRIMARY KEY NOT NULL, 
-             name TEXT NOT NULL DEFAULT '', 
-             name_source INTEGER NOT NULL DEFAULT 0, 
-             $sorting TEXT NOT NULL DEFAULT '', 
+             _id TEXT PRIMARY KEY NOT NULL,
+             name TEXT NOT NULL DEFAULT '',
+             name_source INTEGER NOT NULL DEFAULT 0,
+             $sorting TEXT NOT NULL DEFAULT '',
              search_key TEXT NOT NULL DEFAULT ''
              )""".trimIndent()
 
@@ -409,7 +409,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val emailAddress = "email_address"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             $contact TEXT NOT NULL DEFAULT '', 
+             $contact TEXT NOT NULL DEFAULT '',
              $emailAddress TEXT NOT NULL DEFAULT '',
              PRIMARY KEY (contact, email_address)
              )""".trimIndent()
@@ -434,7 +434,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val phoneNumber = "phone_number"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             $contact TEXT NOT NULL DEFAULT '', 
+             $contact TEXT NOT NULL DEFAULT '',
              $phoneNumber TEXT NOT NULL DEFAULT '',
              PRIMARY KEY (contact, phone_number)
              )""".trimIndent()
@@ -457,7 +457,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "MsgDeletion"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             message_id TEXT PRIMARY KEY NOT NULL, 
+             message_id TEXT PRIMARY KEY NOT NULL,
              timestamp INTEGER NOT NULL DEFAULT 0
              )""".trimIndent()
 
@@ -474,8 +474,8 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "EditHistory"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             original_id TEXT PRIMARY KEY NOT NULL, 
-             updated_id TEXT NOT NULL DEFAULT '', 
+             original_id TEXT PRIMARY KEY NOT NULL,
+             updated_id TEXT NOT NULL DEFAULT '',
              timestamp INTEGER NOT NULL DEFAULT 0
              )""".trimIndent()
 
@@ -493,10 +493,10 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val createTempTable = """
              CREATE TABLE $tempTableName (
              pushId TEXT PRIMARY KEY NOT NULL,
-             event_index INTEGER NOT NULL DEFAULT 0, 
-             decrypted INTEGER NOT NULL DEFAULT 0, 
-             event TEXT NOT NULL DEFAULT '', 
-             plain BLOB, 
+             event_index INTEGER NOT NULL DEFAULT 0,
+             decrypted INTEGER NOT NULL DEFAULT 0,
+             event TEXT NOT NULL DEFAULT '',
+             plain BLOB,
              transient INTEGER NOT NULL DEFAULT 0
              )""".trimIndent()
 
@@ -513,9 +513,9 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "ReadReceipts"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             message_id TEXT NOT NULL DEFAULT '', 
-             user_id TEXT NOT NULL DEFAULT '', 
-             timestamp INTEGER NOT NULL DEFAULT 0, 
+             message_id TEXT NOT NULL DEFAULT '',
+             user_id TEXT NOT NULL DEFAULT '',
+             timestamp INTEGER NOT NULL DEFAULT 0,
              PRIMARY KEY (message_id, user_id)
              )""".trimIndent()
 
@@ -532,7 +532,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "Properties"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             key TEXT PRIMARY KEY NOT NULL, 
+             key TEXT PRIMARY KEY NOT NULL,
              value TEXT NOT NULL DEFAULT ''
              )""".trimIndent()
 
@@ -549,21 +549,21 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "UploadAssets"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             _id TEXT PRIMARY KEY NOT NULL, 
-             source TEXT NOT NULL DEFAULT '', 
-             name TEXT NOT NULL DEFAULT '', 
-             sha BLOB, 
-             md5 BLOB, 
-             mime TEXT NOT NULL DEFAULT '', 
-             preview TEXT NOT NULL DEFAULT '', 
-             uploaded INTEGER NOT NULL DEFAULT 0, 
-             size INTEGER NOT NULL DEFAULT 0, 
-             retention INTEGER NOT NULL DEFAULT 0, 
-             public INTEGER NOT NULL DEFAULT 0, 
-             encryption TEXT NOT NULL DEFAULT '', 
-             encryption_salt TEXT, 
-             details TEXT NOT NULL DEFAULT '', 
-             status INTEGER NOT NULL DEFAULT 0, 
+             _id TEXT PRIMARY KEY NOT NULL,
+             source TEXT NOT NULL DEFAULT '',
+             name TEXT NOT NULL DEFAULT '',
+             sha BLOB,
+             md5 BLOB,
+             mime TEXT NOT NULL DEFAULT '',
+             preview TEXT NOT NULL DEFAULT '',
+             uploaded INTEGER NOT NULL DEFAULT 0,
+             size INTEGER NOT NULL DEFAULT 0,
+             retention INTEGER NOT NULL DEFAULT 0,
+             public INTEGER NOT NULL DEFAULT 0,
+             encryption TEXT NOT NULL DEFAULT '',
+             encryption_salt TEXT,
+             details TEXT NOT NULL DEFAULT '',
+             status INTEGER NOT NULL DEFAULT 0,
              asset_id TEXT
              )""".trimIndent()
 
@@ -580,13 +580,13 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "DownloadAssets"
         val createTempTable = """
               CREATE TABLE $tempTableName (
-              _id TEXT PRIMARY KEY NOT NULL, 
-              mime TEXT NOT NULL DEFAULT '', 
-              name TEXT NOT NULL DEFAULT '', 
-              preview TEXT NOT NULL DEFAULT '', 
-              details TEXT NOT NULL DEFAULT '', 
-              downloaded INTEGER NOT NULL DEFAULT 0, 
-              size INTEGER NOT NULL DEFAULT 0, 
+              _id TEXT PRIMARY KEY NOT NULL,
+              mime TEXT NOT NULL DEFAULT '',
+              name TEXT NOT NULL DEFAULT '',
+              preview TEXT NOT NULL DEFAULT '',
+              details TEXT NOT NULL DEFAULT '',
+              downloaded INTEGER NOT NULL DEFAULT 0,
+              size INTEGER NOT NULL DEFAULT 0,
               status INTEGER NOT NULL DEFAULT 0
               )""".trimIndent()
 
@@ -603,16 +603,16 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "Assets2"
         val createTempTable = """
               CREATE TABLE $tempTableName (
-              _id TEXT PRIMARY KEY NOT NULL, 
-              token TEXT, 
-              name TEXT NOT NULL DEFAULT '', 
-              encryption TEXT NOT NULL DEFAULT '', 
-              mime TEXT NOT NULL DEFAULT '', 
-              sha BLOB, 
-              size INTEGER NOT NULL DEFAULT 0, 
-              source TEXT, 
-              preview TEXT, 
-              details TEXT NOT NULL DEFAULT '', 
+              _id TEXT PRIMARY KEY NOT NULL,
+              token TEXT,
+              name TEXT NOT NULL DEFAULT '',
+              encryption TEXT NOT NULL DEFAULT '',
+              mime TEXT NOT NULL DEFAULT '',
+              sha BLOB,
+              size INTEGER NOT NULL DEFAULT 0,
+              source TEXT,
+              preview TEXT,
+              details TEXT NOT NULL DEFAULT '',
               conversation_id TEXT
               )""".trimIndent()
 
@@ -629,9 +629,9 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "FCMNotifications"
         val createTempTable = """
               CREATE TABLE $tempTableName (
-              _id TEXT NOT NULL DEFAULT '', 
-              stage TEXT NOT NULL DEFAULT '', 
-              stage_start_time INTEGER NOT NULL DEFAULT 0, 
+              _id TEXT NOT NULL DEFAULT '',
+              stage TEXT NOT NULL DEFAULT '',
+              stage_start_time INTEGER NOT NULL DEFAULT 0,
               PRIMARY KEY (_id, stage)
               )""".trimIndent()
 
@@ -648,9 +648,9 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "FCMNotificationStats"
         val createTempTable = """
               CREATE TABLE $tempTableName (
-              stage TEXT PRIMARY KEY NOT NULL, 
-              bucket1 INTEGER NOT NULL DEFAULT 0, 
-              bucket2 INTEGER NOT NULL DEFAULT 0, 
+              stage TEXT PRIMARY KEY NOT NULL,
+              bucket1 INTEGER NOT NULL DEFAULT 0,
+              bucket2 INTEGER NOT NULL DEFAULT 0,
               bucket3 INTEGER NOT NULL DEFAULT 0
               )""".trimIndent()
 
@@ -667,8 +667,8 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "Folders"
         val createTempTable = """
               CREATE TABLE $tempTableName (
-              _id TEXT PRIMARY KEY NOT NULL, 
-              name TEXT NOT NULL DEFAULT '', 
+              _id TEXT PRIMARY KEY NOT NULL,
+              name TEXT NOT NULL DEFAULT '',
               type INTEGER NOT NULL DEFAULT 0
               )""".trimIndent()
 
@@ -685,8 +685,8 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "ConversationFolders"
         val createTempTable = """
               CREATE TABLE $tempTableName (
-              conv_id TEXT NOT NULL DEFAULT '', 
-              folder_id TEXT NOT NULL DEFAULT '', 
+              conv_id TEXT NOT NULL DEFAULT '',
+              folder_id TEXT NOT NULL DEFAULT '',
               PRIMARY KEY (conv_id, folder_id)
               )""".trimIndent()
 
@@ -704,9 +704,9 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val convId = "conv_id"
         val createTempTable = """
                CREATE TABLE $tempTableName (
-               label TEXT NOT NULL DEFAULT '', 
-               action TEXT NOT NULL DEFAULT '', 
-               $convId TEXT NOT NULL DEFAULT '', 
+               label TEXT NOT NULL DEFAULT '',
+               action TEXT NOT NULL DEFAULT '',
+               $convId TEXT NOT NULL DEFAULT '',
                PRIMARY KEY (label, action, $convId)
                )""".trimIndent()
 
@@ -750,11 +750,11 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         database.execSQL("DROP TABLE IF EXISTS Buttons")
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS Buttons (
-                message_id TEXT NOT NULL DEFAULT '', 
-                button_id TEXT NOT NULL DEFAULT '', 
+                message_id TEXT NOT NULL DEFAULT '',
+                button_id TEXT NOT NULL DEFAULT '',
                 title TEXT NOT NULL DEFAULT '',
                 ordinal INTEGER NOT NULL DEFAULT 0,
-                state INTEGER NOT NULL DEFAULT 0, 
+                state INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY(message_id, button_id)
             )""".trimIndent()
         )

@@ -48,6 +48,8 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
+import scala.language.postfixOps
+
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
 import com.wire.signals.ext.ClockSignal
@@ -56,7 +58,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
                           maxParticipants: Option[Int] = None,
                           showPeopleOnly:  Boolean = false,
                           showArrow:       Boolean = true,
-                          createSubtitle:  Option[UserData => String] = None
+                          createSubtitle:  Option[(UserData, Boolean) => String] = None
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import ParticipantsAdapter._
@@ -93,7 +95,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     tId          <- team
     participants <- participants
     users        <- usersStorage.listSignal(participants.keys)
-    f            <- filter
+    f            <- filter.throttle(FilterThrottleMs)
   } yield
     users
       .filter(u => f.isEmpty || u.matchesQuery(SearchQuery(f)))
@@ -106,12 +108,12 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       .sortBy(_.userData.name.str)
 
   protected lazy val positions: Signal[List[Either[ParticipantData, Int]]] = for {
-    tId               <- team
-    users             <- users
-    currentConv       <- convController.currentConv
-    convActive        =  currentConv.isActive
-    isTeamConv        =  currentConv.team.nonEmpty
-    selfRole          <- participantsController.selfRole
+    tId         <- team
+    users       <- users
+    currentConv <- convController.currentConv
+    convActive  =  currentConv.isActive
+    isTeamConv  =  currentConv.team.nonEmpty
+    selfRole    <- participantsController.selfRole
   } yield {
     val (bots, people)    = users.toList.partition(_.userData.isWireBot)
     val (admins, members) = people.partition(_.isAdmin)
@@ -271,6 +273,8 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
 }
 
 object ParticipantsAdapter {
+  val FilterThrottleMs: FiniteDuration = 500 millis
+
   val UserRow                  = 0
   val MembersSeparator         = 1
   val ServicesSeparator        = 2
@@ -287,10 +291,12 @@ object ParticipantsAdapter {
 
   val separators = Set(AdminsSeparator, MembersSeparator, ServicesSeparator, OptionsSeparator)
 
-  case class ParticipantData(userData: UserData, isGuest: Boolean, isAdmin: Boolean, isSelf: Boolean)
+  final case class ParticipantData(userData: UserData, isGuest: Boolean, isAdmin: Boolean, isSelf: Boolean)
 
-  case class GuestOptionsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
-    private implicit val ctx = view.getContext
+  final case class GuestOptionsButtonViewHolder(view: View, convController: ConversationController)
+                                               (implicit eventContext: EventContext)
+    extends ViewHolder(view) {
+    private implicit val ctx: Context = view.getContext
     view.setId(R.id.guest_options)
     view.findViewById[TextView](R.id.options_divider).setVisibility(View.VISIBLE)
     view.findViewById[ImageView](R.id.icon).setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
@@ -303,8 +309,10 @@ object ParticipantsAdapter {
     view.setContentDescription("Guest Options")
   }
 
-  case class EphemeralOptionsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
-    private implicit val ctx = view.getContext
+  final case class EphemeralOptionsButtonViewHolder(view: View, convController: ConversationController)
+                                                   (implicit eventContext: EventContext)
+    extends ViewHolder(view) {
+    private implicit val ctx: Context = view.getContext
     view.setId(R.id.timed_messages_options)
     view.findViewById[ImageView](R.id.icon).setImageDrawable(HourGlassIcon(getStyledColor(R.attr.wirePrimaryTextColor)))
     view.findViewById[TextView](R.id.name_text).setText(R.string.ephemeral_options_title)
@@ -317,8 +325,10 @@ object ParticipantsAdapter {
     view.setContentDescription("Ephemeral Options")
   }
 
-  case class NotificationsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
-    private implicit val ctx = view.getContext
+  final case class NotificationsButtonViewHolder(view: View, convController: ConversationController)
+                                                (implicit eventContext: EventContext)
+    extends ViewHolder(view) {
+    private implicit val ctx: Context = view.getContext
     view.setId(R.id.notifications_options)
     view.findViewById[ImageView](R.id.icon).setImageDrawable(NotificationsIcon(getStyledColor(R.attr.wirePrimaryTextColor)))
     view.findViewById[TextView](R.id.name_text).setText(R.string.notifications_options_title)
@@ -329,7 +339,7 @@ object ParticipantsAdapter {
     view.setContentDescription("Notifications")
   }
 
-  case class SeparatorViewHolder(separator: View) extends ViewHolder(separator) {
+  final case class SeparatorViewHolder(separator: View) extends ViewHolder(separator) {
     private val textView = ViewUtils.getView[TextView](separator, R.id.separator_title)
     private val emptySectionView = ViewUtils.getView[TextView](separator, R.id.empty_section_info)
 
@@ -348,26 +358,25 @@ object ParticipantsAdapter {
     def setContentDescription(text: String): Unit = textView.setContentDescription(text)
   }
 
-  case class NoResultsInfoViewHolder(view: View) extends ViewHolder(view) {
+  final case class NoResultsInfoViewHolder(view: View) extends ViewHolder(view) {
     view.setId(R.id.no_results_info)
     view.setContentDescription(s"No Results")
   }
 
-  case class ParticipantRowViewHolder(view: SingleUserRowView, onClick: SourceStream[UserId]) extends ViewHolder(view) {
-
+  final case class ParticipantRowViewHolder(view: SingleUserRowView, onClick: SourceStream[UserId])
+    extends ViewHolder(view) {
     private var userId = Option.empty[UserId]
 
     view.onClick(userId.foreach(onClick ! _))
 
     def bind(participant:    ParticipantData,
              lastRow:        Boolean,
-             createSubtitle: Option[UserData => String],
+             createSubtitle: Option[(UserData, Boolean) => String],
              showArrow:      Boolean): Unit = {
       if (participant.isSelf) {
         view.showArrow(false)
         userId = None
-      }
-      else {
+      } else {
         view.showArrow(showArrow)
         userId = Some(participant.userData.id)
       }
@@ -380,13 +389,17 @@ object ParticipantsAdapter {
     }
   }
 
-  case class ReadReceiptsViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
-    private implicit val ctx = view.getContext
+  final case class ReadReceiptsViewHolder(view: View, convController: ConversationController)
+                                         (implicit eventContext: EventContext)
+    extends ViewHolder(view) {
+    private implicit val ctx: Context = view.getContext
 
     private val switch = view.findViewById[SwitchCompat](R.id.participants_read_receipts_toggle)
     private var readReceipts = Option.empty[Boolean]
 
-    view.findViewById[ImageView](R.id.participants_read_receipts_icon).setImageDrawable(ViewWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
+    view
+      .findViewById[ImageView](R.id.participants_read_receipts_icon)
+      .setImageDrawable(ViewWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
     view.setId(R.id.read_receipts_button)
 
     switch.setOnCheckedChangeListener(new OnCheckedChangeListener {
@@ -401,14 +414,14 @@ object ParticipantsAdapter {
       if (!readReceipts.contains(readReceiptsEnabled)) switch.setChecked(readReceiptsEnabled)
   }
 
-  case class ConversationNameViewHolder(view: View, convController: ConversationController) extends ViewHolder(view) {
-    private val callInfo = view.findViewById[TextView](R.id.call_info)
-    private val editText = view.findViewById[TypefaceEditText](R.id.conversation_name_edit_text)
-    private val penGlyph = view.findViewById[GlyphTextView](R.id.conversation_name_edit_glyph)
+  final case class ConversationNameViewHolder(view: View, convController: ConversationController)
+    extends ViewHolder(view) {
+    private val callInfo       = view.findViewById[TextView](R.id.call_info)
+    private val editText       = view.findViewById[TypefaceEditText](R.id.conversation_name_edit_text)
+    private val penGlyph       = view.findViewById[GlyphTextView](R.id.conversation_name_edit_glyph)
     private val verifiedShield = view.findViewById[ImageView](R.id.conversation_verified_shield)
 
     private var convName = Option.empty[String]
-
     private var isBeingEdited = false
 
     def setEditingEnabled(enabled: Boolean): Unit = {
@@ -417,7 +430,7 @@ object ParticipantsAdapter {
       editText.setEnabled(enabled)
     }
 
-    private def stopEditing() = {
+    private def stopEditing(): Unit = {
       editText.setSelected(false)
       editText.clearFocus()
       Selection.removeSelection(editText.getText)
@@ -465,7 +478,7 @@ object ParticipantsAdapter {
       } else false
   }
 
-  case class ShowAllParticipantsViewHolder(view: View) extends ViewHolder(view) {
+  final case class ShowAllParticipantsViewHolder(view: View) extends ViewHolder(view) {
     private implicit val ctx: Context = view.getContext
 
     view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
@@ -484,9 +497,9 @@ object ParticipantsAdapter {
 
 }
 
-class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle:  Option[UserData => String] = None)
-                          (implicit context: Context, injector: Injector, eventContext: EventContext)
-  extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle) {
+final class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle: Option[UserData => String] = None)
+                                (implicit context: Context, injector: Injector, eventContext: EventContext)
+  extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle.map(f => { (u: UserData, _: Boolean) => f(u) })) {
   import ParticipantsAdapter._
 
   override protected lazy val users: Signal[Vector[ParticipantData]] = for {

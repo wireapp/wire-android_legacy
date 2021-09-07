@@ -55,8 +55,6 @@
 
     <item name="content" type="id"/>
 
-    <item name="collection_image_view" type="id"/>
-
     <item name="admins_section" type="id" />
     <item name="members_section" type="id" />
     <item name="options_section" type="id" />
@@ -71,5 +69,7 @@
     <item name="create_group_button" type="id"/>
     <item name="create_guest_room_button" type="id"/>
     <item name="manage_services_button" type="id"/>
+
+    <item name="participant_tile" type="id"/>
 
 </resources>

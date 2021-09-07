@@ -124,6 +124,14 @@
     <attr name="callIconDisabledActivatedColor" format="color" />
     <attr name="callMutedIcon" format="reference"/>
     <attr name="callUnmutedIcon" format="reference"/>
+    <attr name="callActiveMicrophone" format="reference"/>
+    <attr name="callInactiveMicrophone" format="reference"/>
+    <attr name="callActiveCamera" format="reference"/>
+    <attr name="callInactiveCamera" format="reference"/>
+    <attr name="callActiveSpeaker" format="reference"/>
+    <attr name="callInactiveSpeaker" format="reference"/>
+    <attr name="callFlip" format="reference"/>
+
 
     <!-- OTR -->
     <attr name="otrClientLink" format="reference" />
@@ -135,6 +143,9 @@
 
     <!-- Audio message -->
     <attr name="audioMessageDuration" format="reference" />
+
+    <!-- File message -->
+    <attr name="fileBlocked" format="reference" />
 
     <!-- Giphy -->
     <attr name="giphyControl" format="reference" />
@@ -165,7 +176,7 @@
     <attr name="listPrefixColor" format="reference" />
 
     <attr name="selfMentionBackgroundColor" format="color" />
-    
+
     <attr name="dropdownSeparatorBackgroundColor" format="color"/>
 
     <!-- Composite Message Alarm Buttons -->

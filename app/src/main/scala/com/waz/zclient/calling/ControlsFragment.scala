@@ -18,20 +18,20 @@
 package com.waz.zclient.calling
 
 import android.content.{Context, DialogInterface}
-import android.graphics.Color
 import android.os.Bundle
 import android.view._
 import android.widget.{Button, LinearLayout}
 import androidx.annotation.Nullable
 import androidx.fragment.app.Fragment
-import com.waz.service.call.Avs.VideoState
 import com.waz.threading.Threading._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
+import com.waz.zclient.common.controllers.ThemeController
+import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.ContextUtils.getColor
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 import com.wire.signals.{Signal, Subscription}
 
 class ControlsFragment extends FragmentHelper {
@@ -39,7 +39,7 @@ class ControlsFragment extends FragmentHelper {
   implicit def ctx: Context = getActivity
 
   private lazy val controller = inject[CallController]
-
+  private lazy val themeController  = inject[ThemeController]
   private lazy val callingHeader = view[CallingHeader](R.id.calling_header)
 
   private lazy val callingMiddle = view[CallingMiddleLayout](R.id.calling_middle)
@@ -50,19 +50,19 @@ class ControlsFragment extends FragmentHelper {
 
   private var subs = Set[Subscription]()
 
-  override def onCreate(savedInstanceState: Bundle): Unit = {
-    super.onCreate(savedInstanceState)
-    controller.allVideoReceiveStates.map(_.values.exists(Set(VideoState.Started, VideoState.ScreenShare).contains)).onUi {
-      case true => getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
-      case false => getView.setBackgroundColor(Color.TRANSPARENT)
-    }
-  }
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_calling_controls, viewGroup, false)
 
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
+
+
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS && BuildConfig.CALLING_UI_BUTTONS) getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
+    else Signal.zip(controller.isVideoCall, themeController.currentTheme).onUi {
+      case (false, Theme.Light) => getView.setBackgroundColor(getColor(R.color.white))
+      case _                    => getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
+    }
 
     speakersButton.foreach { button =>
       button.onClick {
@@ -93,6 +93,17 @@ class ControlsFragment extends FragmentHelper {
       }
     }
 
+    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+      Signal.zip(
+        controller.isCallEstablished,
+        controller.isGroupCall,
+        controller.isFullScreenEnabled,
+        controller.allParticipants.map(_.size > 2)
+      ).onUi {
+        case (true, true, false, true) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
+        case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
+      }
+    else
       Signal.zip(
         controller.isCallEstablished,
         controller.isGroupCall,

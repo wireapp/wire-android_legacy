@@ -18,7 +18,6 @@
 package com.waz.content
 
 import android.content.Context
-import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao
@@ -49,14 +48,17 @@ trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberD
   def updateOrCreate(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit]
 }
 
-class MembersStorageImpl(context: Context, storage: ZmsDatabase)
-  extends CachedStorageImpl[(UserId, ConvId), ConversationMemberData](new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationMemberDataDao, LogTag("MembersStorage_Cached"))
-    with MembersStorage with DerivedLogTag {
+final class MembersStorageImpl(context: Context, storage: ZmsDatabase)
+  extends CachedStorageImpl[(UserId, ConvId), ConversationMemberData](
+    new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationMemberDataDao, LogTag("MembersStorage_Cached")
+  ) with MembersStorage with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
-  def getByConv(conv: ConvId) = find(_.convId == conv, ConversationMemberDataDao.findForConv(conv)(_), identity)
+  override def getByConv(conv: ConvId): Future[IndexedSeq[ConversationMemberData]] =
+    find(_.convId == conv, ConversationMemberDataDao.findForConv(conv)(_), identity)
 
-  def getByUser(user: UserId) = find(_.userId == user, ConversationMemberDataDao.findForUser(user)(_), identity)
+  def getByUser(user: UserId): Future[IndexedSeq[ConversationMemberData]] =
+    find(_.userId == user, ConversationMemberDataDao.findForUser(user)(_), identity)
 
   override def activeMembers(conv: ConvId): Signal[Set[UserId]] = {
     def onConvMemberChanged(conv: ConvId) =
@@ -93,8 +95,13 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
   override def updateOrCreateAll(conv: ConvId, user: UserId, role: ConversationRole): Future[Option[ConversationMemberData]] =
     updateOrCreateAll(conv, Map(user -> role)).map(_.headOption)
 
-  override def remove(conv: ConvId, users: Iterable[UserId]): Future[Set[ConversationMemberData]] =
-    getAll(users.map(_ -> conv)).flatMap(toBeRemoved => removeAll(users.map(_ -> conv)).map(_ => toBeRemoved.flatten.toSet))
+  override def remove(conv: ConvId, users: Iterable[UserId]): Future[Set[ConversationMemberData]] = {
+    val keys = users.map(_ -> conv)
+    for {
+      toBeRemoved <- getAll(keys)
+      _           <- removeAll(keys)
+    } yield toBeRemoved.flatten.toSet
+  }
 
   override def remove(conv: ConvId, user: UserId): Future[Option[ConversationMemberData]] =
     remove(conv, Set(user)).map(_.headOption)

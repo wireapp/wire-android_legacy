@@ -88,10 +88,10 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
       }.toSeq
   }
 
-  override def getOrCreateConvWithService(pId: ProviderId, serviceId: IntegrationId) = {
-    def createConv =
+  override def getOrCreateConvWithService(pId: ProviderId, serviceId: IntegrationId): ErrorOr[ConvId] = {
+    def createConv: ErrorOr[ConvId] =
       for {
-        (conv, syncId) <- convsUi.createGroupConversation(Name.Empty)
+        (conv, syncId) <- convsUi.createGroupConversation(None)
         res <- syncRequests.await(syncId).flatMap {
           case Success =>
             for {
@@ -127,7 +127,7 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
   }
 
   // pId here is redundant - we can take it from our 'integrations' map
-  override def addBotToConversation(cId: ConvId, pId: ProviderId, iId: IntegrationId) =
+  override def addBotToConversation(cId: ConvId, pId: ProviderId, iId: IntegrationId): ErrorOr[Unit] =
     (for {
       syncId <- sync.postAddBot(cId, pId, iId)
       result <- syncRequests.await(syncId)
@@ -137,7 +137,7 @@ class IntegrationsServiceImpl(selfUserId:   UserId,
       case _              => Left(internalError("Await should not have completed with SyncResult.Retry"))
     }
 
-  override def removeBotFromConversation(cId: ConvId, botId: UserId) =
+  override def removeBotFromConversation(cId: ConvId, botId: UserId): ErrorOr[Unit] =
     (for {
       syncId <- sync.postRemoveBot(cId, botId)
       result <- syncRequests.await(syncId)

@@ -51,9 +51,7 @@ class ClientsController(implicit inj: Injector) extends Injectable with DerivedL
 
   def client(userId: UserId, clientId: ClientId): Signal[Option[Client]] = for {
     manager <- accountManager
-    _ = verbose(l"FIX client($userId, $clientId)")
     clients <- manager.storage.otrClientsStorage.signal(userId)
-    _ = verbose(l"FIX ${clients.clients.keys}")
   } yield clients.clients.get(clientId)
 
   def selfClient(clientId: ClientId): Signal[Option[Client]] = for {

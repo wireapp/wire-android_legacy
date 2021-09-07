@@ -95,9 +95,9 @@ class UserSearchServiceImpl(selfUserId:           UserId,
           searchResults.filter { u =>
             u.createdBy.contains(selfUserId) ||
             knownUsersIds.contains(u.id) ||
-              u.teamId != teamId ||
-              (u.teamId == teamId && !u.isExternal(teamId)) ||
-              u.exactMatchQuery(query)
+            u.teamId != teamId ||
+            (u.teamId == teamId && !u.isExternal(teamId)) ||
+            u.exactMatchQuery(query)
           }
         }
       case _ => Future.successful(searchResults)
@@ -156,9 +156,10 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
       connected <- userService.acceptedOrBlockedUsers.map(_.values)
+      fake1To1s <- conversationsService.onlyFake1To1ConvUsers
       members   <- teamId.fold(Signal.const(Set.empty[UserData]))(_ => teamsService.searchTeamMembers(query))
     } yield {
-      val included = (connected.toSet ++ members).filter { user =>
+      val included = (connected.toSet ++ fake1To1s.toSet ++ members).filter { user =>
         !excluded.contains(user.id) &&
           selfUserId != user.id &&
           !user.isWireBot &&
@@ -253,11 +254,10 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   def syncSearchResults(query: SearchQuery): Unit = if (!query.isEmpty) sync.syncSearchQuery(query)
 
   private def directoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
-    returning {
-      if (!query.isEmpty)
-        userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
-      else Signal.const(IndexedSeq.empty[UserData])
-    } { dir =>  verbose(l"directory search results: $dir") }
+    if (!query.isEmpty)
+      userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
+    else
+      Signal.const(IndexedSeq.empty[UserData])
 
   override def updateSearchResults(results: UserSearchResponse): Future[Unit] =
     usersStorage.contents.head.flatMap { usersInStorage =>
@@ -271,9 +271,13 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       val allUsers = (local.map(u => usersInStorage(u.qualifiedId.id)) ++ remote.map(UserData(_))).toIndexedSeq
       userSearchResult ! allUsers
 
-      if (remote.nonEmpty)
-        sync.syncSearchResults(remote.map(_.qualifiedId.id).toSet).map(_ => ())
-      else
+      if (remote.nonEmpty) {
+        if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+          sync.syncQualifiedSearchResults(remote.map(_.qualifiedId).toSet).map(_ => ())
+        } else {
+          sync.syncSearchResults(remote.map(_.qualifiedId.id).toSet).map(_ => ())
+        }
+      } else
         Future.successful(())
     }
 

@@ -32,6 +32,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
   import MessageEvent._
 
   feature("Event parsing") {
+
     scenario("parse UserConnectionEvent") {
 
       Given("some json data")
@@ -162,7 +163,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode GenericMessageEvent") {
-      val msg = GenericMessageEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), GenericMessage.TextMessage("content"))
+      val msg = GenericMessageEvent(RConvId(), None, RemoteInstant(Instant.now()), UserId(), None, GenericMessage.TextMessage("content"))
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: GenericMessageEvent =>
           ev.convId shouldEqual msg.convId
@@ -174,7 +175,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode OtrErrorEvent(duplicate)") {
-      val msg = OtrErrorEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), Duplicate)
+      val msg = OtrErrorEvent(RConvId(), None, RemoteInstant(Instant.now()), UserId(), None, Duplicate)
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId
@@ -186,7 +187,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode OtrErrorEvent(DecryptionError)") {
-      val msg = OtrErrorEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), DecryptionError("error", Some(100), UserId(), ClientId()))
+      val msg = OtrErrorEvent(RConvId(), None, RemoteInstant(Instant.now()), UserId(), None, DecryptionError("error", Some(100), UserId(), ClientId()))
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId
@@ -198,7 +199,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode OtrErrorEvent(IdentityChanged)") {
-      val msg = OtrErrorEvent(RConvId(), RemoteInstant(Instant.now()), UserId(), IdentityChangedError(UserId(), ClientId()))
+      val msg = OtrErrorEvent(RConvId(), None, RemoteInstant(Instant.now()), UserId(), None, IdentityChangedError(UserId(), ClientId()))
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: OtrErrorEvent =>
           ev.convId shouldEqual msg.convId
@@ -210,7 +211,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
     }
 
     scenario("encode/decode SessionReset") {
-      val msg = SessionReset(RConvId(), RemoteInstant(Instant.now()), UserId(), ClientId())
+      val msg = SessionReset(RConvId(), None, RemoteInstant(Instant.now()), UserId(), None, ClientId())
       EventDecoder(MessageEventEncoder(msg)) match {
         case ev: SessionReset =>
           ev.convId shouldEqual msg.convId
@@ -367,6 +368,27 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       EventDecoder(jsonObject) match {
         case ev: LegalHoldDisableEvent =>
           ev.userId shouldEqual UserId("858db163-c05d-486f-a478-cfe912e9ccde")
+        case e =>
+          fail(s"unexpected event: $e")
+      }
+    }
+
+    scenario("parse FeatureConfigUpdateEvent") {
+      val jsonStr =
+        """
+          |{
+          |  "type": "feature-config.update",
+          |  "name": "fileSharing",
+          |  "data": {"status":"enabled"}
+          |}
+          |""".stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      EventDecoder(jsonObject) match {
+        case ev: FeatureConfigUpdateEvent =>
+          ev.name shouldEqual "fileSharing"
+          ev.data shouldEqual "{\"status\":\"enabled\"}"
+
         case e =>
           fail(s"unexpected event: $e")
       }

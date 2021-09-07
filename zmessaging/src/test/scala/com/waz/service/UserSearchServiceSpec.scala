@@ -78,6 +78,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     id('t) -> UserData.withName(id('t), "test handle").copy(handle = Some(Handle("smoresare"))),
     id('u) -> UserData.withName(id('u), "Wireless").copy(expiresAt = Some(RemoteInstant.ofEpochMilli(12345L))),
     id('v) -> UserData.withName(id('v), "Wireful"),
+    id('z) -> UserData.withName(id('z), "Francois francois"),
     id('pp1) -> UserData.withName(id('pp1), "External 1").copy(
       permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
@@ -219,6 +220,8 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("search for top people"){
       val expected = ids('g, 'h, 'i)
 
+      (convs.onlyFake1To1ConvUsers _).expects().anyNumberOfTimes().returning(Signal.const(Seq.empty[UserData]))
+
       (usersStorage.find(_: UserData => Boolean, _: DB => Managed[TraversableOnce[UserData]], _: UserData => UserData)(_: CanBuild[UserData, Vector[UserData]]))
         .expects(*, *, *, *).once().returning(Future.successful(expected.map(users).toVector))
 
@@ -241,6 +244,8 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val querySignal = SourceSignal[Option[IndexedSeq[UserData]]]()
       val queryResults = IndexedSeq.empty[UserData]
 
+      (convs.onlyFake1To1ConvUsers _).expects().anyNumberOfTimes().returning(Signal.const(Seq.empty[UserData]))
+
       (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(expected.map(key => key -> users(key)).toMap))
       (userService.selfUser _).expects().anyNumberOfTimes().returning(Signal.const(users(id('me))))
 
@@ -257,6 +262,34 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val res = getService(false, id('me)).search("fr").map(_.local.map(_.id).toSet)
 
       result(res.filter(_ == expected).head)
+    }
+
+    scenario("search for local results with a fake 1-to-1 conversation"){
+      val expected = ids('g, 'h)
+      val fake1To1Id = id('z)
+      val query = SearchQuery("fr")
+
+      val querySignal = SourceSignal[Option[IndexedSeq[UserData]]]()
+      val queryResults = IndexedSeq.empty[UserData]
+
+      (convs.onlyFake1To1ConvUsers _).expects().anyNumberOfTimes().returning(Signal.const(Seq(users(fake1To1Id))))
+
+      (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(expected.map(key => key -> users(key)).toMap))
+      (userService.selfUser _).expects().anyNumberOfTimes().returning(Signal.const(users(id('me))))
+
+      (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
+
+      (sync.syncSearchQuery _).expects(query).once().onCall { _: SearchQuery =>
+        Future.successful[SyncId] {
+          querySignal ! Some(queryResults)
+          result(querySignal.filter(_.contains(queryResults)).head)
+          SyncId()
+        }
+      }
+
+      val res = getService(false, id('me)).search("fr").map(_.local.map(_.id).toSet)
+
+      result(res.filter(_ == (expected ++ Set(fake1To1Id))).head)
     }
   }
 
@@ -285,6 +318,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val querySignal = SourceSignal[Option[Vector[UserId]]]()
       val queryResults = Vector.empty[UserId]
 
+      (convs.onlyFake1To1ConvUsers _).expects().anyNumberOfTimes().returning(Signal.const(Seq.empty[UserData]))
       (usersStorage.get _).stubs(*).onCall { id: UserId =>
         Future.successful(users.get(id))
       }

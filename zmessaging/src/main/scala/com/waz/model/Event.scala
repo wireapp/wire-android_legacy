@@ -61,15 +61,19 @@ sealed trait OtrClientEvent extends UserEvent
 
 sealed trait RConvEvent extends Event {
   val convId: RConvId
+  val convDomain: Option[String]
 }
+
 object RConvEvent extends (Event => RConvId) {
   def apply(ev: Event): RConvId = ev match {
     case ev: RConvEvent => ev.convId
     case _              => RConvId.Empty
   }
 }
+
 case class UserUpdateEvent(user: UserInfo, removeIdentity: Boolean = false) extends UserEvent
 case class UserConnectionEvent(convId:       RConvId,
+                               convDomain:   Option[String],
                                from:         UserId,
                                to:           UserId,
                                message:      Option[String],
@@ -86,88 +90,222 @@ case class PushTokenRemoveEvent(token: PushToken, senderId: String, client: Opti
 sealed trait ConversationEvent extends RConvEvent {
   val time: RemoteInstant
   val from: UserId
+  val fromDomain: Option[String]
 }
 
 // events that affect conversation state
-sealed trait ConversationStateEvent extends ConversationEvent
+sealed trait ConversationStateEvent extends ConversationEvent {
+  val convId: RConvId
+  val convDomain: Option[String]
+}
 
 // events that add or modify some message
 sealed trait MessageEvent extends ConversationEvent
 
-case class UnknownEvent(json: JSONObject) extends Event
-case class UnknownConvEvent(json: JSONObject) extends ConversationEvent {
+final case class UnknownEvent(json: JSONObject) extends Event
+final case class UnknownConvEvent(json: JSONObject) extends ConversationEvent {
   override val convId: RConvId = RConvId()
+  override val convDomain: Option[String] = None
   override val from: UserId = UserId()
+  override val fromDomain: Option[String] = None
   override val time: RemoteInstant = RemoteInstant.Epoch //TODO: epoch?
 }
 
-case class CreateConversationEvent(convId: RConvId, time: RemoteInstant, from: UserId, data: ConversationResponse) extends ConversationStateEvent
+final case class CreateConversationEvent(convId:     RConvId,
+                                         convDomain: Option[String],
+                                         time:       RemoteInstant,
+                                         from:       UserId,
+                                         fromDomain: Option[String],
+                                         data:       ConversationResponse)
+  extends ConversationStateEvent
 
-case class DeleteConversationEvent(convId: RConvId, time: RemoteInstant, from: UserId) extends ConversationStateEvent
+final case class DeleteConversationEvent(convId:     RConvId,
+                                         convDomain: Option[String],
+                                         time:       RemoteInstant,
+                                         from:       UserId,
+                                         fromDomain: Option[String])
+  extends ConversationStateEvent
 
-case class MessageTimerEvent(convId: RConvId, time: RemoteInstant, from: UserId, duration: Option[FiniteDuration]) extends MessageEvent with ConversationStateEvent
+final case class MessageTimerEvent(convId:     RConvId,
+                                   convDomain: Option[String],
+                                   time:       RemoteInstant,
+                                   from:       UserId,
+                                   fromDomain: Option[String],
+                                   duration:   Option[FiniteDuration])
+  extends MessageEvent with ConversationStateEvent
 
-case class RenameConversationEvent(convId: RConvId, time: RemoteInstant, from: UserId, name: Name) extends MessageEvent with ConversationStateEvent
+final case class RenameConversationEvent(convId:     RConvId,
+                                         convDomain: Option[String],
+                                         time:       RemoteInstant,
+                                         from:       UserId,
+                                         fromDomain: Option[String],
+                                         name:       Name)
+  extends MessageEvent with ConversationStateEvent
 
-case class GenericMessageEvent(convId: RConvId, time: RemoteInstant, from: UserId, content: GenericMessage) extends MessageEvent
+final case class GenericMessageEvent(convId:     RConvId,
+                                     convDomain: Option[String],
+                                     time:       RemoteInstant,
+                                     from:       UserId,
+                                     fromDomain: Option[String],
+                                     content:     GenericMessage)
+  extends MessageEvent
 
-case class CallMessageEvent(convId: RConvId, time: RemoteInstant, from: UserId, sender: ClientId, content: String) extends MessageEvent
+final case class CallMessageEvent(convId:     RConvId,
+                                  convDomain: Option[String],
+                                  time:       RemoteInstant,
+                                  from:       UserId,
+                                  fromDomain: Option[String],
+                                  sender: ClientId,
+                                  content: String)
+  extends MessageEvent
 
 sealed trait OtrError
+
 case object Duplicate extends OtrError
-case class DecryptionError(msg: String, code: Option[Int], from: UserId, sender: ClientId) extends OtrError
-case class IdentityChangedError(from: UserId, sender: ClientId) extends OtrError
-case class UnknownOtrErrorEvent(json: JSONObject) extends OtrError
 
-case class OtrErrorEvent(convId: RConvId, time: RemoteInstant, from: UserId, error: OtrError) extends MessageEvent
-case class SessionReset(convId: RConvId, time: RemoteInstant, from: UserId, sender: ClientId) extends MessageEvent
+final case class DecryptionError(msg:    String,
+                                 code:   Option[Int],
+                                 from:   UserId,
+                                 sender: ClientId)
+  extends OtrError
 
-case class TypingEvent(convId: RConvId, time: RemoteInstant, from: UserId, isTyping: Boolean) extends ConversationEvent
+final case class IdentityChangedError(from: UserId, sender: ClientId) extends OtrError
 
-case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], users: Map[UserId, ConversationRole], firstEvent: Boolean = false)
-  extends MessageEvent with ConversationStateEvent with ConversationEvent
+final case class UnknownOtrErrorEvent(json: JSONObject) extends OtrError
 
-case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], reason: Option[MemberLeaveReason]) extends MessageEvent with ConversationStateEvent
+final case class OtrErrorEvent(convId:     RConvId,
+                               convDomain: Option[String],
+                               time:       RemoteInstant,
+                               from:       UserId,
+                               fromDomain: Option[String],
+                               error:      OtrError)
+  extends MessageEvent
+
+final case class SessionReset(convId:     RConvId,
+                              convDomain: Option[String],
+                              time:       RemoteInstant,
+                              from:       UserId,
+                              fromDomain: Option[String],
+                              sender:     ClientId)
+  extends MessageEvent
+
+final case class TypingEvent(convId:     RConvId,
+                             convDomain: Option[String],
+                             time:       RemoteInstant,
+                             from:       UserId,
+                             fromDomain: Option[String],
+                             isTyping:   Boolean)
+  extends ConversationEvent
+
+final case class MemberJoinEvent(convId:     RConvId,
+                                 convDomain: Option[String],
+                                 time:       RemoteInstant,
+                                 from:       UserId,
+                                 fromDomain: Option[String],
+                                 userIds:    Seq[UserId],
+                                 users:      Map[QualifiedId, ConversationRole],
+                                 firstEvent: Boolean = false)
+  extends MessageEvent with ConversationStateEvent
+
+final case class MemberLeaveEvent(convId:     RConvId,
+                                  convDomain: Option[String],
+                                  time:       RemoteInstant,
+                                  from:       UserId,
+                                  fromDomain: Option[String],
+                                  userIds:    Seq[UserId],
+                                  reason:     Option[MemberLeaveReason])
+  extends MessageEvent with ConversationStateEvent
 
 final case class MemberLeaveReason(value: String) extends AnyVal
 object MemberLeaveReason {
   val LegalHoldPolicyConflict = MemberLeaveReason("legalhold-policy-conflict")
 }
 
-case class MemberUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, state: ConversationState) extends ConversationStateEvent
+final case class MemberUpdateEvent(convId:     RConvId,
+                                   convDomain: Option[String],
+                                   time:       RemoteInstant,
+                                   from:       UserId,
+                                   fromDomain: Option[String],
+                                   state:      ConversationState)
+  extends ConversationStateEvent
 
-case class ConversationReceiptModeEvent(convId: RConvId, time: RemoteInstant, from: UserId, receiptMode: Int) extends MessageEvent with ConversationStateEvent
+final case class ConversationReceiptModeEvent(convId:      RConvId,
+                                              convDomain:  Option[String],
+                                              time:        RemoteInstant,
+                                              from:        UserId,
+                                              fromDomain:  Option[String],
+                                              receiptMode: Int)
+  extends MessageEvent with ConversationStateEvent
 
-case class ConnectRequestEvent(convId: RConvId, time: RemoteInstant, from: UserId, message: String, recipient: UserId, name: Name, email: Option[String]) extends MessageEvent with ConversationStateEvent
+final case class ConnectRequestEvent(convId:     RConvId,
+                                     convDomain: Option[String],
+                                     time:       RemoteInstant,
+                                     from:       UserId,
+                                     fromDomain: Option[String],
+                                     message:    String,
+                                     recipient:  UserId,
+                                     name:       Name,
+                                     email:      Option[String])
+  extends MessageEvent with ConversationStateEvent
 
-case class ConversationAccessEvent(convId: RConvId, time: RemoteInstant, from: UserId, access: Set[Access], accessRole: AccessRole) extends ConversationStateEvent
-case class ConversationCodeUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, link: ConversationData.Link) extends ConversationStateEvent
-case class ConversationCodeDeleteEvent(convId: RConvId, time: RemoteInstant, from: UserId) extends ConversationStateEvent
+final case class ConversationAccessEvent(convId:     RConvId,
+                                         convDomain: Option[String],
+                                         time:       RemoteInstant,
+                                         from:       UserId,
+                                         fromDomain: Option[String],
+                                         access:     Set[Access],
+                                         accessRole: AccessRole)
+  extends ConversationStateEvent
+
+final case class ConversationCodeUpdateEvent(convId:     RConvId,
+                                             convDomain: Option[String],
+                                             time:       RemoteInstant,
+                                             from:       UserId,
+                                             fromDomain: Option[String],
+                                             link:       ConversationData.Link)
+  extends ConversationStateEvent
+
+final case class ConversationCodeDeleteEvent(convId:     RConvId,
+                                             convDomain: Option[String],
+                                             time:       RemoteInstant,
+                                             from:       UserId,
+                                             fromDomain: Option[String])
+  extends ConversationStateEvent
 
 sealed trait OtrEvent extends ConversationEvent {
   val sender: ClientId
   val recipient: ClientId
   val ciphertext: Array[Byte]
 }
-case class OtrMessageEvent(convId: RConvId, time: RemoteInstant, from: UserId, sender: ClientId, recipient: ClientId, ciphertext: Array[Byte], externalData: Option[Array[Byte]] = None) extends OtrEvent
+
+final case class OtrMessageEvent(convId:       RConvId,
+                                 convDomain:   Option[String],
+                                 time:         RemoteInstant,
+                                 from:         UserId,
+                                 fromDomain:   Option[String],
+                                 sender:       ClientId,
+                                 recipient:    ClientId,
+                                 ciphertext:   Array[Byte],
+                                 externalData: Option[Array[Byte]] = None)
+  extends OtrEvent
 
 sealed trait PropertyEvent extends UserEvent
 
-case class ReadReceiptEnabledPropertyEvent(value: Int) extends PropertyEvent
+final case class ReadReceiptEnabledPropertyEvent(value: Int) extends PropertyEvent
 
 // An event that contains a new folders/favorites list
-case class FoldersEvent(folders: Seq[RemoteFolderData]) extends PropertyEvent
+final case class FoldersEvent(folders: Seq[RemoteFolderData]) extends PropertyEvent
 
-case class UnknownPropertyEvent(key: PropertyKey, value: String) extends PropertyEvent
+final case class UnknownPropertyEvent(key: PropertyKey, value: String) extends PropertyEvent
 
-case class ConversationState(archived:         Option[Boolean] = None,
-                             archiveTime:      Option[RemoteInstant] = None,
-                             muted:            Option[Boolean] = None,
-                             muteTime:         Option[RemoteInstant] = None,
-                             mutedStatus:      Option[Int] = None,
-                             target:           Option[UserId] = None,
-                             conversationRole: Option[ConversationRole] = None
-                            ) extends SafeToLog
+final case class ConversationState(archived:         Option[Boolean] = None,
+                                   archiveTime:      Option[RemoteInstant] = None,
+                                   muted:            Option[Boolean] = None,
+                                   muteTime:         Option[RemoteInstant] = None,
+                                   mutedStatus:      Option[Int] = None,
+                                   target:           Option[UserId] = None,
+                                   conversationRole: Option[ConversationRole] = None
+                                  ) extends SafeToLog
 
 object ConversationState {
   private def encode(state: ConversationState, o: JSONObject) = {
@@ -216,32 +354,48 @@ object ConversationState {
 }
 
 object Event {
+  def decodeRConvId(implicit js: JSONObject): (RConvId, Option[String]) =
+    RConvQualifiedId.decodeOpt('qualified_conversation)
+      .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
+      .getOrElse {
+        if (js.has("convId")) (RConvId('convId), None)
+        else (RConvId('conversation), None)
+      }
+
+  def decodeQUserId(implicit js: JSONObject): (UserId, Option[String]) =
+    QualifiedId.decodeOpt('qualified_from)
+      .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
+      .getOrElse((UserId('from), None))
 
   implicit object EventDecoder extends JsonDecoder[Event] with DerivedLogTag {
 
     import com.waz.utils.JsonDecoder._
 
-    def connectionEvent(implicit js: JSONObject, name: Option[Name]) = UserConnectionEvent('conversation, 'from, 'to, 'message, ConnectionStatus('status), JsonDecoder.decodeISORemoteInstant('last_update), fromUserName = name)
+    def connectionEvent(implicit js: JSONObject, name: Option[Name]): UserConnectionEvent = {
+      val (convId, convDomain) = Event.decodeRConvId
+      UserConnectionEvent(convId, convDomain, 'from, 'to, 'message, ConnectionStatus('status), JsonDecoder.decodeISORemoteInstant('last_update), fromUserName = name)
+    }
 
-    def gcmTokenRemoveEvent(implicit js: JSONObject) = PushTokenRemoveEvent(token = 'token, senderId = 'app, client = 'client)
+    def gcmTokenRemoveEvent(implicit js: JSONObject): PushTokenRemoveEvent =
+      PushTokenRemoveEvent(token = 'token, senderId = 'app, client = 'client)
 
     override def apply(implicit js: JSONObject): Event = Try {
-
       decodeString('type) match {
         case tpe if tpe.startsWith("conversation") => ConversationEventDecoder(js)
         case tpe if tpe.startsWith("team")         => TeamEvent.TeamEventDecoder(js)
-        case "user.update" => UserUpdateEvent(JsonDecoder[UserInfo]('user))
-        case "user.identity-remove" => UserUpdateEvent(JsonDecoder[UserInfo]('user), true)
-        case "user.connection" => connectionEvent(js.getJSONObject("connection"), JsonDecoder.opt('user, _.getJSONObject("user")) flatMap (JsonDecoder.decodeOptName('name)(_)))
-        case "user.push-remove" => gcmTokenRemoveEvent(js.getJSONObject("token"))
-        case "user.delete" => UserDeleteEvent(user = 'id)
-        case "user.client-add" => OtrClientAddEvent(OtrClient.ClientsResponse.Decoder(js.getJSONObject("client")))
-        case "user.client-remove" => OtrClientRemoveEvent(decodeId[ClientId]('id)(js.getJSONObject("client"), implicitly))
-        case "user.properties-set" => PropertyEvent.Decoder(js)
-        case "user.properties-delete" => PropertyEvent.Decoder(js)
-        case "user.legalhold-request" => LegalHoldRequestEvent(decodeId[UserId]('id), LegalHoldRequest.Decoder(js))
-        case "user.legalhold-enable" => LegalHoldEnableEvent(decodeId[UserId]('id))
-        case "user.legalhold-disable" => LegalHoldDisableEvent(decodeId[UserId]('id))
+        case "user.update"                         => UserUpdateEvent(JsonDecoder[UserInfo]('user))
+        case "user.identity-remove"                => UserUpdateEvent(JsonDecoder[UserInfo]('user), true)
+        case "user.connection"                     => connectionEvent(js.getJSONObject("connection"), JsonDecoder.opt('user, _.getJSONObject("user")) flatMap (JsonDecoder.decodeOptName('name)(_)))
+        case "user.push-remove"                    => gcmTokenRemoveEvent(js.getJSONObject("token"))
+        case "user.delete"                         => UserDeleteEvent(user = 'id)
+        case "user.client-add"                     => OtrClientAddEvent(OtrClient.ClientsResponse.Decoder(js.getJSONObject("client")))
+        case "user.client-remove"                  => OtrClientRemoveEvent(decodeId[ClientId]('id)(js.getJSONObject("client"), implicitly))
+        case "user.properties-set"                 => PropertyEvent.Decoder(js)
+        case "user.properties-delete"              => PropertyEvent.Decoder(js)
+        case "user.legalhold-request"              => LegalHoldRequestEvent(decodeId[UserId]('id), LegalHoldRequest.Decoder(js))
+        case "user.legalhold-enable"               => LegalHoldEnableEvent(decodeId[UserId]('id))
+        case "user.legalhold-disable"              => LegalHoldDisableEvent(decodeId[UserId]('id))
+        case "feature-config.update"               => FeatureConfigUpdateEvent('name, 'data)
         case _ =>
           error(l"unhandled event: $js")
           UnknownEvent(js)
@@ -259,39 +413,56 @@ object UserConnectionEvent {
 object ConversationEvent extends DerivedLogTag {
 
   import OtrErrorEvent._
-  import ConversationRole.decodeUserIdsWithRoles
+  import ConversationRole.decodeQualifiedIdsWithRoles
 
   def unapply(e: ConversationEvent): Option[(RConvId, RemoteInstant, UserId)] =
     Some((e.convId, e.time, e.from))
 
   implicit lazy val ConversationEventDecoder: JsonDecoder[ConversationEvent] = new JsonDecoder[ConversationEvent] {
-    override def apply(implicit js: JSONObject): ConversationEvent = Try {
 
+    private def decodeMemberJoinEvent(data: JSONObject, time: RemoteInstant)(implicit js: JSONObject): MemberJoinEvent = {
+      val (convId, convDomain) = Event.decodeRConvId
+      val (from, fromDomain) = Event.decodeQUserId
+
+      MemberJoinEvent(
+        convId,
+        convDomain,
+        time,
+        from,
+        fromDomain,
+        decodeUserIdSeq('user_ids)(data),
+        decodeQualifiedIdsWithRoles('users)(data),
+        decodeString('id).startsWith("1.")
+      )
+    }
+
+    override def apply(implicit js: JSONObject): ConversationEvent = Try {
+      val (rConvId, convDomain) = Event.decodeRConvId
+      val (from, fromDomain) = Event.decodeQUserId
       lazy val d = if (js.has("data") && !js.isNull("data")) Try(js.getJSONObject("data")).toOption else None
 
       val time = RemoteInstant(decodeISOInstant('time))
 
       decodeString('type) match {
-        case "conversation.create"               => CreateConversationEvent('conversation, time, 'from, JsonDecoder[ConversationResponse]('data))
-        case "conversation.delete"               => DeleteConversationEvent('conversation, time, 'from)
-        case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeName('name)(d.get))
-        case "conversation.member-join"          =>
-          MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeUserIdsWithRoles('users)(d.get), decodeString('id).startsWith("1."))
-        case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeOptString('reason)(d.get).map(MemberLeaveReason(_)))
-        case "conversation.member-update"        => MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get))
-        case "conversation.connect-request"      => ConnectRequestEvent('conversation, time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeName('name)(d.get), decodeOptString('email)(d.get))
-        case "conversation.typing"               => TypingEvent('conversation, time, 'from, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))
-        case "conversation.otr-message-add"      => OtrMessageEvent('conversation, time, 'from, decodeClientId('sender)(d.get), decodeClientId('recipient)(d.get), decodeByteString('text)(d.get), decodeOptByteString('data)(d.get))
-        case "conversation.access-update"        => ConversationAccessEvent('conversation, time, 'from, decodeAccess('access)(d.get), decodeAccessRole('access_role)(d.get))
-        case "conversation.code-update"          => ConversationCodeUpdateEvent('conversation, time, 'from, ConversationData.Link(d.get.getString("uri")))
-        case "conversation.code-delete"          => ConversationCodeDeleteEvent('conversation, time, 'from)
-        case "conversation.receipt-mode-update"  => ConversationReceiptModeEvent('conversation, time, 'from, decodeInt('receipt_mode)(d.get))
-        case "conversation.message-timer-update" => MessageTimerEvent('conversation, time, 'from, decodeOptLong('message_timer)(d.get).map(EphemeralDuration(_)))
+        case "conversation.create"               => CreateConversationEvent(rConvId, convDomain, time, from, fromDomain, JsonDecoder[ConversationResponse]('data))
+        case "conversation.delete"               => DeleteConversationEvent(rConvId, convDomain, time, from, fromDomain)
+        case "conversation.rename"               => RenameConversationEvent(rConvId, convDomain, time, from, fromDomain, decodeName('name)(d.get))
+        case "conversation.member-join"          => decodeMemberJoinEvent(d.get, time)
+        case "conversation.member-leave"         => MemberLeaveEvent(rConvId, convDomain, time, from, fromDomain, decodeUserIdSeq('user_ids)(d.get), decodeOptString('reason)(d.get).map(MemberLeaveReason(_)))
+        case "conversation.member-update"        => MemberUpdateEvent(rConvId, convDomain, time, from, fromDomain, ConversationState.Decoder(d.get))
+        case "conversation.connect-request"      => ConnectRequestEvent(rConvId, convDomain, time, from, fromDomain, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeName('name)(d.get), decodeOptString('email)(d.get))
+        case "conversation.typing"               => TypingEvent(rConvId, convDomain, time, from, fromDomain, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))
+        case "conversation.otr-message-add"      => OtrMessageEvent(rConvId, convDomain, time, from, fromDomain, decodeClientId('sender)(d.get), decodeClientId('recipient)(d.get), decodeByteString('text)(d.get), decodeOptByteString('data)(d.get))
+        case "conversation.access-update"        => ConversationAccessEvent(rConvId, convDomain, time, from, fromDomain, decodeAccess('access)(d.get), decodeAccessRole('access_role)(d.get))
+        case "conversation.code-update"          => ConversationCodeUpdateEvent(rConvId, convDomain, time, from, fromDomain, ConversationData.Link(d.get.getString("uri")))
+        case "conversation.code-delete"          => ConversationCodeDeleteEvent(rConvId, convDomain, time, from, fromDomain)
+        case "conversation.receipt-mode-update"  => ConversationReceiptModeEvent(rConvId, convDomain, time, from, fromDomain, decodeInt('receipt_mode)(d.get))
+        case "conversation.message-timer-update" => MessageTimerEvent(rConvId, convDomain, time, from, fromDomain, decodeOptLong('message_timer)(d.get).map(EphemeralDuration(_)))
 
           //Note, the following events are not from the backend, but are the result of decrypting and re-encoding conversation.otr-message-add events - hence the different name for `convId
-        case "conversation.generic-message"      => GenericMessageEvent('convId, time, 'from, 'content)
-        case "conversation.otr-error"            => OtrErrorEvent('convId, time, 'from, decodeOtrError('error))
-        case "conversation.session-reset"        => SessionReset('convId, time, 'from, 'sender)
+        case "conversation.generic-message"      => GenericMessageEvent(rConvId, convDomain, time, from, fromDomain, 'content)
+        case "conversation.otr-error"            => OtrErrorEvent(rConvId, convDomain, time, from, fromDomain, decodeOtrError('error))
+        case "conversation.session-reset"        => SessionReset(rConvId, convDomain, time, from, fromDomain, 'sender)
         case _ =>
           error(l"unhandled event (1): ${js.toString}")
           UnknownConvEvent(js)
@@ -332,28 +503,49 @@ object MessageEvent {
 
   implicit lazy val MessageEventEncoder: JsonEncoder[MessageEvent] = new JsonEncoder[MessageEvent] {
 
-    private def setFields(json: JSONObject, convId: RConvId, time: RemoteInstant, from: UserId, eventType: String) =
+    val QualifiedEncoder: JsonEncoder[(RConvId, String)] =
+      JsonEncoder.build { case (id, domain) => js => {
+        js.put("id", id.str)
+        js.put("domain", domain)
+      } }
+
+    private def setFields(json: JSONObject,
+                          convId: RConvId,
+                          convDomain: Option[String],
+                          time: RemoteInstant,
+                          from: UserId,
+                          fromDomain: Option[String],
+                          eventType: String): JSONObject = {
       json
         .put("convId", convId.str)
         .put("time", JsonEncoder.encodeISOInstant(time.instant))
         .put("from", from.str)
         .put("type", eventType)
         .setType(eventType)
+      convDomain.foreach { domain =>
+        json.put("qualified_conversation", QualifiedEncoder.apply((convId, domain)) )
+      }
+      fromDomain.foreach { domain =>
+        json.put("qualified_from", QualifiedEncoder.apply((convId, domain)) )
+      }
+
+      json
+    }
 
     override def apply(event: MessageEvent): JSONObject = JsonEncoder { json =>
       event match {
-        case GenericMessageEvent(convId, time, from, content) =>
-          setFields(json, convId, time, from, "conversation.generic-message")
+        case GenericMessageEvent(convId, convDomain, time, from, fromDomain, content) =>
+          setFields(json, convId, convDomain, time, from, fromDomain, "conversation.generic-message")
             .put("content", AESUtils.base64(content.proto.toByteArray))
-        case OtrErrorEvent(convId, time, from, error) =>
-          setFields(json, convId, time, from, "conversation.otr-error")
+        case OtrErrorEvent(convId, convDomain, time, from, fromDomain, error) =>
+          setFields(json, convId, convDomain, time, from, fromDomain, "conversation.otr-error")
             .put("error", OtrError.OtrErrorEncoder(error))
-        case CallMessageEvent(convId, time, from, sender, content) =>
-          setFields(json, convId, time, from, "conversation.call-message")
+        case CallMessageEvent(convId, convDomain, time, from, fromDomain, sender, content) =>
+          setFields(json, convId, convDomain, time, from, fromDomain, "conversation.call-message")
             .put("sender", sender.str)
             .put("content", content)
-        case SessionReset(convId, time, from, sender) =>
-          setFields(json, convId, time, from, "conversation.session-reset")
+        case SessionReset(convId, convDomain, time, from, fromDomain, sender) =>
+          setFields(json, convId, convDomain, time, from, fromDomain, "conversation.session-reset")
             .put("sender", sender.str)
         case e => throw new JSONException(s"Encoder for event $e not implemented")
       }
@@ -468,6 +660,9 @@ object PropertyEvent {
 }
 
 sealed trait LegalHoldEvent extends UserEvent
-case class LegalHoldRequestEvent(userId: UserId, request: LegalHoldRequest) extends LegalHoldEvent
-case class LegalHoldEnableEvent(userId: UserId) extends LegalHoldEvent
-case class LegalHoldDisableEvent(userId: UserId) extends LegalHoldEvent
+final case class LegalHoldRequestEvent(userId: UserId, request: LegalHoldRequest) extends LegalHoldEvent
+final case class LegalHoldEnableEvent(userId: UserId) extends LegalHoldEvent
+final case class LegalHoldDisableEvent(userId: UserId) extends LegalHoldEvent
+
+sealed trait FeatureConfigEvent extends Event
+final case class FeatureConfigUpdateEvent(name: String, data: String) extends FeatureConfigEvent

@@ -45,7 +45,9 @@ class LegalHoldServiceImpl(selfUserId: UserId,
                            membersStorage: MembersStorage,
                            cryptoSessionService: CryptoSessionService,
                            sync: SyncServiceHandle,
-                           messagesService: MessagesService) extends LegalHoldService {
+                           messagesService: MessagesService,
+                           userService: UserService
+                          ) extends LegalHoldService {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -59,12 +61,12 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
     case LegalHoldEnableEvent(userId) =>
       if (userId == selfUserId) onLegalHoldApprovedFromAnotherDevice()
-      else sync.syncClients(userId).map(_ => ())
+      else userService.syncClients(userId).map(_ => ())
 
 
     case LegalHoldDisableEvent(userId) =>
       if (userId == selfUserId) onLegalHoldDisabled()
-      else  sync.syncClients(userId).map(_ => ())
+      else userService.syncClients(userId).map(_ => ())
 
     case _ =>
       Future.successful({})
@@ -127,13 +129,13 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     client          <- clientsService.getOrCreateClient(selfUserId, request.clientId)
     legalHoldClient = client.copy(deviceClass = DeviceClass.LegalHold, isTemporary = true)
     _               <- clientsService.updateUserClients(selfUserId, Seq(legalHoldClient), replace = false)
-    sessionId       = SessionId(selfUserId, legalHoldClient.id)
+    sessionId       = SessionId(selfUserId, None, legalHoldClient.id)
     _               <- cryptoSessionService.getOrCreateSession(sessionId, request.lastPreKey)
   } yield ()
 
   private def deleteLegalHoldClientAndSession(clientId: ClientId): Future[Unit] = for {
-    _ <- clientsService.removeClients(selfUserId, Seq(clientId))
-    _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, clientId))
+    _ <- clientsService.removeClients(selfUserId, Set(clientId))
+    _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, None, clientId))
   } yield ()
 
   private def onLegalHoldApprovedFromAnotherDevice(): Future[Unit] = for {
@@ -230,7 +232,7 @@ class LegalHoldServiceImpl(selfUserId: UserId,
 
   override def messageEventStage: Stage.Atomic = EventScheduler.Stage[MessageEvent] { (_, events) =>
     Future.traverse(events) {
-      case GenericMessageEvent(convId, time, _, content) =>
+      case GenericMessageEvent(convId, _, time, _, _, content) =>
         updateStatusFromMessageHint(convId, content.legalHoldStatus, time)
       case _ =>
         Future.successful(())

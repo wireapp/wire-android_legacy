@@ -55,13 +55,24 @@ object ConversationRole {
   def getRole(label: String, defaultRole: ConversationRole = ConversationRole.MemberRole): ConversationRole =
     defaultRoles.find(_.label == label).getOrElse(defaultRole)
 
-  implicit val Decoder: JsonDecoder[(UserId, String)] = new JsonDecoder[(UserId, String)] {
-    import com.waz.utils.JsonDecoder._
-    override def apply(implicit js: JSONObject): (UserId, String) = (UserId('id), 'conversation_role)
+  def decodeUserIdsWithRoles(s: Symbol)(implicit js: JSONObject): Map[UserId, ConversationRole] = {
+    implicit val decoder: JsonDecoder[(UserId, String)] = new JsonDecoder[(UserId, String)] {
+      import com.waz.utils.JsonDecoder._
+      override def apply(implicit js: JSONObject): (UserId, String) = (UserId('id), 'conversation_role)
+    }
+
+    decodeSeq[(UserId, String)](s).map { case (id, label) => id -> getRole(label) }.toMap
   }
 
-  def decodeUserIdsWithRoles(s: Symbol)(implicit js: JSONObject): Map[UserId, ConversationRole] =
-    decodeSeq[(UserId, String)](s).map { case (id, label) => id -> getRole(label) }.toMap
+  def decodeQualifiedIdsWithRoles(s: Symbol)(implicit js: JSONObject): Map[QualifiedId, ConversationRole] = {
+    implicit val decoder: JsonDecoder[(QualifiedId, String)] = new JsonDecoder[(QualifiedId, String)] {
+      import com.waz.utils.JsonDecoder._
+      override def apply(implicit js: JSONObject): (QualifiedId, String) =
+        (QualifiedId.decodeOpt('qualified_id).getOrElse(QualifiedId(UserId('id))), 'conversation_role)
+    }
+
+    decodeSeq[(QualifiedId, String)](s).map { case (id, label) => id -> getRole(label) }.toMap
+  }
 
   def fromRoleActions(roleActions: Iterable[ConversationRoleAction]): Map[ConvId, Set[ConversationRole]] =
     roleActions.groupBy(_.convId).mapValues {
