@@ -409,7 +409,6 @@ dependencies {
     implementation BuildDependencies.rebound
     implementation BuildDependencies.commonMark
     implementation BuildDependencies.jna
-    implementation BuildDependencies.pinEditText
     implementation BuildDependencies.countly
 
     implementation BuildDependencies.wireSignals

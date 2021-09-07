@@ -66,7 +66,6 @@ object Versions {
     const val COMMON_MARK = "0.11.0"
     const val JNA = "4.4.0@aar"
     const val LIB_PHONE_NUMBER = "7.1.1" // 7.2.x breaks protobuf
-    const val PIN_EDITTEXT = "1.2.1"
     const val LIB_SODIUM = "2.0.2"
     const val COUNTLY = "20.04.2"
     const val ZOOMING = "1.1.0"
@@ -149,7 +148,6 @@ object BuildDependencies {
     val commonMark = "com.atlassian.commonmark:commonmark:${Versions.COMMON_MARK}"
     val jna = "net.java.dev.jna:jna:${Versions.JNA}"
     val libPhoneNumber = "com.googlecode.libphonenumber:libphonenumber:${Versions.LIB_PHONE_NUMBER}"
-    val pinEditText = "com.poovam:pin-edittext-field:${Versions.PIN_EDITTEXT}"
     val libSodium = "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:${Versions.LIB_SODIUM}"
     val countly = "ly.count.android:sdk:${Versions.COUNTLY}"
     val zooming = "com.wire.zoom:zoomlayout:${Versions.ZOOMING}"
