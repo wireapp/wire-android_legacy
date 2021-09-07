@@ -62,7 +62,6 @@ class OtrClientImpl(implicit
                     urlCreator: UrlCreator,
                     httpClient: HttpClient,
                     authRequestInterceptor: AuthRequestInterceptor) extends OtrClient with DerivedLogTag {
-
   import HttpClient.AutoDerivationOld._
   import HttpClient.dsl._
   import OtrMessage.OtrMessageSerializer
@@ -223,7 +222,6 @@ class OtrClientImpl(implicit
 }
 
 object OtrClient extends DerivedLogTag {
-
   val ClientsPath = "/clients"
   val PrekeysPath = "/users/prekeys"
   val BroadcastPath = "/broadcast/otr/messages"
@@ -231,17 +229,11 @@ object OtrClient extends DerivedLogTag {
   val ListPrekeysPath = "/users/list-prekeys"
 
   def clientPath(id: ClientId) = s"/clients/$id"
-
   def clientKeyIdsPath(id: ClientId) = s"/clients/$id/prekeys"
-
   def userPreKeysPath(user: UserId) = s"/users/$user/prekeys"
-
   def userClientsPath(user: UserId) = s"/users/$user/clients"
-
   def clientPreKeyPath(user: UserId, client: ClientId) = s"/users/$user/prekeys/$client"
-
   def userPreKeysPath(qId: QualifiedId) = s"/users/${qId.domain}/${qId.id.str}/prekeys"
-
   def clientPreKeyPath(qId: QualifiedId, clientId: ClientId) = s"/users/${qId.domain}/${qId.id.str}/prekeys/$clientId"
 
   // If you change this, don't forget to set the 'ShouldPostClientCapabilities' user preference
@@ -291,9 +283,7 @@ object OtrClient extends DerivedLogTag {
 
   final case class EncryptedContent(content: Map[UserId, Map[ClientId, Array[Byte]]]) {
     lazy val estimatedSize: Int = content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
-
-    lazy val userEntries: Array[Otr.UserEntry] =
-      content.map { case (user, cs) => userEntry(user, cs) }(breakOut)
+    lazy val userEntries: Array[Otr.UserEntry] = content.map { case (user, cs) => userEntry(user, cs) }(breakOut)
   }
 
   object EncryptedContent {
@@ -301,8 +291,8 @@ object OtrClient extends DerivedLogTag {
   }
 
   final case class QEncryptedContent(content: Map[QualifiedId, Map[ClientId, Array[Byte]]]) {
-    lazy val estimatedSize: Int = content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
-
+    lazy val estimatedSize: Int =
+      content.valuesIterator.map { cs => 16 + cs.valuesIterator.map(_.length + 8).sum }.sum
     lazy val entries: Array[Otr.QualifiedUserEntry] =
       content.groupBy(_._1.domain).map { case (domain, userContent) =>
         val userEntries = userContent.map { case (user, cs) => userEntry(user.id, cs) }
@@ -330,7 +320,6 @@ object OtrClient extends DerivedLogTag {
   type PreKeysResponse = Seq[(UserId, Seq[ClientKey])]
 
   object PreKeysResponse {
-
     import scala.collection.JavaConverters._
 
     def unapply(content: ResponseContent): Option[PreKeysResponse] = content match {
@@ -351,9 +340,9 @@ object OtrClient extends DerivedLogTag {
   final case class ListPreKeysResponse(values: Map[QualifiedId, Map[ClientId, PreKey]])
 
   object ListPreKeysResponse {
-    val Empty: ListPreKeysResponse = ListPreKeysResponse(Map.empty)
-
     import scala.collection.JavaConverters._
+
+    val Empty: ListPreKeysResponse = ListPreKeysResponse(Map.empty)
 
     private def getPreKeys(json: JSONObject): Map[ClientId, PreKey] =
       json.keySet.asScala.toSeq.map { clientId =>
@@ -376,9 +365,7 @@ object OtrClient extends DerivedLogTag {
         if (response.nonEmpty) ListPreKeysResponse(response) else Empty
       }
     }
-
   }
-
 
   final case class ListClientsRequest(qualifiedUsers: Seq[QualifiedId]) {
     def encode: JSONObject = JsonEncoder { o =>
@@ -390,19 +377,17 @@ object OtrClient extends DerivedLogTag {
   }
 
   object ListClientsRequest {
-
     implicit object Encoder extends JsonEncoder[ListClientsRequest] {
       override def apply(request: ListClientsRequest): JSONObject = request.encode
     }
-
   }
 
   final case class ListClientsResponse(values: Map[QualifiedId, Seq[Client]])
 
   object ListClientsResponse {
-    val Empty: ListClientsResponse = ListClientsResponse(Map.empty)
-
     import scala.collection.JavaConverters._
+
+    val Empty: ListClientsResponse = ListClientsResponse(Map.empty)
 
     private def getClients(json: JSONArray): Seq[Client] =
       JsonDecoder.array(json, (arr, i) => Try(arr.getJSONObject(i)).map(ClientsResponse.Decoder(_)).toOption).flatten
@@ -426,11 +411,9 @@ object OtrClient extends DerivedLogTag {
         if (response.nonEmpty) ListClientsResponse(response) else Empty
       }
     }
-
   }
 
   object ClientsResponse {
-
     implicit object Decoder extends JsonDecoder[Client] {
       override def apply(implicit js: JSONObject): Client = {
         Client(
@@ -457,6 +440,4 @@ object OtrClient extends DerivedLogTag {
       case _ => None
     }
   }
-
 }
-
