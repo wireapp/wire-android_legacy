@@ -23,11 +23,10 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
-import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, Decoder}
+import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, QConversationsResult, Decoder}
 import com.waz.utils.JsonDecoder.{array, decodeBool}
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
-import com.waz.zms.BuildConfig
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
@@ -43,9 +42,9 @@ import scala.util.control.NonFatal
 trait ConversationsClient {
   import ConversationsClient._
   def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
-  def loadQualifiedConversations(start: Option[RConvQualifiedId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
   def loadConversations(ids: Set[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
-  def loadQualifiedConversations(ids: Set[RConvQualifiedId]): ErrorOrResponse[Seq[ConversationResponse]]
+  def loadQualifiedConversations(ids: Set[RConvQualifiedId]): ErrorOrResponse[QConversationsResult]
+  def loadQualifiedConversationsIds(pagingState: Option[String]): ErrorOrResponse[ListConversationsIdsResponse]
   def loadConversationRoles(remoteIds: Set[RConvId], defRoles: Set[ConversationRole]): Future[Map[RConvId, Set[ConversationRole]]]
   def postName(convId: RConvId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]]
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
@@ -60,7 +59,6 @@ trait ConversationsClient {
   def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit]
   def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
-  def postQualifiedConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
   def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
   def getGuestroomOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse]
   def postJoinConversation(key: String, code: String): ErrorOrResponse[Option[MemberJoinEvent]]
@@ -86,24 +84,47 @@ class ConversationsClientImpl(implicit
       ConversationsResult(ids, hasMore)
     }
 
+  private implicit val QConversationIdsResponseDeserializer: RawBodyDeserializer[QConversationsResult] =
+    RawBodyDeserializer[JSONObject].map { json =>
+      val found =
+        if (json.has("found"))
+          array[ConversationResponse](json.getJSONArray("found"))
+        else
+          Seq.empty[ConversationResponse]
+      val notFound =
+        if (json.has("not_found"))
+          array[RConvQualifiedId](json.getJSONArray("not_found"))
+        else
+          Seq.empty[RConvQualifiedId]
+      val failed =
+        if (json.has("failed"))
+          array[RConvQualifiedId](json.getJSONArray("failed"))
+        else
+          Seq.empty[RConvQualifiedId]
+
+      QConversationsResult(found, notFound.toSet, failed.toSet)
+    }
+
+  private implicit val ListConversationIdsResponseDeserializer: RawBodyDeserializer[ListConversationsIdsResponse] =
+    RawBodyDeserializer[JSONObject].map { json =>
+      val qIds =
+        if (json.has("qualified_conversations"))
+          array[RConvQualifiedId](json.getJSONArray("qualified_conversations"))
+        else
+          Seq.empty[RConvQualifiedId]
+      val hasMore =
+        if (json.has("has_more")) json.getBoolean("has_more") else false
+      val pagingState =
+        if (json.has("paging_state")) Some(json.getString("paging_state")) else None
+
+      ListConversationsIdsResponse(qIds.toSet, hasMore, pagingState)
+    }
+
   override def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] = {
     Request
       .Get(
         relativePath = ConversationsPath,
         queryParameters = queryParameters("size" -> limit, "start" -> start)
-      )
-      .withResultType[ConversationsResult]
-      .withErrorType[ErrorResponse]
-      .executeSafe
-  }
-
-  override def loadQualifiedConversations(start: Option[RConvQualifiedId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] = {
-    val jsonBody = Json("size" -> limit)
-    start.foreach(startId => jsonBody.put("start_id", RConvQualifiedId.Encoder(startId)))
-    Request
-      .Post(
-        relativePath = ListConversationsPath,
-        body = jsonBody
       )
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
@@ -119,16 +140,26 @@ class ConversationsClientImpl(implicit
       .map(_.map(_.conversations))
   }
 
-  override def loadQualifiedConversations(ids: Set[RConvQualifiedId]): ErrorOrResponse[Seq[ConversationResponse]] = {
+  override def loadQualifiedConversations(ids: Set[RConvQualifiedId]): ErrorOrResponse[QConversationsResult] = {
     Request
       .Post(
         relativePath = ListConversationsPath,
         body = Json("qualified_ids" -> RConvQualifiedId.encode(ids))
       )
-      .withResultType[ConversationsResult]
+      .withResultType[QConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe
-      .map(_.map(_.conversations))
+  }
+
+  override def loadQualifiedConversationsIds(pagingState: Option[String]): ErrorOrResponse[ListConversationsIdsResponse] = {
+    Request
+      .Post(
+        relativePath = ListConversationsIdsPath,
+        body = pagingState.map(state => Json("paging_state" -> state)).getOrElse(Json())
+      )
+      .withResultType[ListConversationsIdsResponse]
+      .withErrorType[ErrorResponse]
+      .executeSafe
   }
 
   private def loadConversationRoles(id: RConvId): ErrorOrResponse[Set[ConversationRole]] = {
@@ -280,14 +311,6 @@ class ConversationsClientImpl(implicit
       .executeSafe(_.conversations.head)
   }
 
-  override def postQualifiedConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
-    verbose(l"postQualifiedConversation($state)")
-    Request.Post(relativePath = QualifiedConversationsPath, body = state)
-      .withResultType[ConversationsResult]
-      .withErrorType[ErrorResponse]
-      .executeSafe(_.conversations.head)
-  }
-
   override def postConversationRole(conv: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit] = {
     verbose(l"postConversationRole($conv, $userId, $role)")
     Request.Put(
@@ -333,8 +356,8 @@ class ConversationsClientImpl(implicit
 
 object ConversationsClient {
   val ConversationsPath = "/conversations"
-  val ListConversationsPath = "/list-conversations"
-  val QualifiedConversationsPath = "/conversations/one2one"
+  val ListConversationsPath = "/conversations/list/v2"
+  val ListConversationsIdsPath = "/conversations/list-ids"
   val JoinConversationPath = "/conversations/join"
   val ConversationsPageSize = 100
   val ConversationIdsPageSize = 1000
@@ -444,6 +467,12 @@ object ConversationsClient {
     }
 
     final case class ConversationsResult(conversations: Seq[ConversationResponse], hasMore: Boolean)
+
+    final case class QConversationsResult(found: Seq[ConversationResponse], notFound: Set[RConvQualifiedId], failed: Set[RConvQualifiedId])
+
+    object QConversationsResult {
+      val Empty: QConversationsResult = QConversationsResult(Nil, Set.empty, Set.empty)
+    }
   }
 
   final case class ConvRole(conversation_role: String, actions: Seq[String]) {
@@ -506,4 +535,6 @@ object ConversationsClient {
         ConversationOverviewResponse(decodeRConvId('id), decodeString('name))
     }
   }
+
+  final case class ListConversationsIdsResponse(qIds: Set[RConvQualifiedId], hasMore: Boolean, pagingState: Option[String])
 }
