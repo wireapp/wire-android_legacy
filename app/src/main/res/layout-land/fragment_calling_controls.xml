@@ -83,7 +83,7 @@
 
     <com.waz.zclient.calling.views.ControlsView
         android:id="@+id/controls_grid"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center"
         android:layout_marginStart="@dimen/wire__padding__regular"

@@ -78,6 +78,18 @@
         android:visibility="invisible"/>
 
     <com.waz.zclient.calling.views.CallControlButtonView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"/>
+
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"/>
+
+
+
+    <com.waz.zclient.calling.views.CallControlButtonView
         android:id="@+id/reject_call"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -85,7 +97,13 @@
         android:clickable="true"
         app:iconDimension="@dimen/hangup_call_icon_size"
         android:focusable="true"
-        android:visibility="gone"/>
+        android:paddingBottom="@dimen/wire__padding__16"
+        android:visibility="invisible"/>
+
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"/>
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:id="@+id/accept_call"
@@ -93,9 +111,20 @@
         android:layout_height="wrap_content"
         android:clickable="true"
         android:focusable="true"
-        android:visibility="gone"
+        android:visibility="invisible"
         android:paddingBottom="@dimen/wire__padding__16"
         />
+
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"/>
+
+
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"/>
 
 
 </merge>
