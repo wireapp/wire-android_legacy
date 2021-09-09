@@ -63,6 +63,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
+      (userService.isFederated(_ : UserData)).expects(*).anyNumberOfTimes().returning(false)
 
       // when
       result(handler.postAvailability(Availability.Available))
@@ -88,6 +89,39 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
         (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
           checkAvailabilityStatus(message, Messages.Availability.Type.AVAILABLE)
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id, user3.id, user4.id))
+          Future.successful(Right(RemoteInstant(Instant.now())))
+      }
+      (userService.isFederated(_ : UserData)).expects(*).anyNumberOfTimes().returning(false)
+
+      // when
+      result(handler.postAvailability(Availability.Available))
+    }
+
+    scenario("Don't post to users from other backends") {
+      // given
+      val domain = "chala.wire.link"
+      val otherDomain = "anta.wire.ling"
+      val self = UserData("self").copy(teamId = Some(teamId), domain = Some(domain))
+      (userService.getSelfUser _).expects().anyNumberOfTimes().returning(
+        Future.successful(Some(self))
+      )
+
+      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted, domain = Some(domain))
+      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted, domain = Some(domain))
+      val user3 = UserData("user3").copy(teamId = Some(teamId), connection = Accepted, domain = Some(otherDomain))
+      (usersStorage.values _).expects().anyNumberOfTimes().returning(
+        Future.successful(Vector(user1, user2, user3))
+      )
+
+      // then
+      (userService.isFederated(_ : UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData =>
+        user.domain.exists(_ != domain)
+      }
+      
+      (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
+        (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
+          checkAvailabilityStatus(message, Messages.Availability.Type.AVAILABLE)
+          recipients shouldEqual Some(Set(self.id, user1.id, user2.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
 
@@ -119,6 +153,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id, user3.id, user4.id, user5.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
+      (userService.isFederated(_ : UserData)).expects(*).anyNumberOfTimes().returning(false)
 
       // when
       result(handler.postAvailability(Availability.Available))
@@ -146,6 +181,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
           recipients shouldEqual Some(Set(self.id, user1.id, user2.id, user3.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
+      (userService.isFederated(_ : UserData)).expects(*).anyNumberOfTimes().returning(false)
 
       // when
       result(handler.postAvailability(Availability.Available, limit = 4))
@@ -174,6 +210,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
           recipients shouldEqual Some(Set(self.id, user1.id))
           Future.successful(Right(RemoteInstant(Instant.now())))
       }
+      (userService.isFederated(_ : UserData)).expects(*).anyNumberOfTimes().returning(false)
 
       // when
       result(handler.postAvailability(Availability.Available, limit = 2))
