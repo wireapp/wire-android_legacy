@@ -39,7 +39,7 @@ import com.xuliwen.zoom.ZoomLayout.ZoomLayoutGestureListener
 import com.waz.zclient.R
 import com.waz.zclient.calling.CallingGridFragment.PAGINATION_BUNDLE_KEY
 import com.waz.zclient.calling.AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.{ContextUtils, RichView}
 
 
 class CallingGridFragment extends FragmentHelper {
@@ -176,7 +176,41 @@ class CallingGridFragment extends FragmentHelper {
         }
 
     gridViews.zipWithIndex.foreach { case (userVideoView, index) =>
-      val (row, col, span, width) = index match {
+
+      val (row, col, span, width) = if (ContextUtils.isInLandscape) index match {
+        case 0 if gridViews.size == 1 => (0, 0, 1, 0)
+        case 0 if gridViews.size == 2 => (0, 0, 2, 0)
+        case 0 if gridViews.size > 2  => (0, 0, 1, 0)
+
+        case 1 if gridViews.size == 1 => (0, 1, 1, 0)
+        case 1 if gridViews.size == 2 => (1, 0, 2, 0)
+        case 1 if gridViews.size > 2  => (0, 1, 1, 0)
+
+        case 2 if gridViews.size == 3 => (1, 0, 2, grid.getWidth / 2)
+        case 2 if gridViews.size == 4 => (1, 0, 1, 0)
+        case 2 if gridViews.size > 4  => (0, 2, 1, 0)
+
+        case 3 if gridViews.size == 4 => (1, 1, 1, 0)
+        case 3 if gridViews.size == 5 => (1, 0, 2, grid.getWidth / 3)
+        case 3 if gridViews.size == 6 => (1, 0, 1, 0)
+        case 3 if gridViews.size > 6  => (0, 3, 1, 0)
+
+        case 4 if gridViews.size == 5 => (1, 1, 2, grid.getWidth / 3)
+        case 4 if gridViews.size == 6 => (1, 1, 1, 0)
+        case 4 if gridViews.size == 7 => (1, 0, 2, grid.getWidth / 4)
+        case 4 if gridViews.size == 8 => (1, 0, 1, 0)
+
+        case 5 if gridViews.size == 6 => (1, 2, 1, 0)
+        case 5 if gridViews.size == 7 => (1, 1, 2, grid.getWidth / 4)
+        case 5 if gridViews.size == 8 => (1, 1, 1, 0)
+
+        case 6 if gridViews.size == 7 => (1, 2, 2, grid.getWidth / 4)
+        case 6 if gridViews.size == 8 => (1, 2, 1, 0)
+
+        case 7 if gridViews.size == 8 => (1, 3, 1, 0)
+
+      }
+      else index match {
         case 0 if gridViews.size == 2 => (0, 0, 2, 0)
         case 0 => (0, 0, 1, 0)
         case 1 if gridViews.size == 2 => (1, 0, 2, 0)
@@ -189,6 +223,7 @@ class CallingGridFragment extends FragmentHelper {
         // else display it in row n/2, column 0 , span 1, , width match_parent(0)
         case n => (n / 2, 0, 1, 0)
       }
+
 
       val columnAlignment = width match {
         case 0 => GridLayout.FILL
