@@ -121,12 +121,12 @@ class ConversationsSyncHandler(selfUserId:      UserId,
 
   def syncConversations(): Future[SyncResult] =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      syncQualifiedConversations(None)
+      syncQualifiedConversations(None, Set.empty)
     } else {
       syncConversations(None, Set.empty)
     }
 
-  private def syncQualifiedConversations(pagingState: Option[String]): Future[SyncResult] =
+  private def syncQualifiedConversations(pagingState: Option[String], qIds: Set[RConvQualifiedId]): Future[SyncResult] =
     convClient.loadQualifiedConversationsIds(pagingState).future.flatMap {
       case Right(resp) =>
         convClient.loadQualifiedConversations(resp.qIds).future.flatMap {
@@ -134,8 +134,9 @@ class ConversationsSyncHandler(selfUserId:      UserId,
             for {
               roles      <- loadConversationRoles(found)
               _          <- convService.updateConversationsWithDeviceStartMessage(found, roles)
-              _          <- if (missing.nonEmpty) removeConvsMissingOnBackend(missing.map(_.id)) else Future.successful(())
-              syncResult <- if (resp.hasMore) syncQualifiedConversations(resp.pagingState) else Future.successful(Success)
+              _          <- if (missing.nonEmpty) removeConvsMissingOnBackend(missing.map(_.id))                  else Future.successful(())
+              _          <- if (!resp.hasMore)    removeConvsMissingOnBackend((resp.qIds ++ qIds).map(_.id))      else Future.successful(())
+              syncResult <- if (resp.hasMore)     syncQualifiedConversations(resp.pagingState, resp.qIds ++ qIds) else Future.successful(Success)
             } yield syncResult
           case Left(error) =>
             Future.successful(SyncResult(error))
