@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2021 Wire Swiss GmbH
@@ -18,8 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<merge
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -29,24 +27,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
-        app:iconDimension="@dimen/hangup_call_icon_size"
         android:focusable="true"
-        android:visibility="invisible"
         android:paddingBottom="@dimen/wire__padding__16"
-        />
+        android:visibility="invisible"
+        app:iconDimension="@dimen/hangup_call_icon_size" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"/>
+        android:visibility="invisible" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:id="@+id/mute_call"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
-        android:paddingBottom="@dimen/wire__padding__16"
-        android:focusable="true"/>
+        android:focusable="true"
+        android:paddingBottom="@dimen/wire__padding__16" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:id="@+id/video_call"
@@ -54,8 +51,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:clickable="true"
-        android:paddingBottom="@dimen/wire__padding__16"
-        android:focusable="true"/>
+        android:focusable="true"
+        android:paddingBottom="@dimen/wire__padding__16" />
 
     <!-- speaker and flip buttons use the same position -->
     <com.waz.zclient.calling.views.CallControlButtonView
@@ -63,31 +60,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
-        android:paddingBottom="@dimen/wire__padding__16"
-        android:focusable="true"/>
-
-
-    <com.waz.zclient.calling.views.CallControlButtonView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="invisible"/>
+        android:focusable="true"
+        android:paddingBottom="@dimen/wire__padding__16" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"/>
+        android:visibility="invisible" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"/>
+        android:visibility="invisible" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"/>
+        android:visibility="invisible" />
 
-
+    <com.waz.zclient.calling.views.CallControlButtonView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:id="@+id/reject_call"
@@ -95,15 +89,15 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:clickable="true"
-        app:iconDimension="@dimen/hangup_call_icon_size"
         android:focusable="true"
         android:paddingBottom="@dimen/wire__padding__16"
-        android:visibility="invisible"/>
+        android:visibility="invisible"
+        app:iconDimension="@dimen/hangup_call_icon_size" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"/>
+        android:visibility="invisible" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:id="@+id/accept_call"
@@ -111,20 +105,17 @@
         android:layout_height="wrap_content"
         android:clickable="true"
         android:focusable="true"
-        android:visibility="invisible"
         android:paddingBottom="@dimen/wire__padding__16"
-        />
+        android:visibility="invisible" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"/>
-
+        android:visibility="invisible" />
 
     <com.waz.zclient.calling.views.CallControlButtonView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"/>
-
+        android:visibility="invisible" />
 
 </merge>

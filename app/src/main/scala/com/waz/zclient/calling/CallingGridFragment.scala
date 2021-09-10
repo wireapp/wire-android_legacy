@@ -224,7 +224,6 @@ class CallingGridFragment extends FragmentHelper {
         case n => (n / 2, 0, 1, 0)
       }
 
-
       val columnAlignment = width match {
         case 0 => GridLayout.FILL
         case _ => GridLayout.CENTER

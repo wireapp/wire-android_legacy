@@ -18,23 +18,22 @@
 
 -->
 
-    <com.xuliwen.zoom.ZoomLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/zoom_layout"
+<com.xuliwen.zoom.ZoomLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/zoom_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:elevation="1dp"
+    app:double_click_zoom="1.0"
+    app:max_zoom="10.0"
+    app:min_zoom="1.0">
+
+    <androidx.gridlayout.widget.GridLayout
+        android:id="@+id/video_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="1dp"
-        app:double_click_zoom="1.0"
-        app:max_zoom="10.0"
-        app:min_zoom="1.0">
-
-        <androidx.gridlayout.widget.GridLayout
-            android:id="@+id/video_grid"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/black"
-            app:columnCount="4"
-            app:rowCount="2"
-            app:orientation="horizontal"
-            />
-    </com.xuliwen.zoom.ZoomLayout>
+        android:background="@color/black"
+        app:columnCount="4"
+        app:orientation="horizontal"
+        app:rowCount="2" />
+</com.xuliwen.zoom.ZoomLayout>

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2021 Wire Swiss GmbH
@@ -18,67 +17,62 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:background="@color/calling_video_overlay"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center">
+    android:background="@color/calling_video_overlay"
+    android:gravity="center"
+    android:orientation="vertical">
 
     <com.waz.zclient.calling.views.CallingHeader
         android:id="@+id/calling_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="top|center" />
+        android:layout_gravity="top|center"
+        android:orientation="vertical" />
 
     <com.waz.zclient.calling.views.CallingMiddleLayout
         android:id="@+id/calling_middle"
         android:layout_width="@dimen/calling__controls__participant_list_width"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginBottom="@dimen/wire__padding__16"
-   />
+        android:layout_marginBottom="@dimen/wire__padding__16" />
 
     <LinearLayout
         android:id="@+id/all_speakers_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:orientation="horizontal"
         android:layout_marginBottom="@dimen/wire__padding__16"
-        >
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/speakers_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/selector_toggle_left_button_background"
-            android:textColor="@drawable/selector_toggle_button_text_color"
-            android:text="@string/calling_toggle_speakers"
-            android:paddingTop="@dimen/wire__padding__4"
-            android:paddingBottom="@dimen/wire__padding__4"
-            android:paddingStart="@dimen/wire__padding__12"
-            android:paddingEnd="@dimen/wire__padding__12"
             android:minWidth="0dp"
             android:minHeight="0dp"
-            />
+            android:paddingStart="@dimen/wire__padding__12"
+            android:paddingTop="@dimen/wire__padding__4"
+            android:paddingEnd="@dimen/wire__padding__12"
+            android:paddingBottom="@dimen/wire__padding__4"
+            android:text="@string/calling_toggle_speakers"
+            android:textColor="@drawable/selector_toggle_button_text_color" />
 
         <Button
             android:id="@+id/all_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/selector_toggle_right_button_background"
-            android:textColor="@drawable/selector_toggle_button_text_color"
-            android:text="@string/calling_toggle_all"
-            android:paddingTop="@dimen/wire__padding__4"
-            android:paddingBottom="@dimen/wire__padding__4"
-            android:paddingStart="@dimen/wire__padding__12"
-            android:paddingEnd="@dimen/wire__padding__12"
             android:minWidth="0dp"
             android:minHeight="0dp"
-            />
+            android:paddingStart="@dimen/wire__padding__12"
+            android:paddingTop="@dimen/wire__padding__4"
+            android:paddingEnd="@dimen/wire__padding__12"
+            android:paddingBottom="@dimen/wire__padding__4"
+            android:text="@string/calling_toggle_all"
+            android:textColor="@drawable/selector_toggle_button_text_color" />
     </LinearLayout>
 
     <com.waz.zclient.calling.views.ControlsView
@@ -87,7 +81,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center"
         android:layout_marginStart="@dimen/wire__padding__regular"
-        android:layout_marginEnd="@dimen/wire__padding__regular"
-        />
+        android:layout_marginEnd="@dimen/wire__padding__regular" />
 
 </LinearLayout>
