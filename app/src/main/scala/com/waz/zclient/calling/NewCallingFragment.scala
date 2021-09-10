@@ -58,7 +58,7 @@ class NewCallingFragment extends FragmentHelper {
 
   private lazy val tabLayoutMediator: TabLayoutMediator =
     new TabLayoutMediator(tabLayout.get, viewPager.get, new TabLayoutMediator.TabConfigurationStrategy() {
-      override def onConfigureTab(tab: TabLayout.Tab, position: Int): Unit = {}
+      override def onConfigureTab(tab: TabLayout.Tab, position: Int): Unit = tab.setId(position)
     })
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -188,25 +188,26 @@ class NewCallingFragment extends FragmentHelper {
     cardView.setVisibility(View.GONE)
   }
 
-  private def initCallingGridViewPager(): Unit =
+  private def initCallingGridViewPager(): Unit = {
+
+    attachTabLayoutToViewPager()
+
     Signal.zip(callController.showTopSpeakers, callController.allParticipants.map(_.size)
     ).onUi {
       case (false, size) =>
         viewPager.foreach(_.setAdapter(allParticipantsAdapter))
         allParticipantsAdapter.notifyDataSetChanged()
         if (size > AllParticipantsAdapter.MAX_PARTICIPANTS_PER_PAGE) {
-          attachTabLayoutToViewPager()
           showPaginationDots()
         } else {
-          detachTabLayoutFromViewPager()
           hidePaginationDots()
         }
       case (true, _) =>
         viewPager.foreach(_.setAdapter(activeParticipantsAdapter))
         activeParticipantsAdapter.notifyDataSetChanged()
-        detachTabLayoutFromViewPager()
         hidePaginationDots()
     }
+  }
 
   private def attachTabLayoutToViewPager(): Unit = tabLayoutMediator.attach()
 
