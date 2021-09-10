@@ -175,51 +175,55 @@ class CallingGridFragment extends FragmentHelper {
           case (v1, v2) => infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
         }
 
+
     gridViews.zipWithIndex.foreach { case (userVideoView, index) =>
 
+      import gridViews._
+
       val (row, col, span, width) = if (ContextUtils.isInLandscape) index match {
-        case 0 if gridViews.size == 1 => (0, 0, 1, 0)
-        case 0 if gridViews.size == 2 => (0, 0, 2, 0)
-        case 0 if gridViews.size > 2  => (0, 0, 1, 0)
+        case 0 if size == 1 => (0, 0, 1, 0)
+        case 0 if size == 2 => (0, 0, 2, 0)
+        case 0 if size > 2  => (0, 0, 1, 0)
 
-        case 1 if gridViews.size == 1 => (0, 1, 1, 0)
-        case 1 if gridViews.size == 2 => (1, 0, 2, 0)
-        case 1 if gridViews.size > 2  => (0, 1, 1, 0)
+        case 1 if size == 1 => (0, 1, 1, 0)
+        case 1 if size == 2 => (1, 0, 2, 0)
+        case 1 if size > 2  => (0, 1, 1, 0)
 
-        case 2 if gridViews.size == 3 => (1, 0, 2, grid.getWidth / 2)
-        case 2 if gridViews.size == 4 => (1, 0, 1, 0)
-        case 2 if gridViews.size > 4  => (0, 2, 1, 0)
+        case 2 if size == 3 => (1, 0, 2, grid.getWidth / 2)
+        case 2 if size == 4 => (1, 0, 1, 0)
+        case 2 if size > 4  => (0, 2, 1, 0)
 
-        case 3 if gridViews.size == 4 => (1, 1, 1, 0)
-        case 3 if gridViews.size == 5 => (1, 0, 2, grid.getWidth / 3)
-        case 3 if gridViews.size == 6 => (1, 0, 1, 0)
-        case 3 if gridViews.size > 6  => (0, 3, 1, 0)
+        case 3 if size == 4 => (1, 1, 1, 0)
+        case 3 if size == 5 => (1, 0, 2, grid.getWidth / 3)
+        case 3 if size == 6 => (1, 0, 1, 0)
+        case 3 if size > 6  => (0, 3, 1, 0)
 
-        case 4 if gridViews.size == 5 => (1, 1, 2, grid.getWidth / 3)
-        case 4 if gridViews.size == 6 => (1, 1, 1, 0)
-        case 4 if gridViews.size == 7 => (1, 0, 2, grid.getWidth / 4)
-        case 4 if gridViews.size == 8 => (1, 0, 1, 0)
+        case 4 if size == 5 => (1, 1, 2, grid.getWidth / 3)
+        case 4 if size == 6 => (1, 1, 1, 0)
+        case 4 if size == 7 => (1, 0, 2, grid.getWidth / 4)
+        case 4 if size == 8 => (1, 0, 1, 0)
 
-        case 5 if gridViews.size == 6 => (1, 2, 1, 0)
-        case 5 if gridViews.size == 7 => (1, 1, 2, grid.getWidth / 4)
-        case 5 if gridViews.size == 8 => (1, 1, 1, 0)
+        case 5 if size == 6 => (1, 2, 1, 0)
+        case 5 if size == 7 => (1, 1, 2, grid.getWidth / 4)
+        case 5 if size == 8 => (1, 1, 1, 0)
 
-        case 6 if gridViews.size == 7 => (1, 2, 2, grid.getWidth / 4)
-        case 6 if gridViews.size == 8 => (1, 2, 1, 0)
+        case 6 if size == 7 => (1, 2, 2, grid.getWidth / 4)
+        case 6 if size == 8 => (1, 2, 1, 0)
 
-        case 7 if gridViews.size == 8 => (1, 3, 1, 0)
+        case 7 if size == 8 => (1, 3, 1, 0)
 
       }
       else index match {
-        case 0 if gridViews.size == 2 => (0, 0, 2, 0)
+
+        case 0 if size == 2 => (0, 0, 2, 0)
         case 0 => (0, 0, 1, 0)
-        case 1 if gridViews.size == 2 => (1, 0, 2, 0)
+        case 1 if size == 2 => (1, 0, 2, 0)
         case 1 => (0, 1, 1, 0)
         // The max number of columns is 2 and the max number of rows is undefined
         // if the index of the video preview is even, display it in row n/2, column 1 , span 1 , width match_parent(0)
         case n if n % 2 != 0 => (n / 2, 1, 1, 0)
         // else if the gridViews size is n+1 , display it in row n/2, column 0 , span 2, , width view size / 2
-        case n if gridViews.size == n + 1 => (n / 2, 0, 2, grid.getWidth / 2)
+        case n if size == n + 1 => (n / 2, 0, 2, grid.getWidth / 2)
         // else display it in row n/2, column 0 , span 1, , width match_parent(0)
         case n => (n / 2, 0, 1, 0)
       }
