@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2021 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/calling_video_overlay"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <com.waz.zclient.calling.views.CallingHeader
+        android:id="@+id/calling_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center"
+        android:orientation="vertical" />
+
+    <com.waz.zclient.calling.views.CallingMiddleLayout
+        android:id="@+id/calling_middle"
+        android:layout_width="@dimen/calling__controls__participant_list_width"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="@dimen/wire__padding__16" />
+
+    <LinearLayout
+        android:id="@+id/all_speakers_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="@dimen/wire__padding__16"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/speakers_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/selector_toggle_left_button_background"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="@dimen/wire__padding__12"
+            android:paddingTop="@dimen/wire__padding__4"
+            android:paddingEnd="@dimen/wire__padding__12"
+            android:paddingBottom="@dimen/wire__padding__4"
+            android:text="@string/calling_toggle_speakers"
+            android:textColor="@drawable/selector_toggle_button_text_color" />
+
+        <Button
+            android:id="@+id/all_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/selector_toggle_right_button_background"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="@dimen/wire__padding__12"
+            android:paddingTop="@dimen/wire__padding__4"
+            android:paddingEnd="@dimen/wire__padding__12"
+            android:paddingBottom="@dimen/wire__padding__4"
+            android:text="@string/calling_toggle_all"
+            android:textColor="@drawable/selector_toggle_button_text_color" />
+    </LinearLayout>
+
+    <com.waz.zclient.calling.views.ControlsView
+        android:id="@+id/controls_grid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center"
+        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:layout_marginEnd="@dimen/wire__padding__regular" />
+
+</LinearLayout>

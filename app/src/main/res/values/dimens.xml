@@ -35,6 +35,8 @@
     <dimen name="calling__controls__button__dimension">64dp</dimen>
     <dimen name="calling__controls__button_label__dimension">96dp</dimen>
     <dimen name="calling__controls__button__label__margin_top">8dp</dimen>
+    <dimen name="calling__controls__participant_list_width">220dp</dimen>
+    <dimen name="calling__controls__participant_medium_list_width">310dp</dimen>
 
     <!-- Cursor-->
     <dimen name="cursor_menu_button_width">56dp</dimen>

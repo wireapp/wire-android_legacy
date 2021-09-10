@@ -23,8 +23,8 @@ import android.content.res.Resources
 import android.graphics.{Bitmap, Canvas, Paint, PorterDuff, PorterDuffColorFilter, RectF}
 import android.util.AttributeSet
 import android.view.View
-import android.widget.GridLayout
 import androidx.core.content.ContextCompat
+import androidx.gridlayout.widget.GridLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.VideoState._
@@ -56,8 +56,15 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   import com.waz.threading.Threading.Implicits.Ui
 
   inflate(R.layout.calling__controls__grid, this)
-  setColumnCount(3)
-  setRowCount(2)
+
+  if (!ContextUtils.isInLandscape){
+    setColumnCount(3)
+    setRowCount(2)
+  }
+  else {
+    setColumnCount(7)
+    setRowCount(2)
+  }
 
   private lazy val controller  = inject[CallController]
   private lazy val permissions = inject[PermissionsService]

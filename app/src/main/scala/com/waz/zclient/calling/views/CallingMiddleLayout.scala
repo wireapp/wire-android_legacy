@@ -25,7 +25,7 @@ import com.wire.signals.{EventStream, Signal}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.utils.ContextUtils.getDimenPx
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.{ContextUtils, RichView}
 import com.waz.zclient.{BuildConfig, R, ViewHelper}
 import com.waz.threading.Threading._
 
@@ -50,7 +50,7 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
     case (SelfConnected, _,     true)  => CallDisplay.Participants
     case _                             => CallDisplay.Empty
   }.onUi { display =>
-    chathead.setVisible(display == CallDisplay.Chathead)
+    chathead.setVisible(display == CallDisplay.Chathead && !ContextUtils.isInLandscape)
     callParticipantsView.setVisible(display == CallDisplay.Participants)
   }
 
