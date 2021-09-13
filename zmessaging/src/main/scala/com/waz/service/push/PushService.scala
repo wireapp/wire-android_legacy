@@ -114,13 +114,14 @@ class PushServiceImpl(selfUserId:           UserId,
 
   notificationStorage.registerEventHandler { () =>
     Serialized.future(PipelineKey) {
+      verbose(l"processing new added events")
+      val offset = System.currentTimeMillis()
       for {
         _ <- Future.successful(processing ! true)
-        t =  System.currentTimeMillis()
         _ <- processEncryptedRows()
         _ <- processDecryptedRows()
-        _ = verbose(l"events processing finished, time: ${System.currentTimeMillis() - t}ms")
         _ <- Future.successful(processing ! false)
+        _ = verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
       } yield {}
     }.recover {
       case ex =>

@@ -346,7 +346,8 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                   else Future.successful(false)
       _        <- if (toDelete) userService.deleteUsers(Set(user), sendLeaveMessage = false) else Future.successful(())
       _        <- messages.addMemberLeaveMessage(conv, selfUserId, Set(user), reason = None)
-      syncId   <- sync.postConversationMemberLeave(conv, user)
+      qId      <- if (BuildConfig.FEDERATION_USER_DISCOVERY) userService.qualifiedId(user).map(Some(_)) else Future.successful(None)
+      syncId   <- qId.fold(sync.postConversationMemberLeave(conv, user))(sync.postConversationMemberLeave(conv, _))
     } yield Option(syncId))
       .recover {
         case NonFatal(e) =>

@@ -224,7 +224,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         }
 
         msgClient.postMessage(
-          conv.qualifiedId.getOrElse(RConvQualifiedId(conv.remoteId, currentDomain.getOrElse(""))),
+          convsService.rConvQualifiedId(conv),
           QualifiedOtrMessage(selfClientId, content, external, flags.nativePush, reportMissing = targetUsers, reportAll = reportAll)
         ).future
       } else {
@@ -442,7 +442,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
           case Some(content) =>
             msgClient
               .postMessage(
-                conv.qualifiedId.getOrElse(RConvQualifiedId(conv.remoteId, currentDomain.getOrElse(""))),
+                convsService.rConvQualifiedId(conv),
                 QualifiedOtrMessage(selfClientId, content)
               )
               .future

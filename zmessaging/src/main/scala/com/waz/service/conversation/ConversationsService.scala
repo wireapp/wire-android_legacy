@@ -81,6 +81,8 @@ trait ConversationsService {
   def onlyFake1To1ConvUsers: Signal[Seq[UserData]]
 
   def generateTempConversationId(users: Set[UserId]): RConvId
+
+  def rConvQualifiedId(conv: ConversationData): RConvQualifiedId
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -186,6 +188,16 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         _ <- usersStorage.remove(userId)
       } yield ()
   }
+
+  override def rConvQualifiedId(conv: ConversationData): RConvQualifiedId =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      conv
+        .qualifiedId
+        .orElse(currentDomain.map(RConvQualifiedId(conv.remoteId, _)))
+        .getOrElse(RConvQualifiedId(conv.remoteId, ""))
+    } else {
+      RConvQualifiedId(conv.remoteId)
+    }
 
   /**
    *
