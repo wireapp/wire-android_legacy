@@ -58,7 +58,7 @@ class NewCallingFragment extends FragmentHelper {
 
   private lazy val tabLayoutMediator: TabLayoutMediator =
     new TabLayoutMediator(tabLayout.get, viewPager.get, new TabLayoutMediator.TabConfigurationStrategy() {
-      override def onConfigureTab(tab: TabLayout.Tab, position: Int): Unit = {}
+      override def onConfigureTab(tab: TabLayout.Tab, position: Int): Unit = tab.setId(position)
     })
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
