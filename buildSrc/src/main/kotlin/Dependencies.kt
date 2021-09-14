@@ -70,6 +70,10 @@ object Versions {
     const val COUNTLY = "20.04.2"
     const val ZOOMING = "1.1.0"
 
+    //osm
+    const val OSMDROID = "6.1.11"
+    const val OSMBONUSPACK = "6.8.0"
+
     //testing
     const val JUNIT = "4.12"
     const val MOCKITO = "3.1.0"
@@ -153,6 +157,8 @@ object BuildDependencies {
     val zooming = "com.wire.zoom:zoomlayout:${Versions.ZOOMING}"
     val wireSignals = "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:${LegacyDependencies.WIRE_SIGNALS}"
     val wireSignalsExtensions = "com.wire:wire-signals-extensions_${LegacyDependencies.SCALA_MAJOR_VERSION}:${LegacyDependencies.WIRE_SIGNALS_EXTENSIONS}"
+    val osmdroid = "org.osmdroid:osmdroid-android:${Versions.OSMDROID}"
+    val osmbonuspack = "com.github.MKergall:osmbonuspack:${Versions.OSMBONUSPACK}"
 }
 
 object ModuleDependencies {
