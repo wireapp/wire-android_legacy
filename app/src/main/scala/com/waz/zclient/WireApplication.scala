@@ -45,7 +45,7 @@ import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation._
 import com.waz.service.messages.MessagesService
 import com.waz.service.teams.{FeatureConfigsService, TeamsService}
-import com.waz.service.tracking.TrackingService
+import com.waz.service.tracking.{CountlyApi, TrackingService}
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.{WebSocketController, WebSocketService}
@@ -91,7 +91,6 @@ import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTr
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import com.wire.signals.{EventContext, Signal}
-import ly.count.android.sdk.Countly
 import org.threeten.bp.Clock
 
 import scala.concurrent.Future
@@ -378,7 +377,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         baseDir = getApplicationContext.getApplicationInfo.dataDir,
         showSafeOnly = BuildConfig.SAFE_LOGGING)
       )
-      global.trackingService.isTrackingEnabled.head.foreach(_ => Countly.applicationOnCreate())(Threading.Background)
+      global.trackingService.isTrackingEnabled.head.foreach(_ => CountlyApi.applicationOnCreate())(Threading.Background)
       global.httpProxy.foreach(KotlinServices.INSTANCE.setHttpProxy)
     }
 

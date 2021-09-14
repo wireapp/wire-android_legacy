@@ -32,7 +32,6 @@ import com.waz.zclient._
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
 import com.wire.signals.Signal
-import ly.count.android.sdk.{Countly, CountlyConfig, DeviceId}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -62,7 +61,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
       curTrackingId <- am.storage.userPrefs(CurrentTrackingId).apply()
       isNew         =  !curTrackingId.contains(id)
       _             =  if (isNew) am.storage.userPrefs(CurrentTrackingId) := Some(id)
-      _             =  if (inited && isNew) Countly.sharedInstance().changeDeviceIdWithMerge(id.str)
+      _             =  if (inited && isNew) CountlyApi.changeDeviceIdWithMerge(id.str)
       _             =  verbose(l"tracking id set to $id (new: $isNew)")
     } yield ()
 
@@ -84,13 +83,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
       logsEnabled      <- inject[LogsService].logsEnabled
     } yield {
         verbose(l"Using countly Id: ${trackingId.str}")
-        val config = new CountlyConfig(cxt, GlobalTrackingController.countlyAppKey, BuildConfig.COUNTLY_SERVER_URL)
-          .setLoggingEnabled(logsEnabled)
-          .setIdMode(DeviceId.Type.DEVELOPER_SUPPLIED)
-          .setDeviceId(trackingId.str)
-          .setRecordAppStartTime(true)
-
-        Countly.sharedInstance().init(config)
+        CountlyApi.init(cxt, GlobalTrackingController.countlyAppKey, BuildConfig.COUNTLY_SERVER_URL, logsEnabled, trackingId.str)
         setUserDataFields()
         initialized ! true
     }
@@ -100,14 +93,14 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
     isProUser         <- userAccountsController.isProUser.head
     isTrackingEnabled <- tracking.isTrackingEnabled.head
   } yield {
-    if (isProUser && isTrackingEnabled) Countly.sharedInstance().onStart(cxt)
+    if (isProUser && isTrackingEnabled) CountlyApi.onStart(cxt)
   }
 
   def stop(): Future[Unit] = for {
     isProUser         <- userAccountsController.isProUser.head
     isTrackingEnabled <- tracking.isTrackingEnabled.head
   } yield {
-    if (isProUser && isTrackingEnabled) Countly.sharedInstance().onStop()
+    if (isProUser && isTrackingEnabled) CountlyApi.onStop()
   }
 
   def optIn(): Future[Unit] = {
@@ -147,8 +140,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
       customFields.put("team_team_id", teamId.toString)
       customFields.put("team_team_size", MathUtils.logRoundFactor6(teamSize).toString)
       customFields.put("team_user_type", userAccountType)
-      Countly.userData.setUserData(predefinedFields, customFields)
-      Countly.userData.save()
+      CountlyApi.setUserData(predefinedFields, customFields)
     }
   }
 
@@ -161,7 +153,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)
 
   private def sendEvent(eventArg: TrackingEvent, zmsArg: Option[ZMessaging] = None) = {
     verbose(l"send countly event: $eventArg")
-    Countly.sharedInstance().events().recordEvent(eventArg.name, eventArg.segments.asJava)
+    CountlyApi.recordEvent(eventArg)
   }
 }
 
