@@ -397,10 +397,17 @@ object ContextUtils {
     ).foreach(onConfirm)
   }
 
-  def showConferenceCallingNotAccessibleDialog()(implicit ex: ExecutionContext, context: Context): Unit = {
+  def showConferenceCallingUnavailableDialogForPersonal()(implicit ex: ExecutionContext, context: Context): Unit = {
     showInfoDialog(
-      title = getString(R.string.feature_not_accessible_dialog_title),
-      msg = getString(R.string.feature_not_accessible_dialog_description)
+      title = getString(R.string.conference_calling_unavailable_dialog_title),
+      msg = getString(R.string.conference_calling_unavailable_dialog_description_personal_user)
+    )
+  }
+
+  def showConferenceCallingUnavailableDialogForMember()(implicit ex: ExecutionContext, context: Context): Unit = {
+    showInfoDialog(
+      title = getString(R.string.conference_calling_unavailable_dialog_title),
+      msg = getString(R.string.conference_calling_unavailable_dialog_description_team_member_user)
     )
   }
 
