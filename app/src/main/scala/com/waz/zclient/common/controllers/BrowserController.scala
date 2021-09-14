@@ -17,8 +17,9 @@
  */
 package com.waz.zclient.common.controllers
 
-import android.content.{Context, Intent}
+import android.content.{ActivityNotFoundException, Context, Intent}
 import android.net.Uri
+import android.util.Log
 import com.waz.api.MessageContent.Location
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageId
@@ -29,6 +30,7 @@ import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.IntentUtils
 import com.waz.zclient.{Injectable, Injector, R}
 
+import scala.collection.JavaConversions._
 import scala.util.Try
 
 class BrowserController(implicit context: Context, injector: Injector) extends Injectable with DerivedLogTag {
@@ -51,12 +53,22 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
   }
 
   def openLocation(location: Location): Unit =
-    Option(IntentUtils.getMapsIntent(
+    IntentUtils.getMapIntents(
       context,
       location.getLatitude,
       location.getLongitude,
       location.getZoom,
-      location.getName)) foreach { context.startActivity }
+      location.getName
+    ) foreach { i =>
+      try {
+        Log.i("BrowserController", s"trying $i...")
+        context.startActivity(i)
+        Log.i("BrowserController", "OK")
+        return
+      } catch {
+        case _: ActivityNotFoundException => Log.i("BrowserController", "failed")
+      }
+    }
 
   def openPlayStoreListing(): Unit =
     openUrl(getString(R.string.url_play_store_listing))
