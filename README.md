@@ -38,7 +38,8 @@ In order to build Wire for Android locally, it is necessary to install the follo
 
 1. Check out the `wire-android` repository.
 2. Switch to latest release branch `release`
-3. From the checkout folder, run `./gradlew assembleProdRelease`. This will pull in all the necessary dependencies from Maven.
+3. From the checkout folder, run `./build_libsodium.sh`. This will build the required `libsodium.so` files from source.
+4. From the checkout folder, run `./gradlew assembleProdRelease`. This will pull in all the necessary dependencies from Maven.
 
 These steps will build only the Wire client UI, pulling in all other Wire frameworks from Maven. If you want to modify the source/debug other Wire frameworks, you can check project dependencies and build other wire projects separately. The most interesting projects to check are:
 
