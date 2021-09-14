@@ -33,7 +33,6 @@ import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
 import com.wire.signals.Signal
 
-import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 class GlobalTrackingController(implicit inj: Injector, cxt: WireContext)

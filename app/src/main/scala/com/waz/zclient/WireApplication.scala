@@ -45,7 +45,7 @@ import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation._
 import com.waz.service.messages.MessagesService
 import com.waz.service.teams.{FeatureConfigsService, TeamsService}
-import com.waz.service.tracking.{CountlyApi, TrackingService}
+import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.{WebSocketController, WebSocketService}
@@ -87,7 +87,7 @@ import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
-import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
+import com.waz.zclient.tracking.{CountlyApi, CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import com.wire.signals.{EventContext, Signal}
