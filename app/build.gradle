@@ -318,6 +318,14 @@ dexinfo {
     maxDepth 2
 }
 
+if (!fdroidBuild) {
+    buildscript {
+        dependencies {
+            classpath "com.google.gms:google-services:${Versions.GMS}"
+        }
+    }
+}
+
 dependencies {
 
     implementation LegacyDependencies.scalaLibrary
