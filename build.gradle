@@ -10,7 +10,6 @@ buildscript {
         classpath "com.wire:gradle-android-scala-plugin:${Versions.SCALA_BUILD_PLUGIN}"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}"
         classpath "org.jetbrains.kotlin:kotlin-serialization:${Versions.KOTLIN}"
-        classpath "com.google.gms:google-services:${Versions.GMS}"
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.DETEKT}"
         classpath "org.jacoco:org.jacoco.core:${Versions.JACOCO}"
         classpath "com.mutualmobile.gradle.plugins:dexinfo:${Versions.DEX_INFO}"
