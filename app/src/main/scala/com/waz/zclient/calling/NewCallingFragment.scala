@@ -160,8 +160,10 @@ class NewCallingFragment extends FragmentHelper {
 
         previewCardView.foreach { cardView =>
           if (!showTopSpeakers && participantsCount == 2) {
+            callController.isSelfViewVisible ! true
             showFloatingSelfPreview(selfVideoView, cardView)
           } else {
+            callController.isSelfViewVisible ! false
             hideFloatingSelfPreview(cardView)
           }
         }
