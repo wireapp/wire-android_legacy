@@ -9,7 +9,7 @@ final case class ConferenceCallingFeatureConfig(status: String) {
 
 object ConferenceCallingFeatureConfig {
 
-  val Default: ConferenceCallingFeatureConfig = ConferenceCallingFeatureConfig(status = "enabled")
+  val Default: ConferenceCallingFeatureConfig = ConferenceCallingFeatureConfig(status = "disabled")
 
   implicit object Decoder extends JsonDecoder[ConferenceCallingFeatureConfig] {
     override def apply(implicit js: JSONObject): ConferenceCallingFeatureConfig =
