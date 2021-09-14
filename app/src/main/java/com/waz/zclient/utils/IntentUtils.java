@@ -32,6 +32,8 @@ import com.waz.zclient.controllers.notifications.ShareSavedImageActivity;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class IntentUtils {
@@ -40,10 +42,13 @@ public class IntentUtils {
     public static final String PASSWORD_RESET_SUCCESSFUL_HOST_TOKEN = "password-reset-successful";
     public static final String EXTRA_LAUNCH_FROM_SAVE_IMAGE_NOTIFICATION = "EXTRA_LAUNCH_FROM_SAVE_IMAGE_NOTIFICATION";
     public static final String EXTRA_CONTENT_URI = "EXTRA_CONTENT_URI";
-    private static final String GOOGLE_MAPS_INTENT_URI = "geo:0,0?q=%s,%s";
-    private static final String GOOGLE_MAPS_WITH_LABEL_INTENT_URI = "geo:0,0?q=%s,%s(%s)";
+    private static final String MAP_INTENT_URI = "geo:0,0?q=%f,%f&z=%d"; // osmand
+    private static final String MAP_WITH_LABEL_INTENT_URI = "geo:0,0?q=%f,%f(%s)&z=%d"; // google maps
     private static final String GOOGLE_MAPS_INTENT_PACKAGE = "com.google.android.apps.maps";
-    private static final String GOOGLE_MAPS_WEB_LINK = "http://maps.google.com/maps?z=%d&q=loc:%f+%f+(%s)";
+    private static final String GOOGLE_MAPS_WEB_LINK = "https://maps.google.com/maps?z=%d&q=loc:%f+%f+(%s)"; // FIXME
+    private static final String OSMAND_INTENT_PACKAGE = "net.osmand";
+    private static final String OSMAND_PLUS_INTENT_PACKAGE = "net.osmand.plus";
+    private static final String OPENSTREETMAP_WEB_LINK = "https://www.openstreetmap.org/#map=%d/%f/%f";
     private static final String IMAGE_MIME_TYPE = "image/*";
 
     public static boolean isPasswordResetIntent(@Nullable Intent intent) {
@@ -118,32 +123,20 @@ public class IntentUtils {
                intent.hasExtra(EXTRA_CONTENT_URI);
     }
 
-    public static Intent getMapsIntent(Context context, float lat, float lon, int zoom, String name) {
-        Uri gmmIntentUri;
-        if (StringUtils.isBlank(name)) {
-            gmmIntentUri = Uri.parse(String.format(GOOGLE_MAPS_INTENT_URI, lat, lon));
-        } else {
-            gmmIntentUri = Uri.parse(String.format(GOOGLE_MAPS_WITH_LABEL_INTENT_URI, lat, lon, name));
+    // FIXME: osm vs gmaps
+    public static List<Intent> getMapIntents(Context context, float lat, float lon, int zoom, String name) {
+        List<Intent> intents = new ArrayList<>();
+        Uri osmUri = Uri.parse(String.format(Locale.getDefault(), MAP_INTENT_URI, lat, lon, zoom));
+        intents.add(new Intent(Intent.ACTION_VIEW, osmUri).setPackage(OSMAND_PLUS_INTENT_PACKAGE));
+        intents.add(new Intent(Intent.ACTION_VIEW, osmUri).setPackage(OSMAND_INTENT_PACKAGE));
+        Uri gmmIntentUri = osmUri;
+        if (!StringUtils.isBlank(name)) {
+            gmmIntentUri = Uri.parse(String.format(Locale.getDefault(), MAP_WITH_LABEL_INTENT_URI, lat, lon, name, zoom));
         }
-        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-        mapIntent.setPackage(GOOGLE_MAPS_INTENT_PACKAGE);
-        if (mapIntent.resolveActivity(context.getPackageManager()) == null) {
-            return getMapsWebFallbackIntent(lat, lon, zoom, name);
-        }
-        return mapIntent;
-    }
-
-    private static Intent getMapsWebFallbackIntent(float lat, float lon, int zoom, String name) {
-        String urlEncodedName;
-        try {
-            urlEncodedName = URLEncoder.encode(name, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            urlEncodedName = name;
-        }
-        String url = String.format(Locale.getDefault(), GOOGLE_MAPS_WEB_LINK, zoom, lat, lon, urlEncodedName);
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        return browserIntent;
+        intents.add(new Intent(Intent.ACTION_VIEW, gmmIntentUri).setPackage(GOOGLE_MAPS_INTENT_PACKAGE));
+        String url = String.format(Locale.getDefault(), OPENSTREETMAP_WEB_LINK, zoom, lat, lon);
+        intents.add(new Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        return intents;
     }
 
     public static Intent getInviteIntent(String subject, String body) {
