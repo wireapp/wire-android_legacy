@@ -73,5 +73,10 @@ apply from: "./scripts/avs.gradle"
 apply from: "./scripts/detekt.gradle"
 apply from: "./scripts/jacoco.gradle"
 apply from: "./scripts/licensing.gradle"
+
 apply from: "./scripts/customization.gradle"
+if (buildtimeConfiguration == null) {
+    apply from: "./scripts/custombuild.gradle"
+}
+
 apply from: "./scripts/ci.gradle"
