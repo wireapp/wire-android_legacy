@@ -240,6 +240,17 @@ android {
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
         }
 
+        fdroid {
+            applicationId "com.wire"
+            manifestPlaceholders = [applicationLabel       : "Wire",
+                                    applicationIcon        : "@mipmap/ic_launcher_wire",
+                                    sharedUserId           : "com.waz.userid"]
+
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', 'false'
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
+        }
+
         internal {
             applicationId "com.wire.internal"
             versionName android.defaultConfig.versionName + "-internal"
