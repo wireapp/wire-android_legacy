@@ -136,9 +136,9 @@ object BuildDependencies {
     ))
     val okHttpLoggingInterceptor = "com.squareup.okhttp3:logging-interceptor:${Versions.OKHTTP}"
     val koin = KoinDependencyMap(mapOf(
-        "androidCore" to "org.koin:koin-android:${Versions.KOIN}",
-        "androidScope" to "org.koin:koin-android-scope:${Versions.KOIN}",
-        "androidViewModel" to "org.koin:koin-android-viewmodel:${Versions.KOIN}"
+        "androidCore" to "io.insert-koin:koin-android:${Versions.KOIN}",
+        "androidScope" to "io.insert-koin:koin-android-scope:${Versions.KOIN}",
+        "androidViewModel" to "io.insert-koin:koin-android-viewmodel:${Versions.KOIN}"
     ))
     val rxJava = RxJavaDependencyMap(mapOf(
         "rxKotlin" to "io.reactivex.rxjava2:rxkotlin:${Versions.RX_KOTLIN}",
