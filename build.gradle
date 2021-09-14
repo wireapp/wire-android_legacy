@@ -2,8 +2,11 @@
 
 buildscript {
     repositories {
+        mavenLocal() // FIXME
         google()
         mavenCentral()
+        jcenter() // FIXME
+        maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:${Versions.ANDROID_GRADLE_PLUGIN}"
@@ -23,9 +26,12 @@ plugins {
 
 allprojects {
     repositories {
+        mavenLocal() // FIXME
         google()
         mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        jcenter() // FIXME
+        maven { url "https://jitpack.io" }
+        // maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
 }
 
