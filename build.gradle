@@ -1,38 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-
-    final String NEXUS_URL_ENV_VAR = "NEXUS_URL"
-    final String NEXUS_URL_LOCAL_VAR = "nexus.url"
-    final String LOCAL_PROPERTIES_FILE_NAME = "local.properties"
-
-    String nexusUrl = ""
-    Properties properties = new Properties()
-    def propertiesFile = project.rootProject.file(LOCAL_PROPERTIES_FILE_NAME)
-    if (propertiesFile.exists()) {
-        properties.load(propertiesFile.newDataInputStream())
-        nexusUrl = System.getenv(NEXUS_URL_ENV_VAR) ?: properties.getProperty(NEXUS_URL_LOCAL_VAR) ?: ""
-    } else {
-        nexusUrl = System.getenv(NEXUS_URL_ENV_VAR) ?: ""
-    }
-
-    if (!nexusUrl.isEmpty()) {
-        buildscript {
-            repositories {
-                maven { url nexusUrl }
-            }
-        }
-        allprojects {
-            repositories {
-                maven { url nexusUrl }
-            }
-        }
-
-        ext {
-            nexusUrlExt = nexusUrl
-        }
-    }
-
     repositories {
         google()
         mavenCentral()
