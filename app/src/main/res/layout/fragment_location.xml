@@ -65,9 +65,9 @@
         android:layout_weight="1"
         >
 
-        <com.google.android.gms.maps.MapView android:id="@+id/mv_map"
-                                             android:layout_width="match_parent"
-                                             android:layout_height="match_parent" />
+        <org.osmdroid.views.MapView android:id="@+id/mv_map"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent" />
 
 
         <ImageView
