@@ -443,6 +443,12 @@ dependencies {
 
     implementation BuildDependencies.zooming
 
+    implementation BuildDependencies.osmdroid
+    implementation(BuildDependencies.osmbonuspack) {
+        // don't bring in newer com.squareup.okhttp3:okhttp & androidx.core:core
+        transitive = false
+    }
+
     // Unit Tests
     testImplementation TestDependencies.jUnit
     testImplementation TestDependencies.mockito.core
