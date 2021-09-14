@@ -1,0 +1,43 @@
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <provider
+            android:name="com.google.firebase.provider.FirebaseInitProvider"
+            tools:node="remove" />
+        <meta-data
+            android:name="firebase_analytics_collection_deactivated"
+            tools:node="remove" />
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            tools:node="remove" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            tools:node="remove" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            tools:node="remove" />
+        <service
+            android:name="com.waz.services.fcm.FCMHandlerService"
+            tools:node="remove">
+        </service>
+    </application>
+</manifest>
