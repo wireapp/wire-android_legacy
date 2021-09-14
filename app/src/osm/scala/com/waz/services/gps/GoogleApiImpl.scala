@@ -26,14 +26,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.PushToken
 import com.waz.service.BackendConfig
 import com.wire.signals.Signal
-import com.waz.utils.returning
 import com.waz.utils.wrappers.GoogleApi
-import com.waz.zclient.log.LogUI._
 
-class GoogleApiImpl private (context: Context, beConfig: BackendConfig, prefs: GlobalPreferences)
-  extends GoogleApi with DerivedLogTag {
-
-  import GoogleApiImpl._
+class GoogleApiImpl extends GoogleApi with DerivedLogTag {
 
   override val isGooglePlayServicesAvailable = Signal[Boolean](false)
 
@@ -49,10 +44,7 @@ class GoogleApiImpl private (context: Context, beConfig: BackendConfig, prefs: G
 }
 
 object GoogleApiImpl {
-  def apply(context: Context, beConfig: BackendConfig, prefs: GlobalPreferences): GoogleApiImpl = synchronized {
-    instance match {
-      case Some(api) => api
-      case None => returning(new GoogleApiImpl(context, beConfig, prefs)){ api: GoogleApiImpl => instance = Some(api) }
-    }
-  }
+  private val instance = new GoogleApiImpl
+
+  def apply(context: Context, beConfig: BackendConfig, prefs: GlobalPreferences): GoogleApiImpl = instance
 }
