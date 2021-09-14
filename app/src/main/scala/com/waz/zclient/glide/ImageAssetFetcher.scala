@@ -48,7 +48,7 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
         case AssetIdRequest(assetId)             => zms.assetService.loadContentById(assetId)
         case PublicAssetIdRequest(assetId)       => zms.assetService.loadPublicContentById(assetId, None, None)
         case UploadAssetIdRequest(uploadAssetId) => zms.assetService.loadUploadContentById(uploadAssetId, None)
-        case GoogleMapRequest(location)          => zms.googleMapsMediaService.loadMapPreview(location)
+        case MapRequest(location)                => zms.mapsMediaService.loadMapPreview(location)
         case _ =>
           CancellableFuture.failed(NotSupportedError("Unsupported image request"))
       }

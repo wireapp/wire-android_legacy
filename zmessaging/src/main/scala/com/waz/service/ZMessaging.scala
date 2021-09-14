@@ -186,7 +186,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val conversationFoldersStorage: ConversationFoldersStorage = wire[ConversationFoldersStorageImpl]
   lazy val buttonsStorage: ButtonsStorage                         = wire[ButtonsStorageImpl]
 
-  lazy val googleMapsClient   = new GoogleMapsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
+  lazy val mapsClient         = new MapsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val youtubeClient      = new YouTubeClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val assetClient        = new AssetClientImpl()(urlCreator, httpClientForLongRunning, authRequestInterceptor)
   lazy val usersClient        = new UsersClientImpl()(urlCreator, httpClient, authRequestInterceptor)
@@ -239,7 +239,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val richmedia                                  = wire[RichMediaService]
   lazy val giphy: GiphyService                        = new GiphyServiceImpl(giphyClient)(Threading.Background)
   lazy val youtubeMedia                               = wire[YouTubeMediaService]
-  lazy val googleMapsMediaService                     = wire[GoogleMapsMediaServiceImpl]
+  lazy val mapsMediaService                           = wire[MapsMediaServiceImpl]
   lazy val otrService: OtrService                     = wire[OtrServiceImpl]
   lazy val genericMsgs: GenericMessageService         = wire[GenericMessageService]
   lazy val reactions: ReactionsService                = wire[ReactionsService]

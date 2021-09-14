@@ -118,7 +118,7 @@ public class IntentUtils {
                intent.hasExtra(EXTRA_CONTENT_URI);
     }
 
-    public static Intent getGoogleMapsIntent(Context context, float lat, float lon, int zoom, String name) {
+    public static Intent getMapsIntent(Context context, float lat, float lon, int zoom, String name) {
         Uri gmmIntentUri;
         if (StringUtils.isBlank(name)) {
             gmmIntentUri = Uri.parse(String.format(GOOGLE_MAPS_INTENT_URI, lat, lon));
@@ -128,12 +128,12 @@ public class IntentUtils {
         Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
         mapIntent.setPackage(GOOGLE_MAPS_INTENT_PACKAGE);
         if (mapIntent.resolveActivity(context.getPackageManager()) == null) {
-            return getGoogleMapsWebFallbackIntent(lat, lon, zoom, name);
+            return getMapsWebFallbackIntent(lat, lon, zoom, name);
         }
         return mapIntent;
     }
 
-    private static Intent getGoogleMapsWebFallbackIntent(float lat, float lon, int zoom, String name) {
+    private static Intent getMapsWebFallbackIntent(float lat, float lon, int zoom, String name) {
         String urlEncodedName;
         try {
             urlEncodedName = URLEncoder.encode(name, "UTF-8");

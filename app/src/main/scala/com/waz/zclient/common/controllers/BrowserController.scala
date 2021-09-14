@@ -51,7 +51,7 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
   }
 
   def openLocation(location: Location): Unit =
-    Option(IntentUtils.getGoogleMapsIntent(
+    Option(IntentUtils.getMapsIntent(
       context,
       location.getLatitude,
       location.getLongitude,
