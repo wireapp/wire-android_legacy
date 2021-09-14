@@ -17,20 +17,20 @@
  */
 package com.waz.sync.client
 
-import com.waz.service.media.RichMediaContentParser.GoogleMapsLocation
+import com.waz.service.media.RichMediaContentParser.MapsLocation
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.client.GoogleMapsClient.StaticMapsPathBase
+import com.waz.sync.client.MapsClient.StaticMapsPathBase
 
-class GoogleMapsClientSpec extends AndroidFreeSpec {
+class MapsClientSpec extends AndroidFreeSpec {
 
   feature("google map previews") {
 
     scenario("get the map preview url") {
       // Given
-      val location = GoogleMapsLocation("13.402276", "52.523842", "2")
+      val location = MapsLocation("13.402276", "52.523842", "2")
 
       // When
-      val actual = GoogleMapsClient.getStaticMapPath(location, 100, 200)
+      val actual = MapsClient.getStaticMapPath(location, 100, 200)
 
       // Then
       val expected = s"$StaticMapsPathBase?center=${location.x}%2C${location.y}&zoom=2&size=100x200"

@@ -107,7 +107,7 @@ object RichMediaContentParser extends DerivedLogTag {
     }
   }
 
-  case class GoogleMapsLocation(x: String, y: String, zoom: String)
+  case class MapsLocation(x: String, y: String, zoom: String)
 
   // XXX: this is to block some messages from being treated as weblinks, one case where we need it is giphy,
   // UI generates 'sytem' text message: '... via giphy.com`, eventually we should stop using those fake messages,

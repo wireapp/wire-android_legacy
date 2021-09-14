@@ -22,7 +22,7 @@ import java.net.URLEncoder
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.Dim2
-import com.waz.service.media.RichMediaContentParser.GoogleMapsLocation
+import com.waz.service.media.RichMediaContentParser.MapsLocation
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.HttpClient.AutoDerivation._
@@ -30,20 +30,20 @@ import com.waz.znet2.http.HttpClient.dsl._
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 
-trait GoogleMapsClient {
-  def loadMapPreview(location: GoogleMapsLocation, dimensions: Dim2): ErrorOrResponse[InputStream]
+trait MapsClient {
+  def loadMapPreview(location: MapsLocation, dimensions: Dim2): ErrorOrResponse[InputStream]
 }
 
-class GoogleMapsClientImpl(implicit
-                           urlCreator: UrlCreator,
-                           httpClient: HttpClient,
-                           authRequestInterceptor: AuthRequestInterceptor) extends GoogleMapsClient with CirceJSONSupport {
+class MapsClientImpl(implicit
+                     urlCreator: UrlCreator,
+                     httpClient: HttpClient,
+                     authRequestInterceptor: AuthRequestInterceptor) extends MapsClient with CirceJSONSupport {
 
-  import GoogleMapsClient._
+  import MapsClient._
 
   private implicit def inputStreamBodyDeserializer: RawBodyDeserializer[InputStream] = RawBodyDeserializer.create(_.data())
 
-  def loadMapPreview(location: GoogleMapsLocation, dimensions: Dim2): ErrorOrResponse[InputStream] =
+  def loadMapPreview(location: MapsLocation, dimensions: Dim2): ErrorOrResponse[InputStream] =
     Request
       .Get(relativePath = getStaticMapPath(location, dimensions.width, dimensions.height))
       .withResultType[InputStream]
@@ -52,11 +52,12 @@ class GoogleMapsClientImpl(implicit
 
 }
 
-object GoogleMapsClient {
+object MapsClient {
 
+  // FIXME: use openstreetmap
   val StaticMapsPathBase = "/proxy/googlemaps/api/staticmap"
 
-  def getStaticMapPath(location: GoogleMapsLocation, width: Int, height: Int): String = {
+  def getStaticMapPath(location: MapsLocation, width: Int, height: Int): String = {
     val center = URLEncoder.encode(s"${location.x},${location.y}", "utf8")
     val zoom = URLEncoder.encode(location.zoom, "utf8")
     s"$StaticMapsPathBase?center=$center&zoom=$zoom&size=${width}x$height"

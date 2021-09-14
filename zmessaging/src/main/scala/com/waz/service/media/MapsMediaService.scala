@@ -20,33 +20,33 @@ package com.waz.service.media
 import com.waz.api.MessageContent.Location
 import com.waz.model._
 import com.waz.service.assets.AssetInput
-import com.waz.service.media.RichMediaContentParser.GoogleMapsLocation
-import com.waz.sync.client.GoogleMapsClient
+import com.waz.service.media.RichMediaContentParser.MapsLocation
+import com.waz.sync.client.MapsClient
 import com.wire.signals.CancellableFuture
 
 import scala.concurrent.ExecutionContext
 
-trait GoogleMapsMediaService {
+trait MapsMediaService {
   def loadMapPreview(location: Location, dimensions: Dim2): CancellableFuture[AssetInput]
 }
 
-class GoogleMapsMediaServiceImpl(googleMapsClient: GoogleMapsClient)(implicit executionContext: ExecutionContext)
-  extends GoogleMapsMediaService {
+class MapsMediaServiceImpl(mapsClient: MapsClient)(implicit executionContext: ExecutionContext)
+  extends MapsMediaService {
 
-  import com.waz.service.media.GoogleMapsMediaService._
+  import com.waz.service.media.MapsMediaService._
 
   def loadMapPreview(location: Location, dimensions: Dim2 = ImageDimensions): CancellableFuture[AssetInput] = {
-    val googleMapsLocation = GoogleMapsLocation(location.getLatitude.toString, location.getLongitude.toString, location.getZoom.toString)
+    val mapsLocation = MapsLocation(location.getLatitude.toString, location.getLongitude.toString, location.getZoom.toString)
     val constrainedDimensions = constrain(dimensions)
 
-    googleMapsClient.loadMapPreview(googleMapsLocation, constrainedDimensions).flatMap {
+    mapsClient.loadMapPreview(mapsLocation, constrainedDimensions).flatMap {
       case Left(error) => CancellableFuture.failed(error)
       case Right(result) => CancellableFuture.successful(result)
     }.map(AssetInput(_))
   }
 }
 
-object GoogleMapsMediaService {
+object MapsMediaService {
 
   val MaxImageWidth = 640 // free maps api limitation
   val ImageDimensions = Dim2(MaxImageWidth, MaxImageWidth * 3 / 4)

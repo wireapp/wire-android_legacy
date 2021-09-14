@@ -29,14 +29,14 @@ import com.waz.service.ZMessaging
 import com.wire.signals.Signal
 import com.waz.zclient.core.images.AssetKey
 import com.waz.zclient.{Injectable, Injector, WireContext}
-import com.waz.zclient.glide.{GoogleMapRequest, ImageAssetFetcher}
+import com.waz.zclient.glide.{MapRequest, ImageAssetFetcher}
 import com.waz.zclient.log.LogUI._
 
-class GoogleMapModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Location, InputStream]
+class MapModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Location, InputStream]
   with DerivedLogTag {
 
   override def buildLoadData(model: Location, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
-    val request = GoogleMapRequest(model)
+    val request = MapRequest(model)
     val key = new AssetKey(request.toString, width, height, options)
     verbose(l"key: $key")
     new LoadData[InputStream](key, new ImageAssetFetcher(request, zms))
@@ -45,7 +45,7 @@ class GoogleMapModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Location
   override def handles(model: Location): Boolean = true
 }
 
-object GoogleMapModelLoader {
+object MapModelLoader {
 
   class Factory(context: Context) extends ModelLoaderFactory[Location, InputStream]
     with Injectable {
@@ -53,7 +53,7 @@ object GoogleMapModelLoader {
     private implicit val injector: Injector = context.asInstanceOf[WireContext].injector
 
     override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[Location, InputStream] = {
-      new GoogleMapModelLoader(inject[Signal[ZMessaging]])
+      new MapModelLoader(inject[Signal[ZMessaging]])
     }
 
     override def teardown(): Unit = {}
