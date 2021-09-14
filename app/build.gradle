@@ -57,6 +57,8 @@ task copyCustomResources(type: Copy) {
     }
 }
 
+def fdroidBuild
+
 android {
     def patchVersion = System.getenv("PATCH_VERSION") as Integer?: System.getenv("BUILD_NUMBER") as Integer ?: 99999
 
@@ -77,6 +79,7 @@ android {
         versionName = (System.getenv("CLIENT_VERSION") ?: Versions.ANDROID_CLIENT_MAJOR_VERSION) + patchVersion
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
+        fdroidBuild = false
 
         manifestPlaceholders = [
             customURLScheme   : buildtimeConfiguration.configuration.custom_url_scheme,
@@ -242,6 +245,7 @@ android {
 
         fdroid {
             applicationId "com.wire"
+            fdroidBuild = true
             manifestPlaceholders = [applicationLabel       : "Wire",
                                     applicationIcon        : "@mipmap/ic_launcher_wire",
                                     sharedUserId           : "com.waz.userid"]
@@ -369,16 +373,18 @@ dependencies {
 
     implementation BuildDependencies.androidX.viewPager2
 
-    // Play services
-    implementation BuildDependencies.playServices.base
-    implementation BuildDependencies.playServices.maps
-    implementation BuildDependencies.playServices.location
-    implementation BuildDependencies.playServices.gcm
+    if (!fdroidBuild) {
+        // Play services
+        implementation BuildDependencies.playServices.base
+        implementation BuildDependencies.playServices.maps
+        implementation BuildDependencies.playServices.location
+        implementation BuildDependencies.playServices.gcm
 
-    // Firebase
-    implementation (BuildDependencies.fireBaseMessaging) {
-        exclude group: 'com.google.firebase', module: 'firebase-analytics'
-        exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
+        // Firebase
+        implementation (BuildDependencies.fireBaseMessaging) {
+            exclude group: 'com.google.firebase', module: 'firebase-analytics'
+            exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
+        }
     }
 
     //Glide
@@ -420,7 +426,10 @@ dependencies {
     implementation BuildDependencies.rebound
     implementation BuildDependencies.commonMark
     implementation BuildDependencies.jna
-    implementation BuildDependencies.countly
+
+    if (!fdroidBuild) {
+        implementation BuildDependencies.countly
+    }
 
     implementation BuildDependencies.wireSignals
     implementation BuildDependencies.wireSignalsExtensions
