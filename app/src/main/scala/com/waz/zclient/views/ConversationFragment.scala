@@ -379,21 +379,29 @@ class ConversationFragment extends FragmentHelper {
           case _ => false
         }
     })
+
     def performCall(item: MenuItem): Unit = {
       for {
         conversationType <- convController.currentConvType.head
-        callRestricted   <- isConferenceCallingRestricted
-        currentUserRole  <- convController.selfRole.head
+        isTeam <- accountsController.isTeam.head
+        isAdmin <- accountsController.isAdmin.head
+        callRestricted <- isConferenceCallingRestricted
       } yield
-        if(conversationType == ConversationType.Group && callRestricted && BuildConfig.CONFERENCE_CALLING_RESTRICTION) {
-          if(currentUserRole == ConversationRole.AdminRole)
-            displayConferenceCallingUpgradeDialog()
-          else showConferenceCallingNotAccessibleDialog()
-        }
+        if (conversationType == ConversationType.Group && callRestricted && BuildConfig.CONFERENCE_CALLING_RESTRICTION)
+          displayWarningDialogs(isAdmin, isTeam)
         else {
           callStartController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call, forceOption = true)
           cursorView.foreach(_.closeEditMessage(false))
         }
+    }
+
+    def displayWarningDialogs(isAdmin: Boolean, isTeam: Boolean): Unit = {
+      if (isTeam) {
+        if (isAdmin)
+          displayConferenceCallingUpgradeDialog()
+        else showConferenceCallingUnavailableDialogForMember()
+      }
+      else showConferenceCallingUnavailableDialogForPersonal()
     }
 
     def isConferenceCallingRestricted: Future[Boolean] =
