@@ -110,6 +110,8 @@ object Calling {
 
   @native def wcall_set_active_speaker_handler(inst: Handle, wcall_active_speaker_h: ActiveSpeakersHandler): Unit
 
+  @native def wcall_request_video_streams(inst: Handle, convId: String, mode : Int, json: String): Unit
+
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use
      * for calling.
