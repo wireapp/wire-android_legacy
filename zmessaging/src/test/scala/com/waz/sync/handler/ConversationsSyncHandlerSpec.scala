@@ -21,7 +21,8 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
 
   private val self = UserData("self")
   private val teamId = TeamId()
-  private val userService      = mock[UserService]
+  private val domain = "chala.wire.link"
+  private val userService = mock[UserService]
   private val messagesStorage = mock[MessagesStorage]
   private val messagesService = mock[MessagesService]
   private val convService = mock[ConversationsService]
@@ -35,7 +36,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   private val membersStorage = mock[MembersStorage]
 
   private def createHandler: ConversationsSyncHandler = new ConversationsSyncHandler(
-    self.id, Some(teamId), userService, messagesStorage, messagesService,
+    self.id, Some(domain), Some(teamId), userService, messagesStorage, messagesService,
     convService, convs, convEvents, convStorage, errorsService,
     conversationsClient, genericMessages, rolesService, membersStorage
   )

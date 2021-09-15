@@ -53,6 +53,7 @@ trait ConversationsClient {
   def postMemberJoin(conv: RConvId, members: Set[UserId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]]
   def postQualifiedMemberJoin(conv: RConvId, members: Set[QualifiedId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]]
   def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]]
+  def postQualifiedMemberLeave(qConvId: RConvQualifiedId, qUserId: QualifiedId): ErrorOrResponse[Option[MemberLeaveEvent]]
   def createLink(conv: RConvId): ErrorOrResponse[Link]
   def removeLink(conv: RConvId): ErrorOrResponse[Unit]
   def getLink(conv: RConvId): ErrorOrResponse[Option[Link]]
@@ -196,12 +197,17 @@ class ConversationsClientImpl(implicit
       .executeSafe(_.collect { case (event: MemberJoinEvent) :: Nil => event })
   }
 
-  override def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]] = {
-    Request.Delete(relativePath = s"${membersPath(conv)}/$user")
+  override def postMemberLeave(convId: RConvId, userId: UserId): ErrorOrResponse[Option[MemberLeaveEvent]] =
+    Request.Delete(relativePath = memberLeavePath(convId, userId))
       .withResultType[Option[List[ConversationEvent]]]
       .withErrorType[ErrorResponse]
       .executeSafe(_.collect { case (event: MemberLeaveEvent) :: Nil => event })
-  }
+
+  override def postQualifiedMemberLeave(qConvId: RConvQualifiedId, qUserId: QualifiedId): ErrorOrResponse[Option[MemberLeaveEvent]] =
+    Request.Delete(relativePath = qualifiedMemberLeavePath(qConvId, qUserId))
+      .withResultType[Option[List[ConversationEvent]]]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.collect { case (event: MemberLeaveEvent) :: Nil => event })
 
   override def createLink(conv: RConvId): ErrorOrResponse[Link] = {
     Request.Post(relativePath = s"$ConversationsPath/$conv/code", body = "")
@@ -339,6 +345,10 @@ object ConversationsClient {
   def rolesPath(id: RConvId) = s"$ConversationsPath/${id.str}/roles"
   def membersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members"
   def qualifiedMembersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members/v2"
+  def memberLeavePath(convId: RConvId, userId: UserId) =
+    s"$ConversationsPath/${convId.str}/members/${userId.str}"
+  def qualifiedMemberLeavePath(qConvId: RConvQualifiedId, qUserId: QualifiedId) =
+    s"$ConversationsPath/${qConvId.domain}/${qConvId.id.str}/members/${qUserId.domain}/${qUserId.id.str}"
 
   final case class ConversationInitState(users:            Set[UserId],
                                          qualifiedUsers:   Set[QualifiedId],
