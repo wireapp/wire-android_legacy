@@ -253,6 +253,8 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
             buildConfigField 'boolean', 'LOGGING_ENABLED', 'false'
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
+
+            buildConfigField 'boolean', 'KEEP_WEBSOCKET_ON', 'true'
         }
 
         internal {
