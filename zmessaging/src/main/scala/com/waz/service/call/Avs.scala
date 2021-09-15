@@ -24,6 +24,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.{ClientId, OtrClientIdMap}
+import com.waz.service.call.Avs.AvsClientList.encode
 import com.waz.service.call.CallInfo.{ActiveSpeaker, Participant}
 import com.waz.service.call.Calling.{ActiveSpeakersHandler, Handle, _}
 import com.waz.utils.jna.{Size_t, Uint32_t}
@@ -186,6 +187,13 @@ class AvsImpl() extends Avs with DerivedLogTag {
           ParticipantsChangeDecoder.decode(data).fold(()) { participantsChange =>
             val participants = participantsChange.members.map(m => Participant(m.userid, m.clientid, m.muted == 1)).toSet
             cs.onParticipantsChanged(RConvId(convId), participants)
+
+            import AvsClientList._
+            val clients = participants.map { participant =>
+              AvsClient(participant.userId.str, participant.clientId.str)
+            }
+            val json = encode(AvsClientList(clients.toSeq))
+            withAvs(wcall_request_video_streams(wCall, convId, 0, json))
           }
         }
       }
