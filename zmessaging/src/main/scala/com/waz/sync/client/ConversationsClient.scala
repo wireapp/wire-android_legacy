@@ -23,8 +23,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
-import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, QConversationsResult, Decoder}
-import com.waz.utils.JsonDecoder.{array, decodeBool}
+import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, Decoder, QConversationsResult}
+import com.waz.utils.JsonDecoder.{array, decodeBool, decodeSeq, decodeOptString}
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
 import com.waz.znet2.AuthRequestInterceptor
@@ -74,49 +74,26 @@ class ConversationsClientImpl(implicit
   import HttpClient.dsl._
   import com.waz.threading.Threading.Implicits.Background
 
-  private implicit val ConversationIdsResponseDeserializer: RawBodyDeserializer[ConversationsResult] =
-    RawBodyDeserializer[JSONObject].map { json =>
-      val (ids, hasMore) =
-        if (json.has("conversations"))
-          (array[ConversationResponse](json.getJSONArray("conversations")).toList, decodeBool('has_more)(json))
-        else
-          (List(Decoder(json)), false)
+  private implicit val ConversationsResultDeserializer: RawBodyDeserializer[ConversationsResult] =
+    RawBodyDeserializer[JSONObject].map { implicit json =>
+      val ids = decodeSeq[ConversationResponse]('conversations)
+      val hasMore = decodeBool('has_more)
       ConversationsResult(ids, hasMore)
     }
 
-  private implicit val QConversationIdsResponseDeserializer: RawBodyDeserializer[QConversationsResult] =
-    RawBodyDeserializer[JSONObject].map { json =>
-      val found =
-        if (json.has("found"))
-          array[ConversationResponse](json.getJSONArray("found"))
-        else
-          Seq.empty[ConversationResponse]
-      val notFound =
-        if (json.has("not_found"))
-          array[RConvQualifiedId](json.getJSONArray("not_found"))
-        else
-          Seq.empty[RConvQualifiedId]
-      val failed =
-        if (json.has("failed"))
-          array[RConvQualifiedId](json.getJSONArray("failed"))
-        else
-          Seq.empty[RConvQualifiedId]
-
+  private implicit val QConversationsResultDeserializer: RawBodyDeserializer[QConversationsResult] =
+    RawBodyDeserializer[JSONObject].map { implicit json =>
+      val found = decodeSeq[ConversationResponse]('found)
+      val notFound = decodeSeq[RConvQualifiedId]('not_found)
+      val failed = decodeSeq[RConvQualifiedId]('failed)
       QConversationsResult(found, notFound.toSet, failed.toSet)
     }
 
   private implicit val ListConversationIdsResponseDeserializer: RawBodyDeserializer[ListConversationsIdsResponse] =
-    RawBodyDeserializer[JSONObject].map { json =>
-      val qIds =
-        if (json.has("qualified_conversations"))
-          array[RConvQualifiedId](json.getJSONArray("qualified_conversations"))
-        else
-          Seq.empty[RConvQualifiedId]
-      val hasMore =
-        if (json.has("has_more")) json.getBoolean("has_more") else false
-      val pagingState =
-        if (json.has("paging_state")) Some(json.getString("paging_state")) else None
-
+    RawBodyDeserializer[JSONObject].map { implicit json =>
+      val qIds = decodeSeq[RConvQualifiedId]('qualified_conversations)
+      val hasMore = decodeBool('has_more)
+      val pagingState = decodeOptString('paging_state)
       ListConversationsIdsResponse(qIds.toSet, hasMore, pagingState)
     }
 
@@ -467,7 +444,6 @@ object ConversationsClient {
     }
 
     final case class ConversationsResult(conversations: Seq[ConversationResponse], hasMore: Boolean)
-
     final case class QConversationsResult(found: Seq[ConversationResponse], notFound: Set[RConvQualifiedId], failed: Set[RConvQualifiedId])
 
     object QConversationsResult {
