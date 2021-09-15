@@ -23,7 +23,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, MessagesStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model._
+import com.waz.model.{RConvQualifiedId, _}
 import com.waz.service._
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
@@ -44,6 +44,7 @@ object ConversationsSyncHandler {
 }
 
 class ConversationsSyncHandler(selfUserId:      UserId,
+                               selfDomain:      Option[String],
                                teamId:          Option[TeamId],
                                userService:     UserService,
                                messagesStorage: MessagesStorage,
@@ -226,10 +227,18 @@ class ConversationsSyncHandler(selfUserId:      UserId,
       postConversationMemberJoin(id, members.map(_.id), defaultRole)
     }
 
-  def postConversationMemberLeave(id: ConvId, user: UserId): Future[SyncResult] =
-    if (user != selfUserId) postConv(id) { conv => convClient.postMemberLeave(conv.remoteId, user) }
-    else withConversation(id) { conv =>
-      convClient.postMemberLeave(conv.remoteId, user).future flatMap {
+  private def postSelfLeave(id: ConvId): Future[SyncResult] =
+    withConversation(id) { conv =>
+      val clientResult =
+        (BuildConfig.FEDERATION_USER_DISCOVERY, selfDomain) match {
+          case (true, Some(domain)) =>
+            val convQualifiedId = convService.rConvQualifiedId(conv)
+            val userQualifiedId = QualifiedId(selfUserId, domain)
+            convClient.postQualifiedMemberLeave(convQualifiedId, userQualifiedId)
+          case _ =>
+            convClient.postMemberLeave(conv.remoteId, selfUserId)
+        }
+      clientResult.future.flatMap {
         case Right(Some(event: MemberLeaveEvent)) =>
           event.localTime = LocalInstant.Now
           convClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time))).future flatMap {
@@ -241,7 +250,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
               Future.successful(SyncResult(error))
           }
         case Right(None) =>
-          debug(l"member $user already left, just updating the conversation state")
+          debug(l"member self already left, just updating the conversation state")
           convClient
             .postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(conv.lastEventTime)))
             .future
@@ -250,6 +259,22 @@ class ConversationsSyncHandler(selfUserId:      UserId,
         case Left(error) =>
           Future.successful(SyncResult(error))
       }
+    }
+
+  def postConversationMemberLeave(id: ConvId, user: UserId): Future[SyncResult] =
+    if (user != selfUserId)
+      postConv(id) { conv => convClient.postMemberLeave(conv.remoteId, user) }
+    else
+      postSelfLeave(id)
+
+  def postConversationMemberLeave(convId: ConvId, qId: QualifiedId): Future[SyncResult] =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY && qId.id != selfUserId) {
+      postConv(convId) { conv =>
+        val rConvId = convService.rConvQualifiedId(conv)
+        convClient.postQualifiedMemberLeave(rConvId, qId)
+      }
+    } else {
+      postConversationMemberLeave(convId, qId.id)
     }
 
   def postConversationState(id: ConvId, state: ConversationState): Future[SyncResult] =

@@ -132,9 +132,9 @@ object PushNotificationsClient {
   }
 }
 
-case class PushNotificationEncoded(id: Uid, events: JSONArray, transient: Boolean = false)
+final case class PushNotificationEncoded(id: Uid, events: JSONArray, transient: Boolean = false)
 
-case class PushNotification(id: Uid, events: Seq[Event], transient: Boolean = false) {
+final case class PushNotification(id: Uid, events: Seq[Event], transient: Boolean = false) {
 
   /**
     * Check if notification contains events intended for current client. In some (rare) cases it may happen that

@@ -71,7 +71,7 @@ class BaseSingleParticipantAdapter(userId:      UserId,
         timerText, isDarkTheme, hasInformation, isFederated
       )
     case h: GroupAdminViewHolder =>
-      h.bind(onParticipantRoleChange, participantRole.contains(ConversationRole.AdminRole))
+      h.bind(onParticipantRoleChange, participantRole.contains(ConversationRole.AdminRole), isFederated = isFederated)
   }
 
   override def getItemCount: Int = if (isGroupAdminViewVisible) 2 else 1
@@ -142,8 +142,8 @@ object BaseSingleParticipantAdapter {
     }
   }
 
-  case class GroupAdminViewHolder(view: View) extends ViewHolder(view) with DerivedLogTag {
-    private implicit val ctx = view.getContext
+  final case class GroupAdminViewHolder(view: View) extends ViewHolder(view) with DerivedLogTag {
+    private implicit val ctx: Context = view.getContext
 
     private val switch                   = view.findViewById[SwitchCompat](R.id.participant_group_admin_toggle)
     private var groupAdmin               = Option.empty[Boolean]
@@ -157,10 +157,14 @@ object BaseSingleParticipantAdapter {
         }
     })
 
-    def bind(onParticipantRoleChanged: SourceStream[ConversationRole], groupAdminEnabled: Boolean): Unit = {
+    def bind(onParticipantRoleChanged: SourceStream[ConversationRole],
+             groupAdminEnabled:        Boolean,
+             isFederated:              Boolean
+            ): Unit = {
       if (!this.onParticipantRoleChanged.contains(onParticipantRoleChanged))
         this.onParticipantRoleChanged = Some(onParticipantRoleChanged)
       if (!groupAdmin.contains(groupAdminEnabled)) switch.setChecked(groupAdminEnabled)
+      switch.setEnabled(!isFederated)
       view.setContentDescription(s"Group Admin: $groupAdminEnabled")
     }
   }
