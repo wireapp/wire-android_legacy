@@ -147,11 +147,12 @@ class UsersSyncHandlerImpl(userService:      UserService,
     for {
       Some(self)     <- userService.getSelfUser
       users          <- usersStorage.values
-      (team, others) = users.filterNot(u => u.deleted || u.isWireBot).partition(_.isInTeam(self.teamId))
-      recipients     = (List(self.id) ++
-                        team.filter(_.id != self.id).map(_.id).toList.sorted ++
-                        others.filter(_.isConnected).map(_.id).toList.sorted
-                       ).take(limit).toSet
+      localUsers     =  users.filterNot(userService.isFederated) // for now the status is sent only to users on the same backend
+      (team, others) =  localUsers.filterNot(u => u.deleted || u.isWireBot).partition(_.isInTeam(self.teamId))
+      recipients     =  (List(self.id) ++
+                         team.filter(_.id != self.id).map(_.id).toList.sorted ++
+                         others.filter(_.isConnected).map(_.id).toList.sorted
+                        ).take(limit).toSet
       result         <- otrSync.broadcastMessage(gm, recipients = Some(recipients))
     } yield SyncResult(result)
   }

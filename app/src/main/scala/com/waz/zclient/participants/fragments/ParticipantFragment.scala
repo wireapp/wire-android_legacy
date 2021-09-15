@@ -263,8 +263,10 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
       for {
         userOpt      <- participantsController.getUser(userId)
         isTeamMember <- userAccountsController.isTeamMember(userId).head
+        // for now, federated users are not really "accepted", they're more like team members; it's a temporary solution
+        isFederated  <- userOpt.fold(Future.successful(false))(usersController.isFederated)
       } userOpt match {
-        case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
+        case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember || isFederated =>
           import SingleParticipantFragment._
           val tabToOpen = if (forLegalHold) Some(DevicesTab.str) else None
           openUserProfileFragment(SingleParticipantFragment.newInstance(tabToOpen), Tag)

@@ -58,6 +58,7 @@ public enum SyncCommand {
     PostConvJoin("post-conv-join"),
     PostQualifiedConvJoin("post-qualified-conv-join"),
     PostConvLeave("post-conv-leave"),
+    PostQualifiedConvLeave("post-qualified-conv-leave"),
     PostConnection("post-connection"),
     PostQualifiedConnection("post-qualified-connection"),
     DeletePushToken("delete-push-token"),

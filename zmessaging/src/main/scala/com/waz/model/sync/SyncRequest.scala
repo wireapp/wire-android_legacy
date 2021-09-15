@@ -447,6 +447,10 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, convId, user)
   }
 
+  final case class PostQualifiedConvLeave(convId: ConvId, qId: QualifiedId) extends RequestForConversation(Cmd.PostQualifiedConvLeave) with Serialized {
+    override val mergeKey: Any = (cmd, convId, qId)
+  }
+
   final case class PostStringProperty(key: PropertyKey, value: String) extends BaseRequest(Cmd.PostStringProperty) {
     override def mergeKey: Any = (cmd, key)
   }
@@ -619,7 +623,9 @@ object SyncRequest {
         case PostQualifiedConvJoin(_, users, conversationRole) =>
           o.put("users", users.map(QualifiedId.Encoder(_)))
           o.put("conversation_role", conversationRole.label)
-        case PostConvLeave(_, user)           => putId("user", user)
+        case PostConvLeave(_, user)  => putId("user", user)
+        case PostQualifiedConvLeave(_, qId)  =>
+          o.put("qualifiedId", QualifiedId.Encoder(qId))
         case PostOpenGraphMeta(_, messageId, time) =>
           putId("message", messageId)
           o.put("time", time.toEpochMilli)
