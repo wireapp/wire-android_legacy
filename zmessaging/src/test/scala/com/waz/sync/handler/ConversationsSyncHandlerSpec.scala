@@ -9,8 +9,8 @@ import com.waz.service.conversation.{ConversationOrderEventsService, Conversatio
 import com.waz.service.messages.MessagesService
 import com.waz.service.{ConversationRolesService, ErrorsService, GenericMessageService, UserService}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.client.ConversationsClient.ConversationResponse
-import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
+import com.waz.sync.client.ConversationsClient.{ConversationResponse, ListConversationsIdsResponse}
+import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, QConversationsResult}
 import com.waz.sync.client.{ConversationsClient, ErrorOrResponse}
 import com.wire.signals.{CancellableFuture, Signal}
 import com.waz.zms.BuildConfig
@@ -91,9 +91,9 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
       val resp3 = toConversationResponse(conv3)
       val resps = Seq(resp1, resp2, resp3)
 
-      val backendResponse: ErrorOrResponse[Seq[ConversationResponse]] =
+      val backendResponse: ErrorOrResponse[QConversationsResult] =
         CancellableFuture.successful {
-          Right(resps)
+          Right(QConversationsResult(resps, Set.empty, Set.empty))
         }
 
       (convStorage.getAll _)
@@ -125,9 +125,9 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
       val resp3 = toConversationResponse(conv3)
       val resps = Seq(resp1, resp2, resp3)
 
-      val qBackendResponse: ErrorOrResponse[Seq[ConversationResponse]] =
+      val qBackendResponse: ErrorOrResponse[QConversationsResult] =
         CancellableFuture.successful {
-          Right(Seq(resp1, resp2))
+          Right(QConversationsResult(Seq(resp1, resp2), Set.empty, Set.empty))
         }
       val backendResponse: ErrorOrResponse[Seq[ConversationResponse]] =
         CancellableFuture.successful {
@@ -152,27 +152,37 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   }
 
   scenario("When syncing conversations, given local convs that are absent from the backend, remove the missing local convs") {
-    val conv1 = ConversationData(team = Some(teamId), creator = self.id)
-    val conv2 = ConversationData(team = Some(teamId), creator = self.id)
-    val conv3 = ConversationData(team = Some(teamId), creator = self.id)
+    val conv1 = ConversationData(id = ConvId("conv1"), team = Some(teamId), creator = self.id, domain = Some("anta"))
+    val conv2 = ConversationData(id = ConvId("conv2"), team = Some(teamId), creator = self.id, domain = Some("anta"))
+    val conv3 = ConversationData(id = ConvId("conv3"), team = Some(teamId), creator = self.id, domain = Some("anta"))
 
     val resp1 = toConversationResponse(conv1)
     val resp2 = toConversationResponse(conv2)
 
+    val qBackendResponse: ErrorOrResponse[QConversationsResult] =
+      CancellableFuture.successful {
+        Right(QConversationsResult(Seq(resp1, resp2), Set.empty, Set.empty))
+      }
     val backendResponse: ErrorOrResponse[ConversationsResult] =
       CancellableFuture.successful { Right(ConversationsResult(Seq(resp1, resp2), hasMore = false)) }
-    val storageResponse =
-      Future.successful(Set(conv1.remoteId, conv2.remoteId, conv3.remoteId))
 
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      (conversationsClient.loadQualifiedConversations(_: Option[RConvQualifiedId], _: Int))
-        .expects(*, *).anyNumberOfTimes().returning(backendResponse)
+      (conversationsClient.loadQualifiedConversationsIds _)
+        .expects(*).anyNumberOfTimes().returning(
+        CancellableFuture.successful(Right(
+          ListConversationsIdsResponse(qIds = Set(resp1.qualifiedId.get, resp2.qualifiedId.get), hasMore = false, pagingState = None)
+        ))
+      )
+      (conversationsClient.loadQualifiedConversations _)
+        .expects(*).anyNumberOfTimes().returning(qBackendResponse)
     } else {
       (conversationsClient.loadConversations(_: Option[RConvId], _: Int))
         .expects(*, *).anyNumberOfTimes().returning(backendResponse)
     }
 
-    (convService.remoteIds _).expects().anyNumberOfTimes().returning(storageResponse)
+    (convService.remoteIds _).expects().anyNumberOfTimes().returning(
+      Future.successful(Set(conv1.remoteId, conv2.remoteId, conv3.remoteId))
+    )
 
     (rolesService.defaultRoles _).expects().anyNumberOfTimes().returning(Signal.const(Set.empty[ConversationRole]))
     (conversationsClient.loadConversationRoles _).expects(*,*).anyNumberOfTimes().returning(Future.successful(Map.empty[RConvId, Set[ConversationRole]]))
