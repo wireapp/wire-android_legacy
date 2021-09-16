@@ -263,7 +263,9 @@ class CallingServiceImpl(val accountId:       UserId,
         isConferenceCall,
         startedAsVideoCall = videoCall,
         videoSendState = VideoState.NoCameraPermission,
-        shouldRing = !conv.muted.isAllMuted && shouldRing)
+        shouldRing = !conv.muted.isAllMuted && shouldRing,
+        muted = isGroup
+      )
 
       callProfile.mutate { p =>
         // If we have a call in the profile with the same id, this incoming call should be just a GROUPCHECK
@@ -454,7 +456,6 @@ class CallingServiceImpl(val accountId:       UserId,
                     verbose(l"Answering call")
                     avs.answerCall(w, conv.remoteId, callType, useConstantBitRate)
                     updateActiveCall(_.updateCallState(SelfJoining))("startCall/OtherCalling")
-                    setCallMuted(muted = isGroup)
                     if (forceOption)
                       setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
                   case _ =>
