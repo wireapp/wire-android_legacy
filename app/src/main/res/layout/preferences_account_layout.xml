@@ -73,6 +73,20 @@
                 app:subtitle="@string/pref_account_phone_title"
                 />
 
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_account_team"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:subtitle="@string/pref_account_team_title"
+                />
+
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_account_domain"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:subtitle="@string/pref_account_domain_title"
+                />
+
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/preferences_account_appearance_header"
                 android:layout_width="match_parent"

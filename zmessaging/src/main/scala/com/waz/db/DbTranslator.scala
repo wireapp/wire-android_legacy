@@ -121,10 +121,10 @@ object DbTranslator {
     override def literal(value: EmailAddress): String = value.str
   }
   implicit object HandleTranslator extends DbTranslator[Handle] {
-    override def load(cursor: DBCursor, index: Int): Handle = Handle(cursor.getString(index))
+    override def load(cursor: DBCursor, index: Int): Handle = Handle.from(cursor.getString(index))
     override def save(value: Handle, name: String, values: DBContentValues): Unit = values.put(name, literal(value))
     override def bind(value: Handle, index: Int, stmt: DBProgram): Unit = stmt.bindString(index, literal(value))
-    override def literal(value: Handle): String = value.string
+    override def literal(value: Handle): String = value.toString
   }
   implicit def optionTranslator[A](implicit trans: DbTranslator[A]): DbTranslator[Option[A]] = new DbTranslator[Option[A]] {
     override def load(cursor: DBCursor, index: Int): Option[A] = if (cursor.isNull(index)) None else Some(trans.load(cursor, index))

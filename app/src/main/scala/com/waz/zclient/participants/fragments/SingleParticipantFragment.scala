@@ -37,7 +37,7 @@ import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
-import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView, StringUtils}
+import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.Instant
@@ -181,10 +181,10 @@ class SingleParticipantFragment extends FragmentHelper {
   }
 
   private def initUserHandle(): Unit = returning(view[TextView](R.id.user_handle)) { vh =>
-    subs += participantsController.otherParticipant.map(_.handle.map(_.string)).onUi {
+    subs += participantsController.otherParticipant.map(_.displayHandle).onUi {
       case Some(h) =>
         vh.foreach { view =>
-          view.setText(StringUtils.formatHandle(h))
+          view.setText(h)
           view.setVisible(true)
         }
       case None =>

@@ -152,7 +152,7 @@ object UserInfo {
       info.phone.foreach(p => o.put("phone", p.str))
       info.email.foreach(e => o.put("email", e.str))
       info.accentId.foreach(o.put("accent_id", _))
-      info.handle.foreach(h => o.put("handle", h.string))
+      info.handle.foreach(h => o.put("handle", h.toString))
       info.trackingId.foreach(id => o.put("tracking_id", id.str))
       info.picture.foreach(ps => o.put("assets", encodeAsset(ps)))
       info.managedBy.foreach(m => o.put("managed_by", m.toString))

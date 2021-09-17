@@ -34,6 +34,8 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 import scala.concurrent.duration._
 import scala.util.Try
 
+import com.waz.zms.BuildConfig
+
 final case class UserData(override val id:       UserId,
                           domain:                Option[String]         = None,
                           teamId:                Option[TeamId]         = None,
@@ -74,10 +76,15 @@ final case class UserData(override val id:       UserId,
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
   lazy val qualifiedId: Option[QualifiedId] = domain.map(d => QualifiedId(id, d))
+  lazy val displayHandle: Option[String] = (handle, domain) match {
+    case (Some(h), Some(d)) if h.nonEmpty && BuildConfig.FEDERATION_USER_DISCOVERY => Some(s"${h.withSymbol}@$d")
+    case (Some(h), None) if h.nonEmpty => Some(h.withSymbol)
+    case _ => None
+  }
 
   def updated(user: UserInfo): UserData = updated(user, withSearchKey = true, permissions = permissions)
   def updated(user: UserInfo, withSearchKey: Boolean, permissions: PermissionsMasks): UserData = copy(
-    domain        = user.domain,
+    domain        = if (BuildConfig.FEDERATION_USER_DISCOVERY) { if (user.domain.isEmpty) domain else user.domain } else None,
     name          = user.name.getOrElse(name),
     email         = user.email.orElse(email),
     phone         = user.phone.orElse(phone),
@@ -93,7 +100,7 @@ final case class UserData(override val id:       UserId,
     managedBy     = user.managedBy.orElse(managedBy),
     fields        = user.fields.getOrElse(fields),
     handle        = user.handle match {
-      case Some(h) if !h.toString.isEmpty => Some(h)
+      case Some(h) if h.nonEmpty => Some(h)
       case _ => handle
     },
     permissions = permissions

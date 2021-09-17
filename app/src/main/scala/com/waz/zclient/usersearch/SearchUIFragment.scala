@@ -60,7 +60,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.usersearch.domain.RetrieveSearchResults
 import com.waz.zclient.usersearch.views.SearchEditText
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{IntentUtils, ResColor, RichView, StringUtils, UiStorage, UserSignal}
+import com.waz.zclient.utils.{IntentUtils, ResColor, RichView, UiStorage, UserSignal}
 import com.waz.zclient.views._
 
 import scala.concurrent.Future
@@ -486,7 +486,8 @@ class SearchUIFragment extends BaseFragment[Container]
     self.head.map { self =>
       val sharingIntent = IntentUtils.getInviteIntent(
         getString(R.string.people_picker__invite__share_text__header, self.name.str),
-        getString(R.string.people_picker__invite__share_text__body, StringUtils.formatHandle(self.handle.map(_.string).getOrElse(""))))
+        getString(R.string.people_picker__invite__share_text__body,self.displayHandle.getOrElse(""))
+      )
       startActivity(Intent.createChooser(sharingIntent, getString(R.string.people_picker__invite__share_details_dialog)))
     }
 

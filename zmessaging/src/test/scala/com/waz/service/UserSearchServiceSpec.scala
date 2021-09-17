@@ -70,59 +70,59 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     id('l) -> UserData.withName(id('l), "Bjorn-Rodrigo Smith"),
     id('m) -> UserData.withName(id('m), "John Smith"),
     id('n) -> UserData.withName(id('n), "Jason-John Mercier"),
-    id('o) -> UserData.withName(id('o), "Captain Crunch").copy(handle = Some(Handle("john"))),
-    id('p) -> UserData.withName(id('p), "Peter Pan").copy(handle = Some(Handle("john"))),
+    id('o) -> UserData.withName(id('o), "Captain Crunch").copy(handle = Some(Handle.from("john"))),
+    id('p) -> UserData.withName(id('p), "Peter Pan").copy(handle = Some(Handle.from("john"))),
     id('q) -> UserData.withName(id('q), "James gjohnjones"),
-    id('r) -> UserData.withName(id('r), "Liv Boeree").copy(handle = Some(Handle("testjohntest"))),
-    id('s) -> UserData.withName(id('s), "blah").copy(handle = Some(Handle("mores"))),
-    id('t) -> UserData.withName(id('t), "test handle").copy(handle = Some(Handle("smoresare"))),
+    id('r) -> UserData.withName(id('r), "Liv Boeree").copy(handle = Some(Handle.from("testjohntest"))),
+    id('s) -> UserData.withName(id('s), "blah").copy(handle = Some(Handle.from("mores"))),
+    id('t) -> UserData.withName(id('t), "test handle").copy(handle = Some(Handle.from("smoresare"))),
     id('u) -> UserData.withName(id('u), "Wireless").copy(expiresAt = Some(RemoteInstant.ofEpochMilli(12345L))),
     id('v) -> UserData.withName(id('v), "Wireful"),
     id('z) -> UserData.withName(id('z), "Francois francois"),
     id('pp1) -> UserData.withName(id('pp1), "External 1").copy(
       permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
-      handle = Some(Handle("pp1")),
+      handle = Some(Handle.from("pp1")),
       createdBy = Some(id('aa1))
     ),
     id('pp2) -> UserData.withName(id('pp2), "External 2").copy(
       permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
-      handle = Some(Handle("pp2")),
+      handle = Some(Handle.from("pp2")),
       createdBy = Some(id('aa2))
     ),
     id('pp3) -> UserData.withName(id('pp3), "External 3").copy(
       permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
-      handle = Some(Handle("pp3"))
+      handle = Some(Handle.from("pp3"))
     ),
     id('mm1) -> UserData.withName(id('mm1), "Member 1").copy(
       permissions = (memberPermissions, memberPermissions),
       teamId = teamId,
-      handle = Some(Handle("mm1")),
+      handle = Some(Handle.from("mm1")),
       createdBy = Some(id('aa1))
     ),
     id('mm2) -> UserData.withName(id('mm2), "Member 2").copy(
       permissions = (memberPermissions, memberPermissions),
       teamId = teamId,
-      handle = Some(Handle("mm2")),
+      handle = Some(Handle.from("mm2")),
       createdBy = Some(id('aa1))
     ),
     id('mm3) -> UserData.withName(id('mm3), "Member 3").copy(
       permissions = (memberPermissions, memberPermissions),
       teamId = teamId,
-      handle = Some(Handle("mm3")),
+      handle = Some(Handle.from("mm3")),
       createdBy = Some(id('aa1))
     ),
     id('aa1) -> UserData.withName(id('aa1), "Admin 1").copy(
       permissions = (adminPermissions, adminPermissions),
       teamId = teamId,
-      handle = Some(Handle("aa1"))
+      handle = Some(Handle.from("aa1"))
     ),
     id('aa2) -> UserData.withName(id('aa2), "Admin 2").copy(
       permissions = (adminPermissions, adminPermissions),
       teamId = teamId,
-      handle = Some(Handle("aa2"))
+      handle = Some(Handle.from("aa2"))
     ),
     id('me1) -> UserData.withName(id('me1), "Team Member With Email").copy(
       email = Some(EmailAddress("a_member@wire.com")),

@@ -174,8 +174,8 @@ object JsonDecoder {
   implicit def decodeOptEmailAddress(s: Symbol)(implicit js: JSONObject): Option[EmailAddress] = opt(s, js => EmailAddress(js.getString(s.name)))
   implicit def decodePhoneNumber(s: Symbol)(implicit js: JSONObject): PhoneNumber = PhoneNumber(js.getString(s.name))
   implicit def decodeOptPhoneNumber(s: Symbol)(implicit js: JSONObject): Option[PhoneNumber] = opt(s, js => PhoneNumber(js.getString(s.name)))
-  implicit def decodeOptHandle(s: Symbol)(implicit js: JSONObject): Option[Handle] = opt(s, js => Handle(js.getString(s.name)))
-  implicit def decodeHandleSeq(s: Symbol)(implicit js: JSONObject): Seq[Handle] = array[Handle](s)({ (arr, i) => Handle(arr.getString(i)) })
+  implicit def decodeOptHandle(s: Symbol)(implicit js: JSONObject): Option[Handle] = opt(s, js => Handle.from(js.getString(s.name)))
+  implicit def decodeHandleSeq(s: Symbol)(implicit js: JSONObject): Seq[Handle] = array[Handle](s)({ (arr, i) => Handle.from(arr.getString(i)) })
 
   implicit def decodePushToken(s: Symbol)(implicit js: JSONObject): PushToken = PushToken(js.getString(s.name))
 
@@ -200,7 +200,7 @@ object JsonDecoder {
   implicit def decodeUploadAssetId(s: Symbol)(implicit js: JSONObject): UploadAssetId = UploadAssetId(js.getString(s.name))
   implicit def decodeRAssetId(s: Symbol)(implicit js: JSONObject): RAssetId = RAssetId(js.getString(s.name))
   implicit def decodeMessageId(s: Symbol)(implicit js: JSONObject): MessageId = MessageId(js.getString(s.name))
-  implicit def decodeHandle(s: Symbol)(implicit js: JSONObject): Handle = Handle(js.getString(s.name))
+  implicit def decodeHandle(s: Symbol)(implicit js: JSONObject): Handle = Handle.from(js.getString(s.name))
   implicit def decodeInvitationId(s: Symbol)(implicit js: JSONObject): InvitationId = InvitationId(js.getString(s.name))
   implicit def decodeMessage(s: Symbol)(implicit js: JSONObject): GenericMessage = GenericMessage(AESUtils.base64(decodeString(s)))
   implicit def decodeMessageIdSeq(s: Symbol)(implicit js: JSONObject): Seq[MessageId] = array[MessageId](s)({ (arr, i) => MessageId(arr.getString(i)) })

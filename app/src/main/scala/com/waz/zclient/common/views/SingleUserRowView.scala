@@ -41,7 +41,7 @@ import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon}
 import com.waz.zclient.ui.animation.interpolators.penner.Quad.EaseOut
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{GuestUtils, StringUtils, _}
+import com.waz.zclient.utils.{GuestUtils, _}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 import com.wire.signals.{EventStream, Signal, SourceStream}
@@ -263,9 +263,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
 object SingleUserRowView {
   def defaultSubtitle(user: UserData, isFederated: Boolean)(implicit context: Context): String = {
-    lazy val handle: String =
-      user.handle.fold("")(h => StringUtils.formatHandle(h.string)) +
-        (if (isFederated) "@" + user.domain.getOrElse("") else "")
+    lazy val handle: String = user.displayHandle.getOrElse("")
     val expiration = user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now))
     expiration.getOrElse(handle)
   }

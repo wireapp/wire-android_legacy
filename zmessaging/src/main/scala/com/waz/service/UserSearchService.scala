@@ -136,7 +136,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
 
       def cmpHandle(u: UserData, fn: String => Boolean) = u.handle match {
         case None => false
-        case Some(h) => fn(h.string)
+        case Some(h) => fn(h.toString)
       }
 
       val rules: Seq[UserData => Boolean] = Seq(
@@ -328,7 +328,7 @@ object UserSearchService {
       UserSearchEntry(qualified_id,
                       Name(name),
                       accent_id,
-                      handle.fold(Handle.Empty)(Handle(_)),
+                      handle.fold(Handle.Empty)(Handle.from),
                       team.map(TeamId.apply))
     }
   }

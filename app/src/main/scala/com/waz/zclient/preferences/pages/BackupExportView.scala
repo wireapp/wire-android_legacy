@@ -84,7 +84,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
     for {
       users          <- inject[Signal[UserService]].head
       self           <- users.selfUser.head
-      userHandle     =  self.handle.fold("")(_.string)
+      userHandle     =  self.handle.map(_.toString).getOrElse("")
       Some(clientId) <- inject[Signal[AccountManager]].flatMap(_.clientId).head
       _              <- lifecycle.uiActive.collect { case true => () }.head
       _              <- Future {

@@ -43,7 +43,7 @@ import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.Time.TimeStamp
-import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, UiStorage, UserSignal}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.threading.Threading._
 
@@ -264,7 +264,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   self.on(Threading.Ui) { self =>
     view.setAccentColor(AccentColor(self.accent).color)
-    self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))
+    self.displayHandle.foreach(view.setHandle)
     view.setUserName(self.name)
   }
 

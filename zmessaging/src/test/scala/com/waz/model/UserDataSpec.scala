@@ -32,7 +32,7 @@ class UserDataSpec extends AndroidFreeSpec {
     None, // ignoring pictures for now
     Some(TrackingId("123454fsdf")),
     false,
-    Some(Handle("atticus")),
+    Some(Handle.from("atticus")),
     Some(false),
     Some(Service(
       IntegrationId("f0f83af0-c7d3-42b7-ab8b-7fc137ee7173"),

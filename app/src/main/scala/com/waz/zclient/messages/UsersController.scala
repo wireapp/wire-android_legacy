@@ -136,8 +136,6 @@ class UsersController(implicit injector: Injector, context: Context)
       strings.mkString(itemSeparator + " ")
   }
 
-  def userHandle(id: UserId): Signal[Option[Handle]] = user(id).map(_.handle)
-
   def user(id: UserId): Signal[UserData] = zms.flatMap(_.usersStorage.signal(id))
   def userOpt(id: UserId): Signal[Option[UserData]] = zms.flatMap(_.usersStorage.optSignal(id))
   def users(ids: Iterable[UserId]): Signal[Vector[UserData]] = zms.flatMap(_.usersStorage.listSignal(ids))

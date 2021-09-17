@@ -61,7 +61,7 @@ case class HandleCredentials(handle: Handle, password: Password) extends Credent
   override val autoLogin = false
 
   override def addToRegistrationJson(o: JSONObject): Unit = {
-    o.put("email", handle.string)
+    o.put("email", handle.toString)
     o.put("password", password)
   }
 

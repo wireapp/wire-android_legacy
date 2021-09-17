@@ -21,7 +21,7 @@ import java.util.UUID
 
 import com.waz.utils.Locales
 
-case class Handle(string: String) extends AnyVal {
+final case class Handle(private val string: String) extends AnyVal {
   override def toString : String = string
 
   def startsWithQuery(query: String): Boolean =
@@ -31,11 +31,18 @@ case class Handle(string: String) extends AnyVal {
     string == Handle.stripSymbol(query).toLowerCase
 
   def withSymbol: String = if (string.startsWith("@")) string else s"@$string"
+
+  def nonEmpty: Boolean = string.nonEmpty
 }
 
 object Handle extends (String => Handle){
   val Empty: Handle = Handle("")
-  def apply(): Handle = Empty
+
+  def from(string: String): Handle = {
+    val h = string.trim
+    if (h.nonEmpty) Handle(h) else Empty
+  }
+
   def random: Handle = Handle(UUID.randomUUID().toString)
   private val handlePattern = """@(.*)""".r
   def transliterated(s: String): String = Locales.transliterate(s)
