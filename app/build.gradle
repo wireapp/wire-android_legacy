@@ -285,9 +285,9 @@ android {
 
     sourceSets {
         if (fdroidBuild) {
-            main.java.srcDirs += ['src/osm/java', 'src/osm/scala']
+            main.java.srcDirs += ['src/foss/java', 'src/foss/scala']
         } else {
-            main.java.srcDirs += ['src/gms/java', 'src/gms/scala']
+            main.java.srcDirs += ['src/nonfree/java', 'src/nonfree/scala']
         }
 
         main.java.srcDirs += ['src/main/java', 'src/main/kotlin']
