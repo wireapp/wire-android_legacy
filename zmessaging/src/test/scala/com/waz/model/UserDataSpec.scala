@@ -19,6 +19,7 @@ package com.waz.model
 
 import com.waz.model.UserInfo.Service
 import com.waz.specs.AndroidFreeSpec
+import com.waz.zms.BuildConfig
 
 class UserDataSpec extends AndroidFreeSpec {
 
@@ -54,7 +55,11 @@ class UserDataSpec extends AndroidFreeSpec {
 
       // THEN
       data.id.shouldEqual(referenceInfo.id)
-      data.domain.shouldEqual(referenceInfo.domain)
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        data.domain.shouldEqual(referenceInfo.domain)
+      } else {
+        data.domain.shouldEqual(None)
+      }
       data.name.shouldEqual(referenceInfo.name.get)
       data.accent.shouldEqual(referenceInfo.accentId.get)
       data.email.shouldEqual(referenceInfo.email)
