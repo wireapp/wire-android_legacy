@@ -150,6 +150,7 @@ object JsonDecoder {
   implicit def decodeOptAssetId(s: Symbol)(implicit js: JSONObject): Option[AssetId] = opt(s, js => AssetId(js.getString(s.name)))
   implicit def decodeOptUploadAssetId(s: Symbol)(implicit js: JSONObject): Option[UploadAssetId] = opt(s, js => UploadAssetId(js.getString(s.name)))
   implicit def decodeOptClientId(s: Symbol)(implicit js: JSONObject): Option[ClientId] = opt(s, js => ClientId(js.getString(s.name)))
+  implicit def decodeOptUserId(s: Symbol)(implicit js: JSONObject): Option[UserId] = opt(s, js => UserId(js.getString(s.name)))
   implicit def decodeOptTeamId(s: Symbol)(implicit js: JSONObject): Option[TeamId] = opt(s, js => TeamId(js.getString(s.name)))
   implicit def decodeOptRAssetId(s: Symbol)(implicit js: JSONObject): Option[RAssetId] = opt(s, js => RAssetId(js.getString(s.name)))
   implicit def decodeOptRConvId(s: Symbol)(implicit js: JSONObject): Option[RConvId] = opt(s, js => RConvId(js.getString(s.name)))

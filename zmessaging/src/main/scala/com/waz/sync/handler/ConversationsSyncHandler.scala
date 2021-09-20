@@ -280,7 +280,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
     }
 
   def postConversation(convId:      ConvId,
-                       users:       Set[UserId],
+                       otherUser:   Option[UserId],
                        name:        Option[Name],
                        team:        Option[TeamId],
                        access:      Set[Access],
@@ -288,10 +288,9 @@ class ConversationsSyncHandler(selfUserId:      UserId,
                        receiptMode: Option[Int],
                        defaultRole: ConversationRole
                       ): Future[SyncResult] = {
-    debug(l"postConversation($convId, $users, $name, $defaultRole)")
-    val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
+    debug(l"postConversation($convId, $otherUser, $name, $defaultRole)")
     val initState = ConversationInitState(
-      users                 = toCreate,
+      users                 = otherUser.map(Set(_)).getOrElse(Set.empty),
       qualifiedUsers        = Set.empty,
       name                  = name,
       team                  = team,
@@ -302,17 +301,13 @@ class ConversationsSyncHandler(selfUserId:      UserId,
     )
     convClient.postConversation(initState).future.flatMap {
       case Right(response) =>
-        convService.updateRemoteId(convId, response.id).flatMap { _ =>
-          loadConversationRoles(Seq(response)).flatMap { roles =>
-            convService.updateConversationsWithDeviceStartMessage(Seq(response), roles).flatMap { _ =>
-              if (toAdd.nonEmpty) postConversationMemberJoin(convId, toAdd, defaultRole)
-              else Future.successful(Success)
-            }
-          }
-        }
+        for {
+          _     <- convService.updateRemoteId(convId, response.id)
+          roles <- loadConversationRoles(Seq(response))
+          _     <- convService.updateConversationsWithDeviceStartMessage(Seq(response), roles)
+        } yield Success
       case Left(resp@ErrorResponse(status, _, label)) =>
         warn(l"got error: $resp")
-
         val errorType = (status, label) match {
           case (403, "not-connected") =>
             Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER)
@@ -329,62 +324,6 @@ class ConversationsSyncHandler(selfUserId:      UserId,
         }
     }
   }
-
-  def postQualifiedConversation(convId:      ConvId,
-                                users:       Set[QualifiedId],
-                                name:        Option[Name],
-                                team:        Option[TeamId],
-                                access:      Set[Access],
-                                accessRole:  AccessRole,
-                                receiptMode: Option[Int],
-                                defaultRole: ConversationRole
-                               ): Future[SyncResult] =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      debug(l"postQualifiedConversation($convId, $users, $name, $defaultRole)")
-
-      val initState = ConversationInitState(
-        users            = Set.empty,
-        qualifiedUsers   = Set.empty,
-        name             = name,
-        team             = team,
-        access           = access,
-        accessRole       = accessRole,
-        receiptMode      = receiptMode,
-        conversationRole = defaultRole
-      )
-
-      convClient.postConversation(initState).future.flatMap {
-        case Right(response) =>
-          convService.updateRemoteId(convId, response.id).flatMap { _ =>
-            loadConversationRoles(Seq(response)).flatMap { roles =>
-              convService.updateConversationsWithDeviceStartMessage(Seq(response), roles).flatMap { _ =>
-                if (users.nonEmpty) postQualifiedConversationMemberJoin(convId, users, defaultRole)
-                else Future.successful(SyncResult.Success)
-              }
-            }
-          }
-
-        case Left(resp@ErrorResponse(status, _, label)) =>
-          warn(l"got error: $resp")
-
-          val errorType = (status, label) match {
-            case (403, "not-connected") =>
-              Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER)
-            case (412, "missing-legalhold-consent") =>
-              Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT)
-            case _ =>
-              None
-          }
-
-          errorType.fold(Future.successful(SyncResult(resp))) { errorType =>
-            errorsService
-              .addErrorWhenActive(ErrorData(errorType, resp, convId))
-              .map(_ => SyncResult(resp))
-          }
-      }
-    } else {
-      postConversation(convId, users.map(_.id), name, team, access, accessRole, receiptMode, defaultRole)
-    }
 
   def syncConvLink(convId: ConvId): Future[SyncResult] = {
     (for {
@@ -417,9 +356,8 @@ class ConversationsSyncHandler(selfUserId:      UserId,
   }
 
   private def withConversation(id: ConvId)(body: ConversationData => Future[SyncResult]): Future[SyncResult] =
-    convUpdater.convById(id) flatMap {
+    convStorage.get(id).flatMap {
       case Some(conv) => body(conv)
-      case _ =>
-        Future.successful(Retry(s"No conversation found for id: $id")) // XXX: does it make sense to retry ?
+      case _          => Future.successful(Retry(s"No conversation found for id: $id")) // XXX: does it make sense to retry ?
     }
 }

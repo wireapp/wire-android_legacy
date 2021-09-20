@@ -468,7 +468,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
       (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
-      (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+      (sync.postConversation _).expects(*, Option.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
       (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
       (userService.findUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
       (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))

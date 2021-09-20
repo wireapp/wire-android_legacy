@@ -174,7 +174,7 @@ object SyncRequest {
   }
 
   final case class PostConv(convId:       ConvId,
-                            users:        Set[UserId],
+                            otherUser:    Option[UserId],
                             name:         Option[Name],
                             team:         Option[TeamId],
                             access:       Set[Access],
@@ -183,19 +183,6 @@ object SyncRequest {
                             defaultRole:  ConversationRole
                            ) extends RequestForConversation(Cmd.PostConv) with Serialized {
     override def merge(req: SyncRequest): MergeResult[PostConv] = mergeHelper[PostConv](req)(Merged(_))
-  }
-
-  final case class PostQualifiedConv(convId:       ConvId,
-                                     users:        Set[QualifiedId],
-                                     name:         Option[Name],
-                                     team:         Option[TeamId],
-                                     access:       Set[Access],
-                                     accessRole:   AccessRole,
-                                     receiptMode:  Option[Int],
-                                     defaultRole:  ConversationRole
-                                    ) extends RequestForConversation(Cmd.PostQualifiedConv) with Serialized {
-    override def merge(req: SyncRequest): MergeResult[PostQualifiedConv] =
-      mergeHelper[PostQualifiedConv](req)(Merged(_))
   }
 
   final case class PostConvReceiptMode(convId: ConvId, receiptMode: Int)
@@ -493,8 +480,7 @@ object SyncRequest {
           case Cmd.SyncSearchQuery           => SyncSearchQuery(SearchQuery.fromCacheKey(decodeString('queryCacheKey)))
           case Cmd.SyncSearchResults         => SyncSearchResults(users)
           case Cmd.SyncQualifiedSearchResults => SyncQualifiedSearchResults(decodeQualifiedIds('qualified_ids).toSet)
-          case Cmd.PostConv                  => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
-          case Cmd.PostQualifiedConv         => PostQualifiedConv(convId, decodeQualifiedIds('users).toSet, 'name, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
+          case Cmd.PostConv                  => PostConv(convId, decodeOptUserId('user), 'name, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
           case Cmd.PostConvName              => PostConvName(convId, 'name)
           case Cmd.PostConvReceiptMode       => PostConvReceiptMode(convId, 'receipt_mode)
           case Cmd.PostConvState             => PostConvState(convId, JsonDecoder[ConversationState]('state))
@@ -660,16 +646,8 @@ object SyncRequest {
         case PostConvState(_, state) => o.put("state", JsonEncoder.encode(state))
         case PostConvName(_, name) => o.put("name", name)
         case PostConvReceiptMode(_, receiptMode) => o.put("receipt_mode", receiptMode)
-        case PostConv(_, users, name, team, access, accessRole, receiptMode, defaultRole) =>
-          o.put("users", arrString(users.map(_.str).toSeq))
-          name.foreach(o.put("name", _))
-          team.foreach(o.put("team", _))
-          o.put("access", JsonEncoder.encodeAccess(access))
-          o.put("access_role", JsonEncoder.encodeAccessRole(accessRole))
-          receiptMode.foreach(o.put("receipt_mode", _))
-          o.put("default_role", defaultRole)
-        case PostQualifiedConv(_, users, name, team, access, accessRole, receiptMode, defaultRole) =>
-          o.put("users", users.map(QualifiedId.Encoder(_)))
+        case PostConv(_, user, name, team, access, accessRole, receiptMode, defaultRole) =>
+          user.foreach(o.put("user", _))
           name.foreach(o.put("name", _))
           team.foreach(o.put("team", _))
           o.put("access", JsonEncoder.encodeAccess(access))

@@ -201,7 +201,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
     val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
 
     // Mock
-    (convs.convById _)
+    (convStorage.get _)
       .expects(convId)
       .once()
       .returning(Future.successful(Some(ConversationData(convId))))
@@ -231,7 +231,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
       val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
 
       // Mock
-      (convs.convById _)
+      (convStorage.get _)
         .expects(convId)
         .once()
         .returning(Future.successful(Some(ConversationData(convId))))
@@ -281,7 +281,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
     // When (arguments are irrelevant)
     result(handler.postConversation(
       convId,
-      Set(UserId("userId")),
+      Some(UserId("userId")),
       None,
       None,
       Set.empty,
