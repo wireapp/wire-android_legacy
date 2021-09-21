@@ -292,8 +292,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       for {
         _      <- content.updateConversationState(conv.id, state)
         _      <- (state.target, state.conversationRole) match {
-                    case (Some(id), Some(role)) => membersStorage.updateOrCreate(conv.id, id, role)
-                    case _                      => Future.successful(())
+                    case (Some(qId), Some(role)) => membersStorage.updateOrCreate(conv.id, qId.id, role)
+                    case _                       => Future.successful(())
                   }
         syncId <- users.syncIfNeeded(Set(userId))
         _      <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))

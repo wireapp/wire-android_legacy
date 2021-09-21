@@ -303,7 +303,7 @@ final case class ConversationState(archived:         Option[Boolean] = None,
                                    muted:            Option[Boolean] = None,
                                    muteTime:         Option[RemoteInstant] = None,
                                    mutedStatus:      Option[Int] = None,
-                                   target:           Option[UserId] = None,
+                                   target:           Option[QualifiedId] = None,
                                    conversationRole: Option[ConversationRole] = None
                                   ) extends SafeToLog
 
@@ -319,7 +319,10 @@ object ConversationState {
       o.put("otr_muted_ref", JsonEncoder.encodeISOInstant(time.instant))
     }
     state.mutedStatus.foreach { status => o.put("otr_muted_status", status) }
-    state.target.foreach { id => o.put("target", id) }
+    state.target.foreach { qId =>
+      o.put("target", qId.id.str) // backward compatibility
+      o.put("qualified_target", QualifiedId.Encoder(qId))
+    }
     state.conversationRole.foreach { role => o.put("conversation_role", role) }
   }
 
@@ -344,7 +347,13 @@ object ConversationState {
 
       val mutedStatus = decodeOptInt('otr_muted_status)
 
-      val target = decodeOptId[UserId]('target).orElse(decodeOptId[UserId]('id))
+      val target =
+        QualifiedId.decodeOpt('qualified_target)
+          .orElse(
+            decodeOptId[UserId]('target)
+              .orElse(decodeOptId[UserId]('id))
+              .map(QualifiedId(_))
+          )
       val conversationRole = decodeOptConversationRole('conversation_role)
 
       ConversationState(archived, archiveTime, muted, muteTime, mutedStatus, target, conversationRole)
