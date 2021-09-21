@@ -283,9 +283,9 @@ class ConversationsClientImpl(implicit
   override def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
     verbose(l"postConversation($state): \n${ConversationInitState.Encoder(state).toString(2)}")
     Request.Post(relativePath = ConversationsPath, body = state)
-      .withResultType[ConversationsResult]
+      .withResultType[ConversationResponse]
       .withErrorType[ErrorResponse]
-      .executeSafe(_.conversations.head)
+      .executeSafe
   }
 
   override def postConversationRole(conv: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit] = {
