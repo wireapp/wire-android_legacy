@@ -17,9 +17,8 @@
  */
 package com.waz.zclient.common.controllers
 
-import android.content.{ActivityNotFoundException, Context, Intent}
+import android.content.{Context, Intent}
 import android.net.Uri
-import android.util.Log
 import com.waz.api.MessageContent.Location
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageId
@@ -59,16 +58,7 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
       location.getLongitude,
       location.getZoom,
       location.getName
-    ) foreach { i =>
-      try {
-        Log.i("BrowserController", s"trying $i...")
-        context.startActivity(i)
-        Log.i("BrowserController", "OK")
-        return
-      } catch {
-        case _: ActivityNotFoundException => Log.i("BrowserController", "failed")
-      }
-    }
+    ) foreach { i => if (Try(context.startActivity(i)).isSuccess) return }
 
   def openPlayStoreListing(): Unit =
     openUrl(getString(R.string.url_play_store_listing))
