@@ -5,7 +5,6 @@ buildscript {
         mavenLocal() // FIXME
         google()
         mavenCentral()
-        jcenter() // FIXME
         maven { url "https://jitpack.io" }
     }
     dependencies {
@@ -29,7 +28,6 @@ allprojects {
         mavenLocal() // FIXME
         google()
         mavenCentral()
-        jcenter() // FIXME
         maven { url "https://jitpack.io" }
         // maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
