@@ -268,8 +268,11 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     (for {
       Some(est)    <- currentCall.map(_.estabTime)
       (show, last) <- lastControlsClick.orElse(Signal.const((true, clock.instant())))
-      display      <- if (show) ClockSignal(3.seconds).map(c => last.max(est.instant).until(c).asScala <= 3.seconds)
-      else Signal.const(false)
+      display      <-
+        if (show) {
+           if (BuildConfig.FLAVOR.equals("internal")) ClockSignal(8.seconds).map(c => last.max(est.instant).until(c).asScala <= 8.seconds)
+           else ClockSignal(3.seconds).map(c => last.max(est.instant).until(c).asScala <= 3.seconds)
+        } else Signal.const(false)
     } yield display).orElse(Signal.const(true))
   else
     (for {
