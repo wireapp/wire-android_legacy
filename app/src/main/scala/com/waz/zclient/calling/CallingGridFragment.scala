@@ -109,16 +109,25 @@ class CallingGridFragment extends FragmentHelper {
           val startIndex = pageNumber * MAX_PARTICIPANTS_PER_PAGE
           val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE
 
-          val participantsToShow = (participants.slice(startIndex, endIndex), size) match {
+          val participantsToShow = (orderedParticipants(participants, participantsInfo.toIdMap, selfClientId).slice(startIndex, endIndex), size) match {
             case (ps, 2) => ps.filter(_.clientId != selfClientId)
             case (ps, _) => ps
           }
 
-          refreshVideoGrid(grid, selfUserId, selfClientId, participantsToShow.toSeq, participantsInfo, participants, false)
+          refreshVideoGrid(grid, selfUserId, selfClientId, participantsToShow, participantsInfo, participants, false)
         case _ =>
       }
     }
   }
+
+  private def orderedParticipants(participants : Set[Participant], infoMap : Map[UserId, CallParticipantInfo], selfClientId : ClientId): Seq[Participant] =
+    participants.toSeq.sortWith {
+      case (p, _) if p.clientId == selfClientId => true
+      case (_, p) if p.clientId == selfClientId => false
+      case (p1, p2) if isVideoUser(infoMap(p1.userId)) && !isVideoUser(infoMap(p2.userId)) => true
+      case (p1, p2) if !isVideoUser(infoMap(p1.userId)) && isVideoUser(infoMap(p2.userId)) => false
+      case (p1, p2) => infoMap(p1.userId).displayName.toLowerCase < infoMap(p2.userId).displayName.toLowerCase
+    }
 
   private def observeParticipantsCount(): Unit =
     callController.allParticipants.map(_.size).onUi {
@@ -167,12 +176,6 @@ class CallingGridFragment extends FragmentHelper {
         views.filter {
           case _: SelfVideoView if views.size == 2 && allParticipants.size == 2  => false
           case _ => true
-        }.sortWith {
-          case (_: SelfVideoView, _) => true
-          case (_, _: SelfVideoView) => false
-          case (v1, v2) if isVideoUser(infoMap(v1.participant.userId)) && !isVideoUser(infoMap(v2.participant.userId)) => true
-          case (v1, v2) if !isVideoUser(infoMap(v1.participant.userId)) && isVideoUser(infoMap(v2.participant.userId)) => false
-          case (v1, v2) => infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
         }
 
 
