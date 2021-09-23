@@ -420,7 +420,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
             } yield conv
           case _ =>
             for {
-              _    <- sync.postConversation(ConvId(otherUserId.str), Set(otherUserId), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
+              _    <- sync.postConversation(ConvId(otherUserId.str), Some(otherUserId), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
               conv <- convsContent.createConversation(
                         convId      = ConvId(otherUserId.str),
                         remoteId    = RConvId(),
@@ -485,9 +485,9 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                       ): Future[(ConversationData, SyncId)] = {
     val tempRConvId =  convs.generateTempConversationId(members)
     for {
-      (conv, syncId)        <- createAndPostConversation(ConvId(), name, Set.empty, teamOnly, receiptMode, defaultRole, tempRConvId)
-      _                     <- syncRequests.await(syncId)
-      _                     <- addConversationMembers(conv.id, members, defaultRole, enforceModifyMembers = true)
+      (conv, syncId) <- createAndPostGroupConversation(ConvId(), name, teamOnly, receiptMode, defaultRole, tempRConvId)
+      _              <- syncRequests.await(syncId)
+      _              <- addConversationMembers(conv.id, members, defaultRole, enforceModifyMembers = true)
     } yield (conv, syncId)
   }
 
@@ -498,15 +498,14 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                           ): Future[(ConversationData, SyncId)] =
     createGroupConversation(None, Set(qId.id), teamOnly, receiptMode, defaultRole)
 
-  private def createConversation(id:          ConvId,
-                                 name:        Option[Name],
-                                 members:     Set[UserId],
-                                 access:      Set[Access],
-                                 accessRole:  AccessRole,
-                                 receiptMode: Int,
-                                 defaultRole: ConversationRole,
-                                 tempRConvId: RConvId
-                                ): Future[ConversationData] =
+  private def createLocalGroupConversation(id:          ConvId,
+                                           name:        Option[Name],
+                                           access:      Set[Access],
+                                           accessRole:  AccessRole,
+                                           receiptMode: Int,
+                                           defaultRole: ConversationRole,
+                                           tempRConvId: RConvId
+                                          ): Future[ConversationData] =
     for {
       conv <- convsContent.createConversation(
                 convId      = id,
@@ -519,22 +518,21 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                 receiptMode = receiptMode,
                 defaultRole = defaultRole
               )
-      _    =  verbose(l"created: $conv, members: $members")
-      _    <- messages.addConversationStartMessage(conv.id, selfUserId, members, name, conv.readReceiptsAllowed)
+      _    =  verbose(l"created: $conv")
+      _    <- messages.addConversationStartMessage(conv.id, selfUserId, Set(selfUserId), name, conv.readReceiptsAllowed)
     } yield conv
 
-  private def createAndPostConversation(id:          ConvId,
-                                        name:        Option[Name],
-                                        members:     Set[UserId] = Set.empty,
-                                        teamOnly:    Boolean = false,
-                                        receiptMode: Int = 0,
-                                        defaultRole: ConversationRole,
-                                        tempRConvId: RConvId
-                                       ): Future[(ConversationData, SyncId)] = {
+  private def createAndPostGroupConversation(id:          ConvId,
+                                             name:        Option[Name],
+                                             teamOnly:    Boolean = false,
+                                             receiptMode: Int = 0,
+                                             defaultRole: ConversationRole,
+                                             tempRConvId: RConvId
+                                            ): Future[(ConversationData, SyncId)] = {
     val (ac, ar) = getAccessAndRoleForGroupConv(teamOnly, teamId)
     for {
-      conv   <- createConversation(id, name, members, ac, ar, receiptMode, defaultRole, tempRConvId)
-      syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar, Some(receiptMode), defaultRole)
+      conv   <- createLocalGroupConversation(id, name, ac, ar, receiptMode, defaultRole, tempRConvId)
+      syncId <- sync.postConversation(id, None, conv.name, teamId, ac, ar, Some(receiptMode), defaultRole)
     } yield (conv, syncId)
   }
 
