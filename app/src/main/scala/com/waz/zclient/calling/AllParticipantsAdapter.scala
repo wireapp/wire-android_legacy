@@ -31,15 +31,23 @@ class AllParticipantsAdapter(implicit context: Context, eventContext: EventConte
 
   private val callController = inject[CallController]
 
-  var numberOfParticipants : Int = 0
+  var numberOfParticipants: Int = 0
+  var previousPagesCount: Int = 0
 
-  callController.allParticipants.map(_.size).foreach { numberOfParticipants = _ }
+  callController.allParticipants.map(_.size).foreach { size =>
+    numberOfParticipants = size
+    if (getPagesCount() != previousPagesCount) notifyDataSetChanged()
+    previousPagesCount = getPagesCount()
+  }
 
-  override def getItemCount(): Int = if (numberOfParticipants == 0) 0
-  else if (numberOfParticipants % MAX_PARTICIPANTS_PER_PAGE == 0) numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE
-  else (numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE) + 1
+  override def getItemCount(): Int = getPagesCount()
 
   override def createFragment(position: Int): Fragment = CallingGridFragment.newInstance(position)
+
+  private def getPagesCount(): Int =
+    if (numberOfParticipants == 0) 0
+    else if (numberOfParticipants % MAX_PARTICIPANTS_PER_PAGE == 0) numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE
+    else (numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE) + 1
 
 }
 
