@@ -109,7 +109,7 @@ class CallingGridFragment extends FragmentHelper {
           val startIndex = pageNumber * MAX_PARTICIPANTS_PER_PAGE
           val endIndex = startIndex + MAX_PARTICIPANTS_PER_PAGE
 
-          val participantsToShow = (orderedParticipants(participants, participantsInfo.toIdMap, selfClientId).slice(startIndex, endIndex), size) match {
+          val participantsToShow = (orderedParticipants(participants, participantsInfo.toIdMap, selfUserId, selfClientId).slice(startIndex, endIndex), size) match {
             case (ps, 2) => ps.filter(_.clientId != selfClientId)
             case (ps, _) => ps
           }
@@ -120,10 +120,12 @@ class CallingGridFragment extends FragmentHelper {
     }
   }
 
-  private def orderedParticipants(participants : Set[Participant], infoMap : Map[UserId, CallParticipantInfo], selfClientId : ClientId): Seq[Participant] =
+  private def orderedParticipants(participants: Set[Participant], infoMap: Map[UserId, CallParticipantInfo], selfUserId: UserId, selfClientId: ClientId): Seq[Participant] =
     participants.toSeq.sortWith {
-      case (p, _) if p.clientId == selfClientId => true
-      case (_, p) if p.clientId == selfClientId => false
+      case (p, _) if p.userId == selfUserId && p.clientId == selfClientId => true
+      case (_, p) if p.userId == selfUserId && p.clientId == selfClientId => false
+      case (p, _) if p.userId == selfUserId => true
+      case (_, p) if p.userId == selfUserId => false
       case (p1, p2) if isVideoUser(infoMap(p1.userId)) && !isVideoUser(infoMap(p2.userId)) => true
       case (p1, p2) if !isVideoUser(infoMap(p1.userId)) && isVideoUser(infoMap(p2.userId)) => false
       case (p1, p2) => infoMap(p1.userId).displayName.toLowerCase < infoMap(p2.userId).displayName.toLowerCase
