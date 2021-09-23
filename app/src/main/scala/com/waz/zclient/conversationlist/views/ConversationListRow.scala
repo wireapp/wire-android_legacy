@@ -49,7 +49,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.ui.views.properties.MoveToAnimateable
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{ConversationSignal, StringUtils, UiStorage, UserSetSignal, UserSignal, ViewUtils}
+import com.waz.zclient.utils.{ConversationSignal, UiStorage, UserSetSignal, UserSignal, ViewUtils}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 
@@ -411,7 +411,7 @@ object ConversationListRow {
         case Message.Type.KNOCK =>
           formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup, quotePrefix = isQuote)
         case Message.Type.CONNECT_ACCEPTED | Message.Type.MEMBER_JOIN if !isGroup =>
-          members.headOption.flatMap(_.handle).map(_.string).fold("")(StringUtils.formatHandle)
+          members.headOption.flatMap(_.displayHandle).getOrElse("")
         case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
           getString(R.string.conversation_list__added_you, senderName)
         case Message.Type.MEMBER_JOIN if members.length > 1 =>
@@ -443,7 +443,7 @@ object ConversationListRow {
                                     userName:                 Option[Name])
                                    (implicit context: Context): String = {
     if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && !isGroupConv)) {
-      otherMember.flatMap(_.handle.map(_.string)).fold("")(StringUtils.formatHandle)
+      otherMember.flatMap(_.displayHandle).getOrElse("")
     } else if (memberIds.count(_ != selfId) == 0 && conv.convType == ConversationType.Group) {
       ""
     } else if (conv.unreadCount.total == 0 && !conv.isActive) {

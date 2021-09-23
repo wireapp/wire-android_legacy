@@ -103,7 +103,7 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
     keepButton.foreach { keepButton =>
       keepButton.setIsFilled(false)
       keepButton.onClick {
-        zms.head.map(_.users.updateHandle(Handle(suggestedUsername))).map { _ =>
+        zms.head.map(_.users.updateHandle(Handle.from(suggestedUsername))).map { _ =>
           getContainer.onUsernameSet()
         }
       }
@@ -117,8 +117,8 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
 
     self.head.foreach { self =>
       self.handle.foreach{ handle =>
-        suggestedUsername = handle.string
-        usernameTextView.foreach(_.setText(StringUtils.formatHandle(handle.string)))
+        suggestedUsername = handle.toString
+        usernameTextView.foreach(_.setText(StringUtils.formatHandle(handle.toString)))
       }
       startUsernameGenerator(self.name)
     }
@@ -173,7 +173,7 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
 
   private def getAttempts(base: String, attempts: Int): Seq[Handle] =
     (0 until attempts).map(getTrailingNumber).map { tN =>
-      Handle(StringUtils.truncate(base, HandleLength.HandleMaxLength - tN.length) + tN)
+      Handle.from(StringUtils.truncate(base, HandleLength.HandleMaxLength - tN.length) + tN)
     }
 
   private def getTrailingNumber(attempt: Int): String = {

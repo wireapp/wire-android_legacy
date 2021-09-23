@@ -24,7 +24,6 @@ import android.widget.{LinearLayout, TextView}
 import com.waz.model.UserId
 import com.wire.signals.Signal
 import com.waz.zclient.messages.UsersController
-import com.waz.zclient.utils.StringUtils
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
 
@@ -39,11 +38,7 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
   val users = inject[UsersController]
   val userId = Signal[UserId]()
 
-  userId.flatMap(users.userHandle).map {
-    case Some(h) => StringUtils.formatHandle(h.string)
-    case None => ""
-  }.onUi(userNameTextView.setText(_))
-
+  userId.flatMap(users.user).map(_.displayHandle.getOrElse("")).onUi(userNameTextView.setText(_))
   userId.flatMap(users.user).map(_.name).onUi(userInfoTextView.setText(_))
 
   def setUserId(id: UserId): Unit =

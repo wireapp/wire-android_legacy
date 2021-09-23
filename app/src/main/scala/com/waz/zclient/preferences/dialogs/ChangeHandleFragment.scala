@@ -56,7 +56,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val users = zms.map(_.users)
-  lazy val currentHandle = users.flatMap(_.selfUser.map(_.handle))
+  lazy val currentHandle = users.flatMap(_.selfUser.map(_.displayHandle))
 
   private val handleTextWatcher = new TextWatcher() {
     private var lastText: String = ""
@@ -82,8 +82,8 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
             for {
               z         <- zms.head
               curHandle <- currentHandle.head
-              if !curHandle.map(_.string).contains(normalText)
-              _ <- z.handlesClient.isUserHandleAvailable(Handle(normalText)).map {
+              if !curHandle.contains(normalText)
+              _ <- z.handlesClient.isUserHandleAvailable(Handle.from(normalText)).map {
                 case Right(true) =>
                   setErrorMessage("")
                   okButton.setEnabled(editingEnabled)
@@ -115,7 +115,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
 
       Option(inputHandle).filter(_.nonEmpty).foreach { input =>
         currentHandle.head.map {
-          case Some(h) if h.string == input => dismiss()
+          case Some(h) if h == input => dismiss()
           case _ =>
             import ValidationError._
             validateUsername(input) match {
@@ -235,7 +235,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
     handleEditText.startAnimation(AnimationUtils.loadAnimation(getContext, R.anim.shake_animation))
 
   private def updateHandle(handle: String) =
-    users.head.flatMap(_.updateHandle(Handle(handle)))
+    users.head.flatMap(_.updateHandle(Handle.from(handle)))
 }
 
 object ChangeHandleFragment {

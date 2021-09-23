@@ -31,7 +31,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AccentColor, EmailAddress, PhoneNumber, Picture}
+import com.waz.model.{AccentColor, EmailAddress, Name, PhoneNumber, Picture}
 import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -46,7 +46,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
-import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, UiStorage}
 import com.waz.zclient.{BuildConfig, _}
 import com.waz.threading.Threading._
 
@@ -68,6 +68,8 @@ trait AccountView {
   def setHandle(handle: String): Unit
   def setEmail(email: Option[EmailAddress]): Unit
   def setPhone(phone: Option[PhoneNumber]): Unit
+  def setTeam(team: Option[Name]): Unit
+  def setDomain(domain: Option[String]): Unit
   def setPicture(picture: Picture): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
@@ -78,7 +80,8 @@ trait AccountView {
   def setAccountLocked(locked: Boolean): Unit
 }
 
-class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AccountView with ViewHelper with DerivedLogTag {
+class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style)
+  with AccountView with ViewHelper with DerivedLogTag {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -88,6 +91,8 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val handleButton        = findById[TextButton](R.id.preferences_account_handle)
   val emailButton         = findById[TextButton](R.id.preferences_account_email)
   val phoneButton         = findById[TextButton](R.id.preferences_account_phone)
+  val teamButton          = findById[TextButton](R.id.preferences_account_team)
+  val domainButton        = findById[TextButton](R.id.preferences_account_domain)
   val pictureButton       = findById[PictureTextButton](R.id.preferences_account_picture)
   val colorButton         = findById[PictureTextButton](R.id.preferences_account_accent)
   val resetPasswordButton = findById[TextButton](R.id.preferences_account_reset_pw)
@@ -125,6 +130,16 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setEmail(email: Option[EmailAddress]) = emailButton.setTitle(email.map(_.str).getOrElse(getString(R.string.pref_account_add_email_title)))
 
   override def setPhone(phone: Option[PhoneNumber]) = phoneButton.setTitle(phone.map(_.str).getOrElse(getString(R.string.pref_account_add_phone_title)))
+
+  override def setTeam(team: Option[Name]): Unit = {
+    team.foreach(name => teamButton.setTitle(name.str))
+    teamButton.setVisible(team.isDefined)
+  }
+
+  override def setDomain(domain: Option[String]): Unit = {
+    domain.foreach(domainButton.setTitle)
+    domainButton.setVisible(domain.isDefined)
+  }
 
   override def setPicture(picture: Picture) = {
     WireGlide(context)
@@ -195,14 +210,15 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
 
   val zms                = inject[Signal[ZMessaging]]
   val self               = zms.flatMap(_.users.selfUser)
+  val team               = zms.flatMap(_.teams.selfTeam)
   val accounts           = inject[AccountsService]
   implicit val uiStorage = inject[UiStorage]
   val navigator          = inject[BackStackNavigator]
 
-  val isTeam = zms.map(_.teamId.isDefined)
-
-  val phone = self.map(_.phone)
-  val email = self.map(_.email)
+  val isTeam = team.map(_.isDefined)
+  val phone  = self.map(_.phone)
+  val email  = self.map(_.email)
+  val domain = self.map(_.domain)
 
   val isPhoneNumberEnabled = isTeam.map(!_)
 
@@ -217,7 +233,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   }
 
   self.onUi { self =>
-    self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))
+    self.displayHandle.foreach(view.setHandle)
     view.setName(self.name)
     view.setAccentDrawable(new Drawable {
 
@@ -238,6 +254,13 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
 
   phone.onUi(view.setPhone)
   email.onUi(view.setEmail)
+  team.map(_.map(_.name)).onUi(view.setTeam)
+
+  if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    domain.onUi(view.setDomain)
+  } else {
+    view.setDomain(None)
+  }
 
   Signal.zip(isTeam, accounts.isActiveAccountSSO)
     .map { case (team, sso) => team || sso }
@@ -258,7 +281,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   view.onHandleClick.onUi { _ =>
     self.head.map { self =>
       import com.waz.zclient.preferences.dialogs.ChangeHandleFragment._
-      showPrefDialog(newInstance(self.handle.fold("")(_.string), cancellable = true), Tag)
+      showPrefDialog(newInstance(self.handle.fold("")(_.toString), cancellable = true), Tag)
     } (Threading.Ui)
   }
 

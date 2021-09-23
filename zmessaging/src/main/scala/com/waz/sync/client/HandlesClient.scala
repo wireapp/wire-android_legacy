@@ -91,7 +91,7 @@ object HandlesClient {
   val CheckMultipleAvailabilityPath = "/users/handles"
   val MaxHandlesToPost = 50
 
-  def checkSingleAvailabilityPath(handle: Handle): String = s"/users/handles/${handle.string}"
+  def checkSingleAvailabilityPath(handle: Handle): String = s"/users/handles/${handle.toString}"
 
   case class UsernameValidation(username: String, reason: UsernameValidationError) {
     def isValid: Boolean = reason == UsernameValidationError.NONE

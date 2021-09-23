@@ -14,7 +14,6 @@ import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.UserRequester
-import com.waz.zclient.utils.StringUtils
 
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
@@ -57,7 +56,7 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
         linkedText    <- linkedText(user)
       } yield (user, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText)).foreach {
         case (user, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText) =>
-          val formattedHandle = StringUtils.formatHandle(user.handle.map(_.string).getOrElse(""))
+          val formattedHandle = user.displayHandle.getOrElse("")
           val participantRole = participantsController.participants.map(_.get(userToConnectId))
           val selfRole =
             if (fromParticipants)
