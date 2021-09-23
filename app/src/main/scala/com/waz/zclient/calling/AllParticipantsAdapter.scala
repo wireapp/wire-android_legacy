@@ -36,8 +36,12 @@ class AllParticipantsAdapter(implicit context: Context, eventContext: EventConte
 
   callController.allParticipants.map(_.size).foreach { size =>
     numberOfParticipants = size
-    if (getPagesCount() != previousPagesCount) notifyDataSetChanged()
-    previousPagesCount = getPagesCount()
+    getPagesCount match {
+      case n if n != previousPagesCount =>
+        notifyDataSetChanged()
+        previousPagesCount = n
+      case _ =>
+    }
   }
 
   override def getItemCount(): Int = getPagesCount()
