@@ -413,8 +413,8 @@ object ConversationsClient {
         val members = js.getJSONObject("members")
         val state = ConversationState.Decoder(members.getJSONObject("self"))
         val selfRole: Map[QualifiedId, ConversationRole] = (state.target, state.conversationRole) match {
-          case (Some(id), Some(role)) => Map(QualifiedId(id) -> role)
-          case _                      => Map.empty
+          case (Some(qId), Some(role)) => Map(qId -> role)
+          case _                       => Map.empty
         }
 
         val (id, domain) =
