@@ -77,7 +77,7 @@ object Versions {
     //testing
     const val JUNIT = "4.12"
     const val MOCKITO = "3.1.0"
-    const val KLUENT = "1.14"
+    const val KLUENT = "1.68"
     const val ANDROIDX_TEST_CORE = "2.1.0"
     const val ANDROIDX_TEST_JUNIT = "1.1.1"
     const val ROBOLECTRIC = "5.0.0_r2-robolectric-1"
