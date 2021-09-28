@@ -340,7 +340,6 @@ dependencies {
     implementation BuildDependencies.kotlin.coroutinesCore
     implementation avsDependency
 
-    implementation BuildDependencies.wire.audioNotifications
     //don't include wire translations for custom builds
     if (buildtimeConfiguration.customResourcesPath == null) {
         implementation BuildDependencies.wire.translations
