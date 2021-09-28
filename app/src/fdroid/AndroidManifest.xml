@@ -32,9 +32,6 @@
         <meta-data
             android:name="com.google.android.gms.version"
             tools:node="remove" />
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            tools:node="remove" />
         <service
             android:name="com.waz.services.fcm.FCMHandlerService"
             tools:node="remove">
