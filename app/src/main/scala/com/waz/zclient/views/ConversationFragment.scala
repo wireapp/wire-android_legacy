@@ -382,12 +382,12 @@ class ConversationFragment extends FragmentHelper {
 
     def performCall(item: MenuItem): Unit = {
       for {
-        conversationType <- convController.currentConvType.head
-        isTeam <- accountsController.isTeam.head
-        isAdmin <- accountsController.isAdmin.head
+        isGroup        <- convController.currentConvIsGroup.head
+        isTeam         <- accountsController.isTeam.head
+        isAdmin        <- accountsController.isAdmin.head
         callRestricted <- isConferenceCallingRestricted
       } yield
-        if (conversationType == ConversationType.Group && callRestricted && BuildConfig.CONFERENCE_CALLING_RESTRICTION)
+        if (isGroup && callRestricted && BuildConfig.CONFERENCE_CALLING_RESTRICTION)
           displayWarningDialogs(isAdmin, isTeam)
         else {
           callStartController.startCallInCurrentConv(withVideo = item.getItemId == R.id.action_video_call, forceOption = true)
