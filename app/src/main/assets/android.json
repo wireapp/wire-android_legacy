@@ -1,0 +1,148 @@
+{
+	"sounds": {
+		"ringing_from_me": {
+			"path": "ringing_from_me",
+			"format": "m4a",
+			"loopAllowed": 1,
+			"mixingAllowed": 0,
+			"incallAllowed": 1,
+			"intensity": 0
+		},
+		"ringing_from_me_video": {
+			"path": "ringing_from_me_video",
+			"format": "m4a",
+			"loopAllowed": 1,
+			"mixingAllowed": 0,
+			"incallAllowed": 1,
+			"intensity": 0
+		},
+		"ringing_from_them": {
+			"path": "ringing_from_them",
+			"format": "m4a",
+			"loopAllowed": 1,
+			"mixingAllowed": 0,
+			"incallAllowed": 0,
+			"intensity": 0
+		},
+		"ringing_from_them_incall": {
+			"path": "ringing_from_them_incall",
+			"format": "m4a",
+			"loopAllowed": 1,
+			"mixingAllowed": 1,
+			"incallAllowed": 1,
+			"intensity": 0
+		},
+		"ready_to_talk": {
+			"path": "ready_to_talk",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 0,
+			"incallAllowed": 1,
+			"intensity": 0
+		},
+		"talk": {
+			"path": "talk",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 0,
+			"incallAllowed": 0,
+			"intensity": 0
+		},
+		"pull_voice": {
+			"path": "pull_voice",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 0,
+			"incallAllowed": 0,
+			"intensity": 0
+		},
+		"talk_later": {
+			"path": "talk_later",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 1,
+			"incallAllowed": 1,
+			"intensity": 100
+		},
+		"call_drop": {
+			"path": "call_drop",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 0,
+			"incallAllowed": 1,
+			"intensity": 50
+		},
+		"first_message": {
+			"path": "first_message",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 100,
+			"incallAllowed": 0,
+			"intensity": 50
+		},
+		"new_message_gcm": {
+			"path": "new_message_gcm",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 100,
+			"incallAllowed": 0,
+			"intensity": 100
+		},
+		"new_message": {
+			"path": "new_message",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 100,
+			"incallAllowed": 0,
+			"intensity": 100
+		},
+		"ping_from_me": {
+			"path": "ping_from_me",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 100,
+			"incallAllowed": 0,
+			"intensity": 50
+		},
+		"ping_from_them": {
+			"path": "ping_from_them",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 100,
+			"incallAllowed": 0,
+			"intensity": 50
+		},
+		"hotping_from_me": {
+			"path": "hotping_from_me",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 100,
+			"incallAllowed": 0,
+			"intensity": 50
+		},
+		"hotping_from_them": {
+			"path": "hotping_from_them",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 100,
+			"incallAllowed": 0,
+			"intensity": 50
+		},
+		"camera": {
+			"path": "camera",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 0,
+			"incallAllowed": 0,
+			"intensity": 100
+		},
+		"alert": {
+			"path": "alert",
+			"format": "m4a",
+			"loopAllowed": 0,
+			"mixingAllowed": 0,
+			"incallAllowed": 0,
+			"intensity": 100
+		}
+	}
+}

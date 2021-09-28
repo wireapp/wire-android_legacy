@@ -17,7 +17,6 @@ object Versions {
     const val KOTLIN = "1.3.72"
 
     const val WIRE_TRANSLATIONS = "1.+"
-    val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
 
     //plugins
     const val ANDROID_GRADLE_PLUGIN = "3.2.1"
@@ -91,7 +90,6 @@ object BuildDependencies {
         "coroutinesAndroid" to "org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.COROUTINES}"
     ))
     val wire = WireDependencyMap(mapOf(
-        "audioNotifications" to "com.wire:audio-notifications:${Versions.WIRE_AUDIO}",
         "translations" to "com.wire:wiretranslations:${Versions.WIRE_TRANSLATIONS}"
     ))
     val androidX = AndroidXDependencyMap(mapOf(
