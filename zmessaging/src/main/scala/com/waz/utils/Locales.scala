@@ -105,8 +105,9 @@ object Transliteration extends DerivedLogTag {
 
 object ICU4JTransliteration {
   def create(id: String)(implicit logTag: LogTag): Transliteration = new Transliteration {
-    debug(l"using ICU4J transliteration")(logTag)
-    private val delegate = com.ibm.icu.text.Transliterator.getInstance(id)
+    debug(l"using ICU transliteration")(logTag) // available since Android 7
+
+    private val delegate = android.icu.text.Transliterator.getInstance(id)
     def transliterate(s: String): String = delegate.transliterate(s)
   }
 }

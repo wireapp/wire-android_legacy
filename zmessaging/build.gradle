@@ -78,7 +78,6 @@ dependencies {
     implementation "io.circe:circe-core_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
     implementation "io.circe:circe-generic_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
     implementation "io.circe:circe-parser_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
-    implementation "com.wire:icu4j-shrunk:57.1"
     implementation "com.googlecode.mp4parser:isoparser:1.1.7"
     implementation BuildDependencies.wireSignals
     implementation BuildDependencies.wireSignalsExtensions
