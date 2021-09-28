@@ -2,7 +2,6 @@
 
 buildscript {
     repositories {
-        mavenLocal() // FIXME
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
@@ -25,7 +24,6 @@ plugins {
 
 allprojects {
     repositories {
-        mavenLocal() // FIXME
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
