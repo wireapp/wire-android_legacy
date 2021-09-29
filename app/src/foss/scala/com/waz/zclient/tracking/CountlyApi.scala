@@ -20,6 +20,7 @@ package com.waz.zclient.tracking
 
 import java.util
 
+import android.app.Activity
 import com.waz.service.tracking.TrackingEvent
 import com.waz.zclient.WireContext
 
@@ -29,7 +30,7 @@ object CountlyApi {
   def init(cxt: WireContext, countlyAppKey: String, serverURL: String,
            logsEnabled: Boolean, id: String): Unit = {}
 
-  def onStart(ctx: WireContext): Unit = {}
+  def onStart(cxt: Activity): Unit = {}
 
   def onStop(): Unit = {}
 

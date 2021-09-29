@@ -30,8 +30,6 @@ import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.notifications.ShareSavedImageActivity;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

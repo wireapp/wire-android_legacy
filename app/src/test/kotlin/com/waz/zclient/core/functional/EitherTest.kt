@@ -50,7 +50,7 @@ class EitherTest : UnitTest() {
             { left ->
                 left shouldBeInstanceOf String::class.java
                 left shouldEqualTo "ironman"
-            }, {})
+            }, { null })
     }
 
     @Test
