@@ -113,7 +113,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
       )))
 
       (convsStorage.getAll _).expects(Seq(existingConv.id)).once().returning(Future.successful(Seq(Some(existingConv))))
-      (convsContent.createConversation _)
+      (convsContent.createQualifiedConversation _)
         .expects(*, *, Group, selfId, ConversationRole.AdminRole, None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, 0).once().onCall {
         (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
@@ -145,7 +145,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
       (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
-      (convsContent.createConversation _)
+      (convsContent.createQualifiedConversation _)
         .expects(ConvId("otherUser"), *, Incoming, otherUserId, ConversationRole.AdminRole, None, true, Set(Access.PRIVATE), AccessRole.PRIVATE, 0).once().onCall {
         (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))

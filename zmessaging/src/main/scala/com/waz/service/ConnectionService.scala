@@ -65,15 +65,27 @@ class ConnectionServiceImpl(selfUserId:      UserId,
 
   import Threading.Implicits.Background
 
-  override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((c, e) => handleUserConnectionEvents(e))
+  override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((_, e) => handleUserConnectionEvents(e))
 
-  override def handleUserConnectionEvents(events: Seq[UserConnectionEvent]) = {
+  override def handleUserConnectionEvents(events: Seq[UserConnectionEvent]): Future[Unit] = {
     def updateOrCreate(event: UserConnectionEvent)(user: Option[UserData]): UserData =
       user.fold {
-        UserData(event.to, None, None, event.fromUserName.getOrElse(Name.Empty), None, None, connection = event.status, conversation = Some(event.convId), connectionMessage = event.message, searchKey = SearchKey.Empty, connectionLastUpdated = event.lastUpdated,
-          handle = None)
+        UserData(
+          event.to,
+          if (BuildConfig.FEDERATION_USER_DISCOVERY) event.toDomain else None,
+          None,
+          event.fromUserName.getOrElse(Name.Empty),
+          None,
+          None,
+          connection = event.status,
+          conversation = if (BuildConfig.FEDERATION_USER_DISCOVERY) event.qualifiedConvId else None,
+          connectionMessage = event.message,
+          searchKey = SearchKey.Empty,
+          connectionLastUpdated = event.lastUpdated,
+          handle = None
+        )
       } {
-        _.copy(conversation = Some(event.convId)).updateConnectionStatus(event.status, Some(event.lastUpdated), event.message)
+        _.copy(conversation = event.qualifiedConvId).updateConnectionStatus(event.status, Some(event.lastUpdated), event.message)
       }
 
     val lastEvents = events.groupBy(_.to).map { case (to, es) => to -> es.maxBy(_.lastUpdated) }
@@ -106,7 +118,10 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     }
 
     val oneToOneConvData = eventInfos.map { case ConnectionEventInfo(user , _ , _) =>
-      OneToOneConvData(user.id, user.conversation, getConvTypeForUser(user))
+      (BuildConfig.FEDERATION_USER_DISCOVERY, user.qualifiedId) match {
+        case (true, Some(qId)) => OneToOneConvData(qId, user.conversation, getConvTypeForUser(user))
+        case _                 => OneToOneConvData(QualifiedId(user.id), user.conversation, getConvTypeForUser(user))
+      }
     }
 
     val eventMap = eventInfos.map(eventInfo => eventInfo.user.id -> eventInfo).toMap
@@ -171,7 +186,8 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     connectIfUnconnected().flatMap {
       case Some(_) =>
         for {
-          conv <- getOrCreateOneToOneConversation(userId, convType = ConversationType.WaitForConnection)
+          qId  <- users.qualifiedId(userId)
+          conv <- getOrCreateOneToOneConversation(qId, convType = ConversationType.WaitForConnection)
           _ = verbose(l"connectToUser, conv: $conv")
           _ <- messages.addConnectRequestMessage(conv.id, selfUserId, userId, message, name)
         } yield Some(conv)
@@ -180,22 +196,23 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     }
   }
 
-  override def acceptConnection(userId: UserId): Future[ConversationData] =
-    users.updateConnectionStatus(userId, ConnectionStatus.Accepted).map {
+  override def acceptConnection(userId: UserId): Future[ConversationData] = {
+    val updateConnectionStatus = users.updateConnectionStatus(userId, ConnectionStatus.Accepted).map {
       case Some(_) =>
         sync.postConnectionStatus(userId, ConnectionStatus.Accepted).map { syncId =>
           sync.syncConversations(Set(ConvId(userId.str)), Some(syncId))
         }
       case _ =>
-    } flatMap { _ =>
-      getOrCreateOneToOneConversation(userId, convType = ConversationType.OneToOne).flatMap { conv =>
-        convsContent.updateConversation(conv.id, Some(ConversationType.OneToOne), hidden = Some(false)).flatMap { updated =>
-          messages.addMemberJoinMessage(conv.id, selfUserId, Set(selfUserId), firstMessage = true) map { _ =>
-            updated.fold(conv)(_._2)
-          }
-        }
-      }
     }
+
+    for {
+      _       <- updateConnectionStatus
+      qId     <- users.qualifiedId(userId)
+      conv    <- getOrCreateOneToOneConversation(qId, convType = ConversationType.OneToOne)
+      updated <- convsContent.updateConversation(conv.id, Some(ConversationType.OneToOne), hidden = Some(false))
+      _       <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(selfUserId), firstMessage = true)
+    } yield updated.fold(conv)(_._2)
+  }
 
   override def ignoreConnection(userId: UserId): Future[Option[UserData]] =
     for {
@@ -221,7 +238,8 @@ class ConnectionServiceImpl(selfUserId:      UserId,
           _      <- sync.syncConversations(Set(ConvId(userId.str)), Some(syncId)) // sync conversation after syncing connection state (conv is locked on backend while connection is blocked) TODO: we could use some better api for that
         } yield {}
       }
-      conv    <- getOrCreateOneToOneConversation(userId, convType = ConversationType.OneToOne)
+      qId     <- users.qualifiedId(userId)
+      conv    <- getOrCreateOneToOneConversation(qId, convType = ConversationType.OneToOne)
       updated <- convsContent.updateConversation(conv.id, Some(ConversationType.OneToOne), hidden = Some(false)) map { _.fold(conv)(_._2) } // TODO: what about messages
     } yield updated
 
@@ -248,41 +266,46 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     * Will not post created conversation to backend.
     * TODO: improve - it looks too complicated and duplicates some code
     */
-  private def getOrCreateOneToOneConversation(toUser: UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne): Future[ConversationData] =
+  private def getOrCreateOneToOneConversation(toUser: QualifiedId,
+                                              remoteId: Option[RConvQualifiedId] = None,
+                                              convType: ConversationType = ConversationType.OneToOne): Future[ConversationData] =
     getOrCreateOneToOneConversations(Seq(OneToOneConvData(toUser, remoteId, convType))).map(_.values.head)
 
   private def getOrCreateOneToOneConversations(convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]] =
     Serialized.future("getOrCreateOneToOneConversations") {
       verbose(l"getOrCreateOneToOneConversations(self: $selfUserId, convs:${convsInfo.size})")
 
-      def convIdForUser(userId: UserId) = ConvId(userId.str)
+      def convIdForUser(qId: QualifiedId) = ConvId(qId.id.str)
       def userIdForConv(convId: ConvId) = UserId(convId.str)
 
       for {
-        remotes   <- convsStorage.getByRemoteIds2(convsInfo.flatMap(_.remoteId).toSet)
+        remotes   <- convsStorage.getMapByQRemoteIds(convsInfo.flatMap(_.remoteId).toSet)
         _         <- convsStorage.updateLocalIds(convsInfo.collect {
                        case OneToOneConvData(toUser, Some(remoteId), _) if remotes.contains(remoteId) =>
                          remotes(remoteId).id -> convIdForUser(toUser)
                      }.toMap)
                      // remotes need to be refreshed after updating local ids
-        remotes   <- convsStorage.getByRemoteIds2(convsInfo.flatMap(_.remoteId).toSet)
+        remotes   <- convsStorage.getMapByQRemoteIds(convsInfo.flatMap(_.remoteId).toSet)
         remoteIds =  convsInfo.map(i => convIdForUser(i.toUser) -> i.remoteId).toMap
         newConvs  =  convsInfo.map { case OneToOneConvData(toUser, remoteId, convType) =>
                        val convId = convIdForUser(toUser)
                        convId -> ConversationData(
                          convId,
-                         remoteId.getOrElse(RConvId(toUser.str)),
+                         remoteId.map(_.id).getOrElse(RConvId(toUser.id.str)),
                          name          = None,
                          creator       = selfUserId,
                          convType      = convType,
                          team          = teamId,
                          access        = Set(Access.PRIVATE),
-                         accessRole    = Some(AccessRole.PRIVATE)
+                         accessRole    = Some(AccessRole.PRIVATE),
+                         domain        = remoteId.map(_.domain)
                        )
                      }.toMap
         result    <- convsStorage.updateOrCreateAll2(newConvs.keys, {
                        case (cId, Some(conv)) =>
-                         remoteIds(cId).fold(conv)(rId => remotes.getOrElse(rId, conv.copy(remoteId = rId)))
+                         remoteIds(cId).fold(conv){ rId =>
+                           remotes.getOrElse(rId, conv.copy(remoteId = rId.id, domain = if (BuildConfig.FEDERATION_USER_DISCOVERY && rId.domain.nonEmpty) Some(rId.domain) else None))
+                         }
                         case (cId, _)          =>
                           newConvs(cId)
                      })
@@ -292,7 +315,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
 }
 
 object ConnectionService {
-  case class ConnectionEventInfo(user: UserData, fromSync: Boolean, lastEventTime: RemoteInstant)
+  final case class ConnectionEventInfo(user: UserData, fromSync: Boolean, lastEventTime: RemoteInstant)
 
-  case class OneToOneConvData(toUser:   UserId, remoteId: Option[RConvId] = None, convType: ConversationType = ConversationType.OneToOne)
+  final case class OneToOneConvData(toUser: QualifiedId, remoteId: Option[RConvQualifiedId] = None, convType: ConversationType = ConversationType.OneToOne)
 }

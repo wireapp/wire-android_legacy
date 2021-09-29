@@ -466,7 +466,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val conv = ConversationData(team = Some(teamId), name = Some(convName))
       val syncId = SyncId()
 
-      (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
+      (content.createQualifiedConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
       (sync.postConversation _).expects(*, Option.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
       (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
@@ -495,7 +495,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val member1 = ConversationMemberData(user1.id, conv.id, ConversationRole.MemberRole)
       val member2 = ConversationMemberData(user2.id, conv.id, ConversationRole.MemberRole)
 
-      (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId/*, users.map(_.id)*/, *, *, *, *, *, *).once().returning(Future.successful(conv))
+      (content.createQualifiedConversation _).expects(*, *, ConversationType.Group, selfUserId/*, users.map(_.id)*/, *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
       (sync.postConversation _).expects(*, *, Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
       (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
@@ -539,7 +539,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         val member1 = ConversationMemberData(user1.id, conv.id, ConversationRole.MemberRole)
         val member2 = ConversationMemberData(user2.id, conv.id, ConversationRole.MemberRole)
 
-        (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
+        (content.createQualifiedConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
         (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
         (sync.postConversation _).expects(*, *, Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
         (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
@@ -591,7 +591,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         val member1 = ConversationMemberData(user1.id, conv.id, ConversationRole.MemberRole)
         val member2 = ConversationMemberData(user2.id, conv.id, ConversationRole.MemberRole)
 
-        (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
+        (content.createQualifiedConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
         (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
         (sync.postConversation _).expects(*, *, Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
         (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))

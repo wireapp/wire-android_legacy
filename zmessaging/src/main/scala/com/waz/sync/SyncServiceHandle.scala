@@ -72,7 +72,7 @@ trait SyncServiceHandle {
   def postAssetStatus(id: MessageId, conv: ConvId, exp: Option[FiniteDuration], status: UploadAssetStatus): Future[SyncId]
   def postLiking(id: ConvId, liking: Liking): Future[SyncId]
   def postConnection(user: UserId, name: Name, message: String): Future[SyncId]
-  def postQualifiedConnection(qId: QualifiedId, name: Name, message: String): Future[SyncId]
+  def postQualifiedConnection(qId: QualifiedId): Future[SyncId]
   def postConnectionStatus(user: UserId, status: ConnectionStatus): Future[SyncId]
   def postQualifiedConnectionStatus(qId: QualifiedId, status: ConnectionStatus): Future[SyncId]
   def postReceiptMode(id: ConvId, receiptMode: Int): Future[SyncId]
@@ -177,8 +177,8 @@ class AndroidSyncServiceHandle(account:         UserId,
   def postDeleted(conv: ConvId, msg: MessageId) = addRequest(PostDeleted(conv, msg))
   def postRecalled(conv: ConvId, msg: MessageId, recalled: MessageId) = addRequest(PostRecalled(conv, msg, recalled))
   def postAssetStatus(id: MessageId, conv: ConvId, exp: Option[FiniteDuration], status: UploadAssetStatus) = addRequest(PostAssetStatus(conv, id, exp, status))
-  def postConnection(user: UserId, name: Name, message: String) = addRequest(PostConnection(user, name, message))
-  def postQualifiedConnection(qId: QualifiedId, name: Name, message: String) = addRequest(PostQualifiedConnection(qId, name, message))
+  def postConnection(user: UserId, name: Name, message: String): Future[SyncId] = addRequest(PostConnection(user, name, message))
+  def postQualifiedConnection(qId: QualifiedId): Future[SyncId] = addRequest(PostQualifiedConnection(qId))
   def postConnectionStatus(user: UserId, status: ConnectionStatus) = addRequest(PostConnectionStatus(user, Some(status)))
   def postQualifiedConnectionStatus(qId: QualifiedId, status: ConnectionStatus) = addRequest(PostQualifiedConnectionStatus(qId, Some(status)))
   def postTypingState(conv: ConvId, typing: Boolean) = addRequest(PostTypingState(conv, typing))
@@ -298,7 +298,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case SyncRichMedia(messageId)                        => zms.richmediaSync.syncRichMedia(messageId)
           case DeletePushToken(token)                          => zms.gcmSync.deleteGcmToken(token)
           case PostConnection(userId, name, message)           => zms.connectionsSync.postConnection(userId, name, message)
-          case PostQualifiedConnection(qId, name, message)     => zms.connectionsSync.postQualifiedConnection(qId, name, message)
+          case PostQualifiedConnection(qId)                    => zms.connectionsSync.postQualifiedConnection(qId)
           case PostConnectionStatus(userId, status)            => zms.connectionsSync.postConnectionStatus(userId, status)
           case PostQualifiedConnectionStatus(qId, status)      => zms.connectionsSync.postQualifiedConnectionStatus(qId, status)
           case SyncTeam                                        => zms.teamsSync.syncTeam()

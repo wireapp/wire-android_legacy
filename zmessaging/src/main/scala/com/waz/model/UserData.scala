@@ -49,7 +49,7 @@ final case class UserData(override val id:       UserId,
                           connection:            ConnectionStatus       = ConnectionStatus.Unconnected,
                           connectionLastUpdated: RemoteInstant          = RemoteInstant.Epoch, // server side timestamp of last connection update
                           connectionMessage:     Option[String]         = None, // incoming connection request message
-                          conversation:          Option[RConvId]        = None, // remote conversation id with this contact (one-to-one)
+                          conversation:          Option[RConvQualifiedId] = None, // remote conversation id with this contact (one-to-one)
                           relation:              Relation               = Relation.Other, //unused - remove in future migration
                           syncTimestamp:         Option[LocalInstant]   = None,
                           verified:              Verification           = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
@@ -226,7 +226,8 @@ object UserData {
     val Conn = text[ConnectionStatus]('connection, _.code, ConnectionStatus(_))(_.connection)
     val ConnTime = date('conn_timestamp)(_.connectionLastUpdated.javaDate) //TODO: Migrate instead?
     val ConnMessage = opt(text('conn_msg))(_.connectionMessage)
-    val Conversation = opt(id[RConvId]('conversation))(_.conversation)
+    val Conversation = opt(id[RConvId]('conversation))(_.conversation.map(_.id))
+    val ConversationDomain = opt(text('conversation_domain))(_.conversation.map(_.domain))
     val Rel = text[Relation]('relation, _.name, Relation.valueOf)(_.relation)
     val Timestamp = opt(localTimestamp('timestamp))(_.syncTimestamp)
     val Verified = text[Verification]('verified, _.name, getVerification)(_.verified)
@@ -249,15 +250,23 @@ object UserData {
     override val idCol = Id
     override val table = Table(
       UsersTableName, Id, Domain, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, ConnTime, ConnMessage,
-      Conversation, Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId,
+      Conversation, ConversationDomain, Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId,
       ExpiresAt, Managed, SelfPermissions, CopyPermissions, CreatedBy // Fields are now lazy-loaded from BE every time the user opens a profile
     )
 
-    override def apply(implicit cursor: DBCursor): UserData = new UserData(
-      Id, Domain, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
-      Conversation, Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed,
-      Seq.empty, (SelfPermissions, CopyPermissions), CreatedBy
-    )
+    override def apply(implicit cursor: DBCursor): UserData = {
+      def rConvQualifiedId(rConvId: Option[RConvId], domain: Option[String]): Option[RConvQualifiedId] = (rConvId, domain) match {
+        case (Some(id), Some(d)) => Some(RConvQualifiedId(id, d))
+        case (Some(id), None)    => Some(RConvQualifiedId(id))
+        case _                   => None
+      }
+
+      new UserData(
+        Id, Domain, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
+        rConvQualifiedId(Conversation, ConversationDomain), Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed,
+        Seq.empty, (SelfPermissions, CopyPermissions), CreatedBy
+      )
+    }
 
     override def onCreate(db: DB): Unit = {
       super.onCreate(db)

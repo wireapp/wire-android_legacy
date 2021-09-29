@@ -109,7 +109,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
         )
       }
 
-      (convsStorage.getByRemoteIds2 _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
+      (convsStorage.getMapByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
       (convsStorage.updateLocalIds _).expects(Map.empty[ConvId, ConvId]).anyNumberOfTimes().returning(Future.successful(Set.empty))
       (convsStorage.updateOrCreateAll2 _).expects(*, *).anyNumberOfTimes().onCall { (keys: Iterable[ConvId], updater: (ConvId, Option[ConversationData]) => ConversationData) =>
         Future.successful(keys.map(id => updater(id, None)).toSet)
@@ -263,7 +263,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       }
 
       (users.syncUsers _).expects(Set(otherUser.id), *).returning(Future.successful(Option(SyncId())))
-      (convsStorage.getByRemoteIds2 _).expects(Set(remoteId)).twice().returning(Future.successful(Map.empty))
+      (convsStorage.getMapByRemoteIds _).expects(Set(remoteId)).twice().returning(Future.successful(Map.empty))
       (convsStorage.updateLocalIds _).expects(Map.empty[ConvId, ConvId]).returning(Future.successful(Set.empty))
       (convsStorage.updateOrCreateAll2 _).expects(*, *).onCall { (keys: Iterable[ConvId], updater: ((ConvId, Option[ConversationData]) => ConversationData)) =>
         Future.successful(keys.map {
@@ -319,7 +319,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       )
     }
 
-    (convsStorage.getByRemoteIds2 _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
+    (convsStorage.getMapByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
     (convsStorage.updateLocalIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
     (convsStorage.updateOrCreateAll2 _).expects(*, *).onCall { (keys: Iterable[ConvId], updater: ((ConvId, Option[ConversationData]) => ConversationData)) =>
       Future.successful(keys.map(id => updater(id, None)).toSet)

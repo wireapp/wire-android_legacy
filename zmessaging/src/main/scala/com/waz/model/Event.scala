@@ -17,6 +17,7 @@
  */
 package com.waz.model
 
+import com.waz.BuildConfig
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
@@ -71,21 +72,25 @@ object RConvEvent extends (Event => RConvId) {
   }
 }
 
-case class UserUpdateEvent(user: UserInfo, removeIdentity: Boolean = false) extends UserEvent
-case class UserConnectionEvent(convId:       RConvId,
-                               convDomain:   Option[String],
-                               from:         UserId,
-                               to:           UserId,
-                               message:      Option[String],
-                               status:       ConnectionStatus,
-                               lastUpdated:  RemoteInstant,
-                               fromUserName: Option[Name] = None
-                              ) extends UserEvent with RConvEvent
-case class UserDeleteEvent(user: UserId) extends UserEvent
-case class OtrClientAddEvent(client: Client) extends OtrClientEvent
-case class OtrClientRemoveEvent(client: ClientId) extends OtrClientEvent
+final case class UserUpdateEvent(user: UserInfo, removeIdentity: Boolean = false) extends UserEvent
+final case class UserConnectionEvent(convId:       RConvId,
+                                     convDomain:   Option[String],
+                                     from:         UserId,
+                                     to:           UserId,
+                                     toDomain:     Option[String],
+                                     message:      Option[String],
+                                     status:       ConnectionStatus,
+                                     lastUpdated:  RemoteInstant,
+                                     fromUserName: Option[Name] = None
+                                    ) extends UserEvent with RConvEvent {
+  def qualifiedConvId: Option[RConvQualifiedId] = convDomain.map(RConvQualifiedId(convId, _))
+  def qualifiedTo: Option[QualifiedId] = toDomain.map(QualifiedId(to, _))
+}
+final case class UserDeleteEvent(user: UserId) extends UserEvent
+final case class OtrClientAddEvent(client: Client) extends OtrClientEvent
+final case class OtrClientRemoveEvent(client: ClientId) extends OtrClientEvent
 
-case class PushTokenRemoveEvent(token: PushToken, senderId: String, client: Option[String]) extends Event
+final case class PushTokenRemoveEvent(token: PushToken, senderId: String, client: Option[String]) extends Event
 
 sealed trait ConversationEvent extends RConvEvent {
   val time: RemoteInstant
@@ -371,10 +376,10 @@ object Event {
         else (RConvId('conversation), None)
       }
 
-  def decodeQUserId(implicit js: JSONObject): (UserId, Option[String]) =
-    QualifiedId.decodeOpt('qualified_from)
+  def decodeQUserId(nonQSymbol: Symbol, qSymbol: Symbol)(implicit js: JSONObject): (UserId, Option[String]) =
+    QualifiedId.decodeOpt(qSymbol)
       .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
-      .getOrElse((UserId('from), None))
+      .getOrElse((UserId(nonQSymbol), None))
 
   implicit object EventDecoder extends JsonDecoder[Event] with DerivedLogTag {
 
@@ -382,7 +387,18 @@ object Event {
 
     def connectionEvent(implicit js: JSONObject, name: Option[Name]): UserConnectionEvent = {
       val (convId, convDomain) = Event.decodeRConvId
-      UserConnectionEvent(convId, convDomain, 'from, 'to, 'message, ConnectionStatus('status), JsonDecoder.decodeISORemoteInstant('last_update), fromUserName = name)
+      val (to, toDomain) = Event.decodeQUserId('to, 'qualified_to)
+      UserConnectionEvent(
+        convId,
+        convDomain,
+        'from,
+        to,
+        toDomain,
+        'message,
+        ConnectionStatus('status),
+        JsonDecoder.decodeISORemoteInstant('last_update),
+        fromUserName = name
+      )
     }
 
     def gcmTokenRemoveEvent(implicit js: JSONObject): PushTokenRemoveEvent =
@@ -431,7 +447,7 @@ object ConversationEvent extends DerivedLogTag {
 
     private def decodeMemberJoinEvent(data: JSONObject, time: RemoteInstant)(implicit js: JSONObject): MemberJoinEvent = {
       val (convId, convDomain) = Event.decodeRConvId
-      val (from, fromDomain) = Event.decodeQUserId
+      val (from, fromDomain) = Event.decodeQUserId('from, 'qualified_from)
 
       MemberJoinEvent(
         convId,
@@ -447,7 +463,7 @@ object ConversationEvent extends DerivedLogTag {
 
     override def apply(implicit js: JSONObject): ConversationEvent = Try {
       val (rConvId, convDomain) = Event.decodeRConvId
-      val (from, fromDomain) = Event.decodeQUserId
+      val (from, fromDomain) = Event.decodeQUserId('from, 'qualified_from)
       lazy val d = if (js.has("data") && !js.isNull("data")) Try(js.getJSONObject("data")).toOption else None
 
       val time = RemoteInstant(decodeISOInstant('time))

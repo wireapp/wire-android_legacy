@@ -408,7 +408,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
             for {
               conv <- convsContent.createConversation(
                         convId      = ConvId(otherUserId.str),
-                        remoteId    = u.conversation.getOrElse(RConvId()),
+                        remoteId    = u.conversation.map(_.id).getOrElse(RConvId()),
                         convType    = ConversationType.Incoming,
                         creator     = otherUserId,
                         name        = None,
