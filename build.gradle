@@ -1,6 +1,10 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+    ext {
+        fdroidBuild = gradle.startParameter.taskRequests.toString().toLowerCase().contains("fdroid") // FIXME
+        println("F-Droid build: ${fdroidBuild}")
+    }
     repositories {
         google()
         mavenCentral()
@@ -15,6 +19,13 @@ buildscript {
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.DETEKT}"
         classpath "org.jacoco:org.jacoco.core:${Versions.JACOCO}"
         classpath "com.mutualmobile.gradle.plugins:dexinfo:${Versions.DEX_INFO}"
+
+        if (fdroidBuild) {
+            println("Not including gms")
+        } else {
+            println("Including gms")
+            classpath "com.google.gms:google-services:${Versions.GMS}"
+        }
     }
 }
 

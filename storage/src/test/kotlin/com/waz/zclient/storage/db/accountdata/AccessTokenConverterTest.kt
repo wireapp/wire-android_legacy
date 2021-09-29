@@ -50,7 +50,7 @@ class AccessTokenConverterTest {
     fun `given an AccessTokenEntity, when accessTokenToString called, maps it to correct json string`() {
         val entity = AccessTokenEntity("token", "type", 1000)
 
-        val jsonString = accessTokenConverter.accessTokenToString(entity)
+        val jsonString = accessTokenConverter.accessTokenToString(entity)!!
 
         jsonString shouldEqualTo """
             {
