@@ -29,7 +29,7 @@ tar xzf libsodium-$vsn.tar.gz
 cd libsodium-$vsn
 for arch in armv7-a armv8-a x86 x86_64; do
   ./dist-build/android-$arch.sh
-  rm -fr android-toolchain-$arch
+  rm -fr android-toolchain-*
 done
 cd ..
 
