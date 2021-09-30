@@ -78,14 +78,16 @@ class ConnectionServiceImpl(selfUserId:      UserId,
           None,
           None,
           connection = event.status,
-          conversation = if (BuildConfig.FEDERATION_USER_DISCOVERY) event.qualifiedConvId else None,
+          conversation = if (BuildConfig.FEDERATION_USER_DISCOVERY) event.qualifiedConvId else Some(RConvQualifiedId(event.convId)),
           connectionMessage = event.message,
           searchKey = SearchKey.Empty,
           connectionLastUpdated = event.lastUpdated,
           handle = None
         )
       } {
-        _.copy(conversation = event.qualifiedConvId).updateConnectionStatus(event.status, Some(event.lastUpdated), event.message)
+        _.copy(
+          conversation = if (BuildConfig.FEDERATION_USER_DISCOVERY) event.qualifiedConvId else Some(RConvQualifiedId(event.convId))
+        ).updateConnectionStatus(event.status, Some(event.lastUpdated), event.message)
       }
 
     val lastEvents = events.groupBy(_.to).map { case (to, es) => to -> es.maxBy(_.lastUpdated) }
@@ -273,19 +275,25 @@ class ConnectionServiceImpl(selfUserId:      UserId,
 
   private def getOrCreateOneToOneConversations(convsInfo: Seq[OneToOneConvData]): Future[Map[UserId, ConversationData]] =
     Serialized.future("getOrCreateOneToOneConversations") {
-      verbose(l"getOrCreateOneToOneConversations(self: $selfUserId, convs:${convsInfo.size})")
+      verbose(l"getOrCreateOneToOneConversations(self: $selfUserId, convs:${convsInfo})")
 
       def convIdForUser(qId: QualifiedId) = ConvId(qId.id.str)
       def userIdForConv(convId: ConvId) = UserId(convId.str)
 
+      def getRemotes: Future[Map[RConvQualifiedId, ConversationData]] =
+        if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+          convsStorage.getMapByQRemoteIds(convsInfo.flatMap(_.remoteId).toSet)
+        } else {
+          convsStorage.getMapByRemoteIds(convsInfo.flatMap(_.remoteId.map(_.id)).toSet)
+            .map(_.map { case (rId, conv) => RConvQualifiedId(rId) -> conv })
+        }
+
       for {
-        remotes   <- convsStorage.getMapByQRemoteIds(convsInfo.flatMap(_.remoteId).toSet)
+        remotes   <- getRemotes
         _         <- convsStorage.updateLocalIds(convsInfo.collect {
                        case OneToOneConvData(toUser, Some(remoteId), _) if remotes.contains(remoteId) =>
                          remotes(remoteId).id -> convIdForUser(toUser)
                      }.toMap)
-                     // remotes need to be refreshed after updating local ids
-        remotes   <- convsStorage.getMapByQRemoteIds(convsInfo.flatMap(_.remoteId).toSet)
         remoteIds =  convsInfo.map(i => convIdForUser(i.toUser) -> i.remoteId).toMap
         newConvs  =  convsInfo.map { case OneToOneConvData(toUser, remoteId, convType) =>
                        val convId = convIdForUser(toUser)
@@ -301,6 +309,8 @@ class ConnectionServiceImpl(selfUserId:      UserId,
                          domain        = remoteId.map(_.domain)
                        )
                      }.toMap
+        // remotes need to be refreshed after updating local ids
+        remotes   <- getRemotes
         result    <- convsStorage.updateOrCreateAll2(newConvs.keys, {
                        case (cId, Some(conv)) =>
                          remoteIds(cId).fold(conv){ rId =>
