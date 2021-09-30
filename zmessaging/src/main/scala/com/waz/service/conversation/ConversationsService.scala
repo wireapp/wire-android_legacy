@@ -151,7 +151,16 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       convIds <- convsStorage.keySet
       _       <- convsStorage.updateAll2(convIds, { conv => if (conv.domain.isEmpty) conv.copy(domain = currentDomain) else conv })
       userIds <- usersStorage.keySet
-      _       <- usersStorage.updateAll2(userIds, { user => if (user.domain.isEmpty) user.copy(domain = currentDomain) else user })
+      _       <- usersStorage.updateAll2(userIds, { user =>
+                   (user.domain, user.conversation, currentDomain) match {
+                     case (None, Some(remoteId), Some(domain)) if !remoteId.hasDomain =>
+                       user.copy(domain = currentDomain, conversation = Some(RConvQualifiedId(remoteId.id, domain)))
+                     case (None, None, Some(_)) =>
+                       user.copy(domain = currentDomain)
+                     case _ =>
+                       user
+                   }
+                 })
       _       <- shouldMigrateToFederation := false
     } yield ()
   }
