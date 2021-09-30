@@ -33,7 +33,7 @@ class MapsClientSpec extends AndroidFreeSpec {
       val actual = MapsClient.getStaticMapPath(location, 100, 200)
 
       // Then
-      val expected = s"$StaticMapsPathBase?center=${location.x}%2C${location.y}&zoom=2&size=100x200"
+      val expected = s"$StaticMapsPathBase?center=${location.latitude}%2C${location.longitude}&zoom=2&size=100x200"
       actual shouldEqual expected
     }
   }
