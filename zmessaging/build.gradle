@@ -60,6 +60,10 @@ repositories {
     maven { url "https://oss.sonatype.org/content/repositories/releases" }
 }
 
+configurations {
+    cryptobox
+}
+
 dependencies {
 
     api project(':macrosupport')
@@ -73,7 +77,11 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
     // should match okhttp3's mockserver version (see test dependencies)
     implementation BuildDependencies.libPhoneNumber
-    implementation "com.wire:cryptobox-android:1.1.2"
+
+    cryptobox('com.wire:cryptobox-android:1.1.3') {
+        transitive = false
+    }
+
     implementation "com.wire:generic-message-proto:1.35.0"
     implementation "io.circe:circe-core_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
     implementation "io.circe:circe-generic_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
@@ -124,3 +132,16 @@ dependencies {
 
 }
 
+task extractLibSodium(type: Copy) {
+    println("Extracting libsodium from cryptobox-android")
+    from 'src/dist'
+    from {
+        zipTree(configurations.cryptobox.singleFile).matching { include 'jni/***/libsodium.so' }
+    }
+    into layout.buildDirectory.dir("libsodium")
+}
+
+android.libraryVariants.all { variant ->
+    tasks.findByName("externalNativeBuild${variant.name.capitalize()}")
+        .dependsOn(extractLibSodium)
+}
