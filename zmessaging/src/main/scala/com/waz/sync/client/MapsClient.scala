@@ -58,7 +58,7 @@ object MapsClient {
   val StaticMapsPathBase = "/proxy/googlemaps/api/staticmap"
 
   def getStaticMapPath(location: MapsLocation, width: Int, height: Int): String = {
-    val center = URLEncoder.encode(s"${location.x},${location.y}", "utf8")
+    val center = URLEncoder.encode(s"${location.latitude},${location.longitude}", "utf8")
     val zoom = URLEncoder.encode(location.zoom, "utf8")
     s"$StaticMapsPathBase?center=$center&zoom=$zoom&size=${width}x$height"
   }
