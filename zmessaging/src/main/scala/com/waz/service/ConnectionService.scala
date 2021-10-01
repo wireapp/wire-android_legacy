@@ -169,17 +169,47 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   /**
    * Connects to user and creates one-to-one conversation if needed. Returns existing conversation if user is already connected.
    */
-  override def connectToUser(userId: UserId, message: String, name: Name): Future[Option[ConversationData]] = {
+  override def connectToUser(userId: UserId, message: String, name: Name): Future[Option[ConversationData]] =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      users.qualifiedId(userId).flatMap(connectToUser(_, message, name))
+    } else {
+      def sanitizedName = if (name.isEmpty) Name("_") else if (name.length >= 256) name.substring(0, 256) else name
 
-    def sanitizedName = if (name.isEmpty) Name("_") else if (name.length >= 256) name.substring(0, 256) else name
+      def connectIfUnconnected() = users.getOrCreateUser(userId).flatMap { user =>
+        if (user.isConnected) {
+          verbose(l"User already connected: $user")
+          Future.successful(None)
+        } else {
+          users.updateConnectionStatus(user.id, ConnectionStatus.PendingFromUser).flatMap {
+            case Some(u) => sync.postConnection(userId, sanitizedName, message).map(_ => Some(u))
+            case _       => Future.successful(None)
+          }
+        }
+      }
 
-    def connectIfUnconnected() = users.getOrCreateUser(userId).flatMap { user =>
+      connectIfUnconnected().flatMap {
+        case Some(_) =>
+          for {
+            qId  <- users.qualifiedId(userId)
+            conv <- localConnectToUser(qId, message, name)
+          } yield Some(conv)
+        case None => //already connected
+          convsContent.convById(ConvId(userId.str))
+      }
+    }
+
+  /**
+   * Connects to user using te qualified id and creates one-to-one conversation if needed.
+   * Returns existing conversation if user is already connected.
+   */
+  private def connectToUser(qualifiedId: QualifiedId, message: String, name: Name): Future[Option[ConversationData]] = {
+    def connectIfUnconnected() = users.getOrCreateUser(qualifiedId.id).flatMap { user =>
       if (user.isConnected) {
         verbose(l"User already connected: $user")
         Future.successful(None)
       } else {
         users.updateConnectionStatus(user.id, ConnectionStatus.PendingFromUser).flatMap {
-          case Some(u) => sync.postConnection(userId, sanitizedName, message).map(_ => Some(u))
+          case Some(u) => sync.postQualifiedConnection(qualifiedId).map(_ => Some(u))
           case _       => Future.successful(None)
         }
       }
@@ -187,63 +217,112 @@ class ConnectionServiceImpl(selfUserId:      UserId,
 
     connectIfUnconnected().flatMap {
       case Some(_) =>
-        for {
-          qId  <- users.qualifiedId(userId)
-          conv <- getOrCreateOneToOneConversation(qId, convType = ConversationType.WaitForConnection)
-          _ = verbose(l"connectToUser, conv: $conv")
-          _ <- messages.addConnectRequestMessage(conv.id, selfUserId, userId, message, name)
-        } yield Some(conv)
+        localConnectToUser(qualifiedId, message, name).map(Some(_))
       case None => //already connected
-        convsContent.convById(ConvId(userId.str))
+        convsContent.convById(ConvId(qualifiedId.id.str))
     }
   }
 
-  override def acceptConnection(userId: UserId): Future[ConversationData] = {
-    val updateConnectionStatus = users.updateConnectionStatus(userId, ConnectionStatus.Accepted).map {
+  private def localConnectToUser(qualifiedId: QualifiedId, message: String, name: Name) =
+    for {
+      conv <- getOrCreateOneToOneConversation(qualifiedId, convType = ConversationType.WaitForConnection)
+      _    =  verbose(l"connectToUser, conv: $conv")
+      _    <- messages.addConnectRequestMessage(conv.id, selfUserId, qualifiedId.id, message, name)
+    } yield conv
+
+  override def acceptConnection(userId: UserId): Future[ConversationData] =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      users.qualifiedId(userId).flatMap(acceptConnection)
+    } else {
+      val updateConnectionStatus = users.updateConnectionStatus(userId, ConnectionStatus.Accepted).map {
+        case Some(_) =>
+          sync.postConnectionStatus(userId, ConnectionStatus.Accepted).map { syncId =>
+            sync.syncConversations(Set(ConvId(userId.str)), Some(syncId))
+          }
+        case _ =>
+      }
+
+      for {
+        _       <- updateConnectionStatus
+        qId     <- users.qualifiedId(userId)
+        conv    <- localAcceptConnection(qId)
+      } yield conv
+    }
+
+  private def acceptConnection(qualifiedId: QualifiedId): Future[ConversationData] = {
+    val updateConnectionStatus = users.updateConnectionStatus(qualifiedId.id, ConnectionStatus.Accepted).map {
       case Some(_) =>
-        sync.postConnectionStatus(userId, ConnectionStatus.Accepted).map { syncId =>
-          sync.syncConversations(Set(ConvId(userId.str)), Some(syncId))
+        sync.postQualifiedConnectionStatus(qualifiedId, ConnectionStatus.Accepted).map { syncId =>
+          sync.syncConversations(Set(ConvId(qualifiedId.id.str)), Some(syncId))
         }
       case _ =>
     }
 
     for {
       _       <- updateConnectionStatus
-      qId     <- users.qualifiedId(userId)
-      conv    <- getOrCreateOneToOneConversation(qId, convType = ConversationType.OneToOne)
+      conv    <- localAcceptConnection(qualifiedId)
+    } yield conv
+  }
+
+  private def localAcceptConnection(qualifiedId: QualifiedId) =
+    for {
+      conv    <- getOrCreateOneToOneConversation(qualifiedId, convType = ConversationType.OneToOne)
       updated <- convsContent.updateConversation(conv.id, Some(ConversationType.OneToOne), hidden = Some(false))
       _       <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(selfUserId), firstMessage = true)
     } yield updated.fold(conv)(_._2)
-  }
 
   override def ignoreConnection(userId: UserId): Future[Option[UserData]] =
-    for {
-      user <- users.updateConnectionStatus(userId, ConnectionStatus.Ignored)
-      _    <- user.fold(Future.successful({}))(_ => sync.postConnectionStatus(userId, ConnectionStatus.Ignored).map(_ => {}))
-      _    <- convsContent.hideIncomingConversation(userId)
-    } yield user
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      users.qualifiedId(userId).flatMap(ignoreConnection)
+    } else {
+      for {
+        user <- users.updateConnectionStatus(userId, ConnectionStatus.Ignored)
+        _    <- user.fold(Future.successful({}))(_ => sync.postConnectionStatus(userId, ConnectionStatus.Ignored).map(_ => {}))
+        _    <- convsContent.hideIncomingConversation(userId)
+      } yield user
+    }
 
-  override def blockConnection(userId: UserId): Future[Option[UserData]] = {
+  private def ignoreConnection(qualifiedId: QualifiedId): Future[Option[UserData]] =
+  for {
+    user <- users.updateConnectionStatus(qualifiedId.id, ConnectionStatus.Ignored)
+    _    <- user.fold(Future.successful({}))(_ => sync.postQualifiedConnectionStatus(qualifiedId, ConnectionStatus.Ignored).map(_ => {}))
+    _    <- convsContent.hideIncomingConversation(qualifiedId.id)
+  } yield user
+
+  override def blockConnection(userId: UserId): Future[Option[UserData]] =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      users.qualifiedId(userId).flatMap(blockConnection)
+    } else {
+      for {
+        _    <- convsContent.setConversationHidden(ConvId(userId.str), hidden = true)
+        user <- users.updateConnectionStatus(userId, ConnectionStatus.Blocked)
+        _    <- user.fold(Future.successful({}))(_ => sync.postConnectionStatus(userId, ConnectionStatus.Blocked).map(_ => {}))
+      } yield user
+    }
+
+  private def blockConnection(qualifiedId: QualifiedId) =
     for {
-      _    <- convsContent.setConversationHidden(ConvId(userId.str), hidden = true)
-      user <- users.updateConnectionStatus(userId, ConnectionStatus.Blocked)
-      _    <- user.fold(Future.successful({}))(_ => sync.postConnectionStatus(userId, ConnectionStatus.Blocked).map(_ => {}))
+      _    <- convsContent.setConversationHidden(ConvId(qualifiedId.id.str), hidden = true)
+      user <- users.updateConnectionStatus(qualifiedId.id, ConnectionStatus.Blocked)
+      _    <- user.fold(Future.successful({}))(_ => sync.postQualifiedConnectionStatus(qualifiedId, ConnectionStatus.Blocked).map(_ => {}))
     } yield user
-  }
 
   override def unblockConnection(userId: UserId): Future[ConversationData] =
     for {
       user <- users.updateConnectionStatus(userId, ConnectionStatus.Accepted)
+      qId  <- users.qualifiedId(userId)
       _    <- user.fold(Future.successful({})) { _ =>
-        for {
-          syncId <- sync.postConnectionStatus(userId, ConnectionStatus.Accepted)
-          _      <- sync.syncConversations(Set(ConvId(userId.str)), Some(syncId)) // sync conversation after syncing connection state (conv is locked on backend while connection is blocked) TODO: we could use some better api for that
-        } yield {}
-      }
-      qId     <- users.qualifiedId(userId)
+                for {
+                  syncId <- if (BuildConfig.FEDERATION_USER_DISCOVERY && qId.hasDomain)
+                              sync.postQualifiedConnectionStatus(qId, ConnectionStatus.Accepted)
+                            else
+                              sync.postConnectionStatus(userId, ConnectionStatus.Accepted)
+                  _ <- sync.syncConversations(Set(ConvId(userId.str)), Some(syncId)) // sync conversation after syncing connection state (conv is locked on backend while connection is blocked) TODO: we could use some better api for that
+                } yield {}
+              }
       conv    <- getOrCreateOneToOneConversation(qId, convType = ConversationType.OneToOne)
-      updated <- convsContent.updateConversation(conv.id, Some(ConversationType.OneToOne), hidden = Some(false)) map { _.fold(conv)(_._2) } // TODO: what about messages
-    } yield updated
+      updated <- convsContent.updateConversation(conv.id, Some(ConversationType.OneToOne), hidden = Some(false))
+    } yield updated.fold(conv)(_._2)
 
 
   override def cancelConnection(userId: UserId): Future[Option[UserData]] =
@@ -255,7 +334,12 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       }
     }).flatMap {
       case Some((prev, user)) if prev != user =>
-        sync.postConnectionStatus(userId, ConnectionStatus.Cancelled)
+        (BuildConfig.FEDERATION_USER_DISCOVERY, user.qualifiedId) match {
+          case (true, Some(qId)) =>
+            sync.postQualifiedConnectionStatus(qId, ConnectionStatus.Cancelled)
+          case _ =>
+            sync.postConnectionStatus(userId, ConnectionStatus.Cancelled)
+        }
         convsContent.setConversationHidden(ConvId(user.id.str), hidden = true).map { _ => Some(user) }
       case None =>
         Future.successful(None)

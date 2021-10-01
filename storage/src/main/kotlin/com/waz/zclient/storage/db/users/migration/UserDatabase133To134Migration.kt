@@ -16,7 +16,7 @@ val USER_DATABASE_MIGRATION_133_TO_134 = object : Migration(133, 134) {
         MigrationUtils.addColumn(
             database = database,
             tableName = "Users",
-            columnName = "conversationDomain",
+            columnName = "conversation_domain",
             columnType = MigrationUtils.ColumnType.TEXT
         )
     }

@@ -19,6 +19,7 @@ data class UsersBackUpModel(
     val connectionTimestamp: Long = 0,
     val connectionMessage: String? = null,
     val conversation: String? = null,
+    val conversationDomain: String? = null,
     val relation: String = String.empty(),
     val timestamp: Long? = null,
     val verified: String? = null,
