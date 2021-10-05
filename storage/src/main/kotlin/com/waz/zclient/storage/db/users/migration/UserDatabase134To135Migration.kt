@@ -5,12 +5,12 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.zclient.storage.db.MigrationUtils
 
-val USER_DATABASE_MIGRATION_133_TO_134 = object : Migration(133, 134) {
+val USER_DATABASE_MIGRATION_134_TO_135 = object : Migration(134, 135) {
     override fun migrate(database: SupportSQLiteDatabase) {
         MigrationUtils.addColumn(
             database = database,
-            tableName = "Conversations",
-            columnName = "domain",
+            tableName = "Users",
+            columnName = "conversation_domain",
             columnType = MigrationUtils.ColumnType.TEXT
         )
     }

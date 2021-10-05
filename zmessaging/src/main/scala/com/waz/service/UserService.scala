@@ -221,6 +221,10 @@ class UserServiceImpl(selfUserId:        UserId,
   private def getOrCreateQualifiedId(userId: UserId, qualifiedId: Option[QualifiedId]) =
     (qualifiedId, currentDomain) match {
       case (Some(qId), _) if qId.hasDomain => qId
+      case (Some(qId), Some(domain)) =>
+        warn(l"qualifiedId($userId): A user with qualified id set already, but no domain - a failed migration?")
+        usersStorage.update(userId, _.copy(domain = currentDomain))
+        qId.copy(domain = domain)
       case (_, Some(domain)) =>
         warn(l"qualifiedId($userId): Unable to find the user for the given id or the user has no specified domain - generating a new qId")
         QualifiedId(userId, domain)
