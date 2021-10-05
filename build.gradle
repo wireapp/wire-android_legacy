@@ -63,8 +63,6 @@ allprojects {
 }
 
 ext {
-    largeVideoConferenceCalls = false
-    callingUiButtons = true
     federationUserDiscovery = false
     conferenceCallingRestriction = true
 }

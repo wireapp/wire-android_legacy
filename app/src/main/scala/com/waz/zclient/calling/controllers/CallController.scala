@@ -36,7 +36,7 @@ import com.waz.utils._
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
-import com.waz.zclient.common.controllers.{SoundController, ThemeController}
+import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
@@ -151,13 +151,6 @@ class CallController(implicit inj: Injector, cxt: WireContext)
 
   var theme: Signal[Theme] = Signal.const(Theme.Dark)
 
-  if (!BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
-    theme = isVideoCall.flatMap {
-      case true => Signal.const(Theme.Dark)
-      case false => inject[ThemeController].currentTheme
-    }
-  }
-
   private val mergedVideoStates: Signal[Map[UserId, Set[VideoState]]] = {
     allVideoReceiveStates.map(_.groupBy(_._1.userId).mapValues(_.values.toSet))
   }
@@ -245,16 +238,10 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   }
 
   val memberForPicture: Signal[Option[UserId]] =
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
       Signal.zip(isCallEstablished, videoSendState).flatMap {
         case (true, _) => Signal.const(None)
         case (false, VideoState.Started) => Signal.const(None)
         case _ => fetchMember()
-      }
-     else
-      isGroupCall.flatMap {
-        case true => Signal.const(None)
-        case false => fetchMember()
       }
 
   def fetchMember(): Signal[Option[UserId]] = for {
@@ -264,23 +251,15 @@ class CallController(implicit inj: Injector, cxt: WireContext)
 
   private lazy val lastControlsClick = Signal[(Boolean, Instant)]() //true = show controls and set timer, false = hide controls
 
-  lazy val controlsVisible = if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+  lazy val controlsVisible =
     (for {
       Some(est)    <- currentCall.map(_.estabTime)
       (show, last) <- lastControlsClick.orElse(Signal.const((true, clock.instant())))
       display      <-
         if (show) {
-           if (BuildConfig.FLAVOR.equals("internal")) ClockSignal(8.seconds).map(c => last.max(est.instant).until(c).asScala <= 8.seconds)
+           if (BuildConfig.FLAVOR.equals("internal")) ClockSignal(15.seconds).map(c => last.max(est.instant).until(c).asScala <= 15.seconds)
            else ClockSignal(3.seconds).map(c => last.max(est.instant).until(c).asScala <= 3.seconds)
         } else Signal.const(false)
-    } yield display).orElse(Signal.const(true))
-  else
-    (for {
-      true         <- isVideoCall
-      Some(est)    <- currentCall.map(_.estabTime)
-      (show, last) <- lastControlsClick.orElse(Signal.const((true, clock.instant())))
-      display      <- if (show) ClockSignal(3.seconds).map(c => last.max(est.instant).until(c).asScala <= 3.seconds)
-                      else Signal.const(false)
     } yield display).orElse(Signal.const(true))
 
   def controlsClick(show: Boolean): Unit = lastControlsClick ! (show, clock.instant())

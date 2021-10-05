@@ -25,7 +25,7 @@ import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading._
 import com.waz.utils.returning
-import com.waz.zclient.{BuildConfig, FragmentHelper, R}
+import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.FullScreenVideoFragment.PARTICIPANT_BUNDLE_KEY
 import com.waz.zclient.calling.views.{OtherVideoView, SelfVideoView, UserVideoView}
@@ -52,7 +52,6 @@ class FullScreenVideoFragment extends FragmentHelper {
     initUserVideoView()
     initVideoZoomLayout()
     initVideoContainer()
-    if (!BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) minimizeVideoWhenNotAvailable()
   }
 
   override def onResume(): Unit = {
@@ -109,11 +108,6 @@ class FullScreenVideoFragment extends FragmentHelper {
     controller.isFullScreenEnabled.onUi { isFullScreenEnabled =>
       fullScreenVideoContainer.foreach(_.setVisible(isFullScreenEnabled))
     }
-  }
-
-  def minimizeVideoWhenNotAvailable() = controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
-    case VideoState.Started | VideoState.ScreenShare =>
-    case _ => minimizeVideo()
   }
 
   def minimizeVideo(): Unit = {

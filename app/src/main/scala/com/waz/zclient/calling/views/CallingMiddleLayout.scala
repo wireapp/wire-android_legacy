@@ -26,7 +26,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.utils.ContextUtils.getDimenPx
 import com.waz.zclient.utils.{ContextUtils, RichView}
-import com.waz.zclient.{BuildConfig, R, ViewHelper}
+import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
 
 class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
@@ -62,9 +62,7 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
     super.onLayout(changed, l, t, r, b)
     if (changed) callParticipantsView.setMaxRows((b - t) / getDimenPx(R.dimen.user_row_height))
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
       callParticipantsView.hideParticipants()
-    }
   }
 }
 
