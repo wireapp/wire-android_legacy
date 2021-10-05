@@ -46,6 +46,8 @@ allprojects {
 
 ext {
     federationUserDiscovery = false
+    largeVideoConferenceCalls = true
+    callingUiButtons = true
     conferenceCallingRestriction = true
 }
 

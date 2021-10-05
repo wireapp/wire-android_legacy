@@ -95,7 +95,7 @@ class ConnectionsClientImpl(implicit
   }
 
   override def createConnection(qId: QualifiedId): ErrorOrResponse[UserConnectionEvent] =
-    Request.Post(relativePath = qualifiedConnectionsPath(qId))
+    Request.Post(relativePath = qualifiedConnectionsPath(qId), body = "")
       .withResultType[UserConnectionEvent]
       .withErrorType[ErrorResponse]
       .executeSafe

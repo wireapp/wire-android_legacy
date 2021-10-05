@@ -366,10 +366,20 @@ class ConnectionServiceImpl(selfUserId:      UserId,
 
       def getRemotes: Future[Map[RConvQualifiedId, ConversationData]] =
         if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-          convsStorage.getMapByQRemoteIds(convsInfo.flatMap(_.remoteId).toSet)
+          convsInfo.flatMap(_.remoteId).toSet match {
+            case remotes if remotes.isEmpty =>
+              Future.successful(Map.empty)
+            case remotes =>
+              convsStorage.getMapByQRemoteIds(remotes)
+          }
         } else {
-          convsStorage.getMapByRemoteIds(convsInfo.flatMap(_.remoteId.map(_.id)).toSet)
-            .map(_.map { case (rId, conv) => RConvQualifiedId(rId) -> conv })
+          convsInfo.flatMap(_.remoteId.map(_.id)).toSet match {
+            case remotes if remotes.isEmpty =>
+              Future.successful(Map.empty)
+            case remotes =>
+              convsStorage.getMapByRemoteIds(remotes)
+                .map(_.map { case (rId, conv) => RConvQualifiedId(rId) -> conv })
+          }
         }
 
       for {
