@@ -29,6 +29,7 @@ import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.IntentUtils
 import com.waz.zclient.{Injectable, Injector, R}
 
+import scala.collection.JavaConversions._
 import scala.util.Try
 
 class BrowserController(implicit context: Context, injector: Injector) extends Injectable with DerivedLogTag {
@@ -51,12 +52,13 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
   }
 
   def openLocation(location: Location): Unit =
-    Option(IntentUtils.getGoogleMapsIntent(
+    IntentUtils.getMapIntents(
       context,
       location.getLatitude,
       location.getLongitude,
       location.getZoom,
-      location.getName)) foreach { context.startActivity }
+      location.getName
+    ) foreach { i => if (Try(context.startActivity(i)).isSuccess) return }
 
   def openPlayStoreListing(): Unit =
     openUrl(getString(R.string.url_play_store_listing))

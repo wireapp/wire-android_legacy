@@ -49,7 +49,7 @@ case class UploadAssetIdRequest(assetId: UploadAssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
 
-case class GoogleMapRequest(location: Location) extends AssetRequest {
+case class MapRequest(location: Location) extends AssetRequest {
   override val key: String = location.toString
 }
 

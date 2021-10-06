@@ -42,7 +42,7 @@ class RichMediaService(msgsStorage: MessagesStorage,
   private def isSyncableMsg(msg: MessageData) = msg.msgType == Message.Type.RICH_MEDIA && msg.content.exists(isSyncable)
 
   private def isSyncable(c: MessageContent) = c.tpe match {
-    case YOUTUBE | GOOGLE_MAPS => true
+    case YOUTUBE | MAPS => true
     case _ => false
   }
 

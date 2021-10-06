@@ -5,7 +5,7 @@ import org.gradle.api.JavaVersion
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.72."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.74."
     const val COMPILE_SDK_VERSION = 30
     const val TARGET_SDK_VERSION = 30
     const val MIN_SDK_VERSION = 24
@@ -17,7 +17,6 @@ object Versions {
     const val KOTLIN = "1.3.72"
 
     const val WIRE_TRANSLATIONS = "1.+"
-    val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
 
     //plugins
     const val ANDROID_GRADLE_PLUGIN = "3.2.1"
@@ -70,10 +69,14 @@ object Versions {
     const val COUNTLY = "20.04.2"
     const val ZOOMING = "1.1.0"
 
+    //osm
+    const val OSMDROID = "6.1.11"
+    const val OSMBONUSPACK = "6.8.0"
+
     //testing
     const val JUNIT = "4.12"
     const val MOCKITO = "3.1.0"
-    const val KLUENT = "1.14"
+    const val KLUENT = "1.59"
     const val ANDROIDX_TEST_CORE = "2.1.0"
     const val ANDROIDX_TEST_JUNIT = "1.1.1"
     const val ROBOLECTRIC = "5.0.0_r2-robolectric-1"
@@ -87,7 +90,6 @@ object BuildDependencies {
         "coroutinesAndroid" to "org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.COROUTINES}"
     ))
     val wire = WireDependencyMap(mapOf(
-        "audioNotifications" to "com.wire:audio-notifications:${Versions.WIRE_AUDIO}",
         "translations" to "com.wire:wiretranslations:${Versions.WIRE_TRANSLATIONS}"
     ))
     val androidX = AndroidXDependencyMap(mapOf(
@@ -132,9 +134,9 @@ object BuildDependencies {
     ))
     val okHttpLoggingInterceptor = "com.squareup.okhttp3:logging-interceptor:${Versions.OKHTTP}"
     val koin = KoinDependencyMap(mapOf(
-        "androidCore" to "org.koin:koin-android:${Versions.KOIN}",
-        "androidScope" to "org.koin:koin-android-scope:${Versions.KOIN}",
-        "androidViewModel" to "org.koin:koin-android-viewmodel:${Versions.KOIN}"
+        "androidCore" to "io.insert-koin:koin-android:${Versions.KOIN}",
+        "androidScope" to "io.insert-koin:koin-android-scope:${Versions.KOIN}",
+        "androidViewModel" to "io.insert-koin:koin-android-viewmodel:${Versions.KOIN}"
     ))
     val rxJava = RxJavaDependencyMap(mapOf(
         "rxKotlin" to "io.reactivex.rxjava2:rxkotlin:${Versions.RX_KOTLIN}",
@@ -153,6 +155,8 @@ object BuildDependencies {
     val zooming = "com.wire.zoom:zoomlayout:${Versions.ZOOMING}"
     val wireSignals = "com.wire:wire-signals_${LegacyDependencies.SCALA_MAJOR_VERSION}:${LegacyDependencies.WIRE_SIGNALS}"
     val wireSignalsExtensions = "com.wire:wire-signals-extensions_${LegacyDependencies.SCALA_MAJOR_VERSION}:${LegacyDependencies.WIRE_SIGNALS_EXTENSIONS}"
+    val osmdroid = "org.osmdroid:osmdroid-android:${Versions.OSMDROID}"
+    val osmbonuspack = "com.github.MKergall:osmbonuspack:${Versions.OSMBONUSPACK}"
 }
 
 object ModuleDependencies {
