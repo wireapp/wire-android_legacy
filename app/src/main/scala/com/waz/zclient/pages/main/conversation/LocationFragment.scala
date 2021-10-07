@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.pages.main.conversation
 
-import java.util._
+import java.util.Locale
 
 import android.Manifest
 import android.content.{Context, DialogInterface, Intent}
@@ -32,6 +32,7 @@ import androidx.annotation.Nullable
 import androidx.appcompat.widget.Toolbar
 import androidx.preference.PreferenceManager
 import com.waz.api.MessageContent
+import com.waz.log.BasicLogging.LogTag
 import com.waz.model.{AccentColor, ConversationData}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
@@ -43,7 +44,6 @@ import com.waz.zclient.controllers.location.ILocationController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
-import com.waz.zclient.core.logging.Logger.info
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.views.TouchRegisteringFrameLayout
@@ -60,6 +60,7 @@ import org.osmdroid.views.overlay.Marker
 
 import scala.util.Try
 import scala.util.control.Exception._
+import com.waz.zclient.log.LogUI._
 
 // FIXME: use more idiomatic scala (Option, lazy val etc.)
 class LocationFragment extends BaseFragment[LocationFragment.Container]
@@ -127,7 +128,7 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
 
   private val updateSelectedLocationBubbleRunnable = new Runnable {
     override def run(): Unit =
-      if (Option(getActivity).isDefined) {
+      if (Option(getActivity).isDefined && Option(getContainer).isDefined) {
         for { l <- selectedLocation; z <- mapView.map(_.getZoomLevelDouble.toInt)}
           setTextAddressBubble(l.name(z))
       }
@@ -147,11 +148,11 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
               adr.getCountryName
             ))
           } else {
-            info(TAG, "No locations returned by geocoder")
+            info(l"No locations returned by geocoder")
           }
         }
       } catch {
-        case e: Exception => info(TAG, s"Unable to retrieve location name: $e")
+        case e: Exception => info(l"Unable to retrieve location name: $e")
       }
       mainHandler.removeCallbacksAndMessages(null)
       mainHandler.post(updateSelectedLocationBubbleRunnable)
@@ -245,20 +246,19 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
   override def onProviderDisabled(provider: String): Unit = {}
 
   private def startLocationManagerListeningForCurrentLocation(): Unit = {
-    info(TAG, "startLocationManagerListeningForCurrentLocation")
-    locationManager.foreach { lm =>
-      if (hasLocationPermission) {
+    info(l"startLocationManagerListeningForCurrentLocation")
+    locationManager.foreach {
+      case lm if hasLocationPermission =>
         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
-      }
+      case _ =>
     }
   }
 
   private def stopLocationManagerListeningForCurrentLocation(): Unit = {
-    info(TAG, "stopLocationManagerListeningForCurrentLocation")
-    locationManager.foreach { lm =>
-      if (hasLocationPermission) {
-        lm.removeUpdates(this)
-      }
+    info(l"stopLocationManagerListeningForCurrentLocation")
+    locationManager.foreach {
+      case lm if hasLocationPermission => lm.removeUpdates(this)
+      case _ =>
     }
   }
 
@@ -324,7 +324,7 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
   override def onZoom(event: ZoomEvent): Boolean = onCameraChange()
 
   private def onCameraChange(): Boolean = {
-    info(TAG, "onCameraChange")
+    info(l"onCameraChange")
     selectedLocation = None
     mainHandler.postDelayed(new Runnable {
       override def run(): Unit = selectedLocationAddress.foreach(_.setVisible(false))
@@ -337,14 +337,14 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
   // FIXME: what's the expected behaviour?
   override def onLocationChanged(location: Location): Unit = {
     val distanceToCurrent = currentLocation.fold(0f)(location.distanceTo)
-    info(TAG, s"onLocationChanged, lat=${location.getLatitude}, lon=${location.getLongitude}, accuracy=${location.getAccuracy}, distanceToCurrent=$distanceToCurrent")
+    info(l"onLocationChanged, lat=${location.getLatitude}, lon=${location.getLongitude}, accuracy=${location.getAccuracy}, distanceToCurrent=$distanceToCurrent")
     var distanceFromCenterOfScreen = Float.MaxValue
     mapView.foreach { mv =>
       val center = mv.getMapCenter
       val distance = new Array[Float](1)
       Location.distanceBetween(center.getLatitude, center.getLongitude, location.getLatitude, location.getLongitude, distance)
       distanceFromCenterOfScreen = distance(0)
-      info(TAG, s"current location distance from map center: ${distance(0)}")
+      info(l"current location distance from map center: ${distance(0)}")
       if (currentLocation.isEmpty || distanceToCurrent != 0) {
         mv.getOverlays.clear()
         mv.getOverlays.add(returning(new Marker(mv)){ marker =>
@@ -355,7 +355,7 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
         mv.invalidate()
       }
       if (currentLocation.isEmpty && animateToCurrentLocation.isEmpty) {
-        info(TAG, "zooming in to current location")
+        info(l"zooming in to current location")
         mv.getController.setZoom(DEFAULT_MAP_ZOOM_LEVEL)
         animateToCurrentLocation = Some(true)
       }
@@ -363,7 +363,7 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
     currentLocation = Some(location)
     mapView.foreach { mv =>
       if (animateToCurrentLocation.getOrElse(false) && distanceFromCenterOfScreen > DEFAULT_MINIMUM_CAMERA_MOVEMENT) {
-        info(TAG, "moving to current location")
+        info(l"moving to current location")
         mv.getController.animateTo(new GeoPoint(location.getLatitude, location.getLongitude))
         animateToCurrentLocation = Some(false)
       }
@@ -396,8 +396,12 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
 
     def drawCircle(alphaId: Int, ringRadiusId: Int): Unit = {
       paint.setAlpha(getResources.getInteger(alphaId))
-      val radius = getResources.getDimensionPixelSize(ringRadiusId)
-      canvas.drawCircle((size / 2).toFloat, (size / 2).toFloat, radius.toFloat, paint)
+      canvas.drawCircle(
+        (size / 2).toFloat,
+        (size / 2).toFloat,
+        getResources.getDimensionPixelSize(ringRadiusId).toFloat,
+        paint
+      )
     }
 
     drawCircle(
@@ -428,25 +432,21 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
     permissions.requestPermission(
       Manifest.permission.ACCESS_FINE_LOCATION,
       new PermissionsService.PermissionsCallback {
-        override def onPermissionResult (granted: Boolean): Unit =
+        override def onPermissionResult(granted: Boolean): Unit =
           if (getActivity != null) {
             if (granted) {
               requestCurrentLocationButton.foreach(_.setVisible(true))
               updateLastKnownLocation()
-              if (locationManager.nonEmpty) {
-                startLocationManagerListeningForCurrentLocation()
-              }
+              if (locationManager.nonEmpty) startLocationManagerListeningForCurrentLocation()
               if (checkIfLocationServicesEnabled) {
                 checkIfLocationServicesEnabled = false
-                if (!isLocationServicesEnabled) {
-                  showLocationServicesDialog()
-                }
+                if (!isLocationServicesEnabled) showLocationServicesDialog()
               }
-            } else {
+            } else
               Toast.makeText(getContext, R.string.location_sharing__permission_error, Toast.LENGTH_SHORT).show()
-            }
           }
-      })
+      }
+    )
 }
 
 object LocationFragment {
@@ -454,20 +454,13 @@ object LocationFragment {
 
   case class LocationInfo(firstAddressLine: String, subLocality: String, locality: String, countryName: String) {
     def name(zoom: Int): String = {
-      info(TAG, s"Zoom level: $zoom")
-      if (zoom >= ZOOM_STREET && !StringUtils.isBlank(firstAddressLine)) {
-        firstAddressLine
-      } else if (zoom >= ZOOM_CITY && !StringUtils.isBlank(subLocality)) {
-        subLocality
-      } else if (zoom >= ZOOM_CITY && !StringUtils.isBlank(locality)) {
-        locality
-      } else {
-        countryName
-      }
+      info(l"Zoom level: $zoom")(LogTag("LocationInfo"))
+      if (zoom >= ZOOM_STREET && !StringUtils.isBlank(firstAddressLine)) firstAddressLine
+      else if (zoom >= ZOOM_CITY && !StringUtils.isBlank(subLocality)) subLocality
+      else if (zoom >= ZOOM_CITY && !StringUtils.isBlank(locality)) locality
+      else countryName
     }
   }
-
-  val TAG = "LocationFragment"
 
   // FIXME: zoom levels seem to differ between google maps & openstreetmap
   // https://wiki.openstreetmap.org/wiki/Zoom_levels
@@ -480,4 +473,5 @@ object LocationFragment {
   private val LOCATION_REQUEST_TIMEOUT_MS = 1500
 
   def newInstance(): LocationFragment = new LocationFragment
+  val TAG: String = "LocationFragment"
 }
