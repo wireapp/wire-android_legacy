@@ -3,6 +3,8 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
     google()
+    mavenCentral()
+    jcenter() // FIXME
+    maven { url = uri("https://jitpack.io") }
 }

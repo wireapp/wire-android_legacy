@@ -13,7 +13,6 @@ class KotlinDependencyMap(map: Map<String, String>) {
 }
 
 class WireDependencyMap(map: Map<String, String>) {
-    val audioNotifications: String by map
     val translations: String by map
     val avs: String by map
 }

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- From: file:/Users/jenkins/workspace/audio-notifications/build/aar/src/main/res/values/buildinfo.xml -->
+    <eat-comment />
+
+    <string name="audio_notifications_version">1.209</string>
+    <!-- From: file:/Users/jenkins/workspace/audio-notifications/build/aar/src/main/res/values/sounds.xml -->
+    <eat-comment />
+
+    <string name="sound_event_alert">alert</string>
+    <string name="sound_event_call_drop">call_drop</string>
+    <string name="sound_event_camera">camera</string>
+    <string name="sound_event_first_message">first_message</string>
+    <string name="sound_event_hotping_from_me">hotping_from_me</string>
+    <string name="sound_event_hotping_from_them">hotping_from_them</string>
+    <string name="sound_event_new_message">new_message</string>
+    <string name="sound_event_new_message_gcm">new_message_gcm</string>
+    <string name="sound_event_ping_from_me">ping_from_me</string>
+    <string name="sound_event_ping_from_them">ping_from_them</string>
+    <string name="sound_event_pull_voice">pull_voice</string>
+    <string name="sound_event_ready_to_talk">ready_to_talk</string>
+    <string name="sound_event_ringing_from_me">ringing_from_me</string>
+    <string name="sound_event_ringing_from_me_video">ringing_from_me_video</string>
+    <string name="sound_event_ringing_from_them">ringing_from_them</string>
+    <string name="sound_event_ringing_from_them_incall">ringing_from_them_incall</string>
+    <string name="sound_event_talk">talk</string>
+    <string name="sound_event_talk_later">talk_later</string>
+
+</resources>

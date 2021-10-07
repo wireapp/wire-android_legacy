@@ -109,7 +109,7 @@ object MsgPart {
       case SOUNDCLOUD => WebLink
       case SPOTIFY => WebLink
       case YOUTUBE => YouTube
-      case GOOGLE_MAPS | TWITTER => WebLink
+      case MAPS | TWITTER => WebLink
     }
   }
 

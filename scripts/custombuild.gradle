@@ -1,0 +1,80 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import org.ajoberstar.grgit.Grgit
+import org.ajoberstar.grgit.Credentials
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name "ajoberstar-backup"
+            url "https://ajoberstar.github.io/bintray-backup/"
+        }
+    }
+    dependencies {
+        classpath "org.ajoberstar.grgit:grgit-core:${Versions.GRGIT}"
+    }
+}
+
+// Will check out custom repo, if any, and load its configuration, merging it on top of the default configuration
+def prepareCustomizationEnvironment() {
+    def properties = new Properties()
+    def localProperties = project.rootProject.file("local.properties")
+
+    if (localProperties.exists()) {
+        properties.load(localProperties.newDataInputStream())
+    }
+
+    def jsonReader = new JsonSlurper()
+    def wireConfigFile = new File("$rootDir/default.json")
+    def defaultConfig = jsonReader.parseText(wireConfigFile.text)
+
+    def customRepository = System.getenv("CUSTOM_REPOSITORY") ?: properties.getProperty("CUSTOM_REPOSITORY") ?: ''
+    if (customRepository.isEmpty()) {
+        throw new GradleException('No custom repo')
+    }
+
+    def customFolder = System.getenv("CUSTOM_FOLDER") ?: properties.getProperty("CUSTOM_FOLDER") ?: ''
+    if (customFolder.isEmpty()) {
+        throw new GradleException('Custom repo specified, but not custom folder')
+    }
+
+    def clientFolder = System.getenv("CLIENT_FOLDER") ?: properties.getProperty("CLIENT_FOLDER") ?: ''
+    if (clientFolder.isEmpty()) {
+        throw new GradleException('Custom repo specified, but not client folder')
+    }
+
+    def gitHubToken = System.getenv("GITHUB_API_TOKEN") ?: properties.getProperty("GITHUB_API_TOKEN") ?: ''
+    if (gitHubToken.isEmpty()) {
+        throw new GradleException('Custom repo specified, but no GitHub API token provided')
+    }
+
+    def customDirPath = customCheckoutDir + '/' + customFolder + '/' + clientFolder
+    def customConfigFile = new File("$customDirPath/custom.json")
+
+    // clean up
+    if (file(customCheckoutDir).exists()) {
+        delete file(customCheckoutDir)
+    }
+
+    def credentials = new Credentials(gitHubToken, '')
+    Grgit.clone(dir: customCheckoutDir, uri: customRepository, credentials: credentials)
+    project.logger.quiet("Using custom repository $customRepository -> folder $customFolder")
+
+    def customConfig = jsonReader.parseText(customConfigFile.text)
+    project.logger.quiet("Loaded custom build configuration for keys: ${customConfig.keySet()}")
+
+    customConfig.keySet().forEach { key ->
+        defaultConfig[key] = customConfig[key]
+    }
+
+    def buildtimeConfiguration = new BuildtimeConfiguration(defaultConfig, customDirPath)
+
+    project.logger.quiet("Build time configuration is: ${JsonOutput.prettyPrint(JsonOutput.toJson(buildtimeConfiguration.configuration))}")
+
+    return buildtimeConfiguration
+}
+
+ext {
+    buildtimeConfiguration = prepareCustomizationEnvironment()
+}

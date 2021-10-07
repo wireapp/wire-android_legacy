@@ -23,7 +23,6 @@ import android.content.Context
 import android.text.TextUtils
 import android.view.{MotionEvent, View}
 import android.widget.Toast
-import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
 import com.waz.api.NetworkMode
 import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.content.UserPreferences.AreSelfDeletingMessagesEnabled
@@ -369,12 +368,8 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext) 
         // this is not a synchronous operation, but we are not interested in waiting
         askedForLocationPermissionPreference.update(true)
 
-        val googleAPI = GoogleApiAvailability.getInstance
-        if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
-          KeyboardUtils.hideKeyboard(activity)
-          locationController.showShareLocation()
-        }
-        else showToast(R.string.location_sharing__missing_play_services)
+        KeyboardUtils.hideKeyboard(activity)
+        locationController.showShareLocation()
       }
     }
   }
