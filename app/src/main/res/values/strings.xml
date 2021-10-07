@@ -1667,13 +1667,13 @@
     <string name="self_deleting_messages_change_info_dialog_message_disabled">Sending of self deleting messages is disabled.</string>
 
     <!-- Conference Calling Restriction feature config -->
-    <string name="conference_calling_restriction_dialog_title">Upgrade to enterprise</string>
+    <string name="conference_calling_restriction_dialog_title">Upgrade to Enterprise</string>
     <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to features such as starting conferences and more.
     &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
     <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
     <string name="conference_calling_restriction_dialog_negative_button">CANCEL</string>
 
-    <string name="upgraded_plan_dialog_title">Wire enterprise</string>
+    <string name="upgraded_plan_dialog_title">Wire Enterprise</string>
     <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
         &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
 
