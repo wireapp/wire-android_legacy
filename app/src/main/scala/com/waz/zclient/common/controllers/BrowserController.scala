@@ -58,7 +58,7 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
       location.getLongitude,
       location.getZoom,
       location.getName
-    ) foreach { i => if (Try(context.startActivity(i)).isSuccess) return }
+    ).find(intent => Try(context.startActivity(intent)).isSuccess)
 
   def openPlayStoreListing(): Unit =
     openUrl(getString(R.string.url_play_store_listing))

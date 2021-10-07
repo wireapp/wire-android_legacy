@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.pages.main.conversation
 
+import java.util._
+
 import android.Manifest
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.BitmapDrawable
@@ -26,15 +28,18 @@ import android.os.{Bundle, Handler, HandlerThread, Looper}
 import android.provider.Settings
 import android.view.{LayoutInflater, MotionEvent, View, ViewGroup}
 import android.widget.{LinearLayout, TextView, Toast}
+import androidx.annotation.Nullable
 import androidx.appcompat.widget.Toolbar
 import androidx.preference.PreferenceManager
-
 import com.waz.api.MessageContent
 import com.waz.model.{AccentColor, ConversationData}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.ContributionEvent
-import com.waz.zclient.common.controllers.global.{AccentColorCallback, AccentColorController}
+import com.waz.threading.Threading
+import com.waz.utils.returning
+import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.controllers.location.ILocationController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
@@ -42,10 +47,8 @@ import com.waz.zclient.core.logging.Logger.info
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.ui.views.TouchRegisteringFrameLayout
-import com.waz.zclient.utils.{Callback, StringUtils, ViewUtils}
-import com.waz.zclient.{BaseActivity, BuildConfig, OnBackPressedListener, R}
-import com.wire.signals.EventContext
-
+import com.waz.zclient.utils.{Callback, RichView, StringUtils, ViewUtils}
+import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 import org.osmdroid.bonuspack.location.GeocoderNominatim
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.{MapListener, ScrollEvent, ZoomEvent}
@@ -55,47 +58,77 @@ import org.osmdroid.views.CustomZoomButtonsController.Visibility
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
-import java.util._
+import scala.util.Try
 import scala.util.control.Exception._
 
 // FIXME: use more idiomatic scala (Option, lazy val etc.)
 class LocationFragment extends BaseFragment[LocationFragment.Container]
+  with FragmentHelper
   with LocationListener
   with MapListener
   with TouchRegisteringFrameLayout.TouchCallback
   with OnBackPressedListener
-  with View.OnClickListener {
+  with View.OnClickListener { self =>
 
+  private implicit def context: Context = getActivity
   import LocationFragment._
 
+  private lazy val conversationController = inject[ConversationController]
+  private lazy val locationController = inject[ILocationController]
+  private lazy val userPreferencesController  = inject[IUserPreferencesController]
+  private lazy val permissions = inject[PermissionsService]
+  private lazy val accentColorsController = inject[AccentColorController]
+
+  private lazy val mapView = returning(view[MapView](R.id.mv_map)) { vh =>
+    vh.foreach { mv =>
+      mv.setTileSource(TileSourceFactory.MAPNIK)
+      mv.addMapListener(this)
+      mv.getController.setZoom(INIT_MAP_ZOOM_LEVEL)
+      mv.setMultiTouchControls(true)
+      mv.getZoomController.setVisibility(Visibility.SHOW_AND_FADEOUT) // FIXME
+    }
+  }
+
+  private lazy val requestCurrentLocationButton = returning(view[TextView](R.id.gtv__location__current__button)) { vh =>
+    vh.foreach(_.setOnClickListener(self))
+  }
+  private lazy val selectedLocationAddress = view[TextView](R.id.ttv__location_address)
+  private lazy val selectedLocationBackground = view[View](R.id.iv__selected_location__background)
+  private lazy val selectedLocationDetails = returning(view[LinearLayout](R.id.ll_selected_location_details)) { vh =>
+    vh.foreach(_.setVisible(false))
+  }
+  private lazy val selectedLocationPin = view[GlyphTextView](R.id.gtv__selected_location__pin)
+  private lazy val sendSelectedLocationButton = returning(view[TextView](R.id.ttv__location_send_button)) { vh =>
+    vh.foreach(_.setOnClickListener(self))
+  }
+  private lazy val toolbar = returning(view[Toolbar](R.id.t_location_toolbar)) { vh =>
+    vh.foreach(_.setNavigationOnClickListener(new View.OnClickListener {
+      override def onClick(v: View): Unit =
+        if (Option(getActivity).isDefined) locationController.hideShareLocation(null)
+    }))
+  }
+  private lazy val toolbarTitle = view[TextView](R.id.tv__location_toolbar__title)
+  private lazy val touchRegisteringFrameLayout = returning(view[TouchRegisteringFrameLayout](R.id.trfl_location_touch_registerer)) { vh =>
+    vh.foreach(_.setTouchCallback(self))
+  }
+
+  private lazy val mainHandler = new Handler(Looper.myLooper)
+  private lazy val handlerThread = returning(new HandlerThread("Background handler")) { _.start() }
+  private lazy val backgroundHandler = new Handler(handlerThread.getLooper)
+  private lazy val geocoder = new GeocoderNominatim(Locale.getDefault, getContext.getPackageName)
+  private lazy val locationManager =
+    Try(getActivity.getSystemService(Context.LOCATION_SERVICE).asInstanceOf[LocationManager]).toOption
+
   private var currentLocation: Option[Location] = None
-  private var locationManager: Option[LocationManager] = None
-  private var map: Option[MapView] = None
   private var selectedLocation: Option[LocationInfo] = None
-
-  private var requestCurrentLocationButton: TextView = null
-  private var selectedLocationAddress: TextView = null
-  private var selectedLocationBackground: View = null
-  private var selectedLocationDetails: LinearLayout = null
-  private var selectedLocationPin: GlyphTextView = null
-  private var sendSelectedLocationButton: TextView = null
-  private var toolbar: Toolbar = null
-  private var toolbarTitle: TextView = null
-  private var touchRegisteringFrameLayout: TouchRegisteringFrameLayout = null
-
-  private var backgroundHandler: Handler = null
-  private var geocoder: GeocoderNominatim = null
-  private var handlerThread: HandlerThread = null
-  private var mainHandler: Handler = null
-
   private var animateToCurrentLocation: Option[Boolean] = None
   private var checkIfLocationServicesEnabled = false
   private var accentColor = 0
 
   private val updateSelectedLocationBubbleRunnable = new Runnable {
     override def run(): Unit =
-      if (getActivity != null && getContainer != null) {
-        for { l <- selectedLocation; z <- map.map(_.getZoomLevelDouble.toInt) }
+      if (Option(getActivity).isDefined) {
+        for { l <- selectedLocation; z <- mapView.map(_.getZoomLevelDouble.toInt)}
           setTextAddressBubble(l.name(z))
       }
   }
@@ -103,8 +136,7 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
   private val retrieveSelectedLocationNameRunnable = new Runnable {
     override def run(): Unit = {
       try {
-        map foreach { m =>
-          val center = m.getMapCenter
+        mapView.map(_.getMapCenter).foreach { center =>
           val addresses = geocoder.getFromLocation(center.getLatitude, center.getLongitude, 1)
           if (addresses != null && addresses.size > 0) {
             val adr = addresses.get(0)
@@ -129,104 +161,70 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
   private val callback: Callback[ConversationChange] = new Callback[ConversationChange] {
     override def callback(change: ConversationChange): Unit =
       if (change.toConvId != null) {
-        inject(classOf[ConversationController]).withConvLoaded(change.toConvId, new Callback[ConversationData] {
+        conversationController.withConvLoaded(change.toConvId, new Callback[ConversationData] {
           override def callback(conversationData: ConversationData): Unit =
-            toolbarTitle.setText(conversationData.getName())
+            toolbarTitle.foreach(_.setText(conversationData.getName()))
         })
       }
   }
 
-  override def onCreate(savedInstanceState: Bundle): Unit = {
+  override def onCreate(@Nullable savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
     val ctx = getActivity.getApplicationContext
     Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
 
-    locationManager = Some(getActivity.getSystemService(Context.LOCATION_SERVICE).asInstanceOf[LocationManager])
-    mainHandler = new Handler(Looper.myLooper)
-    handlerThread = new HandlerThread("Background handler")
-    handlerThread.start()
-    backgroundHandler = new Handler(handlerThread.getLooper)
-    geocoder = new GeocoderNominatim(Locale.getDefault, getContext.getPackageName)
+    locationManager
+    mainHandler
+    handlerThread
+    backgroundHandler
+    geocoder
 
     // retrieve the accent color to be used for the paint
     accentColor = AccentColor.defaultColor.color
-    getContext.asInstanceOf[BaseActivity].injectJava(classOf[AccentColorController])
-      .accentColorForJava(new AccentColorCallback {
-        override def color(color: AccentColor): Unit = {
-          selectedLocationPin.setTextColor(color.color)
-          accentColor = color.color
-        }
-      }, EventContext.Implicits.global)
+    accentColorsController.accentColor.head.foreach { color => accentColor = color.color }(Threading.Background)
   }
 
-  override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View = {
-    val view = inflater.inflate(R.layout.fragment_location, viewGroup, false)
+  override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
+    inflater.inflate(R.layout.fragment_location, viewGroup, false)
 
-    toolbar = ViewUtils.getView(view, R.id.t_location_toolbar)
-    toolbar.setNavigationOnClickListener(new View.OnClickListener {
-      override def onClick(v: View): Unit =
-        if (getActivity != null) {
-          getControllerFactory.getLocationController.hideShareLocation(null)
-        }
-    })
+  override def onViewCreated(view: View, @Nullable savedInstanceState: Bundle): Unit = {
+    super.onViewCreated(view, savedInstanceState)
 
-    toolbarTitle = ViewUtils.getView(view, R.id.tv__location_toolbar__title)
-
-    selectedLocationBackground = ViewUtils.getView(view, R.id.iv__selected_location__background)
-    selectedLocationPin = ViewUtils.getView(view, R.id.gtv__selected_location__pin)
-
-    selectedLocationDetails = ViewUtils.getView(view, R.id.ll_selected_location_details)
-    selectedLocationDetails.setVisibility(View.INVISIBLE)
-
-    touchRegisteringFrameLayout = ViewUtils.getView(view, R.id.trfl_location_touch_registerer)
-    touchRegisteringFrameLayout.setTouchCallback(this)
-
-    requestCurrentLocationButton = ViewUtils.getView(view, R.id.gtv__location__current__button)
-    requestCurrentLocationButton.setOnClickListener(this)
-
-    sendSelectedLocationButton = ViewUtils.getView(view, R.id.ttv__location_send_button)
-    sendSelectedLocationButton.setOnClickListener(this)
-
-    selectedLocationAddress = ViewUtils.getView(view, R.id.ttv__location_address)
-
-    map = Some(ViewUtils.getView(view, R.id.mv_map))
-    map foreach { m =>
-      m.setTileSource(TileSourceFactory.MAPNIK)
-      m.addMapListener(this)
-      m.getController.setZoom(INIT_MAP_ZOOM_LEVEL)
-      m.setMultiTouchControls(true)
-      m.getZoomController.setVisibility(Visibility.SHOW_AND_FADEOUT) // FIXME
-    }
-
-    view
+    toolbar
+    toolbarTitle
+    selectedLocationBackground
+    selectedLocationPin
+    selectedLocationDetails
+    touchRegisteringFrameLayout
+    requestCurrentLocationButton
+    sendSelectedLocationButton
+    selectedLocationAddress
+    mapView
   }
 
   override def onStart(): Unit = {
     super.onStart()
-    if (hasLocationPermission()) {
+    if (hasLocationPermission) {
       updateLastKnownLocation()
-      if (!isLocationServicesEnabled) {
-        showLocationServicesDialog()
-      }
-      requestCurrentLocationButton.setVisibility(View.VISIBLE)
+      if (!isLocationServicesEnabled) showLocationServicesDialog()
+      requestCurrentLocationButton.foreach(_.setVisible(true))
     } else {
       requestLocationPermission()
       checkIfLocationServicesEnabled = true
-      requestCurrentLocationButton.setVisibility(View.GONE)
+      requestCurrentLocationButton.foreach(_.setVisible(false))
     }
-    inject(classOf[ConversationController]).addConvChangedCallback(callback)
+    conversationController.addConvChangedCallback(callback)
   }
 
   override def onResume(): Unit = {
     super.onResume()
-    map.foreach(_.onResume())
+    mapView.foreach(_.onResume())
     inject(classOf[ConversationController]).withCurrentConvName(new Callback[String] {
-      override def callback(convName: String): Unit =
-        toolbarTitle.setText(convName)
+      override def callback(convName: String): Unit = toolbarTitle.foreach(_.setText(convName))
     })
-    if (!getControllerFactory.getUserPreferencesController.hasPerformedAction(IUserPreferencesController.SEND_LOCATION_MESSAGE)) {
-      getControllerFactory.getUserPreferencesController.setPerformedAction(IUserPreferencesController.SEND_LOCATION_MESSAGE)
+    if (!userPreferencesController.hasPerformedAction(IUserPreferencesController.SEND_LOCATION_MESSAGE)) {
+      userPreferencesController.setPerformedAction(IUserPreferencesController.SEND_LOCATION_MESSAGE)
       Toast.makeText(getContext, R.string.location_sharing__tip, Toast.LENGTH_LONG).show()
     }
     startLocationManagerListeningForCurrentLocation()
@@ -235,11 +233,11 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
   override def onPause(): Unit = {
     stopLocationManagerListeningForCurrentLocation()
     super.onPause()
-    map.foreach(_.onPause())
+    mapView.foreach(_.onPause())
   }
 
   override def onStop(): Unit = {
-    inject(classOf[ConversationController]).removeConvChangedCallback(callback)
+    conversationController.removeConvChangedCallback(callback)
     super.onStop()
   }
 
@@ -248,8 +246,8 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
 
   private def startLocationManagerListeningForCurrentLocation(): Unit = {
     info(TAG, "startLocationManagerListeningForCurrentLocation")
-    locationManager foreach { lm =>
-      if (hasLocationPermission()) {
+    locationManager.foreach { lm =>
+      if (hasLocationPermission) {
         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
       }
     }
@@ -257,8 +255,8 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
 
   private def stopLocationManagerListeningForCurrentLocation(): Unit = {
     info(TAG, "stopLocationManagerListeningForCurrentLocation")
-    locationManager foreach { lm =>
-      if (hasLocationPermission()) {
+    locationManager.foreach { lm =>
+      if (hasLocationPermission) {
         lm.removeUpdates(this)
       }
     }
@@ -266,8 +264,8 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
 
   // FIXME: NETWORK_PROVIDER does not seem to be used
   // We are creating a local locationManager here, as it's not sure we already have one
-  private def isLocationServicesEnabled(): Boolean =
-    hasLocationPermission() && Option(getActivity.getSystemService(Context.LOCATION_SERVICE)
+  private def isLocationServicesEnabled: Boolean =
+    hasLocationPermission && Option(getActivity.getSystemService(Context.LOCATION_SERVICE)
                                       .asInstanceOf[LocationManager]).fold(false) { lm =>
       failAsValue(classOf[Exception])(false)(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) ||
       failAsValue(classOf[Exception])(false)(lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
@@ -295,32 +293,24 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
     view.getId match {
       case R.id.gtv__location__current__button =>
         animateToCurrentLocation = Some(true)
-        if (hasLocationPermission()) {
-          updateLastKnownLocation()
-        } else {
-          requestLocationPermission()
-        }
+        if (hasLocationPermission) updateLastKnownLocation() else requestLocationPermission()
       case R.id.ttv__location_send_button =>
-        val location = map.fold({
-          if (!BuildConfig.DEBUG) {
-            return
-          }
+        val location = mapView.fold(
           new MessageContent.Location(0f, 0f, "", 0)
-        }) { m =>
-          val center = m.getMapCenter
-          val zoom = m.getZoomLevelDouble.toInt
+        ) { mv =>
+          val center = mv.getMapCenter
+          val zoom = mv.getZoomLevelDouble.toInt
           // NB: longitude before latitude in this API
           new MessageContent.Location(
             center.getLongitude.toFloat,
             center.getLatitude.toFloat,
-            selectedLocation.map(_.name(zoom)) getOrElse "",
+            selectedLocation.fold("")(_.name(zoom)),
             zoom
           )
         }
-        getControllerFactory.getLocationController.hideShareLocation(location)
-        // TODO: use lazy val when in scala
+        locationController.hideShareLocation(location)
         ZMessaging.currentGlobal.trackingService.contribution(
-          new ContributionEvent.Action("location"),
+          ContributionEvent.Action.Location,
           Option.empty
         )
       case _ =>
@@ -337,7 +327,7 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
     info(TAG, "onCameraChange")
     selectedLocation = None
     mainHandler.postDelayed(new Runnable {
-      override def run(): Unit = selectedLocationAddress.setVisibility(View.INVISIBLE)
+      override def run(): Unit = selectedLocationAddress.foreach(_.setVisible(false))
     }, LOCATION_REQUEST_TIMEOUT_MS)
     backgroundHandler.removeCallbacksAndMessages(null)
     backgroundHandler.post(retrieveSelectedLocationNameRunnable)
@@ -349,89 +339,99 @@ class LocationFragment extends BaseFragment[LocationFragment.Container]
     val distanceToCurrent = currentLocation.fold(0f)(location.distanceTo)
     info(TAG, s"onLocationChanged, lat=${location.getLatitude}, lon=${location.getLongitude}, accuracy=${location.getAccuracy}, distanceToCurrent=$distanceToCurrent")
     var distanceFromCenterOfScreen = Float.MaxValue
-    map foreach { m =>
-      val center = m.getMapCenter
+    mapView.foreach { mv =>
+      val center = mv.getMapCenter
       val distance = new Array[Float](1)
       Location.distanceBetween(center.getLatitude, center.getLongitude, location.getLatitude, location.getLongitude, distance)
       distanceFromCenterOfScreen = distance(0)
       info(TAG, s"current location distance from map center: ${distance(0)}")
       if (currentLocation.isEmpty || distanceToCurrent != 0) {
-        m.getOverlays.clear()
-        val marker = new Marker(m)
-        marker.setPosition(new GeoPoint(location.getLatitude, location.getLongitude))
-        marker.setIcon(new BitmapDrawable(getResources, getMarker))
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-        m.getOverlays.add(marker)
-        m.invalidate()
+        mv.getOverlays.clear()
+        mv.getOverlays.add(returning(new Marker(mv)){ marker =>
+          marker.setPosition(new GeoPoint(location.getLatitude, location.getLongitude))
+          marker.setIcon(new BitmapDrawable(getResources, getMarker))
+          marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+        })
+        mv.invalidate()
       }
       if (currentLocation.isEmpty && animateToCurrentLocation.isEmpty) {
         info(TAG, "zooming in to current location")
-        m.getController.setZoom(DEFAULT_MAP_ZOOM_LEVEL)
+        mv.getController.setZoom(DEFAULT_MAP_ZOOM_LEVEL)
         animateToCurrentLocation = Some(true)
       }
     }
     currentLocation = Some(location)
-    map foreach { m =>
+    mapView.foreach { mv =>
       if (animateToCurrentLocation.getOrElse(false) && distanceFromCenterOfScreen > DEFAULT_MINIMUM_CAMERA_MOVEMENT) {
         info(TAG, "moving to current location")
-        m.getController.animateTo(new GeoPoint(location.getLatitude, location.getLongitude))
+        mv.getController.animateTo(new GeoPoint(location.getLatitude, location.getLongitude))
         animateToCurrentLocation = Some(false)
       }
     }
   }
 
-  private def setTextAddressBubble(name: String): Unit =
-    if (StringUtils.isBlank(name)) {
-      selectedLocationDetails.setVisibility(View.INVISIBLE)
-      selectedLocationBackground.setVisibility(View.VISIBLE)
-      selectedLocationPin.setVisibility(View.VISIBLE)
-    } else {
-      info(TAG, s"Selected location: $name")
-      selectedLocationAddress.setText(name)
-      selectedLocationAddress.setVisibility(View.VISIBLE)
-      selectedLocationDetails.requestLayout()
-      selectedLocationDetails.setVisibility(View.VISIBLE)
-      selectedLocationBackground.setVisibility(View.INVISIBLE)
-      selectedLocationPin.setVisibility(View.INVISIBLE)
+  private def setTextAddressBubble(name: String): Unit = {
+    val isBlank = StringUtils.isBlank(name)
+    selectedLocationBackground.foreach(_.setVisible(isBlank))
+    selectedLocationDetails.foreach { sld =>
+      if (!isBlank) sld.requestLayout()
+      sld.setVisible(!isBlank)
     }
+    selectedLocationPin.foreach(_.setVisible(isBlank))
+    selectedLocationAddress.foreach { sla =>
+      sla.setText(name)
+      sla.setVisible(!isBlank)
+    }
+  }
 
   private lazy val getMarker: Bitmap = {
     val size = getResources.getDimensionPixelSize(R.dimen.share_location__current_location_marker__size)
-    val outerCircleRadius = getResources.getDimensionPixelSize(R.dimen.share_location__current_location_marker__outer_ring_radius)
-    val midCircleRadius = getResources.getDimensionPixelSize(R.dimen.share_location__current_location_marker__mid_ring_radius)
-    val innerCircleRadius = getResources.getDimensionPixelSize(R.dimen.share_location__current_location_marker__inner_ring_radius)
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = new Canvas(bitmap)
-    val paint = new Paint
-    paint.setColor(accentColor)
-    paint.setAntiAlias(true)
-    paint.setStyle(Paint.Style.FILL)
-    paint.setAlpha(getResources.getInteger(R.integer.share_location__current_location_marker__outer_ring_alpha))
-    canvas.drawCircle((size / 2).toFloat, (size / 2).toFloat, outerCircleRadius.toFloat, paint)
-    paint.setAlpha(getResources.getInteger(R.integer.share_location__current_location_marker__mid_ring_alpha))
-    canvas.drawCircle((size / 2).toFloat, (size / 2).toFloat, midCircleRadius.toFloat, paint)
-    paint.setAlpha(getResources.getInteger(R.integer.share_location__current_location_marker__inner_ring_alpha))
-    canvas.drawCircle((size / 2).toFloat, (size / 2).toFloat, innerCircleRadius.toFloat, paint)
+    val paint = returning(new Paint) { p =>
+      p.setColor(accentColor)
+      p.setAntiAlias(true)
+      p.setStyle(Paint.Style.FILL)
+    }
+
+    def drawCircle(alphaId: Int, ringRadiusId: Int): Unit = {
+      paint.setAlpha(getResources.getInteger(alphaId))
+      val radius = getResources.getDimensionPixelSize(ringRadiusId)
+      canvas.drawCircle((size / 2).toFloat, (size / 2).toFloat, radius.toFloat, paint)
+    }
+
+    drawCircle(
+      R.integer.share_location__current_location_marker__outer_ring_alpha,
+      R.dimen.share_location__current_location_marker__outer_ring_radius
+    )
+    drawCircle(
+      R.integer.share_location__current_location_marker__mid_ring_alpha,
+      R.dimen.share_location__current_location_marker__mid_ring_radius
+    )
+    drawCircle(
+      R.integer.share_location__current_location_marker__inner_ring_alpha,
+      R.dimen.share_location__current_location_marker__inner_ring_radius
+    )
+
     bitmap
   }
 
-  override def onBackPressed(): Boolean =
-    getControllerFactory != null && !getControllerFactory.isTornDown && {
-      getControllerFactory.getLocationController.hideShareLocation(null)
-      true
-    }
+  override def onBackPressed(): Boolean = {
+    locationController.hideShareLocation(null)
+    true
+  }
 
-  private def hasLocationPermission(): Boolean =
-    inject(classOf[PermissionsService]).checkPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+  private def hasLocationPermission: Boolean =
+    permissions.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION)
 
   private def requestLocationPermission(): Unit =
-    inject(classOf[PermissionsService]).requestPermission(
+    permissions.requestPermission(
       Manifest.permission.ACCESS_FINE_LOCATION,
       new PermissionsService.PermissionsCallback {
         override def onPermissionResult (granted: Boolean): Unit =
           if (getActivity != null) {
             if (granted) {
-              requestCurrentLocationButton.setVisibility(View.VISIBLE)
+              requestCurrentLocationButton.foreach(_.setVisible(true))
               updateLastKnownLocation()
               if (locationManager.nonEmpty) {
                 startLocationManagerListeningForCurrentLocation()
