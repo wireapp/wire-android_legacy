@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.DiffUtil
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
+import com.waz.zclient.conversation.ConversationController
 import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
@@ -34,7 +35,20 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
     with DerivedLogTag {
 
   private lazy val listController = inject[MessagesController]
-  var convInfo: MessageAdapterData = MessageAdapterData.Empty
+  private var lastRead = RemoteInstant.Epoch
+
+  inject[ConversationController].currentConv.map(_.lastRead).filter(_ != lastRead).foreach { time =>
+      lastRead = time
+      notifyDataSetChanged()
+  }
+
+  private var convInfo: MessageAdapterData = MessageAdapterData.Empty
+
+  def setConvInfo(convInfo: MessageAdapterData): Unit = {
+    this.convInfo = convInfo
+    notifyDataSetChanged()
+  }
+
   var listDim: Dim2 = Dim2(0, 0)
   val onScrollRequested: SourceStream[(MessageData, Int)] = EventStream[(MessageData, Int)]()
 
@@ -44,7 +58,7 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder =
         MessageViewHolder(MessageView(parent, viewType), this)
 
-  override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit = {
+  override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit =
     Option(getItem(position)).foreach { m =>
 
       val prev = if ((position + 1) < getItemCount) Option(getItem(position + 1)) else None
@@ -53,7 +67,7 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
       val isSelf = m.message.userId == convInfo.selfId
       val isLast = position == 0
       val isLastSelf = listController.isLastSelf(m.message.id)
-      val isFirstUnread = prev.exists(_.message.time == convInfo.lastRead)
+      val isFirstUnread = prev.exists(_.message.time == lastRead)
 
       val opts = MsgBindOptions(position, isSelf, isLast, isLastSelf, isFirstUnread = isFirstUnread,
         listDim, convInfo.isGroup, convInfo.teamId, convInfo.canHaveLink, Option(convInfo.selfId))
@@ -66,18 +80,11 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
           set
       }
     }
-  }
 
   override def getItemViewType(position: Int): Int =
     Option(getItem(position)).map(m => MessageView.viewType(m.message.msgType)).getOrElse(1)
 
-  def unreadIsLast: Boolean = getItemCount > 0 && Option(getItem(0)).exists(_.message.time == convInfo.lastRead)
-
-  def unreadIndex: Int = (for {
-    list <- Option(getCurrentList)
-    ds <- Option(list.getDataSource)
-    pos <- if(convInfo.lastRead.isEpoch) None else ds.asInstanceOf[MessageDataSource].positionForMessage(convInfo.lastRead)
-  } yield pos).getOrElse(-1)
+  def unreadIsLast: Boolean = getItemCount > 0 && Option(getItem(0)).exists(_.message.time == lastRead)
 
   def positionForMessage(mId: MessageId): Option[Int] = for {
     list <- Option(getCurrentList)
