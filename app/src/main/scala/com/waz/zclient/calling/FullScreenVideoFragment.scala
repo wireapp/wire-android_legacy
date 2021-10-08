@@ -21,7 +21,6 @@ import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, Toast}
 import androidx.fragment.app.Fragment
-import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading._
 import com.waz.utils.returning
