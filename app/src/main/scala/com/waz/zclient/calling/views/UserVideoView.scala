@@ -29,7 +29,7 @@ import com.waz.model.Picture
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.utils.returning
-import com.waz.zclient.{BuildConfig, R, ViewHelper}
+import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
@@ -70,8 +70,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
   protected val participantInfo: Signal[Option[CallParticipantInfo]] =
     for {
       isGroup <- callController.isGroupCall
-      infos   <- if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) callController.participantsInfo
-                 else { if (isGroup) callController.participantsInfo else Signal.const(Vector.empty)}
+      infos   <- callController.participantsInfo
     } yield infos.find(_.id == participant.userId)
 
   protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
@@ -82,31 +81,17 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     }
   }
 
-  if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS) {
-    Signal.zip(participantInfo, callController.isCallEstablished).onUi {
-      case (Some(p), true) if (p.picture.isDefined) => setProfilePicture(p.picture.get)
-      case _ =>
-    }
+  Signal.zip(participantInfo, callController.isCallEstablished).onUi {
+    case (Some(p), true) if (p.picture.isDefined) => setProfilePicture(p.picture.get)
+    case _                                        =>
   }
 
-  if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
-    callController.controlsVisible.map { !_ }.onUi(participantInfoCardView.setVisible)
-  else  Signal.zip(
-    callController.isGroupCall,
-    callController.controlsVisible,
-    callController.showTopSpeakers,
-    callController.allParticipants.map(_.size > 2)
-  ).map {
-    case (true, false, true, _)     => View.VISIBLE
-    case (true, false, false, true) => View.VISIBLE
-    case _                          => View.GONE
-  }.onUi(participantInfoCardView.setVisibility)
+  callController.controlsVisible.map { !_ }.onUi(participantInfoCardView.setVisible)
 
   def unMutedParticipant(participant: Participant) = participant.copy(muted = false)
 
-  private lazy val allVideoStates = if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
+  private lazy val allVideoStates =
     callController.allVideoReceiveStates.map(_.getOrElse(unMutedParticipant(participant), VideoState.Unknown))
-  else callController.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown))
 
   protected def registerHandler(view: View): Unit = {
     allVideoStates.onUi {
