@@ -34,7 +34,7 @@ import com.waz.zclient.paintcode.ForwardNavigationIcon
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getColor, getDrawable, getString}
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
+import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.threading.Threading._
 
 class CallParticipantsAdapter(implicit context: Context, eventContext: EventContext, inj: Injector)
@@ -135,10 +135,7 @@ case class ShowAllButtonViewHolder(view: View) extends ViewHolder(view) {
   private lazy val nameView = view.findViewById[TypefaceTextView](R.id.name_text)
 
   def bind(numOfParticipants: Int, theme: Theme): Unit = {
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
-      nameView.setText(getString(R.string.all_participants, numOfParticipants.toString))
-    else
-      nameView.setText(getString(R.string.show_all_participants, numOfParticipants.toString))
+    nameView.setText(getString(R.string.all_participants, numOfParticipants.toString))
     setTheme(theme)
   }
 

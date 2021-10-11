@@ -583,7 +583,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         val convName = Name("conv")
         val conv = ConversationData(team = Some(teamId), name = Some(convName))
         val syncId = SyncId()
-
+        val domain = "chala.wire.link"
         val self = UserData.withName(selfUserId, "self").copy(domain = Some(domain))
         val user1 = UserData("user1").copy(domain = Some(domain))
         val user2 = UserData("user2").copy(domain = Some(domain))
