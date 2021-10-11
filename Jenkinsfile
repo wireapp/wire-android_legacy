@@ -229,6 +229,8 @@ echo $ANDROID_NDK_HOME'''
                             last_started = env.STAGE_NAME
                         }
                         s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${params.ClientVersion}${params.PatchVersion}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/wire-prod-${usedBuildType.toLowerCase()}-${params.ClientVersion}${params.PatchVersion}.apk")
+                        wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
+                                                            "\nLast 5 commits:\n```\n$lastCommits\n```"
                     }
                 }
             }
@@ -248,10 +250,6 @@ echo $ANDROID_NDK_HOME'''
             }
             wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                     "\nLast 5 commits:\n```\n$lastCommits\n```"
-            if(prod_client_build) {
-                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
-                                    "\nLast 5 commits:\n```\n$lastCommits\n```"
-            }
         }
         aborted {
             wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ ABORTED ($last_started) "
