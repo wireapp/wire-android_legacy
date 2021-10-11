@@ -27,11 +27,10 @@ import com.waz.threading.Threading._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
 import com.waz.zclient.common.controllers.ThemeController
-import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils.getColor
 import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.{BuildConfig, FragmentHelper, R}
+import com.waz.zclient.{FragmentHelper, R}
 import com.wire.signals.{Signal, Subscription}
 
 class ControlsFragment extends FragmentHelper {
@@ -57,12 +56,7 @@ class ControlsFragment extends FragmentHelper {
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
 
-
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS && BuildConfig.CALLING_UI_BUTTONS) getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
-    else Signal.zip(controller.isVideoCall, themeController.currentTheme).onUi {
-      case (false, Theme.Light) => getView.setBackgroundColor(getColor(R.color.white))
-      case _                    => getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
-    }
+   getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
 
     speakersButton.foreach { button =>
       button.onClick {
@@ -93,7 +87,6 @@ class ControlsFragment extends FragmentHelper {
       }
     }
 
-    if (BuildConfig.LARGE_VIDEO_CONFERENCE_CALLS)
       Signal.zip(
         controller.isCallEstablished,
         controller.isGroupCall,
@@ -102,17 +95,6 @@ class ControlsFragment extends FragmentHelper {
       ).onUi {
         case (true, true, false, true) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
         case _                         => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
-      }
-    else
-      Signal.zip(
-        controller.isCallEstablished,
-        controller.isGroupCall,
-        controller.isVideoCall,
-        controller.isFullScreenEnabled,
-        controller.allParticipants.map(_.size > 2)
-      ).onUi {
-        case (true, true, true, false, true) => speakersLayoutContainer.foreach(_.setVisibility(View.VISIBLE))
-        case _                               => speakersLayoutContainer.foreach(_.setVisibility(View.INVISIBLE))
       }
 
     getView.onClick {
