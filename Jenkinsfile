@@ -57,12 +57,14 @@ pipeline {
         stage('Setup environment preconditions') {
             steps {
                 script {
+                    def currentDir = new File('.').absolutePath
                     last_started = env.STAGE_NAME
                     usedBuildType = defineBuildType()
                     usedFlavor = defineFlavor()
                     usedClientVersion = defineClientVersion()
                 }
-                sh "echo \"Loading config file: ${params.ConfigFileId}\""
+                sh "echo "Current Dir: ${currentDir}"
+                sh "echo Loading config file: ${params.ConfigFileId}"
                 configFileProvider([
                         configFile( fileId: "${params.ConfigFileId}", variable: 'GROOVY_FILE_THAT_SETS_VARIABLES')
                 ]) {
