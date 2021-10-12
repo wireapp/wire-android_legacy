@@ -30,7 +30,7 @@ def defineBuildType() {
 }
 
 def defineClientVersion() {
-    String fileContents = new File('buildSrc/src/main/kotlin/Dependencies.kt').getText('UTF-8')
+    String fileContents = new File('./buildSrc/src/main/kotlin/Dependencies.kt').getText('UTF-8')
     return (fileContents =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
 }
 
@@ -62,7 +62,6 @@ pipeline {
                     usedFlavor = defineFlavor()
                     //usedClientVersion = defineClientVersion()
                 }
-                sh "ls -la"
                 sh "echo Loading config file: ${params.ConfigFileId}"
                 configFileProvider([
                         configFile( fileId: "${params.ConfigFileId}", variable: 'GROOVY_FILE_THAT_SETS_VARIABLES')
