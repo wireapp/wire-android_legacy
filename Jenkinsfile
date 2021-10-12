@@ -29,11 +29,6 @@ def defineBuildType() {
     return "Debug"
 }
 
-def defineClientVersion() {
-    String fileContents = new File('./buildSrc/src/main/kotlin/Dependencies.kt').getText('UTF-8')
-    return (fileContents =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
-}
-
 pipeline {
     agent {
         docker {
@@ -60,11 +55,11 @@ pipeline {
                     last_started = env.STAGE_NAME
                     usedBuildType = defineBuildType()
                     usedFlavor = defineFlavor()
-                    //usedClientVersion = defineClientVersion()
 
                     //get the usedClientVersion
                     def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
-                    println(data)
+                    usedClientVersion = ( data =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
+                    println(usedClientVersion)
                 }
                 sh "echo Loading config file: ${params.ConfigFileId}"
                 configFileProvider([
