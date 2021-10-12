@@ -1,8 +1,7 @@
 def defineFlavor() {
     //check if the pipeline has the custom flavor env variable set
-    def overwrite = params.Flavor
-    if(overwrite != '') {
-        return overwrite
+    if(params.Flavor != '') {
+        return params.Flavor
     }
 
     def branchName = env.BRANCH_NAME
@@ -17,9 +16,8 @@ def defineFlavor() {
 }
 
 def defineBuildType() {
-    def overwrite = params.BuildType
-    if(overwrite != '') {
-        return overwrite
+    if(params.BuildType != '') {
+        return params.BuildType
     }
 
     if(env.BRANCH_NAME == "release") {
@@ -27,6 +25,14 @@ def defineBuildType() {
     }
 
     return "Debug"
+}
+
+def definePatchVersion() {
+    if(params.PatchVersion != '') {
+        return params.PatchVersion
+    }
+
+    return env.BUILD_NUMBER
 }
 
 pipeline {
@@ -42,7 +48,7 @@ pipeline {
         string(name: 'ConfigFileId', defaultValue: 'wire-android-config', description: 'Name or ID of the Groovy file (under Jenkins -> Managed Files) that sets environment variables')
         string(name: 'BuildType', defaultValue: '', description: 'Build Type for the Client')
         string(name: 'Flavor', defaultValue: '', description: 'Product Flavor to build')
-        string(name: 'PatchVersion', defaultValue: "99999", description: 'PatchVersion for the build E.G. X.Y.99999')
+        string(name: 'PatchVersion', defaultValue: '', description: 'PatchVersion for the build E.G. X.Y.99999')
         booleanParam(name: 'AppUnitTests', defaultValue: true, description: 'Run all app unit tests for this build')
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
         booleanParam(name: 'ZMessageUnitTests', defaultValue: true, description: 'Run all zmessaging unit tests for this build')
@@ -60,6 +66,9 @@ pipeline {
                     def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
                     usedClientVersion = ( data =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
                     println("Fetched ClientVersion from Dependencies.kt:"+usedClientVersion)
+
+                    //used patchVersion
+                    usedPatchVersion = definePatchVersion()
                 }
                 sh "echo Loading config file: ${params.ConfigFileId}"
                 configFileProvider([
@@ -194,7 +203,7 @@ echo $ANDROID_NDK_HOME'''
                         script {
                             last_started = env.STAGE_NAME
                         }
-                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${params.PatchVersion}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
+                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
                     }
                 }
                 stage('Prod Client') {
@@ -205,7 +214,7 @@ echo $ANDROID_NDK_HOME'''
                         script {
                             last_started = env.STAGE_NAME
                         }
-                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${params.PatchVersion}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
+                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
                     }
                 }
             }
@@ -219,7 +228,7 @@ echo $ANDROID_NDK_HOME'''
                         script {
                             last_started = env.STAGE_NAME
                         }
-                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${params.PatchVersion}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${params.PatchVersion}.apk")
+                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk")
                     }
                 }
                 stage('Prod Client') {
@@ -230,7 +239,7 @@ echo $ANDROID_NDK_HOME'''
                         script {
                             last_started = env.STAGE_NAME
                         }
-                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${params.PatchVersion}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${params.PatchVersion}.apk")
+                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk")
                         wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                             "\nLast 5 commits:\n```\n$lastCommits\n```"
                     }
