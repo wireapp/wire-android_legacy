@@ -57,7 +57,7 @@ pipeline {
         stage('Setup environment preconditions') {
             steps {
                 script {
-                    def currentDir = new File('.').absolutePath
+                    currentDir = new File('.').absolutePath
                     last_started = env.STAGE_NAME
                     usedBuildType = defineBuildType()
                     usedFlavor = defineFlavor()
