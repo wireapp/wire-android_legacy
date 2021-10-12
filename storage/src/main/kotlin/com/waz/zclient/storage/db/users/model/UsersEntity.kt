@@ -57,6 +57,9 @@ data class UsersEntity(
     @ColumnInfo(name = "conversation")
     val conversation: String?,
 
+    @ColumnInfo(name = "conversation_domain")
+    val conversationDomain: String?,
+
     @ColumnInfo(name = "relation", defaultValue = "")
     val relation: String,
 

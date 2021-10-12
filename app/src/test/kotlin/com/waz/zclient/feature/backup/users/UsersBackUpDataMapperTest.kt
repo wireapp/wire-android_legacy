@@ -34,6 +34,7 @@ class UsersBackUpDataMapperTest : UnitTest() {
             connectionTimestamp = data.connectionTimestamp,
             connectionMessage = data.connectionMessage,
             conversation = data.conversation,
+            conversationDomain = data.conversationDomain,
             relation = data.relation,
             timestamp = data.timestamp,
             verified = data.verified,
@@ -63,6 +64,7 @@ class UsersBackUpDataMapperTest : UnitTest() {
         assertEquals(data.connectionTimestamp, model.connectionTimestamp)
         assertEquals(data.connectionMessage, model.connectionMessage)
         assertEquals(data.conversation, model.conversation)
+        assertEquals(data.conversationDomain, model.conversationDomain)
         assertEquals(data.relation, model.relation)
         assertEquals(data.timestamp, model.timestamp)
         assertEquals(data.verified, model.verified)
@@ -96,6 +98,7 @@ class UsersBackUpDataMapperTest : UnitTest() {
             connectionTimestamp = data.connectionTimestamp,
             connectionMessage = data.connectionMessage,
             conversation = data.conversation,
+            conversationDomain = data.conversationDomain,
             relation = data.relation,
             timestamp = data.timestamp,
             verified = data.verified,
@@ -127,6 +130,7 @@ class UsersBackUpDataMapperTest : UnitTest() {
         assertEquals(data.connectionTimestamp, entity.connectionTimestamp)
         assertEquals(data.connectionMessage, entity.connectionMessage)
         assertEquals(data.conversation, entity.conversation)
+        assertEquals(data.conversationDomain, entity.conversationDomain)
         assertEquals(data.relation, entity.relation)
         assertEquals(data.timestamp, entity.timestamp)
         assertEquals(data.verified, entity.verified)

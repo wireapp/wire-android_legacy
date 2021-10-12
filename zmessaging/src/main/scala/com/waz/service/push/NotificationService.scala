@@ -134,9 +134,9 @@ class NotificationServiceImpl(selfUserId:      UserId,
 
   override val connectionNotificationEventStage = EventScheduler.Stage[Event]({ (_, events) =>
     val toShow = events.collect {
-      case UserConnectionEvent(_, _, _, userId, msg, ConnectionStatus.PendingFromOther, time, _) =>
+      case UserConnectionEvent(_, _, _, userId, _, msg, ConnectionStatus.PendingFromOther, time, _) =>
         NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time)
-      case UserConnectionEvent(_, _, _, userId, _, ConnectionStatus.Accepted, time, _) =>
+      case UserConnectionEvent(_, _, _, userId, _, _, ConnectionStatus.Accepted, time, _) =>
         NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time)
     }
 

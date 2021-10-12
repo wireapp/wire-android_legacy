@@ -33,6 +33,7 @@ import com.waz.utils.returning
 import org.scalatest.Inside
 
 import scala.concurrent.Future
+import com.waz.zms.BuildConfig
 
 class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
   import com.waz.threading.Threading.Implicits.Background
@@ -52,12 +53,13 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
   val rConvId        = RConvId("remote-conv-id")
   val selfUserId     = UserId("selfUserId")
   val otherUserId    = UserId("otherUserId")
+  val domain         = "anta.wire.link"
 
   feature("Event handling") {
 
     scenario("Handle connection events updates the last event time of the conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, Accepted, RemoteInstant.ofEpochMilli(1))
+      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, None, Accepted, RemoteInstant.ofEpochMilli(1))
       val updatedConv = getUpdatedConversation(service, event)
 
       updatedConv.lastEventTime should be(event.lastUpdated)
@@ -65,7 +67,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
     scenario("Handling an accepted connection event should return a one to one conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, Accepted, RemoteInstant.ofEpochMilli(1))
+      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, None, Accepted, RemoteInstant.ofEpochMilli(1))
       val updatedConv = getUpdatedConversation(service, event)
 
       updatedConv.convType should be(ConversationType.OneToOne)
@@ -73,7 +75,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
     scenario("Handling a pending from other connection event should return a wait for connection conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, PendingFromOther, RemoteInstant.ofEpochMilli(1))
+      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, None, PendingFromOther, RemoteInstant.ofEpochMilli(1))
 
       (messagesService.addConnectRequestMessage _).expects(*, *, *, *, *, *).once().returns(Future.successful(MessageData.Empty))
 
@@ -84,7 +86,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
     scenario("Handling a pending from user connection event should return a incoming conversation") {
       val service = initConnectionService()
-      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, PendingFromUser, RemoteInstant.ofEpochMilli(1))
+      val event = UserConnectionEvent(rConvId, None, selfUserId, otherUserId, None, None, PendingFromUser, RemoteInstant.ofEpochMilli(1))
       val updatedConv = getUpdatedConversation(service, event)
 
       updatedConv.convType should be(WaitForConnection)
@@ -98,8 +100,15 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       (users.updateConnectionStatus _).expects(user.id, expectedNewStatus, None, None).anyNumberOfTimes().returning(
         Future.successful(Some(user.copy(connection = expectedNewStatus)))
       )
-      (sync.postConnection _).expects(user.id, *, *).anyNumberOfTimes().returning(Future.successful(SyncId()))
-      (sync.postConnectionStatus _).expects(user.id, expectedNewStatus).anyNumberOfTimes().returning(Future.successful(SyncId()))
+      (users.qualifiedId _).expects(user.id).anyNumberOfTimes().returning(Future.successful(QualifiedId(user.id, domain)))
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val qId = QualifiedId(user.id, domain)
+        (sync.postQualifiedConnection _).expects(qId).anyNumberOfTimes().returning(Future.successful(SyncId()))
+        (sync.postQualifiedConnectionStatus _).expects(qId, expectedNewStatus).anyNumberOfTimes().returning(Future.successful(SyncId()))
+      } else {
+        (sync.postConnection _).expects(user.id, *, *).anyNumberOfTimes().returning(Future.successful(SyncId()))
+        (sync.postConnectionStatus _).expects(user.id, expectedNewStatus).anyNumberOfTimes().returning(Future.successful(SyncId()))
+      }
 
       (usersStorage.listAll _).expects(*).anyNumberOfTimes().onCall { ids: Traversable[UserId] =>
         Future.successful(
@@ -109,7 +118,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
         )
       }
 
-      (convsStorage.getByRemoteIds2 _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
+      (convsStorage.getMapByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
       (convsStorage.updateLocalIds _).expects(Map.empty[ConvId, ConvId]).anyNumberOfTimes().returning(Future.successful(Set.empty))
       (convsStorage.updateOrCreateAll2 _).expects(*, *).anyNumberOfTimes().onCall { (keys: Iterable[ConvId], updater: (ConvId, Option[ConversationData]) => ConversationData) =>
         Future.successful(keys.map(id => updater(id, None)).toSet)
@@ -157,14 +166,19 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     }
 
     scenario("cancel the connection") {
-      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
+      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"), domain = Some(domain))
       val pendingFromUser = user.copy(connection = PendingFromUser)
       (users.updateUserData _).expects(user.id, *).anyNumberOfTimes().onCall { (userId: UserId, updater: UserData => UserData) =>
         Future.successful(Some((pendingFromUser, updater(pendingFromUser))))
       }
 
       val service = setup(user, PendingFromUser)
-      (sync.postConnectionStatus _).expects(user.id, Cancelled).once().returning(Future.successful(SyncId()))
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val qId = QualifiedId(user.id, domain)
+        (sync.postQualifiedConnectionStatus _).expects(qId, Cancelled).once().returning(Future.successful(SyncId()))
+      } else {
+        (sync.postConnectionStatus _).expects(user.id, Cancelled).once().returning(Future.successful(SyncId()))
+      }
       (convs.setConversationHidden _).expects(ConvId(user.id.str), true).once().returning(Future.successful(None))
       val combined = for {
         _         <- service.connectToUser(user.id, "", user.name)
@@ -186,7 +200,12 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
       val service = setup(user, PendingFromUser)
       (users.updateConnectionStatus _).expects(user.id, Ignored, *, *).once().returning(Future.successful(Some(user.copy(connection = Ignored))))
-      (sync.postConnectionStatus _).expects(user.id, Ignored).once().returning(Future.successful(SyncId()))
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val qId = QualifiedId(user.id, domain)
+        (sync.postQualifiedConnectionStatus _).expects(qId, Ignored).once().returning(Future.successful(SyncId()))
+      } else {
+        (sync.postConnectionStatus _).expects(user.id, Ignored).once().returning(Future.successful(SyncId()))
+      }
       (convs.hideIncomingConversation _).expects(user.id).once().returning(Future.successful(None))
 
       inside(result(service.ignoreConnection(user.id))) { case Some(resUser) =>
@@ -196,7 +215,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     }
 
     scenario("block the connection") {
-      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
+      val user = UserData(UserId("user-id"), domain = Some(domain), name = Name("name"), searchKey = SearchKey.simple("name"))
       val blockedUser = user.copy(connection = Blocked)
       (users.updateUserData _).expects(user.id, *).anyNumberOfTimes().onCall { (userId: UserId, updater: UserData => UserData) =>
         Future.successful(Some((blockedUser, updater(blockedUser))))
@@ -205,7 +224,12 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       val service = setup(user, Accepted)
       (users.updateConnectionStatus _).expects(user.id, Blocked, *, *).once().returning(Future.successful(Some(blockedUser)))
       (convs.setConversationHidden _).expects(ConvId(user.id.str), true).once().returning(Future.successful(None))
-      (sync.postConnectionStatus _).expects(user.id, Blocked).once().returning(Future.successful(SyncId()))
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val qId = QualifiedId(user.id, domain)
+        (sync.postQualifiedConnectionStatus _).expects(qId, Blocked).once().returning(Future.successful(SyncId()))
+      } else {
+        (sync.postConnectionStatus _).expects(user.id, Blocked).once().returning(Future.successful(SyncId()))
+      }
       val combined = for {
         _         <- service.acceptConnection(user.id)
         Some(res) <- service.blockConnection(user.id)
@@ -218,7 +242,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     }
 
     scenario("unblock the connection") {
-      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
+      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"), domain = Some(domain))
       val blockedUser = user.copy(connection = Blocked)
       (users.updateUserData _).expects(user.id, *).anyNumberOfTimes().onCall { (userId: UserId, updater: UserData => UserData) =>
         Future.successful(Some((blockedUser, updater(blockedUser))))
@@ -227,7 +251,12 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       val service = setup(user, Accepted)
       (users.updateConnectionStatus _).expects(user.id, Blocked, *, *).once().returning(Future.successful(Some(blockedUser)))
       (convs.setConversationHidden _).expects(ConvId(user.id.str), true).once().returning(Future.successful(None))
-      (sync.postConnectionStatus _).expects(user.id, Blocked).once().returning(Future.successful(SyncId()))
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val qId = QualifiedId(user.id, domain)
+        (sync.postQualifiedConnectionStatus _).expects(qId, Blocked).once().returning(Future.successful(SyncId()))
+      } else {
+        (sync.postConnectionStatus _).expects(user.id, Blocked).once().returning(Future.successful(SyncId()))
+      }
       (sync.syncConversations _).expects(Set(ConvId(user.id.str)), *).anyNumberOfTimes().returning(Future.successful(SyncId()))
       val combined = for {
         _    <- service.acceptConnection(user.id)
@@ -247,7 +276,8 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     scenario("handle response after sending connect request sync job completes - ensure that remoteId of previously created conversation is updated properly") {
 
       val remoteId = RConvId("remote_conv")
-      var otherUser = UserData("other-user").copy()
+      var otherUser = UserData("other-user").copy(domain = Some(domain))
+      val qRemoteId = RConvQualifiedId(remoteId, domain)
 
       val tempRemoteId = RConvId(otherUser.id.str)
       val convId = ConvId(otherUser.id.str)
@@ -263,7 +293,11 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       }
 
       (users.syncUsers _).expects(Set(otherUser.id), *).returning(Future.successful(Option(SyncId())))
-      (convsStorage.getByRemoteIds2 _).expects(Set(remoteId)).twice().returning(Future.successful(Map.empty))
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        (convsStorage.getMapByQRemoteIds _).expects(Set(qRemoteId)).anyNumberOfTimes().returning(Future.successful(Map.empty))
+      } else {
+        (convsStorage.getMapByRemoteIds _).expects(Set(remoteId)).anyNumberOfTimes().returning(Future.successful(Map.empty))
+      }
       (convsStorage.updateLocalIds _).expects(Map.empty[ConvId, ConvId]).returning(Future.successful(Set.empty))
       (convsStorage.updateOrCreateAll2 _).expects(*, *).onCall { (keys: Iterable[ConvId], updater: ((ConvId, Option[ConversationData]) => ConversationData)) =>
         Future.successful(keys.map {
@@ -286,7 +320,11 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
 
       val service = createBlankService()
-      await(service.handleUserConnectionEvents(Seq(UserConnectionEvent(remoteId, None, selfUserId, otherUser.id, Some("Hi!"), PendingFromUser, RemoteInstant(clock.instant()), None))))
+      await {
+        service.handleUserConnectionEvents(Seq(
+          UserConnectionEvent(remoteId, Some(domain), selfUserId, otherUser.id, Some(domain), Some("Hi!"), PendingFromUser, RemoteInstant(clock.instant()), None)
+        ))
+      }
 
       previousConv.remoteId shouldEqual remoteId
 
@@ -319,7 +357,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       )
     }
 
-    (convsStorage.getByRemoteIds2 _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
+    (convsStorage.getMapByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
     (convsStorage.updateLocalIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
     (convsStorage.updateOrCreateAll2 _).expects(*, *).onCall { (keys: Iterable[ConvId], updater: ((ConvId, Option[ConversationData]) => ConversationData)) =>
       Future.successful(keys.map(id => updater(id, None)).toSet)

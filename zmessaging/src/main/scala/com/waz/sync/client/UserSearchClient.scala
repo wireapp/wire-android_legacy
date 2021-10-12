@@ -47,9 +47,9 @@ class UserSearchClientImpl(implicit
     verbose(l"search($query, $limit)")
     val params =
       if (BuildConfig.FEDERATION_USER_DISCOVERY && query.hasDomain)
-        queryParameters("q" -> query.query, "domain" -> query.domain, "size" -> limit)
+        List("q" -> query.query, "domain" -> query.domain, "size" -> limit.toString)
       else
-        queryParameters("q" -> query.query, "size" -> limit)
+        List("q" -> query.query, "size" -> limit.toString)
     Request
       .Get(relativePath = SearchPath, queryParameters = params)
       .withResultType[UserSearchResponse]

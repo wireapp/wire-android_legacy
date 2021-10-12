@@ -335,7 +335,7 @@ object SyncRequest {
 
   final case class PostConnection(userId: UserId, name: Name, message: String) extends RequestForUser(Cmd.PostConnection)
 
-  final case class PostQualifiedConnection(qualifiedId: QualifiedId, name: Name, message: String)
+  final case class PostQualifiedConnection(qualifiedId: QualifiedId)
     extends RequestForQualifiedUser(Cmd.PostQualifiedConnection)
 
   final case class PostConnectionStatus(userId: UserId, status: Option[ConnectionStatus])
@@ -501,8 +501,9 @@ object SyncRequest {
           case Cmd.PostConvJoin              => PostConvJoin(convId, users, 'conversation_role)
           case Cmd.PostQualifiedConvJoin     => PostQualifiedConvJoin(convId, decodeQualifiedIds('users).toSet, 'conversation_role)
           case Cmd.PostConvLeave             => PostConvLeave(convId, userId)
+          case Cmd.PostQualifiedConvLeave    => PostQualifiedConvLeave(convId, qualifiedId)
           case Cmd.PostConnection            => PostConnection(userId, 'name, 'message)
-          case Cmd.PostQualifiedConnection   => PostQualifiedConnection(qualifiedId, 'name, 'message)
+          case Cmd.PostQualifiedConnection   => PostQualifiedConnection(qualifiedId)
           case Cmd.DeletePushToken           => DeletePushToken(decodeId[PushToken]('token))
           case Cmd.SyncRichMedia             => SyncRichMedia(messageId)
           case Cmd.SyncSelf                  => SyncSelf
@@ -625,10 +626,8 @@ object SyncRequest {
           o.put("name", name)
           o.put("message", message)
 
-        case PostQualifiedConnection(qId, name, message) =>
+        case PostQualifiedConnection(qId) =>
           o.put("qualifiedId", QualifiedId.Encoder(qId))
-          o.put("name", name)
-          o.put("message", message)
 
         case PostLastRead(_, time) =>
           o.put("time", time.toEpochMilli)

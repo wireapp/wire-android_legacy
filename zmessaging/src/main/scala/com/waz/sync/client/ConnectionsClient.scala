@@ -40,6 +40,7 @@ trait ConnectionsClient {
   def loadConnections(start: Option[UserId] = None, pageSize: Int = PageSize): ErrorOrResponse[Seq[UserConnectionEvent]]
   def loadConnection(id: UserId): ErrorOrResponse[UserConnectionEvent]
   def createConnection(user: UserId, name: Name, message: String): ErrorOrResponse[UserConnectionEvent]
+  def createConnection(qId: QualifiedId): ErrorOrResponse[UserConnectionEvent]
   def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]]
 }
 
@@ -93,6 +94,12 @@ class ConnectionsClientImpl(implicit
       .executeSafe
   }
 
+  override def createConnection(qId: QualifiedId): ErrorOrResponse[UserConnectionEvent] =
+    Request.Post(relativePath = qualifiedConnectionsPath(qId), body = "")
+      .withResultType[UserConnectionEvent]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+
   override def updateConnection(user: UserId, status: ConnectionStatus): ErrorOrResponse[Option[UserConnectionEvent]] = {
     val jsonData = Json("status" -> status.code)
     Request.Put(relativePath = s"$ConnectionsPath/${user.str}", body = jsonData)
@@ -105,6 +112,9 @@ class ConnectionsClientImpl(implicit
 object ConnectionsClient extends DerivedLogTag {
   val ConnectionsPath = "/connections"
   val PageSize = 100
+
+  def qualifiedConnectionsPath(qId: QualifiedId): String =
+    s"$ConnectionsPath/${qId.domain}/${qId.id}"
 
   object ConnectionResponseExtractor extends DerivedLogTag {
     def unapply(resp: ResponseContent): Option[UserConnectionEvent] = resp match {

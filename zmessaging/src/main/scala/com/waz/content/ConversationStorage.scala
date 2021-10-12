@@ -37,7 +37,8 @@ trait ConversationStorage extends CachedStorage[ConvId, ConversationData] {
   def setLegalHoldEnabledStatus(convId: ConvId): Future[Option[(ConversationData, ConversationData)]]
   def getByRemoteIds(remoteId: Traversable[RConvId]): Future[Seq[ConvId]]
   def getByRemoteId(remoteId: RConvId): Future[Option[ConversationData]]
-  def getByRemoteIds2(remoteIds: Set[RConvId]): Future[Map[RConvId, ConversationData]]
+  def getMapByRemoteIds(remoteIds: Set[RConvId]): Future[Map[RConvId, ConversationData]]
+  def getMapByQRemoteIds(remoteIds: Set[RConvQualifiedId]): Future[Map[RConvQualifiedId, ConversationData]]
 
   def updateLocalId(oldId: ConvId, newId: ConvId): Future[Option[ConversationData]]
   def updateLocalIds(update: Map[ConvId, ConvId]): Future[Set[ConversationData]]
@@ -89,17 +90,22 @@ final class ConversationStorageImpl(storage: ZmsDatabase)
   }
 
   override def getByRemoteIds(remoteIds: Traversable[RConvId]): Future[Seq[ConvId]] =
-    getByRemoteIds2(remoteIds.toSet).map { convs =>
+    getMapByRemoteIds(remoteIds.toSet).map { convs =>
       remoteIds.flatMap(rId => convs.get(rId).map(_.id)).toSeq
     }
 
-  override def getByRemoteIds2(remoteIds: Set[RConvId]): Future[Map[RConvId, ConversationData]] = init.flatMap { _ =>
+  override def getMapByRemoteIds(remoteIds: Set[RConvId]): Future[Map[RConvId, ConversationData]] = init.flatMap { _ =>
     findByRemoteIds(remoteIds).map { convs =>
       remoteIds.flatMap(rId => convs.find(_.remoteId == rId)).map(c => c.remoteId -> c).toMap
     }
   }
 
-  override final def values: Future[Vector[ConversationData]] = init.flatMap { _ => contents.head.map(_.values.toVector)  }
+  override def getMapByQRemoteIds(remoteIds: Set[RConvQualifiedId]): Future[Map[RConvQualifiedId, ConversationData]] =
+    findByRemoteIds(remoteIds.map(_.id)).map { convs =>
+      remoteIds.flatMap(rId => convs.find(_.qualifiedId.contains(rId)).map(rId -> _)).toMap
+    }
+
+  override def values: Future[Vector[ConversationData]] = init.flatMap { _ => contents.head.map(_.values.toVector)  }
 
   def updateLocalId(oldId: ConvId, newId: ConvId) =
     updateLocalIds(Map(oldId -> newId)).map(_.headOption)
