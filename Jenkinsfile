@@ -63,7 +63,7 @@ pipeline {
                     usedFlavor = defineFlavor()
                     usedClientVersion = defineClientVersion()
                 }
-                sh "echo "Current Dir: ${currentDir}"
+                sh "echo Current Dir: ${currentDir}"
                 sh "echo Loading config file: ${params.ConfigFileId}"
                 configFileProvider([
                         configFile( fileId: "${params.ConfigFileId}", variable: 'GROOVY_FILE_THAT_SETS_VARIABLES')
