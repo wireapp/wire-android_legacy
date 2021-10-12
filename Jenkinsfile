@@ -62,18 +62,14 @@ pipeline {
     }
 
     stages {
-        stage('Setup environment preconditions') {
+        stage('pipeline preconditions') {
             steps {
                 script {
                     last_started = env.STAGE_NAME
                     usedBuildType = defineBuildType()
                     usedFlavor = defineFlavor()
-
-                    //get the usedClientVersion
                     usedClientVersion = defineClientVersion()
-
-                    //used patchVersion
-                    usedPatchVersion = definePatchVersion()
+                    env.PATCH_VERSION = definePatchVersion()
                 }
                 sh "echo Loading config file: ${params.ConfigFileId}"
                 configFileProvider([
@@ -86,7 +82,7 @@ pipeline {
             }
         }
 
-        stage('prepare repository') {
+        stage('repository setup') {
             steps {
                 script {
                     last_started = env.STAGE_NAME
@@ -208,7 +204,7 @@ echo $ANDROID_NDK_HOME'''
                         script {
                             last_started = env.STAGE_NAME
                         }
-                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
+                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
                     }
                 }
                 stage('Prod Client') {
@@ -219,7 +215,7 @@ echo $ANDROID_NDK_HOME'''
                         script {
                             last_started = env.STAGE_NAME
                         }
-                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
+                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
                     }
                 }
             }
@@ -233,7 +229,7 @@ echo $ANDROID_NDK_HOME'''
                         script {
                             last_started = env.STAGE_NAME
                         }
-                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk")
+                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk")
                     }
                 }
                 stage('Prod Client') {
@@ -244,7 +240,7 @@ echo $ANDROID_NDK_HOME'''
                         script {
                             last_started = env.STAGE_NAME
                         }
-                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${usedPatchVersion}.apk")
+                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk")
                         wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                             "\nLast 5 commits:\n```\n$lastCommits\n```"
                     }
