@@ -76,7 +76,7 @@ pipeline {
             steps {
                 script {
                     last_started = env.STAGE_NAME
-                    currentBuild.displayName = "Wire Android ${usedFlavor}${usedBuildType}"
+                    currentBuild.displayName = "${usedFlavor}${usedBuildType}"
                     currentBuild.description = "Version [${usedClientVersion}] | Branch [${env.BRANCH_NAME}] | ASZ [${AppUnitTests},${StorageUnitTests},${ZMessageUnitTests}]"
                 }
                 configFileProvider([
