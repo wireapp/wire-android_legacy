@@ -301,16 +301,16 @@ object MessageView extends DerivedLogTag {
 
   // Message properties calculated while binding, may not be directly related to message state,
   // should not be cached in message view as those can be valid only while set method is called
-  case class MsgBindOptions(position: Int,
-                            isSelf: Boolean,
-                            isLast: Boolean,
-                            isLastSelf: Boolean, // last self message in conv
-                            isFirstUnread: Boolean,
-                            listDimensions: Dim2,
-                            isGroup: Boolean,
-                            teamId: Option[TeamId],
-                            canHaveLink: Boolean,
-                            selfId: Option[UserId])
+  final case class MsgBindOptions(position: Int,
+                                  isSelf: Boolean,
+                                  isLast: Boolean,
+                                  isLastSelf: Boolean, // last self message in conv
+                                  isFirstUnread: Boolean,
+                                  listDimensions: Dim2,
+                                  isGroup: Boolean,
+                                  teamId: Option[TeamId],
+                                  canHaveLink: Boolean,
+                                  selfId: Option[UserId])
 }
 
 
