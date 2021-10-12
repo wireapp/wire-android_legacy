@@ -49,16 +49,17 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.language.postfixOps
-
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
 import com.wire.signals.ext.ClockSignal
+
+import scala.concurrent.Future
 
 class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]],
                           maxParticipants: Option[Int] = None,
                           showPeopleOnly:  Boolean = false,
                           showArrow:       Boolean = true,
-                          createSubtitle:  Option[(UserData, Boolean) => String] = None
+                          createSubtitle:  Option[(UserData, Boolean) => Future[String]] = None
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import ParticipantsAdapter._
@@ -371,7 +372,7 @@ object ParticipantsAdapter {
 
     def bind(participant:    ParticipantData,
              lastRow:        Boolean,
-             createSubtitle: Option[(UserData, Boolean) => String],
+             createSubtitle: Option[(UserData, Boolean) => Future[String]],
              showArrow:      Boolean): Unit = {
       if (participant.isSelf) {
         view.showArrow(false)
@@ -497,7 +498,7 @@ object ParticipantsAdapter {
 
 }
 
-final class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle: Option[UserData => String] = None)
+final class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle: Option[UserData => Future[String]] = None)
                                 (implicit context: Context, injector: Injector, eventContext: EventContext)
   extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle.map(f => { (u: UserData, _: Boolean) => f(u) })) {
   import ParticipantsAdapter._

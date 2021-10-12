@@ -76,10 +76,10 @@ final case class UserData(override val id:       UserId,
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
   lazy val qualifiedId: Option[QualifiedId] = domain.map(d => QualifiedId(id, d))
-  lazy val displayHandle: Option[String] = (handle, domain) match {
-    case (Some(h), Some(d)) if h.nonEmpty && BuildConfig.FEDERATION_USER_DISCOVERY => Some(s"${h.withSymbol}@$d")
-    case (Some(h), None) if h.nonEmpty => Some(h.withSymbol)
-    case _ => None
+  def displayHandle(currentDomain: Option[String]): String = (handle, domain, currentDomain) match {
+    case (Some(h), Some(d), Some(cd)) if h.nonEmpty && BuildConfig.FEDERATION_USER_DISCOVERY && d != cd => s"${h.withSymbol}@$d"
+    case (Some(h), _, _) if h.nonEmpty => h.withSymbol
+    case _ => ""
   }
 
   def updated(user: UserInfo): UserData = updated(user, withSearchKey = true, permissions = permissions)

@@ -45,7 +45,7 @@ allprojects {
 }
 
 ext {
-    federationUserDiscovery = false
+    federationUserDiscovery = true
     conferenceCallingRestriction = true
 }
 

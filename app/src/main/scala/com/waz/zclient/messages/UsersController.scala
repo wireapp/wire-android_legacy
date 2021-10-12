@@ -31,6 +31,7 @@ import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 
@@ -66,6 +67,22 @@ class UsersController(implicit injector: Injector, context: Context)
     case _ =>
       userService.flatMap(_.userNames.map(_.getOrElse(id, DefaultDeletedName)).map(Other(_)))
   }
+
+  def displayHandle(id: UserId): Future[String] = {
+    import Threading.Implicits.Background
+    for {
+      service    <- userService.head
+      Some(user) <- service.findUser(id)
+      handle     <- displayHandle(user)
+    } yield handle
+  }
+
+  def displayHandle(user: UserData): Future[String] =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      selfUser.head.map(self => user.displayHandle(self.domain))(Threading.Background)
+    } else {
+      Future.successful(user.displayHandle(None))
+    }
 
   def syncUserAndCheckIfDeleted(userId: UserId): Future[(Option[UserData], Option[UserData])] = {
     import Threading.Implicits.Background

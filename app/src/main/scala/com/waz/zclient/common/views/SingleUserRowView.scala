@@ -47,6 +47,8 @@ import com.waz.zclient.{R, ViewHelper}
 import com.wire.signals.{EventStream, Signal, SourceStream}
 import org.threeten.bp.Instant
 
+import scala.concurrent.Future
+
 class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   extends RelativeLayout(context, attrs, style) with ViewHelper with ThemedView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -195,7 +197,8 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   def setUserData(userData:       UserData,
-                  createSubtitle: (UserData, Boolean) => String = SingleUserRowView.defaultSubtitle): Unit = {
+                  createSubtitle: (UserData, Boolean) => Future[String] = defaultSubtitle): Unit = {
+    import Threading.Implicits.Ui
     setTitle(userData.name, userData.isSelf)
     setVerified(userData.isVerified)
 
@@ -208,12 +211,15 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     }(Threading.Ui)
 
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      usersController.isFederated(userData).foreach { federated =>
+      for {
+        federated <- usersController.isFederated(userData)
+        subtitle  <- createSubtitle(userData, federated)
+      } yield {
         isFederated ! federated
-        setSubtitle(createSubtitle(userData, federated))
-      }(Threading.Ui)
+        setSubtitle(subtitle)
+      }
     } else {
-      setSubtitle(createSubtitle(userData, false))
+      createSubtitle(userData, false).foreach(setSubtitle)
     }
   }
 
@@ -259,12 +265,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
       auxContainer.addView(v)
     }
   }
+
+  private def defaultSubtitle(user: UserData, isFederated: Boolean)(implicit context: Context) =
+    user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now)) match {
+      case Some(expiration) => Future.successful(expiration)
+      case _ => usersController.displayHandle(user)
+    }
 }
 
-object SingleUserRowView {
-  def defaultSubtitle(user: UserData, isFederated: Boolean)(implicit context: Context): String = {
-    lazy val handle: String = user.displayHandle.getOrElse("")
-    val expiration = user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now))
-    expiration.getOrElse(handle)
-  }
-}

@@ -181,13 +181,16 @@ class SingleParticipantFragment extends FragmentHelper {
   }
 
   private def initUserHandle(): Unit = returning(view[TextView](R.id.user_handle)) { vh =>
-    subs += participantsController.otherParticipant.map(_.displayHandle).onUi {
-      case Some(h) =>
+    subs += (for {
+      otherUser <- participantsController.otherParticipant
+      handle    <- Signal.from(usersController.displayHandle(otherUser))
+    } yield handle).onUi {
+      case handle if handle.nonEmpty =>
         vh.foreach { view =>
-          view.setText(h)
+          view.setText(handle)
           view.setVisible(true)
         }
-      case None =>
+      case _ =>
         vh.foreach(_.setVisible(false))
     }
   }

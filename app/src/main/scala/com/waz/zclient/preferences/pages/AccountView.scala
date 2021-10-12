@@ -233,7 +233,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   }
 
   self.onUi { self =>
-    self.displayHandle.foreach(view.setHandle)
+    view.setHandle(self.displayHandle(None))
     view.setName(self.name)
     view.setAccentDrawable(new Drawable {
 

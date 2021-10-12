@@ -38,7 +38,7 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
   val users = inject[UsersController]
   val userId = Signal[UserId]()
 
-  userId.flatMap(users.user).map(_.displayHandle.getOrElse("")).onUi(userNameTextView.setText(_))
+  userId.flatMap(id => Signal.from(users.displayHandle(id))).onUi(userNameTextView.setText(_))
   userId.flatMap(users.user).map(_.name).onUi(userInfoTextView.setText(_))
 
   def setUserId(id: UserId): Unit =
