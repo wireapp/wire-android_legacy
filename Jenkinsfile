@@ -60,7 +60,11 @@ pipeline {
                     last_started = env.STAGE_NAME
                     usedBuildType = defineBuildType()
                     usedFlavor = defineFlavor()
-                    usedClientVersion = defineClientVersion()
+                    //usedClientVersion = defineClientVersion()
+
+                    //get the usedClientVersion
+                    def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
+                    println(data)
                 }
                 sh "echo Loading config file: ${params.ConfigFileId}"
                 configFileProvider([
