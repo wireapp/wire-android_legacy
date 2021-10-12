@@ -59,7 +59,7 @@ pipeline {
                     //get the usedClientVersion
                     def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
                     usedClientVersion = ( data =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
-                    println(usedClientVersion)
+                    println("Fetched ClientVersion from Dependencies.kt:"+usedClientVersion)
                 }
                 sh "echo Loading config file: ${params.ConfigFileId}"
                 configFileProvider([
