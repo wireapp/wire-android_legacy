@@ -90,9 +90,10 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
     for {
       existingValue <- userPrefs (ConferenceCallingFeatureEnabled).apply()
       newValue      =  conferenceCallingFeatureConfig.isEnabled
-      _             <- userPrefs(ConferenceCallingFeatureEnabled) := newValue
+      _             <- userPrefs(ConferenceCallingFeatureEnabled) := Some(newValue)
                     // Inform of plan upgraded.
-      _             <- if (!existingValue && newValue) userPrefs(ShouldInformPlanUpgradedToEnterprise) := true
+      _             <- if (existingValue != None && !existingValue.get && newValue)
+                          userPrefs(ShouldInformPlanUpgradedToEnterprise) := true
                        // Don't inform
                        else if (!newValue) userPrefs(ShouldInformPlanUpgradedToEnterprise) := false
                        else Future.successful(())
