@@ -92,7 +92,8 @@ class CallController(implicit inj: Injector, cxt: WireContext)
 
   private var lastCallZms = Option.empty[ZMessaging]
   callingZmsOpt.onUi { zms =>
-    lastCallZms.foreach(_.flowmanager.setVideoPreview(null))
+    val rotation = cxt.getDisplay.getRotation
+    lastCallZms.foreach(_.flowmanager.setVideoPreview(null, rotation))
     lastCallZms = zms
   }
 
@@ -401,7 +402,8 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   def setVideoPreview(view: Option[VideoPreview]): Unit =
     flowManager.head.foreach { fm =>
       verbose(l"Setting VideoPreview on Flowmanager, view: $view")
-      fm.setVideoPreview(view.orNull)
+      val rotation = cxt.getDisplay.getRotation
+      fm.setVideoPreview(view.orNull, rotation)
     } (Threading.Ui)
 
   private lazy val callingUsername: Signal[String] =
