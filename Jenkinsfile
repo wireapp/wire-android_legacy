@@ -35,6 +35,13 @@ def definePatchVersion() {
     return env.BUILD_NUMBER
 }
 
+def defineClientVersion() {
+    def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
+    foundClientVersion = ( data =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
+    println("Fetched ClientVersion from Dependencies.kt:"+foundClientVersion)
+    return foundClientVersion
+}
+
 pipeline {
     agent {
         docker {
@@ -63,9 +70,7 @@ pipeline {
                     usedFlavor = defineFlavor()
 
                     //get the usedClientVersion
-                    def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
-                    usedClientVersion = ( data =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
-                    println("Fetched ClientVersion from Dependencies.kt:"+usedClientVersion)
+                    usedClientVersion = defineClientVersion()
 
                     //used patchVersion
                     usedPatchVersion = definePatchVersion()
@@ -139,7 +144,7 @@ echo $ANDROID_NDK_HOME'''
                     last_started = env.STAGE_NAME
                 }
                 sh "./gradlew :app:test${usedFlavor}${usedBuildType}UnitTest"
-                publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "app/build/reports/tests/test${flavor}${BuildType}UnitTest/", reportFiles: 'index.html', reportName: 'Unit Test Report', reportTitles: 'Unit Test')
+                publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "app/build/reports/tests/test${usedFlavor}${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'Unit Test Report', reportTitles: 'Unit Test')
             }
         }
 
@@ -152,7 +157,7 @@ echo $ANDROID_NDK_HOME'''
                     last_started = env.STAGE_NAME
                 }
                 sh "./gradlew :storage:test${usedBuildType}UnitTest"
-                publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "storage/build/reports/tests/test${BuildType}UnitTest/", reportFiles: 'index.html', reportName: 'Storage Unit Test Report', reportTitles: 'Storage Unit Test')
+                publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "storage/build/reports/tests/test${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'Storage Unit Test Report', reportTitles: 'Storage Unit Test')
             }
         }
 
@@ -165,7 +170,7 @@ echo $ANDROID_NDK_HOME'''
                     last_started = env.STAGE_NAME
                 }
                 sh "./gradlew :zmessaging:test${usedBuildType}UnitTest -PwireDeflakeTests=1"
-                publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "zmessaging/build/reports/tests/test${BuildType}UnitTest/", reportFiles: 'index.html', reportName: 'ZMessaging Unit Test Report', reportTitles: 'ZMessaging Unit Test')
+                publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "zmessaging/build/reports/tests/test${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'ZMessaging Unit Test Report', reportTitles: 'ZMessaging Unit Test')
             }
         }
 
