@@ -61,7 +61,7 @@ pipeline {
                     last_started = env.STAGE_NAME
                     usedBuildType = defineBuildType()
                     usedFlavor = defineFlavor()
-                    usedClientVersion = defineClientVersion()
+                    //usedClientVersion = defineClientVersion()
                 }
                 sh "echo Current Dir: ${currentDir}"
                 sh "echo Loading config file: ${params.ConfigFileId}"
