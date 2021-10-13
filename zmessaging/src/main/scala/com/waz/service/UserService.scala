@@ -221,6 +221,10 @@ class UserServiceImpl(selfUserId:        UserId,
   private def getOrCreateQualifiedId(userId: UserId, qualifiedId: Option[QualifiedId]) =
     (qualifiedId, currentDomain) match {
       case (Some(qId), _) if qId.hasDomain => qId
+      case (Some(qId), Some(domain)) =>
+        warn(l"qualifiedId($userId): A user with qualified id set already, but no domain - a failed migration?")
+        usersStorage.update(userId, _.copy(domain = currentDomain))
+        qId.copy(domain = domain)
       case (_, Some(domain)) =>
         warn(l"qualifiedId($userId): Unable to find the user for the given id or the user has no specified domain - generating a new qId")
         QualifiedId(userId, domain)
@@ -259,15 +263,19 @@ class UserServiceImpl(selfUserId:        UserId,
       )
     })
 
-  override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =
+  override def updateConnectionStatus(id: UserId,
+                                      status: UserData.ConnectionStatus,
+                                      time: Option[RemoteInstant] = None,
+                                      message: Option[String] = None): Future[Option[UserData]] =
     usersStorage.update(id, { _.updateConnectionStatus(status, time, message)}).map {
       case Some((prev, updated)) if prev != updated => Some(updated)
       case _ => None
     }
 
-  override def updateUserData(id: UserId, updater: UserData => UserData) = usersStorage.update(id, updater)
+  override def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]] =
+    usersStorage.update(id, updater)
 
-  override def updateUsers(entries: Seq[UserSearchEntry]) = {
+  override def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]] = {
     def updateOrAdd(entry: UserSearchEntry) = (_: Option[UserData]).fold(UserData(entry))(_.updated(entry))
     usersStorage.updateOrCreateAll(entries.map(entry => entry.qualifiedId.id -> updateOrAdd(entry)).toMap)
   }

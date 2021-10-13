@@ -1,51 +1,31 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-
-    final String NEXUS_URL_ENV_VAR = "NEXUS_URL"
-    final String NEXUS_URL_LOCAL_VAR = "nexus.url"
-    final String LOCAL_PROPERTIES_FILE_NAME = "local.properties"
-
-    String nexusUrl = ""
-    Properties properties = new Properties()
-    def propertiesFile = project.rootProject.file(LOCAL_PROPERTIES_FILE_NAME)
-    if (propertiesFile.exists()) {
-        properties.load(propertiesFile.newDataInputStream())
-        nexusUrl = System.getenv(NEXUS_URL_ENV_VAR) ?: properties.getProperty(NEXUS_URL_LOCAL_VAR) ?: ""
-    } else {
-        nexusUrl = System.getenv(NEXUS_URL_ENV_VAR) ?: ""
+    ext {
+        fdroidBuild = gradle.startParameter.taskRequests.toString().toLowerCase().contains("fdroid") // FIXME
+        println("F-Droid build: ${fdroidBuild}")
     }
-
-    if (!nexusUrl.isEmpty()) {
-        buildscript {
-            repositories {
-                maven { url nexusUrl }
-            }
-        }
-        allprojects {
-            repositories {
-                maven { url nexusUrl }
-            }
-        }
-
-        ext {
-            nexusUrlExt = nexusUrl
-        }
-    }
-
     repositories {
         google()
         mavenCentral()
+        jcenter() // FIXME
+        maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:${Versions.ANDROID_GRADLE_PLUGIN}"
         classpath "com.wire:gradle-android-scala-plugin:${Versions.SCALA_BUILD_PLUGIN}"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}"
         classpath "org.jetbrains.kotlin:kotlin-serialization:${Versions.KOTLIN}"
-        classpath "com.google.gms:google-services:${Versions.GMS}"
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.DETEKT}"
         classpath "org.jacoco:org.jacoco.core:${Versions.JACOCO}"
         classpath "com.mutualmobile.gradle.plugins:dexinfo:${Versions.DEX_INFO}"
+
+        if (fdroidBuild) {
+            println("Not including gms")
+        } else {
+            println("Including gms")
+            classpath "com.google.gms:google-services:${Versions.GMS}"
+        }
     }
 }
 
@@ -58,7 +38,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        jcenter() // FIXME
+        maven { url "https://jitpack.io" }
+        // maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
 }
 
@@ -71,5 +53,10 @@ apply from: "./scripts/avs.gradle"
 apply from: "./scripts/detekt.gradle"
 apply from: "./scripts/jacoco.gradle"
 apply from: "./scripts/licensing.gradle"
+
 apply from: "./scripts/customization.gradle"
+if (buildtimeConfiguration == null) {
+    apply from: "./scripts/custombuild.gradle"
+}
+
 apply from: "./scripts/ci.gradle"

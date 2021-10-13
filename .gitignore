@@ -8,6 +8,9 @@
 # Java class files
 *.class
 
+# shared objects
+*.so
+
 # OS X crap
 *.DS_Store
 

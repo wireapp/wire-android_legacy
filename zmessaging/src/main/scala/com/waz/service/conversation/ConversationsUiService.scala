@@ -320,7 +320,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       contacted             <- members.getByUsers(userIds)
       toSync                =  userIds -- contacted.map(_.userId).toSet
       _                     <- if (toSync.nonEmpty) userService.syncUsers(toSync) else Future.successful(())
-      _                     <- members.updateOrCreateAll(conv, userIds.map(_ -> defaultRole).toMap)
+      _                     <- if (userIds.nonEmpty) members.updateOrCreateAll(conv, userIds.map(_ -> defaultRole).toMap) else Future.successful(())
       _                     <- messages.addMemberJoinMessage(conv, selfUserId, userIds)
       (qIds, nonQIds)       <- partitionForQualified(userIds)
       syncId1               <- if (qIds.nonEmpty)
@@ -408,7 +408,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
             for {
               conv <- convsContent.createConversation(
                         convId      = ConvId(otherUserId.str),
-                        remoteId    = u.conversation.getOrElse(RConvId()),
+                        remoteId    = u.conversation.map(_.id).getOrElse(RConvId()),
                         convType    = ConversationType.Incoming,
                         creator     = otherUserId,
                         name        = None,

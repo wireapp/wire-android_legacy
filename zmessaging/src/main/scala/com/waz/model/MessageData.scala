@@ -308,7 +308,7 @@ object MessageContent extends ((Message.Part.Type, String, Option[MediaAssetData
     case Message.Part.Type.SPOTIFY         => "Spotify"
     case Message.Part.Type.TWITTER         => "Twitter"
     case Message.Part.Type.WEB_LINK        => "WebLink"
-    case Message.Part.Type.GOOGLE_MAPS     => "GoogleMaps"
+    case Message.Part.Type.MAPS            => "Maps"
   }
 }
 

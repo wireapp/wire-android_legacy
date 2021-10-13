@@ -23,7 +23,7 @@ import com.waz.log.LogSE._
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.model.{ErrorData, Name, QualifiedId, UserId}
+import com.waz.model.{ErrorData, Name, QualifiedId, UserConnectionEvent, UserId}
 import com.waz.service.{ConnectionService, ErrorsService}
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
@@ -50,24 +50,26 @@ class ConnectionsSyncHandler(usersStorage:      UsersStorage,
     }
   }
 
-  def postConnection(userId: UserId, name: Name, message: String): Future[SyncResult] =
-    connectionsClient.createConnection(userId, name, message).future.flatMap {
-      case Right(event) =>
-        verbose(l"postConnection($userId) success: $event")
-        connectionService
-          .handleUserConnectionEvents(Seq(event))
-          .map(_ => Success)
-      case Left(resp @ ErrorResponse(412, _, "missing-legalhold-consent")) =>
-        warn(l"got error: $resp")
-        errorsService
-          .addErrorWhenActive(ErrorData(ErrorType.CANNOT_CONNECT_USER_WITH_MISSING_LEGAL_HOLD_CONSENT, resp, userId))
-          .map(_ => SyncResult(resp))
-      case Left(error) =>
-        Future.successful(SyncResult(error))
-    }
+  private def processConnectionResponse(userId: UserId, event: Either[ErrorResponse, UserConnectionEvent]) = event match {
+    case Right(event) =>
+      verbose(l"postConnection($userId) success: $event")
+      connectionService
+        .handleUserConnectionEvents(Seq(event))
+        .map(_ => Success)
+    case Left(resp @ ErrorResponse(412, _, "missing-legalhold-consent")) =>
+      warn(l"got error: $resp")
+      errorsService
+        .addErrorWhenActive(ErrorData(ErrorType.CANNOT_CONNECT_USER_WITH_MISSING_LEGAL_HOLD_CONSENT, resp, userId))
+        .map(_ => SyncResult(resp))
+    case Left(error) =>
+      Future.successful(SyncResult(error))
+  }
 
-  def postQualifiedConnection(qId: QualifiedId, name: Name, message: String): Future[SyncResult] =
-    postConnection(qId.id, name, message) // TODO: qualified connections will be implemented later
+  def postConnection(userId: UserId, name: Name, message: String): Future[SyncResult] =
+    connectionsClient.createConnection(userId, name, message).future.flatMap(processConnectionResponse(userId, _))
+
+  def postQualifiedConnection(qId: QualifiedId): Future[SyncResult] =
+    connectionsClient.createConnection(qId).future.flatMap(processConnectionResponse(qId.id, _))
 
   def postConnectionStatus(userId: UserId, status: Option[ConnectionStatus]): Future[SyncResult] = usersStorage.get(userId).flatMap {
     case Some(user) => connectionsClient.updateConnection(userId, status getOrElse user.connection).future.flatMap {

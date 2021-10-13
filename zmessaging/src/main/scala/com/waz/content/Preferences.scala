@@ -449,5 +449,5 @@ object UserPreferences {
   lazy val ConferenceCallingFeatureEnabled: PrefKey[Option[Boolean]] = PrefKey[Option[Boolean]]("conference_calling_feature_enabled", customDefault = None)
   lazy val ShouldInformPlanUpgradedToEnterprise: PrefKey[Boolean] = PrefKey[Boolean]("should_inform_plan_upgraded_to_enterprise", customDefault = false)
 
-  lazy val ShouldMigrateToFederation: PrefKey[Boolean] = PrefKey[Boolean]("should_migrate_to_federation", customDefault = true)
+  lazy val ShouldMigrateToFederation: PrefKey[Boolean] = PrefKey[Boolean]("should_migrate_to_federation_2", customDefault = true)
 }

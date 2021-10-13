@@ -26,6 +26,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
 import com.waz.sync.SyncServiceHandle
 import com.waz.utils._
+import com.waz.zms.BuildConfig
 import com.wire.signals.CancellableFuture
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,6 +62,18 @@ trait ConversationsContentUpdater {
                          access:      Set[Access] = Set(Access.PRIVATE),
                          accessRole:  AccessRole = AccessRole.PRIVATE,
                          receiptMode: Int = 0
+                        ): Future[ConversationData]
+
+  def createQualifiedConversation(convId:      ConvId,
+                                  remoteId:    RConvQualifiedId,
+                                  convType:    ConversationType,
+                                  creator:     UserId,
+                                  defaultRole: ConversationRole,
+                                  name:        Option[Name],
+                                  hidden:      Boolean = false,
+                                  access:      Set[Access] = Set(Access.PRIVATE),
+                                  accessRole:  AccessRole = AccessRole.PRIVATE,
+                                  receiptMode: Int = 0
                         ): Future[ConversationData]
 }
 
@@ -102,7 +115,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
   override def convByRemoteId(id: RConvId): Future[Option[ConversationData]] = storage.getByRemoteId(id)
 
   override def convsByRemoteId(ids: Set[RConvId]): Future[Map[RConvId, ConversationData]] =
-    storage.getByRemoteIds2(ids)
+    storage.getMapByRemoteIds(ids)
 
   override def updateConversationName(id: ConvId, name: Name) = storage.update(id, { conv =>
       if (conv.convType == ConversationType.Group)
@@ -195,6 +208,51 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
         ))
       _  <- membersStorage.updateOrCreate(convId, creator, ConversationRole.AdminRole)
     } yield conv
+
+  override def createQualifiedConversation(convId:      ConvId,
+                                           remoteId:    RConvQualifiedId,
+                                           convType:    ConversationType,
+                                           creator:     UserId,
+                                           defaultRole: ConversationRole,
+                                           name:        Option[Name],
+                                           hidden:      Boolean = false,
+                                           access:      Set[Access] = Set(Access.PRIVATE),
+                                           accessRole:  AccessRole = AccessRole.PRIVATE,
+                                           receiptMode: Int = 0): Future[ConversationData] = {
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      for {
+        conv <- storage.insert(
+          ConversationData(
+            convId,
+            remoteId.id,
+            name          = name,
+            creator       = creator,
+            convType      = convType,
+            hidden        = hidden,
+            team          = teamId,
+            access        = access,
+            accessRole    = Some(accessRole),
+            receiptMode   = Some(receiptMode),
+            domain        = if (remoteId.hasDomain) Some(remoteId.domain) else None
+          ))
+        _  <- membersStorage.updateOrCreate(convId, creator, ConversationRole.AdminRole)
+      } yield conv
+    } else {
+      createConversation(
+        convId      = convId,
+        remoteId    = remoteId.id,
+        convType    = convType,
+        creator     = creator,
+        name        = name,
+        hidden      = hidden,
+        defaultRole = defaultRole,
+        access      = access,
+        accessRole  = accessRole,
+        receiptMode = receiptMode
+      )
+    }
+
+  }
 
   override def hideIncomingConversation(user: UserId) = storage.update(ConvId(user.str), { conv =>
     if (conv.convType == ConversationType.Incoming) conv.copy(hidden = true) else conv

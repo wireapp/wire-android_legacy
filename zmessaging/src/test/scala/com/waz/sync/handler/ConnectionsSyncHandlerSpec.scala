@@ -12,7 +12,6 @@ import com.wire.signals.CancellableFuture
 import scala.concurrent.Future
 
 class ConnectionsSyncHandlerSpec extends AndroidFreeSpec {
-
   private val userStorage = mock[UsersStorage]
   private val connectionService = mock[ConnectionService]
   private val connectionsClient = mock[ConnectionsClient]
@@ -33,7 +32,7 @@ class ConnectionsSyncHandlerSpec extends AndroidFreeSpec {
     val errorResponse = ErrorResponse(412, "", "missing-legalhold-consent")
 
     // Mocks
-    (connectionsClient.createConnection _)
+    (connectionsClient.createConnection(_: UserId, _: Name, _: String))
         .expects(userId, *, *)
         .once()
         .returning(CancellableFuture.successful(Left(errorResponse)))

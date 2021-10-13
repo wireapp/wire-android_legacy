@@ -74,7 +74,7 @@ android {
         minSdkVersion Versions.MIN_SDK_VERSION
         targetSdkVersion Versions.TARGET_SDK_VERSION
         versionCode getUnixTimestamp() as Integer
-        versionName = (System.getenv("CLIENT_VERSION") ?: Versions.ANDROID_CLIENT_MAJOR_VERSION) + patchVersion
+        versionName = Versions.ANDROID_CLIENT_MAJOR_VERSION + patchVersion
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
 
@@ -238,6 +238,19 @@ android {
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
         }
 
+        fdroid {
+            applicationId "com.wire"
+            manifestPlaceholders = [applicationLabel       : "Wire",
+                                    applicationIcon        : "@mipmap/ic_launcher_wire",
+                                    sharedUserId           : "com.waz.userid"]
+
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', 'false'
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
+
+            buildConfigField 'boolean', 'KEEP_WEBSOCKET_ON', 'true'
+        }
+
         internal {
             applicationId "com.wire.internal"
             versionName android.defaultConfig.versionName + "-internal"
@@ -265,6 +278,11 @@ android {
 
 
     sourceSets {
+        if (fdroidBuild) {
+            main.java.srcDirs += ['src/foss/java', 'src/foss/scala']
+        } else {
+            main.java.srcDirs += ['src/nonfree/java', 'src/nonfree/scala']
+        }
 
         main.java.srcDirs += ['src/main/java', 'src/main/kotlin']
 
@@ -308,7 +326,6 @@ dependencies {
     implementation BuildDependencies.kotlin.coroutinesCore
     implementation avsDependency
 
-    implementation BuildDependencies.wire.audioNotifications
     //don't include wire translations for custom builds
     if (buildtimeConfiguration.customResourcesPath == null) {
         implementation BuildDependencies.wire.translations
@@ -356,16 +373,18 @@ dependencies {
 
     implementation BuildDependencies.androidX.viewPager2
 
-    // Play services
-    implementation BuildDependencies.playServices.base
-    implementation BuildDependencies.playServices.maps
-    implementation BuildDependencies.playServices.location
-    implementation BuildDependencies.playServices.gcm
+    if (!fdroidBuild) {
+        // Play services
+        implementation BuildDependencies.playServices.base
+        implementation BuildDependencies.playServices.maps
+        implementation BuildDependencies.playServices.location
+        implementation BuildDependencies.playServices.gcm
 
-    // Firebase
-    implementation (BuildDependencies.fireBaseMessaging) {
-        exclude group: 'com.google.firebase', module: 'firebase-analytics'
-        exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
+        // Firebase
+        implementation (BuildDependencies.fireBaseMessaging) {
+            exclude group: 'com.google.firebase', module: 'firebase-analytics'
+            exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
+        }
     }
 
     //Glide
@@ -407,7 +426,10 @@ dependencies {
     implementation BuildDependencies.rebound
     implementation BuildDependencies.commonMark
     implementation BuildDependencies.jna
-    implementation BuildDependencies.countly
+
+    if (!fdroidBuild) {
+        implementation BuildDependencies.countly
+    }
 
     implementation BuildDependencies.wireSignals
     implementation BuildDependencies.wireSignalsExtensions
@@ -415,6 +437,12 @@ dependencies {
     implementation BuildDependencies.libSodium
 
     implementation BuildDependencies.zooming
+
+    implementation BuildDependencies.osmdroid
+    implementation(BuildDependencies.osmbonuspack) {
+        // don't bring in newer com.squareup.okhttp3:okhttp & androidx.core:core
+        transitive = false
+    }
 
     // Unit Tests
     testImplementation TestDependencies.jUnit
