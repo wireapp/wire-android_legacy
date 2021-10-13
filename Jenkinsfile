@@ -24,9 +24,9 @@ pipeline {
                     last_stage = env.STAGE_NAME
 
                     //secure declaration of unit test vars for avoiding null pointer on first pipeline spawn //TODO: find out why this happens
-                    runAppUnitTest = AppUnitTests == NULL?: AppUnitTests
-                    runStorageUnitTests = StorageUnitTests == NULL?: StorageUnitTests
-                    runZMessageUnitTests = ZMessageUnitTests == NULL?: ZMessageUnitTests
+                    runAppUnitTest = AppUnitTests != NULL? AppUnitTests : true
+                    runStorageUnitTests = StorageUnitTests != NULL? StorageUnitTests : true
+                    runZMessageUnitTests = ZMessageUnitTests != NULL? ZMessageUnitTests : false
 
                     //define the build type
                     if(params.BuildType != '') {
