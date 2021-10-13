@@ -1,47 +1,3 @@
-def defineFlavor() {
-    //check if the pipeline has the custom flavor env variable set
-    if(params.Flavor != '') {
-        return params.Flavor
-    }
-
-    def branchName = env.BRANCH_NAME
-    if (branchName == "main") {
-        return 'Internal'
-    } else if(branchName == "develop") {
-        return 'Dev'
-    } else if(branchName == "release") {
-        return 'Candidate' //for release we build both in the same moment
-    }
-    return 'Experimental'
-}
-
-def defineBuildType() {
-    if(params.BuildType != '') {
-        return params.BuildType
-    }
-
-    if(env.BRANCH_NAME == "release") {
-        return "Release"
-    }
-
-    return "Debug"
-}
-
-def definePatchVersion() {
-    if(params.PatchVersion != '') {
-        return params.PatchVersion
-    }
-
-    return env.BUILD_NUMBER
-}
-
-def defineClientVersion() {
-    def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
-    foundClientVersion = ( data =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
-    println("Fetched ClientVersion from Dependencies.kt:"+foundClientVersion)
-    return foundClientVersion
-}
-
 pipeline {
     agent {
         docker {
@@ -58,7 +14,7 @@ pipeline {
         string(name: 'PatchVersion', defaultValue: '', description: 'PatchVersion for the build as a numeric value (e.g. 1337)')
         booleanParam(name: 'AppUnitTests', defaultValue: true, description: 'Run all app unit tests for this build')
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
-        booleanParam(name: 'ZMessageUnitTests', defaultValue: true, description: 'Run all zmessaging unit tests for this build')
+        booleanParam(name: 'ZMessageUnitTests', defaultValue: false, description: 'Run all zmessaging unit tests for this build')
     }
 
     stages {
@@ -66,11 +22,50 @@ pipeline {
             steps {
                 script {
                     last_started = env.STAGE_NAME
-                    usedBuildType = defineBuildType()
-                    usedFlavor = defineFlavor()
-                    usedClientVersion = defineClientVersion()
-                    env.PATCH_VERSION = definePatchVersion()
+
+                    //define the build type
+                    if(params.BuildType != '') {
+                        usedBuildType = params.BuildType
+                    } else if(env.BRANCH_NAME == "release") {
+                        usedBuildType =  "Release"
+                    } else {
+                        usedBuildType =  "Debug"
+                    }
+
+                    //define the flavor
+                    if(params.Flavor != '') {
+                        usedFlavor = params.Flavor
+                    } else {
+                        def branchName = env.BRANCH_NAME
+                        if (branchName == "main") {
+                            usedFlavor = 'Internal'
+                        } else if(branchName == "develop") {
+                            usedFlavor = 'Dev'
+                        } else if(branchName == "release") {
+                            usedFlavor = 'Candidate' //for release we build both in the same moment
+                        } else {
+                            usedFlavor = 'Experimental'
+                        }
+                    }
+
+                    //fetch the clientVesion
+                    def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
+                    foundClientVersion = ( data =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
+                    println("Fetched ClientVersion from Dependencies.kt:"+foundClientVersion)
+                    usedClientVersion = foundClientVersion
+
+                    //define the patch version
+                    if(params.PatchVersion != '') {
+                        env.PATCH_VERSION = params.PatchVersion
+                    } else {
+                        env.PATCH_VERSION = env.BUILD_NUMBER
+                    }
                 }
+
+
+
+
+                //load the config file from jenkins which contains all necessary env variables
                 sh "echo Loading config file: ${params.ConfigFileId}"
                 configFileProvider([
                         configFile( fileId: "${params.ConfigFileId}", variable: 'GROOVY_FILE_THAT_SETS_VARIABLES')
