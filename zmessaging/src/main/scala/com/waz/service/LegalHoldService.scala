@@ -36,6 +36,7 @@ trait LegalHoldService {
 }
 
 class LegalHoldServiceImpl(selfUserId: UserId,
+                           selfDomain: Domain,
                            teamId: Option[TeamId],
                            userPrefs: UserPreferences,
                            client: LegalHoldClient,
@@ -129,13 +130,13 @@ class LegalHoldServiceImpl(selfUserId: UserId,
     client          <- clientsService.getOrCreateClient(selfUserId, request.clientId)
     legalHoldClient = client.copy(deviceClass = DeviceClass.LegalHold, isTemporary = true)
     _               <- clientsService.updateUserClients(selfUserId, Seq(legalHoldClient), replace = false)
-    sessionId       = SessionId(selfUserId, None, legalHoldClient.id)
+    sessionId       = SessionId(selfUserId, selfDomain, legalHoldClient.id)
     _               <- cryptoSessionService.getOrCreateSession(sessionId, request.lastPreKey)
   } yield ()
 
   private def deleteLegalHoldClientAndSession(clientId: ClientId): Future[Unit] = for {
     _ <- clientsService.removeClients(selfUserId, Set(clientId))
-    _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, None, clientId))
+    _ <- cryptoSessionService.deleteSession(SessionId(selfUserId, selfDomain, clientId))
   } yield ()
 
   private def onLegalHoldApprovedFromAnotherDevice(): Future[Unit] = for {

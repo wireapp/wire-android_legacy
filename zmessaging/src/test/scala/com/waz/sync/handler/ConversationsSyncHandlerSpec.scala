@@ -21,7 +21,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
 
   private val self = UserData("self")
   private val teamId = TeamId()
-  private val domain = "chala.wire.link"
+  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
   private val userService = mock[UserService]
   private val messagesStorage = mock[MessagesStorage]
   private val messagesService = mock[MessagesService]
@@ -36,7 +36,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   private val membersStorage = mock[MembersStorage]
 
   private def createHandler: ConversationsSyncHandler = new ConversationsSyncHandler(
-    self.id, Some(domain), Some(teamId), userService, messagesStorage, messagesService,
+    self.id, domain, Some(teamId), userService, messagesStorage, messagesService,
     convService, convs, convEvents, convStorage, errorsService,
     conversationsClient, genericMessages, rolesService, membersStorage
   )
@@ -80,9 +80,9 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
 
   scenario("Sync qualified conversations") {
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
-      val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
-      val conv3 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
+      val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
+      val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
+      val conv3 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
 
       val convMap = Seq(conv1, conv2, conv3).toIdMap
 
@@ -114,8 +114,8 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
 
   scenario("Sync part qualified part non-qualified conversations") {
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
-      val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
+      val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
+      val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
       val conv3 = ConversationData(team = Some(teamId), creator = self.id)
 
       val convMap = Seq(conv1, conv2, conv3).toIdMap
@@ -152,9 +152,9 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   }
 
   scenario("When syncing conversations, given local convs that are absent from the backend, remove the missing local convs") {
-    val conv1 = ConversationData(id = ConvId("conv1"), team = Some(teamId), creator = self.id, domain = Some("anta"))
-    val conv2 = ConversationData(id = ConvId("conv2"), team = Some(teamId), creator = self.id, domain = Some("anta"))
-    val conv3 = ConversationData(id = ConvId("conv3"), team = Some(teamId), creator = self.id, domain = Some("anta"))
+    val conv1 = ConversationData(id = ConvId("conv1"), team = Some(teamId), creator = self.id, domain = domain)
+    val conv2 = ConversationData(id = ConvId("conv2"), team = Some(teamId), creator = self.id, domain = domain)
+    val conv3 = ConversationData(id = ConvId("conv3"), team = Some(teamId), creator = self.id, domain = domain)
 
     val resp1 = toConversationResponse(conv1)
     val resp2 = toConversationResponse(conv2)

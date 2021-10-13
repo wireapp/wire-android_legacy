@@ -381,7 +381,7 @@ object ConversationsClient {
   }
 
   final case class ConversationResponse(id:           RConvId,
-                                        domain:       Option[String],
+                                        domain:       Domain,
                                         name:         Option[Name],
                                         creator:      UserId,
                                         convType:     ConversationType,
@@ -397,8 +397,8 @@ object ConversationsClient {
                                         members:      Map[QualifiedId, ConversationRole],
                                         receiptMode:  Option[Int]
                                        ) {
-    lazy val qualifiedId: Option[RConvQualifiedId] = domain.map(RConvQualifiedId(id, _))
-    def hasDomain: Boolean = domain.nonEmpty
+    lazy val qualifiedId: Option[RConvQualifiedId] = domain.mapOpt(RConvQualifiedId(id, _))
+    def hasDomain: Boolean = domain.isDefined
     lazy val memberIds: Set[UserId] = members.keySet.map(_.id)
     lazy val qualifiedMemberIds: Set[QualifiedId] = members.keySet.filter(_.hasDomain)
   }
@@ -419,8 +419,8 @@ object ConversationsClient {
 
         val (id, domain) =
           RConvQualifiedId.decodeOpt('qualified_id)
-            .map(qId => (qId.id, if (qId.hasDomain) Some(qId.domain) else None))
-            .getOrElse((JsonDecoder.decodeRConvId('id), None))
+            .map(qId => (qId.id, if (qId.hasDomain) Domain(qId.domain) else Domain.Empty))
+            .getOrElse((JsonDecoder.decodeRConvId('id), Domain.Empty))
 
         ConversationResponse(
           id,

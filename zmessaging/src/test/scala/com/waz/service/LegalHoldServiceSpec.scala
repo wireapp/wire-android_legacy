@@ -31,6 +31,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
   import LegalHoldServiceSpec._
 
   private val selfUserId = UserId("selfUserId")
+  private val selfDomain = Domain("anta.wire.link")
   private val teamId = TeamId("teamId")
   private val userPrefs = new TestUserPreferences()
   private val apiClient = mock[LegalHoldClient]
@@ -60,6 +61,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
     new LegalHoldServiceImpl(
       selfUserId,
+      selfDomain,
       Some(teamId),
       userPrefs,
       apiClient,
@@ -487,7 +489,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
       // Delete session.
       (cryptoSessionService.deleteSession _)
-        .expects(SessionId(selfUserId, None, client.id))
+        .expects(SessionId(selfUserId, selfDomain, client.id))
         .once()
         .returning(Future.successful({}))
 
@@ -519,7 +521,7 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
 
       // Creating the crypto session.
       (cryptoSessionService.getOrCreateSession _)
-        .expects(SessionId(selfUserId, None, client.id), legalHoldRequest.lastPreKey)
+        .expects(SessionId(selfUserId, selfDomain, client.id), legalHoldRequest.lastPreKey)
         .once()
         // To make testing simpler, just return none since
         // we don't actually need to use the crypto session.
@@ -818,10 +820,10 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
                     time: RemoteInstant = RemoteInstant(Instant.now())): GenericMessageEvent =
       GenericMessageEvent(
         convId,
-        None,
+        Domain.Empty,
         time,
         UserId("senderId"),
-        None,
+        Domain.Empty,
         message
       )
 

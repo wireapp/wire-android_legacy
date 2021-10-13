@@ -44,7 +44,7 @@ object ConversationsSyncHandler {
 }
 
 class ConversationsSyncHandler(selfUserId:      UserId,
-                               selfDomain:      Option[String],
+                               selfDomain:      Domain,
                                teamId:          Option[TeamId],
                                userService:     UserService,
                                messagesStorage: MessagesStorage,
@@ -228,10 +228,10 @@ class ConversationsSyncHandler(selfUserId:      UserId,
   private def postSelfLeave(id: ConvId): Future[SyncResult] =
     withConversation(id) { conv =>
       val clientResult =
-        (BuildConfig.FEDERATION_USER_DISCOVERY, selfDomain) match {
-          case (true, Some(domain)) =>
+        (BuildConfig.FEDERATION_USER_DISCOVERY, selfDomain.isDefined) match {
+          case (true, true) =>
             val convQualifiedId = convService.rConvQualifiedId(conv)
-            val userQualifiedId = QualifiedId(selfUserId, domain)
+            val userQualifiedId = QualifiedId(selfUserId, selfDomain)
             convClient.postQualifiedMemberLeave(convQualifiedId, userQualifiedId)
           case _ =>
             convClient.postMemberLeave(conv.remoteId, selfUserId)

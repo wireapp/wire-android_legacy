@@ -203,8 +203,8 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       if (query.hasDomain || query.isEmpty)
         search(query)
       else
-        userService.selfUser.map(_.domain.getOrElse("")).flatMap {
-          case domain if domain.nonEmpty => search(query.withDomain(domain))
+        userService.selfUser.map(_.domain).flatMap {
+          case domain if domain.isDefined => search(query.withDomain(domain.str))
           case _ => search(query)
         }
     } else {
