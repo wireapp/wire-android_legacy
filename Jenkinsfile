@@ -10,7 +10,7 @@ pipeline {
     parameters {
         string(name: 'ConfigFileId', defaultValue: 'wire-android-config', description: 'Name or ID of the Groovy file (under Jenkins -> Managed Files) that sets environment variables')
         string(name: 'BuildType', defaultValue: '', description: 'Build Type for the Client (Release or Debug)')
-        string(name: 'Flavor', defaultValue: '', description: 'Product Flavor to build (Experimental, Internal, Debug, Candidate, Release)')
+        string(name: 'Flavor', defaultValue: '', description: 'Product Flavor to build (Experimental, Internal, Dev, Candidate, Release)')
         string(name: 'PatchVersion', defaultValue: '', description: 'PatchVersion for the build as a numeric value (e.g. 1337)')
         booleanParam(name: 'AppUnitTests', defaultValue: true, description: 'Run all app unit tests for this build')
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
@@ -22,17 +22,6 @@ pipeline {
             steps {
                 script {
                     last_stage = env.STAGE_NAME
-
-                    //define the build type
-                    if(params.BuildType != '') {
-                        usedBuildType = params.BuildType
-                        println("using params.BuildType for usedBuildType")
-                    } else if(env.BRANCH_NAME == "release") {
-                        usedBuildType =  "Release"
-                    } else {
-                        usedBuildType =  "Debug"
-                    }
-                    println("Build Type is:" + usedBuildType)
 
                     //define the flavor
                     if(params.Flavor != '') {
@@ -51,6 +40,17 @@ pipeline {
                         }
                     }
                     println("Flavor is:" + usedFlavor)
+
+                    //define the build type
+                    if(params.BuildType != '') {
+                        usedBuildType = params.BuildType
+                        println("using params.BuildType for usedBuildType")
+                    } else if(usedFlavor != 'Experimental') {
+                        usedBuildType =  "Debug"
+                    } else {
+                        usedBuildType =  "Release"
+                    }
+                    println("Build Type is:" + usedBuildType)
 
                     //fetch the clientVesion
                     def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
