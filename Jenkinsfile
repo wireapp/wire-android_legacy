@@ -23,11 +23,6 @@ pipeline {
                 script {
                     last_stage = env.STAGE_NAME
 
-                    //secure declaration of unit test vars for avoiding null pointer on first pipeline spawn //TODO: find out why this happens
-                    runAppUnitTest = AppUnitTests != NULL? AppUnitTests : true
-                    runStorageUnitTests = StorageUnitTests != NULL? StorageUnitTests : true
-                    runZMessageUnitTests = ZMessageUnitTests != NULL? ZMessageUnitTests : false
-
                     //define the build type
                     if(params.BuildType != '') {
                         usedBuildType = params.BuildType
@@ -91,7 +86,7 @@ pipeline {
                 script {
                     last_stage = env.STAGE_NAME
                     currentBuild.displayName = "${usedFlavor}${usedBuildType}"
-                    currentBuild.description = "Version [${usedClientVersion}] | Branch [${env.BRANCH_NAME}] | ASZ [${runAppUnitTests},${runStorageUnitTests},${runZMessageUnitTests}]"
+                    currentBuild.description = "Version [${usedClientVersion}] | Branch [${env.BRANCH_NAME}] | ASZ [${params.AppUnitTests},${params.StorageUnitTests},${params.ZMessageUnitTests}]"
                 }
                 configFileProvider([
                         configFile(fileId: "${env.SIGNING_GRADLE_FILE}", targetLocation: 'app/signing.gradle'),
@@ -137,7 +132,7 @@ pipeline {
 
         stage('App Unit Testing') {
             when {
-                expression { runAppUnitTests }
+                expression { params.AppUnitTests }
             }
             steps {
                 script {
@@ -150,7 +145,7 @@ pipeline {
 
         stage('Storage Unit Testing') {
             when {
-                expression { runStorageUnitTests }
+                expression { params.StorageUnitTests }
             }
             steps {
                 script {
@@ -163,7 +158,7 @@ pipeline {
 
         stage('ZMessage Unit Testing') {
             when {
-                expression { runZMessageUnitTests }
+                expression { params.ZMessageUnitTests }
             }
             steps {
                 script {
