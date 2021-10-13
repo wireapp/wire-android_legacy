@@ -21,20 +21,23 @@ pipeline {
         stage('pipeline preconditions') {
             steps {
                 script {
-                    last_started = env.STAGE_NAME
+                    last_stage = env.STAGE_NAME
 
                     //define the build type
                     if(params.BuildType != '') {
                         usedBuildType = params.BuildType
+                        println("using params.BuildType for usedBuildType")
                     } else if(env.BRANCH_NAME == "release") {
                         usedBuildType =  "Release"
                     } else {
                         usedBuildType =  "Debug"
                     }
+                    println("Build Type is:" + usedBuildType)
 
                     //define the flavor
                     if(params.Flavor != '') {
                         usedFlavor = params.Flavor
+                        println("Using params.Flavor for usedFlavor")
                     } else {
                         def branchName = env.BRANCH_NAME
                         if (branchName == "main") {
@@ -47,23 +50,24 @@ pipeline {
                             usedFlavor = 'Experimental'
                         }
                     }
+                    println("Flavor is:" + usedFlavor)
 
                     //fetch the clientVesion
                     def data = readFile(file: 'buildSrc/src/main/kotlin/Dependencies.kt')
                     foundClientVersion = ( data =~ /const val ANDROID_CLIENT_MAJOR_VERSION = "(.*)"/)[0][1]
-                    println("Fetched ClientVersion from Dependencies.kt:"+foundClientVersion)
+                    println("Fetched ClientVersion from Dependencies.kt:" + foundClientVersion)
                     usedClientVersion = foundClientVersion
 
                     //define the patch version
                     if(params.PatchVersion != '') {
                         env.PATCH_VERSION = params.PatchVersion
+                        println("using params.PatchVersion for env.PATCH_VERSION")
                     } else {
                         env.PATCH_VERSION = env.BUILD_NUMBER
+                        println("using env.BUILD_NUMBER for env.PATCH_VERSION")
                     }
+                    println("env.PATCH_VERSION has been set to: " + env.PATCH_VERSION)
                 }
-
-
-
 
                 //load the config file from jenkins which contains all necessary env variables
                 sh "echo Loading config file: ${params.ConfigFileId}"
@@ -80,7 +84,7 @@ pipeline {
         stage('repository setup') {
             steps {
                 script {
-                    last_started = env.STAGE_NAME
+                    last_stage = env.STAGE_NAME
                     currentBuild.displayName = "${usedFlavor}${usedBuildType}"
                     currentBuild.description = "Version [${usedClientVersion}] | Branch [${env.BRANCH_NAME}] | ASZ [${AppUnitTests},${StorageUnitTests},${ZMessageUnitTests}]"
                 }
@@ -104,10 +108,10 @@ pipeline {
                 stage('Check SDK/NDK') {
                     steps {
                         script {
-                            last_started = env.STAGE_NAME
+                            last_stage = env.STAGE_NAME
+                            println(env.ANDROID_HOME)
+                            println(env.ANDROID_NDK_HOME)
                         }
-                        sh '''echo $ANDROID_HOME
-echo $ANDROID_NDK_HOME'''
                     }
                 }
 
@@ -132,7 +136,7 @@ echo $ANDROID_NDK_HOME'''
             }
             steps {
                 script {
-                    last_started = env.STAGE_NAME
+                    last_stage = env.STAGE_NAME
                 }
                 sh "./gradlew :app:test${usedFlavor}${usedBuildType}UnitTest"
                 publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "app/build/reports/tests/test${usedFlavor}${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'Unit Test Report', reportTitles: 'Unit Test')
@@ -145,7 +149,7 @@ echo $ANDROID_NDK_HOME'''
             }
             steps {
                 script {
-                    last_started = env.STAGE_NAME
+                    last_stage = env.STAGE_NAME
                 }
                 sh "./gradlew :storage:test${usedBuildType}UnitTest"
                 publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "storage/build/reports/tests/test${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'Storage Unit Test Report', reportTitles: 'Storage Unit Test')
@@ -158,7 +162,7 @@ echo $ANDROID_NDK_HOME'''
             }
             steps {
                 script {
-                    last_started = env.STAGE_NAME
+                    last_stage = env.STAGE_NAME
                 }
                 sh "./gradlew :zmessaging:test${usedBuildType}UnitTest -PwireDeflakeTests=1"
                 publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "zmessaging/build/reports/tests/test${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'ZMessaging Unit Test Report', reportTitles: 'ZMessaging Unit Test')
@@ -171,7 +175,7 @@ echo $ANDROID_NDK_HOME'''
                 stage('Branch Client') {
                     steps {
                         script {
-                            last_started = env.STAGE_NAME
+                            last_stage = env.STAGE_NAME
                         }
                         sh "./gradlew --profile assemble${usedFlavor}${usedBuildType}"
                         sh "ls -la app/build/outputs/apk"
@@ -183,7 +187,7 @@ echo $ANDROID_NDK_HOME'''
                     }
                     steps {
                         script {
-                            last_started = env.STAGE_NAME
+                            last_stage = env.STAGE_NAME
                         }
                         sh "./gradlew --profile assembleProd${usedBuildType}"
                         sh "ls -la app/build/outputs/apk"
@@ -197,7 +201,7 @@ echo $ANDROID_NDK_HOME'''
                 stage('Default Client') {
                     steps {
                         script {
-                            last_started = env.STAGE_NAME
+                            last_stage = env.STAGE_NAME
                         }
                         archiveArtifacts(artifacts: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
                     }
@@ -208,7 +212,7 @@ echo $ANDROID_NDK_HOME'''
                     }
                     steps {
                         script {
-                            last_started = env.STAGE_NAME
+                            last_stage = env.STAGE_NAME
                         }
                         archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
                     }
@@ -222,7 +226,7 @@ echo $ANDROID_NDK_HOME'''
                 stage('Default Client') {
                     steps {
                         script {
-                            last_started = env.STAGE_NAME
+                            last_stage = env.STAGE_NAME
                         }
                         s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk")
                     }
@@ -233,7 +237,7 @@ echo $ANDROID_NDK_HOME'''
                     }
                     steps {
                         script {
-                            last_started = env.STAGE_NAME
+                            last_stage = env.STAGE_NAME
                         }
                         s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk")
                         wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
@@ -246,7 +250,7 @@ echo $ANDROID_NDK_HOME'''
 
     post {
         failure {
-            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ FAILED ($last_started) 👎"
+            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ FAILED ($last_stage) 👎"
         }
         success {
             script {
@@ -259,7 +263,7 @@ echo $ANDROID_NDK_HOME'''
                     "\nLast 5 commits:\n```\n$lastCommits\n```"
         }
         aborted {
-            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ ABORTED ($last_started) "
+            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ ABORTED ($last_stage) "
         }
     }
 }
