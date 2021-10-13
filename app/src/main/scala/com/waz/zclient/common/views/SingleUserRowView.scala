@@ -47,8 +47,6 @@ import com.waz.zclient.{R, ViewHelper}
 import com.wire.signals.{EventStream, Signal, SourceStream}
 import org.threeten.bp.Instant
 
-import scala.concurrent.Future
-
 class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   extends RelativeLayout(context, attrs, style) with ViewHelper with ThemedView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -197,8 +195,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   def setUserData(userData:       UserData,
-                  createSubtitle: (UserData, Boolean) => Future[String] = defaultSubtitle): Unit = {
-    import Threading.Implicits.Ui
+                  createSubtitle: (UserData, Boolean) => String = defaultSubtitle): Unit = {
     setTitle(userData.name, userData.isSelf)
     setVerified(userData.isVerified)
 
@@ -211,15 +208,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     }(Threading.Ui)
 
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      for {
-        federated <- usersController.isFederated(userData)
-        subtitle  <- createSubtitle(userData, federated)
-      } yield {
-        isFederated ! federated
-        setSubtitle(subtitle)
-      }
+      val federated = usersController.isFederated(userData)
+      isFederated ! federated
+      setSubtitle(createSubtitle(userData, federated))
     } else {
-      createSubtitle(userData, false).foreach(setSubtitle)
+      setSubtitle(createSubtitle(userData, false))
     }
   }
 
@@ -268,7 +261,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
   private def defaultSubtitle(user: UserData, isFederated: Boolean)(implicit context: Context) =
     user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now)) match {
-      case Some(expiration) => Future.successful(expiration)
+      case Some(expiration) => expiration
       case _ => usersController.displayHandle(user)
     }
 }

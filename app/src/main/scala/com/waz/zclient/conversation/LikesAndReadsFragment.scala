@@ -44,8 +44,6 @@ import com.waz.zclient.utils.Time.SameDayTimeStamp
 import com.waz.zclient.{FragmentHelper, R}
 import com.waz.threading.Threading._
 
-import scala.concurrent.Future
-
 class LikesAndReadsFragment extends FragmentHelper {
   import LikesAndReadsFragment._
   import Threading.Implicits.Ui
@@ -188,8 +186,8 @@ class LikesAndReadsFragment extends FragmentHelper {
 
   private var readTimestamps = Map.empty[UserId, RemoteInstant]
 
-  private def createSubtitle(user: UserData): Future[String] =
-    Future.successful(readTimestamps.get(user.id).fold("")(time => SameDayTimeStamp(time.instant).string))
+  private def createSubtitle(user: UserData): String =
+    readTimestamps.get(user.id).fold("")(time => SameDayTimeStamp(time.instant).string)
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_likes_and_reads, viewGroup, false)

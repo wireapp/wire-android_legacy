@@ -56,12 +56,12 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val users = zms.map(_.users)
-  lazy val currentHandle = users.flatMap(_.selfUser.map(_.displayHandle(None)))
+  private lazy val currentHandle = users.flatMap(_.selfUser.map(_.displayHandle()))
 
   private val handleTextWatcher = new TextWatcher() {
     private var lastText: String = ""
 
-    def beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) = {
+    def beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int): Unit = {
       val currentText = charSequence.toString
       if (validateUsername(currentText) != ValidationError.InvalidCharacters) lastText = currentText
     }

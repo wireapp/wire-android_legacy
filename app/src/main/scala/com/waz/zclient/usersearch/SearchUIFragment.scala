@@ -435,10 +435,7 @@ class SearchUIFragment extends BaseFragment[Container]
         }
       case (_, connection) if connectionsForOpenProfile.contains(connection) =>
         if (BuildConfig.FEDERATION_USER_DISCOVERY)
-          inject[UsersController].isFederated(user).foreach {
-            case true  => tryOpenConversation()
-            case false => showUserProfile()
-          }
+          if (inject[UsersController].isFederated(user)) tryOpenConversation() else showUserProfile()
         else
           showUserProfile()
 
@@ -486,7 +483,7 @@ class SearchUIFragment extends BaseFragment[Container]
     self.head.map { self =>
       val sharingIntent = IntentUtils.getInviteIntent(
         getString(R.string.people_picker__invite__share_text__header, self.name.str),
-        getString(R.string.people_picker__invite__share_text__body,self.displayHandle(None))
+        getString(R.string.people_picker__invite__share_text__body,self.displayHandle())
       )
       startActivity(Intent.createChooser(sharingIntent, getString(R.string.people_picker__invite__share_details_dialog)))
     }

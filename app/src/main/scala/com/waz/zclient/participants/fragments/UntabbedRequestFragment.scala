@@ -48,8 +48,8 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
         zms           <- inject[Signal[ZMessaging]].head
         Some(user)    <- userToConnect
         isGroup       <- participantsController.isGroup.head
-        isFederated   <- usersController.isFederated(user)
-        handle        <- usersController.displayHandle(user)
+        isFederated   =  usersController.isFederated(user)
+        handle        =  usersController.displayHandle(user)
         isGuest       =  !user.isWireBot && user.isGuest(zms.teamId)
         isExternal    =  !user.isWireBot && user.isExternal(zms.teamId)
         isDarkTheme   <- inject[ThemeController].darkThemeSet.head

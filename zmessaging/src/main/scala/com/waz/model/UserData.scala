@@ -76,11 +76,11 @@ final case class UserData(override val id:       UserId,
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
   lazy val qualifiedId: Option[QualifiedId] = domain.mapOpt(d => QualifiedId(id, d))
-  def displayHandle(currentDomain: Domain): String =
+  def displayHandle(currentDomain: Domain = Domain.Empty): String =
     handle match {
       case Some(h) if BuildConfig.FEDERATION_USER_DISCOVERY && h.nonEmpty &&
                                  currentDomain.isDefined && domain != currentDomain =>
-        s"${h.withSymbol}@$domain"
+        s"${h.withSymbol}@${domain.str}"
       case Some(h) if h.nonEmpty =>
         h.withSymbol
       case _ =>

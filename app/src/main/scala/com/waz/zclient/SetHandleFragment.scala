@@ -116,7 +116,7 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
     }
 
     self.head.foreach { self =>
-      self.handle.foreach{ handle =>
+      self.handle.foreach { handle =>
         suggestedUsername = handle.toString
         usernameTextView.foreach(_.setText(StringUtils.formatHandle(handle.toString)))
       }
