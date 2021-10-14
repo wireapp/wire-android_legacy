@@ -227,11 +227,12 @@ pipeline {
                     steps {
                         script {
                             last_stage = env.STAGE_NAME
-                            fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk"
                             if(env.BRANCH_NAME.startsWith("PR-")) {
-                                pathToUploadTo = "megazord/android/pr/${env.BRANCH_NAME}/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
-                            } else {
-                                pathToUploadTo = "megazord/android/${BRANCH_NAME.replaceAll('/','_')}/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
+                                pathToUploadTo = "megazord/android/pr/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
+                                 fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${env.BRANCH_NAME}-${usedClientVersion}${env.PATCH_VERSION}.apk"
+                        } else {
+                                pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
+                                fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${BRANCH_NAME.replaceAll('/','_')}-${usedClientVersion}${env.PATCH_VERSION}.apk"
                             }
                         }
                         s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}/${fileNameForS3}")
