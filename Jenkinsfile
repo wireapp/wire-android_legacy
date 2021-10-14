@@ -227,15 +227,12 @@ pipeline {
                     steps {
                         script {
                             last_stage = env.STAGE_NAME
+                            fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk"
                             if(env.BRANCH_NAME.startsWith("PR-")) {
-                                //this is a PR build, we need to rename the file to not acidently overwrite other PR test buildSrc
-                                fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-{env.BRANCH_NAME}-${usedClientVersion}${env.PATCH_VERSION}.apk"
-                                pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
+                                pathToUploadTo = "megazord/android/pr/{env.BRANCH_NAME}/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
                             } else if(env.BRANCH_NAME.startsWith("feature") || env.BRANCH_NAME.startsWith("hotfix") || env.BRANCH_NAME.startsWith("pipeline") || env.BRANCH_NAME.startsWith("translation")) {
-                                fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk"
                                 pathToUploadTo = "megazord/android/${BRANCH_NAME.replaceAll('/','_')}/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
                             } else {
-                                fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk"
                                 pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
                             }
                         }
