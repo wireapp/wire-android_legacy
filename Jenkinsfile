@@ -171,7 +171,7 @@ pipeline {
 
         stage('Assemble/Archive/Upload') {
             parallel {
-                stage('Branch Client') {
+                stages('Branch Client') {
                     when {
                         expression { usedFlavor != "F-Droid"}
                     }
@@ -209,7 +209,7 @@ pipeline {
                     }
                 }
 
-                stage('Prod Client') {
+                stages('Prod Client') {
                     when {
                         expression { usedFlavor != "Prod" && env.BRANCH_NAME == "release" }
                     }
@@ -242,7 +242,7 @@ pipeline {
                     }
                 }
 
-                stage('FDroid') {
+                stages('FDroid') {
                     when {
                         expression { usedFlavor.equals("F-Droid") }
                     }
