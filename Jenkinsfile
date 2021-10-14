@@ -211,7 +211,7 @@ pipeline {
                     }
                 }
 
-                stages('Prod Client') {
+                stage('Prod Client') {
                     when {
                         expression { usedFlavor != "Prod" && env.BRANCH_NAME == "release" }
                     }
@@ -246,7 +246,7 @@ pipeline {
                     }
                 }
 
-                stages('FDroid') {
+                stage('FDroid') {
                     when {
                         expression { usedFlavor.equals("F-Droid") }
                     }
