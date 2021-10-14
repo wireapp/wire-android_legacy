@@ -156,9 +156,9 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
       if (directoryExternalMembers.nonEmpty) {
         if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-          val federatedDomain = (directoryExternalMembers.headOption, currentUser.flatMap(_.domain)) match {
-            case (Some(user), Some(selfDomain)) if usersController.isFederated(user, selfDomain) => user.domain
-            case _ => None
+          val federatedDomain = (directoryExternalMembers.headOption) match {
+            case Some(user) if usersController.isFederated(user) => user.domain
+            case _ => Domain.Empty
           }
 
           mergedResult += SectionViewItem(DirectorySection, 0, federatedDomain = federatedDomain)

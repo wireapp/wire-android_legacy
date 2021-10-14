@@ -165,6 +165,10 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[UserId]]         to inject[Signal[ZMessaging]].map(_.selfUserId)
     bind [Signal[Option[TeamId]]] to inject[Signal[ZMessaging]].map(_.teamId)
 
+    // the current domain should be constant and the same for all current user accounts on the same device
+    // but technically we can't guarantee it, hence every time it's used we need to check its value
+    // (so, `toProvider`, not `to`)
+    bind[Domain] toProvider inject[Signal[ZMessaging]].map(_.selfDomain).currentValue.getOrElse(Domain.Empty)
 
     // services  and storages of the current zms
     bind [Signal[ConversationsService]]          to inject[Signal[ZMessaging]].map(_.conversations)

@@ -23,7 +23,7 @@ import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.ShouldPostClientCapabilities
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.{Client, ClientId, OtrClientIdMap, QOtrClientIdMap}
-import com.waz.model.{QualifiedId, UserId}
+import com.waz.model.{Domain, QualifiedId, UserId}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr._
 import com.waz.sync.SyncResult
@@ -45,7 +45,7 @@ trait OtrClientsSyncHandler {
 }
 
 class OtrClientsSyncHandlerImpl(selfId:        UserId,
-                                currentDomain: Option[String],
+                                currentDomain: Domain,
                                 selfClient:    ClientId,
                                 netClient:     OtrClient,
                                 otrClients:    OtrClientsService,
@@ -113,7 +113,7 @@ class OtrClientsSyncHandlerImpl(selfId:        UserId,
     netClient.loadClients().future
       .flatMap {
         case Left(error)    => Future.successful(SyncResult(error))
-        case Right(clients) => updateClients(Map(QualifiedId(selfId, currentDomain.getOrElse("")) -> clients))
+        case Right(clients) => updateClients(Map(QualifiedId(selfId, currentDomain.str) -> clients))
       }
 
   override def syncClients(users: Set[QualifiedId]): Future[SyncResult] = {
@@ -153,7 +153,7 @@ class OtrClientsSyncHandlerImpl(selfId:        UserId,
             Future.successful(SyncResult(err))
           case None =>
             updateClients(responses.collect {
-              case (id, Right(clients)) => QualifiedId(id, currentDomain.getOrElse("")) -> clients
+              case (id, Right(clients)) => QualifiedId(id, currentDomain.str) -> clients
             }.toMap)
         }
       }
@@ -205,7 +205,7 @@ class OtrClientsSyncHandlerImpl(selfId:        UserId,
             us.map { case (uId, cs) => uId -> cs.map { case (id, _) => Client(id) } },
             replace = false
           )
-          prekeys =  us.flatMap { case (u, cs) => cs map { case (c, p) => (SessionId(u, None, c), p)} }
+          prekeys =  us.flatMap { case (u, cs) => cs map { case (c, p) => (SessionId(u, Domain.Empty, c), p)} }
           _       <- Future.traverse(prekeys) { case (id, p) => sessions.getOrCreateSession(id, p) }
           _       <- VerificationStateUpdater.awaitUpdated(selfId)
         } yield None

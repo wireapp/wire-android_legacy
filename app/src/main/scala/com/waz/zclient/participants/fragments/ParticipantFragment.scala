@@ -264,7 +264,7 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
         userOpt      <- participantsController.getUser(userId)
         isTeamMember <- userAccountsController.isTeamMember(userId).head
         // for now, federated users are not really "accepted", they're more like team members; it's a temporary solution
-        isFederated  <- userOpt.fold(Future.successful(false))(usersController.isFederated)
+        isFederated  =  userOpt.fold(false)(usersController.isFederated)
       } userOpt match {
         case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember || isFederated =>
           import SingleParticipantFragment._

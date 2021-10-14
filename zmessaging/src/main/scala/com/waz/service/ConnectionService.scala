@@ -72,7 +72,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       user.fold {
         UserData(
           event.to,
-          if (BuildConfig.FEDERATION_USER_DISCOVERY) event.toDomain else None,
+          if (BuildConfig.FEDERATION_USER_DISCOVERY) event.toDomain else Domain.Empty,
           None,
           event.fromUserName.getOrElse(Name.Empty),
           None,
@@ -400,7 +400,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
                          team          = teamId,
                          access        = Set(Access.PRIVATE),
                          accessRole    = Some(AccessRole.PRIVATE),
-                         domain        = remoteId.map(_.domain)
+                         domain        = Domain(remoteId.map(_.domain))
                        )
                      }.toMap
         // remotes need to be refreshed after updating local ids
@@ -408,9 +408,15 @@ class ConnectionServiceImpl(selfUserId:      UserId,
         result    <- convsStorage.updateOrCreateAll2(newConvs.keys, {
                        case (cId, Some(conv)) =>
                          remoteIds(cId).fold(conv){ rId =>
-                           remotes.getOrElse(rId, conv.copy(remoteId = rId.id, domain = if (BuildConfig.FEDERATION_USER_DISCOVERY && rId.domain.nonEmpty) Some(rId.domain) else None))
+                           remotes.getOrElse(
+                             rId,
+                             conv.copy(
+                               remoteId = rId.id,
+                               domain = if (BuildConfig.FEDERATION_USER_DISCOVERY && rId.domain.nonEmpty) Domain(rId.domain) else Domain.Empty
+                             )
+                           )
                          }
-                        case (cId, _)          =>
+                        case (cId, _) =>
                           newConvs(cId)
                      })
       } yield result.map(conv => userIdForConv(conv.id) -> conv).toMap

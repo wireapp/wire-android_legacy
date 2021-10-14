@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.waz.model._
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.DefaultPatienceConfig
+import com.waz.zms.BuildConfig
 import com.wire.signals.CancellableFuture
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
@@ -37,6 +38,7 @@ class SerialProcessingQueueSpec extends AndroidFreeSpec with Matchers with Scala
   feature("Grouped event processing queue") {
 
     scenario("Enqueue events and await results") {
+      val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
       val processedCount = new AtomicInteger(0)
       val queue = new GroupedEventProcessingQueue[ConversationEvent, RConvId](_.convId, {
         case (_, events) =>
@@ -46,9 +48,9 @@ class SerialProcessingQueueSpec extends AndroidFreeSpec with Matchers with Scala
       val convId = RConvId()
       val future = queue.enqueue(
         Seq(
-          TypingEvent(convId, None, RemoteInstant(Instant.now()), UserId(), None, isTyping = true),
-          TypingEvent(convId, None, RemoteInstant(Instant.now()), UserId(), None, isTyping = true),
-          TypingEvent(RConvId(), None, RemoteInstant(Instant.now()), UserId(), None, isTyping = true)
+          TypingEvent(convId, domain, RemoteInstant(Instant.now()), UserId(), domain, isTyping = true),
+          TypingEvent(convId, domain, RemoteInstant(Instant.now()), UserId(), domain, isTyping = true),
+          TypingEvent(RConvId(), domain, RemoteInstant(Instant.now()), UserId(), domain, isTyping = true)
         )
       )
 

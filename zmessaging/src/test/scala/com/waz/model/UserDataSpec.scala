@@ -25,7 +25,7 @@ class UserDataSpec extends AndroidFreeSpec {
 
   val referenceInfo = UserInfo(
     UserId(),
-    Some("staging.zinfra.io"),
+    Domain("staging.zinfra.io"),
     Some(Name("Atticus")),
     Some(4),
     Some(EmailAddress("atticus@wire.com")),
@@ -78,14 +78,15 @@ class UserDataSpec extends AndroidFreeSpec {
     scenario("Updating with empty UserInfo preserves data") {
 
       // GIVEN
-      val oldData = UserData(referenceInfo, false)
-      val info = UserInfo(referenceInfo.id, None, referenceInfo.name)
+      val oldData = UserData(referenceInfo, withSearchKey = false)
+      val info = UserInfo(referenceInfo.id, Domain.Empty, referenceInfo.name)
 
       // WHEN
       val data = oldData.updated(info)
 
       // THEN
       data.id.shouldEqual(referenceInfo.id)
+      data.domain.shouldEqual(referenceInfo.domain)
       data.name.shouldEqual(referenceInfo.name.get)
       data.accent.shouldEqual(referenceInfo.accentId.get)
       data.email.shouldEqual(referenceInfo.email)

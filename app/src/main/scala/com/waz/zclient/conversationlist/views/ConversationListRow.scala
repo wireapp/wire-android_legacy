@@ -122,6 +122,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       verbose(l"Outdated badge status")
   }
 
+  private lazy val currentDomain = inject[Domain]
+
   private val subtitleText = for {
     z <- zms
     conv <- conversation
@@ -135,7 +137,23 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     isGroupConv <- z.conversations.groupConversation(conv.id)
     missedCallerId <- controller.lastMessage(conv.id).map(_.lastMissedCall.map(_.userId))
     userName <- missedCallerId.fold2(Signal.const(Option.empty[Name]), u => z.usersStorage.signal(u).map(d => Some(d.name)))
-  } yield (conv.id, subtitleStringForLastMessages(conv, otherUser, ms.toSet, lastMessage, lastUnreadMessage, lastUnreadMessageUser, lastUnreadMessageMembers, typingUser, z.selfUserId, isGroupConv, userName))
+  } yield (
+    conv.id,
+    subtitleStringForLastMessages(
+      conv,
+      otherUser,
+      ms.toSet,
+      lastMessage,
+      lastUnreadMessage,
+      lastUnreadMessageUser,
+      lastUnreadMessageMembers,
+      typingUser,
+      z.selfUserId,
+      isGroupConv,
+      userName,
+      currentDomain
+    )
+  )
 
   subtitleText.onUi {
     case (convId, text) if conversationData.forall(_.id == convId) =>
@@ -373,12 +391,13 @@ object ConversationListRow {
     }
   }
 
-  private def subtitleStringForLastMessage(messageData: MessageData,
-                                           user:        Option[UserData],
-                                           members:     Vector[UserData],
-                                           isGroup:     Boolean,
-                                           selfId:      UserId,
-                                           isQuote:     Boolean
+  private def subtitleStringForLastMessage(messageData:   MessageData,
+                                           user:          Option[UserData],
+                                           members:       Vector[UserData],
+                                           isGroup:       Boolean,
+                                           selfId:        UserId,
+                                           isQuote:       Boolean,
+                                           currentDomain: Domain
                                   )(implicit context: Context): String = {
     lazy val senderName = user.map(_.name).getOrElse(Name(getString(R.string.conversation_list__someone)))
     lazy val memberName = members.headOption.map(_.name).getOrElse(Name(getString(R.string.conversation_list__someone)))
@@ -411,7 +430,7 @@ object ConversationListRow {
         case Message.Type.KNOCK =>
           formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup, quotePrefix = isQuote)
         case Message.Type.CONNECT_ACCEPTED | Message.Type.MEMBER_JOIN if !isGroup =>
-          members.headOption.flatMap(_.displayHandle).getOrElse("")
+          members.headOption.map(_.displayHandle(currentDomain)).getOrElse("")
         case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
           getString(R.string.conversation_list__added_you, senderName)
         case Message.Type.MEMBER_JOIN if members.length > 1 =>
@@ -440,10 +459,11 @@ object ConversationListRow {
                                     typingUser:               Option[UserData],
                                     selfId:                   UserId,
                                     isGroupConv:              Boolean,
-                                    userName:                 Option[Name])
+                                    userName:                 Option[Name],
+                                    currentDomain:            Domain)
                                    (implicit context: Context): String = {
     if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && !isGroupConv)) {
-      otherMember.flatMap(_.displayHandle).getOrElse("")
+      otherMember.map(_.displayHandle(currentDomain)).getOrElse("")
     } else if (memberIds.count(_ != selfId) == 0 && conv.convType == ConversationType.Group) {
       ""
     } else if (conv.unreadCount.total == 0 && !conv.isActive) {
@@ -508,7 +528,15 @@ object ConversationListRow {
           ""
         } { msg =>
           // if we are here, it means there is only one unread message, so if the number of quotes > 0, it means this unread message is a quote
-          subtitleStringForLastMessage(msg, lastUnreadMessageUser, lastUnreadMessageMembers, isGroupConv, selfId, conv.unreadCount.quotes > 0)
+          subtitleStringForLastMessage(
+            msg,
+            lastUnreadMessageUser,
+            lastUnreadMessageMembers,
+            isGroupConv,
+            selfId,
+            conv.unreadCount.quotes > 0,
+            currentDomain
+          )
         }
       } { usr =>
         formatSubtitle(getString(R.string.conversation_list__typing), usr.name, isGroupConv)
