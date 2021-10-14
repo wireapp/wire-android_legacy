@@ -197,13 +197,8 @@ pipeline {
                             steps {
                                 script {
                                     last_stage = env.STAGE_NAME
-                                    if(env.BRANCH_NAME.startsWith("PR-")) {
-                                        pathToUploadTo = "megazord/android/pr/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
-                                        fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${env.BRANCH_NAME}-${usedClientVersion}${env.PATCH_VERSION}.apk"
-                                    } else {
-                                        pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
-                                        fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${BRANCH_NAME.replaceAll('/','_')}-${usedClientVersion}${env.PATCH_VERSION}.apk"
-                                    }
+                                    pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
+                                    fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${BRANCH_NAME.replaceAll('/','_')}-${usedClientVersion}${env.PATCH_VERSION}.apk"
                                 }
                                 s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}${fileNameForS3}")
                             }
