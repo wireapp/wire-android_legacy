@@ -227,8 +227,19 @@ pipeline {
                     steps {
                         script {
                             last_stage = env.STAGE_NAME
+                            if(env.BRANCH_NAME.startsWith("PR-") {
+                                //this is a PR build, we need to rename the file to not acidently overwrite other PR test buildSrc
+                                fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-{env.BRANCH_NAME}-${usedClientVersion}${env.PATCH_VERSION}.apk"
+                                pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
+                            } else if(env.BRANCH_NAME.startsWith("feature") || env.BRANCH_NAME.startsWith("hotfix") || env.BRANCH_NAME.startsWith("pipeline") || env.BRANCH_NAME.startsWith("translation")) {
+                                fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk"
+                                pathToUploadTo = "megazord/android/${BRANCH_NAME.replaceAll('/','_')}/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
+                            } else {
+                                fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk"
+                                pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
+                            }
                         }
-                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk")
+                        s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: 'wire-*.apk' bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}/${fileNameForS3}")
                     }
                 }
                 stage('Prod Client') {
@@ -239,8 +250,8 @@ pipeline {
                         script {
                             last_stage = env.STAGE_NAME
                         }
-                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk")
-                        wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
+                        s3Upload(acl: "${env.ACL_NAME}", workDir: "app/build/outputs/apk/", file: "wire-*.apk" bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
+                        wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                             "\nLast 5 commits:\n```\n$lastCommits\n```"
                     }
                 }
@@ -250,7 +261,7 @@ pipeline {
 
     post {
         failure {
-            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ FAILED ($last_stage) 👎"
+            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ FAILED ($last_stage) 👎"
         }
         success {
             script {
@@ -259,11 +270,11 @@ pipeline {
                         returnStdout: true
                 )
             }
-            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
+            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                     "\nLast 5 commits:\n```\n$lastCommits\n```"
         }
         aborted {
-            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ ABORTED ($last_stage) "
+            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ ABORTED ($last_stage) "
         }
     }
 }
