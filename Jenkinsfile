@@ -171,40 +171,42 @@ pipeline {
 
         stage('Assemble/Archive/Upload') {
             parallel {
-                stages('Branch Client') {
+                stage('Branch Client') {
                     when {
                         expression { usedFlavor != "F-Droid"}
                     }
-                    stage('Assemble Branch') {
-                        steps {
-                            script {
-                                last_stage = env.STAGE_NAME
-                            }
-                            sh "./gradlew --profile assemble${usedFlavor}${usedBuildType}"
-                            sh "ls -la app/build/outputs/apk"
-                        }
-                    }
-                    stage('Archive Branch') {
-                        steps {
-                            script {
-                                last_stage = env.STAGE_NAME
-                            }
-                            archiveArtifacts(artifacts: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
-                        }
-                    }
-                    stage('Upload Branch') {
-                        steps {
-                            script {
-                                last_stage = env.STAGE_NAME
-                                if(env.BRANCH_NAME.startsWith("PR-")) {
-                                    pathToUploadTo = "megazord/android/pr/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
-                                    fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${env.BRANCH_NAME}-${usedClientVersion}${env.PATCH_VERSION}.apk"
-                                } else {
-                                    pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
-                                    fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${BRANCH_NAME.replaceAll('/','_')}-${usedClientVersion}${env.PATCH_VERSION}.apk"
+                    stages {
+                        stage('Assemble Branch') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
                                 }
+                                sh "./gradlew --profile assemble${usedFlavor}${usedBuildType}"
+                                sh "ls -la app/build/outputs/apk"
                             }
-                            s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}${fileNameForS3}")
+                        }
+                        stage('Archive Branch') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                archiveArtifacts(artifacts: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
+                            }
+                        }
+                        stage('Upload Branch') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                    if(env.BRANCH_NAME.startsWith("PR-")) {
+                                        pathToUploadTo = "megazord/android/pr/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
+                                        fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${env.BRANCH_NAME}-${usedClientVersion}${env.PATCH_VERSION}.apk"
+                                    } else {
+                                        pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
+                                        fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${BRANCH_NAME.replaceAll('/','_')}-${usedClientVersion}${env.PATCH_VERSION}.apk"
+                                    }
+                                }
+                                s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}${fileNameForS3}")
+                            }
                         }
                     }
                 }
@@ -213,31 +215,33 @@ pipeline {
                     when {
                         expression { usedFlavor != "Prod" && env.BRANCH_NAME == "release" }
                     }
-                    stage('Assemble Prod') {
-                        steps {
-                            script {
-                                last_stage = env.STAGE_NAME
+                    stages {
+                        stage('Assemble Prod') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                sh "./gradlew --profile assembleProd${usedBuildType}"
+                                sh "ls -la app/build/outputs/apk"
                             }
-                            sh "./gradlew --profile assembleProd${usedBuildType}"
-                            sh "ls -la app/build/outputs/apk"
                         }
-                    }
-                    stage('Archive Prod') {
-                        steps {
-                            script {
-                                last_stage = env.STAGE_NAME
+                        stage('Archive Prod') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
                             }
-                            archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
                         }
-                    }
-                    stage('Prod Client') {
-                        steps {
-                            script {
-                                last_stage = env.STAGE_NAME
+                        stage('Prod Client') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", file: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
+                                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
+                                                                    "\nLast 5 commits:\n```\n$lastCommits\n```"
                             }
-                            s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", file: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
-                            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
-                                                                "\nLast 5 commits:\n```\n$lastCommits\n```"
                         }
                     }
                 }
@@ -245,6 +249,13 @@ pipeline {
                 stages('FDroid') {
                     when {
                         expression { usedFlavor.equals("F-Droid") }
+                    }
+                    stages {
+                        stage('Assemble F-Droid') {
+                            script {
+                                last_stage = env.STAGE_NAME
+                            }
+                        }
                     }
                 }
             }
