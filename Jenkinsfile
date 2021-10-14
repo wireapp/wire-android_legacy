@@ -10,7 +10,7 @@ pipeline {
     parameters {
         string(name: 'ConfigFileId', defaultValue: 'wire-android-config', description: 'Name or ID of the Groovy file (under Jenkins -> Managed Files) that sets environment variables')
         string(name: 'BuildType', defaultValue: '', description: 'Build Type for the Client (Release or Debug)')
-        string(name: 'Flavor', defaultValue: '', description: 'Product Flavor to build (Experimental, Internal, Dev, Candidate, Release)')
+        string(name: 'Flavor', defaultValue: '', description: 'Product Flavor to build (Experimental, Internal, Dev, Candidate, Prod, F-Droid)')
         string(name: 'PatchVersion', defaultValue: '', description: 'PatchVersion for the build as a numeric value (e.g. 1337)')
         booleanParam(name: 'AppUnitTests', defaultValue: true, description: 'Run all app unit tests for this build')
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
@@ -45,7 +45,7 @@ pipeline {
                     if(params.BuildType != '') {
                         usedBuildType = params.BuildType
                         println("using params.BuildType for usedBuildType")
-                    } else if(usedFlavor != 'Experimental') {
+                    } else if(usedFlavor == 'Experimental') {
                         usedBuildType =  "Debug"
                     } else {
                         usedBuildType =  "Release"
@@ -169,79 +169,90 @@ pipeline {
             }
         }
 
-
-        stage('Client Assembly') {
+        stage('Assemble/Archive/Upload') {
             parallel {
                 stage('Branch Client') {
-                    steps {
-                        script {
-                            last_stage = env.STAGE_NAME
+                    when {
+                        expression { usedFlavor != "F-Droid"}
+                    }
+                    stages {
+                        stage('Assemble Branch') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                sh "./gradlew --profile assemble${usedFlavor}${usedBuildType}"
+                                sh "ls -la app/build/outputs/apk"
+                            }
                         }
-                        sh "./gradlew --profile assemble${usedFlavor}${usedBuildType}"
-                        sh "ls -la app/build/outputs/apk"
+                        stage('Archive Branch') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                archiveArtifacts(artifacts: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
+                            }
+                        }
+                        stage('Upload Branch') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                    pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
+                                    fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${BRANCH_NAME.replaceAll('/','_')}-${usedClientVersion}${env.PATCH_VERSION}.apk"
+                                }
+                                s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}${fileNameForS3}")
+                            }
+                        }
                     }
                 }
+
                 stage('Prod Client') {
                     when {
                         expression { usedFlavor != "Prod" && env.BRANCH_NAME == "release" }
                     }
-                    steps {
-                        script {
-                            last_stage = env.STAGE_NAME
+                    stages {
+                        stage('Assemble Prod') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                sh "./gradlew --profile assembleProd${usedBuildType}"
+                                sh "ls -la app/build/outputs/apk"
+                            }
                         }
-                        sh "./gradlew --profile assembleProd${usedBuildType}"
-                        sh "ls -la app/build/outputs/apk"
+                        stage('Archive Prod') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
+                            }
+                        }
+                        stage('Prod Client') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", file: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
+                                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
+                                                                    "\nLast 5 commits:\n```\n$lastCommits\n```"
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        stage('Save Artifact') {
-            parallel {
-                stage('Default Client') {
-                    steps {
-                        script {
-                            last_stage = env.STAGE_NAME
-                        }
-                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
-                    }
-                }
-                stage('Prod Client') {
+                stage('FDroid') {
                     when {
-                        expression { usedFlavor != "Prod" && env.BRANCH_NAME == "release" }
+                        expression { usedFlavor.equals("F-Droid") }
                     }
-                    steps {
-                        script {
-                            last_stage = env.STAGE_NAME
+                    stages {
+                        stage('Assemble F-Droid') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                            }
                         }
-                        archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
-                    }
-                }
-            }
-        }
-
-
-        stage('Upload to S3') {
-            parallel {
-                stage('Default Client') {
-                    steps {
-                        script {
-                            last_stage = env.STAGE_NAME
-                        }
-                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk")
-                    }
-                }
-                stage('Prod Client') {
-                    when {
-                        expression { usedFlavor != "Prod" && env.BRANCH_NAME == "release" }
-                    }
-                    steps {
-                        script {
-                            last_stage = env.STAGE_NAME
-                        }
-                        s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk")
-                        wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
-                                                            "\nLast 5 commits:\n```\n$lastCommits\n```"
                     }
                 }
             }
@@ -250,7 +261,7 @@ pipeline {
 
     post {
         failure {
-            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ FAILED ($last_stage) 👎"
+            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ FAILED ($last_stage) 👎"
         }
         success {
             script {
@@ -259,11 +270,11 @@ pipeline {
                         returnStdout: true
                 )
             }
-            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
+            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                     "\nLast 5 commits:\n```\n$lastCommits\n```"
         }
         aborted {
-            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ ABORTED ($last_stage) "
+            wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ ABORTED ($last_stage) "
         }
     }
 }
