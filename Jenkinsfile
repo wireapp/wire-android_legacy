@@ -252,8 +252,10 @@ pipeline {
                     }
                     stages {
                         stage('Assemble F-Droid') {
-                            script {
-                                last_stage = env.STAGE_NAME
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
                             }
                         }
                     }
