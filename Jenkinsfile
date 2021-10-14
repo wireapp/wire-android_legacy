@@ -227,7 +227,7 @@ pipeline {
                     steps {
                         script {
                             last_stage = env.STAGE_NAME
-                            if(env.BRANCH_NAME.startsWith("PR-") {
+                            if(env.BRANCH_NAME.startsWith("PR-")) {
                                 //this is a PR build, we need to rename the file to not acidently overwrite other PR test buildSrc
                                 fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-{env.BRANCH_NAME}-${usedClientVersion}${env.PATCH_VERSION}.apk"
                                 pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}"
