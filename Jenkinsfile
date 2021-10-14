@@ -205,7 +205,7 @@ pipeline {
                                         fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${BRANCH_NAME.replaceAll('/','_')}-${usedClientVersion}${env.PATCH_VERSION}.apk"
                                     }
                                 }
-                                s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk" bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}${fileNameForS3}")
+                                s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}${fileNameForS3}")
                             }
                         }
                     }
