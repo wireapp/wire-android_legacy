@@ -25,7 +25,7 @@ class UserDataSpec extends AndroidFreeSpec {
 
   val referenceInfo = UserInfo(
     UserId(),
-    Domain("staging.zinfra.io"),
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("staging.zinfra.io") else Domain.Empty,
     Some(Name("Atticus")),
     Some(4),
     Some(EmailAddress("atticus@wire.com")),
@@ -58,7 +58,7 @@ class UserDataSpec extends AndroidFreeSpec {
       if (BuildConfig.FEDERATION_USER_DISCOVERY) {
         data.domain.shouldEqual(referenceInfo.domain)
       } else {
-        data.domain.shouldEqual(None)
+        data.domain.shouldEqual(Domain.Empty)
       }
       data.name.shouldEqual(referenceInfo.name.get)
       data.accent.shouldEqual(referenceInfo.accentId.get)
