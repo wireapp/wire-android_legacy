@@ -233,6 +233,10 @@ pipeline {
                             steps {
                                 script {
                                     last_stage = env.STAGE_NAME
+                                    lastCommits = sh(
+                                            script: "git log -5 --pretty=\"%h [%an] %s\" | sed \"s/^/    /\"",
+                                            returnStdout: true
+                                    )
                                     println("Uploading prod version of wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the the S3 Bucket [${env.S3_BUCKET_NAME}] to the folder [megazord/android/prod/${usedBuildType.toLowerCase()}/]")
                                 }
                                 s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
