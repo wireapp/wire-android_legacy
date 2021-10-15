@@ -199,6 +199,7 @@ pipeline {
                                     last_stage = env.STAGE_NAME
                                     pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
                                     fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${BRANCH_NAME.replaceAll('/','_')}-${usedClientVersion}${env.PATCH_VERSION}.apk"
+                                    println("Uploading wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the the S3 Bucket [${env.S3_BUCKET_NAME}] to the folder [${pathToUploadTo}] under the name [${fileNameForS3}]")
                                 }
                                 s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}${fileNameForS3}")
                             }
@@ -228,14 +229,28 @@ pipeline {
                                 archiveArtifacts(artifacts: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
                             }
                         }
-                        stage('Prod Client') {
+                        stage('Upload Prod to S3') {
                             steps {
                                 script {
                                     last_stage = env.STAGE_NAME
+                                    println("Uploading prod version of wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the the S3 Bucket [${env.S3_BUCKET_NAME}] to the folder [megazord/android/prod/${usedBuildType.toLowerCase()}/]")
                                 }
                                 s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
                                 wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                                     "\nLast 5 commits:\n```\n$lastCommits\n```"
+                            }
+                        }
+
+                        stage('Upload to PlayStore') {
+                            when {
+                                expression { env.PLAYSTORE_UPLOAD_ENABLED }
+                            }
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                    println("Uploading wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the Track [${env.WIRE_ANDROID_TRACK_NAME}]")
+                                }
+                                androidApkUpload(googleCredentialsId: '${env.GOOGLE_PLAY_CREDS}', filesPattern: "app/build/outputs/apk/prod/${usedBuildType.toLowerCase()}/wire-*.apk", trackName: "${env.WIRE_ANDROID_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Release ${usedClientVersion}${env.BUILD_NUMBER}")
                             }
                         }
                     }
