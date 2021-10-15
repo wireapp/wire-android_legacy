@@ -39,8 +39,8 @@ import com.waz.sync.client._
 import com.waz.sync.{AccountSyncHandler, SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.ui.{MemoryImageCache, MemoryImageCacheImpl}
+import com.waz.utils.IoUtils
 import com.waz.utils.wrappers.{Context, GoogleApi}
-import com.waz.utils.{Cache, IoUtils}
 import com.waz.zms.BuildConfig
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}

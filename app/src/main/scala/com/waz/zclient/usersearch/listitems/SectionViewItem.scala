@@ -17,12 +17,12 @@
   */
 package com.waz.zclient.usersearch.listitems
 
-import com.waz.model.Name
+import com.waz.model.{Domain, Name}
 
 final case class SectionViewItem(override val section: Int,
                                  override val index:   Int,
                                  override val name:    Name = Name.Empty,
-                                 federatedDomain:      Option[String] = None
+                                 federatedDomain:      Domain = Domain.Empty
                                 )
   extends SearchViewItem {
   import SearchViewItem._

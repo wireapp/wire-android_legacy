@@ -37,12 +37,12 @@ import scala.concurrent.Future
 
 class UserServiceSpec extends AndroidFreeSpec {
 
-  private val Domain = "staging.zinfra.io"
-  private val OtherDomain = "chala.wire.link"
+  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("staging.zinfra.io") else Domain.Empty
+  private val otherDomain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
 
-  private lazy val me = UserData(name = "me").updateConnectionStatus(ConnectionStatus.Self).copy(domain = Some(Domain))
+  private lazy val me = UserData(name = "me").updateConnectionStatus(ConnectionStatus.Self).copy(domain = domain)
   private lazy val user1 = UserData("other user 1")
-  private lazy val federatedUser = UserData("federated user").copy(domain = Some(OtherDomain))
+  private lazy val federatedUser = UserData("federated user").copy(domain = otherDomain)
   private lazy val meAccount = AccountData(me.id)
 
   private lazy val users = Seq(me, user1, UserData("other user 2"), UserData("some name"),
@@ -77,7 +77,7 @@ class UserServiceSpec extends AndroidFreeSpec {
     result(userPrefs(UserPreferences.ShouldSyncUsers) := false)
 
     new UserServiceImpl(
-      users.head.id, if (BuildConfig.FEDERATION_USER_DISCOVERY) Some(Domain) else None, None, accountsService, accountsStrg, usersStorage, membersStorage,
+      users.head.id, domain, None, accountsService, accountsStrg, usersStorage, membersStorage,
       userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
       selectedConv, messages
     )
@@ -99,7 +99,7 @@ class UserServiceSpec extends AndroidFreeSpec {
       availability should not equal Availability.Busy
 
       val userService = new UserServiceImpl(
-        users.head.id, None, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
+        users.head.id, domain, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
         userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
         selectedConv, messages
       )
@@ -147,7 +147,7 @@ class UserServiceSpec extends AndroidFreeSpec {
     scenario("check if a federated user exists") {
       if (BuildConfig.FEDERATION_USER_DISCOVERY) {
         val qId = federatedUser.qualifiedId.get
-        val userInfo = UserInfo(federatedUser.id, domain = Some(OtherDomain))
+        val userInfo = UserInfo(federatedUser.id, domain = otherDomain)
 
         (usersClient.loadQualifiedUser _).expects(qId).anyNumberOfTimes().returning(
           CancellableFuture.successful(Right(Option(userInfo)))

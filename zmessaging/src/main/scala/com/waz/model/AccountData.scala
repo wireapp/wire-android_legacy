@@ -19,6 +19,7 @@ package com.waz.model
 
 import com.waz.db.Col._
 import com.waz.db.Dao
+import com.waz.model
 import com.waz.model.AccountData.Password
 import com.waz.sync.client.AuthenticationManager
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
@@ -34,7 +35,7 @@ import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder}
   */
 
 final case class AccountData(id:           UserId              = UserId(),
-                             domain:       Option[String]      = None,
+                             domain:       Domain              = Domain.Empty,
                              teamId:       Option[TeamId]      = None,
                              cookie:       Cookie              = Cookie(""), //defaults for tests
                              accessToken:  Option[AccessToken] = None,
@@ -79,7 +80,7 @@ object AccountData {
 
   implicit object AccountDataDao extends Dao[AccountData, UserId] {
     val Id             = id[UserId]('_id, "PRIMARY KEY").apply(_.id)
-    val Domain         = opt(text('domain))(_.domain)
+    val Domain         = text[model.Domain]('domain, _.str, model.Domain(_))(_.domain)
     val TeamId         = opt(id[TeamId]('team_id)).apply(_.teamId)
     val Cookie         = text[Cookie]('cookie, _.str, AuthenticationManager.Cookie)(_.cookie)
     val Token          = opt(text[AccessToken]('access_token, JsonEncoder.encodeString[AccessToken], JsonDecoder.decode[AccessToken]))(_.accessToken)

@@ -41,7 +41,6 @@ import scala.concurrent.Future
 class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
   val teamId             = Some(TeamId())
-  val domain             = "chala.wire.link"
   val selfClientId       = ClientId("client-id")
   val otrClient          = mock[OtrClient]
   val msgClient          = mock[MessagesClient]
@@ -61,7 +60,6 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
     new OtrSyncHandlerImpl(
       teamId,
       selfClientId,
-      Some(domain),
       otrClient,
       msgClient,
       service,
@@ -151,14 +149,14 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       val msg = createTextMessage("content")
 
       val selfClient       = Client(selfClientId)
-      val currentDomain    = "domain"
+      val currentDomain    = Domain("domain")
 
       val otherUser        = UserId("other-user-id")
       val otherUserClient  = Client(ClientId("other-user-client-1"))
       val encryptedContent1 = EncryptedContent(Map(otherUser -> Map(otherUserClient.id -> "content".getBytes)))
 
       val missingUser       = UserId("missing-user-id")
-      val missingUserData   = UserData(missingUser, domain = Some(currentDomain), name = Name("missing user"), searchKey = SearchKey.simple("missing user"))
+      val missingUserData   = UserData(missingUser, domain = currentDomain, name = Name("missing user"), searchKey = SearchKey.simple("missing user"))
       val missingUserClient = Client(ClientId("missing-user-client-1"), deviceClass = DeviceClass.LegalHold)
       val missing           = OtrClientIdMap.from(missingUser -> Set(missingUserClient.id))
 
@@ -224,7 +222,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .returning(Future.successful(ErrorData(Uid(), ErrorType.CANNOT_SEND_MESSAGE_TO_UNAPPROVED_LEGAL_HOLD_CONVERSATION)))
 
       (users.qualifiedIds _).expects(*).anyNumberOfTimes().onCall { userIds: Set[UserId] =>
-        Future.successful(userIds.map(QualifiedId(_, currentDomain)))
+        Future.successful(userIds.map(QualifiedId(_, currentDomain.str)))
       }
       // When
       val actualResult = result(syncHandler.postOtrMessage(conv.id, msg, isHidden = false))
@@ -277,7 +275,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
     def setUpExpectationsForReencryptAndSend(conv: ConversationData,
                                              message: GenericMessage): Unit = {
       val selfClient       = Client(selfClientId)
-      val currentDomain    = "domain"
+      val currentDomain    = Domain("domain")
 
       val otherUser        = UserId("other-user-id")
       val otherUserClient  = Client(ClientId("other-user-client-1"))
@@ -286,7 +284,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       val encryptedContent1 = EncryptedContent(Map(otherUser -> Map(otherUserClient.id -> content)))
 
       val missingUser       = UserId("missing-user-id")
-      val missingUserData   = UserData(missingUser, domain = Some(currentDomain), name = Name("missing user"), searchKey = SearchKey.simple("missing user"))
+      val missingUserData   = UserData(missingUser, domain = currentDomain, name = Name("missing user"), searchKey = SearchKey.simple("missing user"))
       val missingUserClient = Client(ClientId("missing-user-client-1"))
       val contentForMissing = "content".getBytes
       val missing           = OtrClientIdMap.from(missingUser -> Set(missingUserClient.id))
@@ -407,7 +405,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
         .returning(Future.successful(Seq(Some(UserClients(missingUser, Map(missingUserClient.id -> missingUserClient))))))
 
       (users.qualifiedIds _).expects(*).anyNumberOfTimes().onCall { userIds: Set[UserId] =>
-        Future.successful(userIds.map(QualifiedId(_, currentDomain)))
+        Future.successful(userIds.map(QualifiedId(_, currentDomain.str)))
       }
     }
 
