@@ -272,13 +272,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Update PR') {
-            when {
-                expression { env.BRANCH_NAME.startsWith("PR-") }
-            }
-            pullRequest.comment("Build Download")
-        }
     }
 
     post {
