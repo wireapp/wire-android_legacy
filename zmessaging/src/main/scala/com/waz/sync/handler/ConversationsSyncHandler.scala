@@ -232,7 +232,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
           case (true, true) =>
             val convQualifiedId = convService.rConvQualifiedId(conv)
             val userQualifiedId = QualifiedId(selfUserId, selfDomain)
-            convClient.postQualifiedMemberLeave(convQualifiedId, userQualifiedId)
+            convClient.postMemberLeave(convQualifiedId, userQualifiedId)
           case _ =>
             convClient.postMemberLeave(conv.remoteId, selfUserId)
         }
@@ -269,7 +269,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
     if (BuildConfig.FEDERATION_USER_DISCOVERY && qId.id != selfUserId) {
       postConv(convId) { conv =>
         val rConvId = convService.rConvQualifiedId(conv)
-        convClient.postQualifiedMemberLeave(rConvId, qId)
+        convClient.postMemberLeave(rConvId, qId)
       }
     } else {
       postConversationMemberLeave(convId, qId.id)

@@ -24,7 +24,7 @@ import com.waz.log.LogSE._
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
 import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, Decoder, QConversationsResult}
-import com.waz.utils.JsonDecoder.{array, decodeBool, decodeSeq, decodeOptString}
+import com.waz.utils.JsonDecoder.{decodeBool, decodeSeq, decodeOptString}
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
 import com.waz.znet2.AuthRequestInterceptor
@@ -47,17 +47,22 @@ trait ConversationsClient {
   def loadQualifiedConversationsIds(pagingState: Option[String]): ErrorOrResponse[ListConversationsIdsResponse]
   def loadConversationRoles(remoteIds: Set[RConvId], defRoles: Set[ConversationRole]): Future[Map[RConvId, Set[ConversationRole]]]
   def postName(convId: RConvId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]]
+  def postName(convId: RConvQualifiedId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]]
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
+  def postConversationState(convId: RConvQualifiedId, state: ConversationState): ErrorOrResponse[Unit]
   def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit]
-  def postMemberJoin(conv: RConvId, members: Set[UserId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]]
-  def postQualifiedMemberJoin(conv: RConvId, members: Set[QualifiedId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]]
-  def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]]
-  def postQualifiedMemberLeave(qConvId: RConvQualifiedId, qUserId: QualifiedId): ErrorOrResponse[Option[MemberLeaveEvent]]
+  def postMessageTimer(convId: RConvQualifiedId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit]
+  def postMemberJoin(convId: RConvId, members: Set[UserId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]]
+  def postQualifiedMemberJoin(convId: RConvId, members: Set[QualifiedId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]]
+  def postMemberLeave(convId: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]]
+  def postMemberLeave(convId: RConvQualifiedId, qUserId: QualifiedId): ErrorOrResponse[Option[MemberLeaveEvent]]
   def createLink(conv: RConvId): ErrorOrResponse[Link]
   def removeLink(conv: RConvId): ErrorOrResponse[Unit]
   def getLink(conv: RConvId): ErrorOrResponse[Option[Link]]
-  def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit]
-  def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
+  def postAccessUpdate(convId: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit]
+  def postAccessUpdate(convId: RConvQualifiedId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit]
+  def postReceiptMode(convId: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
+  def postReceiptMode(convId: RConvQualifiedId, receiptMode: Int): ErrorOrResponse[Unit]
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
   def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
   def getGuestroomOverview(key: String, code: String): ErrorOrResponse[ConversationOverviewResponse]
@@ -68,7 +73,6 @@ class ConversationsClientImpl(implicit
                               urlCreator: UrlCreator,
                               httpClient: HttpClient,
                               authRequestInterceptor: AuthRequestInterceptor) extends ConversationsClient with DerivedLogTag {
-
   import ConversationsClient._
   import HttpClient.AutoDerivationOld._
   import HttpClient.dsl._
@@ -97,7 +101,7 @@ class ConversationsClientImpl(implicit
       ListConversationsIdsResponse(qIds.toSet, hasMore, pagingState)
     }
 
-  override def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] = {
+  override def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult] =
     Request
       .Get(
         relativePath = ConversationsPath,
@@ -106,18 +110,16 @@ class ConversationsClientImpl(implicit
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
 
-  override def loadConversations(ids: Set[RConvId]): ErrorOrResponse[Seq[ConversationResponse]] = {
+  override def loadConversations(ids: Set[RConvId]): ErrorOrResponse[Seq[ConversationResponse]] =
     Request
       .Get(relativePath = ConversationsPath, queryParameters = queryParameters("ids" -> ids.mkString(",")))
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe
       .map(_.map(_.conversations))
-  }
 
-  override def loadQualifiedConversations(ids: Set[RConvQualifiedId]): ErrorOrResponse[QConversationsResult] = {
+  override def loadQualifiedConversations(ids: Set[RConvQualifiedId]): ErrorOrResponse[QConversationsResult] =
     Request
       .Post(
         relativePath = ListConversationsPath,
@@ -126,9 +128,8 @@ class ConversationsClientImpl(implicit
       .withResultType[QConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
 
-  override def loadQualifiedConversationsIds(pagingState: Option[String]): ErrorOrResponse[ListConversationsIdsResponse] = {
+  override def loadQualifiedConversationsIds(pagingState: Option[String]): ErrorOrResponse[ListConversationsIdsResponse] =
     Request
       .Post(
         relativePath = ListConversationsIdsPath,
@@ -137,14 +138,12 @@ class ConversationsClientImpl(implicit
       .withResultType[ListConversationsIdsResponse]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
 
-  private def loadConversationRoles(id: RConvId): ErrorOrResponse[Set[ConversationRole]] = {
+  private def loadConversationRoles(id: RConvId): ErrorOrResponse[Set[ConversationRole]] =
     Request.Get(relativePath = rolesPath(id))
       .withResultType[ConvRoles]
       .withErrorType[ErrorResponse]
       .executeSafe(_.toConversationRoles)
-  }
 
   override def loadConversationRoles(remoteIds: Set[RConvId], defRoles: Set[ConversationRole]): Future[Map[RConvId, Set[ConversationRole]]] =
     Future.sequence(
@@ -157,53 +156,73 @@ class ConversationsClientImpl(implicit
   private implicit val EventsResponseDeserializer: RawBodyDeserializer[List[ConversationEvent]] =
     RawBodyDeserializer[JSONObject].map(json => EventsResponse.unapplySeq(JsonObjectResponse(json)).get)
 
-  override def postName(convId: RConvId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]] = {
-    Request.Put(relativePath = s"$ConversationsPath/$convId", body = Json("name" -> name))
+  override def postName(convId: RConvId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]] =
+    Request.Put(relativePath = conversationPath(convId), body = Json("name" -> name))
       .withResultType[List[ConversationEvent]]
       .withErrorType[ErrorResponse]
       .executeSafe {
         case (event: RenameConversationEvent) :: Nil => Some(event)
         case _ => None
       }
-  }
 
-  override def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] = {
+  override def postName(convId: RConvQualifiedId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]] =
+    Request.Put(relativePath = conversationPath(convId), body = Json("name" -> name))
+      .withResultType[List[ConversationEvent]]
+      .withErrorType[ErrorResponse]
+      .executeSafe {
+        case (event: RenameConversationEvent) :: Nil => Some(event)
+        case _ => None
+      }
+
+  override def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] =
     Request
       .Put(
-        relativePath = s"$ConversationsPath/$convId/message-timer",
+        relativePath = timerUpdatePath(convId),
         body = Json("message_timer" -> duration.map(_.toMillis))
       )
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
 
-  override def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit] = {
-    Request.Put(relativePath = s"$ConversationsPath/$convId/self", body = state)
+  override def postMessageTimer(convId: RConvQualifiedId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit] =
+    Request
+      .Put(
+        relativePath = timerUpdatePath(convId),
+        body = Json("message_timer" -> duration.map(_.toMillis))
+      )
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
 
-  override def postMemberJoin(conv: RConvId, members: Set[UserId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]] = {
+  override def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit] =
+    Request.Put(relativePath = stateUpdatePath(convId), body = state)
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+
+  override def postConversationState(convId: RConvQualifiedId, state: ConversationState): ErrorOrResponse[Unit] =
+    Request.Put(relativePath = stateUpdatePath(convId), body = state)
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+
+  override def postMemberJoin(convId: RConvId, members: Set[UserId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]] =
     Request.Post(
-      relativePath = membersPath(conv),
+      relativePath = membersPath(convId),
       body = Json("users" -> Json(members), "conversation_role" -> defaultRole.label)
     )
       .withResultType[Option[List[ConversationEvent]]]
       .withErrorType[ErrorResponse]
       .executeSafe(_.collect { case (event: MemberJoinEvent) :: Nil => event })
-  }
 
-  override def postQualifiedMemberJoin(conv: RConvId, members: Set[QualifiedId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]] = {
+  override def postQualifiedMemberJoin(convId: RConvId, members: Set[QualifiedId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]] =
     Request.Post(
-      relativePath = qualifiedMembersPath(conv),
+      relativePath = qualifiedMembersPath(convId),
       body = Json("qualified_users" -> QualifiedId.encode(members), "conversation_role" -> defaultRole.label)
     )
       .withResultType[Option[List[ConversationEvent]]]
       .withErrorType[ErrorResponse]
       .executeSafe(_.collect { case (event: MemberJoinEvent) :: Nil => event })
-  }
 
   override def postMemberLeave(convId: RConvId, userId: UserId): ErrorOrResponse[Option[MemberLeaveEvent]] =
     Request.Delete(relativePath = memberLeavePath(convId, userId))
@@ -211,13 +230,13 @@ class ConversationsClientImpl(implicit
       .withErrorType[ErrorResponse]
       .executeSafe(_.collect { case (event: MemberLeaveEvent) :: Nil => event })
 
-  override def postQualifiedMemberLeave(qConvId: RConvQualifiedId, qUserId: QualifiedId): ErrorOrResponse[Option[MemberLeaveEvent]] =
+  override def postMemberLeave(qConvId: RConvQualifiedId, qUserId: QualifiedId): ErrorOrResponse[Option[MemberLeaveEvent]] =
     Request.Delete(relativePath = qualifiedMemberLeavePath(qConvId, qUserId))
       .withResultType[Option[List[ConversationEvent]]]
       .withErrorType[ErrorResponse]
       .executeSafe(_.collect { case (event: MemberLeaveEvent) :: Nil => event })
 
-  override def createLink(conv: RConvId): ErrorOrResponse[Link] = {
+  override def createLink(conv: RConvId): ErrorOrResponse[Link] =
     Request.Post(relativePath = s"$ConversationsPath/$conv/code", body = "")
       .withResultType[Response[JSONObject]]
       .withErrorType[ErrorResponse]
@@ -231,17 +250,14 @@ class ConversationsClientImpl(implicit
           throw new IllegalArgumentException(s"Can not extract link from json: $js")
       }
 
-  }
-
-  def removeLink(conv: RConvId): ErrorOrResponse[Unit] = {
-    Request.Delete(relativePath = s"$ConversationsPath/$conv/code")
+  override def removeLink(convId: RConvId): ErrorOrResponse[Unit] =
+    Request.Delete(relativePath = linkPath(convId))
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
 
-  def getLink(conv: RConvId): ErrorOrResponse[Option[Link]] = {
-    Request.Get(relativePath = s"$ConversationsPath/$conv/code")
+  override def getLink(convId: RConvId): ErrorOrResponse[Option[Link]] =
+    Request.Get(relativePath = linkPath(convId))
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
       .withResultType[Response[JSONObject]]
       .withErrorType[ErrorResponse]
@@ -254,9 +270,8 @@ class ConversationsClientImpl(implicit
         else
           throw new IllegalArgumentException(s"Can not extract link from json: $js")
       }
-  }
 
-  def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit] = {
+  override def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit] =
     Request
       .Put(
         relativePath = accessUpdatePath(conv),
@@ -268,17 +283,37 @@ class ConversationsClientImpl(implicit
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
 
-  def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit] = {
+  override def postAccessUpdate(convId: RConvQualifiedId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit] =
+    Request
+      .Put(
+        relativePath = accessUpdatePath(convId),
+        body = Json(
+          "access" -> encodeAccess(access),
+          "access_role" -> encodeAccessRole(accessRole)
+        )
+      )
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+
+  override def postReceiptMode(convId: RConvId, receiptMode: Int): ErrorOrResponse[Unit] =
     Request.Put(
-      relativePath = receiptModePath(conv),
+      relativePath = receiptModePath(convId),
       body = Json("receipt_mode" -> receiptMode)
     )
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
+
+  override def postReceiptMode(convId: RConvQualifiedId, receiptMode: Int): ErrorOrResponse[Unit] =
+    Request.Put(
+      relativePath = receiptModePath(convId),
+      body = Json("receipt_mode" -> receiptMode)
+    )
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
 
   override def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
     verbose(l"postConversation($state): \n${ConversationInitState.Encoder(state).toString(2)}")
@@ -340,14 +375,23 @@ object ConversationsClient {
   val ConversationIdsPageSize = 1000
   val IdsCountThreshold = 32
 
-  def accessUpdatePath(id: RConvId) = s"$ConversationsPath/${id.str}/access"
-  def receiptModePath(id: RConvId) = s"$ConversationsPath/${id.str}/receipt-mode"
-  def rolesPath(id: RConvId) = s"$ConversationsPath/${id.str}/roles"
-  def membersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members"
-  def qualifiedMembersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members/v2"
-  def memberLeavePath(convId: RConvId, userId: UserId) =
+  def conversationPath(id: RConvId): String = s"$ConversationsPath/${id.str}"
+  def conversationPath(id: RConvQualifiedId): String = s"$ConversationsPath/${id.domain}/${id.id.str}"
+  def accessUpdatePath(id: RConvId): String = s"$ConversationsPath/${id.str}/access"
+  def accessUpdatePath(id: RConvQualifiedId): String = s"$ConversationsPath/${id.domain}/${id.id.str}/access"
+  def timerUpdatePath(id: RConvId): String = s"$ConversationsPath/${id.str}/message-timer"
+  def timerUpdatePath(id: RConvQualifiedId): String = s"$ConversationsPath/${id.domain}/${id.id.str}/message-timer"
+  def stateUpdatePath(id: RConvId): String = s"$ConversationsPath/${id.str}/self"
+  def stateUpdatePath(id: RConvQualifiedId): String = s"$ConversationsPath/${id.domain}/${id.id.str}/self"
+  def receiptModePath(id: RConvId): String = s"$ConversationsPath/${id.str}/receipt-mode"
+  def receiptModePath(id: RConvQualifiedId): String = s"$ConversationsPath/${id.domain}/${id.id.str}/receipt-mode"
+  def linkPath(id: RConvId): String = s"$ConversationsPath/${id.str}/code"
+  def rolesPath(id: RConvId): String = s"$ConversationsPath/${id.str}/roles"
+  def membersPath(id: RConvId): String = s"$ConversationsPath/${id.str}/members"
+  def qualifiedMembersPath(id: RConvId): String = s"$ConversationsPath/${id.str}/members/v2"
+  def memberLeavePath(convId: RConvId, userId: UserId): String =
     s"$ConversationsPath/${convId.str}/members/${userId.str}"
-  def qualifiedMemberLeavePath(qConvId: RConvQualifiedId, qUserId: QualifiedId) =
+  def qualifiedMemberLeavePath(qConvId: RConvQualifiedId, qUserId: QualifiedId): String =
     s"$ConversationsPath/${qConvId.domain}/${qConvId.id.str}/members/${qUserId.domain}/${qUserId.id.str}"
 
   final case class ConversationInitState(users:            Set[UserId],
