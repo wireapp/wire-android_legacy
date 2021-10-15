@@ -277,9 +277,7 @@ pipeline {
             when {
                 expression { env.BRANCH_NAME.startsWith("PR-") }
             }
-            script {
-                pullRequest.comment("Build Download\nURL: https://10.10.124.134/blue/organizations/jenkins/wire-android/detail/${env.BRANCH_NAME.replaceAll('/', '%2F')}/${env.BUILD_NUMBER}/artifacts")
-            }
+            pullRequest.comment("Build Download\nURL: https://10.10.124.134/blue/organizations/jenkins/wire-android/detail/${env.BRANCH_NAME.replaceAll('/', '%2F')}/${env.BUILD_NUMBER}/artifacts")
         }
     }
 
