@@ -272,6 +272,15 @@ pipeline {
                 }
             }
         }
+
+        stage('Update PR') {
+            when {
+                expression { env.BRANCH_NAME.startsWith("PR-") }
+            }
+            steps {
+                pullRequest.comment("Build Download\nURL: https://10.10.124.134/blue/organizations/jenkins/wire-android/detail/${env.BRANCH_NAME.replaceAll("//", "%2F")}/${env.BUILD_NUMBER}/artifacts")
+            }
+        }
     }
 
     post {
