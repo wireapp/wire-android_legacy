@@ -233,7 +233,7 @@ pipeline {
                                 script {
                                     last_stage = env.STAGE_NAME
                                 }
-                                s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", file: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
+                                s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
                                 wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                                     "\nLast 5 commits:\n```\n$lastCommits\n```"
                             }
