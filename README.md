@@ -44,7 +44,6 @@ These steps will build only the Wire client UI, pulling in all other Wire framew
 
 - [Audio Video Signaling](https://github.com/wireapp/avs)
 - [generic-message-proto](https://github.com/wireapp/generic-message-proto)
-- [wire-android-translations](https://github.com/wireapp/wire-android-translations)
 
 ## Android Studio
 
