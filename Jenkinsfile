@@ -254,7 +254,7 @@ pipeline {
                                     last_stage = env.STAGE_NAME
                                     println("Uploading wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the Track [${env.WIRE_ANDROID_TRACK_NAME}]")
                                 }
-                                androidApkUpload(googleCredentialsId: '${env.GOOGLE_PLAY_CREDS}', filesPattern: "app/build/outputs/apk/prod/${usedBuildType.toLowerCase()}/wire-*.apk", trackName: "${env.WIRE_ANDROID_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Release ${usedClientVersion}${env.BUILD_NUMBER}")
+                                androidApkUpload(googleCredentialsId: '${env.GOOGLE_PLAY_CREDS}', filesPattern: "app/build/outputs/apk/wire-*.apk", trackName: "${env.WIRE_ANDROID_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Release ${usedClientVersion}${env.BUILD_NUMBER}")
                             }
                         }
                     }
