@@ -140,7 +140,7 @@ pipeline {
                 }
                 sh "./gradlew :app:test${usedFlavor}${usedBuildType}UnitTest"
                 publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "app/build/reports/tests/test${usedFlavor}${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'Unit Test Report', reportTitles: 'Unit Test')
-                junit "app/build/reports/tests/test${usedFlavor}${usedBuildType}UnitTest/**/*.html"
+                junit "app/build/reports/tests/test${usedFlavor}${usedBuildType}UnitTest/index.html"
             }
         }
 
@@ -154,7 +154,7 @@ pipeline {
                 }
                 sh "./gradlew :storage:test${usedBuildType}UnitTest"
                 publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "storage/build/reports/tests/test${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'Storage Unit Test Report', reportTitles: 'Storage Unit Test')
-                junit "storage/build/reports/tests/test${usedBuildType}UnitTest/**/*.html"
+                junit "storage/build/reports/tests/test${usedBuildType}UnitTest/index.html"
             }
         }
 
@@ -168,7 +168,7 @@ pipeline {
                 }
                 sh "./gradlew :zmessaging:test${usedBuildType}UnitTest -PwireDeflakeTests=1"
                 publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "zmessaging/build/reports/tests/test${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'ZMessaging Unit Test Report', reportTitles: 'ZMessaging Unit Test')
-                junit "zmessaging/build/reports/tests/test${usedBuildType}UnitTest/**/*.html"
+                junit "zmessaging/build/reports/tests/test${usedBuildType}UnitTest/index.html"
             }
         }
 
