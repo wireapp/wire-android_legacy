@@ -38,9 +38,9 @@ trait FlowManagerService {
   def flowManager: Option[FlowManager]
   def getVideoCaptureDevices: Future[Vector[VideoCaptureDevice]]
   def setVideoCaptureDevice(id: RConvId, deviceId: String): Future[Unit]
-  def setVideoPreview(view: View, roation : Int): Future[Unit]
+  def setVideoPreview(view: View): Future[Unit]
   def setVideoView(id: RConvId, partId: Option[UserId], view: View): Future[Unit]
-
+  def setUIRotation(rotation: Int): Future[Unit]
   val cameraFailedSig: Signal[Boolean]
 }
 
@@ -94,11 +94,10 @@ class DefaultFlowManagerService(context:      Context,
 
   // This is the preview of the outgoing video stream.
   // Call this from the callback telling us to.
-  def setVideoPreview(view: View, rotation :Int): Future[Unit] = schedule { fm =>
+  def setVideoPreview(view: View): Future[Unit] = schedule { fm =>
     debug(l"setVideoPreview")
     cameraFailedSig ! false //reset this signal since we are trying to start the capture again
     fm.setVideoPreview(null, view)
-    //fm.setUIRotation(rotation)
   }
 
   // This is the incoming video call stream from the other participant.
@@ -107,6 +106,10 @@ class DefaultFlowManagerService(context:      Context,
   def setVideoView(id: RConvId, partId: Option[UserId], view: View): Future[Unit] = schedule { fm =>
     debug(l"setVideoView($id, $partId)")
     fm.setVideoView(id.str, partId.map(_.str).orNull, view)
+  }
+
+  def setUIRotation(rotation: Int): Future[Unit] = schedule { fm =>
+    fm.setUIRotation(rotation)
   }
 
   private def schedule(op: FlowManager => Unit)(implicit dispatcher: ExecutionContext): Future[Unit] =
