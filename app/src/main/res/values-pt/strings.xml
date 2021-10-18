@@ -513,8 +513,8 @@
     <!-- About -->
     <string name="pref_about_screen_title">Sobre</string>
     <string name="pref_about_website_title">Site do Wire</string>
-    <string name="pref_about_tos_title">Termos de uso</string>
-    <string name="pref_about_privacy_policy_title">Política de privacidade</string>
+    <string name="pref_about_tos_title">Termos de Uso</string>
+    <string name="pref_about_privacy_policy_title">Política de Privacidade</string>
     <string name="pref_about_licenses_title">Informações de licença</string>
     <string name="pref_about_version_title">Versão %s</string>
     <string name="pref_about_copyright_title">\u00A9 Wire Swiss GmbH</string>
@@ -635,13 +635,13 @@
     <string name="system_notification__silence_call">Recusar</string>
     <string name="system_notification__join_call">Abrir Chamada</string>
     <string name="system_notification__leave_call">Encerrar chamada</string>
-    <string name="system_notification__calling_one">Chamando&#8230;</string>
-    <string name="system_notification__calling_group">%1$s está chamando&#8230;</string>
-    <string name="system_notification__video_calling_one">Chamando com vídeo&#8230;</string>
-    <string name="system_notification__video_calling_group">%1$s está chamando com vídeo&#8230;</string>
+    <string name="system_notification__calling_one">Chamando…</string>
+    <string name="system_notification__calling_group">%1$s está chamando…</string>
+    <string name="system_notification__video_calling_one">Chamando com vídeo…</string>
+    <string name="system_notification__video_calling_group">%1$s está chamando com vídeo…</string>
     <string name="ws_foreground_notification_connected_title">Conectado ao servidor do Wire</string>
-    <string name="ws_foreground_notification_no_internet_title">Aguardando conexão com a internet&#8230;</string>
-    <string name="ws_foreground_notification_connecting_title">Estabelecendo conexão&#8230;</string>
+    <string name="ws_foreground_notification_no_internet_title">Aguardando conexão com a internet…</string>
+    <string name="ws_foreground_notification_connecting_title">Estabelecendo conexão…</string>
     <string name="ws_foreground_notification_summary">Toque aqui para obter mais informações.</string>
     <!-- Notification actions -->
     <string name="notification__action__call">Chamada</string>
@@ -718,7 +718,7 @@
     <string name="new_reg__password__forgot">Esqueceu a senha?</string>
     <string name="phone_sign_in">Telefone</string>
     <string name="email_sign_in">E-mail</string>
-    <string name="edit_email">Editar o e-mail</string>
+    <string name="edit_email">Editar E-mail</string>
     <string name="hello">Olá, &lt;b&gt;%s&lt;/b&gt;</string>
     <string name="sign_in">Iniciar Sessão</string>
     <string name="new_reg__password_length">PELO MENOS %1$s CARACTERES</string>
@@ -882,8 +882,8 @@
         <item quantity="one">%1$d pessoa</item>
         <item quantity="other">%1$d pessoas</item>
     </plurals>
-    <string name="message_footer__status__sending">Enviando&#8230;</string>
-    <string name="message_footer__status__waiting_for_connection">Aguardando conexão&#8230;</string>
+    <string name="message_footer__status__sending">Enviando…</string>
+    <string name="message_footer__status__waiting_for_connection">Aguardando conexão…</string>
     <string name="message_footer__status__sent">%1$s \u30FB Enviada</string>
     <string name="message_footer__status__delivered">%1$s \u30FB Entregue</string>
     <string name="message_footer__status__failed">Envio falhou. _Reenviar_</string>
@@ -932,7 +932,7 @@
     <string name="collection_empty">NÃO HÁ ITENS NA COLEÇÃO</string>
     <string name="collection_all">Mostrar todos %1$s</string>
     <string name="multi_share_toast_sending">@string/message_footer__status__sending</string>
-    <string name="multi_share_search_hint">ENVIAR PARA&#8230;</string>
+    <string name="multi_share_search_hint">ENVIAR PARA…</string>
     <string name="single_selector_search_hint">"SELECIONE UMA CONVERSA…"</string>
     <string name="search__box__hint_text">PESQUISAR MENSAGENS DE TEXTO</string>
     <string name="search__no_results">Sem resultados.</string>
@@ -977,7 +977,7 @@
     <string name="conversation_list__group_eph_and_mention">Alguém mencionou você</string>
     <string name="conversation_list__single_eph_and_quote">Respondeu a você</string>
     <string name="conversation_list__group_eph_and_quote">Alguém respondeu para você</string>
-    <string name="conversation_list__typing">Digitando uma mensagem&#8230;</string>
+    <string name="conversation_list__typing">Digitando uma mensagem…</string>
     <string name="conversation_list__someone">Alguém</string>
     <string name="conversation_list__added">[[%1$s]] foi adicionado(a)</string>
     <string name="conversation_list__added_you">[[%1$s]] adicionou você</string>
@@ -1085,7 +1085,7 @@
     <string name="remove_service_button_text">Remover serviço</string>
     <string name="integrations_create_conversation">Criar uma nova conversa</string>
     <string name="no_matches_found">Nenhum resultado encontrado</string>
-    <string name="loading_services">Carregando serviços&#8230;</string>
+    <string name="loading_services">Carregando serviços…</string>
     <string name="empty_services_list">Os serviços são ajudantes que podem melhorar seu fluxo de trabalho. Para ativá-los, fale ao seu administrador.</string>
     <string name="empty_services_list_admin">Os serviços são ajudantes que podem melhorar seu fluxo de trabalho.</string>
     <string name="empty_services_content_description">Nenhum serviço encontrado</string>
@@ -1151,7 +1151,7 @@
     <string name="create_link_button">Criar Link</string>
     <string name="copy_link_button">Copiar link</string>
     <string name="share_link_button">Compartilhar Link</string>
-    <string name="revoke_link_button">Desativar Link&#8230;</string>
+    <string name="revoke_link_button">Desativar Link…</string>
     <string name="invitation_link_title">CONVIDAR OUTRAS PESSOAS COM UM LINK</string>
     <string name="link_copied_toast">Link Copiado!</string>
     <string name="revoke_link_message">Novos convidados não será capazes de juntar-se com este link. Os convidados atuais ainda terão acesso.</string>
@@ -1181,9 +1181,9 @@
     <string name="restore_override_alert_title">Restaurar histórico</string>
     <string name="restore_override_alert_text">O conteúdo do backup substituirá o histórico de conversas nesse dispositivo. Você só pode restaurar o histórico de um backup da mesma plataforma.</string>
     <string name="restore_override_alert_ok">Escolha o Arquivo de Backup</string>
-    <string name="back_up_progress">FAZENDO BACKUP&#8230;</string>
+    <string name="back_up_progress">FAZENDO BACKUP…</string>
     <string name="back_up_progress_complete">CONCLUÍDO</string>
-    <string name="restore_progress">RESTAURANDO&#8230;</string>
+    <string name="restore_progress">RESTAURANDO…</string>
     <string name="pref_account_backup_warning_title">Defina um e-mail e senha.</string>
     <string name="pref_account_backup_warning_message">Você precisa de um e-mail e uma senha para fazer backup de seu histórico de conversas. Você pode fazer isso na página da conta em Configurações.</string>
     <string name="pref_account_backup_warning_ok">OK</string>
@@ -1362,7 +1362,7 @@
     <string name="composite_message_button_action_error">Sua resposta não pode ser enviada. Por favor, tente novamente.</string>
     <string name="composite_message_confirmed_button_content_description">%1$s confirmado</string>
     <!-- StartSSO Screen  -->
-    <string name="start_sso_leaving_wire">Redirecionando&#8230;</string>
+    <string name="start_sso_leaving_wire">Redirecionando…</string>
     <string name="start_sso_redirected_to">Você está sendo redirecionado para seu serviço empresarial dedicado.</string>
     <string name="start_sso_notice">Forneça credenciais apenas se tiver certeza de que este é o login da sua organização.</string>
     <!-- Legal Hold -->
