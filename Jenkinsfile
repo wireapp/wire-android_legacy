@@ -140,7 +140,7 @@ pipeline {
                 }
                 sh "./gradlew :app:test${usedFlavor}${usedBuildType}UnitTest"
                 publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "app/build/reports/tests/test${usedFlavor}${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'Unit Test Report', reportTitles: 'Unit Test')
-                junit "app/build/reports/test-results/**/*.xml"
+                junit "app/build/test-results/**/*.xml"
             }
         }
 
