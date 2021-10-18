@@ -590,14 +590,19 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     } yield update.map(_._2)
   }
 
-  override def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]) = {
+  override def setEphemeral(id: ConvId, expiration: Option[FiniteDuration]): Future[Unit] = {
     convStorage.update(id, _.copy(localEphemeral = expiration)).map(_ => {})
   }
 
-  override def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration]) =
+  override def setEphemeralGlobal(id: ConvId, expiration: Option[FiniteDuration]): ErrorOr[Unit] =
     for {
       Some(conv) <- convsContent.convById(id) if conv.globalEphemeral != expiration
-      resp       <- client.postMessageTimer(conv.remoteId, expiration).future
+      resp       <- (if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+                       val convQualifiedId = convs.rConvQualifiedId(conv)
+                       client.postMessageTimer(convQualifiedId, expiration)
+                     } else {
+                       client.postMessageTimer(conv.remoteId, expiration)
+                     }).future
       _          <- resp.mapFuture(_ => convStorage.update(id, _.copy(globalEphemeral = expiration)))
       _          <- resp.mapFuture(_ => messages.addTimerChangedMessage(id, selfUserId, expiration, LocalInstant.Now.toRemote(currentBeDrift)))
     } yield resp

@@ -679,7 +679,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
           Some((old, upd)) <- content.updateAccessMode(convId, ac, Some(ar))
           resp <-
             if (old.access != upd.access || old.accessRole != upd.accessRole) {
-              client.postAccessUpdate(upd.remoteId, ac, ar)
+              if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+                client.postAccessUpdate(rConvQualifiedId(upd), ac, ar)
+              } else {
+                client.postAccessUpdate(upd.remoteId, ac, ar)
+              }
             }.future.flatMap {
               case Right(_) => Future.successful(Right {})
               case Left(err) =>

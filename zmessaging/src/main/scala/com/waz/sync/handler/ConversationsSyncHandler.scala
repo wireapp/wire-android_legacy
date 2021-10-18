@@ -173,7 +173,11 @@ class ConversationsSyncHandler(selfUserId:      UserId,
 
   def postConversationReceiptMode(id: ConvId, receiptMode: Int): Future[SyncResult] =
     withConversation(id) { conv =>
-      convClient.postReceiptMode(conv.remoteId, receiptMode).map(SyncResult(_))
+      (if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        convClient.postReceiptMode(convService.rConvQualifiedId(conv), receiptMode)
+      } else {
+        convClient.postReceiptMode(conv.remoteId, receiptMode)
+      }).map(SyncResult(_))
     }
 
   def postConversationRole(id: ConvId, userId: UserId, newRole: ConversationRole, origRole: ConversationRole): Future[SyncResult] =
@@ -227,10 +231,10 @@ class ConversationsSyncHandler(selfUserId:      UserId,
 
   private def postSelfLeave(id: ConvId): Future[SyncResult] =
     withConversation(id) { conv =>
+      val convQualifiedId = convService.rConvQualifiedId(conv)
       val clientResult =
         (BuildConfig.FEDERATION_USER_DISCOVERY, selfDomain.isDefined) match {
           case (true, true) =>
-            val convQualifiedId = convService.rConvQualifiedId(conv)
             val userQualifiedId = QualifiedId(selfUserId, selfDomain)
             convClient.postMemberLeave(convQualifiedId, userQualifiedId)
           case _ =>
@@ -239,19 +243,29 @@ class ConversationsSyncHandler(selfUserId:      UserId,
       clientResult.future.flatMap {
         case Right(Some(event: MemberLeaveEvent)) =>
           event.localTime = LocalInstant.Now
-          convClient.postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time))).future flatMap {
-            case Right(_) =>
-              verbose(l"postConversationState finished")
-              convEvents.handlePostConversationEvent(event)
-                .map(_ => Success)
-            case Left(error) =>
-              Future.successful(SyncResult(error))
-          }
+          (if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+            convClient
+              .postConversationState(convQualifiedId, ConversationState(archived = Some(true), archiveTime = Some(event.time)))
+          } else {
+            convClient
+              .postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(event.time)))
+          }).future
+            .flatMap {
+              case Right(_) =>
+                verbose(l"postConversationState finished")
+                convEvents.handlePostConversationEvent(event).map(_ => Success)
+              case Left(error) =>
+                Future.successful(SyncResult(error))
+            }
         case Right(None) =>
           debug(l"member self already left, just updating the conversation state")
-          convClient
-            .postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(conv.lastEventTime)))
-            .future
+          (if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+            convClient
+              .postConversationState(convQualifiedId, ConversationState(archived = Some(true), archiveTime = Some(conv.lastEventTime)))
+          } else {
+            convClient
+              .postConversationState(conv.remoteId, ConversationState(archived = Some(true), archiveTime = Some(conv.lastEventTime)))
+          }).future
             .map(_ => Success)
 
         case Left(error) =>
@@ -277,7 +291,12 @@ class ConversationsSyncHandler(selfUserId:      UserId,
 
   def postConversationState(id: ConvId, state: ConversationState): Future[SyncResult] =
     withConversation(id) { conv =>
-      convClient.postConversationState(conv.remoteId, state).map(SyncResult(_))
+      (if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        convClient.postConversationState(convService.rConvQualifiedId(conv), state)
+      } else {
+        convClient.postConversationState(conv.remoteId, state)
+      })
+        .map(SyncResult(_))
     }
 
   def postConversation(convId:      ConvId,
