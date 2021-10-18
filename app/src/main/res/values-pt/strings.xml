@@ -189,7 +189,7 @@
     <string name="content__otr__unverified_device__message">[[VOCÊ]] DESAUTORIZOU UM DOS _DISPOSITIVOS DE %1$s_</string>
     <string name="content__otr__your_unverified_device__message">[[VOCÊ]] RETIROU A VERIFICAÇÃO A UM DOS _SEUS DISPOSITIVOS_</string>
     <string name="content__otr__new_member__message">NOVAS PESSOAS ENTRARAM. _VERIFIQUE OS DISPOSITIVOS_</string>
-    <string name="content__otr__legalhold_enabled__message">Esta conversa está com retenção legal. _SAIBA MAIS_</string>
+    <string name="content__otr__legalhold_enabled__message">Esta conversa está sob retenção legal. _SAIBA MAIS_</string>
     <string name="content__otr__legalhold_disabled__message">A Retenção Legal está desativada para esta conversa</string>
     <!-- File transfer -->
     <string name="content__file__status__default">%1$s</string>
@@ -219,8 +219,8 @@
     <string name="file_restrictions__receiver_error">O arquivo de %1$s não pode ser aberto.</string>
     <string name="content__location__no_map_placeholder">A LOCALIZAÇÃO APARECERÁ NO MAPA QUANDO VOCÊ ESTIVER ONLINE DE VOLTA.</string>
     <!-- Conversation actions -->
-    <string name="conversation__action__clear_content">Limpar conteúdo&#8230;</string>
-    <string name="conversation__action__delete_group">Excluir grupo&#8230;</string>
+    <string name="conversation__action__clear_content">Limpar conteúdo…</string>
+    <string name="conversation__action__delete_group">Excluir grupo…</string>
     <string name="conversation__action__archive">Arquivar</string>
     <string name="conversation__action__unarchive">Desarquivar</string>
     <string name="conversation__action__add_participants">ADICIONAR PARTICIPANTES</string>
@@ -229,15 +229,15 @@
     <string name="conversation__action__notifications">Notificações&#8230;</string>
     <string name="conversation__action__silence">Silenciar</string>
     <string name="conversation__action__unsilence">Dessilenciar</string>
-    <string name="conversation__action__leave">Deixar grupo&#8230;</string>
+    <string name="conversation__action__leave">Deixar grupo…</string>
     <string name="conversation__action__call">Chamada</string>
     <string name="conversation__action__picture">Foto</string>
-    <string name="conversation__action__block">Bloquear&#8230;</string>
+    <string name="conversation__action__block">Bloquear…</string>
     <string name="conversation__action__unblock">Desbloquear</string>
-    <string name="conversation__action__remove_member">Remover do grupo&#8230;</string>
+    <string name="conversation__action__remove_member">Remover do grupo…</string>
     <string name="conversation__action__add_to_favorites">Adicionar aos Favoritos</string>
     <string name="conversation__action__remove_from_favorites">Remover dos Favoritos</string>
-    <string name="conversation__action__move_to_folder">Mover para&#8230;</string>
+    <string name="conversation__action__move_to_folder">Mover para…</string>
     <string name="conversation__action__remove_from_folder">Remover de \"%1$s\"</string>
     <string name="conversation__action__leave_and_clear">\tSair e limpar conteúdo</string>
     <string name="conversation__action__leave_only">\tSair do grupo</string>
@@ -261,19 +261,19 @@
     <string name="incoming__controls__ongoing__flip">MUDAR</string>
     <string name="ongoing__poor_connection_message">O VÍDEO PAROU DEVIDO À CONEXÃO LENTA</string>
     <string name="calling__self_preview_unavailable_long">CÂMERA NÃO DISPONÍVEL</string>
-    <string name="incoming__controls__ongoing__microphone">Microfone</string>
+    <string name="incoming__controls__ongoing__microphone">MICROFONE</string>
     <string name="incoming__controls__ongoing__camera">CÂMERA</string>
     <string name="incoming__controls__ongoing__flip_camera">FLIP CÂMERA</string>
-    <string name="calling__header__joining">Conectando&#8230;</string>
-    <string name="calling__header__outgoing_subtitle">Tocando&#8230;</string>
-    <string name="calling__header__outgoing_video_subtitle">Tocando&#8230;</string>
-    <string name="calling__header__incoming_subtitle">Chamando&#8230;</string>
-    <string name="calling__header__incoming_subtitle__video">Chamando&#8230;</string>
-    <string name="calling__header__incoming_subtitle__group">%1$s está chamando&#8230;</string>
-    <string name="call_banner_joining">Conectando&#8230;</string>
-    <string name="call_banner_outgoing">Chamando %1$S&#8230;</string>
-    <string name="call_banner_incoming">%1$s está chamando&#8230;</string>
-    <string name="call_banner_incoming_group">%1$s \u30FB %2$s está chamando&#8230;</string>
+    <string name="calling__header__joining">Conectando…</string>
+    <string name="calling__header__outgoing_subtitle">Tocando…</string>
+    <string name="calling__header__outgoing_video_subtitle">Tocando…</string>
+    <string name="calling__header__incoming_subtitle">Chamando…</string>
+    <string name="calling__header__incoming_subtitle__video">Chamando…</string>
+    <string name="calling__header__incoming_subtitle__group">%1$s está chamando…</string>
+    <string name="call_banner_joining">Conectando…</string>
+    <string name="call_banner_outgoing">Chamando %1$S…</string>
+    <string name="call_banner_incoming">%1$s está chamando…</string>
+    <string name="call_banner_incoming_group">%1$s \u30FB %2$s está chamando…</string>
     <string name="call_banner_tap_to_return_to_call">Toque para retornar a chamada \u30FB %1$s</string>
     <string name="call_error_unsupported_version_title">Por favor, atualize o Wire</string>
     <string name="call_error_unsupported_version_message">Você recebeu uma chamada que não é suportada por esta versão do Wire.\n\nObtenha a versão mais recente na Play Store.</string>
@@ -311,7 +311,7 @@
     </plurals>
     <string name="connect_request__ignore_button__text">Ignorar</string>
     <string name="content__message__connect_request__footer">CONECTADO</string>
-    <string name="content__message__connect_request__auto_connect__footer">AUTO-CONECTADO. _SABER MAIS_</string>
+    <string name="content__message__connect_request__auto_connect__footer">AUTO-CONECTADO. _SAIBA MAIS_</string>
     <string name="conversation_degraded_message">A chamada foi desconectada porque alguém não é mais um contato verificado.</string>
     <!-- Otr-->
     <plurals name="conversation__degraded_confirmation__header__single_user">
@@ -337,7 +337,7 @@
         <item quantity="other">Você ainda deseja enviar suas mensagens?</item>
     </plurals>
     <string name="conversation__legal_hold_confirmation__negative_action">O que é Retenção Legal?</string>
-    <string name="conversation__legal_hold_confirmation__neutral_action">Verificar dispositivos&#8230;</string>
+    <string name="conversation__legal_hold_confirmation__neutral_action">Verificar dispositivos…</string>
     <string name="conversation__legal_hold_confirmation__positive_action">Enviar mesmo assim</string>
     <!-- Picture selection confirmation -->
     <string name="confirmation_menu__confirm_done">OK</string>
