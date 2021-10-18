@@ -324,8 +324,7 @@ dependencies {
     implementation BuildDependencies.kotlin.standardLibrary
     implementation BuildDependencies.kotlin.coroutinesAndroid
     implementation BuildDependencies.kotlin.coroutinesCore
-   // implementation avsDependency
-    implementation(name:'avs', ext:'aar')
+    implementation avsDependency
 
     //don't include wire translations for custom builds
     if (buildtimeConfiguration.customResourcesPath == null) {
