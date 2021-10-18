@@ -4,7 +4,7 @@ final String AVS_VERSION_ENV_VAR = "AVS_VERSION"
 final String AVS_GROUP = "com.wire"
 final String AVS_NAME = "avs"
 
-String avsVersion = "7.2.99"
+String avsVersion = "7.2.101"
 
 ext {
     avsGroup = System.getenv(AVS_GROUP_ENV_VAR) ?: AVS_GROUP
