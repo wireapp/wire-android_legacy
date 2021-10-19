@@ -93,6 +93,7 @@ dependencies {
     compileOnly "com.softwaremill.macwire:util_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
     compileOnly "com.softwaremill.macwire:proxy_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
     compileOnly avsDependency
+
     compileOnly "androidx.legacy:legacy-support-v4:1.0.0"
     compileOnly BuildDependencies.threetenbpJava
     compileOnly "net.java.dev.jna:jna:4.4.0@aar"
