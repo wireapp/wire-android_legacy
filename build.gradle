@@ -60,13 +60,3 @@ if (buildtimeConfiguration == null) {
 }
 
 apply from: "./scripts/ci.gradle"
-
-
-allprojects {
-    repositories {
-        jcenter()
-        flatDir {
-            dirs 'libs'
-        }
-    }
-}
