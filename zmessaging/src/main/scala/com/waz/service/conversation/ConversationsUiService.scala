@@ -420,7 +420,14 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
             } yield conv
           case _ =>
             for {
-              _    <- sync.postConversation(ConvId(otherUserId.str), Some(otherUserId), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
+              _    <-
+                if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+                  userService.qualifiedId(otherUserId).flatMap { qId =>
+                    sync.postConversation(ConvId(otherUserId.str), qId, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
+                  }
+                } else {
+                  sync.postConversation(ConvId(otherUserId.str), Some(otherUserId), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
+                }
               conv <- convsContent.createConversation(
                         convId      = ConvId(otherUserId.str),
                         remoteId    = RConvId(),
@@ -434,8 +441,8 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
         }
       }
 
-    def createFake1To1(tId: TeamId, otherUser: UserData, isFederated: Boolean) = {
-      verbose(l"Checking for 1:1 conversation with user: ${otherUser.id}, isFederated: $isFederated")
+    def createFake1To1(tId: TeamId, otherUser: UserData) = {
+      verbose(l"Checking for 1:1 conversation with user: ${otherUser.id}")
       (for {
         allConvs    <- this.members.getByUsers(Set(otherUser.id)).map(_.map(_.convId))
         allMembers  <- this.members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))
@@ -450,11 +457,6 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       }).flatMap {
         case Some(conv) =>
           Future.successful(conv)
-        case _ if isFederated =>
-          (otherUser.qualifiedId match {
-            case Some(qId) => createConvWithFederatedUser(qId, defaultRole = ConversationRole.AdminRole)
-            case None      => Future.failed(new IllegalStateException(s"A federated user without a qualified id: $otherUser"))
-          }).map(_._1)
         case _ =>
           createGroupConversation(
             name        = None,
@@ -468,9 +470,8 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       case Some(tId) =>
         for {
           Some(otherUser) <- userService.findUser(otherUserId)
-          isFederated     =  userService.isFederated(otherUser)
           isGuest         =  otherUser.isGuest(tId)
-          conv            <- if (isGuest && !isFederated) createReal1to1() else createFake1To1(tId, otherUser, isFederated)
+          conv            <- if (isGuest) createReal1to1() else createFake1To1(tId, otherUser)
         } yield conv
       case None =>
         createReal1to1()

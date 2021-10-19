@@ -78,7 +78,6 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val existingConv = ConversationData(creator = selfId, convType = Group, team = team)
 
       (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
@@ -102,9 +101,8 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val existingConv = ConversationData(creator = selfId, name = name, convType = Group, team = team)
 
       (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
-      (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
+      (members.getByUsers _).expects(Set(otherUserId)).anyNumberOfTimes().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
       )))
 
@@ -120,7 +118,8 @@ class TeamConversationSpec extends AndroidFreeSpec {
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
       }
       (messages.addConversationStartMessage _).expects(*, selfId, *, None, *, None).once().returning(Future.successful({}))
-      (sync.postConversation _)
+      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
+        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
         .expects(*, *, None, team, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, Some(0), *)
         .once()
         .returning(Future.successful(SyncId()))
@@ -143,7 +142,6 @@ class TeamConversationSpec extends AndroidFreeSpec {
       val otherUser = UserData(otherUserId, domain, Some(TeamId("different_team")), Name("other"), searchKey = SearchKey.simple("other"), connection = ConnectionStatus.Ignored)
 
       (users.findUser _).expects(otherUserId).twice().returning(Future.successful(Some(otherUser)))
-      (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
       (convsContent.createConversation _)

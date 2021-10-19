@@ -17,6 +17,7 @@
  */
 package com.waz.service.conversation
 
+import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.Message
 import com.waz.api.impl.ErrorResponse
 import com.waz.content._
@@ -468,7 +469,11 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
       (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
-      (sync.postConversation _).expects(*, Option.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
+        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
+        .expects(*, *, Some(convName), Some(teamId), *, *, *, *)
+        .once()
+        .returning(Future.successful(syncId))
       (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
       (userService.findUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
       (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
@@ -497,7 +502,11 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
       (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
-      (sync.postConversation _).expects(*, *, Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
+        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
+        .expects(*, *, Some(convName), Some(teamId), *, *, *, *)
+        .once()
+        .returning(Future.successful(syncId))
       (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
       (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1, member2)))
       (userService.findUsers _).expects(Seq(user1.id, user2.id)).anyNumberOfTimes().returning(Future.successful(Seq(Some(user1), Some(user2))))
@@ -541,7 +550,11 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
         (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
         (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
-        (sync.postConversation _).expects(*, *, Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+        (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
+          _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
+          .expects(*, *, Some(convName), Some(teamId), *, *, *, *)
+          .once()
+          .returning(Future.successful(syncId))
         (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
         (userService.findUsers _).expects(*).anyNumberOfTimes().onCall { userIds: Seq[UserId] =>
           Future.successful {
@@ -593,7 +606,11 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
         (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
         (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
-        (sync.postConversation _).expects(*, *, Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
+        (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
+          _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
+          .expects(*, *, Some(convName), Some(teamId), *, *, *, *)
+          .once()
+          .returning(Future.successful(syncId))
         (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
         (userService.findUsers _).expects(*).anyNumberOfTimes().onCall { userIds: Seq[UserId] =>
           Future.successful {
