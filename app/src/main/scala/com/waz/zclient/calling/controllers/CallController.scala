@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.calling.controllers
 
+import android.content.Context
 import android.os.{Build, PowerManager}
 import android.telephony.{PhoneStateListener, TelephonyManager}
 import com.waz.avs.VideoPreview
@@ -399,11 +400,11 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     soundController.setOutgoingRingTonePlaying(play, v)
   }
 
-  def setVideoPreview(view: Option[VideoPreview]): Unit =
+  def setVideoPreview(context : Context, view: Option[VideoPreview]): Unit =
     flowManager.head.foreach { fm =>
       verbose(l"Setting VideoPreview on Flowmanager, view: $view")
       fm.setVideoPreview(view.orNull)
-      fm.setUIRotation(cxt.getDisplay.getRotation)
+      fm.setUIRotation(context.getDisplay.getRotation)
     } (Threading.Ui)
 
   private lazy val callingUsername: Signal[String] =

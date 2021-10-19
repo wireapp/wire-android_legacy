@@ -131,10 +131,10 @@ class NewCallingFragment extends FragmentHelper {
     }
   }
 
-  private def stopVideoPreview(): Unit = callController.setVideoPreview(null)
+  private def stopVideoPreview(): Unit = callController.setVideoPreview(getContext, null)
 
   private def startVideoPreview(): Unit =
-    callController.setVideoPreview(Some(videoPreview))
+    callController.setVideoPreview(getContext, Some(videoPreview))
 
   private def attachVideoPreviewToParentLayout(): Unit =
     parentLayout.foreach(_.addView(videoPreview))
