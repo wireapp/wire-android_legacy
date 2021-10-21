@@ -33,7 +33,6 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 
 import scala.concurrent.duration._
 import scala.util.Try
-
 import com.waz.zms.BuildConfig
 
 final case class UserData(override val id:       UserId,
@@ -76,10 +75,10 @@ final case class UserData(override val id:       UserId,
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
   lazy val qualifiedId: Option[QualifiedId] = domain.mapOpt(d => QualifiedId(id, d))
-  def displayHandle(currentDomain: Domain = Domain.Empty): String =
+  def displayHandle(currentDomain: Domain = Domain.Empty, forceDomain: Boolean = false): String =
     handle match {
       case Some(h) if BuildConfig.FEDERATION_USER_DISCOVERY && h.nonEmpty &&
-                                 currentDomain.isDefined && domain != currentDomain =>
+                                 domain.isDefined && (forceDomain || domain != currentDomain) =>
         s"${h.withSymbol}@${domain.str}"
       case Some(h) if h.nonEmpty =>
         h.withSymbol
