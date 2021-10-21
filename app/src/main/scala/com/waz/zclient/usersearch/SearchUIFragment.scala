@@ -68,7 +68,6 @@ import scala.concurrent.duration._
 import com.waz.zclient.usersearch.SearchUIFragment._
 import com.waz.threading.Threading._
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.messages.UsersController
 
 class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper
@@ -434,10 +433,7 @@ class SearchUIFragment extends BaseFragment[Container]
           getContainer.showIncomingPendingConnectRequest(ConvId(user.id.str))
         }
       case (_, connection) if connectionsForOpenProfile.contains(connection) =>
-        if (BuildConfig.FEDERATION_USER_DISCOVERY)
-          if (inject[UsersController].isFederated(user)) tryOpenConversation() else showUserProfile()
-        else
-          showUserProfile()
+        showUserProfile()
 
       case (teamId, connection) =>
         warn(l"Unhandled connection type. The UI shouldn't display such entry. teamId: $teamId, connection type: $connection")

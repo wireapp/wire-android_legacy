@@ -340,15 +340,18 @@ object ConversationsClient {
   val ConversationIdsPageSize = 1000
   val IdsCountThreshold = 32
 
-  def accessUpdatePath(id: RConvId) = s"$ConversationsPath/${id.str}/access"
-  def receiptModePath(id: RConvId) = s"$ConversationsPath/${id.str}/receipt-mode"
-  def rolesPath(id: RConvId) = s"$ConversationsPath/${id.str}/roles"
-  def membersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members"
-  def qualifiedMembersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members/v2"
-  def memberLeavePath(convId: RConvId, userId: UserId) =
+  def accessUpdatePath(id: RConvId): String = s"$ConversationsPath/${id.str}/access"
+  def receiptModePath(id: RConvId): String = s"$ConversationsPath/${id.str}/receipt-mode"
+  def rolesPath(id: RConvId): String = s"$ConversationsPath/${id.str}/roles"
+  def membersPath(id: RConvId): String = s"$ConversationsPath/${id.str}/members"
+  def qualifiedMembersPath(id: RConvId): String = s"$ConversationsPath/${id.str}/members/v2"
+  def memberLeavePath(convId: RConvId, userId: UserId): String =
     s"$ConversationsPath/${convId.str}/members/${userId.str}"
-  def qualifiedMemberLeavePath(qConvId: RConvQualifiedId, qUserId: QualifiedId) =
-    s"$ConversationsPath/${qConvId.domain}/${qConvId.id.str}/members/${qUserId.domain}/${qUserId.id.str}"
+  def qualifiedMemberLeavePath(qConvId: RConvQualifiedId, qUserId: QualifiedId): String =
+    if (qConvId.hasDomain && qUserId.hasDomain)
+      s"$ConversationsPath/${qConvId.domain}/${qConvId.id.str}/members/${qUserId.domain}/${qUserId.id.str}"
+    else
+      memberLeavePath(qConvId.id, qUserId.id)
 
   final case class ConversationInitState(users:            Set[UserId],
                                          qualifiedUsers:   Set[QualifiedId],
