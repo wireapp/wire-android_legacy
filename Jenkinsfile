@@ -220,19 +220,6 @@ pipeline {
                                 androidApkUpload(googleCredentialsId: "${env.GOOGLE_PLAY_CREDS}", filesPattern: "app/build/outputs/apk/wire-internal-release-${usedClientVersion}${env.BUILD_NUMBER}.apk", trackName: "${env.WIRE_ANDROID_INTERNAL_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Internal Release ${usedClientVersion}${env.BUILD_NUMBER}")
                             }
                         }
-
-                        stage('Comment PullRequest') {
-                            when {
-                                expression { env.BRANCH_NAME.startsWith("PR-") }
-                            }
-                            steps {
-                                script {
-                                    last_stage = env.STAGE_NAME
-                                    message = "Build Job: [Link to Build #${BUILD_NUMBER}](${env.BUILD_URL})"
-                                }
-                                sh '''curl -s -H "Authorization: token ${env.GITHUB_API_TOKEN}" -X POST -d "{\"body\": \"${message}\"}" "https://api.github.com/repos/wireapp/wire-android/issues/${env.CHANGE_ID}/comments"'''
-                            }
-                        }
                     }
                 }
 
@@ -310,6 +297,9 @@ pipeline {
     post {
         failure {
             wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ FAILED ($last_stage) 👎"
+            if(env.BRANCH_NAME.startsWith("PR-") {
+                sh "curl -s -H \"Authorization: token ${env.GITHUB_API_TOKEN}\" -X POST -d \"{\\\"body\\\": \\\"Build Failure\\nID:${BUILD_NUMBER}\\nURL:[Link to Buildjob](${env.BUILD_URL})\\\"}\" \"https://api.github.com/repos/wireapp/wire-android/issues/3562/comments\""
+            }
         }
         success {
             script {
@@ -320,9 +310,15 @@ pipeline {
             }
             wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                     "\nLast 5 commits:\n```\n$lastCommits\n```"
+            if(env.BRANCH_NAME.startsWith("PR-") {
+                sh "curl -s -H \"Authorization: token ${env.GITHUB_API_TOKEN}\" -X POST -d \"{\\\"body\\\": \\\"Build Success\\nID:${BUILD_NUMBER}\\nURL:[Link to Buildjob](${env.BUILD_URL})\\\"}\" \"https://api.github.com/repos/wireapp/wire-android/issues/3562/comments\""
+            }
         }
         aborted {
             wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ ABORTED ($last_stage) "
+            if(env.BRANCH_NAME.startsWith("PR-") {
+                sh "curl -s -H \"Authorization: token ${env.GITHUB_API_TOKEN}\" -X POST -d \"{\\\"body\\\": \\\"Build Aborted\\nID:${BUILD_NUMBER}\\nURL:[Link to Buildjob](${env.BUILD_URL})\\\"}\" \"https://api.github.com/repos/wireapp/wire-android/issues/3562/comments\""
+            }
         }
     }
 }
