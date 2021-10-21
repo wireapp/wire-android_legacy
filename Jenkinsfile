@@ -207,6 +207,19 @@ pipeline {
                                 s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}${fileNameForS3}")
                             }
                         }
+
+                        stage('Upload to PlayStore') {
+                            when {
+                                expression { env.PLAYSTORE_UPLOAD_ENABLED && env.BRANCH_NAME.equals("main") && usedBuildType.equals("Release") && usedFlavor.equals("Internal") }
+                            }
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                    println("Uploading internal wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the Track [${env.WIRE_ANDROID_INTERNAL_TRACK_NAME}]")
+                                }
+                                androidApkUpload(googleCredentialsId: "${env.GOOGLE_PLAY_CREDS}", filesPattern: "app/build/outputs/apk/wire-internal-release-${usedClientVersion}${env.BUILD_NUMBER}.apk", trackName: "${env.WIRE_ANDROID_INTERNAL_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Internal Release ${usedClientVersion}${env.BUILD_NUMBER}")
+                            }
+                        }
                     }
                 }
 
@@ -255,9 +268,9 @@ pipeline {
                             steps {
                                 script {
                                     last_stage = env.STAGE_NAME
-                                    println("Uploading wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the Track [${env.WIRE_ANDROID_TRACK_NAME}]")
+                                    println("Uploading prod wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the Track [${env.WIRE_ANDROID_PROD_TRACK_NAME}]")
                                 }
-                                androidApkUpload(googleCredentialsId: "${env.GOOGLE_PLAY_CREDS}", filesPattern: "app/build/outputs/apk/wire-prod-release-${usedClientVersion}${env.BUILD_NUMBER}.apk", trackName: "${env.WIRE_ANDROID_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Release ${usedClientVersion}${env.BUILD_NUMBER}")
+                                androidApkUpload(googleCredentialsId: "${env.GOOGLE_PLAY_CREDS}", filesPattern: "app/build/outputs/apk/wire-prod-release-${usedClientVersion}${env.BUILD_NUMBER}.apk", trackName: "${env.WIRE_ANDROID_PROD_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Prod Release ${usedClientVersion}${env.BUILD_NUMBER}")
                             }
                         }
                     }
