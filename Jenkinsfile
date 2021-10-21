@@ -220,6 +220,19 @@ pipeline {
                                 androidApkUpload(googleCredentialsId: "${env.GOOGLE_PLAY_CREDS}", filesPattern: "app/build/outputs/apk/wire-internal-release-${usedClientVersion}${env.BUILD_NUMBER}.apk", trackName: "${env.WIRE_ANDROID_INTERNAL_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Internal Release ${usedClientVersion}${env.BUILD_NUMBER}")
                             }
                         }
+
+                        stage('Comment PullRequest') {
+                            when {
+                                expression { env.BRANCH_NAME.startsWith("PR-") }
+                            }
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                    message = "Build Job: [Link to Build #${BUILDER_NUMBER}](${env.JENKINS_URL}/job/wire-android/view/change-requests/job/${env.BRANCH_NAME}/)"
+                                }
+                                sh '''curl -s -H "Authorization: token ${env.GITHUB_API_TOKEN}" -X POST -d \'{"body": "${message}"}\' "https://api.github.com/repos/wireapp/wire-android/issues/${env.CHANGE_ID}/comments"'''
+                            }
+                        }
                     }
                 }
 
