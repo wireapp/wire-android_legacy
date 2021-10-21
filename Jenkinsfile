@@ -228,7 +228,7 @@ pipeline {
                             steps {
                                 script {
                                     last_stage = env.STAGE_NAME
-                                    message = "Build Job: [Link to Build #${BUILDER_NUMBER}](${env.BUILD_URL}/)"
+                                    message = "Build Job: [Link to Build #${BUILD_NUMBER}](${env.BUILD_URL}/)"
                                 }
                                 sh '''curl -s -H "Authorization: token ${env.GITHUB_API_TOKEN}" -X POST -d \'{"body": "${message}"}\' "https://api.github.com/repos/wireapp/wire-android/issues/${env.CHANGE_ID}/comments"'''
                             }
