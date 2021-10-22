@@ -47,7 +47,7 @@ allprojects {
 ext {
     federationUserDiscovery = false
     conferenceCallingRestriction = true
-    webLinkPreview = true
+    webLinkPreview = false
 }
 
 apply from: "./scripts/avs.gradle"
