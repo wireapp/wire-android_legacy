@@ -20,7 +20,7 @@
 -->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!--*********************************************** ERRORS ***********************************************-->
-    <string name="generic_error_header">Something went wrong</string>
+    <string name="generic_error_header">Нещо се обърка</string>
     <string name="generic_error_message">Please try again</string>
     <string name="internet_connectivity_error_header">No Internet Connection</string>
     <string name="internet_connectivity_error_message">Please check your Internet connection and try again</string>
@@ -31,7 +31,7 @@
     <string name="email_exists_message">THIS EMAIL ADDRESS HAS ALREADY BEEN REGISTERED</string>
     <string name="email_invalid_header">Invalid email address</string>
     <string name="email_invalid_message">PLEASE ENTER A VALID EMAIL ADDRESS</string>
-    <string name="invalid_credentials_header">Invalid information</string>
+    <string name="invalid_credentials_header">Невалидна информация</string>
     <string name="invalid_credentials_message">PLEASE VERIFY YOUR DETAILS AND TRY AGAIN</string>
     <string name="phone_exists_header">Phone number already taken</string>
     <string name="phone_exists_message">The phone number you provided has already been registered. Please try again</string>
@@ -40,17 +40,17 @@
     <string name="phone_password_exists_header">Password exists</string>
     <string name="phone_password_exists_message">This account already has a password and email associated. Please log in by email.</string>
     <string name="invalid_code_header">Invalid code</string>
-    <string name="incorrect_code_header">Incorrect Code</string>
+    <string name="incorrect_code_header">Неправилен код</string>
     <string name="wrong_code_message">PLEASE ENTER A VALID CODE</string>
     <string name="phone_pending_login_header">Code Already Sent</string>
     <string name="phone_pending_login_message">We already sent you a code via SMS. Tap Resend after 10 minutes to get a new one.</string>
-    <string name="phone_budget_exhausted_header">Too many requests</string>
-    <string name="phone_budget_exhausted_message">Please try again later.</string>
+    <string name="phone_budget_exhausted_header">Твърде много заявки</string>
+    <string name="phone_budget_exhausted_message">Моля опитайте отново по-късно.</string>
     <string name="conversation_input_bar_message_too_long_title">Message too long</string>
     <string name="conversation_input_bar_message_too_long_message">You can send messages up to %1$s characters long.</string>
     <string name="conversation_input_bar_dialog_ok">OK</string>
     <!--*********************************************** ERRORS ***********************************************-->
-    <string name="permissions_denied_dialog_settings">Settings</string>
+    <string name="permissions_denied_dialog_settings">Настройки</string>
     <string name="camera_not_available">CAMERA NOT AVAILABLE</string>
     <string name="camera_permissions_denied_title">Camera not available</string>
     <string name="camera_permissions_denied_message">To take and send photos, grant permission to access the camera</string>
@@ -58,11 +58,11 @@
     <string name="welcome__terms_of_service">BY CONTINUING YOU AGREE TO _TERMS OF USE_.</string>
     <string name="profile__name__guidance__tooshort__title">AT LEAST 2 CHARACTERS</string>
     <string name="profile__email__placeholder">Email</string>
-    <string name="profile__password__placeholder">Password</string>
+    <string name="profile__password__placeholder">Парола</string>
     <string name="profile__password__guidance__tooshort__title">AT LEAST 8 CHARACTERS</string>
     <string name="profile__email__verify__instructions">We sent an email to \n[[%1$s]]. \nFollow the link to verify your address.</string>
     <string name="profile__email__verify__didnt_get">Didn\'t get the message?</string>
-    <string name="profile__email__verify__resend">Re-send</string>
+    <string name="profile__email__verify__resend">Изпрати отново</string>
     <string name="profile__guidance__invalid_email">The email address you entered is not valid. Please verify and try again</string>
     <string name="new_reg__code_resent">A new code was sent to you via SMS</string>
     <string name="new_reg__email_code_resent">A new code was sent to you via email</string>
@@ -78,7 +78,7 @@
     <string name="people_picker__top_users_header_title">Top people</string>
     <string name="people_picker__search_result_conversations_header_title">Groups</string>
     <string name="people_picker__search_result_team_conversations_header_title">%1$s Groups</string>
-    <string name="people_picker__search_result_connections_searched_header_title">Contacts</string>
+    <string name="people_picker__search_result_connections_searched_header_title">Контакти</string>
     <string name="people_picker__search_result_others_header_title">Connect with Wire</string>
     <string name="people_picker__search_result_others_header_federated">Connect with %1$s</string>
     <string name="people_picker__search_result__expander_title">Show all %1$s ↓</string>
@@ -107,7 +107,7 @@
     <string name="people_picker__invite__share_text__header">%1$s wants to connect on Wire</string>
     <string name="people_picker__invite__share_text__body">I\'m on Wire, search for %1$s or visit get.wire.com</string>
     <!-- Conversation: Quick menu -->
-    <string name="conversation_quick_menu__conversation_button__single_label">OPEN</string>
+    <string name="conversation_quick_menu__conversation_button__single_label">ОТВОРИ</string>
     <!-- Conversation: System messages -->
     <string name="content__system__other_joined">[[%1$s]] joined</string>
     <string name="content__system__you_joined">[[You]] joined</string>
@@ -195,7 +195,7 @@
     <string name="content__file__status__default">%1$s</string>
     <string name="content__file__status__uploading__minimized">UPLOADING&#8230;</string>
     <string name="content__file__status__cancelled__minimized">CANCELLED&#8230;</string>
-    <string name="content__file__status__downloading__minimized">DOWNLOADING&#8230;</string>
+    <string name="content__file__status__downloading__minimized">ИЗТЕГЛЯНЕ&#8230;</string>
     <string name="content__file__status__download_failed__minimized">DOWNLOAD FAILED</string>
     <string name="content__file__status__upload_failed__minimized">UPLOAD FAILED</string>
     <string name="content__file__status__uploading">%1$s · UPLOADING&#8230;</string>
@@ -210,34 +210,34 @@
     <string name="content__file__status__downloading__size_and_extension">%1$s · %2$s · DOWNLOADING&#8230;</string>
     <string name="content__file__status__download_failed__size_and_extension">%1$s · %2$s · DOWNLOAD FAILED</string>
     <string name="content__file__status__upload_failed__size_and_extension">%1$s · %2$s · UPLOAD FAILED</string>
-    <string name="content__file__action__open">OPEN</string>
-    <string name="content__file__action__save">SAVE</string>
+    <string name="content__file__action__open">ОТВОРИ</string>
+    <string name="content__file__action__save">ЗАПАЗИ</string>
     <string name="content__file__action__open__no_app_found">No app found to open this file type</string>
-    <string name="content__file__action__save_completed">File successfully saved</string>
+    <string name="content__file__action__save_completed">Файлът е запазен успешно</string>
     <string name="content__file__action__save_error">Unable to save file</string>
     <string name="file_restrictions__sender_error">Sharing files with the .%1$s extension is not permitted by your organization</string>
     <string name="file_restrictions__receiver_error">File from %1$s can\'t be opened.</string>
     <string name="content__location__no_map_placeholder">THE LOCATION WILL APPEAR ON THE MAP WHEN YOU ARE BACK ONLINE.</string>
     <!-- Conversation actions -->
-    <string name="conversation__action__clear_content">Clear content…</string>
-    <string name="conversation__action__delete_group">Delete group…</string>
+    <string name="conversation__action__clear_content">Clear content&#8230;</string>
+    <string name="conversation__action__delete_group">Delete group&#8230;</string>
     <string name="conversation__action__archive">Archive</string>
     <string name="conversation__action__unarchive">Unarchive</string>
     <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>
     <string name="conversation__action__create_group">CREATE GROUP</string>
     <string name="conversation__action__open_conversation">OPEN CONVERSATION</string>
-    <string name="conversation__action__notifications">Notifications…</string>
+    <string name="conversation__action__notifications">Notifications&#8230;</string>
     <string name="conversation__action__silence">Mute</string>
     <string name="conversation__action__unsilence">Unmute</string>
-    <string name="conversation__action__leave">Leave group…</string>
+    <string name="conversation__action__leave">Leave group&#8230;</string>
     <string name="conversation__action__call">Call</string>
     <string name="conversation__action__picture">Picture</string>
-    <string name="conversation__action__block">Block…</string>
+    <string name="conversation__action__block">Block&#8230;</string>
     <string name="conversation__action__unblock">Unblock</string>
-    <string name="conversation__action__remove_member">Remove from group…</string>
+    <string name="conversation__action__remove_member">Remove from group&#8230;</string>
     <string name="conversation__action__add_to_favorites">Add to Favorites</string>
     <string name="conversation__action__remove_from_favorites">Remove from Favorites</string>
-    <string name="conversation__action__move_to_folder">Move to…</string>
+    <string name="conversation__action__move_to_folder">Move to&#8230;</string>
     <string name="conversation__action__remove_from_folder">Remove from \"%1$s\"</string>
     <string name="conversation__action__leave_and_clear">\tLeave and clear content</string>
     <string name="conversation__action__leave_only">\tLeave group</string>
@@ -264,16 +264,16 @@
     <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
     <string name="incoming__controls__ongoing__camera">CAMERA</string>
     <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
-    <string name="calling__header__joining">Connecting…</string>
-    <string name="calling__header__outgoing_subtitle">Ringing…</string>
-    <string name="calling__header__outgoing_video_subtitle">Ringing…</string>
-    <string name="calling__header__incoming_subtitle">Calling…</string>
-    <string name="calling__header__incoming_subtitle__video">Calling…</string>
-    <string name="calling__header__incoming_subtitle__group">%1$s is calling…</string>
-    <string name="call_banner_joining">Connecting…</string>
-    <string name="call_banner_outgoing">Calling %1$S…</string>
-    <string name="call_banner_incoming">%1$s is calling…</string>
-    <string name="call_banner_incoming_group">%1$s \u30FB %2$s is calling…</string>
+    <string name="calling__header__joining">Connecting&#8230;</string>
+    <string name="calling__header__outgoing_subtitle">Ringing&#8230;</string>
+    <string name="calling__header__outgoing_video_subtitle">Ringing&#8230;</string>
+    <string name="calling__header__incoming_subtitle">Calling&#8230;</string>
+    <string name="calling__header__incoming_subtitle__video">Calling&#8230;</string>
+    <string name="calling__header__incoming_subtitle__group">%1$s is calling&#8230;</string>
+    <string name="call_banner_joining">Connecting&#8230;</string>
+    <string name="call_banner_outgoing">Calling %1$S&#8230;</string>
+    <string name="call_banner_incoming">%1$s is calling&#8230;</string>
+    <string name="call_banner_incoming_group">%1$s \u30FB %2$s is calling&#8230;</string>
     <string name="call_banner_tap_to_return_to_call">Tap to return to call \u30FB %1$s</string>
     <string name="call_error_unsupported_version_title">Please update Wire</string>
     <string name="call_error_unsupported_version_message">You received a call that isn\'t supported by this version of Wire.\n\nGet the latest version in the Play Store.</string>
@@ -337,7 +337,7 @@
         <item quantity="other">Do you still want to send your messages?</item>
     </plurals>
     <string name="conversation__legal_hold_confirmation__negative_action">What is legal hold?</string>
-    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices…</string>
+    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices&#8230;</string>
     <string name="conversation__legal_hold_confirmation__positive_action">Send anyway</string>
     <!-- Picture selection confirmation -->
     <string name="confirmation_menu__confirm_done">OK</string>
@@ -371,12 +371,12 @@
     <!-- Invite banner -->
     <!-- Self profile -->
     <!-- Options and settings -->
-    <string name="settings_title">Settings</string>
+    <string name="settings_title">Настройки</string>
     <!-- Options menu -->
     <!-- Manage Team -->
     <string name="pref_manage_team_title">Manage Team</string>
     <!-- About screen -->
-    <string name="pref_category_title">Settings</string>
+    <string name="pref_category_title">Настройки</string>
     <string name="pref_developer_screen_title">Developer Settings</string>
     <string name="pref_dev_avs_screen_title">AVS Settings</string>
     <string name="pref_profile_screen_title">Profile</string>
@@ -532,7 +532,7 @@
     <string name="pref__account_action__email_verification__question">No email showing up?</string>
     <string name="pref__account_action__email_verification__resend">&lt;u&gt;Resend to %s&lt;/u&gt;</string>
     <string name="pref__account_action__email_verification__change"><u>Change email</u></string>
-    <string name="pref__account_action__dialog__add_email_password__password">Password</string>
+    <string name="pref__account_action__dialog__add_email_password__password">Парола</string>
     <string name="pref__account_action__dialog__add_email_password__email">Email</string>
     <string name="pref__account_action__dialog__add_email_password__title">Add email address</string>
     <string name="pref__account_action__dialog__add_email_password__error__invalid_email">Invalid email address</string>
@@ -635,13 +635,13 @@
     <string name="system_notification__silence_call">Decline</string>
     <string name="system_notification__join_call">Open Call</string>
     <string name="system_notification__leave_call">End call</string>
-    <string name="system_notification__calling_one">Calling…</string>
-    <string name="system_notification__calling_group">%1$s is calling…</string>
-    <string name="system_notification__video_calling_one">Calling with video…</string>
-    <string name="system_notification__video_calling_group">%1$s is calling with video…</string>
+    <string name="system_notification__calling_one">Calling&#8230;</string>
+    <string name="system_notification__calling_group">%1$s is calling&#8230;</string>
+    <string name="system_notification__video_calling_one">Calling with video&#8230;</string>
+    <string name="system_notification__video_calling_group">%1$s is calling with video&#8230;</string>
     <string name="ws_foreground_notification_connected_title">Connected to Wire server</string>
-    <string name="ws_foreground_notification_no_internet_title">Waiting for Internet connection…</string>
-    <string name="ws_foreground_notification_connecting_title">Establishing connection…</string>
+    <string name="ws_foreground_notification_no_internet_title">Waiting for Internet connection&#8230;</string>
+    <string name="ws_foreground_notification_connecting_title">Establishing connection&#8230;</string>
     <string name="ws_foreground_notification_summary">Tap here for more information.</string>
     <!-- Notification actions -->
     <string name="notification__action__call">Call</string>
@@ -700,7 +700,7 @@
     <string name="timestamp_pattern__12h_format">hh:mm a</string>
     <string name="country">Country</string>
     <string name="register">Register</string>
-    <string name="password_placeholder">Password</string>
+    <string name="password_placeholder">Парола</string>
     <string name="email_placeholder">Email</string>
     <string name="name_placeholder">Name</string>
     <!-- Strings -->
@@ -743,7 +743,7 @@
     <string name="location_sharing__send_button">SEND</string>
     <string name="location_sharing__enable_system_location__title">Use location?</string>
     <string name="location_sharing__enable_system_location__message">Enable location in settings to show your current position</string>
-    <string name="location_sharing__enable_system_location__confirm">Settings</string>
+    <string name="location_sharing__enable_system_location__confirm">Настройки</string>
     <string name="location_sharing__enable_system_location__cancel">Cancel</string>
     <string name="location_sharing__missing_play_services">Google Play Services is needed for location sharing</string>
     <string name="location_sharing__permission__message">Do you want to allow Wire to access your location?</string>
@@ -848,7 +848,7 @@
     <string name="audio_message__recording__slide_control__tap_hint">TAP TO SEND</string>
     <string name="audio_message__recording__tap_to_record">Tap to record a message\nyou can _GLYPH_ it after that</string>
     <string name="audio_message__recording__failure__title">Can\'t record audio</string>
-    <string name="audio_message__recording__failure__message">Please try again.</string>
+    <string name="audio_message__recording__failure__message">Моля опитайте отново.</string>
     <string name="audio_message__recording__limit_reached__title">Recording stopped</string>
     <string name="audio_message__recording__limit_reached__message">Audio messages are limited to 25MB. Send this message?</string>
     <string name="audio_message__recording__limit_reached__confirmation">SEND</string>
@@ -882,8 +882,8 @@
         <item quantity="one">%1$d people</item>
         <item quantity="other">%1$d people</item>
     </plurals>
-    <string name="message_footer__status__sending">Sending…</string>
-    <string name="message_footer__status__waiting_for_connection">Waiting for connection…</string>
+    <string name="message_footer__status__sending">Sending&#8230;</string>
+    <string name="message_footer__status__waiting_for_connection">Waiting for connection&#8230;</string>
     <string name="message_footer__status__sent">%1$s \u30FB Sent</string>
     <string name="message_footer__status__delivered">%1$s \u30FB Delivered</string>
     <string name="message_footer__status__failed">Sending failed. _Resend_</string>
@@ -932,7 +932,7 @@
     <string name="collection_empty">NO ITEMS IN COLLECTION</string>
     <string name="collection_all">Show all %1$s</string>
     <string name="multi_share_toast_sending">@string/message_footer__status__sending</string>
-    <string name="multi_share_search_hint">SEND TO…</string>
+    <string name="multi_share_search_hint">SEND TO&#8230;</string>
     <string name="single_selector_search_hint">"SELECT CONVERSATION…"</string>
     <string name="search__box__hint_text">SEARCH TEXT MESSAGES</string>
     <string name="search__no_results">No results.</string>
@@ -977,7 +977,7 @@
     <string name="conversation_list__group_eph_and_mention">Someone mentioned you</string>
     <string name="conversation_list__single_eph_and_quote">Replied to you</string>
     <string name="conversation_list__group_eph_and_quote">Someone replied to you</string>
-    <string name="conversation_list__typing">Typing a message…</string>
+    <string name="conversation_list__typing">Typing a message&#8230;</string>
     <string name="conversation_list__someone">Someone</string>
     <string name="conversation_list__added">[[%1$s]] was added</string>
     <string name="conversation_list__added_you">[[%1$s]] added you</string>
@@ -1029,7 +1029,7 @@
     <string name="teams_set_email_hint">YOU@YOURCOMPANY.COM</string>
     <string name="teams_set_email_about">LEARN MORE</string>
     <string name="teams_set_password_title">Set password</string>
-    <string name="teams_set_password_hint">Password</string>
+    <string name="teams_set_password_hint">Парола</string>
     <string name="teams_set_username_title">Set username</string>
     <string name="teams_set_username_hint">USERNAME</string>
     <string name="teams_set_team_name_title">Name your team</string>
@@ -1085,7 +1085,7 @@
     <string name="remove_service_button_text">Remove Service</string>
     <string name="integrations_create_conversation">Create a new conversation</string>
     <string name="no_matches_found">No matches found</string>
-    <string name="loading_services">Loading services…</string>
+    <string name="loading_services">Loading services&#8230;</string>
     <string name="empty_services_list">Services are helpers that can improve your workflow. To enable them, ask your administrator.</string>
     <string name="empty_services_list_admin">Services are helpers that can improve your workflow.</string>
     <string name="empty_services_content_description">No services found</string>
@@ -1111,7 +1111,7 @@
     <string name="participants_divider_admins_no_number">GROUP ADMINS</string>
     <string name="participants_divider_options">OPTIONS</string>
     <string name="participants_no_admins">There are no admins.</string>
-    <string name="participants_no_results_1">No matching results.</string>
+    <string name="participants_no_results_1">Няма съвпадащи резултати.</string>
     <string name="participants_no_results_2">Try entering a different name.</string>
     <string name="group_name_hint">GROUP NAME</string>
     <string name="allow_guests_toggle_text">Allow guests and services</string>
@@ -1139,7 +1139,7 @@
     <string name="show_all_participants">Show all (%1$s)</string>
     <string name="participant_was_removed_from_team">%s was removed from team</string>
     <string name="all_participants">Participants (%1$s)</string>
-    <string name="allow_guests_error_title">Something went wrong</string>
+    <string name="allow_guests_error_title">Нещо се обърка</string>
     <string name="allow_guests_error_body">Could not allow guests nor services. Please try again.</string>
     <string name="allow_guests_warning_body">Current guests and services will be removed from the conversation. New guests and services will not be allowed.</string>
     <string name="allow_guests_warning_confirm">Remove</string>
@@ -1151,7 +1151,7 @@
     <string name="create_link_button">Create Link</string>
     <string name="copy_link_button">Copy Link</string>
     <string name="share_link_button">Share Link</string>
-    <string name="revoke_link_button">Revoke Link…</string>
+    <string name="revoke_link_button">Revoke Link&#8230;</string>
     <string name="invitation_link_title">INVITE OTHERS WITH A LINK</string>
     <string name="link_copied_toast">Link Copied!</string>
     <string name="revoke_link_message">New guests will not be able to join with this link. Current guests will still have access.</string>
@@ -1181,16 +1181,16 @@
     <string name="restore_override_alert_title">Restore history</string>
     <string name="restore_override_alert_text">The backup contents will replace the conversation history on this device. You can only restore history from a backup of the same platform.</string>
     <string name="restore_override_alert_ok">Choose Backup File</string>
-    <string name="back_up_progress">BACKING UP…</string>
+    <string name="back_up_progress">BACKING UP&#8230;</string>
     <string name="back_up_progress_complete">COMPLETE</string>
-    <string name="restore_progress">RESTORING…</string>
+    <string name="restore_progress">RESTORING&#8230;</string>
     <string name="pref_account_backup_warning_title">Set an email and password.</string>
     <string name="pref_account_backup_warning_message">You need an email and a password in order to back up your conversation history. You can do it from the account page in Settings.</string>
     <string name="pref_account_backup_warning_ok">OK</string>
     <string name="export_generic_error_title">The file could not be saved</string>
     <string name="export_generic_error_text">You may not have enough space or permission to save it there.</string>
     <string name="backup_button">Back Up Now</string>
-    <string name="backup_import_error_unknown_title">Something went wrong</string>
+    <string name="backup_import_error_unknown_title">Нещо се обърка</string>
     <string name="backup_import_error_unknown">Your history could not be restored.</string>
     <string name="backup_import_error_unsupported_version_title">Incompatible backup</string>
     <string name="backup_import_error_unsupported_version">This backup was created by a newer or outdated version of Wire and cannot be restored here.</string>
@@ -1208,7 +1208,7 @@
     <string name="max_participants_create_alert_message">Up to %1$s people can join a conversation.</string>
     <string name="max_participants_add_alert_message">Up to %1$s people can join a conversation. Currently there is only room for %2$s more.</string>
     <string name="sso_signin_button">Company log in</string>
-    <string name="sso_signin_error_title">Something went wrong</string>
+    <string name="sso_signin_error_title">Нещо се обърка</string>
     <string name="sso_signin_error_message">Please contact your team administrator for details (Error %1$s).</string>
     <string name="sso_signin_error_try_again_message">Please try again later (Error %1$s).</string>
     <string name="enterprise_signin_domain_not_found_error">This email cannot be used for enterprise login. Please enter the SSO code to proceed.</string>
@@ -1294,7 +1294,7 @@
     <string name="no_internet_connection_title">No Internet Connection</string>
     <string name="no_internet_connection_message">Please check your Internet connection and try again</string>
     <!-- Shortcuts -->
-    <string name="shortcut_create_group_label">Create Group</string>
+    <string name="shortcut_create_group_label">Създай група</string>
     <string name="shortcut_share_a_photo_label">Share Photo</string>
     <string name="shortcut_new_message_label">New Message</string>
     <!-- Settings Account - Edit Phone -->
@@ -1362,7 +1362,7 @@
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
     <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
     <!-- StartSSO Screen  -->
-    <string name="start_sso_leaving_wire">Redirecting…</string>
+    <string name="start_sso_leaving_wire">Redirecting&#8230;</string>
     <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
     <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
     <!-- Legal Hold -->
