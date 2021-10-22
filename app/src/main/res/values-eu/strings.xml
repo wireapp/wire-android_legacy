@@ -20,51 +20,51 @@
 -->
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!--*********************************************** ERRORS ***********************************************-->
-    <string name="generic_error_header">Something went wrong</string>
+    <string name="generic_error_header">Zerbait ez da ondo atera</string>
     <string name="generic_error_message">Please try again</string>
-    <string name="internet_connectivity_error_header">No Internet Connection</string>
+    <string name="internet_connectivity_error_header">Ez dago Interneteko Konexiorik</string>
     <string name="internet_connectivity_error_message">Please check your Internet connection and try again</string>
-    <string name="too_many_attempts_header">Too many attempts</string>
+    <string name="too_many_attempts_header">Saialdi gehiegi</string>
     <string name="email_login_later_message">PLEASE TRY TO LOG IN LATER</string>
     <string name="phone_login_later_message">Please try to log in later</string>
     <string name="email_exists_header">Email address already taken</string>
     <string name="email_exists_message">THIS EMAIL ADDRESS HAS ALREADY BEEN REGISTERED</string>
-    <string name="email_invalid_header">Invalid email address</string>
+    <string name="email_invalid_header">Baliogabeko e-mail helbidea</string>
     <string name="email_invalid_message">PLEASE ENTER A VALID EMAIL ADDRESS</string>
-    <string name="invalid_credentials_header">Invalid information</string>
+    <string name="invalid_credentials_header">Baliogabeko informazioa</string>
     <string name="invalid_credentials_message">PLEASE VERIFY YOUR DETAILS AND TRY AGAIN</string>
-    <string name="phone_exists_header">Phone number already taken</string>
+    <string name="phone_exists_header">Telefono zenbakia dagoeneko hartuta</string>
     <string name="phone_exists_message">The phone number you provided has already been registered. Please try again</string>
-    <string name="phone_invalid_format_header">Invalid phone number</string>
-    <string name="phone_invalid_format_message">Please enter a valid phone number</string>
+    <string name="phone_invalid_format_header">Baliogabeko telefono zenbakia</string>
+    <string name="phone_invalid_format_message">Sartu balioko telefono zenbaki bat, mesedez</string>
     <string name="phone_password_exists_header">Password exists</string>
     <string name="phone_password_exists_message">This account already has a password and email associated. Please log in by email.</string>
-    <string name="invalid_code_header">Invalid code</string>
-    <string name="incorrect_code_header">Incorrect Code</string>
+    <string name="invalid_code_header">Baliogabeko kodea</string>
+    <string name="incorrect_code_header">Kode okerra</string>
     <string name="wrong_code_message">PLEASE ENTER A VALID CODE</string>
-    <string name="phone_pending_login_header">Code Already Sent</string>
+    <string name="phone_pending_login_header">Kodea Dagoeneko Bidalita</string>
     <string name="phone_pending_login_message">We already sent you a code via SMS. Tap Resend after 10 minutes to get a new one.</string>
-    <string name="phone_budget_exhausted_header">Too many requests</string>
-    <string name="phone_budget_exhausted_message">Please try again later.</string>
+    <string name="phone_budget_exhausted_header">Eskera gehiegi</string>
+    <string name="phone_budget_exhausted_message">Mesedez, berriro saiatu beranduago.</string>
     <string name="conversation_input_bar_message_too_long_title">Message too long</string>
     <string name="conversation_input_bar_message_too_long_message">You can send messages up to %1$s characters long.</string>
-    <string name="conversation_input_bar_dialog_ok">OK</string>
+    <string name="conversation_input_bar_dialog_ok">ADOS</string>
     <!--*********************************************** ERRORS ***********************************************-->
-    <string name="permissions_denied_dialog_settings">Settings</string>
-    <string name="camera_not_available">CAMERA NOT AVAILABLE</string>
-    <string name="camera_permissions_denied_title">Camera not available</string>
-    <string name="camera_permissions_denied_message">To take and send photos, grant permission to access the camera</string>
+    <string name="permissions_denied_dialog_settings">Ezarpenak</string>
+    <string name="camera_not_available">ARGAZKI-KAMERA EZ DAGO ERABILTZEKO MODUAN</string>
+    <string name="camera_permissions_denied_title">Kamera ez dago eskuragarri</string>
+    <string name="camera_permissions_denied_message">Argazkiak ateratzeko eta bidaltzeko, baimena eman kameran sartzeko</string>
     <!-- Registration and Sign in -->
-    <string name="welcome__terms_of_service">BY CONTINUING YOU AGREE TO _TERMS OF USE_.</string>
-    <string name="profile__name__guidance__tooshort__title">AT LEAST 2 CHARACTERS</string>
-    <string name="profile__email__placeholder">Email</string>
-    <string name="profile__password__placeholder">Password</string>
-    <string name="profile__password__guidance__tooshort__title">AT LEAST 8 CHARACTERS</string>
-    <string name="profile__email__verify__instructions">We sent an email to \n[[%1$s]]. \nFollow the link to verify your address.</string>
-    <string name="profile__email__verify__didnt_get">Didn\'t get the message?</string>
-    <string name="profile__email__verify__resend">Re-send</string>
+    <string name="welcome__terms_of_service">JARRAITZEN BADUZU, ONARTZEN DITUZU _ERABILTZEKO BALDINTZAK_.</string>
+    <string name="profile__name__guidance__tooshort__title">GUTXIENEZ 2 KARAKTERE</string>
+    <string name="profile__email__placeholder">E-mail</string>
+    <string name="profile__password__placeholder">Pasahitza</string>
+    <string name="profile__password__guidance__tooshort__title">GUTXIENEZ 8 KARAKTERE</string>
+    <string name="profile__email__verify__instructions">Bidali dizugu e-mail bat \n[[%1$s]]. \nJarraitu lotura zure helbidea egiaztatzeko.</string>
+    <string name="profile__email__verify__didnt_get">Ez duzu mezua jaso?</string>
+    <string name="profile__email__verify__resend">Birbidali</string>
     <string name="profile__guidance__invalid_email">The email address you entered is not valid. Please verify and try again</string>
-    <string name="new_reg__code_resent">A new code was sent to you via SMS</string>
+    <string name="new_reg__code_resent">Kode berri bat bidali dizugu SMS baten bidez</string>
     <string name="new_reg__email_code_resent">A new code was sent to you via email</string>
     <string name="new_reg__code_resent__call">Stand by for a call</string>
     <string name="new_reg__default_country">de</string>
@@ -75,13 +75,13 @@
     <string name="pick_user_search_focus">\u0020 SEARCH</string>
     <string name="pick_user_search_hint">SEARCH</string>
     <string name="choose_conversation">SEARCH</string>
-    <string name="people_picker__top_users_header_title">Top people</string>
-    <string name="people_picker__search_result_conversations_header_title">Groups</string>
-    <string name="people_picker__search_result_team_conversations_header_title">%1$s Groups</string>
-    <string name="people_picker__search_result_connections_searched_header_title">Contacts</string>
+    <string name="people_picker__top_users_header_title">Pertsona garrantsitzuenak</string>
+    <string name="people_picker__search_result_conversations_header_title">Taldeak</string>
+    <string name="people_picker__search_result_team_conversations_header_title">%1$s Taldeak</string>
+    <string name="people_picker__search_result_connections_searched_header_title">Kontaktuak</string>
     <string name="people_picker__search_result_others_header_title">Connect with Wire</string>
     <string name="people_picker__search_result_others_header_federated">Connect with %1$s</string>
-    <string name="people_picker__search_result__expander_title">Show all %1$s ↓</string>
+    <string name="people_picker__search_result__expander_title">Ikusi guztia %1$s ↓</string>
     <string name="people_picker__search_people">PEOPLE</string>
     <string name="people_picker__search_services">SERVICES</string>
     <string name="receive_news_and_offers_request_title">Newsletter</string>
@@ -91,10 +91,10 @@
     <string name="crashes_and_analytics_request_no">No</string>
     <string name="crashes_and_analytics_request_agree">I Agree</string>
     <!-- Request Password dialog -->
-    <string name="request_password_ok">OK</string>
-    <string name="request_password_cancel">Cancel</string>
+    <string name="request_password_ok">ADOS</string>
+    <string name="request_password_cancel">Ezeztatu</string>
     <string name="request_password_biometric_description">Unlock using biometric authentication.</string>
-    <string name="request_password_biometric_cancel">Cancel</string>
+    <string name="request_password_biometric_cancel">Ezeztatu</string>
     <string name="request_password_error">Wrong passcode</string>
     <!-- Bots / Integrations / Services -->
     <string name="integrations_picker__section_title">Services</string>
@@ -103,11 +103,11 @@
     <string name="conversation_errors_full">The conversation is full</string>
     <!-- Invite -->
     <!-- Should not use newline in the dialog message, not supported by all devices, text will be cut off -->
-    <string name="people_picker__invite__share_details_dialog">Share Wire with your friends.</string>
-    <string name="people_picker__invite__share_text__header">%1$s wants to connect on Wire</string>
-    <string name="people_picker__invite__share_text__body">I\'m on Wire, search for %1$s or visit get.wire.com</string>
+    <string name="people_picker__invite__share_details_dialog">Wire partekatu zure lagunekin.</string>
+    <string name="people_picker__invite__share_text__header">%1$s-ek Wire-en konektatu nahi du</string>
+    <string name="people_picker__invite__share_text__body">Wire-en nago, %1$s bilatu edo get.wire.com bisitatu</string>
     <!-- Conversation: Quick menu -->
-    <string name="conversation_quick_menu__conversation_button__single_label">OPEN</string>
+    <string name="conversation_quick_menu__conversation_button__single_label">IREKI</string>
     <!-- Conversation: System messages -->
     <string name="content__system__other_joined">[[%1$s]] joined</string>
     <string name="content__system__you_joined">[[You]] joined</string>
@@ -137,15 +137,15 @@
         <item quantity="other">You added %1$s and _%2$s others to the conversation_</item>
     </plurals>
     <!-- Remove people -->
-    <string name="content__system__other_removed_other">[[%1$s]] removed %2$s</string>
+    <string name="content__system__other_removed_other">[[%1$s]]-(e)k %2$s taldetik bota du</string>
     <string name="content__system__other_removed_someone">[[%1$s]] removed someone</string>
     <string name="content__system__someone_removed_other">Someone removed %2$s</string>
-    <string name="content__system__other_removed_you">[[%1$s]] removed you</string>
+    <string name="content__system__other_removed_you">[[%1$s]]-(e)k taldetik bota zaitu</string>
     <string name="content__system__someone_removed_you">Someone removed you</string>
     <string name="content__system__you_removed_other">You removed %1$s</string>
     <string name="content__system__you_removed_someone">You removed someone</string>
-    <string name="content__system__you_left">[[You]] left</string>
-    <string name="content__system__other_left">[[%1$s]] left</string>
+    <string name="content__system__you_left">[[Zuk]] taldea utzi duzu</string>
+    <string name="content__system__other_left">[[%1$s]]-(e)k taldea utzi du</string>
     <string name="content__system__someone_left">Someone left</string>
     <string name="content__system__other_was_removed">%1$s was removed</string>
     <string name="content__system__someone_was_removed">Someone was removed</string>
@@ -168,10 +168,10 @@
         <item quantity="other">with %1$s, you and _%2$s others_</item>
     </plurals>
     <!-- Conversation: missed call -->
-    <string name="content__missed_call__you_called">[[YOU]] CALLED</string>
-    <string name="content__missed_call__xxx_called">[[%1$s]] CALLED</string>
-    <string name="content__you_pinged">[[YOU]] PINGED</string>
-    <string name="content__xxx_pinged">[[%1$s]] PINGED</string>
+    <string name="content__missed_call__you_called">[[ZUK]] DEITU DUZU</string>
+    <string name="content__missed_call__xxx_called">[[%1$s]]-(E)K DEITU DU</string>
+    <string name="content__you_pinged">[[ZUK]] PIN EGIN DUZU</string>
+    <string name="content__xxx_pinged">[[%1$s]]-(E)K PIN EGIN DU</string>
     <!-- Conversation: E2EE system messages -->
     <string name="content__otr__message_error">A message from [[%1$s]] could not be decrypted.\n _FIX TO DECRYPT FUTURE MESSAGES_</string>
     <string name="content__otr__message_error_fixed">You can now decrypt future messages from [[%1$s]]. To recover lost messages, [[ask %2$s to resend them.]]\n(FIXED ERROR: [[%3$s]] ID: %4$s)</string>
@@ -184,8 +184,8 @@
     <string name="content__otr__someone_and_others_added_new_device__message">%1$s and %2$s others started using a _new device_</string>
     <string name="content__otr__someone_others_and_you_added_new_device__message">%1$s, %2$s others and you started using a _new device_</string>
     <string name="content__otr__start_this_device__message">[[YOU]] STARTED USING _THIS DEVICE_</string>
-    <string name="content__otr__all_fingerprints_verified">ALL FINGERPRINTS ARE VERIFIED</string>
-    <string name="content__otr__lost_history">YOU HAVEN\'T USED THIS DEVICE FOR A WHILE. SOME MESSAGES MAY NOT APPEAR HERE.</string>
+    <string name="content__otr__all_fingerprints_verified">HATZ-MARKA GUZTIAK EGIAZTATUTA DAUDE</string>
+    <string name="content__otr__lost_history">DENBORA LUZEA DARAMAZU GAILU HAU ERABILI GABE. AGIAN MEZU BATZUK EZ DIRA AGERTZEN.</string>
     <string name="content__otr__unverified_device__message">[[YOU]] UNVERIFIED ONE OF _%1$s\'s DEVICES_</string>
     <string name="content__otr__your_unverified_device__message">[[YOU]] UNVERIFIED ONE OF _YOUR DEVICES_</string>
     <string name="content__otr__new_member__message">NEW PEOPLE JOINED. _VERIFY DEVICES_</string>
@@ -193,11 +193,11 @@
     <string name="content__otr__legalhold_disabled__message">Legal hold deactivated for this conversation</string>
     <!-- File transfer -->
     <string name="content__file__status__default">%1$s</string>
-    <string name="content__file__status__uploading__minimized">UPLOADING&#8230;</string>
-    <string name="content__file__status__cancelled__minimized">CANCELLED&#8230;</string>
-    <string name="content__file__status__downloading__minimized">DOWNLOADING&#8230;</string>
-    <string name="content__file__status__download_failed__minimized">DOWNLOAD FAILED</string>
-    <string name="content__file__status__upload_failed__minimized">UPLOAD FAILED</string>
+    <string name="content__file__status__uploading__minimized">KARGATZEN&#8230;</string>
+    <string name="content__file__status__cancelled__minimized">EZEZTATU&#8230;</string>
+    <string name="content__file__status__downloading__minimized">DESKARGATZEN&#8230;</string>
+    <string name="content__file__status__download_failed__minimized">DESKARGA TXARTO ATERA DA</string>
+    <string name="content__file__status__upload_failed__minimized">IGOERA TXARTO ATERA DA</string>
     <string name="content__file__status__uploading">%1$s · UPLOADING&#8230;</string>
     <string name="content__file__status__cancelled">%1$s · CANCELLED&#8230;</string>
     <string name="content__file__status__downloading">%1$s · DOWNLOADING&#8230;</string>
@@ -210,34 +210,34 @@
     <string name="content__file__status__downloading__size_and_extension">%1$s · %2$s · DOWNLOADING&#8230;</string>
     <string name="content__file__status__download_failed__size_and_extension">%1$s · %2$s · DOWNLOAD FAILED</string>
     <string name="content__file__status__upload_failed__size_and_extension">%1$s · %2$s · UPLOAD FAILED</string>
-    <string name="content__file__action__open">OPEN</string>
-    <string name="content__file__action__save">SAVE</string>
-    <string name="content__file__action__open__no_app_found">No app found to open this file type</string>
-    <string name="content__file__action__save_completed">File successfully saved</string>
-    <string name="content__file__action__save_error">Unable to save file</string>
+    <string name="content__file__action__open">IREKI</string>
+    <string name="content__file__action__save">GORDE</string>
+    <string name="content__file__action__open__no_app_found">Ez da app-ik aurkitu fitxategi hau irekitzeko</string>
+    <string name="content__file__action__save_completed">Fitxategia ondo gorde da</string>
+    <string name="content__file__action__save_error">Ezin da fitxategia gorde</string>
     <string name="file_restrictions__sender_error">Sharing files with the .%1$s extension is not permitted by your organization</string>
     <string name="file_restrictions__receiver_error">File from %1$s can\'t be opened.</string>
-    <string name="content__location__no_map_placeholder">THE LOCATION WILL APPEAR ON THE MAP WHEN YOU ARE BACK ONLINE.</string>
+    <string name="content__location__no_map_placeholder">LOKALIZAZIOA MAPAN AGERTUKO DA BERRIRO ONLINE EGONGO ZARENEAN.</string>
     <!-- Conversation actions -->
-    <string name="conversation__action__clear_content">Clear content…</string>
-    <string name="conversation__action__delete_group">Delete group…</string>
+    <string name="conversation__action__clear_content">Clear content&#8230;</string>
+    <string name="conversation__action__delete_group">Delete group&#8230;</string>
     <string name="conversation__action__archive">Archive</string>
     <string name="conversation__action__unarchive">Unarchive</string>
     <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>
-    <string name="conversation__action__create_group">CREATE GROUP</string>
+    <string name="conversation__action__create_group">TALDEA SORTU</string>
     <string name="conversation__action__open_conversation">OPEN CONVERSATION</string>
-    <string name="conversation__action__notifications">Notifications…</string>
+    <string name="conversation__action__notifications">Notifications&#8230;</string>
     <string name="conversation__action__silence">Mute</string>
     <string name="conversation__action__unsilence">Unmute</string>
-    <string name="conversation__action__leave">Leave group…</string>
-    <string name="conversation__action__call">Call</string>
+    <string name="conversation__action__leave">Leave group&#8230;</string>
+    <string name="conversation__action__call">Deitu</string>
     <string name="conversation__action__picture">Picture</string>
-    <string name="conversation__action__block">Block…</string>
-    <string name="conversation__action__unblock">Unblock</string>
-    <string name="conversation__action__remove_member">Remove from group…</string>
+    <string name="conversation__action__block">Block&#8230;</string>
+    <string name="conversation__action__unblock">Desblokeatu</string>
+    <string name="conversation__action__remove_member">Remove from group&#8230;</string>
     <string name="conversation__action__add_to_favorites">Add to Favorites</string>
     <string name="conversation__action__remove_from_favorites">Remove from Favorites</string>
-    <string name="conversation__action__move_to_folder">Move to…</string>
+    <string name="conversation__action__move_to_folder">Move to&#8230;</string>
     <string name="conversation__action__remove_from_folder">Remove from \"%1$s\"</string>
     <string name="conversation__action__leave_and_clear">\tLeave and clear content</string>
     <string name="conversation__action__leave_only">\tLeave group</string>
@@ -252,28 +252,28 @@
     <string name="calling__cannot_start__title">Microphone required</string>
     <string name="calling__cannot_start__message">To call, hang up your current call.</string>
     <string name="calling__cannot_start__no_permission__message">Go to Settings and allow Wire to access the microphone.</string>
-    <string name="calling__cannot_start__cancel__message">CANCEL</string>
+    <string name="calling__cannot_start__cancel__message">EZEZTATU</string>
     <string name="calling__cannot_start__no_camera_permission__message">Wire doesn\'t have access to the camera</string>
     <string name="calling__video_call__slow_connection__message">You might experience issues during the call</string>
-    <string name="incoming__controls__ongoing__speaker">SPEAKER</string>
-    <string name="incoming__controls__ongoing__mute">MUTE</string>
-    <string name="incoming__controls__ongoing__video">VIDEO</string>
+    <string name="incoming__controls__ongoing__speaker">BOZGORAILUA</string>
+    <string name="incoming__controls__ongoing__mute">ISILDU</string>
+    <string name="incoming__controls__ongoing__video">BIDEOA</string>
     <string name="incoming__controls__ongoing__flip">FLIP</string>
     <string name="ongoing__poor_connection_message">VIDEO STOPPED DUE TO POOR CONNECTION</string>
-    <string name="calling__self_preview_unavailable_long">CAMERA NOT AVAILABLE</string>
+    <string name="calling__self_preview_unavailable_long">ARGAZKI-KAMERA EZ DAGO ERABILTZEKO MODUAN</string>
     <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
     <string name="incoming__controls__ongoing__camera">CAMERA</string>
     <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
-    <string name="calling__header__joining">Connecting…</string>
-    <string name="calling__header__outgoing_subtitle">Ringing…</string>
-    <string name="calling__header__outgoing_video_subtitle">Ringing…</string>
-    <string name="calling__header__incoming_subtitle">Calling…</string>
-    <string name="calling__header__incoming_subtitle__video">Calling…</string>
-    <string name="calling__header__incoming_subtitle__group">%1$s is calling…</string>
-    <string name="call_banner_joining">Connecting…</string>
-    <string name="call_banner_outgoing">Calling %1$S…</string>
-    <string name="call_banner_incoming">%1$s is calling…</string>
-    <string name="call_banner_incoming_group">%1$s \u30FB %2$s is calling…</string>
+    <string name="calling__header__joining">Connecting&#8230;</string>
+    <string name="calling__header__outgoing_subtitle">Ringing&#8230;</string>
+    <string name="calling__header__outgoing_video_subtitle">Ringing&#8230;</string>
+    <string name="calling__header__incoming_subtitle">Calling&#8230;</string>
+    <string name="calling__header__incoming_subtitle__video">Calling&#8230;</string>
+    <string name="calling__header__incoming_subtitle__group">%1$s is calling&#8230;</string>
+    <string name="call_banner_joining">Connecting&#8230;</string>
+    <string name="call_banner_outgoing">Calling %1$S&#8230;</string>
+    <string name="call_banner_incoming">%1$s is calling&#8230;</string>
+    <string name="call_banner_incoming_group">%1$s \u30FB %2$s is calling&#8230;</string>
     <string name="call_banner_tap_to_return_to_call">Tap to return to call \u30FB %1$s</string>
     <string name="call_error_unsupported_version_title">Please update Wire</string>
     <string name="call_error_unsupported_version_message">You received a call that isn\'t supported by this version of Wire.\n\nGet the latest version in the Play Store.</string>
@@ -288,9 +288,9 @@
     <string name="calling_ongoing_call_audio_message">You can\'t record an audio message while on a call</string>
     <string name="calling_ongoing_call_video_message">You can\'t record a video message while on a call</string>
     <!-- Calling in group conversation -->
-    <string name="group_calling_title">Start a call</string>
+    <string name="group_calling_title">Dei bat hasi</string>
     <string name="group_calling_message" tools:ignore="PluralsCandidate">This will call %1$s people</string>
-    <string name="group_calling_confirm">Call</string>
+    <string name="group_calling_confirm">Deitu</string>
     <string name="calling_self">%s (You)</string>
     <string name="calling_no_active_video_speakers">No active video speakers...</string>
     <string name="calling_no_active_speakers">No active speakers...</string>
@@ -301,17 +301,17 @@
     <string name="calling_pinch_to_zoom_message">Pinch to zoom</string>
     <!-- Connect request -->
     <string name="connect__message">Hi %1$s,\nLet\'s connect on Wire.\n%2$s</string>
-    <string name="connect_request__sub_header__pending_label">Pending</string>
+    <string name="connect_request__sub_header__pending_label">Itxaroten</string>
     <string name="connect_request__cancel_request__label">CANCEL CONNECTION REQUEST</string>
-    <string name="connect_request__unblock__button__text">Unblock</string>
+    <string name="connect_request__unblock__button__text">Desblokeatu</string>
     <string name="send_connect_request__connect_button__text">CONNECT</string>
     <plurals name="connect_inbox__link__name">
-        <item quantity="one">1 person waiting</item>
-        <item quantity="other">%1$s people waiting</item>
+        <item quantity="one">%1$s pertsona itxaroten</item>
+        <item quantity="other">%1$s pertsona itxaroten</item>
     </plurals>
-    <string name="connect_request__ignore_button__text">Ignore</string>
-    <string name="content__message__connect_request__footer">CONNECTED</string>
-    <string name="content__message__connect_request__auto_connect__footer">AUTO-CONNECTED. _LEARN MORE_</string>
+    <string name="connect_request__ignore_button__text">Baztertu</string>
+    <string name="content__message__connect_request__footer">KONEKTATUTA</string>
+    <string name="content__message__connect_request__auto_connect__footer">AUTO-KONEKTATUTA. _IKASI GEHIAGO_</string>
     <string name="conversation_degraded_message">The call was disconnected because someone is no longer a verified contact.</string>
     <!-- Otr-->
     <plurals name="conversation__degraded_confirmation__header__single_user">
@@ -337,11 +337,11 @@
         <item quantity="other">Do you still want to send your messages?</item>
     </plurals>
     <string name="conversation__legal_hold_confirmation__negative_action">What is legal hold?</string>
-    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices…</string>
+    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices&#8230;</string>
     <string name="conversation__legal_hold_confirmation__positive_action">Send anyway</string>
     <!-- Picture selection confirmation -->
-    <string name="confirmation_menu__confirm_done">OK</string>
-    <string name="confirmation_menu__cancel">CANCEL</string>
+    <string name="confirmation_menu__confirm_done">ADOS</string>
+    <string name="confirmation_menu__cancel">EZEZTATU</string>
     <!-- ADD TO CONVERSATION offline -->
     <!-- CREATE GROUP CONVERSATION FROM 1:1 offline -->
     <!-- Leave conversation -->
@@ -351,7 +351,7 @@
     <!-- Remove from conversation dialogue -->
     <string name="confirmation_menu__header">Remove?</string>
     <string name="confirmation_menu_text_with_name">%1$s won\'t be able to send or receive messages in this conversation.</string>
-    <string name="confirmation_menu__confirm_remove">REMOVE</string>
+    <string name="confirmation_menu__confirm_remove">EZABATU</string>
     <!-- RE-USING: confirmation_menu.cancel -->
     <!-- Block someone dialogue -->
     <string name="confirmation_menu__block_header">Block?</string>
@@ -371,12 +371,12 @@
     <!-- Invite banner -->
     <!-- Self profile -->
     <!-- Options and settings -->
-    <string name="settings_title">Settings</string>
+    <string name="settings_title">Ezarpenak</string>
     <!-- Options menu -->
     <!-- Manage Team -->
     <string name="pref_manage_team_title">Manage Team</string>
     <!-- About screen -->
-    <string name="pref_category_title">Settings</string>
+    <string name="pref_category_title">Ezarpenak</string>
     <string name="pref_developer_screen_title">Developer Settings</string>
     <string name="pref_dev_avs_screen_title">AVS Settings</string>
     <string name="pref_profile_screen_title">Profile</string>
@@ -394,7 +394,7 @@
     <string name="pref_account_team_title">Team</string>
     <string name="pref_account_domain_title">Domain</string>
     <string name="pref_account_add_phone_title">Add phone number</string>
-    <string name="pref_account_email_title">Email</string>
+    <string name="pref_account_email_title">E-mail</string>
     <string name="pref_account_add_email_title">Add email</string>
     <string name="pref_account_delete">Delete</string>
     <string name="pref_account_sign_out_title">Log out</string>
@@ -404,14 +404,14 @@
     <string name="pref_account_delete_warning_title">Delete account</string>
     <string name="pref_account_delete_warning_message_email">We will send an email to:\n[[%1$s]]\nFollow the link to permanently delete your account.</string>
     <string name="pref_account_delete_warning_message_sms">We will send a SMS to:\n[[%1$s]]\nFollow the link to permanently delete your account.</string>
-    <string name="pref_account_delete_warning_verify">OK</string>
-    <string name="pref_account_delete_warning_cancel">Cancel</string>
+    <string name="pref_account_delete_warning_verify">ADOS</string>
+    <string name="pref_account_delete_warning_cancel">Ezeztatu</string>
     <string name="pref_account_sign_out_warning_message">Are you sure you want to log out?</string>
     <string name="pref_account_sign_out_warning_verify">Log out</string>
-    <string name="pref_account_sign_out_warning_cancel">Cancel</string>
+    <string name="pref_account_sign_out_warning_cancel">Ezeztatu</string>
     <string name="pref_account_password_title">Reset Password</string>
     <string name="pref_account_edit_name_empty_warning">Name must have 2 or more characters</string>
-    <string name="pref_account_edit_name_empty_verify">OK</string>
+    <string name="pref_account_edit_name_empty_verify">ADOS</string>
     <string name="pref_account_data_usage_permissions">Data Usage Permissions</string>
     <string name="pref_backup_screen_title">Back Up Conversations</string>
     <!-- Data Usage Permissions -->
@@ -532,15 +532,15 @@
     <string name="pref__account_action__email_verification__question">No email showing up?</string>
     <string name="pref__account_action__email_verification__resend">&lt;u&gt;Resend to %s&lt;/u&gt;</string>
     <string name="pref__account_action__email_verification__change"><u>Change email</u></string>
-    <string name="pref__account_action__dialog__add_email_password__password">Password</string>
-    <string name="pref__account_action__dialog__add_email_password__email">Email</string>
+    <string name="pref__account_action__dialog__add_email_password__password">Pasahitza</string>
+    <string name="pref__account_action__dialog__add_email_password__email">E-mail</string>
     <string name="pref__account_action__dialog__add_email_password__title">Add email address</string>
-    <string name="pref__account_action__dialog__add_email_password__error__invalid_email">Invalid email address</string>
+    <string name="pref__account_action__dialog__add_email_password__error__invalid_email">Baliogabeko e-mail helbidea</string>
     <string name="pref__account_action__dialog__add_email_password__error__invalid_password">At least 8 characters</string>
     <string name="pref__account_action__dialog__edit_phone__title">Edit Phone Number</string>
     <string name="pref__account_action__dialog__add_phone__title">Add Phone Number</string>
     <string name="pref__account_action__dialog__add_phone__error__country">Invalid country code</string>
-    <string name="pref__account_action__dialog__add_phone__error__number">Invalid phone number</string>
+    <string name="pref__account_action__dialog__add_phone__error__number">Baliogabeko telefono zenbakia</string>
     <string name="pref__account_action__dialog__add_phone__confirm__title">Confirm number</string>
     <string name="pref__account_action__dialog__add_phone__confirm__message">We will send a notification code to:\n%s</string>
     <string name="pref__account_action__dialog__delete_phone_or_email__confirm__title">Remove</string>
@@ -557,8 +557,8 @@
     <!-- No Internet connection -->
     <string name="system_status__no_internet">NO INTERNET</string>
     <!-- SHARING -->
-    <string name="alert_dialog__confirmation">OK</string>
-    <string name="alert_dialog__no_network__header">No Internet Connection</string>
+    <string name="alert_dialog__confirmation">ADOS</string>
+    <string name="alert_dialog__no_network__header">Ez dago Interneteko Konexiorik</string>
     <string name="sign_up__set_picture__choose">Choose your own</string>
     <string name="sign_up__set_picture__keep">Keep this one</string>
     <string name="sign_up__set_picture__guidance">Wire is so much nicer with a picture.</string>
@@ -635,16 +635,16 @@
     <string name="system_notification__silence_call">Decline</string>
     <string name="system_notification__join_call">Open Call</string>
     <string name="system_notification__leave_call">End call</string>
-    <string name="system_notification__calling_one">Calling…</string>
-    <string name="system_notification__calling_group">%1$s is calling…</string>
-    <string name="system_notification__video_calling_one">Calling with video…</string>
-    <string name="system_notification__video_calling_group">%1$s is calling with video…</string>
+    <string name="system_notification__calling_one">Calling&#8230;</string>
+    <string name="system_notification__calling_group">%1$s is calling&#8230;</string>
+    <string name="system_notification__video_calling_one">Calling with video&#8230;</string>
+    <string name="system_notification__video_calling_group">%1$s is calling with video&#8230;</string>
     <string name="ws_foreground_notification_connected_title">Connected to Wire server</string>
-    <string name="ws_foreground_notification_no_internet_title">Waiting for Internet connection…</string>
-    <string name="ws_foreground_notification_connecting_title">Establishing connection…</string>
+    <string name="ws_foreground_notification_no_internet_title">Waiting for Internet connection&#8230;</string>
+    <string name="ws_foreground_notification_connecting_title">Establishing connection&#8230;</string>
     <string name="ws_foreground_notification_summary">Tap here for more information.</string>
     <!-- Notification actions -->
-    <string name="notification__action__call">Call</string>
+    <string name="notification__action__call">Deitu</string>
     <string name="notification__action__reply">Reply</string>
     <!-- Quick reply -->
     <string name="quick_reply__counter">%1$d of %2$d</string>
@@ -665,17 +665,17 @@
     <string name="sharing__image_preview__confirm_action">SEND</string>
     <string name="sharing__user_not_logged_in__dialog__title">Please log in</string>
     <string name="sharing__user_not_logged_in__dialog__message">Open Wire and log in to share.</string>
-    <string name="sharing__user_not_logged_in__dialog__confirm">OK</string>
+    <string name="sharing__user_not_logged_in__dialog__confirm">ADOS</string>
     <string name="sharing__file_sharing_prohibited__dialog__title">File sharing restrictions</string>
     <string name="sharing__file_sharing_prohibited__dialog__message">You can not share this file because this feature is disabled.</string>
-    <string name="sharing__file_sharing_prohibited__dialog__confirm">OK</string>
+    <string name="sharing__file_sharing_prohibited__dialog__confirm">ADOS</string>
     <!-- Sync errors -->
     <string name="in_app_notification__sync_error__create_group_convo__title">Unable to create</string>
     <string name="in_app_notification__sync_error__create_group_convo__body">Couldn\'t create conversation with %1$s</string>
     <string name="in_app_notification__sync_error__add_user__body">%1$s does not want to be added to conversations.</string>
     <string name="in_app_notification__sync_error__add_multiple_user__body">One of the people you selected does not want to be added to conversations.</string>
     <string name="in_app_notification__sync_error__unknown__body">Something went wrong, please try again.</string>
-    <string name="in_app_notification__sync_error__create_convo__button">Continue</string>
+    <string name="in_app_notification__sync_error__create_convo__button">Jarraitu</string>
     <!--Timestamp formatting-->
     <string name="timestamp__just_now">Just now</string>
     <plurals name="timestamp__x_minutes_ago_1">
@@ -700,8 +700,8 @@
     <string name="timestamp_pattern__12h_format">hh:mm a</string>
     <string name="country">Country</string>
     <string name="register">Register</string>
-    <string name="password_placeholder">Password</string>
-    <string name="email_placeholder">Email</string>
+    <string name="password_placeholder">Pasahitza</string>
+    <string name="email_placeholder">E-mail</string>
     <string name="name_placeholder">Name</string>
     <!-- Strings -->
     <string name="edit_phone_number">EDIT PHONE NUMBER</string>
@@ -717,7 +717,7 @@
     <string name="enter_name_hint">Enter Full Name</string>
     <string name="new_reg__password__forgot">Forgot Password?</string>
     <string name="phone_sign_in">Phone</string>
-    <string name="email_sign_in">Email</string>
+    <string name="email_sign_in">E-mail</string>
     <string name="edit_email">Edit Email</string>
     <string name="hello">Hello, &lt;b&gt;%s&lt;/b&gt;</string>
     <string name="sign_in">Log In</string>
@@ -743,22 +743,22 @@
     <string name="location_sharing__send_button">SEND</string>
     <string name="location_sharing__enable_system_location__title">Use location?</string>
     <string name="location_sharing__enable_system_location__message">Enable location in settings to show your current position</string>
-    <string name="location_sharing__enable_system_location__confirm">Settings</string>
-    <string name="location_sharing__enable_system_location__cancel">Cancel</string>
+    <string name="location_sharing__enable_system_location__confirm">Ezarpenak</string>
+    <string name="location_sharing__enable_system_location__cancel">Ezeztatu</string>
     <string name="location_sharing__missing_play_services">Google Play Services is needed for location sharing</string>
     <string name="location_sharing__permission__message">Do you want to allow Wire to access your location?</string>
     <string name="location_sharing__permission__title">Location sharing</string>
-    <string name="location_sharing__permission__cancel">Cancel</string>
-    <string name="location_sharing__permission__continue">OK</string>
+    <string name="location_sharing__permission__cancel">Ezeztatu</string>
+    <string name="location_sharing__permission__continue">ADOS</string>
     <!-- From SyncEngine -->
-    <string name="new_reg__phone_signup__create_account">Create an account</string>
+    <string name="new_reg__phone_signup__create_account">Kontu bat sortu</string>
     <!-- OTR -->
     <string name="otr__remove_device__title">Remove %1$s</string>
     <string name="otr__remove_device__message">Enter your password</string>
     <string name="otr__remove_device__are_you_sure">Are you sure?</string>
     <string name="otr__remove_device__default">device</string>
-    <string name="otr__remove_device__button_delete">OK</string>
-    <string name="otr__remove_device__button_cancel">Cancel</string>
+    <string name="otr__remove_device__button_delete">ADOS</string>
+    <string name="otr__remove_device__button_cancel">Ezeztatu</string>
     <string name="otr__remove_device__error">Wrong password</string>
     <string name="otr__error_dialog__cannot_register__message">Remove one of your other devices to start using Wire on this one.</string>
     <string name="otr__error_dialog__cannot_register__manage_devices_button">Manage devices</string>
@@ -784,13 +784,13 @@
     <string name="otr__device_id">ID: %s</string>
     <string name="otr__first_launch__header">It\'s the first time you\'re using Wire on this device.</string>
     <string name="otr__first_launch__sub_header">For privacy reasons, your conversation history will not appear here.</string>
-    <string name="otr__first_launch__button">OK</string>
+    <string name="otr__first_launch__button">ADOS</string>
     <string name="otr__signin__info_text">Log in</string>
     <string name="otr__reset_session__message_ok">Session has been reset</string>
     <string name="otr__reset_session__message_fail">Could not reset the session</string>
-    <string name="otr__reset_session__button_ok">OK</string>
+    <string name="otr__reset_session__button_ok">ADOS</string>
     <string name="otr__reset_session__button_fail">Try again</string>
-    <string name="user_profile_email_field_name">Email</string>
+    <string name="user_profile_email_field_name">E-mail</string>
     <string name="advanced_image_download_wifi_info">The picture will appear when you are on Wi-Fi again</string>
     <string name="change_settings">Change Settings</string>
     <string name="conversation_list__action_join_call">JOIN</string>
@@ -801,11 +801,11 @@
     <!-- Asset upload errors -->
     <string name="asset_upload_error__not_found__title">File not found</string>
     <string name="asset_upload_error__not_found__message">Unable to retrieve the specified file</string>
-    <string name="asset_upload_error__not_found__button">OK</string>
+    <string name="asset_upload_error__not_found__button">ADOS</string>
     <string name="asset_upload_error__file_too_large__title">File too large</string>
     <string name="asset_upload_error__file_too_large__message_default">Uploading large files is not supported.</string>
     <string name="asset_upload_error__file_too_large__message">You can send files up to %1$s.</string>
-    <string name="asset_upload_error__file_too_large__button">OK</string>
+    <string name="asset_upload_error__file_too_large__button">ADOS</string>
     <string name="asset_upload_warning__large_file__title">You\'re not on Wi-Fi</string>
     <string name="asset_upload_warning__large_file__message_default">Are you sure you want to send a large file via the mobile network?</string>
     <string name="asset_upload_warning__large_file__message">Are you sure you want to send %1$s via the mobile network?</string>
@@ -835,7 +835,7 @@
     <string name="conversation__message_action__delete_for_me">Delete only for me?</string>
     <string name="conversation__message_action__delete_for_everyone">Delete for everyone?</string>
     <string name="conversation__message_action__delete_details">This cannot be undone.</string>
-    <string name="conversation__message_action__delete__dialog__cancel">Cancel</string>
+    <string name="conversation__message_action__delete__dialog__cancel">Ezeztatu</string>
     <string name="conversation__message_action__delete__dialog__ok">Delete</string>
     <string name="conversation__message_action__delete__confirmation">Message Deleted</string>
     <string name="conversation__action_mode__copy__description">Message from %1$s</string>
@@ -848,7 +848,7 @@
     <string name="audio_message__recording__slide_control__tap_hint">TAP TO SEND</string>
     <string name="audio_message__recording__tap_to_record">Tap to record a message\nyou can _GLYPH_ it after that</string>
     <string name="audio_message__recording__failure__title">Can\'t record audio</string>
-    <string name="audio_message__recording__failure__message">Please try again.</string>
+    <string name="audio_message__recording__failure__message">Mesedez, saiatu berriro.</string>
     <string name="audio_message__recording__limit_reached__title">Recording stopped</string>
     <string name="audio_message__recording__limit_reached__message">Audio messages are limited to 25MB. Send this message?</string>
     <string name="audio_message__recording__limit_reached__confirmation">SEND</string>
@@ -882,8 +882,8 @@
         <item quantity="one">%1$d people</item>
         <item quantity="other">%1$d people</item>
     </plurals>
-    <string name="message_footer__status__sending">Sending…</string>
-    <string name="message_footer__status__waiting_for_connection">Waiting for connection…</string>
+    <string name="message_footer__status__sending">Sending&#8230;</string>
+    <string name="message_footer__status__waiting_for_connection">Waiting for connection&#8230;</string>
     <string name="message_footer__status__sent">%1$s \u30FB Sent</string>
     <string name="message_footer__status__delivered">%1$s \u30FB Delivered</string>
     <string name="message_footer__status__failed">Sending failed. _Resend_</string>
@@ -932,7 +932,7 @@
     <string name="collection_empty">NO ITEMS IN COLLECTION</string>
     <string name="collection_all">Show all %1$s</string>
     <string name="multi_share_toast_sending">@string/message_footer__status__sending</string>
-    <string name="multi_share_search_hint">SEND TO…</string>
+    <string name="multi_share_search_hint">SEND TO&#8230;</string>
     <string name="single_selector_search_hint">"SELECT CONVERSATION…"</string>
     <string name="search__box__hint_text">SEARCH TEXT MESSAGES</string>
     <string name="search__no_results">No results.</string>
@@ -977,21 +977,21 @@
     <string name="conversation_list__group_eph_and_mention">Someone mentioned you</string>
     <string name="conversation_list__single_eph_and_quote">Replied to you</string>
     <string name="conversation_list__group_eph_and_quote">Someone replied to you</string>
-    <string name="conversation_list__typing">Typing a message…</string>
+    <string name="conversation_list__typing">Typing a message&#8230;</string>
     <string name="conversation_list__someone">Someone</string>
     <string name="conversation_list__added">[[%1$s]] was added</string>
-    <string name="conversation_list__added_you">[[%1$s]] added you</string>
+    <string name="conversation_list__added_you">[[%1$s]]-ek gehitu zaitu</string>
     <string name="conversation_list__left_you">You left</string>
-    <string name="conversation_list__removed_you">[[%1$s]] removed you</string>
+    <string name="conversation_list__removed_you">[[%1$s]]-(e)k taldetik bota zaitu</string>
     <string name="conversation_list__header__title">CONVERSATIONS</string>
     <string name="conversation_list__header__folders_title">FOLDERS</string>
-    <string name="conversation_list__header__archive_title">ARCHIVE</string>
+    <string name="conversation_list__header__archive_title">ARTXIBATU</string>
     <string name="conversation_list__single_with_quote">Reply: %1$s</string>
     <string name="conversation_list__group_with_quote">Reply from %1$s: %2$s</string>
     <string name="conversation_list__single_without_quote">%1$s</string>
     <string name="conversation_list__group_without_quote">[[%1$s]]: %2$s</string>
     <string name="guest_indicator">GUEST</string>
-    <string name="participant_tab_guest_indicator_label">Guest</string>
+    <string name="participant_tab_guest_indicator_label">Gonbidatua</string>
     <string name="participant_tab_external_indicator_label">EXTERNAL</string>
     <string name="participant_tab_group_admin_indicator_label">GROUP ADMIN</string>
     <string name="federated_indicator">FEDERATED</string>
@@ -1029,7 +1029,7 @@
     <string name="teams_set_email_hint">YOU@YOURCOMPANY.COM</string>
     <string name="teams_set_email_about">LEARN MORE</string>
     <string name="teams_set_password_title">Set password</string>
-    <string name="teams_set_password_hint">Password</string>
+    <string name="teams_set_password_hint">Pasahitza</string>
     <string name="teams_set_username_title">Set username</string>
     <string name="teams_set_username_hint">USERNAME</string>
     <string name="teams_set_team_name_title">Name your team</string>
@@ -1052,8 +1052,8 @@
     <string name="app_entry_tc_dialog_message">You must accept to continue</string>
     <string name="app_entry_notifications_dialog_title">Notifications</string>
     <string name="app_entry_notifications_dialog_message">Notifications may include alerts, sounds, and icon badges. These can be configured in Settings.</string>
-    <string name="app_entry_dialog_accept">ACCEPT</string>
-    <string name="app_entry_dialog_cancel">CANCEL</string>
+    <string name="app_entry_dialog_accept">ONARTU</string>
+    <string name="app_entry_dialog_cancel">EZEZTATU</string>
     <string name="app_entry_dialog_log_in">LOG IN</string>
     <string name="app_entry_dialog_no_thanks">NO, THANKS</string>
     <string name="app_entry_dialog_not_now">NOT NOW</string>
@@ -1085,18 +1085,18 @@
     <string name="remove_service_button_text">Remove Service</string>
     <string name="integrations_create_conversation">Create a new conversation</string>
     <string name="no_matches_found">No matches found</string>
-    <string name="loading_services">Loading services…</string>
+    <string name="loading_services">Loading services&#8230;</string>
     <string name="empty_services_list">Services are helpers that can improve your workflow. To enable them, ask your administrator.</string>
     <string name="empty_services_list_admin">Services are helpers that can improve your workflow.</string>
     <string name="empty_services_content_description">No services found</string>
     <string name="empty_search_content_description">No users found</string>
-    <string name="create_group_conversation">Create group</string>
+    <string name="create_group_conversation">Taldea sortu</string>
     <string name="create_guest_room_conversation">Create guest room</string>
     <string name="manage_services">Manage Services</string>
     <string name="next_button">NEXT</string>
     <string name="skip_button">SKIP</string>
     <string name="done_button">DONE</string>
-    <string name="new_group_header">CREATE GROUP</string>
+    <string name="new_group_header">TALDEA SORTU</string>
     <string name="add_participants_empty_header">ADD PARTICIPANTS</string>
     <string name="add_participants_count_header">ADD PARTICIPANTS (%1$s)</string>
     <string name="new_conv_no_results">No results</string>
@@ -1111,7 +1111,7 @@
     <string name="participants_divider_admins_no_number">GROUP ADMINS</string>
     <string name="participants_divider_options">OPTIONS</string>
     <string name="participants_no_admins">There are no admins.</string>
-    <string name="participants_no_results_1">No matching results.</string>
+    <string name="participants_no_results_1">Ez dira emaitzarik aurkitu.</string>
     <string name="participants_no_results_2">Try entering a different name.</string>
     <string name="group_name_hint">GROUP NAME</string>
     <string name="allow_guests_toggle_text">Allow guests and services</string>
@@ -1139,7 +1139,7 @@
     <string name="show_all_participants">Show all (%1$s)</string>
     <string name="participant_was_removed_from_team">%s was removed from team</string>
     <string name="all_participants">Participants (%1$s)</string>
-    <string name="allow_guests_error_title">Something went wrong</string>
+    <string name="allow_guests_error_title">Zerbait ez da ondo atera</string>
     <string name="allow_guests_error_body">Could not allow guests nor services. Please try again.</string>
     <string name="allow_guests_warning_body">Current guests and services will be removed from the conversation. New guests and services will not be allowed.</string>
     <string name="allow_guests_warning_confirm">Remove</string>
@@ -1151,7 +1151,7 @@
     <string name="create_link_button">Create Link</string>
     <string name="copy_link_button">Copy Link</string>
     <string name="share_link_button">Share Link</string>
-    <string name="revoke_link_button">Revoke Link…</string>
+    <string name="revoke_link_button">Revoke Link&#8230;</string>
     <string name="invitation_link_title">INVITE OTHERS WITH A LINK</string>
     <string name="link_copied_toast">Link Copied!</string>
     <string name="revoke_link_message">New guests will not be able to join with this link. Current guests will still have access.</string>
@@ -1167,8 +1167,8 @@
     <string name="pref_account_backup_title">Back up conversations</string>
     <string name="backup_password_dialog_title">Set password</string>
     <string name="backup_password_dialog_message">The backup will be compressed and encrypted with a password. Make sure to store it in a secure place.</string>
-    <string name="backup_password_dialog_ok">OK</string>
-    <string name="backup_password_dialog_no_password">Cancel</string>
+    <string name="backup_password_dialog_ok">ADOS</string>
+    <string name="backup_password_dialog_no_password">Ezeztatu</string>
     <string name="restore_password_dialog_title">This backup is password protected.</string>
     <string name="add_email_address">Add your email address</string>
     <string name="set_a_password">Set a password</string>
@@ -1181,16 +1181,16 @@
     <string name="restore_override_alert_title">Restore history</string>
     <string name="restore_override_alert_text">The backup contents will replace the conversation history on this device. You can only restore history from a backup of the same platform.</string>
     <string name="restore_override_alert_ok">Choose Backup File</string>
-    <string name="back_up_progress">BACKING UP…</string>
+    <string name="back_up_progress">BACKING UP&#8230;</string>
     <string name="back_up_progress_complete">COMPLETE</string>
-    <string name="restore_progress">RESTORING…</string>
+    <string name="restore_progress">RESTORING&#8230;</string>
     <string name="pref_account_backup_warning_title">Set an email and password.</string>
     <string name="pref_account_backup_warning_message">You need an email and a password in order to back up your conversation history. You can do it from the account page in Settings.</string>
-    <string name="pref_account_backup_warning_ok">OK</string>
+    <string name="pref_account_backup_warning_ok">ADOS</string>
     <string name="export_generic_error_title">The file could not be saved</string>
     <string name="export_generic_error_text">You may not have enough space or permission to save it there.</string>
     <string name="backup_button">Back Up Now</string>
-    <string name="backup_import_error_unknown_title">Something went wrong</string>
+    <string name="backup_import_error_unknown_title">Zerbait ez da ondo atera</string>
     <string name="backup_import_error_unknown">Your history could not be restored.</string>
     <string name="backup_import_error_unsupported_version_title">Incompatible backup</string>
     <string name="backup_import_error_unsupported_version">This backup was created by a newer or outdated version of Wire and cannot be restored here.</string>
@@ -1202,20 +1202,20 @@
     <string name="call_info">Up to %1$s people can join a group conversation.</string>
     <string name="markdown_link_dialog_title">Visit Link</string>
     <string name="markdown_link_dialog_message">This will take you to\n%1$s</string>
-    <string name="markdown_link_dialog_confirmation">OK</string>
-    <string name="markdown_link_dialog_cancel">CANCEL</string>
+    <string name="markdown_link_dialog_confirmation">ADOS</string>
+    <string name="markdown_link_dialog_cancel">EZEZTATU</string>
     <string name="max_participants_alert_title">The group is full</string>
     <string name="max_participants_create_alert_message">Up to %1$s people can join a conversation.</string>
     <string name="max_participants_add_alert_message">Up to %1$s people can join a conversation. Currently there is only room for %2$s more.</string>
     <string name="sso_signin_button">Company log in</string>
-    <string name="sso_signin_error_title">Something went wrong</string>
+    <string name="sso_signin_error_title">Zerbait ez da ondo atera</string>
     <string name="sso_signin_error_message">Please contact your team administrator for details (Error %1$s).</string>
     <string name="sso_signin_error_try_again_message">Please try again later (Error %1$s).</string>
     <string name="enterprise_signin_domain_not_found_error">This email cannot be used for enterprise login. Please enter the SSO code to proceed.</string>
     <string name="enterprise_signin_email_sso_invalid_input_error">Please enter a valid email or SSO access code.</string>
     <string name="enterprise_signin_sso_invalid_input_error">Please enter a valid SSO access code.</string>
     <string name="enterprise_signin_email_multiple_servers_not_supported">This email is linked to a different server, but the app can only be connected to one server at a time. Please log out of all Wire accounts on this device and try to log in again.</string>
-    <string name="sso_signin_wrong_code_title">Invalid code</string>
+    <string name="sso_signin_wrong_code_title">Baliogabeko kodea</string>
     <string name="sso_signin_wrong_code_message">Please verify your company SSO access code and try again.</string>
     <string name="sso_signin_max_accounts_title">Two accounts active</string>
     <string name="sso_signin_max_accounts_message">You can only be logged in with two accounts at once. Log out from one to add another.</string>
@@ -1231,7 +1231,7 @@
     <string name="wire_ping_name">Wire Ping</string>
     <string name="reply_self_name">You</string>
     <string name="reply_message_type_image">IMAGE</string>
-    <string name="reply_message_type_video">VIDEO</string>
+    <string name="reply_message_type_video">BIDEOA</string>
     <string name="reply_message_type_audio">AUDIO MESSAGE</string>
     <string name="reply_message_type_location">LOCATION</string>
     <string name="reply_message_type_asset">ATTACHMENT</string>
@@ -1246,9 +1246,9 @@
     <!-- Custom Backend -->
     <string name="custom_backend_info_title">Connected to \"%1$s\"</string>
     <string name="custom_backend_info_show_more">SHOW MORE</string>
-    <string name="custom_backend_dialog_ok">OK</string>
-    <string name="custom_backend_dialog_cancel">Cancel</string>
-    <string name="custom_backend_dialog_connect">Connect</string>
+    <string name="custom_backend_dialog_ok">ADOS</string>
+    <string name="custom_backend_dialog_cancel">Ezeztatu</string>
+    <string name="custom_backend_dialog_connect">Konektatu</string>
     <string name="custom_backend_dialog_confirmation_title">Connect to server</string>
     <string name="custom_backend_dialog_confirmation_message">This action will connect the app to a custom server: %1$s</string>
     <string name="custom_backend_dialog_info_title">You are connected to a third-party server: \"%1$s\"</string>
@@ -1277,7 +1277,7 @@
     <string name="invalid_cookie_dialog_title">Your session expired</string>
     <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
     <string name="conversation_folder_name_favorites">Favorites</string>
-    <string name="conversation_folder_name_group">Groups</string>
+    <string name="conversation_folder_name_group">Taldeak</string>
     <string name="conversation_folder_name_one_to_one">People</string>
     <string name="folders_move_to">MOVE TO</string>
     <string name="folders_no_custom_folder_found">Create a new folder by pressing the + button</string>
@@ -1291,15 +1291,15 @@
     <string name="delete_group_conversation_error_message">An error occurred while trying to delete the group. Please try again.</string>
     <string name="delete_group_conversation_error_message_with_group_name">An error occurred while trying to delete the group %1$s. Please try again.</string>
     <!-- No Internet Connection -->
-    <string name="no_internet_connection_title">No Internet Connection</string>
+    <string name="no_internet_connection_title">Ez dago Interneteko Konexiorik</string>
     <string name="no_internet_connection_message">Please check your Internet connection and try again</string>
     <!-- Shortcuts -->
-    <string name="shortcut_create_group_label">Create Group</string>
+    <string name="shortcut_create_group_label">Taldea Sortu</string>
     <string name="shortcut_share_a_photo_label">Share Photo</string>
     <string name="shortcut_new_message_label">New Message</string>
     <!-- Settings Account - Edit Phone -->
     <string name="edit_phone_dialog_country_code_error">Invalid country code</string>
-    <string name="edit_phone_dialog_phone_number_error">Invalid phone number</string>
+    <string name="edit_phone_dialog_phone_number_error">Baliogabeko telefono zenbakia</string>
     <!-- SSO Login -->
     <string name="sso_login_dialog_title">Enterprise Login</string>
     <string name="sso_login_dialog_message">Please enter your SSO code:</string>
@@ -1326,7 +1326,7 @@
     <string name="authentication_tab_layout_title_email">EMAIL</string>
     <string name="authentication_tab_layout_title_phone">PHONE</string>
     <!-- Create Personal Account - Main screen -->
-    <string name="create_personal_account_title">Create an account</string>
+    <string name="create_personal_account_title">Kontu bat sortu</string>
     <string name="create_personal_account_with_email_edit_text_hint">EMAIL</string>
     <string name="create_personal_account_with_phone_edit_text_hint">PHONE NUMBER</string>
     <string name="create_personal_account_with_email_email_blacklisted_error">This email address is not allowed.</string>
@@ -1362,7 +1362,7 @@
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
     <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
     <!-- StartSSO Screen  -->
-    <string name="start_sso_leaving_wire">Redirecting…</string>
+    <string name="start_sso_leaving_wire">Redirecting&#8230;</string>
     <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
     <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
     <!-- Legal Hold -->
@@ -1391,7 +1391,7 @@
     <!-- Join Conversation via Deep Link -->
     <string name="join_conversation_confirmation_message">You have been invited to a conversation:\n%s</string>
     <string name="join_conversation_confirmation_join_button_text">Join</string>
-    <string name="join_conversation_confirmation_cancel_button_text">Cancel</string>
+    <string name="join_conversation_confirmation_cancel_button_text">Ezeztatu</string>
     <string name="join_conversation_conversation_join_error_title">You could not join the conversation</string>
     <string name="join_conversation_invalid_link_error_message">The conversation link is invalid.</string>
     <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
@@ -1414,7 +1414,7 @@
     <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to features such as starting conferences and more.
     &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
     <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
-    <string name="conference_calling_restriction_dialog_negative_button">CANCEL</string>
+    <string name="conference_calling_restriction_dialog_negative_button">EZEZTATU</string>
     <string name="upgraded_plan_dialog_title">Wire Enterprise</string>
     <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
         &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
