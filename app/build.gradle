@@ -130,6 +130,7 @@ android {
         //Feature Flags
         buildConfigField 'boolean', 'FEDERATION_USER_DISCOVERY', "$federationUserDiscovery"
         buildConfigField 'boolean', 'CONFERENCE_CALLING_RESTRICTION', "$conferenceCallingRestriction"
+        buildConfigField 'boolean', 'WEB_LINK_PREVIEW', "$webLinkPreview"
     }
 
     packagingOptions {

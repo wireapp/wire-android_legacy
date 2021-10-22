@@ -20,7 +20,7 @@ package com.waz.zclient.messages
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.zclient.R
+import com.waz.zclient.{BuildConfig, R}
 import com.waz.zclient.ViewHelper._
 import com.waz.zclient.log.LogUI._
 
@@ -52,8 +52,16 @@ class MessageViewFactory extends DerivedLogTag {
         case Ping               => inflate(R.layout.message_ping, parent, false)
         case Rename             => inflate(R.layout.message_rename, parent, false)
         case Image              => inflate(R.layout.message_image, parent, false)
-        case YouTube            => inflate(R.layout.message_youtube, parent, false)
-        case WebLink            => inflate(R.layout.message_link_preview, parent, false)
+        case YouTube            => {
+          if(BuildConfig.WEB_LINK_PREVIEW)
+              inflate(R.layout.message_youtube, parent, false)
+            else inflate(R.layout.message_text, parent, false)
+        }
+        case WebLink            => {
+          if(BuildConfig.WEB_LINK_PREVIEW)
+            inflate(R.layout.message_link_preview, parent, false)
+          else inflate(R.layout.message_text, parent, false)
+        }
         case FileAsset          => inflate(R.layout.message_file_asset, parent, false)
         case AudioAsset         => inflate(R.layout.message_audio_asset, parent, false)
         case VideoAsset         => inflate(R.layout.message_video_asset, parent, false)
