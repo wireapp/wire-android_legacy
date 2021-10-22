@@ -110,9 +110,6 @@ final case class ConversationData(override val id:      ConvId                 =
 
   val isWirelessLegacy: Boolean = !(isTeamOnly || isGuestRoom)
 
-  def isUserAllowed(userData: UserData): Boolean =
-    !(userData.isGuest(team) && isTeamOnly)
-
   def isMemberFromTeamGuest(teamId: Option[TeamId]): Boolean = team.isDefined && teamId != team
 
   val isAllAllowed: Boolean = muted.isAllAllowed
