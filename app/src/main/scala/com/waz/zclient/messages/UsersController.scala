@@ -31,6 +31,7 @@ import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 
@@ -154,7 +155,8 @@ class UsersController(implicit injector: Injector, context: Context)
 
   def selfUser: Signal[UserData] = selfUserId.flatMap(user)
 
-  def isFederated(user: UserData): Boolean = user.domain != selfDomain
+  def isFederated(user: UserData): Boolean =
+    BuildConfig.FEDERATION_USER_DISCOVERY && user.domain != selfDomain
 
   def conv(msg: MessageData): Signal[ConversationData] =
     for {
