@@ -214,25 +214,25 @@
     <string name="file_restrictions__receiver_error">File from %1$s can\'t be opened.</string>
     <string name="content__location__no_map_placeholder">THE LOCATION WILL APPEAR ON THE MAP WHEN YOU ARE BACK ONLINE.</string>
     <!-- Conversation actions -->
-    <string name="conversation__action__clear_content">Clear content…</string>
-    <string name="conversation__action__delete_group">Delete group…</string>
+    <string name="conversation__action__clear_content">Clear content&#8230;</string>
+    <string name="conversation__action__delete_group">Delete group&#8230;</string>
     <string name="conversation__action__archive">Archive</string>
     <string name="conversation__action__unarchive">Unarchive</string>
     <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>
     <string name="conversation__action__create_group">CREATE GROUP</string>
     <string name="conversation__action__open_conversation">OPEN CONVERSATION</string>
-    <string name="conversation__action__notifications">Notifications…</string>
+    <string name="conversation__action__notifications">Notifications&#8230;</string>
     <string name="conversation__action__silence">Mute</string>
     <string name="conversation__action__unsilence">Unmute</string>
-    <string name="conversation__action__leave">Leave group…</string>
+    <string name="conversation__action__leave">Leave group&#8230;</string>
     <string name="conversation__action__call">Call</string>
     <string name="conversation__action__picture">Picture</string>
-    <string name="conversation__action__block">Block…</string>
+    <string name="conversation__action__block">Block&#8230;</string>
     <string name="conversation__action__unblock">Unblock</string>
-    <string name="conversation__action__remove_member">Remove from group…</string>
+    <string name="conversation__action__remove_member">Remove from group&#8230;</string>
     <string name="conversation__action__add_to_favorites">Add to Favorites</string>
     <string name="conversation__action__remove_from_favorites">Remove from Favorites</string>
-    <string name="conversation__action__move_to_folder">Move to…</string>
+    <string name="conversation__action__move_to_folder">Move to&#8230;</string>
     <string name="conversation__action__remove_from_folder">Remove from \"%1$s\"</string>
     <string name="conversation__action__leave_and_clear">\tLeave and clear content</string>
     <string name="conversation__action__leave_only">\tLeave group</string>
@@ -259,16 +259,16 @@
     <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
     <string name="incoming__controls__ongoing__camera">CAMERA</string>
     <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
-    <string name="calling__header__joining">Connecting…</string>
-    <string name="calling__header__outgoing_subtitle">Ringing…</string>
-    <string name="calling__header__outgoing_video_subtitle">Ringing…</string>
-    <string name="calling__header__incoming_subtitle">Calling…</string>
-    <string name="calling__header__incoming_subtitle__video">Calling…</string>
-    <string name="calling__header__incoming_subtitle__group">%1$s is calling…</string>
-    <string name="call_banner_joining">Connecting…</string>
-    <string name="call_banner_outgoing">Calling %1$S…</string>
-    <string name="call_banner_incoming">%1$s is calling…</string>
-    <string name="call_banner_incoming_group">%1$s \u30FB %2$s is calling…</string>
+    <string name="calling__header__joining">Connecting&#8230;</string>
+    <string name="calling__header__outgoing_subtitle">Ringing&#8230;</string>
+    <string name="calling__header__outgoing_video_subtitle">Ringing&#8230;</string>
+    <string name="calling__header__incoming_subtitle">Calling&#8230;</string>
+    <string name="calling__header__incoming_subtitle__video">Calling&#8230;</string>
+    <string name="calling__header__incoming_subtitle__group">%1$s is calling&#8230;</string>
+    <string name="call_banner_joining">Connecting&#8230;</string>
+    <string name="call_banner_outgoing">Calling %1$S&#8230;</string>
+    <string name="call_banner_incoming">%1$s is calling&#8230;</string>
+    <string name="call_banner_incoming_group">%1$s \u30FB %2$s is calling&#8230;</string>
     <string name="call_banner_tap_to_return_to_call">Tap to return to call \u30FB %1$s</string>
     <string name="call_error_unsupported_version_title">Please update Wire</string>
     <string name="call_error_unsupported_version_message">You received a call that isn\'t supported by this version of Wire.\n\nGet the latest version in the Play Store.</string>
@@ -327,7 +327,7 @@
         <item quantity="other">Do you still want to send your messages?</item>
     </plurals>
     <string name="conversation__legal_hold_confirmation__negative_action">What is legal hold?</string>
-    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices…</string>
+    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices&#8230;</string>
     <string name="conversation__legal_hold_confirmation__positive_action">Send anyway</string>
     <!-- Picture selection confirmation -->
     <string name="confirmation_menu__confirm_done">OK</string>
@@ -622,13 +622,13 @@
     <string name="system_notification__silence_call">Decline</string>
     <string name="system_notification__join_call">Open Call</string>
     <string name="system_notification__leave_call">End call</string>
-    <string name="system_notification__calling_one">Calling…</string>
-    <string name="system_notification__calling_group">%1$s is calling…</string>
-    <string name="system_notification__video_calling_one">Calling with video…</string>
-    <string name="system_notification__video_calling_group">%1$s is calling with video…</string>
+    <string name="system_notification__calling_one">Calling&#8230;</string>
+    <string name="system_notification__calling_group">%1$s is calling&#8230;</string>
+    <string name="system_notification__video_calling_one">Calling with video&#8230;</string>
+    <string name="system_notification__video_calling_group">%1$s is calling with video&#8230;</string>
     <string name="ws_foreground_notification_connected_title">Connected to Wire server</string>
-    <string name="ws_foreground_notification_no_internet_title">Waiting for Internet connection…</string>
-    <string name="ws_foreground_notification_connecting_title">Establishing connection…</string>
+    <string name="ws_foreground_notification_no_internet_title">Waiting for Internet connection&#8230;</string>
+    <string name="ws_foreground_notification_connecting_title">Establishing connection&#8230;</string>
     <string name="ws_foreground_notification_summary">Tap here for more information.</string>
     <!-- Notification actions -->
     <string name="notification__action__call">Call</string>
@@ -866,8 +866,8 @@
     <plurals name="message_footer__number_of_likes">
         <item quantity="other">%1$d people</item>
     </plurals>
-    <string name="message_footer__status__sending">Sending…</string>
-    <string name="message_footer__status__waiting_for_connection">Waiting for connection…</string>
+    <string name="message_footer__status__sending">Sending&#8230;</string>
+    <string name="message_footer__status__waiting_for_connection">Waiting for connection&#8230;</string>
     <string name="message_footer__status__sent">%1$s \u30FB Sent</string>
     <string name="message_footer__status__delivered">%1$s \u30FB Delivered</string>
     <string name="message_footer__status__failed">Sending failed. _Resend_</string>
@@ -910,7 +910,7 @@
     <string name="collection_empty">NO ITEMS IN COLLECTION</string>
     <string name="collection_all">Show all %1$s</string>
     <string name="multi_share_toast_sending">@string/message_footer__status__sending</string>
-    <string name="multi_share_search_hint">SEND TO…</string>
+    <string name="multi_share_search_hint">SEND TO&#8230;</string>
     <string name="single_selector_search_hint">"SELECT CONVERSATION…"</string>
     <string name="search__box__hint_text">SEARCH TEXT MESSAGES</string>
     <string name="search__no_results">No results.</string>
@@ -949,7 +949,7 @@
     <string name="conversation_list__group_eph_and_mention">Someone mentioned you</string>
     <string name="conversation_list__single_eph_and_quote">Replied to you</string>
     <string name="conversation_list__group_eph_and_quote">Someone replied to you</string>
-    <string name="conversation_list__typing">Typing a message…</string>
+    <string name="conversation_list__typing">Typing a message&#8230;</string>
     <string name="conversation_list__someone">Someone</string>
     <string name="conversation_list__added">[[%1$s]] was added</string>
     <string name="conversation_list__added_you">[[%1$s]] added you</string>
@@ -1057,7 +1057,7 @@
     <string name="remove_service_button_text">Remove Service</string>
     <string name="integrations_create_conversation">Create a new conversation</string>
     <string name="no_matches_found">No matches found</string>
-    <string name="loading_services">Loading services…</string>
+    <string name="loading_services">Loading services&#8230;</string>
     <string name="empty_services_list">Services are helpers that can improve your workflow. To enable them, ask your administrator.</string>
     <string name="empty_services_list_admin">Services are helpers that can improve your workflow.</string>
     <string name="empty_services_content_description">No services found</string>
@@ -1122,7 +1122,7 @@
     <string name="create_link_button">Create Link</string>
     <string name="copy_link_button">Copy Link</string>
     <string name="share_link_button">Share Link</string>
-    <string name="revoke_link_button">Revoke Link…</string>
+    <string name="revoke_link_button">Revoke Link&#8230;</string>
     <string name="invitation_link_title">INVITE OTHERS WITH A LINK</string>
     <string name="link_copied_toast">Link Copied!</string>
     <string name="revoke_link_message">New guests will not be able to join with this link. Current guests will still have access.</string>
@@ -1152,9 +1152,9 @@
     <string name="restore_override_alert_title">Restore history</string>
     <string name="restore_override_alert_text">The backup contents will replace the conversation history on this device. You can only restore history from a backup of the same platform.</string>
     <string name="restore_override_alert_ok">Choose Backup File</string>
-    <string name="back_up_progress">BACKING UP…</string>
+    <string name="back_up_progress">BACKING UP&#8230;</string>
     <string name="back_up_progress_complete">COMPLETE</string>
-    <string name="restore_progress">RESTORING…</string>
+    <string name="restore_progress">RESTORING&#8230;</string>
     <string name="pref_account_backup_warning_title">Set an email and password.</string>
     <string name="pref_account_backup_warning_message">You need an email and a password in order to back up your conversation history. You can do it from the account page in Settings.</string>
     <string name="pref_account_backup_warning_ok">OK</string>
@@ -1333,7 +1333,7 @@
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
     <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
     <!-- StartSSO Screen  -->
-    <string name="start_sso_leaving_wire">Redirecting…</string>
+    <string name="start_sso_leaving_wire">Redirecting&#8230;</string>
     <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
     <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
     <!-- Legal Hold -->
