@@ -296,6 +296,11 @@ pipeline {
 
     post {
         failure {
+            script {
+                if(env.BRANCH_NAME.startsWith("PR-")) {
+                    sh "curl -s -H \"Authorization: token ${env.GITHUB_API_TOKEN}\" -X POST -d \"{\\\"body\\\": \\\"Build Failure\\nID:${BUILD_NUMBER}\\nURL:[Link to Buildjob](${env.BUILD_URL})\\\"}\" \"https://api.github.com/repos/wireapp/wire-android/issues/${CHANGE_ID}/comments\""
+                }
+            }
             wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ FAILED ($last_stage) 👎"
         }
         success {
@@ -304,11 +309,19 @@ pipeline {
                         script: "git log -5 --pretty=\"%h [%an] %s\" | sed \"s/^/    /\"",
                         returnStdout: true
                 )
+                if(env.BRANCH_NAME.startsWith("PR-")) {
+                    sh "curl -s -H \"Authorization: token ${env.GITHUB_API_TOKEN}\" -X POST -d \"{\\\"body\\\": \\\"Build Success\\nID:${BUILD_NUMBER}\\nURL:[Link to Buildjob](${env.BUILD_URL})\\\"}\" \"https://api.github.com/repos/wireapp/wire-android/issues/${CHANGE_ID}/comments\""
+                }
             }
             wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                     "\nLast 5 commits:\n```\n$lastCommits\n```"
         }
         aborted {
+            script {
+                if(env.BRANCH_NAME.startsWith("PR-")) {
+                    sh "curl -s -H \"Authorization: token ${env.GITHUB_API_TOKEN}\" -X POST -d \"{\\\"body\\\": \\\"Build Aborted\\nID:${BUILD_NUMBER}\\nURL:[Link to Buildjob](${env.BUILD_URL})\\\"}\" \"https://api.github.com/repos/wireapp/wire-android/issues/${CHANGE_ID}/comments\""
+                }
+            }
             wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ❌ ABORTED ($last_stage) "
         }
     }
