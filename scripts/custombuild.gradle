@@ -75,6 +75,20 @@ def prepareCustomizationEnvironment() {
     return buildtimeConfiguration
 }
 
+class BuildtimeConfiguration {
+    String customResourcesPath
+    Object configuration
+
+    BuildtimeConfiguration(Object configuration, String customResourcesPath) {
+        this.configuration = configuration
+        this.customResourcesPath = customResourcesPath
+    }
+
+    def isCustomBuild() {
+        return customResourcesPath != null
+    }
+}
+
 ext {
     buildtimeConfiguration = prepareCustomizationEnvironment()
 }
