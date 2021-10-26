@@ -32,7 +32,7 @@ import com.waz.zms.BuildConfig
 import scala.concurrent.Future
 
 class LastReadSyncHandler(selfUserId:    UserId,
-                          currentDomain: Option[String],
+                          currentDomain: Domain,
                           convs:         ConversationStorage,
                           metadata:      MetaDataService,
                           msgsSync:      MessagesSyncHandler,
@@ -47,7 +47,7 @@ class LastReadSyncHandler(selfUserId:    UserId,
         val msg = GenericMessage(Uid(), LastRead(conv.remoteId, time))
         val postMsg =
           if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-            val qId = currentDomain.map(QualifiedId(selfUserId, _)).getOrElse(QualifiedId(selfUserId))
+            val qId = currentDomain.mapOpt(QualifiedId(selfUserId, _)).getOrElse(QualifiedId(selfUserId))
             otrSync.postQualifiedOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, QTargetRecipients.SpecificUsers(Set(qId)))
           } else {
             otrSync.postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, TargetRecipients.SpecificUsers(Set(selfUserId)))

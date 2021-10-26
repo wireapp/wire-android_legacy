@@ -2,7 +2,7 @@ package com.waz.sync.handler
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.UserPreferences.ShouldPostClientCapabilities
-import com.waz.model.{QualifiedId, UserId}
+import com.waz.model.{Domain, QualifiedId, UserId}
 import com.waz.model.otr.{Client, ClientId, OtrClientIdMap, QOtrClientIdMap, UserClients}
 import com.waz.service.otr.{CryptoBoxService, CryptoSessionService, OtrClientsService}
 import com.waz.specs.AndroidFreeSpec
@@ -21,7 +21,7 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
 
   private val selfUserId = UserId("selfUserId")
   private val selfClientId = ClientId("selfClientId")
-  private val currentDomain = Some("staging.zinfra.io")
+  private val currentDomain = Domain("staging.zinfra.io")
   private val netClient = mock[OtrClient]
   private val otrClients = mock[OtrClientsService]
   private val cryptoBox =  mock[CryptoBoxService]
@@ -29,7 +29,7 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
   private val userPrefs = new TestUserPreferences()
 
   private val otherUserId = UserId("otherUserId")
-  private val otherQualifiedId = QualifiedId(otherUserId, currentDomain.get)
+  private val otherQualifiedId = QualifiedId(otherUserId, currentDomain.str)
   private val otherClientId = ClientId("otherClientId")
 
   private def createHandler() = new OtrClientsSyncHandlerImpl(
@@ -124,7 +124,7 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
     val clients =
       QOtrClientIdMap(
         (0 to (OtrClientsSyncHandlerImpl.LoadPreKeysMaxClients/4 + 1)).map { _ =>
-          QualifiedId(UserId(), currentDomain.get) -> Set(ClientId(), ClientId(), ClientId(), ClientId())
+          QualifiedId(UserId(), currentDomain.str) -> Set(ClientId(), ClientId(), ClientId(), ClientId())
         }.toMap
       )
     val responsePreKey = new PreKey(0, Array[Byte](0))

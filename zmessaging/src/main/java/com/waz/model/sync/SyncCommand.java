@@ -37,6 +37,7 @@ public enum SyncCommand {
     SyncQualifiedSearchResults("sync-qualified-search-results"),
     SyncProperties("sync-properties"),
     PostConv("post-conv"),
+    PostQualified1To1Conv("post-qualified-1to1-conv"),
     PostConvReceiptMode("post-conv-receipt-mode"),
     PostConvName("post-conv-name"),
     PostConvState("post-conv-state"),

@@ -30,7 +30,7 @@ import org.json.{JSONArray, JSONObject}
 import scala.util.Try
 
 final case class UserInfo(id:           UserId,
-                          domain:       Option[String]          = None,
+                          domain:       Domain                  = Domain.Empty,
                           name:         Option[Name]            = None,
                           accentId:     Option[Int]             = None,
                           email:        Option[EmailAddress]    = None,
@@ -101,7 +101,7 @@ object UserInfo {
       }
       val qualifiedId = QualifiedId.decodeOpt('qualified_id)
       val id = qualifiedId.map(_.id).getOrElse(UserId('id))
-      val domain = qualifiedId.map(_.domain)
+      val domain = Domain(qualifiedId.map(_.domain))
       val pic = getAssets
       val privateMode = decodeOptBoolean('privateMode)
       val ssoId = SSOId.decodeOptSSOId('sso_id)
@@ -147,7 +147,7 @@ object UserInfo {
   implicit lazy val Encoder: JsonEncoder[UserInfo] = new JsonEncoder[UserInfo] {
     override def apply(info: UserInfo): JSONObject = JsonEncoder { o =>
       o.put("id", info.id.str)
-      info.domain.map(d => o.put("qualified_id", encodeQualifiedId(QualifiedId(info.id, d))))
+      info.domain.mapOpt(d => o.put("qualified_id", encodeQualifiedId(QualifiedId(info.id, d))))
       info.name.foreach(o.put("name", _))
       info.phone.foreach(p => o.put("phone", p.str))
       info.email.foreach(e => o.put("email", e.str))
@@ -158,5 +158,4 @@ object UserInfo {
       info.managedBy.foreach(m => o.put("managed_by", m.toString))
     }
   }
-
 }

@@ -19,6 +19,7 @@ package com.waz.service
 
 import java.io.File
 
+import com.waz.zms.BuildConfig
 import com.waz.api._
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences._
@@ -106,6 +107,13 @@ trait AccountsService {
   def wipeDataForAllAccounts(): Future[Unit]
 
   lazy val accountPassword: Signal[Option[Password]] = activeAccount.map(_.flatMap(_.password)).disableAutowiring()
+
+  lazy val domain: Signal[Domain] =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      activeAccount.map(_.map(_.domain).getOrElse(Domain.Empty)).disableAutowiring()
+    } else {
+      Signal.const(Domain.Empty)
+    }
 }
 
 object AccountsService {

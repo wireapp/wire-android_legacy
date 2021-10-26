@@ -36,6 +36,7 @@ class DecryptionHandlerTest : UnitTest() {
     }
 
     @Test
+    //@SF.Storage
     fun `given backup file, userId, password, when meta data fails, then propagate meta data error`() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
@@ -53,6 +54,7 @@ class DecryptionHandlerTest : UnitTest() {
     }
 
     @Test
+    //@SF.Storage
     fun `given backup file, userId, password, when meta data and hash do not match, then propagate hash error`() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
@@ -71,6 +73,7 @@ class DecryptionHandlerTest : UnitTest() {
     }
 
     @Test
+    //@SF.Storage
     fun `given backup file, userId, password, when decrypted message part is invalid, then propagate error`() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)

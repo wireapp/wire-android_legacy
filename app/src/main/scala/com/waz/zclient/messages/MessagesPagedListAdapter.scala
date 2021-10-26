@@ -28,6 +28,7 @@ import com.wire.signals.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessagesPagedListAdapter._
+import com.waz.threading.Threading._
 
 class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
   extends PagedListAdapter[MessageAndLikes, MessageViewHolder](MessageDataDiffCallback)
@@ -35,22 +36,15 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
     with DerivedLogTag {
 
   private lazy val listController = inject[MessagesController]
-  private var lastRead = RemoteInstant.Epoch
-
-  inject[ConversationController].currentConv.map(_.lastRead).filter(_ != lastRead).foreach { time =>
-      lastRead = time
-      notifyDataSetChanged()
-  }
-
-  private var convInfo: MessageAdapterData = MessageAdapterData.Empty
-
-  def setConvInfo(convInfo: MessageAdapterData): Unit = {
-    this.convInfo = convInfo
-    notifyDataSetChanged()
-  }
-
+  var convInfo: MessageAdapterData = MessageAdapterData.Empty
   var listDim: Dim2 = Dim2(0, 0)
   val onScrollRequested: SourceStream[(MessageData, Int)] = EventStream[(MessageData, Int)]()
+
+  private var lastRead = RemoteInstant.Epoch
+  inject[ConversationController].currentConv.map(_.lastRead).filter(_ != lastRead).onUi { time =>
+    lastRead = time
+    notifyDataSetChanged()
+  }
 
   private val ephemerals = Signal[Set[MessageId]](Set.empty[MessageId])
   val hasEphemeral: Signal[Boolean] = ephemerals.map(_.nonEmpty)
@@ -58,7 +52,7 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder =
         MessageViewHolder(MessageView(parent, viewType), this)
 
-  override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit =
+  override def onBindViewHolder(holder: MessageViewHolder, position: Int): Unit = {
     Option(getItem(position)).foreach { m =>
 
       val prev = if ((position + 1) < getItemCount) Option(getItem(position + 1)) else None
@@ -80,6 +74,7 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
           set
       }
     }
+  }
 
   override def getItemViewType(position: Int): Int =
     Option(getItem(position)).map(m => MessageView.viewType(m.message.msgType)).getOrElse(1)

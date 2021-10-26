@@ -32,11 +32,7 @@ class SendConnectRequestFragment extends UntabbedRequestFragment {
     override def onLeftActionClicked(): Unit =
       for {
         Some(user)  <- userToConnect
-        isFederated <- usersCtrl.isFederated(user)
-        conv        <- (isFederated, user.qualifiedId) match {
-                         case (true, Some(qId)) => convCtrl.createConvWithFederatedUser(qId, false, false).map(Option(_))
-                         case _                 => usersCtrl.connectToUser(user.id)
-                       }
+        conv        <- usersCtrl.connectToUser(user.id)
         _           <- conv.fold(
                          Future.successful(pickUserCtrl.hideUserProfile())
                        ) (c =>

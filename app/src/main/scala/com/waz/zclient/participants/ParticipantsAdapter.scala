@@ -49,7 +49,6 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.language.postfixOps
-
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
 import com.wire.signals.ext.ClockSignal

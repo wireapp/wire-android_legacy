@@ -79,7 +79,7 @@ class UserInfoSpec extends AndroidFreeSpec {
 
       // THEN
       info.id.shouldEqual(UserId("e902e865-7564-4bd9-9789-d2395a984922"))
-      info.domain.shouldEqual(Some("staging.zinfra.io"))
+      info.domain.shouldEqual(Domain("staging.zinfra.io"))
       info.name.shouldEqual(Some(Name("Atticus")))
       info.accentId.shouldEqual(Some(6))
     }
@@ -90,7 +90,7 @@ class UserInfoSpec extends AndroidFreeSpec {
       // GIVEN
       val info = UserInfo(
         id = UserId("e902e865-7564-4bd9-9789-d2395a984922"),
-        domain = Some("staging.zinfra.io"),
+        domain = Domain("staging.zinfra.io"),
         name = Some("Atticus"),
         accentId = Some(6)
       )

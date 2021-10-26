@@ -108,18 +108,21 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   private def filterForExternal(query: SearchQuery, searchResults: Signal[IndexedSeq[UserData]]): Signal[IndexedSeq[UserData]] =
     searchResults.flatMap(res => Signal.from(filterForExternal(query, res)))
 
+  private def canUserBeAddedToConv(user: UserData, convTeam: Option[TeamId], teamOnlyConv: Boolean): Boolean =
+    (user.isConnected || user.isInTeam(convTeam)) && !(user.isGuest(convTeam) && teamOnlyConv)
+
   override def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults] =
     for {
-      localResults  <- filterForExternal(query, searchLocal(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly))))
-      remoteResults <- filterForExternal(query, directoryResults(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly))))
+      localResults  <- filterForExternal(query, searchLocal(query).map(_.filter(u => canUserBeAddedToConv(u, teamId, teamOnly))))
+      remoteResults <- filterForExternal(query, directoryResults(query).map(_.filter(u => canUserBeAddedToConv(u, teamId, teamOnly))))
     } yield SearchResults(local = localResults, dir = remoteResults)
 
   override def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[SearchResults] =
     for {
       curr              <- membersStorage.activeMembers(toConv)
       conv              <- convsStorage.signal(toConv)
-      localResults      <- filterForExternal(query, searchLocal(query, curr).map(_.filter(conv.isUserAllowed)))
-      remoteResults     <- filterForExternal(query, directoryResults(query).map(_.filter(conv.isUserAllowed)))
+      localResults      <- filterForExternal(query, searchLocal(query, curr).map(_.filter(u => canUserBeAddedToConv(u, teamId, conv.isTeamOnly))))
+      remoteResults     <- filterForExternal(query, directoryResults(query).map(_.filter(u => canUserBeAddedToConv(u, teamId, conv.isTeamOnly))))
     } yield SearchResults(local = localResults, dir = remoteResults)
 
   override def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
@@ -203,8 +206,8 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       if (query.hasDomain || query.isEmpty)
         search(query)
       else
-        userService.selfUser.map(_.domain.getOrElse("")).flatMap {
-          case domain if domain.nonEmpty => search(query.withDomain(domain))
+        userService.selfUser.map(_.domain).flatMap {
+          case domain if domain.isDefined => search(query.withDomain(domain.str))
           case _ => search(query)
         }
     } else {

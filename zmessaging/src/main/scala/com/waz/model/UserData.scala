@@ -33,11 +33,10 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 
 import scala.concurrent.duration._
 import scala.util.Try
-
 import com.waz.zms.BuildConfig
 
 final case class UserData(override val id:       UserId,
-                          domain:                Option[String]         = None,
+                          domain:                Domain                 = Domain.Empty,
                           teamId:                Option[TeamId]         = None,
                           name:                  Name,
                           email:                 Option[EmailAddress]   = None,
@@ -75,16 +74,21 @@ final case class UserData(override val id:       UserId,
   lazy val isReadOnlyProfile: Boolean   = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
-  lazy val qualifiedId: Option[QualifiedId] = domain.map(d => QualifiedId(id, d))
-  lazy val displayHandle: Option[String] = (handle, domain) match {
-    case (Some(h), Some(d)) if h.nonEmpty && BuildConfig.FEDERATION_USER_DISCOVERY => Some(s"${h.withSymbol}@$d")
-    case (Some(h), None) if h.nonEmpty => Some(h.withSymbol)
-    case _ => None
-  }
+  lazy val qualifiedId: Option[QualifiedId] = domain.mapOpt(d => QualifiedId(id, d))
+  def displayHandle(currentDomain: Domain = Domain.Empty, forceDomain: Boolean = false): String =
+    handle match {
+      case Some(h) if BuildConfig.FEDERATION_USER_DISCOVERY && h.nonEmpty &&
+                                 domain.isDefined && (forceDomain || domain != currentDomain) =>
+        s"${h.withSymbol}@${domain.str}"
+      case Some(h) if h.nonEmpty =>
+        h.withSymbol
+      case _ =>
+        ""
+    }
 
   def updated(user: UserInfo): UserData = updated(user, withSearchKey = true, permissions = permissions)
   def updated(user: UserInfo, withSearchKey: Boolean, permissions: PermissionsMasks): UserData = copy(
-    domain        = if (BuildConfig.FEDERATION_USER_DISCOVERY) { if (user.domain.isEmpty) domain else user.domain } else None,
+    domain        = if (user.domain.isDefined) user.domain else domain,
     name          = user.name.getOrElse(name),
     email         = user.email.orElse(email),
     phone         = user.phone.orElse(phone),
@@ -108,7 +112,7 @@ final case class UserData(override val id:       UserId,
 
   def updated(user: UserSearchEntry): UserData = copy(
     name      = user.name,
-    domain    = if (user.qualifiedId.hasDomain) Some(user.qualifiedId.domain) else None,
+    domain    = if (user.qualifiedId.hasDomain) Domain(user.qualifiedId.domain) else Domain.Empty,
     teamId    = user.teamId,
     searchKey = SearchKey(user.name),
     accent    = user.colorId.getOrElse(accent),
@@ -192,14 +196,14 @@ object UserData {
 
   // used for testing only
   def apply(name: String): UserData = UserData(UserId(name), name = Name(name), searchKey = SearchKey.simple(name))
-  def withName(id: UserId, name: String): UserData = UserData(id, None, None, Name(name), None, None, searchKey = SearchKey.simple(name), handle = None)
+  def withName(id: UserId, name: String): UserData = UserData(id, Domain.Empty, None, Name(name), None, None, searchKey = SearchKey.simple(name), handle = None)
 
-  def apply(id: UserId, name: String): UserData = UserData(id, None, None, Name(name), None, None, searchKey = SearchKey(name), handle = None)
+  def apply(id: UserId, name: String): UserData = UserData(id, Domain.Empty, None, Name(name), None, None, searchKey = SearchKey(name), handle = None)
 
   def apply(entry: UserSearchEntry): UserData =
     UserData(
       id        = entry.qualifiedId.id,
-      domain    = Some(entry.qualifiedId.domain),
+      domain    = Domain(entry.qualifiedId.domain),
       teamId    = entry.teamId,
       name      = entry.name,
       accent    = entry.colorId.getOrElse(0),
@@ -214,7 +218,7 @@ object UserData {
 
   implicit object UserDataDao extends Dao[UserData, UserId] with StorageCodecs {
     val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.id)
-    val Domain = opt(text('domain))(_.domain)
+    val Domain = text[model.Domain]('domain, _.str, model.Domain(_))(_.domain)
     val TeamId = opt(id[TeamId]('teamId))(_.teamId)
     val Name = text[model.Name]('name, _.str, model.Name(_))(_.name)
     val Email = opt(emailAddress('email))(_.email)

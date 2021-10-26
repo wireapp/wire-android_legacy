@@ -21,7 +21,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
 
   private val self = UserData("self")
   private val teamId = TeamId()
-  private val domain = "chala.wire.link"
+  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
   private val userService = mock[UserService]
   private val messagesStorage = mock[MessagesStorage]
   private val messagesService = mock[MessagesService]
@@ -36,7 +36,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   private val membersStorage = mock[MembersStorage]
 
   private def createHandler: ConversationsSyncHandler = new ConversationsSyncHandler(
-    self.id, Some(domain), Some(teamId), userService, messagesStorage, messagesService,
+    self.id, domain, Some(teamId), userService, messagesStorage, messagesService,
     convService, convs, convEvents, convStorage, errorsService,
     conversationsClient, genericMessages, rolesService, membersStorage
   )
@@ -49,40 +49,47 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
     )
 
   scenario("Sync non-qualified conversations") {
-    val conv1 = ConversationData(team = Some(teamId), creator = self.id)
-    val conv2 = ConversationData(team = Some(teamId), creator = self.id)
-    val conv3 = ConversationData(team = Some(teamId), creator = self.id)
+    if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+      val conv1 = ConversationData(team = Some(teamId), creator = self.id)
+      val conv2 = ConversationData(team = Some(teamId), creator = self.id)
+      val conv3 = ConversationData(team = Some(teamId), creator = self.id)
 
-    val convMap = Seq(conv1, conv2, conv3).toIdMap
+      val convMap = Seq(conv1, conv2, conv3).toIdMap
 
-    val resp1 = toConversationResponse(conv1)
-    val resp2 = toConversationResponse(conv2)
-    val resp3 = toConversationResponse(conv3)
-    val resps = Seq(resp1, resp2, resp3)
+      val resp1 = toConversationResponse(conv1)
+      val resp2 = toConversationResponse(conv2)
+      val resp3 = toConversationResponse(conv3)
+      val resps = Seq(resp1, resp2, resp3)
 
-    val backendResponse: ErrorOrResponse[Seq[ConversationResponse]] =
-      CancellableFuture.successful { Right(resps) }
+      val backendResponse: ErrorOrResponse[Seq[ConversationResponse]] =
+        CancellableFuture.successful {
+          Right(resps)
+        }
 
-    (convStorage.getAll _)
-      .expects(convMap.keySet).once().returning(Future.successful(convMap.values.map(Option(_)).toSeq))
-    (conversationsClient.loadConversations(_: Set[RConvId]))
-      .expects(convMap.values.map(_.remoteId).toSet).once().returning(backendResponse)
-    (conversationsClient.loadQualifiedConversations(_: Set[RConvQualifiedId])).expects(*).never()
+      (convStorage.getAll _)
+        .expects(convMap.keySet).once().returning(Future.successful(convMap.values.map(Option(_)).toSeq))
+      (conversationsClient.loadConversations(_: Set[RConvId]))
+        .expects(convMap.values.map(_.remoteId).toSet).once().returning(backendResponse)
+      (conversationsClient.loadQualifiedConversations(_: Set[RConvQualifiedId])).expects(*).never()
 
-    (rolesService.defaultRoles _).expects().anyNumberOfTimes().returning(Signal.const(Set.empty[ConversationRole]))
-    (conversationsClient.loadConversationRoles _)
-      .expects(*, *).anyNumberOfTimes().returning(Future.successful(Map.empty[RConvId, Set[ConversationRole]]))
-    (convService.updateConversationsWithDeviceStartMessage _).expects(resps, *).once().returning(Future.successful(()))
+      (rolesService.defaultRoles _).expects().anyNumberOfTimes().returning(Signal.const(Set.empty[ConversationRole]))
+      (conversationsClient.loadConversationRoles _)
+        .expects(*, *).anyNumberOfTimes().returning(Future.successful(Map.empty[RConvId, Set[ConversationRole]]))
+      (convService.updateConversationsWithDeviceStartMessage _).expects(resps, *).anyNumberOfTimes().returning(Future.successful(()))
+      (convService.rConvQualifiedId _).expects(*).anyNumberOfTimes().onCall { conv: ConversationData =>
+        RConvQualifiedId(conv.remoteId, domain.str)
+      }
 
-    val handler = createHandler
-    result(handler.syncConversations(convMap.keySet))
+      val handler = createHandler
+      result(handler.syncConversations(convMap.keySet))
+    }
   }
 
   scenario("Sync qualified conversations") {
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
-      val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
-      val conv3 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
+      val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
+      val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
+      val conv3 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
 
       val convMap = Seq(conv1, conv2, conv3).toIdMap
 
@@ -105,7 +112,10 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
       (rolesService.defaultRoles _).expects().anyNumberOfTimes().returning(Signal.const(Set.empty[ConversationRole]))
       (conversationsClient.loadConversationRoles _)
         .expects(*, *).anyNumberOfTimes().returning(Future.successful(Map.empty[RConvId, Set[ConversationRole]]))
-      (convService.updateConversationsWithDeviceStartMessage _).expects(resps, *).once().returning(Future.successful(()))
+      (convService.updateConversationsWithDeviceStartMessage _).expects(resps, *).anyNumberOfTimes().returning(Future.successful(()))
+      (convService.rConvQualifiedId _).expects(*).anyNumberOfTimes().onCall { conv: ConversationData =>
+        RConvQualifiedId(conv.remoteId, domain.str)
+      }
 
       val handler = createHandler
       result(handler.syncConversations(convMap.keySet))
@@ -114,8 +124,8 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
 
   scenario("Sync part qualified part non-qualified conversations") {
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
-      val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = Some("anta"))
+      val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
+      val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
       val conv3 = ConversationData(team = Some(teamId), creator = self.id)
 
       val convMap = Seq(conv1, conv2, conv3).toIdMap
@@ -123,7 +133,6 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
       val resp1 = toConversationResponse(conv1)
       val resp2 = toConversationResponse(conv2)
       val resp3 = toConversationResponse(conv3)
-      val resps = Seq(resp1, resp2, resp3)
 
       val qBackendResponse: ErrorOrResponse[QConversationsResult] =
         CancellableFuture.successful {
@@ -137,14 +146,15 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
       (convStorage.getAll _)
         .expects(convMap.keySet).once().returning(Future.successful(convMap.values.map(Option(_)).toSeq))
       (conversationsClient.loadQualifiedConversations(_: Set[RConvQualifiedId]))
-        .expects(Seq(conv1, conv2).flatMap(_.qualifiedId).toSet).once().returning(qBackendResponse)
-      (conversationsClient.loadConversations(_: Set[RConvId]))
-        .expects(Set(conv3.remoteId)).once().returning(backendResponse)
+        .expects(Set(conv1, conv2, conv3.copy(domain = domain)).flatMap(_.qualifiedId)).once().returning(qBackendResponse)
 
       (rolesService.defaultRoles _).expects().anyNumberOfTimes().returning(Signal.const(Set.empty[ConversationRole]))
       (conversationsClient.loadConversationRoles _)
         .expects(*, *).anyNumberOfTimes().returning(Future.successful(Map.empty[RConvId, Set[ConversationRole]]))
-      (convService.updateConversationsWithDeviceStartMessage _).expects(resps, *).once().returning(Future.successful(()))
+      (convService.updateConversationsWithDeviceStartMessage _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
+      (convService.rConvQualifiedId _).expects(*).anyNumberOfTimes().onCall { conv: ConversationData =>
+        RConvQualifiedId(conv.remoteId, domain.str)
+      }
 
       val handler = createHandler
       result(handler.syncConversations(convMap.keySet))
@@ -152,9 +162,9 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   }
 
   scenario("When syncing conversations, given local convs that are absent from the backend, remove the missing local convs") {
-    val conv1 = ConversationData(id = ConvId("conv1"), team = Some(teamId), creator = self.id, domain = Some("anta"))
-    val conv2 = ConversationData(id = ConvId("conv2"), team = Some(teamId), creator = self.id, domain = Some("anta"))
-    val conv3 = ConversationData(id = ConvId("conv3"), team = Some(teamId), creator = self.id, domain = Some("anta"))
+    val conv1 = ConversationData(id = ConvId("conv1"), team = Some(teamId), creator = self.id, domain = domain)
+    val conv2 = ConversationData(id = ConvId("conv2"), team = Some(teamId), creator = self.id, domain = domain)
+    val conv3 = ConversationData(id = ConvId("conv3"), team = Some(teamId), creator = self.id, domain = domain)
 
     val resp1 = toConversationResponse(conv1)
     val resp2 = toConversationResponse(conv2)

@@ -30,6 +30,7 @@ import com.waz.sync.client.TeamsClient
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.testutils.TestUserPreferences
+import com.waz.zms.BuildConfig
 import com.wire.signals.EventStream
 
 import scala.collection.breakOut
@@ -42,6 +43,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   def ids(s: Symbol*) = s.map(id)(breakOut).toSet
 
   val selfUser      = id('me)
+  val domain        = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
   val teamId        = Some(TeamId())
   val teamStorage   = mock[TeamsStorage]
   val userService   = mock[UserService]
@@ -68,11 +70,11 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
     val initialTeamMembers = Set(
-      UserData(UserId(), None, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty),
-      UserData(UserId(), None, teamId, Name("user2"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
+      UserData(UserId(), domain, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty),
+      UserData(UserId(), domain, teamId, Name("user2"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
     )
 
-    val newTeamMember = UserData(UserId(), None, teamId, Name("user3"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
+    val newTeamMember = UserData(UserId(), domain, teamId, Name("user3"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
 
     (userStorage.getByTeam _).expects(Set(teamId).flatten).once().returning(Future.successful(initialTeamMembers))
 
@@ -100,8 +102,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
 
-    val member1 = UserData(UserId(), None, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.simple("user1"))
-    val member2 = UserData(UserId(), None, teamId, Name("rick2"), handle = Some(Handle.Empty), searchKey = SearchKey.simple("rick2"))
+    val member1 = UserData(UserId(), domain, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.simple("user1"))
+    val member2 = UserData(UserId(), domain, teamId, Name("rick2"), handle = Some(Handle.Empty), searchKey = SearchKey.simple("rick2"))
     val member2Updated = member2.copy(name = Name("user2"), searchKey = SearchKey.simple("user2"))
 
     val query = SearchQuery("user")
@@ -132,11 +134,11 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
     val initialTeamMembers = Set(
-      UserData(UserId(), None, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty),
-      UserData(UserId(), None, teamId, Name("user2"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
+      UserData(UserId(), domain, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty),
+      UserData(UserId(), domain, teamId, Name("user2"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
     )
 
-    val newTeamMember = UserData(UserId(), None, None, Name("user3"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
+    val newTeamMember = UserData(UserId(), domain, None, Name("user3"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
 
     (userStorage.getByTeam _).expects(Set(teamId).flatten).once().returning(Future.successful(initialTeamMembers))
 
@@ -163,8 +165,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (userStorage.onUpdated _).expects().once().returning(userStorageOnUpdated)
     (userStorage.onDeleted _).expects().once().returning(userStorageOnDeleted)
 
-    val constUser = UserData(UserId(), None, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
-    val teamMemberToUpdate = UserData(UserId(), None, teamId, Name("user2"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
+    val constUser = UserData(UserId(), domain, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
+    val teamMemberToUpdate = UserData(UserId(), domain, teamId, Name("user2"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
     val updatedTeamMember = teamMemberToUpdate.copy(name = Name("user3"))
 
     val initialTeamMembers = Set(constUser, teamMemberToUpdate)
@@ -186,7 +188,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     // GIVEN
     val createdBy = id('creator)
     val permissions = TeamsClient.Permissions(123, 890)
-    val userData = UserData(selfUser, None, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
+    val userData = UserData(selfUser, domain, teamId, Name("user1"), handle = Some(Handle.Empty), searchKey = SearchKey.Empty)
     val service = createService
     val teamMember = TeamMember(selfUser, Some(permissions), Some(createdBy))
 

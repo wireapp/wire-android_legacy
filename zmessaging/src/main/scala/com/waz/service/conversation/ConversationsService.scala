@@ -87,7 +87,7 @@ trait ConversationsService {
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
                                selfUserId:      UserId,
-                               currentDomain:   Option[String],
+                               currentDomain:   Domain,
                                push:            PushService,
                                users:           UserService,
                                usersStorage:    UsersStorage,
@@ -152,10 +152,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _       <- convsStorage.updateAll2(convIds, { conv => if (conv.domain.isEmpty) conv.copy(domain = currentDomain) else conv })
       userIds <- usersStorage.keySet
       _       <- usersStorage.updateAll2(userIds, { user =>
-                   (user.domain, user.conversation, currentDomain) match {
-                     case (None, Some(remoteId), Some(domain)) if !remoteId.hasDomain =>
-                       user.copy(domain = currentDomain, conversation = Some(RConvQualifiedId(remoteId.id, domain)))
-                     case (None, None, Some(_)) =>
+                   (user.domain.isDefined, user.conversation, currentDomain.isDefined) match {
+                     case (false, Some(remoteId), true) if !remoteId.hasDomain =>
+                       user.copy(domain = currentDomain, conversation = Some(RConvQualifiedId(remoteId.id, currentDomain.str)))
+                     case (false, None, true) =>
                        user.copy(domain = currentDomain)
                      case _ =>
                        user
@@ -202,7 +202,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
       conv
         .qualifiedId
-        .orElse(currentDomain.map(RConvQualifiedId(conv.remoteId, _)))
+        .orElse(currentDomain.mapOpt(RConvQualifiedId(conv.remoteId, _)))
         .getOrElse(RConvQualifiedId(conv.remoteId, ""))
     } else {
       RConvQualifiedId(conv.remoteId)
@@ -241,7 +241,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
               val membersWithRoles = us.map { case (qId, role) => qId.id -> role } ++ ids.map(_ -> ConversationRole.MemberRole).toMap
               // this happens when we are added to group conversation
               for {
-                conv       <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time, domain = convDomain))
+                conv       <- convsStorage.insert(
+                                ConversationData(
+                                  ConvId(), rConvId, None, from, ConversationType.Group,
+                                  lastEventTime = time, domain = convDomain
+                                )
+                              )
                 _          <- membersStorage.updateOrCreateAll(conv.id, Map(from -> ConversationRole.AdminRole) ++ membersWithRoles)
                 sId        <- sync.syncConversations(Set(conv.id))
                 _          <- syncReqService.await(sId)

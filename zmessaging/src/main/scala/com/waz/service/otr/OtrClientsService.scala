@@ -54,7 +54,7 @@ trait OtrClientsService {
 }
 
 class OtrClientsServiceImpl(selfId:        UserId,
-                            currentDomain: Option[String],
+                            currentDomain: Domain,
                             clientId:      ClientId,
                             userPrefs:     UserPreferences,
                             storage:       OtrClientsStorage,
@@ -79,7 +79,7 @@ class OtrClientsServiceImpl(selfId:        UserId,
       case OtrClientAddEvent(client) =>
         for {
           _  <- updateUserClients(selfId, Seq(client), replace = false)
-          id <- sync.syncPreKeys(QualifiedId(selfId, currentDomain.getOrElse("")), Set(client.id))
+          id <- sync.syncPreKeys(QualifiedId(selfId, currentDomain.str), Set(client.id))
         } yield id
       case OtrClientRemoveEvent(cId) =>
         removeClients(selfId, Set(cId))

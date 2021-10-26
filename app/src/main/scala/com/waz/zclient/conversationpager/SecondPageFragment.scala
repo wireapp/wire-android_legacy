@@ -22,7 +22,6 @@ import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.api.IConversation.Type
 import com.waz.model.UserId
-import com.waz.threading.Threading
 import com.waz.zclient.controllers.navigation.{INavigationController, Page, PagerControllerObserver}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
@@ -32,10 +31,6 @@ import com.waz.zclient.participants.fragments.{ConnectRequestFragment, PendingCo
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 import com.waz.threading.Threading._
 import com.waz.utils.MathUtils
-import com.waz.zclient.messages.MessagePagedListController
-import com.wire.signals.CancellableFuture
-
-import scala.concurrent.duration._
 
 class SecondPageFragment extends FragmentHelper
   with OnBackPressedListener
@@ -44,25 +39,18 @@ class SecondPageFragment extends FragmentHelper
   private lazy val navigationController   = inject[INavigationController]
   private lazy val conversationController = inject[ConversationController]
 
-  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
+  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_pager_second, container, false)
-  }
 
   private val connectionRequestTags = Set(ConnectRequestFragment.Tag, PendingConnectRequestFragment.Tag)
 
-  private lazy val pageDetails =
-    for {
-      conv <- conversationController.currentConv
-      // the paged list data should be created asynchronously as the conversation is opening; wait for it
-      _    <- inject[MessagePagedListController].pagedListData.map(_._1.convId).filter(_ == conv.id)
-    } yield (conv.id, conv.convType) match {
+  private lazy val pageDetails = conversationController.currentConv.map(c => (c.id, c.convType)).map {
     case (id, Type.INCOMING_CONNECTION) => (ConnectRequestFragment.Tag, Some(UserId(id.str)))
     case (id, Type.WAIT_FOR_CONNECTION) => (PendingConnectRequestFragment.Tag, Some(UserId(id.str)))
     case _                              => (ConversationManagerFragment.Tag, None)
   }
 
-  // delay opening the conversation for a bit to give the contents more time to refresh
-  private def open(tag: String, other: Option[UserId]): Unit = CancellableFuture.delayed(100.millis) {
+  private def open(tag: String, other: Option[UserId]): Unit = {
     info(l"open (${showString(tag)}, $other)")
     val (fragment, page) = (tag, other) match {
       case (ConnectRequestFragment.Tag, Some(userId)) =>
@@ -93,7 +81,7 @@ class SecondPageFragment extends FragmentHelper
       )
 
     transaction.commit()
-  }(Threading.Ui)
+  }
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)

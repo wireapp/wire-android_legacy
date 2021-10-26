@@ -102,7 +102,7 @@ trait UserService {
 }
 
 class UserServiceImpl(selfUserId:        UserId,
-                      currentDomain:     Option[String],
+                      currentDomain:     Domain,
                       teamId:            Option[TeamId],
                       accounts:          AccountsService,
                       accsStorage:       AccountStorage,
@@ -219,15 +219,15 @@ class UserServiceImpl(selfUserId:        UserId,
   override def findUsers(ids: Seq[UserId]): Future[Seq[Option[UserData]]] = usersStorage.getAll(ids)
 
   private def getOrCreateQualifiedId(userId: UserId, qualifiedId: Option[QualifiedId]) =
-    (qualifiedId, currentDomain) match {
+    (qualifiedId, currentDomain.isDefined) match {
       case (Some(qId), _) if qId.hasDomain => qId
-      case (Some(qId), Some(domain)) =>
+      case (Some(qId), true) =>
         warn(l"qualifiedId($userId): A user with qualified id set already, but no domain - a failed migration?")
         usersStorage.update(userId, _.copy(domain = currentDomain))
-        qId.copy(domain = domain)
-      case (_, Some(domain)) =>
+        qId.copy(domain = currentDomain.str)
+      case (_, true) =>
         warn(l"qualifiedId($userId): Unable to find the user for the given id or the user has no specified domain - generating a new qId")
-        QualifiedId(userId, domain)
+        QualifiedId(userId, currentDomain.str)
       case _ =>
         warn(l"qualifiedId($userId): Unable to find the user for the given id and there is no current domain")
         QualifiedId(userId)
@@ -258,7 +258,7 @@ class UserServiceImpl(selfUserId:        UserId,
     usersStorage.getOrCreate(id, {
       syncUsers(Set(id))
       UserData(
-        id, None, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected,
+        id, currentDomain, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected,
         searchKey = SearchKey.Empty, handle = None
       )
     })
@@ -349,7 +349,8 @@ class UserServiceImpl(selfUserId:        UserId,
       false
 
   override def isFederated(qId: QualifiedId): Boolean =
-    currentDomain.fold(false)(domain => qId.domain != domain)
+    if (currentDomain.isEmpty) false
+    else !currentDomain.contains(qId.domain)
 
   override def isFederated(id: UserId): Future[Boolean] =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {

@@ -230,7 +230,6 @@ case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 
 class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext)
   extends Injectable {
-
   import ProfileViewController._
 
   implicit val uiStorage = inject[UiStorage]
@@ -264,7 +263,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   self.on(Threading.Ui) { self =>
     view.setAccentColor(AccentColor(self.accent).color)
-    self.displayHandle.foreach(view.setHandle)
+    view.setHandle(self.displayHandle(forceDomain = true))
     view.setUserName(self.name)
   }
 

@@ -30,6 +30,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
@@ -37,9 +38,9 @@ class TeamConversationSpec extends AndroidFreeSpec {
   import ConversationRole._
 
   val selfId          = UserId()
-  val domain          = "chala.wire.link"
+  val domain          = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
   val team            = Some(TeamId("team"))
-  val selfUser        = UserData(selfId, None, team, Name("self"), searchKey = SearchKey.simple("self"))
+  val selfUser        = UserData(selfId, domain, team, Name("self"), searchKey = SearchKey.simple("self"))
   val users           = mock[UserService]
   val members         = mock[MembersStorage]
   val convsContent    = mock[ConversationsContentUpdater]
@@ -72,12 +73,11 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
     scenario("Create 1:1 conversation within a team with existing 1:1 conversation between the two members should return existing conversation") {
       val otherUserId = UserId("otherUser")
-      val otherUser = UserData(otherUserId, Some(domain), team, Name("other"), searchKey = SearchKey.simple("other"))
+      val otherUser = UserData(otherUserId, domain, team, Name("other"), searchKey = SearchKey.simple("other"))
 
       val existingConv = ConversationData(creator = selfId, convType = Group, team = team)
 
       (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
       (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
@@ -95,15 +95,14 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
     scenario("Existing 1:1 conversation between two team members with NAME should not be returned") {
       val otherUserId = UserId("otherUser")
-      val otherUser = UserData(otherUserId, Some(domain), team, Name("other"), searchKey = SearchKey.simple("other"))
+      val otherUser = UserData(otherUserId, domain, team, Name("other"), searchKey = SearchKey.simple("other"))
 
       val name = Some(Name("Conv Name"))
       val existingConv = ConversationData(creator = selfId, name = name, convType = Group, team = team)
 
       (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-      (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
-      (members.getByUsers _).expects(Set(otherUserId)).once().returning(Future.successful(IndexedSeq(
+      (members.getByUsers _).expects(Set(otherUserId)).anyNumberOfTimes().returning(Future.successful(IndexedSeq(
         ConversationMemberData(otherUserId, existingConv.id, AdminRole)
       )))
 
@@ -119,7 +118,8 @@ class TeamConversationSpec extends AndroidFreeSpec {
           Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
       }
       (messages.addConversationStartMessage _).expects(*, selfId, *, None, *, None).once().returning(Future.successful({}))
-      (sync.postConversation _)
+      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
+        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
         .expects(*, *, None, team, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, Some(0), *)
         .once()
         .returning(Future.successful(SyncId()))
@@ -139,10 +139,9 @@ class TeamConversationSpec extends AndroidFreeSpec {
     //TODO under what circumstances is the user connection status "Ignored"? What happens if you're just unconnected with that person?
     scenario("Create 1:1 conversation with a non-team member should create a real 1:1 conversation") {
       val otherUserId = UserId("otherUser")
-      val otherUser = UserData(otherUserId, Some(domain), Some(TeamId("different_team")), Name("other"), searchKey = SearchKey.simple("other"), connection = ConnectionStatus.Ignored)
+      val otherUser = UserData(otherUserId, domain, Some(TeamId("different_team")), Name("other"), searchKey = SearchKey.simple("other"), connection = ConnectionStatus.Ignored)
 
       (users.findUser _).expects(otherUserId).twice().returning(Future.successful(Some(otherUser)))
-      (users.isFederated(_: UserData)).expects(otherUser).once().returning(false)
 
       (convsContent.convById _).expects(ConvId("otherUser")).returning(Future.successful(None))
       (convsContent.createConversation _)

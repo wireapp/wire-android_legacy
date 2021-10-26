@@ -32,6 +32,7 @@ import com.wire.signals._
 import com.waz.utils.returning
 import com.waz.utils.wrappers.DBCursor
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessagePagedListController._
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.{Injectable, Injector}
@@ -53,12 +54,11 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
 
   @volatile private var _pagedList = Option.empty[PagedList[MessageAndLikes]]
   private def getPagedList(cursor: Option[DBCursor]): PagedList[MessageAndLikes] = {
-    def createPagedList(config: PagedListConfig) = {
+    def createPagedList(config: PagedListConfig) =
       new PagedList.Builder[Integer, MessageAndLikes](new MessageDataSource(cursor), config.config)
         .setFetchExecutor(ExecutorWrapper(Threading.Background))
         .setNotifyExecutor(ExecutorWrapper(Threading.Ui))
         .build()
-    }
 
     _pagedList.foreach(_.getDataSource.invalidate())
 
@@ -88,11 +88,10 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
     isGroup                 <- Signal.from(z.conversations.isGroupConversation(cId))
     canHaveLink             =  isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
     cursor                  <- RefreshingSignal.from(loadCursor(cId), cursorRefreshEvent(z, cId))
-    list                    <- Signal.from(Future { PagedListWrapper(getPagedList(cursor)) }(Threading.Background))
+    _                       =  verbose(l"cursor changed")
+    list                    =  PagedListWrapper(getPagedList(cursor))
     messageToReveal         <- messageActionsController.messageToReveal
-  } yield {
-    (MessageAdapterData(cId, isGroup, canHaveLink, z.selfUserId, z.teamId), list, messageToReveal)
-  }
+  } yield (MessageAdapterData(cId, isGroup, canHaveLink, z.selfUserId, z.teamId), list, messageToReveal)
 }
 
 object MessagePagedListController {
@@ -110,19 +109,14 @@ object MessagePagedListController {
 }
 
 final case class PagedListWrapper[T](pagedList: PagedList[T]) {
-  override def equals(obj: scala.Any): Boolean = false // a hack need for proper message view refresh
+  override def equals(obj: scala.Any): Boolean = false
 }
 
 final case class ExecutorWrapper(ec: ExecutionContext) extends Executor {
   override def execute(command: Runnable): Unit = ec.execute(command)
 }
 
-final case class MessageAdapterData(convId: ConvId,
-                                    isGroup: Boolean,
-                                    canHaveLink: Boolean,
-                                    selfId: UserId,
-                                    teamId: Option[TeamId])
-
+final case class MessageAdapterData(convId: ConvId, isGroup: Boolean, canHaveLink: Boolean, selfId: UserId, teamId: Option[TeamId])
 object MessageAdapterData {
   val Empty = MessageAdapterData(ConvId(), isGroup = false, canHaveLink = false, UserId(), None)
 }

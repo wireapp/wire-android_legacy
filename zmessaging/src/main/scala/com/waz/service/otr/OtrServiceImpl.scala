@@ -83,7 +83,7 @@ trait OtrService {
 }
 
 class OtrServiceImpl(selfUserId:     UserId,
-                     currentDomain:  Option[String],
+                     currentDomain:  Domain,
                      clientId:       ClientId,
                      clients:        OtrClientsService,
                      cryptoBox:      CryptoBoxService,
@@ -363,25 +363,32 @@ object OtrService {
 
   val EncryptionFailedMsg: Array[Byte] = "\uD83D\uDCA3".getBytes("utf8")
 
-  final case class SessionId(userId: UserId, domain: Option[String], clientId: ClientId) {
-    override def toString: String = domain match {
-      case Some(d) if BuildConfig.FEDERATION_USER_DISCOVERY => s"${userId}_${d}_$clientId"
-      case _ => s"${userId}_$clientId"
-    }
+  final case class SessionId(userId: UserId, domain: Domain, clientId: ClientId) {
+    override def toString: String =
+      if (BuildConfig.FEDERATION_USER_DISCOVERY && domain.isDefined)
+        s"${userId}_${domain.str}_$clientId"
+      else
+        s"${userId}_$clientId"
   }
 
   object SessionId {
-    def apply(ev: OtrEvent, currentDomain: Option[String]): SessionId =
-     if (BuildConfig.FEDERATION_USER_DISCOVERY && ev.fromDomain.isDefined && currentDomain.isDefined && ev.fromDomain != currentDomain)
+    def apply(ev: OtrEvent, currentDomain: Domain): SessionId =
+     if (BuildConfig.FEDERATION_USER_DISCOVERY &&
+         ev.fromDomain.isDefined &&
+         currentDomain.isDefined &&
+         !ev.fromDomain.contains(currentDomain.str))
         SessionId(ev.from, ev.fromDomain, ev.sender)
       else
-        SessionId(ev.from, None, ev.sender)
+        SessionId(ev.from, Domain.Empty, ev.sender)
 
-    def apply(qId: QualifiedId, clientId: ClientId, currentDomain: Option[String]): SessionId =
-      if (BuildConfig.FEDERATION_USER_DISCOVERY && qId.hasDomain && currentDomain.isDefined && !currentDomain.contains(qId.domain))
-        SessionId(qId.id, Some(qId.domain), clientId)
+    def apply(qId: QualifiedId, clientId: ClientId, currentDomain: Domain): SessionId =
+      if (BuildConfig.FEDERATION_USER_DISCOVERY &&
+          qId.hasDomain &&
+          currentDomain.isDefined &&
+          !currentDomain.contains(qId.domain))
+        SessionId(qId.id, Domain(qId.domain), clientId)
       else
-        SessionId(qId.id, None, clientId)
+        SessionId(qId.id, Domain.Empty, clientId)
   }
 
   def hmacSha256(key: SignalingKey, data: Array[Byte]): Array[Byte] = {

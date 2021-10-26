@@ -10,6 +10,7 @@ final case class RConvQualifiedId(id: RConvId, domain: String) {
 
 object RConvQualifiedId {
   def apply(id: RConvId): RConvQualifiedId = RConvQualifiedId(id, "")
+  def apply(id: RConvId, domain: Domain): RConvQualifiedId = RConvQualifiedId(id, domain.str)
 
   private val IdFieldName = "id"
   private val DomainFieldName  = "domain"

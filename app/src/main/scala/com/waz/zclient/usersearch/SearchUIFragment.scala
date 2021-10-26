@@ -68,7 +68,6 @@ import scala.concurrent.duration._
 import com.waz.zclient.usersearch.SearchUIFragment._
 import com.waz.threading.Threading._
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.messages.UsersController
 
 class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper
@@ -434,13 +433,7 @@ class SearchUIFragment extends BaseFragment[Container]
           getContainer.showIncomingPendingConnectRequest(ConvId(user.id.str))
         }
       case (_, connection) if connectionsForOpenProfile.contains(connection) =>
-        if (BuildConfig.FEDERATION_USER_DISCOVERY)
-          inject[UsersController].isFederated(user).foreach {
-            case true  => tryOpenConversation()
-            case false => showUserProfile()
-          }
-        else
-          showUserProfile()
+        showUserProfile()
 
       case (teamId, connection) =>
         warn(l"Unhandled connection type. The UI shouldn't display such entry. teamId: $teamId, connection type: $connection")
@@ -486,7 +479,7 @@ class SearchUIFragment extends BaseFragment[Container]
     self.head.map { self =>
       val sharingIntent = IntentUtils.getInviteIntent(
         getString(R.string.people_picker__invite__share_text__header, self.name.str),
-        getString(R.string.people_picker__invite__share_text__body,self.displayHandle.getOrElse(""))
+        getString(R.string.people_picker__invite__share_text__body,self.displayHandle())
       )
       startActivity(Intent.createChooser(sharingIntent, getString(R.string.people_picker__invite__share_details_dialog)))
     }

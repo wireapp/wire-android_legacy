@@ -73,7 +73,6 @@ trait OtrSyncHandler {
 
 class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                          selfClientId:       ClientId,
-                         currentDomain:      Option[String],
                          otrClient:          OtrClient,
                          msgClient:          MessagesClient,
                          service:            OtrService,

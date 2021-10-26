@@ -31,7 +31,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AccentColor, EmailAddress, Name, PhoneNumber, Picture}
+import com.waz.model.{AccentColor, Domain, EmailAddress, Name, PhoneNumber, Picture}
 import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -69,7 +69,7 @@ trait AccountView {
   def setEmail(email: Option[EmailAddress]): Unit
   def setPhone(phone: Option[PhoneNumber]): Unit
   def setTeam(team: Option[Name]): Unit
-  def setDomain(domain: Option[String]): Unit
+  def setDomain(domain: Domain): Unit
   def setPicture(picture: Picture): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
@@ -136,10 +136,13 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     teamButton.setVisible(team.isDefined)
   }
 
-  override def setDomain(domain: Option[String]): Unit = {
-    domain.foreach(domainButton.setTitle)
-    domainButton.setVisible(domain.isDefined)
-  }
+  override def setDomain(domain: Domain): Unit =
+    if (domain.isDefined) {
+      domainButton.setTitle(domain.str)
+      domainButton.setVisible(true)
+    } else {
+      domainButton.setVisible(false)
+    }
 
   override def setPicture(picture: Picture) = {
     WireGlide(context)
@@ -218,7 +221,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   val isTeam = team.map(_.isDefined)
   val phone  = self.map(_.phone)
   val email  = self.map(_.email)
-  val domain = self.map(_.domain)
+  val domain = inject[Domain]
 
   val isPhoneNumberEnabled = isTeam.map(!_)
 
@@ -233,7 +236,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   }
 
   self.onUi { self =>
-    self.displayHandle.foreach(view.setHandle)
+    view.setHandle(self.displayHandle())
     view.setName(self.name)
     view.setAccentDrawable(new Drawable {
 
@@ -255,12 +258,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   phone.onUi(view.setPhone)
   email.onUi(view.setEmail)
   team.map(_.map(_.name)).onUi(view.setTeam)
-
-  if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-    domain.onUi(view.setDomain)
-  } else {
-    view.setDomain(None)
-  }
+  view.setDomain(domain)
 
   Signal.zip(isTeam, accounts.isActiveAccountSSO)
     .map { case (team, sso) => team || sso }

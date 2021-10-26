@@ -40,7 +40,7 @@ trait FlowManagerService {
   def setVideoCaptureDevice(id: RConvId, deviceId: String): Future[Unit]
   def setVideoPreview(view: View): Future[Unit]
   def setVideoView(id: RConvId, partId: Option[UserId], view: View): Future[Unit]
-
+  def setUIRotation(rotation: Int): Future[Unit]
   val cameraFailedSig: Signal[Boolean]
 }
 
@@ -106,6 +106,10 @@ class DefaultFlowManagerService(context:      Context,
   def setVideoView(id: RConvId, partId: Option[UserId], view: View): Future[Unit] = schedule { fm =>
     debug(l"setVideoView($id, $partId)")
     fm.setVideoView(id.str, partId.map(_.str).orNull, view)
+  }
+
+  def setUIRotation(rotation: Int): Future[Unit] = schedule { fm =>
+    fm.setUIRotation(rotation)
   }
 
   private def schedule(op: FlowManager => Unit)(implicit dispatcher: ExecutionContext): Future[Unit] =

@@ -147,8 +147,10 @@ trait TimeSeparator extends MessageViewPart with ViewHelper {
   lazy val timeText: TypefaceTextView = findById(R.id.separator__time)
   lazy val unreadDot: UnreadDot = findById(R.id.unread_dot)
 
-  private val time = Signal[RemoteInstant]()
-  time.map(_.instant).map(TimeStamp(_).string).onUi(timeText.setTransformedText)
+  val time = Signal[RemoteInstant]()
+  val text = time.map(_.instant).map(TimeStamp(_).string)
+
+  text.on(Threading.Ui)(timeText.setTransformedText)
 
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)

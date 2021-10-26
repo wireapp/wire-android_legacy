@@ -110,7 +110,14 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
   val global     = account.global
   val selfUserId: UserId = account.userId
-  val selfDomain: Option[String] = if (BuildConfig.FEDERATION_USER_DISCOVERY) account.currentDomain else None
+  val selfDomain: Domain =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      import com.waz.log.LogSE._
+      verbose(l"DMN current domain: ${account.domain}")
+      account.domain
+  } else {
+      Domain.Empty
+    }
 
   val auth       = account.auth
   val urlCreator = global.urlCreator
@@ -436,6 +443,7 @@ object ZMessaging extends DerivedLogTag { self =>
       currentUi = ui
       currentGlobal = _global
       currentAccounts = currentGlobal.accountsService
+
 
       globalReady.success(_global)
 

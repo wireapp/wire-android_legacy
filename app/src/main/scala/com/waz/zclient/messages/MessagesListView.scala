@@ -77,16 +77,16 @@ class MessagesListView(context: Context, attrs: AttributeSet, style: Int)
   setLayoutManager(layoutManager)
   setAdapter(adapter)
 
-  messagePagedListController.pagedListData.onUi { case (data, PagedListWrapper(pagedList), messageToReveal) =>
-    pagedList.addWeakCallback(null, plCallback)
-    adapter.setConvInfo(data)
-    adapter.submitList(pagedList)
+  messagePagedListController.pagedListData.onUi { case (data, PagedListWrapper(pl), messageToReveal) =>
+    pl.addWeakCallback(null, plCallback)
+    adapter.convInfo = data
+    adapter.submitList(pl)
 
-    val dataSource = pagedList.getDataSource.asInstanceOf[MessageDataSource]
+    val dataSource = pl.getDataSource.asInstanceOf[MessageDataSource]
     messageToReveal
       .flatMap(mtr => dataSource.positionForMessage(mtr).filter(_ >= 0))
       .foreach { position =>
-        scrollController.onPagedListReplaced(pagedList)
+        scrollController.onPagedListReplaced(pl)
         scrollController.scrollToPositionRequested ! position
       }
   }
@@ -212,7 +212,6 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapte
 
   def bind(msg: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
     view.set(msg, prev, next, opts, adapter)
-
     message ! msg.message
     this.opts = Some(opts)
     _isFocused = selection.isFocused(msg.message.id)

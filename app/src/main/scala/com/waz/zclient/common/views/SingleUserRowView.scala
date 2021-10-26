@@ -195,7 +195,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   def setUserData(userData:       UserData,
-                  createSubtitle: (UserData, Boolean) => String = SingleUserRowView.defaultSubtitle): Unit = {
+                  createSubtitle: (UserData, Boolean) => String = defaultSubtitle): Unit = {
     setTitle(userData.name, userData.isSelf)
     setVerified(userData.isVerified)
 
@@ -208,10 +208,9 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     }(Threading.Ui)
 
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      usersController.isFederated(userData).foreach { federated =>
-        isFederated ! federated
-        setSubtitle(createSubtitle(userData, federated))
-      }(Threading.Ui)
+      val federated = usersController.isFederated(userData)
+      isFederated ! federated
+      setSubtitle(createSubtitle(userData, federated))
     } else {
       setSubtitle(createSubtitle(userData, false))
     }
@@ -259,12 +258,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
       auxContainer.addView(v)
     }
   }
+
+  private def defaultSubtitle(user: UserData, isFederated: Boolean)(implicit context: Context) =
+    user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now)) match {
+      case Some(expiration) => expiration
+      case _ => usersController.displayHandle(user)
+    }
 }
 
-object SingleUserRowView {
-  def defaultSubtitle(user: UserData, isFederated: Boolean)(implicit context: Context): String = {
-    lazy val handle: String = user.displayHandle.getOrElse("")
-    val expiration = user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now))
-    expiration.getOrElse(handle)
-  }
-}

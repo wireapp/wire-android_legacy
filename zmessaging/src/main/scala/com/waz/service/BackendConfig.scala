@@ -37,6 +37,7 @@ class BackendConfig(private var _environment: String,
 
   def environment: String = _environment
   def baseUrl: URI = _baseUrl
+  def domain: String = baseUrl.getPath.substring(baseUrl.getPath.indexOf('.'))
   def websocketUrl: URI = _websocketUrl
   def blacklistHost: Option[URI] = _blacklistHost
   def teamsUrl: URI = _teamsUrl

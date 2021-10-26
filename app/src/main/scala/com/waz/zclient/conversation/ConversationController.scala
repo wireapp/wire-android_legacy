@@ -396,16 +396,6 @@ class ConversationController(implicit injector: Injector, context: Context)
     (conv, _) <- convsUi.createGroupConversation(Some(name), userIds, teamOnly, if (readReceipts) 1 else 0, defaultRole)
   } yield conv
 
-  def createConvWithFederatedUser(qId:          QualifiedId,
-                                  teamOnly:     Boolean,
-                                  readReceipts: Boolean,
-                                  defaultRole:  ConversationRole = ConversationRole.MemberRole
-                                 ): Future[ConversationData] = for {
-    convsUi   <- convsUi.head
-    _         <- inject[FolderStateController].update(Folder.GroupId, isExpanded = true)
-    (conv, _) <- convsUi.createConvWithFederatedUser(qId, teamOnly, if (readReceipts) 1 else 0, defaultRole)
-  } yield conv
-
   def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.map(_.str).foreach(callback.callback)(Threading.Ui)
 
   def getCurrentConvId: ConvId = currentConvId.currentValue.orNull

@@ -146,7 +146,7 @@ class SingleParticipantFragment extends FragmentHelper {
       zms                <- inject[Signal[ZMessaging]].head
       user               <- participantsController.otherParticipant.head
       isGroup            <- participantsController.isGroup.head
-      isFederated        <- usersController.isFederated(user)
+      isFederated        =  usersController.isFederated(user)
       isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
       isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
       isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
@@ -181,13 +181,16 @@ class SingleParticipantFragment extends FragmentHelper {
   }
 
   private def initUserHandle(): Unit = returning(view[TextView](R.id.user_handle)) { vh =>
-    subs += participantsController.otherParticipant.map(_.displayHandle).onUi {
-      case Some(h) =>
+    subs += (for {
+      otherUser <- participantsController.otherParticipant
+      handle    =  usersController.displayHandle(otherUser)
+    } yield handle).onUi {
+      case handle if handle.nonEmpty =>
         vh.foreach { view =>
-          view.setText(h)
+          view.setText(handle)
           view.setVisible(true)
         }
-      case None =>
+      case _ =>
         vh.foreach(_.setVisible(false))
     }
   }

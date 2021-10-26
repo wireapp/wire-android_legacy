@@ -48,15 +48,15 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
         zms           <- inject[Signal[ZMessaging]].head
         Some(user)    <- userToConnect
         isGroup       <- participantsController.isGroup.head
-        isFederated   <- usersController.isFederated(user)
+        isFederated   =  usersController.isFederated(user)
+        handle        =  usersController.displayHandle(user)
         isGuest       =  !user.isWireBot && user.isGuest(zms.teamId)
         isExternal    =  !user.isWireBot && user.isExternal(zms.teamId)
         isDarkTheme   <- inject[ThemeController].darkThemeSet.head
         isWireless    =  user.expiresAt.isDefined
         linkedText    <- linkedText(user)
-      } yield (user, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText)).foreach {
-        case (user, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText) =>
-          val formattedHandle = user.displayHandle.getOrElse("")
+      } yield (user, handle, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText)).foreach {
+        case (user, handle, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText) =>
           val participantRole = participantsController.participants.map(_.get(userToConnectId))
           val selfRole =
             if (fromParticipants)
@@ -66,7 +66,7 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
 
           val adapter = new UnconnectedParticipantAdapter(
             user.id, isGuest, isExternal, isDarkTheme, isGroup, isWireless,
-            user.name, formattedHandle, isFederated, linkedText
+            user.name, handle, isFederated, linkedText
           )
           subs += Signal.zip(timerText, participantRole, selfRole).onUi {
             case (tt, pRole, sRole) => adapter.set(tt, pRole, sRole)

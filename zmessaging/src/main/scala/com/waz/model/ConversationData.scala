@@ -63,9 +63,9 @@ final case class ConversationData(override val id:      ConvId                 =
                                   link:                 Option[Link]           = None,
                                   receiptMode:          Option[Int]            = None,  //Some(1) if both users have RR enabled in a 1-to-1 convo
                                   legalHoldStatus:      LegalHoldStatus        = LegalHoldStatus.Disabled,
-                                  domain:               Option[String]         = None
+                                  domain:               Domain                 = Domain.Empty
                                  ) extends Identifiable[ConvId] {
-  lazy val qualifiedId: Option[RConvQualifiedId] = domain.map(RConvQualifiedId(remoteId, _))
+  lazy val qualifiedId: Option[RConvQualifiedId] = domain.mapOpt(RConvQualifiedId(remoteId, _))
 
   def getName(): String = name.fold("")(_.str) // still used in Java
 
@@ -109,9 +109,6 @@ final case class ConversationData(override val id:      ConvId                 =
   }
 
   val isWirelessLegacy: Boolean = !(isTeamOnly || isGuestRoom)
-
-  def isUserAllowed(userData: UserData): Boolean =
-    !(userData.isGuest(team) && isTeamOnly)
 
   def isMemberFromTeamGuest(teamId: Option[TeamId]): Boolean = team.isDefined && teamId != team
 
@@ -254,7 +251,7 @@ object ConversationData {
     val UnreadQuotesCount   = int('unread_quote_count)(_.unreadCount.quotes)
     val ReceiptMode         = opt(int('receipt_mode))(_.receiptMode)
     val LegalHoldStatus     = int[LegalHoldStatus]('legal_hold_status, _.value, ConversationData.LegalHoldStatus.apply)(_.legalHoldStatus)
-    val Domain              = opt(text('domain))(_.domain)
+    val Domain              = text[model.Domain]('domain, _.str, model.Domain(_))(_.domain)
 
     private def getVerification(name: String): Verification =
       Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)

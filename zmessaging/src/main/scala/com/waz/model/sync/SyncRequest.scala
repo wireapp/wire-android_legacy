@@ -185,6 +185,18 @@ object SyncRequest {
     override def merge(req: SyncRequest): MergeResult[PostConv] = mergeHelper[PostConv](req)(Merged(_))
   }
 
+  final case class PostQualified1To1Conv(convId: ConvId,
+                            otherUser:   QualifiedId,
+                            team:        Option[TeamId],
+                            access:      Set[Access],
+                            accessRole:  AccessRole,
+                            receiptMode: Option[Int],
+                            defaultRole: ConversationRole
+                           ) extends RequestForConversation(Cmd.PostQualified1To1Conv) with Serialized {
+    override def merge(req: SyncRequest): MergeResult[PostQualified1To1Conv] =
+      mergeHelper[PostQualified1To1Conv](req)(Merged(_))
+  }
+
   final case class PostConvReceiptMode(convId: ConvId, receiptMode: Int)
     extends RequestForConversation(Cmd.PostConvReceiptMode) with Serialized {
     override def merge(req: SyncRequest): MergeResult[PostConvReceiptMode] = mergeHelper[PostConvReceiptMode](req)(Merged(_))
@@ -481,6 +493,7 @@ object SyncRequest {
           case Cmd.SyncSearchResults         => SyncSearchResults(users)
           case Cmd.SyncQualifiedSearchResults => SyncQualifiedSearchResults(decodeQualifiedIds('qualified_ids).toSet)
           case Cmd.PostConv                  => PostConv(convId, decodeOptUserId('user), 'name, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
+          case Cmd.PostQualified1To1Conv     => PostQualified1To1Conv(convId, qualifiedId, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
           case Cmd.PostConvName              => PostConvName(convId, 'name)
           case Cmd.PostConvReceiptMode       => PostConvReceiptMode(convId, 'receipt_mode)
           case Cmd.PostConvState             => PostConvState(convId, JsonDecoder[ConversationState]('state))
@@ -648,6 +661,13 @@ object SyncRequest {
         case PostConv(_, user, name, team, access, accessRole, receiptMode, defaultRole) =>
           user.foreach(o.put("user", _))
           name.foreach(o.put("name", _))
+          team.foreach(o.put("team", _))
+          o.put("access", JsonEncoder.encodeAccess(access))
+          o.put("access_role", JsonEncoder.encodeAccessRole(accessRole))
+          receiptMode.foreach(o.put("receipt_mode", _))
+          o.put("default_role", defaultRole)
+        case PostQualified1To1Conv(_, qId, team, access, accessRole, receiptMode, defaultRole) =>
+          o.put("qualifiedId", QualifiedId.Encoder(qId))
           team.foreach(o.put("team", _))
           o.put("access", JsonEncoder.encodeAccess(access))
           o.put("access_role", JsonEncoder.encodeAccessRole(accessRole))

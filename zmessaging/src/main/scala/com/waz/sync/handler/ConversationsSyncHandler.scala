@@ -44,7 +44,7 @@ object ConversationsSyncHandler {
 }
 
 class ConversationsSyncHandler(selfUserId:      UserId,
-                               selfDomain:      Option[String],
+                               selfDomain:      Domain,
                                teamId:          Option[TeamId],
                                userService:     UserService,
                                messagesStorage: MessagesStorage,
@@ -79,26 +79,20 @@ class ConversationsSyncHandler(selfUserId:      UserId,
     convStorage.getAll(ids).flatMap { convs =>
       val load: ErrorOr[Seq[ConversationResponse]] =
         if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-          val (qIds, remoteIds) = convs.foldLeft((Set.empty[RConvQualifiedId], Set.empty[RConvId])) {
-            case ((qIds, remoteIds), Some(conv)) if conv.qualifiedId.nonEmpty =>
-              (qIds + conv.qualifiedId.get, remoteIds)
-            case ((qIds, remoteIds), Some(conv)) =>
-              (qIds, remoteIds + conv.remoteId)
-            case (acc, _) =>
-              error(l"syncConversations($ids) - some conversations were not found in local db, skipping")
-              acc
+          val qIds = convs.flatMap {
+            case Some(conv) => Option(convService.rConvQualifiedId(conv))
+            case None =>
+              error(l"syncConversations($ids) - a conversation was not found in local db, skipping")
+              None
           }
 
-          (for {
-            qRes   <- if (qIds.nonEmpty) convClient.loadQualifiedConversations(qIds).future
-                      else Future.successful(Right(QConversationsResult.Empty))
-            resps  <- if (remoteIds.nonEmpty) convClient.loadConversations(remoteIds).future
-                      else Future.successful(Right(Seq.empty))
-          } yield (qRes, resps)).map {
-            case (Left(error), _)        => Left(error)
-            case (_, Left(error))        => Left(error)
-            case (Right(qrs), Right(rs)) => Right(qrs.found ++ rs)
-          }
+          if (qIds.nonEmpty)
+            convClient.loadQualifiedConversations(qIds.toSet).future.map {
+              case Left(error) => Left(error)
+              case Right(qrs)  => Right(qrs.found)
+            }
+          else
+            Future.successful(Right(Seq.empty[ConversationResponse]))
         } else {
           val remoteIds = convs.collect { case Some(conv) => conv.remoteId }.toSet
           if (remoteIds.size != convs.size)
@@ -228,10 +222,10 @@ class ConversationsSyncHandler(selfUserId:      UserId,
   private def postSelfLeave(id: ConvId): Future[SyncResult] =
     withConversation(id) { conv =>
       val clientResult =
-        (BuildConfig.FEDERATION_USER_DISCOVERY, selfDomain) match {
-          case (true, Some(domain)) =>
+        (BuildConfig.FEDERATION_USER_DISCOVERY, selfDomain.isDefined) match {
+          case (true, true) =>
             val convQualifiedId = convService.rConvQualifiedId(conv)
-            val userQualifiedId = QualifiedId(selfUserId, domain)
+            val userQualifiedId = QualifiedId(selfUserId, selfDomain)
             convClient.postQualifiedMemberLeave(convQualifiedId, userQualifiedId)
           case _ =>
             convClient.postMemberLeave(conv.remoteId, selfUserId)
@@ -290,40 +284,66 @@ class ConversationsSyncHandler(selfUserId:      UserId,
                        defaultRole: ConversationRole
                       ): Future[SyncResult] = {
     debug(l"postConversation($convId, $otherUser, $name, $defaultRole)")
-    val initState = ConversationInitState(
-      users                 = otherUser.map(Set(_)).getOrElse(Set.empty),
-      qualifiedUsers        = Set.empty,
-      name                  = name,
-      team                  = team,
-      access                = access,
-      accessRole            = accessRole,
-      receiptMode           = receiptMode,
-      conversationRole      = defaultRole
-    )
-    convClient.postConversation(initState).future.flatMap {
-      case Right(response) =>
-        for {
-          _     <- convService.updateRemoteId(convId, response.id)
-          roles <- loadConversationRoles(Seq(response))
-          _     <- convService.updateConversationsWithDeviceStartMessage(Seq(response), roles)
-        } yield Success
-      case Left(resp@ErrorResponse(status, _, label)) =>
-        warn(l"got error: $resp")
-        val errorType = (status, label) match {
-          case (403, "not-connected") =>
-            Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER)
-          case (412, "missing-legalhold-consent") =>
-            Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT)
-          case _ =>
-            None
-        }
+    val initState =
+      ConversationInitState(
+        users                 = otherUser.map(Set(_)).getOrElse(Set.empty),
+        qualifiedUsers        = Set.empty,
+        name                  = name,
+        team                  = team,
+        access                = access,
+        accessRole            = accessRole,
+        receiptMode           = receiptMode,
+        conversationRole      = defaultRole
+      )
+    convClient.postConversation(initState).future.flatMap(handlePostConvResponse(convId, _))
+  }
 
-        errorType.fold(Future.successful(SyncResult(resp))) { errorType =>
-          errorsService
-            .addErrorWhenActive(ErrorData(errorType, resp, convId))
-            .map(_ => SyncResult(resp))
-        }
-    }
+  def postConversation(convId:      ConvId,
+                       otherUser:   QualifiedId,
+                       team:        Option[TeamId],
+                       access:      Set[Access],
+                       accessRole:  AccessRole,
+                       receiptMode: Option[Int],
+                       defaultRole: ConversationRole
+                      ): Future[SyncResult] = {
+    debug(l"postConversation($convId, $otherUser, $defaultRole)")
+    val initState =
+      ConversationInitState(
+        users                 = Set.empty,
+        qualifiedUsers        = Set(otherUser),
+        name                  = None,
+        team                  = team,
+        access                = access,
+        accessRole            = accessRole,
+        receiptMode           = receiptMode,
+        conversationRole      = defaultRole
+      )
+    convClient.postConversation(initState).future.flatMap(handlePostConvResponse(convId, _))
+  }
+
+  private def handlePostConvResponse(convId: ConvId, resp: Either[ErrorResponse, ConversationResponse]) = resp match {
+    case Right(response) =>
+      for {
+        _     <- convService.updateRemoteId(convId, response.id)
+        roles <- loadConversationRoles(Seq(response))
+        _     <- convService.updateConversationsWithDeviceStartMessage(Seq(response), roles)
+      } yield Success
+    case Left(resp@ErrorResponse(status, _, label)) =>
+      warn(l"got error: $resp")
+      val errorType = (status, label) match {
+        case (403, "not-connected") =>
+          Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER)
+        case (412, "missing-legalhold-consent") =>
+          Some(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_USER_MISSING_LEGAL_HOLD_CONSENT)
+        case _ =>
+          None
+      }
+
+      errorType.fold(Future.successful(SyncResult(resp))) { errorType =>
+        errorsService
+          .addErrorWhenActive(ErrorData(errorType, resp, convId))
+          .map(_ => SyncResult(resp))
+      }
   }
 
   def syncConvLink(convId: ConvId): Future[SyncResult] = {

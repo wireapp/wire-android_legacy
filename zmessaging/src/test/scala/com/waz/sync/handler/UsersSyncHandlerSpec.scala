@@ -10,6 +10,7 @@ import com.waz.sync.client.OtrClient.EncryptedContent
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
+import com.waz.zms.BuildConfig
 import com.wire.signals.CancellableFuture
 import org.scalamock.function.FunctionAdapter1
 import org.threeten.bp.Instant
@@ -98,35 +99,37 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
     }
 
     scenario("Don't post to users from other backends") {
-      // given
-      val domain = "chala.wire.link"
-      val otherDomain = "anta.wire.ling"
-      val self = UserData("self").copy(teamId = Some(teamId), domain = Some(domain))
-      (userService.getSelfUser _).expects().anyNumberOfTimes().returning(
-        Future.successful(Some(self))
-      )
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        // given
+        val domain = Domain("chala.wire.link")
+        val otherDomain = Domain("anta.wire.link")
+        val self = UserData("self").copy(teamId = Some(teamId), domain = domain)
+        (userService.getSelfUser _).expects().anyNumberOfTimes().returning(
+          Future.successful(Some(self))
+        )
 
-      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted, domain = Some(domain))
-      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted, domain = Some(domain))
-      val user3 = UserData("user3").copy(teamId = Some(teamId), connection = Accepted, domain = Some(otherDomain))
-      (usersStorage.values _).expects().anyNumberOfTimes().returning(
-        Future.successful(Vector(user1, user2, user3))
-      )
+        val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+        val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+        val user3 = UserData("user3").copy(teamId = Some(teamId), connection = Accepted, domain = otherDomain)
+        (usersStorage.values _).expects().anyNumberOfTimes().returning(
+          Future.successful(Vector(user1, user2, user3))
+        )
 
-      // then
-      (userService.isFederated(_ : UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData =>
-        user.domain.exists(_ != domain)
+        // then
+        (userService.isFederated(_: UserData)).expects(*).anyNumberOfTimes().onCall { user: UserData =>
+          user.domain != domain
+        }
+
+        (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
+          (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
+            checkAvailabilityStatus(message, Messages.Availability.Type.AVAILABLE)
+            recipients shouldEqual Some(Set(self.id, user1.id, user2.id))
+            Future.successful(Right(RemoteInstant(Instant.now())))
+        }
+
+        // when
+        result(handler.postAvailability(Availability.Available))
       }
-      
-      (otrSync.broadcastMessage _).expects(*, *, *, *).once().onCall {
-        (message: GenericMessage, _: Int, _: EncryptedContent, recipients: Option[Set[UserId]]) =>
-          checkAvailabilityStatus(message, Messages.Availability.Type.AVAILABLE)
-          recipients shouldEqual Some(Set(self.id, user1.id, user2.id))
-          Future.successful(Right(RemoteInstant(Instant.now())))
-      }
-
-      // when
-      result(handler.postAvailability(Availability.Available))
     }
 
     scenario("Post to to all team users and only connected non-team users") {

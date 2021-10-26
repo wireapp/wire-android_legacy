@@ -289,10 +289,10 @@ object SearchUIAdapter {
           getString(R.string.people_picker__search_result_team_conversations_header_title, name.str)
         case SectionViewItem(ContactsSection, _, _, _) =>
           getString(R.string.people_picker__search_result_connections_searched_header_title)
-        case SectionViewItem(DirectorySection, _, _, None) =>
+        case SectionViewItem(DirectorySection, _, _, domain) if domain.isEmpty =>
           getString(R.string.people_picker__search_result_others_header_title)
-        case SectionViewItem(DirectorySection, _, _, Some(domain)) =>
-          getString(R.string.people_picker__search_result_others_header_federated, domain)
+        case SectionViewItem(DirectorySection, _, _, domain) =>
+          getString(R.string.people_picker__search_result_others_header_federated, domain.str)
         case SectionViewItem(IntegrationsSection, _, _, _) =>
           getString(R.string.integrations_picker__section_title)
       }

@@ -15,6 +15,7 @@ class ConnectionSpecsFactoryTest : UnitTest() {
     }
 
     @Test
+    //@SF.Messages @TSFI.RESTfulAPI
     fun `Given connectionSpecs are created, then ensure list contains modern specification`() {
         val connectionSpecs = ConnectionSpecsFactory.create()
         with(connectionSpecs[0]) {

@@ -33,6 +33,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.threading.Threading
 import com.waz.utils._
+import com.waz.zms.BuildConfig
 import com.wire.signals.Signal
 import org.threeten.bp.Duration
 
@@ -54,6 +55,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   private val storedNotifications = Signal(Set.empty[NotificationData])
   private val processing = Signal(true)
+  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
 
   private def lastEventTime = RemoteInstant.apply(clock.instant())
 
@@ -64,7 +66,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   private val conv       = ConversationData(remoteId = rConvId, id = convId)
   private val content    = TextMessage("abc")
   private val from       = UserId("User1")
-  private lazy val event = GenericMessageEvent(rConvId, None, lastEventTime, from, None, content)
+  private lazy val event = GenericMessageEvent(rConvId, domain, lastEventTime, from,domain, content)
 
   private val msg = MessageData(
     MessageId(content.unpack._1.str),
@@ -375,10 +377,10 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val originalContent = GenericMessage(Uid("messageId"), Text("abc"))
 
       val editContent1 = GenericMessage(Uid("edit-id-1"), MsgEdit(MessageId(originalContent.unpack._1.str), Text("def")))
-      val editEvent1 = GenericMessageEvent(rConvId, None, edit1EventTime, from, None, editContent1)
+      val editEvent1 = GenericMessageEvent(rConvId, domain, edit1EventTime, from, domain, editContent1)
 
       val editContent2 = GenericMessage(Uid("edit-id-2"), MsgEdit(MessageId(editContent1.unpack._1.str), Text("ghi")))
-      val editEvent2 = GenericMessageEvent(rConvId, None, edit2EventTime, from, None, editContent2)
+      val editEvent2 = GenericMessageEvent(rConvId, domain, edit2EventTime, from, domain, editContent2)
 
       val originalNotification = NotificationData(
         id               = NotId(originalContent.unpack._1.str),
@@ -432,13 +434,13 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       val from = UserId("User1")
       val msgContent = GenericMessage(Uid("messageId"), Text("abc"))
-      val msgEvent = GenericMessageEvent(rConvId, None, RemoteInstant(clock.instant()), from, None, msgContent)
+      val msgEvent = GenericMessageEvent(rConvId, domain, RemoteInstant(clock.instant()), from, domain, msgContent)
 
       val deleteContent1 = GenericMessage(Uid(), MsgDeleted(rConvId, MessageId(toBeDeletedNotif.id.str)))
-      val deleteEvent1 = GenericMessageEvent(rConvId, None, RemoteInstant.apply(clock.instant()), from, None, deleteContent1)
+      val deleteEvent1 = GenericMessageEvent(rConvId, domain, RemoteInstant.apply(clock.instant()), from, domain, deleteContent1)
 
       val deleteContent2 = GenericMessage(Uid(), MsgRecall(MessageId(msgContent.unpack._1.str)))
-      val deleteEvent2 = GenericMessageEvent(rConvId, None, RemoteInstant.apply(clock.instant()), from, None, deleteContent2)
+      val deleteEvent2 = GenericMessageEvent(rConvId, domain, RemoteInstant.apply(clock.instant()), from, domain, deleteContent2)
 
       setup(
         availability = Availability.Available,
@@ -476,16 +478,16 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val likedMessageId = MessageId("message")
 
       val like1Content = GenericMessage(Uid("like1-id"), Reaction(likedMessageId, Liking.Action.Like, LegalHoldStatus.UNKNOWN))
-      val like1Event = GenericMessageEvent(rConvId, None, like1EventTime, from, None, like1Content)
+      val like1Event = GenericMessageEvent(rConvId, domain, like1EventTime, from, domain, like1Content)
 
       val unlikeContent = GenericMessage(Uid("unlike-id"), Reaction(likedMessageId, Liking.Action.Unlike, LegalHoldStatus.UNKNOWN))
-      val unlikeEvent = GenericMessageEvent(rConvId, None, unlikeEventTime, from, None, unlikeContent)
+      val unlikeEvent = GenericMessageEvent(rConvId, domain, unlikeEventTime, from, domain, unlikeContent)
 
       val like2Content = GenericMessage(Uid("like2-id"), Reaction(likedMessageId, Liking.Action.Like, LegalHoldStatus.UNKNOWN))
-      val like2Event = GenericMessageEvent(rConvId, None, like2EventTime, from, None, like2Content)
+      val like2Event = GenericMessageEvent(rConvId, domain, like2EventTime, from, domain, like2Content)
 
       val otherLikeContent = GenericMessage(Uid("like3-id"), Reaction(likedMessageId, Liking.Action.Like, LegalHoldStatus.UNKNOWN))
-      val otherLikeEvent = GenericMessageEvent(rConvId, None, otherEventTime, from2, None, otherLikeContent)
+      val otherLikeEvent = GenericMessageEvent(rConvId, domain, otherEventTime, from2, domain, otherLikeContent)
 
       val originalMessage =
         MessageData(
@@ -527,13 +529,13 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   feature ("Conversation state events") {
 
     scenario("Group creation events") {
-      val domain = "anta"
       val generatedMessageId = MessageId()
-      val event = CreateConversationEvent(rConvId, None, RemoteInstant(clock.instant()), from, None, ConversationResponse(
-        rConvId, None, Some(Name("conv")), from, ConversationType.Group, None, MuteSet.AllAllowed,
-        RemoteInstant.Epoch, archived = false, RemoteInstant.Epoch, Set.empty, None, None, None,
-        Map(QualifiedId(account1Id, domain) -> MemberRole, QualifiedId(from, domain) -> AdminRole), None
-      ))
+      val event = CreateConversationEvent(rConvId, domain, RemoteInstant(clock.instant()), from, domain,
+        ConversationResponse(
+          rConvId, domain, Some(Name("conv")), from, ConversationType.Group, None, MuteSet.AllAllowed,
+          RemoteInstant.Epoch, archived = false, RemoteInstant.Epoch, Set.empty, None, None, None,
+          Map(QualifiedId(account1Id, domain) -> MemberRole, QualifiedId(from, domain) -> AdminRole), None
+        ))
 
       val memberJoinMsg = MessageData(
         generatedMessageId,

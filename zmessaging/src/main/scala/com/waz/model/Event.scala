@@ -62,7 +62,7 @@ sealed trait OtrClientEvent extends UserEvent
 
 sealed trait RConvEvent extends Event {
   val convId: RConvId
-  val convDomain: Option[String]
+  val convDomain: Domain
 }
 
 object RConvEvent extends (Event => RConvId) {
@@ -74,17 +74,17 @@ object RConvEvent extends (Event => RConvId) {
 
 final case class UserUpdateEvent(user: UserInfo, removeIdentity: Boolean = false) extends UserEvent
 final case class UserConnectionEvent(convId:       RConvId,
-                                     convDomain:   Option[String],
+                                     convDomain:   Domain,
                                      from:         UserId,
                                      to:           UserId,
-                                     toDomain:     Option[String],
+                                     toDomain:     Domain,
                                      message:      Option[String],
                                      status:       ConnectionStatus,
                                      lastUpdated:  RemoteInstant,
                                      fromUserName: Option[Name] = None
                                     ) extends UserEvent with RConvEvent {
-  def qualifiedConvId: Option[RConvQualifiedId] = convDomain.map(RConvQualifiedId(convId, _))
-  def qualifiedTo: Option[QualifiedId] = toDomain.map(QualifiedId(to, _))
+  def qualifiedConvId: Option[RConvQualifiedId] = convDomain.mapOpt(RConvQualifiedId(convId, _))
+  def qualifiedTo: Option[QualifiedId] = toDomain.mapOpt(QualifiedId(to, _))
 }
 final case class UserDeleteEvent(user: UserId) extends UserEvent
 final case class OtrClientAddEvent(client: Client) extends OtrClientEvent
@@ -95,13 +95,13 @@ final case class PushTokenRemoveEvent(token: PushToken, senderId: String, client
 sealed trait ConversationEvent extends RConvEvent {
   val time: RemoteInstant
   val from: UserId
-  val fromDomain: Option[String]
+  val fromDomain: Domain
 }
 
 // events that affect conversation state
 sealed trait ConversationStateEvent extends ConversationEvent {
   val convId: RConvId
-  val convDomain: Option[String]
+  val convDomain: Domain
 }
 
 // events that add or modify some message
@@ -110,56 +110,56 @@ sealed trait MessageEvent extends ConversationEvent
 final case class UnknownEvent(json: JSONObject) extends Event
 final case class UnknownConvEvent(json: JSONObject) extends ConversationEvent {
   override val convId: RConvId = RConvId()
-  override val convDomain: Option[String] = None
+  override val convDomain: Domain = Domain.Empty
   override val from: UserId = UserId()
-  override val fromDomain: Option[String] = None
+  override val fromDomain: Domain = Domain.Empty
   override val time: RemoteInstant = RemoteInstant.Epoch //TODO: epoch?
 }
 
 final case class CreateConversationEvent(convId:     RConvId,
-                                         convDomain: Option[String],
+                                         convDomain: Domain,
                                          time:       RemoteInstant,
                                          from:       UserId,
-                                         fromDomain: Option[String],
+                                         fromDomain: Domain,
                                          data:       ConversationResponse)
   extends ConversationStateEvent
 
 final case class DeleteConversationEvent(convId:     RConvId,
-                                         convDomain: Option[String],
+                                         convDomain: Domain,
                                          time:       RemoteInstant,
                                          from:       UserId,
-                                         fromDomain: Option[String])
+                                         fromDomain: Domain)
   extends ConversationStateEvent
 
 final case class MessageTimerEvent(convId:     RConvId,
-                                   convDomain: Option[String],
+                                   convDomain: Domain,
                                    time:       RemoteInstant,
                                    from:       UserId,
-                                   fromDomain: Option[String],
+                                   fromDomain: Domain,
                                    duration:   Option[FiniteDuration])
   extends MessageEvent with ConversationStateEvent
 
 final case class RenameConversationEvent(convId:     RConvId,
-                                         convDomain: Option[String],
+                                         convDomain: Domain,
                                          time:       RemoteInstant,
                                          from:       UserId,
-                                         fromDomain: Option[String],
+                                         fromDomain: Domain,
                                          name:       Name)
   extends MessageEvent with ConversationStateEvent
 
 final case class GenericMessageEvent(convId:     RConvId,
-                                     convDomain: Option[String],
+                                     convDomain: Domain,
                                      time:       RemoteInstant,
                                      from:       UserId,
-                                     fromDomain: Option[String],
-                                     content:     GenericMessage)
+                                     fromDomain: Domain,
+                                     content:    GenericMessage)
   extends MessageEvent
 
 final case class CallMessageEvent(convId:     RConvId,
-                                  convDomain: Option[String],
+                                  convDomain: Domain,
                                   time:       RemoteInstant,
                                   from:       UserId,
-                                  fromDomain: Option[String],
+                                  fromDomain: Domain,
                                   sender: ClientId,
                                   content: String)
   extends MessageEvent
@@ -179,44 +179,44 @@ final case class IdentityChangedError(from: UserId, sender: ClientId) extends Ot
 final case class UnknownOtrErrorEvent(json: JSONObject) extends OtrError
 
 final case class OtrErrorEvent(convId:     RConvId,
-                               convDomain: Option[String],
+                               convDomain: Domain,
                                time:       RemoteInstant,
                                from:       UserId,
-                               fromDomain: Option[String],
+                               fromDomain: Domain,
                                error:      OtrError)
   extends MessageEvent
 
 final case class SessionReset(convId:     RConvId,
-                              convDomain: Option[String],
+                              convDomain: Domain,
                               time:       RemoteInstant,
                               from:       UserId,
-                              fromDomain: Option[String],
+                              fromDomain: Domain,
                               sender:     ClientId)
   extends MessageEvent
 
 final case class TypingEvent(convId:     RConvId,
-                             convDomain: Option[String],
+                             convDomain: Domain,
                              time:       RemoteInstant,
                              from:       UserId,
-                             fromDomain: Option[String],
+                             fromDomain: Domain,
                              isTyping:   Boolean)
   extends ConversationEvent
 
 final case class MemberJoinEvent(convId:     RConvId,
-                                 convDomain: Option[String],
+                                 convDomain: Domain,
                                  time:       RemoteInstant,
                                  from:       UserId,
-                                 fromDomain: Option[String],
+                                 fromDomain: Domain,
                                  userIds:    Seq[UserId],
                                  users:      Map[QualifiedId, ConversationRole],
                                  firstEvent: Boolean = false)
   extends MessageEvent with ConversationStateEvent
 
 final case class MemberLeaveEvent(convId:     RConvId,
-                                  convDomain: Option[String],
+                                  convDomain: Domain,
                                   time:       RemoteInstant,
                                   from:       UserId,
-                                  fromDomain: Option[String],
+                                  fromDomain: Domain,
                                   userIds:    Seq[UserId],
                                   reason:     Option[MemberLeaveReason])
   extends MessageEvent with ConversationStateEvent
@@ -227,26 +227,26 @@ object MemberLeaveReason {
 }
 
 final case class MemberUpdateEvent(convId:     RConvId,
-                                   convDomain: Option[String],
+                                   convDomain: Domain,
                                    time:       RemoteInstant,
                                    from:       UserId,
-                                   fromDomain: Option[String],
+                                   fromDomain: Domain,
                                    state:      ConversationState)
   extends ConversationStateEvent
 
 final case class ConversationReceiptModeEvent(convId:      RConvId,
-                                              convDomain:  Option[String],
+                                              convDomain:  Domain,
                                               time:        RemoteInstant,
                                               from:        UserId,
-                                              fromDomain:  Option[String],
+                                              fromDomain:  Domain,
                                               receiptMode: Int)
   extends MessageEvent with ConversationStateEvent
 
 final case class ConnectRequestEvent(convId:     RConvId,
-                                     convDomain: Option[String],
+                                     convDomain: Domain,
                                      time:       RemoteInstant,
                                      from:       UserId,
-                                     fromDomain: Option[String],
+                                     fromDomain: Domain,
                                      message:    String,
                                      recipient:  UserId,
                                      name:       Name,
@@ -254,27 +254,27 @@ final case class ConnectRequestEvent(convId:     RConvId,
   extends MessageEvent with ConversationStateEvent
 
 final case class ConversationAccessEvent(convId:     RConvId,
-                                         convDomain: Option[String],
+                                         convDomain: Domain,
                                          time:       RemoteInstant,
                                          from:       UserId,
-                                         fromDomain: Option[String],
+                                         fromDomain: Domain,
                                          access:     Set[Access],
                                          accessRole: AccessRole)
   extends ConversationStateEvent
 
 final case class ConversationCodeUpdateEvent(convId:     RConvId,
-                                             convDomain: Option[String],
+                                             convDomain: Domain,
                                              time:       RemoteInstant,
                                              from:       UserId,
-                                             fromDomain: Option[String],
+                                             fromDomain: Domain,
                                              link:       ConversationData.Link)
   extends ConversationStateEvent
 
 final case class ConversationCodeDeleteEvent(convId:     RConvId,
-                                             convDomain: Option[String],
+                                             convDomain: Domain,
                                              time:       RemoteInstant,
                                              from:       UserId,
-                                             fromDomain: Option[String])
+                                             fromDomain: Domain)
   extends ConversationStateEvent
 
 sealed trait OtrEvent extends ConversationEvent {
@@ -284,10 +284,10 @@ sealed trait OtrEvent extends ConversationEvent {
 }
 
 final case class OtrMessageEvent(convId:       RConvId,
-                                 convDomain:   Option[String],
+                                 convDomain:   Domain,
                                  time:         RemoteInstant,
                                  from:         UserId,
-                                 fromDomain:   Option[String],
+                                 fromDomain:   Domain,
                                  sender:       ClientId,
                                  recipient:    ClientId,
                                  ciphertext:   Array[Byte],
@@ -390,10 +390,10 @@ object Event {
       val (to, toDomain) = Event.decodeQUserId('to, 'qualified_to)
       UserConnectionEvent(
         convId,
-        convDomain,
+        Domain(convDomain),
         'from,
         to,
-        toDomain,
+        Domain(toDomain),
         'message,
         ConnectionStatus('status),
         JsonDecoder.decodeISORemoteInstant('last_update),
@@ -451,10 +451,10 @@ object ConversationEvent extends DerivedLogTag {
 
       MemberJoinEvent(
         convId,
-        convDomain,
+        Domain(convDomain),
         time,
         from,
-        fromDomain,
+        Domain(fromDomain),
         decodeUserIdSeq('user_ids)(data),
         decodeQualifiedIdsWithRoles('users)(data),
         decodeString('id).startsWith("1.")
@@ -462,8 +462,10 @@ object ConversationEvent extends DerivedLogTag {
     }
 
     override def apply(implicit js: JSONObject): ConversationEvent = Try {
-      val (rConvId, convDomain) = Event.decodeRConvId
-      val (from, fromDomain) = Event.decodeQUserId('from, 'qualified_from)
+      val (rConvId, cd) = Event.decodeRConvId
+      val convDomain = Domain(cd)
+      val (from, fd) = Event.decodeQUserId('from, 'qualified_from)
+      val fromDomain = Domain(fd)
       lazy val d = if (js.has("data") && !js.isNull("data")) Try(js.getJSONObject("data")).toOption else None
 
       val time = RemoteInstant(decodeISOInstant('time))
@@ -536,10 +538,10 @@ object MessageEvent {
 
     private def setFields(json: JSONObject,
                           convId: RConvId,
-                          convDomain: Option[String],
+                          convDomain: Domain,
                           time: RemoteInstant,
                           from: UserId,
-                          fromDomain: Option[String],
+                          fromDomain: Domain,
                           eventType: String): JSONObject = {
       json
         .put("convId", convId.str)
@@ -547,12 +549,11 @@ object MessageEvent {
         .put("from", from.str)
         .put("type", eventType)
         .setType(eventType)
-      convDomain.foreach { domain =>
-        json.put("qualified_conversation", QualifiedEncoder.apply((convId, domain)) )
-      }
-      fromDomain.foreach { domain =>
-        json.put("qualified_from", QualifiedEncoder.apply((convId, domain)) )
-      }
+      if (convDomain.isDefined)
+        json.put("qualified_conversation", QualifiedEncoder.apply((convId, convDomain.str)) )
+
+      if (fromDomain.isDefined)
+        json.put("qualified_from", QualifiedEncoder.apply((convId, fromDomain.str)) )
 
       json
     }

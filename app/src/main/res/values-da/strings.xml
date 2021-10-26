@@ -1,0 +1,1425 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--*********************************************** ERRORS ***********************************************-->
+    <string name="generic_error_header">Noget gik galt</string>
+    <string name="generic_error_message">Please try again</string>
+    <string name="internet_connectivity_error_header">Ingen internetforbindelse</string>
+    <string name="internet_connectivity_error_message">Please check your Internet connection and try again</string>
+    <string name="too_many_attempts_header">For mange forsøg</string>
+    <string name="email_login_later_message">PLEASE TRY TO LOG IN LATER</string>
+    <string name="phone_login_later_message">Please try to log in later</string>
+    <string name="email_exists_header">Email adresse allerede brugt</string>
+    <string name="email_exists_message">THIS EMAIL ADDRESS HAS ALREADY BEEN REGISTERED</string>
+    <string name="email_invalid_header">Ugyldig e-mailadresse</string>
+    <string name="email_invalid_message">PLEASE ENTER A VALID EMAIL ADDRESS</string>
+    <string name="invalid_credentials_header">Ugyldige oplysninger</string>
+    <string name="invalid_credentials_message">PLEASE VERIFY YOUR DETAILS AND TRY AGAIN</string>
+    <string name="phone_exists_header">Telefonnummeret er allerede i brug</string>
+    <string name="phone_exists_message">The phone number you provided has already been registered. Please try again</string>
+    <string name="phone_invalid_format_header">Ugyldigt telefonnummer</string>
+    <string name="phone_invalid_format_message">Indtast et gyldigt telefonnummer</string>
+    <string name="phone_password_exists_header">Password exists</string>
+    <string name="phone_password_exists_message">This account already has a password and email associated. Please log in by email.</string>
+    <string name="invalid_code_header">Ugyldig kode</string>
+    <string name="incorrect_code_header">Forkert kode</string>
+    <string name="wrong_code_message">PLEASE ENTER A VALID CODE</string>
+    <string name="phone_pending_login_header">Koden er allerede sendt</string>
+    <string name="phone_pending_login_message">Vi har allerede sendt dig en kode via SMS. Tryk på Gensend efter 10 minutter for at få en ny.</string>
+    <string name="phone_budget_exhausted_header">For mange anmodninger</string>
+    <string name="phone_budget_exhausted_message">Prøv venligst igen senere.</string>
+    <string name="conversation_input_bar_message_too_long_title">Besked for lang</string>
+    <string name="conversation_input_bar_message_too_long_message">You can send messages up to %1$s characters long.</string>
+    <string name="conversation_input_bar_dialog_ok">OK</string>
+    <!--*********************************************** ERRORS ***********************************************-->
+    <string name="permissions_denied_dialog_settings">Indstillinger</string>
+    <string name="camera_not_available">KAMERA IKKE TILGÆNGELIGT</string>
+    <string name="camera_permissions_denied_title">Kamera ikke tilgængeligt</string>
+    <string name="camera_permissions_denied_message">For at tage og sende billeder, giv tilladelse til brug af kameraet</string>
+    <!-- Registration and Sign in -->
+    <string name="welcome__terms_of_service">VED AT FORTSÆTTE ACCEPTERER DU _VILKÅR FOR ANVENDELSE_.</string>
+    <string name="profile__name__guidance__tooshort__title">MINDST 2 TEGN</string>
+    <string name="profile__email__placeholder">E-mail</string>
+    <string name="profile__password__placeholder">Adgangskode</string>
+    <string name="profile__password__guidance__tooshort__title">MINDST 8 TEGN</string>
+    <string name="profile__email__verify__instructions">Vi har sendt en e-mail til \n[[%1$s]]. \nFølg linket for at bekræfte din adresse.</string>
+    <string name="profile__email__verify__didnt_get">Fik du ikke beskeden?</string>
+    <string name="profile__email__verify__resend">Gensend</string>
+    <string name="profile__guidance__invalid_email">The email address you entered is not valid. Please verify and try again</string>
+    <string name="new_reg__code_resent">En ny kode blev sendt til dig via SMS</string>
+    <string name="new_reg__email_code_resent">A new code was sent to you via email</string>
+    <string name="new_reg__code_resent__call">Vent på et opkald</string>
+    <string name="new_reg__default_country">dk</string>
+    <!-- consider updating this for every new language -->
+    <string name="your_phone_number">Your phone number</string>
+    <!-- Receive email/sms invitation -->
+    <!-- People picker/start UI -->
+    <string name="pick_user_search_focus">\u0020 SEARCH</string>
+    <string name="pick_user_search_hint">SEARCH</string>
+    <string name="choose_conversation">SEARCH</string>
+    <string name="people_picker__top_users_header_title">Top personer</string>
+    <string name="people_picker__search_result_conversations_header_title">Grupper</string>
+    <string name="people_picker__search_result_team_conversations_header_title">%1$s Grupper</string>
+    <string name="people_picker__search_result_connections_searched_header_title">Kontakter</string>
+    <string name="people_picker__search_result_others_header_title">Connect with Wire</string>
+    <string name="people_picker__search_result_others_header_federated">Connect with %1$s</string>
+    <string name="people_picker__search_result__expander_title">Vis alle %1$s ↓</string>
+    <string name="people_picker__search_people">PERSONER</string>
+    <string name="people_picker__search_services">SERVICES</string>
+    <string name="receive_news_and_offers_request_title">Newsletter</string>
+    <string name="receive_news_and_offers_request_body">Do you want to receive news and product updates from Wire via email? You can unsubscribe at any time.</string>
+    <string name="crashes_and_analytics_request_title">Help us make Wire better</string>
+    <string name="crashes_and_analytics_request_body">I agree that Wire may create and use anonymous usage and error reports to improve the Wire App. I can revoke this consent at any time.</string>
+    <string name="crashes_and_analytics_request_no">Nej</string>
+    <string name="crashes_and_analytics_request_agree">Besvar</string>
+    <!-- Request Password dialog -->
+    <string name="request_password_ok">OK</string>
+    <string name="request_password_cancel">Annuller</string>
+    <string name="request_password_biometric_description">Unlock using biometric authentication.</string>
+    <string name="request_password_biometric_cancel">Annuller</string>
+    <string name="request_password_error">Wrong passcode</string>
+    <!-- Bots / Integrations / Services -->
+    <string name="integrations_picker__section_title">Tjenester</string>
+    <string name="integrations_errors_add_service">Tilføje tjeneste ikke muligt</string>
+    <string name="integrations_errors_service_unavailable">The service is unavailable at the moment</string>
+    <string name="conversation_errors_full">The conversation is full</string>
+    <!-- Invite -->
+    <!-- Should not use newline in the dialog message, not supported by all devices, text will be cut off -->
+    <string name="people_picker__invite__share_details_dialog">Del Wire med dine venner.</string>
+    <string name="people_picker__invite__share_text__header">%1$s ønsker at forbinde sig på Wire</string>
+    <string name="people_picker__invite__share_text__body">Jeg er på Wire, søg efter %1$s eller besøg get.wire.com</string>
+    <!-- Conversation: Quick menu -->
+    <string name="conversation_quick_menu__conversation_button__single_label">ÅBN</string>
+    <!-- Conversation: System messages -->
+    <string name="content__system__other_joined">[[%1$s]] joined</string>
+    <string name="content__system__you_joined">[[You]] joined</string>
+    <string name="content__system__other_renamed_conv">[[%1$s]] renamed the conversation</string>
+    <string name="content__system__you_renamed_conv">[[You]] renamed the conversation</string>
+    <!-- Read receipts: System messages -->
+    <string name="content__system__read_receipts_on">Read receipts are on</string>
+    <string name="content__system__read_receipts_off">Read receipts are off</string>
+    <string name="content__system__read_receipts_someone_turned_on">[[%1$s]] turned read receipts on for everyone</string>
+    <string name="content__system__read_receipts_someone_turned_off">[[%1$s]] turned read receipts off for everyone</string>
+    <string name="content__system__read_receipts_you_turned_on">[[You]] turned read receipts on for everyone</string>
+    <string name="content__system__read_receipts_you_turned_off">[[You]] turned read receipts off for everyone</string>
+    <!-- Add people -->
+    <string name="content__system__someone_added_people">[[%1$s]] added %2$s to the conversation</string>
+    <plurals name="content__system__someone_added_people_with_others">
+        <item quantity="one">[[%1$s]] added %2$s and _%3$s other to the conversation_</item>
+        <item quantity="other">[[%1$s]] added %2$s and _%3$s others to the conversation_</item>
+    </plurals>
+    <string name="content__system__someone_added_you">[[%1$s]] added you to the conversation</string>
+    <plurals name="content__system__someone_added_people_and_you_with_others">
+        <item quantity="one">[[%1$s]] added %2$s, you and _%3$s other to the conversation_</item>
+        <item quantity="other">[[%1$s]] added %2$s, you and _%3$s others to the conversation_</item>
+    </plurals>
+    <string name="content__system__you_added_people">You added %1$s to the conversation</string>
+    <plurals name="content__system__you_added_people_with_others">
+        <item quantity="one">You added %1$s and _%2$s other to the conversation_</item>
+        <item quantity="other">You added %1$s and _%2$s others to the conversation_</item>
+    </plurals>
+    <!-- Remove people -->
+    <string name="content__system__other_removed_other">[[%1$s]] fjernede %2$s</string>
+    <string name="content__system__other_removed_someone">[[%1$s]] removed someone</string>
+    <string name="content__system__someone_removed_other">Someone removed %2$s</string>
+    <string name="content__system__other_removed_you">[[%1$s]] fjernede dig</string>
+    <string name="content__system__someone_removed_you">Someone removed you</string>
+    <string name="content__system__you_removed_other">You removed %1$s</string>
+    <string name="content__system__you_removed_someone">You removed someone</string>
+    <string name="content__system__you_left">[[Du]] har forladt</string>
+    <string name="content__system__other_left">[[%1$s]] har forladt</string>
+    <string name="content__system__someone_left">Someone left</string>
+    <string name="content__system__other_was_removed">%1$s was removed</string>
+    <string name="content__system__someone_was_removed">Someone was removed</string>
+    <string name="content__system__legalhold_conflict__you_were_removed">[[You]] were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__someone_was_removed">Someone was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__other_was_removed">%1$s was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__others_were_removed">%1$s were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <!-- Create conversation -->
+    <string name="content__system__you_started_conversation">You started the conversation</string>
+    <string name="content__system__other_started_conversation">%1$s started the conversation</string>
+    <string name="content__system__with_you_only">with you</string>
+    <string name="content__system__with_list_only">with %1$s</string>
+    <plurals name="content__system__with_others_only">
+        <item quantity="one">with %1$s and _%2$s other_</item>
+        <item quantity="other">with %1$s and _%2$s others_</item>
+    </plurals>
+    <string name="content__system__with_list_and_you">with %1$s and you</string>
+    <plurals name="content__system__with_others_and_you">
+        <item quantity="one">with %1$s, you and _%2$s other_</item>
+        <item quantity="other">with %1$s, you and _%2$s others_</item>
+    </plurals>
+    <!-- Conversation: missed call -->
+    <string name="content__missed_call__you_called">[[YOU]] RINGEDE</string>
+    <string name="content__missed_call__xxx_called">[[%1$s]] RINGEDE</string>
+    <string name="content__you_pinged">[[DU]] PINGEDE</string>
+    <string name="content__xxx_pinged">[[%1$s]] PINGEDE</string>
+    <!-- Conversation: E2EE system messages -->
+    <string name="content__otr__message_error">A message from [[%1$s]] could not be decrypted.\n _FIX TO DECRYPT FUTURE MESSAGES_</string>
+    <string name="content__otr__message_error_fixed">You can now decrypt future messages from [[%1$s]]. To recover lost messages, [[ask %2$s to resend them.]]\n(FIXED ERROR: [[%3$s]] ID: %4$s)</string>
+    <string name="content__otr__message_error_you">A MESSAGE FROM YOU WAS NOT RECEIVED. _WHY?_</string>
+    <string name="content__otr__identity_changed_error">[[%1$s]]S ENHEDSIDENTITET ÆNDRET. BESKED IKKE LEVERET. _VIS MERE_</string>
+    <string name="content__otr__identity_changed_error_you">YOUR DEVICE IDENTITY CHANGED. UNDELIVERED MESSAGE. _LEARN MORE_</string>
+    <string name="content__session_reset">[[%1$s was unable to decrypt some of your messages but has solved the issue.]] This affected all conversations you share together.</string>
+    <string name="content__otr__someone_added_new_device__message">%1$s started using a _new device_</string>
+    <string name="content__otr__someone_and_you_added_new_device__message">%1$s and you started using a _new device_</string>
+    <string name="content__otr__someone_and_others_added_new_device__message">%1$s and %2$s others started using a _new device_</string>
+    <string name="content__otr__someone_others_and_you_added_new_device__message">%1$s, %2$s others and you started using a _new device_</string>
+    <string name="content__otr__start_this_device__message">[[DU]] BEGYNDTE AT BRUGE _DENNE ENHED_</string>
+    <string name="content__otr__all_fingerprints_verified">ALLE FINGERAFTRYK ER VERIFICERET</string>
+    <string name="content__otr__lost_history">DU HAR IKKE BRUGT DENNE ENHED ET STYKKE TID. NOGLE BESKEDER VISES EVT. IKKE HER.</string>
+    <string name="content__otr__unverified_device__message">[[DU]] UVERIFICEREDE EN AF _%1$s\'s ENHEDER_</string>
+    <string name="content__otr__your_unverified_device__message">[[DU]] UVERIFICEREDE EN AF _DINE ENHEDER_</string>
+    <string name="content__otr__new_member__message">NYE FOLK HAR SLUTTET SIG TIL. _VERIFICÉR ENHEDER_</string>
+    <string name="content__otr__legalhold_enabled__message">This conversation is under legal hold. _LEARN MORE_</string>
+    <string name="content__otr__legalhold_disabled__message">Legal hold deactivated for this conversation</string>
+    <!-- File transfer -->
+    <string name="content__file__status__default">%1$s</string>
+    <string name="content__file__status__uploading__minimized">SENDER&#8230;</string>
+    <string name="content__file__status__cancelled__minimized">AFBRUDT&#8230;</string>
+    <string name="content__file__status__downloading__minimized">DOWNLOADER&#8230;</string>
+    <string name="content__file__status__download_failed__minimized">DOWNLOAD MISLYKKEDES</string>
+    <string name="content__file__status__upload_failed__minimized">UPLOAD MISLYKKEDES</string>
+    <string name="content__file__status__uploading">%1$s · UPLOADER&#8230;</string>
+    <string name="content__file__status__cancelled">%1$s · AFBRUDT&#8230;</string>
+    <string name="content__file__status__downloading">%1$s · DOWNLOADER&#8230;</string>
+    <string name="content__file__status__download_failed">%1$s · DOWNLOAD MISLYKKEDES</string>
+    <string name="content__file__status__upload_failed">%1$s · UPLOAD MISLYKKEDES</string>
+    <!-- used when there's a non-empty file extension, e.g. "300KB · PDF" -->
+    <string name="content__file__status__default__size_and_extension">%1$s · %2$s</string>
+    <string name="content__file__status__uploading__size_and_extension">%1$s · %2$s · UPLOADER&#8230;</string>
+    <string name="content__file__status__cancelled__size_and_extension">%1$s · %2$s · AFBRUDT&#8230;</string>
+    <string name="content__file__status__downloading__size_and_extension">%1$s · %2$s · HENTER&#8230;</string>
+    <string name="content__file__status__download_failed__size_and_extension">%1$s · %2$s · _OWNLOAD MISLYKKEDES</string>
+    <string name="content__file__status__upload_failed__size_and_extension">%1$s · %2$s · UPLOAD MISLYKKEDES</string>
+    <string name="content__file__action__open">ÅBEN</string>
+    <string name="content__file__action__save">GEM</string>
+    <string name="content__file__action__open__no_app_found">Der blev ikke fundet en app, som kan åbne denne type fil</string>
+    <string name="content__file__action__save_completed">Fil gemt</string>
+    <string name="content__file__action__save_error">Kunne ikke gemme fil</string>
+    <string name="file_restrictions__sender_error">Sharing files with the .%1$s extension is not permitted by your organization</string>
+    <string name="file_restrictions__receiver_error">File from %1$s can\'t be opened.</string>
+    <string name="content__location__no_map_placeholder">PLACERINGEN VISES PÅ KORTET, NÅR DU ER ONLINE IGEN.</string>
+    <!-- Conversation actions -->
+    <string name="conversation__action__clear_content">Slet indhold&#8230;</string>
+    <string name="conversation__action__delete_group">Delete group&#8230;</string>
+    <string name="conversation__action__archive">Arkiv</string>
+    <string name="conversation__action__unarchive">Fjern fra arkiv</string>
+    <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>
+    <string name="conversation__action__create_group">OPRET GRUPPE</string>
+    <string name="conversation__action__open_conversation">OPEN CONVERSATION</string>
+    <string name="conversation__action__notifications">Notifications&#8230;</string>
+    <string name="conversation__action__silence">Lyd fra</string>
+    <string name="conversation__action__unsilence">Lyd til</string>
+    <string name="conversation__action__leave">Forlad gruppen&#8230;</string>
+    <string name="conversation__action__call">Ring op</string>
+    <string name="conversation__action__picture">Billede</string>
+    <string name="conversation__action__block">Bloker kontakt&#8230;</string>
+    <string name="conversation__action__unblock">Fjern blokering</string>
+    <string name="conversation__action__remove_member">Fjern fra gruppe&#8230;</string>
+    <string name="conversation__action__add_to_favorites">Add to Favorites</string>
+    <string name="conversation__action__remove_from_favorites">Remove from Favorites</string>
+    <string name="conversation__action__move_to_folder">Move to&#8230;</string>
+    <string name="conversation__action__remove_from_folder">Remove from \"%1$s\"</string>
+    <string name="conversation__action__leave_and_clear">\tLeave and clear content</string>
+    <string name="conversation__action__leave_only">\tLeave group</string>
+    <string name="conversation__action__clear_and_leave">\tClear content and leave</string>
+    <string name="conversation__action__clear_only">\tClear content</string>
+    <string name="conversation__action__notifications_everything">Everything</string>
+    <string name="conversation__action__notifications_mentions_and_replies">Mentions and Replies</string>
+    <string name="conversation__action__notifications_nothing">Nothing</string>
+    <string name="conversation__action__notifications_title">Notify me about:</string>
+    <!-- Conversation: Profile Popover -->
+    <!-- Calling/voice -->
+    <string name="calling__cannot_start__title">Microphone required</string>
+    <string name="calling__cannot_start__message">For at ringe op, skal du afslutte dit igangværende opkald.</string>
+    <string name="calling__cannot_start__no_permission__message">Go to Settings and allow Wire to access the microphone.</string>
+    <string name="calling__cannot_start__cancel__message">ANNULLER</string>
+    <string name="calling__cannot_start__no_camera_permission__message">Wire doesn\'t have access to the camera</string>
+    <string name="calling__video_call__slow_connection__message">Du kan opleve problemer under opkaldet</string>
+    <string name="incoming__controls__ongoing__speaker">HØJTALER</string>
+    <string name="incoming__controls__ongoing__mute">LYD FRA</string>
+    <string name="incoming__controls__ongoing__video">VIDEO</string>
+    <string name="incoming__controls__ongoing__flip">FLIP</string>
+    <string name="ongoing__poor_connection_message">VIDEO STOPPET GRUNDET DÅRLIGT FORBINDELSE</string>
+    <string name="calling__self_preview_unavailable_long">KAMERA IKKE TILGÆNGELIGT</string>
+    <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
+    <string name="incoming__controls__ongoing__camera">KAMERA</string>
+    <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
+    <string name="calling__header__joining">Forbinder&#8230;</string>
+    <string name="calling__header__outgoing_subtitle">Ringer op&#8230;</string>
+    <string name="calling__header__outgoing_video_subtitle">Ringer op&#8230;</string>
+    <string name="calling__header__incoming_subtitle">Ringer op&#8230;</string>
+    <string name="calling__header__incoming_subtitle__video">Ringer op&#8230;</string>
+    <string name="calling__header__incoming_subtitle__group">%1$s is calling&#8230;</string>
+    <string name="call_banner_joining">Forbinder&#8230;</string>
+    <string name="call_banner_outgoing">Calling %1$S&#8230;</string>
+    <string name="call_banner_incoming">%1$s is calling&#8230;</string>
+    <string name="call_banner_incoming_group">%1$s \u30FB %2$s is calling&#8230;</string>
+    <string name="call_banner_tap_to_return_to_call">Tap to return to call \u30FB %1$s</string>
+    <string name="call_error_unsupported_version_title">Please update Wire</string>
+    <string name="call_error_unsupported_version_message">You received a call that isn\'t supported by this version of Wire.\n\nGet the latest version in the Play Store.</string>
+    <string name="call_error_unsupported_version_button_ok">Go to Play Store</string>
+    <string name="call_error_unsupported_version_button_dismiss">Senere</string>
+    <string name="calling_ongoing_call_title">Ongoing call</string>
+    <string name="calling_ongoing_call_start_message">A call is active in another conversation.\nCalling here will hang up the other call.</string>
+    <string name="calling_ongoing_call_start_anyway">CALL ANYWAY</string>
+    <string name="calling_ongoing_call_join_message">A call is active in another conversation.\nJoining this call will hang up the other one.</string>
+    <string name="calling_ongoing_call_join_anyway">JOIN ANYWAY</string>
+    <string name="calling_ongoing_call_participants_header">PARTICIPANTS</string>
+    <string name="calling_ongoing_call_audio_message">You can\'t record an audio message while on a call</string>
+    <string name="calling_ongoing_call_video_message">You can\'t record a video message while on a call</string>
+    <!-- Calling in group conversation -->
+    <string name="group_calling_title">Starte et opkald</string>
+    <string name="group_calling_message" tools:ignore="PluralsCandidate">This will call %1$s people</string>
+    <string name="group_calling_confirm">Ring op</string>
+    <string name="calling_self">%s (You)</string>
+    <string name="calling_no_active_video_speakers">No active video speakers...</string>
+    <string name="calling_no_active_speakers">No active speakers...</string>
+    <string name="calling_toggle_all">ALL</string>
+    <string name="calling_toggle_speakers">SPEAKERS</string>
+    <string name="calling_double_tap_enter_fullscreen_message">Double tap on a tile for fullscreen</string>
+    <string name="calling_double_tap_exit_fullscreen_message">Double tap to go back, pinch to zoom</string>
+    <string name="calling_pinch_to_zoom_message">Pinch to zoom</string>
+    <!-- Connect request -->
+    <string name="connect__message">Hej %1$s,\nLad os forbinde os på Wire.\n%2$s</string>
+    <string name="connect_request__sub_header__pending_label">Afventer</string>
+    <string name="connect_request__cancel_request__label">CANCEL CONNECTION REQUEST</string>
+    <string name="connect_request__unblock__button__text">Fjern blokering</string>
+    <string name="send_connect_request__connect_button__text">CONNECT</string>
+    <plurals name="connect_inbox__link__name">
+        <item quantity="one">1 person venter</item>
+        <item quantity="other">%1$s personer venter</item>
+    </plurals>
+    <string name="connect_request__ignore_button__text">Ignorer</string>
+    <string name="content__message__connect_request__footer">TILSLUTTET</string>
+    <string name="content__message__connect_request__auto_connect__footer">AUTO-FORBUNDET. _LÆR MERE_</string>
+    <string name="conversation_degraded_message">The call was disconnected because someone is no longer a verified contact.</string>
+    <!-- Otr-->
+    <plurals name="conversation__degraded_confirmation__header__single_user">
+        <item quantity="one">%1$s er begyndt at bruge en ny enhed.</item>
+        <item quantity="other">%1$s er begyndt at bruge en ny enhed.</item>
+    </plurals>
+    <string name="conversation__degraded_confirmation__header__someone">Nogen er begyndt at bruge en ny enhed.</string>
+    <string name="conversation__degraded_confirmation__header__multiple_user">%1$s og %2$s er begyndt at bruge en nye enheder.</string>
+    <plurals name="conversation__degraded_confirmation__message">
+        <item quantity="one">Vil du stadig sende din besked?</item>
+        <item quantity="other">Vil du stadig sende dine beskeder?</item>
+    </plurals>
+    <string name="conversation__degraded_confirmation__positive_action">Send alligevel</string>
+    <plurals name="conversation__degraded_confirmation__negative_action">
+        <item quantity="one">Vis enhed</item>
+        <item quantity="other">Vis personer</item>
+    </plurals>
+    <string name="conversation__degraded_confirmation__negative_action_self">Vis dine enheder</string>
+    <string name="conversation_degraded_confirmation__header__you">Dig</string>
+    <string name="conversation__legal_hold_confirmation__header">The conversation is now subject to legal hold.</string>
+    <plurals name="conversation__legal_hold_confirmation__message">
+        <item quantity="one">Vil du stadig sende din besked?</item>
+        <item quantity="other">Vil du stadig sende dine beskeder?</item>
+    </plurals>
+    <string name="conversation__legal_hold_confirmation__negative_action">What is legal hold?</string>
+    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices&#8230;</string>
+    <string name="conversation__legal_hold_confirmation__positive_action">Send alligevel</string>
+    <!-- Picture selection confirmation -->
+    <string name="confirmation_menu__confirm_done">OK</string>
+    <string name="confirmation_menu__cancel">ANNULLER</string>
+    <!-- ADD TO CONVERSATION offline -->
+    <!-- CREATE GROUP CONVERSATION FROM 1:1 offline -->
+    <!-- Leave conversation -->
+    <string name="confirmation_menu__meta_remove">Forlade samtalen?</string>
+    <string name="confirmation_menu__meta_remove_text">Du vil ikke være i stand til at sende eller modtage beskeder i denne samtale.</string>
+    <!-- RE-USING: confirmation_menu.cancel -->
+    <!-- Remove from conversation dialogue -->
+    <string name="confirmation_menu__header">Fjern?</string>
+    <string name="confirmation_menu_text_with_name">%1$s vil ikke være i stand til at sende eller modtage beskeder i denne samtale.</string>
+    <string name="confirmation_menu__confirm_remove">FJERN</string>
+    <!-- RE-USING: confirmation_menu.cancel -->
+    <!-- Block someone dialogue -->
+    <string name="confirmation_menu__block_header">Blokér?</string>
+    <string name="confirmation_menu__block_text_with_name">%1$s vil ikke kunne kontakte dig eller tilføje dig til gruppesamtaler.</string>
+    <string name="confirmation_menu__confirm_block">Blokér</string>
+    <!-- RE-USING: confirmation_menu.cancel -->
+    <string name="connect_request__footer__blocked_label">Blokkeret</string>
+    <!-- Clear conversation -->
+    <string name="confirmation_menu__clear_popup_title">Slet indhold?</string>
+    <string name="confirmation_menu__meta_delete_text">Dette vil fjerne samtaleoversigten på alle dine enheder.</string>
+    <!-- Delete conversation -->
+    <string name="confirmation_menu__delete_popup_title">Delete group conversation?</string>
+    <string name="confirmation_menu__delete_popup_text">This will delete the group and all content for all participants on all devices. There is no option to restore the content. All participants will be notified.</string>
+    <string name="confirmation_menu__delete_popup_positive_button">DELETE GROUP</string>
+    <!-- Rich media -->
+    <string name="content__youtube__error__text">video blev ikke fundet</string>
+    <!-- Invite banner -->
+    <!-- Self profile -->
+    <!-- Options and settings -->
+    <string name="settings_title">Indstillinger</string>
+    <!-- Options menu -->
+    <!-- Manage Team -->
+    <string name="pref_manage_team_title">Administrer Team</string>
+    <!-- About screen -->
+    <string name="pref_category_title">Indstillinger</string>
+    <string name="pref_developer_screen_title">Udviklerindstillinger</string>
+    <string name="pref_dev_avs_screen_title">AVS Indstillinger</string>
+    <string name="pref_profile_screen_title">Profil</string>
+    <!-- Account -->
+    <string name="pref_account_screen_title">Konto</string>
+    <string name="pref_account_name_title">Navn</string>
+    <string name="pref_account_edit_name_title">Rediger navn</string>
+    <string name="pref_account_details_category_title">Info</string>
+    <string name="pref_account_actions_category_title">Handlinger</string>
+    <string name="pref_account_appearance_category_title">Udseende</string>
+    <string name="pref_account_personal_information_category_title">Personal Information</string>
+    <string name="pref_account_conversations_category_title">Historik</string>
+    <string name="pref_account_username_title">Brugernavn</string>
+    <string name="pref_account_phone_title">Telefon</string>
+    <string name="pref_account_team_title">Team</string>
+    <string name="pref_account_domain_title">Domain</string>
+    <string name="pref_account_add_phone_title">Tilføj telefonnummer</string>
+    <string name="pref_account_email_title">E-mail</string>
+    <string name="pref_account_add_email_title">Tilføj e-mail</string>
+    <string name="pref_account_delete">Slet</string>
+    <string name="pref_account_sign_out_title">Log ud</string>
+    <string name="pref_account_color_title">Farve</string>
+    <string name="pref_account_picture_title">Billede</string>
+    <string name="pref_account_delete_title">Slet konto</string>
+    <string name="pref_account_delete_warning_title">Slet konto</string>
+    <string name="pref_account_delete_warning_message_email">Vi sender en e-mail til:\n[[%1$s]]\nKlik på linket for permanent at slette din konto.</string>
+    <string name="pref_account_delete_warning_message_sms">Vi sender en SMS til:\n[[%1$s]]\nKlik på linket for permanent at slette din konto.</string>
+    <string name="pref_account_delete_warning_verify">OK</string>
+    <string name="pref_account_delete_warning_cancel">Annuller</string>
+    <string name="pref_account_sign_out_warning_message">Er du sikker på, at du vil logge ud?</string>
+    <string name="pref_account_sign_out_warning_verify">Log ud</string>
+    <string name="pref_account_sign_out_warning_cancel">Annuller</string>
+    <string name="pref_account_password_title">Nulstil adgangskode</string>
+    <string name="pref_account_edit_name_empty_warning">Navnet skal have 2 eller flere tegn</string>
+    <string name="pref_account_edit_name_empty_verify">OK</string>
+    <string name="pref_account_data_usage_permissions">Data Usage Permissions</string>
+    <string name="pref_backup_screen_title">Back Up Conversations</string>
+    <!-- Data Usage Permissions -->
+    <string name="pref_advanced_send_anonymous_crash_reports_title">Send anonymous crash reports</string>
+    <string name="pref_advanced_send_anonymous_crash_reports_summary">Send anonymous crash reports and basic data like version number and operating system to help Wire identify and solve issues in the app.</string>
+    <string name="pref_advanced_send_anonymous_usage_data_title">Send anonymous usage data</string>
+    <string name="pref_advanced_send_anonymous_usage_data_summary">Usage data allows Wire to understand how the app is being used and how it can be improved. The data is anonymous and does not include the content of your communications (such as messages, files or calls).</string>
+    <string name="pref_advanced_receive_news_and_offers_title">Receive Newsletter</string>
+    <string name="pref_advanced_receive_news_and_offers_summary">Receive news and product updates from Wire via email.</string>
+    <!-- App Lock -->
+    <string name="pref_options_app_lock">Passcode</string>
+    <string name="pref_options_app_lock_change">Change passcode</string>
+    <string name="app_lock_locked_title">Wire is locked due to inactivity</string>
+    <string name="app_lock_locked_message">Please enter your account passcode.</string>
+    <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passcode in your device settings.</string>
+    <string name="new_password_dialog_title">Create a Passcode</string>
+    <string name="new_password_dialog_button">Create Passcode</string>
+    <string name="new_password_dialog_title_change">Change Passcode</string>
+    <string name="new_password_dialog_button_change">Change Passcode</string>
+    <string name="new_password_dialog_message">Your organization needs to lock your app when Wire is not in use to keep the Team safe.\nCreate a memorable passcode, as it cannot be recovered.</string>
+    <string name="new_password_dialog_showhide_cd">Show/hide the passcode</string>
+    <string name="new_password_dialog_title_change_in_wire">There was a change in Wire</string>
+    <!-- Options -->
+    <string name="pref_options_screen_title">Egenskaber</string>
+    <string name="pref_options_vbr_title">Variable bithastighed</string>
+    <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use constant bitrate encoding (CBR). This setting only affects 1:1 calls; conference calls always use CBR encoding.</string>
+    <string name="pref_options_alerts_category_title">Notifikationer</string>
+    <string name="pref_options_calls_category_title">Opkald</string>
+    <string name="pref_options_sounds_title">Lyde</string>
+    <string name="pref_options_sounds_all">Alle</string>
+    <string name="pref_options_sounds_new_conversations_and_talks_only">Første besked, pings, opkald</string>
+    <string name="pref_options_sounds_none">Ingen</string>
+    <string name="pref_options_vibration_title">Vibration</string>
+    <string name="pref_options_vibration_title_o">Vibrate on ring</string>
+    <string name="pref_options_ringtones_category_title">Lyde</string>
+    <string name="pref_options_ringtones_ringtone_title">Ringetone</string>
+    <string name="pref_options_ringtones_text_title">Ringetone for beskeder</string>
+    <string name="pref_options_ringtones_ping_title">Ping</string>
+    <string name="pref_options_ringtones_default_summary">Wire standard</string>
+    <string name="pref_options_ringtones_silent">Lydløs</string>
+    <string name="pref_options_dark_theme_title">Mørkt tema</string>
+    <string name="pref_options_hide_screen_title">Hide screen content</string>
+    <string name="pref_options_hide_screen_summary">Wire\'s contents will no longer be visible in the task switcher</string>
+    <string name="pref_options_image_download_title">Download billeder</string>
+    <string name="pref_options_image_download_always">Altid</string>
+    <string name="pref_options_image_download_wifi">Kun Wi-Fi</string>
+    <string name="pref_options_media_category_title">Media</string>
+    <string name="pref_options_requested_category_title">Ved populær efterspørgsel</string>
+    <string name="pref_options_cursor_send_button_title">Send knap</string>
+    <string name="pref_options_cursor_send_button_summary">Slå fra for at sende via returtasten.</string>
+    <string name="pref_options_message_previews">Besked forhåndsvisning</string>
+    <string name="pref_options_message_previews_summary">Display message content in notifications.</string>
+    <string name="pref_options_app_lock_title">Lock with Passcode</string>
+    <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Passcode or Biometrics.</string>
+    <string name="pref_options_incognito_keyboard">Incognito keyboard</string>
+    <string name="pref_options_incognito_keyboard_summary">The keyboard will not show suggestions when typing messages</string>
+    <!-- Devices -->
+    <string name="pref_devices_screen_title">Enheder</string>
+    <string name="pref_devices_current_device_category_title">Aktuelle enhed</string>
+    <string name="pref_devices_other_devices_category_title">Andre enheder</string>
+    <string name="pref_devices_device_activation_summary">Activated [[%1$s]]\n</string>
+    <string name="pref_devices_device_activation_subtitle">Activated [[%1$s]]</string>
+    <string name="pref_devices_device_id">ID: %1$s</string>
+    <string name="pref_devices_device_verified">Verificeret</string>
+    <string name="pref_devices_device_not_verified">Ikke verificeret</string>
+    <string name="legal_hold_device_content_description">Legal Hold device</string>
+    <string name="pref_devices_warning_summary">If you don\'t recognize a device above, remove it and reset your passcode.</string>
+    <string name="pref_devices_device_screen_title">Enhedsdetaljer</string>
+    <string name="pref_devices_device_fingerprint_category_title">Nøgle fingeraftryk</string>
+    <string name="pref_devices_device_fingerprint_summary">Wire giver hver enhed et unikt fingeraftryk. Sammenlign dem og verificer dine enheder og samtaler.</string>
+    <string name="pref_devices_device_actions_category_title">Handlinger</string>
+    <string name="pref_devices_device_reset_session_title">Nulstil session</string>
+    <string name="pref_devices_device_reset_session_summary">Hvis fingeraftrykkene ikke stemmer overens, skal sessionen nulstilles for at generere nye krypteringsnøgler hos begge parter.</string>
+    <string name="pref_devices_device_remove_title">Fjern enhed</string>
+    <string name="pref_devices_device_remove_summary">Fjern denne enhed, hvis du ikke bruger den længere. Du bliver logget ud af enheden med det samme.</string>
+    <string name="pref_devices_device_fingerprint_copy_description">Fingeraftryk</string>
+    <string name="pref_devices_device_fingerprint_copy_toast">Nøgle fingeraftryk kopieret</string>
+    <!-- Advanced -->
+    <string name="pref_advanced_screen_title">Avanceret</string>
+    <string name="pref_advanced_enable_logs_title">Collect usage data</string>
+    <string name="pref_advanced_enable_logs_subtitle">This stores troubleshooting information locally. Disabling this option will delete all local logs.</string>
+    <string name="pref_advanced_debug_report_title">Create debug report</string>
+    <string name="pref_advanced_debug_report_summary">You can submit this to Wire Support to help diagnose problems.</string>
+    <string name="pref_advanced_reset_push_title">Reset push notifications token</string>
+    <string name="pref_advanced_reset_push_summary">Hvis du oplever problemer med push notifikationer, kan Wire Support bede dig om at nulstille denne token.</string>
+    <string name="pref_advanced_reset_push_completed">Push token er blevet nulstillet</string>
+    <string name="debug_report__title">Wire fejlrapport - %1$s</string>
+    <string name="debug_report__body">Beskriv de nødvendige trin for at gengive problemet, vedlæg screenshots hvis muligt og send til denne mail.\n\n</string>
+    <string name="pref_advanced_ws_foreground_title">Maintain connection to server</string>
+    <string name="pref_advanced_ws_foreground_summary">Wire will try to keep a connection with the server open to receive notifications while the application is not in the foreground.
+        Turning this setting off may improve battery performance, but you will no longer receive notifications when Wire is in the background. This applies to all accounts on this device.</string>
+    <string name="pref_advanced_full_sync_title">Perform full synchronization</string>
+    <string name="pref_advanced_full_sync_summary">This performs a full synchronization with the server.</string>
+    <string name="pref_advanced_full_sync_popup">Are you sure? The full synchronization may take a while.</string>
+    <!-- Support -->
+    <string name="pref_support_screen_title">Support</string>
+    <string name="pref_support_website_title">Wire Support hjemmeside</string>
+    <string name="pref_support_contact_title">Kontakt support</string>
+    <!-- About -->
+    <string name="pref_about_screen_title">Om</string>
+    <string name="pref_about_website_title">Wire hjemmeside</string>
+    <string name="pref_about_tos_title">Vilkår for anvendelse</string>
+    <string name="pref_about_privacy_policy_title">Fortrolighedspolitik</string>
+    <string name="pref_about_licenses_title">Licensoplysninger</string>
+    <string name="pref_about_version_title">Version %s</string>
+    <string name="pref_about_copyright_title">\u00A9 Wire Swiss GmbH</string>
+    <!-- Pref invite -->
+    <string name="pref_invite_title">Inviter personer til Wire</string>
+    <!-- Preference Account Actions -->
+    <string name="pref__account_action__phone_verification__title">Verificer telefonnummer</string>
+    <string name="pref__account_action__phone_verification__description">Angiv bekræftelseskoden vi har sendt til %s</string>
+    <string name="pref__account_action__phone_verification__code">Kode</string>
+    <string name="pref__account_action__phone_verification__question">Ingen kode vist?</string>
+    <string name="pref__account_action__phone_verification__resend"><u>Gensend kode</u></string>
+    <string name="pref__account_action__phone_verification__change"><u>Skift telefonnummer</u></string>
+    <string name="pref__account_action__email_verification__title">Bekræft din e-mail adresse</string>
+    <string name="pref__account_action__email_verification__description">Tjek din e-mail indbakke og følg instruktionerne.</string>
+    <string name="pref__account_action__email_verification__question">Ingen e-mail modtaget?</string>
+    <string name="pref__account_action__email_verification__resend">&lt;u&gt;Gensend til %s&lt;/u&gt;</string>
+    <string name="pref__account_action__email_verification__change"><u>Skift e-mail</u></string>
+    <string name="pref__account_action__dialog__add_email_password__password">Adgangskode</string>
+    <string name="pref__account_action__dialog__add_email_password__email">E-mail</string>
+    <string name="pref__account_action__dialog__add_email_password__title">Tilføj e-mail adresse</string>
+    <string name="pref__account_action__dialog__add_email_password__error__invalid_email">Ugyldig e-mailadresse</string>
+    <string name="pref__account_action__dialog__add_email_password__error__invalid_password">Mindst 8 tegn</string>
+    <string name="pref__account_action__dialog__edit_phone__title">Rediger telefonnummer</string>
+    <string name="pref__account_action__dialog__add_phone__title">Tilføj telefonnummer</string>
+    <string name="pref__account_action__dialog__add_phone__error__country">Ugyldig landekode</string>
+    <string name="pref__account_action__dialog__add_phone__error__number">Ugyldigt telefonnummer</string>
+    <string name="pref__account_action__dialog__add_phone__confirm__title">Bekræft nummer</string>
+    <string name="pref__account_action__dialog__add_phone__confirm__message">Vi sender en notifikationskode til:\n%s</string>
+    <string name="pref__account_action__dialog__delete_phone_or_email__confirm__title">Fjern</string>
+    <string name="pref__account_action__dialog__delete_phone_or_email__confirm__message">Are you sure you want to remove %s from your Wire account?</string>
+    <string name="pref__account_action__dialog__delete_phone__error">Unable to delete phone number</string>
+    <string name="pref__account_action__dialog__change_email__title">Rediger e-mail adresse</string>
+    <string name="pref__account_action__dialog__change_username__rules">Mindst to tegn. Kun a-z, 0-9 og _</string>
+    <string name="pref__account_action__dialog__change_username__title">Brugernavn</string>
+    <string name="pref__account_action__dialog__change_username__error_already_taken">Allerede i brug</string>
+    <string name="pref__account_action__dialog__change_username__error_unknown">Forbindelsesfejl, prøv venligst igen</string>
+    <string name="pref__account_privacy">Privatliv</string>
+    <string name="pref__account_send_read_receipts_title">Send Read Receipts</string>
+    <string name="pref__account_send_read_receipts_summary">When this is off, you won’t be able to see read receipts from other people. This setting does not apply to group conversations.</string>
+    <!-- No Internet connection -->
+    <string name="system_status__no_internet">INTET INTERNET</string>
+    <!-- SHARING -->
+    <string name="alert_dialog__confirmation">OK</string>
+    <string name="alert_dialog__no_network__header">Ingen internetforbindelse</string>
+    <string name="sign_up__set_picture__choose">Vælg dit eget</string>
+    <string name="sign_up__set_picture__keep">Behold denne</string>
+    <string name="sign_up__set_picture__guidance">Wire er så meget pænere med et billede.</string>
+    <string name="sign_up__set_picture__loading">Indlæser billede</string>
+    <string name="leave_conversation_failed__message">Du skal være online for at forlade samtalen. 
+Tjek din forbindelse og prøv igen.</string>
+    <string name="remove_from_conversation__no_network__message">Du skal være online for at fjerne personer fra samtaler. Tjek din forbindelse og prøv igen.</string>
+    <string name="calling__call_drop__message">Du skal være online for at foretage opkald. Tjek din forbindelse og prøv igen.</string>
+    <!-- Lockscreen and notifications -->
+    <string name="message_notifications_channel_name">Messages</string>
+    <string name="message_notifications_channel_description">Notifications for all message types, including text, images, audio and video messages.</string>
+    <string name="incoming_call_notifications_channel_name">Incoming Calls</string>
+    <string name="ping_notifications_channel_name">Pings</string>
+    <string name="ping_notifications_channel_description">Notifications when other users ping you</string>
+    <string name="ongoing_channel_name">Background notifications</string>
+    <string name="ongoing_channel_description">Notifications about ongoing processes or secondary actions, such as calls or saving an image</string>
+    <string name="foreground_service_notification_name">Maintain connection to server</string>
+    <string name="foreground_service_notification_description">This notification is necessary to keep the connection to the server alive while Wire is in the background and Google Play Services are not installed.</string>
+    <plurals name="notification__new_messages__multiple">
+        <item quantity="one">Besked i %2$s samtaler</item>
+        <item quantity="other">%1$d beskeder i %2$s samtaler</item>
+    </plurals>
+    <!-- %1$s == username, %2$s == conversation -->
+    <string name="notification__message__name__prefix__text">%1$s: \u0020</string>
+    <string name="notification__message__group__prefix__text">%1$s i %2$s: \u0020</string>
+    <string name="notification__message_with_mention__name__prefix__text">Mention from %1$s: \u0020</string>
+    <string name="notification__message_with_mention__group__prefix__text">Mention from %1$s in %2$s: \u0020</string>
+    <string name="notification__message_with_quote__name__prefix__text_one2one">Reply: \u0020</string>
+    <string name="notification__message_with_quote__name__prefix__text">Reply from %1$s: \u0020</string>
+    <string name="notification__message_with_quote__group__prefix__text">Reply from %1$s in %2$s: \u0020</string>
+    <string name="notification__message__one_to_one__wanted_to_talk">Ringede</string>
+    <string name="notification__message__one_to_one__pinged">Pinged</string>
+    <string name="notification__message__one_to_one__shared_picture">Delte et billede</string>
+    <string name="notification__message__one_to_one__shared_file">Delte en fil</string>
+    <string name="notification__message__one_to_one__shared_video">Delte en video</string>
+    <string name="notification__message__one_to_one__shared_audio">Delte en lydbesked</string>
+    <string name="notification__message__one_to_one__shared_location">Delte en placering</string>
+    <string name="notification__message_one_to_one_message_preview">Sendte dig en besked</string>
+    <!-- %1$s == username, %2$s == conversation -->
+    <string name="notification__message__group__prefix__other">%1$s i %2$s \u0020</string>
+    <string name="notification__message__group__renamed_conversation">omdøbte samtalen til %1$s</string>
+    <string name="notification__message__group__add">tilføjede personer til samtalen</string>
+    <string name="notification__message__group__remove">fjernede personer fra samtalen</string>
+    <string name="notification__message__single__accept_request">%1$s og dig har nu oprettet forbindelse</string>
+    <string name="notification__message__group__default_conversation_name">gruppesamtale</string>
+    <string name="notification__message__send_failed">Message failed to send</string>
+    <string name="notification__message__ephemeral">Sendte dig en besked</string>
+    <string name="notification__message_with_mention__ephemeral">Mentioned you</string>
+    <string name="notification__message_with_quote__ephemeral">Replied to you</string>
+    <string name="notification__message__liked">\u2764 ‘%1$s’</string>
+    <string name="notification__message__liked_message">\u2764 din besked</string>
+    <string name="notification__message__liked_picture">\u2764 your picture</string>
+    <string name="notification__message__conversation_deleted">Someone deleted the group</string>
+    <string name="notification__message__conversation_deleted_by">%1$s deleted the group</string>
+    <!-- ephemeral -->
+    <string name="notification__message__ephemeral_someone">Nogen</string>
+    <plurals name="notification__message__ephemeral">
+        <item quantity="one">Nogen har sendt dig en besked</item>
+        <item quantity="other">Nogen har sendt dig %1$d beskeder</item>
+    </plurals>
+    <string name="other_set_message_timer">[[%1$s]] set the message timer to [[%2$s]]</string>
+    <string name="you_set_message_timer">[[You]] set the message timer to [[%1$s]]</string>
+    <string name="other_turned_off_message_timer">[[%1$s]] turned off the message timer</string>
+    <string name="you_turned_off_message_timer">[[You]] turned off the message timer</string>
+    <!-- Others -->
+    <string name="app_name">Wire</string>
+    <string name="content__system__item_separator">,</string>
+    <string name="content__system__last_item_separator">og</string>
+    <string name="content__system__you">dig</string>
+    <plurals name="content__system__other_members">
+        <item quantity="one">%1$s other</item>
+        <item quantity="other">%1$s others</item>
+    </plurals>
+    <!-- System notifications -->
+    <string name="system_notification__silence_call">Afvis</string>
+    <string name="system_notification__join_call">Open Call</string>
+    <string name="system_notification__leave_call">Afslut opkald</string>
+    <string name="system_notification__calling_one">Ringer op&#8230;</string>
+    <string name="system_notification__calling_group">%1$s is calling&#8230;</string>
+    <string name="system_notification__video_calling_one">Calling with video&#8230;</string>
+    <string name="system_notification__video_calling_group">%1$s is calling with video&#8230;</string>
+    <string name="ws_foreground_notification_connected_title">Connected to Wire server</string>
+    <string name="ws_foreground_notification_no_internet_title">Waiting for Internet connection&#8230;</string>
+    <string name="ws_foreground_notification_connecting_title">Establishing connection&#8230;</string>
+    <string name="ws_foreground_notification_summary">Tap here for more information.</string>
+    <!-- Notification actions -->
+    <string name="notification__action__call">Ring op</string>
+    <string name="notification__action__reply">Svar</string>
+    <!-- Quick reply -->
+    <string name="quick_reply__counter">%1$d af %2$d</string>
+    <string name="quick_reply__message_group">[[%1$s:]] %2$s</string>
+    <string name="quick_reply__open_wire">Åbn Wire</string>
+    <!-- Save image notification -->
+    <string name="notification__image_saving__content__title">Wire billede gemt.</string>
+    <string name="notification__image_saving__content__subtitle">Tryk for at se.</string>
+    <string name="notification__image_saving__action__share">Del</string>
+    <!-- See: https://code.google.com/p/android/issues/detail?id=36744 -->
+    <dimen name="notification__image_saving__image_width">512dp</dimen>
+    <!-- forced update -->
+    <string name="forced_update__header">Vigtig opdatering</string>
+    <string name="forced_update__sub_header">Installer den seneste version af Wire.</string>
+    <string name="forced_update__download_button">Download</string>
+    <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <!-- Sharing -->
+    <string name="sharing__image_preview__confirm_action">SEND</string>
+    <string name="sharing__user_not_logged_in__dialog__title">Log venligst ind</string>
+    <string name="sharing__user_not_logged_in__dialog__message">Åbn Wire og log ind for at dele.</string>
+    <string name="sharing__user_not_logged_in__dialog__confirm">OK</string>
+    <string name="sharing__file_sharing_prohibited__dialog__title">File sharing restrictions</string>
+    <string name="sharing__file_sharing_prohibited__dialog__message">You can not share this file because this feature is disabled.</string>
+    <string name="sharing__file_sharing_prohibited__dialog__confirm">OK</string>
+    <!-- Sync errors -->
+    <string name="in_app_notification__sync_error__create_group_convo__title">Kunne ikke oprette</string>
+    <string name="in_app_notification__sync_error__create_group_convo__body">Kunne ikke oprette samtale med %1$s</string>
+    <string name="in_app_notification__sync_error__add_user__body">%1$s vil ikke tilføjes til samtalen.</string>
+    <string name="in_app_notification__sync_error__add_multiple_user__body">En af de valgte personer vil ikke tilføjes til samtalen.</string>
+    <string name="in_app_notification__sync_error__unknown__body">Noget gik galt, prøv igen.</string>
+    <string name="in_app_notification__sync_error__create_convo__button">Fortsæt</string>
+    <!--Timestamp formatting-->
+    <string name="timestamp__just_now">Lige nu</string>
+    <plurals name="timestamp__x_minutes_ago_1">
+        <item quantity="one">%1$s minute ago</item>
+        <item quantity="other">%1$s minutes ago</item>
+    </plurals>
+    <!-- http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html -->
+    <!-- Example: FRIDAY, MAR 9, 11:29 -->
+    <string name="timestamp_pattern__date_and_time__no_year">EEE, MMM d, %1$s</string>
+    <!-- Example: FRIDAY, MAR 9, 2015, 11:29 -->
+    <string name="timestamp_pattern__date_and_time__with_year">EEE, MMM d, yyyy, %1$s</string>
+    <!-- Example: MAR 9, 11:29 -->
+    <string name="timestamp_pattern__date_and_time__no_year_no_weekday">d. MMM, %1$s</string>
+    <!-- Example: MAR 9, 2015, 11:29 -->
+    <string name="timestamp_pattern__date_and_time__with_year_no_weekday">MMM d, yyyy, %1$s</string>
+    <!-- Example: MONDAY, 9 MARCH 2015 \u30FB 12:08 -->
+    <!-- MONDAY -->
+    <!-- MARCH 2 -->
+    <!-- MARCH 2, 2015 -->
+    <!-- 23:15 -->
+    <string name="timestamp_pattern__24h_format">HH:mm</string>
+    <string name="timestamp_pattern__12h_format">hh:mm a</string>
+    <string name="country">Land</string>
+    <string name="register">Registrer</string>
+    <string name="password_placeholder">Adgangskode</string>
+    <string name="email_placeholder">E-mail</string>
+    <string name="name_placeholder">Navn</string>
+    <!-- Strings -->
+    <string name="edit_phone_number">REDIGER TELEFONNUMMER</string>
+    <string name="i_have_an_account">LOG IND</string>
+    <plurals name="welcome__resend__timer_label">
+        <item quantity="one">DU KAN ANMODE OM EN NY KODE OM %1$d SEKUND</item>
+        <item quantity="other">DU KAN ANMODE OM EN NY KODE OM %1$d SEKUNDER</item>
+    </plurals>
+    <string name="welcome__resend__manual">SEND IGEN</string>
+    <string name="welcome__resend__callme">RING MIG OP</string>
+    <string name="activation_code_info_manual">Indtast verifikationskoden vi har sendt til \n&lt;b&gt;%s&lt;/b&gt;</string>
+    <string name="enter_name">Hvad skal vi kalde dig?</string>
+    <string name="enter_name_hint">Indtast dit fulde navn</string>
+    <string name="new_reg__password__forgot">Glemt din adgangskode?</string>
+    <string name="phone_sign_in">Telefon</string>
+    <string name="email_sign_in">E-mail</string>
+    <string name="edit_email">Ret e-mail</string>
+    <string name="hello">Hej &lt;b&gt;%s&lt;/b&gt;</string>
+    <string name="sign_in">Log ind</string>
+    <string name="new_reg__password_length">MINDST %1$s TEGN</string>
+    <string name="username__set__toast_error">Fejl under opdatering af brugernavn</string>
+    <!-- Giphy -->
+    <string name="giphy_preview__search_hint">Søg Giphy</string>
+    <string name="giphy_preview__error">INGEN GIF\'ER FUNDET.</string>
+    <string name="giphy_preview__message_via_random_trending">via giphy.com</string>
+    <string name="giphy_preview__message_via_search">%s · via giphy.com</string>
+    <string name="service_giphy_name">Giphy</string>
+    <!--Sketch-->
+    <string name="drawing__tip__picture__message">TRYK PÅ FARVEN FOR AT ÆNDRE PENSLENS STØRRELSE.\n\nRYST FOR AT FJERNE BILLEDER.</string>
+    <string name="drawing__tip__message">TRYK PÅ FARVEN FOR AT ÆNDRE PENSLENS STØRRELSE.\n\nTRYK OG HOLD FOR AT UDFYLDE ET OMRÅDE.</string>
+    <string name="sketch__emoji_keyboard__size_label__small">LILLE</string>
+    <string name="sketch__emoji_keyboard__size_label__medium">MELLEM</string>
+    <string name="sketch__emoji_keyboard__size_label__large">STOR</string>
+    <string name="toolbar__sketch__action_close">Luk</string>
+    <string name="drawing__text_hint">SKRIV EN BESKED</string>
+    <!-- Location sharing -->
+    <string name="location_sharing__tip">Træk i kortet for at ændre position</string>
+    <string name="location_sharing__permission_error">Kunne ikke hente aktuelle placering, tilladelser nægtet</string>
+    <string name="location_sharing__send_button">SEND</string>
+    <string name="location_sharing__enable_system_location__title">Brug placering?</string>
+    <string name="location_sharing__enable_system_location__message">Aktiver placering i indstillinger for at vise din aktuelle position</string>
+    <string name="location_sharing__enable_system_location__confirm">Indstillinger</string>
+    <string name="location_sharing__enable_system_location__cancel">Annuller</string>
+    <string name="location_sharing__missing_play_services">Google Play tjenester er nødvendige for pæaceringsdeling</string>
+    <string name="location_sharing__permission__message">Do you want to allow Wire to access your location?</string>
+    <string name="location_sharing__permission__title">Location sharing</string>
+    <string name="location_sharing__permission__cancel">Annuller</string>
+    <string name="location_sharing__permission__continue">OK</string>
+    <!-- From SyncEngine -->
+    <string name="new_reg__phone_signup__create_account">Opret en konto</string>
+    <!-- OTR -->
+    <string name="otr__remove_device__title">Fjern %1$s</string>
+    <string name="otr__remove_device__message">Angiv din adgangskode</string>
+    <string name="otr__remove_device__are_you_sure">Are you sure?</string>
+    <string name="otr__remove_device__default">enhed</string>
+    <string name="otr__remove_device__button_delete">OK</string>
+    <string name="otr__remove_device__button_cancel">Annuller</string>
+    <string name="otr__remove_device__error">Forkert adgangskode</string>
+    <string name="otr__error_dialog__cannot_register__message">Fjern en af dine andre enheder for at begynde at bruge Wire med denne enhed.</string>
+    <string name="otr__error_dialog__cannot_register__manage_devices_button">Administrer enheder</string>
+    <string name="otr__error_dialog__cannot_register__log_out_button">Log ud</string>
+    <!-- OTR Participants -->
+    <string name="otr__participant__device_header">Wire giver hver enhed et unikt fingeraftryk. Sammenlign dem med %1$s og verificér din samtale.</string>
+    <string name="otr__participant__device_header__no_devices">%1$s bruger en gammel version af Wire. Ingen enheder er vist her.</string>
+    <string name="otr__participant__device_header__link_text">_Hvorfor verificere samtaler?_</string>
+    <string name="otr__participant__device_class__unknown">Ukendt</string>
+    <string name="otr__participant__device_class__phone">Telefon</string>
+    <string name="otr__participant__device_class__tablet">Tablet</string>
+    <string name="otr__participant__device_class__desktop">Stationær computer</string>
+    <string name="otr__participant__device_class__legal_hold">Legal Hold</string>
+    <string name="otr__participant__tab_details">DETAILS</string>
+    <string name="otr__participant__tab_devices">DEVICES</string>
+    <string name="otr__participant__information">INFORMATION</string>
+    <string name="otr__participant__single_device__my_fingerprint_link">Vis min enheds fingeraftryk</string>
+    <string name="otr__participant__single_device__reset_session_link">Nulstil session</string>
+    <string name="otr__participant__my_device__description">Din enheds fingeraftryk</string>
+    <string name="otr__participant__my_device__show_all_devices_link">Vis alle mine enheder</string>
+    <string name="otr__participant__single_device__description">Verificér at dette matcher fingeraftrykket, som er vist på %1$ss enhed.</string>
+    <string name="otr__participant__single_device__how_to_link">_Hvordan gør jeg det?_</string>
+    <string name="otr__device_id">Id: %s</string>
+    <string name="otr__first_launch__header">Det er første gang, at du bruger Wire på denne enhed.</string>
+    <string name="otr__first_launch__sub_header">Af hensyn til fortrolighed, vil din chathistorik ikke vises her.</string>
+    <string name="otr__first_launch__button">OK</string>
+    <string name="otr__signin__info_text">Log ind</string>
+    <string name="otr__reset_session__message_ok">Sessionen er blevet nulstillet</string>
+    <string name="otr__reset_session__message_fail">Kunne ikke nulstille sessionen</string>
+    <string name="otr__reset_session__button_ok">OK</string>
+    <string name="otr__reset_session__button_fail">Prøv igen</string>
+    <string name="user_profile_email_field_name">E-mail</string>
+    <string name="advanced_image_download_wifi_info">Billedet dukker frem, når du er på Wi-Fi igen</string>
+    <string name="change_settings">Ændre indstillinger</string>
+    <string name="conversation_list__action_join_call">DELTAG</string>
+    <!-- Conversation Toolbar -->
+    <string name="conversation_toolbar__collection">Samling</string>
+    <string name="conversation_toolbar__call_video">Videoopkald</string>
+    <string name="conversation_toolbar__call_audio">Opkald</string>
+    <!-- Asset upload errors -->
+    <string name="asset_upload_error__not_found__title">Filen blev ikke fundet</string>
+    <string name="asset_upload_error__not_found__message">Kunne ikke læse den ønskede fil</string>
+    <string name="asset_upload_error__not_found__button">OK</string>
+    <string name="asset_upload_error__file_too_large__title">Filen er for stor</string>
+    <string name="asset_upload_error__file_too_large__message_default">Upload af store filer er ikke understøttet.</string>
+    <string name="asset_upload_error__file_too_large__message">Du kan sende filer med størrelse op til %1$s.</string>
+    <string name="asset_upload_error__file_too_large__button">OK</string>
+    <string name="asset_upload_warning__large_file__title">Du er ikke tilsluttet et wi-fi</string>
+    <string name="asset_upload_warning__large_file__message_default">Er du sikker på, at du vil sende en stor fil via det mobile netværk?</string>
+    <string name="asset_upload_warning__large_file__message">Er du sikker på, at du vil sende %1$s via det mobile netværk?</string>
+    <!-- Video message errors -->
+    <string name="audio_message_error__missing_audio_permissions">For at sende lydbeskeder skal du give adgang til optagelse af lyd.</string>
+    <!-- Audio bit rate mode -->
+    <string name="audio_message_constant_bit_rate">KONSTANT BITHASTIGHED</string>
+    <!-- no contacts -->
+    <string name="no_conversation_in_list__header">Ingen samtaler</string>
+    <string name="all_archived__header">Alt arkiveret</string>
+    <string name="no_conversation_in_list__message">Ingen samtaler</string>
+    <string name="default_deleted_username">Default</string>
+    <string name="cursor__type_a_message">SKRIV EN BESKED</string>
+    <string name="cursor__ephemeral_message">SELF-DELETING MESSAGE</string>
+    <string name="tooltip_record">Optag en video</string>
+    <string name="tooltip_camera">Tilføj et billede</string>
+    <string name="tooltip_sketch">Tegn et billede</string>
+    <string name="tooltip_ping">Ping</string>
+    <string name="tooltip_emoji">Emoji</string>
+    <string name="tooltip_location">Placering</string>
+    <string name="tooltip_more">Flere handlinger</string>
+    <string name="tooltip_audio_message">Tryk på og hold nede for at sende en lydbesked</string>
+    <string name="tooltip_file">Send en fil</string>
+    <string name="tooltip_gif">GIF</string>
+    <string name="tooltip_mention">Add Mention</string>
+    <!-- Delete -->
+    <string name="conversation__message_action__delete_for_me">Slet kun hos mig?</string>
+    <string name="conversation__message_action__delete_for_everyone">Slet hos alle?</string>
+    <string name="conversation__message_action__delete_details">Dette kan ikke fortrydes.</string>
+    <string name="conversation__message_action__delete__dialog__cancel">Annuller</string>
+    <string name="conversation__message_action__delete__dialog__ok">Slet</string>
+    <string name="conversation__message_action__delete__confirmation">Besked slettet</string>
+    <string name="conversation__action_mode__copy__description">Besked fra %1$s</string>
+    <string name="conversation__action_mode__copy__toast">Kopieret</string>
+    <string name="conversation__action_mode__fwd__dialog__title">Forberede indhold</string>
+    <string name="conversation__action_mode__fwd__dialog__message">Vent venligst&#8230;</string>
+    <string name="conversation__action_mode__fwd__chooser__title">Del med</string>
+    <!-- video message preview -->
+    <string name="audio_message__recording__slide_control__slide_hint">STRYG OP FOR AT SENDE</string>
+    <string name="audio_message__recording__slide_control__tap_hint">TRYK FOR AT SENDE</string>
+    <string name="audio_message__recording__tap_to_record">Tryk for at optage en besked\ndu kan _GLYPH_ den herefter</string>
+    <string name="audio_message__recording__failure__title">Kan ikke optage lyd</string>
+    <string name="audio_message__recording__failure__message">Prøv venligst igen.</string>
+    <string name="audio_message__recording__limit_reached__title">Optagelse stoppet</string>
+    <string name="audio_message__recording__limit_reached__message">Lydbeskeder er begrænset til 25 MB. Send denne besked?</string>
+    <string name="audio_message__recording__limit_reached__confirmation">SEND</string>
+    <string name="hint_change_filter">Vælg et filter ovenfor</string>
+    <string name="message_bottom_menu_action_forward">Del</string>
+    <string name="message_bottom_menu_action_copy">Kopiér</string>
+    <string name="message_bottom_menu_action_edit">Rediger</string>
+    <string name="message_bottom_menu_action_like">Synes om</string>
+    <string name="message_bottom_menu_action_unlike">Synes ikke godt om</string>
+    <string name="message_bottom_menu_action_save">Gem</string>
+    <string name="message_bottom_menu_action_open">Åbn</string>
+    <string name="message_bottom_menu_action_delete">Slet</string>
+    <string name="message_bottom_menu_action_delete_local">Slet hos mig</string>
+    <string name="message_bottom_menu_action_delete_global">Slet hos alle</string>
+    <string name="message_bottom_menu_action_reveal">Vis i samtale</string>
+    <string name="message_bottom_menu_action_reply">Svar</string>
+    <string name="message_bottom_menu_action_save_ok">Billedet er gemt</string>
+    <string name="message_bottom_menu_action_details">Detaljer</string>
+    <string name="message_details_title">MESSAGE DETAILS</string>
+    <string name="message_liked_title">LIKED</string>
+    <string name="message_read_title">READ</string>
+    <string name="message_details_sent">Sendt</string>
+    <string name="message_details_last_edited">Edited</string>
+    <string name="tab_title_read">READ</string>
+    <string name="tab_title_likes">LIKED</string>
+    <string name="messages_reads_turned_off">Read receipts were not on when this message was sent.</string>
+    <string name="messages_no_reads">No one has read this message yet.</string>
+    <string name="messages_no_likes">No one has liked this message yet.</string>
+    <string name="message_footer__tap_to_like">Tryk for at syntes om</string>
+    <plurals name="message_footer__number_of_likes">
+        <item quantity="one">%1$d person</item>
+        <item quantity="other">%1$d personer</item>
+    </plurals>
+    <string name="message_footer__status__sending">Sender&#8230;</string>
+    <string name="message_footer__status__waiting_for_connection">Waiting for connection&#8230;</string>
+    <string name="message_footer__status__sent">%1$s \u30FB Sendt</string>
+    <string name="message_footer__status__delivered">%1$s \u30FB Afleveret</string>
+    <string name="message_footer__status__failed">Afsendelse mislykkedes. _Send igen_</string>
+    <string name="message_footer__status__deleted">%1$s \u30FB Slettet</string>
+    <string name="message_footer__status__read">%1$s \u30FB @ %2$s</string>
+    <string name="message_footer__status__read_group">%1$s \u30FB @ %2$s</string>
+    <string name="message_footer__status__edited">Edited: %1$s</string>
+    <string name="ephemeral_message__timeout_selection_info">ANGIV ET TIDSPUNKT HVOR BESKEDEN FORSVINDER</string>
+    <string name="usernames__take_over__summary">Få dit eget unikke navn på Wire. _Læs mere._</string>
+    <string name="usernames__take_over__choose">VÆLG DIT EGET</string>
+    <string name="usernames__take_over__keep">BEHOLD DETTE HER</string>
+    <string name="ephemeral_message__timeout__off">Slået fra</string>
+    <string name="ephemeral_message__options_header">SELF-DELETING MESSAGES</string>
+    <string name="guests_option_on">Aktiv</string>
+    <plurals name="unit_years">
+        <item quantity="one">%1$s year</item>
+        <item quantity="other">%1$s years</item>
+    </plurals>
+    <plurals name="unit_weeks">
+        <item quantity="one">%1$s week</item>
+        <item quantity="other">%1$s weeks</item>
+    </plurals>
+    <plurals name="unit_days">
+        <item quantity="one">%1$s day</item>
+        <item quantity="other">%1$s days</item>
+    </plurals>
+    <plurals name="unit_hours">
+        <item quantity="one">%1$s hour</item>
+        <item quantity="other">%1$s hours</item>
+    </plurals>
+    <plurals name="unit_minutes">
+        <item quantity="one">%1$s minute</item>
+        <item quantity="other">%1$s minutes</item>
+    </plurals>
+    <plurals name="unit_seconds">
+        <item quantity="one">%1$s second</item>
+        <item quantity="other">%1$s seconds</item>
+    </plurals>
+    <string name="ephemeral_message_footer_multiple_units">%1$s and %2$s remaining</string>
+    <string name="ephemeral_message_footer_single_unit">%1$s remaining</string>
+    <string name="collection_header_images">IMAGES</string>
+    <string name="collection_header_files">FILER</string>
+    <string name="collection_header_links">LINKS</string>
+    <string name="collection_header_today">I DAG</string>
+    <string name="collection_header_yesterday">I GÅR</string>
+    <string name="collection_empty">INGEN ELEMENTER I SAMLINGEN</string>
+    <string name="collection_all">Vis alle %1$s</string>
+    <string name="multi_share_toast_sending">@string/message_footer__status__sending</string>
+    <string name="multi_share_search_hint">SEND TIL&#8230;</string>
+    <string name="single_selector_search_hint">"SELECT CONVERSATION…"</string>
+    <string name="search__box__hint_text">SØG EFTER TEKSTBESKEDER</string>
+    <string name="search__no_results">Ingen resultater.</string>
+    <!-- Conversation List -->
+    <plurals name="conversation_list__new_message_count">
+        <item quantity="one">%1$s message</item>
+        <item quantity="other">%1$s messages</item>
+    </plurals>
+    <plurals name="conversation_list__pings_count">
+        <item quantity="one">%1$s ping</item>
+        <item quantity="other">%1$s pings</item>
+    </plurals>
+    <plurals name="conversation_list__new_likes_count">
+        <item quantity="one">%1$s ♥</item>
+        <item quantity="other">%1$s ♥</item>
+    </plurals>
+    <plurals name="conversation_list__missed_calls_plural">
+        <item quantity="one">%1$s ubesvarede opkald</item>
+        <item quantity="other">%1$s ubesvarede opkald</item>
+    </plurals>
+    <string name="conversation_list__missed_calls_count">Ubesvarede opkald</string>
+    <string name="conversation_list__missed_calls_count_group">Missed call from %1$s</string>
+    <plurals name="conversation_list__mentions_count">
+        <item quantity="one">%1$s mention</item>
+        <item quantity="other">%1$s mentions</item>
+    </plurals>
+    <plurals name="conversation_list__quotes_count">
+        <item quantity="one">%1$s reply</item>
+        <item quantity="other">%1$s replies</item>
+    </plurals>
+    <string name="conversation_list__unsent_message_long">⚠ Unsent message</string>
+    <string name="conversation_list__unsent_message_short">⚠</string>
+    <string name="conversation_list__shared__image">Delte et billede</string>
+    <string name="conversation_list__shared__file">Delte en fil</string>
+    <string name="conversation_list__shared__video">Delte en video</string>
+    <string name="conversation_list__shared__audio">Delte en lydbesked</string>
+    <string name="conversation_list__shared__location">Delte en placering</string>
+    <string name="conversation_list__missed_call">Ubesvarede opkald</string>
+    <string name="conversation_list__pinged">Pinged</string>
+    <string name="conversation_list__ephemeral">Someone sent a message</string>
+    <string name="conversation_list__single_eph_and_mention">Mentioned you</string>
+    <string name="conversation_list__group_eph_and_mention">Someone mentioned you</string>
+    <string name="conversation_list__single_eph_and_quote">Replied to you</string>
+    <string name="conversation_list__group_eph_and_quote">Someone replied to you</string>
+    <string name="conversation_list__typing">Skriver en besked&#8230;</string>
+    <string name="conversation_list__someone">Nogen</string>
+    <string name="conversation_list__added">[[%1$s]] was added</string>
+    <string name="conversation_list__added_you">[[%1$s]] tilføjede dig</string>
+    <string name="conversation_list__left_you">Du forlod</string>
+    <string name="conversation_list__removed_you">[[%1$s]] fjernede dig</string>
+    <string name="conversation_list__header__title">SAMTALER</string>
+    <string name="conversation_list__header__folders_title">FOLDERS</string>
+    <string name="conversation_list__header__archive_title">ARKIV</string>
+    <string name="conversation_list__single_with_quote">Reply: %1$s</string>
+    <string name="conversation_list__group_with_quote">Reply from %1$s: %2$s</string>
+    <string name="conversation_list__single_without_quote">%1$s</string>
+    <string name="conversation_list__group_without_quote">[[%1$s]]: %2$s</string>
+    <string name="guest_indicator">GÆST</string>
+    <string name="participant_tab_guest_indicator_label">Gæst</string>
+    <string name="participant_tab_external_indicator_label">EXTERNAL</string>
+    <string name="participant_tab_group_admin_indicator_label">GROUP ADMIN</string>
+    <string name="federated_indicator">FEDERATED</string>
+    <string name="availability_none">Ingen</string>
+    <string name="availability_available">Ledig</string>
+    <string name="availability_away">Ikke til stede</string>
+    <string name="availability_busy">Optaget</string>
+    <string name="availability_text_available">AVAILABLE</string>
+    <string name="availability_text_away">AWAY</string>
+    <string name="availability_text_busy">BUSY</string>
+    <string name="availability_setstatus">SET A STATUS</string>
+    <string name="availability_notification_warning_away_title">You are set to Away</string>
+    <string name="availability_notification_warning_away">You will appear as Away to other people. You will not receive notifications about any incoming calls or messages.</string>
+    <string name="availability_notification_warning_busy_title">You are set to Busy</string>
+    <string name="availability_notification_warning_busy">You will appear as Busy to other people. You will only receive notifications for mentions, replies, and calls in conversations that are not muted.</string>
+    <string name="availability_notification_warning_available_title">You are set to Available</string>
+    <string name="availability_notification_warning_available">You will appear as Available to other people. You will receive notifications for incoming calls and for messages according to the Notifications setting in each conversation.</string>
+    <string name="availability_notification_warning_nostatus_title">No status set</string>
+    <string name="availability_notification_warning_nostatus">You will receive notifications for incoming calls and for messages according to the Notifications setting in each conversation.</string>
+    <string name="availability_notification_dont_show">Do not display this information again</string>
+    <string name="availability_notification_ok">Ok</string>
+    <string name="availability_notification_blocked_title">Notifications are disabled in %1$s</string>
+    <string name="availability_notification_blocked">Status affects notifications now. You\'re set to \"Away\" and won\'t receive any notifications.</string>
+    <string name="availability_notification_changed_title">Notifications have changed in %1$s</string>
+    <string name="availability_notification_changed">Status affects notifications now. You\'re set to \"Busy\" and will only receive notifications when someone mentions you or replies to one of your messages.</string>
+    <string name="preferences_profile_new">New Team or Account</string>
+    <string name="preferences_profile_add_account">Tilføj en konto</string>
+    <string name="preferences_profile_create_team">Opret team</string>
+    <string name="preferences_profile_in_team">in %1$s</string>
+    <string name="new_devices_dialog_title">Du har forbundet en enhed til din Wire konto.</string>
+    <string name="new_devices_dialog_info">Hvis du ikke har gjort det, så fjern enheden og nulstil din adgangskode.</string>
+    <string name="new_devices_dialog_manage_devices">Administrer enheder</string>
+    <string name="teams_set_email_title">Your account</string>
+    <string name="teams_set_email_subtitle">Enter your work email address.</string>
+    <string name="teams_set_email_hint">YOU@YOURCOMPANY.COM</string>
+    <string name="teams_set_email_about">LEARN MORE</string>
+    <string name="teams_set_password_title">Set password</string>
+    <string name="teams_set_password_hint">Adgangskode</string>
+    <string name="teams_set_username_title">Set username</string>
+    <string name="teams_set_username_hint">USERNAME</string>
+    <string name="teams_set_team_name_title">Name your team</string>
+    <string name="teams_set_team_name_subtitle">You can always change it later.</string>
+    <string name="teams_set_team_name_hint">TEAM NAME</string>
+    <string name="teams_set_team_name_about">WHAT IS WIRE FOR TEAMS?</string>
+    <string name="teams_verify_email_title">You\'ve got mail</string>
+    <string name="teams_verify_email_subtitle">Enter the verification code we sent to %1$s.</string>
+    <string name="teams_verify_email_resend">RESEND CODE</string>
+    <string name="teams_verify_email_change">CHANGE EMAIL</string>
+    <string name="teams_set_name_title">Your name</string>
+    <string name="teams_set_name_hint">FULL NAME</string>
+    <string name="app_entry_create_account">Personligt</string>
+    <string name="app_entry_create_account_sub">Chat privately with groups of friends and family</string>
+    <string name="app_entry_create_team">Pro</string>
+    <string name="app_entry_create_team_sub">Secure collaboration for businesses, institutions and professional organizations</string>
+    <string name="app_entry_login_sub">Already have an account?</string>
+    <string name="app_entry_login">Log ind</string>
+    <string name="app_entry_tc_dialog_title">Terms of Service</string>
+    <string name="app_entry_tc_dialog_message">You must accept to continue</string>
+    <string name="app_entry_notifications_dialog_title">Notifikationer</string>
+    <string name="app_entry_notifications_dialog_message">Notifications may include alerts, sounds, and icon badges. These can be configured in Settings.</string>
+    <string name="app_entry_dialog_accept">ACCEPTER</string>
+    <string name="app_entry_dialog_cancel">ANNULLER</string>
+    <string name="app_entry_dialog_log_in">LOG IND</string>
+    <string name="app_entry_dialog_no_thanks">NO, THANKS</string>
+    <string name="app_entry_dialog_not_now">NOT NOW</string>
+    <string name="app_entry_dialog_view">VIEW</string>
+    <string name="app_entry_dialog_privacy_policy">PRIVACY POLICY</string>
+    <string name="app_entry_email_sent">Email sent</string>
+    <string name="teams_set_username_subtitle">Usernames help people find you.</string>
+    <string name="app_entry_sso_dialog_title">Company login</string>
+    <string name="app_entry_sso_dialog_message">Enter the company SSO access code.</string>
+    <string name="app_entry_sso_input_hint"></string>
+    <string name="action_button_state_play">play</string>
+    <string name="action_button_state_pause">pause</string>
+    <string name="action_button_state_close">close</string>
+    <string name="action_button_state_redo">redo</string>
+    <string name="action_button_state_none">none</string>
+    <string name="pick_user_teams_invite">Inviter personer til holdet</string>
+    <string name="teams_invitations_skip">SKIP</string>
+    <string name="teams_invitations_done">DONE</string>
+    <string name="teams_invitations_error_too_many">THE MAXIMUM NUMBER OF INVITATIONS HAS BEEN SENT</string>
+    <string name="teams_invitations_error_already_sent">ALREADY SENT</string>
+    <string name="teams_invitations_error_generic">SOMETHING WENT WRONG, PLEASE TRY AGAIN</string>
+    <string name="teams_invite_email_hint">COLLEAGUE@YOURCOMPANY.COM</string>
+    <string name="teams_invitations_error_invalid_email">PLEASE ENTER A VALID EMAIL ADDRESS</string>
+    <string name="teams_invitations_error_email_exists">THIS EMAIL ADDRESS IS ALREADY IN USE</string>
+    <string name="teams_invitations_error_no_internet">NO INTERNET CONNECTION</string>
+    <string name="invitation_screen_title">Build your team</string>
+    <string name="invitation_screen_subtitle">Your Wire team is ready to go. Invite your colleagues as members.</string>
+    <string name="open_service_conversation_button_text">Åben Samtale</string>
+    <string name="remove_service_button_text">Remove Service</string>
+    <string name="integrations_create_conversation">Opret en ny samtale</string>
+    <string name="no_matches_found">No matches found</string>
+    <string name="loading_services">Loading services&#8230;</string>
+    <string name="empty_services_list">Services are helpers that can improve your workflow. To enable them, ask your administrator.</string>
+    <string name="empty_services_list_admin">Services are helpers that can improve your workflow.</string>
+    <string name="empty_services_content_description">No services found</string>
+    <string name="empty_search_content_description">No users found</string>
+    <string name="create_group_conversation">Opret gruppe</string>
+    <string name="create_guest_room_conversation">Opret gæsterum</string>
+    <string name="manage_services">Manage Services</string>
+    <string name="next_button">NEXT</string>
+    <string name="skip_button">SKIP</string>
+    <string name="done_button">DONE</string>
+    <string name="new_group_header">OPRET GRUPPE</string>
+    <string name="add_participants_empty_header">ADD PARTICIPANTS</string>
+    <string name="add_participants_count_header">ADD PARTICIPANTS (%1$s)</string>
+    <string name="new_conv_no_results">Intet resultat</string>
+    <string name="new_conv_no_contacts">No contacts</string>
+    <plurals name="participants_divider_services">
+        <item quantity="one">SERVICES (%1$s)</item>
+        <item quantity="other">SERVICES (%1$s)</item>
+    </plurals>
+    <string name="participants_divider_people">GROUP MEMBERS (%1$s)</string>
+    <string name="participants_divider_admins">GROUP ADMINS (%1$s)</string>
+    <string name="participants_divider_people_no_number">GROUP MEMBERS</string>
+    <string name="participants_divider_admins_no_number">GROUP ADMINS</string>
+    <string name="participants_divider_options">OPTIONS</string>
+    <string name="participants_no_admins">There are no admins.</string>
+    <string name="participants_no_results_1">Ingen matchende resultater.</string>
+    <string name="participants_no_results_2">Try entering a different name.</string>
+    <string name="group_name_hint">GROUP NAME</string>
+    <string name="allow_guests_toggle_text">Tillad gæster</string>
+    <string name="allow_guests_toggle_info_text">Åbn denne samtale for personer uden for dit team.</string>
+    <string name="read_receipts_toggle_text">Read receipts</string>
+    <string name="read_receipts_toggle_info_text">When this is on, people can see when their messages in this conversation are read.</string>
+    <string name="read_receipts_info_title_enabled">YOU HAVE ENABLED READ RECEIPTS</string>
+    <string name="read_receipts_info_title_disabled">YOU HAVE DISABLED READ RECEIPTS</string>
+    <string name="read_receipts_info_1">If both sides turn on read receipts, you can see when messages are read.</string>
+    <string name="read_receipts_info_2">You can change this option in your account settings.</string>
+    <string name="create_conv_options_title_text">Conversation options</string>
+    <string name="create_conv_options_subtitle_allow_guests">Tillad gæster</string>
+    <string name="create_conv_options_subtitle_read_receipts">Read receipts</string>
+    <string name="create_conv_options_subtitle_on">ON</string>
+    <string name="create_conv_options_subtitle_off">FRA</string>
+    <string name="participant_group_admin_toggle_text">Group admin</string>
+    <string name="participant_group_admin_toggle_info_text">When this is on, the admin can add or remove people and services, update group settings, and change a participant’s role.</string>
+    <string name="open_this_conversation_to_people_outside_your_team">Åbn denne samtale for personer uden for dit team.</string>
+    <string name="allow_guests">Tillad gæster</string>
+    <string name="guest_options_title">Gæst indstillinger</string>
+    <string name="ephemeral_options_title">Self-deleting messages</string>
+    <string name="notifications_options_title">Notifikationer</string>
+    <string name="ephemeral_explanation_text">Self-deleting messages will be turned on for all the participants in this conversation</string>
+    <string name="notifications_explanation_text">You can be notified about everything (including audio and video calls) or only when you are mentioned.</string>
+    <string name="show_all_participants">Show all (%1$s)</string>
+    <string name="participant_was_removed_from_team">%s was removed from team</string>
+    <string name="all_participants">Participants (%1$s)</string>
+    <string name="allow_guests_error_title">Noget gik galt</string>
+    <string name="allow_guests_error_body">Could not allow guests nor services. Please try again.</string>
+    <string name="allow_guests_warning_body">Aktuel gæst vil blive fjernet fra samtalen. Nye gæster vil ikke være tilladt.</string>
+    <string name="allow_guests_warning_confirm">Fjern</string>
+    <string name="guests_are_present">GUESTS ARE PRESENT</string>
+    <string name="services_are_present">SERVICES ARE ACTIVE</string>
+    <string name="guests_and_services_are_present">GUESTS AND SERVICES ARE PRESENT</string>
+    <string name="participants_details_header_title">DETAILS</string>
+    <string name="invitation_link_description">Anyone with the link can join the conversation, even if they don\'t have Wire</string>
+    <string name="create_link_button">Create Link</string>
+    <string name="copy_link_button">Copy Link</string>
+    <string name="share_link_button">Share Link</string>
+    <string name="revoke_link_button">Revoke Link&#8230;</string>
+    <string name="invitation_link_title">INVITE OTHERS WITH A LINK</string>
+    <string name="link_copied_toast">Link Copied!</string>
+    <string name="revoke_link_message">Nye gæster vil ikke kunne tilslutte med dette link. Aktuelle gæster vil stadig have adgang.</string>
+    <string name="revoke_link_confirm">Revoke Link</string>
+    <string name="invite_button_description">Folk uden for dit team kan deltage i denne samtale.</string>
+    <string name="invite_people">Invitér personer</string>
+    <string name="guest_room_name">Gæsterum</string>
+    <string name="guest_time_left_hours">%1$sh left</string>
+    <string name="guest_time_left_hours_minutes">%1$s.%2$sh left</string>
+    <string name="guest_time_left_minutes">Less than %1$sm left</string>
+    <string name="backup_description">Create a backup to preserve your conversation history. You can use this to restore history if you lose your device or switch to a new one.
+        \n\nChoose a strong password to protect the backup file.</string>
+    <string name="pref_account_backup_title">Sikkerhedskopier samtaler</string>
+    <string name="backup_password_dialog_title">Set password</string>
+    <string name="backup_password_dialog_message">The backup will be compressed and encrypted with a password. Make sure to store it in a secure place.</string>
+    <string name="backup_password_dialog_ok">OK</string>
+    <string name="backup_password_dialog_no_password">Annuller</string>
+    <string name="restore_password_dialog_title">This backup is password protected.</string>
+    <string name="add_email_address">Add your email address</string>
+    <string name="set_a_password">Set a password</string>
+    <string name="email_and_password_explanation">You need an email address and a password to use Wire on multiple devices.</string>
+    <string name="new_device_password">New device</string>
+    <string name="new_device_password_explanation">Enter the password for your Wire account.\n%1$s</string>
+    <string name="restore_from_backup_button">RESTORE FROM BACKUP</string>
+    <string name="second_launch__header">Du har brugt Wire på denne enhed før.</string>
+    <string name="second_launch__sub_header">If that was long ago, some messages may not appear here.</string>
+    <string name="restore_override_alert_title">Restore history</string>
+    <string name="restore_override_alert_text">The backup contents will replace the conversation history on this device. You can only restore history from a backup of the same platform.</string>
+    <string name="restore_override_alert_ok">Choose Backup File</string>
+    <string name="back_up_progress">BACKING UP&#8230;</string>
+    <string name="back_up_progress_complete">COMPLETE</string>
+    <string name="restore_progress">RESTORING&#8230;</string>
+    <string name="pref_account_backup_warning_title">Set an email and password.</string>
+    <string name="pref_account_backup_warning_message">You need an email and a password in order to back up your conversation history. You can do it from the account page in Settings.</string>
+    <string name="pref_account_backup_warning_ok">OK</string>
+    <string name="export_generic_error_title">Filen kunne ikke gemmes</string>
+    <string name="export_generic_error_text">You may not have enough space or permission to save it there.</string>
+    <string name="backup_button">Back Up Now</string>
+    <string name="backup_import_error_unknown_title">Noget gik galt</string>
+    <string name="backup_import_error_unknown">Din historik kunne ikke gendannes.</string>
+    <string name="backup_import_error_unsupported_version_title">Ukompatibel sikkerhedskopi</string>
+    <string name="backup_import_error_unsupported_version">Denne sikkerhedskopi er lavet på en nyere eller uddateret version af Wire og kan ikke blive gendannet her.</string>
+    <string name="backup_import_error_wrong_account_title">Forkert sikkerhedskopi</string>
+    <string name="backup_import_error_wrong_account">Du kan ikke gendanne historik fra en anden konto.</string>
+    <string name="video_paused">Video paused</string>
+    <string name="call_degraded_title">Call ended</string>
+    <string name="calling_degraded_title">New device</string>
+    <string name="call_info">Up to %1$s people can join a group conversation.</string>
+    <string name="markdown_link_dialog_title">Visit Link</string>
+    <string name="markdown_link_dialog_message">This will take you to\n%1$s</string>
+    <string name="markdown_link_dialog_confirmation">OK</string>
+    <string name="markdown_link_dialog_cancel">ANNULLER</string>
+    <string name="max_participants_alert_title">Fuldt hus</string>
+    <string name="max_participants_create_alert_message">Up to %1$s people can join a conversation.</string>
+    <string name="max_participants_add_alert_message">Up to %1$s people can join a conversation. Currently there is only room for %2$s more.</string>
+    <string name="sso_signin_button">Company log in</string>
+    <string name="sso_signin_error_title">Noget gik galt</string>
+    <string name="sso_signin_error_message">Please contact your team administrator for details (Error %1$s).</string>
+    <string name="sso_signin_error_try_again_message">Please try again later (Error %1$s).</string>
+    <string name="enterprise_signin_domain_not_found_error">This email cannot be used for enterprise login. Please enter the SSO code to proceed.</string>
+    <string name="enterprise_signin_email_sso_invalid_input_error">Please enter a valid email or SSO access code.</string>
+    <string name="enterprise_signin_sso_invalid_input_error">Please enter a valid SSO access code.</string>
+    <string name="enterprise_signin_email_multiple_servers_not_supported">This email is linked to a different server, but the app can only be connected to one server at a time. Please log out of all Wire accounts on this device and try to log in again.</string>
+    <string name="sso_signin_wrong_code_title">Ugyldig kode</string>
+    <string name="sso_signin_wrong_code_message">Please verify your company SSO access code and try again.</string>
+    <string name="sso_signin_max_accounts_title">Two accounts active</string>
+    <string name="sso_signin_max_accounts_message">You can only be logged in with two accounts at once. Log out from one to add another.</string>
+    <string name="custom_backend_welcome">Welcome to\n%1$s workspace</string>
+    <string name="participant_search_hint">SEARCH FOR NAMES</string>
+    <string name="participant_search_title">PARTICIPANTS</string>
+    <string name="generic_service_warning">Services have access to the content of this conversation</string>
+    <string name="add_services_button_text">Manage services</string>
+    <string name="empty_search_button_text">Lær mere</string>
+    <string name="empty_search_same_domain_text">Find people in Wire by name or @username</string>
+    <string name="empty_search_other_domains_text">Find people from another domain by @username@domainname</string>
+    <string name="wire_notification_name">Wire Notification</string>
+    <string name="wire_ping_name">Wire Ping</string>
+    <string name="reply_self_name">Dig</string>
+    <string name="reply_message_type_image">IMAGE</string>
+    <string name="reply_message_type_video">VIDEO</string>
+    <string name="reply_message_type_audio">AUDIO MESSAGE</string>
+    <string name="reply_message_type_location">LOCATION</string>
+    <string name="reply_message_type_asset">ATTACHMENT</string>
+    <string name="reply_message_type_unknown">You cannot see this message.</string>
+    <string name="deep_link_generic_error_title">Invalid link.</string>
+    <string name="deep_link_generic_error_message">The link you opened is not valid.</string>
+    <string name="deep_link_conversation_error_title">Wire can\'t open this conversation.</string>
+    <string name="deep_link_conversation_error_message">You may not have permission with this account or the person may not be on Wire.</string>
+    <string name="deep_link_user_error_title">Wire can\'t find this person.</string>
+    <string name="deep_link_user_error_message">You may not have permission with this account or it no longer exists.</string>
+    <string name="password_policy_hint">Use at least %1$s characters, with one lowercase letter, one capital letter, a number, and a special character.</string>
+    <!-- Custom Backend -->
+    <string name="custom_backend_info_title">Connected to \"%1$s\"</string>
+    <string name="custom_backend_info_show_more">SHOW MORE</string>
+    <string name="custom_backend_dialog_ok">OK</string>
+    <string name="custom_backend_dialog_cancel">Annuller</string>
+    <string name="custom_backend_dialog_connect">Forbind</string>
+    <string name="custom_backend_dialog_confirmation_title">Connect to server</string>
+    <string name="custom_backend_dialog_confirmation_message">This action will connect the app to a custom server: %1$s</string>
+    <string name="custom_backend_dialog_info_title">You are connected to a third-party server: \"%1$s\"</string>
+    <string name="custom_backend_dialog_network_error_title">The server is not responding</string>
+    <string name="custom_backend_dialog_network_error_message">Please check your internet connection, verify the link and try again.</string>
+    <string name="custom_backend_not_found_error_title">This server can\'t be reached</string>
+    <string name="custom_backend_not_found_error_message">We can\'t connect to the server at %1$s.\nLet your server
+        administrator know about this issue.</string>
+    <string name="custom_backend_dialog_logged_in_error_title">Can\'t switch servers</string>
+    <string name="custom_backend_dialog_logged_in_error_message">You are already logged in.\nTo connect to this server, log out of all accounts and try again.</string>
+    <string name="root_detected_dialog_title">Jailbreak/root detected</string>
+    <string name="root_detected_dialog_message">You can not use Wire on this device.</string>
+    <!--Two identical strings are needed for German translation-->
+    <string name="quote_timestamp_message_time">Original message from %s</string>
+    <string name="quote_timestamp_message_date">Original message from %s</string>
+    <string name="read_receipts_remotely_enabled_title">You have enabled read receipts</string>
+    <string name="read_receipts_remotely_disabled_title">You have disabled read receipts</string>
+    <string name="read_receipts_remotely_changed_message">You can change this option in your account settings.</string>
+    <string name="security_policy_title">Wire Security Policy</string>
+    <string name="security_policy_description">Allow Wire to make your device more secure.</string>
+    <string name="security_policy_setup_dialog_title">Enable Security Policy</string>
+    <string name="security_policy_setup_dialog_message">Wire needs admin privileges to set security policies.</string>
+    <string name="security_policy_setup_dialog_button">Open settings</string>
+    <string name="security_policy_invalid_password_dialog_title">Password strength insufficient</string>
+    <string name="security_policy_invalid_password_dialog_message">Your device must have a password with minimum %1$s characters, at least one each of digit, uppercase, lowercase, and special symbol.</string>
+    <string name="invalid_cookie_dialog_title">Your session expired</string>
+    <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
+    <string name="conversation_folder_name_favorites">Favorites</string>
+    <string name="conversation_folder_name_group">Grupper</string>
+    <string name="conversation_folder_name_one_to_one">Personer</string>
+    <string name="folders_move_to">MOVE TO</string>
+    <string name="folders_no_custom_folder_found">Create a new folder by pressing the + button</string>
+    <string name="folders_create_new_folder">CREATE NEW FOLDER</string>
+    <string name="folders_create_new_folder_action">OPRET</string>
+    <string name="folders_create_new_folder_info">Move the conversation \"%1$s\" to a new folder.</string>
+    <string name="folders_folder_name_hint">FOLDER NAME</string>
+    <string name="folders_folder_name_error_text">Maximum %s characters</string>
+    <string name="folders_move_to_folder_close">Luk</string>
+    <string name="delete_group_conversation_error_title">Group not deleted</string>
+    <string name="delete_group_conversation_error_message">An error occurred while trying to delete the group. Please try again.</string>
+    <string name="delete_group_conversation_error_message_with_group_name">An error occurred while trying to delete the group %1$s. Please try again.</string>
+    <!-- No Internet Connection -->
+    <string name="no_internet_connection_title">Ingen internetforbindelse</string>
+    <string name="no_internet_connection_message">Please check your Internet connection and try again</string>
+    <!-- Shortcuts -->
+    <string name="shortcut_create_group_label">Opret Gruppe</string>
+    <string name="shortcut_share_a_photo_label">Share Photo</string>
+    <string name="shortcut_new_message_label">New Message</string>
+    <!-- Settings Account - Edit Phone -->
+    <string name="edit_phone_dialog_country_code_error">Ugyldig landekode</string>
+    <string name="edit_phone_dialog_phone_number_error">Ugyldigt telefonnummer</string>
+    <!-- SSO Login -->
+    <string name="sso_login_dialog_title">Enterprise Login</string>
+    <string name="sso_login_dialog_message">Please enter your SSO code:</string>
+    <string name="email_sso_login_dialog_message">Please enter your email or SSO code. If your email matches an enterprise installation of Wire, this app will connect to that server.</string>
+    <!-- Welcome -->
+    <string name="welcome_to_wire">Welcome to Wire</string>
+    <string name="welcome_enterprise_log_in">Enterprise Login</string>
+    <string name="welcome_custom_backend_log_in_email">LOG IN WITH EMAIL</string>
+    <string name="welcome_custom_backend_log_in_sso">LOG IN WITH SSO</string>
+    <!-- Updated edit handle screen -->
+    <string name="edit_account_handle_error_already_taken">Allerede i brug</string>
+    <string name="edit_account_handle_error_too_short">Mindst 2 tegn</string>
+    <string name="edit_account_handle_error_invalid_characters">Please only use: a–z, 0–9, and _ </string>
+    <string name="edit_account_handle_error_unknown_error">Noget gik galt, prøv igen.</string>
+    <string name="edit_phone_remove_phone_number">Remove phone number</string>
+    <string name="edit_phone_dialog_delete_phone_confirmation">Are you sure you want to remove %s from your Wire account?</string>
+    <string name="edit_phone_dialog_confirm_phone_confirmation">Vi sender en notifikationskode til:\n%s</string>
+    <string name="edit_phone_save_phone_number">Gem</string>
+    <!-- Delete Account -->
+    <string name="delete_account_permanently_email_confirmation">We will send an email to:\n %1$s \nFollow the link to permanently delete your account.</string>
+    <string name="delete_account_permanently_sms_confirmation">We will send an SMS to:\n %1$s \nFollow the link to permanently delete your account.</string>
+    <string name="pref_account_delete_confirmed">Account deletion confirmed, please check your email.</string>
+    <!-- Authentication (Shared strings between create account and login screens) -->
+    <string name="authentication_tab_layout_title_email">EMAIL</string>
+    <string name="authentication_tab_layout_title_phone">PHONE</string>
+    <!-- Create Personal Account - Main screen -->
+    <string name="create_personal_account_title">Opret en konto</string>
+    <string name="create_personal_account_with_email_edit_text_hint">EMAIL</string>
+    <string name="create_personal_account_with_phone_edit_text_hint">PHONE NUMBER</string>
+    <string name="create_personal_account_with_email_email_blacklisted_error">This email address is not allowed.</string>
+    <string name="create_personal_account_with_email_email_in_use_error">This email address you used is already linked to an account.\nUse another email address or try to login if you own this account.</string>
+    <string name="create_personal_account_with_phone_phone_blacklisted_error">This phone number is not allowed.</string>
+    <string name="create_personal_account_with_phone_phone_in_use_error">This phone number you used is already linked to an account.\nUse another phone number or try to login if you own this account.</string>
+    <string name="create_personal_account_with_phone_default_country_name">Germany</string>
+    <string name="create_personal_account_with_phone_default_country_code">+49</string>
+    <!-- Create Personal Account - Email Code screen -->
+    <string name="create_personal_account_email_code_title">You\'ve got mail</string>
+    <string name="create_personal_account_email_code_description">Angiv bekræftelseskoden vi har sendt til %s</string>
+    <string name="create_personal_account_email_code_change_email">CHANGE EMAIL</string>
+    <string name="create_personal_account_email_code_resend_code">RESEND CODE</string>
+    <string name="create_personal_account_email_code_invalid_code_error">Indtast en gyldig kode</string>
+    <!-- Create Personal Account - Phone Code screen -->
+    <string name="create_personal_account_phone_code_title">SMS code</string>
+    <string name="create_personal_account_phone_code_description">Enter the code we sent to %s</string>
+    <string name="create_personal_account_phone_code_resend_code">RESEND CODE</string>
+    <string name="create_personal_account_phone_code_invalid_code_error">Indtast en gyldig kode</string>
+    <!-- Create Personal Account - Name screen -->
+    <string name="create_personal_account_name_input_title">Your name</string>
+    <string name="create_personal_account_name_input_edit_text_hint">FULL NAME</string>
+    <!-- Create Personal Account - Password screen -->
+    <string name="create_personal_account_password_input_title">Set Password</string>
+    <string name="create_personal_account_password_input_edit_text_hint">PASSWORD</string>
+    <!-- Create Personal Account - Registration errors -->
+    <string name="create_personal_account_unauthorized_email_error">Unauthorized e-mail address.</string>
+    <string name="create_personal_account_email_in_use_error">The given e-mail address is in use.</string>
+    <string name="create_personal_account_invalid_activation_code_error">Invalid activation code.</string>
+    <string name="create_personal_account_unauthorized_phone_error">Unauthorized phone number.</string>
+    <string name="create_personal_account_phone_in_use_error">The given phone number is in use.</string>
+    <!-- Composite Message -->
+    <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
+    <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
+    <!-- StartSSO Screen  -->
+    <string name="start_sso_leaving_wire">Redirecting&#8230;</string>
+    <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
+    <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
+    <!-- Legal Hold -->
+    <string name="legal_hold_info_title">Legal Hold</string>
+    <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.\n\nYour conversation partners will be aware of the recording.</string>
+    <string name="legal_hold_conversation_info_message">Legal Hold has been activated for at least one person in this conversation.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.</string>
+    <string name="legal_hold_info_list_title">Legal Hold Subjects</string>
+    <string name="legal_hold_request_dialog_title">Legal Hold Requested</string>
+    <string name="legal_hold_request_dialog_message_for_sso">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.</string>
+    <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.\nEnter your password to confirm.</string>
+    <string name="legal_hold_request_dialog_positive_button_text">Besvar</string>
+    <string name="legal_hold_request_dialog_negative_button_text">Ikke nu</string>
+    <string name="legal_hold_request_dialog_wrong_password_error">Forkert adgangskode</string>
+    <string name="legal_hold_all_subjects_title">LEGAL HOLD SUBJECTS</string>
+    <string name="legal_hold_device_name">Legal Hold</string>
+    <string name="legal_hold_deactivated_dialog_title">Legal Hold Deactivated</string>
+    <string name="legal_hold_deactivated_dialog_message">Future messages will not be recorded.</string>
+    <string name="legal_hold_activated_dialog_title">Legal Hold is Active</string>
+    <string name="legal_hold_participant_missing_consent_alert_title">Guests cannot be added</string>
+    <string name="legal_hold_participant_missing_consent_alert_message">Due to legal hold, only team members can be added to this conversation.</string>
+    <string name="legal_hold_participant_missing_consent_alert_negative_button">LEARN MORE</string>
+    <string name="legal_hold_user_blocked_message">This user is blocked due to legal hold. _LEARN MORE_</string>
+    <string name="legal_hold_cannot_connect_alert_title">Cannot connect to this user</string>
+    <string name="legal_hold_cannot_connect_alert_message">You cannot connect to this user due to legal hold.</string>
+    <string name="legal_hold_cannot_connect_alert_negative_button">LEARN MORE</string>
+    <!-- Join Conversation via Deep Link -->
+    <string name="join_conversation_confirmation_message">You have been invited to a conversation:\n%s</string>
+    <string name="join_conversation_confirmation_join_button_text">Deltag</string>
+    <string name="join_conversation_confirmation_cancel_button_text">Annuller</string>
+    <string name="join_conversation_conversation_join_error_title">You could not join the conversation</string>
+    <string name="join_conversation_invalid_link_error_message">The conversation link is invalid.</string>
+    <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
+    <!-- Feature Config Changes -->
+    <string name="feature_config_changed_info_dialog_title">There has been a change in Wire</string>
+    <!-- File sharing feature config -->
+    <string name="file_sharing_enabled_info_dialog_message">Sharing and receiving files of any type is now enabled.</string>
+    <string name="file_sharing_disabled_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
+    <string name="file_sharing_restriction_info_image">RECEIVING IMAGES IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_file">RECEIVING FILES IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_generic">FILE SHARING RESTRICTED</string>
+    <!-- Self Deleting Messages feature config -->
+    <string name="self_deleting_messages_change_info_dialog_message_enabled">Sending of self deleting messages is enabled.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">Sending of self deleting messages is mandatory. The enforced timeout for deletion is %s seconds.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_disabled">Sending of self deleting messages is disabled.</string>
+    <!-- Conference Calling Restriction feature config -->
+    <string name="conference_calling_restriction_dialog_title">Upgrade to Enterprise</string>
+    <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to features such as starting conferences and more.
+    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
+    <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
+    <string name="conference_calling_restriction_dialog_negative_button">ANNULLER</string>
+    <string name="upgraded_plan_dialog_title">Wire Enterprise</string>
+    <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
+        &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
+    <string name="conference_calling_unavailable_dialog_title">Feature unavailable</string>
+    <string name="conference_calling_unavailable_dialog_description_personal_user">The option to initiate a conference call is only available in the paid version of Wire.</string>
+    <string name="conference_calling_unavailable_dialog_description_team_member_user">To start a conference call, your team needs to upgrade to the Enterprise plan.</string>
+</resources>

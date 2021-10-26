@@ -2,7 +2,7 @@ package com.waz.service
 
 import com.waz.content.{OtrClientsStorage, UserPreferences}
 import com.waz.content.UserPreferences.ShouldPostClientCapabilities
-import com.waz.model.{SyncId, UserId}
+import com.waz.model.{Domain, SyncId, UserId}
 import com.waz.model.otr.ClientId
 import com.waz.service.otr.OtrClientsServiceImpl
 import com.waz.specs.AndroidFreeSpec
@@ -15,7 +15,7 @@ class OtrClientsServiceSpec extends AndroidFreeSpec {
 
   private val selfUserId = UserId("selfUserId")
   private val selfClientId = ClientId("selfClientId")
-  private val currentDomain = Some("staging.zinfra.io")
+  private val currentDomain = Domain("staging.zinfra.io")
   private val userPrefs = new TestUserPreferences()
   private val storage = mock[OtrClientsStorage]
   private val sync = mock[SyncServiceHandle]

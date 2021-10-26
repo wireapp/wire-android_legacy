@@ -1,0 +1,1425 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--*********************************************** ERRORS ***********************************************-->
+    <string name="generic_error_header">Valami nem stimmel</string>
+    <string name="generic_error_message">Kérjük, próbáld meg újra</string>
+    <string name="internet_connectivity_error_header">Nincs internet kapcsolat</string>
+    <string name="internet_connectivity_error_message">Ellenőrizd az internetkapcsolatod és próbáld újra</string>
+    <string name="too_many_attempts_header">Túl sok sikertelen próbálkozás</string>
+    <string name="email_login_later_message">KÉRLEK, PRÓBÁLJ KÉSŐBB BELÉPNI</string>
+    <string name="phone_login_later_message">Kérjük, próbáld meg később</string>
+    <string name="email_exists_header">Ez az e-mail cím már foglalt</string>
+    <string name="email_exists_message">EZ AZ E-MAIL CÍM MÁR HASZNÁLATBAN VAN</string>
+    <string name="email_invalid_header">Érvénytelen e-mail cím</string>
+    <string name="email_invalid_message">ADJON MEG EGY ÉRVÉNYES E-MAIL CÍMET</string>
+    <string name="invalid_credentials_header">Érvénytelen információ</string>
+    <string name="invalid_credentials_message">KÉRLEK, ELLENŐRIZD AZ ADATAIDAT ÉS PRÓBÁLKOZZ ÚJRA</string>
+    <string name="phone_exists_header">Ez a telefonszám már regisztrálva van</string>
+    <string name="phone_exists_message">A megadott telefonszám már regisztrált. Kérjük, próbáld meg újra</string>
+    <string name="phone_invalid_format_header">Érvénytelen telefonszám</string>
+    <string name="phone_invalid_format_message">Kérjük, valós telefonszámot adj meg</string>
+    <string name="phone_password_exists_header">A jelszó létezik</string>
+    <string name="phone_password_exists_message">Ehhez a fiókhoz már tartozik e-mail cím és jelszó. Kérjük, jelentkezz be az e-mail címeddel.</string>
+    <string name="invalid_code_header">Érvénytelen kód</string>
+    <string name="incorrect_code_header">Helytelen kód</string>
+    <string name="wrong_code_message">KÉRLEK ÉRVÉNYES KÓDOT ADJ MEG</string>
+    <string name="phone_pending_login_header">A kódot már elküldtük</string>
+    <string name="phone_pending_login_message">Már elküldtük neked a kódot SMS-ben. Ha új kódot szeretnél kérni, koppints az Újraküldés gombra 10 perc elteltével.</string>
+    <string name="phone_budget_exhausted_header">Túl sok kérelem</string>
+    <string name="phone_budget_exhausted_message">Kérjük, próbáld meg később.</string>
+    <string name="conversation_input_bar_message_too_long_title">Az üzenet túl hosszú</string>
+    <string name="conversation_input_bar_message_too_long_message">You can send messages up to %1$s characters long.</string>
+    <string name="conversation_input_bar_dialog_ok">OK</string>
+    <!--*********************************************** ERRORS ***********************************************-->
+    <string name="permissions_denied_dialog_settings">Beállítások</string>
+    <string name="camera_not_available">A KAMERA NEM ELÉRHETŐ</string>
+    <string name="camera_permissions_denied_title">A kamera nem elérhető</string>
+    <string name="camera_permissions_denied_message">Fotók készítéséhez és küldéséhez először engedélyezd a kamera-hozzáférést</string>
+    <!-- Registration and Sign in -->
+    <string name="welcome__terms_of_service">A FOLYTATÁSSAL ELFOGADOD A _FELHASZNÁLÁSI FELTÉTELEKET_.</string>
+    <string name="profile__name__guidance__tooshort__title">LEGALÁBB 2 KARAKTER</string>
+    <string name="profile__email__placeholder">E-mail</string>
+    <string name="profile__password__placeholder">Jelszó</string>
+    <string name="profile__password__guidance__tooshort__title">LEGALÁBB 8 KARAKTER</string>
+    <string name="profile__email__verify__instructions">Küldtünk egy e-mailt a \n[[%1$s]] címre. \nE-mail címed megerősítéséhez kövesd a levélben lévő linket.</string>
+    <string name="profile__email__verify__didnt_get">Nem kaptad meg az üzenetet?</string>
+    <string name="profile__email__verify__resend">Újraküldés</string>
+    <string name="profile__guidance__invalid_email">A megadott e-mail cím érvénytelen. Kérjük, ellenőrizd és próbáld újra</string>
+    <string name="new_reg__code_resent">Elküldtük az új kódot SMS-ben</string>
+    <string name="new_reg__email_code_resent">Elküldtük az új kódot e-mailben</string>
+    <string name="new_reg__code_resent__call">Mindjárt felhívunk</string>
+    <string name="new_reg__default_country">hu</string>
+    <!-- consider updating this for every new language -->
+    <string name="your_phone_number">Telefonszámod</string>
+    <!-- Receive email/sms invitation -->
+    <!-- People picker/start UI -->
+    <string name="pick_user_search_focus">\u0020 KERESÉS</string>
+    <string name="pick_user_search_hint">KERESÉS</string>
+    <string name="choose_conversation">KERESÉS</string>
+    <string name="people_picker__top_users_header_title">Top Partnerek</string>
+    <string name="people_picker__search_result_conversations_header_title">Csoportok</string>
+    <string name="people_picker__search_result_team_conversations_header_title">%1$s Csoportjai</string>
+    <string name="people_picker__search_result_connections_searched_header_title">Névjegyek</string>
+    <string name="people_picker__search_result_others_header_title">Connect with Wire</string>
+    <string name="people_picker__search_result_others_header_federated">Connect with %1$s</string>
+    <string name="people_picker__search_result__expander_title">Mind a(z) %1$s mutatása ↓</string>
+    <string name="people_picker__search_people">PARTNEREK</string>
+    <string name="people_picker__search_services">SZOLGÁLTATÁSOK</string>
+    <string name="receive_news_and_offers_request_title">Hírlevél</string>
+    <string name="receive_news_and_offers_request_body">Szeretnél híreket és termékfrissítéseket kapni a Wire-től e-mailben? Később bármikor leiratkozhatsz.</string>
+    <string name="crashes_and_analytics_request_title">Segíts nekünk jobbá tenni a Wire-t</string>
+    <string name="crashes_and_analytics_request_body">Segíts jobbá tenni termékeinket és szolgáltatásainkat azzal, hogy névtelen használati és hibajelentéseket küldesz. Ezeket az információkat semmi másra nem használjuk.</string>
+    <string name="crashes_and_analytics_request_no">Nem</string>
+    <string name="crashes_and_analytics_request_agree">Elfogadás</string>
+    <!-- Request Password dialog -->
+    <string name="request_password_ok">OK</string>
+    <string name="request_password_cancel">Mégsem</string>
+    <string name="request_password_biometric_description">Unlock using biometric authentication.</string>
+    <string name="request_password_biometric_cancel">Mégsem</string>
+    <string name="request_password_error">Wrong passcode</string>
+    <!-- Bots / Integrations / Services -->
+    <string name="integrations_picker__section_title">Szolgáltatások</string>
+    <string name="integrations_errors_add_service">Új szolgáltatás hozzáadása nem lehetséges</string>
+    <string name="integrations_errors_service_unavailable">A szolgáltatás jelenleg nem elérhető</string>
+    <string name="conversation_errors_full">A beszélgetés megtelt</string>
+    <!-- Invite -->
+    <!-- Should not use newline in the dialog message, not supported by all devices, text will be cut off -->
+    <string name="people_picker__invite__share_details_dialog">Oszd meg a Wire-t barátaiddal.</string>
+    <string name="people_picker__invite__share_text__header">%1$s fel szeretné venni veled a kapcsolatot Wire-ön</string>
+    <string name="people_picker__invite__share_text__body">Fent vagyok a Wire-ön. Keress rá erre: %1$s vagy nyisd meg a get.wire.com weboldalt</string>
+    <!-- Conversation: Quick menu -->
+    <string name="conversation_quick_menu__conversation_button__single_label">MEGNYITÁS</string>
+    <!-- Conversation: System messages -->
+    <string name="content__system__other_joined">[[%1$s]] csatlakozott</string>
+    <string name="content__system__you_joined">[[Te]] csatlakoztál</string>
+    <string name="content__system__other_renamed_conv">[[%1$s]] átnevezte a beszélgetést</string>
+    <string name="content__system__you_renamed_conv">[[Te]] átnevezted a beszélgetést</string>
+    <!-- Read receipts: System messages -->
+    <string name="content__system__read_receipts_on">Az olvasási nyugták be vannak kapcsolva</string>
+    <string name="content__system__read_receipts_off">Tértivevények kikapcsolva</string>
+    <string name="content__system__read_receipts_someone_turned_on">[[%1$s]] mindenki számára bekapcsolta a tértivevényeket</string>
+    <string name="content__system__read_receipts_someone_turned_off">[[%1$s]] mindenki számára kikapcsolta a tértivevényeket</string>
+    <string name="content__system__read_receipts_you_turned_on">[[You]] mindenki számára bekapcsolta(d) a tértivevényeket</string>
+    <string name="content__system__read_receipts_you_turned_off">[[You]] mindenki számára kikapcsolta(d) a tértivevényeket</string>
+    <!-- Add people -->
+    <string name="content__system__someone_added_people">[[%1$s]] hozzáadta %2$s partnert a beszélgetéshez</string>
+    <plurals name="content__system__someone_added_people_with_others">
+        <item quantity="one">[[%1$s]] hozzáadta %2$s és _még %3$s másik partnert a beszélgetéshez_</item>
+        <item quantity="other">[[%1$s]] hozzáadta %2$s és _még %3$s másik partnert a beszélgetéshez_</item>
+    </plurals>
+    <string name="content__system__someone_added_you">[[%1$s]] hozzáadott a beszélgetéshez</string>
+    <plurals name="content__system__someone_added_people_and_you_with_others">
+        <item quantity="one">[[%1$s]] added %2$s, you and _%3$s other to the conversation_</item>
+        <item quantity="other">[[%1$s]] added %2$s, you and _%3$s others to the conversation_</item>
+    </plurals>
+    <string name="content__system__you_added_people">You added %1$s to the conversation</string>
+    <plurals name="content__system__you_added_people_with_others">
+        <item quantity="one">You added %1$s and _%2$s other to the conversation_</item>
+        <item quantity="other">You added %1$s and _%2$s others to the conversation_</item>
+    </plurals>
+    <!-- Remove people -->
+    <string name="content__system__other_removed_other">[[%1$s]] eltávolította %2$s-t a beszélgetésből</string>
+    <string name="content__system__other_removed_someone">[[%1$s]] removed someone</string>
+    <string name="content__system__someone_removed_other">Someone removed %2$s</string>
+    <string name="content__system__other_removed_you">[[%1$s]] eltávolított a beszélgetésből</string>
+    <string name="content__system__someone_removed_you">Someone removed you</string>
+    <string name="content__system__you_removed_other">You removed %1$s</string>
+    <string name="content__system__you_removed_someone">You removed someone</string>
+    <string name="content__system__you_left">[[Te]] kiléptél a beszélgetésből</string>
+    <string name="content__system__other_left">[[%1$s]] kilépett a beszélgetésből</string>
+    <string name="content__system__someone_left">Someone left</string>
+    <string name="content__system__other_was_removed">%1$s was removed</string>
+    <string name="content__system__someone_was_removed">Someone was removed</string>
+    <string name="content__system__legalhold_conflict__you_were_removed">[[You]] were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__someone_was_removed">Someone was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__other_was_removed">%1$s was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__others_were_removed">%1$s were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <!-- Create conversation -->
+    <string name="content__system__you_started_conversation">Te indítottad a beszélgetést</string>
+    <string name="content__system__other_started_conversation">%1$s beszélgetést indított</string>
+    <string name="content__system__with_you_only">with you</string>
+    <string name="content__system__with_list_only">résztvevő: %1$s</string>
+    <plurals name="content__system__with_others_only">
+        <item quantity="one">with %1$s and _%2$s other_</item>
+        <item quantity="other">with %1$s and _%2$s others_</item>
+    </plurals>
+    <string name="content__system__with_list_and_you">with %1$s and you</string>
+    <plurals name="content__system__with_others_and_you">
+        <item quantity="one">with %1$s, you and _%2$s other_</item>
+        <item quantity="other">with %1$s, you and _%2$s others_</item>
+    </plurals>
+    <!-- Conversation: missed call -->
+    <string name="content__missed_call__you_called">[[TE]] HÍVÁST INDÍTOTTÁL</string>
+    <string name="content__missed_call__xxx_called">[[%1$s]] HÍVÁST INDÍTOTT</string>
+    <string name="content__you_pinged">[[TE]] KOPOGTÁL</string>
+    <string name="content__xxx_pinged">[[%1$s]] KOPOGOTT</string>
+    <!-- Conversation: E2EE system messages -->
+    <string name="content__otr__message_error">A message from [[%1$s]] could not be decrypted.\n _FIX TO DECRYPT FUTURE MESSAGES_</string>
+    <string name="content__otr__message_error_fixed">You can now decrypt future messages from [[%1$s]]. To recover lost messages, [[ask %2$s to resend them.]]\n(FIXED ERROR: [[%3$s]] ID: %4$s)</string>
+    <string name="content__otr__message_error_you">EGY ÁLTALAD KÜLDÖTT ÜZENET NEM ÉRKEZETT MEG. _MIÉRT?_</string>
+    <string name="content__otr__identity_changed_error">[[%1$s]] ESZKÖZ AZONOSÍTÓJA MEGVÁLTOZOTT. KÉZBESÍTETLEN ÜZENET. _TOVÁBBI INFORMÁCIÓ_</string>
+    <string name="content__otr__identity_changed_error_you">ESZKÖZAZONOSÍTÓD MEGVÁLTOZOTT. KÉZBESÍTETLEN ÜZENET. _TOVÁBBI INFORMÁCIÓ_</string>
+    <string name="content__session_reset">[[%1$s was unable to decrypt some of your messages but has solved the issue.]] This affected all conversations you share together.</string>
+    <string name="content__otr__someone_added_new_device__message">%1$s started using a _new device_</string>
+    <string name="content__otr__someone_and_you_added_new_device__message">%1$s and you started using a _new device_</string>
+    <string name="content__otr__someone_and_others_added_new_device__message">%1$s and %2$s others started using a _new device_</string>
+    <string name="content__otr__someone_others_and_you_added_new_device__message">%1$s, %2$s others and you started using a _new device_</string>
+    <string name="content__otr__start_this_device__message">[[TE]] ELKEZDTED HASZNÁLNI _EZT AZ ESZKÖZT_</string>
+    <string name="content__otr__all_fingerprints_verified">MINDEN UJJLENYOMAT ELLENŐRIZVE</string>
+    <string name="content__otr__lost_history">EGY IDEJE MÁR NEM HASZNÁLTAD EZT AZ ESZKÖZT, EZÉRT NÉHÁNY ÜZENETEK ITT NEM JELENIK MEG.</string>
+    <string name="content__otr__unverified_device__message">[[TE]] VISSZAVONTAD _%1$s EGYIK ESZKÖZÉNEK_ ELLENŐRZÖTT STÁTUSZÁT</string>
+    <string name="content__otr__your_unverified_device__message">[[TE]] VISSZAVONTAD _EGYIK SAJÁT ESZKÖZÖDNEK_ ELLENŐRZÖTT STÁTUSZÁT</string>
+    <string name="content__otr__new_member__message">ÚJ PARTNEREK CSATLAKOZTAK. _ELLENŐRIZZÉTEK AZ ESZKÖZÖKET_</string>
+    <string name="content__otr__legalhold_enabled__message">This conversation is under legal hold. _LEARN MORE_</string>
+    <string name="content__otr__legalhold_disabled__message">Legal hold deactivated for this conversation</string>
+    <!-- File transfer -->
+    <string name="content__file__status__default">%1$s</string>
+    <string name="content__file__status__uploading__minimized">FELTÖLTÉS&#8230;</string>
+    <string name="content__file__status__cancelled__minimized">MEGSZAKÍTVA&#8230;</string>
+    <string name="content__file__status__downloading__minimized">LETÖLTÉS&#8230;</string>
+    <string name="content__file__status__download_failed__minimized">LETÖLTÉS SIKERTELEN</string>
+    <string name="content__file__status__upload_failed__minimized">FELTÖLTÉS SIKERTELEN</string>
+    <string name="content__file__status__uploading">%1$s · FELTÖLTÉS&#8230;</string>
+    <string name="content__file__status__cancelled">%1$s · MEGSZAKÍTVA&#8230;</string>
+    <string name="content__file__status__downloading">%1$s · LETÖLTÉS&#8230;</string>
+    <string name="content__file__status__download_failed">%1$s · LETÖLTÉS SIKERTELEN</string>
+    <string name="content__file__status__upload_failed">%1$s · FELTÖLTÉS SIKERTELEN</string>
+    <!-- used when there's a non-empty file extension, e.g. "300KB · PDF" -->
+    <string name="content__file__status__default__size_and_extension">%1$s · %2$s</string>
+    <string name="content__file__status__uploading__size_and_extension">%1$s · %2$s · FELTÖLTÉS&#8230;</string>
+    <string name="content__file__status__cancelled__size_and_extension">%1$s · %2$s · MEGSZAKÍTVA&#8230;</string>
+    <string name="content__file__status__downloading__size_and_extension">%1$s · %2$s · LETÖLTÉS&#8230;</string>
+    <string name="content__file__status__download_failed__size_and_extension">%1$s · %2$s · LETÖLTÉS SIKERTELEN</string>
+    <string name="content__file__status__upload_failed__size_and_extension">%1$s · %2$s · FELTÖLTÉS SIKERTELEN</string>
+    <string name="content__file__action__open">MEGNYITÁS</string>
+    <string name="content__file__action__save">MENTÉS</string>
+    <string name="content__file__action__open__no_app_found">Nem található alkalmazás az ilyen típusú fájlok megnyitásához</string>
+    <string name="content__file__action__save_completed">Fájl mentése sikeres</string>
+    <string name="content__file__action__save_error">Nem sikerült menteni a fájlt</string>
+    <string name="file_restrictions__sender_error">Sharing files with the .%1$s extension is not permitted by your organization</string>
+    <string name="file_restrictions__receiver_error">File from %1$s can\'t be opened.</string>
+    <string name="content__location__no_map_placeholder">A HELY MEGJELENIK A TÉRKÉPEN, HA ÚJRA LESZ INTERNETKAPCSOLAT.</string>
+    <!-- Conversation actions -->
+    <string name="conversation__action__clear_content">Tartalom törlése</string>
+    <string name="conversation__action__delete_group">Delete group&#8230;</string>
+    <string name="conversation__action__archive">Archiválás</string>
+    <string name="conversation__action__unarchive">Archiválás visszavonása</string>
+    <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>
+    <string name="conversation__action__create_group">CSOPORT LÉTREHOZÁSA</string>
+    <string name="conversation__action__open_conversation">OPEN CONVERSATION</string>
+    <string name="conversation__action__notifications">Értesítések&#8230;</string>
+    <string name="conversation__action__silence">Némítás</string>
+    <string name="conversation__action__unsilence">Némítás feloldása</string>
+    <string name="conversation__action__leave">Kilépés a csoportból&#8230;</string>
+    <string name="conversation__action__call">Hívás</string>
+    <string name="conversation__action__picture">Kép</string>
+    <string name="conversation__action__block">Letilt&#8230;</string>
+    <string name="conversation__action__unblock">Tiltás feloldása</string>
+    <string name="conversation__action__remove_member">Eltávolítás a csoportból</string>
+    <string name="conversation__action__add_to_favorites">Hozzáadás a kedvencekhez</string>
+    <string name="conversation__action__remove_from_favorites">Eltávolítás kedvencekből</string>
+    <string name="conversation__action__move_to_folder">Áthelyezés ide&#8230;</string>
+    <string name="conversation__action__remove_from_folder">Remove from \"%1$s\"</string>
+    <string name="conversation__action__leave_and_clear">\tLeave and clear content</string>
+    <string name="conversation__action__leave_only">\tKilépés a csoportból</string>
+    <string name="conversation__action__clear_and_leave">\tClear content and leave</string>
+    <string name="conversation__action__clear_only">\tClear content</string>
+    <string name="conversation__action__notifications_everything">Minden</string>
+    <string name="conversation__action__notifications_mentions_and_replies">Mentions and Replies</string>
+    <string name="conversation__action__notifications_nothing">Semmi</string>
+    <string name="conversation__action__notifications_title">Notify me about:</string>
+    <!-- Conversation: Profile Popover -->
+    <!-- Calling/voice -->
+    <string name="calling__cannot_start__title">Mikrofon szükséges</string>
+    <string name="calling__cannot_start__message">Új hívás indítása előtt tedd le a folyamatban lévőt.</string>
+    <string name="calling__cannot_start__no_permission__message">Menj a Beállításokhoz és engedélyezd a mikrofon hozzáférést a Wire számára.</string>
+    <string name="calling__cannot_start__cancel__message">MÉGSEM</string>
+    <string name="calling__cannot_start__no_camera_permission__message">A Wire nem fér hozzá a kamerához</string>
+    <string name="calling__video_call__slow_connection__message">Előfordulhat, hogy problémákat tapasztalsz a hívás közben</string>
+    <string name="incoming__controls__ongoing__speaker">HANGSZÓRÓ</string>
+    <string name="incoming__controls__ongoing__mute">NÉMÍTÁS</string>
+    <string name="incoming__controls__ongoing__video">VIDEÓ</string>
+    <string name="incoming__controls__ongoing__flip">ÁTFORDÍT</string>
+    <string name="ongoing__poor_connection_message">A VIDEÓ MEGSZAKADT, MERT LASSÚ AZ INTERNETKAPCSOLAT</string>
+    <string name="calling__self_preview_unavailable_long">A KAMERA NEM ELÉRHETŐ</string>
+    <string name="incoming__controls__ongoing__microphone">MICROPHONE</string>
+    <string name="incoming__controls__ongoing__camera">KAMERA</string>
+    <string name="incoming__controls__ongoing__flip_camera">FLIP CAMERA</string>
+    <string name="calling__header__joining">Csatlakozás&#8230;</string>
+    <string name="calling__header__outgoing_subtitle">Kicsengés&#8230;</string>
+    <string name="calling__header__outgoing_video_subtitle">Kicsengés&#8230;</string>
+    <string name="calling__header__incoming_subtitle">Hívás&#8230;</string>
+    <string name="calling__header__incoming_subtitle__video">Hívás&#8230;</string>
+    <string name="calling__header__incoming_subtitle__group">%1$s hív&#8230;</string>
+    <string name="call_banner_joining">Csatlakozás&#8230;</string>
+    <string name="call_banner_outgoing">Calling %1$S&#8230;</string>
+    <string name="call_banner_incoming">%1$s hív&#8230;</string>
+    <string name="call_banner_incoming_group">%1$s \u30FB %2$s is calling&#8230;</string>
+    <string name="call_banner_tap_to_return_to_call">Tap to return to call \u30FB %1$s</string>
+    <string name="call_error_unsupported_version_title">Please update Wire</string>
+    <string name="call_error_unsupported_version_message">You received a call that isn\'t supported by this version of Wire.\n\nGet the latest version in the Play Store.</string>
+    <string name="call_error_unsupported_version_button_ok">Go to Play Store</string>
+    <string name="call_error_unsupported_version_button_dismiss">Később</string>
+    <string name="calling_ongoing_call_title">Folyamatban lévő hívás</string>
+    <string name="calling_ongoing_call_start_message">Már folyamatban van egy másik hívás.\nÚj hívás indítása megszakítja a másikat.</string>
+    <string name="calling_ongoing_call_start_anyway">HÍVÁS MINDENKÉPP</string>
+    <string name="calling_ongoing_call_join_message">Már folyamatban van egy másik hívás.\nE hívás felvétele megszakítja a másikat.</string>
+    <string name="calling_ongoing_call_join_anyway">FELVESZ MINDENKÉPP</string>
+    <string name="calling_ongoing_call_participants_header">RÉSZTVEVŐK</string>
+    <string name="calling_ongoing_call_audio_message">Nem tudsz hangüzenetet rögzíteni, amíg vonalban vagy</string>
+    <string name="calling_ongoing_call_video_message">Nem tudsz videóüzenetetet felvenni, amíg vonalban vagy</string>
+    <!-- Calling in group conversation -->
+    <string name="group_calling_title">Hívás indítása</string>
+    <string name="group_calling_message" tools:ignore="PluralsCandidate">%1$s partnert fogsz felhívni</string>
+    <string name="group_calling_confirm">Hívás</string>
+    <string name="calling_self">%s (You)</string>
+    <string name="calling_no_active_video_speakers">No active video speakers...</string>
+    <string name="calling_no_active_speakers">No active speakers...</string>
+    <string name="calling_toggle_all">ALL</string>
+    <string name="calling_toggle_speakers">SPEAKERS</string>
+    <string name="calling_double_tap_enter_fullscreen_message">Double tap on a tile for fullscreen</string>
+    <string name="calling_double_tap_exit_fullscreen_message">Double tap to go back, pinch to zoom</string>
+    <string name="calling_pinch_to_zoom_message">Pinch to zoom</string>
+    <!-- Connect request -->
+    <string name="connect__message">Szia %1$s!\nLépj velem kapcsolatba a Wire-ön.\n%2$s</string>
+    <string name="connect_request__sub_header__pending_label">Függőben lévő</string>
+    <string name="connect_request__cancel_request__label">CSATLAKOZÁSI KÉRELEM VISSZAVONÁSA</string>
+    <string name="connect_request__unblock__button__text">Tiltás feloldása</string>
+    <string name="send_connect_request__connect_button__text">CSATLAKOZÁS</string>
+    <plurals name="connect_inbox__link__name">
+        <item quantity="one">1 partner várakozik</item>
+        <item quantity="other">%1$s partner várakozik</item>
+    </plurals>
+    <string name="connect_request__ignore_button__text">Figyelmen kívül hagyás</string>
+    <string name="content__message__connect_request__footer">CSATLAKOZOTT</string>
+    <string name="content__message__connect_request__auto_connect__footer">AUTOMATIKUSAN CSATLAKOZTATVA. _TOVÁBBI INFORMÁCIÓ_</string>
+    <string name="conversation_degraded_message">The call was disconnected because someone is no longer a verified contact.</string>
+    <!-- Otr-->
+    <plurals name="conversation__degraded_confirmation__header__single_user">
+        <item quantity="one">%1$s elkezdett használni egy új eszközt.</item>
+        <item quantity="other">%1$s elkezdtek használni egy új eszközt.</item>
+    </plurals>
+    <string name="conversation__degraded_confirmation__header__someone">Valaki elkezdett használni egy új eszközt.</string>
+    <string name="conversation__degraded_confirmation__header__multiple_user">%1$s és %2$s elkezdtek új eszközt használni.</string>
+    <plurals name="conversation__degraded_confirmation__message">
+        <item quantity="one">Biztos, hogy még mindig el szeretnéd küldeni az üzenetedet?</item>
+        <item quantity="other">Biztos, hogy még mindig el szeretnéd küldeni az üzeneteidet?</item>
+    </plurals>
+    <string name="conversation__degraded_confirmation__positive_action">Küldés mindenképpen</string>
+    <plurals name="conversation__degraded_confirmation__negative_action">
+        <item quantity="one">Eszköz mutatása</item>
+        <item quantity="other">Partnerek mutatása</item>
+    </plurals>
+    <string name="conversation__degraded_confirmation__negative_action_self">Saját eszközök mutatása</string>
+    <string name="conversation_degraded_confirmation__header__you">Te</string>
+    <string name="conversation__legal_hold_confirmation__header">The conversation is now subject to legal hold.</string>
+    <plurals name="conversation__legal_hold_confirmation__message">
+        <item quantity="one">Biztos, hogy még mindig el szeretnéd küldeni az üzenetedet?</item>
+        <item quantity="other">Biztos, hogy még mindig el szeretnéd küldeni az üzeneteidet?</item>
+    </plurals>
+    <string name="conversation__legal_hold_confirmation__negative_action">Mi az a megőrzésre vonatkozó rendelkezés?</string>
+    <string name="conversation__legal_hold_confirmation__neutral_action">Verify devices&#8230;</string>
+    <string name="conversation__legal_hold_confirmation__positive_action">Küldés mindenképpen</string>
+    <!-- Picture selection confirmation -->
+    <string name="confirmation_menu__confirm_done">OK</string>
+    <string name="confirmation_menu__cancel">MÉGSEM</string>
+    <!-- ADD TO CONVERSATION offline -->
+    <!-- CREATE GROUP CONVERSATION FROM 1:1 offline -->
+    <!-- Leave conversation -->
+    <string name="confirmation_menu__meta_remove">Kilépsz a beszélgetésből?</string>
+    <string name="confirmation_menu__meta_remove_text">Ezután nem fogsz tudni üzeneteket küldeni és fogadni ebben a beszélgetésben.</string>
+    <!-- RE-USING: confirmation_menu.cancel -->
+    <!-- Remove from conversation dialogue -->
+    <string name="confirmation_menu__header">Eltávolítod?</string>
+    <string name="confirmation_menu_text_with_name">%1$s ezután nem fog tudni üzenetet küldeni és fogadni ebben a beszélgetésben.</string>
+    <string name="confirmation_menu__confirm_remove">ELTÁVOLÍTÁS</string>
+    <!-- RE-USING: confirmation_menu.cancel -->
+    <!-- Block someone dialogue -->
+    <string name="confirmation_menu__block_header">Letiltod?</string>
+    <string name="confirmation_menu__block_text_with_name">%1$s nem tud majd kapcsolatba lépni veled, sem meghívni téged csoportos beszélgetésekbe.</string>
+    <string name="confirmation_menu__confirm_block">Tiltás</string>
+    <!-- RE-USING: confirmation_menu.cancel -->
+    <string name="connect_request__footer__blocked_label">Letiltva</string>
+    <!-- Clear conversation -->
+    <string name="confirmation_menu__clear_popup_title">Törlöd a tartalmat?</string>
+    <string name="confirmation_menu__meta_delete_text">Ezzel törlöd a beszélgetés előzményét az összes eszközödről.</string>
+    <!-- Delete conversation -->
+    <string name="confirmation_menu__delete_popup_title">Törlöd a csoportos beszélgetést?</string>
+    <string name="confirmation_menu__delete_popup_text">Ezzel törlöd a csoportot és az összes résztvevő összes tartalmát az összes eszközről. Nincs lehetőség a tartalom visszaállítására. Minden résztvevő értesítést kap.</string>
+    <string name="confirmation_menu__delete_popup_positive_button">DELETE GROUP</string>
+    <!-- Rich media -->
+    <string name="content__youtube__error__text">videó nem található</string>
+    <!-- Invite banner -->
+    <!-- Self profile -->
+    <!-- Options and settings -->
+    <string name="settings_title">Beállítások</string>
+    <!-- Options menu -->
+    <!-- Manage Team -->
+    <string name="pref_manage_team_title">Csapat kezelése</string>
+    <!-- About screen -->
+    <string name="pref_category_title">Beállítások</string>
+    <string name="pref_developer_screen_title">Fejlesztői beállítások</string>
+    <string name="pref_dev_avs_screen_title">AVS beállítások</string>
+    <string name="pref_profile_screen_title">Profil</string>
+    <!-- Account -->
+    <string name="pref_account_screen_title">Fiók</string>
+    <string name="pref_account_name_title">Név</string>
+    <string name="pref_account_edit_name_title">Név szerkesztése</string>
+    <string name="pref_account_details_category_title">Alapadatok</string>
+    <string name="pref_account_actions_category_title">Műveletek</string>
+    <string name="pref_account_appearance_category_title">Megjelenés</string>
+    <string name="pref_account_personal_information_category_title">Személyes információk</string>
+    <string name="pref_account_conversations_category_title">Előzmények</string>
+    <string name="pref_account_username_title">Felhasználónév</string>
+    <string name="pref_account_phone_title">Telefon</string>
+    <string name="pref_account_team_title">Csapat</string>
+    <string name="pref_account_domain_title">Domain</string>
+    <string name="pref_account_add_phone_title">Telefonszám hozzáadása</string>
+    <string name="pref_account_email_title">E-mail</string>
+    <string name="pref_account_add_email_title">E-mail cím hozzáadása</string>
+    <string name="pref_account_delete">Törlés</string>
+    <string name="pref_account_sign_out_title">Kijelentkezés</string>
+    <string name="pref_account_color_title">Szín</string>
+    <string name="pref_account_picture_title">Kép</string>
+    <string name="pref_account_delete_title">Fiók törlése</string>
+    <string name="pref_account_delete_warning_title">Fiók törlése</string>
+    <string name="pref_account_delete_warning_message_email">Küldünk egy e-mailt erre a címre:\n[[%1$s]]\nFiókod végleges törléséhez nyisd meg a kapott linket.</string>
+    <string name="pref_account_delete_warning_message_sms">Küldünk egy SMS-t erre a számra:\n[[%1$s]]\nFiókod végleges törléséhez nyisd meg a kapott linket.</string>
+    <string name="pref_account_delete_warning_verify">OK</string>
+    <string name="pref_account_delete_warning_cancel">Mégsem</string>
+    <string name="pref_account_sign_out_warning_message">Biztos, hogy kijelentkezel?</string>
+    <string name="pref_account_sign_out_warning_verify">Kijelentkezés</string>
+    <string name="pref_account_sign_out_warning_cancel">Mégsem</string>
+    <string name="pref_account_password_title">Jelszó visszaállítása</string>
+    <string name="pref_account_edit_name_empty_warning">Legalább 2 karakterből álló nevet adj meg</string>
+    <string name="pref_account_edit_name_empty_verify">OK</string>
+    <string name="pref_account_data_usage_permissions">Adatokhasználati Engedélyek</string>
+    <string name="pref_backup_screen_title">Beszélgetések Mentése</string>
+    <!-- Data Usage Permissions -->
+    <string name="pref_advanced_send_anonymous_crash_reports_title">Send anonymous crash reports</string>
+    <string name="pref_advanced_send_anonymous_crash_reports_summary">Send anonymous crash reports and basic data like version number and operating system to help Wire identify and solve issues in the app.</string>
+    <string name="pref_advanced_send_anonymous_usage_data_title">Anonimizált használati adatok küldése</string>
+    <string name="pref_advanced_send_anonymous_usage_data_summary">Usage data allows Wire to understand how the app is being used and how it can be improved. The data is anonymous and does not include the content of your communications (such as messages, files or calls).</string>
+    <string name="pref_advanced_receive_news_and_offers_title">Feliratkozás a Hírlevélre</string>
+    <string name="pref_advanced_receive_news_and_offers_summary">Hírek és termékinformációk fogadása e-mailben a Wire-től.</string>
+    <!-- App Lock -->
+    <string name="pref_options_app_lock">Jelszó</string>
+    <string name="pref_options_app_lock_change">Change passcode</string>
+    <string name="app_lock_locked_title">Wire is locked due to inactivity</string>
+    <string name="app_lock_locked_message">Please enter your account passcode.</string>
+    <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passcode in your device settings.</string>
+    <string name="new_password_dialog_title">Create a Passcode</string>
+    <string name="new_password_dialog_button">Create Passcode</string>
+    <string name="new_password_dialog_title_change">Change Passcode</string>
+    <string name="new_password_dialog_button_change">Change Passcode</string>
+    <string name="new_password_dialog_message">Your organization needs to lock your app when Wire is not in use to keep the Team safe.\nCreate a memorable passcode, as it cannot be recovered.</string>
+    <string name="new_password_dialog_showhide_cd">Show/hide the passcode</string>
+    <string name="new_password_dialog_title_change_in_wire">There was a change in Wire</string>
+    <!-- Options -->
+    <string name="pref_options_screen_title">Beállítások</string>
+    <string name="pref_options_vbr_title">Változó bitsebességű (VBR) hangkódolás</string>
+    <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use constant bitrate encoding (CBR). This setting only affects 1:1 calls; conference calls always use CBR encoding.</string>
+    <string name="pref_options_alerts_category_title">Értesítések</string>
+    <string name="pref_options_calls_category_title">Hívások</string>
+    <string name="pref_options_sounds_title">Hangjelzés</string>
+    <string name="pref_options_sounds_all">Minden üzenet</string>
+    <string name="pref_options_sounds_new_conversations_and_talks_only">Csak az első üzenet, kopogások és hívások</string>
+    <string name="pref_options_sounds_none">Nincs hangjelzés</string>
+    <string name="pref_options_vibration_title">Rezgés</string>
+    <string name="pref_options_vibration_title_o">Vibrate on ring</string>
+    <string name="pref_options_ringtones_category_title">Hangok</string>
+    <string name="pref_options_ringtones_ringtone_title">Hívás csengőhangja</string>
+    <string name="pref_options_ringtones_text_title">Üzenetek értesítési hangja</string>
+    <string name="pref_options_ringtones_ping_title">Kopogás hangja</string>
+    <string name="pref_options_ringtones_default_summary">Wire alapértelmezett</string>
+    <string name="pref_options_ringtones_silent">Néma</string>
+    <string name="pref_options_dark_theme_title">Sötét téma</string>
+    <string name="pref_options_hide_screen_title">A képernyő tartalmának elrejtése</string>
+    <string name="pref_options_hide_screen_summary">Wire\'s contents will no longer be visible in the task switcher</string>
+    <string name="pref_options_image_download_title">Képek letöltése</string>
+    <string name="pref_options_image_download_always">Bármikor</string>
+    <string name="pref_options_image_download_wifi">Csak Wi-Fi hálózaton</string>
+    <string name="pref_options_media_category_title">Média</string>
+    <string name="pref_options_requested_category_title">Közkívánatra</string>
+    <string name="pref_options_cursor_send_button_title">Küldés gomb</string>
+    <string name="pref_options_cursor_send_button_summary">Bekapcsolva Enter gomb lesz a billentyűzeten, hogy többsoros üzeneteket küldhess. Kikapcsolva Küldés gomb lesz a billentyűzeten.</string>
+    <string name="pref_options_message_previews">Üzenetek Előnézete</string>
+    <string name="pref_options_message_previews_summary">Display message content in notifications.</string>
+    <string name="pref_options_app_lock_title">Lock with Passcode</string>
+    <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Passcode or Biometrics.</string>
+    <string name="pref_options_incognito_keyboard">Inkognitó billentyűzet</string>
+    <string name="pref_options_incognito_keyboard_summary">The keyboard will not show suggestions when typing messages</string>
+    <!-- Devices -->
+    <string name="pref_devices_screen_title">Eszközök</string>
+    <string name="pref_devices_current_device_category_title">Ez az eszköz</string>
+    <string name="pref_devices_other_devices_category_title">Egyéb eszközök</string>
+    <string name="pref_devices_device_activation_summary">Aktiválva [[%1$s]]\n</string>
+    <string name="pref_devices_device_activation_subtitle">Aktiválva [[%1$s]]</string>
+    <string name="pref_devices_device_id">AZONOSÍTÓ (ID): %1$s</string>
+    <string name="pref_devices_device_verified">Ellenőrizve</string>
+    <string name="pref_devices_device_not_verified">Nincs ellenőrizve</string>
+    <string name="legal_hold_device_content_description">Legal Hold device</string>
+    <string name="pref_devices_warning_summary">If you don\'t recognize a device above, remove it and reset your passcode.</string>
+    <string name="pref_devices_device_screen_title">Eszköz részletei</string>
+    <string name="pref_devices_device_fingerprint_category_title">Eszközazonosító ujjlenyomat</string>
+    <string name="pref_devices_device_fingerprint_summary">A Wire-ben minden eszköz egyedi ujjlenyomattal rendelkezik. Összehasonlítással ellenőrizd az eszközöket és a beszélgetéseket.</string>
+    <string name="pref_devices_device_actions_category_title">Műveletek</string>
+    <string name="pref_devices_device_reset_session_title">Visszaállítás</string>
+    <string name="pref_devices_device_reset_session_summary">Ha az ujjlenyomatok nem egyeznek, állítsd vissza a munkamenet, így mindkét oldalon új titkosítási kulcsok jönnek létre.</string>
+    <string name="pref_devices_device_remove_title">Eszköz eltávolítása</string>
+    <string name="pref_devices_device_remove_summary">Távolítsd el ezt az eszközt, ha már nem használod. Ezzel együtt azonnal ki is jelentkezel erről az eszközről.</string>
+    <string name="pref_devices_device_fingerprint_copy_description">Ujjlenyomat</string>
+    <string name="pref_devices_device_fingerprint_copy_toast">Az Eszközazonosító ujjlenyomat a vágólapra másolva</string>
+    <!-- Advanced -->
+    <string name="pref_advanced_screen_title">Haladó beállítások</string>
+    <string name="pref_advanced_enable_logs_title">Felhasználási adatokat összegyűjtése</string>
+    <string name="pref_advanced_enable_logs_subtitle">Ez helyileg tárolja a hibaelhárítási információkat. Ennek a beállításnak a letiltásával az összes helyi napló törlődik.</string>
+    <string name="pref_advanced_debug_report_title">Create debug report</string>
+    <string name="pref_advanced_debug_report_summary">Ezt beküldheted a Wire Support-ra a problémák diagnosztizálása érdekében.</string>
+    <string name="pref_advanced_reset_push_title">Reset push notifications token</string>
+    <string name="pref_advanced_reset_push_summary">Ha problémákat tapasztalsz a Push Értesítésekkel, akkor a Wire Ügyfélszolgálat megkérhet, hogy állítsd alaphelyzetbe ezt a tokent.</string>
+    <string name="pref_advanced_reset_push_completed">Push Token visszaállítva alaphelyzetbe</string>
+    <string name="debug_report__title">Wire hibakeresés jelentés - %1$s</string>
+    <string name="debug_report__body">Kérjük, írd le a probléma előidézéséhez vezető lépéseket. Ha tudsz, csatolj képernyőképet, majd küldd el ezt az e-mailt. \n\n</string>
+    <string name="pref_advanced_ws_foreground_title">Fenntartja a kapcsolatot a szerverrel</string>
+    <string name="pref_advanced_ws_foreground_summary">A Wire megpróbálja nyitva tartani a kapcsolatot a szerverrel az értesítések fogadására, amíg az alkalmazás nincs az előtérben.
+        Ennek a beállításnak a kikapcsolása javíthatja az akkumulátor teljesítményét, de már nem kap értesítést, ha a Wire a háttérben van. Ez az eszköz összes fiókjára vonatkozik.</string>
+    <string name="pref_advanced_full_sync_title">Végezz teljes szinkronizálást</string>
+    <string name="pref_advanced_full_sync_summary">Ez teljes szinkronizálást hajt végre a szerverrel.</string>
+    <string name="pref_advanced_full_sync_popup">Biztos vagy ebben? A teljes szinkronizálás eltarthat egy ideig.</string>
+    <!-- Support -->
+    <string name="pref_support_screen_title">Ügyfélszolgálat</string>
+    <string name="pref_support_website_title">Wire ügyfélszolgálat weboldala</string>
+    <string name="pref_support_contact_title">Kapcsolatfelvétel az ügyfélszolgálattal</string>
+    <!-- About -->
+    <string name="pref_about_screen_title">Névjegy</string>
+    <string name="pref_about_website_title">Wire weboldala</string>
+    <string name="pref_about_tos_title">Felhasználási feltételek</string>
+    <string name="pref_about_privacy_policy_title">Adatvédelmi Nyilatkozat</string>
+    <string name="pref_about_licenses_title">Licenc információ</string>
+    <string name="pref_about_version_title">Verzió: %s</string>
+    <string name="pref_about_copyright_title">\u00A9 Wire Swiss GmbH</string>
+    <!-- Pref invite -->
+    <string name="pref_invite_title">Hívj meg másokat is a Wire-re</string>
+    <!-- Preference Account Actions -->
+    <string name="pref__account_action__phone_verification__title">Telefonszám ellenőrzése</string>
+    <string name="pref__account_action__phone_verification__description">Írd be az ellenőrző kódot, amit a %s telefonszámra küldtünk</string>
+    <string name="pref__account_action__phone_verification__code">Kód</string>
+    <string name="pref__account_action__phone_verification__question">Nem kaptál kódot?</string>
+    <string name="pref__account_action__phone_verification__resend"><u>Kód újraküldése</u></string>
+    <string name="pref__account_action__phone_verification__change"><u>Telefonszám módosítása</u></string>
+    <string name="pref__account_action__email_verification__title">E-mail cím ellenőrzése</string>
+    <string name="pref__account_action__email_verification__description">Ellenőrizd bejövő e-mailjeidet és kövesd az utasításokat.</string>
+    <string name="pref__account_action__email_verification__question">Nem kaptál e-mailt?</string>
+    <string name="pref__account_action__email_verification__resend">&lt;u&gt; Újraküldés ide: %s&lt;/u&gt;</string>
+    <string name="pref__account_action__email_verification__change"><u>E-mail cím módosítása</u></string>
+    <string name="pref__account_action__dialog__add_email_password__password">Jelszó</string>
+    <string name="pref__account_action__dialog__add_email_password__email">E-mail</string>
+    <string name="pref__account_action__dialog__add_email_password__title">Email cím hozzáadása</string>
+    <string name="pref__account_action__dialog__add_email_password__error__invalid_email">Érvénytelen e-mail cím</string>
+    <string name="pref__account_action__dialog__add_email_password__error__invalid_password">Legalább 8 karakter</string>
+    <string name="pref__account_action__dialog__edit_phone__title">Telefonszám módosítása</string>
+    <string name="pref__account_action__dialog__add_phone__title">Telefonszám hozzáadása</string>
+    <string name="pref__account_action__dialog__add_phone__error__country">Érvénytelen az Országhívó-kód</string>
+    <string name="pref__account_action__dialog__add_phone__error__number">Érvénytelen telefonszám</string>
+    <string name="pref__account_action__dialog__add_phone__confirm__title">Szám megerősítése</string>
+    <string name="pref__account_action__dialog__add_phone__confirm__message">Küldünk egy értesítő kódot ide: \n%s</string>
+    <string name="pref__account_action__dialog__delete_phone_or_email__confirm__title">Eltávolítás</string>
+    <string name="pref__account_action__dialog__delete_phone_or_email__confirm__message">Biztos, hogy törölni szeretnéd %s-t a Wire fiókodból?</string>
+    <string name="pref__account_action__dialog__delete_phone__error">A telefonszám törlése sikertelen</string>
+    <string name="pref__account_action__dialog__change_email__title">E-mail cím módosítása</string>
+    <string name="pref__account_action__dialog__change_username__rules">Legalább 2 karakter, és kizárólag a—z, 0—9 és _ karakterek</string>
+    <string name="pref__account_action__dialog__change_username__title">Felhasználónév</string>
+    <string name="pref__account_action__dialog__change_username__error_already_taken">Már foglalt</string>
+    <string name="pref__account_action__dialog__change_username__error_unknown">Csatlakozási hiba, próbáld meg újra</string>
+    <string name="pref__account_privacy">Adatvédelem</string>
+    <string name="pref__account_send_read_receipts_title">Olvasási visszaigazolás küldése</string>
+    <string name="pref__account_send_read_receipts_summary">Ha ez ki van kapcsolva, akkor nem fogod látni a másoktól származó olvasási visszaigazolást. Ez a beállítás nem vonatkozik a csoportos beszélgetésekre.</string>
+    <!-- No Internet connection -->
+    <string name="system_status__no_internet">NINCS INTERNET</string>
+    <!-- SHARING -->
+    <string name="alert_dialog__confirmation">OK</string>
+    <string name="alert_dialog__no_network__header">Nincs internetkapcsolat</string>
+    <string name="sign_up__set_picture__choose">Sajátot választok</string>
+    <string name="sign_up__set_picture__keep">Megtartom ezt</string>
+    <string name="sign_up__set_picture__guidance">A Wire sokkal szebb egy képpel.</string>
+    <string name="sign_up__set_picture__loading">Fotó betöltése</string>
+    <string name="leave_conversation_failed__message">A beszélgetés elhagyásához internetkapcsolat szükséges. Próbáld újra, ha már online vagy.</string>
+    <string name="remove_from_conversation__no_network__message">Már partnerek eltávolításához a beszélgetésből internetkapcsolat szükséges. Próbáld újra, ha már online vagy.</string>
+    <string name="calling__call_drop__message">A híváshoz internetkapcsolat szükséges. Próbáld újra, ha már online vagy.</string>
+    <!-- Lockscreen and notifications -->
+    <string name="message_notifications_channel_name">Üzenetek</string>
+    <string name="message_notifications_channel_description">Notifications for all message types, including text, images, audio and video messages.</string>
+    <string name="incoming_call_notifications_channel_name">Bejövő hívások</string>
+    <string name="ping_notifications_channel_name">Kopogás</string>
+    <string name="ping_notifications_channel_description">Notifications when other users ping you</string>
+    <string name="ongoing_channel_name">Háttér értesítések</string>
+    <string name="ongoing_channel_description">Notifications about ongoing processes or secondary actions, such as calls or saving an image</string>
+    <string name="foreground_service_notification_name">Fenntartja a kapcsolatot a szerverrel</string>
+    <string name="foreground_service_notification_description">This notification is necessary to keep the connection to the server alive while Wire is in the background and Google Play Services are not installed.</string>
+    <plurals name="notification__new_messages__multiple">
+        <item quantity="one">Üzenet %2$s beszélgetésben</item>
+        <item quantity="other">%1$d üzenet beszélgetésekben %2$s</item>
+    </plurals>
+    <!-- %1$s == username, %2$s == conversation -->
+    <string name="notification__message__name__prefix__text">%1$s: \u0020</string>
+    <string name="notification__message__group__prefix__text">%1$s a(z) %2$s csoportban: \u0020</string>
+    <string name="notification__message_with_mention__name__prefix__text">Mention from %1$s: \u0020</string>
+    <string name="notification__message_with_mention__group__prefix__text">Mention from %1$s in %2$s: \u0020</string>
+    <string name="notification__message_with_quote__name__prefix__text_one2one">Reply: \u0020</string>
+    <string name="notification__message_with_quote__name__prefix__text">Reply from %1$s: \u0020</string>
+    <string name="notification__message_with_quote__group__prefix__text">Reply from %1$s in %2$s: \u0020</string>
+    <string name="notification__message__one_to_one__wanted_to_talk">Hívott</string>
+    <string name="notification__message__one_to_one__pinged">Kopogott</string>
+    <string name="notification__message__one_to_one__shared_picture">Megosztott egy képet</string>
+    <string name="notification__message__one_to_one__shared_file">Megosztott egy fájlt</string>
+    <string name="notification__message__one_to_one__shared_video">Megosztott egy videót</string>
+    <string name="notification__message__one_to_one__shared_audio">Megosztott egy hangüzenetet</string>
+    <string name="notification__message__one_to_one__shared_location">Megosztott egy helyet</string>
+    <string name="notification__message_one_to_one_message_preview">Üzenetet küldött</string>
+    <!-- %1$s == username, %2$s == conversation -->
+    <string name="notification__message__group__prefix__other">%1$s a(z) %2$s csoportban: \u0020</string>
+    <string name="notification__message__group__renamed_conversation">átnevezte a beszélgetést erre: %1$s</string>
+    <string name="notification__message__group__add">hozzá adott partnereket a beszélgetéshez</string>
+    <string name="notification__message__group__remove">eltávolított partnereket a beszélgetésből</string>
+    <string name="notification__message__single__accept_request">%1$s a partnered lett a Wire-ön</string>
+    <string name="notification__message__group__default_conversation_name">csoportos beszélgetés</string>
+    <string name="notification__message__send_failed">Nem sikerült az üzenet küldése</string>
+    <string name="notification__message__ephemeral">Üzenetet küldött</string>
+    <string name="notification__message_with_mention__ephemeral">Megemlített téged</string>
+    <string name="notification__message_with_quote__ephemeral">Válaszoltam neked</string>
+    <string name="notification__message__liked">\u2764 ‘%1$s’</string>
+    <string name="notification__message__liked_message">\u2764-t küldött az üzenetedre</string>
+    <string name="notification__message__liked_picture">\u2764-t küldött a fotódra</string>
+    <string name="notification__message__conversation_deleted">Someone deleted the group</string>
+    <string name="notification__message__conversation_deleted_by">%1$s deleted the group</string>
+    <!-- ephemeral -->
+    <string name="notification__message__ephemeral_someone">Valaki</string>
+    <plurals name="notification__message__ephemeral">
+        <item quantity="one">Valaki üzenetet küldött neked</item>
+        <item quantity="other">Valaki %1$d üzenetet küldött neked</item>
+    </plurals>
+    <string name="other_set_message_timer">[[%1$s]] set the message timer to [[%2$s]]</string>
+    <string name="you_set_message_timer">[[You]] set the message timer to [[%1$s]]</string>
+    <string name="other_turned_off_message_timer">[[%1$s]] turned off the message timer</string>
+    <string name="you_turned_off_message_timer">[[You]] turned off the message timer</string>
+    <!-- Others -->
+    <string name="app_name">Wire</string>
+    <string name="content__system__item_separator">,</string>
+    <string name="content__system__last_item_separator">és</string>
+    <string name="content__system__you">te</string>
+    <plurals name="content__system__other_members">
+        <item quantity="one">%1$s other</item>
+        <item quantity="other">%1$s others</item>
+    </plurals>
+    <!-- System notifications -->
+    <string name="system_notification__silence_call">Elutasítás</string>
+    <string name="system_notification__join_call">Open Call</string>
+    <string name="system_notification__leave_call">Hívás befejezése</string>
+    <string name="system_notification__calling_one">Hívás&#8230;</string>
+    <string name="system_notification__calling_group">%1$s hív&#8230;</string>
+    <string name="system_notification__video_calling_one">Hívás videóval&#8230;</string>
+    <string name="system_notification__video_calling_group">%1$s is calling with video&#8230;</string>
+    <string name="ws_foreground_notification_connected_title">Csatlakoztatva a Wire szerveréhez</string>
+    <string name="ws_foreground_notification_no_internet_title">Várakozás az internet kapcsolatra&#8230;</string>
+    <string name="ws_foreground_notification_connecting_title">Kapcsolat létrehozása&#8230;</string>
+    <string name="ws_foreground_notification_summary">Tap here for more information.</string>
+    <!-- Notification actions -->
+    <string name="notification__action__call">Hívás</string>
+    <string name="notification__action__reply">Válasz</string>
+    <!-- Quick reply -->
+    <string name="quick_reply__counter">%1$d / %2$d</string>
+    <string name="quick_reply__message_group">[[%1$s:]] %2$s</string>
+    <string name="quick_reply__open_wire">Wire megnyitása</string>
+    <!-- Save image notification -->
+    <string name="notification__image_saving__content__title">Wire kép elmentve.</string>
+    <string name="notification__image_saving__content__subtitle">A megtekintéshez koppints rá.</string>
+    <string name="notification__image_saving__action__share">Megosztás</string>
+    <!-- See: https://code.google.com/p/android/issues/detail?id=36744 -->
+    <dimen name="notification__image_saving__image_width">512dp</dimen>
+    <!-- forced update -->
+    <string name="forced_update__header">Fontos frissítés</string>
+    <string name="forced_update__sub_header">Kérjük, telepítsd a Wire legfrissebb verzióját.</string>
+    <string name="forced_update__download_button">Letöltés</string>
+    <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <!-- Sharing -->
+    <string name="sharing__image_preview__confirm_action">KÜLDÉS</string>
+    <string name="sharing__user_not_logged_in__dialog__title">Kérjük, jelentkezz be</string>
+    <string name="sharing__user_not_logged_in__dialog__message">A megosztáshoz nyisd meg a Wire-t és jelentkezz be.</string>
+    <string name="sharing__user_not_logged_in__dialog__confirm">OK</string>
+    <string name="sharing__file_sharing_prohibited__dialog__title">File sharing restrictions</string>
+    <string name="sharing__file_sharing_prohibited__dialog__message">You can not share this file because this feature is disabled.</string>
+    <string name="sharing__file_sharing_prohibited__dialog__confirm">OK</string>
+    <!-- Sync errors -->
+    <string name="in_app_notification__sync_error__create_group_convo__title">Nem sikerült létrehozni</string>
+    <string name="in_app_notification__sync_error__create_group_convo__body">Nem sikerült létrehozni a beszélgetés %1$s partnereddel</string>
+    <string name="in_app_notification__sync_error__add_user__body">%1$s nem szeretne beszélgetésekhez csatlakozni.</string>
+    <string name="in_app_notification__sync_error__add_multiple_user__body">Az egyik kiválasztott partner nem szeretne beszélgetésekhez csatlakozni.</string>
+    <string name="in_app_notification__sync_error__unknown__body">Hoppá... valami hiba történt, kérjük, próbáld meg újra!</string>
+    <string name="in_app_notification__sync_error__create_convo__button">Folytatás</string>
+    <!--Timestamp formatting-->
+    <string name="timestamp__just_now">Épp most</string>
+    <plurals name="timestamp__x_minutes_ago_1">
+        <item quantity="one">%1$s perccel ezelőtt</item>
+        <item quantity="other">%1$s perccel ezelött</item>
+    </plurals>
+    <!-- http://joda-time.sourceforge.net/apidocs/org/joda/time/format/DateTimeFormat.html -->
+    <!-- Example: FRIDAY, MAR 9, 11:29 -->
+    <string name="timestamp_pattern__date_and_time__no_year">MMM d. (EEE), %1$s</string>
+    <!-- Example: FRIDAY, MAR 9, 2015, 11:29 -->
+    <string name="timestamp_pattern__date_and_time__with_year">EEE, MMM d, yyyy, %1$s</string>
+    <!-- Example: MAR 9, 11:29 -->
+    <string name="timestamp_pattern__date_and_time__no_year_no_weekday">MMM d., %1$s</string>
+    <!-- Example: MAR 9, 2015, 11:29 -->
+    <string name="timestamp_pattern__date_and_time__with_year_no_weekday">MMM d, yyyy, %1$s</string>
+    <!-- Example: MONDAY, 9 MARCH 2015 \u30FB 12:08 -->
+    <!-- MONDAY -->
+    <!-- MARCH 2 -->
+    <!-- MARCH 2, 2015 -->
+    <!-- 23:15 -->
+    <string name="timestamp_pattern__24h_format">HH:mm</string>
+    <string name="timestamp_pattern__12h_format">hh:mm a</string>
+    <string name="country">Ország</string>
+    <string name="register">Regisztráció</string>
+    <string name="password_placeholder">Jelszó</string>
+    <string name="email_placeholder">E-mail</string>
+    <string name="name_placeholder">Név</string>
+    <!-- Strings -->
+    <string name="edit_phone_number">TELEFONSZÁM SZERKESZTÉSE</string>
+    <string name="i_have_an_account">BEJELENTKEZÉS</string>
+    <plurals name="welcome__resend__timer_label">
+        <item quantity="one">%1$d MÁSODPERC MÚLVA ÚJ KÓDOT KÉRHETSZ</item>
+        <item quantity="other">KÉRHET EGY ÚJ KÓDOT %1$d MÁSODPERC MÚLVA</item>
+    </plurals>
+    <string name="welcome__resend__manual">ÚJRAKÜLDÉS</string>
+    <string name="welcome__resend__callme">HÍVJ FEL</string>
+    <string name="activation_code_info_manual">Írd be az ellenőrző kódot, amit a
+\n&lt;b&gt;%s&lt;/b&gt; telefonszámra küldtünk</string>
+    <string name="enter_name">Hogy szólíthatunk?</string>
+    <string name="enter_name_hint">Add meg a Teljes Neved</string>
+    <string name="new_reg__password__forgot">Elfelejtett jelszó?</string>
+    <string name="phone_sign_in">Telefon</string>
+    <string name="email_sign_in">E-mail</string>
+    <string name="edit_email">E-mail cím szerkesztése</string>
+    <string name="hello">Szia &lt;b&gt;%s&lt;/b&gt;!</string>
+    <string name="sign_in">Bejelentkezés</string>
+    <string name="new_reg__password_length">LEGALÁBB %1$s KARAKTER</string>
+    <string name="username__set__toast_error">Hiba a felhasználónév frissítése közben</string>
+    <!-- Giphy -->
+    <string name="giphy_preview__search_hint">Giphy Keresés</string>
+    <string name="giphy_preview__error">GIF NEM TALÁLHATÓ.</string>
+    <string name="giphy_preview__message_via_random_trending">Forrás: Giphy.com</string>
+    <string name="giphy_preview__message_via_search">%s · Forrás: giphy.com</string>
+    <string name="service_giphy_name">Giphy</string>
+    <!--Sketch-->
+    <string name="drawing__tip__picture__message">AZ ECSETMÉRET VÁLTOZTATÁSÁHOZ KOPPINTS A SZÍNRE.\n\nA KÉPEK ELTÁVOLÍTÁSÁHOZ RÁZD MEG.</string>
+    <string name="drawing__tip__message">AZ ECSETMÉRET VÁLTOZTATÁSÁHOZ KOPPINTS A SZÍNRE.\n\nTARTSD LENYOMVA A TERÜLET KISZÍNEZÉSÉHEZ.</string>
+    <string name="sketch__emoji_keyboard__size_label__small">KICSI</string>
+    <string name="sketch__emoji_keyboard__size_label__medium">KÖZEPES</string>
+    <string name="sketch__emoji_keyboard__size_label__large">NAGY</string>
+    <string name="toolbar__sketch__action_close">Bezárás</string>
+    <string name="drawing__text_hint">ÜZENET ÍRÁSA...</string>
+    <!-- Location sharing -->
+    <string name="location_sharing__tip">Helyváltoztatáshoz húzd a térképet</string>
+    <string name="location_sharing__permission_error">Nem sikerült megállapítani a jelenlegi helyzeted. Hozzáférés megtagadva.</string>
+    <string name="location_sharing__send_button">KÜLDÉS</string>
+    <string name="location_sharing__enable_system_location__title">Hely használata?</string>
+    <string name="location_sharing__enable_system_location__message">A jelenlegi pozíció mutatásához engedélyezze a helybeállításokat</string>
+    <string name="location_sharing__enable_system_location__confirm">Beállítások</string>
+    <string name="location_sharing__enable_system_location__cancel">Mégsem</string>
+    <string name="location_sharing__missing_play_services">A helymegosztáshoz a Google Play Services telepítésére van szükség</string>
+    <string name="location_sharing__permission__message">Do you want to allow Wire to access your location?</string>
+    <string name="location_sharing__permission__title">Helymegosztás</string>
+    <string name="location_sharing__permission__cancel">Mégsem</string>
+    <string name="location_sharing__permission__continue">OK</string>
+    <!-- From SyncEngine -->
+    <string name="new_reg__phone_signup__create_account">Fiók létrehozása</string>
+    <!-- OTR -->
+    <string name="otr__remove_device__title">%1$s eszköz eltávolítása</string>
+    <string name="otr__remove_device__message">Add meg a jelszavad</string>
+    <string name="otr__remove_device__are_you_sure">Biztos benne?</string>
+    <string name="otr__remove_device__default">eszköz</string>
+    <string name="otr__remove_device__button_delete">OK</string>
+    <string name="otr__remove_device__button_cancel">Mégsem</string>
+    <string name="otr__remove_device__error">Hibás jelszó</string>
+    <string name="otr__error_dialog__cannot_register__message">Ahhoz, hogy használni tudd a Wire-t ezen az eszközön, először távolítsd el azt valamelyik másikról.</string>
+    <string name="otr__error_dialog__cannot_register__manage_devices_button">Eszközök kezelése</string>
+    <string name="otr__error_dialog__cannot_register__log_out_button">Kijelentkezés</string>
+    <!-- OTR Participants -->
+    <string name="otr__participant__device_header">A Wire-ben minden eszköz egyedi ujjlenyomattal rendelkezik. Hasonlítsd össze ezt az ujjlenyomatot %1$s partnerrel és ellenőrizd a beszélgetést.</string>
+    <string name="otr__participant__device_header__no_devices">%1$s a Wire egy régebbi verzióját használja. Eszközei nem jeleníthetőek meg itt.</string>
+    <string name="otr__participant__device_header__link_text">_Miért ellenőrizd a beszélgetést?_</string>
+    <string name="otr__participant__device_class__unknown">Ismeretlen</string>
+    <string name="otr__participant__device_class__phone">Telefon</string>
+    <string name="otr__participant__device_class__tablet">Táblagép</string>
+    <string name="otr__participant__device_class__desktop">Asztali számítógép</string>
+    <string name="otr__participant__device_class__legal_hold">Legal Hold</string>
+    <string name="otr__participant__tab_details">RÉSZLETEK</string>
+    <string name="otr__participant__tab_devices">ESZKÖZÖK</string>
+    <string name="otr__participant__information">INFORMÁCIÓ</string>
+    <string name="otr__participant__single_device__my_fingerprint_link">Eszköz ujjlenyomatának megjelenítése</string>
+    <string name="otr__participant__single_device__reset_session_link">Visszaállítás</string>
+    <string name="otr__participant__my_device__description">Saját eszköz ujjlenyomata</string>
+    <string name="otr__participant__my_device__show_all_devices_link">Összes saját eszköz mutatása</string>
+    <string name="otr__participant__single_device__description">Ellenőrizd, hogy ez egyezik-e %1$s eszközén látható ujjlenyomattal.</string>
+    <string name="otr__participant__single_device__how_to_link">_Hogyan csináljam?_</string>
+    <string name="otr__device_id">Eszközazonosító (ID): %s</string>
+    <string name="otr__first_launch__header">Első alkalommal használod a Wire-t ezen az eszközön.</string>
+    <string name="otr__first_launch__sub_header">Adatvédelmi okokból a beszélgetés előzményei nem jelennek meg.</string>
+    <string name="otr__first_launch__button">OK</string>
+    <string name="otr__signin__info_text">Bejelentkezés</string>
+    <string name="otr__reset_session__message_ok">A munkamenet alaphelyzetbe állítva</string>
+    <string name="otr__reset_session__message_fail">A munkamenetet nem sikerült alaphelyzetbe állítani</string>
+    <string name="otr__reset_session__button_ok">OK</string>
+    <string name="otr__reset_session__button_fail">Újra próbál</string>
+    <string name="user_profile_email_field_name">E-mail</string>
+    <string name="advanced_image_download_wifi_info">A kép majd akkor jelenik meg, ha Wi-Fi kapcsolaton leszel</string>
+    <string name="change_settings">Beállítások módosítása</string>
+    <string name="conversation_list__action_join_call">CSATLAKOZÁS</string>
+    <!-- Conversation Toolbar -->
+    <string name="conversation_toolbar__collection">Gyűjtemény</string>
+    <string name="conversation_toolbar__call_video">Videóhívás</string>
+    <string name="conversation_toolbar__call_audio">Hanghívás</string>
+    <!-- Asset upload errors -->
+    <string name="asset_upload_error__not_found__title">A fájl nem található</string>
+    <string name="asset_upload_error__not_found__message">Nem sikerült megnyitni a megadott fájlt</string>
+    <string name="asset_upload_error__not_found__button">OK</string>
+    <string name="asset_upload_error__file_too_large__title">A fájl túl nagy</string>
+    <string name="asset_upload_error__file_too_large__message_default">Nagy fájlok feltöltése nem támogatott.</string>
+    <string name="asset_upload_error__file_too_large__message">Maximum %1$s méretű fájlokat küldhetsz.</string>
+    <string name="asset_upload_error__file_too_large__button">OK</string>
+    <string name="asset_upload_warning__large_file__title">Nem Wi-Fi kapcsolaton vagy</string>
+    <string name="asset_upload_warning__large_file__message_default">Biztos, hogy elküldöd ezt a nagyméretű fájlt mobilhálózaton keresztül?</string>
+    <string name="asset_upload_warning__large_file__message">Biztos, hogy elküldöd a(z) %1$s-t mobilhálózaton keresztül?</string>
+    <!-- Video message errors -->
+    <string name="audio_message_error__missing_audio_permissions">Hangüzenetek küldéséhez először adj engedélyt, hogy a Wire hangot rögzíthessen.</string>
+    <!-- Audio bit rate mode -->
+    <string name="audio_message_constant_bit_rate">ÁLLANDÓ BITSEBESSÉG (CBR)</string>
+    <!-- no contacts -->
+    <string name="no_conversation_in_list__header">Még nincsenek beszélgetések</string>
+    <string name="all_archived__header">Minden archiválva</string>
+    <string name="no_conversation_in_list__message">Indíts egy beszélgetést vagy hozz létre egy csoportot.</string>
+    <string name="default_deleted_username">Alapértelmezett</string>
+    <string name="cursor__type_a_message">ÜZENET ÍRÁSA...</string>
+    <string name="cursor__ephemeral_message">SELF-DELETING MESSAGE</string>
+    <string name="tooltip_record">Videó Felvétele</string>
+    <string name="tooltip_camera">Fotó Hozzáadása</string>
+    <string name="tooltip_sketch">Kép Rajzolása</string>
+    <string name="tooltip_ping">Kopogás</string>
+    <string name="tooltip_emoji">Emoji Hangulatjel</string>
+    <string name="tooltip_location">Helyszín</string>
+    <string name="tooltip_more">További műveletek</string>
+    <string name="tooltip_audio_message">Hangüzenet küldéséhez érintsd meg és tartsd lenyomva</string>
+    <string name="tooltip_file">Fájl Küldése</string>
+    <string name="tooltip_gif">Gif</string>
+    <string name="tooltip_mention">Add Mention</string>
+    <!-- Delete -->
+    <string name="conversation__message_action__delete_for_me">Törlés csak nálam?</string>
+    <string name="conversation__message_action__delete_for_everyone">Törlés minden résztvevőnél?</string>
+    <string name="conversation__message_action__delete_details">Ezt a műveletet nem lehet visszavonni.</string>
+    <string name="conversation__message_action__delete__dialog__cancel">Mégsem</string>
+    <string name="conversation__message_action__delete__dialog__ok">Törlés</string>
+    <string name="conversation__message_action__delete__confirmation">Üzenet Törölve</string>
+    <string name="conversation__action_mode__copy__description">%1$s üzenetet küldött</string>
+    <string name="conversation__action_mode__copy__toast">Másolva</string>
+    <string name="conversation__action_mode__fwd__dialog__title">Tartalom előkészítése</string>
+    <string name="conversation__action_mode__fwd__dialog__message">Kérjük, várj&#8230;</string>
+    <string name="conversation__action_mode__fwd__chooser__title">Megosztás vele:</string>
+    <!-- video message preview -->
+    <string name="audio_message__recording__slide_control__slide_hint">HÚZD FELFELE A KÜLDÉSHEZ</string>
+    <string name="audio_message__recording__slide_control__tap_hint">KÜLDÉSHEZ KOPPINTS</string>
+    <string name="audio_message__recording__tap_to_record">A hangüzenet felvételéhez először koppints,\n, aztán már száguld is az üzenet, mint egy _GLYPH_</string>
+    <string name="audio_message__recording__failure__title">A hangfelvétel sikertelen</string>
+    <string name="audio_message__recording__failure__message">Kérjük, próbáld meg újra.</string>
+    <string name="audio_message__recording__limit_reached__title">Felvétel leállítva</string>
+    <string name="audio_message__recording__limit_reached__message">Maximum 25 MB méretű hangüzenetek küldhetsz. Elküldöd ezt az üzenetet?</string>
+    <string name="audio_message__recording__limit_reached__confirmation">KÜLDÉS</string>
+    <string name="hint_change_filter">Válassz egyet a fenti szűrőkből</string>
+    <string name="message_bottom_menu_action_forward">Megosztás</string>
+    <string name="message_bottom_menu_action_copy">Másolás</string>
+    <string name="message_bottom_menu_action_edit">Szerkesztés</string>
+    <string name="message_bottom_menu_action_like">Tetszik</string>
+    <string name="message_bottom_menu_action_unlike">Nem tetszik</string>
+    <string name="message_bottom_menu_action_save">Mentés</string>
+    <string name="message_bottom_menu_action_open">Megnyitás</string>
+    <string name="message_bottom_menu_action_delete">Törlés</string>
+    <string name="message_bottom_menu_action_delete_local">Törlés nálam</string>
+    <string name="message_bottom_menu_action_delete_global">Törlés mindenkinél</string>
+    <string name="message_bottom_menu_action_reveal">Mutasd a beszélgetésben</string>
+    <string name="message_bottom_menu_action_reply">Válasz</string>
+    <string name="message_bottom_menu_action_save_ok">Kép elmentve</string>
+    <string name="message_bottom_menu_action_details">Részletek</string>
+    <string name="message_details_title">MESSAGE DETAILS</string>
+    <string name="message_liked_title">LIKED</string>
+    <string name="message_read_title">READ</string>
+    <string name="message_details_sent">Elküldve</string>
+    <string name="message_details_last_edited">Edited</string>
+    <string name="tab_title_read">READ</string>
+    <string name="tab_title_likes">LIKED</string>
+    <string name="messages_reads_turned_off">Az olvasási visszaigazolás nem voltak bekapcsolva, amikor ezt az üzenetet elküldték.</string>
+    <string name="messages_no_reads">Még senki nem olvasta el az üzenetet.</string>
+    <string name="messages_no_likes">Még senkinek nem tetszett ez az üzenet.</string>
+    <string name="message_footer__tap_to_like">Ha tetszik, koppints</string>
+    <plurals name="message_footer__number_of_likes">
+        <item quantity="one">%1$d partner</item>
+        <item quantity="other">%1$d partner</item>
+    </plurals>
+    <string name="message_footer__status__sending">Küldés&#8230;</string>
+    <string name="message_footer__status__waiting_for_connection">Waiting for connection&#8230;</string>
+    <string name="message_footer__status__sent">%1$s \u30FB Elküldve</string>
+    <string name="message_footer__status__delivered">%1$s \u30FB Kézbesítve</string>
+    <string name="message_footer__status__failed">A küldés sikertelen. _Újraküldés_</string>
+    <string name="message_footer__status__deleted">%1$s \u30FB Törölve</string>
+    <string name="message_footer__status__read">%1$s \u30FB @ %2$s</string>
+    <string name="message_footer__status__read_group">%1$s \u30FB @ %2$s</string>
+    <string name="message_footer__status__edited">Edited: %1$s</string>
+    <string name="ephemeral_message__timeout_selection_info">ÁLLÍTSD BE, HOGY MENNYI IDŐ UTÁN TŰNJÖN EL AZ ÜZENET</string>
+    <string name="usernames__take_over__summary">Foglald le egyedi Wire felhasználóneved. _További információ._</string>
+    <string name="usernames__take_over__choose">VÁLASZD KI A SAJÁTOD</string>
+    <string name="usernames__take_over__keep">TARTSD MEG EZT</string>
+    <string name="ephemeral_message__timeout__off">Kikapcsolva</string>
+    <string name="ephemeral_message__options_header">SELF-DELETING MESSAGES</string>
+    <string name="guests_option_on">Be</string>
+    <plurals name="unit_years">
+        <item quantity="one">%1$s év</item>
+        <item quantity="other">%1$s év</item>
+    </plurals>
+    <plurals name="unit_weeks">
+        <item quantity="one">%1$s hét</item>
+        <item quantity="other">%1$s hét</item>
+    </plurals>
+    <plurals name="unit_days">
+        <item quantity="one">%1$s nap</item>
+        <item quantity="other">%1$s nap</item>
+    </plurals>
+    <plurals name="unit_hours">
+        <item quantity="one">%1$s óra</item>
+        <item quantity="other">%1$s óra</item>
+    </plurals>
+    <plurals name="unit_minutes">
+        <item quantity="one">%1$s perc</item>
+        <item quantity="other">%1$s perc</item>
+    </plurals>
+    <plurals name="unit_seconds">
+        <item quantity="one">%1$s másodperc</item>
+        <item quantity="other">%1$s másodperc</item>
+    </plurals>
+    <string name="ephemeral_message_footer_multiple_units">%1$s and %2$s remaining</string>
+    <string name="ephemeral_message_footer_single_unit">%1$s remaining</string>
+    <string name="collection_header_images">IMAGES</string>
+    <string name="collection_header_files">FÁJLOK</string>
+    <string name="collection_header_links">HIVATKOZÁSOK</string>
+    <string name="collection_header_today">MA</string>
+    <string name="collection_header_yesterday">TEGNAP</string>
+    <string name="collection_empty">A GYŰJTEMÉNY ÜRES</string>
+    <string name="collection_all">Mind a(z) %1$s mutatása</string>
+    <string name="multi_share_toast_sending">@string/message_footer__status__sending</string>
+    <string name="multi_share_search_hint">KÜLDÉS&#8230;</string>
+    <string name="single_selector_search_hint">"SELECT CONVERSATION…"</string>
+    <string name="search__box__hint_text">SZÖVEGES ÜZENETEK KERESÉSE</string>
+    <string name="search__no_results">Nincs találat.</string>
+    <!-- Conversation List -->
+    <plurals name="conversation_list__new_message_count">
+        <item quantity="one">%1$s message</item>
+        <item quantity="other">%1$s messages</item>
+    </plurals>
+    <plurals name="conversation_list__pings_count">
+        <item quantity="one">%1$s kopogás</item>
+        <item quantity="other">%1$s kopogás</item>
+    </plurals>
+    <plurals name="conversation_list__new_likes_count">
+        <item quantity="one">%1$s ♥</item>
+        <item quantity="other">%1$s ♥</item>
+    </plurals>
+    <plurals name="conversation_list__missed_calls_plural">
+        <item quantity="one">%1$s nem fogadott hívás</item>
+        <item quantity="other">%1$s nem fogadott hívás</item>
+    </plurals>
+    <string name="conversation_list__missed_calls_count">Nem fogadott hívás</string>
+    <string name="conversation_list__missed_calls_count_group">Missed call from %1$s</string>
+    <plurals name="conversation_list__mentions_count">
+        <item quantity="one">%1$s mention</item>
+        <item quantity="other">%1$s mentions</item>
+    </plurals>
+    <plurals name="conversation_list__quotes_count">
+        <item quantity="one">%1$s reply</item>
+        <item quantity="other">%1$s replies</item>
+    </plurals>
+    <string name="conversation_list__unsent_message_long">⚠ El nem küldött üzenet</string>
+    <string name="conversation_list__unsent_message_short">⚠</string>
+    <string name="conversation_list__shared__image">Megosztott egy képet</string>
+    <string name="conversation_list__shared__file">Megosztott egy fájlt</string>
+    <string name="conversation_list__shared__video">Megosztott egy videót</string>
+    <string name="conversation_list__shared__audio">Megosztott egy hangüzenetet</string>
+    <string name="conversation_list__shared__location">Megosztott egy helyet</string>
+    <string name="conversation_list__missed_call">Nem fogadott hívás</string>
+    <string name="conversation_list__pinged">Kopogott</string>
+    <string name="conversation_list__ephemeral">Valaki egy üzenetet küldött</string>
+    <string name="conversation_list__single_eph_and_mention">Megemlített téged</string>
+    <string name="conversation_list__group_eph_and_mention">Valaki megemlített téged</string>
+    <string name="conversation_list__single_eph_and_quote">Válaszoltam neked</string>
+    <string name="conversation_list__group_eph_and_quote">Valaki válaszolt neked</string>
+    <string name="conversation_list__typing">Üzenet írása&#8230;</string>
+    <string name="conversation_list__someone">Valaki</string>
+    <string name="conversation_list__added">[[%1$s]] hozzáadva</string>
+    <string name="conversation_list__added_you">[[%1$s]] hozzáadott téged</string>
+    <string name="conversation_list__left_you">Kiléptél</string>
+    <string name="conversation_list__removed_you">[[%1$s]] eltávolított téged</string>
+    <string name="conversation_list__header__title">BESZÉLGETÉSEK</string>
+    <string name="conversation_list__header__folders_title">FOLDERS</string>
+    <string name="conversation_list__header__archive_title">ARCHÍVUM</string>
+    <string name="conversation_list__single_with_quote">Reply: %1$s</string>
+    <string name="conversation_list__group_with_quote">Reply from %1$s: %2$s</string>
+    <string name="conversation_list__single_without_quote">%1$s</string>
+    <string name="conversation_list__group_without_quote">[[%1$s]]: %2$s</string>
+    <string name="guest_indicator">VENDÉG</string>
+    <string name="participant_tab_guest_indicator_label">Vendég</string>
+    <string name="participant_tab_external_indicator_label">EXTERNAL</string>
+    <string name="participant_tab_group_admin_indicator_label">GROUP ADMIN</string>
+    <string name="federated_indicator">FEDERATED</string>
+    <string name="availability_none">Nincs hangjelzés</string>
+    <string name="availability_available">Elérhető</string>
+    <string name="availability_away">Nem Elérhető</string>
+    <string name="availability_busy">Elfoglalt</string>
+    <string name="availability_text_available">AVAILABLE</string>
+    <string name="availability_text_away">AWAY</string>
+    <string name="availability_text_busy">BUSY</string>
+    <string name="availability_setstatus">ÁLLAPOT BEÁLLíTÁSA</string>
+    <string name="availability_notification_warning_away_title">Beállítottad a távol van állapotot</string>
+    <string name="availability_notification_warning_away">Másoknak távol van állapotban fogsz megjelenni. A bejövő hívásokról vagy üzenetekről nem fogsz értesítést kapni.</string>
+    <string name="availability_notification_warning_busy_title">Beállítottad elfoglalt állapotra</string>
+    <string name="availability_notification_warning_busy">Másoknak elfoglaltként fogsz megjelenni. Csak a némítás nélküli beszélgetésekben küldött értesítésekről kapsz értesítést: a válaszokról és a hívásokról.</string>
+    <string name="availability_notification_warning_available_title">Beállítottad a távol van állapotot</string>
+    <string name="availability_notification_warning_available">Mások számára elérhetőként jelensz meg. Az értesítések beállításnak megfelelően értesítéseket kapsz a bejövő hívásokról és az üzenetekről.</string>
+    <string name="availability_notification_warning_nostatus_title">Nincs állapot megadva</string>
+    <string name="availability_notification_warning_nostatus">Az egyes beszélgetésekben az Értesítések beállításnak megfelelően értesítéseket kapsz a bejövő hívásokról és az üzenetekről.</string>
+    <string name="availability_notification_dont_show">Ne jelenítse meg újra ezeket az információkat</string>
+    <string name="availability_notification_ok">Ok</string>
+    <string name="availability_notification_blocked_title">Notifications are disabled in %1$s</string>
+    <string name="availability_notification_blocked">Status affects notifications now. You\'re set to \"Away\" and won\'t receive any notifications.</string>
+    <string name="availability_notification_changed_title">Notifications have changed in %1$s</string>
+    <string name="availability_notification_changed">Status affects notifications now. You\'re set to \"Busy\" and will only receive notifications when someone mentions you or replies to one of your messages.</string>
+    <string name="preferences_profile_new">Új Csapat vagy Fiók</string>
+    <string name="preferences_profile_add_account">Fiók hozzáadása</string>
+    <string name="preferences_profile_create_team">Csapat létrehozása</string>
+    <string name="preferences_profile_in_team">itt: %1$s</string>
+    <string name="new_devices_dialog_title">Új eszközt csatlakoztatott a Wire fiókjához</string>
+    <string name="new_devices_dialog_info">Ha ezt nem te voltál, akkor töröld az eszközt, és állítsd alaphelyzetbe jelszavad.</string>
+    <string name="new_devices_dialog_manage_devices">Eszközök kezelése</string>
+    <string name="teams_set_email_title">Fiókod</string>
+    <string name="teams_set_email_subtitle">Add meg a munkahelyi e-mail címed.</string>
+    <string name="teams_set_email_hint">TE@CÉGED.HU</string>
+    <string name="teams_set_email_about">TOVÁBBI INFÓ</string>
+    <string name="teams_set_password_title">Jelszó megadása</string>
+    <string name="teams_set_password_hint">Jelszó</string>
+    <string name="teams_set_username_title">Felhasználónév megadása</string>
+    <string name="teams_set_username_hint">FELHASZNÁLÓNÉV</string>
+    <string name="teams_set_team_name_title">Nevezd el a csapatod</string>
+    <string name="teams_set_team_name_subtitle">Később bármikor módosíthatod.</string>
+    <string name="teams_set_team_name_hint">CSAPAT NEVE</string>
+    <string name="teams_set_team_name_about">MI AZ A WIRE CSAPATOKNAK?</string>
+    <string name="teams_verify_email_title">Leveled érkezett</string>
+    <string name="teams_verify_email_subtitle">Írd be az ellenőrző kódot, amit a(z) %1$s e-mail címre küldtünk.</string>
+    <string name="teams_verify_email_resend">KÓD ÚJRAKÜLDÉSE</string>
+    <string name="teams_verify_email_change">E-MAIL CÍM MEGVÁLTOZTATÁSA</string>
+    <string name="teams_set_name_title">Neved</string>
+    <string name="teams_set_name_hint">TELJES NÉV</string>
+    <string name="app_entry_create_account">Személyes</string>
+    <string name="app_entry_create_account_sub">Chat privately with groups of friends and family</string>
+    <string name="app_entry_create_team">Pro</string>
+    <string name="app_entry_create_team_sub">Secure collaboration for businesses, institutions and professional organizations</string>
+    <string name="app_entry_login_sub">Már van fiókod?</string>
+    <string name="app_entry_login">Bejelentkezés</string>
+    <string name="app_entry_tc_dialog_title">Felhasználási feltételek</string>
+    <string name="app_entry_tc_dialog_message">A folytatáshoz ezt el kell fogadnod</string>
+    <string name="app_entry_notifications_dialog_title">Értesítések</string>
+    <string name="app_entry_notifications_dialog_message">Az értesítések lehetnek riasztások, hangok és ikonok. Ezeket a Beállítások menüben testreszabhatod.</string>
+    <string name="app_entry_dialog_accept">ELFOGADÁS</string>
+    <string name="app_entry_dialog_cancel">MÉGSEM</string>
+    <string name="app_entry_dialog_log_in">BEJELENTKEZÉS</string>
+    <string name="app_entry_dialog_no_thanks">KÖSZÖNÖM, NEM</string>
+    <string name="app_entry_dialog_not_now">MOST NEM</string>
+    <string name="app_entry_dialog_view">NÉZET</string>
+    <string name="app_entry_dialog_privacy_policy">ADATVÉDELMI IRÁNYELVEK</string>
+    <string name="app_entry_email_sent">E-mail elküldve</string>
+    <string name="teams_set_username_subtitle">A Felhasználónevek segítségével mások könnyebben megtalálnak.</string>
+    <string name="app_entry_sso_dialog_title">Company login</string>
+    <string name="app_entry_sso_dialog_message">Írd be a vállalati SSO hozzáférési kódját.</string>
+    <string name="app_entry_sso_input_hint"></string>
+    <string name="action_button_state_play">Lejátszás</string>
+    <string name="action_button_state_pause">szünet</string>
+    <string name="action_button_state_close">bezár</string>
+    <string name="action_button_state_redo">ismét</string>
+    <string name="action_button_state_none">none</string>
+    <string name="pick_user_teams_invite">Hívj meg másokat a csapatba</string>
+    <string name="teams_invitations_skip">KIHAGY</string>
+    <string name="teams_invitations_done">Kész</string>
+    <string name="teams_invitations_error_too_many">THE MAXIMUM NUMBER OF INVITATIONS HAS BEEN SENT</string>
+    <string name="teams_invitations_error_already_sent">ALREADY SENT</string>
+    <string name="teams_invitations_error_generic">SOMETHING WENT WRONG, PLEASE TRY AGAIN</string>
+    <string name="teams_invite_email_hint">KOLLÉGÁD@CÉGED.HU</string>
+    <string name="teams_invitations_error_invalid_email">ADJON MEG EGY ÉRVÉNYES E-MAIL CÍMET</string>
+    <string name="teams_invitations_error_email_exists">EZ AZ E-MAIL CÍM MÁR HASZNÁLATBAN VAN</string>
+    <string name="teams_invitations_error_no_internet">NINCS INTERNETKAPCSOLAT</string>
+    <string name="invitation_screen_title">Alakítsd ki a csapatod</string>
+    <string name="invitation_screen_subtitle">Your Wire team is ready to go. Invite your colleagues as members.</string>
+    <string name="open_service_conversation_button_text">Beszélgetés megnyitása</string>
+    <string name="remove_service_button_text">Szolgáltatás Eltávolítása</string>
+    <string name="integrations_create_conversation">Új beszélgetés létrehozása</string>
+    <string name="no_matches_found">Nincs találat</string>
+    <string name="loading_services">Loading services&#8230;</string>
+    <string name="empty_services_list">Services are helpers that can improve your workflow. To enable them, ask your administrator.</string>
+    <string name="empty_services_list_admin">Services are helpers that can improve your workflow.</string>
+    <string name="empty_services_content_description">No services found</string>
+    <string name="empty_search_content_description">No users found</string>
+    <string name="create_group_conversation">Csoport létrehozása</string>
+    <string name="create_guest_room_conversation">Vendégszoba létrehozása</string>
+    <string name="manage_services">Szolgáltatások kezelése</string>
+    <string name="next_button">KÖVETKEZŐ</string>
+    <string name="skip_button">KIHAGY</string>
+    <string name="done_button">Kész</string>
+    <string name="new_group_header">CSOPORT LÉTREHOZÁSA</string>
+    <string name="add_participants_empty_header">ADD PARTICIPANTS</string>
+    <string name="add_participants_count_header">ADD PARTICIPANTS (%1$s)</string>
+    <string name="new_conv_no_results">Nincs találat</string>
+    <string name="new_conv_no_contacts">No contacts</string>
+    <plurals name="participants_divider_services">
+        <item quantity="one">SZOLGÁLTATÁSOK (%1$s)</item>
+        <item quantity="other">SZOLGÁLTATÁSOK (%1$s)</item>
+    </plurals>
+    <string name="participants_divider_people">GROUP MEMBERS (%1$s)</string>
+    <string name="participants_divider_admins">GROUP ADMINS (%1$s)</string>
+    <string name="participants_divider_people_no_number">GROUP MEMBERS</string>
+    <string name="participants_divider_admins_no_number">GROUP ADMINS</string>
+    <string name="participants_divider_options">OPTIONS</string>
+    <string name="participants_no_admins">Nincsenek rendszergazdák.</string>
+    <string name="participants_no_results_1">Nincs találat.</string>
+    <string name="participants_no_results_2">Try entering a different name.</string>
+    <string name="group_name_hint">CSOPORT NEVE</string>
+    <string name="allow_guests_toggle_text">Vendégek engedélyezése</string>
+    <string name="allow_guests_toggle_info_text">Megnyitja a beszélgetést a csapatodon kívüli partnerek számára is.</string>
+    <string name="read_receipts_toggle_text">Olvasási visszaigazolás</string>
+    <string name="read_receipts_toggle_info_text">Amikor ez be van kapcsolva, az emberek láthatják, mikor olvasták el a beszélgetés üzeneteit.</string>
+    <string name="read_receipts_info_title_enabled">YOU HAVE ENABLED READ RECEIPTS</string>
+    <string name="read_receipts_info_title_disabled">YOU HAVE DISABLED READ RECEIPTS</string>
+    <string name="read_receipts_info_1">Ha mindkét fél bekapcsolja az olvasási visszaigazolást, láthatod mikor olvasta el az üzeneteket.</string>
+    <string name="read_receipts_info_2">Ezt a beállítást a fiókbeállításokban módosíthatod.</string>
+    <string name="create_conv_options_title_text">Conversation options</string>
+    <string name="create_conv_options_subtitle_allow_guests">Vendégek engedélyezése</string>
+    <string name="create_conv_options_subtitle_read_receipts">Olvasási visszaigazolás</string>
+    <string name="create_conv_options_subtitle_on">ON</string>
+    <string name="create_conv_options_subtitle_off">Soha</string>
+    <string name="participant_group_admin_toggle_text">Group admin</string>
+    <string name="participant_group_admin_toggle_info_text">Amikor ez be van kapcsolva, az adminisztrátor hozzáadhat vagy eltávolíthat embereket és szolgáltatókat, frissítheti a csoport beállításait és megváltoztathatja a résztvevők szerepét.</string>
+    <string name="open_this_conversation_to_people_outside_your_team">Megnyitja a beszélgetést a csapatodon kívüli partnerek számára is.</string>
+    <string name="allow_guests">Vendégek engedélyezése</string>
+    <string name="guest_options_title">Vendég opciók</string>
+    <string name="ephemeral_options_title">Self-deleting messages</string>
+    <string name="notifications_options_title">Értesítések</string>
+    <string name="ephemeral_explanation_text">Self-deleting messages will be turned on for all the participants in this conversation</string>
+    <string name="notifications_explanation_text">You can be notified about everything (including audio and video calls) or only when you are mentioned.</string>
+    <string name="show_all_participants">Mind a(z) %1$s mutatása</string>
+    <string name="participant_was_removed_from_team">%s was removed from team</string>
+    <string name="all_participants">Participants (%1$s)</string>
+    <string name="allow_guests_error_title">Valami nem stimmel</string>
+    <string name="allow_guests_error_body">Could not allow guests nor services. Please try again.</string>
+    <string name="allow_guests_warning_body">A jelenlegi vendég el lesz távolítva a beszélgetésből. Új vendégek sem csatlakozhatnak.</string>
+    <string name="allow_guests_warning_confirm">Eltávolítás</string>
+    <string name="guests_are_present">VENDÉGEK IS VANNAK ITT</string>
+    <string name="services_are_present">SERVICES ARE ACTIVE</string>
+    <string name="guests_and_services_are_present">GUESTS AND SERVICES ARE PRESENT</string>
+    <string name="participants_details_header_title">RÉSZLETEK</string>
+    <string name="invitation_link_description">Bárki, akinek megvan ez a hivatkozás, csatlakozhat a beszélgetéshez 24 órán belül, akkor is, ha egyébként nincsenek a Wire-ön</string>
+    <string name="create_link_button">Hivatkozás Létrehozása</string>
+    <string name="copy_link_button">Hivatkozás Másolása</string>
+    <string name="share_link_button">Hivatkozás Megosztása</string>
+    <string name="revoke_link_button">Hivatkozás Eltávolítása&#8230;</string>
+    <string name="invitation_link_title">MÁSOK MEGHÍVÁSA EGY HIVATKOZÁSSAL</string>
+    <string name="link_copied_toast">Hivatkozás Másolva!</string>
+    <string name="revoke_link_message">Új vendégek nem tudnak ezzel a hivatkozással csatlakozni. A már meglévő vendégeknek továbbra is megmarad a hozzáférése.</string>
+    <string name="revoke_link_confirm">Hivatkozás Visszavonása</string>
+    <string name="invite_button_description">Csapatodon kívüli emberek is csatlakozhatnak ehhez a beszélgetéshez.</string>
+    <string name="invite_people">Partner meghívása</string>
+    <string name="guest_room_name">Vendégszoba</string>
+    <string name="guest_time_left_hours">%1$s ó maradt</string>
+    <string name="guest_time_left_hours_minutes">%1$s.%2$s ó maradt</string>
+    <string name="guest_time_left_minutes">Kevesebb, mint %1$s p maradt</string>
+    <string name="backup_description">Create a backup to preserve your conversation history. You can use this to restore history if you lose your device or switch to a new one.
+        \n\nChoose a strong password to protect the backup file.</string>
+    <string name="pref_account_backup_title">Beszélgetések mentése</string>
+    <string name="backup_password_dialog_title">Jelszó megadása</string>
+    <string name="backup_password_dialog_message">The backup will be compressed and encrypted with a password. Make sure to store it in a secure place.</string>
+    <string name="backup_password_dialog_ok">OK</string>
+    <string name="backup_password_dialog_no_password">Mégsem</string>
+    <string name="restore_password_dialog_title">This backup is password protected.</string>
+    <string name="add_email_address">E-mail cím hozzáadása</string>
+    <string name="set_a_password">Jelszó beállítása</string>
+    <string name="email_and_password_explanation">Ha több eszközön szeretnéd használni a Wire-t, akkor e-mail címre és jelszó megadására van szükség.</string>
+    <string name="new_device_password">Új eszköz</string>
+    <string name="new_device_password_explanation">Add meg a Wire fiókod jelszavát.\n%1$s</string>
+    <string name="restore_from_backup_button">VISSZAÁLLÍTÁS MENTÉSBŐL</string>
+    <string name="second_launch__header">Korábban már használtad a Wire-t ezen az eszközön.</string>
+    <string name="second_launch__sub_header">Ha ez túl régen volt, akkor néhány üzenet nem jelenik meg itt.</string>
+    <string name="restore_override_alert_title">Előzmények visszaállítása</string>
+    <string name="restore_override_alert_text">A mentés felülírja a beszélgetés előzményeit ezen az eszközön. Csak olyan mentést tudsz visszaállítani, ami ugyanazon a rendszeren (platformon) készült.</string>
+    <string name="restore_override_alert_ok">Mentés fájl Választása</string>
+    <string name="back_up_progress">MENTÉS&#8230;</string>
+    <string name="back_up_progress_complete">KÉSZ</string>
+    <string name="restore_progress">VISSZAÁLLÍTÁS&#8230;</string>
+    <string name="pref_account_backup_warning_title">E-mail és jelszó beállítása.</string>
+    <string name="pref_account_backup_warning_message">A beszélgetési előzmények mentéséhez szükséged lesz egy e-mail címre és jelszóra. Ezt a Beállítások menü Fiók oldalán tudod megadni.</string>
+    <string name="pref_account_backup_warning_ok">OK</string>
+    <string name="export_generic_error_title">Nem sikerült a fájl mentése</string>
+    <string name="export_generic_error_text">Lehet, hogy nincs elég szabad hely vagy jogosultságod a mentéshez.</string>
+    <string name="backup_button">Mentés Most</string>
+    <string name="backup_import_error_unknown_title">Valami nem stimmel</string>
+    <string name="backup_import_error_unknown">Az előzmények visszaállítása nem sikerült.</string>
+    <string name="backup_import_error_unsupported_version_title">A mentés nem kompatibilis</string>
+    <string name="backup_import_error_unsupported_version">Ez a mentés egy újabb vagy elavultabb Wire verzióval készült és nem lehet itt visszaállítani.</string>
+    <string name="backup_import_error_wrong_account_title">Rossz mentés</string>
+    <string name="backup_import_error_wrong_account">Az előzményeket nem lehet másik felhasználói fiókból visszaállítani.</string>
+    <string name="video_paused">Videó szüneteltetve</string>
+    <string name="call_degraded_title">Call ended</string>
+    <string name="calling_degraded_title">Új eszköz</string>
+    <string name="call_info">Up to %1$s people can join a group conversation.</string>
+    <string name="markdown_link_dialog_title">Látogasd meg a linket</string>
+    <string name="markdown_link_dialog_message">This will take you to\n%1$s</string>
+    <string name="markdown_link_dialog_confirmation">OK</string>
+    <string name="markdown_link_dialog_cancel">MÉGSEM</string>
+    <string name="max_participants_alert_title">Telt ház</string>
+    <string name="max_participants_create_alert_message">Up to %1$s people can join a conversation.</string>
+    <string name="max_participants_add_alert_message">Up to %1$s people can join a conversation. Currently there is only room for %2$s more.</string>
+    <string name="sso_signin_button">Vállalati bejelentkezés</string>
+    <string name="sso_signin_error_title">Valami nem stimmel</string>
+    <string name="sso_signin_error_message">Please contact your team administrator for details (Error %1$s).</string>
+    <string name="sso_signin_error_try_again_message">Please try again later (Error %1$s).</string>
+    <string name="enterprise_signin_domain_not_found_error">Ez az e-mail nem használható vállalati bejelentkezéshez. Kérlek, írd be az SSO kódot a folytatáshoz.</string>
+    <string name="enterprise_signin_email_sso_invalid_input_error">Please enter a valid email or SSO access code.</string>
+    <string name="enterprise_signin_sso_invalid_input_error">Please enter a valid SSO access code.</string>
+    <string name="enterprise_signin_email_multiple_servers_not_supported">This email is linked to a different server, but the app can only be connected to one server at a time. Please log out of all Wire accounts on this device and try to log in again.</string>
+    <string name="sso_signin_wrong_code_title">Érvénytelen kód</string>
+    <string name="sso_signin_wrong_code_message">Please verify your company SSO access code and try again.</string>
+    <string name="sso_signin_max_accounts_title">Two accounts active</string>
+    <string name="sso_signin_max_accounts_message">You can only be logged in with two accounts at once. Log out from one to add another.</string>
+    <string name="custom_backend_welcome">Welcome to\n%1$s workspace</string>
+    <string name="participant_search_hint">KERESÉS NÉV SZERINT</string>
+    <string name="participant_search_title">RÉSZTVEVŐK</string>
+    <string name="generic_service_warning">A szolgálatok hozzáférhetnek a beszélgetés tartalmához</string>
+    <string name="add_services_button_text">Szolgáltatók kezelése</string>
+    <string name="empty_search_button_text">További információ</string>
+    <string name="empty_search_same_domain_text">Find people in Wire by name or @username</string>
+    <string name="empty_search_other_domains_text">Find people from another domain by @username@domainname</string>
+    <string name="wire_notification_name">Wire Notification</string>
+    <string name="wire_ping_name">Wire Kopogás</string>
+    <string name="reply_self_name">Te</string>
+    <string name="reply_message_type_image">KÉP</string>
+    <string name="reply_message_type_video">VIDEÓ</string>
+    <string name="reply_message_type_audio">HANG ÜZENET</string>
+    <string name="reply_message_type_location">LOCATION</string>
+    <string name="reply_message_type_asset">ATTACHMENT</string>
+    <string name="reply_message_type_unknown">Ezt az üzenetet nem látod.</string>
+    <string name="deep_link_generic_error_title">Érvénytelen hivatkozás.</string>
+    <string name="deep_link_generic_error_message">The link you opened is not valid.</string>
+    <string name="deep_link_conversation_error_title">Wire can\'t open this conversation.</string>
+    <string name="deep_link_conversation_error_message">You may not have permission with this account or the person may not be on Wire.</string>
+    <string name="deep_link_user_error_title">Wire can\'t find this person.</string>
+    <string name="deep_link_user_error_message">Lehet, hogy nincs engedélyed ehhez a fiókhoz, vagy már nem létezik.</string>
+    <string name="password_policy_hint">Use at least %1$s characters, with one lowercase letter, one capital letter, a number, and a special character.</string>
+    <!-- Custom Backend -->
+    <string name="custom_backend_info_title">Connected to \"%1$s\"</string>
+    <string name="custom_backend_info_show_more">SHOW MORE</string>
+    <string name="custom_backend_dialog_ok">OK</string>
+    <string name="custom_backend_dialog_cancel">Mégsem</string>
+    <string name="custom_backend_dialog_connect">Csatlakozás</string>
+    <string name="custom_backend_dialog_confirmation_title">Csatlakozás a szerverhez</string>
+    <string name="custom_backend_dialog_confirmation_message">This action will connect the app to a custom server: %1$s</string>
+    <string name="custom_backend_dialog_info_title">You are connected to a third-party server: \"%1$s\"</string>
+    <string name="custom_backend_dialog_network_error_title">The server is not responding</string>
+    <string name="custom_backend_dialog_network_error_message">Please check your internet connection, verify the link and try again.</string>
+    <string name="custom_backend_not_found_error_title">This server can\'t be reached</string>
+    <string name="custom_backend_not_found_error_message">We can\'t connect to the server at %1$s.\nLet your server
+        administrator know about this issue.</string>
+    <string name="custom_backend_dialog_logged_in_error_title">Can\'t switch servers</string>
+    <string name="custom_backend_dialog_logged_in_error_message">You are already logged in.\nTo connect to this server, log out of all accounts and try again.</string>
+    <string name="root_detected_dialog_title">Jailbreak/root detected</string>
+    <string name="root_detected_dialog_message">You can not use Wire on this device.</string>
+    <!--Two identical strings are needed for German translation-->
+    <string name="quote_timestamp_message_time">Original message from %s</string>
+    <string name="quote_timestamp_message_date">Original message from %s</string>
+    <string name="read_receipts_remotely_enabled_title">Engedélyezted az olvasási visszaigazolást</string>
+    <string name="read_receipts_remotely_disabled_title">Letiltottad az olvasási visszaigazolást</string>
+    <string name="read_receipts_remotely_changed_message">Ezt a beállítást a fiókbeállításokban módosíthatod.</string>
+    <string name="security_policy_title">Wire Security Policy</string>
+    <string name="security_policy_description">Allow Wire to make your device more secure.</string>
+    <string name="security_policy_setup_dialog_title">Enable Security Policy</string>
+    <string name="security_policy_setup_dialog_message">Wire needs admin privileges to set security policies.</string>
+    <string name="security_policy_setup_dialog_button">Beállítások megnyitása</string>
+    <string name="security_policy_invalid_password_dialog_title">Password strength insufficient</string>
+    <string name="security_policy_invalid_password_dialog_message">Your device must have a password with minimum %1$s characters, at least one each of digit, uppercase, lowercase, and special symbol.</string>
+    <string name="invalid_cookie_dialog_title">Your session expired</string>
+    <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
+    <string name="conversation_folder_name_favorites">Kedvencek</string>
+    <string name="conversation_folder_name_group">Csoportok</string>
+    <string name="conversation_folder_name_one_to_one">Partner</string>
+    <string name="folders_move_to">MOVE TO</string>
+    <string name="folders_no_custom_folder_found">Hozz létre új mappát a + gomb megnyomásával</string>
+    <string name="folders_create_new_folder">CREATE NEW FOLDER</string>
+    <string name="folders_create_new_folder_action">LÉTREHOZÁSA</string>
+    <string name="folders_create_new_folder_info">Move the conversation \"%1$s\" to a new folder.</string>
+    <string name="folders_folder_name_hint">MAPPA NEVE</string>
+    <string name="folders_folder_name_error_text">Maximum %s karakter</string>
+    <string name="folders_move_to_folder_close">Bezárás</string>
+    <string name="delete_group_conversation_error_title">A csoportot nem töröltük</string>
+    <string name="delete_group_conversation_error_message">An error occurred while trying to delete the group. Please try again.</string>
+    <string name="delete_group_conversation_error_message_with_group_name">An error occurred while trying to delete the group %1$s. Please try again.</string>
+    <!-- No Internet Connection -->
+    <string name="no_internet_connection_title">Nincs internet kapcsolat</string>
+    <string name="no_internet_connection_message">Ellenőrizd az internetkapcsolatod és próbáld újra</string>
+    <!-- Shortcuts -->
+    <string name="shortcut_create_group_label">Csoport létrehozása</string>
+    <string name="shortcut_share_a_photo_label">Share Photo</string>
+    <string name="shortcut_new_message_label">New Message</string>
+    <!-- Settings Account - Edit Phone -->
+    <string name="edit_phone_dialog_country_code_error">Érvénytelen az Országhívó-kód</string>
+    <string name="edit_phone_dialog_phone_number_error">Érvénytelen telefonszám</string>
+    <!-- SSO Login -->
+    <string name="sso_login_dialog_title">Vállalati bejelentkezés</string>
+    <string name="sso_login_dialog_message">Please enter your SSO code:</string>
+    <string name="email_sso_login_dialog_message">Please enter your email or SSO code. If your email matches an enterprise installation of Wire, this app will connect to that server.</string>
+    <!-- Welcome -->
+    <string name="welcome_to_wire">Welcome to Wire</string>
+    <string name="welcome_enterprise_log_in">Vállalati bejelentkezés</string>
+    <string name="welcome_custom_backend_log_in_email">LOG IN WITH EMAIL</string>
+    <string name="welcome_custom_backend_log_in_sso">LOG IN WITH SSO</string>
+    <!-- Updated edit handle screen -->
+    <string name="edit_account_handle_error_already_taken">Már foglalt</string>
+    <string name="edit_account_handle_error_too_short">Legalább 2 karakter</string>
+    <string name="edit_account_handle_error_invalid_characters">Please only use: a–z, 0–9, and _ </string>
+    <string name="edit_account_handle_error_unknown_error">Hoppá... valami hiba történt, kérjük, próbáld meg újra!</string>
+    <string name="edit_phone_remove_phone_number">Remove phone number</string>
+    <string name="edit_phone_dialog_delete_phone_confirmation">Biztos, hogy törölni szeretnéd %s-t a Wire fiókodból?</string>
+    <string name="edit_phone_dialog_confirm_phone_confirmation">Küldünk egy értesítő kódot ide: \n%s</string>
+    <string name="edit_phone_save_phone_number">Mentés</string>
+    <!-- Delete Account -->
+    <string name="delete_account_permanently_email_confirmation">We will send an email to:\n %1$s \nFollow the link to permanently delete your account.</string>
+    <string name="delete_account_permanently_sms_confirmation">We will send an SMS to:\n %1$s \nFollow the link to permanently delete your account.</string>
+    <string name="pref_account_delete_confirmed">Account deletion confirmed, please check your email.</string>
+    <!-- Authentication (Shared strings between create account and login screens) -->
+    <string name="authentication_tab_layout_title_email">EMAIL</string>
+    <string name="authentication_tab_layout_title_phone">PHONE</string>
+    <!-- Create Personal Account - Main screen -->
+    <string name="create_personal_account_title">Fiók létrehozása</string>
+    <string name="create_personal_account_with_email_edit_text_hint">EMAIL</string>
+    <string name="create_personal_account_with_phone_edit_text_hint">PHONE NUMBER</string>
+    <string name="create_personal_account_with_email_email_blacklisted_error">Ez az e-mail cím nem megengedett.</string>
+    <string name="create_personal_account_with_email_email_in_use_error">This email address you used is already linked to an account.\nUse another email address or try to login if you own this account.</string>
+    <string name="create_personal_account_with_phone_phone_blacklisted_error">Ez a telefonszám nem megengedett.</string>
+    <string name="create_personal_account_with_phone_phone_in_use_error">This phone number you used is already linked to an account.\nUse another phone number or try to login if you own this account.</string>
+    <string name="create_personal_account_with_phone_default_country_name">Németország</string>
+    <string name="create_personal_account_with_phone_default_country_code">+49</string>
+    <!-- Create Personal Account - Email Code screen -->
+    <string name="create_personal_account_email_code_title">Leveled érkezett</string>
+    <string name="create_personal_account_email_code_description">Írd be az ellenőrző kódot, amit a %s telefonszámra küldtünk</string>
+    <string name="create_personal_account_email_code_change_email">E-MAIL CÍM MEGVÁLTOZTATÁSA</string>
+    <string name="create_personal_account_email_code_resend_code">KÓD ÚJRAKÜLDÉSE</string>
+    <string name="create_personal_account_email_code_invalid_code_error">Kérjük, adj meg egy érvényes kódot</string>
+    <!-- Create Personal Account - Phone Code screen -->
+    <string name="create_personal_account_phone_code_title">SMS code</string>
+    <string name="create_personal_account_phone_code_description">Enter the code we sent to %s</string>
+    <string name="create_personal_account_phone_code_resend_code">KÓD ÚJRAKÜLDÉSE</string>
+    <string name="create_personal_account_phone_code_invalid_code_error">Kérjük, adj meg egy érvényes kódot</string>
+    <!-- Create Personal Account - Name screen -->
+    <string name="create_personal_account_name_input_title">Neved</string>
+    <string name="create_personal_account_name_input_edit_text_hint">TELJES NÉV</string>
+    <!-- Create Personal Account - Password screen -->
+    <string name="create_personal_account_password_input_title">Set Password</string>
+    <string name="create_personal_account_password_input_edit_text_hint">PASSWORD</string>
+    <!-- Create Personal Account - Registration errors -->
+    <string name="create_personal_account_unauthorized_email_error">Unauthorized e-mail address.</string>
+    <string name="create_personal_account_email_in_use_error">The given e-mail address is in use.</string>
+    <string name="create_personal_account_invalid_activation_code_error">Invalid activation code.</string>
+    <string name="create_personal_account_unauthorized_phone_error">Unauthorized phone number.</string>
+    <string name="create_personal_account_phone_in_use_error">The given phone number is in use.</string>
+    <!-- Composite Message -->
+    <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
+    <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
+    <!-- StartSSO Screen  -->
+    <string name="start_sso_leaving_wire">Redirecting&#8230;</string>
+    <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
+    <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
+    <!-- Legal Hold -->
+    <string name="legal_hold_info_title">Legal Hold</string>
+    <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.\n\nYour conversation partners will be aware of the recording.</string>
+    <string name="legal_hold_conversation_info_message">Legal Hold has been activated for at least one person in this conversation.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.</string>
+    <string name="legal_hold_info_list_title">Legal Hold Subjects</string>
+    <string name="legal_hold_request_dialog_title">Legal Hold Requested</string>
+    <string name="legal_hold_request_dialog_message_for_sso">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.</string>
+    <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.\nEnter your password to confirm.</string>
+    <string name="legal_hold_request_dialog_positive_button_text">Elfogadás</string>
+    <string name="legal_hold_request_dialog_negative_button_text">Nem most</string>
+    <string name="legal_hold_request_dialog_wrong_password_error">Hibás jelszó</string>
+    <string name="legal_hold_all_subjects_title">LEGAL HOLD SUBJECTS</string>
+    <string name="legal_hold_device_name">Legal Hold</string>
+    <string name="legal_hold_deactivated_dialog_title">Legal Hold Deactivated</string>
+    <string name="legal_hold_deactivated_dialog_message">A jövőbeli üzeneteket nem rögzítjük.</string>
+    <string name="legal_hold_activated_dialog_title">Legal Hold is Active</string>
+    <string name="legal_hold_participant_missing_consent_alert_title">Guests cannot be added</string>
+    <string name="legal_hold_participant_missing_consent_alert_message">Due to legal hold, only team members can be added to this conversation.</string>
+    <string name="legal_hold_participant_missing_consent_alert_negative_button">TOVÁBBI INFÓ</string>
+    <string name="legal_hold_user_blocked_message">This user is blocked due to legal hold. _LEARN MORE_</string>
+    <string name="legal_hold_cannot_connect_alert_title">Cannot connect to this user</string>
+    <string name="legal_hold_cannot_connect_alert_message">You cannot connect to this user due to legal hold.</string>
+    <string name="legal_hold_cannot_connect_alert_negative_button">TOVÁBBI INFÓ</string>
+    <!-- Join Conversation via Deep Link -->
+    <string name="join_conversation_confirmation_message">You have been invited to a conversation:\n%s</string>
+    <string name="join_conversation_confirmation_join_button_text">Csatlakozás</string>
+    <string name="join_conversation_confirmation_cancel_button_text">Mégsem</string>
+    <string name="join_conversation_conversation_join_error_title">You could not join the conversation</string>
+    <string name="join_conversation_invalid_link_error_message">The conversation link is invalid.</string>
+    <string name="join_conversation_member_limit_reached_error_message">The conversation is full.</string>
+    <!-- Feature Config Changes -->
+    <string name="feature_config_changed_info_dialog_title">There has been a change in Wire</string>
+    <!-- File sharing feature config -->
+    <string name="file_sharing_enabled_info_dialog_message">Sharing and receiving files of any type is now enabled.</string>
+    <string name="file_sharing_disabled_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
+    <string name="file_sharing_restriction_info_image">RECEIVING IMAGES IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_file">RECEIVING FILES IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_generic">FILE SHARING RESTRICTED</string>
+    <!-- Self Deleting Messages feature config -->
+    <string name="self_deleting_messages_change_info_dialog_message_enabled">Sending of self deleting messages is enabled.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">Sending of self deleting messages is mandatory. The enforced timeout for deletion is %s seconds.</string>
+    <string name="self_deleting_messages_change_info_dialog_message_disabled">Sending of self deleting messages is disabled.</string>
+    <!-- Conference Calling Restriction feature config -->
+    <string name="conference_calling_restriction_dialog_title">Upgrade to Enterprise</string>
+    <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to features such as starting conferences and more.
+    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
+    <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
+    <string name="conference_calling_restriction_dialog_negative_button">MÉGSEM</string>
+    <string name="upgraded_plan_dialog_title">Wire Enterprise</string>
+    <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
+        &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
+    <string name="conference_calling_unavailable_dialog_title">Feature unavailable</string>
+    <string name="conference_calling_unavailable_dialog_description_personal_user">The option to initiate a conference call is only available in the paid version of Wire.</string>
+    <string name="conference_calling_unavailable_dialog_description_team_member_user">To start a conference call, your team needs to upgrade to the Enterprise plan.</string>
+</resources>

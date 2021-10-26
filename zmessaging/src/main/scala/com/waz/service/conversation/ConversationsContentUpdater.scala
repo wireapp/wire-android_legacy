@@ -233,7 +233,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
             access        = access,
             accessRole    = Some(accessRole),
             receiptMode   = Some(receiptMode),
-            domain        = if (remoteId.hasDomain) Some(remoteId.domain) else None
+            domain        = Domain(remoteId.domain)
           ))
         _  <- membersStorage.updateOrCreate(convId, creator, ConversationRole.AdminRole)
       } yield conv

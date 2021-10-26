@@ -31,6 +31,7 @@ import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 
@@ -42,6 +43,8 @@ class UsersController(implicit injector: Injector, context: Context)
   private lazy val connectionService = inject[Signal[ConnectionService]]
   private lazy val selfUserId        = inject[Signal[UserId]]
   private lazy val userService       = inject[Signal[UserService]]
+
+  private lazy val selfDomain        = inject[Domain]
 
   private lazy val itemSeparator = getString(R.string.content__system__item_separator)
   private lazy val lastSeparator = getString(R.string.content__system__last_item_separator)
@@ -66,6 +69,16 @@ class UsersController(implicit injector: Injector, context: Context)
     case _ =>
       userService.flatMap(_.userNames.map(_.getOrElse(id, DefaultDeletedName)).map(Other(_)))
   }
+
+  def displayHandle(id: UserId): Future[String] = {
+    import Threading.Implicits.Background
+    for {
+      service    <- userService.head
+      Some(user) <- service.findUser(id)
+    } yield displayHandle(user)
+  }
+
+  def displayHandle(user: UserData): String = user.displayHandle(selfDomain)
 
   def syncUserAndCheckIfDeleted(userId: UserId): Future[(Option[UserData], Option[UserData])] = {
     import Threading.Implicits.Background
@@ -142,13 +155,8 @@ class UsersController(implicit injector: Injector, context: Context)
 
   def selfUser: Signal[UserData] = selfUserId.flatMap(user)
 
-  def isFederated(user: UserData, selfDomain: String): Boolean = user.domain.exists(_ != selfDomain)
-
-  def isFederated(user: UserData): Future[Boolean] =
-    zms.head.map(z => z.selfDomain.fold(false)(domain => isFederated(user, domain)))(Threading.Background)
-
-  def isFederated(id: UserId): Future[Boolean] =
-    userService.head.flatMap(_.isFederated(id))(Threading.Background)
+  def isFederated(user: UserData): Boolean =
+    BuildConfig.FEDERATION_USER_DISCOVERY && user.domain != selfDomain
 
   def conv(msg: MessageData): Signal[ConversationData] =
     for {
