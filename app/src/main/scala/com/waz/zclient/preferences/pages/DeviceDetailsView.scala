@@ -27,7 +27,7 @@ import android.widget.{LinearLayout, ScrollView, Toast}
 import androidx.fragment.app.FragmentTransaction
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.model.ConvId
+import com.waz.model.{ConvId, QualifiedId}
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
@@ -48,6 +48,7 @@ import com.waz.zclient.utils.{BackStackKey, RichClient, RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper, _}
 import com.wire.signals.{EventContext, EventStream, Signal}
 import org.threeten.bp.Instant
+import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -220,8 +221,14 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
 
   private def resetSession(): Unit = {
     zms.head.flatMap { zms =>
-      zms.selectedConv.selectedConvIdPref() flatMap { conv =>
-        zms.otrService.resetSession(conv.getOrElse(ConvId(zms.selfUserId.str)), zms.selfUserId, clientId) flatMap zms.syncRequests.await
+      zms.selectedConv.selectedConvIdPref().flatMap { conv =>
+        (if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+          val qId = QualifiedId(zms.selfUserId, zms.selfDomain.str)
+          zms.otrService.resetSession(conv.getOrElse(ConvId(zms.selfUserId.str)), qId, clientId)
+        } else {
+          zms.otrService.resetSession(conv.getOrElse(ConvId(zms.selfUserId.str)), zms.selfUserId, clientId)
+        })
+          .flatMap(zms.syncRequests.await)
       }
     }.recover {
       case e: Throwable => SyncResult(e)

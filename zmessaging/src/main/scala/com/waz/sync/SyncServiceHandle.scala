@@ -123,6 +123,7 @@ trait SyncServiceHandle {
 
   def syncPreKeys(qId: QualifiedId, clientIds: Set[ClientId]): Future[SyncId]
   def postSessionReset(conv: ConvId, user: UserId, client: ClientId): Future[SyncId]
+  def postSessionReset(conv: ConvId, user: QualifiedId, client: ClientId): Future[SyncId]
 
   def performFullSync(): Future[Unit]
 
@@ -241,7 +242,10 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncPreKeys(qId: QualifiedId, clientIds: Set[ClientId]): Future[SyncId] = addRequest(SyncPreKeys(qId, clientIds))
   def syncProperties(): Future[SyncId] = addRequest(SyncProperties, forceRetry = true)
 
-  def postSessionReset(conv: ConvId, user: UserId, client: ClientId) = addRequest(PostSessionReset(conv, user, client))
+  def postSessionReset(conv: ConvId, user: UserId, client: ClientId): Future[SyncId] =
+    addRequest(PostSessionReset(conv, user, client))
+  def postSessionReset(conv: ConvId, qId: QualifiedId, client: ClientId): Future[SyncId] =
+    addRequest(PostQualifiedSessionReset(conv, qId, client))
 
   override def performFullSync(): Future[Unit] = {
     verbose(l"performFullSync")
@@ -339,6 +343,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostOpenGraphMeta(conv, msg, time)              => zms.openGraphSync.postMessageMeta(conv, msg, time)
           case PostRecalled(convId, msg, recall)               => zms.messagesSync.postRecalled(convId, msg, recall)
           case PostSessionReset(conv, user, client)            => zms.otrSync.postSessionReset(conv, user, client)
+          case PostQualifiedSessionReset(conv, qId, client)    => zms.otrSync.postSessionReset(conv, qId, client)
           case PostReceipt(conv, msg, user, tpe)               => zms.messagesSync.postReceipt(conv, msg, user, tpe)
           case PostMessage(convId, messageId, time)            => zms.messagesSync.postMessage(convId, messageId, time)
           case PostAssetStatus(cid, mid, exp, status)          => zms.messagesSync.postAssetStatus(cid, mid, exp, status)

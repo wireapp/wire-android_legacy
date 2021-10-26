@@ -33,6 +33,7 @@ import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 
@@ -87,9 +88,13 @@ class ClientsController(implicit inj: Injector) extends Injectable with DerivedL
   private def resetSession(convId: ConvId, userId: UserId, clientId: ClientId): Future[SyncResult] = {
     (for {
       z      <- inject[Signal[ZMessaging]].head
-      syncId <- z.otrService.resetSession(convId, userId, clientId)
+      qId    <- if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+                  z.users.qualifiedId(userId).map(Option(_))
+                } else {
+                  Future.successful(None)
+                }
+      syncId <- qId.fold(z.otrService.resetSession(convId, userId, clientId))(z.otrService.resetSession(convId, _, clientId))
       resp   <- z.syncRequests.await(syncId)
-
     } yield resp)
       .recover {
         case e: Throwable => SyncResult(e)

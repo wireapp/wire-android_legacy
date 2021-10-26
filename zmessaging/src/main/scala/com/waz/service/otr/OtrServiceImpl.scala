@@ -174,17 +174,26 @@ class OtrServiceImpl(selfUserId:     UserId,
     }
 
   override def resetSession(convId: ConvId, userId: UserId, clientId: ClientId): Future[SyncId] =
-    for {
-      qId    <- users.qualifiedId(userId)
-      syncId <- resetSession(convId, qId, clientId)
-    } yield syncId
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      for {
+        qId    <- users.qualifiedId(userId)
+        syncId <- resetSession(convId, qId, clientId)
+      } yield syncId
+    } else {
+      for {
+        _      <- sessions.deleteSession(SessionId(userId, Domain.Empty, clientId)).recover { case _ => () }
+        _      <- clientsStorage.updateVerified(userId, clientId, verified = false)
+        _      <- sync.syncPreKeys(QualifiedId(userId), Set(clientId))
+        syncId <- sync.postSessionReset(convId, userId, clientId)
+      } yield syncId
+    }
 
   override def resetSession(convId: ConvId, qId: QualifiedId, clientId: ClientId): Future[SyncId] =
     for {
       _      <- sessions.deleteSession(SessionId(qId, clientId, currentDomain)).recover { case _ => () }
       _      <- clientsStorage.updateVerified(qId.id, clientId, verified = false)
       _      <- sync.syncPreKeys(qId, Set(clientId))
-      syncId <- sync.postSessionReset(convId, qId.id, clientId)
+      syncId <- sync.postSessionReset(convId, qId, clientId)
     } yield syncId
 
   override def encryptTargetedMessage(userId: UserId, clientId: ClientId, msg: GenericMessage): Future[Option[OtrClient.EncryptedContent]] =
