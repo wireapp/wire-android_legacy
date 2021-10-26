@@ -74,6 +74,7 @@ public enum SyncCommand {
     PostClientLabel("post-client-label"),
     PostLiking("post-liking"),
     PostSessionReset("post-session-reset"),
+    PostQualifiedSessionReset("post-qualified-session-reset"),
     PostAssetStatus("post-asset-status"),
     PostOpenGraphMeta("post-og-meta"),
     PostReceipt("post-receipt"),

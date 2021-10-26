@@ -345,6 +345,11 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, convId, userId, client)
   }
 
+  final case class PostQualifiedSessionReset(convId: ConvId, qId: QualifiedId, client: ClientId)
+    extends RequestForConversation(Cmd.PostQualifiedSessionReset) {
+    override val mergeKey: Any = (cmd, convId, qId, client)
+  }
+
   final case class PostConnection(userId: UserId, name: Name, message: String) extends RequestForUser(Cmd.PostConnection)
 
   final case class PostQualifiedConnection(qualifiedId: QualifiedId)
@@ -538,6 +543,7 @@ object SyncRequest {
           case Cmd.PostRemoveBot             => PostRemoveBot(decodeId[ConvId]('convId), decodeId[UserId]('botId))
           case Cmd.PostButtonAction          => PostButtonAction(messageId, decodeId[ButtonId]('button), decodeId[UserId]('sender))
           case Cmd.PostSessionReset          => PostSessionReset(convId, userId, decodeId[ClientId]('client))
+          case Cmd.PostQualifiedSessionReset  => PostQualifiedSessionReset(convId, qualifiedId, decodeId[ClientId]('client))
           case Cmd.PostOpenGraphMeta         => PostOpenGraphMeta(convId, messageId, 'time)
           case Cmd.PostReceipt               => PostReceipt(convId, decodeMessageIdSeq('messages), userId, ReceiptType.fromName('type))
           case Cmd.PostBoolProperty          => PostBoolProperty('key, 'value)
@@ -685,6 +691,9 @@ object SyncRequest {
         case PostSessionReset(_, user, client) =>
           o.put("client", client.str)
           o.put("user", user)
+        case PostQualifiedSessionReset(_, qId, client) =>
+          o.put("client", client.str)
+          o.put("qualifiedId", QualifiedId.Encoder(qId))
         case SyncClientsBatch(qIds) =>
           o.put("qualified_ids", qIds.map(QualifiedId.Encoder(_)))
         case SyncPreKeys(qId, clients) =>
