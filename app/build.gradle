@@ -214,7 +214,6 @@ android {
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
             buildConfigField 'boolean', 'SAFE_LOGGING', 'false'
-
         }
 
         candidate {
@@ -235,7 +234,7 @@ android {
                                     applicationIcon        : "@mipmap/ic_launcher_wire",
                                     sharedUserId           : buildtimeConfiguration.configuration.userId]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', "$buildtimeConfiguration.configuration.developer_features_enabled"
             buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.loggingEnabled"
             buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
         }
