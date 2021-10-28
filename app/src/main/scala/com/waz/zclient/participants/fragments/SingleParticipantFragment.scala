@@ -223,11 +223,12 @@ class SingleParticipantFragment extends FragmentHelper {
       }
   }
 
-  protected lazy val leftActionStrings = for {
-    isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
-    isGroupOrBot   <- participantsController.isGroupOrBot
-    canCreateConv  <- userAccountsController.hasCreateConvPermission
-    isExternal     <- userAccountsController.isExternal
+  protected lazy val leftActionStrings: Signal[(Int, Int)] = for {
+    isWireless    <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
+    flags         <- participantsController.flags
+    isGroupOrBot  =  flags.isGroup || flags.hasBot
+    canCreateConv <- userAccountsController.hasCreateConvPermission
+    isExternal    <- userAccountsController.isExternal
   } yield if (isWireless) {
     (R.string.empty_string, R.string.empty_string)
   } else if (fromDeepLink) {

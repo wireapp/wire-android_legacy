@@ -162,7 +162,7 @@
                 android:visibility="visible">
 
                 <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/banner_text"
+                    android:id="@+id/guests_banner_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -171,9 +171,7 @@
                     android:textSize="@dimen/wire__text_size__smaller"
                     app:w_font="@string/wire__typeface__medium"
                     android:text="@string/guests_are_present"/>
-
             </FrameLayout>
-
         </FrameLayout>
 
         <com.waz.zclient.cursor.CursorView

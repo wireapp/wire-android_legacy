@@ -1336,9 +1336,28 @@
     <string name="allow_guests_error_body">Could not allow guests nor services. Please try again.</string>
     <string name="allow_guests_warning_body">Current guests and services will be removed from the conversation. New guests and services will not be allowed.</string>
     <string name="allow_guests_warning_confirm">Remove</string>
-    <string name="guests_are_present">GUESTS ARE PRESENT</string>
-    <string name="services_are_present">SERVICES ARE ACTIVE</string>
-    <string name="guests_and_services_are_present">GUESTS AND SERVICES ARE PRESENT</string>
+
+    <string name="guests_are_present">Guests are present</string>
+    <string name="services_are_present">Services are active</string>
+    <string name="externals_are_present">Externals are present</string>
+    <string name="federated_are_present">Federated users are present</string>
+
+    <string name="guests_and_services_are_present">Guests and services are present</string>
+    <string name="externals_and_services_are_present">Externals and services are present</string>
+    <string name="federated_and_services_are_present">Federated users and services are present</string>
+
+    <string name="externals_and_guests_are_present">Externals and guests are present</string>
+    <string name="federated_and_guests_are_present">Federated users and guests are present</string>
+
+    <string name="federated_and_externals_are_present">Federated users and externals are present</string>
+
+    <string name="federated_externals_and_guests_are_present">Federated users, externals, and guests are present</string>
+    <string name="federated_externals_and_services_are_present">Federated users, externals, and services are present</string>
+    <string name="federated_guests_and_services_are_present">Federated users, guests, and services are present</string>
+    <string name="externals_guests_and_services_are_present">Externals, guests, and services are present</string>
+
+    <string name="federated_externals_guests_and_services_are_present">Federated users, externals, guests, and services are present</string>
+
     <string name="participants_details_header_title">DETAILS</string>
     <string name="invitation_link_description">Anyone with the link can join the conversation, even if they don\'t have Wire</string>
     <string name="create_link_button">Create Link</string>
