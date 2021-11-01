@@ -98,6 +98,10 @@ import scala.concurrent.Future
 object WireApplication extends DerivedLogTag {
   var APP_INSTANCE: WireApplication = _
 
+  def isInitialized: Boolean =
+    if (Option(APP_INSTANCE).isEmpty) false
+    else APP_INSTANCE.isInitialized
+
   def ensureInitialized(): Boolean =
     if (Option(APP_INSTANCE).isEmpty) false // too early
     else APP_INSTANCE.ensureInitialized()
@@ -392,8 +396,10 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     ensureInitialized()
   }
 
+  private[waz] def isInitialized: Boolean = Option(ZMessaging.currentGlobal).isDefined
+
   private[waz] def ensureInitialized(): Boolean =
-    if (Option(ZMessaging.currentGlobal).isDefined) true // the app is initialized, nothing to do here
+    if (isInitialized) true // the app is initialized, nothing to do here
     else
       try {
         inject[BackendController].getStoredBackendConfig.fold(false){ config =>
