@@ -24,7 +24,7 @@
     <string name="generic_error_message">කරුණාකර නැවත උත්සාහ කරන්න</string>
     <string name="internet_connectivity_error_header">අන්තර්ජාල සම්බන්ධතාවයක් නැත</string>
     <string name="internet_connectivity_error_message">කරුණාකර ඔබගේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
-    <string name="too_many_attempts_header">Too many attempts</string>
+    <string name="too_many_attempts_header">තැත් කිරීම් බොහෝය</string>
     <string name="email_login_later_message">පසුව පිවිසීමට උත්සහ කරන්න</string>
     <string name="phone_login_later_message">කරුණාකර පසුව පිවිසීමට උත්සාහ කරන්න</string>
     <string name="email_exists_header">වි-තැපැල් ලිපිනය දැනටමත් ගෙන ඇත</string>
@@ -34,7 +34,7 @@
     <string name="invalid_credentials_header">වලංගු නොවන තොරතුර කි</string>
     <string name="invalid_credentials_message">PLEASE VERIFY YOUR DETAILS AND TRY AGAIN</string>
     <string name="phone_exists_header">දු.ක. අංකය දැනටමත් ගෙන ඇත</string>
-    <string name="phone_exists_message">The phone number you provided has already been registered. Please try again</string>
+    <string name="phone_exists_message">ඔබ ලබාදුන් දු.ක. අංකය දැනටමත් ලියාපදිංචි කර ඇත. යළි උත්සාහ කරන්න</string>
     <string name="phone_invalid_format_header">වලංගු නොවන දුරකථන අංකයකි</string>
     <string name="phone_invalid_format_message">වලංගු දුරකථන අංකයක් ඇතුල් කරන්න</string>
     <string name="phone_password_exists_header">මුරපදය පවතී</string>
@@ -43,8 +43,8 @@
     <string name="incorrect_code_header">සාවද්‍ය කේතය කි</string>
     <string name="wrong_code_message">වලංගු කේතයක් යොදන්න</string>
     <string name="phone_pending_login_header">කේතය දැනටමත් යවා ඇත</string>
-    <string name="phone_pending_login_message">We already sent you a code via SMS. Tap Resend after 10 minutes to get a new one.</string>
-    <string name="phone_budget_exhausted_header">Too many requests</string>
+    <string name="phone_pending_login_message">කෙටි පණිඩිඩයක් හරහා කේතයක් යවා ඇත. නව එකක් ගැනීමට විනාඩි 10 කට පසු නැවත යැවීම මත තට්ටු කරන්න.</string>
+    <string name="phone_budget_exhausted_header">ඉල්ලීම් බොහෝය</string>
     <string name="phone_budget_exhausted_message">කරුණාකර පසුව උත්සාහ කරන්න</string>
     <string name="conversation_input_bar_message_too_long_title">පණිවිඩය දීර්ඝ වැඩියි</string>
     <string name="conversation_input_bar_message_too_long_message">You can send messages up to %1$s characters long.</string>
@@ -55,7 +55,7 @@
     <string name="camera_permissions_denied_title">Camera not available</string>
     <string name="camera_permissions_denied_message">To take and send photos, grant permission to access the camera</string>
     <!-- Registration and Sign in -->
-    <string name="welcome__terms_of_service">BY CONTINUING YOU AGREE TO _TERMS OF USE_.</string>
+    <string name="welcome__terms_of_service">ඉදිරියට යෑමෙන් ඔබ _භාවිත නියම_ වලට එකඟ වේ.</string>
     <string name="profile__name__guidance__tooshort__title">අවම වශයෙන් අක්ෂර 2 ක් </string>
     <string name="profile__email__placeholder">විද්‍යුත් තැපෑල</string>
     <string name="profile__password__placeholder">මුරපදය</string>
