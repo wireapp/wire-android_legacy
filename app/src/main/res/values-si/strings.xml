@@ -57,15 +57,15 @@
     <!-- Registration and Sign in -->
     <string name="welcome__terms_of_service">ඉදිරියට යෑමෙන් ඔබ _භාවිත නියම_ වලට එකඟ වේ.</string>
     <string name="profile__name__guidance__tooshort__title">අවම වශයෙන් අක්ෂර 2 ක් </string>
-    <string name="profile__email__placeholder">විද්‍යුත් තැපෑල</string>
+    <string name="profile__email__placeholder">වි-තැපෑල</string>
     <string name="profile__password__placeholder">මුරපදය</string>
     <string name="profile__password__guidance__tooshort__title">අවම වශයෙන් අක්ෂර 8 ක් </string>
     <string name="profile__email__verify__instructions">We sent an email to \n[[%1$s]]. \nFollow the link to verify your address.</string>
     <string name="profile__email__verify__didnt_get">පණිවිඩය ලැබුනේ නැද්ද?</string>
     <string name="profile__email__verify__resend">නැවත යවන්න</string>
     <string name="profile__guidance__invalid_email">The email address you entered is not valid. Please verify and try again</string>
-    <string name="new_reg__code_resent">A new code was sent to you via SMS</string>
-    <string name="new_reg__email_code_resent">A new code was sent to you via email</string>
+    <string name="new_reg__code_resent">කෙටි පණිවිඩයක් හරහා නව කේතයක් යැවිණි</string>
+    <string name="new_reg__email_code_resent">වි-තැපෑල හරහා නව කේතයක් යැවිණි</string>
     <string name="new_reg__code_resent__call">Stand by for a call</string>
     <string name="new_reg__default_country">de</string>
     <!-- consider updating this for every new language -->
@@ -83,10 +83,10 @@
     <string name="people_picker__search_result_others_header_federated">%1$s සමඟ සම්බන්ධ වන්න</string>
     <string name="people_picker__search_result__expander_title">%1$s සියල්ල පෙන්වන්න ↓</string>
     <string name="people_picker__search_people">මිනිසුන්</string>
-    <string name="people_picker__search_services">සේවාවන්</string>
+    <string name="people_picker__search_services">සේවා</string>
     <string name="receive_news_and_offers_request_title">පුවත් පත්‍රිකාව</string>
     <string name="receive_news_and_offers_request_body">Do you want to receive news and product updates from Wire via email? You can unsubscribe at any time.</string>
-    <string name="crashes_and_analytics_request_title">Help us make Wire better</string>
+    <string name="crashes_and_analytics_request_title">අපට වයර් දියුණු කිරීමට උදව්වන්න</string>
     <string name="crashes_and_analytics_request_body">I agree that Wire may create and use anonymous usage and error reports to improve the Wire App. I can revoke this consent at any time.</string>
     <string name="crashes_and_analytics_request_no">නැහැ</string>
     <string name="crashes_and_analytics_request_agree">මම එකඟයි</string>
@@ -111,15 +111,15 @@
     <!-- Conversation: System messages -->
     <string name="content__system__other_joined">[[%1$s]] එක් වුණා</string>
     <string name="content__system__you_joined">[[You]] එක් වුණා</string>
-    <string name="content__system__other_renamed_conv">[[%1$s]] renamed the conversation</string>
-    <string name="content__system__you_renamed_conv">[[You]] renamed the conversation</string>
+    <string name="content__system__other_renamed_conv">[[%1$s]] සංවාදය නැවත නම් කළා</string>
+    <string name="content__system__you_renamed_conv">[[You]] සංවාදය නැවත නම් කළා</string>
     <!-- Read receipts: System messages -->
     <string name="content__system__read_receipts_on">කියවූ බවට ලදුපත් සක්‍රීයයි</string>
     <string name="content__system__read_receipts_off">කියවූ බවට ලදුපත් අක්‍රීයයි</string>
-    <string name="content__system__read_receipts_someone_turned_on">[[%1$s]] turned read receipts on for everyone</string>
-    <string name="content__system__read_receipts_someone_turned_off">[[%1$s]] turned read receipts off for everyone</string>
-    <string name="content__system__read_receipts_you_turned_on">[[You]] turned read receipts on for everyone</string>
-    <string name="content__system__read_receipts_you_turned_off">[[You]] turned read receipts off for everyone</string>
+    <string name="content__system__read_receipts_someone_turned_on">[[%1$s]] සැමට කියවූ බටව ලදුපත් සක්‍රිය කළා</string>
+    <string name="content__system__read_receipts_someone_turned_off">[[%1$s]] සැමට කියවූ බටව ලදුපත් අක්‍රිය කළා</string>
+    <string name="content__system__read_receipts_you_turned_on">[[You]] සැමට කියවූ බටව ලදුපත් සක්‍රිය කළා</string>
+    <string name="content__system__read_receipts_you_turned_off">[[You]] සැමට කියවූ බටව ලදුපත් අක්‍රිය කළා</string>
     <!-- Add people -->
     <string name="content__system__someone_added_people">[[%1$s]] added %2$s to the conversation</string>
     <plurals name="content__system__someone_added_people_with_others">
@@ -194,29 +194,29 @@
     <!-- File transfer -->
     <string name="content__file__status__default">%1$s</string>
     <string name="content__file__status__uploading__minimized">උඩුගත වෙමින්&#8230;</string>
-    <string name="content__file__status__cancelled__minimized">CANCELLED&#8230;</string>
+    <string name="content__file__status__cancelled__minimized">අවලංගු කෙරිණි&#8230;</string>
     <string name="content__file__status__downloading__minimized">බාගත වෙමින්&#8230;</string>
     <string name="content__file__status__download_failed__minimized">බාගතවීම අසාර්ථකයි</string>
     <string name="content__file__status__upload_failed__minimized">උඩුගතවීම අසාර්ථකයි</string>
     <string name="content__file__status__uploading">%1$s · උඩුගත වෙමින්&#8230;</string>
-    <string name="content__file__status__cancelled">%1$s · CANCELLED&#8230;</string>
+    <string name="content__file__status__cancelled">%1$s · අවලංගු කෙරිණි&#8230;</string>
     <string name="content__file__status__downloading">%1$s · බාගත වෙමින්&#8230;</string>
     <string name="content__file__status__download_failed">%1$s · බාගතවීම අසාර්ථකයි</string>
     <string name="content__file__status__upload_failed">%1$s . උඩුගතවීම අසාර්ථකයි</string>
     <!-- used when there's a non-empty file extension, e.g. "300KB · PDF" -->
     <string name="content__file__status__default__size_and_extension">%1$s · %2$s</string>
     <string name="content__file__status__uploading__size_and_extension">%1$s · %2$s · උඩුගත වෙමින්&#8230;</string>
-    <string name="content__file__status__cancelled__size_and_extension">%1$s · %2$s · CANCELLED&#8230;</string>
+    <string name="content__file__status__cancelled__size_and_extension">%1$s · %2$s · අවලංගු කෙරිණි&#8230;</string>
     <string name="content__file__status__downloading__size_and_extension">%1$s · %2$s · බාගත වෙමින්&#8230;</string>
     <string name="content__file__status__download_failed__size_and_extension">%1$s · %2$s · බාගතවීම අසාර්ථකයි</string>
     <string name="content__file__status__upload_failed__size_and_extension">%1$s · %2$s · උඩුගතවීම අසාර්ථකයි</string>
     <string name="content__file__action__open">විවෘත කරන්න</string>
     <string name="content__file__action__save">සුරකින්න</string>
     <string name="content__file__action__open__no_app_found">No app found to open this file type</string>
-    <string name="content__file__action__save_completed">File successfully saved</string>
-    <string name="content__file__action__save_error">Unable to save file</string>
+    <string name="content__file__action__save_completed">ගොනුව සාර්ථකව සුරැකිණි</string>
+    <string name="content__file__action__save_error">ගොනුව සුරැකීමට නොහැකියි</string>
     <string name="file_restrictions__sender_error">Sharing files with the .%1$s extension is not permitted by your organization</string>
-    <string name="file_restrictions__receiver_error">File from %1$s can\'t be opened.</string>
+    <string name="file_restrictions__receiver_error">%1$s න් ගොනුව විවෘත කළ නොහැකියි.</string>
     <string name="content__location__no_map_placeholder">THE LOCATION WILL APPEAR ON THE MAP WHEN YOU ARE BACK ONLINE.</string>
     <!-- Conversation actions -->
     <string name="conversation__action__clear_content">අන්තර්ගතය හිස් කරන්න&#8230;</string>
@@ -244,12 +244,12 @@
     <string name="conversation__action__clear_and_leave">\tඅන්තර්ගතය හිස් කර හැරයන්න</string>
     <string name="conversation__action__clear_only">\tඅන්තර්ගතය හිස් කරන්න</string>
     <string name="conversation__action__notifications_everything">සියල්ල</string>
-    <string name="conversation__action__notifications_mentions_and_replies">Mentions and Replies</string>
+    <string name="conversation__action__notifications_mentions_and_replies">සැඳහුම් සහ පිළිතුරු</string>
     <string name="conversation__action__notifications_nothing">කිසිවක් නැත</string>
     <string name="conversation__action__notifications_title">Notify me about:</string>
     <!-- Conversation: Profile Popover -->
     <!-- Calling/voice -->
-    <string name="calling__cannot_start__title">Microphone required</string>
+    <string name="calling__cannot_start__title">ශබ්දවාහිනිය අවශ්‍යයි</string>
     <string name="calling__cannot_start__message">To call, hang up your current call.</string>
     <string name="calling__cannot_start__no_permission__message">Go to Settings and allow Wire to access the microphone.</string>
     <string name="calling__cannot_start__cancel__message">අවලංගු</string>
@@ -257,7 +257,7 @@
     <string name="calling__video_call__slow_connection__message">You might experience issues during the call</string>
     <string name="incoming__controls__ongoing__speaker">විකාශකය</string>
     <string name="incoming__controls__ongoing__mute">නිහඬකරන්න</string>
-    <string name="incoming__controls__ongoing__video">VIDEO</string>
+    <string name="incoming__controls__ongoing__video">දෘශ්‍යකය</string>
     <string name="incoming__controls__ongoing__flip">FLIP</string>
     <string name="ongoing__poor_connection_message">VIDEO STOPPED DUE TO POOR CONNECTION</string>
     <string name="calling__self_preview_unavailable_long">CAMERA NOT AVAILABLE</string>
@@ -281,9 +281,9 @@
     <string name="call_error_unsupported_version_button_dismiss">පසුව </string>
     <string name="calling_ongoing_call_title">Ongoing call</string>
     <string name="calling_ongoing_call_start_message">A call is active in another conversation.\nCalling here will hang up the other call.</string>
-    <string name="calling_ongoing_call_start_anyway">CALL ANYWAY</string>
+    <string name="calling_ongoing_call_start_anyway">කෙසේවුවද අමතන්න</string>
     <string name="calling_ongoing_call_join_message">A call is active in another conversation.\nJoining this call will hang up the other one.</string>
-    <string name="calling_ongoing_call_join_anyway">JOIN ANYWAY</string>
+    <string name="calling_ongoing_call_join_anyway">කෙසේවුවද එක්වන්න</string>
     <string name="calling_ongoing_call_participants_header">සහභාගීවන්නන්</string>
     <string name="calling_ongoing_call_audio_message">You can\'t record an audio message while on a call</string>
     <string name="calling_ongoing_call_video_message">You can\'t record a video message while on a call</string>
@@ -394,7 +394,7 @@
     <string name="pref_account_team_title">කණ්ඩායම</string>
     <string name="pref_account_domain_title">වසම</string>
     <string name="pref_account_add_phone_title">දුක. අංකය එකතු කරන්න</string>
-    <string name="pref_account_email_title">විද්‍යුත් තැපෑල</string>
+    <string name="pref_account_email_title">වි-තැපෑල</string>
     <string name="pref_account_add_email_title">වි-තැපෑල එකතු</string>
     <string name="pref_account_delete">මකන්න</string>
     <string name="pref_account_sign_out_title">නික්මෙන්න</string>
@@ -432,7 +432,7 @@
     <string name="new_password_dialog_title_change">මුර කේතය වෙනස් කරන්න</string>
     <string name="new_password_dialog_button_change">මුර කේතය වෙනස් කරන්න</string>
     <string name="new_password_dialog_message">Your organization needs to lock your app when Wire is not in use to keep the Team safe.\nCreate a memorable passcode, as it cannot be recovered.</string>
-    <string name="new_password_dialog_showhide_cd">Show/hide the passcode</string>
+    <string name="new_password_dialog_showhide_cd">මුරකේතය පෙන්වන්න/සඟවන්න</string>
     <string name="new_password_dialog_title_change_in_wire">There was a change in Wire</string>
     <!-- Options -->
     <string name="pref_options_screen_title">විකල්ප</string>
@@ -450,13 +450,13 @@
     <string name="pref_options_ringtones_ringtone_title">Ringtone</string>
     <string name="pref_options_ringtones_text_title">Text tone</string>
     <string name="pref_options_ringtones_ping_title">නාද කරන්න</string>
-    <string name="pref_options_ringtones_default_summary">Wire default</string>
+    <string name="pref_options_ringtones_default_summary">වයර් පෙරනිමි</string>
     <string name="pref_options_ringtones_silent">Silent</string>
     <string name="pref_options_dark_theme_title">අඳුරු තේමාව</string>
     <string name="pref_options_hide_screen_title">තිරයේ අන්තර්ගතය සඟවන්න</string>
     <string name="pref_options_hide_screen_summary">Wire\'s contents will no longer be visible in the task switcher</string>
     <string name="pref_options_image_download_title">Download pictures</string>
-    <string name="pref_options_image_download_always">Always</string>
+    <string name="pref_options_image_download_always">සැමවිටම</string>
     <string name="pref_options_image_download_wifi">වයි-ෆයි පමණි</string>
     <string name="pref_options_media_category_title">මාධ්‍යය</string>
     <string name="pref_options_requested_category_title">By popular demand</string>
@@ -464,7 +464,7 @@
     <string name="pref_options_cursor_send_button_summary">Disable to send via the keyboard.</string>
     <string name="pref_options_message_previews">පණිවිඩ පෙරදසුන්</string>
     <string name="pref_options_message_previews_summary">Display message content in notifications.</string>
-    <string name="pref_options_app_lock_title">Lock with Passcode</string>
+    <string name="pref_options_app_lock_title">මුරකේතයකින් අගුලුලන්න</string>
     <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Passcode or Biometrics.</string>
     <string name="pref_options_incognito_keyboard">Incognito keyboard</string>
     <string name="pref_options_incognito_keyboard_summary">The keyboard will not show suggestions when typing messages</string>
@@ -533,7 +533,7 @@
     <string name="pref__account_action__email_verification__resend">&lt;u&gt;%s ට නැවත යවන්න&lt;/u&gt;</string>
     <string name="pref__account_action__email_verification__change"><u>වි-තැපෑල වෙනස් කරන්න</u></string>
     <string name="pref__account_action__dialog__add_email_password__password">මුරපදය</string>
-    <string name="pref__account_action__dialog__add_email_password__email">විද්‍යුත් තැපෑල</string>
+    <string name="pref__account_action__dialog__add_email_password__email">වි-තැපෑල</string>
     <string name="pref__account_action__dialog__add_email_password__title">වි-තැපැල් ලිපිනය එකතු කරන්න</string>
     <string name="pref__account_action__dialog__add_email_password__error__invalid_email">වලංගු නොවන වි-තැපැල් ලිපිනයකි</string>
     <string name="pref__account_action__dialog__add_email_password__error__invalid_password">At least 8 characters</string>
@@ -592,8 +592,8 @@
     <string name="notification__message__one_to_one__pinged">නාද කළා</string>
     <string name="notification__message__one_to_one__shared_picture">සේයාරුවක් බෙදාගත්තා</string>
     <string name="notification__message__one_to_one__shared_file">ගොනුවක් බෙදාගත්තා</string>
-    <string name="notification__message__one_to_one__shared_video">Shared a video</string>
-    <string name="notification__message__one_to_one__shared_audio">Shared an audio message</string>
+    <string name="notification__message__one_to_one__shared_video">දෘශ්‍යකයක් බෙදාගැනිණි</string>
+    <string name="notification__message__one_to_one__shared_audio">ශ්‍රව්‍ය පණිවිඩයක් බෙදාගැනිණි</string>
     <string name="notification__message__one_to_one__shared_location">ස්ථානයක් බෙදාගත්තා</string>
     <string name="notification__message_one_to_one_message_preview">පණිවිඩයක් යැව්වා</string>
     <!-- %1$s == username, %2$s == conversation -->
@@ -701,7 +701,7 @@
     <string name="country">රට</string>
     <string name="register">ලියාපදිංචි වන්න</string>
     <string name="password_placeholder">මුරපදය</string>
-    <string name="email_placeholder">විද්‍යුත් තැපෑල</string>
+    <string name="email_placeholder">වි-තැපෑල</string>
     <string name="name_placeholder">නම</string>
     <!-- Strings -->
     <string name="edit_phone_number">දුක. අංකය සංස්කරණය</string>
@@ -717,7 +717,7 @@
     <string name="enter_name_hint">සම්පූර්ණ නම යොදන්න</string>
     <string name="new_reg__password__forgot">මුරපදය අමතක වුණාද?</string>
     <string name="phone_sign_in">දුරකථනය</string>
-    <string name="email_sign_in">විද්‍යුත් තැපෑල</string>
+    <string name="email_sign_in">වි-තැපෑල</string>
     <string name="edit_email">වි-තැපෑල සංස්කරණය</string>
     <string name="hello">ආයුබෝවන් &lt;b&gt;%s&lt;/b&gt;,</string>
     <string name="sign_in">පිවිසෙන්න</string>
@@ -790,7 +790,7 @@
     <string name="otr__reset_session__message_fail">Could not reset the session</string>
     <string name="otr__reset_session__button_ok">හරි</string>
     <string name="otr__reset_session__button_fail">නැවත උත්සාහ කරන්න</string>
-    <string name="user_profile_email_field_name">විද්‍යුත් තැපෑල</string>
+    <string name="user_profile_email_field_name">වි-තැපෑල</string>
     <string name="advanced_image_download_wifi_info">The picture will appear when you are on Wi-Fi again</string>
     <string name="change_settings">සැකසුම් වෙනස් කරන්න</string>
     <string name="conversation_list__action_join_call">එක්වන්න</string>
@@ -817,7 +817,7 @@
     <string name="no_conversation_in_list__header">තවම සංවාද නැත</string>
     <string name="all_archived__header">සියල්ල සංරක්ෂණය කළා</string>
     <string name="no_conversation_in_list__message">සංවාදයක් අරඹන්න හෝ සමූහයක් සාදන්න</string>
-    <string name="default_deleted_username">Default</string>
+    <string name="default_deleted_username">පෙරනිමි</string>
     <string name="cursor__type_a_message">TYPE A MESSAGE</string>
     <string name="cursor__ephemeral_message">SELF-DELETING MESSAGE</string>
     <string name="tooltip_record">Record Video</string>
@@ -829,7 +829,7 @@
     <string name="tooltip_more">තව ක්‍රියාමාර්ග</string>
     <string name="tooltip_audio_message">Tap and hold to send an audio message</string>
     <string name="tooltip_file">ගොනුව යවන්න</string>
-    <string name="tooltip_gif">Gif</string>
+    <string name="tooltip_gif">චලනරූ</string>
     <string name="tooltip_mention">Add Mention</string>
     <!-- Delete -->
     <string name="conversation__message_action__delete_for_me">Delete only for me?</string>
@@ -838,8 +838,8 @@
     <string name="conversation__message_action__delete__dialog__cancel">අවලංගු කරන්න</string>
     <string name="conversation__message_action__delete__dialog__ok">මකන්න</string>
     <string name="conversation__message_action__delete__confirmation">Message Deleted</string>
-    <string name="conversation__action_mode__copy__description">Message from %1$s</string>
-    <string name="conversation__action_mode__copy__toast">Copied</string>
+    <string name="conversation__action_mode__copy__description">%1$s වෙතින් පණිවිඩය</string>
+    <string name="conversation__action_mode__copy__toast">පිටපත් විය</string>
     <string name="conversation__action_mode__fwd__dialog__title">Preparing content</string>
     <string name="conversation__action_mode__fwd__dialog__message">කරුණාකර රැඳෙන්න&#8230;</string>
     <string name="conversation__action_mode__fwd__chooser__title">සමඟ බෙදාගන්න</string>
@@ -883,7 +883,7 @@
         <item quantity="other">මිනිසුන් %1$d</item>
     </plurals>
     <string name="message_footer__status__sending">යවමින්&#8230;</string>
-    <string name="message_footer__status__waiting_for_connection">Waiting for connection&#8230;</string>
+    <string name="message_footer__status__waiting_for_connection">සම්බන්ධතාව සඳහා රැඳෙමින්&#8230;</string>
     <string name="message_footer__status__sent">%1$s \u30FB යැවිණි</string>
     <string name="message_footer__status__delivered">%1$s \u30FB බාරදුනි</string>
     <string name="message_footer__status__failed">යැවීමට අසමත්විය. _නැවතයවන්න_</string>
@@ -953,8 +953,8 @@
         <item quantity="one">%1$s missed call</item>
         <item quantity="other">%1$s missed calls</item>
     </plurals>
-    <string name="conversation_list__missed_calls_count">Missed call</string>
-    <string name="conversation_list__missed_calls_count_group">Missed call from %1$s</string>
+    <string name="conversation_list__missed_calls_count">මගහැරුණු ඇමතුම</string>
+    <string name="conversation_list__missed_calls_count_group">%1$s ගෙන් මගහැරුණු ඇමතුම</string>
     <plurals name="conversation_list__mentions_count">
         <item quantity="one">%1$s mention</item>
         <item quantity="other">%1$s mentions</item>
@@ -963,14 +963,14 @@
         <item quantity="one">%1$s reply</item>
         <item quantity="other">%1$s replies</item>
     </plurals>
-    <string name="conversation_list__unsent_message_long">⚠ Unsent message</string>
+    <string name="conversation_list__unsent_message_long">⚠ නොයැවූ පණිවිඩය</string>
     <string name="conversation_list__unsent_message_short">⚠</string>
     <string name="conversation_list__shared__image">සේයාරුවක් බෙදාගත්තා</string>
     <string name="conversation_list__shared__file">ගොනුවක් බෙදාගත්තා</string>
-    <string name="conversation_list__shared__video">Shared a video</string>
-    <string name="conversation_list__shared__audio">Shared an audio message</string>
+    <string name="conversation_list__shared__video">දෘශ්‍යකයක් බෙදාගැනිණි</string>
+    <string name="conversation_list__shared__audio">ශ්‍රව්‍ය පණිවිඩයක් බෙදාගැනිණි</string>
     <string name="conversation_list__shared__location">ස්ථානයක් බෙදාගත්තා</string>
-    <string name="conversation_list__missed_call">Missed call</string>
+    <string name="conversation_list__missed_call">මගහැරුණු ඇමතුම</string>
     <string name="conversation_list__pinged">නාද කළා</string>
     <string name="conversation_list__ephemeral">යමෙක් පණිවිඩයක් යැව්වා</string>
     <string name="conversation_list__single_eph_and_mention">ඔබව සඳහන් කළා</string>
@@ -1001,8 +1001,8 @@
     <string name="availability_busy">කාර්යබහුලයි</string>
     <string name="availability_text_available">AVAILABLE</string>
     <string name="availability_text_away">AWAY</string>
-    <string name="availability_text_busy">BUSY</string>
-    <string name="availability_setstatus">SET A STATUS</string>
+    <string name="availability_text_busy">කාර්යබහුලයි</string>
+    <string name="availability_setstatus">තත්වයක් සකසන්න</string>
     <string name="availability_notification_warning_away_title">You are set to Away</string>
     <string name="availability_notification_warning_away">You will appear as Away to other people. You will not receive notifications about any incoming calls or messages.</string>
     <string name="availability_notification_warning_busy_title">You are set to Busy</string>
@@ -1073,7 +1073,7 @@
     <string name="teams_invitations_skip">මගහරින්න</string>
     <string name="teams_invitations_done">DONE</string>
     <string name="teams_invitations_error_too_many">THE MAXIMUM NUMBER OF INVITATIONS HAS BEEN SENT</string>
-    <string name="teams_invitations_error_already_sent">ALREADY SENT</string>
+    <string name="teams_invitations_error_already_sent">දැනටමත් යවා ඇත</string>
     <string name="teams_invitations_error_generic">SOMETHING WENT WRONG, PLEASE TRY AGAIN</string>
     <string name="teams_invite_email_hint">සහායයා@ඔබගේසමාගම.ලංකා</string>
     <string name="teams_invitations_error_invalid_email">වලංගු වි-තැපැල් ලිපිනයක් ඇතුල් කරන්න</string>
@@ -1189,7 +1189,7 @@
     <string name="pref_account_backup_warning_ok">හරි</string>
     <string name="export_generic_error_title">The file could not be saved</string>
     <string name="export_generic_error_text">You may not have enough space or permission to save it there.</string>
-    <string name="backup_button">Back Up Now</string>
+    <string name="backup_button">උපස්ථ කරන්න</string>
     <string name="backup_import_error_unknown_title">යම්කිසි වරදක් සිදුවී ඇත</string>
     <string name="backup_import_error_unknown">ඔබගේ ඉතිහාසය ප්‍රත්‍යර්පණය කළ නොහැකි විය.</string>
     <string name="backup_import_error_unsupported_version_title">නොගැළපෙන උපස්ථය කි</string>
@@ -1220,7 +1220,7 @@
     <string name="sso_signin_max_accounts_title">Two accounts active</string>
     <string name="sso_signin_max_accounts_message">You can only be logged in with two accounts at once. Log out from one to add another.</string>
     <string name="custom_backend_welcome">Welcome to\n%1$s workspace</string>
-    <string name="participant_search_hint">SEARCH FOR NAMES</string>
+    <string name="participant_search_hint">නම් සඳහා සොයන්න</string>
     <string name="participant_search_title">සහභාගීවන්නන්</string>
     <string name="generic_service_warning">මෙම සංවාදයේ අන්තර්ගතයට සේවා ප්‍රවේශය ඇත</string>
     <string name="add_services_button_text">සේවා කළමනාකරණය</string>
@@ -1231,7 +1231,7 @@
     <string name="wire_ping_name">Wire Ping</string>
     <string name="reply_self_name">ඔබ</string>
     <string name="reply_message_type_image">IMAGE</string>
-    <string name="reply_message_type_video">VIDEO</string>
+    <string name="reply_message_type_video">දෘශ්‍යකය</string>
     <string name="reply_message_type_audio">ශ්‍රව්‍ය පණිවිඩය</string>
     <string name="reply_message_type_location">ස්ථානය</string>
     <string name="reply_message_type_asset">ඇමිණුම</string>
@@ -1279,12 +1279,12 @@
     <string name="conversation_folder_name_favorites">ප්‍රියතම</string>
     <string name="conversation_folder_name_group">සමූහ</string>
     <string name="conversation_folder_name_one_to_one">මිනිසුන්</string>
-    <string name="folders_move_to">MOVE TO</string>
+    <string name="folders_move_to">වෙත ගෙනයන්න</string>
     <string name="folders_no_custom_folder_found">Create a new folder by pressing the + button</string>
-    <string name="folders_create_new_folder">CREATE NEW FOLDER</string>
-    <string name="folders_create_new_folder_action">CREATE</string>
-    <string name="folders_create_new_folder_info">Move the conversation \"%1$s\" to a new folder.</string>
-    <string name="folders_folder_name_hint">FOLDER NAME</string>
+    <string name="folders_create_new_folder">නව බහාලුමක් සාදන්න</string>
+    <string name="folders_create_new_folder_action">සාදන්න</string>
+    <string name="folders_create_new_folder_info">\"%1$s\" සංවාදය නව බහාලුමකට ගෙනයන්න.</string>
+    <string name="folders_folder_name_hint">බහාලුමේ නම</string>
     <string name="folders_folder_name_error_text">Maximum %s characters</string>
     <string name="folders_move_to_folder_close">වසන්න</string>
     <string name="delete_group_conversation_error_title">Group not deleted</string>
@@ -1305,14 +1305,14 @@
     <string name="sso_login_dialog_message">Please enter your SSO code:</string>
     <string name="email_sso_login_dialog_message">Please enter your email or SSO code. If your email matches an enterprise installation of Wire, this app will connect to that server.</string>
     <!-- Welcome -->
-    <string name="welcome_to_wire">Welcome to Wire</string>
+    <string name="welcome_to_wire">වයර් වෙත සාදරයෙන් පිළිගනිමු</string>
     <string name="welcome_enterprise_log_in">ව්‍යවසාය පිවිසුම</string>
     <string name="welcome_custom_backend_log_in_email">LOG IN WITH EMAIL</string>
     <string name="welcome_custom_backend_log_in_sso">LOG IN WITH SSO</string>
     <!-- Updated edit handle screen -->
     <string name="edit_account_handle_error_already_taken">දැනටමත් ගෙන ඇත</string>
-    <string name="edit_account_handle_error_too_short">At least 2 characters</string>
-    <string name="edit_account_handle_error_invalid_characters">Please only use: a–z, 0–9, and _ </string>
+    <string name="edit_account_handle_error_too_short">අවම වශයෙන් අකුරු 2 ක්</string>
+    <string name="edit_account_handle_error_invalid_characters">a–z, 0–9, සහ _ පමණක් යොදාගන්න </string>
     <string name="edit_account_handle_error_unknown_error">Something went wrong, please try again.</string>
     <string name="edit_phone_remove_phone_number">දුරකථන අංකය ඉවත් කරන්න</string>
     <string name="edit_phone_dialog_delete_phone_confirmation">Are you sure you want to remove %s from your Wire account?</string>
@@ -1323,11 +1323,11 @@
     <string name="delete_account_permanently_sms_confirmation">We will send an SMS to:\n %1$s \nFollow the link to permanently delete your account.</string>
     <string name="pref_account_delete_confirmed">Account deletion confirmed, please check your email.</string>
     <!-- Authentication (Shared strings between create account and login screens) -->
-    <string name="authentication_tab_layout_title_email">විද්යුත් තැපෑල</string>
+    <string name="authentication_tab_layout_title_email">වි-තැපෑල</string>
     <string name="authentication_tab_layout_title_phone">දුරකථන අංකය</string>
     <!-- Create Personal Account - Main screen -->
     <string name="create_personal_account_title">ගිණුමක් සාදන්න</string>
-    <string name="create_personal_account_with_email_edit_text_hint">විද්යුත් තැපෑල</string>
+    <string name="create_personal_account_with_email_edit_text_hint">වි-තැපෑල</string>
     <string name="create_personal_account_with_phone_edit_text_hint">දුරකථන අංකය</string>
     <string name="create_personal_account_with_email_email_blacklisted_error">This email address is not allowed.</string>
     <string name="create_personal_account_with_email_email_in_use_error">This email address you used is already linked to an account.\nUse another email address or try to login if you own this account.</string>
@@ -1342,8 +1342,8 @@
     <string name="create_personal_account_email_code_resend_code">කේතය නැවත යවන්න</string>
     <string name="create_personal_account_email_code_invalid_code_error">කරුණාකර වලංගු කේතයක් ඇතුල් කරන්න</string>
     <!-- Create Personal Account - Phone Code screen -->
-    <string name="create_personal_account_phone_code_title">SMS code</string>
-    <string name="create_personal_account_phone_code_description">Enter the code we sent to %s</string>
+    <string name="create_personal_account_phone_code_title">කෙටි පණිඩිඩ කේතය</string>
+    <string name="create_personal_account_phone_code_description">%s ට යැවූ කේතය ඇතුලු කරන්න</string>
     <string name="create_personal_account_phone_code_resend_code">කේතය නැවත යවන්න</string>
     <string name="create_personal_account_phone_code_invalid_code_error">කරුණාකර වලංගු කේතයක් ඇතුල් කරන්න</string>
     <!-- Create Personal Account - Name screen -->
@@ -1362,7 +1362,7 @@
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
     <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
     <!-- StartSSO Screen  -->
-    <string name="start_sso_leaving_wire">Redirecting&#8230;</string>
+    <string name="start_sso_leaving_wire">හරවා යවමින්...</string>
     <string name="start_sso_redirected_to">You are being redirected to your dedicated enterprise service.</string>
     <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
     <!-- Legal Hold -->
@@ -1398,13 +1398,13 @@
     <!-- Feature Config Changes -->
     <string name="feature_config_changed_info_dialog_title">There has been a change in Wire</string>
     <!-- File sharing feature config -->
-    <string name="file_sharing_enabled_info_dialog_message">Sharing and receiving files of any type is now enabled.</string>
-    <string name="file_sharing_disabled_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
+    <string name="file_sharing_enabled_info_dialog_message">ඕනෑම වර්ගයක ගොනු බෙදාගැනීම සහ ලැබීම සබල කර ඇත.</string>
+    <string name="file_sharing_disabled_info_dialog_message">ඕනෑම වර්ගයක ගොනු බෙදාගැනීම සහ ලැබීම අබල කර ඇත.</string>
     <string name="file_sharing_restriction_info_image">RECEIVING IMAGES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_file">RECEIVING FILES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_generic">FILE SHARING RESTRICTED</string>
+    <string name="file_sharing_restriction_info_video">දෘශ්‍යක ලැබීම වලක්වා ඇත</string>
+    <string name="file_sharing_restriction_info_audio">ශ්‍රව්‍ය ගොනු ලැබීම වලක්වා ඇත</string>
+    <string name="file_sharing_restriction_info_file">ගොනු ලැබීම වලක්වා ඇත</string>
+    <string name="file_sharing_restriction_info_generic">ගොනු බෙදාගැනීම වලක්වා ඇත</string>
     <!-- Self Deleting Messages feature config -->
     <string name="self_deleting_messages_change_info_dialog_message_enabled">Sending of self deleting messages is enabled.</string>
     <string name="self_deleting_messages_change_info_dialog_message_enabled_enforced">Sending of self deleting messages is mandatory. The enforced timeout for deletion is %s seconds.</string>
@@ -1415,7 +1415,7 @@
     &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
     <string name="conference_calling_restriction_dialog_positive_button">UPGRADE NOW</string>
     <string name="conference_calling_restriction_dialog_negative_button">අවලංගු</string>
-    <string name="upgraded_plan_dialog_title">Wire Enterprise</string>
+    <string name="upgraded_plan_dialog_title">වයර් ව්‍යවසාය</string>
     <string name="upgraded_plan_dialog_description">Your team was upgraded to Wire Enterprise, which gives you access to features such as conference calls and more.
         &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Learn more about Wire Enterprise</a>]]></string>
     <string name="conference_calling_unavailable_dialog_title">Feature unavailable</string>
