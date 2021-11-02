@@ -26,8 +26,9 @@ import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.controllers.confirmation.{ConfirmationRequest, IConfirmationController, TwoButtonConfirmationCallback}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
+import com.waz.zclient.participants.ParticipantsController.{ParticipantRequest, ParticipantsFlags}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
@@ -44,6 +45,7 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   private lazy val convController         = inject[ConversationController]
   private lazy val confirmationController = inject[IConfirmationController]
   private lazy val screenController       = inject[IConversationScreenController]
+  private lazy val usersController        = inject[UsersController]
 
   lazy val selectedParticipant = Signal(Option.empty[UserId])
 
@@ -71,32 +73,24 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     user     <- z.usersStorage.signal(id)
   } yield user
 
-  lazy val otherParticipantExists = for {
+  lazy val otherParticipantExists: Signal[Boolean] = for {
     z           <- zms
-    groupOrBot  <- isGroupOrBot
+    flags       <- flags
+    groupOrBot  =  flags.isGroup || flags.hasBot
     userId      <- if (groupOrBot) Signal.const(Option.empty[UserId]) else otherParticipantId
     participant <- userId.fold(Signal.const(Option.empty[UserData]))(id => z.usersStorage.optSignal(id))
   } yield groupOrBot || participant.exists(!_.deleted)
 
-  lazy val isWithBot = for {
-    z       <- zms
-    others  <- otherParticipants
-    withBot <- Signal.sequence(others.map(p => z.usersStorage.signal(p._1).map(_.isWireBot)).toSeq: _*)
-  } yield withBot.contains(true)
-
-  lazy val isGroupOrBot = for {
-    group      <- isGroup
-    groupOrBot <- if (group) Signal.const(true) else isWithBot
-  } yield groupOrBot
-
-  lazy val guestBotGroup = for {
-    z        <- zms
-    others   <- otherParticipants
-    isGroup  <- isGroup
-    users    <- Signal.sequence(others.map(p => z.usersStorage.signal(p._1)).toSeq:_*)
-    hasGuest =  isGroup && users.exists(u => u.isGuest(z.teamId) && !u.isWireBot)
-    hasBot   <- isWithBot
-  } yield (hasGuest, hasBot, isGroup)
+  lazy val flags: Signal[ParticipantsFlags] = for {
+    z            <- zms
+    others       <- otherParticipants
+    isGroup      <- isGroup
+    users        <- Signal.sequence(others.map(p => z.usersStorage.signal(p._1)).toSeq: _*)
+    hasGuest     =  isGroup && users.exists(u => u.isGuest(z.teamId) && !u.isWireBot && !usersController.isFederated(u))
+    hasFederated =  isGroup && users.exists(usersController.isFederated)
+    hasExternal  =  isGroup && users.exists(_.isExternal(z.teamId))
+    hasBot       =  users.exists(_.isWireBot)
+  } yield ParticipantsFlags(isGroup, hasGuest, hasBot, hasExternal, hasFederated)
 
   // is the current user a guest in the current conversation
   lazy val isCurrentUserGuest: Signal[Boolean] = for {
@@ -158,5 +152,15 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
 }
 
 object ParticipantsController {
-  case class ParticipantRequest(userId: UserId, fromDeepLink: Boolean = false)
+  final case class ParticipantRequest(userId: UserId, fromDeepLink: Boolean = false)
+
+  final case class ParticipantsFlags(isGroup:      Boolean,
+                                     hasGuest:     Boolean,
+                                     hasBot:       Boolean,
+                                     hasExternal:  Boolean,
+                                     hasFederated: Boolean)
+
+  object ParticipantsFlags {
+    val False: ParticipantsFlags = ParticipantsFlags(isGroup = false, hasGuest = false, hasBot = false, hasExternal = false, hasFederated = false)
+  }
 }
