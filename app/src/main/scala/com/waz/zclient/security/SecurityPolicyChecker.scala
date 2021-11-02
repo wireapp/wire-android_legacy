@@ -205,7 +205,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
    * we use a quick if/else at start to check if more complicated checks are necessary at all.
    */
   def runBackgroundSecurityChecklist()(implicit context: Context): Future[Boolean] =
-    if (!BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT && !BuildConfig.WIPE_ON_COOKIE_INVALID) {
+    if (!needsBackgroundSecurityChecklist) {
       Future.successful(true)
     } else {
       WireApplication.ensureInitialized()
@@ -222,4 +222,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
         )
     )
   }
+
+  def needsBackgroundSecurityChecklist: Boolean =
+    BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT || BuildConfig.WIPE_ON_COOKIE_INVALID
 }
