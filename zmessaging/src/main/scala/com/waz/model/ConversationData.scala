@@ -251,7 +251,7 @@ object ConversationData {
     val UnreadQuotesCount   = int('unread_quote_count)(_.unreadCount.quotes)
     val ReceiptMode         = opt(int('receipt_mode))(_.receiptMode)
     val LegalHoldStatus     = int[LegalHoldStatus]('legal_hold_status, _.value, ConversationData.LegalHoldStatus.apply)(_.legalHoldStatus)
-    val Domain              = text[model.Domain]('domain, _.str, model.Domain(_))(_.domain)
+    val Domain              = opt(text[model.Domain]('domain, _.str, model.Domain(_)))(c => Some(c.domain))
 
     private def getVerification(name: String): Verification =
       Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)
@@ -296,7 +296,8 @@ object ConversationData {
       Domain
     )
 
-    override def apply(implicit cursor: DBCursor): ConversationData =
+    override def apply(implicit cursor: DBCursor): ConversationData = {
+      def orEmpty(domain: Option[model.Domain]): model.Domain = domain.getOrElse(model.Domain.Empty)
       ConversationData(
         Id,
         RemoteId,
@@ -327,8 +328,9 @@ object ConversationData {
         Link,
         ReceiptMode,
         LegalHoldStatus,
-        Domain
+        orEmpty(Domain)
       )
+    }
 
     import com.waz.model.ConversationData.ConversationType._
 
