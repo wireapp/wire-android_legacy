@@ -15,7 +15,6 @@ import com.waz.zclient.WireApplication
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.BackendController
 
-import scala.collection.JavaConversions._
 import scala.util.Try
 
 final class FCMLightService extends FirebaseMessagingService with DerivedLogTag {
@@ -30,7 +29,7 @@ final class FCMLightService extends FirebaseMessagingService with DerivedLogTag 
     }
 
   override def onNewToken(s: String): Unit = {
-    info(l"onNewToken: ${redactedString(s)}")
+    verbose(l"onNewToken: ${redactedString(s)}")
     tokenService.foreach(_.setNewToken())
   }
 
@@ -48,29 +47,28 @@ final class FCMLightService extends FirebaseMessagingService with DerivedLogTag 
   }.toOption.flatten
 
   override def onMessageReceived(remoteMessage: RemoteMessage): Unit = {
-    info(l"onMessageReceived($remoteMessage)")
-    if (!remoteMessage.getData.isEmpty && isSenderKnown(remoteMessage.getFrom)) {
-      val data = remoteMessage.getData.toMap[String, String]
-      data.get(UserKey) match {
-        case None =>
-          warn(l"User key missing msg: ${redactedString(UserKeyMissingMsg)}")
-        case Some(userKey) =>
-          val input = new Data.Builder().putString(UserKey, userKey).build()
-          val workRequest =
-            new OneTimeWorkRequest.Builder(classOf[FCMNotificationWorker])
-              .setInputData(input)
-              .setInitialDelay(10L, TimeUnit.MILLISECONDS)
-              .build()
-          WorkManager.getInstance().enqueue(workRequest)
+    verbose(l"onMessageReceived($remoteMessage)")
+    if (isSenderKnown(remoteMessage.getFrom)) {
+      val userKey = remoteMessage.getData.getOrDefault(UserKey, "")
+      if (userKey.isEmpty) {
+        warn(l"User key missing msg: ${redactedString(UserKeyMissingMsg)}")
+      } else {
+        val workRequest =
+          new OneTimeWorkRequest.Builder(classOf[FCMNotificationWorker])
+            .setInputData(new Data.Builder().putString(UserKey, userKey).build())
+            .setInitialDelay(10L, TimeUnit.MILLISECONDS)
+            .build()
+        WorkManager.getInstance().enqueue(workRequest)
       }
     } else {
-      warn(l"Received an invalid FCM notification from a sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
+      warn(l"Received an FCM notification from an unknown sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
     }
   }
 
   private def isSenderKnown(pushSenderId: String): Boolean =
     returning(backendConfig.exists(_.pushSenderId == pushSenderId)) {
-      case false => warn(l"A remote message from an unknown sender: $pushSenderId (our sender is ${backendConfig.map(_.pushSenderId)})")
+      case false =>
+        warn(l"A remote message from an unknown sender: $pushSenderId (our sender is ${backendConfig.map(_.pushSenderId)})")
       case _ =>
     }
 }
