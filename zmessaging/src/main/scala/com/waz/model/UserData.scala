@@ -218,7 +218,7 @@ object UserData {
 
   implicit object UserDataDao extends Dao[UserData, UserId] with StorageCodecs {
     val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.id)
-    val Domain = text[model.Domain]('domain, _.str, model.Domain(_))(_.domain)
+    val Domain = opt(text[model.Domain]('domain, _.str, model.Domain(_)))(u => Some(u.domain))
     val TeamId = opt(id[TeamId]('teamId))(_.teamId)
     val Name = text[model.Name]('name, _.str, model.Name(_))(_.name)
     val Email = opt(emailAddress('email))(_.email)
@@ -265,10 +265,14 @@ object UserData {
         case _                   => None
       }
 
+      def orEmpty(domain: Option[model.Domain]): model.Domain = domain.getOrElse(model.Domain.Empty)
+
       new UserData(
-        Id, Domain, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
-        rConvQualifiedId(Conversation, ConversationDomain), Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed,
-        Seq.empty, (SelfPermissions, CopyPermissions), CreatedBy
+        Id, orEmpty(Domain), TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn,
+        RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
+        rConvQualifiedId(Conversation, ConversationDomain), Rel, Timestamp, Verified, Deleted,
+        AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed, Seq.empty,
+        (SelfPermissions, CopyPermissions), CreatedBy
       )
     }
 
