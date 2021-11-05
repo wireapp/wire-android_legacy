@@ -58,7 +58,7 @@ class CreateConversationController(implicit inj: Injector)
         z   <- zms.head
         ids <- users.head
         us  <- z.usersStorage.listAll(ids).map(_.toSet)
-      } yield users.mutate(_ -- us.filter(u => u.isGuest(z.teamId) || u.deleted).map(_.id))
+      } yield users.mutate(_ -- us.filter(u => u.isGuest(z.teamId, Some(z.selfDomain)) || u.deleted).map(_.id))
     case false => //
   }
 

@@ -64,6 +64,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
 
   protected lazy val usersStorage           = inject[Signal[UsersStorage]]
   protected lazy val team                   = inject[Signal[Option[TeamId]]]
+  protected lazy val domain                 = inject[Signal[Option[Domain]]]
   protected lazy val participantsController = inject[ParticipantsController]
   protected lazy val convController         = inject[ConversationController]
   protected lazy val themeController        = inject[ThemeController]
@@ -92,6 +93,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     selfId       <- selfId
     usersStorage <- usersStorage
     tId          <- team
+    domain       <- domain
     participants <- participants
     users        <- usersStorage.listSignal(participants.keys)
     f            <- filter.throttle(FilterThrottleMs)
@@ -100,7 +102,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       .filter(u => f.isEmpty || u.matchesQuery(SearchQuery(f)))
       .map(user => ParticipantData(
         user,
-        user.isGuest(tId) && !user.isWireBot,
+        user.isGuest(tId, domain) && !user.isWireBot,
         isAdmin = participants.get(user.id).contains(ConversationRole.AdminRole),
         isSelf = user.id == selfId
       ))
@@ -505,12 +507,13 @@ final class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle: O
     selfId       <- selfId
     usersStorage <- usersStorage
     tId          <- team
+    domain       <- domain
     userIds      <- userIds
     users        <- usersStorage.listSignal(userIds.toList)
   } yield
     users.map(user => ParticipantData(
       user,
-      isGuest = user.isGuest(tId) && !user.isWireBot,
+      isGuest = user.isGuest(tId, domain) && !user.isWireBot,
       isAdmin = false, // unused
       isSelf  = user.id == selfId
     )).sortBy(_.userData.name.str)
