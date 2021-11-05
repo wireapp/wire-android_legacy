@@ -103,7 +103,11 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val assetsStorage: AssetStorage         = new AssetStorageImpl(context, db2, Threading.IO)
 }
 
-class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: AccountManager, val storage: StorageModule, val cryptoBox: CryptoBoxService) extends DerivedLogTag {
+class ZMessaging(val teamId:    Option[TeamId],
+                 val clientId:  ClientId,
+                 account:       AccountManager,
+                 val storage:   StorageModule,
+                 val cryptoBox: CryptoBoxService) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   val clock = ZMessaging.clock
@@ -112,8 +116,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   val selfUserId: UserId = account.userId
   val selfDomain: Domain =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      import com.waz.log.LogSE._
-      verbose(l"DMN current domain: ${account.domain}")
       account.domain
   } else {
       Domain.Empty

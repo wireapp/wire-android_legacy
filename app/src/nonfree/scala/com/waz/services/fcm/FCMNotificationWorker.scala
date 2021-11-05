@@ -17,20 +17,19 @@ final class FCMNotificationWorker(context: Context, params: WorkerParameters)
   import Threading.Implicits.Background
 
   override def doWork(): ListenableWorker.Result = {
-    verbose(l"FCM doWork")
+    verbose(l"doWork")
     val userId = UserId(params.getInputData.getString(FCMLightService.UserKey))
     if (!WireApplication.isInitialized) {
-      verbose(l"FCM not initialized")
+      verbose(l"not initialized")
       checkSecurityAndProcess(userId)
       Result.success()
     } else {
-      verbose(l"FCM initialized")
       ZMessaging.accountsService.flatMap(_.accountState(userId).head).foreach {
         case InBackground =>
-          verbose(l"FCM account $userId in background")
+          verbose(l"account $userId in background")
           checkSecurityAndProcess(userId)
         case other =>
-          verbose(l"FCM account $userId in state $other -- no processing")
+          verbose(l"account $userId in state $other -- no processing")
       }
       Result.success()
     }
@@ -38,20 +37,29 @@ final class FCMNotificationWorker(context: Context, params: WorkerParameters)
 
   private def checkSecurityAndProcess(userId: UserId): Unit =
     if (SecurityPolicyChecker.needsBackgroundSecurityChecklist) {
-      verbose(l"FCM background security check needed")
       implicit val ctx: Context = context
       SecurityPolicyChecker.runBackgroundSecurityChecklist().map {
         case true =>
-          verbose(l"FCM background security check passed")
           process(userId)
         case _ =>
-          warn(l"FCM the background security check failed for $userId")
+          warn(l"the background security check failed for $userId")
       }
     } else
       process(userId)
 
   private def process(userId: UserId): Unit = {
-    verbose(l"FCM process($userId)")
+    // It's too difficult to work without the initialized app from this point.
+    // In SQCORE-1146, ensureInitialized() will be split into two - the essential part,
+    // and other components that should be initialized only when the app comes to the front.
+    // Here we only need the essentials.
+    WireApplication.ensureInitialized()
+    val handler = for {
+      global    <- ZMessaging.globalModule
+      accounts  <- ZMessaging.accountsService
+      Some(zms) <- accounts.getZms(userId)
+    } yield
+      FCMPushHandler(zms.userPrefs, global.prefs, zms.pushNotificationsClient, zms.clientId)
+    handler.foreach(_.syncNotifications())
   }
 }
 

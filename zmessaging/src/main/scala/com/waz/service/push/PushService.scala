@@ -18,7 +18,6 @@
 package com.waz.service.push
 
 import android.content.Context
-import com.waz.api.NetworkMode.{OFFLINE, UNKNOWN}
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.Preferences.Preference
