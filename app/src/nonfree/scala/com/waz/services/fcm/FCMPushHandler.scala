@@ -62,7 +62,7 @@ final class FCMPushHandlerImpl(userPrefs:   UserPreferences,
   // TODO: change to storeNotifications in SQCORE-1138
   private def updateLastId(nots: Seq[PushNotificationEncoded]): CancellableFuture[Unit] =
     if (nots.nonEmpty) {
-      verbose(l"FCM push notification: \n ${nots.map(_.events.toString(2))}")
+      verbose(l"FCM push notification: \n ${nots.map(_.events)}")
       val res = nots.lift(nots.lastIndexWhere(!_.transient))
       if (res.nonEmpty) CancellableFuture.lift(idPref := res.map(_.id)) else CancellableFuture.successful(())
     } else

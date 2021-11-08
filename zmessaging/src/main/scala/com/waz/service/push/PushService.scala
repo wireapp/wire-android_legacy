@@ -133,8 +133,8 @@ class PushServiceImpl(selfUserId:           UserId,
     notificationStorage.encryptedEvents.flatMap { rows =>
       verbose(l"Processing ${rows.size} encrypted rows")
       Future.sequence(rows.map { row =>
-        if (!isOtrEventJson(row.event)) notificationStorage.setAsDecrypted(row.index)
-        else ConversationEvent.ConversationEventDecoder(row.event) match {
+        if (!row.event.isOtrMessageAdd) notificationStorage.setAsDecrypted(row.index)
+        else ConversationEvent.ConversationEventDecoder(row.event.toJson) match {
           case otrEvent: OtrEvent =>
             val writer = notificationStorage.writeClosure(row.index)
             otrService.decryptStoredOtrEvent(otrEvent, writer).flatMap {
@@ -149,7 +149,7 @@ class PushServiceImpl(selfUserId:           UserId,
               case Right(_) => Future.successful(())
             }
           case _ =>
-            error(l"Unrecognized event: ${row.event.toString}")
+            error(l"Unrecognized event: ${row.event}")
             notificationStorage.setAsDecrypted(row.index)
         }
       }).map(_ => ())
@@ -157,16 +157,16 @@ class PushServiceImpl(selfUserId:           UserId,
 
   private def processDecryptedRows(): Future[Unit] = {
     def decodeRow(event: PushNotificationEvent) =
-      if(event.plain.isDefined && isOtrEventJson(event.event)) {
+      if(event.plain.isDefined && event.event.isOtrMessageAdd) {
         verbose(l"decodeRow($event) for an otr event")
         val msg = GenericMessage(event.plain.get)
-        val msgEvent = ConversationEvent.ConversationEventDecoder(event.event)
+        val msgEvent = ConversationEvent.ConversationEventDecoder(event.event.toJson)
         returning(otrService.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)) { event =>
           verbose(l"decoded otr event: $event")
         }
       } else {
         verbose(l"decodeRow($event) for a non-otr event")
-        Some(EventDecoder(event.event))
+        Some(EventDecoder(event.event.toJson))
       }
 
     notificationStorage.getDecryptedRows().flatMap { rows =>
@@ -223,9 +223,6 @@ class PushServiceImpl(selfUserId:           UserId,
         _   <- if (res.nonEmpty) idPref := res.map(_.id) else Future.successful(())
       } yield None
     } else Future.successful(None)
-
-  private def isOtrEventJson(ev: JSONObject) =
-    ev.getString("type").equals("conversation.otr-message-add")
 
   private def futureHistoryResults(notifications: Vector[PushNotificationEncoded] = Vector.empty,
                                    time:          Option[Instant] = None,

@@ -31,13 +31,12 @@ import scala.concurrent.duration._
 class FCMPushHandlerSpec extends FeatureSpec
   with Matchers
   with OneInstancePerTest
-  with MockFactory {
-  this: Suite =>
+  with MockFactory { this: Suite =>
 
-  private val userPrefs = new TestUserPreferences
+  private val userPrefs   = new TestUserPreferences
   private val globalPrefs = new TestGlobalPreferences
-  private val client = mock[PushNotificationsClient]
-  private val clientId = ClientId()
+  private val client      = mock[PushNotificationsClient]
+  private val clientId    = ClientId()
 
   private def handler: FCMPushHandler = new FCMPushHandlerImpl(userPrefs, globalPrefs, client, clientId)
 
@@ -53,4 +52,56 @@ class FCMPushHandlerSpec extends FeatureSpec
     } yield ()
     result(scenario) shouldEqual (())
   }
+/*
+ scenario("A new notification should update the last id") {
+    val lastId = Uid()
+    val newId = Uid()
+    val eventJson = new JSONObject(eventJsonStr)
+    val eventsArray = returning(new JSONArray()) { _.put(eventJson) }
+    val notification = PushNotificationEncoded(newId, eventsArray)
+    val response = LoadNotificationsResponse(Vector(notification), hasMore = false, beTime = None)
+    val res = LoadNotificationsResult(response, historyLost = false)
+    (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res))
+
+    val lastIdPref = userPrefs.preference(LastStableNotification)
+    val scenario = for {
+      _  <- CancellableFuture.lift(lastIdPref := Some(lastId))
+      _  <- handler.syncNotifications()
+      id <- CancellableFuture.lift(lastIdPref())
+    } yield id.contains(newId)
+    result(scenario) shouldEqual true
+  }*/
+}
+
+object FCMPushHandlerSpec {
+  val convId = ConvId()
+  val userId = UserId()
+  val domain = "staging.zinfra.io"
+
+  val eventJsonStr =
+    s"""
+      |      {
+      |        "qualified_conversation": {
+      |          "domain": "$domain",
+      |          "id": "${convId.str}"
+      |        },
+      |        "conversation": "${convId.str}",
+      |        "time": "2021-11-08T16:31:28.872Z",
+      |        "data": {
+      |          "text": "encoded_string",
+      |          "data": "",
+      |          "sender": "a693b2dea78f634c",
+      |          "recipient": "ed9a6a236ed3f4ae"
+      |        },
+      |        "from": "${userId.str}",
+      |        "qualified_from": {
+      |          "domain": "$domain",
+      |          "id": "$userId"
+      |        },
+      |        "type": "conversation.otr-message-add"
+      |      }
+      |""".stripMargin.trim
+
+
+
 }

@@ -26,7 +26,7 @@ import com.waz.model.PushNotificationEvents.PushNotificationEventsDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.push.PushNotificationEventsStorage.{EventHandler, EventIndex, PlainWriter}
-import com.waz.sync.client.PushNotificationEncoded
+import com.waz.sync.client.{EncodedEvent, PushNotificationEncoded}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.wire.signals.EventContext
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
@@ -70,29 +70,20 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     (plain: Array[Byte]) => update(index, _.copy(decrypted = true, plain = Some(plain))).map(_ => Unit)
 
   override def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit] =
-    update(index, _.copy(decrypted = true, event = MessageEvent.MessageEventEncoder(error), plain = None))
+    update(index, _.copy(decrypted = true, event = MessageEvent.errorToEncodedEvent(error), plain = None))
       .map(_ => Unit)
 
   override def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Unit] = {
-    import com.waz.utils._
-    def isOtrEventForUs(obj: JSONObject): Boolean =
-      returning(!obj.getString("type").startsWith("conversation.otr") || obj.getJSONObject("data").getString("recipient").equals(clientId.str)) { ret =>
-        if (!ret) {
-          verbose(l"Skipping otr event not intended for us: $obj")
-        }
-      }
-
-    val eventsToSave = pushNotifications
-      .flatMap { pn =>
-        pn.events.toVector.filter(isOtrEventForUs).map { event =>
-          (pn.id, event, pn.transient)
-        }
-      }
+    val eventsToSave = pushNotifications.flatMap { pn =>
+      val (valid, invalid) = pn.events.partition(_.isForUs(clientId))
+      invalid.foreach { event => verbose(l"Skipping otr event not intended for us: $event") }
+      valid.map { (pn.id, _, pn.transient) }
+    }
 
     storage.withTransaction { implicit db =>
       val curIndex = PushNotificationEventsDao.maxIndex()
       val nextIndex = if (curIndex == -1) 0 else curIndex+1
-      insertAll(eventsToSave.zip(nextIndex until (nextIndex+eventsToSave.length))
+      insertAll(eventsToSave.zip(nextIndex.until(nextIndex+eventsToSave.length))
         .map { case ((id, event, transient), index) =>
           PushNotificationEvent(id, index, event = event, transient = transient)
         })
