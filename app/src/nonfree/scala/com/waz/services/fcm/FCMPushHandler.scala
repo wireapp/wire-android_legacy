@@ -35,7 +35,8 @@ final class FCMPushHandlerImpl(userPrefs:   UserPreferences,
     Serialized.apply("syncInProgress")(syncHistory())
 
   private lazy val idPref: Preference[Option[Uid]] = userPrefs.preference(LastStableNotification)
-  private val beDriftPref: Preference[Duration] = globalPrefs.preference(BackendDrift)
+  private lazy val beDriftPref: Preference[Duration] = globalPrefs.preference(BackendDrift)
+
   private def updateDrift(time: Option[Instant]) =
     CancellableFuture.lift(
       beDriftPref.mutate(v => time.fold(v)(clock.instant.until(_)))
@@ -43,23 +44,25 @@ final class FCMPushHandlerImpl(userPrefs:   UserPreferences,
 
   private def syncHistory(): CancellableFuture[Unit] = {
     verbose(l"Sync history")
-    CancellableFuture
-      .lift(idPref())
-      .flatMap(load(_, 0))
-      .flatMap {
-        case Some(Results(nots, time)) if nots.nonEmpty =>
-          updateDrift(time)
-            .flatMap(_ => updateLastId(nots))
-            .flatMap(_ => syncHistory())
-        case Some(Results(_, time)) =>
-          updateDrift(time).map(_ => None)
-        case None => CancellableFuture.successful(None)
+    for {
+      lastId  <- CancellableFuture.lift(idPref())
+      results <- lastId.map(load(_, 0)).getOrElse(CancellableFuture.successful(None))
+    } yield results match {
+      case Some(Results(nots, time)) if nots.nonEmpty =>
+        updateDrift(time)
+          .flatMap(_ => updateLastId(nots))
+          .flatMap(_ => syncHistory())
+      case Some(Results(_, time)) =>
+        updateDrift(time).map(_ => None)
+      case None =>
+        CancellableFuture.successful(None)
     }
   }
 
   // TODO: change to storeNotifications in SQCORE-1138
   private def updateLastId(nots: Seq[PushNotificationEncoded]): CancellableFuture[Unit] =
     if (nots.nonEmpty) {
+      verbose(l"FCM push notification: \n ${nots.map(_.events.toString(2))}")
       val res = nots.lift(nots.lastIndexWhere(!_.transient))
       if (res.nonEmpty) CancellableFuture.lift(idPref := res.map(_.id)) else CancellableFuture.successful(())
     } else
@@ -70,13 +73,14 @@ final class FCMPushHandlerImpl(userPrefs:   UserPreferences,
                                    time:          Option[Instant] = None): CancellableFuture[Option[Results]] =
     CancellableFuture.successful(Some(Results(notifications, time)))
 
-  private def load(lastId: Option[Uid], attempts: Int): CancellableFuture[Option[Results]] =
-    client.loadNotifications(lastId, clientId).flatMap {
+  private def load(lastId: Uid, attempts: Int): CancellableFuture[Option[Results]] =
+    client.loadNotifications(Some(lastId), clientId).flatMap {
       case Right(LoadNotificationsResult(response, historyLost)) if !response.hasMore && !historyLost =>
         verbose(l"FCM (1) notifications: ${response.notifications}, time: ${response.beTime}")
         futureHistoryResults(response.notifications, response.beTime)
-      case Right(LoadNotificationsResult(response, historyLost)) if response.hasMore && !historyLost =>
-        load(response.notifications.lastOption.map(_.id), 0).flatMap {
+      case Right(LoadNotificationsResult(response, historyLost))
+        if response.notifications.nonEmpty && response.hasMore && !historyLost =>
+        load(response.notifications.last.id, 0).flatMap {
           case Some(results) =>
             verbose(l"FCM (2) notifications: ${response.notifications}, results: ${results.notifications}, time: ${response.beTime}, time2: ${results.time}")
             futureHistoryResults(
@@ -87,10 +91,13 @@ final class FCMPushHandlerImpl(userPrefs:   UserPreferences,
             verbose(l"FCM (3) notifications: ${response.notifications}, time: ${response.beTime}, but returning None")
             CancellableFuture.successful(None)
         }
-      case Right(LoadNotificationsResult(response, historyLost)) if lastId.isDefined && historyLost =>
+      case Right(LoadNotificationsResult(response, historyLost)) if historyLost =>
         warn(l"FCM /notifications failed with 404, history lost")
         // we don't handle historyLost here so we just try to recover with what we got
         futureHistoryResults(response.notifications, response.beTime)
+      case Right(LoadNotificationsResult(response, _)) =>
+        // here we know that there are no notifications in the response
+        futureHistoryResults(time = response.beTime)
       case Left(e@ErrorResponse(ResponseCode.Unauthorized, _, _)) =>
         warn(l"FCM Logged out, failing sync request")
         CancellableFuture.failed(FetchFailedException(e))

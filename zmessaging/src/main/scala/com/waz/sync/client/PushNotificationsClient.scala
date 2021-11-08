@@ -87,9 +87,11 @@ object PushNotificationsClient {
   val NotificationsLastPath = "/notifications/last"
   val PageSize = 500
 
-  case class LoadNotificationsResult(response: LoadNotificationsResponse, historyLost: Boolean)
+  final case class LoadNotificationsResult(response: LoadNotificationsResponse, historyLost: Boolean)
 
-  case class LoadNotificationsResponse(notifications: Vector[PushNotificationEncoded], hasMore: Boolean, beTime: Option[Instant])
+  final case class LoadNotificationsResponse(notifications: Vector[PushNotificationEncoded],
+                                             hasMore: Boolean,
+                                             beTime: Option[Instant])
 
   object PagedNotificationsResponse extends DerivedLogTag {
 

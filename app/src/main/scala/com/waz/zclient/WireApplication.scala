@@ -30,7 +30,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.fragment.app.{FragmentActivity, FragmentManager}
 import androidx.multidex.MultiDexApplication
-import com.evernote.android.job.{JobCreator, JobManager}
+import com.evernote.android.job.{Job, JobCreator, JobManager}
 import com.waz.api.NetworkMode
 import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._
@@ -414,7 +414,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   def ensureInitialized(backend: BackendConfig): Unit = {
     JobManager.create(this).addJobCreator(new JobCreator {
-      override def create(tag: String) =
+      override def create(tag: String): Job =
         if      (tag.contains(FetchJob.Tag))          new FetchJob
         else if (tag.contains(PushTokenCheckJob.Tag)) new PushTokenCheckJob
         else    null

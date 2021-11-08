@@ -429,6 +429,7 @@ dependencies {
     implementation BuildDependencies.commonMark
     implementation BuildDependencies.jna
 
+
     if (!fdroidBuild) {
         implementation BuildDependencies.countly
     }
@@ -460,6 +461,8 @@ dependencies {
         exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
     }
     testImplementation project(ModuleDependencies.commonTest)
+    testImplementation LegacyDependencies.scalaMock
+    testImplementation LegacyDependencies.scalaCheck
 
     // Functional Tests
     androidTestImplementation TestDependencies.jUnit

@@ -26,7 +26,6 @@ import com.waz.service._
 import com.waz.service.push.PushService.{FetchFromIdle, SyncHistory}
 import com.waz.service.push._
 import com.waz.services.ZMessagingService
-import com.waz.services.fcm.FCMHandlerService._
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, returning}
 import com.waz.zclient.WireApplication
@@ -46,6 +45,7 @@ import scala.util.Try
   */
 class FCMHandlerService extends FirebaseMessagingService with ZMessagingService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
+  import FCMHandlerService._
 
   lazy val pushSenderId = ZMessaging.currentGlobal.backend.pushSenderId
   lazy val accounts = ZMessaging.currentAccounts

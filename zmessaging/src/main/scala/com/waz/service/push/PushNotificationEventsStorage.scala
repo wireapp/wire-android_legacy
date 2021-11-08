@@ -75,13 +75,12 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
 
   override def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Unit] = {
     import com.waz.utils._
-    def isOtrEventForUs(obj: JSONObject): Boolean = {
+    def isOtrEventForUs(obj: JSONObject): Boolean =
       returning(!obj.getString("type").startsWith("conversation.otr") || obj.getJSONObject("data").getString("recipient").equals(clientId.str)) { ret =>
         if (!ret) {
           verbose(l"Skipping otr event not intended for us: $obj")
         }
       }
-    }
 
     val eventsToSave = pushNotifications
       .flatMap { pn =>
