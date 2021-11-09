@@ -148,7 +148,7 @@ class SingleParticipantFragment extends FragmentHelper {
       isGroup            <- participantsController.isGroup.head
       isFederated        =  usersController.isFederated(user)
       isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
-      isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
+      isExternal         =  !user.isWireBot && user.isExternal(zms.teamId, zms.selfDomain)
       isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
       // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
       _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())

@@ -88,7 +88,7 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     users        <- Signal.sequence(others.map(p => z.usersStorage.signal(p._1)).toSeq: _*)
     hasGuest     =  isGroup && users.exists(u => u.isGuest(z.teamId) && !u.isWireBot && !usersController.isFederated(u))
     hasFederated =  isGroup && users.exists(usersController.isFederated)
-    hasExternal  =  isGroup && users.exists(_.isExternal(z.teamId))
+    hasExternal  =  isGroup && users.exists(_.isExternal(z.teamId, z.selfDomain))
     hasBot       =  users.exists(_.isWireBot)
   } yield ParticipantsFlags(isGroup, hasGuest, hasBot, hasExternal, hasFederated)
 

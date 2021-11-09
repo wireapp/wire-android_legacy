@@ -58,6 +58,7 @@ trait UserSearchService {
 
 class UserSearchServiceImpl(selfUserId:           UserId,
                             teamId:               Option[TeamId],
+                            domain:               Domain,
                             userService:          UserService,
                             usersStorage:         UsersStorage,
                             teamsService:         TeamsService,
@@ -96,7 +97,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
             u.createdBy.contains(selfUserId) ||
             knownUsersIds.contains(u.id) ||
             u.teamId != teamId ||
-            (u.teamId == teamId && !u.isExternal(teamId)) ||
+            (u.teamId == teamId && !u.isExternal(teamId, domain)) ||
             u.exactMatchQuery(query)
           }
         }

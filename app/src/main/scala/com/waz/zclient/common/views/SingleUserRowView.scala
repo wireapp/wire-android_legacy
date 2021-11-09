@@ -201,10 +201,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
 
     usersController.selfUser.head.foreach { self =>
       val teamId = self.teamId
+      val domain = self.domain
       chathead.setUserData(userData, userData.isInTeam(teamId))
       setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
       setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
-      setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
+      setIsExternal(userData.isExternal(teamId, domain) && !userData.isWireBot)
     }(Threading.Ui)
 
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
