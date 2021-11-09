@@ -64,7 +64,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
 
   protected lazy val usersStorage           = inject[Signal[UsersStorage]]
   protected lazy val team                   = inject[Signal[Option[TeamId]]]
-  protected lazy val domain                 = inject[Signal[Option[Domain]]]
+  protected lazy val domain                 = inject[Signal[Domain]]
   protected lazy val participantsController = inject[ParticipantsController]
   protected lazy val convController         = inject[ConversationController]
   protected lazy val themeController        = inject[ThemeController]

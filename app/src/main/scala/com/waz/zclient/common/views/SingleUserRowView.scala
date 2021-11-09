@@ -204,7 +204,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
       val domain = self.domain
       chathead.setUserData(userData, userData.isInTeam(teamId))
       setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
-      setIsGuest(userData.isGuest(teamId, Some(domain)) && !userData.isWireBot)
+      setIsGuest(userData.isGuest(teamId, domain) && !userData.isWireBot)
       setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
     }(Threading.Ui)
 
