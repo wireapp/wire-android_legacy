@@ -147,7 +147,7 @@ class SingleParticipantFragment extends FragmentHelper {
       user               <- participantsController.otherParticipant.head
       isGroup            <- participantsController.isGroup.head
       isFederated        =  usersController.isFederated(user)
-      isGuest            =  !user.isWireBot && user.isGuest(zms.teamId, Some(zms.selfDomain))
+      isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
       isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
       isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
       // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
@@ -248,7 +248,7 @@ class SingleParticipantFragment extends FragmentHelper {
         remPerm         <- participantsController.selfRole.map(_.canRemoveGroupMember)
         selfIsProUser   <- userAccountsController.isTeam
         other           <- participantsController.otherParticipant
-        otherIsGuest    =  other.isGuest(conv.team, Some(conv.domain))
+        otherIsGuest    =  other.isGuest(conv.team)
         showRightAction =  if (fromDeepLink) !selfIsProUser || otherIsGuest else remPerm
         rightActionStr  =  getString(if (showRightAction) R.string.glyph__more else R.string.empty_string)
       } yield rightActionStr).onUi(text => vh.foreach(_.setRightActionText(text)))

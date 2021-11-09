@@ -122,7 +122,6 @@ object ConversationsUiService {
 
 class ConversationsUiServiceImpl(selfUserId:        UserId,
                                  teamId:            Option[TeamId],
-                                 domain:            Domain,
                                  assets:            AssetService,
                                  userService:       UserService,
                                  messages:          MessagesService,
@@ -471,7 +470,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       case Some(tId) =>
         for {
           Some(otherUser) <- userService.findUser(otherUserId)
-          isGuest         =  otherUser.isGuest(tId, domain)
+          isGuest         =  otherUser.isGuest(tId)
           conv            <- if (isGuest) createReal1to1() else createFake1To1(tId, otherUser)
         } yield conv
       case None =>

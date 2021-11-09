@@ -102,7 +102,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       .filter(u => f.isEmpty || u.matchesQuery(SearchQuery(f)))
       .map(user => ParticipantData(
         user,
-        user.isGuest(tId, domain) && !user.isWireBot,
+        user.isGuest(tId) && !user.isWireBot,
         isAdmin = participants.get(user.id).contains(ConversationRole.AdminRole),
         isSelf = user.id == selfId
       ))
@@ -513,7 +513,7 @@ final class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle: O
   } yield
     users.map(user => ParticipantData(
       user,
-      isGuest = user.isGuest(tId, domain) && !user.isWireBot,
+      isGuest = user.isGuest(tId) && !user.isWireBot,
       isAdmin = false, // unused
       isSelf  = user.id == selfId
     )).sortBy(_.userData.name.str)
