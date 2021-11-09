@@ -143,7 +143,7 @@ final case class UserData(override val id:       UserId,
     val isSameTeam = teamId == ourTeamId
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
       val isSameDomain = ourDomain.isDefined && ourDomain.get == domain
-      ourTeamId.isDefined && (!isSameTeam || (isSameTeam &&  !isSameDomain))
+      ourTeamId.isDefined && (!isSameTeam || (isSameTeam && !isSameDomain))
     } else {
       ourTeamId.isDefined && !isSameTeam
     }
@@ -152,7 +152,14 @@ final case class UserData(override val id:       UserId,
   def isExternal(ourTeamId: Option[TeamId]): Boolean =
     teamId.isDefined && teamId == ourTeamId && decodeBitmask(permissions._1) == ExternalPermissions
 
-  def isInTeam(otherTeamId: Option[TeamId]): Boolean = teamId.isDefined && teamId == otherTeamId
+  def isInTeam(otherTeamId: Option[TeamId], ourDomain: Domain): Boolean = {
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      val isSameDomain = ourDomain.isDefined && ourDomain == domain
+      teamId.isDefined && teamId == otherTeamId && isSameDomain
+    } else {
+      teamId.isDefined && teamId == otherTeamId
+    }
+  }
 
   def matchesQuery(query: SearchQuery): Boolean =
     handle.exists(_.startsWithQuery(query.query)) ||
