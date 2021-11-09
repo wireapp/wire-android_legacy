@@ -429,7 +429,6 @@ dependencies {
     implementation BuildDependencies.commonMark
     implementation BuildDependencies.jna
 
-
     if (!fdroidBuild) {
         implementation BuildDependencies.countly
     }

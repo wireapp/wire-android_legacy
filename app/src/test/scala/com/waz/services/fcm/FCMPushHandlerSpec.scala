@@ -17,30 +17,42 @@
  */
 package com.waz.services.fcm
 
+import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.model.otr.ClientId
-import com.waz.model.{ConvId, UserId}
-import com.waz.sync.client.{ErrorOrResponse, PushNotificationsClient}
-import com.wire.signals.CancellableFuture
+import com.waz.model.{ConvId, Uid, UserId}
+import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
+import com.waz.sync.client.{EncodedEvent, ErrorOrResponse, PushNotificationEncoded, PushNotificationsClient}
+import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue, Threading}
+import org.junit.runner.RunWith
 import org.scalamock.scalatest.MockFactory
-import org.scalatest._
+import org.scalatest.{BeforeAndAfterAll, FeatureSpec, Matchers, OneInstancePerTest, Suite}
+import org.scalatest.junit.JUnitRunner
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
+@RunWith(classOf[JUnitRunner])
 class FCMPushHandlerSpec extends FeatureSpec
   with Matchers
+  with BeforeAndAfterAll
   with OneInstancePerTest
   with MockFactory { this: Suite =>
+  import FCMPushHandlerSpec._
+  implicit val dispatcher: DispatchQueue = SerialDispatchQueue()
+
+  override def beforeAll(): Unit = {
+    Threading.setAsDefault(dispatcher)
+  }
 
   private val userPrefs   = new TestUserPreferences
   private val globalPrefs = new TestGlobalPreferences
   private val client      = mock[PushNotificationsClient]
-  private val clientId    = ClientId()
 
   private def handler: FCMPushHandler = new FCMPushHandlerImpl(userPrefs, globalPrefs, client, clientId)
 
-  private def result[T](scenario: CancellableFuture[T]): T = Await.result(scenario.future, 5.seconds)
+  private def result[T](scenario: CancellableFuture[T]): T = result(scenario.future)
+  private def result[T](scenario: Future[T]): T = Await.result(scenario, 5.seconds)
 
   private def success[T](result: T): ErrorOrResponse[T] = CancellableFuture.successful(Right(result))
 
@@ -52,31 +64,46 @@ class FCMPushHandlerSpec extends FeatureSpec
     } yield ()
     result(scenario) shouldEqual (())
   }
-/*
- scenario("A new notification should update the last id") {
+
+  scenario("A new notification should update the last id") {
     val lastId = Uid()
     val newId = Uid()
-    val eventJson = new JSONObject(eventJsonStr)
-    val eventsArray = returning(new JSONArray()) { _.put(eventJson) }
-    val notification = PushNotificationEncoded(newId, eventsArray)
-    val response = LoadNotificationsResponse(Vector(notification), hasMore = false, beTime = None)
-    val res = LoadNotificationsResult(response, historyLost = false)
-    (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res))
+
+    val res1 =
+      LoadNotificationsResult(
+        LoadNotificationsResponse(
+          Vector(PushNotificationEncoded(newId, Vector(EncodedEvent(eventJsonStr)))),
+          hasMore = false,
+          beTime = None
+        ),
+        historyLost = false
+      )
+    (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res1))
+
+    val res2 =
+      LoadNotificationsResult(
+        LoadNotificationsResponse(Vector.empty, hasMore = false, beTime = None),
+        historyLost = false
+      )
+    (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(res2))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
+
     val scenario = for {
-      _  <- CancellableFuture.lift(lastIdPref := Some(lastId))
-      _  <- handler.syncNotifications()
-      id <- CancellableFuture.lift(lastIdPref())
-    } yield id.contains(newId)
-    result(scenario) shouldEqual true
-  }*/
+      _  <- lastIdPref := Some(lastId)
+      _  <- globalPrefs.preference(BackendDrift) := org.threeten.bp.Duration.ZERO
+      _  <- handler.syncNotifications().future
+      id <- lastIdPref()
+    } yield id
+    result(scenario) shouldEqual Some(newId)
+  }
 }
 
 object FCMPushHandlerSpec {
-  val convId = ConvId()
-  val userId = UserId()
-  val domain = "staging.zinfra.io"
+  val convId   = ConvId()
+  val userId   = UserId()
+  val clientId = ClientId()
+  val domain   = "staging.zinfra.io"
 
   val eventJsonStr =
     s"""
@@ -91,7 +118,7 @@ object FCMPushHandlerSpec {
       |          "text": "encoded_string",
       |          "data": "",
       |          "sender": "a693b2dea78f634c",
-      |          "recipient": "ed9a6a236ed3f4ae"
+      |          "recipient": "${clientId.str}"
       |        },
       |        "from": "${userId.str}",
       |        "qualified_from": {
@@ -101,7 +128,4 @@ object FCMPushHandlerSpec {
       |        "type": "conversation.otr-message-add"
       |      }
       |""".stripMargin.trim
-
-
-
 }
