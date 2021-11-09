@@ -1,3 +1,7 @@
+import java.text.SimpleDateFormat
+import org.ajoberstar.grgit.Grgit
+
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
@@ -58,8 +62,6 @@ task copyCustomResources(type: Copy) {
 }
 
 android {
-    def patchVersion = System.getenv("PATCH_VERSION") as Integer?: System.getenv("BUILD_NUMBER") as Integer ?: 99999
-
     //Trigger the licenseFormat task at least once in any compile phase
     applicationVariants.all { variant ->
         variant.javaCompiler.dependsOn(rootProject.licenseFormat)
@@ -73,8 +75,8 @@ android {
     defaultConfig {
         minSdkVersion Versions.MIN_SDK_VERSION
         targetSdkVersion Versions.TARGET_SDK_VERSION
-        versionCode getUnixTimestamp() as Integer
-        versionName = Versions.ANDROID_CLIENT_MAJOR_VERSION + patchVersion
+        versionCode readOrGenerateVersionCode() as Integer
+        versionName = readOrGenerateVersionName() as String
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
 
@@ -488,13 +490,67 @@ tasks.withType(ScalaCompile) {
         "UTF-8"]
 }
 
+tasks.register("generateVersionFile") {
+    //clean the repo from a probably existing version.txt
+    if(file("$projectDir/version.txt").exists()) {
+        println("deleting existing version.txt file for safety reasons")
+        delete file "$projectDir/version.txt"
+    }
+    def versionCode = readOrGenerateVersionCode()
+    def versionName = readOrGenerateVersionName()
+
+    println("VersionCode = " + versionCode)
+    println("VersionName = " + versionName)
+    doLast {
+        new File(projectDir, "version.txt").text = """VersionCode: $versionCode
+VersionName: $versionName
+Revision: ${grgit.head().abbreviatedId}
+Buildtime: ${new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date())}
+Application-name: com.wire
+    """
+    }
+}
+
 def getDate() {
     def date = new Date()
     def formattedDate = date.format('MM/dd HH:mm:ss')
     return formattedDate
 }
 
-def getUnixTimestamp() {
+def readOrGenerateVersionCode() {
+    if(!file("$projectDir/version.txt").exists()) {
+        println("No version.txt found, generating new versioncode")
+        return generateUnixTimestamp()
+    }
+
+    //file exists, read the version code from the version.txt
+    println("version.txt found, using versionCode from version.txt file")
+    String versionContext = new File("$projectDir/version.txt").text
+    def matcher = versionContext =~ /^VersionCode: (.*)/
+    matcher.find()
+    def versionCode = matcher.group(1)
+    println("Found VersionCode in File: $versionCode")
+    return versionCode
+}
+
+def readOrGenerateVersionName() {
+    if(!file("$projectDir/version.txt").exists()) {
+        println("No version.txt found, using system internal version name")
+        def patchVersion = System.getenv("PATCH_VERSION") as Integer?: System.getenv("BUILD_NUMBER") as Integer ?: 99999
+        return "$Versions.ANDROID_CLIENT_MAJOR_VERSION$patchVersion"
+    }
+
+    //file exists, read the versionanme from the version.txt
+    String versionContext = new File("$projectDir/version.txt").text
+    println("$versionContext")
+    def matcher = versionContext =~ /^VersionName: (.*)/
+    matcher.find()
+    def versionName = matcher.group(1)
+    println("Found VersionName found in File: $versionName")
+    return versionName
+}
+
+def generateUnixTimestamp() {
     def dateOffset = new Date("04/21/2021 01:00:00")
     def date = new Date()
     def dateTime = (date.getTime()/10000L)

@@ -10,6 +10,10 @@ buildscript {
         mavenCentral()
         jcenter() // FIXME
         maven { url "https://jitpack.io" }
+        maven {
+            name "ajoberstar-backup"
+            url "https://ajoberstar.github.io/bintray-backup/"
+        }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:${Versions.ANDROID_GRADLE_PLUGIN}"
@@ -19,6 +23,7 @@ buildscript {
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.DETEKT}"
         classpath "org.jacoco:org.jacoco.core:${Versions.JACOCO}"
         classpath "com.mutualmobile.gradle.plugins:dexinfo:${Versions.DEX_INFO}"
+        classpath "org.ajoberstar.grgit:grgit-core:${Versions.GRGIT}"
 
         if (fdroidBuild) {
             println("Not including gms")
@@ -32,6 +37,7 @@ buildscript {
 plugins {
     id "com.github.hierynomus.license" version "0.13.1"
     id "io.gitlab.arturbosch.detekt" version "1.2.2"
+    id "org.ajoberstar.grgit" version "4.1.0"
 }
 
 allprojects {
