@@ -526,7 +526,7 @@ def readOrGenerateVersionCode() {
     //file exists, read the version code from the version.txt
     println("version.txt found, using versionCode from version.txt file")
     String versionContext = new File("$projectDir/version.txt").text
-    def matcher = versionContext =~ /^VersionCode: (.*)/
+    def matcher = versionContext =~ /VersionCode: (.*)/
     matcher.find()
     def versionCode = matcher.group(1)
     println("Found VersionCode in File: $versionCode")
@@ -543,7 +543,7 @@ def readOrGenerateVersionName() {
     //file exists, read the versionanme from the version.txt
     String versionContext = new File("$projectDir/version.txt").text
     println("$versionContext")
-    def matcher = versionContext =~ /^VersionName: (.*)/
+    def matcher = versionContext =~ /VersionName: (.*)/
     matcher.find()
     def versionName = matcher.group(1)
     println("Found VersionName found in File: $versionName")
