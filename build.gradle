@@ -8,12 +8,8 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        jcenter() // FIXME
+        jcenter()
         maven { url "https://jitpack.io" }
-        maven {
-            name "ajoberstar-backup"
-            url "https://ajoberstar.github.io/bintray-backup/"
-        }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:${Versions.ANDROID_GRADLE_PLUGIN}"

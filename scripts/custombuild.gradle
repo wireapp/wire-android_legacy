@@ -6,10 +6,7 @@ import org.ajoberstar.grgit.Credentials
 buildscript {
     repositories {
         mavenCentral()
-        maven {
-            name "ajoberstar-backup"
-            url "https://ajoberstar.github.io/bintray-backup/"
-        }
+        jcenter()
     }
     dependencies {
         classpath "org.ajoberstar.grgit:grgit-core:${Versions.GRGIT}"
