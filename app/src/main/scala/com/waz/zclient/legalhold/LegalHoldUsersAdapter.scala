@@ -18,7 +18,6 @@ class LegalHoldUsersAdapter(userIds: Signal[Set[UserId]], maxParticipants: Optio
     selfId       <- selfId
     usersStorage <- usersStorage
     teamId       <- team
-    domain       <- domain
     userIds      <- userIds
     users        <- usersStorage.listSignal(userIds.toList)
     filter       <- filter
