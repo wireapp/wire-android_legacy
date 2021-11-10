@@ -205,7 +205,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
       chathead.setUserData(userData, userData.isInTeam(teamId, domain))
       setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
       setIsGuest(userData.isGuest(teamId, domain) && !userData.isWireBot)
-      setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
+      setIsExternal(userData.isExternal(teamId, domain) && !userData.isWireBot)
     }(Threading.Ui)
 
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {

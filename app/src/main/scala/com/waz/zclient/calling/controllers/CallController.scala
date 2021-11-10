@@ -174,7 +174,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
         displayName    = user.name,
         isGuest        = user.isGuest(cZms.teamId, cZms.selfDomain),
         isVerified     = user.isVerified,
-        isExternal     = user.isExternal(cZms.teamId),
+        isExternal     = user.isExternal(cZms.teamId, cZms.selfDomain),
         isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started)).nonEmpty),
         isScreenShareEnabled = videoStates.get(user.id).exists(_.intersect(Set(ScreenShare)).nonEmpty),
         isSelf         = cZms.selfUserId == user.id,

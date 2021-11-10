@@ -97,7 +97,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
             u.createdBy.contains(selfUserId) ||
             knownUsersIds.contains(u.id) ||
             u.teamId != teamId ||
-            (u.teamId == teamId && !u.isExternal(teamId)) ||
+            (u.teamId == teamId && !u.isExternal(teamId, domain)) ||
             u.exactMatchQuery(query)
           }
         }
