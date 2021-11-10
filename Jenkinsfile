@@ -15,6 +15,7 @@ pipeline {
         booleanParam(name: 'AppUnitTests', defaultValue: true, description: 'Run all app unit tests for this build')
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
         booleanParam(name: 'ZMessageUnitTests', defaultValue: false, description: 'Run all zmessaging unit tests for this build')
+        booleanParam(name: 'CompileFDroid', defaultValue: true, description: 'Defines if the fdroid flavor should be compiled in addition')
     }
 
     stages {
@@ -77,7 +78,7 @@ pipeline {
                     load env.GROOVY_FILE_THAT_SETS_VARIABLES
                 }
                 sh "echo ConfigFile ${params.ConfigFileId} loaded successfully"
-                sh "echo Version of the client: ${usedClientVersion}${BUILD_NUMBER}"
+                sh "echo Version of the client: ${usedClientVersion}${PATCH_VERSION}"
             }
         }
 
@@ -130,6 +131,16 @@ pipeline {
             }
         }
 
+        stage('Generate version.txt') {
+            steps {
+                script {
+                    last_stage = env.STAGE_NAME
+                }
+                sh './gradlew generateVersionFile'
+                archiveArtifacts(artifacts: "app/version.txt", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
+            }
+        }
+
         stage('App Unit Testing') {
             when {
                 expression { params.AppUnitTests }
@@ -175,9 +186,6 @@ pipeline {
         stage('Assemble/Archive/Upload') {
             parallel {
                 stage('Branch Client') {
-                    when {
-                        expression { usedFlavor != "F-Droid"}
-                    }
                     stages {
                         stage('Assemble Branch') {
                             steps {
@@ -202,7 +210,7 @@ pipeline {
                                     last_stage = env.STAGE_NAME
                                     pathToUploadTo = "megazord/android/${usedFlavor.toLowerCase()}/${usedBuildType.toLowerCase()}/"
                                     fileNameForS3 = "wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${BRANCH_NAME.replaceAll('/','_')}-${usedClientVersion}${env.PATCH_VERSION}.apk"
-                                    println("Uploading wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the the S3 Bucket [${env.S3_BUCKET_NAME}] to the folder [${pathToUploadTo}] under the name [${fileNameForS3}]")
+                                    println("Uploading wire client with version [${usedClientVersion}${env.PATCH_VERSION}] to the the S3 Bucket [${env.S3_BUCKET_NAME}] to the folder [${pathToUploadTo}] under the name [${fileNameForS3}]")
                                 }
                                 s3Upload(acl: "${env.ACL_NAME}", file: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", bucket: "${env.S3_BUCKET_NAME}", path: "${pathToUploadTo}${fileNameForS3}")
                             }
@@ -215,9 +223,9 @@ pipeline {
                             steps {
                                 script {
                                     last_stage = env.STAGE_NAME
-                                    println("Uploading internal wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the Track [${env.WIRE_ANDROID_INTERNAL_TRACK_NAME}]")
+                                    println("Uploading internal wire client with version [${usedClientVersion}${env.PATCH_VERSION}] to the Track [${env.WIRE_ANDROID_INTERNAL_TRACK_NAME}]")
                                 }
-                                androidApkUpload(googleCredentialsId: "${env.GOOGLE_PLAY_CREDS}", filesPattern: "app/build/outputs/apk/wire-internal-release-${usedClientVersion}${env.BUILD_NUMBER}.apk", trackName: "${env.WIRE_ANDROID_INTERNAL_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Internal Release ${usedClientVersion}${env.BUILD_NUMBER}")
+                                androidApkUpload(googleCredentialsId: "${env.GOOGLE_PLAY_CREDS}", filesPattern: "app/build/outputs/apk/wire-internal-release-${usedClientVersion}${env.PATCH_VERSION}.apk", trackName: "${env.WIRE_ANDROID_INTERNAL_TRACK_NAME}", rolloutPercentage: '100', releaseName: "Internal Release ${usedClientVersion}${env.PATCH_VERSION}")
                             }
                         }
                     }
@@ -255,7 +263,7 @@ pipeline {
                                     )
                                     println("Uploading prod version of wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the the S3 Bucket [${env.S3_BUCKET_NAME}] to the folder [megazord/android/prod/${usedBuildType.toLowerCase()}/]")
                                 }
-                                s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
+                                s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-prod-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
                                 wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                                     "\nLast 5 commits:\n```\n$lastCommits\n```"
                             }
@@ -278,7 +286,7 @@ pipeline {
 
                 stage('FDroid') {
                     when {
-                        expression { usedFlavor.equals("F-Droid") }
+                        expression { params.CompileFDroid }
                     }
                     stages {
                         stage('Assemble F-Droid') {
@@ -286,9 +294,50 @@ pipeline {
                                 script {
                                     last_stage = env.STAGE_NAME
                                 }
+                                sh "./gradlew --profile assembleFDroid${usedBuildType}"
+                                sh "ls -la app/build/outputs/apk"
+                            }
+                        }
+
+                        stage('Archive F-Droid') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                }
+                                archiveArtifacts(artifacts: "app/build/outputs/apk/wire-fdroid-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.PATCH_VERSION}.apk", allowEmptyArchive: true, caseSensitive: true, onlyIfSuccessful: true)
+                            }
+                        }
+
+                        stage('Upload FDroid to S3') {
+                            steps {
+                                script {
+                                    last_stage = env.STAGE_NAME
+                                    lastCommits = sh(
+                                            script: "git log -5 --pretty=\"%h [%an] %s\" | sed \"s/^/    /\"",
+                                            returnStdout: true
+                                    )
+                                    println("Uploading fdroid version of wire client with version [${usedClientVersion}${env.BUILD_NUMBER}] to the the S3 Bucket [${env.S3_BUCKET_NAME}] to the folder [megazord/android/fdroid/${usedBuildType.toLowerCase()}/]")
+                                }
+                                s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-fdroid-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/fdroid/${usedBuildType.toLowerCase()}/")
+                                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] FDroid${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
+                                                                    "\nLast 5 commits:\n```\n$lastCommits\n```"
                             }
                         }
                     }
+                }
+            }
+        }
+
+        stage('Release to Github') {
+            when {
+                expression { env.BRANCH_NAME == "release" }
+            }
+            steps {
+                script {
+                    last_stage = env.STAGE_NAME
+                    versionName = usedClientVersion =~ /(.*)\./
+                    println("Releasing version to Github under Release Tag ${versionName} automatically")
+                    println("THIS FEATURE IS NOT YET IMPLEMENTED")
                 }
             }
         }
