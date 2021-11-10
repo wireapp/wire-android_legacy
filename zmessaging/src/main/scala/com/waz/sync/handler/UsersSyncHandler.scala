@@ -148,7 +148,7 @@ class UsersSyncHandlerImpl(userService:      UserService,
       Some(self)     <- userService.getSelfUser
       users          <- usersStorage.values
       localUsers     =  users.filterNot(userService.isFederated) // for now the status is sent only to users on the same backend
-      (team, others) =  localUsers.filterNot(u => u.deleted || u.isWireBot).partition(_.isInTeam(self.teamId))
+      (team, others) =  localUsers.filterNot(u => u.deleted || u.isWireBot).partition(_.isInTeam(self.teamId, self.domain))
       recipients     =  (List(self.id) ++
                          team.filter(_.id != self.id).map(_.id).toList.sorted ++
                          others.filter(_.isConnected).map(_.id).toList.sorted
