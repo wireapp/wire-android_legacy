@@ -202,7 +202,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     usersController.selfUser.head.foreach { self =>
       val teamId = self.teamId
       val domain = self.domain
-      chathead.setUserData(userData, userData.isInTeam(teamId))
+      chathead.setUserData(userData, userData.isInTeam(teamId, domain))
       setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
       setIsGuest(userData.isGuest(teamId, domain) && !userData.isWireBot)
       setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
