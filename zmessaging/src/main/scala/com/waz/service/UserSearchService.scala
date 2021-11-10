@@ -110,7 +110,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     searchResults.flatMap(res => Signal.from(filterForExternal(query, res)))
 
   private def canUserBeAddedToConv(user: UserData, convTeam: Option[TeamId], teamOnlyConv: Boolean): Boolean =
-    (user.isConnected || user.isInTeam(convTeam)) && !(user.isGuest(convTeam, domain) && teamOnlyConv)
+    (user.isConnected || user.isInTeam(convTeam, domain)) && !(user.isGuest(convTeam, domain) && teamOnlyConv)
 
   override def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults] =
     for {
