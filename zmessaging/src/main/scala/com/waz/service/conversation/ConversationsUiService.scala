@@ -471,7 +471,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       case Some(tId) =>
         for {
           Some(otherUser) <- userService.findUser(otherUserId)
-          isGuest         =  otherUser.isGuest(Some(tId))
+          isGuest         =  otherUser.isGuest(Some(tId), domain)
           conv            <- if (isGuest) createReal1to1() else createFake1To1(tId, otherUser)
         } yield conv
       case None =>
