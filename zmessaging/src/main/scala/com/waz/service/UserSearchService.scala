@@ -58,6 +58,7 @@ trait UserSearchService {
 
 class UserSearchServiceImpl(selfUserId:           UserId,
                             teamId:               Option[TeamId],
+                            domain:               Domain,
                             userService:          UserService,
                             usersStorage:         UsersStorage,
                             teamsService:         TeamsService,
@@ -109,7 +110,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     searchResults.flatMap(res => Signal.from(filterForExternal(query, res)))
 
   private def canUserBeAddedToConv(user: UserData, convTeam: Option[TeamId], teamOnlyConv: Boolean): Boolean =
-    (user.isConnected || user.isInTeam(convTeam)) && !(user.isGuest(convTeam) && teamOnlyConv)
+    (user.isConnected || user.isInTeam(convTeam)) && !(user.isGuest(convTeam, domain) && teamOnlyConv)
 
   override def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults] =
     for {
