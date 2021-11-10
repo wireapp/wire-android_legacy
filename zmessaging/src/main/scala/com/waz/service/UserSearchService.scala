@@ -109,21 +109,21 @@ class UserSearchServiceImpl(selfUserId:           UserId,
   private def filterForExternal(query: SearchQuery, searchResults: Signal[IndexedSeq[UserData]]): Signal[IndexedSeq[UserData]] =
     searchResults.flatMap(res => Signal.from(filterForExternal(query, res)))
 
-  private def canUserBeAddedToConv(user: UserData, convTeam: Option[TeamId], domain: Domain, teamOnlyConv: Boolean): Boolean =
-    (user.isConnected || user.isInTeam(convTeam, domain)) && !(user.isGuest(convTeam) && teamOnlyConv)
+  private def canUserBeAddedToConv(user: UserData, convTeam: Option[TeamId], teamOnlyConv: Boolean): Boolean =
+    (user.isConnected || user.isInTeam(convTeam)) && !(user.isGuest(convTeam, domain) && teamOnlyConv)
 
   override def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults] =
     for {
-      localResults  <- filterForExternal(query, searchLocal(query).map(_.filter(u => canUserBeAddedToConv(u, teamId, domain, teamOnly))))
-      remoteResults <- filterForExternal(query, directoryResults(query).map(_.filter(u => canUserBeAddedToConv(u, teamId, domain, teamOnly))))
+      localResults  <- filterForExternal(query, searchLocal(query).map(_.filter(u => canUserBeAddedToConv(u, teamId, teamOnly))))
+      remoteResults <- filterForExternal(query, directoryResults(query).map(_.filter(u => canUserBeAddedToConv(u, teamId, teamOnly))))
     } yield SearchResults(local = localResults, dir = remoteResults)
 
   override def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[SearchResults] =
     for {
       curr              <- membersStorage.activeMembers(toConv)
       conv              <- convsStorage.signal(toConv)
-      localResults      <- filterForExternal(query, searchLocal(query, curr).map(_.filter(u => canUserBeAddedToConv(u, teamId, domain, conv.isTeamOnly))))
-      remoteResults     <- filterForExternal(query, directoryResults(query).map(_.filter(u => canUserBeAddedToConv(u, teamId, domain, conv.isTeamOnly))))
+      localResults      <- filterForExternal(query, searchLocal(query, curr).map(_.filter(u => canUserBeAddedToConv(u, teamId, conv.isTeamOnly))))
+      remoteResults     <- filterForExternal(query, directoryResults(query).map(_.filter(u => canUserBeAddedToConv(u, teamId, conv.isTeamOnly))))
     } yield SearchResults(local = localResults, dir = remoteResults)
 
   override def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =

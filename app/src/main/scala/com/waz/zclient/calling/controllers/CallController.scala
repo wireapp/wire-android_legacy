@@ -172,7 +172,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
         id         = user.id,
         picture        = user.picture,
         displayName    = user.name,
-        isGuest        = user.isGuest(cZms.teamId),
+        isGuest        = user.isGuest(cZms.teamId, cZms.selfDomain),
         isVerified     = user.isVerified,
         isExternal     = user.isExternal(cZms.teamId),
         isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started)).nonEmpty),

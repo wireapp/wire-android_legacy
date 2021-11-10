@@ -96,7 +96,7 @@ class TrackingServiceImpl(curAccount: => Signal[Option[UserId]], zmsProvider: Zm
       Some(convType) <- z.convsStorage.get(convId).map(_.map(_.convType.name()))
       userIds        <- z.membersStorage.activeMembers(convId).head
       users          <- z.usersStorage.listAll(userIds.toSeq)
-      guests         =  users.filter(_.isGuest(z.teamId))
+      guests         =  users.filter(_.isGuest(z.teamId, z.selfDomain))
       proGuestCount  =  guests.count(_.teamId.isDefined)
       wirelessGuests =  guests.count(_.expiresAt.isDefined)
       servicesCount  =  users.count(_.isWireBot)
