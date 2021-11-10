@@ -137,9 +137,11 @@ final case class UserData(override val id:       UserId,
     }
   }
 
-  def isGuest(ourTeamId: TeamId): Boolean = isGuest(Some(ourTeamId))
-
-  def isGuest(ourTeamId: Option[TeamId]): Boolean = ourTeamId.isDefined && teamId != ourTeamId
+  def isGuest(ourTeamId: Option[TeamId], ourDomain: Domain = Domain.Empty): Boolean = {
+    val isSameTeam = teamId == ourTeamId
+    val isSameDomain = ourDomain == domain
+    ourTeamId.isDefined && (!isSameTeam || !isSameDomain)
+  }
 
   def isExternal(ourTeamId: Option[TeamId], ourDomain: Domain): Boolean = {
     val isSameTeam = teamId.isDefined && teamId == ourTeamId

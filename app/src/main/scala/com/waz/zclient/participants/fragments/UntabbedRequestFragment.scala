@@ -50,7 +50,7 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
         isGroup       <- participantsController.isGroup.head
         isFederated   =  usersController.isFederated(user)
         handle        =  usersController.displayHandle(user)
-        isGuest       =  !user.isWireBot && user.isGuest(zms.teamId)
+        isGuest       =  !user.isWireBot && user.isGuest(zms.teamId, zms.selfDomain)
         isExternal    =  !user.isWireBot && user.isExternal(zms.teamId, zms.selfDomain)
         isDarkTheme   <- inject[ThemeController].darkThemeSet.head
         isWireless    =  user.expiresAt.isDefined
