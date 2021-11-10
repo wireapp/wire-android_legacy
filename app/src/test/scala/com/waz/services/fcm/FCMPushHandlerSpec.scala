@@ -21,6 +21,7 @@ import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, Uid, UserId}
+import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
 import com.waz.sync.client.{EncodedEvent, ErrorOrResponse, PushNotificationEncoded, PushNotificationsClient}
 import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue, Threading}
@@ -45,11 +46,12 @@ class FCMPushHandlerSpec extends FeatureSpec
     Threading.setAsDefault(dispatcher)
   }
 
-  private val userPrefs   = new TestUserPreferences
-  private val globalPrefs = new TestGlobalPreferences
   private val client      = mock[PushNotificationsClient]
+  private val storage     = mock[PushNotificationEventsStorage]
+  private val globalPrefs = new TestGlobalPreferences
+  private val userPrefs   = new TestUserPreferences
 
-  private def handler: FCMPushHandler = new FCMPushHandlerImpl(userPrefs, globalPrefs, client, clientId)
+  private def handler = FCMPushHandler(clientId, client, storage, globalPrefs, userPrefs)
 
   private def result[T](scenario: CancellableFuture[T]): T = result(scenario.future)
   private def result[T](scenario: Future[T]): T = Await.result(scenario, 5.seconds)
@@ -79,13 +81,8 @@ class FCMPushHandlerSpec extends FeatureSpec
         historyLost = false
       )
     (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res1))
-
-    val res2 =
-      LoadNotificationsResult(
-        LoadNotificationsResponse(Vector.empty, hasMore = false, beTime = None),
-        historyLost = false
-      )
-    (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(res2))
+    (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(emptyResult))
+    (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
@@ -96,6 +93,35 @@ class FCMPushHandlerSpec extends FeatureSpec
       id <- lastIdPref()
     } yield id
     result(scenario) shouldEqual Some(newId)
+  }
+
+  scenario("A new notification should be saved to the storage") {
+    val lastId = Uid()
+    val newId = Uid()
+
+    val notifications = Vector(PushNotificationEncoded(newId, Vector(EncodedEvent(eventJsonStr))))
+
+    val res1 =
+      LoadNotificationsResult(
+        LoadNotificationsResponse(
+          notifications = notifications,
+          hasMore = false,
+          beTime = None
+        ),
+        historyLost = false
+      )
+    (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res1))
+    (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(emptyResult))
+    (storage.saveAll _).expects(notifications).once().returning(Future.successful(()))
+
+    val lastIdPref = userPrefs.preference(LastStableNotification)
+
+    val scenario = for {
+      _  <- lastIdPref := Some(lastId)
+      _  <- globalPrefs.preference(BackendDrift) := org.threeten.bp.Duration.ZERO
+      _  <- handler.syncNotifications().future
+    } yield ()
+    result(scenario)
   }
 }
 
@@ -128,4 +154,10 @@ object FCMPushHandlerSpec {
       |        "type": "conversation.otr-message-add"
       |      }
       |""".stripMargin.trim
+
+  val emptyResult =
+    LoadNotificationsResult(
+      LoadNotificationsResponse(Vector.empty, hasMore = false, beTime = None),
+      historyLost = false
+    )
 }

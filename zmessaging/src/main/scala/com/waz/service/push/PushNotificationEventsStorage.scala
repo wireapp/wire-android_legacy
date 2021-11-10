@@ -26,11 +26,10 @@ import com.waz.model.PushNotificationEvents.PushNotificationEventsDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.push.PushNotificationEventsStorage.{EventHandler, EventIndex, PlainWriter}
-import com.waz.sync.client.{EncodedEvent, PushNotificationEncoded}
+import com.waz.sync.client.PushNotificationEncoded
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.wire.signals.EventContext
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
-import org.json.JSONObject
 
 import scala.concurrent.Future
 

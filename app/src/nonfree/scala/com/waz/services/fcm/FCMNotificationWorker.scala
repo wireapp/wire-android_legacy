@@ -57,8 +57,11 @@ final class FCMNotificationWorker(context: Context, params: WorkerParameters)
       global    <- ZMessaging.globalModule
       accounts  <- ZMessaging.accountsService
       Some(zms) <- accounts.getZms(userId)
+      clientId  =  zms.clientId
+      client    =  zms.pushNotificationsClient
+      storage   =  zms.eventStorage
     } yield
-      FCMPushHandler(zms.userPrefs, global.prefs, zms.pushNotificationsClient, zms.clientId)
+      FCMPushHandler(clientId, client,  storage, global.prefs, zms.userPrefs)
     handler.foreach(_.syncNotifications())
   }
 }

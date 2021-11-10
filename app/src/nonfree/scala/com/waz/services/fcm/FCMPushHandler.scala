@@ -10,6 +10,7 @@ import com.waz.log.LogSE._
 import com.waz.model.Uid
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.clock
+import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.utils.{Backoff, ExponentialBackoff, _}
@@ -19,15 +20,17 @@ import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import com.wire.signals.CancellableFuture.RichFuture
 
 trait FCMPushHandler {
   def syncNotifications(): CancellableFuture[Unit]
 }
 
-final class FCMPushHandlerImpl(userPrefs:   UserPreferences,
-                               globalPrefs: GlobalPreferences,
+final class FCMPushHandlerImpl(clientId:    ClientId,
                                client:      PushNotificationsClient,
-                               clientId:    ClientId)
+                               storage:     PushNotificationEventsStorage,
+                               globalPrefs: GlobalPreferences,
+                               userPrefs:   UserPreferences)
                               (implicit ec: ExecutionContext)
   extends FCMPushHandler with DerivedLogTag {
   import FCMPushHandler._
@@ -37,21 +40,29 @@ final class FCMPushHandlerImpl(userPrefs:   UserPreferences,
   private lazy val idPref: Preference[Option[Uid]] = userPrefs.preference(LastStableNotification)
   private lazy val beDriftPref: Preference[Duration] = globalPrefs.preference(BackendDrift)
 
-  private def updateDrift(time: Instant) =
-    CancellableFuture.lift { beDriftPref := clock.instant.until(time) }
+  private def updateDrift(time: Option[Instant]) =
+    time.fold(CancellableFuture.successful(()))(t => (beDriftPref := clock.instant.until(t)).lift)
 
-  private def syncHistory(): CancellableFuture[Unit] =
+  private def syncHistory(): CancellableFuture[Unit] = {
+    def processNotifications(notifications: Vector[PushNotificationEncoded]): CancellableFuture[Unit] =
+      if (notifications.nonEmpty)
+        for {
+          _ <- storage.saveAll(notifications).lift
+          _ <- updateLastId(notifications)
+          // at the end of processing we check if no new notifications came in the meantime
+          _ <- syncHistory()
+        } yield ()
+      else
+        CancellableFuture.successful(())
+
     for {
-      lastId       <- CancellableFuture.lift(idPref())
-      results      <- lastId.map(load(_, 0)).getOrElse(CancellableFuture.successful(None))
-      (nots, time) =  results.collect {
-                        case Results(nots, time) => (nots, time)
-                      }.getOrElse((Vector.empty, Option.empty))
-      _            <- time.map(updateDrift).getOrElse(CancellableFuture.successful(()))
-      _            <- if (nots.nonEmpty) updateLastId(nots) else CancellableFuture.successful(())
-                      // at the end of processing we check if no new notifications came in the meantime
-      _            <- if (nots.nonEmpty) syncHistory() else CancellableFuture.successful(())
+      lastId              <- idPref().lift
+      results             <- lastId.map(load(_, 0)).getOrElse(CancellableFuture.successful(None))
+      Results(nots, time) =  results.getOrElse(Results.Empty)
+      _                   <- updateDrift(time)
+      _                   <- processNotifications(nots)
     } yield ()
+  }
 
   private def updateLastId(nots: Seq[PushNotificationEncoded]) =
     nots.reverse.find(!_.transient).map(_.id) match {
@@ -104,13 +115,19 @@ object FCMPushHandler {
   val MaxRetries: Int = 3
   val SyncHistoryBackoff: Backoff = new ExponentialBackoff(3.second, 15.seconds)
 
-  def apply(userPrefs:   UserPreferences,
-            globalPrefs: GlobalPreferences,
+  def apply(clientId:    ClientId,
             client:      PushNotificationsClient,
-            clientId:    ClientId)
+            storage:     PushNotificationEventsStorage,
+            globalPrefs: GlobalPreferences,
+            userPrefs:   UserPreferences)
            (implicit ec: ExecutionContext): FCMPushHandler =
-    new FCMPushHandlerImpl(userPrefs, globalPrefs, client, clientId)
+    new FCMPushHandlerImpl(clientId, client, storage, globalPrefs, userPrefs)
 
   final case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant])
+
+  object Results {
+    val Empty: Results = Results(Vector.empty, Option.empty)
+  }
+
   final case class FetchFailedException(err: ErrorResponse) extends Exception(s"Failed to fetch notifications: ${err.message}")
 }
