@@ -64,7 +64,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
 
   protected lazy val usersStorage           = inject[Signal[UsersStorage]]
   protected lazy val team                   = inject[Signal[Option[TeamId]]]
-  protected lazy val domain                 = inject[Signal[Domain]]
+  protected lazy val domain                 = inject[Domain]
   protected lazy val participantsController = inject[ParticipantsController]
   protected lazy val convController         = inject[ConversationController]
   protected lazy val themeController        = inject[ThemeController]
@@ -93,7 +93,6 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     selfId       <- selfId
     usersStorage <- usersStorage
     tId          <- team
-    domain       <- domain
     participants <- participants
     users        <- usersStorage.listSignal(participants.keys)
     f            <- filter.throttle(FilterThrottleMs)
@@ -507,7 +506,6 @@ final class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle: O
     selfId       <- selfId
     usersStorage <- usersStorage
     tId          <- team
-    domain       <- domain
     userIds      <- userIds
     users        <- usersStorage.listSignal(userIds.toList)
   } yield
