@@ -169,7 +169,6 @@ object WireApplication extends DerivedLogTag {
     // but technically we can't guarantee it, hence every time it's used we need to check its value
     // (so, `toProvider`, not `to`)
     bind[Domain] toProvider inject[Signal[ZMessaging]].map(_.selfDomain).currentValue.getOrElse(Domain.Empty)
-    bind [Signal[Domain]] to inject[Signal[ZMessaging]].map(_.selfDomain)
 
     // services  and storages of the current zms
     bind [Signal[ConversationsService]]          to inject[Signal[ZMessaging]].map(_.conversations)
