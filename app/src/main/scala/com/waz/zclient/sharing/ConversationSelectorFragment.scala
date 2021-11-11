@@ -219,11 +219,14 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
       }
     })
 
-    ephemeralIcon.foreach(icon =>
-      enforcedSelfDeletingMessagesTimeout.filter(_ > 0)
-        .map { timeoutInSeconds => Some(ConvExpiry(timeoutInSeconds.seconds)).asInstanceOf[Option[EphemeralDuration]] }
-        .pipeTo(icon.ephemeralExpiration)
-    )
+    ephemeralIcon.foreach { icon =>
+        enforcedSelfDeletingMessagesTimeout.map(_ > 0)
+          .pipeTo(icon.hasEnforcedTimeout)
+
+        enforcedSelfDeletingMessagesTimeout.filter(_ > 0)
+          .map { timeoutInSeconds => Some(ConvExpiry(timeoutInSeconds.seconds)).asInstanceOf[Option[EphemeralDuration]] }
+          .pipeTo(icon.ephemeralExpiration)
+    }
     ephemeralIcon.foreach(icon =>
       isEphemeralButtonVisible.onUi(icon.setVisible)
     )

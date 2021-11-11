@@ -92,6 +92,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   val ephemeralButton = returning(findById[EphemeralTimerButton](R.id.cib__ephemeral)) { v =>
     controller.ephemeralBtnVisible.onUi(v.setVisible)
 
+    controller.enforcedSelfDeletingMessagesTimeout.map(_ > 0)
+      .pipeTo(v.hasEnforcedTimeout)
     controller.ephemeralExp.pipeTo(v.ephemeralExpiration)
     inject[ThemeController].darkThemeSet.pipeTo(v.darkTheme)
 
