@@ -32,16 +32,15 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
-import com.waz.service.otr.OtrService
+import com.waz.service.otr.{OtrEventDecoder, OtrService}
 import com.waz.service.push.PushService.SyncMode
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue, Signal, SourceSignal, Serialized}
+import com.wire.signals.{CancellableFuture, SerialDispatchQueue, Serialized, Signal, SourceSignal}
 import com.waz.utils.{RichInstant, _}
 import com.waz.znet2.http.ResponseCode
-import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration._
@@ -82,7 +81,7 @@ class PushServiceImpl(selfUserId:           UserId,
                       client:               PushNotificationsClient,
                       clientId:             ClientId,
                       pipeline:             EventPipeline,
-                      otrService:           OtrService,
+                      otrEventDecoder:      OtrEventDecoder,
                       wsPushService:        WSPushService,
                       accounts:             AccountsService,
                       pushTokenService:     PushTokenService,
@@ -137,7 +136,7 @@ class PushServiceImpl(selfUserId:           UserId,
         else ConversationEvent.ConversationEventDecoder(row.event.toJson) match {
           case otrEvent: OtrEvent =>
             val writer = notificationStorage.writeClosure(row.index)
-            otrService.decryptStoredOtrEvent(otrEvent, writer).flatMap {
+            otrEventDecoder.decryptStoredOtrEvent(otrEvent, writer).flatMap {
               case Left(Duplicate) =>
                 verbose(l"Ignoring duplicate message")
                 notificationStorage.remove(row.index)
@@ -161,7 +160,7 @@ class PushServiceImpl(selfUserId:           UserId,
         verbose(l"decodeRow($event) for an otr event")
         val msg = GenericMessage(event.plain.get)
         val msgEvent = ConversationEvent.ConversationEventDecoder(event.event.toJson)
-        returning(otrService.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)) { event =>
+        returning(otrEventDecoder.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)) { event =>
           verbose(l"decoded otr event: $event")
         }
       } else {

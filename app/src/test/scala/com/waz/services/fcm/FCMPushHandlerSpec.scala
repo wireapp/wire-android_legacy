@@ -20,7 +20,8 @@ package com.waz.services.fcm
 import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.model.otr.ClientId
-import com.waz.model.{ConvId, Uid, UserId}
+import com.waz.model.{ConvId, Domain, Uid, UserId}
+import com.waz.service.otr.OtrEventDecoder
 import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
 import com.waz.sync.client.{EncodedEvent, ErrorOrResponse, PushNotificationEncoded, PushNotificationsClient}
@@ -29,6 +30,7 @@ import org.junit.runner.RunWith
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, FeatureSpec, Matchers, OneInstancePerTest, Suite}
 import org.scalatest.junit.JUnitRunner
+import org.threeten.bp.Instant
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -48,10 +50,11 @@ class FCMPushHandlerSpec extends FeatureSpec
 
   private val client      = mock[PushNotificationsClient]
   private val storage     = mock[PushNotificationEventsStorage]
+  private val decoder     = mock[OtrEventDecoder]
   private val globalPrefs = new TestGlobalPreferences
   private val userPrefs   = new TestUserPreferences
 
-  private def handler = FCMPushHandler(clientId, client, storage, globalPrefs, userPrefs)
+  private def handler = FCMPushHandler(clientId, client, storage, decoder, globalPrefs, userPrefs)
 
   private def result[T](scenario: CancellableFuture[T]): T = result(scenario.future)
   private def result[T](scenario: Future[T]): T = Await.result(scenario, 5.seconds)
@@ -71,18 +74,12 @@ class FCMPushHandlerSpec extends FeatureSpec
     val lastId = Uid()
     val newId = Uid()
 
-    val res1 =
-      LoadNotificationsResult(
-        LoadNotificationsResponse(
-          Vector(PushNotificationEncoded(newId, Vector(EncodedEvent(eventJsonStr)))),
-          hasMore = false,
-          beTime = None
-        ),
-        historyLost = false
-      )
-    (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res1))
+    val res = wrapInResult(Vector(PushNotificationEncoded(newId, Vector(EncodedEvent(eventJsonStr())))))
+
+    (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res))
     (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(emptyResult))
-    (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+    (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
+    (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
@@ -99,20 +96,39 @@ class FCMPushHandlerSpec extends FeatureSpec
     val lastId = Uid()
     val newId = Uid()
 
-    val notifications = Vector(PushNotificationEncoded(newId, Vector(EncodedEvent(eventJsonStr))))
+    val notifications = Vector(PushNotificationEncoded(newId, Vector(EncodedEvent(eventJsonStr()))))
 
-    val res1 =
-      LoadNotificationsResult(
-        LoadNotificationsResponse(
-          notifications = notifications,
-          hasMore = false,
-          beTime = None
-        ),
-        historyLost = false
-      )
-    (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res1))
+    val res = wrapInResult(notifications)
+    (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res))
     (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(emptyResult))
-    (storage.saveAll _).expects(notifications).once().returning(Future.successful(()))
+    (storage.saveAll _).expects(notifications).once().returning(Future.successful(Seq.empty))
+    (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
+
+    val lastIdPref = userPrefs.preference(LastStableNotification)
+
+    val scenario = for {
+      _  <- lastIdPref := Some(lastId)
+      _  <- globalPrefs.preference(BackendDrift) := org.threeten.bp.Duration.ZERO
+      _  <- handler.syncNotifications().future
+    } yield ()
+    result(scenario)
+  }
+
+  scenario("If a new notification comes while the first is processed, we should load it too") {
+    val lastId = Uid()
+    val newId1 = Uid()
+    val newId2 = Uid()
+
+    val nots1 = Vector(PushNotificationEncoded(newId1, Vector(EncodedEvent(eventJsonStr()))))
+    val nots2 = Vector(PushNotificationEncoded(newId2, Vector(EncodedEvent(eventJsonStr()))))
+
+    val res1 = wrapInResult(nots1)
+    val res2 = wrapInResult(nots2)
+    (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res1))
+    (client.loadNotifications _).expects(Some(newId1), clientId).once().returning(success(res2))
+    (client.loadNotifications _).expects(Some(newId2), clientId).once().returning(success(emptyResult))
+    (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
+    (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
@@ -126,36 +142,52 @@ class FCMPushHandlerSpec extends FeatureSpec
 }
 
 object FCMPushHandlerSpec {
-  val convId   = ConvId()
-  val userId   = UserId()
-  val clientId = ClientId()
-  val domain   = "staging.zinfra.io"
+  val convId: ConvId = ConvId()
+  val userId: UserId = UserId()
+  val clientId: ClientId = ClientId()
+  val domain: Domain = Domain("staging.zinfra.io")
 
-  val eventJsonStr =
+  def eventJsonStr(convId: ConvId = this.convId,
+                   userId: UserId = this.userId,
+                   clientId: ClientId = this.clientId,
+                   domain: Domain = this.domain): String =
     s"""
-      |      {
-      |        "qualified_conversation": {
-      |          "domain": "$domain",
-      |          "id": "${convId.str}"
-      |        },
-      |        "conversation": "${convId.str}",
-      |        "time": "2021-11-08T16:31:28.872Z",
-      |        "data": {
-      |          "text": "encoded_string",
-      |          "data": "",
-      |          "sender": "a693b2dea78f634c",
-      |          "recipient": "${clientId.str}"
-      |        },
-      |        "from": "${userId.str}",
-      |        "qualified_from": {
-      |          "domain": "$domain",
-      |          "id": "$userId"
-      |        },
-      |        "type": "conversation.otr-message-add"
-      |      }
-      |""".stripMargin.trim
+       |      {
+       |        "qualified_conversation": {
+       |          "domain": "${domain.str}",
+       |          "id": "${convId.str}"
+       |        },
+       |        "conversation": "${convId.str}",
+       |        "time": "2021-11-08T16:31:28.872Z",
+       |        "data": {
+       |          "text": "encoded_string",
+       |          "data": "",
+       |          "sender": "a693b2dea78f634c",
+       |          "recipient": "${clientId.str}"
+       |        },
+       |        "from": "${userId.str}",
+       |        "qualified_from": {
+       |          "domain": "${domain.str}",
+       |          "id": "$userId"
+       |        },
+       |        "type": "conversation.otr-message-add"
+       |      }
+       |""".stripMargin.trim
 
-  val emptyResult =
+  def wrapInResult(notifications: Vector[PushNotificationEncoded],
+                   hasMore: Boolean = false,
+                   beTime: Option[Instant] = None,
+                   historyLost: Boolean = false): LoadNotificationsResult =
+    LoadNotificationsResult(
+      LoadNotificationsResponse(
+        notifications = notifications,
+        hasMore = hasMore,
+        beTime = beTime
+      ),
+      historyLost = historyLost
+    )
+
+  val emptyResult: LoadNotificationsResult =
     LoadNotificationsResult(
       LoadNotificationsResponse(Vector.empty, hasMore = false, beTime = None),
       historyLost = false

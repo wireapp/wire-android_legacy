@@ -7,9 +7,10 @@ import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.Uid
+import com.waz.model.{ConversationEvent, Duplicate, OtrErrorEvent, OtrEvent, PushNotificationEvent, Uid}
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.clock
+import com.waz.service.otr.OtrEventDecoder
 import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
@@ -18,7 +19,7 @@ import com.waz.znet2.http.ResponseCode
 import com.wire.signals.{CancellableFuture, Serialized}
 import org.threeten.bp.{Duration, Instant}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import com.wire.signals.CancellableFuture.RichFuture
 
@@ -29,13 +30,15 @@ trait FCMPushHandler {
 final class FCMPushHandlerImpl(clientId:    ClientId,
                                client:      PushNotificationsClient,
                                storage:     PushNotificationEventsStorage,
+                               decoder:     OtrEventDecoder,
                                globalPrefs: GlobalPreferences,
                                userPrefs:   UserPreferences)
                               (implicit ec: ExecutionContext)
   extends FCMPushHandler with DerivedLogTag {
   import FCMPushHandler._
 
-  override def syncNotifications(): CancellableFuture[Unit] = Serialized("syncInProgress")(syncHistory())
+  override def syncNotifications(): CancellableFuture[Unit] =
+    Serialized("syncNotifications")(syncHistory())
 
   private lazy val idPref: Preference[Option[Uid]] = userPrefs.preference(LastStableNotification)
   private lazy val beDriftPref: Preference[Duration] = globalPrefs.preference(BackendDrift)
@@ -47,10 +50,11 @@ final class FCMPushHandlerImpl(clientId:    ClientId,
     def processNotifications(notifications: Vector[PushNotificationEncoded]): CancellableFuture[Unit] =
       if (notifications.nonEmpty)
         for {
-          _ <- storage.saveAll(notifications).lift
-          _ <- updateLastId(notifications)
-          // at the end of processing we check if no new notifications came in the meantime
-          _ <- syncHistory()
+          events <- storage.saveAll(notifications).lift
+          _      <- processEvents(events).lift
+          _      <- updateLastId(notifications)
+                 // at the end of processing we check if no new notifications came in the meantime
+          _      <- syncHistory()
         } yield ()
       else
         CancellableFuture.successful(())
@@ -68,6 +72,25 @@ final class FCMPushHandlerImpl(clientId:    ClientId,
     nots.reverse.find(!_.transient).map(_.id) match {
       case Some(notId) => CancellableFuture.lift { idPref := Some(notId) }
       case _           => CancellableFuture.successful(())
+    }
+
+  private def processEvents(events: Seq[PushNotificationEvent]) =
+    Future.traverse(events) {
+      case event @ GetOtrEvent(otrEvent) => decrypt(event.index, otrEvent)
+      case otherEvent                    => storage.setAsDecrypted(otherEvent.index)
+    }.map(_ => ())
+
+  private def decrypt(index: Int, otrEvent: OtrEvent): Future[Unit] =
+    decoder.decryptStoredOtrEvent(otrEvent, storage.writeClosure(index)).flatMap {
+      case Left(Duplicate) =>
+        verbose(l"Ignoring duplicate message")
+        storage.remove(index)
+      case Left(err) =>
+        val e = OtrErrorEvent(otrEvent.convId, otrEvent.convDomain, otrEvent.time, otrEvent.from, otrEvent.fromDomain, err)
+        error(l"Got error when decrypting: $e")
+        storage.writeError(index, e)
+      case Right(_) =>
+        Future.successful(())
     }
 
   @inline
@@ -118,10 +141,11 @@ object FCMPushHandler {
   def apply(clientId:    ClientId,
             client:      PushNotificationsClient,
             storage:     PushNotificationEventsStorage,
+            decoder:     OtrEventDecoder,
             globalPrefs: GlobalPreferences,
             userPrefs:   UserPreferences)
            (implicit ec: ExecutionContext): FCMPushHandler =
-    new FCMPushHandlerImpl(clientId, client, storage, globalPrefs, userPrefs)
+    new FCMPushHandlerImpl(clientId, client, storage, decoder, globalPrefs, userPrefs)
 
   final case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant])
 
@@ -130,4 +154,13 @@ object FCMPushHandler {
   }
 
   final case class FetchFailedException(err: ErrorResponse) extends Exception(s"Failed to fetch notifications: ${err.message}")
+
+  object GetOtrEvent extends DerivedLogTag {
+    def unapply(event: PushNotificationEvent): Option[OtrEvent] =
+      if (!event.event.isOtrMessageAdd) None
+      else ConversationEvent.ConversationEventDecoder(event.event.toJson) match {
+        case otrEvent: OtrEvent => Some(otrEvent)
+        case _                  => error(l"Unrecognized event: ${event.event}"); None
+      }
+  }
 }

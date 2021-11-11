@@ -249,6 +249,7 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val giphy: GiphyService                        = new GiphyServiceImpl(giphyClient)(Threading.Background)
   lazy val youtubeMedia                               = wire[YouTubeMediaService]
   lazy val mapsMediaService                           = wire[MapsMediaServiceImpl]
+  lazy val otrEventDecoder: OtrEventDecoder           = wire[OtrEventDecoderImpl]
   lazy val otrService: OtrService                     = wire[OtrServiceImpl]
   lazy val genericMsgs: GenericMessageService         = wire[GenericMessageService]
   lazy val reactions: ReactionsService                = wire[ReactionsService]
@@ -350,9 +351,9 @@ class ZMessaging(val teamId:    Option[TeamId],
     expiringUsers
     callLogging
 
-    push // connect on start
-    notifications
-    blockStreamsWhenProcessing
+    //push // connect on start
+    //notifications
+    //blockStreamsWhenProcessing
 
     // services listening for storage updates
     richmedia
