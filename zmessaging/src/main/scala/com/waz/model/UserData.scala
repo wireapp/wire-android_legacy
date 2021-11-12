@@ -137,15 +137,35 @@ final case class UserData(override val id:       UserId,
     }
   }
 
-  def isGuest(ourTeamId: TeamId): Boolean = isGuest(Some(ourTeamId))
+  def isGuest(ourTeamId: Option[TeamId], ourDomain: Domain = Domain.Empty): Boolean = {
+    val isNotSameTeam = ourTeamId.isDefined && teamId != ourTeamId
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      val isSameDomain = ourDomain == domain
+      isNotSameTeam || !isSameDomain
+    } else {
+      isNotSameTeam
+    }
+  }
 
-  def isGuest(ourTeamId: Option[TeamId]): Boolean = ourTeamId.isDefined && teamId != ourTeamId
+  def isExternal(ourTeamId: Option[TeamId], ourDomain: Domain): Boolean = {
+    val isSameTeam = teamId.isDefined && teamId == ourTeamId
+    val hasPermission = decodeBitmask(permissions._1) == ExternalPermissions
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      isSameTeam && hasPermission && ourDomain == domain
+    } else {
+      isSameTeam && hasPermission
+    }
+  }
 
-  def isExternal(ourTeamId: Option[TeamId]): Boolean =
-    teamId.isDefined && teamId == ourTeamId && decodeBitmask(permissions._1) == ExternalPermissions
-
-  def isInTeam(otherTeamId: Option[TeamId]): Boolean = teamId.isDefined && teamId == otherTeamId
-
+  def isInTeam(otherTeamId: Option[TeamId], ourDomain: Domain): Boolean = {
+    val isSameTeam = teamId.isDefined && teamId == otherTeamId
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      val isSameDomain = ourDomain.isDefined && ourDomain == domain
+      isSameTeam && isSameDomain
+    } else {
+      isSameTeam
+    }
+  }
   def matchesQuery(query: SearchQuery): Boolean =
     handle.exists(_.startsWithQuery(query.query)) ||
       (!query.handleOnly &&

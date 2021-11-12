@@ -147,8 +147,8 @@ class SingleParticipantFragment extends FragmentHelper {
       user               <- participantsController.otherParticipant.head
       isGroup            <- participantsController.isGroup.head
       isFederated        =  usersController.isFederated(user)
-      isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
-      isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
+      isGuest            =  !user.isWireBot && user.isGuest(zms.teamId, zms.selfDomain)
+      isExternal         =  !user.isWireBot && user.isExternal(zms.teamId, zms.selfDomain)
       isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
       // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
       _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
@@ -223,11 +223,12 @@ class SingleParticipantFragment extends FragmentHelper {
       }
   }
 
-  protected lazy val leftActionStrings = for {
-    isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
-    isGroupOrBot   <- participantsController.isGroupOrBot
-    canCreateConv  <- userAccountsController.hasCreateConvPermission
-    isExternal     <- userAccountsController.isExternal
+  protected lazy val leftActionStrings: Signal[(Int, Int)] = for {
+    isWireless    <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
+    flags         <- participantsController.flags
+    isGroupOrBot  =  flags.isGroup || flags.hasBot
+    canCreateConv <- userAccountsController.hasCreateConvPermission
+    isExternal    <- userAccountsController.isExternal
   } yield if (isWireless) {
     (R.string.empty_string, R.string.empty_string)
   } else if (fromDeepLink) {
@@ -247,7 +248,7 @@ class SingleParticipantFragment extends FragmentHelper {
         remPerm         <- participantsController.selfRole.map(_.canRemoveGroupMember)
         selfIsProUser   <- userAccountsController.isTeam
         other           <- participantsController.otherParticipant
-        otherIsGuest    =  other.isGuest(conv.team)
+        otherIsGuest    =  other.isGuest(conv.team, conv.domain)
         showRightAction =  if (fromDeepLink) !selfIsProUser || otherIsGuest else remPerm
         rightActionStr  =  getString(if (showRightAction) R.string.glyph__more else R.string.empty_string)
       } yield rightActionStr).onUi(text => vh.foreach(_.setRightActionText(text)))

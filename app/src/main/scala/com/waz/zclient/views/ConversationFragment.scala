@@ -18,6 +18,7 @@
 package com.waz.zclient.views
 
 import java.io.File
+
 import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.content.{DialogInterface, Intent}
 import android.os.Bundle
@@ -72,6 +73,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneCont
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.pages.main.{ImagePreviewCallback, ImagePreviewLayout}
 import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.participants.ParticipantsController.ParticipantsFlags
 import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.ui.cursor.CursorMenuItem
@@ -157,7 +159,7 @@ class ConversationFragment extends FragmentHelper {
   private var toolbar: Toolbar = _
 
   private lazy val guestsBanner = view[FrameLayout](R.id.guests_banner)
-  private lazy val guestsBannerText = view[TypefaceTextView](R.id.banner_text)
+  private lazy val guestsBannerText = view[TypefaceTextView](R.id.guests_banner_text)
 
   private var isBannerOpen = false
 
@@ -266,16 +268,14 @@ class ConversationFragment extends FragmentHelper {
     guestsBannerText
 
     accountsController.isTeam.flatMap {
-      case true  => participantsController.guestBotGroup
-      case false => Signal.const((false, false, false))
-    }.onUi {
-      case (hasGuest, hasBot, isGroup) => updateGuestsBanner(hasGuest, hasBot, isGroup)
-    }
+      case true  => participantsController.flags
+      case false => Signal.const(ParticipantsFlags.False)
+    }.onUi(updateGuestsBanner)
 
     keyboardController.isKeyboardVisible.onUi(visible => if(visible) collapseGuestsBanner())
   }
 
-  private def updateGuestsBanner(hasGuest: Boolean, hasBot: Boolean, isGroup: Boolean): Unit = {
+  private def updateGuestsBanner(flags: ParticipantsFlags): Unit = {
     def openGuestsBanner(resId: Int): Unit = {
       if (!isBannerOpen) {
         isBannerOpen = true
@@ -294,12 +294,26 @@ class ConversationFragment extends FragmentHelper {
       guestsBanner.foreach(_.setVisibility(View.GONE))
     }
 
-    (hasGuest, hasBot, isGroup) match {
-      case (true, true, true)   => openGuestsBanner(R.string.guests_and_services_are_present)
-      case (true, false, true)  => openGuestsBanner(R.string.guests_are_present)
-      case (false, true, true)  => openGuestsBanner(R.string.services_are_present)
-      case _ => hideGuestsBanner()
+    val banner = flags match { // the order is: group, guest, service, external, federated
+      case ParticipantsFlags(_, true,  true,  true,  true)  => Some(R.string.federated_externals_guests_and_services_are_present)
+      case ParticipantsFlags(_, true,  true,  true,  false) => Some(R.string.externals_guests_and_services_are_present)
+      case ParticipantsFlags(_, true,  true,  false, true)  => Some(R.string.federated_guests_and_services_are_present)
+      case ParticipantsFlags(_, true,  true,  false, false) => Some(R.string.guests_and_services_are_present)
+      case ParticipantsFlags(_, true,  false, true,  true)  => Some(R.string.federated_externals_and_guests_are_present)
+      case ParticipantsFlags(_, true,  false, true,  false) => Some(R.string.externals_and_guests_are_present)
+      case ParticipantsFlags(_, true,  false, false, true)  => Some(R.string.federated_and_guests_are_present)
+      case ParticipantsFlags(_, true,  false, false, false) => Some(R.string.guests_are_present)
+      case ParticipantsFlags(_, false, true,  true,  true)  => Some(R.string.federated_externals_and_services_are_present)
+      case ParticipantsFlags(_, false, true,  true,  false) => Some(R.string.externals_and_services_are_present)
+      case ParticipantsFlags(_, false, true,  false, true)  => Some(R.string.federated_and_services_are_present)
+      case ParticipantsFlags(_, false, true,  false, false) => Some(R.string.services_are_present)
+      case ParticipantsFlags(_, false, false, true,  true)  => Some(R.string.federated_and_externals_are_present)
+      case ParticipantsFlags(_, false, false, true,  false) => Some(R.string.externals_are_present)
+      case ParticipantsFlags(_, false, false, false, true)  => Some(R.string.federated_are_present)
+      case _ => None
     }
+
+    banner.fold(hideGuestsBanner())(openGuestsBanner)
   }
 
   private def collapseGuestsBanner(): Unit = {
@@ -758,17 +772,16 @@ class ConversationFragment extends FragmentHelper {
   private val navigationControllerObserver = new NavigationControllerObserver {
     override def onPageVisible(page: Page): Unit = if (page == Page.MESSAGE_STREAM) {
       accountsController.isTeam.head.flatMap {
-        case true  => participantsController.guestBotGroup.head
-        case false => Future.successful((false, false, false))
-      }.foreach {
-        case (hasGuest, hasBot, isGroup) =>
-          val backStackSize = getFragmentManager.getBackStackEntryCount
-          if (backStackSize > 0) {
-            // update the guests' banner only if the conversation's fragment is on top
-            if (getFragmentManager.getBackStackEntryAt(backStackSize - 1).getName == ConversationFragment.TAG)
-              updateGuestsBanner(hasGuest, hasBot, isGroup)
-          } else
-            updateGuestsBanner(hasGuest, hasBot, isGroup)
+        case true  => participantsController.flags.head
+        case false => Future.successful(ParticipantsFlags.False)
+      }.foreach { flags =>
+        val backStackSize = getFragmentManager.getBackStackEntryCount
+        if (backStackSize > 0) {
+          // update the guests' banner only if the conversation's fragment is on top
+          if (getFragmentManager.getBackStackEntryAt(backStackSize - 1).getName == ConversationFragment.TAG)
+            updateGuestsBanner(flags)
+        } else
+          updateGuestsBanner(flags)
       }
       inflateCollectionIcon()
       cursorView.foreach(_.enableMessageWriting())

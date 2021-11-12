@@ -25,7 +25,7 @@ class LegalHoldUsersAdapter(userIds: Signal[Set[UserId]], maxParticipants: Optio
     users.filter(user => filter.isEmpty || user.matchesQuery(SearchQuery(filter)))
       .map(user => ParticipantData(
         user,
-        isGuest = user.isGuest(teamId),
+        isGuest = user.isGuest(teamId, domain),
         isAdmin = false, // unused
         isSelf = user.id == selfId
       )).sortBy(_.userData.name.str)

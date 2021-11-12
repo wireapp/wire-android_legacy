@@ -39,6 +39,7 @@ class EphemeralTimerButton(context: Context, attrs: AttributeSet, defStyleAttr: 
 
   val accentColor         = inject[Signal[AccentColor]]
 
+  val hasEnforcedTimeout  = Signal[Boolean](false)
   val ephemeralExpiration = Signal[Option[EphemeralDuration]](None)
   val darkTheme           = Signal(true) //sharing controller is always in "dark" theme
 
@@ -87,7 +88,9 @@ class EphemeralTimerButton(context: Context, attrs: AttributeSet, defStyleAttr: 
     setGravity(Gravity.CENTER)
 
     display.onUi(setText)
-
+    hasEnforcedTimeout.onUi{ isEnforced =>
+      setEnabled(!isEnforced)
+    }
     drawable.onUi(setBackgroundDrawable)
     contentDescription.onUi(setContentDescription)
 
