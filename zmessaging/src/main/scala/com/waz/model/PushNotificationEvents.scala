@@ -44,8 +44,8 @@ object PushNotificationEvents {
 
     def maxIndex()(implicit db: DB): Int = queryForLong(maxWithDefault(Index.name)).toInt
 
-    def listDecrypted(limit: Int)(implicit db: DB): Vector[PushNotificationEvent] =
-      list(db.query(table.name, null, s"${Decrypted.name} = 1", null, null, null, "event_index ASC", s"$limit"))
+    def listDecrypted()(implicit db: DB): Vector[PushNotificationEvent] =
+      list(db.query(table.name, null, s"${Decrypted.name} = 1", null, null, null, "event_index ASC"))
   }
 }
 

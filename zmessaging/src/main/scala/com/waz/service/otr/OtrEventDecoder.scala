@@ -16,6 +16,7 @@ import scala.util.Try
 trait OtrEventDecoder {
   def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter): Future[Either[OtrError, Unit]]
   def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent]
+  def decode(bytes: Array[Byte]): Option[GenericMessage]
 }
 
 final class OtrEventDecoderImpl(selfUserId:    UserId,
@@ -23,6 +24,7 @@ final class OtrEventDecoderImpl(selfUserId:    UserId,
                                 clients:       OtrClientsService,
                                 sessions:      CryptoSessionService)
   extends OtrEventDecoder with DerivedLogTag {
+  import OtrEventDecoder._
   import Threading.Implicits.Background
 
   override def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter): Future[Either[OtrError, Unit]] =
@@ -89,8 +91,15 @@ final class OtrEventDecoderImpl(selfUserId:    UserId,
     for {
       data  <- extData if sha.forall(_.matches(data))
       plain <- Try(AESUtils.decrypt(key, data)).toOption
-      msg   <- Try(GenericMessage(plain)).toOption
+      msg   <- decode(plain)
     } yield msg
+
+  // This is a utility method. In the codebase we have two classes called GenericMessage, each with
+  // a few overloaded constructors. The compiler sometimes get confused. This method can be used to
+  // call the most popular of them in a simple way.
+  // It also allows for mocking in unit tests
+  override def decode(bytes: Array[Byte]): Option[GenericMessage] =
+    Try(com.waz.model.GenericMessage.apply(bytes)).toOption
 }
 
 object OtrEventDecoder {
@@ -99,4 +108,5 @@ object OtrEventDecoder {
             clients:       OtrClientsService,
             sessions:      CryptoSessionService): OtrEventDecoder =
     new OtrEventDecoderImpl(selfUserId, currentDomain, clients, sessions)
+
 }

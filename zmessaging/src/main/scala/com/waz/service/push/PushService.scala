@@ -32,7 +32,7 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
-import com.waz.service.otr.{OtrEventDecoder, OtrService}
+import com.waz.service.otr.OtrEventDecoder
 import com.waz.service.push.PushService.SyncMode
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
@@ -158,17 +158,18 @@ class PushServiceImpl(selfUserId:           UserId,
     def decodeRow(event: PushNotificationEvent) =
       if(event.plain.isDefined && event.event.isOtrMessageAdd) {
         verbose(l"decodeRow($event) for an otr event")
-        val msg = GenericMessage(event.plain.get)
-        val msgEvent = ConversationEvent.ConversationEventDecoder(event.event.toJson)
-        returning(otrEventDecoder.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)) { event =>
-          verbose(l"decoded otr event: $event")
+        event.plain.flatMap(otrEventDecoder.decode).flatMap { msg =>
+          val msgEvent = ConversationEvent.ConversationEventDecoder(event.event.toJson)
+          returning(otrEventDecoder.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)) { event =>
+            verbose(l"decoded otr event: $event")
+          }
         }
       } else {
         verbose(l"decodeRow($event) for a non-otr event")
         Some(EventDecoder(event.event.toJson))
       }
 
-    notificationStorage.getDecryptedRows().flatMap { rows =>
+    notificationStorage.getDecryptedRows.flatMap { rows =>
       verbose(l"Processing ${rows.size} rows")
       if (rows.nonEmpty) {
         val ids = rows.map(_.pushId).toSet

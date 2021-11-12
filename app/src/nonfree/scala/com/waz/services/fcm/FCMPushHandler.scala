@@ -7,7 +7,8 @@ import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{ConversationEvent, Duplicate, OtrErrorEvent, OtrEvent, PushNotificationEvent, Uid}
+import com.waz.model.Event.EventDecoder
+import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.clock
 import com.waz.service.otr.OtrEventDecoder
@@ -21,10 +22,9 @@ import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
-import com.wire.signals.CancellableFuture.RichFuture
 
 trait FCMPushHandler {
-  def syncNotifications(): CancellableFuture[Unit]
+  def syncNotifications(): Future[Unit]
 }
 
 final class FCMPushHandlerImpl(clientId:    ClientId,
@@ -37,44 +37,58 @@ final class FCMPushHandlerImpl(clientId:    ClientId,
   extends FCMPushHandler with DerivedLogTag {
   import FCMPushHandler._
 
-  override def syncNotifications(): CancellableFuture[Unit] =
-    Serialized("syncNotifications")(syncHistory())
+  override def syncNotifications(): Future[Unit] =
+    Serialized.future("syncNotifications")(syncHistory())
 
   private lazy val idPref: Preference[Option[Uid]] = userPrefs.preference(LastStableNotification)
   private lazy val beDriftPref: Preference[Duration] = globalPrefs.preference(BackendDrift)
 
   private def updateDrift(time: Option[Instant]) =
-    time.fold(CancellableFuture.successful(()))(t => (beDriftPref := clock.instant.until(t)).lift)
+    time.fold(Future.successful(()))(t => (beDriftPref := clock.instant.until(t)))
 
-  private def syncHistory(): CancellableFuture[Unit] = {
-    def processNotifications(notifications: Vector[PushNotificationEncoded]): CancellableFuture[Unit] =
+  private def syncHistory(): Future[Unit] = {
+    def processNotifications(notifications: Vector[PushNotificationEncoded]): Future[Unit] =
       if (notifications.nonEmpty)
         for {
-          events <- storage.saveAll(notifications).lift
-          _      <- processEvents(events).lift
-          _      <- updateLastId(notifications)
-                 // at the end of processing we check if no new notifications came in the meantime
-          _      <- syncHistory()
+          encrypted <- storage.saveAll(notifications)
+          _         <- processEncryptedEvents(encrypted)
+          decrypted <- storage.getDecryptedRows
+          decoded   =  decrypted.flatMap(decodeRow)
+          _         =  verbose(l"decoded events (${decoded.size}): $decoded")
+          _         <- updateLastId(notifications)
+                    // at the end of processing we check if no new notifications came in the meantime
+          _         <- syncHistory()
         } yield ()
       else
-        CancellableFuture.successful(())
+        Future.successful(())
 
     for {
-      lastId              <- idPref().lift
-      results             <- lastId.map(load(_, 0)).getOrElse(CancellableFuture.successful(None))
+      lastId              <- idPref()
+      results             <- lastId.map(load(_, 0).future).getOrElse(Future.successful(None))
       Results(nots, time) =  results.getOrElse(Results.Empty)
       _                   <- updateDrift(time)
       _                   <- processNotifications(nots)
     } yield ()
   }
 
-  private def updateLastId(nots: Seq[PushNotificationEncoded]) =
-    nots.reverse.find(!_.transient).map(_.id) match {
-      case Some(notId) => CancellableFuture.lift { idPref := Some(notId) }
-      case _           => CancellableFuture.successful(())
+  private def decodeRow(event: PushNotificationEvent) =
+    event.plain match {
+      case Some(bytes) if event.event.isOtrMessageAdd =>
+        val msgEvent = ConversationEvent.ConversationEventDecoder(event.event.toJson).asInstanceOf[OtrMessageEvent]
+        decoder.decode(bytes).flatMap(
+          decoder.parseGenericMessage(msgEvent, _)
+        )
+      case _ =>
+        Some(EventDecoder(event.event.toJson))
     }
 
-  private def processEvents(events: Seq[PushNotificationEvent]) =
+  private def updateLastId(nots: Seq[PushNotificationEncoded]) =
+    nots.reverse.find(!_.transient).map(_.id) match {
+      case Some(notId) => idPref := Some(notId)
+      case _           => Future.successful(())
+    }
+
+  private def processEncryptedEvents(events: Seq[PushNotificationEvent]) =
     Future.traverse(events) {
       case event @ GetOtrEvent(otrEvent) => decrypt(event.index, otrEvent)
       case otherEvent                    => storage.setAsDecrypted(otherEvent.index)

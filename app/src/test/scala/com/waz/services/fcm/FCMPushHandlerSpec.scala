@@ -20,7 +20,7 @@ package com.waz.services.fcm
 import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.model.otr.ClientId
-import com.waz.model.{ConvId, Domain, Uid, UserId}
+import com.waz.model._
 import com.waz.service.otr.OtrEventDecoder
 import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
@@ -28,12 +28,12 @@ import com.waz.sync.client.{EncodedEvent, ErrorOrResponse, PushNotificationEncod
 import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue, Threading}
 import org.junit.runner.RunWith
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfterAll, FeatureSpec, Matchers, OneInstancePerTest, Suite}
 import org.scalatest.junit.JUnitRunner
+import org.scalatest._
 import org.threeten.bp.Instant
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 @RunWith(classOf[JUnitRunner])
 class FCMPushHandlerSpec extends FeatureSpec
@@ -56,15 +56,13 @@ class FCMPushHandlerSpec extends FeatureSpec
 
   private def handler = FCMPushHandler(clientId, client, storage, decoder, globalPrefs, userPrefs)
 
-  private def result[T](scenario: CancellableFuture[T]): T = result(scenario.future)
   private def result[T](scenario: Future[T]): T = Await.result(scenario, 5.seconds)
-
   private def success[T](result: T): ErrorOrResponse[T] = CancellableFuture.successful(Right(result))
 
   scenario("Don't load notifications when the last id is empty") {
     (client.loadNotifications _).expects(*, *).never()
     val scenario = for {
-      _ <- CancellableFuture.lift(userPrefs.preference(LastStableNotification) := None)
+      _ <- userPrefs.preference(LastStableNotification) := None
       _ <- handler.syncNotifications()
     } yield ()
     result(scenario) shouldEqual (())
@@ -80,13 +78,14 @@ class FCMPushHandlerSpec extends FeatureSpec
     (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(emptyResult))
     (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
     (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
+    (storage.getDecryptedRows _).expects().anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
     val scenario = for {
       _  <- lastIdPref := Some(lastId)
       _  <- globalPrefs.preference(BackendDrift) := org.threeten.bp.Duration.ZERO
-      _  <- handler.syncNotifications().future
+      _  <- handler.syncNotifications()
       id <- lastIdPref()
     } yield id
     result(scenario) shouldEqual Some(newId)
@@ -103,13 +102,14 @@ class FCMPushHandlerSpec extends FeatureSpec
     (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(emptyResult))
     (storage.saveAll _).expects(notifications).once().returning(Future.successful(Seq.empty))
     (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
+    (storage.getDecryptedRows _).expects().anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
     val scenario = for {
       _  <- lastIdPref := Some(lastId)
       _  <- globalPrefs.preference(BackendDrift) := org.threeten.bp.Duration.ZERO
-      _  <- handler.syncNotifications().future
+      _  <- handler.syncNotifications()
     } yield ()
     result(scenario)
   }
@@ -129,13 +129,14 @@ class FCMPushHandlerSpec extends FeatureSpec
     (client.loadNotifications _).expects(Some(newId2), clientId).once().returning(success(emptyResult))
     (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
     (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
+    (storage.getDecryptedRows _).expects().anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
     val scenario = for {
       _  <- lastIdPref := Some(lastId)
       _  <- globalPrefs.preference(BackendDrift) := org.threeten.bp.Duration.ZERO
-      _  <- handler.syncNotifications().future
+      _  <- handler.syncNotifications()
     } yield ()
     result(scenario)
   }
@@ -146,6 +147,8 @@ object FCMPushHandlerSpec {
   val userId: UserId = UserId()
   val clientId: ClientId = ClientId()
   val domain: Domain = Domain("staging.zinfra.io")
+  val encryptedBytes = "encryptedstring".getBytes
+  val decryptedBytes = "decryptedstring".getBytes
 
   def eventJsonStr(convId: ConvId = this.convId,
                    userId: UserId = this.userId,
