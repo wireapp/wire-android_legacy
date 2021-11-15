@@ -88,15 +88,11 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
 
   private def storeConferenceCallingConfig(conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig): Future[Unit] = {
     for {
-      existingValue <- userPrefs (ConferenceCallingFeatureEnabled).apply()
+      existingValue <- userPrefs(ConferenceCallingFeatureEnabled).apply()
       newValue      =  conferenceCallingFeatureConfig.isEnabled
-      _             <- userPrefs(ConferenceCallingFeatureEnabled) := Some(newValue)
-                    // Inform of plan upgraded.
-      _             <- if (existingValue != None && !existingValue.get && newValue)
-                          userPrefs(ShouldInformPlanUpgradedToEnterprise) := true
-                       // Don't inform
-                       else if (!newValue) userPrefs(ShouldInformPlanUpgradedToEnterprise) := false
-                       else Future.successful(())
+      _             <- userPrefs(ConferenceCallingFeatureEnabled) := newValue
+                       // inform if we didn't have conference calls and now we do
+      _             <- userPrefs(ShouldInformPlanUpgradedToEnterprise) := !existingValue && newValue
     } yield ()
   }
 

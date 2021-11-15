@@ -41,6 +41,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val externalPermissions: Long = 1025
   val memberPermissions: Long = 1587
   val adminPermissions: Long = 5951
+  val currentDomain: Domain = Domain("staging.zinfra.io")
 
   val userService       = mock[UserService]
   val usersStorage      = mock[UsersStorage]
@@ -633,6 +634,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     new UserSearchServiceImpl(
       selfId,
       if (inTeam) teamId else emptyTeamId,
+      currentDomain,
       userService,
       usersStorage,
       teamsService,

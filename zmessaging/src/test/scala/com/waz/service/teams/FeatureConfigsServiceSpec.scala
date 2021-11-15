@@ -132,7 +132,7 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   scenario("Fetch the ConferenceCalling feature config and set properties") {
     // Given
     val service = createService
-    userPrefs.setValue(ConferenceCallingFeatureEnabled, Some(true))
+    userPrefs.setValue(ConferenceCallingFeatureEnabled, true)
 
     // Mock
     (syncHandler.fetchConferenceCalling _).expects().anyNumberOfTimes().returning(
@@ -143,7 +143,7 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     result(service.updateConferenceCalling())
 
     // Then
-    result(userPrefs(ConferenceCallingFeatureEnabled).apply()) shouldEqual Some(false)
+    result(userPrefs(ConferenceCallingFeatureEnabled).apply()) shouldEqual false
   }
 
 }
