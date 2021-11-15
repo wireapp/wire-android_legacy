@@ -9,9 +9,9 @@ import org.json.JSONObject
 
 trait FeatureConfigsClient {
   def getAppLock(teamId: TeamId): ErrorOrResponse[AppLockFeatureConfig]
-  def getFileSharing(): ErrorOrResponse[FileSharingFeatureConfig]
-  def getSelfDeletingMessages(): ErrorOrResponse[SelfDeletingMessagesFeatureConfig]
-  def getConferenceCalling(): ErrorOrResponse[ConferenceCallingFeatureConfig]
+  def getFileSharing: ErrorOrResponse[FileSharingFeatureConfig]
+  def getSelfDeletingMessages: ErrorOrResponse[SelfDeletingMessagesFeatureConfig]
+  def getConferenceCalling: ErrorOrResponse[ConferenceCallingFeatureConfig]
 }
 
 class FeatureConfigsClientImpl(implicit
@@ -31,19 +31,19 @@ class FeatureConfigsClientImpl(implicit
       .withErrorType[ErrorResponse]
       .executeSafe
 
-  override def getFileSharing(): ErrorOrResponse[FileSharingFeatureConfig] =
+  override def getFileSharing: ErrorOrResponse[FileSharingFeatureConfig] =
     Request.Get(relativePath =  fileSharingPath)
     .withResultType[FileSharingFeatureConfig]
     .withErrorType[ErrorResponse]
     .executeSafe
 
-  override def getSelfDeletingMessages(): ErrorOrResponse[SelfDeletingMessagesFeatureConfig] =
+  override def getSelfDeletingMessages: ErrorOrResponse[SelfDeletingMessagesFeatureConfig] =
     Request.Get(relativePath =  selfDeletingMessages)
     .withResultType[SelfDeletingMessagesFeatureConfig]
     .withErrorType[ErrorResponse]
     .executeSafe
 
-  override def getConferenceCalling(): ErrorOrResponse[ConferenceCallingFeatureConfig] =
+  override def getConferenceCalling: ErrorOrResponse[ConferenceCallingFeatureConfig] =
     Request.Get(relativePath =  conferenceCallingPath)
       .withResultType[ConferenceCallingFeatureConfig]
       .withErrorType[ErrorResponse]
