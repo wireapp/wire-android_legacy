@@ -339,6 +339,7 @@ pipeline {
                     println("Releasing version to Github under Release Tag ${versionName} automatically")
                     println("THIS FEATURE IS NOT YET IMPLEMENTED")
                 }
+                sh 'echo NOT YET IMPLEMENTED'
             }
         }
     }
