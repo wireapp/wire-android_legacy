@@ -63,9 +63,9 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
 
   override def updateFileSharing(): Future[Unit] =
     for {
-      fileSharing <- syncHandler.fetchFileSharing()
-      _           =  verbose(l"FileSharing feature config : $fileSharing")
-      _           <- storeFileSharing(fileSharing)
+      Some(fileSharing) <- syncHandler.fetchFileSharing() // if the handler returns None, we don't store anything
+      _                 =  verbose(l"FileSharing feature config : $fileSharing")
+      _                 <- storeFileSharing(fileSharing)
     } yield ()
 
   private def storeFileSharing(fileSharing: FileSharingFeatureConfig): Future[Unit] = {

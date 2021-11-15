@@ -9,7 +9,7 @@ import scala.concurrent.Future
 
 trait FeatureConfigsSyncHandler {
   def fetchAppLock(): Future[AppLockFeatureConfig]
-  def fetchFileSharing(): Future[FileSharingFeatureConfig]
+  def fetchFileSharing(): Future[Option[FileSharingFeatureConfig]]
   def fetchSelfDeletingMessages(): Future[SelfDeletingMessagesFeatureConfig]
   def fetchConferenceCalling(): Future[ConferenceCallingFeatureConfig]
 }
@@ -31,13 +31,13 @@ class FeatureConfigsSyncHandlerImpl(teamId: Option[TeamId], client: FeatureConfi
       }
   }
 
-  override def fetchFileSharing(): Future[FileSharingFeatureConfig] =
+  override def fetchFileSharing(): Future[Option[FileSharingFeatureConfig]] =
     client.getFileSharing().map {
       case Left(err) =>
         error(l"Unable to fetch FileSharing feature flag: $err")
-        FileSharingFeatureConfig.Default
+        None
       case Right(fileSharing) =>
-        fileSharing
+        Some(fileSharing)
     }
 
   override def fetchSelfDeletingMessages(): Future[SelfDeletingMessagesFeatureConfig] =

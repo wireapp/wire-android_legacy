@@ -68,7 +68,7 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     // Mock
     (syncHandler.fetchFileSharing _).expects().anyNumberOfTimes().returning(
-      Future.successful(FileSharingFeatureConfig("disabled"))
+      Future.successful(Some(FileSharingFeatureConfig("disabled")))
     )
 
     // When
