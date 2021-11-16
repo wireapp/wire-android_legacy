@@ -484,6 +484,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       )
     } else None
 
+  lazy val messageNotificationsController: MessageNotificationsController = inject[MessageNotificationsController]
+
   private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi): Unit =
     prefs(GlobalPreferences.CheckedForPlayServices).apply().foreach {
       case false =>

@@ -2,8 +2,9 @@ package com.waz.service.otr
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
+import com.waz.model.Event.EventDecoder
 import com.waz.model.GenericContent.{Calling, ClientAction, External}
-import com.waz.model.{AESKey, CallMessageEvent, DecryptionError, Domain, Duplicate, GenericMessage, GenericMessageEvent, IdentityChangedError, MessageEvent, OtrError, OtrErrorEvent, OtrEvent, OtrMessageEvent, SessionReset, Sha256, UserId}
+import com.waz.model.{AESKey, CallMessageEvent, ConversationEvent, DecryptionError, Domain, Duplicate, Event, GenericMessage, GenericMessageEvent, IdentityChangedError, MessageEvent, OtrError, OtrErrorEvent, OtrEvent, OtrMessageEvent, PushNotificationEvent, SessionReset, Sha256, UserId}
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.threading.Threading
@@ -11,12 +12,11 @@ import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.CryptoException
 
 import scala.concurrent.Future
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 trait OtrEventDecoder {
   def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter): Future[Either[OtrError, Unit]]
-  def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent]
-  def decode(bytes: Array[Byte]): Option[GenericMessage]
+  def decode(event: PushNotificationEvent): Option[Event]
 }
 
 final class OtrEventDecoderImpl(selfUserId:    UserId,
@@ -49,7 +49,7 @@ final class OtrEventDecoderImpl(selfUserId:    UserId,
         }
     }
 
-  override def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent] = {
+  private def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent] = {
     val conv = otrMsg.convId
     val convDomain = otrMsg.convDomain
     val time = otrMsg.time
@@ -87,6 +87,18 @@ final class OtrEventDecoderImpl(selfUserId:    UserId,
     }
   }
 
+  override def decode(event: PushNotificationEvent): Option[Event] =
+    event.plain match {
+      case Some(bytes) if event.event.isOtrMessageAdd =>
+        for {
+          ev     <- decodeOtrMessageAdd(event)
+          gm     <- decode(bytes)
+          result <- parseGenericMessage(ev, gm)
+        } yield result
+      case _ =>
+        Some(EventDecoder(event.event.toJson))
+    }
+
   private def decodeExternal(key: AESKey, sha: Option[Sha256], extData: Option[Array[Byte]]) =
     for {
       data  <- extData if sha.forall(_.matches(data))
@@ -94,19 +106,23 @@ final class OtrEventDecoderImpl(selfUserId:    UserId,
       msg   <- decode(plain)
     } yield msg
 
-  // This is a utility method. In the codebase we have two classes called GenericMessage, each with
-  // a few overloaded constructors. The compiler sometimes get confused. This method can be used to
-  // call the most popular of them in a simple way.
-  // It also allows for mocking in unit tests
-  override def decode(bytes: Array[Byte]): Option[GenericMessage] =
+  private def decode(bytes: Array[Byte]): Option[GenericMessage] =
     Try(com.waz.model.GenericMessage.apply(bytes)).toOption
 }
 
-object OtrEventDecoder {
+object OtrEventDecoder extends DerivedLogTag {
   def apply(selfUserId:    UserId,
             currentDomain: Domain,
             clients:       OtrClientsService,
             sessions:      CryptoSessionService): OtrEventDecoder =
     new OtrEventDecoderImpl(selfUserId, currentDomain, clients, sessions)
 
+  def decodeOtrMessageAdd(event: PushNotificationEvent): Option[OtrMessageEvent] =
+    Try(ConversationEvent.ConversationEventDecoder(event.event.toJson).asInstanceOf[OtrMessageEvent])
+      .recoverWith {
+        case err: Throwable =>
+          error(l"Unable to decode an OtrMessageAdd event: $event", err)
+          Failure(err)
+      }
+      .toOption
 }

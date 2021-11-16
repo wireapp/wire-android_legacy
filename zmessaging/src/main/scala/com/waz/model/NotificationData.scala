@@ -25,18 +25,18 @@ import com.waz.utils.wrappers.DBCursor
 import com.waz.utils.{EnumCodec, Identifiable, JsonDecoder, JsonEncoder}
 import org.json.JSONObject
 
-case class NotificationData(override val id:   NotId                = NotId(),
-                            msg:               String               = "",
-                            conv:              ConvId               = ConvId(),
-                            user:              UserId               = UserId(),
-                            msgType:           NotificationType     = NotificationType.TEXT,
-                            time:              RemoteInstant        = RemoteInstant.Epoch,
-                            ephemeral:         Boolean              = false,
-                            isSelfMentioned:   Boolean              = false,
-                            likedContent:      Option[LikedContent] = None,
-                            isReply:           Boolean              = false,
-                            hasBeenDisplayed:  Boolean              = false
-                           ) extends Identifiable[NotId] {
+final case class NotificationData(override val id:   NotId                = NotId(),
+                                  msg:               String               = "",
+                                  conv:              ConvId               = ConvId(),
+                                  user:              UserId               = UserId(),
+                                  msgType:           NotificationType     = NotificationType.TEXT,
+                                  time:              RemoteInstant        = RemoteInstant.Epoch,
+                                  ephemeral:         Boolean              = false,
+                                  isSelfMentioned:   Boolean              = false,
+                                  likedContent:      Option[LikedContent] = None,
+                                  isReply:           Boolean              = false,
+                                  hasBeenDisplayed:  Boolean              = false
+                                 ) extends Identifiable[NotId] {
   lazy val isConvDeleted: Boolean = msgType == NotificationType.CONVERSATION_DELETED
 }
 

@@ -26,7 +26,6 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.log.LogShow
-import com.waz.model.Event.EventDecoder
 import com.waz.model.FCMNotification.{Fetched, FinishedPipeline, StartedPipeline}
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -154,28 +153,14 @@ class PushServiceImpl(selfUserId:           UserId,
       }).map(_ => ())
     }
 
-  private def processDecryptedRows(): Future[Unit] = {
-    def decodeRow(event: PushNotificationEvent) =
-      if(event.plain.isDefined && event.event.isOtrMessageAdd) {
-        verbose(l"decodeRow($event) for an otr event")
-        event.plain.flatMap(otrEventDecoder.decode).flatMap { msg =>
-          val msgEvent = ConversationEvent.ConversationEventDecoder(event.event.toJson)
-          returning(otrEventDecoder.parseGenericMessage(msgEvent.asInstanceOf[OtrMessageEvent], msg)) { event =>
-            verbose(l"decoded otr event: $event")
-          }
-        }
-      } else {
-        verbose(l"decodeRow($event) for a non-otr event")
-        Some(EventDecoder(event.event.toJson))
-      }
-
+  private def processDecryptedRows(): Future[Unit] =
     notificationStorage.getDecryptedRows.flatMap { rows =>
       verbose(l"Processing ${rows.size} rows")
       if (rows.nonEmpty) {
         val ids = rows.map(_.pushId).toSet
         for {
           _ <- fcmService.markNotificationsWithState(ids, StartedPipeline)
-          _ <- pipeline(rows.flatMap(decodeRow))
+          _ <- pipeline(rows.flatMap(ev => otrEventDecoder.decode(ev)))
           _ =  verbose(l"pipeline work finished")
           _ <- notificationStorage.removeRows(rows.map(_.index))
           _ =  verbose(l"rows removed from the notification storage")
@@ -186,7 +171,6 @@ class PushServiceImpl(selfUserId:           UserId,
         } yield {}
       } else Future.successful(())
     }
-  }
 
   private val timeOffset = System.currentTimeMillis()
   @inline private def timePassed = System.currentTimeMillis() - timeOffset

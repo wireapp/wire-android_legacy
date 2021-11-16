@@ -250,6 +250,7 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val youtubeMedia                               = wire[YouTubeMediaService]
   lazy val mapsMediaService                           = wire[MapsMediaServiceImpl]
   lazy val otrEventDecoder: OtrEventDecoder           = wire[OtrEventDecoderImpl]
+  lazy val notificationParser: NotificationParser     = wire[NotificationParserImpl]
   lazy val otrService: OtrService                     = wire[OtrServiceImpl]
   lazy val genericMsgs: GenericMessageService         = wire[GenericMessageService]
   lazy val reactions: ReactionsService                = wire[ReactionsService]

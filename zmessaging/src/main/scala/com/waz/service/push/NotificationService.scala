@@ -23,14 +23,14 @@ import com.waz.api.NotificationsHandler.NotificationType._
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
+import com.waz.model.GenericContent.{MsgDeleted, MsgEdit, MsgRecall, Reaction}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.ZMessaging.accountTag
 import com.waz.service._
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.wire.signals.{EventContext, Signal}
+import com.wire.signals.Signal
 import org.threeten.bp.Clock
 
 import scala.concurrent.Future
@@ -262,7 +262,8 @@ class NotificationServiceImpl(selfUserId:      UserId,
             verbose(l"quoteIds: $quoteIds, message: $msg")
             NotificationData(
               id              = msg.id.toNotificationId,
-              msg             = if (msg.isEphemeral) "" else msg.contentString, msg.convId,
+              msg             = if (msg.isEphemeral) "" else msg.contentString,
+              msg.convId,
               user            = msg.userId,
               msgType         = tp,
               //TODO do we ever get RemoteInstant.Epoch?

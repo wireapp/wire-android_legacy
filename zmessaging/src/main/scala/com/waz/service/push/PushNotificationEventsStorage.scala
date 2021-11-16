@@ -49,6 +49,7 @@ trait PushNotificationEventsStorage extends CachedStorage[EventIndex, PushNotifi
   def removeRows(rows: Iterable[Int]): Future[Unit]
   def registerEventHandler(handler: EventHandler)(implicit ec: EventContext): Future[Unit]
   def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]]
+  def getDecryptedRowsSince(index: Int): Future[IndexedSeq[PushNotificationEvent]]
 }
 
 final class PushNotificationEventsStorageImpl(context: Context, storage: Database, clientId: ClientId)
@@ -93,8 +94,11 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
   def encryptedEvents: Future[Seq[PushNotificationEvent]] = values.map(_.filter(!_.decrypted))
 
   //limit amount of decrypted events we read to avoid overwhelming older phones
-  def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
+  override def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
     storage.read { implicit db => PushNotificationEventsDao.listDecrypted }
+
+  override def getDecryptedRowsSince(index: Int): Future[IndexedSeq[PushNotificationEvent]] =
+    storage.read { implicit db => PushNotificationEventsDao.listDecryptedSince(index) }
 
   def removeRows(rows: Iterable[Int]): Future[Unit] = removeAll(rows)
 
