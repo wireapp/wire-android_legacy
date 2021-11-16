@@ -294,7 +294,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   def createService: TeamsService =
     new TeamsServiceImpl(
-      selfUser, teamId, teamStorage, userService, userStorage, convsStorage, convMembers,
+      selfUser, teamId, domain, teamStorage, userService, userStorage, convsStorage, convMembers,
       convsContent, convsService, sync, syncRequests, userPrefs, errorsService, rolesService
     )
 

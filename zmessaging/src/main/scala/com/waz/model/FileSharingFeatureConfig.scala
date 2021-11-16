@@ -18,5 +18,4 @@ object FileSharingFeatureConfig {
       if (!js.has("status")) Default
       else FileSharingFeatureConfig(js.getString("status"))
   }
-
 }
