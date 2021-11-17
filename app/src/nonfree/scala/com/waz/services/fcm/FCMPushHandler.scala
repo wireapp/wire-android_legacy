@@ -55,7 +55,7 @@ final class FCMPushHandlerImpl(userId:      UserId,
         for {
           encrypted <- storage.saveAll(notifications)
           _         <- processEncryptedEvents(encrypted)
-          decrypted <- storage.getDecryptedRowsSince(encrypted.map(_.index).min)
+          decrypted <- storage.getDecryptedRows
           decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
           _         =  verbose(l"FCM decoded events (${decoded.size}): $decoded")
           parsed    <- parser.parse(decoded)

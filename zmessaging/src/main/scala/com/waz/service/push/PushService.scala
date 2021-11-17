@@ -109,7 +109,7 @@ class PushServiceImpl(selfUserId:           UserId,
 
   private lazy val idPref: Preference[Option[Uid]] = userPrefs.preference(LastStableNotification)
 
-  notificationStorage.registerEventHandler { () =>
+  private def process(): Future[Unit] =
     Serialized.future(PipelineKey) {
       verbose(l"processing new added events")
       val offset = System.currentTimeMillis()
@@ -125,7 +125,6 @@ class PushServiceImpl(selfUserId:           UserId,
         processing ! false
         error(l"Unable to process events: $ex")
     }
-  }
 
   private def processEncryptedRows(): Future[Unit] =
     notificationStorage.encryptedEvents.flatMap { rows =>
@@ -176,7 +175,7 @@ class PushServiceImpl(selfUserId:           UserId,
   @inline private def timePassed = System.currentTimeMillis() - timeOffset
 
   wsPushService.notifications.foreach { nots =>
-    syncNotifications(StoreNotifications(nots))
+    syncNotifications(ProcessNotifications(nots))
   }
 
   wsPushService.connected.onChanged.map(WebSocketChange).on(dispatcher){
@@ -190,7 +189,7 @@ class PushServiceImpl(selfUserId:           UserId,
 
   override def syncNotifications(syncMode: SyncMode): Future[Unit] = {
     def fetch(syncMode: SyncMode) = syncMode match {
-      case StoreNotifications(notifications) => storeNotifications(notifications)
+      case ProcessNotifications(notifications) => storeNotifications(notifications).flatMap(_ => process())
       case SyncHistory(source, withRetries)  => syncHistory(source, withRetries)
     }
 
@@ -305,11 +304,11 @@ object PushService {
   }
 
   sealed trait SyncMode
-  case class StoreNotifications(notifications: Seq[PushNotificationEncoded]) extends SyncMode
+  final case class ProcessNotifications(notifications: Seq[PushNotificationEncoded]) extends SyncMode
 
   //set withRetries to false if the caller is to handle their own retry logic
-  case class SyncHistory(source: SyncSource, withRetries: Boolean = true) extends SyncMode
+  final case class SyncHistory(source: SyncSource, withRetries: Boolean = true) extends SyncMode
 
-  case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant], firstSync: Boolean, historyLost: Boolean)
+  final case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant], firstSync: Boolean, historyLost: Boolean)
 
 }
