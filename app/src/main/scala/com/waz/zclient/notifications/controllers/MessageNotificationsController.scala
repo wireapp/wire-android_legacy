@@ -17,11 +17,9 @@
  */
 package com.waz.zclient.notifications.controllers
 
-import android.annotation.TargetApi
 import android.content.Context
 import android.graphics.Color
 import android.net.Uri
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import android.text.TextUtils
 import androidx.annotation.RawRes
@@ -351,35 +349,39 @@ class MessageNotificationsController(applicationId: String = BuildConfig.APPLICA
     } yield {
       if (n.ephemeral) ResString.Empty
       else {
+        verbose(l"getDefaultNotificationMessageLineHeader($account, $n, $singleConversationInBatch)")
         val prefixId =
-          if (!singleConversationInBatch && isGroup)
-            if (n.isSelfMentioned)
+          if (!singleConversationInBatch && isGroup) {
+            if (n.isSelfMentioned) {
               R.string.notification__message_with_mention__group__prefix__text
-            else if (n.isReply)
+            } else if (n.isReply) {
               R.string.notification__message_with_quote__group__prefix__text
-            else
+            } else {
               R.string.notification__message__group__prefix__text
-          else if (!singleConversationInBatch && !isGroup || singleConversationInBatch && isGroup)
-            if (n.isSelfMentioned)
+            }
+          } else if (!singleConversationInBatch && !isGroup || singleConversationInBatch && isGroup) {
+            if (n.isSelfMentioned) {
               R.string.notification__message_with_mention__name__prefix__text
-            else if (n.isReply)
+            } else if (n.isReply) {
               R.string.notification__message_with_quote__name__prefix__text
-            else
+            } else {
               R.string.notification__message__name__prefix__text
-          else if (singleConversationInBatch && isGroup && n.isReply)
+            }
+          } else if (singleConversationInBatch && isGroup && n.isReply) {
             R.string.notification__message_with_quote__name__prefix__text_one2one
-          else 0
+          } else 0
         if (prefixId > 0) {
-          if (convName.isEmpty)
+          if (convName.isEmpty) {
             ResString(prefixId, List(ResString(userName), ResString(R.string.notification__message__group__default_conversation_name)))
-          else
+          } else {
             ResString(prefixId, userName, convName)
+          }
         }
         else ResString.Empty
       }
     }
 
-  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+  //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
   private def getMessageSpannable(header: ResString, body: ResString, isTextMessage: Boolean) = {
     val spans = Span(Span.ForegroundColorSpanBlack, Span.HeaderRange) ::
       (if (!isTextMessage) List(Span(Span.StyleSpanItalic, Span.BodyRange)) else Nil)

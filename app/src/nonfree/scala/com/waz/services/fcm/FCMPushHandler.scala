@@ -57,9 +57,9 @@ final class FCMPushHandlerImpl(userId:      UserId,
           _         <- processEncryptedEvents(encrypted)
           decrypted <- storage.getDecryptedRows
           decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
-          _         =  verbose(l"FCM decoded events (${decoded.size}): $decoded")
+          _         =  verbose(l"decoded events (${decoded.size}): $decoded")
           parsed    <- parser.parse(decoded)
-          _         =  verbose(l"FCM parsed events (${parsed.size}): $parsed")
+          _         =  verbose(l"parsed events (${parsed.size}): $parsed")
           _         <- if (parsed.nonEmpty) controller.onNotificationsChanged(userId, parsed) else Future.successful(())
           _         <- updateLastId(notifications)
                     // at the end of processing we check if no new notifications came in the meantime

@@ -30,7 +30,7 @@ final class NotificationParserImpl(selfId: UserId,
       case _ => Future.successful(None)
     }.map(_.flatten.toSet)
 
-  private def parse(event: GenericMessageEvent): Future[Option[NotificationData]] =
+  private def parse(event: GenericMessageEvent): Future[Option[NotificationData]] = {
     convStorage.getByRemoteId(event.convId).map {
       case Some(conv) =>
         val (uid, msgContent) = event.content.unpack
@@ -50,6 +50,7 @@ final class NotificationParserImpl(selfId: UserId,
           case _ => None
         }
       case _ => None
+  }
   }
 }
 
