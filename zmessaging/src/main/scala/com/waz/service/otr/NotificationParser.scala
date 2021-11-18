@@ -4,7 +4,7 @@ import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.content.{ConversationStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.Text
+import com.waz.model.GenericContent.{Text, Asset}
 import com.waz.model._
 import com.waz.utils._
 import com.waz.threading.Threading
@@ -41,24 +41,54 @@ final class NotificationParserImpl(selfId:       UserId,
       (uid, msgContent) =  event.content.unpack
     } yield
         msgContent match {
-          case t: Text =>
-            val (text, mentions, _, quote, _) = t.unpack
-            val isSelfMentioned = mentions.flatMap(_.userId).contains(selfId)
-            val isReply = quote.isDefined
-            if (shouldShowNotification(self, conv, event, isSelfMentioned || isReply, false)) {
-              Some(NotificationData(
-                id              = NotId(uid.str),
-                msg             = text,
-                conv            = conv.id,
-                user            = event.from,
-                msgType         = NotificationType.TEXT,
-                time            = event.time,
-                isSelfMentioned = isSelfMentioned,
-                isReply         = isReply
-              ))
-            } else None
-          case _ => None
+          case t: Text  => createTextNotification(uid, self, conv, event, t)
+          case a: Asset => createAssetNotification(uid, self, conv, event, a)
+          case _        => None
         }).recover { case _ => None }
+  }
+
+  private def createTextNotification(uid: Uid,
+                                     self: UserData,
+                                     conv: ConversationData,
+                                     event: GenericMessageEvent,
+                                     t: Text) = {
+    val (text, mentions, _, quote, _) = t.unpack
+    val isSelfMentioned = mentions.flatMap(_.userId).contains(selfId)
+    val isReply = quote.isDefined
+    if (shouldShowNotification(self, conv, event, isReplyOrMention = isSelfMentioned || isReply, isComposite = false)) {
+      Some(NotificationData(
+        id              = NotId(uid.str),
+        msg             = text,
+        conv            = conv.id,
+        user            = event.from,
+        msgType         = NotificationType.TEXT,
+        time            = event.time,
+        isSelfMentioned = isSelfMentioned,
+        isReply         = isReply
+      ))
+    } else None
+  }
+
+  private def createAssetNotification(uid: Uid,
+                                      self: UserData,
+                                      conv: ConversationData,
+                                      event: GenericMessageEvent,
+                                      a: Asset) = {
+    val (asset, _) = a.unpack
+    val msgType =
+      if (Mime.Video.supported.contains(asset.mime)) NotificationType.VIDEO_ASSET
+      else if (Mime.Audio.supported.contains(asset.mime)) NotificationType.AUDIO_ASSET
+      else if (Mime.Image.supported.contains(asset.mime)) NotificationType.IMAGE_ASSET
+      else NotificationType.ANY_ASSET
+    if (shouldShowNotification(self, conv, event, isReplyOrMention = false, isComposite = false)) {
+      Some(NotificationData(
+        id      = NotId(uid.str),
+        conv    = conv.id,
+        user    = event.from,
+        msgType = msgType,
+        time    = event.time
+      ))
+    } else None
   }
 
   private def shouldShowNotification(self:             UserData,
