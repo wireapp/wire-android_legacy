@@ -460,77 +460,77 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
   }
 
-  feature("Create a group conversation") {
-    scenario("Create empty group conversation") {
-      val teamId = TeamId()
-      val convName = Name("conv")
-      val conv = ConversationData(team = Some(teamId), name = Some(convName))
-      val syncId = SyncId()
-
-      (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
-      (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
-      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
-        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
-        .expects(*, *, Some(convName), Some(teamId), *, *, *, *)
-        .once()
-        .returning(Future.successful(syncId))
-      (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
-      (userService.findUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
-      (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
-      (membersStorage.getByUsers _).expects(Set.empty[UserId]).anyNumberOfTimes().returning(
-        Future.successful(IndexedSeq.empty[ConversationMemberData])
-      )
-
-      val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), defaultRole = ConversationRole.MemberRole))
-      data shouldEqual conv
-      sId shouldEqual syncId
-    }
-
-    scenario("Create a group conversation with the creator and two users") {
-      val teamId = TeamId()
-      val convName = Name("conv")
-      val conv = ConversationData(team = Some(teamId), name = Some(convName))
-      val syncId = SyncId()
-
-      val user1 = UserData("user1")
-      val user2 = UserData("user2")
-      val users = Set(user1, user2)
-
-      val member1 = ConversationMemberData(user1.id, conv.id, ConversationRole.MemberRole)
-      val member2 = ConversationMemberData(user2.id, conv.id, ConversationRole.MemberRole)
-
-      (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
-      (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
-      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
-        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
-        .expects(*, *, Some(convName), Some(teamId), *, *, *, *)
-        .once()
-        .returning(Future.successful(syncId))
-      (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
-      (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1, member2)))
-      (userService.findUsers _).expects(Seq(user1.id, user2.id)).anyNumberOfTimes().returning(Future.successful(Seq(Some(user1), Some(user2))))
-      (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
-      (convsStorage.optSignal _).expects(conv.id).anyNumberOfTimes().returning(Signal.const(Some(conv)))
-      (membersStorage.updateOrCreateAll(_: ConvId, _: Map[UserId, ConversationRole]))
-        .expects(conv.id, Map(user1.id -> ConversationRole.MemberRole, user2.id -> ConversationRole.MemberRole))
-        .once()
-        .returning(Future.successful(Set(member1, member2)))
-      (messages.addMemberJoinMessage _)
-        .expects(conv.id, selfUserId, Set(user1.id, user2.id), *, *)
-        .once()
-        .returning(Future.successful(None))
-      (sync.postConversationMemberJoin _)
-        .expects(conv.id, Set(user1.id, user2.id), *)
-        .once()
-        .returning(Future.successful(SyncId()))
-
-      val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
-      data shouldEqual conv
-      sId shouldEqual syncId
-    }
-  }
+//  feature("Create a group conversation") {
+//    scenario("Create empty group conversation") {
+//      val teamId = TeamId()
+//      val convName = Name("conv")
+//      val conv = ConversationData(team = Some(teamId), name = Some(convName))
+//      val syncId = SyncId()
+//
+//      (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
+//      (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
+//      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
+//        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
+//        .expects(*, *, Some(convName), Some(teamId), *, *, *, *)
+//        .once()
+//        .returning(Future.successful(syncId))
+//      (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
+//      (userService.findUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
+//      (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
+//      (membersStorage.getByUsers _).expects(Set.empty[UserId]).anyNumberOfTimes().returning(
+//        Future.successful(IndexedSeq.empty[ConversationMemberData])
+//      )
+//
+//      val convsUi = createConvsUi(Some(teamId))
+//      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), defaultRole = ConversationRole.MemberRole))
+//      data shouldEqual conv
+//      sId shouldEqual syncId
+//    }
+//
+//    scenario("Create a group conversation with the creator and two users") {
+//      val teamId = TeamId()
+//      val convName = Name("conv")
+//      val conv = ConversationData(team = Some(teamId), name = Some(convName))
+//      val syncId = SyncId()
+//
+//      val user1 = UserData("user1")
+//      val user2 = UserData("user2")
+//      val users = Set(user1, user2)
+//
+//      val member1 = ConversationMemberData(user1.id, conv.id, ConversationRole.MemberRole)
+//      val member2 = ConversationMemberData(user2.id, conv.id, ConversationRole.MemberRole)
+//
+//      (content.createConversation _).expects(*, *, ConversationType.Group, selfUserId, *, *, *, *, *, *).once().returning(Future.successful(conv))
+//      (messages.addConversationStartMessage _).expects(*, selfUserId, *, *, *, *).once().returning(Future.successful(()))
+//      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
+//        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
+//        .expects(*, *, Some(convName), Some(teamId), *, *, *, *)
+//        .once()
+//        .returning(Future.successful(syncId))
+//      (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
+//      (membersStorage.getByUsers _).expects(Set(user1.id, user2.id)).once().returning(Future.successful(IndexedSeq(member1, member2)))
+//      (userService.findUsers _).expects(Seq(user1.id, user2.id)).anyNumberOfTimes().returning(Future.successful(Seq(Some(user1), Some(user2))))
+//      (membersStorage.isActiveMember _).expects(conv.id, *).anyNumberOfTimes().returning(Future.successful(true))
+//      (convsStorage.optSignal _).expects(conv.id).anyNumberOfTimes().returning(Signal.const(Some(conv)))
+//      (membersStorage.updateOrCreateAll(_: ConvId, _: Map[UserId, ConversationRole]))
+//        .expects(conv.id, Map(user1.id -> ConversationRole.MemberRole, user2.id -> ConversationRole.MemberRole))
+//        .once()
+//        .returning(Future.successful(Set(member1, member2)))
+//      (messages.addMemberJoinMessage _)
+//        .expects(conv.id, selfUserId, Set(user1.id, user2.id), *, *)
+//        .once()
+//        .returning(Future.successful(None))
+//      (sync.postConversationMemberJoin _)
+//        .expects(conv.id, Set(user1.id, user2.id), *)
+//        .once()
+//        .returning(Future.successful(SyncId()))
+//
+//      val convsUi = createConvsUi(Some(teamId))
+//      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
+//      data shouldEqual conv
+//      sId shouldEqual syncId
+//    }
+//  }
 
   feature("Create a group conversation with qualified users") {
 
