@@ -93,45 +93,45 @@ class TeamConversationSpec extends AndroidFreeSpec {
       result(initService.getOrCreateOneToOneConversation(otherUserId)) shouldEqual existingConv
     }
 
-//    scenario("Existing 1:1 conversation between two team members with NAME should not be returned") {
-//      val otherUserId = UserId("otherUser")
-//      val otherUser = UserData(otherUserId, domain, team, Name("other"), searchKey = SearchKey.simple("other"))
-//
-//      val name = Some(Name("Conv Name"))
-//      val existingConv = ConversationData(creator = selfId, name = name, convType = Group, team = team)
-//
-//      (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
-//
-//      (members.getByUsers _).expects(Set(otherUserId)).anyNumberOfTimes().returning(Future.successful(IndexedSeq(
-//        ConversationMemberData(otherUserId, existingConv.id, AdminRole)
-//      )))
-//
-//      (members.getByConvs _).expects(Set(existingConv.id)).once().returning(Future.successful(IndexedSeq(
-//        ConversationMemberData(selfId,      existingConv.id, AdminRole),
-//        ConversationMemberData(otherUserId, existingConv.id, AdminRole)
-//      )))
-//
-//      (convsStorage.getAll _).expects(Seq(existingConv.id)).once().returning(Future.successful(Seq(Some(existingConv))))
-//      (convsContent.createConversation _)
-//        .expects(*, *, Group, selfId, ConversationRole.AdminRole, None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, 0).once().onCall {
-//        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
-//          Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
-//      }
-//      (messages.addConversationStartMessage _).expects(*, selfId, *, None, *, None).once().returning(Future.successful({}))
-//      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
-//        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
-//        .expects(*, *, None, team, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, Some(0), *)
-//        .once()
-//        .returning(Future.successful(SyncId()))
-//      (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
-//      (members.isActiveMember _).expects(*, *).anyNumberOfTimes().returning(Future.successful(true))
-//      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
-//
-//      (convsService.generateTempConversationId _).expects(*).anyNumberOfTimes().returning(RConvId())
-//
-//      val conv = result(initService.getOrCreateOneToOneConversation(otherUserId))
-//      conv shouldNot equal(existingConv)
-//    }
+    scenario("Existing 1:1 conversation between two team members with NAME should not be returned") {
+      val otherUserId = UserId("otherUser")
+      val otherUser = UserData(otherUserId, domain, team, Name("other"), searchKey = SearchKey.simple("other"))
+
+      val name = Some(Name("Conv Name"))
+      val existingConv = ConversationData(creator = selfId, name = name, convType = Group, team = team)
+
+      (users.findUser _).expects(otherUserId).once().returning(Future.successful(Some(otherUser)))
+
+      (members.getByUsers _).expects(Set(otherUserId)).anyNumberOfTimes().returning(Future.successful(IndexedSeq(
+        ConversationMemberData(otherUserId, existingConv.id, AdminRole)
+      )))
+
+      (members.getByConvs _).expects(Set(existingConv.id)).once().returning(Future.successful(IndexedSeq(
+        ConversationMemberData(selfId,      existingConv.id, AdminRole),
+        ConversationMemberData(otherUserId, existingConv.id, AdminRole)
+      )))
+
+      (convsStorage.getAll _).expects(Seq(existingConv.id)).once().returning(Future.successful(Seq(Some(existingConv))))
+      (convsContent.createConversation _)
+        .expects(*, *, Group, selfId, ConversationRole.AdminRole, None, false, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, 0).once().onCall {
+        (conv: ConvId, r: RConvId, tpe: ConversationType, cr: UserId, _: ConversationRole, n: Option[Name], hid: Boolean, ac: Set[Access], ar: AccessRole, rr: Int) =>
+          Future.successful(ConversationData(conv, r, n, cr, tpe, team, hidden = hid, access = ac, accessRole = Some(ar), receiptMode = Some(rr)))
+      }
+      (messages.addConversationStartMessage _).expects(*, selfId, *, None, *, None).once().returning(Future.successful({}))
+      (sync.postConversation(_: ConvId, _: Option[UserId], _: Option[Name], _: Option[TeamId],
+        _: Set[Access], _: AccessRole, _: Option[Int], _: ConversationRole))
+        .expects(*, *, None, team, Set(Access.INVITE, Access.CODE), AccessRole.NON_ACTIVATED, Some(0), *)
+        .once()
+        .returning(Future.successful(SyncId()))
+      (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
+      (members.isActiveMember _).expects(*, *).anyNumberOfTimes().returning(Future.successful(true))
+      (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
+
+      (convsService.generateTempConversationId _).expects(*).anyNumberOfTimes().returning(RConvId())
+
+      val conv = result(initService.getOrCreateOneToOneConversation(otherUserId))
+      conv shouldNot equal(existingConv)
+    }
   }
 
   feature("Conversations with guests") {

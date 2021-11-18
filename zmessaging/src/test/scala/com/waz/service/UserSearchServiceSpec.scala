@@ -382,36 +382,36 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       PreparedSearch(true, selfId, query)
     }
 
-//    scenario("as a member, search externals that are not in a conversation with me") {
-//      // GIVEN
-//      val preparedSearch = prepareTestSearch(
-//        query = "external",
-//        selfId = id('mm1),
-//        conversationMembers = ids('a, 'mm1)
-//      )
-//
-//      // WHEN
-//      val res = result(preparedSearch.perform())
-//
-//      // THEN
-//      res shouldBe ids()
-//    }
+    scenario("as a member, search externals that are not in a conversation with me") {
+      // GIVEN
+      val preparedSearch = prepareTestSearch(
+        query = "external",
+        selfId = id('mm1),
+        conversationMembers = ids('a, 'mm1)
+      )
 
-//    scenario("as a member, search externals that are in a conversation with me") {
-//
-//      // GIVEN
-//      val preparedSearch = prepareTestSearch(
-//        query = "external",
-//        selfId = id('mm1),
-//        conversationMembers = ids('pp1, 'k, 'mm1)
-//      )
-//
-//      // WHEN
-//      val res = result(preparedSearch.perform())
-//
-//      // THEN
-//      res shouldBe ids('pp1)
-//    }
+      // WHEN
+      val res = result(preparedSearch.perform())
+
+      // THEN
+      res shouldBe ids()
+    }
+
+    scenario("as a member, search externals that are in a conversation with me") {
+
+      // GIVEN
+      val preparedSearch = prepareTestSearch(
+        query = "external",
+        selfId = id('mm1),
+        conversationMembers = ids('pp1, 'k, 'mm1)
+      )
+
+      // WHEN
+      val res = result(preparedSearch.perform())
+
+      // THEN
+      res shouldBe ids('pp1)
+    }
 
     scenario("as a member, search externals that are not in a conversation with me by exact handle") {
 
