@@ -349,7 +349,6 @@ class MessageNotificationsController(applicationId: String = BuildConfig.APPLICA
     } yield {
       if (n.ephemeral) ResString.Empty
       else {
-        verbose(l"getDefaultNotificationMessageLineHeader($account, $n, $singleConversationInBatch)")
         val prefixId =
           if (!singleConversationInBatch && isGroup) {
             if (n.isSelfMentioned) {
@@ -381,7 +380,6 @@ class MessageNotificationsController(applicationId: String = BuildConfig.APPLICA
       }
     }
 
-  //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
   private def getMessageSpannable(header: ResString, body: ResString, isTextMessage: Boolean) = {
     val spans = Span(Span.ForegroundColorSpanBlack, Span.HeaderRange) ::
       (if (!isTextMessage) List(Span(Span.StyleSpanItalic, Span.BodyRange)) else Nil)

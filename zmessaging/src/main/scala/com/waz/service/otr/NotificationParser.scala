@@ -6,7 +6,7 @@ import com.waz.api.NotificationsHandler.NotificationType.LikedContent
 import com.waz.content.{ConversationStorage, MessageAndLikesStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{Asset, Knock, Reaction, Text}
+import com.waz.model.GenericContent.{Asset, Knock, Location, Reaction, Text}
 import com.waz.model._
 import com.waz.utils._
 import com.waz.threading.Threading
@@ -48,6 +48,7 @@ final class NotificationParserImpl(selfId:       UserId,
                              case a: Asset    => createAssetNotification(uid, self, conv, event, a)
                              case k: Knock    => createPingNotification(uid, self, conv, event, k)
                              case r: Reaction => createLikeNotification(uid, self, conv, event, r)
+                             case l: Location => createLocationNotification(uid, self, conv, event, l)
                              case _           => Future.successful(None)
                            }
     } yield notification
@@ -146,6 +147,24 @@ final class NotificationParserImpl(selfId:       UserId,
           ))
         case _ => None
       }
+  }
+
+  private def createLocationNotification(uid:   Uid,
+                                         self:  UserData,
+                                         conv:  ConversationData,
+                                         event: GenericMessageEvent,
+                                         l:     Location) = {
+    Future.successful {
+      if (shouldShowNotification(self, conv, event))
+        Some(NotificationData(
+          id      = NotId(uid.str),
+          conv    = conv.id,
+          user    = event.from,
+          msgType = NotificationType.LOCATION,
+          time    = event.time
+        ))
+      else None
+    }
   }
 
   private def shouldShowNotification(self:             UserData,
