@@ -4,7 +4,7 @@ import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.content.{ConversationStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{Text, Asset}
+import com.waz.model.GenericContent.{Text, Asset, Knock}
 import com.waz.model._
 import com.waz.utils._
 import com.waz.threading.Threading
@@ -43,6 +43,7 @@ final class NotificationParserImpl(selfId:       UserId,
         msgContent match {
           case t: Text  => createTextNotification(uid, self, conv, event, t)
           case a: Asset => createAssetNotification(uid, self, conv, event, a)
+          case k: Knock => createKnockNotification(uid, self, conv, event, k)
           case _        => None
         }).recover { case _ => None }
   }
@@ -90,6 +91,21 @@ final class NotificationParserImpl(selfId:       UserId,
       ))
     } else None
   }
+
+  private def createKnockNotification(uid: Uid,
+                                      self: UserData,
+                                      conv: ConversationData,
+                                      event: GenericMessageEvent,
+                                      k: Knock) =
+    if (shouldShowNotification(self, conv, event, isReplyOrMention = false, isComposite = false)) {
+      Some(NotificationData(
+        id      = NotId(uid.str),
+        conv    = conv.id,
+        user    = event.from,
+        msgType = NotificationType.KNOCK,
+        time    = event.time
+      ))
+    } else None
 
   private def shouldShowNotification(self:             UserData,
                                      conv:             ConversationData,

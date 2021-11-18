@@ -352,9 +352,9 @@ class ZMessaging(val teamId:    Option[TeamId],
     expiringUsers
     callLogging
 
-    //push // connect on start
-    //notifications
-    //blockStreamsWhenProcessing
+    push // connect on start
+    notifications
+    blockStreamsWhenProcessing
 
     // services listening for storage updates
     richmedia
