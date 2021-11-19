@@ -5,7 +5,7 @@ import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType.LikedContent
 import com.waz.content.{ConversationStorage, MessageAndLikesStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.GenericContent.{Asset, Knock, Location, Reaction, Text, Ephemeral}
+import com.waz.model.GenericContent.{Asset, Knock, Location, Reaction, Text, Ephemeral, Composite}
 import com.waz.model._
 import com.waz.utils._
 import com.waz.threading.Threading
@@ -13,7 +13,7 @@ import com.waz.threading.Threading
 import scala.concurrent.Future
 
 trait NotificationParser {
-  def parse(events: Seq[Event]): Future[Set[NotificationData]]
+  def parse(events: Iterable[Event]): Future[Set[NotificationData]]
 }
 
 final class NotificationParserImpl(selfId:       UserId,
@@ -27,7 +27,7 @@ final class NotificationParserImpl(selfId:       UserId,
 
   private lazy val selfUser = usersStorage.get(selfId)
 
-  override def parse(events: Seq[Event]): Future[Set[NotificationData]] =
+  override def parse(events: Iterable[Event]): Future[Set[NotificationData]] =
     Future.traverse(events){
       case ev: GenericMessageEvent => parse(ev)
       case ev: CallMessageEvent    => Future.successful(None)
@@ -58,6 +58,7 @@ final class NotificationParserImpl(selfId:       UserId,
       case r: Reaction  => createLikeNotification(uid, self, conv, event, r, isEphemeral)
       case l: Location  => createLocationNotification(uid, self, conv, event, l, isEphemeral)
       case e: Ephemeral => createNotification(uid, self, conv, event, e.unpackContent, isEphemeral = true)
+      case c: Composite => createCompositeNotification(uid, self, conv, event, c, isEphemeral)
       case _            => Future.successful(None)
     }
 
@@ -70,8 +71,10 @@ final class NotificationParserImpl(selfId:       UserId,
     val (text, mentions, _, quote, _) = t.unpack
     val isSelfMentioned = mentions.flatMap(_.userId).contains(selfId)
     val isReply = quote.isDefined
-    Future.successful {
-      if (shouldShowNotification(self, conv, event, isReplyOrMention = isSelfMentioned || isReply))
+    if (!shouldShowNotification(self, conv, event, isReplyOrMention = isSelfMentioned || isReply))
+      Future.successful(None)
+    else
+      Future.successful {
         Some(NotificationData(
           id              = NotId(uid.str),
           msg             = if (isEphemeral) "" else text,
@@ -83,8 +86,7 @@ final class NotificationParserImpl(selfId:       UserId,
           isSelfMentioned = isSelfMentioned,
           isReply         = isReply
         ))
-      else None
-    }
+      }
   }
 
   private def createAssetNotification(uid:         Uid,
@@ -92,15 +94,17 @@ final class NotificationParserImpl(selfId:       UserId,
                                       conv:        ConversationData,
                                       event:       GenericMessageEvent,
                                       a:           Asset,
-                                      isEphemeral: Boolean) = {
-    val (asset, _) = a.unpack
-    val msgType =
-      if (Mime.Video.supported.contains(asset.mime)) NotificationType.VIDEO_ASSET
-      else if (Mime.Audio.supported.contains(asset.mime)) NotificationType.AUDIO_ASSET
-      else if (Mime.Image.supported.contains(asset.mime)) NotificationType.IMAGE_ASSET
-      else NotificationType.ANY_ASSET
-    Future.successful {
-      if (shouldShowNotification(self, conv, event)) {
+                                      isEphemeral: Boolean) =
+    if (!shouldShowNotification(self, conv, event))
+      Future.successful(None)
+    else {
+      val (asset, _) = a.unpack
+      val msgType =
+        if (Mime.Video.supported.contains(asset.mime)) NotificationType.VIDEO_ASSET
+        else if (Mime.Audio.supported.contains(asset.mime)) NotificationType.AUDIO_ASSET
+        else if (Mime.Image.supported.contains(asset.mime)) NotificationType.IMAGE_ASSET
+        else NotificationType.ANY_ASSET
+      Future.successful {
         Some(NotificationData(
           id        = NotId(uid.str),
           conv      = conv.id,
@@ -109,9 +113,8 @@ final class NotificationParserImpl(selfId:       UserId,
           time      = event.time,
           ephemeral = isEphemeral
         ))
-      } else None
+      }
     }
-  }
 
   private def createPingNotification(uid:         Uid,
                                      self:        UserData,
@@ -119,59 +122,65 @@ final class NotificationParserImpl(selfId:       UserId,
                                      event:       GenericMessageEvent,
                                      k:           Knock,
                                      isEphemeral: Boolean) =
-    Future.successful {
-      if (shouldShowNotification(self, conv, event))
-        Some(NotificationData(
-          id      = NotId(uid.str),
-          conv    = conv.id,
-          user    = event.from,
-          msgType = NotificationType.KNOCK,
-          time    = event.time,
-          ephemeral = isEphemeral
-        ))
-      else None
-    }
+    if (!shouldShowNotification(self, conv, event))
+      Future.successful(None)
+    else
+      Future.successful {
+          Some(NotificationData(
+            id        = NotId(uid.str),
+            conv      = conv.id,
+            user      = event.from,
+            msgType   = NotificationType.KNOCK,
+            time      = event.time,
+            ephemeral = isEphemeral
+          ))
+      }
 
   private def createLikeNotification(uid:         Uid,
                                      self:        UserData,
                                      conv:        ConversationData,
                                      event:       GenericMessageEvent,
                                      r:           Reaction,
-                                     isEphemeral: Boolean) = {
-    val (mId, action) = r.unpack
-    if (action != Liking.Action.Like || !shouldShowNotification(self, conv, event))
+                                     isEphemeral: Boolean) =
+    if (!shouldShowNotification(self, conv, event))
       Future.successful(None)
-    else
-      mlStorage.getMessageAndLikes(mId).map {
-        case Some(ml) if ml.message.userId == selfId =>
-          val likedContent = ml.message.msgType match {
-            case Message.Type.IMAGE_ASSET     => LikedContent.PICTURE
-            case Message.Type.TEXT |
-                 Message.Type.TEXT_EMOJI_ONLY => LikedContent.TEXT_OR_URL
-            case _                            => LikedContent.OTHER
-          }
-          Some(NotificationData(
-            id           = NotId(uid.str),
-            msg          = if (ml.message.isEphemeral) "" else ml.message.contentString,
-            conv         = conv.id,
-            user         = event.from,
-            msgType      = NotificationType.LIKE,
-            time         = event.time,
-            ephemeral    = isEphemeral,
-            likedContent = Some(likedContent)
-          ))
-        case _ => None
-      }
-  }
+    else {
+      val (mId, action) = r.unpack
+      if (action != Liking.Action.Like)
+        Future.successful(None)
+      else
+        mlStorage.getMessageAndLikes(mId).map {
+          case Some(ml) if ml.message.userId == selfId =>
+            val likedContent = ml.message.msgType match {
+              case Message.Type.IMAGE_ASSET => LikedContent.PICTURE
+              case Message.Type.TEXT |
+                   Message.Type.TEXT_EMOJI_ONLY => LikedContent.TEXT_OR_URL
+              case _ => LikedContent.OTHER
+            }
+            Some(NotificationData(
+              id           = NotId(uid.str),
+              msg          = if (ml.message.isEphemeral) "" else ml.message.contentString,
+              conv         = conv.id,
+              user         = event.from,
+              msgType      = NotificationType.LIKE,
+              time         = event.time,
+              ephemeral    = isEphemeral,
+              likedContent = Some(likedContent)
+            ))
+          case _ => None
+        }
+    }
 
   private def createLocationNotification(uid:         Uid,
                                          self:        UserData,
                                          conv:        ConversationData,
                                          event:       GenericMessageEvent,
                                          l:           Location,
-                                         isEphemeral: Boolean) = {
-    Future.successful {
-      if (shouldShowNotification(self, conv, event))
+                                         isEphemeral: Boolean) =
+    if (!shouldShowNotification(self, conv, event))
+      Future.successful(None)
+    else
+      Future.successful {
         Some(NotificationData(
           id        = NotId(uid.str),
           conv      = conv.id,
@@ -180,7 +189,31 @@ final class NotificationParserImpl(selfId:       UserId,
           time      = event.time,
           ephemeral = isEphemeral
         ))
-      else None
+      }
+
+  private def createCompositeNotification(uid:         Uid,
+                                          self:        UserData,
+                                          conv:        ConversationData,
+                                          event:       GenericMessageEvent,
+                                          c:           Composite,
+                                          isEphemeral: Boolean) = {
+    if (!shouldShowNotification(self, conv, event, isComposite = true))
+      Future.successful(None)
+    else {
+      lazy val text = c.unpack.items.collectFirst {
+        case TextItem(text) => text.unpack._1
+      }
+      Future.successful {
+        Some(NotificationData(
+          id        = NotId(uid.str),
+          msg       = if (isEphemeral) "" else text.getOrElse(""),
+          conv      = conv.id,
+          user      = event.from,
+          msgType   = NotificationType.COMPOSITE,
+          time      = event.time,
+          ephemeral = isEphemeral
+        ))
+      }
     }
   }
 
