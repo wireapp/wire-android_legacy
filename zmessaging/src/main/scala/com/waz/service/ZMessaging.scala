@@ -242,7 +242,7 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val msgEvents: MessageEventProcessor           = wire[MessageEventProcessor]
   lazy val connection: ConnectionService              = wire[ConnectionServiceImpl]
   lazy val httpProxy: Option[java.net.Proxy]          = global.httpProxy
-  lazy val calling: CallingServiceImpl                = wire[CallingServiceImpl]
+  lazy val calling: CallingService                    = wire[CallingServiceImpl]
   lazy val callLogging: CallLoggingService            = wire[CallLoggingService]
   lazy val typing: TypingService                      = wire[TypingService]
   lazy val richmedia                                  = wire[RichMediaService]

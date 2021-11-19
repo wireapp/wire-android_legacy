@@ -53,12 +53,11 @@ import com.waz.threading.Threading._
 
 import scala.util.Try
 
-class MessageNotificationsController(applicationId: String = BuildConfig.APPLICATION_ID)
-                                    (implicit inj: Injector, cxt: Context)
+final class MessageNotificationsController(applicationId: String = BuildConfig.APPLICATION_ID)
+                                          (implicit inj: Injector, cxt: Context)
   extends Injectable
     with NotificationUiController
     with DerivedLogTag {
-
   import MessageNotificationsController._
   import Threading.Implicits.Background
 
