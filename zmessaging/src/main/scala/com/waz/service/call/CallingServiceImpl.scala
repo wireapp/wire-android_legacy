@@ -110,6 +110,8 @@ trait CallingService {
   def setCallMuted(muted: Boolean): Unit
 
   def setVideoSendState(convId: ConvId, state: VideoState.Value): Unit
+
+  def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit
 }
 
 object CallingService {
@@ -152,26 +154,28 @@ object CallingService {
 
 }
 
-class CallingServiceImpl(val accountId:       UserId,
-                         val clientId:        ClientId,
-                         callingClient:       CallingClient,
-                         avs:                 Avs,
-                         convs:               ConversationsContentUpdater,
-                         convsService:        ConversationsService,
-                         members:             MembersStorage,
-                         otrSyncHandler:      OtrSyncHandler,
-                         flowManagerService:  FlowManagerService,
-                         messagesService:     MessagesService,
-                         mediaManagerService: MediaManagerService,
-                         pushService:         PushService,
-                         network:             NetworkModeService,
-                         errors:              ErrorsService,
-                         userPrefs:           UserPreferences,
-                         globalPrefs:         GlobalPreferences,
-                         permissions:         PermissionsService,
-                         userStorage:         UsersStorage,
-                         httpProxy:           Option[Proxy])(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
-
+final class CallingServiceImpl(val accountId:       UserId,
+                               val clientId:        ClientId,
+                               callingClient:       CallingClient,
+                               avs:                 Avs,
+                               convs:               ConversationsContentUpdater,
+                               convsService:        ConversationsService,
+                               members:             MembersStorage,
+                               otrSyncHandler:      OtrSyncHandler,
+                               flowManagerService:  FlowManagerService,
+                               messagesService:     MessagesService,
+                               mediaManagerService: MediaManagerService,
+                               pushService:         PushService,
+                               network:             NetworkModeService,
+                               errors:              ErrorsService,
+                               userPrefs:           UserPreferences,
+                               globalPrefs:         GlobalPreferences,
+                               permissions:         PermissionsService,
+                               userStorage:         UsersStorage,
+                               httpProxy:           Option[Proxy])
+                              (implicit accountContext: AccountContext)
+  extends CallingService with DerivedLogTag with SafeToLog { self =>
+  verbose(l"FCM CallingService initialized!")
   import CallingService._
 
   import com.waz.threading.Threading.Implicits.Background
@@ -572,7 +576,7 @@ class CallingServiceImpl(val accountId:       UserId,
       })
   }
 
-  private def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit =
+  override def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit =
     wCall.map { w =>
       import CallingServiceImpl._
 

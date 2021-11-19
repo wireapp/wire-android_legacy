@@ -5,22 +5,24 @@ import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType.LikedContent
 import com.waz.content.{ConversationStorage, MessageAndLikesStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.GenericContent.{Asset, Knock, Location, Reaction, Text, Ephemeral, Composite}
+import com.waz.model.GenericContent.{Asset, Composite, Ephemeral, Knock, Location, Reaction, Text}
 import com.waz.model._
 import com.waz.utils._
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
+import com.waz.log.LogSE._
+import com.waz.service.call.CallingService
 
 trait NotificationParser {
   def parse(events: Iterable[Event]): Future[Set[NotificationData]]
 }
 
 final class NotificationParserImpl(selfId:       UserId,
-                                   decoder:      OtrEventDecoder,
                                    convStorage:  ConversationStorage,
                                    usersStorage: UsersStorage,
-                                   mlStorage:    MessageAndLikesStorage)
+                                   mlStorage:    => MessageAndLikesStorage,
+                                   calling:      => CallingService)
   extends NotificationParser with DerivedLogTag {
   import scala.language.existentials
   import Threading.Implicits.Background
@@ -29,10 +31,10 @@ final class NotificationParserImpl(selfId:       UserId,
 
   override def parse(events: Iterable[Event]): Future[Set[NotificationData]] =
     Future.traverse(events){
-      case ev: GenericMessageEvent => parse(ev)
-      case ev: CallMessageEvent    => Future.successful(None)
-      case ev: UserConnectionEvent => Future.successful(None)
-      case _                       => Future.successful(None)
+      case ev: GenericMessageEvent => verbose(l"FCM 1 for $ev"); parse(ev)
+      case ev: CallMessageEvent    => verbose(l"FCM 2 for $ev"); parse(ev)
+      case ev: UserConnectionEvent => verbose(l"FCM 3 for $ev");Future.successful(None)
+      case ev                       => verbose(l"FCM 4 for $ev");Future.successful(None)
     }.map(_.flatten.toSet)
 
   private def parse(event: GenericMessageEvent): Future[Option[NotificationData]] =
@@ -43,6 +45,11 @@ final class NotificationParserImpl(selfId:       UserId,
       notification      <- createNotification(uid, self, conv, event, msgContent)
     } yield notification
   ).recover { case _ => None }
+
+  private def parse(event: CallMessageEvent) = Future.successful {
+    calling.receiveCallEvent(event.content, event.time, event.convId, event.from, event.sender)
+    None
+  }
 
   @scala.annotation.tailrec
   private def createNotification(uid:         Uid,
@@ -243,13 +250,4 @@ final class NotificationParserImpl(selfId:       UserId,
       conv.muted.isAllAllowed || (conv.muted.onlyMentionsAllowed && isReplyOrMention)
     }
   }
-}
-
-object NotificationParser {
-  def apply(selfId:       UserId,
-            decoder:      OtrEventDecoder,
-            convStorage:  ConversationStorage,
-            usersStorage: UsersStorage,
-            mlStorage:    MessageAndLikesStorage): NotificationParser =
-    new NotificationParserImpl(selfId, decoder, convStorage, usersStorage, mlStorage)
 }
