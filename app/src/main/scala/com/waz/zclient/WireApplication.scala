@@ -110,6 +110,7 @@ object WireApplication extends DerivedLogTag {
   type AccountToUsersStorage = (UserId) => Future[Option[UsersStorage]]
   type AccountToConvsStorage = (UserId) => Future[Option[ConversationStorage]]
   type AccountToConvsService = (UserId) => Future[Option[ConversationsService]]
+  type AccountToUserService = (UserId) => Future[Option[UserService]]
 
   lazy val Global = new Module {
 
@@ -163,6 +164,7 @@ object WireApplication extends DerivedLogTag {
     bind [AccountToUsersStorage]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.usersStorage)))
     bind [AccountToConvsStorage]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.convsStorage)))
     bind [AccountToConvsService]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.conversations)))
+    bind [AccountToUserService]   to (userId => inject[AccountsService].getZms(userId).map(_.map(_.users)))
 
     // the current user's id
     bind [Signal[Option[UserId]]] to inject[Signal[AccountsService]].flatMap(_.activeAccountId)

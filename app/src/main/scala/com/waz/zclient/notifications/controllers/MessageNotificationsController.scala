@@ -106,11 +106,14 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   }
 
   override def onNotificationsChanged(accountId: UserId, nots: Set[NotificationData]): Future[Unit] = {
-    verbose(l"onNotificationsChanged: $accountId, nots: $nots")
+    verbose(l"FCM onNotificationsChanged: $accountId, nots: $nots")
     for {
       teamName  <- fetchTeamName(accountId)
+      _ = verbose(l"FCM team name: $teamName")
       summaries <- createSummaryNotificationProps(accountId, nots, teamName).map(_.map(p => (toNotificationGroupId(accountId), p)))
+      _ = verbose(l"FCM summaries: $summaries")
       convNots  <- createConvNotifications(accountId, nots, teamName).map(_.toMap)
+      _ = verbose(l"FCM convNots: $convNots")
       _         <- Threading.Ui {
                      (convNots ++ summaries).foreach {
                        case (id, props) => notificationManager.showNotification(id, props)
@@ -285,8 +288,8 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     }
 
   private def getUserName(account: UserId, n: NotificationData) =
-    inject[AccountToUsersStorage].apply(account).flatMap {
-      case Some(storage) => storage.get(n.user).map(_.map(_.name))
+    inject[AccountToUserService].apply(account).flatMap {
+      case Some(service) => service.getOrCreateUser(n.user, waitTillSynced = true).map(u => Some(u.name))
       case None          => Future.successful(Option.empty[Name])
     }
 
@@ -385,13 +388,12 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     SpannableWrapper(header = header, body = body, spans = spans, separator = "")
   }
 
-  private def getPictureForNotifications(userId: UserId, nots: Seq[NotificationData]): Future[Option[Bitmap]] =
+  private def getPictureForNotifications(accountId: UserId, nots: Seq[NotificationData]): Future[Option[Bitmap]] =
     if (nots.size == 1 && !nots.exists(_.ephemeral)) {
       val result = for {
-        Some(storage) <- inject[AccountToUsersStorage].apply(userId)
-        user          <- storage.get(nots.head.user)
-        picture        = user.flatMap(_.picture)
-        bitmap        <- picture.fold(Future.successful(Option.empty[Bitmap]))(loadPicture)
+        Some(service) <- inject[AccountToUserService].apply(accountId)
+        user          <- service.getOrCreateUser(nots.head.user, waitTillSynced = true)
+        bitmap        <- user.picture.fold(Future.successful(Option.empty[Bitmap]))(loadPicture)
       } yield bitmap
 
       result.recoverWith {

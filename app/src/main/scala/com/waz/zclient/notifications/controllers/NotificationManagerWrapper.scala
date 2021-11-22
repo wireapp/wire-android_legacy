@@ -51,7 +51,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-case class Span(style: Int, range: Int, offset: Int = 0)
+final case class Span(style: Int, range: Int, offset: Int = 0)
 
 object Span {
   val ForegroundColorSpanBlack = 1
@@ -63,11 +63,10 @@ object Span {
   val BodyRange   = 2
 }
 
-case class SpannableWrapper(header: ResString,
-                            body: ResString,
-                            spans: List[Span],
-                            separator: String) {
-
+final case class SpannableWrapper(header: ResString,
+                                  body: ResString,
+                                  spans: List[Span],
+                                  separator: String) {
   override def toString: String =
     format(className = "SpannableWrapper", oneLiner = true,
       "header"    -> Some(header),
@@ -119,11 +118,11 @@ object SpannableWrapper {
   val Empty: SpannableWrapper = SpannableWrapper(ResString.Empty)
 }
 
-case class StyleBuilder(style: Int,
-                        title: SpannableWrapper,
-                        summaryText: Option[String] = None,
-                        bigText: Option[SpannableWrapper] = None,
-                        lines: List[SpannableWrapper] = List.empty) {
+final case class StyleBuilder(style: Int,
+                              title: SpannableWrapper,
+                              summaryText: Option[String] = None,
+                              bigText: Option[SpannableWrapper] = None,
+                              lines: List[SpannableWrapper] = List.empty) {
   override def toString: String =
     format(className = "StyleBuilder", oneLiner = true,
       "style"       -> Some(style),
@@ -273,21 +272,20 @@ trait NotificationManagerWrapper {
 }
 
 object NotificationManagerWrapper {
-
   val IncomingCallNotificationsChannelId = "INCOMING_CALL_NOTIFICATIONS_CHANNEL_ID"
   val OngoingNotificationsChannelId      = "STICKY_NOTIFICATIONS_CHANNEL_ID"
 
   def PingNotificationsChannelId(userId: UserId)         = s"PINGS_NOTIFICATIONS_CHANNEL_ID_${userId.str.hashCode}"
   def MessageNotificationsChannelId(userId: UserId)      = s"MESSAGE_NOTIFICATIONS_CHANNEL_ID_${userId.str.hashCode}"
 
-  case class ChannelGroup(id: String, name: String, channels: Set[ChannelInfo])
+  final case class ChannelGroup(id: String, name: String, channels: Set[ChannelInfo])
 
-  case class ChannelInfo(id: String, name: String, description: String, sound: Uri, vibration: Boolean)
+  final case class ChannelInfo(id: String, name: String, description: String, sound: Uri, vibration: Boolean)
   object ChannelInfo {
     def apply(id: String, name: Int, description: Int, sound: Uri, vibration: Boolean)(implicit cxt: Context): ChannelInfo = ChannelInfo(id, getString(name), getString(description), sound, vibration)
   }
 
-  class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
+  final class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
     extends NotificationManagerWrapper with Injectable with DerivedLogTag {
 
     val accountChannels = inject[AccountsService].accountManagers.flatMap(ams => Signal.sequence(ams.map { am =>
@@ -369,18 +367,19 @@ object NotificationManagerWrapper {
         })
     }
 
-    def showNotification(id: Int, notificationProps: NotificationProps) = {
-      verbose(l"build: $id")
+    def showNotification(id: Int, notificationProps: NotificationProps): Unit = {
+      verbose(l"FCM build: $id, props: $notificationProps")
       notificationManager.notify(id, notificationProps.build())
     }
 
     override def getActiveNotificationIds: Seq[Int] =
-        notificationManager.getActiveNotifications.toSeq.map(_.getId)
+      notificationManager.getActiveNotifications.toSeq.map(_.getId)
 
-    def getNotificationChannel(channelId: String) = notificationManager.getNotificationChannel(channelId)
+    def getNotificationChannel(channelId: String): NotificationChannel =
+      notificationManager.getNotificationChannel(channelId)
 
     override def cancelNotifications(ids: Set[Int]): Unit = {
-      verbose(l"cancel: $ids")
+      verbose(l"FCM cancel: $ids")
       ids.foreach(notificationManager.cancel)
     }
 
@@ -442,4 +441,3 @@ object NotificationManagerWrapper {
         }
   }
 }
-

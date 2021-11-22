@@ -11,8 +11,10 @@ import com.waz.utils._
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
-import com.waz.log.LogSE._
+import com.waz.model.UserData.ConnectionStatus
 import com.waz.service.call.CallingService
+
+import com.waz.log.LogSE._
 
 trait NotificationParser {
   def parse(events: Iterable[Event]): Future[Set[NotificationData]]
@@ -37,14 +39,14 @@ final class NotificationParserImpl(selfId:       UserId,
     Future.traverse(events){
       case ev: GenericMessageEvent => parse(ev)
       case ev: CallMessageEvent    => parse(ev)
-      case ev: UserConnectionEvent => Future.successful(None)
+      case ev: UserConnectionEvent => parse(ev)
       case _                       => Future.successful(None)
     }.map(_.flatten.toSet)
 
   override def createMissedCallNotification(msgId: MessageId,
                                             conv:  ConversationData,
                                             from:  UserId,
-                                            time:  RemoteInstant): Future[Option[NotificationData]] = {
+                                            time:  RemoteInstant): Future[Option[NotificationData]] =
     selfUser.map {
       case Some(self) if shouldShowNotification(self, conv, from, time) =>
         Some(NotificationData(
@@ -57,7 +59,6 @@ final class NotificationParserImpl(selfId:       UserId,
       case _ =>
         None
     }
-  }
 
   private def parse(event: GenericMessageEvent): Future[Option[NotificationData]] =
     (for {
@@ -72,6 +73,35 @@ final class NotificationParserImpl(selfId:       UserId,
     calling.receiveCallEvent(event.content, event.time, event.convId, event.from, event.sender)
     None
   }
+
+  private def parse(event: UserConnectionEvent): Future[Option[NotificationData]] =
+    selfUser.map(_.flatMap { self =>
+      event match {
+        case ev@UserConnectionEvent(_, _, _, from, _, msg, ConnectionStatus.PendingFromOther, time, _)
+          if shouldShowNotification(self, from) =>
+            verbose(l"FCM UserConnectionEvent pending from other: $ev")
+            Some(NotificationData(
+              NotId(NotificationType.CONNECT_REQUEST, from),
+              msg.getOrElse(""),
+              ConvId(from.str),
+              from,
+              NotificationType.CONNECT_REQUEST,
+              time))
+        case ev@UserConnectionEvent(_, _, _, from, _, _, ConnectionStatus.Accepted, time, _)
+          if shouldShowNotification(self, from) =>
+          verbose(l"FCM UserConnectionEvent accepted: $ev")
+            Some(NotificationData(
+              NotId(NotificationType.CONNECT_ACCEPTED, from),
+              "",
+              ConvId(from.str),
+              from,
+              NotificationType.CONNECT_ACCEPTED,
+              time))
+        case other =>
+          verbose(l"FCM UserConnectionEvent other: $other")
+          None
+      }
+    })
 
   @scala.annotation.tailrec
   private def createNotification(uid:         Uid,
@@ -273,4 +303,9 @@ final class NotificationParserImpl(selfId:       UserId,
       conv.muted.isAllAllowed || (conv.muted.onlyMentionsAllowed && isReplyOrMention)
     }
   }
+
+  private def shouldShowNotification(self: UserData, from: UserId): Boolean =
+    from != self.id &&
+      self.availability != Availability.Away &&
+      self.availability != Availability.Busy
 }
