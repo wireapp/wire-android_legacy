@@ -37,10 +37,11 @@ final class NotificationParserImpl(selfId:       UserId,
 
   override def parse(events: Iterable[Event]): Future[Set[NotificationData]] =
     Future.traverse(events){
-      case ev: GenericMessageEvent => parse(ev)
-      case ev: CallMessageEvent    => parse(ev)
-      case ev: UserConnectionEvent => parse(ev)
-      case _                       => Future.successful(None)
+      case ev: GenericMessageEvent     => parse(ev)
+      case ev: CallMessageEvent        => parse(ev)
+      case ev: UserConnectionEvent     => parse(ev)
+      case ev: RenameConversationEvent => parse(ev)
+      case _                           => Future.successful(None)
     }.map(_.flatten.toSet)
 
   override def createMissedCallNotification(msgId: MessageId,
@@ -102,6 +103,23 @@ final class NotificationParserImpl(selfId:       UserId,
           None
       }
     })
+
+  private def parse(event: RenameConversationEvent): Future[Option[NotificationData]] = {
+    for {
+      Some(self) <- selfUser
+      Some(conv) <- convStorage.getByRemoteId(event.convId)
+    } yield
+      if (shouldShowNotification(self, conv, event.from, event.time))
+        Some(NotificationData(
+          id      = NotId(),
+          msg     = event.name.str,
+          conv    = conv.id,
+          user    = event.from,
+          msgType = NotificationType.RENAME,
+          time    = event.time
+        ))
+      else None
+  }.recover { case _ => None }
 
   @scala.annotation.tailrec
   private def createNotification(uid:         Uid,

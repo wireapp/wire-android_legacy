@@ -106,14 +106,11 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   }
 
   override def onNotificationsChanged(accountId: UserId, nots: Set[NotificationData]): Future[Unit] = {
-    verbose(l"FCM onNotificationsChanged: $accountId, nots: $nots")
+    verbose(l"onNotificationsChanged: $accountId, nots: $nots")
     for {
       teamName  <- fetchTeamName(accountId)
-      _ = verbose(l"FCM team name: $teamName")
       summaries <- createSummaryNotificationProps(accountId, nots, teamName).map(_.map(p => (toNotificationGroupId(accountId), p)))
-      _ = verbose(l"FCM summaries: $summaries")
       convNots  <- createConvNotifications(accountId, nots, teamName).map(_.toMap)
-      _ = verbose(l"FCM convNots: $convNots")
       _         <- Threading.Ui {
                      (convNots ++ summaries).foreach {
                        case (id, props) => notificationManager.showNotification(id, props)
@@ -325,7 +322,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
         case VIDEO_ASSET                              => ResString(R.string.notification__message__one_to_one__shared_video)
         case AUDIO_ASSET                              => ResString(R.string.notification__message__one_to_one__shared_audio)
         case LOCATION                                 => ResString(R.string.notification__message__one_to_one__shared_location)
-        case RENAME                                   => ResString(R.string.notification__message__group__renamed_conversation, convName)
+        case RENAME                                   => ResString(R.string.notification__message__group__renamed_conversation, n.msg)
         case CONNECT_ACCEPTED                         => ResString(R.string.notification__message__single__accept_request, userName)
         case CONNECT_REQUEST                          => ResString(R.string.people_picker__invite__share_text__header, userName)
         case MESSAGE_SENDING_FAILED                   => ResString(R.string.notification__message__send_failed)

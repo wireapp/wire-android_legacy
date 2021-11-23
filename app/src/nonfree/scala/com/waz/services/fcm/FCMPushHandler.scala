@@ -49,25 +49,27 @@ final class FCMPushHandlerImpl(userId:      UserId,
   private def updateDrift(time: Option[Instant]) =
     time.fold(Future.successful(()))(t => (beDriftPref := clock.instant.until(t)))
 
-  private def syncHistory(): Future[Unit] = {
-    def processNotifications(notifications: Vector[PushNotificationEncoded]): Future[Unit] =
-      if (notifications.nonEmpty)
-        for {
-          encrypted <- storage.saveAll(notifications)
-          _         <- processEncryptedEvents(encrypted)
-          decrypted <- storage.getDecryptedRows
-          decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
-          _         =  verbose(l"decoded events (${decoded.size}): $decoded")
-          parsed    <- parser.parse(decoded)
-          _         =  verbose(l"parsed events (${parsed.size}): $parsed")
-          _         <- if (parsed.nonEmpty) controller.onNotificationsChanged(userId, parsed) else Future.successful(())
-          _         <- updateLastId(notifications)
-                    // at the end of processing we check if no new notifications came in the meantime
-          _         <- syncHistory()
-        } yield ()
-      else
-        Future.successful(())
+  private def processNotifications(notifications: Vector[PushNotificationEncoded]): Future[Unit] = {
+    verbose(l"processNotifications($notifications)")
+    if (notifications.nonEmpty)
+      for {
+        encrypted <- storage.saveAll(notifications)
+        _         <- processEncryptedEvents(encrypted)
+        decrypted <- storage.getDecryptedRows
+        decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
+        _         =  verbose(l"decoded events (${decoded.size}): $decoded")
+        parsed    <- parser.parse(decoded)
+        _         =  verbose(l"parsed events (${parsed.size}): $parsed")
+        _         <- if (parsed.nonEmpty) controller.onNotificationsChanged(userId, parsed) else Future.successful(())
+        _         <- updateLastId(notifications)
+        // at the end of processing we check if no new notifications came in the meantime
+        _         <- syncHistory()
+      } yield ()
+    else
+      Future.successful(())
+  }
 
+  private def syncHistory(): Future[Unit] =
     for {
       lastId              <- idPref()
       results             <- lastId.map(load(_, 0).future).getOrElse(Future.successful(None))
@@ -75,7 +77,6 @@ final class FCMPushHandlerImpl(userId:      UserId,
       _                   <- updateDrift(time)
       _                   <- processNotifications(nots)
     } yield ()
-  }
 
   private def updateLastId(nots: Seq[PushNotificationEncoded]) =
     nots.reverse.find(!_.transient).map(_.id) match {
@@ -86,7 +87,7 @@ final class FCMPushHandlerImpl(userId:      UserId,
   private def processEncryptedEvents(events: Seq[PushNotificationEvent]) =
     Future.traverse(events) {
       case event @ GetOtrEvent(otrEvent) => decrypt(event.index, otrEvent)
-      case otherEvent                    => storage.setAsDecrypted(otherEvent.index)
+      case event                         => storage.setAsDecrypted(event.index)
     }.map(_ => ())
 
   private def decrypt(index: Int, otrEvent: OtrEvent): Future[Unit] =
