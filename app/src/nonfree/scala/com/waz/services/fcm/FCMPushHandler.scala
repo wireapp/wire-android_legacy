@@ -51,22 +51,17 @@ final class FCMPushHandlerImpl(userId:      UserId,
 
   private def processNotifications(notifications: Vector[PushNotificationEncoded]): Future[Unit] = {
     verbose(l"processNotifications($notifications)")
-    if (notifications.nonEmpty)
-      for {
-        encrypted <- storage.saveAll(notifications)
-        _         <- processEncryptedEvents(encrypted)
-        decrypted <- storage.getDecryptedRows
-        decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
-        _         =  verbose(l"decoded events (${decoded.size}): $decoded")
-        parsed    <- parser.parse(decoded)
-        _         =  verbose(l"parsed events (${parsed.size}): $parsed")
-        _         <- if (parsed.nonEmpty) controller.onNotificationsChanged(userId, parsed) else Future.successful(())
-        _         <- updateLastId(notifications)
-        // at the end of processing we check if no new notifications came in the meantime
-        _         <- syncHistory()
-      } yield ()
-    else
-      Future.successful(())
+    for {
+      encrypted <- storage.saveAll(notifications)
+      _         <- processEncryptedEvents(encrypted)
+      decrypted <- storage.getDecryptedRows
+      decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
+      _         =  verbose(l"decoded events (${decoded.size}): $decoded")
+      parsed    <- parser.parse(decoded)
+      _         =  verbose(l"parsed events (${parsed.size}): $parsed")
+      _         <- if (parsed.nonEmpty) controller.onNotificationsChanged(userId, parsed) else Future.successful(())
+      _         <- updateLastId(notifications)
+    } yield ()
   }
 
   private def syncHistory(): Future[Unit] =
@@ -75,7 +70,9 @@ final class FCMPushHandlerImpl(userId:      UserId,
       results             <- lastId.map(load(_, 0).future).getOrElse(Future.successful(None))
       Results(nots, time) =  results.getOrElse(Results.Empty)
       _                   <- updateDrift(time)
-      _                   <- processNotifications(nots)
+      _                   <- if (nots.nonEmpty) processNotifications(nots) else Future.successful(())
+                             // at the end of processing we check if no new notifications came in the meantime
+      _                   <- if (nots.nonEmpty) syncHistory() else Future.successful(())
     } yield ()
 
   private def updateLastId(nots: Seq[PushNotificationEncoded]) =

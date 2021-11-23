@@ -41,6 +41,7 @@ final class NotificationParserImpl(selfId:       UserId,
       case ev: CallMessageEvent        => parse(ev)
       case ev: UserConnectionEvent     => parse(ev)
       case ev: RenameConversationEvent => parse(ev)
+      case ev: DeleteConversationEvent => parse(ev)
       case _                           => Future.successful(None)
     }.map(_.flatten.toSet)
 
@@ -61,51 +62,52 @@ final class NotificationParserImpl(selfId:       UserId,
         None
     }
 
-  private def parse(event: GenericMessageEvent): Future[Option[NotificationData]] =
+  private def parse(event: GenericMessageEvent) =
     (for {
       Some(self)        <- selfUser
       Some(conv)        <- convStorage.getByRemoteId(event.convId)
       (uid, msgContent) =  event.content.unpack
       notification      <- createNotification(uid, self, conv, event, msgContent)
-    } yield notification
-  ).recover { case _ => None }
+    } yield notification)
+      .recover { case ex: Throwable =>
+        error(l"error while parsing $event, ${ex.getMessage}", ex)
+        None
+      }
 
   private def parse(event: CallMessageEvent) = Future.successful {
     calling.receiveCallEvent(event.content, event.time, event.convId, event.from, event.sender)
-    None
+    Option.empty[NotificationData]
   }
 
-  private def parse(event: UserConnectionEvent): Future[Option[NotificationData]] =
+  private def parse(event: UserConnectionEvent) =
     selfUser.map(_.flatMap { self =>
       event match {
-        case ev@UserConnectionEvent(_, _, _, from, _, msg, ConnectionStatus.PendingFromOther, time, _)
+        case UserConnectionEvent(_, _, _, from, _, msg, ConnectionStatus.PendingFromOther, time, _)
           if shouldShowNotification(self, from) =>
-            verbose(l"FCM UserConnectionEvent pending from other: $ev")
             Some(NotificationData(
               NotId(NotificationType.CONNECT_REQUEST, from),
               msg.getOrElse(""),
               ConvId(from.str),
               from,
               NotificationType.CONNECT_REQUEST,
-              time))
-        case ev@UserConnectionEvent(_, _, _, from, _, _, ConnectionStatus.Accepted, time, _)
+              time
+            ))
+        case UserConnectionEvent(_, _, _, from, _, _, ConnectionStatus.Accepted, time, _)
           if shouldShowNotification(self, from) =>
-          verbose(l"FCM UserConnectionEvent accepted: $ev")
             Some(NotificationData(
               NotId(NotificationType.CONNECT_ACCEPTED, from),
               "",
               ConvId(from.str),
               from,
               NotificationType.CONNECT_ACCEPTED,
-              time))
-        case other =>
-          verbose(l"FCM UserConnectionEvent other: $other")
-          None
+              time
+            ))
+        case _ => None
       }
     })
 
-  private def parse(event: RenameConversationEvent): Future[Option[NotificationData]] = {
-    for {
+  private def parse(event: RenameConversationEvent): Future[Option[NotificationData]] =
+    (for {
       Some(self) <- selfUser
       Some(conv) <- convStorage.getByRemoteId(event.convId)
     } yield
@@ -119,7 +121,28 @@ final class NotificationParserImpl(selfId:       UserId,
           time    = event.time
         ))
       else None
-  }.recover { case _ => None }
+    ).recover { case ex: Throwable =>
+      error(l"error while parsing $event, ${ex.getMessage}", ex)
+      None
+    }
+
+  private def parse(event: DeleteConversationEvent): Future[Option[NotificationData]] =
+    (for {
+      Some(self) <- selfUser
+      Some(conv) <- convStorage.getByRemoteId(event.convId)
+    } yield
+      if (shouldShowNotification(self, conv, event.from, event.time))
+        Some( NotificationData(
+          conv    = conv.id,
+          user    = event.from,
+          msgType = NotificationType.CONVERSATION_DELETED,
+          time    = event.time
+        ))
+      else None
+  ).recover { case ex: Throwable =>
+    error(l"error while parsing $event, ${ex.getMessage}", ex)
+    None
+  }
 
   @scala.annotation.tailrec
   private def createNotification(uid:         Uid,
@@ -299,7 +322,7 @@ final class NotificationParserImpl(selfId:       UserId,
                                      from:             UserId,
                                      time:             RemoteInstant,
                                      isReplyOrMention: Boolean = false,
-                                     isComposite:      Boolean = false): Boolean = {
+                                     isComposite:      Boolean = false) = {
     val fromSelf          = from == self.id
     val notReadYet        = conv.lastRead.isBefore(time)
     val notCleared        = conv.cleared.forall(_.isBefore(time))
