@@ -118,8 +118,7 @@ final class MessagesServiceImpl(selfUserId:     UserId,
                                 members:        MembersStorage,
                                 usersStorage:   UsersStorage,
                                 buttonsStorage: ButtonsStorage,
-                                sync:           SyncServiceHandle,
-                                notsParser:     NotificationParser) extends MessagesService with DerivedLogTag {
+                                sync:           SyncServiceHandle) extends MessagesService with DerivedLogTag {
   import Threading.Implicits.Background
 
   override val msgEdited = EventStream[(MessageId, MessageId)]()

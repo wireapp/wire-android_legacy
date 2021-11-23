@@ -134,7 +134,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   (errors.onErrorDismissed _).expects(*).anyNumberOfTimes().returning(CancellableFuture.successful(()))
 
   (sync.syncTeam _).expects(*).anyNumberOfTimes().returning(Future.successful(SyncId()))
-  (userService.syncUsers _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Option(SyncId())))
+  (userService.syncUsers _).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(Option(SyncId())))
   (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
 
   feature("Archive conversation") {
@@ -157,7 +157,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         MemberLeaveEvent(rConvId, domain, RemoteInstant.ofEpochSec(10000), selfUserId, domain, Seq(selfUserId), reason = None)
       )
-      (userService.syncIfNeeded _).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(*, *, *, *).anyNumberOfTimes().returning(Future.successful(None))
 
       // check if the self is still in any conversation (they are - with self)
       (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
@@ -208,7 +208,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, domain, RemoteInstant.ofEpochSec(10000), removerId, domain, Seq(selfUserId), reason = None)
       )
 
-      (userService.syncIfNeeded _).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(*, *, *, *).anyNumberOfTimes().returning(Future.successful(None))
       (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
         Future.successful(IndexedSeq(ConversationMemberData(selfUserId, convId, ConversationRole.AdminRole)))
       )
@@ -254,7 +254,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, domain, RemoteInstant.ofEpochSec(10000), selfUserId, domain, Seq(otherUserId), reason = None)
       )
 
-      (userService.syncIfNeeded _).expects(Set(otherUserId), *, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(Set(otherUserId), *, *, *).anyNumberOfTimes().returning(Future.successful(None))
       (membersStorage.getByUsers _).expects(Set(otherUserId)).anyNumberOfTimes().returning(
         Future.successful(IndexedSeq(ConversationMemberData(otherUserId, convId, ConversationRole.MemberRole)))
       )
@@ -743,7 +743,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         Future.successful(userIds.map(uId => ConversationMemberData(uId, convId, AdminRole)).toIndexedSeq)
       }
 
-      (userService.syncIfNeeded _).expects(*, *, *).returning(Future.successful(Option(SyncId())))
+      (userService.syncIfNeeded _).expects(*, *, *, *).returning(Future.successful(Option(SyncId())))
 
       (messages.addDeviceStartMessages _).expects(*, *).onCall{ (convs: Seq[ConversationData], selfUserId: UserId) =>
         convs.headOption.flatMap(_.name) should be (Some(Name("conv")))
@@ -927,7 +927,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head }
       (membersStorage.onChanged _).expects().anyNumberOfTimes().onCall(_ => EventStream.from(membersOnChanged))
       (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
-      (userService.syncIfNeeded _).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(*, *, *, *).anyNumberOfTimes().returning(Future.successful(None))
       (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes().returning(convSignal.head)
       (membersStorage.remove(_: ConvId, _:Iterable[UserId])).expects(convId, *).anyNumberOfTimes().onCall { (_: ConvId, userIds: Iterable[UserId]) =>
         members.head.map { ms =>

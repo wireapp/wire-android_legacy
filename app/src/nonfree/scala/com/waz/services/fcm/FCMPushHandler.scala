@@ -11,11 +11,10 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.clock
 import com.waz.service.otr.{NotificationParser, OtrEventDecoder}
-import com.waz.service.push.PushNotificationEventsStorage
+import com.waz.service.push.{NotificationUiController, PushNotificationEventsStorage}
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.utils.{Backoff, ExponentialBackoff, _}
-import com.waz.zclient.notifications.controllers.MessageNotificationsController
 import com.waz.znet2.http.ResponseCode
 import com.wire.signals.{CancellableFuture, Serialized}
 import org.threeten.bp.{Duration, Instant}
@@ -33,7 +32,7 @@ final class FCMPushHandlerImpl(userId:      UserId,
                                storage:     PushNotificationEventsStorage,
                                decoder:     OtrEventDecoder,
                                parser:      NotificationParser,
-                               controller:  MessageNotificationsController,
+                               controller:  NotificationUiController,
                                globalPrefs: GlobalPreferences,
                                userPrefs:   UserPreferences)
                               (implicit ec: ExecutionContext)
@@ -151,7 +150,7 @@ object FCMPushHandler {
             storage:     PushNotificationEventsStorage,
             decoder:     OtrEventDecoder,
             parser:      NotificationParser,
-            controller:  MessageNotificationsController,
+            controller:  NotificationUiController,
             globalPrefs: GlobalPreferences,
             userPrefs:   UserPreferences)
            (implicit ec: ExecutionContext): FCMPushHandler =

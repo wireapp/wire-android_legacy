@@ -21,8 +21,8 @@ import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.model.otr.ClientId
 import com.waz.model._
-import com.waz.service.otr.OtrEventDecoder
-import com.waz.service.push.PushNotificationEventsStorage
+import com.waz.service.otr.{NotificationParser, OtrEventDecoder}
+import com.waz.service.push.{NotificationUiController, PushNotificationEventsStorage}
 import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
 import com.waz.sync.client.{EncodedEvent, ErrorOrResponse, PushNotificationEncoded, PushNotificationsClient}
 import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue, Threading}
@@ -51,10 +51,12 @@ class FCMPushHandlerSpec extends FeatureSpec
   private val client      = mock[PushNotificationsClient]
   private val storage     = mock[PushNotificationEventsStorage]
   private val decoder     = mock[OtrEventDecoder]
+  private val parser      = mock[NotificationParser]
+  private val controller  = mock[NotificationUiController]
   private val globalPrefs = new TestGlobalPreferences
   private val userPrefs   = new TestUserPreferences
 
-  private def handler = FCMPushHandler(clientId, client, storage, decoder, globalPrefs, userPrefs)
+  private def handler = FCMPushHandler(userId, clientId, client, storage, decoder, parser, controller, globalPrefs, userPrefs)
 
   private def result[T](scenario: Future[T]): T = Await.result(scenario, 5.seconds)
   private def success[T](result: T): ErrorOrResponse[T] = CancellableFuture.successful(Right(result))
@@ -79,6 +81,7 @@ class FCMPushHandlerSpec extends FeatureSpec
     (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
     (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
     (storage.getDecryptedRows _).expects().anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
+    (parser.parse _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
@@ -103,6 +106,7 @@ class FCMPushHandlerSpec extends FeatureSpec
     (storage.saveAll _).expects(notifications).once().returning(Future.successful(Seq.empty))
     (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
     (storage.getDecryptedRows _).expects().anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
+    (parser.parse _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
@@ -130,6 +134,7 @@ class FCMPushHandlerSpec extends FeatureSpec
     (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
     (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
     (storage.getDecryptedRows _).expects().anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
+    (parser.parse _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
