@@ -222,7 +222,8 @@ final case class NotificationProps(accountId:                UserId,
       builder.setGroupSummary(summary)
       builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
     }
-    group.foreach(accountId => builder.setGroup(accountId.str))
+
+    builder.setGroup(group.fold("")(_.str))
 
     openAccountIntent.foreach(userId => builder.setContentIntent(Intents.OpenAccountIntent(userId)))
 
@@ -289,23 +290,23 @@ object NotificationManagerWrapper {
   final class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
     extends NotificationManagerWrapper with Injectable with DerivedLogTag {
 
-    val accountChannels = inject[AccountsService].accountManagers.flatMap(ams => Signal.sequence(ams.map { am =>
+    val accountChannels: Signal[Seq[ChannelGroup]] =
+      inject[AccountsService].accountManagers.flatMap(ams => Signal.sequence(ams.map { am =>
+        def getSound(pref: PrefKey[String], default: Int): Future[Uri] =
+          am.userPrefs.preference(pref).apply().map {
+            case ""  => RingtoneUtils.getUriForRawId(cxt, default)
+            case str => Uri.parse(str)
+          }(Threading.Ui)
 
-      def getSound(pref: PrefKey[String], default: Int): Future[Uri] =
-        am.userPrefs.preference(pref).apply().map {
-          case ""  => RingtoneUtils.getUriForRawId(cxt, default)
-          case str => Uri.parse(str)
-        } (Threading.Ui)
-
-      for {
-        msgSound  <- Signal.from(getSound(UserPreferences.TextTone, R.raw.new_message_gcm))
-        pingSound <- Signal.from(getSound(UserPreferences.PingTone, R.raw.ping_from_them))
-        vibration <- Signal.from(am.userPrefs.preference(UserPreferences.VibrateEnabled).apply())
-        channel   <- am.storage.usersStorage.signal(am.userId).map(user => ChannelGroup(user.id.str, user.name, Set(
-                       ChannelInfo(MessageNotificationsChannelId(am.userId), R.string.message_notifications_channel_name, R.string.message_notifications_channel_description, msgSound, vibration),
-                       ChannelInfo(PingNotificationsChannelId(am.userId), R.string.ping_notifications_channel_name, R.string.ping_notifications_channel_description, pingSound, vibration)
-                     )))
-      } yield channel
+        for {
+          msgSound  <- Signal.from(getSound(UserPreferences.TextTone, R.raw.new_message_gcm))
+          pingSound <- Signal.from(getSound(UserPreferences.PingTone, R.raw.ping_from_them))
+          vibration <- Signal.from(am.userPrefs.preference(UserPreferences.VibrateEnabled).apply())
+          channel   <- am.storage.usersStorage.signal(am.userId).map(user => ChannelGroup(user.id.str, user.name, Set(
+                         ChannelInfo(MessageNotificationsChannelId(am.userId), R.string.message_notifications_channel_name, R.string.message_notifications_channel_description, msgSound, vibration),
+                         ChannelInfo(PingNotificationsChannelId(am.userId), R.string.ping_notifications_channel_name, R.string.ping_notifications_channel_description, pingSound, vibration)
+                       )))
+        } yield channel
     }.toSeq:_*))
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -377,13 +378,10 @@ object NotificationManagerWrapper {
       notificationManager.getNotificationChannel(channelId)
 
     override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit = {
-
       val idsToCancel = convs.map(toNotificationConvId(accountId, _))
-      val ns = notificationManager.getActiveNotifications.toSeq
-      val (toCancel, others) = ns.partition { n => idsToCancel.contains(n.getId) }
+      val toCancel = notificationManager.getActiveNotifications.toSeq.filter { n => idsToCancel.contains(n.getId) }
       toCancel.foreach(n => notificationManager.cancel(n.getId))
-      verbose(l"FCM cancel: $convs, toCancel: $toCancel, others: $others")
-      if (ns.nonEmpty && others.isEmpty) notificationManager.cancelAll()
+      toCancel.map(_.getNotification.getGroup).filter(_.nonEmpty).foreach(str => notificationManager.cancel(str.hashCode))
     }
 
     private def addToExternalNotificationFolder(rawId: Int, name: String) =
