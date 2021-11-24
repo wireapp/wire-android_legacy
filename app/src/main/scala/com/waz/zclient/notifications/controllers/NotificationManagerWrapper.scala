@@ -41,6 +41,7 @@ import com.waz.utils.wrappers.Bitmap
 import com.waz.utils.{IoUtils, returning}
 import com.waz.zclient.Intents.CallIntent
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.notifications.controllers.MessageNotificationsController.toNotificationConvId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{MessageNotificationsChannelId, PingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.{DeprecationUtils, ResString, RingtoneUtils, format}
@@ -266,9 +267,8 @@ final case class NotificationProps(accountId:                UserId,
 }
 
 trait NotificationManagerWrapper {
-  def getActiveNotificationIds: Seq[Int]
   def showNotification(id: Int, notificationProps: NotificationProps): Unit
-  def cancelNotifications(ids: Set[Int]): Unit
+  def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit
 }
 
 object NotificationManagerWrapper {
@@ -284,6 +284,7 @@ object NotificationManagerWrapper {
   object ChannelInfo {
     def apply(id: String, name: Int, description: Int, sound: Uri, vibration: Boolean)(implicit cxt: Context): ChannelInfo = ChannelInfo(id, getString(name), getString(description), sound, vibration)
   }
+
 
   final class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
     extends NotificationManagerWrapper with Injectable with DerivedLogTag {
@@ -372,15 +373,17 @@ object NotificationManagerWrapper {
       notificationManager.notify(id, notificationProps.build())
     }
 
-    override def getActiveNotificationIds: Seq[Int] =
-      notificationManager.getActiveNotifications.toSeq.map(_.getId)
-
     def getNotificationChannel(channelId: String): NotificationChannel =
       notificationManager.getNotificationChannel(channelId)
 
-    override def cancelNotifications(ids: Set[Int]): Unit = {
-      verbose(l"FCM cancel: $ids")
-      ids.foreach(notificationManager.cancel)
+    override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit = {
+
+      val idsToCancel = convs.map(toNotificationConvId(accountId, _))
+      val ns = notificationManager.getActiveNotifications.toSeq
+      val (toCancel, others) = ns.partition { n => idsToCancel.contains(n.getId) }
+      toCancel.foreach(n => notificationManager.cancel(n.getId))
+      verbose(l"FCM cancel: $convs, toCancel: $toCancel, others: $others")
+      if (ns.nonEmpty && others.isEmpty) notificationManager.cancelAll()
     }
 
     private def addToExternalNotificationFolder(rawId: Int, name: String) =

@@ -35,6 +35,7 @@ import com.waz.service.conversation._
 import com.waz.service.media._
 import com.waz.service.messages._
 import com.waz.service.otr._
+import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.service.push._
 import com.waz.service.teams.{FeatureConfigsService, FeatureConfigsServiceImpl, TeamsService, TeamsServiceImpl}
 import com.waz.service.tracking.TrackingService
@@ -250,11 +251,11 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val youtubeMedia                               = wire[YouTubeMediaService]
   lazy val mapsMediaService                           = wire[MapsMediaServiceImpl]
   lazy val otrEventDecoder: OtrEventDecoder           = wire[OtrEventDecoderImpl]
+  lazy val eventDecrypter: EventDecrypter             = wire[EventDecrypterImpl]
   lazy val notificationParser: NotificationParser     = wire[NotificationParserImpl]
   lazy val otrService: OtrService                     = wire[OtrServiceImpl]
   lazy val genericMsgs: GenericMessageService         = wire[GenericMessageService]
   lazy val reactions: ReactionsService                = wire[ReactionsService]
-  lazy val notifications: NotificationService         = wire[NotificationServiceImpl]
   lazy val recordAndPlay                              = wire[RecordAndPlayService]
   lazy val receipts                                   = wire[ReceiptService]
   lazy val ephemeral                                  = wire[EphemeralMessagesService]
@@ -331,8 +332,6 @@ class ZMessaging(val teamId:    Option[TeamId],
         convOrder.conversationOrderEventsStage,
         conversations.convStateEventProcessingStage,
         msgEvents.messageEventProcessingStage,
-        notifications.messageNotificationEventsStage,
-        notifications.connectionNotificationEventStage,
         genericMsgs.eventProcessingStage,
         foldersService.eventProcessingStage,
         propertiesService.eventProcessor,
@@ -352,8 +351,8 @@ class ZMessaging(val teamId:    Option[TeamId],
     expiringUsers
     callLogging
 
-    push // connect on start
-    notifications
+    wsPushService
+    push.syncNotifications(SyncHistory(ForceSync)) // connect on start
     blockStreamsWhenProcessing
 
     // services listening for storage updates
@@ -430,7 +429,7 @@ object ZMessaging extends DerivedLogTag { self =>
                assets2:             Assets2Module,
                fileRestrictionList: FileRestrictionList,
                defaultProxyDetails: ProxyDetails
-              ) = {
+              ): Unit = {
     Threading.assertUiThread()
 
     if (this.currentUi == null) {
@@ -447,7 +446,6 @@ object ZMessaging extends DerivedLogTag { self =>
       currentUi = ui
       currentGlobal = _global
       currentAccounts = currentGlobal.accountsService
-
 
       globalReady.success(_global)
 
