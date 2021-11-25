@@ -76,4 +76,12 @@ object EventDecrypter {
         case _                  => error(l"Unrecognized event: ${event.event}"); None
       }
   }
+
+  def apply(selfId: UserId,
+            currentDomain: Domain,
+            storage:       PushNotificationEventsStorage,
+            clients:       OtrClientsService,
+            sessions:      CryptoSessionService,
+            tracking:      => TrackingService): EventDecrypter =
+    new EventDecrypterImpl(selfId, currentDomain, storage, clients, sessions, tracking)
 }

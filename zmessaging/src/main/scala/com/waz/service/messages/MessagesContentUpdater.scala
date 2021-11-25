@@ -25,7 +25,6 @@ import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging.clock
-import com.waz.service.otr.NotificationUiController
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.wire.signals.{Serialized, Signal}
@@ -35,13 +34,12 @@ import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-final class MessagesContentUpdater(selfId:          UserId,
-                                   messagesStorage: MessagesStorage,
-                                   convs:           ConversationStorage,
-                                   deletions:       MsgDeletionStorage,
-                                   buttonsStorage:  ButtonsStorage,
-                                   prefs:           GlobalPreferences,
-                                   userPrefs:       UserPreferences) extends DerivedLogTag {
+class MessagesContentUpdater(messagesStorage: MessagesStorage,
+                             convs:           ConversationStorage,
+                             deletions:       MsgDeletionStorage,
+                             buttonsStorage:  ButtonsStorage,
+                             prefs:           GlobalPreferences,
+                             userPrefs:       UserPreferences) extends DerivedLogTag {
   import Threading.Implicits.Background
 
   def getMessage(msgId: MessageId): Future[Option[MessageData]] = messagesStorage.getMessage(msgId)

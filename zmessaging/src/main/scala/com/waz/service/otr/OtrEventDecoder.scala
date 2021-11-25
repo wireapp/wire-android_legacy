@@ -79,7 +79,7 @@ final class OtrEventDecoderImpl(selfUserId:    UserId, currentDomain: Domain)
 }
 
 object OtrEventDecoder extends DerivedLogTag {
-  def apply(selfUserId:    UserId, currentDomain: Domain): OtrEventDecoder =
+  def apply(selfUserId: UserId, currentDomain: Domain): OtrEventDecoder =
     new OtrEventDecoderImpl(selfUserId, currentDomain)
 
   def decodeOtrMessageAdd(event: PushNotificationEvent): Option[OtrMessageEvent] =

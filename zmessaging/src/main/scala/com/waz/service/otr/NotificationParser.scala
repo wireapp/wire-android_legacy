@@ -132,7 +132,7 @@ final class NotificationParserImpl(selfId:       UserId,
       Some(conv) <- convStorage.getByRemoteId(event.convId)
     } yield
       if (shouldShowNotification(self, conv, event.from, event.time))
-        Some( NotificationData(
+        Some(NotificationData(
           conv    = conv.id,
           user    = event.from,
           msgType = NotificationType.CONVERSATION_DELETED,
@@ -349,4 +349,13 @@ final class NotificationParserImpl(selfId:       UserId,
     from != self.id &&
       self.availability != Availability.Away &&
       self.availability != Availability.Busy
+}
+
+object NotificationParser {
+  def apply(selfId:       UserId,
+            convStorage:  ConversationStorage,
+            usersStorage: UsersStorage,
+            mlStorage:    => MessageAndLikesStorage,
+            calling:      => CallingService): NotificationParser =
+    new NotificationParserImpl(selfId, convStorage, usersStorage, mlStorage, calling)
 }
