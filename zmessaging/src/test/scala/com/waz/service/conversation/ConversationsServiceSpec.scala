@@ -111,7 +111,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
   private def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
     new ConversationsUiServiceImpl(
-      selfUserId, teamId, assets, userService, messages, msgStorage,
+      selfUserId, teamId, domain, assets, userService, messages, msgStorage,
       msgUpdater, membersStorage, content, convsStorage, network,
       service, sync, requests, convsClient, accounts, tracking, errors, uriHelper,
       properties
@@ -1038,7 +1038,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
       val teamsService: TeamsService =
         new TeamsServiceImpl(
-          selfUserId, Some(teamId), teamsStorage, userService, usersStorage, convsStorage, membersStorage,
+          selfUserId, Some(teamId), domain, teamsStorage, userService, usersStorage, convsStorage, membersStorage,
           content, service, sync, requests, userPrefs, errorsService, rolesService
         )
 

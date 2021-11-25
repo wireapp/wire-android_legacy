@@ -3,58 +3,44 @@ package com.waz.sync.handler
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.{AppLockFeatureConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig, TeamId}
-import com.waz.sync.client.FeatureConfigsClient
+import com.waz.sync.client.{ErrorOrResponse, FeatureConfigsClient}
 
 import scala.concurrent.Future
 
 trait FeatureConfigsSyncHandler {
-  def fetchAppLock(): Future[AppLockFeatureConfig]
-  def fetchFileSharing(): Future[FileSharingFeatureConfig]
-  def fetchSelfDeletingMessages(): Future[SelfDeletingMessagesFeatureConfig]
-  def fetchConferenceCalling(): Future[ConferenceCallingFeatureConfig]
+  def fetchAppLock: Future[Option[AppLockFeatureConfig]]
+  def fetchFileSharing: Future[Option[FileSharingFeatureConfig]]
+  def fetchSelfDeletingMessages: Future[Option[SelfDeletingMessagesFeatureConfig]]
+  def fetchConferenceCalling: Future[Option[ConferenceCallingFeatureConfig]]
 }
 
 class FeatureConfigsSyncHandlerImpl(teamId: Option[TeamId], client: FeatureConfigsClient)
   extends FeatureConfigsSyncHandler with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
-  override def fetchAppLock(): Future[AppLockFeatureConfig] = teamId match {
+  override def fetchAppLock: Future[Option[AppLockFeatureConfig]] = teamId match {
     case None =>
-      Future.successful(AppLockFeatureConfig.Default)
+      Future.successful(Some(AppLockFeatureConfig.Default))
     case Some(tId) =>
-      client.getAppLock(tId).future.map {
-        case Left(err) =>
-          error(l"Unable to fetch AppLock feature flag: $err")
-          AppLockFeatureConfig.Default
-        case Right(appLock) =>
-          appLock
-      }
+      fetchFeatureFlag(() => client.getAppLock(tId), "AppLock")
   }
 
-  override def fetchFileSharing(): Future[FileSharingFeatureConfig] =
-    client.getFileSharing().map {
-      case Left(err) =>
-        error(l"Unable to fetch FileSharing feature flag: $err")
-        FileSharingFeatureConfig.Default
-      case Right(fileSharing) =>
-        fileSharing
-    }
+  override def fetchFileSharing: Future[Option[FileSharingFeatureConfig]] =
+    fetchFeatureFlag(client.getFileSharing _, "FileSharing")
 
-  override def fetchSelfDeletingMessages(): Future[SelfDeletingMessagesFeatureConfig] =
-    client.getSelfDeletingMessages().map {
-      case Left(err) =>
-        error(l"Unable to fetch SelfDeletingMessages feature flag: $err")
-        SelfDeletingMessagesFeatureConfig.Default
-      case Right(selfDeletingMessages) =>
-        selfDeletingMessages
-    }
+  override def fetchSelfDeletingMessages: Future[Option[SelfDeletingMessagesFeatureConfig]] =
+    fetchFeatureFlag(client.getSelfDeletingMessages _, "SelfDeletingMessages")
 
-  override def fetchConferenceCalling(): Future[ConferenceCallingFeatureConfig] =
-    client.getConferenceCalling().map {
+  override def fetchConferenceCalling: Future[Option[ConferenceCallingFeatureConfig]] =
+    fetchFeatureFlag(client.getConferenceCalling _, "ConferenceCalling")
+
+  @inline
+  private def fetchFeatureFlag[T](clientFunc: () => ErrorOrResponse[T], name: String): Future[Option[T]] =
+    clientFunc().map {
       case Left(err) =>
-        error(l"Unable to fetch ConferenceCalling feature flag: $err")
-        ConferenceCallingFeatureConfig.Default
-      case Right(conferenceCalling) =>
-        conferenceCalling
+        error(l"Unable to fetch $name feature flag: $err")
+        None
+      case Right(value) =>
+        Some(value)
     }
 }
