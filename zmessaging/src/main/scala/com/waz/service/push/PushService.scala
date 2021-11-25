@@ -71,33 +71,32 @@ trait PushService {
   def beDrift: Signal[Duration]
 }
 
-class PushServiceImpl(selfUserId:           UserId,
-                      context:              Context,
-                      userPrefs:            UserPreferences,
-                      prefs:                GlobalPreferences,
-                      eventsStorage:        PushNotificationEventsStorage,
-                      client:               PushNotificationsClient,
-                      clientId:             ClientId,
-                      pipeline:             EventPipeline,
-                      otrEventDecrypter:    EventDecrypter,
-                      otrEventDecoder:      OtrEventDecoder,
-                      wsPushService:        WSPushService,
-                      accounts:             AccountsService,
-                      pushTokenService:     PushTokenService,
-                      network:              NetworkModeService,
-                      lifeCycle:            UiLifeCycle,
-                      tracking:             TrackingService,
-                      sync:                 SyncServiceHandle,
-                      timeouts:             Timeouts,
-                      fcmService:           FCMNotificationStatsService)
-                     (implicit ev: AccountContext) extends PushService { self =>
+final class PushServiceImpl(selfUserId:        UserId,
+                            context:           Context,
+                            userPrefs:         UserPreferences,
+                            prefs:             GlobalPreferences,
+                            eventsStorage:     PushNotificationEventsStorage,
+                            client:            PushNotificationsClient,
+                            clientId:          ClientId,
+                            pipeline:          EventPipeline,
+                            otrEventDecrypter: EventDecrypter,
+                            otrEventDecoder:   OtrEventDecoder,
+                            wsPushService:     WSPushService,
+                            accounts:          AccountsService,
+                            pushTokenService:  PushTokenService,
+                            network:           NetworkModeService,
+                            lifeCycle:         UiLifeCycle,
+                            tracking:          TrackingService,
+                            sync:              SyncServiceHandle,
+                            timeouts:          Timeouts)
+                           (implicit ev: AccountContext) extends PushService { self =>
   import PushService._
 
   implicit val logTag: LogTag = accountTag[PushServiceImpl](selfUserId)
-  private implicit val dispatcher = SerialDispatchQueue(name = "PushService")
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "PushService")
 
-  override val onHistoryLost = SourceSignal[Instant]()
-  override val processing = Signal(false)
+  override val onHistoryLost: SourceSignal[Instant] = SourceSignal[Instant]()
+  override val processing: SourceSignal[Boolean] = Signal(false)
 
   override def syncNotifications(syncMode: SyncMode): Future[Unit] = Serialized.future("fetchInProgress") {
     (syncMode match {
@@ -106,11 +105,10 @@ class PushServiceImpl(selfUserId:           UserId,
     }).flatMap(_ => process())
   }
 
-  override def waitProcessing =
-    processing.filter(_ == false).head.map(_ => {})
+  override def waitProcessing: Future[Unit] = processing.filter(_ == false).head.map(_ => {})
 
   private val beDriftPref: Preference[Duration] = prefs.preference(BackendDrift)
-  override val beDrift = beDriftPref.signal.disableAutowiring()
+  override val beDrift: Signal[Duration] = beDriftPref.signal.disableAutowiring()
 
   private def updateDrift(time: Option[Instant]) = beDriftPref.mutate(v => time.fold(v)(clock.instant.until(_)))
 
@@ -143,7 +141,6 @@ class PushServiceImpl(selfUserId:           UserId,
     eventsStorage.getDecryptedRows.flatMap { rows =>
       verbose(l"Processing ${rows.size} rows")
       if (rows.nonEmpty) {
-        val ids = rows.map(_.pushId).toSet
         for {
           _ <- pipeline(rows.flatMap(ev => otrEventDecoder.decode(ev)))
           _ =  verbose(l"pipeline work finished")
@@ -209,13 +206,13 @@ class PushServiceImpl(selfUserId:           UserId,
         Future.failed(FetchFailedException(e))
       case Left(err) =>
         warn(l"Request failed due to $err: attempting to load last page (since id: $lastId) again? $withRetries")
-        if (!withRetries) CancellableFuture.failed(FetchFailedException(err))
+        if (!withRetries)
+          CancellableFuture.failed(FetchFailedException(err))
         else {
           //We want to retry the download after the backoff is elapsed and the network is available,
           //OR on a network state change (that is not offline/unknown)
           //OR on a websocket state change
           val retry = Promise[Unit]()
-
           network.isOnline.onTrue.map(_ => retry.trySuccess({}))
           wsPushService.connected.onChanged.next.map(_ => retry.trySuccess({}))
 
@@ -253,11 +250,16 @@ class PushServiceImpl(selfUserId:           UserId,
 
 object PushService {
   //These are the most important event types that generate push notifications
-  val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "conversation.member-join")
+  val TrackingEvents = Set(
+    "conversation.otr-message-add",
+    "conversation.create",
+    "conversation.rename",
+    "conversation.member-join"
+  )
 
   val PipelineKey = "pipeline_processing"
 
-  case class FetchFailedException(err: ErrorResponse) extends Exception(s"Failed to fetch notifications: ${err.message}")
+  final case class FetchFailedException(err: ErrorResponse) extends Exception(s"Failed to fetch notifications: ${err.message}")
 
   var syncHistoryBackoff: Backoff = new ExponentialBackoff(3.second, 15.seconds)
 
@@ -280,6 +282,8 @@ object PushService {
   //set withRetries to false if the caller is to handle their own retry logic
   final case class SyncHistory(source: SyncSource, withRetries: Boolean = true) extends SyncMode
 
-  final case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant], firstSync: Boolean, historyLost: Boolean)
-
+  final case class Results(notifications: Vector[PushNotificationEncoded],
+                           time: Option[Instant],
+                           firstSync: Boolean,
+                           historyLost: Boolean)
 }

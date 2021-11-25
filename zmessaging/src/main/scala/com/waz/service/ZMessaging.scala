@@ -27,7 +27,6 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.repository.{FCMNotificationStatsRepositoryImpl, FCMNotificationsRepositoryImpl}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.assets._
 import com.waz.service.call._
@@ -35,7 +34,6 @@ import com.waz.service.conversation._
 import com.waz.service.media._
 import com.waz.service.messages._
 import com.waz.service.otr._
-import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.service.push._
 import com.waz.service.teams.{FeatureConfigsService, FeatureConfigsServiceImpl, TeamsService, TeamsServiceImpl}
 import com.waz.service.tracking.TrackingService
@@ -92,7 +90,6 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val rolesStorage: ConversationRolesStorage     = wire[ConversationRolesStorageImpl]
   lazy val oldAssetStorage:      AssetsStorage        = wire[AssetsStorageImpl]
   lazy val reactionsStorage                           = wire[ReactionsStorageImpl]
-  lazy val notifStorage:      NotificationStorage     = wire[NotificationStorageImpl]
   lazy val convsStorage:      ConversationStorage     = wire[ConversationStorageImpl]
   lazy val msgDeletions:      MsgDeletionStorage      = wire[MsgDeletionStorageImpl]
   lazy val msgEdits:          EditHistoryStorage      = wire[EditHistoryStorageImpl]
@@ -180,7 +177,6 @@ class ZMessaging(val teamId:    Option[TeamId],
   def rawAssetStorage               = storage.rawAssetStorage
   def downloadAssetStorage               = storage.inProgressAssetStorage
   def reactionsStorage  = storage.reactionsStorage
-  def notifStorage      = storage.notifStorage
   def convsStorage      = storage.convsStorage
   def msgDeletions      = storage.msgDeletions
   def msgEdits          = storage.msgEdits
@@ -217,8 +213,6 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val callingClient      = new CallingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val propertiesClient: PropertiesClient = new PropertiesClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val legalHoldClient    = new LegalHoldClientImpl()(urlCreator, httpClient, authRequestInterceptor)
-  lazy val fcmNotsRepo        = new FCMNotificationsRepositoryImpl()(db)
-  lazy val fcmNotStatsRepo    = new FCMNotificationStatsRepositoryImpl(fcmNotsRepo)(db, Threading.Background)
 
   lazy val convsContent: ConversationsContentUpdaterImpl = wire[ConversationsContentUpdaterImpl]
   lazy val messagesContent: MessagesContentUpdater = wire[MessagesContentUpdater]
@@ -282,7 +276,6 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val propertiesSyncHandler                      = wire[PropertiesSyncHandler]
   lazy val foldersSyncHandler                         = wire[FoldersSyncHandler]
   lazy val propertiesService: PropertiesService       = wire[PropertiesServiceImpl]
-  lazy val fcmNotStatsService                         = wire[FCMNotificationStatsServiceImpl]
   lazy val trackingSync                               = wire[TrackingSyncHandler]
   lazy val legalHold: LegalHoldService                = wire[LegalHoldServiceImpl]
   lazy val legalHoldSync: LegalHoldSyncHandler        = wire[LegalHoldSyncHandlerImpl]
