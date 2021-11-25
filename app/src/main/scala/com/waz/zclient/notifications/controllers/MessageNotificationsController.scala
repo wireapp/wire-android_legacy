@@ -105,7 +105,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit =
     notificationManager.cancelNotifications(accountId, convs)
 
-  override def onNotificationsChanged(accountId: UserId, nots: Set[NotificationData]): Future[Unit] = {
+  override def showNotifications(accountId: UserId, nots: Set[NotificationData]): Future[Unit] = {
     verbose(l"onNotificationsChanged: $accountId, nots: $nots")
     for {
       teamName  <- fetchTeamName(accountId)

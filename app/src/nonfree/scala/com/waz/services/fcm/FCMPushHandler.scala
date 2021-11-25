@@ -59,7 +59,7 @@ final class FCMPushHandlerImpl(userId:      UserId,
       _         =  verbose(l"decoded events (${decoded.size}): $decoded")
       parsed    <- parser.parse(decoded)
       _         =  verbose(l"parsed events (${parsed.size}): $parsed")
-      _         <- if (parsed.nonEmpty) controller.onNotificationsChanged(userId, parsed) else Future.successful(())
+      _         <- if (parsed.nonEmpty) controller.showNotifications(userId, parsed) else Future.successful(())
       _         <- updateLastId(notifications)
     } yield ()
   }

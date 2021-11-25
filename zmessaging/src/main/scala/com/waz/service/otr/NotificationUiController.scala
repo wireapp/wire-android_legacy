@@ -15,7 +15,7 @@ trait NotificationUiController {
    * we can also mark these notifications as displayed.
    * @return a Future that should enclose the display of notifications to the UI
    */
-  def onNotificationsChanged(accountId: UserId, ns: Set[NotificationData]): Future[Unit]
+  def showNotifications(accountId: UserId, ns: Set[NotificationData]): Future[Unit]
 
   def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit
 }

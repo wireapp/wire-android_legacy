@@ -351,8 +351,7 @@ class ZMessaging(val teamId:    Option[TeamId],
     expiringUsers
     callLogging
 
-    wsPushService
-    push.syncNotifications(SyncHistory(ForceSync)) // connect on start
+    push// connect on start
     blockStreamsWhenProcessing
 
     // services listening for storage updates

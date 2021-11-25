@@ -26,7 +26,6 @@ import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.log.LogShow
-import com.waz.model.FCMNotification.{Fetched, FinishedPipeline, StartedPipeline}
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.{accountTag, clock}
@@ -37,9 +36,9 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
-import com.wire.signals.{CancellableFuture, SerialDispatchQueue, Serialized, Signal, SourceSignal}
 import com.waz.utils.{RichInstant, _}
 import com.waz.znet2.http.ResponseCode
+import com.wire.signals._
 import org.threeten.bp.{Duration, Instant}
 
 import scala.concurrent.duration._
@@ -100,14 +99,11 @@ class PushServiceImpl(selfUserId:           UserId,
   override val onHistoryLost = SourceSignal[Instant]()
   override val processing = Signal(false)
 
-  override def syncNotifications(syncMode: SyncMode): Future[Unit] = {
-    def fetch(syncMode: SyncMode) = (syncMode match {
+  override def syncNotifications(syncMode: SyncMode): Future[Unit] = Serialized.future("fetchInProgress") {
+    (syncMode match {
       case ProcessNotifications(notifications) => storeNotifications(notifications)
       case SyncHistory(source, withRetries)    => syncHistory(source, withRetries)
     }).flatMap(_ => process())
-
-    fetchInProgress = if (!fetchInProgress.isCompleted) fetchInProgress.flatMap(_ => fetch(syncMode)) else fetch(syncMode)
-    fetchInProgress
   }
 
   override def waitProcessing =
@@ -122,24 +118,24 @@ class PushServiceImpl(selfUserId:           UserId,
 
   private def process(): Future[Unit] =
     Serialized.future(PipelineKey) {
-      verbose(l"FCM processing new added events")
+      verbose(l"processing new added events")
       val offset = System.currentTimeMillis()
       for {
         _ <- Future.successful(processing ! true)
         _ <- processEncryptedRows()
         _ <- processDecryptedRows()
         _ <- Future.successful(processing ! false)
-        _ = verbose(l"FCM events processing finished, time: ${System.currentTimeMillis() - offset}ms")
+        _ = verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
       } yield {}
     }.recover {
       case ex =>
         processing ! false
-        error(l"FCM Unable to process events: $ex")
+        error(l"Unable to process events: $ex")
     }
 
   private def processEncryptedRows(): Future[Unit] =
     eventsStorage.encryptedEvents.flatMap { rows =>
-      verbose(l"FCM Processing ${rows.size} encrypted rows")
+      verbose(l"Processing ${rows.size} encrypted rows")
       otrEventDecrypter.processEncryptedEvents(rows)
     }
 
@@ -149,15 +145,12 @@ class PushServiceImpl(selfUserId:           UserId,
       if (rows.nonEmpty) {
         val ids = rows.map(_.pushId).toSet
         for {
-          _ <- fcmService.markNotificationsWithState(ids, StartedPipeline)
           _ <- pipeline(rows.flatMap(ev => otrEventDecoder.decode(ev)))
-          _ =  verbose(l"FCM pipeline work finished")
+          _ =  verbose(l"pipeline work finished")
           _ <- eventsStorage.removeRows(rows.map(_.index))
-          _ =  verbose(l"FCM rows removed from the notification storage")
-          _ <- fcmService.markNotificationsWithState(ids, FinishedPipeline)
-          _ =  verbose(l"FCM notifications marked")
+          _ =  verbose(l"rows removed from the notification storage")
           _ <- processDecryptedRows()
-          _ =  verbose(l"FCM decrypted rows processed")
+          _ =  verbose(l"decrypted rows processed")
         } yield {}
       } else Future.successful(())
     }
@@ -169,19 +162,16 @@ class PushServiceImpl(selfUserId:           UserId,
     syncNotifications(ProcessNotifications(nots))
   }
 
-  wsPushService.connected.onChanged.map(WebSocketChange).on(dispatcher){
+  wsPushService.connected.map(WebSocketChange).on(dispatcher){
     case source@WebSocketChange(true) =>
-      verbose(l"FCM sync history due to web socket change")
+      verbose(l"sync history due to web socket change")
       syncNotifications(SyncHistory(source))
     case _ =>
   }
 
-  private var fetchInProgress: Future[Unit] = Future.successful(())
-
   private def storeNotifications(nots: Seq[PushNotificationEncoded]): Future[Unit] =
     if (nots.nonEmpty) {
       for {
-        _   <- fcmService.markNotificationsWithState(nots.map(_.id).toSet, Fetched)
         _   <- eventsStorage.saveAll(nots)
         res =  nots.lift(nots.lastIndexWhere(!_.transient))
         _   <- if (res.nonEmpty) idPref := res.map(_.id) else Future.successful(())
@@ -239,7 +229,7 @@ class PushServiceImpl(selfUserId:           UserId,
     }
 
   private def syncHistory(source: SyncSource, withRetries: Boolean = true): Future[Unit] = {
-    verbose(l"FCM Sync history in response to $source ($timePassed)")
+    verbose(l"Sync history in response to $source ($timePassed)")
     idPref().flatMap(lastId =>
       load(lastId, firstSync = lastId.isEmpty, withRetries = withRetries)
     ).flatMap {
