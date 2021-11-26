@@ -80,11 +80,6 @@ pipeline {
                 }
                 sh "echo ConfigFile ${params.ConfigFileId} loaded successfully"
                 sh "echo Version of the client: ${usedClientVersion}${PATCH_VERSION}"
-
-
-                //set the variable appCenterApiTokenForBranch
-                appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_${usedFlavor.toUpperCase()}
-                sh "echo variable appCenterApiTokenForBranch has been set to [${appCenterApiTokenForBranch}]"
             }
         }
 
@@ -94,6 +89,10 @@ pipeline {
                     last_stage = env.STAGE_NAME
                     currentBuild.displayName = "${usedFlavor}${usedBuildType}"
                     currentBuild.description = "Version [${usedClientVersion}] | Branch [${env.BRANCH_NAME}] | ASZ [${params.AppUnitTests},${params.StorageUnitTests},${params.ZMessageUnitTests}]"
+
+                    //set the variable appCenterApiTokenForBranch
+                    appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_${usedFlavor.toUpperCase()}
+                    println("echo variable appCenterApiTokenForBranch has been set to [${appCenterApiTokenForBranch}]")
                 }
                 configFileProvider([
                         configFile(fileId: "${env.SIGNING_GRADLE_FILE}", targetLocation: 'app/signing.gradle'),
