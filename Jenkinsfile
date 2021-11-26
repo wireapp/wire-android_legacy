@@ -91,7 +91,19 @@ pipeline {
                     currentBuild.description = "Version [${usedClientVersion}] | Branch [${env.BRANCH_NAME}] | ASZ [${params.AppUnitTests},${params.StorageUnitTests},${params.ZMessageUnitTests}]"
 
                     //set the variable appCenterApiTokenForBranch
-                    appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_${usedFlavor.toUpperCase()}
+                    if(usedFlavor.equals("Prod")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_PRODUCTION
+                    } else if (usedFlavor.equals("Internal")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_INTERNAL
+                    } else if (usedFlavor.equals("Candidate")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_CANDIDATE
+                    } else if (usedFlavor.equals("Dev")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_DEV
+                    } else if (usedFlavor.equals("FDroid")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_FDROID
+                    } else {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_EXPERIMENTAL
+                    }
                     println("echo variable appCenterApiTokenForBranch has been set to [${appCenterApiTokenForBranch}]")
                 }
                 configFileProvider([
