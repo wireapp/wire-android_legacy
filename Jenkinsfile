@@ -16,6 +16,7 @@ pipeline {
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
         booleanParam(name: 'ZMessageUnitTests', defaultValue: true, description: 'Run all zmessaging unit tests for this build')
         booleanParam(name: 'CompileFDroid', defaultValue: true, description: 'Defines if the fdroid flavor should be compiled in addition')
+        booleanParam(name: 'UploadToAppCenter', defaultValue: true, description: 'Defines if a build should be uploaded to the appcenter project')
     }
 
     stages {
@@ -216,6 +217,22 @@ pipeline {
                             }
                         }
 
+                        stage('Upload Branch to App Center') {
+                            when {
+                                expression { params.UploadToAppCenter}
+                            }
+                            steps {
+                                script {
+                                    last_started = env.STAGE_NAME
+                                }
+                                appCenter apiToken: env.APPCENTER_API_TOKEN,
+                                        ownerName: env.APPCENTER_API_ACCOUNT,
+                                        appName: "wire-android-${usedFlavor.toLowerCase()}",
+                                        pathToApp: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.BUILD_NUMBER}.apk",
+                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST
+                            }
+                        }
+
                         stage('Upload to PlayStore') {
                             when {
                                 expression { env.PLAYSTORE_UPLOAD_ENABLED && env.BRANCH_NAME.equals("main") && usedBuildType.equals("Release") && usedFlavor.equals("Internal") }
@@ -266,6 +283,22 @@ pipeline {
                                 s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-prod-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
                                 wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                                     "\nLast 5 commits:\n```\n$lastCommits\n```"
+                            }
+                        }
+
+                        stage('Upload Prod to App Center') {
+                            when {
+                                expression { params.UploadToAppCenter}
+                            }
+                            steps {
+                                script {
+                                    last_started = env.STAGE_NAME
+                                }
+                                appCenter apiToken: env.APPCENTER_API_TOKEN,
+                                        ownerName: env.APPCENTER_API_ACCOUNT,
+                                        appName: "wire-android-prod",
+                                        pathToApp: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.BUILD_NUMBER}.apk",
+                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST
                             }
                         }
 
@@ -321,6 +354,22 @@ pipeline {
                                 s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-fdroid-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/fdroid/${usedBuildType.toLowerCase()}/")
                                 wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] FDroid${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                                     "\nLast 5 commits:\n```\n$lastCommits\n```"
+                            }
+                        }
+
+                        stage('Upload F-Droid to App Center') {
+                            when {
+                                expression { params.UploadToAppCenter}
+                            }
+                            steps {
+                                script {
+                                    last_started = env.STAGE_NAME
+                                }
+                                appCenter apiToken: env.APPCENTER_API_TOKEN,
+                                        ownerName: env.APPCENTER_API_ACCOUNT,
+                                        appName: "wire-android-fdroid",
+                                        pathToApp: "app/build/outputs/apk/wire-fdroid-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.BUILD_NUMBER}.apk",
+                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST
                             }
                         }
                     }
