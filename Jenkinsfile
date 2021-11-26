@@ -10,7 +10,7 @@ pipeline {
     parameters {
         string(name: 'ConfigFileId', defaultValue: 'wire-android-config', description: 'Name or ID of the Groovy file (under Jenkins -> Managed Files) that sets environment variables')
         string(name: 'BuildType', defaultValue: '', description: 'Build Type for the Client (Release or Debug)')
-        string(name: 'Flavor', defaultValue: '', description: 'Product Flavor to build (Experimental, Internal, Dev, Candidate, Prod, F-Droid)')
+        string(name: 'Flavor', defaultValue: '', description: 'Product Flavor to build (Experimental, Internal, Dev, Candidate, Prod, FDroid)')
         string(name: 'PatchVersion', defaultValue: '', description: 'PatchVersion for the build as a numeric value (e.g. 1337)')
         booleanParam(name: 'AppUnitTests', defaultValue: true, description: 'Run all app unit tests for this build')
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
@@ -80,6 +80,11 @@ pipeline {
                 }
                 sh "echo ConfigFile ${params.ConfigFileId} loaded successfully"
                 sh "echo Version of the client: ${usedClientVersion}${PATCH_VERSION}"
+
+
+                //set the variable appCenterApiTokenForBranch
+                appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_${usedFlavor.toUpperCase()}
+                sh "echo variable appCenterApiTokenForBranch has been set to [${appCenterApiTokenForBranch}]"
             }
         }
 
@@ -225,11 +230,13 @@ pipeline {
                                 script {
                                     last_started = env.STAGE_NAME
                                 }
-                                appCenter apiToken: env.APPCENTER_API_TOKEN,
+                                appCenter apiToken: appCenterApiTokenForBranch,
                                         ownerName: env.APPCENTER_API_ACCOUNT,
                                         appName: "wire-android-${usedFlavor.toLowerCase()}",
                                         pathToApp: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.BUILD_NUMBER}.apk",
-                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST
+                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST,
+                                        branchName: env.BRANCH_NAME,
+                                        commitHash: env.GIT_COMMIT
                             }
                         }
 
@@ -294,11 +301,13 @@ pipeline {
                                 script {
                                     last_started = env.STAGE_NAME
                                 }
-                                appCenter apiToken: env.APPCENTER_API_TOKEN,
+                                appCenter apiToken: env.APPCENTER_API_TOKEN_PRODUCTION,
                                         ownerName: env.APPCENTER_API_ACCOUNT,
                                         appName: "wire-android-prod",
                                         pathToApp: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.BUILD_NUMBER}.apk",
-                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST
+                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST,
+                                        branchName: env.BRANCH_NAME,
+                                        commitHash: env.GIT_COMMIT
                             }
                         }
 
@@ -365,11 +374,13 @@ pipeline {
                                 script {
                                     last_started = env.STAGE_NAME
                                 }
-                                appCenter apiToken: env.APPCENTER_API_TOKEN,
+                                appCenter apiToken: env.APPCENTER_API_TOKEN_FDROID,
                                         ownerName: env.APPCENTER_API_ACCOUNT,
                                         appName: "wire-android-fdroid",
                                         pathToApp: "app/build/outputs/apk/wire-fdroid-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.BUILD_NUMBER}.apk",
-                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST
+                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST,
+                                        branchName: env.BRANCH_NAME,
+                                        commitHash: env.GIT_COMMIT
                             }
                         }
                     }
