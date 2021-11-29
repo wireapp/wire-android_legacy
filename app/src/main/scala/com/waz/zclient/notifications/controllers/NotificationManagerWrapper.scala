@@ -24,12 +24,12 @@ import android.content.{ContentValues, Context}
 import android.database.sqlite.SQLiteException
 import android.graphics.{Color, Typeface}
 import android.net.Uri
-import android.os.{Build, Environment}
+import android.os.{Build, Bundle, Environment}
 import android.provider.MediaStore
 import android.text.style.{ForegroundColorSpan, StyleSpan}
 import android.text.{SpannableString, Spanned}
 import androidx.core.app.NotificationCompat.Style
-import androidx.core.app.{NotificationCompat, RemoteInput}
+import androidx.core.app.{NotificationCompat, NotificationCompatExtras, RemoteInput}
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -221,6 +221,9 @@ final case class NotificationProps(accountId:                UserId,
     groupSummary.foreach { summary =>
       builder.setGroupSummary(summary)
       builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+      builder.addExtras(returning(new Bundle()) { bundle =>
+        bundle.putBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY, summary)
+      })
     }
 
     builder.setGroup(group.fold("")(_.str))
@@ -375,18 +378,25 @@ object NotificationManagerWrapper {
     def getNotificationChannel(channelId: String): NotificationChannel =
       notificationManager.getNotificationChannel(channelId)
 
-    override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit = {
-      val (convNots, summaryNots) =
-        notificationManager.getActiveNotifications.toSeq.partition(_.getNotification.getGroup.nonEmpty)
-      val idsToCancel = convs.map(toNotificationConvId(accountId, _))
-      val (toCancel, others) = convNots.partition { n => idsToCancel.contains(n.getId) }
-      val summariesToCancel =
-        summaryNots.filterNot(n =>
-          others.map(_.getNotification.getGroup.hashCode.toString).exists(n.getNotification.getChannelId.contains)
-        )
-      toCancel.foreach(n => notificationManager.cancel(n.getId))
-      summariesToCancel.foreach(n => notificationManager.cancel(n.getId))
-    }
+    override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit =
+      if (convs.nonEmpty) {
+        val idsToCancel = convs.map(toNotificationConvId(accountId, _))
+        val (summaryNots, convNots) =
+          notificationManager
+            .getActiveNotifications
+            .toSeq
+            .partition(_.getNotification.extras.getBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY))
+        val (toCancel, others) = convNots.partition { n => idsToCancel.contains(n.getId) }
+        toCancel.foreach(n => notificationManager.cancel(n.getId))
+        if (others.isEmpty)
+          notificationManager.cancelAll()
+        else 
+          summaryNots
+            .filterNot(n =>
+              others.map(_.getNotification.getGroup.hashCode.toString).exists(n.getNotification.getChannelId.contains)
+            )
+            .foreach(n => notificationManager.cancel(n.getId))
+      }
 
     private def addToExternalNotificationFolder(rawId: Int, name: String) =
       for {
