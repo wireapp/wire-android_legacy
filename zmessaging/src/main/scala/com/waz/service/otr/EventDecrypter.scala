@@ -20,7 +20,7 @@ class EventDecrypterImpl(selfId:        UserId,
                          storage:       PushNotificationEventsStorage,
                          clients:       OtrClientsService,
                          sessions:      CryptoSessionService,
-                         tracking:      => TrackingService) extends EventDecrypter with DerivedLogTag {
+                         tracking:      () => TrackingService) extends EventDecrypter with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
   import EventDecrypter._
 
@@ -38,7 +38,7 @@ class EventDecrypterImpl(selfId:        UserId,
       case Left(err) =>
         val e = OtrErrorEvent(otrEvent.convId, otrEvent.convDomain, otrEvent.time, otrEvent.from, otrEvent.fromDomain, err)
         error(l"Got error when decrypting: $e")
-        tracking.msgDecryptionFailed(otrEvent.convId, selfId)
+        tracking().msgDecryptionFailed(otrEvent.convId, selfId)
         storage.writeError(index, e)
       case Right(_) =>
         Future.successful(())
@@ -82,6 +82,6 @@ object EventDecrypter {
             storage:       PushNotificationEventsStorage,
             clients:       OtrClientsService,
             sessions:      CryptoSessionService,
-            tracking:      => TrackingService): EventDecrypter =
+            tracking:      () => TrackingService): EventDecrypter =
     new EventDecrypterImpl(selfId, currentDomain, storage, clients, sessions, tracking)
 }

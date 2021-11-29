@@ -87,12 +87,12 @@ object WSPushServiceImpl {
   }
 }
 
-class WSPushServiceImpl(userId:              UserId,
-                        accessTokenProvider: AccessTokenProvider,
-                        requestCreator:      RequestCreator,
-                        webSocketFactory:    WebSocketFactory,
-                        networkModeService:  NetworkModeService,
-                        backoff:             Backoff = ExponentialBackoff.standardBackoff) extends WSPushService {
+final class WSPushServiceImpl(userId:              UserId,
+                              accessTokenProvider: AccessTokenProvider,
+                              requestCreator:      RequestCreator,
+                              webSocketFactory:    WebSocketFactory,
+                              networkModeService:  NetworkModeService,
+                              backoff:             Backoff = ExponentialBackoff.standardBackoff) extends WSPushService {
 
   private implicit val logTag: LogTag = accountTag[WSPushServiceImpl](userId)
   private implicit val dispatcher = SerialDispatchQueue(name = "WSPushServiceImpl")

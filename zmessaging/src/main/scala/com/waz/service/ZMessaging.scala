@@ -34,6 +34,7 @@ import com.waz.service.conversation._
 import com.waz.service.media._
 import com.waz.service.messages._
 import com.waz.service.otr._
+import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.service.push._
 import com.waz.service.teams.{FeatureConfigsService, FeatureConfigsServiceImpl, TeamsService, TeamsServiceImpl}
 import com.waz.service.tracking.TrackingService
@@ -163,7 +164,7 @@ class ZMessaging(val teamId:    Option[TeamId],
   def flowmanager       = global.flowmanager
   def mediamanager      = global.mediaManager
   def notifcationsUi    = global.notificationsUi
-  def tracking          = global.trackingService
+  def tracking: TrackingService = global.trackingService
   def syncHandler = global.syncHandler
 
   def db                = storage.db
@@ -245,8 +246,6 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val youtubeMedia                               = wire[YouTubeMediaService]
   lazy val mapsMediaService                           = wire[MapsMediaServiceImpl]
   lazy val otrEventDecoder: OtrEventDecoder           = wire[OtrEventDecoderImpl]
-  lazy val eventDecrypter: EventDecrypter             = wire[EventDecrypterImpl]
-  lazy val notificationParser: NotificationParser     = wire[NotificationParserImpl]
   lazy val otrService: OtrService                     = wire[OtrServiceImpl]
   lazy val genericMsgs: GenericMessageService         = wire[GenericMessageService]
   lazy val reactions: ReactionsService                = wire[ReactionsService]
@@ -279,6 +278,13 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val trackingSync                               = wire[TrackingSyncHandler]
   lazy val legalHold: LegalHoldService                = wire[LegalHoldServiceImpl]
   lazy val legalHoldSync: LegalHoldSyncHandler        = wire[LegalHoldSyncHandlerImpl]
+
+  lazy val eventDecrypter: EventDecrypter = EventDecrypter(
+    selfUserId, selfDomain, eventStorage, otrClientsService, cryptoSessionService, () => tracking
+  )
+  lazy val notificationParser: NotificationParser = NotificationParser(
+    selfUserId, convsStorage, usersStorage, () => msgAndLikes, () => calling
+  )
 
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
 
@@ -344,6 +350,7 @@ class ZMessaging(val teamId:    Option[TeamId],
     expiringUsers
     callLogging
 
+    wsPushService
     push// connect on start
     blockStreamsWhenProcessing
 

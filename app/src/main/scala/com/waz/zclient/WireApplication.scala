@@ -44,6 +44,7 @@ import com.waz.service.assets._
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation._
 import com.waz.service.messages.MessagesService
+import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.service.teams.{FeatureConfigsService, TeamsService}
 import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
@@ -453,6 +454,11 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[ImageNotificationsController]
     inject[CallingNotificationsController]
     inject[MessageNotificationsController].initialize()
+    activityLifecycleCallback.appInBackground.map(!_._1).foreach {
+      case true =>
+        inject[Signal[ZMessaging]].head.foreach(_.push.syncNotifications(SyncHistory(ForceSync)))
+      case false =>
+    }
 
 //    //TODO [AN-4942] - is this early enough for app launch events?
     inject[GlobalTrackingController]

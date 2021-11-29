@@ -82,13 +82,8 @@ final class PushServiceImpl(selfUserId:        UserId,
                             otrEventDecrypter: EventDecrypter,
                             otrEventDecoder:   OtrEventDecoder,
                             wsPushService:     WSPushService,
-                            accounts:          AccountsService,
-                            pushTokenService:  PushTokenService,
-                            network:           NetworkModeService,
-                            lifeCycle:         UiLifeCycle,
-                            tracking:          TrackingService,
-                            sync:              SyncServiceHandle,
-                            timeouts:          Timeouts)
+                            network:           => NetworkModeService,
+                            sync:              => SyncServiceHandle)
                            (implicit ev: AccountContext) extends PushService { self =>
   import PushService._
 
