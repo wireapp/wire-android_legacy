@@ -24,12 +24,12 @@ class NotificationParserSpec extends AndroidFreeSpec {
   private val self = UserData.withName(selfId, "self").copy(availability = Availability.Available, domain = domain)
   private val conv = ConversationData(convId, rConvId, Some("conv"), selfId, lastRead = before, domain = domain, muted = MuteSet.AllAllowed)
 
-  private lazy val convStorage = mock[ConversationStorage]
-  private lazy val usersStorage = mock[UsersStorage]
-  private lazy val mlStorage = mock[MessageAndLikesStorage]
-  private lazy val calling = mock[CallingService]
+  private val convStorage = mock[ConversationStorage]
+  private val usersStorage = mock[UsersStorage]
+  private val mlStorage = mock[MessageAndLikesStorage]
+  private val calling = mock[CallingService]
 
-  private def parser = NotificationParser(selfId, convStorage, usersStorage, mlStorage, calling)
+  private def parser = NotificationParser(selfId, convStorage, usersStorage, () => mlStorage, () => calling)
 
   scenario("show a notification on the event of deleting a conversation") {
     val senderId = UserId("sender")

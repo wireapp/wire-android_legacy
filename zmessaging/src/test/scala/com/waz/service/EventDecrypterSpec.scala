@@ -18,7 +18,7 @@ class EventDecrypterSpec extends AndroidFreeSpec {
   private val clients = mock[OtrClientsService]
   private val sessions = mock[CryptoSessionService]
 
-  def decrypter: EventDecrypter = EventDecrypter(userId, domain, storage, clients, sessions, tracking)
+  def decrypter: EventDecrypter = EventDecrypter(userId, domain, storage, clients, sessions, () => tracking)
 
   scenario("decrypt a valid otr event") {
     val from = UserId()
