@@ -23,7 +23,7 @@ import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.{DB, DBCursor}
 import org.threeten.bp.Instant
 
-case class MsgDeletion(msg: MessageId, time: Instant) extends Identifiable[MessageId] {
+final case class MsgDeletion(msg: MessageId, time: Instant) extends Identifiable[MessageId] {
   override val id: MessageId = msg
 }
 
