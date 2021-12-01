@@ -45,6 +45,46 @@ These steps will build only the Wire client UI, pulling in all other Wire framew
 - [Audio Video Signaling](https://github.com/wireapp/avs)
 - [generic-message-proto](https://github.com/wireapp/generic-message-proto)
 
+
+## how to build using docker
+
+we have added a docker compose file and a docker agent file + a configuration script, to make it possible to compile wire android with just one line of code.
+there are 2 possible ways to build a client with docker compose
+
+Option 1: configuring the docker-compose.yml
+
+the docker compose yml file contains some flags which you can change and modify to change what type of client will be build
+1. BUILD_TYPE: this value defines what build type you wanna build, it can either be Release or Debug
+2. FLAVOR_TYPE: this value defines the flavor type of a build. it can be one of the following: Dev, Prod, Experimental, FDroid, Internal, Candidate
+3. CUSTOM_REPOSITORY: this defines the url to a github repository containing the configuration files to build a custom client. see more about this under the section Custom Builds
+4. CUSTOM_FOLDER: this defines the custom folder inside the github repository
+5. CUSTOM_CLIENT: this defines the client folder inside the custom folder inside the github repository
+
+configure these values and use the following command to compile a client ooo (Out of the Box)
+`docker-compose up --build [-d]`
+or if you use a newer version of docker compose
+`docker compose up --build [-d]`
+
+-d means to spawn the docker agent detached, so you can continue using your terminal while the agent is building the client
+
+Option 2: use ENV Flags
+
+the flags which exists inside the docker file, can also be overwritten by directly writing them into the terminal line. See the example below
+
+`export BUILD_TYPE=Release && export FLAVOR=FDroid && docker compose up --build -d`
+
+## Custom Builds
+
+wire-android allows it to compile a client with custom configurations without having to modify the default.json
+for this all you need todo is to add configure the following variables
+
+1. CUSTOM_REPOSITORY
+2. CUSTOM_FOLDER
+3. CUSTOM_CLIENT
+
+see the outcommented example inside the docker-compose.yml file as a reference
+
+
 ## Android Studio
 
 When importing project in Android Studio **do not allow** gradle plugin update. Our build setup requires Android Plugin for Gradle version 3.2.1.
