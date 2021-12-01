@@ -57,8 +57,7 @@ import scala.concurrent.{Future, Promise}
 import scala.util.Success
 import scala.util.control.NonFatal
 
-class GlobalCallingService extends DerivedLogTag {
-
+final class GlobalCallingService extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   lazy val globalCallProfile: Signal[GlobalCallProfile] =
@@ -173,11 +172,9 @@ final class CallingServiceImpl(val accountId:       UserId,
                                mediaManagerService: MediaManagerService,
                                pushService:         PushService,
                                network:             NetworkModeService,
-                               errors:              ErrorsService,
                                userPrefs:           UserPreferences,
                                globalPrefs:         GlobalPreferences,
                                permissions:         PermissionsService,
-                               userStorage:         UsersStorage,
                                httpProxy:           Option[Proxy])
                               (implicit accountContext: AccountContext)
   extends CallingService with DerivedLogTag with SafeToLog { self =>

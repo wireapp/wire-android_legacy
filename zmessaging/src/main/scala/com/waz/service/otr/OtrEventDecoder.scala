@@ -4,49 +4,29 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.Event.EventDecoder
 import com.waz.model.GenericContent.{Calling, ClientAction, External}
-import com.waz.model.{AESKey, CallMessageEvent, ConversationEvent, DecryptionError, Domain, Duplicate, Event, GenericMessage, GenericMessageEvent, IdentityChangedError, MessageEvent, OtrError, OtrErrorEvent, OtrEvent, OtrMessageEvent, PushNotificationEvent, SessionReset, Sha256, UserId}
-import com.waz.service.otr.OtrService.SessionId
-import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
-import com.waz.threading.Threading
+import com.waz.model._
 import com.waz.utils.crypto.AESUtils
-import com.wire.cryptobox.CryptoException
 
-import scala.concurrent.Future
 import scala.util.{Failure, Try}
 
 trait OtrEventDecoder {
-  def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter): Future[Either[OtrError, Unit]]
   def decode(event: PushNotificationEvent): Option[Event]
 }
 
-final class OtrEventDecoderImpl(selfUserId:    UserId,
-                                currentDomain: Domain,
-                                clients:       OtrClientsService,
-                                sessions:      CryptoSessionService)
+final class OtrEventDecoderImpl(selfUserId: UserId, currentDomain: Domain)
   extends OtrEventDecoder with DerivedLogTag {
   import OtrEventDecoder._
-  import Threading.Implicits.Background
 
-  override def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter): Future[Either[OtrError, Unit]] =
-    clients.getOrCreateClient(ev.from, ev.sender).flatMap { _ =>
-      sessions.decryptMessage(SessionId(ev, currentDomain), ev.ciphertext, eventWriter)
-        .map(Right(_))
-        .recoverWith {
-          case e: CryptoException =>
-            import CryptoException.Code._
-            e.code match {
-              case DUPLICATE_MESSAGE =>
-                verbose(l"detected duplicate message for event: $ev")
-                Future.successful(Left(Duplicate))
-              case OUTDATED_MESSAGE =>
-                error(l"detected outdated message for event: $ev")
-                Future.successful(Left(Duplicate))
-              case REMOTE_IDENTITY_CHANGED =>
-                Future.successful(Left(IdentityChangedError(ev.from, ev.sender)))
-              case _ =>
-                Future.successful(Left(DecryptionError(e.getMessage, Some(e.code.ordinal()), ev.from, ev.sender)))
-            }
-        }
+  override def decode(event: PushNotificationEvent): Option[Event] =
+    event.plain match {
+      case Some(bytes) if event.event.isOtrMessageAdd =>
+        for {
+          ev     <- decodeOtrMessageAdd(event)
+          gm     <- decode(bytes)
+          result <- parseGenericMessage(ev, gm)
+        } yield result
+      case _ =>
+        Some(EventDecoder(event.event.toJson))
     }
 
   private def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent] = {
@@ -87,18 +67,6 @@ final class OtrEventDecoderImpl(selfUserId:    UserId,
     }
   }
 
-  override def decode(event: PushNotificationEvent): Option[Event] =
-    event.plain match {
-      case Some(bytes) if event.event.isOtrMessageAdd =>
-        for {
-          ev     <- decodeOtrMessageAdd(event)
-          gm     <- decode(bytes)
-          result <- parseGenericMessage(ev, gm)
-        } yield result
-      case _ =>
-        Some(EventDecoder(event.event.toJson))
-    }
-
   private def decodeExternal(key: AESKey, sha: Option[Sha256], extData: Option[Array[Byte]]) =
     for {
       data  <- extData if sha.forall(_.matches(data))
@@ -111,11 +79,8 @@ final class OtrEventDecoderImpl(selfUserId:    UserId,
 }
 
 object OtrEventDecoder extends DerivedLogTag {
-  def apply(selfUserId:    UserId,
-            currentDomain: Domain,
-            clients:       OtrClientsService,
-            sessions:      CryptoSessionService): OtrEventDecoder =
-    new OtrEventDecoderImpl(selfUserId, currentDomain, clients, sessions)
+  def apply(selfUserId: UserId, currentDomain: Domain): OtrEventDecoder =
+    new OtrEventDecoderImpl(selfUserId, currentDomain)
 
   def decodeOtrMessageAdd(event: PushNotificationEvent): Option[OtrMessageEvent] =
     Try(ConversationEvent.ConversationEventDecoder(event.event.toJson).asInstanceOf[OtrMessageEvent])

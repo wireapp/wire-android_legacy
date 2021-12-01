@@ -10,8 +10,8 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.clock
-import com.waz.service.otr.{NotificationParser, OtrEventDecoder}
-import com.waz.service.push.{NotificationUiController, PushNotificationEventsStorage}
+import com.waz.service.otr.{EventDecrypter, NotificationParser, NotificationUiController, OtrEventDecoder}
+import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.utils.{Backoff, ExponentialBackoff, _}
@@ -30,6 +30,7 @@ final class FCMPushHandlerImpl(userId:      UserId,
                                clientId:    ClientId,
                                client:      PushNotificationsClient,
                                storage:     PushNotificationEventsStorage,
+                               decrypter:   EventDecrypter,
                                decoder:     OtrEventDecoder,
                                parser:      NotificationParser,
                                controller:  NotificationUiController,
@@ -48,17 +49,17 @@ final class FCMPushHandlerImpl(userId:      UserId,
   private def updateDrift(time: Option[Instant]) =
     time.fold(Future.successful(()))(t => (beDriftPref := clock.instant.until(t)))
 
-  private def processNotifications(notifications: Vector[PushNotificationEncoded]): Future[Unit] = {
+  private def processNotifications(notifications: Vector[PushNotificationEncoded]) = {
     verbose(l"processNotifications($notifications)")
     for {
       encrypted <- storage.saveAll(notifications)
-      _         <- processEncryptedEvents(encrypted)
+      _         <- decrypter.processEncryptedEvents(encrypted)
       decrypted <- storage.getDecryptedRows
       decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
       _         =  verbose(l"decoded events (${decoded.size}): $decoded")
       parsed    <- parser.parse(decoded)
       _         =  verbose(l"parsed events (${parsed.size}): $parsed")
-      _         <- if (parsed.nonEmpty) controller.onNotificationsChanged(userId, parsed) else Future.successful(())
+      _         <- if (parsed.nonEmpty) controller.showNotifications(userId, parsed) else Future.successful(())
       _         <- updateLastId(notifications)
     } yield ()
   }
@@ -78,25 +79,6 @@ final class FCMPushHandlerImpl(userId:      UserId,
     nots.reverse.find(!_.transient).map(_.id) match {
       case Some(notId) => idPref := Some(notId)
       case _           => Future.successful(())
-    }
-
-  private def processEncryptedEvents(events: Seq[PushNotificationEvent]) =
-    Future.traverse(events) {
-      case event @ GetOtrEvent(otrEvent) => decrypt(event.index, otrEvent)
-      case event                         => storage.setAsDecrypted(event.index)
-    }.map(_ => ())
-
-  private def decrypt(index: Int, otrEvent: OtrEvent): Future[Unit] =
-    decoder.decryptStoredOtrEvent(otrEvent, storage.writeClosure(index)).flatMap {
-      case Left(Duplicate) =>
-        verbose(l"Ignoring duplicate message")
-        storage.remove(index)
-      case Left(err) =>
-        val e = OtrErrorEvent(otrEvent.convId, otrEvent.convDomain, otrEvent.time, otrEvent.from, otrEvent.fromDomain, err)
-        error(l"Got error when decrypting: $e")
-        storage.writeError(index, e)
-      case Right(_) =>
-        Future.successful(())
     }
 
   @inline
@@ -148,13 +130,14 @@ object FCMPushHandler {
             clientId:    ClientId,
             client:      PushNotificationsClient,
             storage:     PushNotificationEventsStorage,
+            decrypter:   EventDecrypter,
             decoder:     OtrEventDecoder,
             parser:      NotificationParser,
             controller:  NotificationUiController,
             globalPrefs: GlobalPreferences,
             userPrefs:   UserPreferences)
            (implicit ec: ExecutionContext): FCMPushHandler =
-    new FCMPushHandlerImpl(userId, clientId, client, storage, decoder, parser, controller, globalPrefs, userPrefs)
+    new FCMPushHandlerImpl(userId, clientId, client, storage, decrypter, decoder, parser, controller, globalPrefs, userPrefs)
 
   final case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant])
 
@@ -163,13 +146,4 @@ object FCMPushHandler {
   }
 
   final case class FetchFailedException(err: ErrorResponse) extends Exception(s"Failed to fetch notifications: ${err.message}")
-
-  object GetOtrEvent extends DerivedLogTag {
-    def unapply(event: PushNotificationEvent): Option[OtrEvent] =
-      if (!event.event.isOtrMessageAdd) None
-      else ConversationEvent.ConversationEventDecoder(event.event.toJson) match {
-        case otrEvent: OtrEvent => Some(otrEvent)
-        case _                  => error(l"Unrecognized event: ${event.event}"); None
-      }
-  }
 }

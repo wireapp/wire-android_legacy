@@ -27,7 +27,6 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.model.otr.ClientId
-import com.waz.repository.{FCMNotificationStatsRepositoryImpl, FCMNotificationsRepositoryImpl}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.assets._
 import com.waz.service.call._
@@ -35,6 +34,7 @@ import com.waz.service.conversation._
 import com.waz.service.media._
 import com.waz.service.messages._
 import com.waz.service.otr._
+import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.service.push._
 import com.waz.service.teams.{FeatureConfigsService, FeatureConfigsServiceImpl, TeamsService, TeamsServiceImpl}
 import com.waz.service.tracking.TrackingService
@@ -91,7 +91,6 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val rolesStorage: ConversationRolesStorage     = wire[ConversationRolesStorageImpl]
   lazy val oldAssetStorage:      AssetsStorage        = wire[AssetsStorageImpl]
   lazy val reactionsStorage                           = wire[ReactionsStorageImpl]
-  lazy val notifStorage:      NotificationStorage     = wire[NotificationStorageImpl]
   lazy val convsStorage:      ConversationStorage     = wire[ConversationStorageImpl]
   lazy val msgDeletions:      MsgDeletionStorage      = wire[MsgDeletionStorageImpl]
   lazy val msgEdits:          EditHistoryStorage      = wire[EditHistoryStorageImpl]
@@ -165,7 +164,7 @@ class ZMessaging(val teamId:    Option[TeamId],
   def flowmanager       = global.flowmanager
   def mediamanager      = global.mediaManager
   def notifcationsUi    = global.notificationsUi
-  def tracking          = global.trackingService
+  def tracking: TrackingService = global.trackingService
   def syncHandler = global.syncHandler
 
   def db                = storage.db
@@ -179,7 +178,6 @@ class ZMessaging(val teamId:    Option[TeamId],
   def rawAssetStorage               = storage.rawAssetStorage
   def downloadAssetStorage               = storage.inProgressAssetStorage
   def reactionsStorage  = storage.reactionsStorage
-  def notifStorage      = storage.notifStorage
   def convsStorage      = storage.convsStorage
   def msgDeletions      = storage.msgDeletions
   def msgEdits          = storage.msgEdits
@@ -216,8 +214,6 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val callingClient      = new CallingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val propertiesClient: PropertiesClient = new PropertiesClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val legalHoldClient    = new LegalHoldClientImpl()(urlCreator, httpClient, authRequestInterceptor)
-  lazy val fcmNotsRepo        = new FCMNotificationsRepositoryImpl()(db)
-  lazy val fcmNotStatsRepo    = new FCMNotificationStatsRepositoryImpl(fcmNotsRepo)(db, Threading.Background)
 
   lazy val convsContent: ConversationsContentUpdaterImpl = wire[ConversationsContentUpdaterImpl]
   lazy val messagesContent: MessagesContentUpdater = wire[MessagesContentUpdater]
@@ -250,11 +246,9 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val youtubeMedia                               = wire[YouTubeMediaService]
   lazy val mapsMediaService                           = wire[MapsMediaServiceImpl]
   lazy val otrEventDecoder: OtrEventDecoder           = wire[OtrEventDecoderImpl]
-  lazy val notificationParser: NotificationParser     = wire[NotificationParserImpl]
   lazy val otrService: OtrService                     = wire[OtrServiceImpl]
   lazy val genericMsgs: GenericMessageService         = wire[GenericMessageService]
   lazy val reactions: ReactionsService                = wire[ReactionsService]
-  lazy val notifications: NotificationService         = wire[NotificationServiceImpl]
   lazy val recordAndPlay                              = wire[RecordAndPlayService]
   lazy val receipts                                   = wire[ReceiptService]
   lazy val ephemeral                                  = wire[EphemeralMessagesService]
@@ -281,10 +275,16 @@ class ZMessaging(val teamId:    Option[TeamId],
   lazy val propertiesSyncHandler                      = wire[PropertiesSyncHandler]
   lazy val foldersSyncHandler                         = wire[FoldersSyncHandler]
   lazy val propertiesService: PropertiesService       = wire[PropertiesServiceImpl]
-  lazy val fcmNotStatsService                         = wire[FCMNotificationStatsServiceImpl]
   lazy val trackingSync                               = wire[TrackingSyncHandler]
   lazy val legalHold: LegalHoldService                = wire[LegalHoldServiceImpl]
   lazy val legalHoldSync: LegalHoldSyncHandler        = wire[LegalHoldSyncHandlerImpl]
+
+  lazy val eventDecrypter: EventDecrypter = EventDecrypter(
+    selfUserId, selfDomain, eventStorage, otrClientsService, cryptoSessionService, () => tracking
+  )
+  lazy val notificationParser: NotificationParser = NotificationParser(
+    selfUserId, convsStorage, usersStorage, () => msgAndLikes, () => calling
+  )
 
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
 
@@ -331,8 +331,6 @@ class ZMessaging(val teamId:    Option[TeamId],
         convOrder.conversationOrderEventsStage,
         conversations.convStateEventProcessingStage,
         msgEvents.messageEventProcessingStage,
-        notifications.messageNotificationEventsStage,
-        notifications.connectionNotificationEventStage,
         genericMsgs.eventProcessingStage,
         foldersService.eventProcessingStage,
         propertiesService.eventProcessor,
@@ -352,8 +350,8 @@ class ZMessaging(val teamId:    Option[TeamId],
     expiringUsers
     callLogging
 
-    push // connect on start
-    notifications
+    wsPushService
+    push// connect on start
     blockStreamsWhenProcessing
 
     // services listening for storage updates
@@ -430,7 +428,7 @@ object ZMessaging extends DerivedLogTag { self =>
                assets2:             Assets2Module,
                fileRestrictionList: FileRestrictionList,
                defaultProxyDetails: ProxyDetails
-              ) = {
+              ): Unit = {
     Threading.assertUiThread()
 
     if (this.currentUi == null) {
@@ -447,7 +445,6 @@ object ZMessaging extends DerivedLogTag { self =>
       currentUi = ui
       currentGlobal = _global
       currentAccounts = currentGlobal.accountsService
-
 
       globalReady.success(_global)
 

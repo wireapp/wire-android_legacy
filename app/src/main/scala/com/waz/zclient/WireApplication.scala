@@ -44,6 +44,7 @@ import com.waz.service.assets._
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation._
 import com.waz.service.messages.MessagesService
+import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.service.teams.{FeatureConfigsService, TeamsService}
 import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
@@ -197,7 +198,6 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[MessageAndLikesStorage]]        to inject[Signal[ZMessaging]].map(_.msgAndLikes)
     bind [Signal[ReadReceiptsStorage]]           to inject[Signal[ZMessaging]].map(_.readReceiptsStorage)
     bind [Signal[ReactionsStorage]]              to inject[Signal[ZMessaging]].map(_.reactionsStorage)
-    bind [Signal[FCMNotificationStatsService]]   to inject[Signal[ZMessaging]].map(_.fcmNotStatsService)
     bind [Signal[FoldersStorage]]                to inject[Signal[ZMessaging]].map(_.foldersStorage)
     bind [Signal[ConversationFoldersStorage]]    to inject[Signal[ZMessaging]].map(_.conversationFoldersStorage)
     bind [Signal[FoldersService]]                to inject[Signal[ZMessaging]].map(_.foldersService)
@@ -453,6 +453,12 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[NotificationManagerWrapper]
     inject[ImageNotificationsController]
     inject[CallingNotificationsController]
+    inject[MessageNotificationsController].initialize()
+    activityLifecycleCallback.appInBackground.map(!_._1).foreach {
+      case true =>
+        inject[Signal[ZMessaging]].head.foreach(_.push.syncNotifications(SyncHistory(ForceSync)))
+      case false =>
+    }
 
 //    //TODO [AN-4942] - is this early enough for app launch events?
     inject[GlobalTrackingController]
