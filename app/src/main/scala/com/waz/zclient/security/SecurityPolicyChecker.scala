@@ -28,7 +28,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.security.actions._
 import com.waz.zclient.security.checks._
-import com.waz.zclient.{BuildConfig, Injectable, Injector, R, WireApplication}
+import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import org.threeten.bp.Instant
 import org.threeten.bp.temporal.ChronoUnit
 
@@ -205,10 +205,9 @@ object SecurityPolicyChecker extends DerivedLogTag {
    * we use a quick if/else at start to check if more complicated checks are necessary at all.
    */
   def runBackgroundSecurityChecklist()(implicit context: Context): Future[Boolean] =
-    if (!needsBackgroundSecurityChecklist) {
+    if (!BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT && !BuildConfig.WIPE_ON_COOKIE_INVALID)
       Future.successful(true)
-    } else {
-      WireApplication.ensureInitialized()
+    else
       ZMessaging.currentAccounts.activeAccountManager.head.flatMap(am =>
         runSecurityChecklist(
           passwordController  = None,
@@ -221,8 +220,5 @@ object SecurityPolicyChecker extends DerivedLogTag {
           authNeeded          = false
         )
     )
-  }
 
-  def needsBackgroundSecurityChecklist: Boolean =
-    BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT || BuildConfig.WIPE_ON_COOKIE_INVALID
 }

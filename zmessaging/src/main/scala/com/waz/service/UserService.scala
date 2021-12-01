@@ -32,7 +32,7 @@ import com.waz.service.assets.{AssetService, AssetStorage, Content, ContentForUp
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
-import com.waz.sync.{SyncRequestService, SyncServiceHandle}
+import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
 import com.waz.threading.Threading
@@ -63,15 +63,10 @@ trait UserService {
   def findUsers(ids: Seq[UserId]): Future[Seq[Option[UserData]]]
   def qualifiedId(userId: UserId): Future[QualifiedId]
   def qualifiedIds(userIds: Set[UserId]): Future[Set[QualifiedId]]
-  def getOrCreateUser(id: UserId, waitTillSynced: Boolean = false): Future[UserData]
+  def getOrCreateUser(id: UserId): Future[UserData]
   def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]]
-  def syncIfNeeded(userIds: Set[UserId],
-                   olderThan: FiniteDuration = SyncIfOlderThan,
-                   qIds: Set[QualifiedId] = Set.empty,
-                   waitTillSynced: Boolean = false): Future[Option[SyncId]]
-  def syncUsers(userIds: Set[UserId],
-                qIds: Set[QualifiedId] = Set.empty,
-                waitTillSynced: Boolean = false): Future[Option[SyncId]]
+  def syncIfNeeded(userIds: Set[UserId], olderThan: FiniteDuration = SyncIfOlderThan, qIds: Set[QualifiedId] = Set.empty): Future[Option[SyncId]]
+  def syncUsers(userIds: Set[UserId], qIds: Set[QualifiedId] = Set.empty): Future[Option[SyncId]]
   def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None): Future[Option[UserData]]
   def updateUsers(entries: Seq[UserSearchEntry]): Future[Set[UserData]]
   def syncRichInfoNowForUser(id: UserId): Future[Option[UserData]]
@@ -121,8 +116,7 @@ class UserServiceImpl(selfUserId:        UserId,
                       assetsStorage:     AssetStorage,
                       credentialsClient: CredentialsUpdateClient,
                       selectedConv:      SelectedConversationService,
-                      messages:          MessagesService,
-                      syncRequests:      SyncRequestService
+                      messages:          MessagesService
                      ) extends UserService with DerivedLogTag {
 
   import Threading.Implicits.Background
@@ -260,18 +254,14 @@ class UserServiceImpl(selfUserId:        UserId,
       Future.successful(userIds.map(QualifiedId(_)))
     }
 
-  override def getOrCreateUser(id: UserId, waitTillSynced: Boolean = false): Future[UserData] = {
-    for {
-      _    <- syncIfNeeded(Set(id), waitTillSynced = waitTillSynced)
-      user <- usersStorage.getOrCreate(id,
-                                       UserData(
-                                         id, currentDomain, None, Name.Empty, None, None,
-                                         connection = ConnectionStatus.Unconnected,
-                                         searchKey = SearchKey.Empty, handle = None
-                                       )
-                                     )
-    } yield user
-  }
+  override def getOrCreateUser(id: UserId): Future[UserData] =
+    usersStorage.getOrCreate(id, {
+      syncUsers(Set(id))
+      UserData(
+        id, currentDomain, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected,
+        searchKey = SearchKey.Empty, handle = None
+      )
+    })
 
   override def updateConnectionStatus(id: UserId,
                                       status: UserData.ConnectionStatus,
@@ -376,8 +366,7 @@ class UserServiceImpl(selfUserId:        UserId,
   */
   override def syncIfNeeded(userIds:         Set[UserId],
                             olderThan:       FiniteDuration = SyncIfOlderThan,
-                            qIds:            Set[QualifiedId] = Set.empty,
-                            waitTillSynced:  Boolean = false): Future[Option[SyncId]] =
+                            qIds:            Set[QualifiedId] = Set.empty): Future[Option[SyncId]] =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
       val allIds = userIds ++ qIds.map(_.id)
       for {
@@ -401,8 +390,6 @@ class UserServiceImpl(selfUserId:        UserId,
                                    sync.syncUsers(nonQualified).map(Option(_))
                                  else
                                    Future.successful(None)
-        _                     <- if (waitTillSynced) syncRequests.await(Set(syncId1, syncId2).flatten)
-                                 else Future.successful(())
       } yield syncId2.orElse(syncId1)
     } else {
       usersStorage.listAll(userIds).flatMap { found =>
@@ -411,20 +398,11 @@ class UserServiceImpl(selfUserId:        UserId,
         val existing = found.filter(u => !u.isConnected && (u.teamId.isEmpty || u.teamId != teamId) && u.syncTimestamp.forall(_.isBefore(offset)))
         val toSync   = newIds ++ existing.map(_.id)
         verbose(l"syncIfNeeded for users; new: (${newIds.size}) + existing: (${existing.size}) = all: (${toSync.size})")
-        if (toSync.nonEmpty)
-          sync.syncUsers(toSync)
-            .flatMap {
-              case syncId if waitTillSynced => syncRequests.await(syncId).map(_ => Some(syncId))
-              case syncId => Future.successful(Some(syncId))
-            }
-        else
-          Future.successful(None)
+        if (toSync.nonEmpty) sync.syncUsers(toSync).map(Some(_)) else Future.successful(None)
       }
     }
 
-  def syncUsers(userIds: Set[UserId],
-                qIds: Set[QualifiedId] = Set.empty,
-                waitTillSynced:  Boolean = false): Future[Option[SyncId]] =
+  def syncUsers(userIds: Set[UserId], qIds: Set[QualifiedId] = Set.empty): Future[Option[SyncId]] =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
       for {
         found                 <- usersStorage.listAll(userIds -- qIds.map(_.id))
@@ -438,18 +416,10 @@ class UserServiceImpl(selfUserId:        UserId,
                                    sync.syncUsers(nonQualified).map(Option(_))
                                  else
                                    Future.successful(None)
-        _                     <- if (waitTillSynced) syncRequests.await(Set(syncId1, syncId2).flatten)
-                                 else Future.successful(())
       } yield syncId2.orElse(syncId1)
     } else {
-      if (userIds.nonEmpty)
-        sync.syncUsers(userIds)
-          .flatMap {
-            case syncId if waitTillSynced => syncRequests.await(syncId).map(_ => Some(syncId))
-            case syncId => Future.successful(Some(syncId))
-          }
-      else
-        Future.successful(None)
+      if (userIds.nonEmpty) sync.syncUsers(userIds).map(Some(_))
+      else Future.successful(None)
     }
 
   override def updateSyncedUsers(users: Seq[UserInfo], syncTime: LocalInstant = LocalInstant.Now): Future[Set[UserData]] = {

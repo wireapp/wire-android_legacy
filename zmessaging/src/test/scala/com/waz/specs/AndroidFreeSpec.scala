@@ -29,7 +29,7 @@ import com.waz.service.assets.FileRestrictionList
 import com.waz.service.tracking.TrackingService
 import com.waz.testutils.TestClock
 import com.waz.threading.Threading.{Background, IO, ImageDispatcher, Ui}
-import com.wire.signals.{CancellableFuture, DispatchQueue, Signal}
+import com.wire.signals.{CancellableFuture, DispatchQueue, SerialDispatchQueue, Signal}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.wrappers.{Intent, JVMIntentUtil, JavaURIUtil, URI, _}

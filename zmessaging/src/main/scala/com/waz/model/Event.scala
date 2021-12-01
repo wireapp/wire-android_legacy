@@ -30,7 +30,7 @@ import com.waz.service.PropertyKey
 import com.waz.service.conversation.FoldersService.FoldersProperty
 import com.waz.service.conversation.RemoteFolderData
 import com.waz.sync.client.ConversationsClient.ConversationResponse
-import com.waz.sync.client.{EncodedEvent, OtrClient}
+import com.waz.sync.client.OtrClient
 import com.waz.utils.JsonDecoder._
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}
@@ -527,9 +527,6 @@ object OtrErrorEvent extends DerivedLogTag {
 
 object MessageEvent {
   import com.waz.utils._
-
-  def errorToEncodedEvent(error: OtrErrorEvent): EncodedEvent =
-    EncodedEvent(MessageEventEncoder(error).toString)
 
   implicit lazy val MessageEventEncoder: JsonEncoder[MessageEvent] = new JsonEncoder[MessageEvent] {
 

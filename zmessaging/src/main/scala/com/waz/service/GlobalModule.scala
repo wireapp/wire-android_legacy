@@ -33,7 +33,6 @@ import com.waz.log.{LogsService, LogsServiceImpl}
 import com.waz.permissions.PermissionsService
 import com.waz.service.assets.{AudioTranscoder, FileRestrictionList, GeneralFileCacheImpl, GlobalRecordAndPlayService}
 import com.waz.service.call._
-import com.waz.service.otr.NotificationUiController
 import com.waz.service.push._
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
 import com.waz.sync.client._

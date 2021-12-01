@@ -24,9 +24,11 @@ import com.waz.content.{GlobalPreferences, MembersStorage, OtrClientsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.GenericContent.Asset.{AES_CBC, EncryptionAlgorithm}
+import com.waz.model.GenericContent._
 import com.waz.model._
 import com.waz.model.otr._
 import com.waz.service._
+import com.waz.service.push.PushNotificationEventsStorage.PlainWriter
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.OtrClient
@@ -35,6 +37,7 @@ import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
 import com.waz.zms.BuildConfig
+import com.wire.cryptobox.CryptoException
 import com.wire.signals.Signal
 import javax.crypto.Mac
 
@@ -43,6 +46,8 @@ import scala.concurrent.duration._
 import scala.util.Try
 
 trait OtrService {
+  def sessions: CryptoSessionService // only for tests
+
   def resetSession(convId: ConvId, userId: UserId, clientId: ClientId): Future[SyncId]
   def resetSession(convId: ConvId, qId: QualifiedId, clientId: ClientId): Future[SyncId]
 
@@ -72,6 +77,9 @@ trait OtrService {
                        otrKey:     Option[AESKey],
                        sha:        Option[Sha256],
                        data:       Option[Array[Byte]]): Option[Array[Byte]]
+
+  def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter): Future[Either[OtrError, Unit]]
+  def parseGenericMessage(msgEvent: OtrMessageEvent, msg: GenericMessage): Option[MessageEvent]
 }
 
 class OtrServiceImpl(selfUserId:     UserId,
@@ -90,12 +98,80 @@ class OtrServiceImpl(selfUserId:     UserId,
   import OtrService._
   import Threading.Implicits.Background
 
-  private lazy val sessions: CryptoSessionService = returning(cryptoBox.sessions) { sessions =>
+  override lazy val sessions: CryptoSessionService = returning(cryptoBox.sessions) { sessions =>
     // request self clients sync to update prekeys on backend
     // we've just created a session from message, this means that some user had to obtain our prekey from backend (so we can upload it)
     // using signal and sync interval parameter to limit requests to one an hour
     Signal.from(sessions.onCreateFromMessage).throttle(15.seconds).foreach { _ => clients.requestSyncIfNeeded(1.hour) }
   }
+
+  override def parseGenericMessage(otrMsg: OtrMessageEvent, genericMsg: GenericMessage): Option[MessageEvent] = {
+    val conv = otrMsg.convId
+    val convDomain = otrMsg.convDomain
+    val time = otrMsg.time
+    val from = otrMsg.from
+    val fromDomain = otrMsg.fromDomain
+    val sender = otrMsg.sender
+    val extData = otrMsg.externalData
+    val localTime = otrMsg.localTime
+    if (!(genericMsg.isBroadcastMessage || from == selfUserId) && conv.str == selfUserId.str) {
+      warn(l"Received a message to the self-conversation by someone else than self and it's not a broadcast")
+      None
+    } else {
+      genericMsg.unpackContent match {
+        case ext: External =>
+          val (key, sha) = ext.unpack
+          decodeExternal(key, Some(sha), extData) match {
+            case None =>
+              error(l"External message could not be decoded External($key, $sha), data: $extData")
+              Some(OtrErrorEvent(conv, convDomain, time, from, fromDomain, DecryptionError("symmetric decryption failed", Some(OtrError.ERROR_CODE_SYMMETRIC_DECRYPTION_FAILED), from, sender)))
+            case Some(msg :GenericMessage) =>
+              msg.unpackContent match {
+                case calling: Calling =>
+                  Some(CallMessageEvent(conv, convDomain, time, from, fromDomain, sender, calling.unpack)) //call messages need sender client id
+                case _ =>
+                  Some(GenericMessageEvent(conv, convDomain, time, from, fromDomain, msg).withLocalTime(localTime))
+              }
+          }
+        case ClientAction.SessionReset =>
+          Some(SessionReset(conv, convDomain, time, from, fromDomain, sender))
+        case calling: Calling =>
+          Some(CallMessageEvent(conv, convDomain, time, from, fromDomain, sender, calling.unpack)) //call messages need sender client id
+        case _ =>
+          Some(GenericMessageEvent(conv, convDomain, time, from, fromDomain, genericMsg).withLocalTime(localTime))
+      }
+    }
+  }
+
+  private def decodeExternal(key: AESKey, sha: Option[Sha256], extData: Option[Array[Byte]]) =
+    for {
+      data  <- extData if sha.forall(_.matches(data))
+      plain <- Try(AESUtils.decrypt(key, data)).toOption
+      msg   <- Try(GenericMessage(plain)).toOption
+    } yield msg
+
+  override def decryptStoredOtrEvent(ev: OtrEvent, eventWriter: PlainWriter)
+      : Future[Either[OtrError, Unit]] =
+    clients.getOrCreateClient(ev.from, ev.sender) flatMap { _ =>
+      sessions.decryptMessage(SessionId(ev, currentDomain), ev.ciphertext, eventWriter)
+        .map(Right(_))
+        .recoverWith {
+          case e: CryptoException =>
+            import CryptoException.Code._
+            e.code match {
+              case DUPLICATE_MESSAGE =>
+                verbose(l"detected duplicate message for event: $ev")
+                Future successful Left(Duplicate)
+              case OUTDATED_MESSAGE =>
+                error(l"detected outdated message for event: $ev")
+                Future successful Left(Duplicate)
+              case REMOTE_IDENTITY_CHANGED =>
+                Future successful Left(IdentityChangedError(ev.from, ev.sender))
+              case _ =>
+                Future successful Left(DecryptionError(e.getMessage, Some(e.code.ordinal()), ev.from, ev.sender))
+            }
+        }
+    }
 
   override def resetSession(convId: ConvId, userId: UserId, clientId: ClientId): Future[SyncId] =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {

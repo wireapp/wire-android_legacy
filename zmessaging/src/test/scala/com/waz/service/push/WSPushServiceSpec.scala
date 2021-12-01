@@ -142,16 +142,16 @@ import scala.concurrent.duration._
       Thread.sleep(500)
       fakeWebSocketEvents ! SocketEvent.Opened(webSocket)
 
-      val notification = PushNotificationEncoded(id = Uid(), Vector.empty)
+      val notification = PushNotificationEncoded(id = Uid(), new JSONArray)
       import com.waz.utils.Json.syntax._
-      //val responseContent = JsonObjectResponse(notification.toJson)
+      val responseContent = JsonObjectResponse(notification.toJson)
 
       var gotNotification = false
       service.notifications.foreach { _ =>
         gotNotification = true
       }
 
-      //fakeWebSocketEvents ! SocketEvent.Message(webSocket, responseContent)
+      fakeWebSocketEvents ! SocketEvent.Message(webSocket, responseContent)
 
       Thread.sleep(500)
 

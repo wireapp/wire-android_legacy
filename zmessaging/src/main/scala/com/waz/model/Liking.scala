@@ -26,8 +26,7 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{Identifiable, JsonDecoder, JsonEncoder, RichWireInstant}
 import org.json.JSONObject
 
-final case class Liking(message: MessageId, user: UserId, timestamp: RemoteInstant, action: Liking.Action)
-  extends Identifiable[Liking.Id] {
+case class Liking(message: MessageId, user: UserId, timestamp: RemoteInstant, action: Liking.Action) extends Identifiable[Liking.Id] {
   override val id: Liking.Id = (message, user)
 
   def max(other: Liking) =

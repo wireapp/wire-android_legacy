@@ -87,7 +87,9 @@ final class MessagesStorageImpl(context:     Context,
                                 selfUserId:  UserId,
                                 convs:       ConversationStorage,
                                 users:       UsersStorage,
-                                msgAndLikes: => MessageAndLikesStorage)
+                                msgAndLikes: => MessageAndLikesStorage,
+                                timeouts:    Timeouts,
+                                tracking:    TrackingService)
   extends CachedStorageImpl[MessageId, MessageData](
     new TrimmingLruCache[MessageId, Option[MessageData]](context, Fixed(MessagesStorage.cacheSize)),
     storage
@@ -324,9 +326,7 @@ trait MessageAndLikesStorage {
   def sortedLikes(likes: Likes, selfUserId: UserId): (IndexedSeq[UserId], Boolean)
 }
 
-final class MessageAndLikesStorageImpl(selfUserId: UserId,
-                                       messages:   => MessagesStorage,
-                                       likings:    ReactionsStorage) extends MessageAndLikesStorage {
+class MessageAndLikesStorageImpl(selfUserId: UserId, messages: => MessagesStorage, likings: ReactionsStorage) extends MessageAndLikesStorage {
   import com.waz.threading.Threading.Implicits.Background
 
   val onUpdate = EventStream[MessageId]() // TODO: use batching, maybe report new message data instead of just id

@@ -57,7 +57,7 @@ class ReactionsService(storage: ReactionsStorage,
   def processReactions(likings: Seq[Liking]): Future[Seq[Likes]] = Future.traverse(likings) { storage.addOrUpdate } // FIXME: use batching
 }
 
-final case class MessageAndLikes(message: MessageData, likes: IndexedSeq[UserId], likedBySelf: Boolean, quote: Option[MessageData])
+case class MessageAndLikes(message: MessageData, likes: IndexedSeq[UserId], likedBySelf: Boolean, quote: Option[MessageData])
 object MessageAndLikes extends ((MessageData, IndexedSeq[UserId], Boolean, Option[MessageData]) => MessageAndLikes) {
   val Empty = MessageAndLikes(MessageData.Empty, Vector.empty, likedBySelf = false, None)
   val Deleted = MessageAndLikes(MessageData.Deleted, Vector.empty, likedBySelf = false, None)
