@@ -24,12 +24,12 @@ import android.content.{ContentValues, Context}
 import android.database.sqlite.SQLiteException
 import android.graphics.{Color, Typeface}
 import android.net.Uri
-import android.os.{Build, Bundle, Environment}
+import android.os.{Build, Environment}
 import android.provider.MediaStore
 import android.text.style.{ForegroundColorSpan, StyleSpan}
 import android.text.{SpannableString, Spanned}
 import androidx.core.app.NotificationCompat.Style
-import androidx.core.app.{NotificationCompat, NotificationCompatExtras, RemoteInput}
+import androidx.core.app.{NotificationCompat, RemoteInput}
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -41,7 +41,6 @@ import com.waz.utils.wrappers.Bitmap
 import com.waz.utils.{IoUtils, returning}
 import com.waz.zclient.Intents.CallIntent
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.notifications.controllers.MessageNotificationsController.toNotificationConvId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{MessageNotificationsChannelId, PingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.{DeprecationUtils, ResString, RingtoneUtils, format}
@@ -52,7 +51,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-final case class Span(style: Int, range: Int, offset: Int = 0)
+case class Span(style: Int, range: Int, offset: Int = 0)
 
 object Span {
   val ForegroundColorSpanBlack = 1
@@ -64,10 +63,11 @@ object Span {
   val BodyRange   = 2
 }
 
-final case class SpannableWrapper(header: ResString,
-                                  body: ResString,
-                                  spans: List[Span],
-                                  separator: String) {
+case class SpannableWrapper(header: ResString,
+                            body: ResString,
+                            spans: List[Span],
+                            separator: String) {
+
   override def toString: String =
     format(className = "SpannableWrapper", oneLiner = true,
       "header"    -> Some(header),
@@ -119,11 +119,11 @@ object SpannableWrapper {
   val Empty: SpannableWrapper = SpannableWrapper(ResString.Empty)
 }
 
-final case class StyleBuilder(style: Int,
-                              title: SpannableWrapper,
-                              summaryText: Option[String] = None,
-                              bigText: Option[SpannableWrapper] = None,
-                              lines: List[SpannableWrapper] = List.empty) {
+case class StyleBuilder(style: Int,
+                        title: SpannableWrapper,
+                        summaryText: Option[String] = None,
+                        bigText: Option[SpannableWrapper] = None,
+                        lines: List[SpannableWrapper] = List.empty) {
   override def toString: String =
     format(className = "StyleBuilder", oneLiner = true,
       "style"       -> Some(style),
@@ -154,32 +154,32 @@ object StyleBuilder {
   val Inbox   = 2
 }
 
-final case class NotificationProps(accountId:                UserId,
-                                   when:                     Option[Long] = None,
-                                   showWhen:                 Option[Boolean] = None,
-                                   category:                 Option[String] = None,
-                                   priority:                 Option[Int] = None,
-                                   smallIcon:                Option[Int] = None,
-                                   contentTitle:             Option[SpannableWrapper] = None,
-                                   contentText:              Option[SpannableWrapper] = None,
-                                   style:                    Option[StyleBuilder] = None,
-                                   groupSummary:             Option[Boolean] = None,
-                                   group:                    Option[UserId] = None,
-                                   openAccountIntent:        Option[UserId] = None,
-                                   clearNotificationsIntent: Option[(UserId, Option[ConvId])] = None,
-                                   openConvIntent:           Option[(UserId, ConvId, Int)] = None,
-                                   contentInfo:              Option[String] = None,
-                                   color:                    Option[Int] = None,
-                                   vibrate:                  Option[Array[Long]] = None,
-                                   autoCancel:               Option[Boolean] = None,
-                                   sound:                    Option[Uri] = None,
-                                   onlyAlertOnce:            Option[Boolean] = None,
-                                   lights:                   Option[(Int, Int, Int)] = None,
-                                   largeIcon:                Option[Bitmap] = None,
-                                   action1:                  Option[(UserId, ConvId, Int)] = None,
-                                   action2:                  Option[(UserId, ConvId, Int)] = None,
-                                   lastIsPing:               Option[Boolean] = None
-                                  ) {
+case class NotificationProps(accountId:                UserId,
+                             when:                     Option[Long] = None,
+                             showWhen:                 Option[Boolean] = None,
+                             category:                 Option[String] = None,
+                             priority:                 Option[Int] = None,
+                             smallIcon:                Option[Int] = None,
+                             contentTitle:             Option[SpannableWrapper] = None,
+                             contentText:              Option[SpannableWrapper] = None,
+                             style:                    Option[StyleBuilder] = None,
+                             groupSummary:             Option[Boolean] = None,
+                             group:                    Option[UserId] = None,
+                             openAccountIntent:        Option[UserId] = None,
+                             clearNotificationsIntent: Option[(UserId, Option[ConvId])] = None,
+                             openConvIntent:           Option[(UserId, ConvId, Int)] = None,
+                             contentInfo:              Option[String] = None,
+                             color:                    Option[Int] = None,
+                             vibrate:                  Option[Array[Long]] = None,
+                             autoCancel:               Option[Boolean] = None,
+                             sound:                    Option[Uri] = None,
+                             onlyAlertOnce:            Option[Boolean] = None,
+                             lights:                   Option[(Int, Int, Int)] = None,
+                             largeIcon:                Option[Bitmap] = None,
+                             action1:                  Option[(UserId, ConvId, Int)] = None,
+                             action2:                  Option[(UserId, ConvId, Int)] = None,
+                             lastIsPing:               Option[Boolean] = None
+                            ) {
   override def toString: String =
     format(className = "NotificationProps", oneLiner = false,
       "when"                     -> when,
@@ -221,12 +221,8 @@ final case class NotificationProps(accountId:                UserId,
     groupSummary.foreach { summary =>
       builder.setGroupSummary(summary)
       builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
-      builder.addExtras(returning(new Bundle()) { bundle =>
-        bundle.putBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY, summary)
-      })
     }
-
-    builder.setGroup(group.fold("")(_.str))
+    group.foreach(accountId => builder.setGroup(accountId.str))
 
     openAccountIntent.foreach(userId => builder.setContentIntent(Intents.OpenAccountIntent(userId)))
 
@@ -271,45 +267,46 @@ final case class NotificationProps(accountId:                UserId,
 }
 
 trait NotificationManagerWrapper {
+  def getActiveNotificationIds: Seq[Int]
   def showNotification(id: Int, notificationProps: NotificationProps): Unit
-  def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit
+  def cancelNotifications(ids: Set[Int]): Unit
 }
 
 object NotificationManagerWrapper {
+
   val IncomingCallNotificationsChannelId = "INCOMING_CALL_NOTIFICATIONS_CHANNEL_ID"
   val OngoingNotificationsChannelId      = "STICKY_NOTIFICATIONS_CHANNEL_ID"
 
   def PingNotificationsChannelId(userId: UserId)         = s"PINGS_NOTIFICATIONS_CHANNEL_ID_${userId.str.hashCode}"
   def MessageNotificationsChannelId(userId: UserId)      = s"MESSAGE_NOTIFICATIONS_CHANNEL_ID_${userId.str.hashCode}"
 
-  final case class ChannelGroup(id: String, name: String, channels: Set[ChannelInfo])
+  case class ChannelGroup(id: String, name: String, channels: Set[ChannelInfo])
 
-  final case class ChannelInfo(id: String, name: String, description: String, sound: Uri, vibration: Boolean)
+  case class ChannelInfo(id: String, name: String, description: String, sound: Uri, vibration: Boolean)
   object ChannelInfo {
     def apply(id: String, name: Int, description: Int, sound: Uri, vibration: Boolean)(implicit cxt: Context): ChannelInfo = ChannelInfo(id, getString(name), getString(description), sound, vibration)
   }
 
-
-  final class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
+  class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
     extends NotificationManagerWrapper with Injectable with DerivedLogTag {
 
-    val accountChannels: Signal[Seq[ChannelGroup]] =
-      inject[AccountsService].accountManagers.flatMap(ams => Signal.sequence(ams.map { am =>
-        def getSound(pref: PrefKey[String], default: Int): Future[Uri] =
-          am.userPrefs.preference(pref).apply().map {
-            case ""  => RingtoneUtils.getUriForRawId(cxt, default)
-            case str => Uri.parse(str)
-          }(Threading.Ui)
+    val accountChannels = inject[AccountsService].accountManagers.flatMap(ams => Signal.sequence(ams.map { am =>
 
-        for {
-          msgSound  <- Signal.from(getSound(UserPreferences.TextTone, R.raw.new_message_gcm))
-          pingSound <- Signal.from(getSound(UserPreferences.PingTone, R.raw.ping_from_them))
-          vibration <- Signal.from(am.userPrefs.preference(UserPreferences.VibrateEnabled).apply())
-          channel   <- am.storage.usersStorage.signal(am.userId).map(user => ChannelGroup(user.id.str, user.name, Set(
-                         ChannelInfo(MessageNotificationsChannelId(am.userId), R.string.message_notifications_channel_name, R.string.message_notifications_channel_description, msgSound, vibration),
-                         ChannelInfo(PingNotificationsChannelId(am.userId), R.string.ping_notifications_channel_name, R.string.ping_notifications_channel_description, pingSound, vibration)
-                       )))
-        } yield channel
+      def getSound(pref: PrefKey[String], default: Int): Future[Uri] =
+        am.userPrefs.preference(pref).apply().map {
+          case ""  => RingtoneUtils.getUriForRawId(cxt, default)
+          case str => Uri.parse(str)
+        } (Threading.Ui)
+
+      for {
+        msgSound  <- Signal.from(getSound(UserPreferences.TextTone, R.raw.new_message_gcm))
+        pingSound <- Signal.from(getSound(UserPreferences.PingTone, R.raw.ping_from_them))
+        vibration <- Signal.from(am.userPrefs.preference(UserPreferences.VibrateEnabled).apply())
+        channel   <- am.storage.usersStorage.signal(am.userId).map(user => ChannelGroup(user.id.str, user.name, Set(
+                       ChannelInfo(MessageNotificationsChannelId(am.userId), R.string.message_notifications_channel_name, R.string.message_notifications_channel_description, msgSound, vibration),
+                       ChannelInfo(PingNotificationsChannelId(am.userId), R.string.ping_notifications_channel_name, R.string.ping_notifications_channel_description, pingSound, vibration)
+                     )))
+      } yield channel
     }.toSeq:_*))
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -372,31 +369,20 @@ object NotificationManagerWrapper {
         })
     }
 
-    def showNotification(id: Int, notificationProps: NotificationProps): Unit =
+    def showNotification(id: Int, notificationProps: NotificationProps) = {
+      verbose(l"build: $id")
       notificationManager.notify(id, notificationProps.build())
+    }
 
-    def getNotificationChannel(channelId: String): NotificationChannel =
-      notificationManager.getNotificationChannel(channelId)
+    override def getActiveNotificationIds: Seq[Int] =
+        notificationManager.getActiveNotifications.toSeq.map(_.getId)
 
-    override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit =
-      if (convs.nonEmpty) {
-        val idsToCancel = convs.map(toNotificationConvId(accountId, _))
-        val (summaryNots, convNots) =
-          notificationManager
-            .getActiveNotifications
-            .toSeq
-            .partition(_.getNotification.extras.getBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY))
-        val (toCancel, others) = convNots.partition { n => idsToCancel.contains(n.getId) }
-        toCancel.foreach(n => notificationManager.cancel(n.getId))
-        if (others.isEmpty)
-          notificationManager.cancelAll()
-        else 
-          summaryNots
-            .filterNot(n =>
-              others.map(_.getNotification.getGroup.hashCode.toString).exists(n.getNotification.getChannelId.contains)
-            )
-            .foreach(n => notificationManager.cancel(n.getId))
-      }
+    def getNotificationChannel(channelId: String) = notificationManager.getNotificationChannel(channelId)
+
+    override def cancelNotifications(ids: Set[Int]): Unit = {
+      verbose(l"cancel: $ids")
+      ids.foreach(notificationManager.cancel)
+    }
 
     private def addToExternalNotificationFolder(rawId: Int, name: String) =
       for {
@@ -456,3 +442,4 @@ object NotificationManagerWrapper {
         }
   }
 }
+

@@ -39,16 +39,17 @@ import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsCallError, AvsClient, AvsClientList, AvsClosedReason, NetworkQuality, VideoState, WCall, WCallConvType}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessage, Participant}
-import com.waz.service.call.CallingService.{CallProfile, GlobalCallProfile}
+import com.waz.service.call.CallingService.GlobalCallProfile
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
-import com.waz.service.otr.NotificationParser
 import com.waz.service.push.PushService
 import com.waz.sync.client.CallingClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.otr.OtrSyncHandler.TargetRecipients
 import com.wire.signals._
+import com.waz.utils.wrappers.Context
 import com.waz.utils.{RichInstant, returning, returningF}
+import com.waz.zms.BuildConfig
 import org.threeten.bp.Duration
 import org.threeten.bp.temporal.ChronoUnit
 
@@ -57,7 +58,8 @@ import scala.concurrent.{Future, Promise}
 import scala.util.Success
 import scala.util.control.NonFatal
 
-final class GlobalCallingService extends DerivedLogTag {
+class GlobalCallingService extends DerivedLogTag {
+
   import com.waz.threading.Threading.Implicits.Background
 
   lazy val globalCallProfile: Signal[GlobalCallProfile] =
@@ -65,8 +67,7 @@ final class GlobalCallingService extends DerivedLogTag {
       GlobalCallProfile(profiles.flatMap(_.calls.map(c => (c._2.selfParticipant.userId, c._2.convId) -> c._2)).toMap)
     }
 
-  private lazy val services: Signal[Set[(UserId, CallingService)]] =
-    ZMessaging.currentAccounts.zmsInstances.map(_.map(z => z.selfUserId -> z.calling))
+  private lazy val services: Signal[Set[(UserId, CallingServiceImpl)]] = ZMessaging.currentAccounts.zmsInstances.map(_.map(z => z.selfUserId -> z.calling))
 
   //If there is an active call in one or more of the logged in accounts, returns the account id for the one with the oldest call
   lazy val activeAccount: Signal[Option[UserId]] = globalCallProfile.map(_.activeCall.map(_.selfParticipant.userId))
@@ -76,13 +77,9 @@ final class GlobalCallingService extends DerivedLogTag {
 }
 
 trait CallingService {
-  def calls:                 Signal[Map[ConvId, CallInfo]]
-  def joinableCalls:         Signal[Map[ConvId, CallInfo]]
-  def currentCall:           Signal[Option[CallInfo]]
-  def joinableCallsNotMuted: Signal[Map[ConvId, CallInfo]]
-  def callProfile:           Signal[CallProfile]
-
-  def callMessagesStage: Stage.Atomic
+  def calls:          Signal[Map[ConvId, CallInfo]]
+  def joinableCalls:  Signal[Map[ConvId, CallInfo]]
+  def currentCall:    Signal[Option[CallInfo]]
 
   /**
     * @param skipTerminating Used to skip the terminating state when the self user ends the call
@@ -113,10 +110,6 @@ trait CallingService {
   def setCallMuted(muted: Boolean): Unit
 
   def setVideoSendState(convId: ConvId, state: VideoState.Value): Unit
-
-  def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit
-
-  def onInterrupted(): Unit
 }
 
 object CallingService {
@@ -145,9 +138,9 @@ object CallingService {
       s"active call: $activeCall, incomingCalls: ${incomingCalls.values} joinable calls: ${joinableCalls.values}, ended calls: ${endedCalls.values}"
   }
 
-  final case class CallProfile(override val calls: Map[ConvId, CallInfo]) extends AbstractCallProfile[ConvId]
+  case class CallProfile(override val calls: Map[ConvId, CallInfo]) extends AbstractCallProfile[ConvId]
 
-  final case class GlobalCallProfile(override val calls: Map[(UserId, ConvId), CallInfo]) extends AbstractCallProfile[(UserId, ConvId)]
+  case class GlobalCallProfile(override val calls: Map[(UserId, ConvId), CallInfo]) extends AbstractCallProfile[(UserId, ConvId)]
 
   object CallProfile {
     val Empty = CallProfile(Map.empty)
@@ -159,25 +152,26 @@ object CallingService {
 
 }
 
-final class CallingServiceImpl(val accountId:       UserId,
-                               val clientId:        ClientId,
-                               callingClient:       CallingClient,
-                               avs:                 Avs,
-                               convs:               ConversationsContentUpdater,
-                               convsService:        ConversationsService,
-                               members:             MembersStorage,
-                               otrSyncHandler:      OtrSyncHandler,
-                               flowManagerService:  FlowManagerService,
-                               messagesService:     MessagesService,
-                               mediaManagerService: MediaManagerService,
-                               pushService:         PushService,
-                               network:             NetworkModeService,
-                               userPrefs:           UserPreferences,
-                               globalPrefs:         GlobalPreferences,
-                               permissions:         PermissionsService,
-                               httpProxy:           Option[Proxy])
-                              (implicit accountContext: AccountContext)
-  extends CallingService with DerivedLogTag with SafeToLog { self =>
+class CallingServiceImpl(val accountId:       UserId,
+                         val clientId:        ClientId,
+                         callingClient:       CallingClient,
+                         avs:                 Avs,
+                         convs:               ConversationsContentUpdater,
+                         convsService:        ConversationsService,
+                         members:             MembersStorage,
+                         otrSyncHandler:      OtrSyncHandler,
+                         flowManagerService:  FlowManagerService,
+                         messagesService:     MessagesService,
+                         mediaManagerService: MediaManagerService,
+                         pushService:         PushService,
+                         network:             NetworkModeService,
+                         errors:              ErrorsService,
+                         userPrefs:           UserPreferences,
+                         globalPrefs:         GlobalPreferences,
+                         permissions:         PermissionsService,
+                         userStorage:         UsersStorage,
+                         httpProxy:           Option[Proxy])(implicit accountContext: AccountContext) extends CallingService with DerivedLogTag with SafeToLog { self =>
+
   import CallingService._
 
   import com.waz.threading.Threading.Implicits.Background
@@ -186,7 +180,7 @@ final class CallingServiceImpl(val accountId:       UserId,
   flowManagerService.flowManager
   private var closingPromise = Option.empty[Promise[Unit]]
 
-  override val callProfile: SourceSignal[CallProfile] = Signal(CallProfile.Empty)
+  private[call] val callProfile = Signal(CallProfile.Empty)
 
   httpProxy.foreach { proxy =>
      val proxyAddress = proxy.address().asInstanceOf[InetSocketAddress]
@@ -195,11 +189,11 @@ final class CallingServiceImpl(val accountId:       UserId,
 
   callProfile.foreach(p => verbose(l"Call profile: ${p.calls}"))
 
-  override val calls: Signal[Map[ConvId, CallInfo]] = callProfile.map(_.calls).disableAutowiring() //all calls
-  override val joinableCalls: Signal[Map[ConvId, CallInfo]] = callProfile.map(_.joinableCalls).disableAutowiring() //any call a user can potentially join in the UI
-  override val currentCall: Signal[Option[CallInfo]] = callProfile.map(_.activeCall).disableAutowiring() //state about any call for which we should show the CallingActivity
+  override val calls          = callProfile.map(_.calls).disableAutowiring() //all calls
+  override val joinableCalls  = callProfile.map(_.joinableCalls).disableAutowiring() //any call a user can potentially join in the UI
+  override val currentCall    = callProfile.map(_.activeCall).disableAutowiring() //state about any call for which we should show the CallingActivity
 
-  override val joinableCallsNotMuted: Signal[Map[ConvId, CallInfo]] = joinableCalls.map(_.filter { case (_, call) => call.shouldRing })
+  val joinableCallsNotMuted   = joinableCalls.map(_.filter { case (_, call) => call.shouldRing })
 
   //exposed for tests only
   private[call] lazy val wCall = returningF(avs.registerAccount(this)) { call =>
@@ -540,7 +534,7 @@ final class CallingServiceImpl(val accountId:       UserId,
 
   //Drop the current call in case of incoming GSM interruption
   //TODO - we should actually end all calls here - we don't want any other incoming calls to compete with GSM
-  override def onInterrupted(): Unit =
+  def onInterrupted(): Unit =
     updateActiveCallAsync { (w, conv, call) =>
       verbose(l"onInterrupted - gsm call received")
       //Ensure that conversation state is only performed INSIDE withConv
@@ -571,14 +565,14 @@ final class CallingServiceImpl(val accountId:       UserId,
       call.updateVideoState(Participant(accountId, clientId), targetSt)
     }("setVideoSendState")
 
-  override val callMessagesStage: Stage.Atomic = EventScheduler.Stage[CallMessageEvent] {
+  val callMessagesStage: Stage.Atomic = EventScheduler.Stage[CallMessageEvent] {
     case (_, events) =>
       Future.successful(events.sortBy(_.time).foreach { e =>
         receiveCallEvent(e.content, e.time, e.convId, e.from, e.sender)
       })
   }
 
-  override def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit =
+  private def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit =
     wCall.map { w =>
       import CallingServiceImpl._
 

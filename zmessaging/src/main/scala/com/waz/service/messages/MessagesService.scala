@@ -31,15 +31,15 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.assets.UploadAsset
 import com.waz.service.conversation.ConversationsContentUpdater
-import com.waz.service.otr.NotificationParser
 import com.waz.service.otr.VerificationStateUpdater.{ClientUnverified, MemberAdded, VerificationChange}
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient
-import com.wire.signals.{CancellableFuture, EventStream, RefreshingSignal, Serialized, Signal, SourceSignal}
+import com.wire.signals.{CancellableFuture, Serialized}
 import com.waz.threading.Threading
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
+import com.wire.signals.{EventStream, RefreshingSignal, Signal}
 import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
@@ -50,7 +50,6 @@ import scala.util.Success
 
 trait MessagesService {
   def msgEdited: EventStream[(MessageId, MessageId)]
-  def missedCallsNotification: Signal[Option[NotificationData]]
 
   def addTextMessage(convId: ConvId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addKnockMessage(convId: ConvId, selfUserId: UserId, expectsReadReceipt: ReadReceiptSettings = AllDisabled): Future[MessageData]
@@ -107,30 +106,23 @@ trait MessagesService {
   def fixErrorMessages(userId: UserId, clientId: ClientId): Future[Unit]
 }
 
-final class MessagesServiceImpl(selfUserId:     UserId,
-                                teamId:         Option[TeamId],
-                                replyHashing:   ReplyHashing,
-                                storage:        MessagesStorage,
-                                updater:        MessagesContentUpdater,
-                                edits:          EditHistoryStorage,
-                                convs:          ConversationsContentUpdater,
-                                network:        NetworkModeService,
-                                members:        MembersStorage,
-                                usersStorage:   UsersStorage,
-                                buttonsStorage: ButtonsStorage,
-                                sync:           SyncServiceHandle) extends MessagesService with DerivedLogTag {
+class MessagesServiceImpl(selfUserId:      UserId,
+                          teamId:          Option[TeamId],
+                          replyHashing:    ReplyHashing,
+                          storage:         MessagesStorage,
+                          updater:         MessagesContentUpdater,
+                          edits:           EditHistoryStorage,
+                          convs:           ConversationsContentUpdater,
+                          network:         NetworkModeService,
+                          members:         MembersStorage,
+                          usersStorage:    UsersStorage,
+                          buttonsStorage:  ButtonsStorage,
+                          sync:            SyncServiceHandle) extends MessagesService with DerivedLogTag {
   import Threading.Implicits.Background
 
   override val msgEdited = EventStream[(MessageId, MessageId)]()
 
-  override val missedCallsNotification: SourceSignal[Option[NotificationData]] = Signal(None)
-
-  override def recallMessage(convId: ConvId,
-                             msgId: MessageId,
-                             userId: UserId,
-                             systemMsgId: MessageId = MessageId(),
-                             time: RemoteInstant,
-                             state: Message.Status = Message.Status.PENDING): Future[Option[MessageData]] =
+  override def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: RemoteInstant, state: Message.Status = Message.Status.PENDING) =
     updater.getMessage(msgId) flatMap {
       case Some(msg) if msg.convId != convId =>
         error(l"can not recall message belonging to other conversation: $msg, requested by $userId")
@@ -488,27 +480,14 @@ final class MessagesServiceImpl(selfUserId:     UserId,
 
   override def addMissedCallMessage(rConvId: RConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]] =
     convs.convByRemoteId(rConvId).flatMap {
-      case Some(conv) =>
-        addMissedCall(conv, from, time)
+      case Some(conv) => addMissedCallMessage(conv.id, from, time)
       case None =>
         warn(l"No conversation found for remote id: $rConvId")
         Future.successful(None)
     }
 
-  override def addMissedCallMessage(convId: ConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]] = {
-    convs.convById(convId).flatMap {
-      case Some(conv) =>
-        addMissedCall(conv, from, time)
-      case None =>
-        warn(l"No conversation found for id: $convId")
-        Future.successful(None)
-    }
-  }
-
-  private def addMissedCall(conv: ConversationData, from: UserId, time: RemoteInstant) = {
-    val msgId = MessageId()
-    updater.addMessage(MessageData(msgId, conv.id, Message.Type.MISSED_CALL, from, time = time))
-  }
+  override def addMissedCallMessage(convId: ConvId, from: UserId, time: RemoteInstant): Future[Option[MessageData]] =
+    updater.addMessage(MessageData(MessageId(), convId, Message.Type.MISSED_CALL, from, time = time))
 
   override def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: RemoteInstant, duration: FiniteDuration) =
     updater.addMessage(MessageData(MessageId(), convId, Message.Type.SUCCESSFUL_CALL, from, time = time, duration = Some(duration)))

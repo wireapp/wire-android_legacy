@@ -36,12 +36,15 @@ import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model.Liking.LikingDao
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model.MsgDeletion.MsgDeletionDao
+import com.waz.model.NotificationData.NotificationDataDao
 import com.waz.model.PushNotificationEvents.PushNotificationEventsDao
 import com.waz.model.ReadReceipt.ReadReceiptDao
 import com.waz.model.UserData.UserDataDao
 import com.waz.model._
 import com.waz.model.otr.UserClients.UserClientsDao
 import com.waz.model.sync.SyncJob.SyncJobDao
+import com.waz.repository.FCMNotificationStatsRepository.FCMNotificationStatsDao
+import com.waz.repository.FCMNotificationsRepository.FCMNotificationsDao
 import com.waz.service.assets
 import com.waz.service.assets.AssetStorageImpl.AssetDao
 import com.waz.service.assets.DownloadAssetStorage.DownloadAssetDao
@@ -64,10 +67,10 @@ object ZMessagingDB {
 
   lazy val daos = Seq (
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
-    MessageDataDao, KeyValueDataDao, SyncJobDao, ErrorDataDao,
+    MessageDataDao, KeyValueDataDao, SyncJobDao, ErrorDataDao, NotificationDataDao,
     UserClientsDao, LikingDao, MsgDeletionDao, EditHistoryDao,
     PushNotificationEventsDao, ReadReceiptDao, PropertiesDao, UploadAssetDao, DownloadAssetDao,
-    AssetDao, FolderDataDao, ConversationFolderDataDao,
+    AssetDao, FCMNotificationsDao, FCMNotificationStatsDao, FolderDataDao, ConversationFolderDataDao,
     ConversationRoleActionDao, ButtonDataDao, MessageContentIndexDao
   )
 
@@ -292,11 +295,15 @@ object ZMessagingDB {
       db.execSQL("ALTER TABLE Users ADD COLUMN created_by TEXT DEFAULT null")
       db.execSQL("UPDATE KeyValues SET value = 'true' WHERE key = 'should_sync_teams'")
     },
-    Migration(116, 117) { db => },
+    Migration(116, 117) { db =>
+      db.execSQL(FCMNotificationsDao.table.createSql)
+    },
     Migration(117, 118) { db =>
       db.execSQL("DROP TABLE ReceivedPushes")
     },
-    Migration(118, 119) { db => },
+    Migration(118, 119) { db =>
+      db.execSQL(FCMNotificationStatsDao.table.createSql)
+    },
     Migration(119, 120) { db =>
       db.execSQL("UPDATE Conversations SET muted_status = 1 WHERE muted_status = 2") //fix for AN-6210
     },

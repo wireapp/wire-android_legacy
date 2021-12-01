@@ -164,7 +164,6 @@ class ActiveAccountsDaoTest : IntegrationTest() {
             refreshToken: String = TEST_ACTIVE_ACCOUNT_COOKIE
         ) = ActiveAccountsEntity(
             id = userId,
-            domain = "",
             teamId = TEST_ACTIVE_ACCOUNT_TEAM_ID,
             refreshToken = refreshToken,
             accessToken = accessToken,

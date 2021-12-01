@@ -38,7 +38,7 @@ import com.waz.zclient._
 import com.waz.zclient.log.LogUI._
 import com.wire.signals.Signal
 
-final class WebSocketController(implicit inj: Injector) extends Injectable with DerivedLogTag {
+class WebSocketController(implicit inj: Injector) extends Injectable with DerivedLogTag {
   private lazy val global = inject[GlobalModule]
   private lazy val accounts = inject[AccountsService]
 
@@ -60,7 +60,6 @@ final class WebSocketController(implicit inj: Injector) extends Injectable with 
   lazy val serviceInForeground: Signal[Boolean] =
     for {
       uiActive       <- global.lifecycle.uiActive
-      _ = verbose(l"uiActive: $uiActive")
       (zmsWithWS, _) <- accountWebsocketStates
     } yield !uiActive && zmsWithWS.nonEmpty
 
@@ -134,7 +133,7 @@ class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver with DerivedLog
 /**
   * Service keeping the process running as long as web socket should be connected.
   */
-final class WebSocketService extends ServiceHelper with DerivedLogTag {
+class WebSocketService extends ServiceHelper with DerivedLogTag {
   private implicit def context: Context = getApplicationContext
 
   private lazy val launchIntent        = PendingIntent.getActivity(context, 1, Intents.ShowAdvancedSettingsIntent, 0)

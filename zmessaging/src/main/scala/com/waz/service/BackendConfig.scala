@@ -37,7 +37,7 @@ class BackendConfig(private var _environment: String,
 
   def environment: String = _environment
   def baseUrl: URI = _baseUrl
-  def domain: String = if (baseUrl.getPath.contains('.')) baseUrl.getPath.substring(baseUrl.getPath.indexOf('.')) else ""
+  def domain: String = baseUrl.getPath.substring(baseUrl.getPath.indexOf('.'))
   def websocketUrl: URI = _websocketUrl
   def blacklistHost: Option[URI] = _blacklistHost
   def teamsUrl: URI = _teamsUrl
@@ -53,20 +53,6 @@ class BackendConfig(private var _environment: String,
     _accountsUrl = URI.parse(configResponse.endpoints.accountsURL.toString)
     _websiteUrl = URI.parse(configResponse.endpoints.websiteURL.toString)
   }
-
-  override def toString: String =
-    s"""
-      |BackendConfig(
-      |  environment:   $environment,
-      |  baseUrl:       $baseUrl,
-      |  domain:        $domain,
-      |  websocketUrl:  $websocketUrl,
-      |  blacklistHost: $blacklistHost,
-      |  teamsUrl:      $teamsUrl,
-      |  accountsUrl:   $accountsUrl,
-      |  websiteUrl:    $websiteUrl
-      |)
-      |""".stripMargin
 }
 
 object BackendConfig {

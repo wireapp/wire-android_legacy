@@ -102,7 +102,7 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
     awaitAllTasks
 
     Thread.sleep(500)
-    (users.syncUsers _).expects(*, *, *).never()
+    (users.syncUsers _).expects(*, *).never()
   }
 
   scenario("Wireless member added to conversation also triggers a timer") {

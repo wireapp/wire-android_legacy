@@ -33,7 +33,7 @@
             android:name="com.google.android.gms.version"
             tools:node="remove" />
         <service
-            android:name="com.waz.services.fcm.FCMService"
+            android:name="com.waz.services.fcm.FCMHandlerService"
             tools:node="remove">
         </service>
     </application>

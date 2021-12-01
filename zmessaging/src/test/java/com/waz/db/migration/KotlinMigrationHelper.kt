@@ -19,6 +19,9 @@ import com.waz.zclient.storage.db.messages.LikesEntity
 import com.waz.zclient.storage.db.messages.MessageContentIndexEntity
 import com.waz.zclient.storage.db.messages.MessageDeletionEntity
 import com.waz.zclient.storage.db.messages.MessagesEntity
+import com.waz.zclient.storage.db.notifications.CloudNotificationStatsEntity
+import com.waz.zclient.storage.db.notifications.CloudNotificationsEntity
+import com.waz.zclient.storage.db.notifications.NotificationDataEntity
 import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import com.waz.zclient.storage.db.property.PropertiesEntity
@@ -95,6 +98,20 @@ object KotlinMigrationHelper {
         }
 
     @JvmStatic
+    fun assertCloudNotificationsEntity(roomDB: UserDatabase, cloudNotEntity: CloudNotificationsEntity) =
+        runBlocking {
+            val entity = roomDB.cloudNotificationsDao().allCloudNotifications()[0]
+            check(cloudNotEntity, entity)
+        }
+
+    @JvmStatic
+    fun assertCloudNotificationStatsEntity(roomDB: UserDatabase, statsEntity: CloudNotificationStatsEntity) =
+        runBlocking {
+            val entity = roomDB.cloudNotificationStatsDao().allCloudNotificationStats()[0]
+            check(statsEntity, entity)
+        }
+
+    @JvmStatic
     fun assertFoldersEntity(roomDB: UserDatabase, foldersEntity: FoldersEntity) =
         runBlocking {
             val entity = roomDB.foldersDao().allFolders()[0]
@@ -134,6 +151,13 @@ object KotlinMigrationHelper {
         runBlocking {
             val entity = roomDB.messagesDao().allMessages()[0]
             check(messagesEntity, entity)
+        }
+
+    @JvmStatic
+    fun assertNotificationDataEntity(roomDB: UserDatabase, notEntity: NotificationDataEntity) =
+        runBlocking {
+            val entity = roomDB.notificationDataDao().allNotificationsData()[0]
+            check(notEntity, entity)
         }
 
     @JvmStatic

@@ -138,7 +138,7 @@ class LegalHoldSyncHandlerSpec extends AndroidFreeSpec {
       val syncId1 = SyncId("syncId1")
 
       (userService.syncIfNeeded _)
-        .expects(Set(user1, user2), *, *, *)
+        .expects(Set(user1, user2), *, *)
         .once()
         .returning(Future.successful(Some(syncId1)))
 

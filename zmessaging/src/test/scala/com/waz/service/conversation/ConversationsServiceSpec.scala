@@ -28,7 +28,7 @@ import com.waz.model.{ConversationData, ConversationRole, _}
 import com.waz.service._
 import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.push.PushService
+import com.waz.service.push.{NotificationService, PushService}
 import com.waz.service.teams.{TeamsService, TeamsServiceImpl}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
@@ -61,6 +61,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   private lazy val selectedConv   = mock[SelectedConversationService]
   private lazy val assets         = mock[AssetService]
   private lazy val receiptStorage = mock[ReadReceiptsStorage]
+  private lazy val notifications  = mock[NotificationService]
   private lazy val folders        = mock[FoldersService]
   private lazy val network        = mock[NetworkModeService]
   private lazy val properties     = mock[PropertiesService]
@@ -103,6 +104,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     requests,
     assets,
     receiptStorage,
+    notifications,
     folders,
     rolesService
   )
@@ -132,7 +134,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   (errors.onErrorDismissed _).expects(*).anyNumberOfTimes().returning(CancellableFuture.successful(()))
 
   (sync.syncTeam _).expects(*).anyNumberOfTimes().returning(Future.successful(SyncId()))
-  (userService.syncUsers _).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(Option(SyncId())))
+  (userService.syncUsers _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Option(SyncId())))
   (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
 
   feature("Archive conversation") {
@@ -155,7 +157,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         MemberLeaveEvent(rConvId, domain, RemoteInstant.ofEpochSec(10000), selfUserId, domain, Seq(selfUserId), reason = None)
       )
-      (userService.syncIfNeeded _).expects(*, *, *, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
 
       // check if the self is still in any conversation (they are - with self)
       (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
@@ -206,7 +208,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, domain, RemoteInstant.ofEpochSec(10000), removerId, domain, Seq(selfUserId), reason = None)
       )
 
-      (userService.syncIfNeeded _).expects(*, *, *, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
       (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
         Future.successful(IndexedSeq(ConversationMemberData(selfUserId, convId, ConversationRole.AdminRole)))
       )
@@ -252,7 +254,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, domain, RemoteInstant.ofEpochSec(10000), selfUserId, domain, Seq(otherUserId), reason = None)
       )
 
-      (userService.syncIfNeeded _).expects(Set(otherUserId), *, *, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(Set(otherUserId), *, *).anyNumberOfTimes().returning(Future.successful(None))
       (membersStorage.getByUsers _).expects(Set(otherUserId)).anyNumberOfTimes().returning(
         Future.successful(IndexedSeq(ConversationMemberData(otherUserId, convId, ConversationRole.MemberRole)))
       )
@@ -283,6 +285,38 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
   feature("Delete conversation") {
 
+    scenario("Delete conversation event shows notification") {
+      //GIVEN
+      val conversationData = ConversationData(convId, rConvId)
+      (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
+        .returning(Future.successful(Some(conversationData)))
+      (messages.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set.empty))
+      (msgStorage.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set.empty))
+      (msgStorage.deleteAll _).expects(convId).anyNumberOfTimes().returning(Future.successful(()))
+      (messages.getAssetIds _).expects(*).returning(Future.successful(Set.empty))
+      (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (convsStorage.remove _).expects(convId).once().returning(Future.successful(()))
+      (membersStorage.getActiveUsers _).expects(convId).anyNumberOfTimes().returning(Future.successful(Seq.empty))
+      (membersStorage.remove(_: ConvId, _: Iterable[UserId])).expects(convId, *).anyNumberOfTimes().returning(Future.successful(Set.empty))
+      (convsStorage.get _).expects(convId).anyNumberOfTimes().returning(Future.successful(None))
+      (membersStorage.getByUsers _).expects(*).anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
+      (receiptStorage.removeAllForMessages _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (folders.removeConversationFromAll _).expects(convId, *).anyNumberOfTimes().returning(Future.successful(()))
+      (rolesService.removeByConvId _).expects(convId).anyNumberOfTimes().returning(Future.successful(()))
+
+      val dummyUserId = UserId()
+      val events = Seq(
+        DeleteConversationEvent(rConvId, domain, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), dummyUserId, domain)
+      )
+
+      // EXPECT
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, conversationData)
+        .once().returning(Future.successful(()))
+
+      // WHEN
+      result(service.convStateEventProcessingStage.apply(rConvId, events))
+    }
+
     scenario("Delete conversation event deletes conversation from storage") {
       //GIVEN
       val conversationData = ConversationData(convId, rConvId)
@@ -292,6 +326,8 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         DeleteConversationEvent(rConvId, domain, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId(), domain)
       )
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
+        .returning(Future.successful(()))
       (messages.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
       (msgStorage.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
       (messages.getAssetIds _).expects(*).returning(Future.successful(Set.empty))
@@ -320,6 +356,8 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         DeleteConversationEvent(rConvId, domain, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId(), domain)
       )
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
+        .returning(Future.successful(()))
       (messages.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
       (msgStorage.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
       (messages.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[GeneralAssetId]()))
@@ -347,6 +385,8 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         DeleteConversationEvent(rConvId, domain, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId(), domain)
       )
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
+        .returning(Future.successful(()))
 
       val assetId: GeneralAssetId = AssetId()
       val messageId = MessageId()
@@ -384,6 +424,8 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         DeleteConversationEvent(rConvId, domain, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId(), domain)
       )
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
+        .returning(Future.successful(()))
 
       val messageId = MessageId()
       (messages.getAssetIds _).expects(Set(messageId)).anyNumberOfTimes()
@@ -701,7 +743,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
         Future.successful(userIds.map(uId => ConversationMemberData(uId, convId, AdminRole)).toIndexedSeq)
       }
 
-      (userService.syncIfNeeded _).expects(*, *, *, *).returning(Future.successful(Option(SyncId())))
+      (userService.syncIfNeeded _).expects(*, *, *).returning(Future.successful(Option(SyncId())))
 
       (messages.addDeviceStartMessages _).expects(*, *).onCall{ (convs: Seq[ConversationData], selfUserId: UserId) =>
         convs.headOption.flatMap(_.name) should be (Some(Name("conv")))
@@ -885,7 +927,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
       (membersStorage.getByConv _).expects(convId).anyNumberOfTimes().onCall { _: ConvId => members.head }
       (membersStorage.onChanged _).expects().anyNumberOfTimes().onCall(_ => EventStream.from(membersOnChanged))
       (userService.userNames _).expects().anyNumberOfTimes().returning(Signal.const(userNames))
-      (userService.syncIfNeeded _).expects(*, *, *, *).anyNumberOfTimes().returning(Future.successful(None))
+      (userService.syncIfNeeded _).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
       (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes().returning(convSignal.head)
       (membersStorage.remove(_: ConvId, _:Iterable[UserId])).expects(convId, *).anyNumberOfTimes().onCall { (_: ConvId, userIds: Iterable[UserId]) =>
         members.head.map { ms =>

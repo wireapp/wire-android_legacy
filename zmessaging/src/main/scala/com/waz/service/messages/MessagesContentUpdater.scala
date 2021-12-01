@@ -42,9 +42,9 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
                              userPrefs:       UserPreferences) extends DerivedLogTag {
   import Threading.Implicits.Background
 
-  def getMessage(msgId: MessageId): Future[Option[MessageData]] = messagesStorage.getMessage(msgId)
+  def getMessage(msgId: MessageId) = messagesStorage.getMessage(msgId)
 
-  def deleteMessage(msg: MessageData): Future[Unit] = for {
+  def deleteMessage(msg: MessageData) = for {
     _ <- messagesStorage.delete(msg)
    _  <- if (msg.msgType == Message.Type.COMPOSITE) buttonsStorage.deleteAllForMessage(msg.id)
          else Future.successful(())

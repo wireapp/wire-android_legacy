@@ -81,7 +81,7 @@ class GlobalReportingService(context: Context, cache: CacheService, metadata: Me
       lazy val writer = new PrintWriter(new OutputStreamWriter(entry.outputStream))
 
       val rs: Seq[Reporter] =
-        Seq(VersionReporter) ++ (if (metadata.internalBuild) Seq(PushRegistrationReporter, ZUsersReporter) ++ reporters else Seq.empty) ++ Seq(LogCatReporter, InternalLogReporter)
+        Seq(VersionReporter) ++ Seq(FcmStatsReporter) ++ (if (metadata.internalBuild) Seq(PushRegistrationReporter, ZUsersReporter) ++ reporters else Seq.empty) ++ Seq(LogCatReporter, InternalLogReporter)
 
       RichFuture.traverseSequential(rs)(_.apply(writer))
         .map(_ => CacheUri(entry.data, context))
@@ -89,6 +89,16 @@ class GlobalReportingService(context: Context, cache: CacheService, metadata: Me
           case _ => writer.close()
         }
     }
+
+  val FcmStatsReporter = Reporter("FCMStats", { writer =>
+    for {
+      acc <- ZMessaging.accountsService
+      z <- acc.activeZms.collect { case Some(zms) => zms}.head
+      stats <- z.fcmNotStatsService.getFormattedStats
+    } yield {
+      writer.print(stats)
+    }
+  })
 
   val VersionReporter = Reporter("Wire", { writer =>
     import android.os.Build._
