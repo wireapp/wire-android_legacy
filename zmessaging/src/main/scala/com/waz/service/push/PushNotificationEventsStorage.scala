@@ -92,8 +92,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
 
   def encryptedEvents: Future[Seq[PushNotificationEvent]] = values.map(_.filter(!_.decrypted))
 
-  //limit amount of decrypted events we read to avoid overwhelming older phones
-  def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
+  override def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
     storage.read { implicit db => PushNotificationEventsDao.listDecrypted }
 
   def removeRows(rows: Iterable[Int]): Future[Unit] = removeAll(rows)

@@ -21,7 +21,7 @@ import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.model.otr.ClientId
 import com.waz.model._
-import com.waz.service.otr.OtrEventDecoder
+import com.waz.service.otr.{EventDecrypter, NotificationParser, NotificationUiController, OtrEventDecoder}
 import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
 import com.waz.sync.client.{EncodedEvent, ErrorOrResponse, PushNotificationEncoded, PushNotificationsClient}
@@ -50,11 +50,14 @@ class FCMPushHandlerSpec extends FeatureSpec
 
   private val client      = mock[PushNotificationsClient]
   private val storage     = mock[PushNotificationEventsStorage]
+  private val decrypter   = mock[EventDecrypter]
   private val decoder     = mock[OtrEventDecoder]
+  private val parser      = mock[NotificationParser]
+  private val controller  = mock[NotificationUiController]
   private val globalPrefs = new TestGlobalPreferences
   private val userPrefs   = new TestUserPreferences
 
-  private def handler = FCMPushHandler(clientId, client, storage, decoder, globalPrefs, userPrefs)
+  private def handler = FCMPushHandler(userId, clientId, client, storage, decrypter, decoder, parser, controller, globalPrefs, userPrefs)
 
   private def result[T](scenario: Future[T]): T = Await.result(scenario, 5.seconds)
   private def success[T](result: T): ErrorOrResponse[T] = CancellableFuture.successful(Right(result))
@@ -77,8 +80,10 @@ class FCMPushHandlerSpec extends FeatureSpec
     (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res))
     (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(emptyResult))
     (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
-    (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
+    (decrypter.processEncryptedEvents _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+    (decoder.decode _).expects(*).anyNumberOfTimes().returning(None)
     (storage.getDecryptedRows _).expects().anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
+    (parser.parse _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
@@ -101,8 +106,10 @@ class FCMPushHandlerSpec extends FeatureSpec
     (client.loadNotifications _).expects(Some(lastId), clientId).once().returning(success(res))
     (client.loadNotifications _).expects(Some(newId), clientId).once().returning(success(emptyResult))
     (storage.saveAll _).expects(notifications).once().returning(Future.successful(Seq.empty))
-    (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
+    (decrypter.processEncryptedEvents _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+    (decoder.decode _).expects(*).anyNumberOfTimes().returning(None)
     (storage.getDecryptedRows _).expects().anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
+    (parser.parse _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
@@ -128,8 +135,10 @@ class FCMPushHandlerSpec extends FeatureSpec
     (client.loadNotifications _).expects(Some(newId1), clientId).once().returning(success(res2))
     (client.loadNotifications _).expects(Some(newId2), clientId).once().returning(success(emptyResult))
     (storage.saveAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
-    (decoder.decryptStoredOtrEvent _).expects(*, *).anyNumberOfTimes().returning(Future.successful(Right(())))
+    (decrypter.processEncryptedEvents _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+    (decoder.decode _).expects(*).anyNumberOfTimes().returning(None)
     (storage.getDecryptedRows _).expects().anyNumberOfTimes().returning(Future.successful(IndexedSeq.empty))
+    (parser.parse _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
 
     val lastIdPref = userPrefs.preference(LastStableNotification)
 
@@ -147,8 +156,8 @@ object FCMPushHandlerSpec {
   val userId: UserId = UserId()
   val clientId: ClientId = ClientId()
   val domain: Domain = Domain("staging.zinfra.io")
-  val encryptedBytes = "encryptedstring".getBytes
-  val decryptedBytes = "decryptedstring".getBytes
+  val encryptedBytes: Array[Byte] = "encryptedstring".getBytes
+  val decryptedBytes: Array[Byte] = "decryptedstring".getBytes
 
   def eventJsonStr(convId: ConvId = this.convId,
                    userId: UserId = this.userId,

@@ -18,7 +18,7 @@ final class FCMNotificationWorker(context: Context, params: WorkerParameters)
 
   override def doWork(): ListenableWorker.Result = {
     verbose(l"doWork")
-    val userId = UserId(params.getInputData.getString(FCMLightService.UserKey))
+    val userId = UserId(params.getInputData.getString(FCMService.UserKey))
     if (!WireApplication.isInitialized) {
       verbose(l"not initialized")
       checkSecurityAndProcess(userId)
@@ -54,15 +54,18 @@ final class FCMNotificationWorker(context: Context, params: WorkerParameters)
     // Here we only need the essentials.
     WireApplication.ensureInitialized()
     val handler = for {
-      global    <- ZMessaging.globalModule
-      accounts  <- ZMessaging.accountsService
-      Some(zms) <- accounts.getZms(userId)
-      clientId  =  zms.clientId
-      client    =  zms.pushNotificationsClient
-      storage   =  zms.eventStorage
-      decoder   =  zms.otrEventDecoder
+      global     <- ZMessaging.globalModule
+      accounts   <- ZMessaging.accountsService
+      Some(zms)  <- accounts.getZms(userId)
+      clientId   =  zms.clientId
+      client     =  zms.pushNotificationsClient
+      storage    =  zms.eventStorage
+      decrypter  =  zms.eventDecrypter
+      decoder    =  zms.otrEventDecoder
+      parser     =  zms.notificationParser
+      controller = WireApplication.APP_INSTANCE.messageNotificationsController
     } yield
-      FCMPushHandler(clientId, client,  storage, decoder, global.prefs, zms.userPrefs)
+      FCMPushHandler(userId, clientId, client,  storage, decrypter, decoder, parser, controller, global.prefs, zms.userPrefs)
     handler.foreach(_.syncNotifications())
   }
 }
