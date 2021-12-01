@@ -17,7 +17,7 @@
  */
 package com.waz.services.notifications
 
-import android.app.{NotificationManager, PendingIntent}
+import android.app.PendingIntent
 import android.content.{Context, Intent}
 import androidx.core.app.RemoteInput
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -28,7 +28,7 @@ import com.waz.threading.Threading
 import com.waz.utils.{TimedWakeLock, returning}
 import com.waz.zclient.ServiceHelper
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.notifications.controllers.MessageNotificationsController.toNotificationConvId
+import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -40,6 +40,8 @@ class NotificationsHandlerService extends FutureService with ServiceHelper with 
 
   override protected lazy val wakeLock = new TimedWakeLock(getApplicationContext, 2.seconds)
 
+  private lazy val notificationManager = inject[NotificationManagerWrapper]
+
   override protected def onIntent(intent: Intent, id: Int): Future[Any] = wakeLock.async {
 
     val account = Option(intent.getStringExtra(ExtraAccountId)).map(UserId(_))
@@ -48,28 +50,24 @@ class NotificationsHandlerService extends FutureService with ServiceHelper with 
 
     Option(ZMessaging.currentAccounts) match {
       case Some(accs) =>
-        account match {
-          case Some(acc) => accs.getZms(acc).flatMap {
-            case Some(zms) if ActionClear == intent.getAction =>
-              verbose(l"Clearing notifications for account: $acc and conversation:$conversation")
-              zms.notifications.dismissNotifications(conversation.map(Set(_)))
-            case Some(zms) if ActionQuickReply == intent.getAction =>
-              (instantReplyContent, conversation) match {
-                case (Some(content), Some(convId)) =>
-                  zms.convsUi.sendTextMessage(convId, content.toString, exp = Some(None)).map { _ =>
-                    inject[NotificationManager].cancel(toNotificationConvId(acc, convId))
-                  }
-                case _ =>
-                  Future.successful({})
-              }
-            case _ =>
-              Future.successful({})
-          }
-          case None =>
+        (account, conversation, instantReplyContent) match {
+          case (Some(acc), Some(convId), _) if ActionClear == intent.getAction =>
+            verbose(l"Clearing notifications for account: $acc and conversation:$conversation")
+            Future.successful(notificationManager.cancelNotifications(acc, Set(convId)))
+          case (Some(acc), Some(convId), Some(content)) if ActionQuickReply == intent.getAction =>
+            accs.getZms(acc).flatMap {
+              case Some(zms) =>
+                zms.convsUi.sendTextMessage(convId, content.toString, exp = Some(None)).map { _ =>
+                  notificationManager.cancelNotifications(acc, Set(convId))
+                }
+              case _ =>
+                Future.successful({})
+            }
+          case _ =>
             warn(l"No account id passed on intent")
             Future.successful({})
         }
-      case None =>
+      case _ =>
         warn(l"No AccountsService available")
         Future.successful({})
     }
