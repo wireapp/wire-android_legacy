@@ -31,7 +31,7 @@ import com.waz.service.EventScheduler.Stage
 import com.waz.service._
 import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.push.{NotificationService, PushService}
+import com.waz.service.push.PushService
 import com.waz.sync.client.ConversationsClient.{ConversationOverviewResponse, ConversationResponse}
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
@@ -105,11 +105,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                syncReqService:  SyncRequestService,
                                assetService:    AssetService,
                                receiptsStorage: ReadReceiptsStorage,
-                               notificationService: NotificationService,
                                foldersService:  FoldersService,
                                rolesService:    ConversationRolesService
                               ) extends ConversationsService with DerivedLogTag {
-
   import Threading.Implicits.Background
 
   //On conversation changed, update the state of the access roles as part of migration, then check for a link if necessary
@@ -263,7 +261,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   private def processUpdateEvent(conv: ConversationData, ev: ConversationEvent) = ev match {
     case DeleteConversationEvent(_, _, time, from, _) => (for {
-      _ <- notificationService.displayNotificationForDeletingConversation(from, time, conv)
       _ <- deleteConversation(conv.id)
     } yield ()).recoverWith {
       case e: Exception => error(l"error while processing DeleteConversationEvent", e)

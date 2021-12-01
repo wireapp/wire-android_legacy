@@ -164,7 +164,11 @@ class ActiveAccountsDaoTest : IntegrationTest() {
             refreshToken: String = TEST_ACTIVE_ACCOUNT_COOKIE
         ) = ActiveAccountsEntity(
             id = userId,
+<<<<<<< HEAD
             domain = null,
+=======
+            domain = "",
+>>>>>>> feat: Create a new service which uses Work Manager to receive notifications (SQCORE-1136) (#3580)
             teamId = TEST_ACTIVE_ACCOUNT_TEAM_ID,
             refreshToken = refreshToken,
             accessToken = accessToken,

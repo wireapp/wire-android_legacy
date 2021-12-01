@@ -79,6 +79,7 @@ class UsersDaoTest : IntegrationTest() {
             connectionTimestamp = data.connectionTimestamp,
             connectionMessage = data.connectionMessage,
             conversation = data.conversation,
+            conversationDomain = "",
             relation = data.relation,
             timestamp = data.timestamp,
             verified = data.verified,

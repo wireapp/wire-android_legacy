@@ -62,7 +62,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val messages       = mock[MessagesService]
   val permissions    = mock[PermissionsService]
   val push           = mock[PushService]
-  val usersStorage   = mock[UsersStorage]
   val otrSyncHandler = mock[OtrSyncHandler]
   val globalPrefs    = new TestGlobalPreferences
 
@@ -1195,11 +1194,14 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     (avs.registerAccount _).expects(*).once().returning(Future.successful(wCall))
 
-    (usersStorage.get _).expects(selfUserId).anyNumberOfTimes().returning(Future.successful(Some(selfUserData)))
-
     val s = new CallingServiceImpl(
+<<<<<<< HEAD
       selfUserId, selfClientId, domain, null, avs, convs, convsService, members, otrSyncHandler,
       flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, httpProxy = None
+=======
+      selfUserId, selfClientId, null, avs, convs, convsService, members, otrSyncHandler,
+      flows, messages, media, push, network, prefs, globalPrefs, permissions, httpProxy = None
+>>>>>>> feat: Create a new service which uses Work Manager to receive notifications (SQCORE-1136) (#3580)
     )
     result(s.wCall)
     s
