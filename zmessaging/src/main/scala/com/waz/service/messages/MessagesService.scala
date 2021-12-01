@@ -30,12 +30,13 @@ import com.waz.model.{Mention, MessageId, _}
 import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.assets.UploadAsset
+import com.waz.service.call.CallingService.MissedCallInfo
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.otr.NotificationParser
 import com.waz.service.otr.VerificationStateUpdater.{ClientUnverified, MemberAdded, VerificationChange}
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient
-import com.wire.signals.{CancellableFuture, EventStream, RefreshingSignal, Serialized, Signal, SourceSignal}
+import com.wire.signals.{CancellableFuture, EventStream, RefreshingSignal, Serialized, Signal, SourceSignal, SourceStream}
 import com.waz.threading.Threading
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
@@ -50,7 +51,7 @@ import scala.util.Success
 
 trait MessagesService {
   def msgEdited: EventStream[(MessageId, MessageId)]
-  def missedCallsNotification: Signal[Option[NotificationData]]
+  def missedCall: EventStream[MissedCallInfo]
 
   def addTextMessage(convId: ConvId, content: String, expectsReadReceipt: ReadReceiptSettings = AllDisabled, mentions: Seq[Mention] = Nil, exp: Option[Option[FiniteDuration]] = None): Future[MessageData]
   def addKnockMessage(convId: ConvId, selfUserId: UserId, expectsReadReceipt: ReadReceiptSettings = AllDisabled): Future[MessageData]
@@ -123,7 +124,7 @@ final class MessagesServiceImpl(selfUserId:     UserId,
 
   override val msgEdited = EventStream[(MessageId, MessageId)]()
 
-  override val missedCallsNotification: SourceSignal[Option[NotificationData]] = Signal(None)
+  override val missedCall = EventStream[MissedCallInfo]()
 
   override def recallMessage(convId: ConvId,
                              msgId: MessageId,
@@ -506,8 +507,8 @@ final class MessagesServiceImpl(selfUserId:     UserId,
   }
 
   private def addMissedCall(conv: ConversationData, from: UserId, time: RemoteInstant) = {
-    val msgId = MessageId()
-    updater.addMessage(MessageData(msgId, conv.id, Message.Type.MISSED_CALL, from, time = time))
+    if (!conv.muted.isAllMuted) missedCall ! MissedCallInfo(selfUserId, conv.id, time, from)
+    updater.addMessage(MessageData(MessageId(), conv.id, Message.Type.MISSED_CALL, from, time = time))
   }
 
   override def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: RemoteInstant, duration: FiniteDuration) =

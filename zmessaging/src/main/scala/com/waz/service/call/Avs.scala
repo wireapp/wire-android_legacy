@@ -148,7 +148,7 @@ final class AvsImpl() extends Avs with DerivedLogTag {
       },
       new MissedCallHandler {
         override def onMissedCall(convId: String, msgTime: Uint32_t, userId: String, isVideoCall: Boolean, arg: Pointer): Unit =
-          cs.onMissedCall(RConvId(convId), remoteInstant(msgTime), UserId(userId), isVideoCall)
+          cs.onMissedCall(RConvId(convId), remoteInstant(msgTime), UserId(userId))
       },
       new AnsweredCallHandler {
         override def onAnsweredCall(convId: String, arg: Pointer) = cs.onOtherSideAnsweredCall(RConvId(convId))

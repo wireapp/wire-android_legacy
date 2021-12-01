@@ -33,7 +33,7 @@ import com.waz.model._
 import com.waz.service.UiLifeCycle
 import com.waz.service.otr.NotificationUiController
 import com.waz.threading.Threading
-import com.wire.signals.{Signal, EventContext}
+import com.wire.signals.{EventContext, Signal}
 import com.waz.utils.wrappers.Bitmap
 import com.waz.zclient.WireApplication._
 import com.waz.zclient.common.controllers.SoundController
@@ -106,7 +106,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     notificationManager.cancelNotifications(accountId, convs)
 
   override def showNotifications(accountId: UserId, nots: Set[NotificationData]): Future[Unit] = {
-    verbose(l"onNotificationsChanged: $accountId, nots: $nots")
+    verbose(l"showNotifications: $accountId, nots: $nots")
     for {
       teamName  <- fetchTeamName(accountId)
       summaries <- createSummaryNotificationProps(accountId, nots, teamName).map(_.map(p => (toNotificationGroupId(accountId), p)))

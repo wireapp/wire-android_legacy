@@ -24,7 +24,7 @@ import android.Manifest.permission.CAMERA
 import com.sun.jna.Pointer
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.SkipTerminatingState
-import com.waz.content.{GlobalPreferences, MembersStorage, UserPreferences, UsersStorage}
+import com.waz.content.{GlobalPreferences, MembersStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.log.LogShow.SafeToLog
@@ -39,10 +39,9 @@ import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsCallError, AvsClient, AvsClientList, AvsClosedReason, NetworkQuality, VideoState, WCall, WCallConvType}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessage, Participant}
-import com.waz.service.call.CallingService.{CallProfile, GlobalCallProfile}
+import com.waz.service.call.CallingService.{CallProfile, GlobalCallProfile, MissedCallInfo}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
-import com.waz.service.otr.NotificationParser
 import com.waz.service.push.PushService
 import com.waz.sync.client.CallingClient
 import com.waz.sync.otr.OtrSyncHandler
@@ -157,6 +156,7 @@ object CallingService {
     val Empty = GlobalCallProfile(Map.empty)
   }
 
+  final case class MissedCallInfo(currentAccount: UserId, convId: ConvId, time: RemoteInstant, from: UserId)
 }
 
 final class CallingServiceImpl(val accountId:       UserId,
@@ -302,8 +302,8 @@ final class CallingServiceImpl(val accountId:       UserId,
       call.updateCallState(SelfJoining)
     } ("onOtherSideAnsweredCall")
 
-  def onMissedCall(rConvId: RConvId, time: RemoteInstant, userId: UserId, videoCall: Boolean): Future[Option[MessageData]] = {
-    verbose(l"Missed call for conversation: $rConvId at $time from user $userId. Video: $videoCall")
+  def onMissedCall(rConvId: RConvId, time: RemoteInstant, userId: UserId): Future[Option[MessageData]] = {
+    verbose(l"Missed call for conversation: $rConvId at $time from user $userId")
     messagesService.addMissedCallMessage(rConvId, userId, time)
   }
 

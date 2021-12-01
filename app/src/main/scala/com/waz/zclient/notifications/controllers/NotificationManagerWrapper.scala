@@ -390,7 +390,7 @@ object NotificationManagerWrapper {
         toCancel.foreach(n => notificationManager.cancel(n.getId))
         if (others.isEmpty)
           notificationManager.cancelAll()
-        else 
+        else
           summaryNots
             .filterNot(n =>
               others.map(_.getNotification.getGroup.hashCode.toString).exists(n.getNotification.getChannelId.contains)

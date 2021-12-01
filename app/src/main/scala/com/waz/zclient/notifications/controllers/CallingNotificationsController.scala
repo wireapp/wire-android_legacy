@@ -23,16 +23,16 @@ import android.content
 import android.graphics.Bitmap
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.waz.content.UserPreferences
+import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.call.CallInfo.CallState._
-import com.waz.service.{AccountManager, AccountsService, GlobalModule}
+import com.waz.service.{AccountsService, GlobalModule}
 import com.waz.services.calling.CallWakeService._
 import com.waz.services.calling.CallingNotificationsService
 import com.waz.threading.Threading.Implicits.Background
 import com.waz.utils._
-import com.wire.signals.Signal
+import com.wire.signals.{EventStream, Signal}
 import com.waz.utils.wrappers.{Context, Intent}
 import com.waz.zclient.Intents.{CallIntent, OpenCallingScreen}
 import com.waz.zclient._
@@ -49,14 +49,16 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import com.waz.threading.Threading._
 
-class CallingNotificationsController(implicit cxt: WireContext, inj: Injector) extends Injectable with DerivedLogTag {
-
+final class CallingNotificationsController(implicit cxt: WireContext, inj: Injector) extends Injectable with DerivedLogTag {
   import CallingNotificationsController._
 
   private lazy val soundController     = inject[SoundController]
   private lazy val notificationManager = inject[NotificationManager]
   private lazy val callController      = inject[CallController]
   private lazy val convController      = inject[ConversationController]
+  private lazy val notController       = inject[MessageNotificationsController]
+
+  private val zmsInstances = inject[AccountsService].zmsInstances
 
   private val filteredGlobalProfile: Signal[(Option[ConvId], Seq[(ConvId, (UserId, UserId))])] =
     for {
@@ -70,9 +72,9 @@ class CallingNotificationsController(implicit cxt: WireContext, inj: Injector) e
                          .toSeq
     } yield (curCallId, allCalls)
 
-  val notifications =
+  val notifications: Signal[Seq[CallNotification]] =
     for {
-      zs                     <- inject[AccountsService].zmsInstances
+      zs                     <- zmsInstances
       (curCallId, allCallsF) <- filteredGlobalProfile
       bitmaps                <- Signal.sequence(allCallsF.map { case (conv, (_, account)) =>
                                   zs.find(_.selfUserId == account)
@@ -126,8 +128,6 @@ class CallingNotificationsController(implicit cxt: WireContext, inj: Injector) e
       case (cn1, cn2)                                 => cn1.convId.str > cn2.convId.str
     }
 
-  private lazy val currentNotificationsPref = inject[Signal[AccountManager]].map(_.userPrefs(UserPreferences.CurrentNotifications))
-
   notifications.map(_.exists(n => !n.isMainCall && n.allowedByStatus)).onUi(soundController.playRingFromThemInCall)
 
   callController.currentCallOpt.map(_.isDefined).onUi {
@@ -135,7 +135,33 @@ class CallingNotificationsController(implicit cxt: WireContext, inj: Injector) e
     case _ =>
   }
 
-  private def cancelNots(nots: Seq[CallingNotificationsController.CallNotification]): Unit = {
+  private val missedCall: EventStream[(UserId, NotificationData)] =
+    for {
+      zmsInstances <- EventStream.zip(EventStream.from(zmsInstances.head), EventStream.from(zmsInstances)) // TODO: make a change to `EventStream.from` in wire-signals
+      missedCalls  =  zmsInstances.toSeq.map(_.messages.missedCall)
+      call         <- EventStream.zip(missedCalls:_*)
+    } yield
+      (call.currentAccount,
+       NotificationData(NotId(), conv = call.convId, user = call.from, msgType = NotificationType.MISSED_CALL, time = call.time)
+      )
+
+  missedCall.onUi { case (selfId, not) =>
+    cancelCallNotifications()
+    notController.showNotifications(selfId, Set(not))
+  }
+
+  def cancelCallNotifications(): Unit =
+    notificationManager
+      .getActiveNotifications
+      .toSeq
+      .filter { n =>
+        val not = n.getNotification
+        not.getChannelId == IncomingCallNotificationsChannelId || not.getChannelId == OngoingNotificationsChannelId
+      }.foreach { n =>
+        notificationManager.cancel(n.getId)
+      }
+
+  private def cancelNotifications(nots: Seq[CallingNotificationsController.CallNotification]): Unit = {
     val notsIds = nots.map(_.id).toSet
     val activeIds = notificationManager.getActiveNotifications.map(_.getId).toSet
     val toCancel = Future.successful(activeIds -- notsIds)
@@ -144,11 +170,11 @@ class CallingNotificationsController(implicit cxt: WireContext, inj: Injector) e
   }
 
   notifications.map(_.filter(!_.isMainCall)).onUi { nots =>
-    cancelNots(nots)
+    cancelNotifications(nots)
     nots.foreach { not =>
         val builder = androidNotificationBuilder(not)
 
-        def showNotification() = notificationManager.notify(CallNotificationTag, not.id, builder.build())
+        def showNotification(): Unit = notificationManager.notify(CallNotificationTag, not.id, builder.build())
 
         Try(showNotification()).recover {
           case NonFatal(e) =>
@@ -164,21 +190,19 @@ class CallingNotificationsController(implicit cxt: WireContext, inj: Injector) e
 }
 
 object CallingNotificationsController {
-
-  case class CallNotification(id:            Int,
-                              convId:        ConvId,
-                              accountId:     UserId,
-                              callStartTime: LocalInstant,
-                              caller:        Name,
-                              convName:      Name,
-                              bitmap:        Option[Bitmap],
-                              isMainCall:    Boolean,
-                              action:        NotificationAction,
-                              videoCall:     Boolean,
-                              isGroup:       Boolean,
-                              allowedByStatus: Boolean
-                             )
-
+  final case class CallNotification(id:            Int,
+                                    convId:        ConvId,
+                                    accountId:     UserId,
+                                    callStartTime: LocalInstant,
+                                    caller:        Name,
+                                    convName:      Name,
+                                    bitmap:        Option[Bitmap],
+                                    isMainCall:    Boolean,
+                                    action:        NotificationAction,
+                                    videoCall:     Boolean,
+                                    isGroup:       Boolean,
+                                    allowedByStatus: Boolean
+                                   )
 
   object NotificationAction extends Enumeration {
     val DeclineOrJoin, Leave, Nothing = Value
@@ -190,7 +214,8 @@ object CallingNotificationsController {
 
   val isAndroid10OrAbove: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
-  def androidNotificationBuilder(not: CallNotification, treatAsIncomingCall: Boolean = false)(implicit cxt: content.Context): NotificationCompat.Builder = {
+  def androidNotificationBuilder(not: CallNotification, treatAsIncomingCall: Boolean = false)
+                                (implicit cxt: content.Context): NotificationCompat.Builder = {
     val title = if (not.isGroup) not.convName else not.caller
 
     val message = (not.isGroup, not.videoCall) match {

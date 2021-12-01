@@ -18,10 +18,6 @@ import com.waz.log.LogSE._
 
 trait NotificationParser {
   def parse(events: Iterable[Event]): Future[Set[NotificationData]]
-  def createMissedCallNotification(msgId: MessageId,
-                                   conv:  ConversationData,
-                                   from:  UserId,
-                                   time:  RemoteInstant): Future[Option[NotificationData]]
 }
 
 final class NotificationParserImpl(selfId:       UserId,
@@ -44,23 +40,6 @@ final class NotificationParserImpl(selfId:       UserId,
       case ev: DeleteConversationEvent => parse(ev)
       case _                           => Future.successful(None)
     }.map(_.flatten.toSet)
-
-  override def createMissedCallNotification(msgId: MessageId,
-                                            conv:  ConversationData,
-                                            from:  UserId,
-                                            time:  RemoteInstant): Future[Option[NotificationData]] =
-    selfUser.map {
-      case Some(self) if shouldShowNotification(self, conv, from, time) =>
-        Some(NotificationData(
-          id      = NotId(msgId.str),
-          conv    = conv.id,
-          user    = from,
-          msgType = NotificationType.MISSED_CALL,
-          time    = time
-        ))
-      case _ =>
-        None
-    }
 
   private def parse(event: GenericMessageEvent) =
     (for {
