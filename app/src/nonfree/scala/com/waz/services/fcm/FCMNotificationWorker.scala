@@ -18,7 +18,7 @@ final class FCMNotificationWorker(context: Context, params: WorkerParameters)
 
   override def doWork(): ListenableWorker.Result = {
     verbose(l"doWork")
-    val userId = UserId(params.getInputData.getString(FCMLightService.UserKey))
+    val userId = UserId(params.getInputData.getString(FCMService.UserKey))
     if (!WireApplication.isInitialized) {
       verbose(l"not initialized")
       checkSecurityAndProcess(userId)

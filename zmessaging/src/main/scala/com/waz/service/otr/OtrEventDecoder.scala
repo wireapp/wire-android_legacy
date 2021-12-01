@@ -13,7 +13,7 @@ trait OtrEventDecoder {
   def decode(event: PushNotificationEvent): Option[Event]
 }
 
-final class OtrEventDecoderImpl(selfUserId:    UserId, currentDomain: Domain)
+final class OtrEventDecoderImpl(selfUserId: UserId, currentDomain: Domain)
   extends OtrEventDecoder with DerivedLogTag {
   import OtrEventDecoder._
 

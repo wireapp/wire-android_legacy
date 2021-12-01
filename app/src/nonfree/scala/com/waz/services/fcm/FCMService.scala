@@ -17,8 +17,8 @@ import com.waz.zclient.utils.BackendController
 
 import scala.util.Try
 
-final class FCMLightService extends FirebaseMessagingService with DerivedLogTag {
-  import FCMLightService._
+final class FCMService extends FirebaseMessagingService with DerivedLogTag {
+  import FCMService._
   implicit lazy val context: Context = this
 
   private lazy val backend =
@@ -72,7 +72,7 @@ final class FCMLightService extends FirebaseMessagingService with DerivedLogTag 
     }
 }
 
-object FCMLightService {
+object FCMService {
   val UserKeyMissingMsg: String = "Notification did not contain user key - discarding"
   val UserKey: String = "user"
   val NotificationWorkName: String = "Notifications"

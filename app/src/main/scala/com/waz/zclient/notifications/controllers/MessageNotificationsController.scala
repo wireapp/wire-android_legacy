@@ -162,14 +162,14 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     verbose(l"createSummaryNotificationProps: $userId, ${nots.size}")
     if (nots.nonEmpty)
       notificationColor(userId).map { color =>
-        Some(NotificationProps (userId,
+        Some(NotificationProps(userId,
           when                     = Some(nots.minBy(_.time.instant).time.instant.toEpochMilli),
           showWhen                 = Some(true),
           category                 = Some(NotificationCompat.CATEGORY_MESSAGE),
           priority                 = Some(NotificationCompat.PRIORITY_HIGH),
           smallIcon                = Some(R.drawable.ic_menu_logo),
           groupSummary             = Some(true),
-          group                    = None,
+          group                    = Some(userId),
           openAccountIntent        = Some(userId),
           contentInfo              = teamName.map(_.str),
           color                    = color

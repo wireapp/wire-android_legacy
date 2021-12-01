@@ -27,8 +27,8 @@ trait NotificationParser {
 final class NotificationParserImpl(selfId:       UserId,
                                    convStorage:  ConversationStorage,
                                    usersStorage: UsersStorage,
-                                   mlStorage:    => MessageAndLikesStorage,
-                                   calling:      => CallingService)
+                                   mlStorage:    () => MessageAndLikesStorage,
+                                   calling:      () => CallingService)
   extends NotificationParser with DerivedLogTag {
   import scala.language.existentials
   import Threading.Implicits.Background
@@ -75,7 +75,7 @@ final class NotificationParserImpl(selfId:       UserId,
       }
 
   private def parse(event: CallMessageEvent) = Future.successful {
-    calling.receiveCallEvent(event.content, event.time, event.convId, event.from, event.sender)
+    calling().receiveCallEvent(event.content, event.time, event.convId, event.from, event.sender)
     Option.empty[NotificationData]
   }
 
@@ -249,7 +249,7 @@ final class NotificationParserImpl(selfId:       UserId,
       if (action != Liking.Action.Like)
         Future.successful(None)
       else
-        mlStorage.getMessageAndLikes(mId).map {
+        mlStorage().getMessageAndLikes(mId).map {
           case Some(ml) if ml.message.userId == selfId =>
             val likedContent = ml.message.msgType match {
               case Message.Type.IMAGE_ASSET => LikedContent.PICTURE
@@ -355,7 +355,7 @@ object NotificationParser {
   def apply(selfId:       UserId,
             convStorage:  ConversationStorage,
             usersStorage: UsersStorage,
-            mlStorage:    => MessageAndLikesStorage,
-            calling:      => CallingService): NotificationParser =
+            mlStorage:    () => MessageAndLikesStorage,
+            calling:      () => CallingService): NotificationParser =
     new NotificationParserImpl(selfId, convStorage, usersStorage, mlStorage, calling)
 }
