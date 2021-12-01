@@ -446,6 +446,6 @@ object MessageEventProcessor {
   }
 
   object RichMessage {
-    val Empty = RichMessage(MessageData.Empty)
+    val Empty: RichMessage = RichMessage(MessageData.Empty)
   }
 }

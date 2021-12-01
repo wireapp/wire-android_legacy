@@ -58,8 +58,7 @@ trait Avs {
   * Facilitates synchronous communication with AVS and also provides a wrapper around the native code which can be easily
   * mocked for testing the CallingService
   */
-class AvsImpl() extends Avs with DerivedLogTag {
-
+final class AvsImpl() extends Avs with DerivedLogTag {
   private implicit val dispatcher = SerialDispatchQueue(name = "AvsWrapper")
 
   import Avs._
