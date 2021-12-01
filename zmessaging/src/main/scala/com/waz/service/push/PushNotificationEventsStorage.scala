@@ -26,11 +26,10 @@ import com.waz.model.PushNotificationEvents.PushNotificationEventsDao
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.push.PushNotificationEventsStorage.{EventHandler, EventIndex, PlainWriter}
-import com.waz.sync.client.{EncodedEvent, PushNotificationEncoded}
+import com.waz.sync.client.PushNotificationEncoded
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.wire.signals.EventContext
-import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
-import org.json.JSONObject
+import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache, returning}
 
 import scala.concurrent.Future
 
@@ -45,11 +44,11 @@ trait PushNotificationEventsStorage extends CachedStorage[EventIndex, PushNotifi
   def setAsDecrypted(index: EventIndex): Future[Unit]
   def writeClosure(index: EventIndex): PlainWriter
   def writeError(index: EventIndex, error: OtrErrorEvent): Future[Unit]
-  def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Unit]
+  def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]]
   def encryptedEvents: Future[Seq[PushNotificationEvent]]
   def removeRows(rows: Iterable[Int]): Future[Unit]
   def registerEventHandler(handler: EventHandler)(implicit ec: EventContext): Future[Unit]
-  def getDecryptedRows(limit: Int = 50): Future[IndexedSeq[PushNotificationEvent]]
+  def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]]
 }
 
 final class PushNotificationEventsStorageImpl(context: Context, storage: Database, clientId: ClientId)
@@ -73,7 +72,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     update(index, _.copy(decrypted = true, event = MessageEvent.errorToEncodedEvent(error), plain = None))
       .map(_ => Unit)
 
-  override def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Unit] = {
+  override def saveAll(pushNotifications: Seq[PushNotificationEncoded]): Future[Seq[PushNotificationEvent]] = {
     val eventsToSave = pushNotifications.flatMap { pn =>
       val (valid, invalid) = pn.events.partition(_.isForUs(clientId))
       invalid.foreach { event => verbose(l"Skipping otr event not intended for us: $event") }
@@ -83,19 +82,18 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     storage.withTransaction { implicit db =>
       val curIndex = PushNotificationEventsDao.maxIndex()
       val nextIndex = if (curIndex == -1) 0 else curIndex+1
-      insertAll(eventsToSave.zip(nextIndex.until(nextIndex+eventsToSave.length))
-        .map { case ((id, event, transient), index) =>
-          PushNotificationEvent(id, index, event = event, transient = transient)
-        })
-    }.future.map(_ => ())
+      returning(
+        eventsToSave.zip(nextIndex.until(nextIndex+eventsToSave.length)).map {
+          case ((id, event, transient), index) => PushNotificationEvent(id, index, event = event, transient = transient)
+        }
+      ) { insertAll }
+    }.future
   }
 
   def encryptedEvents: Future[Seq[PushNotificationEvent]] = values.map(_.filter(!_.decrypted))
 
-  //limit amount of decrypted events we read to avoid overwhelming older phones
-  def getDecryptedRows(limit: Int = 50): Future[IndexedSeq[PushNotificationEvent]] = storage.read { implicit db =>
-    PushNotificationEventsDao.listDecrypted(limit)
-  }
+  override def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
+    storage.read { implicit db => PushNotificationEventsDao.listDecrypted }
 
   def removeRows(rows: Iterable[Int]): Future[Unit] = removeAll(rows)
 
