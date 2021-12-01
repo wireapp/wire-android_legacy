@@ -88,7 +88,7 @@ class OtrClientsServiceImpl(selfId:        UserId,
 
   override def requestSyncIfNeeded(retryInterval: FiniteDuration = 7.days): Unit =
     getSelfClient.zip(lastSelfClientsSyncPref()) flatMap {
-      case (Some(c), t) if t > System.currentTimeMillis() - retryInterval.toMillis => Future.successful(())
+      case (Some(_), t) if t > System.currentTimeMillis() - retryInterval.toMillis => Future.successful(())
       case _ =>
         sync.syncSelfClients() flatMap { _ =>
           lastSelfClientsSyncPref := System.currentTimeMillis()
@@ -142,7 +142,7 @@ class OtrClientsServiceImpl(selfId:        UserId,
         Future.successful(Option.empty[SyncId])
     }
 
-  override def selfClient: Signal[Client] = for {
+  override lazy val selfClient: Signal[Client] = for {
     uc <- storage.signal(selfId)
     res <- Signal.const(uc.clients.get(clientId)).collect { case Some(c) => c }
   } yield res
