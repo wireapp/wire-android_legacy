@@ -199,19 +199,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       actualResult shouldBe true
     }
 
-    scenario("for a conversation with pending legal hold status") {
-      // Given
-      val service = createService()
-      val convId = ConvId("conv1")
-      mockConversation(convId, LegalHoldStatus.PendingApproval)
-
-      // When
-      val actualResult = result(service.isLegalHoldActive(convId).future)
-
-      // Then
-      actualResult shouldBe true
-    }
-
     scenario("for a conversation with disabled legal hold status") {
       // Given
       val service = createService()

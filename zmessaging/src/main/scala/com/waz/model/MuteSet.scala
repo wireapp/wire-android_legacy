@@ -20,7 +20,7 @@ package com.waz.model
 import MuteSet._
 import com.waz.log.LogShow.SafeToLog
 
-case class MuteSet(private val status: Set[MuteMask]) extends SafeToLog {
+final case class MuteSet(private val status: Set[MuteMask]) extends SafeToLog {
   def toInt: Int =
     (if (status.contains(StandardMuted)) 1 else 0) | (if (status.contains(MentionsMuted)) 2 else 0)
 

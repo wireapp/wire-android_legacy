@@ -19,41 +19,41 @@ package com.waz.model
 
 import com.waz.db.Dao
 import com.waz.db.Col._
+import com.waz.sync.client.EncodedEvent
 import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.{DB, DBCursor}
-import org.json
-import org.json.JSONObject
 
 object PushNotificationEvents {
   implicit object PushNotificationEventsDao extends Dao[PushNotificationEvent, Int] {
     private val PushId = id[Uid]('pushId).apply(_.pushId)
     private val Index = int('event_index)(_.index)
     private val Decrypted = bool('decrypted)(_.decrypted)
-    private val EventJson = text('event)(_.event.toString)
+    private val EventStr = text('event)(_.event.str)
     private val Plain = opt(blob('plain))(_.plain)
     private val Transient = bool('transient)(_.transient)
 
     override val idCol = Index
-    override val table = Table("PushNotificationEvents", PushId, Index, Decrypted, EventJson, Plain, Transient)
+    override val table = Table("PushNotificationEvents", PushId, Index, Decrypted, EventStr, Plain, Transient)
 
     override def apply(implicit cursor: DBCursor): PushNotificationEvent =
-      PushNotificationEvent(PushId, Index, Decrypted, new json.JSONObject(cursor.getString(3)), Plain, Transient)
+      PushNotificationEvent(PushId, Index, Decrypted, EncodedEvent(cursor.getString(3)), Plain, Transient)
 
     override def onCreate(db: DB): Unit = {
       super.onCreate(db)
     }
 
-    def maxIndex()(implicit db: DB) = queryForLong(maxWithDefault(Index.name)).toInt
+    def maxIndex()(implicit db: DB): Int = queryForLong(maxWithDefault(Index.name)).toInt
 
-    def listDecrypted(limit: Int)(implicit db: DB) = list(db.query(table.name, null, s"${Decrypted.name} = 1", null, null, null, "event_index ASC", s"$limit"))
+    def listDecrypted()(implicit db: DB): Vector[PushNotificationEvent] =
+      list(db.query(table.name, null, s"${Decrypted.name} = 1", null, null, null, "event_index ASC"))
   }
 }
 
-case class PushNotificationEvent(pushId:    Uid,
-                                 index:     Int,
-                                 decrypted: Boolean = false,
-                                 event:     JSONObject,
-                                 plain:     Option[Array[Byte]] = None,
-                                 transient: Boolean) extends Identifiable[Int] {
+final case class PushNotificationEvent(pushId:    Uid,
+                                       index:     Int,
+                                       decrypted: Boolean = false,
+                                       event:     EncodedEvent,
+                                       plain:     Option[Array[Byte]] = None,
+                                       transient: Boolean) extends Identifiable[Int] {
   override val id: Int = index
 }
