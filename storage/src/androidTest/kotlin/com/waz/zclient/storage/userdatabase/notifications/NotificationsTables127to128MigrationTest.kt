@@ -23,15 +23,6 @@ class NotificationsTables127to128MigrationTest : UserDatabaseMigrationTest(127, 
             secondBucket, thirdBucket, openHelper = testOpenHelper)
 
         validateMigration(USER_DATABASE_MIGRATION_127_TO_128)
-
-        runBlocking {
-            with(allCloudNotificationStats()[0]) {
-                assertEquals(this.stage, stage)
-                assertEquals(this.firstBucket, firstBucket)
-                assertEquals(this.secondBucket, secondBucket)
-                assertEquals(this.thirdBucket, thirdBucket)
-            }
-        }
     }
 
     @Test
@@ -46,14 +37,6 @@ class NotificationsTables127to128MigrationTest : UserDatabaseMigrationTest(127, 
         )
 
         validateMigration(USER_DATABASE_MIGRATION_127_TO_128)
-
-        runBlocking {
-            with(allCloudNotifications()[0]) {
-                assertEquals(this.id, id)
-                assertEquals(this.stage, stage)
-                assertEquals(this.stageStartTime, stageStartTime)
-            }
-        }
     }
 
     @Test
@@ -69,13 +52,6 @@ class NotificationsTables127to128MigrationTest : UserDatabaseMigrationTest(127, 
         )
 
         validateMigration(USER_DATABASE_MIGRATION_127_TO_128)
-
-        runBlocking {
-            with(allNotificationsData()[0]) {
-                assertEquals(this.id, id)
-                assertEquals(this.data, data)
-            }
-        }
     }
 
     @Test
@@ -112,15 +88,6 @@ class NotificationsTables127to128MigrationTest : UserDatabaseMigrationTest(127, 
             }
         }
     }
-
-    private suspend fun allCloudNotifications() =
-        getDatabase().cloudNotificationsDao().allCloudNotifications()
-
-    private suspend fun allCloudNotificationStats() =
-        getDatabase().cloudNotificationStatsDao().allCloudNotificationStats()
-
-    private suspend fun allNotificationsData() =
-        getDatabase().notificationDataDao().allNotificationsData()
 
     private suspend fun allPushNotificationEvents() =
         getDatabase().pushNotificationEventDao().allPushNotificationEvents()

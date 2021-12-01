@@ -201,4 +201,6 @@ object LegacyDependencies {
 
     //test
     val scalaTest = "org.scalatest:scalatest_${SCALA_MAJOR_VERSION}:3.0.5"
+    val scalaMock = "org.scalamock:scalamock_${LegacyDependencies.SCALA_MAJOR_VERSION}:4.1.0"
+    val scalaCheck = "org.scalacheck:scalacheck_${LegacyDependencies.SCALA_MAJOR_VERSION}:1.14.0"
 }

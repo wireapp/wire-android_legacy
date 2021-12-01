@@ -20,17 +20,17 @@ package com.waz.zclient
 import java.io.File
 import java.util.Calendar
 
-import android.app.{Activity, ActivityManager, NotificationChannel, NotificationManager}
+import android.app.{Activity, ActivityManager, NotificationManager}
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
 import android.media.AudioManager
-import android.os.{Build, PowerManager, Vibrator}
+import android.os.{PowerManager, Vibrator}
 import android.renderscript.RenderScript
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.fragment.app.{FragmentActivity, FragmentManager}
 import androidx.multidex.MultiDexApplication
-import com.evernote.android.job.{JobCreator, JobManager}
+import com.evernote.android.job.{Job, JobCreator, JobManager}
 import com.waz.api.NetworkMode
 import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._
@@ -44,15 +44,16 @@ import com.waz.service.assets._
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation._
 import com.waz.service.messages.MessagesService
+import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.service.teams.{FeatureConfigsService, TeamsService}
 import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
-import com.waz.services.websocket.{WebSocketController, WebSocketService}
+import com.waz.services.websocket.WebSocketController
 import com.waz.sync.client.CustomBackendClient
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
-import com.waz.utils.{SafeBase64, returning}
+import com.waz.utils.SafeBase64
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
 import com.waz.zclient.assets.{AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
@@ -60,7 +61,7 @@ import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers._
-import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController, KeyboardController, PasswordController, SodiumHandler}
+import com.waz.zclient.common.controllers.global._
 import com.waz.zclient.controllers._
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation.IConfirmationController
@@ -78,7 +79,7 @@ import com.waz.zclient.legalhold.{LegalHoldApprovalHandler, LegalHoldController,
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
 import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}
-import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
+import com.waz.zclient.notifications.controllers.AndroidNotificationsManager
 import com.waz.zclient.notifications.controllers._
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
@@ -98,6 +99,10 @@ import scala.concurrent.Future
 object WireApplication extends DerivedLogTag {
   var APP_INSTANCE: WireApplication = _
 
+  def isInitialized: Boolean =
+    if (Option(APP_INSTANCE).isEmpty) false
+    else APP_INSTANCE.isInitialized
+
   def ensureInitialized(): Boolean =
     if (Option(APP_INSTANCE).isEmpty) false // too early
     else APP_INSTANCE.ensureInitialized()
@@ -106,6 +111,7 @@ object WireApplication extends DerivedLogTag {
   type AccountToUsersStorage = (UserId) => Future[Option[UsersStorage]]
   type AccountToConvsStorage = (UserId) => Future[Option[ConversationStorage]]
   type AccountToConvsService = (UserId) => Future[Option[ConversationsService]]
+  type AccountToUserService = (UserId) => Future[Option[UserService]]
 
   lazy val Global = new Module {
 
@@ -159,6 +165,7 @@ object WireApplication extends DerivedLogTag {
     bind [AccountToUsersStorage]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.usersStorage)))
     bind [AccountToConvsStorage]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.convsStorage)))
     bind [AccountToConvsService]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.conversations)))
+    bind [AccountToUserService]   to (userId => inject[AccountsService].getZms(userId).map(_.map(_.users)))
 
     // the current user's id
     bind [Signal[Option[UserId]]] to inject[Signal[AccountsService]].flatMap(_.activeAccountId)
@@ -191,7 +198,6 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[MessageAndLikesStorage]]        to inject[Signal[ZMessaging]].map(_.msgAndLikes)
     bind [Signal[ReadReceiptsStorage]]           to inject[Signal[ZMessaging]].map(_.readReceiptsStorage)
     bind [Signal[ReactionsStorage]]              to inject[Signal[ZMessaging]].map(_.reactionsStorage)
-    bind [Signal[FCMNotificationStatsService]]   to inject[Signal[ZMessaging]].map(_.fcmNotStatsService)
     bind [Signal[FoldersStorage]]                to inject[Signal[ZMessaging]].map(_.foldersStorage)
     bind [Signal[ConversationFoldersStorage]]    to inject[Signal[ZMessaging]].map(_.conversationFoldersStorage)
     bind [Signal[FoldersService]]                to inject[Signal[ZMessaging]].map(_.foldersService)
@@ -392,8 +398,10 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     ensureInitialized()
   }
 
+  private[waz] def isInitialized: Boolean = Option(ZMessaging.currentGlobal).isDefined
+
   private[waz] def ensureInitialized(): Boolean =
-    if (Option(ZMessaging.currentGlobal).isDefined) true // the app is initialized, nothing to do here
+    if (isInitialized) true // the app is initialized, nothing to do here
     else
       try {
         inject[BackendController].getStoredBackendConfig.fold(false){ config =>
@@ -408,7 +416,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   def ensureInitialized(backend: BackendConfig): Unit = {
     JobManager.create(this).addJobCreator(new JobCreator {
-      override def create(tag: String) =
+      override def create(tag: String): Job =
         if      (tag.contains(FetchJob.Tag))          new FetchJob
         else if (tag.contains(PushTokenCheckJob.Tag)) new PushTokenCheckJob
         else    null
@@ -445,6 +453,12 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[NotificationManagerWrapper]
     inject[ImageNotificationsController]
     inject[CallingNotificationsController]
+    inject[MessageNotificationsController].initialize()
+    activityLifecycleCallback.appInBackground.map(!_._1).foreach {
+      case true =>
+        inject[Signal[ZMessaging]].head.foreach(_.push.syncNotifications(SyncHistory(ForceSync)))
+      case false =>
+    }
 
 //    //TODO [AN-4942] - is this early enough for app launch events?
     inject[GlobalTrackingController]
@@ -456,27 +470,9 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     inject[SecurityPolicyChecker]
     inject[LegalHoldStatusChangeListener]
-
-    notificationChannel
   }
 
-  lazy val notificationChannel: Option[NotificationChannel] =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      Some(
-        returning(
-          new NotificationChannel(
-            WebSocketService.ForegroundNotificationChannelId,
-            getString(R.string.foreground_service_notification_name),
-            NotificationManager.IMPORTANCE_LOW)
-        ) { ch =>
-          ch.setDescription(getString(R.string.foreground_service_notification_description))
-          ch.enableVibration(false)
-          ch.setShowBadge(false)
-          ch.setSound(null, null)
-          inject[NotificationManager].createNotificationChannel(ch)
-        }
-      )
-    } else None
+  lazy val messageNotificationsController: MessageNotificationsController = inject[MessageNotificationsController]
 
   private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi): Unit =
     prefs(GlobalPreferences.CheckedForPlayServices).apply().foreach {
