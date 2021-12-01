@@ -24,7 +24,7 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.utils.JsonDecoder.arrayColl
-import com.waz.utils.{JsonDecoder, JsonEncoder}
+import com.waz.utils.{JsonDecoder, JsonEncoder, returning}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request, ResponseCode, _}
@@ -87,9 +87,11 @@ object PushNotificationsClient {
   val NotificationsLastPath = "/notifications/last"
   val PageSize = 500
 
-  case class LoadNotificationsResult(response: LoadNotificationsResponse, historyLost: Boolean)
+  final case class LoadNotificationsResult(response: LoadNotificationsResponse, historyLost: Boolean)
 
-  case class LoadNotificationsResponse(notifications: Vector[PushNotificationEncoded], hasMore: Boolean, beTime: Option[Instant])
+  final case class LoadNotificationsResponse(notifications: Vector[PushNotificationEncoded],
+                                             hasMore: Boolean,
+                                             beTime: Option[Instant])
 
   object PagedNotificationsResponse extends DerivedLogTag {
 
@@ -132,47 +134,24 @@ object PushNotificationsClient {
   }
 }
 
-final case class PushNotificationEncoded(id: Uid, events: JSONArray, transient: Boolean = false)
-
-final case class PushNotification(id: Uid, events: Seq[Event], transient: Boolean = false) {
-
-  /**
-    * Check if notification contains events intended for current client. In some (rare) cases it may happen that
-    * BE sends us notifications intended for different device, we can verify that by checking recipient field.
-    * Unencrypted events are always considered to belong to us.
-    */
-  def hasEventForClient(clientId: ClientId) = events.forall(forUs(clientId, _))
-
-  def eventsForClient(clientId: ClientId) = events.filter(forUs(clientId, _))
-
-  private def forUs(clientId: ClientId, event: Event) = event match {
-    case ev: OtrEvent => clientId == ev.recipient
-    case _ => true
-  }
+final case class EncodedEvent(str: String) extends AnyVal {
+  def isForUs(clientId: ClientId): Boolean =
+    !str.contains("conversation.otr") || str.contains(clientId.str)
+  def isOtrMessageAdd: Boolean = str.contains("conversation.otr-message-add")
+  def toJson: JSONObject = new JSONObject(str)
 }
 
-object PushNotification {
-  implicit lazy val NotificationDecoder: JsonDecoder[PushNotification] = new JsonDecoder[PushNotification] {
-    import com.waz.utils.JsonDecoder._
+final case class PushNotificationEncoded(id: Uid, events: Vector[EncodedEvent], transient: Boolean = false)
 
-    override def apply(implicit js: JSONObject): PushNotification =
-      PushNotification('id, array[Event](js.getJSONArray("payload")), 'transient)
-  }
-}
-
-object PushNotificationEncoded {
+object PushNotificationEncoded extends DerivedLogTag {
   implicit lazy val NotificationDecoder: JsonDecoder[PushNotificationEncoded] =
     new JsonDecoder[PushNotificationEncoded] {
       import com.waz.utils.JsonDecoder._
 
-    override def apply(implicit js: JSONObject): PushNotificationEncoded =
-      PushNotificationEncoded('id, js.getJSONArray("payload"), 'transient)
-  }
-  implicit lazy val NotificationEncoder: JsonEncoder[PushNotificationEncoded] = new JsonEncoder[PushNotificationEncoded] {
-    override def apply(v: PushNotificationEncoded): JSONObject = JsonEncoder { o =>
-      o.put("id", v.id.str)
-      o.put("payload", v.events)
-      o.put("transient", v.transient)
+    override def apply(implicit js: JSONObject): PushNotificationEncoded = {
+      val arr = js.getJSONArray("payload")
+      val vector = (0 until arr.length).map { i => EncodedEvent(arr.getJSONObject(i).toString) }.toVector
+      PushNotificationEncoded('id, vector, 'transient)
     }
   }
 }

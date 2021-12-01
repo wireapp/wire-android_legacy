@@ -164,7 +164,7 @@ class EphemeralMessagesService(selfUserId: UserId,
 
 object EphemeralMessagesService {
 
-  val randomChars = {
+  val randomChars: Iterator[Char] = {
     val cs = ('a' to 'z') ++ ('A' to 'Z')
     Iterator continually cs(ZSecureRandom.nextInt(cs.size))
   }

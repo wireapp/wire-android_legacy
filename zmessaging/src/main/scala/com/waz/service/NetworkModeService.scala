@@ -35,9 +35,7 @@ trait NetworkModeService {
   lazy val isOnline: Signal[Boolean] = networkMode.map(NetworkModeService.isOnlineMode)
 }
 
-class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle)
-  extends NetworkModeService with DerivedLogTag {
-
+class DefaultNetworkModeService(context: Context) extends NetworkModeService with DerivedLogTag {
   private val currentNetwork = Signal[Option[Network]]()
   private val currentCapabilities = Signal[Option[NetworkCapabilities]]()
 

@@ -96,7 +96,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
   feature ("connect to user") {
 
     def setup(user: UserData, expectedNewStatus: ConnectionStatus) = {
-      (users.getOrCreateUser _).expects(user.id).anyNumberOfTimes().returning(Future.successful(user))
+      (users.getOrCreateUser _).expects(user.id, *).anyNumberOfTimes().returning(Future.successful(user))
       (users.updateConnectionStatus _).expects(user.id, expectedNewStatus, None, None).anyNumberOfTimes().returning(
         Future.successful(Some(user.copy(connection = expectedNewStatus)))
       )
@@ -292,7 +292,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
         }.toSet)
       }
 
-      (users.syncUsers _).expects(Set(otherUser.id), *).returning(Future.successful(Option(SyncId())))
+      (users.syncUsers _).expects(Set(otherUser.id), *, *).returning(Future.successful(Option(SyncId())))
       if (BuildConfig.FEDERATION_USER_DISCOVERY) {
         (convsStorage.getMapByQRemoteIds _).expects(Set(qRemoteId)).anyNumberOfTimes().returning(Future.successful(Map.empty))
       } else {
@@ -382,7 +382,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     (messagesService.addDeviceStartMessages _).expects(*, *).anyNumberOfTimes().onCall{ (convs: Seq[ConversationData], selfUserId: UserId) =>
       Future.successful(convs.map(conv => MessageData(MessageId(), conv.id, Message.Type.STARTED_USING_DEVICE, selfUserId)).toSet)
     }
-    (users.syncUsers _).expects(*, *).anyNumberOfTimes().returns(Future.successful(Option(SyncId())))
+    (users.syncUsers _).expects(*, *, *).anyNumberOfTimes().returns(Future.successful(Option(SyncId())))
     new ConnectionServiceImpl(selfUserId, teamId, push, convs, convsStorage, members, messagesService, messagesStorage, users, usersStorage, sync)
   }
 }

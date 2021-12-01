@@ -37,7 +37,7 @@ trait WireInstant {
   def isEpoch: Boolean = instant == Instant.EPOCH
 }
 
-case class RemoteInstant(instant: Instant) extends WireInstant with Comparable[RemoteInstant]  {
+final case class RemoteInstant(instant: Instant) extends WireInstant with Comparable[RemoteInstant]  {
   override def compareTo(o: RemoteInstant): Int = instant.compareTo(o.instant)
 
   def -(d: FiniteDuration): RemoteInstant = copy(instant = instant.minusNanos(d.toNanos))

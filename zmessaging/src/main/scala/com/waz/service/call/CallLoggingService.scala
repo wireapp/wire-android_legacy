@@ -29,11 +29,11 @@ import com.waz.utils.RichWireInstant
 import com.wire.signals.EventContext
 import org.threeten.bp.Duration
 
-class CallLoggingService(selfUserId:  UserId,
-                         calling:     CallingService,
-                         messages:    MessagesService,
-                         pushService: PushService,
-                         tracking:    TrackingService)(implicit eventContext: EventContext) extends DerivedLogTag {
+final class CallLoggingService(selfUserId:  UserId,
+                               calling:     CallingService,
+                               messages:    MessagesService,
+                               pushService: PushService,
+                               tracking:    TrackingService)(implicit eventContext: EventContext) extends DerivedLogTag {
 
   private var subscribedConvs = Set.empty[ConvId]
 
