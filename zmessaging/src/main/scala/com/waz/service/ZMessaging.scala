@@ -286,6 +286,8 @@ class ZMessaging(val teamId:    Option[TeamId],
     selfUserId, convsStorage, usersStorage, () => msgAndLikes
   )
 
+  lazy val wsNotifications: WsNotificationService = wire[WsNotificationServiceImpl]
+
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
 
   lazy val assets2Module = ZMessaging.assets2Module
@@ -331,6 +333,7 @@ class ZMessaging(val teamId:    Option[TeamId],
         convOrder.conversationOrderEventsStage,
         conversations.convStateEventProcessingStage,
         msgEvents.messageEventProcessingStage,
+        wsNotifications.eventsProcessingStage,
         genericMsgs.eventProcessingStage,
         foldersService.eventProcessingStage,
         propertiesService.eventProcessor,

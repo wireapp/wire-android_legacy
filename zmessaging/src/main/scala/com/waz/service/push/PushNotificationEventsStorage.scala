@@ -86,11 +86,15 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
         eventsToSave.zip(nextIndex.until(nextIndex+eventsToSave.length)).map {
           case ((id, event, transient), index) => PushNotificationEvent(id, index, event = event, transient = transient)
         }
-      ) { insertAll }
+      ) { evs =>
+        verbose(l"FCM events to save (${evs.size}): $evs")
+        insertAll(evs)
+      }
     }.future
   }
 
-  def encryptedEvents: Future[Seq[PushNotificationEvent]] = values.map(_.filter(!_.decrypted))
+  override def encryptedEvents: Future[IndexedSeq[PushNotificationEvent]] =
+    storage.read { implicit db => PushNotificationEventsDao.listEncrypted }
 
   override def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
     storage.read { implicit db => PushNotificationEventsDao.listDecrypted }
