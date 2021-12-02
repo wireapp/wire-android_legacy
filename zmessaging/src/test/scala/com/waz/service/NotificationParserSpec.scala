@@ -27,9 +27,8 @@ class NotificationParserSpec extends AndroidFreeSpec {
   private val convStorage = mock[ConversationStorage]
   private val usersStorage = mock[UsersStorage]
   private val mlStorage = mock[MessageAndLikesStorage]
-  private val calling = mock[CallingService]
 
-  private def parser = NotificationParser(selfId, convStorage, usersStorage, () => mlStorage, () => calling)
+  private def parser = NotificationParser(selfId, convStorage, usersStorage, () => mlStorage)
 
   scenario("show a notification on the event of deleting a conversation") {
     val senderId = UserId("sender")

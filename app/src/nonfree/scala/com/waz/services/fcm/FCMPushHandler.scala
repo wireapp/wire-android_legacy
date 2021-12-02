@@ -10,6 +10,7 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.clock
+import com.waz.service.call.CallingService
 import com.waz.service.otr.{EventDecrypter, NotificationParser, NotificationUiController, OtrEventDecoder}
 import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
@@ -34,6 +35,7 @@ final class FCMPushHandlerImpl(userId:      UserId,
                                decoder:     OtrEventDecoder,
                                parser:      NotificationParser,
                                controller:  NotificationUiController,
+                               calling:      () => CallingService,
                                globalPrefs: GlobalPreferences,
                                userPrefs:   UserPreferences)
                               (implicit ec: ExecutionContext)
@@ -56,9 +58,8 @@ final class FCMPushHandlerImpl(userId:      UserId,
       _         <- decrypter.processEncryptedEvents(encrypted)
       decrypted <- storage.getDecryptedRows
       decoded   =  decrypted.flatMap(ev => decoder.decode(ev))
-      _         =  verbose(l"decoded events (${decoded.size}): $decoded")
-      parsed    <- parser.parse(decoded)
-      _         =  verbose(l"parsed events (${parsed.size}): $parsed")
+      notCalls  =  processCalls(decoded)
+      parsed    <- parser.parse(notCalls)
       _         <- if (parsed.nonEmpty) controller.showNotifications(userId, parsed) else Future.successful(())
       _         <- updateLastId(notifications)
     } yield ()
@@ -80,6 +81,18 @@ final class FCMPushHandlerImpl(userId:      UserId,
       case Some(notId) => idPref := Some(notId)
       case _           => Future.successful(())
     }
+
+  private def processCalls(events: Seq[Event]): Seq[Event] = {
+    val (calls, others) = events.partition {
+      case _: CallMessageEvent => true
+      case _ => false
+    }
+    calls.foreach { ev =>
+      val call = ev.asInstanceOf[CallMessageEvent]
+      calling().receiveCallEvent(call.content, call.time, call.convId, call.from, call.sender)
+    }
+    others
+  }
 
   @inline
   private def futureHistoryResults(notifications: Vector[PushNotificationEncoded] = Vector.empty,
@@ -134,10 +147,11 @@ object FCMPushHandler {
             decoder:     OtrEventDecoder,
             parser:      NotificationParser,
             controller:  NotificationUiController,
+            calling:     () => CallingService,
             globalPrefs: GlobalPreferences,
             userPrefs:   UserPreferences)
            (implicit ec: ExecutionContext): FCMPushHandler =
-    new FCMPushHandlerImpl(userId, clientId, client, storage, decrypter, decoder, parser, controller, globalPrefs, userPrefs)
+    new FCMPushHandlerImpl(userId, clientId, client, storage, decrypter, decoder, parser, controller, calling, globalPrefs, userPrefs)
 
   final case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant])
 

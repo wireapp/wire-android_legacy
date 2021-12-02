@@ -283,7 +283,7 @@ class ZMessaging(val teamId:    Option[TeamId],
     selfUserId, selfDomain, eventStorage, otrClientsService, cryptoSessionService, () => tracking
   )
   lazy val notificationParser: NotificationParser = NotificationParser(
-    selfUserId, convsStorage, usersStorage, () => msgAndLikes, () => calling
+    selfUserId, convsStorage, usersStorage, () => msgAndLikes
   )
 
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)

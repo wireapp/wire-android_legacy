@@ -12,7 +12,6 @@ import com.waz.threading.Threading
 
 import scala.concurrent.Future
 import com.waz.model.UserData.ConnectionStatus
-import com.waz.service.call.CallingService
 
 import com.waz.log.LogSE._
 
@@ -23,8 +22,7 @@ trait NotificationParser {
 final class NotificationParserImpl(selfId:       UserId,
                                    convStorage:  ConversationStorage,
                                    usersStorage: UsersStorage,
-                                   mlStorage:    () => MessageAndLikesStorage,
-                                   calling:      () => CallingService)
+                                   mlStorage:    () => MessageAndLikesStorage)
   extends NotificationParser with DerivedLogTag {
   import scala.language.existentials
   import Threading.Implicits.Background
@@ -34,7 +32,6 @@ final class NotificationParserImpl(selfId:       UserId,
   override def parse(events: Iterable[Event]): Future[Set[NotificationData]] =
     Future.traverse(events){
       case ev: GenericMessageEvent     => parse(ev)
-      case ev: CallMessageEvent        => parse(ev)
       case ev: UserConnectionEvent     => parse(ev)
       case ev: RenameConversationEvent => parse(ev)
       case ev: DeleteConversationEvent => parse(ev)
@@ -52,11 +49,6 @@ final class NotificationParserImpl(selfId:       UserId,
         error(l"error while parsing $event, ${ex.getMessage}", ex)
         None
       }
-
-  private def parse(event: CallMessageEvent) = Future.successful {
-    calling().receiveCallEvent(event.content, event.time, event.convId, event.from, event.sender)
-    Option.empty[NotificationData]
-  }
 
   private def parse(event: UserConnectionEvent) =
     selfUser.map(_.flatMap { self =>
@@ -334,7 +326,6 @@ object NotificationParser {
   def apply(selfId:       UserId,
             convStorage:  ConversationStorage,
             usersStorage: UsersStorage,
-            mlStorage:    () => MessageAndLikesStorage,
-            calling:      () => CallingService): NotificationParser =
-    new NotificationParserImpl(selfId, convStorage, usersStorage, mlStorage, calling)
+            mlStorage:    () => MessageAndLikesStorage): NotificationParser =
+    new NotificationParserImpl(selfId, convStorage, usersStorage, mlStorage)
 }
