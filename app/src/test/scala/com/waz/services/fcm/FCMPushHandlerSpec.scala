@@ -21,6 +21,7 @@ import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.model.otr.ClientId
 import com.waz.model._
+import com.waz.service.call.CallingService
 import com.waz.service.otr.{EventDecrypter, NotificationParser, NotificationUiController, OtrEventDecoder}
 import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.{LoadNotificationsResponse, LoadNotificationsResult}
@@ -53,11 +54,14 @@ class FCMPushHandlerSpec extends FeatureSpec
   private val decrypter   = mock[EventDecrypter]
   private val decoder     = mock[OtrEventDecoder]
   private val parser      = mock[NotificationParser]
+  private val calling     = mock[CallingService]
   private val controller  = mock[NotificationUiController]
   private val globalPrefs = new TestGlobalPreferences
   private val userPrefs   = new TestUserPreferences
 
-  private def handler = FCMPushHandler(userId, clientId, client, storage, decrypter, decoder, parser, controller, globalPrefs, userPrefs)
+  private def handler = FCMPushHandler(
+    userId, clientId, client, storage, decrypter, decoder, parser, controller, () => calling, globalPrefs, userPrefs
+  )
 
   private def result[T](scenario: Future[T]): T = Await.result(scenario, 5.seconds)
   private def success[T](result: T): ErrorOrResponse[T] = CancellableFuture.successful(Right(result))
