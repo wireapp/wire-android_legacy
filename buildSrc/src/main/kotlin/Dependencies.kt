@@ -25,7 +25,7 @@ object Versions {
     const val DETEKT = "1.2.2"
     const val JACOCO = "0.8.5"
     const val DEX_INFO = "0.1.2"
-    const val GRGIT = "4.1.0"
+    const val GRGIT = "4.1.1"
 
     //build
     const val COROUTINES = "1.3.7"
