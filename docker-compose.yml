@@ -14,7 +14,7 @@ services:
             #- RUN_APP_UNIT_TESTS=false
             #- RUN_STORAGE_UNIT_TESTS=true
             #- RUN_ZMESSAGE_UNIT_TEST=false
-            #- BUILD_CLIENT=true
+            - BUILD_CLIENT=true
             #### Signing Vars (KEYSTORE_PATH's home directory is the wire-android folder inside the docker container, start from there e.g. app/keystorefile.keystore)
             #- SIGN_APK=true
             #- KEYSTORE_PATH=your-path-to-your-keystore-file
@@ -22,10 +22,13 @@ services:
             #- KEYPWD=your-key-password
             #- KEYSTORE_KEY_NAME=your-key-name
             ###### needed for custom client compilation
-            #- CUSTOM_REPOSITORY="https://github.com/wireapp/wire-android-custom-example"
-            #- CUSTOM_FOLDER="example-co"
-            #- CLIENT_FOLDER="client1"
-            #- GITHUB_API_TOKEN="your-own-github-api-token"
+            - CUSTOM_REPOSITORY="https://github.com/wireapp/wire-android-custom-example/"
+            - CUSTOM_FOLDER="example-co"
+            - CLIENT_FOLDER="client1"
+            - GRGIT_USER="your-github-api-token or username"
+            #- GRGIT_PASSWORD="" #only outcomment this if you wanna use username and password instead of a github api token
+            #### Debug Options
+            #- BUILD_WITH_STACKTRACE=true
         volumes:
             - './:/home/android-agent/wire-android'
         command: bash -c "./agent/configure-project.sh && ./agent/builder.sh"

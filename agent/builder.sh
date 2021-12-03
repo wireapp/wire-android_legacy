@@ -29,9 +29,15 @@ else
    echo "ZMessaging Unit Tests will be skipped"
 fi
 
+buildOption=''
+if [ "$BUILD_WITH_STACKTRACE" = true ] ; then
+    buildOption="--stacktrace"
+    echo "Stacktrace option enabled"
+fi
+
 if [ "$BUILD_CLIENT" = true ] ; then
-    echo "Compiling the client with Flavor:${FLAVOR_TYPE} and BuildType: ${BUILD_TYPE}"
-    ./gradlew assemble${FLAVOR_TYPE}${BUILD_TYPE}
+    echo "Compiling the client with Flavor:${FLAVOR_TYPE} and BuildType:${BUILD_TYPE}"
+    ./gradlew assemble${FLAVOR_TYPE}${BUILD_TYPE} buildOption
 else
     echo "Building the client will be skipped"
 fi
