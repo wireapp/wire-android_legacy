@@ -7,17 +7,25 @@ services:
         image: builder-agent:latest
         container_name: wire-android-build-server
         environment:
-            ##### Additional Helper Variables
             - FLAVOR_TYPE=FDroid
             - BUILD_TYPE=Release
-            - CUSTOM_REPOSITORY="https://github.com/wireapp/wire-android-custom-example"
-            - CUSTOM_FOLDER="example-co"
-            - CLIENT_FOLDER="client1"
-            - CLEAN_PROJECT_BEFORE_BUILD=true
-            - RUN_APP_UNIT_TESTS=false
-            - RUN_STORAGE_UNIT_TESTS=true
-            - RUN_ZMESSAGE_UNIT_TEST=false
-            - BUILD_CLIENT=true
+            - PATCH_VERSION=0
+            #- CLEAN_PROJECT_BEFORE_BUILD=true
+            #- RUN_APP_UNIT_TESTS=false
+            #- RUN_STORAGE_UNIT_TESTS=true
+            #- RUN_ZMESSAGE_UNIT_TEST=false
+            #- BUILD_CLIENT=true
+            #### Signing Vars (KEYSTORE_PATH's home directory is the wire-android folder inside the docker container, start from there e.g. app/keystorefile.keystore)
+            #- SIGN_APK=true
+            #- KEYSTORE_PATH=your-path-to-your-keystore-file
+            #- KSTOREPWD=your-keystore-password
+            #- KEYPWD=your-key-password
+            #- KEYSTORE_KEY_NAME=your-key-name
+            ###### needed for custom client compilation
+            #- CUSTOM_REPOSITORY="https://github.com/wireapp/wire-android-custom-example"
+            #- CUSTOM_FOLDER="example-co"
+            #- CLIENT_FOLDER="client1"
+            #- GITHUB_API_TOKEN="your-own-github-api-token"
         volumes:
             - './:/home/android-agent/wire-android'
         command: bash -c "./agent/configure-project.sh && ./agent/builder.sh"
