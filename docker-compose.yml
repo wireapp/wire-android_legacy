@@ -8,14 +8,19 @@ services:
         container_name: wire-android-build-server
         environment:
             ##### Additional Helper Variables
-            - FLAVOR_TYPE=Dev
-            - BUILD_TYPE=Debug
-            #- CUSTOM_REPOSITORY = "https://github.com/example/custom-repo"
-            #- CUSTOM_FOLDER = "example-folder"
-            #- CLIENT_FOLDER = "example-client-folder"
+            - FLAVOR_TYPE=FDroid
+            - BUILD_TYPE=Release
+            - CUSTOM_REPOSITORY="https://github.com/wireapp/wire-android-custom-example"
+            - CUSTOM_FOLDER="example-co"
+            - CLIENT_FOLDER="client1"
+            - CLEAN_PROJECT_BEFORE_BUILD=true
+            - RUN_APP_UNIT_TESTS=false
+            - RUN_STORAGE_UNIT_TESTS=true
+            - RUN_ZMESSAGE_UNIT_TEST=false
+            - BUILD_CLIENT=true
         volumes:
             - './:/home/android-agent/wire-android'
-        command: bash -c "./agent/configure-project.sh && ./gradlew assemble${FLAVOR_TYPE}${BUILD_TYPE}"
+        command: bash -c "./agent/configure-project.sh && ./agent/builder.sh"
     dozzle:
         container_name: dozzle
         image: amir20/dozzle:latest
