@@ -411,7 +411,7 @@
     <string name="pref_account_conversations_category_title">Історія</string>
     <string name="pref_account_username_title">Нік</string>
     <string name="pref_account_phone_title">Телефон</string>
-    <string name="pref_account_team_title">Team</string>
+    <string name="pref_account_team_title">Команда</string>
     <string name="pref_account_domain_title">Домен</string>
     <string name="pref_account_add_phone_title">Додайте номер телефону</string>
     <string name="pref_account_email_title">Email</string>
@@ -849,7 +849,7 @@
     <string name="no_conversation_in_list__message">Розпочніть розмову або створіть групу.</string>
     <string name="default_deleted_username">Хтось</string>
     <string name="cursor__type_a_message">НАПИШІТЬ ЩОСЬ</string>
-    <string name="cursor__ephemeral_message">SELF-DELETING MESSAGE</string>
+    <string name="cursor__ephemeral_message">ТИМЧАСОВЕ ПОВІДОМЛЕННЯ</string>
     <string name="tooltip_record">Записати відео</string>
     <string name="tooltip_camera">Додати фото</string>
     <string name="tooltip_sketch">Намалювати картинку</string>
@@ -928,7 +928,7 @@
     <string name="usernames__take_over__choose">ВИБРАТИ ВЛАСНИЙ</string>
     <string name="usernames__take_over__keep">ВИКОРИСТОВУВАТИ ЦЕЙ</string>
     <string name="ephemeral_message__timeout__off">Вимк.</string>
-    <string name="ephemeral_message__options_header">SELF-DELETING MESSAGES</string>
+    <string name="ephemeral_message__options_header">ТИМЧАСОВЕ ПОВІДОМЛЕННЯ</string>
     <string name="guests_option_on">Увімк.</string>
     <plurals name="unit_years">
         <item quantity="one">%1$s рік</item>
@@ -1192,7 +1192,7 @@
     <string name="guest_options_title">Гості та сервіси</string>
     <string name="ephemeral_options_title">Тимчасові повідомленяя</string>
     <string name="notifications_options_title">Нотифікації</string>
-    <string name="ephemeral_explanation_text">Self-deleting messages will be turned on for all the participants in this conversation</string>
+    <string name="ephemeral_explanation_text">Тимчасові повідомлення будуть увімкнені для всіх учасників цієї розмови.</string>
     <string name="notifications_explanation_text">Ви можете отримувати нотифікації про всі події (включаючи аудіо- та відеодзвінки), або тільки тоді, коли вас згадують.</string>
     <string name="show_all_participants">Показати всіх (%1$s)</string>
     <string name="participant_was_removed_from_team">%s було видалено з команди</string>
@@ -1425,12 +1425,12 @@
     <string name="start_sso_notice">Надайте ваші дані тільки якщо ви впевнені, що це сторінка входу вашої організації.</string>
     <!-- Legal Hold -->
     <string name="legal_hold_info_title">Правовий захист</string>
-    <string name="legal_hold_self_user_info_message">Legal Hold has been activated for your account.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.\n\nYour conversation partners will be aware of the recording.</string>
-    <string name="legal_hold_conversation_info_message">Legal Hold has been activated for at least one person in this conversation.\n\nAll Messages will be preserved for future access, including deleted, edited, and self-deleting messages.</string>
+    <string name="legal_hold_self_user_info_message">Правовий захист було активовано для вашого акаунту.\n\nВсі повідомлення будуть збережені для доступу в майбутньому, включно з видаленими, відредагованими та тимчасованими повідомленнями.\n\nВаші співрозмовники будуть повідомлені про це.</string>
+    <string name="legal_hold_conversation_info_message">В даній розмові правовий захист було активовано мінімум для одного учасника.\n\nВсі повідомлення будуть збережені для доступу в майбутньому, включно з видаленими та тимчасованими повідомленнями.</string>
     <string name="legal_hold_info_list_title">Суб\'єкти правового захисту</string>
     <string name="legal_hold_request_dialog_title">Отримано запит на правовий захист</string>
-    <string name="legal_hold_request_dialog_message_for_sso">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.</string>
-    <string name="legal_hold_request_dialog_message">All future messages will be recorded by the device with fingerprint:\n%1$sThis includes deleted, edited and self-deleting messages in all conversations.\nEnter your password to confirm.</string>
+    <string name="legal_hold_request_dialog_message_for_sso">Усі майбутні повідомлення будуть записані пристроєм з ідентифікатором:\n%1$sВключно з видаленими, відредагованими та тимчасовими повідомленнями в усіх розмовах.</string>
+    <string name="legal_hold_request_dialog_message">Усі майбутні повідомлення будуть записані пристроєм з ідентифікатором:\n%1$sВключно з видаленими, відредагованими та тимчасовими повідомленнями в усіх розмовах.\nВведіть ваш пароль для підтвердження.</string>
     <string name="legal_hold_request_dialog_positive_button_text">Прийняти</string>
     <string name="legal_hold_request_dialog_negative_button_text">Не зараз</string>
     <string name="legal_hold_request_dialog_wrong_password_error">Невірний пароль</string>
@@ -1458,10 +1458,10 @@
     <!-- File sharing feature config -->
     <string name="file_sharing_enabled_info_dialog_message">Отримання та надсилання файлів будь-якого типу було увімкнено.</string>
     <string name="file_sharing_disabled_info_dialog_message">Отримання та надсилання файлів будь-якого типу було вимкнено.</string>
-    <string name="file_sharing_restriction_info_image">RECEIVING IMAGES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_file">RECEIVING FILES IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_image">ОТРИМАННЯ КАРТИНОК ЗАБОРОНЕНЕ</string>
+    <string name="file_sharing_restriction_info_video">ОТРИМАННЯ ВІДЕО ЗАБОРОНЕНЕ</string>
+    <string name="file_sharing_restriction_info_audio">ОТРИМАННЯ АУДІО-ФАЙЛІВ ЗАБОРОНЕНЕ</string>
+    <string name="file_sharing_restriction_info_file">ОТРИМАННЯ ФАЙЛІВ ЗАБОРОНЕНЕ</string>
     <string name="file_sharing_restriction_info_generic">ПЕРЕСИЛКА ФАЙЛІВ ОБМЕЖЕНА</string>
     <!-- Self Deleting Messages feature config -->
     <string name="self_deleting_messages_change_info_dialog_message_enabled">Надсилання тимчасових повідомлень включене.</string>
@@ -1469,14 +1469,14 @@
     <string name="self_deleting_messages_change_info_dialog_message_disabled">Надсилання тимчасових повідомлень виключене.</string>
     <!-- Conference Calling Restriction feature config -->
     <string name="conference_calling_restriction_dialog_title">Оновити до ентерпрайз-версії</string>
-    <string name="conference_calling_restriction_dialog_description">Your team is currently on the free Basic plan. Upgrade to Enterprise for access to features such as starting conferences and more.
-    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Learn more about Wire\'s pricing</a>]]></string>
+    <string name="conference_calling_restriction_dialog_description">Зараз ваша команда використовує безкоштовну базову версію. Оновіться до ентерпрайз-версії для доступу до таких функцій, як відео-конференції, та багатьох інших.
+    &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/pricing/">Дізнатися більше про цінову політику Wire</a>]]></string>
     <string name="conference_calling_restriction_dialog_positive_button">ОНОВИТИ ЗАРАЗ</string>
     <string name="conference_calling_restriction_dialog_negative_button">СКАСУВАТИ</string>
-    <string name="upgraded_plan_dialog_title">Wire Enterprise</string>
+    <string name="upgraded_plan_dialog_title">Wire Ентерпрайз</string>
     <string name="upgraded_plan_dialog_description">Вашу команду було оновлено до ентерпрайз-версії Wire, яка надає вам доступ до таких функцій, як відео-конференції, та багатьох інших.
         &lt;br /&gt; <![CDATA[ <a href="https://wire.com/en/products/enterprise-collaboration/">Дізнайтеся більше про ентерпрайз-версію Wire</a>]]></string>
-    <string name="conference_calling_unavailable_dialog_title">Feature unavailable</string>
-    <string name="conference_calling_unavailable_dialog_description_personal_user">The option to initiate a conference call is only available in the paid version of Wire.</string>
-    <string name="conference_calling_unavailable_dialog_description_team_member_user">To start a conference call, your team needs to upgrade to the Enterprise plan.</string>
+    <string name="conference_calling_unavailable_dialog_title">Функція недоступна</string>
+    <string name="conference_calling_unavailable_dialog_description_personal_user">Можливість ініціювання конференц-виклику доступна тільки в платній версії Wire.</string>
+    <string name="conference_calling_unavailable_dialog_description_team_member_user">Щоб почати конференц-виклик, команда повинна оновитися до ентерпрайз-версії.</string>
 </resources>
