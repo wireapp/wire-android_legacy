@@ -24,29 +24,24 @@ import android.net.Uri
 import android.os.{Build, Vibrator}
 import android.provider.Settings
 import android.text.TextUtils
-import com.waz.content.UserPreferences
+import com.waz.content.GlobalPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.media.manager.MediaManager
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.model.UserId
-import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RingtoneUtils.{getUriForRawId, isDefaultValue}
 import com.waz.zclient.utils.{DeprecationUtils, RingtoneUtils}
 import com.waz.zclient.{R, _}
-
-import scala.concurrent.Await
-import scala.concurrent.duration.{FiniteDuration, _}
-import scala.util.Try
+import com.wire.signals.{EventContext, Signal}
 
 trait SoundController {
   def currentTonePrefs: (String, String, String)
 
-  def isVibrationEnabled(userId: UserId): Boolean
-  def isVibrationEnabledInCurrentZms: Boolean
+  def isVibrationEnabled: Boolean
   def soundIntensityNone: Boolean
   def soundIntensityFull: Boolean
 
@@ -65,10 +60,6 @@ trait SoundController {
   def playRingFromThemInCall(play: Boolean): Unit
 }
 
-
-
-//TODO Dean - would be nice to change these unit methods to listeners on signals from the classes that could trigger sounds.
-//For that, however, we would need more signals in the app, and hence more scala classes...
 class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   extends SoundController with Injectable with DerivedLogTag {
 
@@ -78,8 +69,8 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   private val zms                 = inject[Signal[ZMessaging]]
   private val audioManager        = Option(inject[AudioManager])
   private val vibrator            = Option(inject[Vibrator])
-  private val accountsService     = inject[AccountsService]
   private val notificationManager = inject[NotificationManager]
+  private val globalPrefs         = inject[GlobalPreferences]
   private val ZenModeKey          = "zen_mode"
 
   private val mediaManager   = zms.flatMap(z => Signal.from(z.mediamanager.mediaManager))
@@ -87,12 +78,6 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
 
   private var _mediaManager = Option.empty[MediaManager]
   mediaManager.foreach(m => _mediaManager = Some(m))
-
-  //TODO Refactor MessageNotificationsController and remove this. Work with normal Signal.head method instead
-  private implicit class RichSignal[T](val value: Signal[T]) {
-    def headSync(timeout: FiniteDuration = 3.seconds): Option[T] =
-      Try(Await.result(value.head, timeout)).toOption
-  }
 
   def currentTonePrefs: (String, String, String) = tonePrefs.currentValue.getOrElse((null, null, null))
 
@@ -118,28 +103,17 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
     }
 
   private val tonePrefs = (for {
-    zms <- zms
-    ringTone <- zms.userPrefs.preference(UserPreferences.RingTone).signal
-    textTone <- zms.userPrefs.preference(UserPreferences.TextTone).signal
-    pingTone <- zms.userPrefs.preference(UserPreferences.PingTone).signal
+    ringTone <- globalPrefs.preference(GlobalPreferences.RingTone).signal
+    textTone <- globalPrefs.preference(GlobalPreferences.TextTone).signal
+    pingTone <- globalPrefs.preference(GlobalPreferences.PingTone).signal
   } yield (ringTone, textTone, pingTone)).disableAutowiring()
 
   tonePrefs.foreach {
     case (ring, text, ping) => setCustomSoundUrisFromPreferences(ring, text, ping)
   }
 
-  private val currentZmsVibrationEnabled =
-    zms.flatMap(_.userPrefs.preference(UserPreferences.VibrateEnabled).signal).disableAutowiring()
-
-  override def isVibrationEnabledInCurrentZms: Boolean =
-    currentZmsVibrationEnabled.headSync().getOrElse(false)
-
-  override def isVibrationEnabled(userId: UserId): Boolean = {
-    (for {
-      zms <- Signal.from(accountsService.getZms(userId)).collect { case Some(v) => v }
-      isEnabled <- zms.userPrefs.preference(UserPreferences.VibrateEnabled).signal
-    } yield isEnabled).headSync().getOrElse(false)
-  }
+  override def isVibrationEnabled: Boolean =
+    globalPrefs.preference(GlobalPreferences.VibrateEnabled).signal.currentValue.getOrElse(false)
 
   override def soundIntensityNone: Boolean =
     soundIntensity.currentValue.contains(IntensityLevel.NONE)
@@ -216,7 +190,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
     (audioManager, vibrator) match {
       case (Some(am), Some(vib)) if play &&
                                     am.getRingerMode != AudioManager.RINGER_MODE_SILENT &&
-                                    userId.fold(isVibrationEnabledInCurrentZms)(isVibrationEnabled) =>
+                                    isVibrationEnabled =>
         vib.cancel() // cancel any current vibrations
         DeprecationUtils.vibrate(vib, getIntArray(patternId).map(_.toLong), if (loop) 0 else -1)
       case (_, Some(vib)) => vib.cancel()
@@ -256,7 +230,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
     otherIds.foreach(id => setCustomSoundUri(id, if (isDefault) getUriForRawId(cxt, id).toString else finalUri))
   }
 
-  private def setCustomSoundUri(resourceId: Int, uri: String) = {
+  private def setCustomSoundUri(resourceId: Int, uri: String): Unit = {
     try {
       _mediaManager.foreach { mm =>
         if (TextUtils.isEmpty(uri)) mm.unregisterMedia(getResEntryName(resourceId))

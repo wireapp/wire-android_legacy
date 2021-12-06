@@ -1,7 +1,5 @@
 package com.waz.services.fcm
 
-import java.util.concurrent.TimeUnit
-
 import android.content.Context
 import androidx.work.{Data, ExistingWorkPolicy, OneTimeWorkRequest, WorkManager}
 import com.google.firebase.messaging.{FirebaseMessagingService, RemoteMessage}
@@ -55,7 +53,6 @@ final class FCMService extends FirebaseMessagingService with DerivedLogTag {
         val workRequest =
           new OneTimeWorkRequest.Builder(classOf[FCMNotificationWorker])
             .setInputData(new Data.Builder().putString(UserKey, userKey).build())
-            .setInitialDelay(10L, TimeUnit.MILLISECONDS)
             .build()
         WorkManager.getInstance().enqueueUniqueWork(NotificationWorkName, ExistingWorkPolicy.APPEND, workRequest)
       }

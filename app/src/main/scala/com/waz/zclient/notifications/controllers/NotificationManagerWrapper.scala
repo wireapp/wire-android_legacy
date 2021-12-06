@@ -17,40 +17,26 @@
  */
 package com.waz.zclient.notifications.controllers
 
-import java.io.{File, FileNotFoundException, IOException}
-
-import android.app.{Notification, NotificationChannel, NotificationChannelGroup, NotificationManager}
-import android.content.{ContentValues, Context}
-import android.database.sqlite.SQLiteException
+import android.app.{Notification, NotificationChannel, NotificationManager}
+import android.content.Context
 import android.graphics.{Color, Typeface}
 import android.net.Uri
-import android.os.{Build, Bundle, Environment}
-import android.provider.MediaStore
+import android.os.Bundle
 import android.text.style.{ForegroundColorSpan, StyleSpan}
 import android.text.{SpannableString, Spanned}
 import androidx.core.app.NotificationCompat.Style
 import androidx.core.app.{NotificationCompat, NotificationCompatExtras, RemoteInput}
-import com.waz.content.Preferences.PrefKey
-import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
-import com.waz.service.AccountsService
 import com.waz.services.notifications.NotificationsHandlerService
-import com.waz.threading.Threading
+import com.waz.utils.returning
 import com.waz.utils.wrappers.Bitmap
-import com.waz.utils.{IoUtils, returning}
 import com.waz.zclient.Intents.CallIntent
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.MessageNotificationsController.toNotificationConvId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{MessageNotificationsChannelId, PingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
-import com.waz.zclient.utils.{DeprecationUtils, ResString, RingtoneUtils, format}
+import com.waz.zclient.utils.{ResString, format}
 import com.waz.zclient.{Injectable, Injector, Intents, R}
-import com.wire.signals.Signal
-
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
 
 final case class Span(style: Int, range: Int, offset: Int = 0)
 
@@ -207,7 +193,7 @@ final case class NotificationProps(accountId:                UserId,
     )
 
   def build()(implicit cxt: Context): Notification = {
-    val channelId = if (lastIsPing.contains(true)) PingNotificationsChannelId(accountId) else MessageNotificationsChannelId(accountId)
+    val channelId = if (lastIsPing.contains(true)) PingNotificationsChannelId else MessageNotificationsChannelId
     val builder = new NotificationCompat.Builder(cxt, channelId)
 
     when.foreach(builder.setWhen)
@@ -278,100 +264,11 @@ trait NotificationManagerWrapper {
 object NotificationManagerWrapper {
   val IncomingCallNotificationsChannelId = "INCOMING_CALL_NOTIFICATIONS_CHANNEL_ID"
   val OngoingNotificationsChannelId      = "STICKY_NOTIFICATIONS_CHANNEL_ID"
-
-  def PingNotificationsChannelId(userId: UserId)         = s"PINGS_NOTIFICATIONS_CHANNEL_ID_${userId.str.hashCode}"
-  def MessageNotificationsChannelId(userId: UserId)      = s"MESSAGE_NOTIFICATIONS_CHANNEL_ID_${userId.str.hashCode}"
-
-  final case class ChannelGroup(id: String, name: String, channels: Set[ChannelInfo])
-
-  final case class ChannelInfo(id: String, name: String, description: String, sound: Uri, vibration: Boolean)
-  object ChannelInfo {
-    def apply(id: String, name: Int, description: Int, sound: Uri, vibration: Boolean)(implicit cxt: Context): ChannelInfo = ChannelInfo(id, getString(name), getString(description), sound, vibration)
-  }
-
+  val PingNotificationsChannelId         = "PINGS_NOTIFICATIONS_CHANNEL_ID"
+  val MessageNotificationsChannelId      = "MESSAGE_NOTIFICATIONS_CHANNEL_ID"
 
   final class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
     extends NotificationManagerWrapper with Injectable with DerivedLogTag {
-
-    val accountChannels: Signal[Seq[ChannelGroup]] =
-      inject[AccountsService].accountManagers.flatMap(ams => Signal.sequence(ams.map { am =>
-        def getSound(pref: PrefKey[String], default: Int): Future[Uri] =
-          am.userPrefs.preference(pref).apply().map {
-            case ""  => RingtoneUtils.getUriForRawId(cxt, default)
-            case str => Uri.parse(str)
-          }(Threading.Ui)
-
-        for {
-          msgSound  <- Signal.from(getSound(UserPreferences.TextTone, R.raw.new_message_gcm))
-          pingSound <- Signal.from(getSound(UserPreferences.PingTone, R.raw.ping_from_them))
-          vibration <- Signal.from(am.userPrefs.preference(UserPreferences.VibrateEnabled).apply())
-          channel   <- am.storage.usersStorage.signal(am.userId).map(user => ChannelGroup(user.id.str, user.name, Set(
-                         ChannelInfo(MessageNotificationsChannelId(am.userId), R.string.message_notifications_channel_name, R.string.message_notifications_channel_description, msgSound, vibration),
-                         ChannelInfo(PingNotificationsChannelId(am.userId), R.string.ping_notifications_channel_name, R.string.ping_notifications_channel_description, pingSound, vibration)
-                       )))
-        } yield channel
-    }.toSeq:_*))
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-      addToExternalNotificationFolder(R.raw.new_message_gcm, getString(R.string.wire_notification_name))
-        .recover {
-          case ex: Exception =>
-            error(l"Failed to add `new message GCM` (${getString(R.string.wire_notification_name)}) to the external notification folder", ex)
-        }
-
-      addToExternalNotificationFolder(R.raw.ping_from_them, getString(R.string.wire_ping_name))
-        .recover {
-          case ex: Exception =>
-            error(l"Failed to add `ping from them` (${getString(R.string.wire_ping_name)}) to the external notification folder", ex)
-        }
-
-      accountChannels.foreach { channels =>
-        notificationManager.getNotificationChannels.asScala.filter { ch =>
-          !channels.flatMap(_.channels).exists(_.id == ch.getId) && !Set(OngoingNotificationsChannelId, IncomingCallNotificationsChannelId).contains(ch.getId)
-        }.foreach(ch => notificationManager.deleteNotificationChannel(ch.getId))
-
-        notificationManager.getNotificationChannelGroups.asScala.filter { ch =>
-          !channels.map(_.id).contains(ch.getId)
-        }.foreach(ch => notificationManager.deleteNotificationChannelGroup(ch.getId))
-
-        channels.foreach {
-          case ChannelGroup(groupId, groupName, channelInfos) =>
-            notificationManager.createNotificationChannelGroup(new NotificationChannelGroup(groupId, groupName))
-            channelInfos.foreach {
-              case ChannelInfo(id, name, description, sound, vibration) =>
-                notificationManager.createNotificationChannel(
-                  returning(new NotificationChannel(id, name, NotificationManager.IMPORTANCE_MAX)) { ch =>
-                    ch.setDescription(description)
-                    ch.setShowBadge(true)
-                    ch.enableVibration(vibration)
-                    ch.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE)
-                    ch.setSound(sound, Notification.AUDIO_ATTRIBUTES_DEFAULT)
-                    ch.setGroup(groupId)
-                    ch.enableLights(true)
-                  })
-          }
-        }
-      }
-
-      notificationManager.createNotificationChannel(
-        returning(new NotificationChannel(OngoingNotificationsChannelId, getString(R.string.ongoing_channel_name), NotificationManager.IMPORTANCE_LOW)) { ch =>
-          ch.setDescription(getString(R.string.ongoing_channel_description))
-          ch.enableVibration(false)
-          ch.setShowBadge(false)
-          ch.setSound(null, null)
-        })
-
-      notificationManager.createNotificationChannel(
-        returning(new NotificationChannel(IncomingCallNotificationsChannelId, getString(R.string.incoming_call_notifications_channel_name), NotificationManager.IMPORTANCE_MAX)) { ch =>
-          ch.setDescription(getString(R.string.ongoing_channel_description))
-          ch.enableVibration(false)
-          ch.setShowBadge(false)
-          ch.setSound(null, null)
-          ch.canBypassDnd
-        })
-    }
-
     def showNotification(id: Int, notificationProps: NotificationProps): Unit =
       notificationManager.notify(id, notificationProps.build())
 
@@ -398,61 +295,5 @@ object NotificationManagerWrapper {
             .foreach(n => notificationManager.cancel(n.getId))
       }
 
-    private def addToExternalNotificationFolder(rawId: Int, name: String) =
-      for {
-        dir      <- externalFilesDir
-        toneFile =  new File(s"${dir.getAbsolutePath}/$name.ogg")
-        _        <- if (toneFile.exists()) createTone(rawId, name, toneFile)
-                    else Failure(new IOException(s"File not found: $toneFile"))
-      } yield ()
-
-    private def externalFilesDir =
-      Try(cxt.getExternalFilesDir(Environment.DIRECTORY_NOTIFICATIONS))
-        .map(Option(_))
-        .flatMap {
-          case Some(dir) => Success(dir)
-          case None      => Failure(new IOException(s"No external files dir ${Environment.DIRECTORY_NOTIFICATIONS}"))
-        }
-
-    private def createTone(rawId: Int, name: String, toneFile: File) = {
-      val uri   = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
-      val query = s"${DeprecationUtils.MEDIA_COLUMN_DATA} LIKE '%$name%'"
-      (for {
-        _      <- Try(IoUtils.copy(cxt.getResources.openRawResource(rawId), toneFile))
-        cursor <- getCursor(uri, query)
-        _      =  if (cursor.getCount == 0) cxt.getContentResolver.insert(uri, createContentValues(name, toneFile))
-        _      =  cursor.close()
-      } yield ()).recoverWith {
-        case ex: FileNotFoundException =>
-          error(l"File not found: $toneFile")
-          Failure(ex)
-        case ex: IOException =>
-          error(l"query to access the media store failed; uri: $uri, query: ${redactedString(query)}", ex)
-          Failure(ex)
-      }
-    }
-
-    private def createContentValues(name: String, toneFile: File) = returning(new ContentValues) { values =>
-      values.put(DeprecationUtils.MEDIA_COLUMN_DATA, toneFile.getAbsolutePath)
-      values.put(MediaStore.MediaColumns.TITLE, name)
-      values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg")
-      values.put(MediaStore.MediaColumns.SIZE, toneFile.length.toInt.asInstanceOf[Integer])
-      values.put(MediaStore.Audio.AudioColumns.IS_RINGTONE, true)
-      values.put(MediaStore.Audio.AudioColumns.IS_NOTIFICATION, true)
-      values.put(MediaStore.Audio.AudioColumns.IS_ALARM, true)
-      values.put(MediaStore.Audio.AudioColumns.IS_MUSIC, false)
-    }
-
-    private def getCursor(uri: Uri, query: String) =
-      Try(cxt.getContentResolver.query(uri, null, query, null, null))
-        .map(Option(_))
-        .flatMap {
-          case Some(dir) => Success(dir)
-          case None      => Failure(new SQLiteException(s"The cursor is null for uri: $uri, and query: ${redactedString(query)}"))
-        }.recoverWith {
-          case ex: SQLiteException =>
-            error(l"query to access the media store failed; uri: $uri, query: ${redactedString(query)}", ex)
-            Failure(ex)
-        }
   }
 }
