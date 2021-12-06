@@ -8,7 +8,7 @@ services:
         container_name: wire-android-build-server
         environment:
             - FLAVOR_TYPE=FDroid
-            - BUILD_TYPE=Release
+            - BUILD_TYPE=Debug
             - PATCH_VERSION=0
             - CLEAN_PROJECT_BEFORE_BUILD=true
             - RUN_APP_UNIT_TESTS=false
