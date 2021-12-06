@@ -16,7 +16,7 @@ pipeline {
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
         booleanParam(name: 'ZMessageUnitTests', defaultValue: true, description: 'Run all zmessaging unit tests for this build')
         booleanParam(name: 'CompileFDroid', defaultValue: true, description: 'Defines if the fdroid flavor should be compiled in addition')
-        booleanParam(name: 'forceReleaseToGithub', defaultValue: false, description: 'Defines if this build should be force uploaded to github even if it is not a build from the release branch')
+        booleanParam(name: 'forceReleaseToGithub', defaultValue: true, description: 'Defines if this build should be force uploaded to github even if it is not a build from the release branch')
     }
 
     stages {
@@ -336,7 +336,7 @@ pipeline {
             steps {
                 script {
                     last_stage = env.STAGE_NAME
-                    versionName = usedClientVersion =~ /(.*)\./
+                    versionName = (usedClientVersion =~ /(.*)\./)[0][1]
                     println("Releasing version to Github under Release Tag ${versionName} automatically")
                     println("THIS FEATURE IS NOT YET IMPLEMENTED")
                 }
