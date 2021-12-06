@@ -273,7 +273,7 @@
     <string name="calling__self_preview_unavailable_long">КАМЕРА НЕДОСТУПНА</string>
     <string name="incoming__controls__ongoing__microphone">МИКРОФОН</string>
     <string name="incoming__controls__ongoing__camera">КАМЕРА</string>
-    <string name="incoming__controls__ongoing__flip_camera">ПЕРЕВОРОТ КАМЕРЫ</string>
+    <string name="incoming__controls__ongoing__flip_camera">КАМЕРА</string>
     <string name="calling__header__joining">Подключение&#8230;</string>
     <string name="calling__header__outgoing_subtitle">Вызываем&#8230;</string>
     <string name="calling__header__outgoing_video_subtitle">Вызываем&#8230;</string>
@@ -1050,7 +1050,7 @@
     <string name="participant_tab_guest_indicator_label">Гость</string>
     <string name="participant_tab_external_indicator_label">ВНЕШНИЙ</string>
     <string name="participant_tab_group_admin_indicator_label">АДМИНИСТРАТОР ГРУППЫ</string>
-    <string name="federated_indicator">ФЕДЕРАТИВНАЯ</string>
+    <string name="federated_indicator">ФЕДЕРАТИВНЫЙ</string>
     <string name="availability_none">Нет</string>
     <string name="availability_available">Доступен</string>
     <string name="availability_away">Отошел</string>
