@@ -46,41 +46,48 @@ These steps will build only the Wire client UI, pulling in all other Wire framew
 - [generic-message-proto](https://github.com/wireapp/generic-message-proto)
 
 
-## how to build using docker and docker compose
+## How to build using docker and docker compose
 
-we have added a docker compose file and a docker agent file + a configuration script, to make it possible to compile wire android with just one line of code.
-there are 2 possible ways to build a client with docker compose
+We have added a docker compose file and a docker agent file + a configuration script, to make it possible to compile wire android with just one line of code.
+There are 2 possible ways to build a client with docker compose
 
-Option 1: configuring the docker-compose.yml
+Option 1: Configuring the `docker-compose.yml` file:
 
-the docker compose yml file contains some flags which you can change and modify to change what type of client will be build
-1. BUILD_TYPE: this value defines what build type you wanna build, it can either be Release or Debug
-2. FLAVOR_TYPE: this value defines the flavor type of a build. it can be one of the following: Dev, Prod, Experimental, FDroid, Internal, Candidate
-3. PATCH_VERSION: here you can define the value which is supposed to be used for the PATCH_LEVEL version of your client. EG XX.XX.1337
-4. CLEAN_PROJECT_BEFORE_BUILD: define if the project branch should be cleaned by ./gradlew clean before anything else [options: true or false]
-5. RUN_APP_UNIT_TESTS: define if the app unit tests should be executed before compilation  [options: true or false]
-6. RUN_STORAGE_UNIT_TESTS: define if the storage unit tests should be executed before compilation  [options: true or false]
-7. RUN_ZMESSAGE_UNIT_TEST: define if the zmessage unit tests should be executed before compilation [options: true or false]
-8. BUILD_CLIENT: define if the compilation/build should be executed, disabe this if you wanna just sign an apk build in a previous run [options: true or false]
-9. SIGN_APK: define if an apk should be signed with the following given information  [options: true or false]
-10. KEYSTORE_PATH: the path to your keystore (root folder is wire-android inside the docker)
-11. KSTOREPWD: the keystore password for the keystore file
-12. KEYPWD: the key password
-13. KEYSTORE_KEY_NAME: the key name
-14. BUILD_WITH_STACKTRACE: define if you wanna compile the build with the option --stacktrace (do ths if you have compilation issues and the general error message is not helpful)
+The docker compose YML file contains some flags which you can change and modify to change what type of client will be build
 
-configure these values and use the following command to compile a client ooo (Out of the Box)
+1. `BUILD_TYPE`: This value defines what build type you want to build, it can either be Release or Debug
+2. `FLAVOR_TYPE`: This value defines the flavor type of build. It can be one of the following: Dev, Prod, Experimental, FDroid, Internal, Candidate
+3. `PATCH_VERSION`: Here you can define the value which is supposed to be used for the PATCH_LEVEL version of your client. EG XX.XX.1337
+4. `CLEAN_PROJECT_BEFORE_BUILD`: Define if the project branch should be cleaned by .`/gradlew clean`  before anything else [options: true or false]
+5. `RUN_APP_UNIT_TESTS`: Define if the app unit tests should be executed before compilation  [options: true or false]
+6. `RUN_STORAGE_UNIT_TESTS`: Define if the storage unit tests should be executed before compilation  [options: true or false]
+7. `RUN_ZMESSAGE_UNIT_TEST`: Define if the zmessage unit tests should be executed before compilation [options: true or false]
+8. `BUILD_CLIENT`: Define if the compilation/build should be executed, disable this if you wanna just sign an apk build in a previous run [options: true or false]
+9. `SIGN_APK`: Define if an APK should be signed with the following given information  [options: true or false]
+10. `KEYSTORE_PATH`: The path to your keystore (root folder is wire-android inside the docker)
+11. `KSTOREPWD`: The keystore password for the keystore file
+12. `KEYPWD`: The key password
+13. `KEYSTORE_KEY_NAME`: The key name
+14. `BUILD_WITH_STACKTRACE`: Define if you want to compile the build with the option `--stacktrace` (do this if you have compilation issues and the general error message is not helpful)
+
+Configure these values and use the following command to compile a client OOO (Out of the Box)
+
 `docker-compose up --build [-d]`
-or if you use a newer version of docker compose
+
+Or if you use a newer version of docker compose
+
 `docker compose up --build [-d]`
 
--d means to spawn the docker agent detached, so you can continue using your terminal while the agent is building the client
+`-d` means to spawn the docker agent detached, so you can continue using your terminal while the agent is building the client
 
-Option 2: use ENV Flags
+Option 2: Use ENV Flags
 
-the flags which exists inside the docker file, can also be overwritten by directly writing them into the terminal line. See the example below
+The flags, which exists inside the docker file, can also be overwritten by directly writing them into the terminal line. 
+
+See the example below:
 
 `export BUILD_TYPE=Release && export FLAVOR=FDroid && docker compose up --build -d`
+
 
 ## Custom Builds
 
