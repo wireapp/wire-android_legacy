@@ -17,26 +17,33 @@
  */
 package com.waz.zclient.notifications.controllers
 
-import android.app.{Notification, NotificationChannel, NotificationManager}
+import android.app.{Notification, NotificationChannel, NotificationChannelGroup, NotificationManager}
 import android.content.Context
 import android.graphics.{Color, Typeface}
 import android.net.Uri
-import android.os.Bundle
+import android.os.{Build, Bundle}
 import android.text.style.{ForegroundColorSpan, StyleSpan}
 import android.text.{SpannableString, Spanned}
 import androidx.core.app.NotificationCompat.Style
 import androidx.core.app.{NotificationCompat, NotificationCompatExtras, RemoteInput}
+import com.waz.content.GlobalPreferences
+import com.waz.content.Preferences.PrefKey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.services.notifications.NotificationsHandlerService
+import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.utils.wrappers.Bitmap
 import com.waz.zclient.Intents.CallIntent
 import com.waz.zclient.notifications.controllers.MessageNotificationsController.toNotificationConvId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{MessageNotificationsChannelId, PingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
-import com.waz.zclient.utils.{ResString, format}
+import com.waz.zclient.utils.{ResString, RingtoneUtils, format}
 import com.waz.zclient.{Injectable, Injector, Intents, R}
+import com.waz.zclient.log.LogUI._
+
+import scala.concurrent.Future
+import scala.util.Try
 
 final case class Span(style: Int, range: Int, offset: Int = 0)
 
@@ -165,7 +172,7 @@ final case class NotificationProps(accountId:                UserId,
                                    action1:                  Option[(UserId, ConvId, Int)] = None,
                                    action2:                  Option[(UserId, ConvId, Int)] = None,
                                    lastIsPing:               Option[Boolean] = None
-                                  ) {
+                                  ) extends DerivedLogTag {
   override def toString: String =
     format(className = "NotificationProps", oneLiner = false,
       "when"                     -> when,
@@ -192,10 +199,10 @@ final case class NotificationProps(accountId:                UserId,
       "lastIsPing"               -> lastIsPing
     )
 
-  def build()(implicit cxt: Context): Notification = {
-    val channelId = if (lastIsPing.contains(true)) PingNotificationsChannelId else MessageNotificationsChannelId
-    val builder = new NotificationCompat.Builder(cxt, channelId)
+  def channelId: String = if (lastIsPing.contains(true)) PingNotificationsChannelId else MessageNotificationsChannelId
 
+  def build()(implicit cxt: Context): Notification = {
+    val builder = new NotificationCompat.Builder(cxt, channelId)
     when.foreach(builder.setWhen)
     showWhen.foreach(builder.setShowWhen)
     category.foreach(builder.setCategory)
@@ -211,7 +218,6 @@ final case class NotificationProps(accountId:                UserId,
         bundle.putBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY, summary)
       })
     }
-
     builder.setGroup(group.fold("")(_.str))
 
     openAccountIntent.foreach(userId => builder.setContentIntent(Intents.OpenAccountIntent(userId)))
@@ -223,7 +229,6 @@ final case class NotificationProps(accountId:                UserId,
     clearNotificationsIntent.foreach { case (uId, convId) =>
       builder.setDeleteIntent(NotificationsHandlerService.clearNotificationsIntent(uId, convId))
     }
-
     contentInfo.foreach(builder.setContentInfo)
     color.foreach(builder.setColor)
     vibrate.foreach(builder.setVibrate)
@@ -232,12 +237,10 @@ final case class NotificationProps(accountId:                UserId,
     onlyAlertOnce.foreach(builder.setOnlyAlertOnce)
     lights.foreach { case (c, on, off) => builder.setLights(c, on, off) }
     largeIcon.foreach(bmp => builder.setLargeIcon(bmp))
-
     action1.map {
       case (userId, convId, requestBase) =>
         new NotificationCompat.Action.Builder(R.drawable.ic_action_call, getString(R.string.notification__action__call), CallIntent(userId, convId, requestBase)).build()
     }.foreach(builder.addAction)
-
     action2.map {
       case (userId, convId, requestBase) => createQuickReplyAction(userId, convId, requestBase)
     }.foreach(builder.addAction)
@@ -262,6 +265,8 @@ trait NotificationManagerWrapper {
 }
 
 object NotificationManagerWrapper {
+  val WireNotificationsChannelGroupId    = "WIRE_NOTIFICATIONS_CHANNEL_GROUP"
+  val WireNotificationsChannelGroupName  = "Wire Notifications Channel Group"
   val IncomingCallNotificationsChannelId = "INCOMING_CALL_NOTIFICATIONS_CHANNEL_ID"
   val OngoingNotificationsChannelId      = "STICKY_NOTIFICATIONS_CHANNEL_ID"
   val PingNotificationsChannelId         = "PINGS_NOTIFICATIONS_CHANNEL_ID"
@@ -269,11 +274,18 @@ object NotificationManagerWrapper {
 
   final class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
     extends NotificationManagerWrapper with Injectable with DerivedLogTag {
-    def showNotification(id: Int, notificationProps: NotificationProps): Unit =
-      notificationManager.notify(id, notificationProps.build())
+    private lazy val prefs = inject[GlobalPreferences]
 
-    def getNotificationChannel(channelId: String): NotificationChannel =
-      notificationManager.getNotificationChannel(channelId)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) buildNotificationChannels()
+
+    def showNotification(id: Int, notificationProps: NotificationProps): Unit = {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getNotificationChannel(notificationProps.channelId).isEmpty)
+        buildNotificationChannels(enforce = true)
+      notificationManager.notify(id, notificationProps.build())
+    }
+
+    def getNotificationChannel(channelId: String): Option[NotificationChannel] =
+      Option(notificationManager.getNotificationChannel(channelId))
 
     override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit =
       if (convs.nonEmpty) {
@@ -295,5 +307,100 @@ object NotificationManagerWrapper {
             .foreach(n => notificationManager.cancel(n.getId))
       }
 
+    private def getSound(pref: PrefKey[String], default: Int): Future[Option[Uri]] =
+      prefs(pref).apply().map {
+        case ""  => Try(RingtoneUtils.getUriForRawId(cxt, default)).toOption
+        case str => Try(Uri.parse(str)).toOption
+      }(Threading.Ui)
+
+    private def createNotificationChannel(id:            String,
+                                          nameId:        Int,
+                                          descriptionId: Int,
+                                          importance:    Int = NotificationManager.IMPORTANCE_DEFAULT,
+                                          vibration:     Boolean = false,
+                                          showBadge:     Boolean = false,
+                                          sound:         Option[Uri] = None,
+                                          visibility:    Int = Notification.VISIBILITY_PUBLIC): NotificationChannel =
+      returning(new NotificationChannel(id, getString(nameId), importance)) { ch =>
+        ch.setDescription(getString(descriptionId))
+        ch.enableVibration(vibration)
+        ch.setShowBadge(showBadge)
+        ch.setLockscreenVisibility(visibility)
+        ch.enableLights(true)
+        ch.setGroup(WireNotificationsChannelGroupId)
+        sound.foreach(uri => ch.setSound(uri, Notification.AUDIO_ATTRIBUTES_DEFAULT))
+      }
+
+    private def buildNotificationChannels(enforce: Boolean = false): Unit = {
+      import Threading.Implicits.Background
+
+      verbose(l"buildNotificationChannels")
+
+      val recreateChannelsPref = prefs.preference(GlobalPreferences.RecreateChannels)
+      val channels: Future[Seq[NotificationChannel]] =
+        for {
+          true      <- if (enforce) Future.successful(true) else recreateChannelsPref()
+          _         <- recreateChannelsPref := false
+          vibration <- prefs.preference(GlobalPreferences.VibrateEnabled).apply()
+          _ = verbose(l"trying to get sounds for messages and pings...")
+          msgSound  <- getSound(GlobalPreferences.TextTone, R.raw.new_message_gcm)
+          _ = verbose(l"msgSound $msgSound")
+          pingSound <- getSound(GlobalPreferences.PingTone, R.raw.ping_from_them)
+          _ = verbose(l"pingSound $pingSound")
+        } yield
+          Seq(
+            createNotificationChannel(
+              id            = OngoingNotificationsChannelId,
+              nameId        = R.string.ongoing_channel_name,
+              descriptionId = R.string.ongoing_channel_description,
+              importance    = NotificationManager.IMPORTANCE_LOW,
+              vibration     = vibration
+            ),
+            createNotificationChannel(
+              id            = IncomingCallNotificationsChannelId,
+              nameId        = R.string.incoming_call_notifications_channel_name,
+              descriptionId = R.string.incoming_call_notifications_channel_name,
+              importance    = NotificationManager.IMPORTANCE_MAX,
+              vibration     = vibration
+            ),
+            createNotificationChannel(
+              id            = MessageNotificationsChannelId,
+              nameId        = R.string.message_notifications_channel_name,
+              descriptionId = R.string.message_notifications_channel_description,
+              importance    = NotificationManager.IMPORTANCE_MAX,
+              vibration     = vibration,
+              sound         = msgSound,
+              visibility    = Notification.VISIBILITY_PRIVATE,
+              showBadge     = true
+            ),
+            createNotificationChannel(
+              id            = PingNotificationsChannelId,
+              nameId        = R.string.ping_notifications_channel_name,
+              descriptionId = R.string.ping_notifications_channel_description,
+              importance    = NotificationManager.IMPORTANCE_MAX,
+              vibration     = vibration,
+              sound         = pingSound,
+              visibility    = Notification.VISIBILITY_PRIVATE,
+              showBadge     = true
+            )
+          )
+
+      channels.foreach { chs =>
+        verbose(l"recreating channels")
+        try {
+          notificationManager.deleteNotificationChannel(OngoingNotificationsChannelId)
+          notificationManager.deleteNotificationChannel(IncomingCallNotificationsChannelId)
+          notificationManager.deleteNotificationChannel(MessageNotificationsChannelId)
+          notificationManager.deleteNotificationChannel(PingNotificationsChannelId)
+          notificationManager.deleteNotificationChannelGroup(WireNotificationsChannelGroupId)
+          import scala.collection.JavaConverters._
+          notificationManager.createNotificationChannelGroup(new NotificationChannelGroup(WireNotificationsChannelGroupId, WireNotificationsChannelGroupName))
+          notificationManager.createNotificationChannels(chs.asJava)
+          verbose(l"channels recreated")
+        } catch {
+          case t: Throwable => error(l"can't recreate channels: ${t.getMessage}", t)
+        }
+      }(Threading.Ui)
+    }
   }
 }

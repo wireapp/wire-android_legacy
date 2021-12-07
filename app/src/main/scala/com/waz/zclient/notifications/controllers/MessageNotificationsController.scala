@@ -20,6 +20,7 @@ package com.waz.zclient.notifications.controllers
 import android.content.Context
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import android.text.TextUtils
 import androidx.annotation.RawRes
@@ -177,7 +178,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     } else Future.successful(None)
   }
 
-  private def createConvNotifications(accountId: UserId, nots: Set[NotificationData], teamName: Option[Name]) = {
+  private def createConvNotifications(accountId: UserId, nots: Set[NotificationData], teamName: Option[Name]): Future[Iterable[(Int, NotificationProps)]] = {
     verbose(l"createConvNotifications: $accountId, ${nots.size}")
     if (nots.nonEmpty) {
       val groupedConvs =
@@ -407,8 +408,8 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     }.future
   }.getOrElse(Future.successful(None))
 
-  private def getSound(ns: Seq[NotificationData]) = {
-    if (soundController.soundIntensityNone) None
+  private def getSound(ns: Seq[NotificationData]) =
+    if (soundController.soundIntensityNone || Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) None
     else if (!soundController.soundIntensityFull && (ns.size > 1 && ns.lastOption.forall(_.msgType != KNOCK))) None
     else ns.map(_.msgType).lastOption.fold(Option.empty[Uri]) {
       case IMAGE_ASSET | ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET |
@@ -417,18 +418,16 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       case KNOCK => Option(getSelectedSoundUri(soundController.currentTonePrefs._3, R.raw.ping_from_them))
       case _     => None
     }
-  }
+
 
   private def getSelectedSoundUri(value: String, @RawRes defaultResId: Int): Uri =
     getSelectedSoundUri(value, defaultResId, defaultResId)
 
-  private def getSelectedSoundUri(value: String, @RawRes preferenceDefault: Int, @RawRes returnDefault: Int): Uri = {
+  private def getSelectedSoundUri(value: String, @RawRes preferenceDefault: Int, @RawRes returnDefault: Int): Uri =
     if (!TextUtils.isEmpty(value) && !RingtoneUtils.isDefaultValue(cxt, value, preferenceDefault)) Uri.parse(value)
     else RingtoneUtils.getUriForRawId(cxt, returnDefault)
-  }
 
   private def multipleNotificationProperties(props: NotificationProps, account: UserId, ns: Seq[NotificationData], teamName: Option[Name]): Future[NotificationProps] = {
-    verbose(l"multipleNotificationProperties: $account, $ns, $teamName")
     val convIds = ns.map(_.conv).toSet
     val isSingleConv = convIds.size == 1
 

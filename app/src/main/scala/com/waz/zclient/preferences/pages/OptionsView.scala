@@ -146,7 +146,9 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     context.asInstanceOf[BaseActivity].startActivityForResult(intent, 0)
   }
 
-  ringToneButton.onClickEvent.onUi { _ => showRingtonePicker(RingtoneManager.TYPE_RINGTONE, defaultRingToneUri, RingToneResultId, ringToneUri)}
+  ringToneButton.onClickEvent.onUi { _ =>
+    showRingtonePicker(RingtoneManager.TYPE_RINGTONE, defaultRingToneUri, RingToneResultId, ringToneUri)
+  }
   textToneButton.onClickEvent.onUi { _ =>
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       openNotificationSettings(NotificationManagerWrapper.MessageNotificationsChannelId)
@@ -262,7 +264,7 @@ class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: Event
 
   private def getChannelTone(channelId: String) =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      notificationManagerWrapper.flatMap(nm => Option(nm.getNotificationChannel(channelId).getSound))
+      notificationManagerWrapper.flatMap(_.getNotificationChannel(channelId)).map(_.getSound)
     } else Option.empty[Uri]
 
   private val channelPingTone = getChannelTone(NotificationManagerWrapper.PingNotificationsChannelId)

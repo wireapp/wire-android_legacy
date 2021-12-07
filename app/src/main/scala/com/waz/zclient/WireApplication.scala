@@ -20,12 +20,11 @@ package com.waz.zclient
 import java.io.File
 import java.util.Calendar
 
-import android.app.{Activity, ActivityManager, Notification, NotificationChannel, NotificationManager}
+import android.app.{Activity, ActivityManager, NotificationManager}
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
 import android.media.AudioManager
-import android.net.Uri
-import android.os.{Build, PowerManager, Vibrator}
+import android.os.{PowerManager, Vibrator}
 import android.renderscript.RenderScript
 import android.telephony.TelephonyManager
 import android.util.Log
@@ -34,7 +33,6 @@ import androidx.multidex.MultiDexApplication
 import com.evernote.android.job.{Job, JobCreator, JobManager}
 import com.waz.api.NetworkMode
 import com.waz.background.WorkManagerSyncRequestService
-import com.waz.content.Preferences.PrefKey
 import com.waz.content._
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -63,7 +61,7 @@ import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers._
-import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController, KeyboardController, PasswordController, SodiumHandler}
+import com.waz.zclient.common.controllers.global._
 import com.waz.zclient.controllers._
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation.IConfirmationController
@@ -81,7 +79,7 @@ import com.waz.zclient.legalhold.{LegalHoldApprovalHandler, LegalHoldController,
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
 import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}
-import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{AndroidNotificationsManager, IncomingCallNotificationsChannelId, MessageNotificationsChannelId, OngoingNotificationsChannelId, PingNotificationsChannelId}
+import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
 import com.waz.zclient.notifications.controllers._
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
@@ -91,7 +89,7 @@ import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.tracking.{CountlyApi, CrashController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, RingtoneUtils, UiStorage}
+import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import com.wire.signals.{EventContext, Signal}
 import org.threeten.bp.Clock
@@ -472,89 +470,6 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     inject[SecurityPolicyChecker]
     inject[LegalHoldStatusChangeListener]
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) buildNotificationChannels(prefs)
-  }
-
-  private def buildNotificationChannels(prefs: GlobalPreferences): Unit = {
-    def getSound(pref: PrefKey[String], default: Int): Future[Uri] = {
-      for {
-        uriString <- prefs(pref).apply()
-      } yield uriString match {
-        case ""  => RingtoneUtils.getUriForRawId(this, default)
-        case str => Uri.parse(str)
-      }
-    }
-
-    lazy val notificationManager = inject[NotificationManager]
-
-    def recreateNotificationChannel(id:            String,
-                                    nameId:        Int,
-                                    descriptionId: Int,
-                                    importance:    Int = NotificationManager.IMPORTANCE_DEFAULT,
-                                    vibration:     Boolean = false,
-                                    showBadge:     Boolean = false,
-                                    sound:         Option[Uri] = None,
-                                    visibility:    Int = Notification.VISIBILITY_PUBLIC): Unit = {
-      val ch = new NotificationChannel(id, getString(nameId), importance)
-      ch.setDescription(getString(descriptionId))
-      ch.enableVibration(vibration)
-      ch.setShowBadge(showBadge)
-      ch.setLockscreenVisibility(visibility)
-      ch.enableLights(true)
-      sound.foreach(uri => ch.setSound(uri, Notification.AUDIO_ATTRIBUTES_DEFAULT))
-
-      notificationManager.deleteNotificationChannel(id)
-      notificationManager.createNotificationChannel(ch)
-    }
-
-    val recreateChannelsPref = prefs.preference(GlobalPreferences.RecreateChannels)
-
-    for {
-      true      <- recreateChannelsPref()
-      _         <- recreateChannelsPref := false
-      vibration <- prefs.preference(GlobalPreferences.VibrateEnabled).apply()
-      msgSound  <- getSound(GlobalPreferences.TextTone, R.raw.new_message_gcm)
-      pingSound <- getSound(GlobalPreferences.PingTone, R.raw.ping_from_them)
-    } yield {
-      recreateNotificationChannel(
-        id            = OngoingNotificationsChannelId,
-        nameId        = R.string.ongoing_channel_name,
-        descriptionId = R.string.ongoing_channel_description,
-        importance    = NotificationManager.IMPORTANCE_LOW,
-        vibration     = vibration
-      )
-
-      recreateNotificationChannel(
-        id            = IncomingCallNotificationsChannelId,
-        nameId        = R.string.incoming_call_notifications_channel_name,
-        descriptionId = R.string.incoming_call_notifications_channel_name,
-        importance    = NotificationManager.IMPORTANCE_MAX,
-        vibration     = vibration
-      )
-
-      recreateNotificationChannel(
-        id            = MessageNotificationsChannelId,
-        nameId        = R.string.message_notifications_channel_name,
-        descriptionId = R.string.message_notifications_channel_description,
-        importance    = NotificationManager.IMPORTANCE_MAX,
-        vibration     = vibration,
-        sound         = Some(msgSound),
-        visibility    = Notification.VISIBILITY_PRIVATE,
-        showBadge     = true
-      )
-
-      recreateNotificationChannel(
-        id            = PingNotificationsChannelId,
-        nameId        = R.string.ping_notifications_channel_name,
-        descriptionId = R.string.ping_notifications_channel_description,
-        importance    = NotificationManager.IMPORTANCE_MAX,
-        vibration     = vibration,
-        sound         = Some(pingSound),
-        visibility    = Notification.VISIBILITY_PRIVATE,
-        showBadge     = true
-      )
-    }
   }
 
   lazy val messageNotificationsController: MessageNotificationsController = inject[MessageNotificationsController]

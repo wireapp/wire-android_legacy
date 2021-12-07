@@ -86,10 +86,7 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
         eventsToSave.zip(nextIndex.until(nextIndex+eventsToSave.length)).map {
           case ((id, event, transient), index) => PushNotificationEvent(id, index, event = event, transient = transient)
         }
-      ) { evs =>
-        verbose(l"FCM events to save (${evs.size}): $evs")
-        insertAll(evs)
-      }
+      ) { insertAll }
     }.future
   }
 
