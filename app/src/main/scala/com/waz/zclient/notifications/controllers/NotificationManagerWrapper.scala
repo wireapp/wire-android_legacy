@@ -328,6 +328,8 @@ object NotificationManagerWrapper {
         ch.setLockscreenVisibility(visibility)
         ch.enableLights(true)
         ch.setGroup(WireNotificationsChannelGroupId)
+        ch.setBypassDnd(true)
+        ch.setAllowBubbles(true)
         sound.foreach(uri => ch.setSound(uri, Notification.AUDIO_ATTRIBUTES_DEFAULT))
       }
 
@@ -370,7 +372,7 @@ object NotificationManagerWrapper {
               importance    = NotificationManager.IMPORTANCE_MAX,
               vibration     = vibration,
               sound         = msgSound,
-              visibility    = Notification.VISIBILITY_PRIVATE,
+              visibility    = Notification.VISIBILITY_PUBLIC,
               showBadge     = true
             ),
             createNotificationChannel(
@@ -380,7 +382,7 @@ object NotificationManagerWrapper {
               importance    = NotificationManager.IMPORTANCE_MAX,
               vibration     = vibration,
               sound         = pingSound,
-              visibility    = Notification.VISIBILITY_PRIVATE,
+              visibility    = Notification.VISIBILITY_PUBLIC,
               showBadge     = true
             )
           )
