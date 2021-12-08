@@ -247,6 +247,8 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       val requestBase  = System.currentTimeMillis.toInt
       val bigTextStyle = StyleBuilder(StyleBuilder.BigText, title = title, summaryText = teamName.map(_.str), bigText = Some(body))
       val specProps = props.copy(
+        convId                   = Some(n.conv),
+        from                     = Some(n.user),
         contentTitle             = Some(title),
         contentText              = Some(body),
         style                    = Some(bigTextStyle),
@@ -436,6 +438,8 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   private def multipleNotificationProperties(props: NotificationProps, account: UserId, ns: Seq[NotificationData], teamName: Option[Name]): Future[NotificationProps] = {
     val convIds = ns.map(_.conv).toSet
     val isSingleConv = convIds.size == 1
+    val froms = ns.map(_.user).toSet
+    val isSingleFrom = froms.size == 1
 
     val n = ns.head
 
@@ -475,6 +479,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       val inboxStyle  = StyleBuilder(StyleBuilder.Inbox, title = title, summaryText = (teamName).map(_.str), lines = messages)
 
       val specProps = props.copy(
+        from         = if (isSingleFrom) Some(froms.head) else None,
         contentTitle = Some(title),
         contentText  = Some(messages.last),
         style        = Some(inboxStyle)
@@ -482,6 +487,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
 
       if (isSingleConv)
         specProps.copy(
+          convId                   = Some(n.conv),
           openConvIntent           = getOpenConvIntent(account, n, requestBase),
           clearNotificationsIntent = Some((account, Some(n.conv))),
           action1                  = getAction(account, n, requestBase, 1),

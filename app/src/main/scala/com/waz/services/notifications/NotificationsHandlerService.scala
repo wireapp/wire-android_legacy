@@ -43,16 +43,15 @@ class NotificationsHandlerService extends FutureService with ServiceHelper with 
   private lazy val notificationManager = inject[NotificationManagerWrapper]
 
   override protected def onIntent(intent: Intent, id: Int): Future[Any] = wakeLock.async {
-
-    val account = Option(intent.getStringExtra(ExtraAccountId)).map(UserId(_))
-    val conversation = Option(intent.getStringExtra(ExtraConvId)).map(ConvId(_))
-    val instantReplyContent = Option(RemoteInput.getResultsFromIntent(intent)).map(_.getCharSequence(InstantReplyKey))
+    def account = Option(intent.getStringExtra(ExtraAccountId)).map(UserId(_))
+    def conversation = Option(intent.getStringExtra(ExtraConvId)).map(ConvId(_))
+    def instantReplyContent = Option(RemoteInput.getResultsFromIntent(intent)).map(_.getCharSequence(InstantReplyKey))
 
     Option(ZMessaging.currentAccounts) match {
       case Some(accs) =>
+
         (account, conversation, instantReplyContent) match {
           case (Some(acc), Some(convId), _) if ActionClear == intent.getAction =>
-            verbose(l"Clearing notifications for account: $acc and conversation: $convId")
             Future.successful(notificationManager.cancelNotifications(acc, Set(convId)))
           case (Some(acc), Some(convId), Some(content)) if ActionQuickReply == intent.getAction =>
             accs.getZms(acc).flatMap {
@@ -61,15 +60,13 @@ class NotificationsHandlerService extends FutureService with ServiceHelper with 
                   notificationManager.cancelNotifications(acc, Set(convId))
                 }
               case _ =>
-                Future.successful({})
+                Future.successful(())
             }
           case _ =>
-            warn(l"No account id passed on intent")
-            Future.successful({})
+            Future.successful(())
         }
       case _ =>
-        warn(l"No AccountsService available")
-        Future.successful({})
+        Future.successful(())
     }
   }
 }
