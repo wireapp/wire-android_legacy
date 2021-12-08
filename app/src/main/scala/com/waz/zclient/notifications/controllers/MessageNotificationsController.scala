@@ -275,11 +275,13 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       }
     }
 
-  private def getConvName(account: UserId, n: NotificationData) =
+  private def getConvName(account: UserId, n: NotificationData): Future[Name] =
     inject[AccountToConvsService].apply(account).flatMap {
       case Some(service) => service.conversationName(n.conv).head
       case None          => Future.successful(Name.Empty)
     }
+
+
 
   private def getUserName(account: UserId, n: NotificationData) =
     inject[AccountToUserService].apply(account).flatMap {
@@ -287,12 +289,14 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       case None          => Future.successful(Option.empty[Name])
     }
 
+
   private def isGroupConv(account: UserId, n: NotificationData) =
     if (n.isConvDeleted) Future.successful(true)
-    else inject[AccountToConvsService].apply(account).flatMap {
-      case Some(service) => service.isGroupConversation(n.conv)
-      case _ => Future.successful(false)
-    }
+    else
+      inject[AccountToConvsService].apply(account).flatMap {
+        case Some(service) => service.isGroupConversation(n.conv)
+        case _ => Future.successful(false)
+      }
 
   private def getMessage(account: UserId, n: NotificationData, singleConversationInBatch: Boolean): Future[SpannableWrapper] = {
     val message = n.msg.replaceAll("\\r\\n|\\r|\\n", " ")
@@ -381,21 +385,23 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     SpannableWrapper(header = header, body = body, spans = spans, separator = "")
   }
 
-  private def getPictureForNotifications(accountId: UserId, nots: Seq[NotificationData]): Future[Option[Bitmap]] =
-    if (nots.size == 1 && !nots.exists(_.ephemeral)) {
-      val result = for {
+  private def getPictureForNotifications(accountId: UserId, nots: Seq[NotificationData]): Future[Option[Bitmap]] = {
+    def picture(userId: UserId): Future[Option[Bitmap]] =
+      (for {
         Some(service) <- inject[AccountToUserService].apply(accountId)
-        user          <- service.getOrCreateUser(nots.head.user, waitTillSynced = true)
+        user          <- service.getOrCreateUser(userId, waitTillSynced = true)
         bitmap        <- user.picture.fold(Future.successful(Option.empty[Bitmap]))(loadPicture)
-      } yield bitmap
-
-      result.recoverWith {
+      } yield bitmap).recoverWith {
         case ex: Exception =>
           warn(l"Could not get avatar.", ex)
           Future.successful(None)
       }
+
+    nots.headOption.collectFirst { case n if !n.ephemeral => n.user } match {
+      case Some(userId) => picture(userId)
+      case None         => Future.successful(None)
     }
-    else Future.successful(None)
+  }
 
   private def loadPicture(picture: Picture): Future[Option[Bitmap]] = Try {
     Threading.ImageDispatcher {

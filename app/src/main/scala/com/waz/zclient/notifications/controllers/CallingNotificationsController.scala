@@ -142,7 +142,7 @@ final class CallingNotificationsController(implicit cxt: WireContext, inj: Injec
       call         <- EventStream.zip(missedCalls:_*)
     } yield
       (call.currentAccount,
-       NotificationData(NotId(), conv = call.convId, user = call.from, msgType = NotificationType.MISSED_CALL, time = call.time)
+       NotificationData(conv = call.convId, user = call.from, msgType = NotificationType.MISSED_CALL, time = call.time)
       )
 
   missedCall.onUi { case (selfId, not) =>

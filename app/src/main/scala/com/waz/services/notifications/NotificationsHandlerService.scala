@@ -52,7 +52,7 @@ class NotificationsHandlerService extends FutureService with ServiceHelper with 
       case Some(accs) =>
         (account, conversation, instantReplyContent) match {
           case (Some(acc), Some(convId), _) if ActionClear == intent.getAction =>
-            verbose(l"Clearing notifications for account: $acc and conversation:$conversation")
+            verbose(l"Clearing notifications for account: $acc and conversation: $convId")
             Future.successful(notificationManager.cancelNotifications(acc, Set(convId)))
           case (Some(acc), Some(convId), Some(content)) if ActionQuickReply == intent.getAction =>
             accs.getZms(acc).flatMap {

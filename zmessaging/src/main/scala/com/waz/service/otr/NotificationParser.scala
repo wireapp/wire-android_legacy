@@ -56,20 +56,18 @@ final class NotificationParserImpl(selfId:       UserId,
         case UserConnectionEvent(_, _, _, from, _, msg, ConnectionStatus.PendingFromOther, time, _)
           if shouldShowNotification(self, from) =>
             Some(NotificationData(
-              NotId(NotificationType.CONNECT_REQUEST, from),
-              msg.getOrElse(""),
               ConvId(from.str),
               from,
+              msg.getOrElse(""),
               NotificationType.CONNECT_REQUEST,
               time
             ))
         case UserConnectionEvent(_, _, _, from, _, _, ConnectionStatus.Accepted, time, _)
           if shouldShowNotification(self, from) =>
             Some(NotificationData(
-              NotId(NotificationType.CONNECT_ACCEPTED, from),
-              "",
               ConvId(from.str),
               from,
+              "",
               NotificationType.CONNECT_ACCEPTED,
               time
             ))
@@ -84,7 +82,6 @@ final class NotificationParserImpl(selfId:       UserId,
     } yield
       if (shouldShowNotification(self, conv, event.from, event.time))
         Some(NotificationData(
-          id      = NotId(),
           msg     = event.name.str,
           conv    = conv.id,
           user    = event.from,
@@ -147,7 +144,6 @@ final class NotificationParserImpl(selfId:       UserId,
     else
       Future.successful {
         Some(NotificationData(
-          id              = NotId(uid.str),
           msg             = if (isEphemeral) "" else text,
           conv            = conv.id,
           user            = event.from,
@@ -177,7 +173,6 @@ final class NotificationParserImpl(selfId:       UserId,
         else NotificationType.ANY_ASSET
       Future.successful {
         Some(NotificationData(
-          id        = NotId(uid.str),
           conv      = conv.id,
           user      = event.from,
           msgType   = msgType,
@@ -198,7 +193,6 @@ final class NotificationParserImpl(selfId:       UserId,
     else
       Future.successful {
           Some(NotificationData(
-            id        = NotId(uid.str),
             conv      = conv.id,
             user      = event.from,
             msgType   = NotificationType.KNOCK,
@@ -229,7 +223,6 @@ final class NotificationParserImpl(selfId:       UserId,
               case _ => LikedContent.OTHER
             }
             Some(NotificationData(
-              id           = NotId(uid.str),
               msg          = if (ml.message.isEphemeral) "" else ml.message.contentString,
               conv         = conv.id,
               user         = event.from,
@@ -253,7 +246,6 @@ final class NotificationParserImpl(selfId:       UserId,
     else
       Future.successful {
         Some(NotificationData(
-          id        = NotId(uid.str),
           conv      = conv.id,
           user      = event.from,
           msgType   = NotificationType.LOCATION,
@@ -276,7 +268,6 @@ final class NotificationParserImpl(selfId:       UserId,
       }
       Future.successful {
         Some(NotificationData(
-          id        = NotId(uid.str),
           msg       = if (isEphemeral) "" else text.getOrElse(""),
           conv      = conv.id,
           user      = event.from,
