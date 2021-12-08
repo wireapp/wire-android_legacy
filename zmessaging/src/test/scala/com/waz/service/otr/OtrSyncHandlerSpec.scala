@@ -231,6 +231,8 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       actualResult shouldEqual Left(ErrorResponse.UnapprovedLegalHold)
     }
 
+    // This test conforms to the following testing standards:
+    // @SF.Messages @TSFI.UserInterface @S0.1
     scenario("Can't encrypt or send message in unverified conversation") {
       // Given
       val syncHandler = getSyncHandler
@@ -250,6 +252,8 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       actualResult shouldEqual Left(ErrorResponse.Unverified)
     }
 
+    // This test conforms to the following testing standards:
+    // @SF.Separation @TSFI.RESTfulAPI @S0.2
     scenario("Unexpected users and/or clients in missing response should be updated and added to members, and previously encrypted content should be updated") {
       // Given
       val syncHandler = getSyncHandler

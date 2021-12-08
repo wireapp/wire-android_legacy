@@ -15,7 +15,8 @@ class ConnectionSpecsFactoryTest : UnitTest() {
     }
 
     @Test
-    //@SF.Messages @TSFI.RESTfulAPI @S0.2 @S0.3 @S3
+    // This test conforms to the following testing standards:
+    // @SF.Messages @TSFI.RESTfulAPI @S0.2 @S0.3 @S3
     fun `Given connectionSpecs are created, then ensure list contains modern specification`() {
         val connectionSpecs = ConnectionSpecsFactory.create()
         with(connectionSpecs[0]) {

@@ -16,6 +16,7 @@ class CertificatePinnerFactoryTest : UnitTest() {
     private lateinit var pinGenerator: CertificatePinnerFactory.PinGenerator
 
     @Test
+    // This test conforms to the following testing standards:
     // @SF.Messages @TSFI.RESTfulAPI @S0.2 @S0.3 @S2 @S3 
     fun `Given CertificatePinner is generated, when pin is injected, then verify pin is generated`() {
         `when`(certificationPin.certificate).thenReturn(certificate)
