@@ -5,7 +5,7 @@ import org.gradle.api.JavaVersion
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.76."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.77."
     const val COMPILE_SDK_VERSION = 30
     const val TARGET_SDK_VERSION = 30
     const val MIN_SDK_VERSION = 24
@@ -25,7 +25,7 @@ object Versions {
     const val DETEKT = "1.2.2"
     const val JACOCO = "0.8.5"
     const val DEX_INFO = "0.1.2"
-    const val GRGIT = "4.1.0"
+    const val GRGIT = "4.1.1"
 
     //build
     const val COROUTINES = "1.3.7"

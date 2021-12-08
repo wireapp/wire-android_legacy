@@ -421,7 +421,7 @@ class ConversationFragment extends FragmentHelper {
     def isConferenceCallingRestricted: Future[Boolean] =
       userPreferences.head
         .flatMap(_.preference(UserPreferences.ConferenceCallingFeatureEnabled).apply())
-        .map(isEnabled => !isEnabled.get)
+        .map(!_)
 
     def displayConferenceCallingUpgradeDialog(): Unit = {
       accentColorController.accentColor.head.foreach { accentColor =>

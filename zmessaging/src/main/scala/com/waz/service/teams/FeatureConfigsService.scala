@@ -49,26 +49,32 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       Future.successful(())
   }
 
-  override def updateAppLock(): Future[Unit] =
-    for {
-      appLock <- syncHandler.fetchAppLock()
-      _       =  verbose(l"AppLock feature flag : $appLock")
-      _       <- userPrefs(AppLockFeatureEnabled) := appLock.enabled
-      _       <- userPrefs(AppLockForced)  := appLock.forced
-      _       <- if (!appLock.enabled) userPrefs(AppLockEnabled) := false
-                 else if (appLock.forced) userPrefs(AppLockEnabled) := true
-                 else Future.successful(())
-      _       <- userPrefs(AppLockTimeout) := appLock.timeout
-    } yield ()
+  @inline
+  private def withRecovery(f: => Future[Unit]): Future[Unit] =
+    f.recover { case _ => Future.successful(()) }
 
-  override def updateFileSharing(): Future[Unit] =
+  override def updateAppLock(): Future[Unit] = withRecovery {
     for {
-      fileSharing <- syncHandler.fetchFileSharing()
-      _           =  verbose(l"FileSharing feature config : $fileSharing")
-      _           <- storeFileSharing(fileSharing)
+      Some(appLock) <- syncHandler.fetchAppLock
+      _             =  verbose(l"AppLock feature flag : $appLock")
+      _             <- userPrefs(AppLockFeatureEnabled) := appLock.enabled
+      _             <- userPrefs(AppLockForced)  := appLock.forced
+      _             <- if (!appLock.enabled) userPrefs(AppLockEnabled) := false
+                       else if (appLock.forced) userPrefs(AppLockEnabled) := true
+                       else Future.successful(())
+      _             <- userPrefs(AppLockTimeout) := appLock.timeout
     } yield ()
+  }
 
-  private def storeFileSharing(fileSharing: FileSharingFeatureConfig): Future[Unit] = {
+  override def updateFileSharing(): Future[Unit] = withRecovery {
+    for {
+      Some(fileSharing) <- syncHandler.fetchFileSharing
+      _                 =  verbose(l"FileSharing feature config : $fileSharing")
+      _                 <- storeFileSharing(fileSharing)
+    } yield ()
+  }
+
+  private def storeFileSharing(fileSharing: FileSharingFeatureConfig): Future[Unit] =
     for {
       existingValue <- userPrefs(FileSharingFeatureEnabled).apply()
       newValue      =  fileSharing.isEnabled
@@ -77,38 +83,34 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       _             <- if (existingValue != newValue) userPrefs(ShouldInformFileSharingRestriction) := true
                        else Future.successful(())
     } yield ()
+
+
+  override def updateConferenceCalling(): Future[Unit] = withRecovery {
+    for {
+      Some(conferenceCalling) <- syncHandler.fetchConferenceCalling
+      _                       =  verbose(l"ConferenceCalling feature config: $conferenceCalling")
+      _                       <- storeConferenceCallingConfig(conferenceCalling)
+    } yield ()
   }
 
-
-  override def updateConferenceCalling(): Future[Unit] =
+  private def storeConferenceCallingConfig(conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig): Future[Unit] =
     for {
-      conferenceCalling <- syncHandler.fetchConferenceCalling()
-      _                 <- storeConferenceCallingConfig(conferenceCalling)
-    } yield ()
-
-  private def storeConferenceCallingConfig(conferenceCallingFeatureConfig: ConferenceCallingFeatureConfig): Future[Unit] = {
-    for {
-      existingValue <- userPrefs (ConferenceCallingFeatureEnabled).apply()
+      existingValue <- userPrefs(ConferenceCallingFeatureEnabled).apply()
       newValue      =  conferenceCallingFeatureConfig.isEnabled
-      _             <- userPrefs(ConferenceCallingFeatureEnabled) := Some(newValue)
-                    // Inform of plan upgraded.
-      _             <- if (existingValue != None && !existingValue.get && newValue)
-                          userPrefs(ShouldInformPlanUpgradedToEnterprise) := true
-                       // Don't inform
-                       else if (!newValue) userPrefs(ShouldInformPlanUpgradedToEnterprise) := false
-                       else Future.successful(())
+      _             <- userPrefs(ConferenceCallingFeatureEnabled) := newValue
+                       // inform if we didn't have conference calls and now we do
+      _             <- userPrefs(ShouldInformPlanUpgradedToEnterprise) := !existingValue && newValue
     } yield ()
-  }
 
-  override def updateSelfDeletingMessages(): Future[Unit] = {
+  override def updateSelfDeletingMessages(): Future[Unit] = withRecovery {
     for {
-      selfDeleting <- syncHandler.fetchSelfDeletingMessages()
-      _            =  verbose(l"SelfDeletingMessages feature config: $selfDeleting")
-      _            <- storeSelfDeletingMessages(selfDeleting)
+      Some(selfDeleting) <- syncHandler.fetchSelfDeletingMessages
+      _                  =  verbose(l"SelfDeletingMessages feature config: $selfDeleting")
+      _                  <- storeSelfDeletingMessages(selfDeleting)
     } yield ()
   }
 
-  private def storeSelfDeletingMessages(config: SelfDeletingMessagesFeatureConfig): Future[Unit] = {
+  private def storeSelfDeletingMessages(config: SelfDeletingMessagesFeatureConfig): Future[Unit] =
     for {
       wasEnabled        <- userPrefs(AreSelfDeletingMessagesEnabled).apply()
       lastKnownTimeout  <- userPrefs(SelfDeletingMessagesEnforcedTimeout).apply()
@@ -116,9 +118,8 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       newTimeout        =  config.enforcedTimeoutInSeconds
       _                 <- userPrefs(AreSelfDeletingMessagesEnabled) := isNowEnabled
       _                 <- userPrefs(SelfDeletingMessagesEnforcedTimeout) := newTimeout
-      // Inform of new restrictions.
+                           // Inform of new restrictions.
       _                 <- userPrefs(ShouldInformSelfDeletingMessagesChanged) :=
-        (wasEnabled != isNowEnabled || lastKnownTimeout != newTimeout)
+                             (wasEnabled != isNowEnabled || lastKnownTimeout != newTimeout)
     } yield ()
-  }
 }

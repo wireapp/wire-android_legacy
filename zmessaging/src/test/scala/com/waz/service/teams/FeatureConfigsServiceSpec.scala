@@ -30,7 +30,7 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     userPrefs.setValue(AppLockTimeout, Some(30.seconds))
 
     (syncHandler.fetchAppLock _).expects().anyNumberOfTimes().returning(
-      Future.successful(AppLockFeatureConfig(enabled = true, forced = true, timeout = Some(10.seconds)))
+      Future.successful(Some(AppLockFeatureConfig(enabled = true, forced = true, timeout = Some(10.seconds))))
     )
 
     val service = createService
@@ -50,7 +50,7 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     userPrefs.setValue(AppLockTimeout, Some(30.seconds))
 
     (syncHandler.fetchAppLock _).expects().anyNumberOfTimes().returning(
-      Future.successful(AppLockFeatureConfig.Disabled)
+      Future.successful(Some(AppLockFeatureConfig.Disabled))
     )
 
     val service = createService
@@ -68,7 +68,7 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     // Mock
     (syncHandler.fetchFileSharing _).expects().anyNumberOfTimes().returning(
-      Future.successful(FileSharingFeatureConfig("disabled"))
+      Future.successful(Some(FileSharingFeatureConfig("disabled")))
     )
 
     // When
@@ -86,7 +86,7 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     // Mock
     (syncHandler.fetchSelfDeletingMessages _).expects().anyNumberOfTimes().returning(
-      Future.successful(SelfDeletingMessagesFeatureConfig(isEnabled = true, 60))
+      Future.successful(Some(SelfDeletingMessagesFeatureConfig(isEnabled = true, 60)))
     )
 
     // When
@@ -132,18 +132,34 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   scenario("Fetch the ConferenceCalling feature config and set properties") {
     // Given
     val service = createService
-    userPrefs.setValue(ConferenceCallingFeatureEnabled, Some(true))
+    userPrefs.setValue(ConferenceCallingFeatureEnabled, true)
 
     // Mock
     (syncHandler.fetchConferenceCalling _).expects().anyNumberOfTimes().returning(
-      Future.successful(ConferenceCallingFeatureConfig("disabled"))
+      Future.successful(Some(ConferenceCallingFeatureConfig("disabled")))
     )
 
     // When
     result(service.updateConferenceCalling())
 
     // Then
-    result(userPrefs(ConferenceCallingFeatureEnabled).apply()) shouldEqual Some(false)
+    result(userPrefs(ConferenceCallingFeatureEnabled).apply()) shouldEqual false
   }
 
+  scenario("Don't update the feature flag if the fetching fails") {
+    // Given
+    val service = createService
+    userPrefs.setValue(ConferenceCallingFeatureEnabled, true)
+
+    // Mock
+    (syncHandler.fetchConferenceCalling _).expects().anyNumberOfTimes().returning(
+      Future.successful(None)
+    )
+
+    // When
+    result(service.updateConferenceCalling())
+
+    // Then
+    result(userPrefs(ConferenceCallingFeatureEnabled).apply()) shouldEqual true
+  }
 }

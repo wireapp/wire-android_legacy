@@ -27,6 +27,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -34,6 +35,7 @@ import scala.concurrent.{Await, Future}
 class ConversationsUiServiceSpec extends AndroidFreeSpec {
 
   val selfUserId = UserId()
+  val domain = Domain("chala.wire.link")
   val push =            mock[PushService]
   val users =           mock[UserService]
   val convsStorage =    mock[ConversationStorage]
@@ -57,7 +59,7 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
   val userPrefs = new TestUserPreferences()
   private def getService(teamId: Option[TeamId] = None): ConversationsUiService = {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs, userPrefs)
-    new ConversationsUiServiceImpl(selfUserId, teamId, assetService, users, messages, messagesStorage,
+    new ConversationsUiServiceImpl(selfUserId, teamId, domain, assetService, users, messages, messagesStorage,
       msgContent, members, content, convsStorage, network, convsService, sync, requests, client,
       accounts, tracking, errors, uriHelper, properties)
   }

@@ -446,7 +446,7 @@ object UserPreferences {
   lazy val SelfDeletingMessagesEnforcedTimeout: PrefKey[Int] = PrefKey[Int]("self_deleting_messages_enforced_timeout", customDefault = 0)
   lazy val ShouldInformSelfDeletingMessagesChanged: PrefKey[Boolean] = PrefKey[Boolean]("self_deleting_messages_enforced_changed", customDefault = false)
 
-  lazy val ConferenceCallingFeatureEnabled: PrefKey[Option[Boolean]] = PrefKey[Option[Boolean]]("conference_calling_feature_enabled", customDefault = None)
+  lazy val ConferenceCallingFeatureEnabled: PrefKey[Boolean] = PrefKey[Boolean]("conference_calling_feature_enabled_1", customDefault = true)
   lazy val ShouldInformPlanUpgradedToEnterprise: PrefKey[Boolean] = PrefKey[Boolean]("should_inform_plan_upgraded_to_enterprise", customDefault = false)
 
   lazy val ShouldMigrateToFederation: PrefKey[Boolean] = PrefKey[Boolean]("should_migrate_to_federation_2", customDefault = true)
