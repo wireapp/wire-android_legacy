@@ -45,6 +45,63 @@ These steps will build only the Wire client UI, pulling in all other Wire framew
 - [Audio Video Signaling](https://github.com/wireapp/avs)
 - [generic-message-proto](https://github.com/wireapp/generic-message-proto)
 
+
+## How to build using docker and docker compose
+
+We have added a docker compose file and a docker agent file + a configuration script, to make it possible to compile wire android with just one line of code.
+There are 2 possible ways to build a client with docker compose
+
+Option 1: Configuring the `docker-compose.yml` file:
+
+The docker compose YML file contains some flags which you can change and modify to change what type of client will be build
+
+1. `BUILD_TYPE`: This value defines what build type you want to build, it can either be Release or Debug
+2. `FLAVOR_TYPE`: This value defines the flavor type of build. It can be one of the following: Dev, Prod, Experimental, FDroid, Internal, Candidate
+3. `PATCH_VERSION`: Here you can define the value which is supposed to be used for the PATCH_LEVEL version of your client. EG XX.XX.1337
+4. `CLEAN_PROJECT_BEFORE_BUILD`: Define if the project branch should be cleaned by .`/gradlew clean`  before anything else [options: true or false]
+5. `RUN_APP_UNIT_TESTS`: Define if the app unit tests should be executed before compilation  [options: true or false]
+6. `RUN_STORAGE_UNIT_TESTS`: Define if the storage unit tests should be executed before compilation  [options: true or false]
+7. `RUN_ZMESSAGE_UNIT_TEST`: Define if the zmessage unit tests should be executed before compilation [options: true or false]
+8. `BUILD_CLIENT`: Define if the compilation/build should be executed, disable this if you wanna just sign an apk build in a previous run [options: true or false]
+9. `SIGN_APK`: Define if an APK should be signed with the following given information  [options: true or false]
+10. `KEYSTORE_PATH`: The path to your keystore (root folder is wire-android inside the docker)
+11. `KSTOREPWD`: The keystore password for the keystore file
+12. `KEYPWD`: The key password
+13. `KEYSTORE_KEY_NAME`: The key name
+14. `BUILD_WITH_STACKTRACE`: Define if you want to compile the build with the option `--stacktrace` (do this if you have compilation issues and the general error message is not helpful)
+
+Configure these values and use the following command to compile a client OOO (Out of the Box)
+
+`docker-compose up --build [-d]`
+
+Or if you use a newer version of docker compose
+
+`docker compose up --build [-d]`
+
+`-d` means to spawn the docker agent detached, so you can continue using your terminal while the agent is building the client
+
+Option 2: Use ENV Flags
+
+The flags, which exists inside the docker file, can also be overwritten by directly writing them into the terminal line. 
+
+See the example below:
+
+`export BUILD_TYPE=Release && export FLAVOR=FDroid && docker compose up --build -d`
+
+
+## Custom Builds
+
+wire-android allows it to compile a client with custom configurations without having to modify the default.json
+for this all you need todo is to add configure the following variables
+
+1. CUSTOM_REPOSITORY: the repository uri on github for the custom content
+2. CUSTOM_FOLDER: a parental folder
+3. CUSTOM_CLIENT: the main folder for the custom client containing the custom.json and the icons folder (optional)
+4. GRGIT_USER: either the github api token or the user name for the github account, which will be used by the build script system to fetch the custom repo on build
+5. GRGIT_PASSWORD: the github password if you use the user name instead of a github api token
+
+see the outcommented example inside the docker-compose.yml file as a reference
+
 ## Android Studio
 
 When importing project in Android Studio **do not allow** gradle plugin update. Our build setup requires Android Plugin for Gradle version 3.2.1.
