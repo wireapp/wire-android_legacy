@@ -27,14 +27,12 @@ import com.waz.services.FutureService
 import com.waz.threading.Threading
 import com.waz.utils.{TimedWakeLock, returning}
 import com.waz.zclient.ServiceHelper
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class NotificationsHandlerService extends FutureService with ServiceHelper with DerivedLogTag {
-
   import NotificationsHandlerService._
   import Threading.Implicits.Background
 
@@ -49,7 +47,6 @@ class NotificationsHandlerService extends FutureService with ServiceHelper with 
 
     Option(ZMessaging.currentAccounts) match {
       case Some(accs) =>
-
         (account, conversation, instantReplyContent) match {
           case (Some(acc), Some(convId), _) if ActionClear == intent.getAction =>
             Future.successful(notificationManager.cancelNotifications(acc, Set(convId)))
