@@ -248,6 +248,8 @@ pipeline {
                                         distributionGroups: env.APPCENTER_GROUP_NAME_LIST,
                                         branchName: env.BRANCH_NAME,
                                         commitHash: env.GIT_COMMIT
+                                //we need to add some api requests against appcenter here, to check for what is the latest upload id, to be able to generate a link
+                                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_APPCENTER_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - A Client has been successfully uploaded to AppCenter"
                             }
                         }
 
@@ -319,6 +321,8 @@ pipeline {
                                         distributionGroups: env.APPCENTER_GROUP_NAME_LIST,
                                         branchName: env.BRANCH_NAME,
                                         commitHash: env.GIT_COMMIT
+                                //we need to add some api requests against appcenter here, to check for what is the latest upload id, to be able to generate a link
+                                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_APPCENTER_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - A Client has been successfully uploaded to AppCenter"
                             }
                         }
 
@@ -392,6 +396,8 @@ pipeline {
                                         distributionGroups: env.APPCENTER_GROUP_NAME_LIST,
                                         branchName: env.BRANCH_NAME,
                                         commitHash: env.GIT_COMMIT
+                                //we need to add some api requests against appcenter here, to check for what is the latest upload id, to be able to generate a link
+                                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_APPCENTER_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - A Client has been successfully uploaded to AppCenter"
                             }
                         }
                     }
