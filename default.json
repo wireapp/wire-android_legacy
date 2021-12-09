@@ -48,5 +48,5 @@
   "keep_websocket_on": false,
   "force_constant_bitrate_calls": false,
   "web_link_preview": true,
-  "federation_user_discovery": false
+  "federation_user_discovery": true
 }

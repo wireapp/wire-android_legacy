@@ -29,6 +29,7 @@ import com.waz.service.call.CallInfo.{ActiveSpeaker, Participant}
 import com.waz.service.call.Calling.{ActiveSpeakersHandler, Handle, _}
 import com.waz.utils.jna.{Size_t, Uint32_t}
 import com.waz.utils.{CirceJSONSupport, returning}
+import com.waz.zms.BuildConfig
 import com.wire.signals.SerialDispatchQueue
 import org.threeten.bp.Instant
 
@@ -95,10 +96,14 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
     verbose(l"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
 
+    var userId = cs.accountId.str
+    if(BuildConfig.FEDERATION_USER_DISCOVERY)
+      userId = userId.concat(s"@${cs.domain.str}")
+
     val callingReady = Promise[Unit]()
 
     val wCall = Calling.wcall_create(
-      cs.accountId.str,
+      userId,
       cs.clientId.str,
       new ReadyHandler {
         override def onReady(version: Int, arg: Pointer) = {
@@ -117,7 +122,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
                             isTransient: Boolean,
                             arg: Pointer): Int = {
 
-          if (!(userIdSelf == cs.accountId.str && clientIdSelf == cs.clientId.str)) {
+          val userId = userIdSelf.split("@").head
+          val rConvId = RConvId(convId.split("@").head)
+
+          if (!(userId == cs.accountId.str && clientIdSelf == cs.clientId.str)) {
             warn(l"Received request to send calling message from non self user and/or client")
             return AvsCallbackError.InvalidArgument
           }
@@ -128,7 +136,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
               AvsClientList.decode(json).fold({ throw _ }, identity)
             }
 
-            cs.onSend(ctx, message, RConvId(convId), targetRecipients)
+            cs.onSend(ctx, message, rConvId, targetRecipients)
             AvsCallbackError.None
           } catch {
             case e: Throwable =>
@@ -218,7 +226,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
       val clientsRequestHandler = new ClientsRequestHandler {
         override def onClientsRequest(inst: Calling.Handle, convId: String, arg: Pointer): Unit = {
-          cs.onClientsRequest(RConvId(convId))
+          cs.onClientsRequest(RConvId(convId)) //TODO
       }}
 
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)
