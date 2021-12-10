@@ -30,19 +30,18 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
   private var notsCounter = Map[UserId, Set[ConvId]]()
 
   override def showNotification(props: NotificationProps): Unit = {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getNotificationChannel(props.channelId).isEmpty)
-      buildNotificationChannels(enforce = true)
-
-    (notsCounter.contains(props.accountId), props.convId) match {
-      case (_, None) =>
-      case (false, Some(convId)) =>
-        notsCounter += props.accountId -> Set(convId)
-      case (true, Some(convId)) =>
-        notsCounter += props.accountId -> (notsCounter(props.accountId) + convId)
+    props.convId.foreach { convId =>
+      notsCounter += props.accountId -> (notsCounter.getOrElse(props.accountId, Set.empty) + convId)
     }
 
     val id = props.convId.fold(toNotificationGroupId(props.accountId))(toNotificationConvId(props.accountId, _))
-    notificationManager.notify(id, props.build())
+    val notification = props.build()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getNotificationChannel(props.channelId).isEmpty)
+      buildNotificationChannels(enforce = true)
+        .foreach(_ => notificationManager.notify(id, notification))(Threading.Ui)
+    else
+      notificationManager.notify(id, notification)
   }
 
   private def toNotificationGroupId(accountId: UserId): Int = accountId.str.hashCode()
@@ -97,7 +96,7 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
       sound.foreach(uri => ch.setSound(uri, Notification.AUDIO_ATTRIBUTES_DEFAULT))
     }
 
-  private def buildNotificationChannels(enforce: Boolean = false): Unit = {
+  private def buildNotificationChannels(enforce: Boolean = false): Future[Unit] = {
     import Threading.Implicits.Background
 
     verbose(l"buildNotificationChannels")
@@ -151,7 +150,7 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
           )
         )
 
-    channels.foreach { chs =>
+    channels.map { chs =>
       verbose(l"recreating channels")
       try {
         notificationManager.deleteNotificationChannel(OngoingNotificationsChannelId)
