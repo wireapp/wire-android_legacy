@@ -1458,9 +1458,9 @@
     <string name="file_sharing_enabled_info_dialog_message">Sharing and receiving files of any type is now enabled.</string>
     <string name="file_sharing_disabled_info_dialog_message">Sharing and receiving files of any type is now disabled.</string>
     <string name="file_sharing_restriction_info_image">RECEIVING IMAGES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_video">RECEIVING VIDEOS IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_audio">RECEIVING AUDIO FILES IS PROHIBITED</string>
-    <string name="file_sharing_restriction_info_file">RECEIVING FILES IS PROHIBITED</string>
+    <string name="file_sharing_restriction_info_video">VAIZDO ĮRAŠŲ GAVIMAS YRA UŽDRAUSTAS</string>
+    <string name="file_sharing_restriction_info_audio">GARSO ĮRAŠŲ FAILŲ GAVIMAS YRA UŽDRAUSTAS</string>
+    <string name="file_sharing_restriction_info_file">FAILŲ GAVIMAS YRA UŽDRAUSTAS</string>
     <string name="file_sharing_restriction_info_generic">FILE SHARING RESTRICTED</string>
     <!-- Self Deleting Messages feature config -->
     <string name="self_deleting_messages_change_info_dialog_message_enabled">Sending of self deleting messages is enabled.</string>
