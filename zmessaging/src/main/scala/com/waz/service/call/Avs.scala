@@ -23,7 +23,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
-import com.waz.model.otr.{ClientId, OtrClientIdMap}
+import com.waz.model.otr.{ClientId, OtrClientIdMap, QOtrClientIdMap}
 import com.waz.service.call.Avs.AvsClientList.encode
 import com.waz.service.call.CallInfo.{ActiveSpeaker, Participant}
 import com.waz.service.call.Calling.{ActiveSpeakersHandler, Handle, _}
@@ -52,6 +52,7 @@ trait Avs {
   def setCallMuted(wCall: WCall, muted: Boolean): Unit
   def setProxy(host: String, port: Int): Unit
   def onClientsRequest(wCall: WCall, convId: RConvId, userClients: OtrClientIdMap): Unit
+  def onQualifiedClientsRequest(wCall: WCall, convId: RConvId, userClients: QOtrClientIdMap): Unit
   def onSftResponse(wCall: WCall, data: Option[Array[Byte]], ctx: Pointer): Unit
 }
 
@@ -183,8 +184,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
           cs.onBitRateStateChanged(isEnabled)
       },
       new VideoReceiveStateHandler {
-        override def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit =
-          cs.onVideoStateChanged(userId, clientId, VideoState(state))
+        override def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit = {
+          val userIdWithoutDomain = userId.split("@").head
+          cs.onVideoStateChanged(userIdWithoutDomain, clientId, VideoState(state))
+        }
       },
       null
     )
@@ -193,7 +196,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       val participantChangedHandler = new ParticipantChangedHandler {
         override def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit = {
           ParticipantsChangeDecoder.decode(data).fold(()) { participantsChange =>
-            val participants = participantsChange.members.map(m => Participant(m.userid, m.clientid, m.muted == 1)).toSet
+            val participants = participantsChange.members.map(m => Participant(UserId(m.userid.str.split("@").head), m.clientid, m.muted == 1)).toSet
             cs.onParticipantsChanged(RConvId(convId), participants)
 
             import AvsClientList._
@@ -226,7 +229,11 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
       val clientsRequestHandler = new ClientsRequestHandler {
         override def onClientsRequest(inst: Calling.Handle, convId: String, arg: Pointer): Unit = {
-          cs.onClientsRequest(RConvId(convId)) //TODO
+          val conv  = convId.split("@").head
+          val domain  = convId.split("@").last
+          if(BuildConfig.FEDERATION_USER_DISCOVERY)
+            cs.onQualifiedClientsRequest(RConvQualifiedId(RConvId(conv), domain))
+          else cs.onClientsRequest(RConvId(convId))
       }}
 
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)
@@ -298,6 +305,20 @@ class AvsImpl() extends Avs with DerivedLogTag {
     val clients = userClients.entries.flatMap { case (userId, clientIds) =>
       clientIds.map { clientId =>
         AvsClient(userId.str, clientId.str)
+      }
+    }
+
+    val json = encode(AvsClientList(clients.toSeq))
+    withAvs(wcall_set_clients_for_conv(wCall, convId.str, json))
+  }
+
+  override def onQualifiedClientsRequest(wCall: WCall, convId: RConvId, userClients: QOtrClientIdMap): Unit = {
+    import AvsClientList._
+
+    val clients = userClients.entries.flatMap { case (userId, clientIds) =>
+      clientIds.map { clientId =>
+        val userIdWithDomain = s"${userId.id.str}@${userId.domain}"
+        AvsClient(userIdWithDomain, clientId.str)
       }
     }
 

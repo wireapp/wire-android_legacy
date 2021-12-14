@@ -433,6 +433,16 @@ class CallingServiceImpl(val accountId:       UserId,
       }
     }
 
+  def onQualifiedClientsRequest(convId: RConvQualifiedId): Future[Unit] =
+    withConv(convId.id) { (wCall, conv) =>
+      otrSyncHandler.postClientDiscoveryMessage(convId).map {
+        case Right(clients) =>
+          avs.onQualifiedClientsRequest(wCall, conv.remoteId, clients)
+        case Left(errorResponse) =>
+          warn(l"Could not post client discovery message: $errorResponse")
+      }
+    }
+
   override def startCall(convId: ConvId,
                          isVideo: Boolean = false,
                          forceOption: Boolean = false,
@@ -569,7 +579,8 @@ class CallingServiceImpl(val accountId:       UserId,
         case c => c
       }
       verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
-      if (state != NoCameraPermission) avs.setVideoSendState(w, conv.remoteId, targetSt)
+      val convIdWithDomain = getConvIdWithDomain(conv.remoteId.str, conv.domain.str)
+      if (state != NoCameraPermission) avs.setVideoSendState(w, convIdWithDomain, targetSt)
       call.updateVideoState(Participant(accountId, clientId), targetSt)
     }("setVideoSendState")
 
