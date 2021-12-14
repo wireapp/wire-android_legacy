@@ -68,6 +68,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   val selfUserId      = UserId("self-user")
   val selfClientId    = ClientId("selfClient")
+  val domain          = Domain("domain")
   val selfParticipant = Participant(selfUserId, selfClientId)
   val selfUserData    = UserData.withName(selfUserId, "")
 
@@ -1193,7 +1194,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (usersStorage.get _).expects(selfUserId).anyNumberOfTimes().returning(Future.successful(Some(selfUserData)))
 
     val s = new CallingServiceImpl(
-      selfUserId, selfClientId, null, avs, convs, convsService, members, otrSyncHandler,
+      selfUserId, selfClientId, domain, null, avs, convs, convsService, members, otrSyncHandler,
       flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, httpProxy = None
     )
     result(s.wCall)
