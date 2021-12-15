@@ -138,6 +138,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
         service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
       }
+      service.getConvIdWithDomain _.expects(*, *).onCall({(_, _) => RConvId(_1to1Conv.remoteId.str)})
 
       clock.advance(10.seconds)
       service.endCall(_1to1Conv.id)
