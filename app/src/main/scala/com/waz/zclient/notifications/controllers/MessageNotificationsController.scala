@@ -65,7 +65,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
 
   private lazy val notificationManager   = inject[NotificationManagerWrapper]
 
-  private lazy val selfId                = inject[Signal[Option[UserId]]]
+  private lazy val selfId                = inject[Signal[UserId]]
   private lazy val soundController       = inject[SoundController]
   private lazy val navigationController  = inject[NavigationController]
   private lazy val convController        = inject[ConversationController]
@@ -73,6 +73,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   private lazy val userStorage           = inject[Signal[UsersStorage]]
   private lazy val teamsStorage          = inject[TeamsStorage]
   private lazy val userPrefs             = inject[Signal[UserPreferences]]
+  private lazy val accountStorage        = inject[AccountStorage]
 
   def initialize(): Unit = {
     /*
@@ -80,8 +81,15 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       with those notifications. This is separate from removing notifications from the storage and may
       sometimes be inconsistent (notifications in the tray may stay longer than in the storage).
     */
+    verbose(l"FCM initialize")
     notificationsSourceVisible.filter(_.nonEmpty).onUi { ids =>
       ids.foreach { case (userId, convs) => cancelNotifications(userId, convs) }
+    }
+
+    accountStorage.onDeleted.onUi { removedAccounts =>
+      removedAccounts.foreach { userId =>
+        convsStorage.head.flatMap(_.keySet).foreach(convs => cancelNotifications(userId, convs))
+      }
     }
   }
 
@@ -91,15 +99,16 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
         Signal.const(Map.empty)
       case true =>
         navigationController.visiblePage.zip(selfId).flatMap {
-          case (Page.CONVERSATION_LIST, Some(id)) =>
-            convsStorage.flatMap(_.contents.map(_.keySet)).map(convs => Map(id -> convs))
-          case (Page.MESSAGE_STREAM, Some(id)) =>
+          case (Page.MESSAGE_STREAM, id) =>
             convController.currentConvIdOpt.map {
               case Some(convId) => Map(id -> Set(convId))
               case _            => Map.empty
             }
-          case _ =>
-            Signal.const(Map.empty)
+          case (_, id) =>
+            for {
+              storage <- convsStorage
+              convIds <- Signal.from(storage.keySet)
+            } yield Map(id -> convIds)
         }
     }
 
@@ -129,8 +138,8 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       separator = ""
     )
     for {
-      Some(accountId) <- selfId.head
-      color           <- notificationColor(accountId)
+      accountId <- selfId.head
+      color     <- notificationColor(accountId)
     } yield {
       val props = NotificationProps(
         accountId,
