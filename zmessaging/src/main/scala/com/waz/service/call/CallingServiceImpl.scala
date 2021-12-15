@@ -217,21 +217,38 @@ class CallingServiceImpl(val accountId:       UserId,
       else RConvId(convId)
   }
 
+  def onQSend(ctx: Pointer, msg: String, convId: RConvId, targetRecipients: Option[AvsClientList]): Future[Unit] =
+    withConv(convId) { (wCall, conv) =>
+      val recipients = targetRecipients match {
+        case Some(clientList) => QTargetRecipients.SpecificClients(qClientsMap(clientList.clients.toSet))
+        case None => QTargetRecipients.ConversationParticipants
+      }
+
+      sendQCallMessage(wCall, conv.id, GenericMessage(Uid(), GenericContent.Calling(msg)), recipients, ctx)
+    }
+
   def onSend(ctx: Pointer, msg: String, convId: RConvId, targetRecipients: Option[AvsClientList]): Future[Unit] =
     withConv(convId) { (wCall, conv) =>
       val recipients = targetRecipients match {
-        case Some(clientList) => QTargetRecipients.SpecificClients(clientsMap(clientList.clients.toSet))
-        case None => QTargetRecipients.ConversationParticipants
+        case Some(clientList) => TargetRecipients.SpecificClients(clientsMap(clientList.clients.toSet))
+        case None => TargetRecipients.ConversationParticipants
       }
 
       sendCallMessage(wCall, conv.id, GenericMessage(Uid(), GenericContent.Calling(msg)), recipients, ctx)
     }
 
-  private def clientsMap(avsClients: Set[AvsClient]): QOtrClientIdMap = QOtrClientIdMap {
+  private def qClientsMap(avsClients: Set[AvsClient]): QOtrClientIdMap = QOtrClientIdMap {
     avsClients
       .groupBy(_.userid)
       .mapValues(_.map(_.clientid))
       .map { case (userId, clientIds) => QualifiedId(UserId(userId), domain.str) -> clientIds.map(ClientId(_)) }
+  }
+
+  private def clientsMap(avsClients: Set[AvsClient]): OtrClientIdMap = OtrClientIdMap {
+    avsClients
+      .groupBy(_.userid)
+      .mapValues(_.map(_.clientid))
+      .map { case (userId, clientIds) => UserId(userId) -> clientIds.map(ClientId(_)) }
   }
 
   def onSftRequest(ctx: Pointer, url: String, data: String): Unit =
@@ -512,27 +529,45 @@ class CallingServiceImpl(val accountId:       UserId,
   override def continueDegradedCall(forceConstantBitRate: Boolean = false): Unit =
     currentCall.head.map {
       case Some(info) =>
-        (info.outstandingMsg, info.state) match {
-          case (Some(message), _)   => convs.storage.setUnknownVerification(info.convId).map(_ => sendOutstandingCallMessage(info.convId, message))
-          case (None, OtherCalling) => convs.storage.setUnknownVerification(info.convId).map(_ => startCall(info.convId, forceConstantBitRate = forceConstantBitRate))
+        (info.outstandingMsg, info.qOutstandingMsg, info.state) match {
+          case (Some(message), None, _)   => convs.storage.setUnknownVerification(info.convId).map(_ => sendOutstandingCallMessage(info.convId, message))
+          case (None, Some(message), _)   => convs.storage.setUnknownVerification(info.convId).map(_ => sendQOutstandingCallMessage(info.convId, message))
+          case (None, None, OtherCalling) => convs.storage.setUnknownVerification(info.convId).map(_ => startCall(info.convId, forceConstantBitRate = forceConstantBitRate))
           case _                    => error(l"Tried resending message on invalid info: ${info.convId} in state ${info.state}")
         }
       case None => warn(l"Tried to continue degraded call without a current active call")
     }
 
-  private def sendOutstandingCallMessage(convId: ConvId, message: QOutstandingMessage): Unit =
+  private def sendOutstandingCallMessage(convId: ConvId, message: OutstandingMessage): Unit =
     withConv(convId) { (wCall, _) =>
       sendCallMessage(wCall, convId, message.message, message.recipients, message.context)
     }
 
-  private def sendCallMessage(wCall: WCall, convId: ConvId, msg: GenericMessage, targetRecipients: QTargetRecipients, ctx: Pointer): Unit =
-    otrSyncHandler.postQualifiedOtrMessage(convId, msg, isHidden = true, targetRecipients).map {
+  private def sendQOutstandingCallMessage(convId: ConvId, message: QOutstandingMessage): Unit =
+    withConv(convId) { (wCall, _) =>
+      sendQCallMessage(wCall, convId, message.message, message.recipients, message.context)
+    }
+
+  private def sendCallMessage(wCall: WCall, convId: ConvId, msg: GenericMessage, targetRecipients: TargetRecipients, ctx: Pointer): Unit =
+    otrSyncHandler.postOtrMessage(convId, msg, isHidden = true, targetRecipients).map {
       case Right(_) =>
         updateActiveCall(_.copy(outstandingMsg = None))("sendCallMessage/verified")
         avs.onHttpResponse(wCall, 200, "", ctx)
       case Left(ErrorResponse.Unverified) =>
         warn(l"Conversation degraded, delay sending message on behalf of AVS")
-        updateActiveCall(_.copy(outstandingMsg = Some(QOutstandingMessage(msg, targetRecipients, ctx))))("sendCallMessage/unverified")
+        updateActiveCall(_.copy(outstandingMsg = Some(OutstandingMessage(msg, targetRecipients, ctx))))("sendCallMessage/unverified")
+      case Left(ErrorResponse(code, errorMsg, label)) =>
+        avs.onHttpResponse(wCall, code, errorMsg, ctx)
+    }
+
+  private def sendQCallMessage(wCall: WCall, convId: ConvId, msg: GenericMessage, targetRecipients: QTargetRecipients, ctx: Pointer): Unit =
+    otrSyncHandler.postQualifiedOtrMessage(convId, msg, isHidden = true, targetRecipients).map {
+      case Right(_) =>
+        updateActiveCall(_.copy(qOutstandingMsg = None))("sendCallMessage/verified")
+        avs.onHttpResponse(wCall, 200, "", ctx)
+      case Left(ErrorResponse.Unverified) =>
+        warn(l"Conversation degraded, delay sending message on behalf of AVS")
+        updateActiveCall(_.copy(qOutstandingMsg = Some(QOutstandingMessage(msg, targetRecipients, ctx))))("sendCallMessage/unverified")
       case Left(ErrorResponse(code, errorMsg, label)) => {
         avs.onHttpResponse(wCall, code, errorMsg, ctx)
     }
