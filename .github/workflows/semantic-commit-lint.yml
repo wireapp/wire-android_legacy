@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CUSTOM_PR_LABEL: "Fix PR Title 🤦‍♂️"
+      CUSTOM_PR_LABEL: "Fix Title or Message"
     steps:
       - name: Checkout
         uses: actions/checkout@v2

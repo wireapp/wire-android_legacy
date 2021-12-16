@@ -1,0 +1,42 @@
+version: '3'
+services:
+    wire-android-build-server:
+        build:
+            context: .
+            dockerfile: agent/builder-agent
+        image: builder-agent:latest
+        container_name: wire-android-build-server
+        environment:
+            - FLAVOR_TYPE=FDroid
+            - BUILD_TYPE=Debug
+            - PATCH_VERSION=0
+            - CLEAN_PROJECT_BEFORE_BUILD=true
+            - RUN_APP_UNIT_TESTS=false
+            - RUN_STORAGE_UNIT_TESTS=true
+            - RUN_ZMESSAGE_UNIT_TEST=false
+            - BUILD_CLIENT=true
+            #### Signing Vars (KEYSTORE_PATH's home directory is the wire-android folder inside the docker container, start from there e.g. app/keystorefile.keystore)
+            #- SIGN_APK=true
+            #- KEYSTORE_PATH=your-path-to-your-keystore-file
+            #- KSTOREPWD=your-keystore-password
+            #- KEYPWD=your-key-password
+            #- KEYSTORE_KEY_NAME=your-key-name
+            ###### needed for custom client compilation
+            #- CUSTOM_REPOSITORY=https://github.com/wireapp/wire-android-custom-example
+            #- CUSTOM_FOLDER=example-co
+            #- CLIENT_FOLDER=client2
+            #- GRGIT_USER="your-github-api-token-or-user-name"
+            #- GRGIT_PASSWORD="your-github-password-only-when-using-username" #only outcomment this if you wanna use username and password instead of a github api token
+            #### Debug Options
+            #- BUILD_WITH_STACKTRACE=true
+        volumes:
+            - './:/home/android-agent/wire-android'
+        command: bash -c "./agent/configure-project.sh && ./agent/builder.sh"
+    # enable this service if you wanna check out the progress of the wire-androd-build-server on a webconsole over http://localhost:9999
+    #dozzle:
+    #    container_name: dozzle
+    #    image: amir20/dozzle:latest
+    #    volumes:
+    #        - /var/run/docker.sock:/var/run/docker.sock
+    #    ports:
+    #        - 9999:8080

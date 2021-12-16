@@ -1,13 +1,3 @@
-New:
-  New intuitive buttons for the call screen introduced 
-  Support for file-sharing restrictions
-
-Improved:
-  Performance tweaks
-
 Fixed:
-  Constant bitrate is indicated correctly in CBR calls
-  Messages sent while offline will be resent automatically after going online
-  Users could create conversations with someone who blocked them 
-  Fix to deep links opening conversations
-
+  Team-enforced self-deleting messages are now correctly disabling the button to change it
+  Fixed a bug where the receiver-side of self-deleting messages would fail to delete messages containing files, audios or images.

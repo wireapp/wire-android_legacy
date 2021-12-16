@@ -25,7 +25,7 @@ import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState}
-import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, Participant, QOutstandingMessage}
+import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessage, Participant, QOutstandingMessage}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.sync.otr.OtrSyncHandler.{QTargetRecipients, TargetRecipients}
 import com.waz.utils.returning
@@ -59,7 +59,8 @@ case class CallInfo(convId:             ConvId,
                     estabTime:          Option[LocalInstant]            = None, //the time that a joined call was established, if any
                     endTime:            Option[LocalInstant]            = None,
                     endReason:          Option[AvsClosedReason]         = None,
-                    outstandingMsg:     Option[QOutstandingMessage]      = None, //Any messages we were unable to send due to conv degradation
+                    outstandingMsg:     Option[OutstandingMessage]      = None, //Any messages we were unable to send due to conv degradation
+                    qOutstandingMsg:    Option[QOutstandingMessage]     = None,
                     shouldRing:         Boolean                         = true,
                     activeSpeakers:     Set[ActiveSpeaker]              = Set.empty
                    ) extends DerivedLogTag {

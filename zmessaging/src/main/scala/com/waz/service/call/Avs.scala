@@ -137,7 +137,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
               AvsClientList.decode(json).fold({ throw _ }, identity)
             }
 
-            cs.onSend(ctx, message, rConvId, targetRecipients)
+            if (BuildConfig.FEDERATION_USER_DISCOVERY)
+              cs.onQSend(ctx, message, rConvId, targetRecipients)
+            else cs.onSend(ctx, message, rConvId, targetRecipients)
+
             AvsCallbackError.None
           } catch {
             case e: Throwable =>
