@@ -67,7 +67,6 @@ object UserInfo {
       val mime = decodeString('content_type)(js)
       val size = decodeInt('content_length)(js)
       val data = decodeOptString('data)(js)
-      val id = RAssetId(decodeString('id)(js))
       implicit val info: JSONObject = js.getJSONObject("info")
 
       AssetData(
@@ -75,9 +74,7 @@ object UserInfo {
         sizeInBytes = size,
         mime = Mime(mime),
         metaData = Some(AssetMetaData.Image(Dim2('width, 'height), Image.Tag('tag))),
-        data = data.map(AssetData.decodeData),
-        convId = Some(RConvId(userId.str)), //v2 asset needs user conv for downloading
-        v2ProfileId = Some(id)
+        data = data.map(AssetData.decodeData)
       )
 
     }

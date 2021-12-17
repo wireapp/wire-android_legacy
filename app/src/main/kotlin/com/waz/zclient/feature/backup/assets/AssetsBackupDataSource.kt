@@ -40,8 +40,7 @@ class AssetsBackupMapper : BackUpDataMapper<AssetsBackUpModel, AssetsEntity> {
         size = entity.size,
         source = entity.source,
         preview = entity.preview,
-        details = entity.details,
-        conversationId = entity.conversationId
+        details = entity.details
     )
 
     override fun toEntity(model: AssetsBackUpModel) = AssetsEntity(
@@ -54,7 +53,6 @@ class AssetsBackupMapper : BackUpDataMapper<AssetsBackUpModel, AssetsEntity> {
         size = model.size,
         source = model.source,
         preview = model.preview,
-        details = model.details,
-        conversationId = model.conversationId
+        details = model.details
     )
 }

@@ -200,10 +200,6 @@ object ConversationData {
   object LegalHoldStatus {
     val Disabled = LegalHoldStatus(0)
     val Enabled = LegalHoldStatus(2)
-
-    // TODO: Delete at end of 2021.
-    @deprecated("'PendingApproval' status is no longer used. Existing occurrences should be treated as 'Enabled'")
-    val PendingApproval = LegalHoldStatus(1)
   }
 
   def getAccessAndRoleForGroupConv(teamOnly: Boolean, teamId: Option[TeamId]): (Set[Access], AccessRole) = {

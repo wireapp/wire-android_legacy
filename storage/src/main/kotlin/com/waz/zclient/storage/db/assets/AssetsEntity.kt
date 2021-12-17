@@ -35,8 +35,5 @@ data class AssetsEntity(
     val preview: String?,
 
     @ColumnInfo(name = "details", defaultValue = "")
-    val details: String,
-
-    @ColumnInfo(name = "conversation_id")
-    val conversationId: String?
+    val details: String
 )

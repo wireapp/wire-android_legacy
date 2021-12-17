@@ -36,28 +36,23 @@ import org.threeten.bp.Duration
 
 import scala.util.Try
 
-case class AssetData(override val id: AssetId               = AssetId(),
-                     mime:            Mime                  = Mime.Unknown,
-                     sizeInBytes:     Long                  = 0L,
-                     status:          AssetStatus           = AssetStatus.UploadNotStarted,
-                     remoteId:        Option[RAssetId]      = None,
-                     token:           Option[AssetToken]    = None,
-                     otrKey:          Option[AESKey]        = None,
-                     sha:             Option[Sha256]        = None,
-                     encryption:      Option[EncryptionAlgorithm] = None,
-                     name:            Option[String]        = None,
-                     previewId:       Option[AssetId]       = None,
-                     metaData:        Option[AssetMetaData] = None,
-                     source:          Option[URI]           = None,
-                     proxyPath:       Option[String]        = None,
-                     //TODO remove v2 attributes when transition period is over
-                     convId:          Option[RConvId]       = None,
-                     //data only used for temporary caching and legacy reasons - shouldn't be stored in AssetsStorage where possible
-                     data:            Option[Array[Byte]]   = None,
-                     v2ProfileId:     Option[RAssetId]      = None,
-                     //TODO remove after v2 transtion period (eases database migration)
-                     assetType:       Option[AssetType]     = None
-                    ) extends Identifiable[AssetId] {
+final case class AssetData(override val id: AssetId               = AssetId(),
+                           mime:            Mime                  = Mime.Unknown,
+                           sizeInBytes:     Long                  = 0L,
+                           status:          AssetStatus           = AssetStatus.UploadNotStarted,
+                           remoteId:        Option[RAssetId]      = None,
+                           token:           Option[AssetToken]    = None,
+                           otrKey:          Option[AESKey]        = None,
+                           sha:             Option[Sha256]        = None,
+                           encryption:      Option[EncryptionAlgorithm] = None,
+                           name:            Option[String]        = None,
+                           previewId:       Option[AssetId]       = None,
+                           metaData:        Option[AssetMetaData] = None,
+                           source:          Option[URI]           = None,
+                           proxyPath:       Option[String]        = None,
+                           //data only used for temporary caching and legacy reasons - shouldn't be stored in AssetsStorage where possible
+                           data:            Option[Array[Byte]]   = None
+                          ) extends Identifiable[AssetId] {
 
   import AssetData._
 
@@ -141,11 +136,7 @@ object AssetData {
   val Empty = AssetData()
 
   object WithRemoteData {
-    def unapply(asset: AssetData): Option[RemoteData] = (asset.remoteData, asset.v2ProfileId) match {
-      case (Some(remoteData), _)  => Some(remoteData)
-      case (_, Some(v2ProfileId)) => Some(RemoteData(Some(v2ProfileId)))
-      case _ => None
-    }
+    def unapply(asset: AssetData): Option[RemoteData] = asset.remoteData
   }
 
   object WithExternalUri {
@@ -262,7 +253,6 @@ object AssetData {
       data.metaData     foreach (v => o.put("metaData",     JsonEncoder.encode(v)))
       data.source       foreach (v => o.put("source",       v.toString))
       data.proxyPath    foreach (v => o.put("proxyPath",    v))
-      data.convId       foreach (v => o.put("convId",       v.str))
       data.data64       foreach (v => o.put("data64",       v))
     }
   }
@@ -285,9 +275,7 @@ object AssetData {
         opt[AssetMetaData]('metaData),
         decodeOptString('source).map(URI.parse),
         'proxyPath,
-        'convId,
-        decodeOptString('data).map(decodeData),
-        decodeOptRAssetId('v2ProfileId)
+        decodeOptString('data).map(decodeData)
       )
     }
   }
@@ -300,16 +288,15 @@ object AssetData {
     override def apply(implicit js: JSONObject): AssetData = {
       //verbose(s"decoding ImageAssetData: $js")
       val id = decodeId[AssetId]('id)
-      val convId = decodeOptRConvId('convId)
 
       Try(js.getJSONArray("versions")).toOption.flatMap { arr =>
-        Seq.tabulate(arr.length())(arr.getJSONObject).map{ obj =>
+        Seq.tabulate(arr.length())(arr.getJSONObject).map { obj =>
           //verbose(s"applying ImageDataDecoder to $obj")
           ImageDataDecoder.apply(obj)
-        }.collect {
-          case a@AssetData.IsImageWithTag(Image.Tag.Medium) => a.copy(id = id, convId = convId)
-        }.headOption
-      }.getOrElse(AssetData(id, convId = convId))
+        }.collectFirst {
+          case a@AssetData.IsImageWithTag(Image.Tag.Medium) => a.copy(id = id)
+        }
+      }.getOrElse(AssetData(id))
     }
   }
 
@@ -365,7 +352,6 @@ object AssetData {
         mime = mime,
         sizeInBytes = 'sizeInBytes,
         name = 'name,
-        convId = decodeOptRConvId('convId),
         source = source
       )
 

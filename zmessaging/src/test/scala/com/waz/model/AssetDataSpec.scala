@@ -69,8 +69,7 @@ class AssetDataSpec extends AndroidFreeSpec with TableDrivenPropertyChecks with 
     name          <- optGen(alphaNumStr)
     source        <- optGen(arbitrary[URI])
     proxyPath     <- optGen(arbitrary[String])
-    convId        <- optGen(arbitrary[RConvId])
-  } yield AssetData(id, mime, sizeInBytes, UploadNotStarted, None, None, None, None, None, name, None, None, source, None, convId, None))
+  } yield AssetData(id, mime, sizeInBytes, UploadNotStarted, None, None, None, None, None, name, None, None, source, proxyPath, None))
 
   private def arbitraryAssetData: List[AssetData] = (1 to 10).flatMap(_ => arbAssetData.arbitrary.sample).toList
 
@@ -134,21 +133,12 @@ class AssetDataSpec extends AndroidFreeSpec with TableDrivenPropertyChecks with 
   }
 
 
-  /*feature("ImageAssetData") {
-
-    scenario("Sort image with broken meta-data") {
-      fail()
-      //      val data = Seq(AssetData(metaData = Some(AssetMetaData.Image(Dim2(280, 280), "smallProfile")), remoteId = Some(RAssetId())), AssetData(metaData = Some(AssetMetaData.Image(Dim2(960, 960), "medium")), remoteId = Some(RAssetId())))
-      //      data.sorted shouldEqual data
-    }
-  }*/
-
   feature("AnyAssetData.updated") {
 
     val id = AssetId()
     val conv = RConvId()
     val mime = Mime("text/plain")
-    lazy val asset = AssetData(id = id, mime = mime, sizeInBytes = 100, convId = Some(conv), status = UploadInProgress, name = Some("file.txt"))
+    lazy val asset = AssetData(id = id, mime = mime, sizeInBytes = 100, status = UploadInProgress, name = Some("file.txt"))
 
     //TODO Dean - test merging asset data
   }

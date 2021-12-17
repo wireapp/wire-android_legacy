@@ -44,7 +44,7 @@ class ReplyHashingSpec extends AndroidFreeSpec {
 
   private val rt = RemoteInstant.Epoch
 
-  def fakeAsset(assetId: AssetId) = Asset(assetId, None, Sha256.Empty, Mime.Unknown, NoEncryption, None, None, "", 0, BlobDetails, None)
+  def fakeAsset(assetId: AssetId) = Asset(assetId, None, Sha256.Empty, Mime.Unknown, NoEncryption, None, None, "", 0, BlobDetails)
 
   val assetStorage = mock[AssetStorage]
 
