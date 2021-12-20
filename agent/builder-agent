@@ -1,0 +1,55 @@
+FROM openjdk:8
+
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get update && \
+    apt-get install -yq libc6 libstdc++6 zlib1g libncurses5 build-essential libssl-dev ruby ruby-dev --no-install-recommends docker.io vim && \
+    apt-get clean
+
+RUN gem install bundler
+
+# Cleaning
+RUN apt-get clean
+
+ARG USER=android-agent
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN useradd -m ${USER} --uid=${USER_ID}
+USER ${USER_ID}:${GROUP_ID}
+ENV HOME /home/${USER}
+WORKDIR ${HOME}
+
+RUN mkdir ${HOME}/wire-android
+RUN chown ${USER_ID}:${GROUP_ID} ${HOME}/wire-android
+
+# Download and untar Android SDK tools
+ENV ANDROID_HOME ${HOME}/android-sdk
+ENV ANDROID_SDK ${ANDROID_HOME}
+RUN wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip -O tools.zip && \
+    unzip tools.zip -d ${ANDROID_HOME} && \
+    rm tools.zip
+
+# Download and untar Android NDK tools
+ENV ANDROID_NDK_HOME ${HOME}/android-ndk
+ENV ANDROID_NDK_VERSION r20
+RUN wget -q https://dl.google.com/android/repository/android-ndk-${ANDROID_NDK_VERSION}-linux-x86_64.zip -O ndk-tools.zip && \
+    unzip ndk-tools.zip "android-ndk-${ANDROID_NDK_VERSION}/*" -d ${ANDROID_NDK_HOME} && \
+    mv ${ANDROID_NDK_HOME}/android-ndk-${ANDROID_NDK_VERSION}/* ${ANDROID_NDK_HOME}/ && \
+    rm -rf ${ANDROID_NDK_HOME}/android-ndk-${ANDROID_NDK_VERSION} && \
+    rm ndk-tools.zip
+
+
+ENV PATH ${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator:${ANDROID_HOME}/tools/bin:${ANDROID_NDK_HOME}:$PATH
+
+#define the values to install/setup via the sdk manager
+ARG BUILD_TOOLS_VERSION=30.0.2
+ARG PLATFORMS_VERSION=android-29
+ARG ARCHITECTURE=x86
+
+# Make license agreement
+RUN yes | ${ANDROID_HOME}/tools/bin/sdkmanager --licenses
+
+# Update and install using sdkmanager
+RUN ${ANDROID_HOME}/tools/bin/sdkmanager "tools" "platform-tools" "build-tools;${BUILD_TOOLS_VERSION}" "platforms;${PLATFORMS_VERSION}" "system-images;${PLATFORMS_VERSION};default;${ARCHITECTURE}" "extras;android;m2repository" "extras;google;m2repository"
+
+WORKDIR ${HOME}/wire-android

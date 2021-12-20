@@ -150,16 +150,12 @@ class EphemeralMessagesService(selfUserId: UserId,
     else if (msg.isAssetMessage)
       // check if asset was fully uploaded
       msg.genericMsgs.exists(_.unpackContent match {
-        case eph: Ephemeral =>
-          eph.unpackContent match {
-            case asset: Asset =>
-              val status = asset.unpack._1.status
-              status == UploadDone || status == UploadFailed
-            case image: ImageAsset =>
-              val status = image.unpack.status
-              status == UploadDone || status == UploadFailed
-            case _ => false
-          }
+        case asset: Asset =>
+          val status = asset.unpack._1.status
+          status == UploadDone || status == UploadFailed
+        case image: ImageAsset =>
+          val status = image.unpack.status
+          status == UploadDone || status == UploadFailed
         case _ => false
       })
     else true

@@ -64,7 +64,7 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
   def initService: ConversationsUiService = {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs, userPrefs)
-    new ConversationsUiServiceImpl(selfId, team, assetService, users, messages, messagesStorage,
+    new ConversationsUiServiceImpl(selfId, team, domain, assetService, users, messages, messagesStorage,
       msgContent, members, convsContent, convsStorage, network, convsService, sync, requests, client,
       accounts, tracking, errors, uriHelper, properties)
   }

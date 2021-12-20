@@ -54,13 +54,12 @@ class GroupParticipantsFragment extends FragmentHelper {
 
   private lazy val participantsView = view[RecyclerView](R.id.pgv__participants)
 
-  lazy val showAddParticipants = for {
+  lazy val showAddParticipants: Signal[Boolean] = for {
     conv         <- participantsController.conv
-    isGroupOrBot <- participantsController.isGroupOrBot
+    flags        <- participantsController.flags
+    isGroupOrBot =  flags.isGroup || flags.hasBot
     hasPerm      <- participantsController.selfRole.map(_.canAddGroupMember)
   } yield conv.isActive && isGroupOrBot && hasPerm
-
-  lazy val shouldEnableAddParticipants = participantsController.otherParticipants.map(_.size + 1 < ConversationController.MaxParticipants)
 
   private lazy val footerMenu = returning(view[FooterMenu](R.id.fm__participants__footer)) { fm =>
     showAddParticipants.map {
@@ -75,7 +74,10 @@ class GroupParticipantsFragment extends FragmentHelper {
     }.map(getString)
      .onUi(t => fm.foreach(_.setLeftActionLabelText(t)))
 
-    shouldEnableAddParticipants.onUi(e => fm.foreach(_.setLeftActionEnabled(e)))
+    participantsController
+      .otherParticipants
+      .map(_.size + 1 < ConversationController.MaxParticipants)
+      .onUi(e => fm.foreach(_.setLeftActionEnabled(e)))
   }
 
   private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.participants, Some(7))) { adapter =>

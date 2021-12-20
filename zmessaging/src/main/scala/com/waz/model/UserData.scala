@@ -137,15 +137,35 @@ final case class UserData(override val id:       UserId,
     }
   }
 
-  def isGuest(ourTeamId: TeamId): Boolean = isGuest(Some(ourTeamId))
+  def isGuest(ourTeamId: Option[TeamId], ourDomain: Domain = Domain.Empty): Boolean = {
+    val isNotSameTeam = ourTeamId.isDefined && teamId != ourTeamId
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      val isSameDomain = ourDomain == domain
+      isNotSameTeam || !isSameDomain
+    } else {
+      isNotSameTeam
+    }
+  }
 
-  def isGuest(ourTeamId: Option[TeamId]): Boolean = ourTeamId.isDefined && teamId != ourTeamId
+  def isExternal(ourTeamId: Option[TeamId], ourDomain: Domain): Boolean = {
+    val isSameTeam = teamId.isDefined && teamId == ourTeamId
+    val hasPermission = decodeBitmask(permissions._1) == ExternalPermissions
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      isSameTeam && hasPermission && ourDomain == domain
+    } else {
+      isSameTeam && hasPermission
+    }
+  }
 
-  def isExternal(ourTeamId: Option[TeamId]): Boolean =
-    teamId.isDefined && teamId == ourTeamId && decodeBitmask(permissions._1) == ExternalPermissions
-
-  def isInTeam(otherTeamId: Option[TeamId]): Boolean = teamId.isDefined && teamId == otherTeamId
-
+  def isInTeam(otherTeamId: Option[TeamId], ourDomain: Domain): Boolean = {
+    val isSameTeam = teamId.isDefined && teamId == otherTeamId
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      val isSameDomain = ourDomain.isDefined && ourDomain == domain
+      isSameTeam && isSameDomain
+    } else {
+      isSameTeam
+    }
+  }
   def matchesQuery(query: SearchQuery): Boolean =
     handle.exists(_.startsWithQuery(query.query)) ||
       (!query.handleOnly &&
@@ -218,7 +238,7 @@ object UserData {
 
   implicit object UserDataDao extends Dao[UserData, UserId] with StorageCodecs {
     val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.id)
-    val Domain = text[model.Domain]('domain, _.str, model.Domain(_))(_.domain)
+    val Domain = opt(text[model.Domain]('domain, _.str, model.Domain(_)))(u => Some(u.domain))
     val TeamId = opt(id[TeamId]('teamId))(_.teamId)
     val Name = text[model.Name]('name, _.str, model.Name(_))(_.name)
     val Email = opt(emailAddress('email))(_.email)
@@ -265,10 +285,14 @@ object UserData {
         case _                   => None
       }
 
+      def orEmpty(domain: Option[model.Domain]): model.Domain = domain.getOrElse(model.Domain.Empty)
+
       new UserData(
-        Id, Domain, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
-        rConvQualifiedId(Conversation, ConversationDomain), Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed,
-        Seq.empty, (SelfPermissions, CopyPermissions), CreatedBy
+        Id, orEmpty(Domain), TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn,
+        RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
+        rConvQualifiedId(Conversation, ConversationDomain), Rel, Timestamp, Verified, Deleted,
+        AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed, Seq.empty,
+        (SelfPermissions, CopyPermissions), CreatedBy
       )
     }
 

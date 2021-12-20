@@ -99,8 +99,8 @@ class ParticipantFragment extends ManagerFragment with ConversationScreenControl
           case Some(LegalHoldInfoFragment.Tag) =>
             createLegalHoldInfoFragment.map((_, LegalHoldInfoFragment.Tag))
           case _ =>
-            participantsController.isGroupOrBot.head.map {
-              case true if getStringArg(UserToOpenArg).isEmpty =>
+            participantsController.flags.head.map {
+              case flags if (flags.isGroup || flags.hasBot) && getStringArg(UserToOpenArg).isEmpty =>
                 (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
               case _ =>
                 (SingleParticipantFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg)), SingleParticipantFragment.Tag)

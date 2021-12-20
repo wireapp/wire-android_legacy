@@ -6,10 +6,7 @@ import org.ajoberstar.grgit.Credentials
 buildscript {
     repositories {
         mavenCentral()
-        maven {
-            name "ajoberstar-backup"
-            url "https://ajoberstar.github.io/bintray-backup/"
-        }
+        jcenter()
     }
     dependencies {
         classpath "org.ajoberstar.grgit:grgit-core:${Versions.GRGIT}"
@@ -44,10 +41,11 @@ def prepareCustomizationEnvironment() {
         throw new GradleException('Custom repo specified, but not client folder')
     }
 
-    def gitHubToken = System.getenv("GITHUB_API_TOKEN") ?: properties.getProperty("GITHUB_API_TOKEN") ?: ''
-    if (gitHubToken.isEmpty()) {
-        throw new GradleException('Custom repo specified, but no GitHub API token provided')
+    def grGitUser = System.getenv("GRGIT_USER") ?: properties.getProperty("GRGIT_USER") ?: ''
+    if (grGitUser.isEmpty()) {
+        throw new GradleException('Custom repo specified, but no grgit user provided')
     }
+    def grGitPassword = System.getenv("GRGIT_PASSWORD") ?: properties.getProperty("GRGIT_PASSWORD") ?: ''
 
     def customDirPath = customCheckoutDir + '/' + customFolder + '/' + clientFolder
     def customConfigFile = new File("$customDirPath/custom.json")
@@ -57,7 +55,7 @@ def prepareCustomizationEnvironment() {
         delete file(customCheckoutDir)
     }
 
-    def credentials = new Credentials(gitHubToken, '')
+    def credentials = new Credentials(grGitUser, grGitPassword)
     Grgit.clone(dir: customCheckoutDir, uri: customRepository, credentials: credentials)
     project.logger.quiet("Using custom repository $customRepository -> folder $customFolder")
 
