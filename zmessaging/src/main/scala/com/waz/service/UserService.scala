@@ -64,6 +64,7 @@ trait UserService {
   def qualifiedId(userId: UserId): Future[QualifiedId]
   def qualifiedIds(userIds: Set[UserId]): Future[Set[QualifiedId]]
   def getOrCreateUser(id: UserId, waitTillSynced: Boolean = false): Future[UserData]
+  def getOrCreateQualifiedUser(id: QualifiedId, waitTillSynced: Boolean = false): Future[UserData]
   def updateUserData(id: UserId, updater: UserData => UserData): Future[Option[(UserData, UserData)]]
   def syncIfNeeded(userIds: Set[UserId],
                    olderThan: FiniteDuration = SyncIfOlderThan,
@@ -260,18 +261,32 @@ class UserServiceImpl(selfUserId:        UserId,
       Future.successful(userIds.map(QualifiedId(_)))
     }
 
-  override def getOrCreateUser(id: UserId, waitTillSynced: Boolean = false): Future[UserData] = {
+  override def getOrCreateUser(id: UserId, waitTillSynced: Boolean = false): Future[UserData] =
     for {
       _    <- syncIfNeeded(Set(id), waitTillSynced = waitTillSynced)
-      user <- usersStorage.getOrCreate(id,
-                                       UserData(
-                                         id, currentDomain, None, Name.Empty, None, None,
-                                         connection = ConnectionStatus.Unconnected,
-                                         searchKey = SearchKey.Empty, handle = None
-                                       )
-                                     )
+      user <- usersStorage.getOrCreate(
+                id,
+                UserData(
+                  id, currentDomain, None, Name.Empty, None, None,
+                  connection = ConnectionStatus.Unconnected,
+                  searchKey = SearchKey.Empty, handle = None
+                )
+              )
     } yield user
-  }
+
+  override def getOrCreateQualifiedUser(qId: QualifiedId, waitTillSynced: Boolean = false): Future[UserData] =
+    for {
+      _    <- syncIfNeeded(qIds = Set(qId), waitTillSynced = waitTillSynced)
+      user <- usersStorage.getOrCreate(
+                qId.id,
+                UserData(
+                  qId.id, if (qId.hasDomain) Domain(qId.domain) else currentDomain,
+                  None, Name.Empty, None, None,
+                  connection = ConnectionStatus.Unconnected,
+                  searchKey = SearchKey.Empty, handle = None
+                )
+              )
+    } yield user
 
   override def updateConnectionStatus(id: UserId,
                                       status: UserData.ConnectionStatus,
@@ -374,7 +389,7 @@ class UserServiceImpl(selfUserId:        UserId,
   /**
    * Schedules user data sync if user with given id doesn't exist or has old timestamp.
   */
-  override def syncIfNeeded(userIds:         Set[UserId],
+  override def syncIfNeeded(userIds:         Set[UserId] = Set.empty,
                             olderThan:       FiniteDuration = SyncIfOlderThan,
                             qIds:            Set[QualifiedId] = Set.empty,
                             waitTillSynced:  Boolean = false): Future[Option[SyncId]] =
