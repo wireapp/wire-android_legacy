@@ -46,11 +46,12 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
-import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
+import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import com.waz.threading.Threading._
+import com.waz.zms.BuildConfig
 
 import scala.util.Try
 
@@ -59,13 +60,12 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   extends Injectable
     with NotificationUiController
     with DerivedLogTag {
-  import MessageNotificationsController._
   import Threading.Implicits.Background
   import EventContext.Implicits.global
 
   private lazy val notificationManager   = inject[NotificationManagerWrapper]
 
-  private lazy val selfId                = inject[Signal[Option[UserId]]]
+  private lazy val selfId                = inject[Signal[UserId]]
   private lazy val soundController       = inject[SoundController]
   private lazy val navigationController  = inject[NavigationController]
   private lazy val convController        = inject[ConversationController]
@@ -73,6 +73,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   private lazy val userStorage           = inject[Signal[UsersStorage]]
   private lazy val teamsStorage          = inject[TeamsStorage]
   private lazy val userPrefs             = inject[Signal[UserPreferences]]
+  private lazy val accountStorage        = inject[AccountStorage]
 
   def initialize(): Unit = {
     /*
@@ -80,8 +81,15 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       with those notifications. This is separate from removing notifications from the storage and may
       sometimes be inconsistent (notifications in the tray may stay longer than in the storage).
     */
+    verbose(l"FCM initialize")
     notificationsSourceVisible.filter(_.nonEmpty).onUi { ids =>
       ids.foreach { case (userId, convs) => cancelNotifications(userId, convs) }
+    }
+
+    accountStorage.onDeleted.onUi { removedAccounts =>
+      removedAccounts.foreach { userId =>
+        convsStorage.head.flatMap(_.keySet).foreach(convs => cancelNotifications(userId, convs))
+      }
     }
   }
 
@@ -91,15 +99,16 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
         Signal.const(Map.empty)
       case true =>
         navigationController.visiblePage.zip(selfId).flatMap {
-          case (Page.CONVERSATION_LIST, Some(id)) =>
-            convsStorage.flatMap(_.contents.map(_.keySet)).map(convs => Map(id -> convs))
-          case (Page.MESSAGE_STREAM, Some(id)) =>
+          case (Page.MESSAGE_STREAM, id) =>
             convController.currentConvIdOpt.map {
               case Some(convId) => Map(id -> Set(convId))
               case _            => Map.empty
             }
-          case _ =>
-            Signal.const(Map.empty)
+          case (_, id) =>
+            for {
+              storage <- convsStorage
+              convIds <- Signal.from(storage.keySet)
+            } yield Map(id -> convIds)
         }
     }
 
@@ -110,11 +119,11 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     verbose(l"showNotifications: $accountId, nots: $nots")
     for {
       teamName  <- fetchTeamName(accountId)
-      summaries <- createSummaryNotificationProps(accountId, nots, teamName).map(_.map(p => (toNotificationGroupId(accountId), p)))
-      convNots  <- createConvNotifications(accountId, nots, teamName).map(_.toMap)
+      summaries <- createSummaryNotificationProps(accountId, nots, teamName)
+      convNots  <- createConvNotifications(accountId, nots, teamName)
       _         <- Threading.Ui {
                      (convNots ++ summaries).foreach {
-                       case (id, props) => notificationManager.showNotification(id, props)
+                       notificationManager.showNotification
                      }
                    }.future
     } yield {}
@@ -129,8 +138,8 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       separator = ""
     )
     for {
-      Some(accountId) <- selfId.head
-      color           <- notificationColor(accountId)
+      accountId <- selfId.head
+      color     <- notificationColor(accountId)
     } yield {
       val props = NotificationProps(
         accountId,
@@ -145,7 +154,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
         contentText       = Some(contentText),
         style             = Some(StyleBuilder(StyleBuilder.BigText, title = contentTitle, bigText = Some(contentText)))
       )
-      notificationManager.showNotification(accountId.hashCode(), props)
+      notificationManager.showNotification(props)
     }
   }
 
@@ -178,29 +187,26 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     } else Future.successful(None)
   }
 
-  private def createConvNotifications(accountId: UserId, nots: Set[NotificationData], teamName: Option[Name]): Future[Iterable[(Int, NotificationProps)]] = {
+  private def createConvNotifications(accountId: UserId, nots: Set[NotificationData], teamName: Option[Name]): Future[Iterable[NotificationProps]] = {
     verbose(l"createConvNotifications: $accountId, ${nots.size}")
     if (nots.nonEmpty) {
-      val groupedConvs =
-        nots.toSeq.sortBy(_.time).groupBy(_.conv).map {
-          case (convId, ns) => toNotificationConvId(accountId, convId) -> ns
-        }
+      val groupedConvs = nots.toSeq.sortBy(_.time).groupBy(_.conv)
 
       val teamNameOpt = if (groupedConvs.keys.size > 1) None else teamName
 
       Future.sequence(groupedConvs.filter(_._2.nonEmpty).map {
-        case (notId, ns) =>
+        case (_, ns) =>
           for {
             commonProps   <- commonNotificationProperties(ns, accountId)
             specificProps <-
               if (ns.size == 1) singleNotificationProperties(commonProps, accountId, ns.head, teamNameOpt)
               else              multipleNotificationProperties(commonProps, accountId, ns, teamNameOpt)
-          } yield notId -> specificProps
+          } yield specificProps
       })
     } else Future.successful(Iterable.empty)
   }
 
-  private def commonNotificationProperties(ns: Seq[NotificationData], userId: UserId) =
+  private def commonNotificationProperties(ns: Seq[NotificationData], userId: UserId): Future[NotificationProps] =
     for {
       color <- notificationColor(userId)
       pic   <- getPictureForNotifications(userId, ns)
@@ -247,6 +253,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       val requestBase  = System.currentTimeMillis.toInt
       val bigTextStyle = StyleBuilder(StyleBuilder.BigText, title = title, summaryText = teamName.map(_.str), bigText = Some(body))
       val specProps = props.copy(
+        convId                   = Some(n.conv),
         contentTitle             = Some(title),
         contentText              = Some(body),
         style                    = Some(bigTextStyle),
@@ -275,7 +282,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       }
     }
 
-  private def getConvName(account: UserId, n: NotificationData) =
+  private def getConvName(account: UserId, n: NotificationData): Future[Name] =
     inject[AccountToConvsService].apply(account).flatMap {
       case Some(service) => service.conversationName(n.conv).head
       case None          => Future.successful(Name.Empty)
@@ -283,16 +290,21 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
 
   private def getUserName(account: UserId, n: NotificationData) =
     inject[AccountToUserService].apply(account).flatMap {
-      case Some(service) => service.getOrCreateUser(n.user, waitTillSynced = true).map(u => Some(u.name))
-      case None          => Future.successful(Option.empty[Name])
+      case Some(service) if BuildConfig.FEDERATION_USER_DISCOVERY && n.userDomain.isDefined =>
+        service.getOrCreateQualifiedUser(QualifiedId(n.user, n.userDomain.str), waitTillSynced = true).map(u => Some(u.name))
+      case Some(service) =>
+        service.getOrCreateUser(n.user, waitTillSynced = true).map(u => Some(u.name))
+      case None =>
+        Future.successful(Option.empty[Name])
     }
 
   private def isGroupConv(account: UserId, n: NotificationData) =
     if (n.isConvDeleted) Future.successful(true)
-    else inject[AccountToConvsService].apply(account).flatMap {
-      case Some(service) => service.isGroupConversation(n.conv)
-      case _ => Future.successful(false)
-    }
+    else
+      inject[AccountToConvsService].apply(account).flatMap {
+        case Some(service) => service.isGroupConversation(n.conv)
+        case _ => Future.successful(false)
+      }
 
   private def getMessage(account: UserId, n: NotificationData, singleConversationInBatch: Boolean): Future[SpannableWrapper] = {
     val message = n.msg.replaceAll("\\r\\n|\\r|\\n", " ")
@@ -381,21 +393,26 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     SpannableWrapper(header = header, body = body, spans = spans, separator = "")
   }
 
-  private def getPictureForNotifications(accountId: UserId, nots: Seq[NotificationData]): Future[Option[Bitmap]] =
-    if (nots.size == 1 && !nots.exists(_.ephemeral)) {
-      val result = for {
+  private def getPictureForNotifications(accountId: UserId, nots: Seq[NotificationData]): Future[Option[Bitmap]] = {
+    def picture(not: NotificationData): Future[Option[Bitmap]] =
+      (for {
         Some(service) <- inject[AccountToUserService].apply(accountId)
-        user          <- service.getOrCreateUser(nots.head.user, waitTillSynced = true)
+        user          <- if (BuildConfig.FEDERATION_USER_DISCOVERY && not.userDomain.isDefined)
+                           service.getOrCreateQualifiedUser(QualifiedId(not.user, not.userDomain.str), waitTillSynced = true)
+                         else
+                           service.getOrCreateUser(not.user, waitTillSynced = true)
         bitmap        <- user.picture.fold(Future.successful(Option.empty[Bitmap]))(loadPicture)
-      } yield bitmap
-
-      result.recoverWith {
+      } yield bitmap).recoverWith {
         case ex: Exception =>
           warn(l"Could not get avatar.", ex)
           Future.successful(None)
       }
-    }
-    else Future.successful(None)
+
+    if (nots.length != 1 || nots.head.ephemeral)
+      Future.successful(None)
+    else
+      picture(nots.head)
+  }
 
   private def loadPicture(picture: Picture): Future[Option[Bitmap]] = Try {
     Threading.ImageDispatcher {
@@ -430,7 +447,6 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   private def multipleNotificationProperties(props: NotificationProps, account: UserId, ns: Seq[NotificationData], teamName: Option[Name]): Future[NotificationProps] = {
     val convIds = ns.map(_.conv).toSet
     val isSingleConv = convIds.size == 1
-
     val n = ns.head
 
     for {
@@ -476,6 +492,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
 
       if (isSingleConv)
         specProps.copy(
+          convId                   = Some(n.conv),
           openConvIntent           = getOpenConvIntent(account, n, requestBase),
           clearNotificationsIntent = Some((account, Some(n.conv))),
           action1                  = getAction(account, n, requestBase, 1),
@@ -490,10 +507,3 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   }
 }
 
-object MessageNotificationsController {
-  def toNotificationGroupId(userId: UserId): Int = userId.str.hashCode()
-  def toNotificationConvId(userId: UserId, convId: ConvId): Int = (userId.str + convId.str).hashCode()
-
-  val ZETA_MESSAGE_NOTIFICATION_ID: Int = 1339272
-  val ZETA_EPHEMERAL_NOTIFICATION_ID: Int = 1339279
-}

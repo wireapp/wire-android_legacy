@@ -41,7 +41,7 @@ import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.GlobalPreferences
 import com.waz.model.UserId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
-import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
+import com.waz.zclient.notifications.controllers.AndroidNotificationsManager
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.threading.Threading._
