@@ -20,11 +20,11 @@ package com.waz.zclient
 import java.io.File
 import java.util.Calendar
 
-import android.app.{Activity, ActivityManager, NotificationChannel, NotificationManager}
+import android.app.{Activity, ActivityManager, NotificationManager}
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
 import android.media.AudioManager
-import android.os.{Build, PowerManager, Vibrator}
+import android.os.{PowerManager, Vibrator}
 import android.renderscript.RenderScript
 import android.telephony.TelephonyManager
 import android.util.Log
@@ -49,11 +49,11 @@ import com.waz.service.teams.{FeatureConfigsService, TeamsService}
 import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
-import com.waz.services.websocket.{WebSocketController, WebSocketService}
+import com.waz.services.websocket.WebSocketController
 import com.waz.sync.client.CustomBackendClient
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
-import com.waz.utils.{SafeBase64, returning}
+import com.waz.utils.SafeBase64
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
 import com.waz.zclient.assets.{AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
@@ -61,7 +61,7 @@ import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers._
-import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController, KeyboardController, PasswordController, SodiumHandler}
+import com.waz.zclient.common.controllers.global._
 import com.waz.zclient.controllers._
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation.IConfirmationController
@@ -79,7 +79,7 @@ import com.waz.zclient.legalhold.{LegalHoldApprovalHandler, LegalHoldController,
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.{MessageActionsController, NavigationController}
 import com.waz.zclient.messages.{LikesController, MessagePagedListController, MessageViewFactory, MessagesController, UsersController}
-import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
+import com.waz.zclient.notifications.controllers.AndroidNotificationsManager
 import com.waz.zclient.notifications.controllers._
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneController
@@ -470,27 +470,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     inject[SecurityPolicyChecker]
     inject[LegalHoldStatusChangeListener]
-
-    notificationChannel
   }
-
-  lazy val notificationChannel: Option[NotificationChannel] =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      Some(
-        returning(
-          new NotificationChannel(
-            WebSocketService.ForegroundNotificationChannelId,
-            getString(R.string.foreground_service_notification_name),
-            NotificationManager.IMPORTANCE_LOW)
-        ) { ch =>
-          ch.setDescription(getString(R.string.foreground_service_notification_description))
-          ch.enableVibration(false)
-          ch.setShowBadge(false)
-          ch.setSound(null, null)
-          inject[NotificationManager].createNotificationChannel(ch)
-        }
-      )
-    } else None
 
   lazy val messageNotificationsController: MessageNotificationsController = inject[MessageNotificationsController]
 

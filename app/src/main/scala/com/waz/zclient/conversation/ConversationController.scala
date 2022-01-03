@@ -169,22 +169,26 @@ class ConversationController(implicit injector: Injector, context: Context)
   }
 
   // this should be the only UI entry point to change conv in SE
-  def selectConv(convId: Option[ConvId], requester: ConversationChangeRequester): Future[Unit] = convId match {
-    case None => Future.successful({})
-    case Some(id) =>
-      val oldId = lastConvId
-      lastConvId = convId
-      for {
-        selectedConv <- selectedConv.head
-        convsUi      <- convsUi.head
-        conv         <- getConversation(id)
-        _            <- if (conv.exists(_.archived)) convsUi.setConversationArchived(id, archived = false)
-                        else Future.successful(Option.empty[ConversationData])
-        _            <- selectedConv.selectConversation(convId)
-      } yield { // catches changes coming from UI
-        verbose(l"changing conversation from $oldId to $convId, requester: $requester")
-        convChanged ! ConversationChange(from = oldId, to = convId, requester = requester)
-      }
+  def selectConv(convId: Option[ConvId], requester: ConversationChangeRequester): Future[Unit] = {
+    val oldId = lastConvId
+    verbose(l"changing conversation from $oldId to $convId, requester: $requester")
+    lastConvId = convId
+    convId match {
+      case None =>
+        selectedConv.head.map(_.selectConversation(None))
+      case Some(id) =>
+        for {
+          selectedConv <- selectedConv.head
+          convsUi      <- convsUi.head
+          conv         <- getConversation(id)
+          _            <- if (conv.exists(_.archived))
+                            convsUi.setConversationArchived(id, archived = false)
+                          else
+                            Future.successful(None)
+          _            <- selectedConv.selectConversation(convId)
+        } yield // catches changes coming from UI
+          convChanged ! ConversationChange(from = oldId, to = convId, requester = requester)
+    }
   }
 
   def selectConv(id: ConvId, requester: ConversationChangeRequester): Future[Unit] =

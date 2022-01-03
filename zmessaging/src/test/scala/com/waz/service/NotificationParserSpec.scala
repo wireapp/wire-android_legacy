@@ -7,6 +7,7 @@ import com.waz.service.call.CallingService
 import com.waz.service.otr.NotificationParser
 import com.waz.specs.AndroidFreeSpec
 import com.waz.zms.BuildConfig
+import com.wire.signals.Signal
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -34,8 +35,8 @@ class NotificationParserSpec extends AndroidFreeSpec {
     val senderId = UserId("sender")
     val event = DeleteConversationEvent(rConvId, domain, now, senderId, domain)
 
-    (usersStorage.get _).expects(selfId).anyNumberOfTimes().returning(
-      Future.successful(Some(self))
+    (usersStorage.signal _).expects(selfId).anyNumberOfTimes().returning(
+      Signal.const(self)
     )
     (convStorage.getByRemoteId _).expects(rConvId).anyNumberOfTimes().returning(
       Future.successful(Some(conv))

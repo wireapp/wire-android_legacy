@@ -206,7 +206,7 @@ trait LogShowInstancesSE {
   implicit val NotificationDataLogShow: LogShow[NotificationData] =
     LogShow.createFrom { n =>
       import n._
-      l"NotificationData(id: $id | conv: $conv | user: $user | msgType: $msgType | time: $time | isReply: $isReply | isSelfMentioned: $isSelfMentioned)"
+      l"NotificationData(conv: $conv | user: $user | msgType: $msgType | time: $time | isReply: $isReply | isSelfMentioned: $isSelfMentioned)"
     }
 
   implicit val TeamDataLogShow: LogShow[TeamData] =

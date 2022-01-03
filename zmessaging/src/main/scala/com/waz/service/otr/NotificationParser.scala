@@ -27,7 +27,7 @@ final class NotificationParserImpl(selfId:       UserId,
   import scala.language.existentials
   import Threading.Implicits.Background
 
-  private lazy val selfUser = usersStorage.get(selfId)
+  private val selfUser = usersStorage.signal(selfId)
 
   override def parse(events: Iterable[Event]): Future[Set[NotificationData]] =
     Future.traverse(events){
@@ -40,7 +40,7 @@ final class NotificationParserImpl(selfId:       UserId,
 
   private def parse(event: GenericMessageEvent) =
     (for {
-      Some(self)        <- selfUser
+      self              <- selfUser.head
       Some(conv)        <- convStorage.getByRemoteId(event.convId)
       (uid, msgContent) =  event.content.unpack
       notification      <- createNotification(uid, self, conv, event, msgContent)
@@ -51,40 +51,40 @@ final class NotificationParserImpl(selfId:       UserId,
       }
 
   private def parse(event: UserConnectionEvent) =
-    selfUser.map(_.flatMap { self =>
+    selfUser.head.map { self =>
       event match {
-        case UserConnectionEvent(_, _, _, from, _, msg, ConnectionStatus.PendingFromOther, time, _)
+        case UserConnectionEvent(_, _, _, from, fromDomain, msg, ConnectionStatus.PendingFromOther, time, _)
           if shouldShowNotification(self, from) =>
             Some(NotificationData(
-              NotId(NotificationType.CONNECT_REQUEST, from),
-              msg.getOrElse(""),
-              ConvId(from.str),
-              from,
-              NotificationType.CONNECT_REQUEST,
-              time
+              conv       = ConvId(from.str),
+              convDomain = fromDomain,
+              user       = from,
+              userDomain = fromDomain,
+              msg        = msg.getOrElse(""),
+              msgType    = NotificationType.CONNECT_REQUEST,
+              time       = time
             ))
-        case UserConnectionEvent(_, _, _, from, _, _, ConnectionStatus.Accepted, time, _)
+        case UserConnectionEvent(_, _, _, from, fromDomain, _, ConnectionStatus.Accepted, time, _)
           if shouldShowNotification(self, from) =>
             Some(NotificationData(
-              NotId(NotificationType.CONNECT_ACCEPTED, from),
-              "",
-              ConvId(from.str),
-              from,
-              NotificationType.CONNECT_ACCEPTED,
-              time
+              conv       = ConvId(from.str),
+              convDomain = fromDomain,
+              user       = from,
+              userDomain = fromDomain,
+              msgType    = NotificationType.CONNECT_ACCEPTED,
+              time       = time
             ))
         case _ => None
       }
-    })
+    }
 
   private def parse(event: RenameConversationEvent): Future[Option[NotificationData]] =
     (for {
-      Some(self) <- selfUser
+      self       <- selfUser.head
       Some(conv) <- convStorage.getByRemoteId(event.convId)
     } yield
       if (shouldShowNotification(self, conv, event.from, event.time))
         Some(NotificationData(
-          id      = NotId(),
           msg     = event.name.str,
           conv    = conv.id,
           user    = event.from,
@@ -99,7 +99,7 @@ final class NotificationParserImpl(selfId:       UserId,
 
   private def parse(event: DeleteConversationEvent): Future[Option[NotificationData]] =
     (for {
-      Some(self) <- selfUser
+      self       <- selfUser.head
       Some(conv) <- convStorage.getByRemoteId(event.convId)
     } yield
       if (shouldShowNotification(self, conv, event.from, event.time))
@@ -147,7 +147,6 @@ final class NotificationParserImpl(selfId:       UserId,
     else
       Future.successful {
         Some(NotificationData(
-          id              = NotId(uid.str),
           msg             = if (isEphemeral) "" else text,
           conv            = conv.id,
           user            = event.from,
@@ -177,7 +176,6 @@ final class NotificationParserImpl(selfId:       UserId,
         else NotificationType.ANY_ASSET
       Future.successful {
         Some(NotificationData(
-          id        = NotId(uid.str),
           conv      = conv.id,
           user      = event.from,
           msgType   = msgType,
@@ -198,7 +196,6 @@ final class NotificationParserImpl(selfId:       UserId,
     else
       Future.successful {
           Some(NotificationData(
-            id        = NotId(uid.str),
             conv      = conv.id,
             user      = event.from,
             msgType   = NotificationType.KNOCK,
@@ -229,7 +226,6 @@ final class NotificationParserImpl(selfId:       UserId,
               case _ => LikedContent.OTHER
             }
             Some(NotificationData(
-              id           = NotId(uid.str),
               msg          = if (ml.message.isEphemeral) "" else ml.message.contentString,
               conv         = conv.id,
               user         = event.from,
@@ -253,7 +249,6 @@ final class NotificationParserImpl(selfId:       UserId,
     else
       Future.successful {
         Some(NotificationData(
-          id        = NotId(uid.str),
           conv      = conv.id,
           user      = event.from,
           msgType   = NotificationType.LOCATION,
@@ -276,7 +271,6 @@ final class NotificationParserImpl(selfId:       UserId,
       }
       Future.successful {
         Some(NotificationData(
-          id        = NotId(uid.str),
           msg       = if (isEphemeral) "" else text.getOrElse(""),
           conv      = conv.id,
           user      = event.from,

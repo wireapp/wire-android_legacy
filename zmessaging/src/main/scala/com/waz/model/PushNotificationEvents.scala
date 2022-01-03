@@ -46,6 +46,9 @@ object PushNotificationEvents {
 
     def listDecrypted()(implicit db: DB): Vector[PushNotificationEvent] =
       list(db.query(table.name, null, s"${Decrypted.name} = 1", null, null, null, "event_index ASC"))
+
+    def listEncrypted()(implicit db: DB): Vector[PushNotificationEvent] =
+      list(db.query(table.name, null, s"${Decrypted.name} = 0", null, null, null, "event_index ASC"))
   }
 }
 

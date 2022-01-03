@@ -90,7 +90,8 @@ final class PushNotificationEventsStorageImpl(context: Context, storage: Databas
     }.future
   }
 
-  def encryptedEvents: Future[Seq[PushNotificationEvent]] = values.map(_.filter(!_.decrypted))
+  override def encryptedEvents: Future[IndexedSeq[PushNotificationEvent]] =
+    storage.read { implicit db => PushNotificationEventsDao.listEncrypted }
 
   override def getDecryptedRows: Future[IndexedSeq[PushNotificationEvent]] =
     storage.read { implicit db => PushNotificationEventsDao.listDecrypted }

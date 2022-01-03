@@ -32,7 +32,6 @@ import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
 import com.waz.service.otr.{EventDecrypter, OtrEventDecoder}
 import com.waz.service.push.PushService.SyncMode
-import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
@@ -114,37 +113,20 @@ final class PushServiceImpl(selfUserId:        UserId,
       verbose(l"processing new added events")
       val offset = System.currentTimeMillis()
       for {
-        _ <- Future.successful(processing ! true)
-        _ <- processEncryptedRows()
-        _ <- processDecryptedRows()
-        _ <- Future.successful(processing ! false)
-        _ = verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
-      } yield {}
+        _         <- Future.successful(processing ! true)
+        encrypted <- eventsStorage.encryptedEvents
+        _         <- otrEventDecrypter.processEncryptedEvents(encrypted)
+        decrypted <- eventsStorage.getDecryptedRows
+        decoded   =  decrypted.flatMap(otrEventDecoder.decode)
+        _         <- if (decoded.nonEmpty) pipeline(decoded) else Future.successful(())
+        _         <- eventsStorage.removeRows(decrypted.map(_.index))
+        _         <- Future.successful(processing ! false)
+        _         = verbose(l"events processing finished, time: ${System.currentTimeMillis() - offset}ms")
+      } yield ()
     }.recover {
       case ex =>
         processing ! false
         error(l"Unable to process events: $ex")
-    }
-
-  private def processEncryptedRows(): Future[Unit] =
-    eventsStorage.encryptedEvents.flatMap { rows =>
-      verbose(l"Processing ${rows.size} encrypted rows")
-      otrEventDecrypter.processEncryptedEvents(rows)
-    }
-
-  private def processDecryptedRows(): Future[Unit] =
-    eventsStorage.getDecryptedRows.flatMap { rows =>
-      verbose(l"Processing ${rows.size} rows")
-      if (rows.nonEmpty) {
-        for {
-          _ <- pipeline(rows.flatMap(ev => otrEventDecoder.decode(ev)))
-          _ =  verbose(l"pipeline work finished")
-          _ <- eventsStorage.removeRows(rows.map(_.index))
-          _ =  verbose(l"rows removed from the notification storage")
-          _ <- processDecryptedRows()
-          _ =  verbose(l"decrypted rows processed")
-        } yield {}
-      } else Future.successful(())
     }
 
   private val timeOffset = System.currentTimeMillis()
@@ -167,8 +149,9 @@ final class PushServiceImpl(selfUserId:        UserId,
         _   <- eventsStorage.saveAll(nots)
         res =  nots.lift(nots.lastIndexWhere(!_.transient))
         _   <- if (res.nonEmpty) idPref := res.map(_.id) else Future.successful(())
-      } yield None
-    } else Future.successful(None)
+      } yield ()
+    } else
+      Future.successful(())
 
   private def futureHistoryResults(notifications: Vector[PushNotificationEncoded] = Vector.empty,
                                    time:          Option[Instant] = None,
