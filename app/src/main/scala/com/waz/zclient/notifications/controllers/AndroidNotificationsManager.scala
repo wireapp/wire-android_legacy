@@ -4,8 +4,6 @@ import android.app.{Notification, NotificationChannel, NotificationChannelGroup,
 import android.content.Context
 import android.net.Uri
 import android.os.Build
-import android.service.notification.StatusBarNotification
-import androidx.core.app.NotificationCompatExtras
 import com.waz.content.GlobalPreferences
 import com.waz.content.Preferences.PrefKey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -14,7 +12,7 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.log.LogUI.{error, verbose}
-import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{IncomingCallNotificationsChannelId, MessageNotificationsChannelId, NotificationAccountId, NotificationConvId, OngoingNotificationsChannelId, PingNotificationsChannelId, WireNotificationsChannelGroupId, WireNotificationsChannelGroupName}
+import com.waz.zclient.notifications.controllers.NotificationManagerWrapper._
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.RingtoneUtils
 import com.waz.zclient.log.LogUI._
@@ -29,41 +27,47 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
 
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) buildNotificationChannels()
 
-  def showNotification(id: Int, notificationProps: NotificationProps): Unit = {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getNotificationChannel(notificationProps.channelId).isEmpty)
+  private var notsCounter = Map[UserId, Set[ConvId]]()
+
+  override def showNotification(props: NotificationProps): Unit = {
+    props.convId.foreach { convId =>
+      notsCounter += props.accountId -> (notsCounter.getOrElse(props.accountId, Set.empty) + convId)
+    }
+
+    val id = props.convId.fold(toNotificationGroupId(props.accountId))(toNotificationConvId(props.accountId, _))
+    val notification = props.build()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getNotificationChannel(props.channelId).isEmpty)
       buildNotificationChannels(enforce = true)
-    notificationManager.notify(id, notificationProps.build())
+        .foreach(_ => notificationManager.notify(id, notification))(Threading.Ui)
+    else
+      notificationManager.notify(id, notification)
   }
 
-  def getNotificationChannel(channelId: String): Option[NotificationChannel] =
+  private def toNotificationGroupId(accountId: UserId): Int = accountId.str.hashCode()
+  private def toNotificationConvId(accountId: UserId, convId: ConvId): Int = (accountId.str + convId.str).hashCode()
+
+  override def getNotificationChannel(channelId: String): Option[NotificationChannel] =
     Option(notificationManager.getNotificationChannel(channelId))
 
   override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit = {
     verbose(l"cancelNotifications($accountId, $convs)")
-    def isSummaryNotification(n: StatusBarNotification): Boolean =
-      n.getNotification.extras.getBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY)
 
-    def isInAccount(accountId: UserId, n: StatusBarNotification): Boolean =
-      n.getNotification.extras.getString(NotificationAccountId) == accountId.str
-
-    def isInConv(convId: ConvId, n: StatusBarNotification): Boolean =
-      n.getNotification.extras.getString(NotificationConvId) == convId.str
-
-    val (summaryNots, convNots) =
-      notificationManager.getActiveNotifications.toSeq.partition(isSummaryNotification)
-
-    val (toCancel, others) =
-      if (convs.isEmpty) convNots.partition(isInAccount(accountId, _))
-      else convNots.partition(n => convs.exists(convId => isInConv(convId, n)))
-
-    toCancel.foreach(n => notificationManager.cancel(n.getId))
-
-    if (others.isEmpty)
-      notificationManager.cancelAll()
-    else
-      summaryNots
-        .filter(summary => others.forall(_.getNotification.getGroup != summary.getNotification.getGroup))
-        .foreach(summary => notificationManager.cancel(summary.getId))
+    if (convs.isEmpty) {
+      notificationManager.cancel(toNotificationGroupId(accountId))
+      notsCounter -= accountId
+    } else
+      convs.foreach { convId =>
+        notificationManager.cancel(toNotificationConvId(accountId, convId))
+        notsCounter.get(accountId) match {
+          case Some(convIds) if convIds == Set(convId) =>
+            notificationManager.cancel(toNotificationGroupId(accountId))
+            notsCounter -= accountId
+          case Some(convIds) if convIds.nonEmpty =>
+            notsCounter += accountId -> (convIds - convId)
+          case None =>
+        }
+      }
   }
 
   private def getSound(pref: PrefKey[String], default: Int): Future[Option[Uri]] =
@@ -92,7 +96,7 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
       sound.foreach(uri => ch.setSound(uri, Notification.AUDIO_ATTRIBUTES_DEFAULT))
     }
 
-  private def buildNotificationChannels(enforce: Boolean = false): Unit = {
+  private def buildNotificationChannels(enforce: Boolean = false): Future[Unit] = {
     import Threading.Implicits.Background
 
     verbose(l"buildNotificationChannels")
@@ -146,7 +150,7 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
           )
         )
 
-    channels.foreach { chs =>
+    channels.map { chs =>
       verbose(l"recreating channels")
       try {
         notificationManager.deleteNotificationChannel(OngoingNotificationsChannelId)

@@ -17,11 +17,13 @@
  */
 package com.waz.zclient.notifications.controllers
 
+import android.app.NotificationChannel
 import com.waz.model.{ConvId, UserId}
 
 trait NotificationManagerWrapper {
-  def showNotification(id: Int, notificationProps: NotificationProps): Unit
+  def showNotification(notificationProps: NotificationProps): Unit
   def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit
+  def getNotificationChannel(channelId: String): Option[NotificationChannel]
 }
 
 object NotificationManagerWrapper {
@@ -31,8 +33,4 @@ object NotificationManagerWrapper {
   val OngoingNotificationsChannelId      = "STICKY_NOTIFICATIONS_CHANNEL_ID"
   val PingNotificationsChannelId         = "PINGS_NOTIFICATIONS_CHANNEL_ID"
   val MessageNotificationsChannelId      = "MESSAGE_NOTIFICATIONS_CHANNEL_ID"
-
-  val NotificationAccountId = "NOTIFICATION_ACCOUNT_ID"
-  val NotificationConvId = "NOTIFICATION_CONV_ID"
-  val NotificationFromId = "NOTIFICATION_FROM_ID"
 }

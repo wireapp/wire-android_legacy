@@ -17,7 +17,6 @@ import com.waz.zclient.{Intents, R}
 
 final case class NotificationProps(accountId:                UserId,
                                    convId:                   Option[ConvId] = None,
-                                   from:                     Option[UserId] = None,
                                    when:                     Option[Long] = None,
                                    showWhen:                 Option[Boolean] = None,
                                    category:                 Option[String] = None,
@@ -49,7 +48,6 @@ final case class NotificationProps(accountId:                UserId,
     format(className = "NotificationProps", oneLiner = false,
       "when"                     -> when,
       "convId"                   -> convId,
-      "from"                     -> from,
       "showWhen"                 -> showWhen,
       "category"                 -> category,
       "priority"                 -> priority,
@@ -89,14 +87,10 @@ final case class NotificationProps(accountId:                UserId,
       builder.setGroupSummary(summary)
       builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
     }
-    builder.setGroup(group.fold("")(_.str))
-
     builder.addExtras(returning(new Bundle()) { bundle =>
       bundle.putBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY, groupSummary.getOrElse(false))
-      bundle.putString(NotificationAccountId, accountId.str)
-      bundle.putString(NotificationConvId, convId.fold("")(_.str))
-      bundle.putString(NotificationFromId, from.fold("")(_.str))
     })
+    builder.setGroup(group.fold("")(_.str))
 
     openAccountIntent.foreach(userId => builder.setContentIntent(Intents.OpenAccountIntent(userId)))
 
