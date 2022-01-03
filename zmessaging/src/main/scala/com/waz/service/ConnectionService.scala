@@ -203,7 +203,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
    * Returns existing conversation if user is already connected.
    */
   private def connectToUser(qualifiedId: QualifiedId, message: String, name: Name): Future[Option[ConversationData]] = {
-    def connectIfUnconnected() = users.getOrCreateUser(qualifiedId.id).flatMap { user =>
+    def connectIfUnconnected() = users.getOrCreateQualifiedUser(qualifiedId).flatMap { user =>
       if (user.isConnected) {
         verbose(l"User already connected: $user")
         Future.successful(None)

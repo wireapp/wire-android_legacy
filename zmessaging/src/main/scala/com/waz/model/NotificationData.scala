@@ -23,6 +23,8 @@ import com.waz.utils.Identifiable
 
 final case class NotificationData(conv:              ConvId,
                                   user:              UserId,
+                                  convDomain:        Domain               = Domain.Empty,
+                                  userDomain:        Domain               = Domain.Empty,
                                   msg:               String               = "",
                                   msgType:           NotificationType     = NotificationType.TEXT,
                                   time:              RemoteInstant        = RemoteInstant.Epoch,
