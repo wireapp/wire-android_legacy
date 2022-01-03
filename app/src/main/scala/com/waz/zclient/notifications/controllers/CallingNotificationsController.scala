@@ -43,6 +43,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{IncomingCallNotificationsChannelId, OngoingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.RingtoneUtils
+import com.waz.zclient.messages.UsersController
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -145,9 +146,16 @@ final class CallingNotificationsController(implicit cxt: WireContext, inj: Injec
        NotificationData(conv = call.convId, user = call.from, msgType = NotificationType.MISSED_CALL, time = call.time)
       )
 
+  private lazy val usersController = inject[UsersController]
+
   missedCall.onUi { case (selfId, not) =>
-    cancelCallNotifications()
     notController.showNotifications(selfId, Set(not))
+    usersController.user(selfId).head.foreach {
+      case self if self.availability != Availability.Away =>
+        cancelCallNotifications()
+        notController.showNotifications(selfId, Set(not))
+      case _ =>
+    }
   }
 
   def cancelCallNotifications(): Unit =

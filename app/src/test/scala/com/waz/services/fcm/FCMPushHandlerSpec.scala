@@ -19,6 +19,7 @@ package com.waz.services.fcm
 
 import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.UserPreferences.LastStableNotification
+import com.waz.content.UsersStorage
 import com.waz.model.otr.ClientId
 import com.waz.model._
 import com.waz.service.call.CallingService
@@ -49,18 +50,20 @@ class FCMPushHandlerSpec extends FeatureSpec
     Threading.setAsDefault(dispatcher)
   }
 
-  private val client      = mock[PushNotificationsClient]
-  private val storage     = mock[PushNotificationEventsStorage]
-  private val decrypter   = mock[EventDecrypter]
-  private val decoder     = mock[OtrEventDecoder]
-  private val parser      = mock[NotificationParser]
-  private val calling     = mock[CallingService]
-  private val controller  = mock[NotificationUiController]
-  private val globalPrefs = new TestGlobalPreferences
-  private val userPrefs   = new TestUserPreferences
+  private val client       = mock[PushNotificationsClient]
+  private val storage      = mock[PushNotificationEventsStorage]
+  private val decrypter    = mock[EventDecrypter]
+  private val decoder      = mock[OtrEventDecoder]
+  private val parser       = mock[NotificationParser]
+  private val calling      = mock[CallingService]
+  private val usersStorage = mock[UsersStorage]
+  private val controller   = mock[NotificationUiController]
+  private val globalPrefs  = new TestGlobalPreferences
+  private val userPrefs    = new TestUserPreferences
 
   private def handler = FCMPushHandler(
-    userId, clientId, client, storage, decrypter, decoder, parser, controller, () => calling, globalPrefs, userPrefs
+    userId, clientId, client, storage, decrypter, decoder, parser,
+    controller, () => calling, () => usersStorage, globalPrefs, userPrefs
   )
 
   private def result[T](scenario: Future[T]): T = Await.result(scenario, 5.seconds)
