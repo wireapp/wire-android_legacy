@@ -342,6 +342,12 @@ object GlobalPreferences {
   // TODO: Remove after everyone migrates to UserPreferences.AppLockEnabled
   lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
   lazy val GlobalAppLockDeprecated: PrefKey[Boolean] = PrefKey[Boolean]("global_app_lock_deprecated", customDefault = false)
+
+  lazy val VibrateEnabled = PrefKey[Boolean]("vibrate_enabled", customDefault = false)
+  lazy val RecreateChannels = PrefKey[Boolean]("recreate_channels_3", customDefault = false)
+  lazy val RingTone = PrefKey[String]("ringtone_key")
+  lazy val TextTone = PrefKey[String]("text_key")
+  lazy val PingTone = PrefKey[String]("ping_key")
 }
 
 object UserPreferences {
@@ -385,17 +391,10 @@ object UserPreferences {
   lazy val GcmRegistrationTime = PrefKey[Instant]("gcm_registration_time")
   lazy val GcmRegistrationRetry = PrefKey[Int]("gcm_registration_retry_count")
 
-  lazy val RingTone = PrefKey[String]("ringtone_key")
-  lazy val TextTone = PrefKey[String]("text_key")
-  lazy val PingTone = PrefKey[String]("ping_key")
-
   lazy val VBREnabled = PrefKey[Boolean]("variable_bit_rate_enabled", customDefault = true)
-  lazy val VibrateEnabled = PrefKey[Boolean]("vibrate_enabled")
   lazy val SendButtonEnabled = PrefKey[Boolean]("send_button_enabled", customDefault = true)
   lazy val MessagePreview = PrefKey[Boolean]("message_previews_enabled", customDefault = true)
   lazy val HideScreenContent = PrefKey[Boolean]("hide_screen_content", customDefault = false)
-
-  lazy val CurrentNotifications = PrefKey[Set[Int]]("current_notifications", customDefault = Set.empty[Int])
 
   //increment number to perform slow sync on particular type
   lazy val ShouldSyncConversations = PrefKey[Boolean]("should_sync_conversations_2", customDefault = true)

@@ -149,7 +149,6 @@ final class PushServiceImpl(selfUserId:        UserId,
         _   <- eventsStorage.saveAll(nots)
         res =  nots.lift(nots.lastIndexWhere(!_.transient))
         _   <- if (res.nonEmpty) idPref := res.map(_.id) else Future.successful(())
-        _ = verbose(l"FCM ${nots.size} events saved")
       } yield ()
     } else
       Future.successful(())

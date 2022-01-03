@@ -23,7 +23,6 @@ import android.content.{BroadcastReceiver, Context, Intent}
 import com.waz.content.GlobalPreferences._
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.Preferences.Preference.PrefCodec
-import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{BackendConfig, ZMessaging}
 import com.waz.zclient.log.LogUI._
@@ -67,7 +66,7 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
       case FULL_CONVERSATION_INTENT =>
         setGlobalPref(ShouldCreateFullConversation, intent.getBooleanExtra(FULL_CONVERSATION_VALUE, true))
       case SILENT_MODE =>
-        Seq(RingTone, PingTone, TextTone).foreach(setUserPref(_, "silent"))
+        Seq(RingTone, PingTone, TextTone).foreach(setGlobalPref(_, "silent"))
       case SELECT_STAGING_BE => updateStoredBackendConfig(context: Context, Backend.StagingBackend)
       case SELECT_QA_BE => updateStoredBackendConfig(context: Context, Backend.QaBackend)
       case SELECT_PROD_BE => updateStoredBackendConfig(context: Context, Backend.ProdBackend)

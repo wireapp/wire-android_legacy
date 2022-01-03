@@ -170,7 +170,6 @@ object RAssetId {
 
 final case class MessageId(str: String) extends AnyVal {
   def uid: Uid = Uid(str)
-  def toNotificationId: NotId = NotId(str)
   override def toString: String = str
 }
 
@@ -280,23 +279,6 @@ object InvitationId extends (String => InvitationId) {
     override def random(): InvitationId = InvitationId(Uid().toString)
     override def decode(str: String): InvitationId = InvitationId(str)
   }
-}
-
-//NotificationId
-final case class NotId(str: String) extends AnyVal {
-  override def toString: String = str
-}
-
-object NotId {
-
-  implicit val id: Id[NotId] = new Id[NotId] {
-    override def random(): NotId = NotId(ZSecureRandom.nextLong().toHexString)
-    override def decode(str: String): NotId = NotId(str)
-  }
-
-  def apply(): NotId = id.random()
-  def apply(tpe: NotificationType, userId: UserId): NotId = NotId(s"$tpe-${userId.str}")
-  def apply(id: (MessageId, UserId)): NotId = NotId(s"$LIKE-${id._1.str}-${id._2.str}")
 }
 
 final case class ProviderId(str: String) extends AnyVal {

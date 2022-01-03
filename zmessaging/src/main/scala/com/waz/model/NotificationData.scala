@@ -21,18 +21,18 @@ import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType.LikedContent
 import com.waz.utils.Identifiable
 
-final case class NotificationData(override val id:   NotId                = NotId(),
+final case class NotificationData(conv:              ConvId,
+                                  user:              UserId,
+                                  convDomain:        Domain               = Domain.Empty,
+                                  userDomain:        Domain               = Domain.Empty,
                                   msg:               String               = "",
-                                  conv:              ConvId               = ConvId(),
-                                  user:              UserId               = UserId(),
                                   msgType:           NotificationType     = NotificationType.TEXT,
                                   time:              RemoteInstant        = RemoteInstant.Epoch,
                                   ephemeral:         Boolean              = false,
                                   isSelfMentioned:   Boolean              = false,
                                   likedContent:      Option[LikedContent] = None,
                                   isReply:           Boolean              = false,
-                                  hasBeenDisplayed:  Boolean              = false
-                                 ) extends Identifiable[NotId] {
+                                  hasBeenDisplayed:  Boolean              = false) {
   lazy val isConvDeleted: Boolean = msgType == NotificationType.CONVERSATION_DELETED
 }
 
