@@ -66,8 +66,7 @@ class AssetClientSpec extends ZIntegrationMockSpec with DerivedLogTag {
       preview = None,
       name = "test_content",
       size = testAssetContent.length,
-      details = BlobDetails,
-      convId = None
+      details = BlobDetails
     )
   }
 

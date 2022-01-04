@@ -3,7 +3,7 @@ package com.waz.service
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UserPreferences}
 import com.waz.model.ConversationData.LegalHoldStatus
-import com.waz.model.ConversationData.LegalHoldStatus.{Disabled, Enabled, PendingApproval}
+import com.waz.model.ConversationData.LegalHoldStatus.{Disabled, Enabled}
 import com.waz.model.GenericContent.Text
 import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.otr.{Client, ClientId, UserClients}
@@ -20,7 +20,7 @@ import com.waz.testutils.TestUserPreferences
 import com.waz.utils.JsonEncoder
 import com.waz.utils.crypto.AESUtils
 import com.wire.cryptobox.PreKey
-import com.wire.signals.{CancellableFuture, EventStream, Signal}
+import com.wire.signals.{CancellableFuture, Signal}
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
@@ -191,19 +191,6 @@ class LegalHoldServiceSpec extends AndroidFreeSpec {
       val service = createService()
       val convId = ConvId("conv1")
       mockConversation(convId, LegalHoldStatus.Enabled)
-
-      // When
-      val actualResult = result(service.isLegalHoldActive(convId).future)
-
-      // Then
-      actualResult shouldBe true
-    }
-
-    scenario("for a conversation with pending legal hold status") {
-      // Given
-      val service = createService()
-      val convId = ConvId("conv1")
-      mockConversation(convId, LegalHoldStatus.PendingApproval)
 
       // When
       val actualResult = result(service.isLegalHoldActive(convId).future)

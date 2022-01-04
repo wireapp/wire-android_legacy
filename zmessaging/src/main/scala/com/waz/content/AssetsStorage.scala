@@ -72,9 +72,7 @@ final class AssetsStorageImpl(context: Context, storage: Database)
       metaData    = if (cur.metaData.isEmpty)      newData.metaData     else cur.metaData,
       proxyPath   = if (cur.proxyPath.isEmpty)     newData.proxyPath    else cur.proxyPath,
       source      = if (cur.source.isEmpty)        newData.source       else cur.source,
-      convId      = if (cur.convId.isEmpty)        newData.convId       else cur.convId,
       data        = if (cur.data.isEmpty)          newData.data         else cur.data
-      //TODO Dean: giphy source and caption
     )
     //After merging the two asset data objects, update the resulting status if we now have remote data
     res.copy(status = res.remoteData.fold(res.status)(_ => UploadDone))

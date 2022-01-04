@@ -346,8 +346,7 @@ object ZMessagingDB {
               BlobDetails
             case None =>
               BlobDetails
-          },
-          convId = old.convId
+          }
         )
       }
 

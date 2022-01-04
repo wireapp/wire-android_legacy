@@ -72,8 +72,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
     preview = None,
     name = "test_content",
     size = testAssetContent.length,
-    details = BlobDetails,
-    convId = None
+    details = BlobDetails
   )
 
   private def service(rawAssetStorage: UploadAssetStorage = rawAssetStorage,

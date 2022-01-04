@@ -30,8 +30,7 @@ class AssetsBackupMapperTest : UnitTest() {
             size = data.size,
             source = data.source,
             preview = data.preview,
-            details = data.details,
-            conversationId = data.conversationId
+            details = data.details
         )
 
         val model = assetsBackupMapper.fromEntity(entity)
@@ -46,8 +45,6 @@ class AssetsBackupMapperTest : UnitTest() {
         assertEquals(data.source, model.source)
         assertEquals(data.preview, model.preview)
         assertEquals(data.details, model.details)
-        assertEquals(data.conversationId, model.conversationId)
-
     }
 
     @Test
@@ -64,8 +61,7 @@ class AssetsBackupMapperTest : UnitTest() {
             size = data.size,
             source = data.source,
             preview = data.preview,
-            details = data.details,
-            conversationId = data.conversationId
+            details = data.details
         )
 
         val entity = assetsBackupMapper.toEntity(model)
@@ -80,6 +76,5 @@ class AssetsBackupMapperTest : UnitTest() {
         assertEquals(data.source, entity.source)
         assertEquals(data.preview, entity.preview)
         assertEquals(data.details, entity.details)
-        assertEquals(data.conversationId, entity.conversationId)
     }
 }

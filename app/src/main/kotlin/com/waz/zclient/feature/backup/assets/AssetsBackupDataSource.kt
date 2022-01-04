@@ -19,8 +19,7 @@ data class AssetsBackUpModel(
     val size: Int = 0,
     val source: String? = null,
     val preview: String? = null,
-    val details: String = String.empty(),
-    val conversationId: String? = null
+    val details: String = String.empty()
 )
 
 class AssetsBackupDataSource(
@@ -40,8 +39,7 @@ class AssetsBackupMapper : BackUpDataMapper<AssetsBackUpModel, AssetsEntity> {
         size = entity.size,
         source = entity.source,
         preview = entity.preview,
-        details = entity.details,
-        conversationId = entity.conversationId
+        details = entity.details
     )
 
     override fun toEntity(model: AssetsBackUpModel) = AssetsEntity(
@@ -54,7 +52,6 @@ class AssetsBackupMapper : BackUpDataMapper<AssetsBackUpModel, AssetsEntity> {
         size = model.size,
         source = model.source,
         preview = model.preview,
-        details = model.details,
-        conversationId = model.conversationId
+        details = model.details
     )
 }

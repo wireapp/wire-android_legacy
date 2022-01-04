@@ -67,7 +67,7 @@ trait AssetService {
 
   def loadContent(asset: Asset, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
   def loadContentById(assetId: AssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
-  def loadPublicContentById(assetId: AssetId, convId: Option[ConvId], callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
+  def loadPublicContentById(assetId: AssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
   def loadUnsplashProfilePicture(): CancellableFuture[AssetInput]
   def loadUploadContentById(uploadAssetId: UploadAssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
 }
@@ -200,8 +200,8 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
       case _ => uriHelper.assetInput(localSource.uri).validate(localSource.sha)
     }.toOption
 
-  override def loadPublicContentById(assetId: AssetId, convId: Option[ConvId], callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
-    assetClient.loadPublicAssetContent(assetId, convId, callback).map {
+  override def loadPublicContentById(assetId: AssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
+    assetClient.loadPublicAssetContent(assetId, callback).map {
       case Left(err) => AssetInput(err)
       case Right(i)  => AssetInput(i)
     }

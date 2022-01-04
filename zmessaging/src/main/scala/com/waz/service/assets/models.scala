@@ -143,9 +143,7 @@ case class Asset(
     preview: Option[AssetId],
     name: String,
     size: Long,
-    details: AssetDetails,
-    @deprecated(message = "Conversation Id was only used for assets v2. No new asset should have asset v3, but we might still have v2 assets in the DB", since = "")
-    convId: Option[RConvId]
+    details: AssetDetails
 ) extends GeneralAsset
     with Identifiable[AssetId]
 
@@ -239,8 +237,7 @@ object Asset {
       preview = asset.preview,
       name = asset.name,
       size = asset.size,
-      details = asset.details,
-      convId = None
+      details = asset.details
     )
 
   def create(preview: Messages.Asset.Preview): Asset = {
@@ -255,8 +252,7 @@ object Asset {
       preview = None,
       name = s"preview_${System.currentTimeMillis()}",
       size = preview.getSize,
-      details = Asset.extractDetails(Right(preview)),
-      convId = None
+      details = Asset.extractDetails(Right(preview))
     )
   }
 
@@ -275,8 +271,7 @@ object Asset {
         case PreviewUploaded(previewId) => Some(previewId)
         case _ => None
       },
-      details = uploadAsset.details.asInstanceOf[AssetDetails],
-      convId = None
+      details = uploadAsset.details.asInstanceOf[AssetDetails]
     )
   }
 

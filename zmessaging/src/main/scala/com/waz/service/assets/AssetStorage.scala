@@ -59,14 +59,13 @@ object AssetStorageImpl {
     val Source     = asTextOpt(_.localSource)('source)
     val Preview    = asTextOpt(_.preview)('preview)
     val Details    = asText(_.details)('details)
-    val ConvId     = asTextOpt(_.convId)('conversation_id)
 
     override val idCol = Id
     override val table =
-      Table("Assets2", Id, Token, Name, Encryption, Mime, Sha, Size, Source, Preview, Details, ConvId)
+      Table("Assets2", Id, Token, Name, Encryption, Mime, Sha, Size, Source, Preview, Details)
 
     override def apply(implicit cursor: DBCursor): Asset =
-      Asset(Id, Token, Sha, Mime, Encryption, Source, Preview, Name, Size, Details, ConvId)
+      Asset(Id, Token, Sha, Mime, Encryption, Source, Preview, Name, Size, Details)
 
   }
 
