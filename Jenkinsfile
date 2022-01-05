@@ -10,12 +10,13 @@ pipeline {
     parameters {
         string(name: 'ConfigFileId', defaultValue: 'wire-android-config', description: 'Name or ID of the Groovy file (under Jenkins -> Managed Files) that sets environment variables')
         string(name: 'BuildType', defaultValue: '', description: 'Build Type for the Client (Release or Debug)')
-        string(name: 'Flavor', defaultValue: '', description: 'Product Flavor to build (Experimental, Internal, Dev, Candidate, Prod, F-Droid)')
+        string(name: 'Flavor', defaultValue: '', description: 'Product Flavor to build (Experimental, Internal, Dev, Candidate, Prod, FDroid)')
         string(name: 'PatchVersion', defaultValue: '', description: 'PatchVersion for the build as a numeric value (e.g. 1337)')
         booleanParam(name: 'AppUnitTests', defaultValue: true, description: 'Run all app unit tests for this build')
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
         booleanParam(name: 'ZMessageUnitTests', defaultValue: true, description: 'Run all zmessaging unit tests for this build')
         booleanParam(name: 'CompileFDroid', defaultValue: true, description: 'Defines if the fdroid flavor should be compiled in addition')
+        booleanParam(name: 'UploadToAppCenter', defaultValue: true, description: 'Defines if a build should be uploaded to the appcenter project')
         booleanParam(name: 'forceReleaseToGithub', defaultValue: false, description: 'Defines if this build should be force uploaded to github even if it is not a build from the release branch')
     }
 
@@ -89,6 +90,22 @@ pipeline {
                     last_stage = env.STAGE_NAME
                     currentBuild.displayName = "${usedFlavor}${usedBuildType}"
                     currentBuild.description = "Version [${usedClientVersion}] | Branch [${env.BRANCH_NAME}] | ASZ [${params.AppUnitTests},${params.StorageUnitTests},${params.ZMessageUnitTests}]"
+
+                    //set the variable appCenterApiTokenForBranch
+                    if(usedFlavor.equals("Prod")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_PRODUCTION
+                    } else if (usedFlavor.equals("Internal")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_INTERNAL
+                    } else if (usedFlavor.equals("Candidate")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_CANDIDATE
+                    } else if (usedFlavor.equals("Dev")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_DEV
+                    } else if (usedFlavor.equals("FDroid")) {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_FDROID
+                    } else {
+                        appCenterApiTokenForBranch = env.APPCENTER_API_TOKEN_EXPERIMENTAL
+                    }
+                    println("echo variable appCenterApiTokenForBranch has been set to [${appCenterApiTokenForBranch}]")
                 }
                 configFileProvider([
                         configFile(fileId: "${env.SIGNING_GRADLE_FILE}", targetLocation: 'app/signing.gradle'),
@@ -217,6 +234,26 @@ pipeline {
                             }
                         }
 
+                        stage('Upload Branch to App Center') {
+                            when {
+                                expression { params.UploadToAppCenter}
+                            }
+                            steps {
+                                script {
+                                    last_started = env.STAGE_NAME
+                                }
+                                appCenter apiToken: appCenterApiTokenForBranch,
+                                        ownerName: env.APPCENTER_API_ACCOUNT,
+                                        appName: "wire-android-${usedFlavor.toLowerCase()}",
+                                        pathToApp: "app/build/outputs/apk/wire-${usedFlavor.toLowerCase()}-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.BUILD_NUMBER}.apk",
+                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST,
+                                        branchName: env.BRANCH_NAME,
+                                        commitHash: env.GIT_COMMIT
+                                //we need to add some api requests against appcenter here, to check for what is the latest upload id, to be able to generate a link
+                                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_APPCENTER_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - A Client has been successfully uploaded to AppCenter"
+                            }
+                        }
+
                         stage('Upload to PlayStore') {
                             when {
                                 expression { env.PLAYSTORE_UPLOAD_ENABLED && env.BRANCH_NAME.equals("main") && usedBuildType.equals("Release") && usedFlavor.equals("Internal") }
@@ -267,6 +304,26 @@ pipeline {
                                 s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-prod-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/prod/${usedBuildType.toLowerCase()}/")
                                 wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                                     "\nLast 5 commits:\n```\n$lastCommits\n```"
+                            }
+                        }
+
+                        stage('Upload Prod to App Center') {
+                            when {
+                                expression { params.UploadToAppCenter}
+                            }
+                            steps {
+                                script {
+                                    last_started = env.STAGE_NAME
+                                }
+                                appCenter apiToken: env.APPCENTER_API_TOKEN_PRODUCTION,
+                                        ownerName: env.APPCENTER_API_ACCOUNT,
+                                        appName: "wire-android-prod",
+                                        pathToApp: "app/build/outputs/apk/wire-prod-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.BUILD_NUMBER}.apk",
+                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST,
+                                        branchName: env.BRANCH_NAME,
+                                        commitHash: env.GIT_COMMIT
+                                //we need to add some api requests against appcenter here, to check for what is the latest upload id, to be able to generate a link
+                                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_APPCENTER_SECRET, message: "[${env.BRANCH_NAME}] Prod${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - A Client has been successfully uploaded to AppCenter"
                             }
                         }
 
@@ -322,6 +379,26 @@ pipeline {
                                 s3Upload(acl: "${env.ACL_NAME}", workingDir: "app/build/outputs/apk/", includePathPattern: "wire-fdroid-*.apk", bucket: "${env.S3_BUCKET_NAME}", path: "megazord/android/fdroid/${usedBuildType.toLowerCase()}/")
                                 wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] FDroid${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
                                                                     "\nLast 5 commits:\n```\n$lastCommits\n```"
+                            }
+                        }
+
+                        stage('Upload F-Droid to App Center') {
+                            when {
+                                expression { params.UploadToAppCenter}
+                            }
+                            steps {
+                                script {
+                                    last_started = env.STAGE_NAME
+                                }
+                                appCenter apiToken: env.APPCENTER_API_TOKEN_FDROID,
+                                        ownerName: env.APPCENTER_API_ACCOUNT,
+                                        appName: "wire-android-fdroid",
+                                        pathToApp: "app/build/outputs/apk/wire-fdroid-${usedBuildType.toLowerCase()}-${usedClientVersion}${env.BUILD_NUMBER}.apk",
+                                        distributionGroups: env.APPCENTER_GROUP_NAME_LIST,
+                                        branchName: env.BRANCH_NAME,
+                                        commitHash: env.GIT_COMMIT
+                                //we need to add some api requests against appcenter here, to check for what is the latest upload id, to be able to generate a link
+                                wireSend secret: env.WIRE_BOT_WIRE_ANDROID_APPCENTER_SECRET, message: "[${env.BRANCH_NAME}] FDroid${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - A Client has been successfully uploaded to AppCenter"
                             }
                         }
                     }
