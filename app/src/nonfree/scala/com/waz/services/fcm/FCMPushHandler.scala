@@ -4,7 +4,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.BackendDrift
 import com.waz.content.Preferences.Preference
 import com.waz.content.UserPreferences.LastStableNotification
-import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.content.{GlobalPreferences, UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
@@ -36,6 +36,7 @@ final class FCMPushHandlerImpl(userId:      UserId,
                                parser:      NotificationParser,
                                controller:  NotificationUiController,
                                calling:      () => CallingService,
+                               usersStorage: () => UsersStorage,
                                globalPrefs: GlobalPreferences,
                                userPrefs:   UserPreferences)
                               (implicit ec: ExecutionContext)
@@ -87,9 +88,18 @@ final class FCMPushHandlerImpl(userId:      UserId,
       case _: CallMessageEvent => true
       case _ => false
     }
-    calls.foreach { ev =>
-      val call = ev.asInstanceOf[CallMessageEvent]
-      calling().receiveCallEvent(call.content, call.time, call.convId, call.from, call.sender)
+
+    val validCalls = calls.collect { case ev: CallMessageEvent if ev.from != userId => ev }
+
+    if (validCalls.nonEmpty) {
+      usersStorage().get(userId).foreach {
+        case Some(self) if self.availability != Availability.Away =>
+          val callService = calling()
+          validCalls.foreach { call =>
+            callService.receiveCallEvent(call.content, call.time, call.convId, call.from, call.sender)
+          }
+        case _ =>
+      }
     }
     others
   }
@@ -139,19 +149,23 @@ object FCMPushHandler {
   val MaxRetries: Int = 3
   val SyncHistoryBackoff: Backoff = new ExponentialBackoff(3.second, 15.seconds)
 
-  def apply(userId:      UserId,
-            clientId:    ClientId,
-            client:      PushNotificationsClient,
-            storage:     PushNotificationEventsStorage,
-            decrypter:   EventDecrypter,
-            decoder:     OtrEventDecoder,
-            parser:      NotificationParser,
-            controller:  NotificationUiController,
-            calling:     () => CallingService,
-            globalPrefs: GlobalPreferences,
-            userPrefs:   UserPreferences)
-           (implicit ec: ExecutionContext): FCMPushHandler =
-    new FCMPushHandlerImpl(userId, clientId, client, storage, decrypter, decoder, parser, controller, calling, globalPrefs, userPrefs)
+  def apply(userId:       UserId,
+            clientId:     ClientId,
+            client:       PushNotificationsClient,
+            storage:      PushNotificationEventsStorage,
+            decrypter:    EventDecrypter,
+            decoder:      OtrEventDecoder,
+            parser:       NotificationParser,
+            controller:   NotificationUiController,
+            calling:      () => CallingService,
+            usersStorage: () => UsersStorage,
+            globalPrefs:  GlobalPreferences,
+            userPrefs:    UserPreferences)
+           (implicit ec:  ExecutionContext): FCMPushHandler =
+    new FCMPushHandlerImpl(
+      userId, clientId, client, storage, decrypter, decoder, parser,
+      controller, calling, usersStorage, globalPrefs, userPrefs
+    )
 
   final case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant])
 
