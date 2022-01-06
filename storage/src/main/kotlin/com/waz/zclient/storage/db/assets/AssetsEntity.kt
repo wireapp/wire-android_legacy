@@ -13,6 +13,9 @@ data class AssetsEntity(
     @ColumnInfo(name = "token")
     val token: String?,
 
+    @ColumnInfo(name = "domain")
+    val domain: String?,
+
     @ColumnInfo(name = "name", defaultValue = "")
     val name: String,
 

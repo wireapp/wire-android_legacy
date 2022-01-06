@@ -23,11 +23,12 @@ import com.waz.ZIntegrationMockSpec
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{AssetId, MD5, Mime, Sha256}
+import com.waz.model.{AssetId, Domain, MD5, Mime, Sha256}
 import com.waz.service.assets.{Asset, BlobDetails, NoEncryption}
 import com.waz.sync.client.AssetClient.FileWithSha
 import com.waz.sync.client.AssetClient.{AssetContent, Metadata, Retention, UploadResponse2}
 import com.waz.utils.{IoUtils, returning}
+import com.waz.zms.BuildConfig
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, Request}
@@ -42,6 +43,8 @@ import scala.util.Random
 @Ignore
 @RunWith(classOf[JUnitRunner])
 class AssetClientSpec extends ZIntegrationMockSpec with DerivedLogTag {
+
+  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Some(Domain("anta.wire.link")) else None
 
   implicit lazy val urlCreator : Request.UrlCreator = mock[UrlCreator]
   implicit lazy val httpClient = mock[HttpClient]
@@ -59,6 +62,7 @@ class AssetClientSpec extends ZIntegrationMockSpec with DerivedLogTag {
     Asset(
       id = AssetId(response.key.str),
       token = response.token,
+      domain = domain,
       sha = Sha256.calculate(testAssetContent),
       mime = Mime.Default,
       encryption = NoEncryption,

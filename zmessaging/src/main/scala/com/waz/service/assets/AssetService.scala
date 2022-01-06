@@ -72,7 +72,8 @@ trait AssetService {
   def loadUploadContentById(uploadAssetId: UploadAssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
 }
 
-class AssetServiceImpl(assetsStorage: AssetStorage,
+class AssetServiceImpl(currentDomain: Domain,
+                       assetsStorage: AssetStorage,
                        uploadAssetStorage: UploadAssetStorage,
                        downloadAssetStorage: DownloadAssetStorage,
                        assetDetailsService: AssetDetailsService,
@@ -292,7 +293,7 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
         case Left(err) =>
           uploadAssetStorage.update(uploadAsset.id, _.copy(status = UploadAssetStatus.Failed)).flatMap(_ => Future.failed(err))
         case Right(response) =>
-          val asset = Asset.create(response.key, response.token, uploadAsset)
+          val asset = Asset.create(response.key, response.token, uploadAsset, currentDomain)
           for {
             _ <- assetsStorage.save(asset)
             _ <- uploadAssetStorage.update(uploadAsset.id, _.copy(status = AssetStatus.Done, assetId = Some(asset.id)))

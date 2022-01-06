@@ -12,6 +12,7 @@ import java.io.File
 data class AssetsBackUpModel(
     val id: String,
     val token: String? = null,
+    val domain: String? = null,
     val name: String = String.empty(),
     val encryption: String = String.empty(),
     val mime: String = String.empty(),
@@ -32,6 +33,7 @@ class AssetsBackupMapper : BackUpDataMapper<AssetsBackUpModel, AssetsEntity> {
     override fun fromEntity(entity: AssetsEntity) = AssetsBackUpModel(
         id = entity.id,
         token = entity.token,
+        domain = entity.domain,
         name = entity.name,
         encryption = entity.encryption,
         mime = entity.mime,
@@ -45,6 +47,7 @@ class AssetsBackupMapper : BackUpDataMapper<AssetsBackUpModel, AssetsEntity> {
     override fun toEntity(model: AssetsBackUpModel) = AssetsEntity(
         id = model.id,
         token = model.token,
+        domain = model.domain,
         name = model.name,
         encryption = model.encryption,
         mime = model.mime,

@@ -68,7 +68,16 @@ class AssetDataSpec extends AndroidFreeSpec with TableDrivenPropertyChecks with 
     sizeInBytes   <- Gen.posNum[Long]
     name          <- optGen(alphaNumStr)
     source        <- optGen(arbitrary[URI])
-  } yield AssetData(id, mime, sizeInBytes, UploadNotStarted, None, None, None, None, None, name, None, None, source, None, None))
+  } yield
+    AssetData(
+      id          = id,
+      mime        = mime,
+      sizeInBytes = sizeInBytes,
+      status      = UploadNotStarted,
+      name        = name,
+      source      = source
+    )
+  )
 
   private def arbitraryAssetData: List[AssetData] = (1 to 10).flatMap(_ => arbAssetData.arbitrary.sample).toList
 

@@ -294,6 +294,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
     IoUtils.createDirectory(rawCacheDirectory)
 
     new AssetServiceImpl(
+      selfDomain,
       storage.assetsStorage,
       storage.rawAssetStorage,
       storage.inProgressAssetStorage,
