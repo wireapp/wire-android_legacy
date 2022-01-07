@@ -32,7 +32,7 @@ import com.waz.zclient.{Injectable, Injector, WireContext}
 import com.waz.zclient.glide.{MapRequest, ImageAssetFetcher}
 import com.waz.zclient.log.LogUI._
 
-class MapModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Location, InputStream]
+final class MapModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Location, InputStream]
   with DerivedLogTag {
 
   override def buildLoadData(model: Location, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
