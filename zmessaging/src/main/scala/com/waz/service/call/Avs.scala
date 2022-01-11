@@ -51,7 +51,7 @@ trait Avs {
   def setCallMuted(wCall: WCall, muted: Boolean): Unit
   def setProxy(host: String, port: Int): Unit
   def onClientsRequest(wCall: WCall, convId: RConvId, userClients: OtrClientIdMap): Unit
-  def onQualifiedClientsRequest(wCall: WCall, convId: RConvId, userClients: QOtrClientIdMap): Unit
+  def onQualifiedClientsRequest(wCall: WCall, convId: RConvId, domain: Domain, userClients: QOtrClientIdMap): Unit
   def onSftResponse(wCall: WCall, data: Option[Array[Byte]], ctx: Pointer): Unit
 }
 
@@ -203,7 +203,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
             val participants = participantsChange.members.map(m => {
               val userIdString = m.userid.str.split("@").head
-              val userDomain = cs.getDomainFromString(userId)
+              val userDomain = cs.getDomainFromString(m.userid.str)
 
               Participant(UserId(userIdString), m.clientid, m.muted == 1, domain = Domain(userDomain))
             }).toSet
@@ -328,8 +328,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
     withAvs(wcall_set_clients_for_conv(wCall, convId.str, json))
   }
 
-  override def onQualifiedClientsRequest(wCall: WCall, convId: RConvId, userClients: QOtrClientIdMap): Unit = {
+  override def onQualifiedClientsRequest(wCall: WCall, convId: RConvId, convDomain: Domain, userClients: QOtrClientIdMap): Unit = {
     import AvsClientList._
+
+    val conversationIdWithDomain = s"${convId.str}@${convDomain.str}"
 
     val clients = userClients.entries.flatMap { case (userId, clientIds) =>
       clientIds.map { clientId =>
@@ -339,7 +341,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
     }
 
     val json = encode(AvsClientList(clients.toSeq))
-    withAvs(wcall_set_clients_for_conv(wCall, convId.str, json))
+    withAvs(wcall_set_clients_for_conv(wCall, conversationIdWithDomain, json))
   }
 
   override def onSftResponse(wCall: WCall, data: Option[Array[Byte]], ctx: Pointer): Unit =
