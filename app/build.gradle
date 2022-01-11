@@ -131,7 +131,6 @@ android {
         buildConfigField 'boolean', 'WEB_LINK_PREVIEW',              "$buildtimeConfiguration.configuration.web_link_preview"
         buildConfigField 'boolean', 'FEDERATION_USER_DISCOVERY',     "$buildtimeConfiguration.configuration.federation_user_discovery"
 
-
         //Feature Flags
         buildConfigField 'boolean', 'CONFERENCE_CALLING_RESTRICTION', "$conferenceCallingRestriction"
     }
@@ -208,75 +207,75 @@ android {
 
     productFlavors {
         dev {
-            applicationId "com.waz.zclient.dev"
-            versionName android.defaultConfig.versionName + "-dev"
-            manifestPlaceholders = [applicationLabel       : "Wire Dev",
-                                    applicationIcon        : "@mipmap/ic_launcher_wire_dev",
-                                    sharedUserId           : ""]
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
-            buildConfigField 'boolean', 'SAFE_LOGGING', 'false'
+            applicationId buildtimeConfiguration.configuration.dev.applicationId
+            versionName android.defaultConfig.versionName + buildtimeConfiguration.configuration.dev.version_name_postfix
+            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.dev.appName,
+                                    applicationIcon        : "@mipmap/$buildtimeConfiguration.configuration.dev.launcherIcon",
+                                    sharedUserId           : buildtimeConfiguration.configuration.dev.userId]
 
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', "$buildtimeConfiguration.configuration.dev.developer_features_enabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.dev.logging_enabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', "$buildtimeConfiguration.configuration.dev.safe_logging"
         }
 
         candidate {
-            applicationId "com.wire.candidate"
-            versionName android.defaultConfig.versionName + "-candidate"
-            manifestPlaceholders = [applicationLabel       : "Wire Candidate",
-                                    applicationIcon        : "@mipmap/ic_launcher_wire_candidate",
-                                    sharedUserId           : ""]
+            applicationId buildtimeConfiguration.configuration.candidate.applicationId
+            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.candidate.appName,
+                                    applicationIcon        : "@mipmap/$buildtimeConfiguration.configuration.candidate.launcherIcon",
+                                    sharedUserId           : buildtimeConfiguration.configuration.candidate.userId]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.loggingEnabled"
-            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', "$buildtimeConfiguration.configuration.candidate.developer_features_enabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.candidate.logging_enabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', "$buildtimeConfiguration.configuration.candidate.safe_logging"
         }
 
         prod {
-            applicationId buildtimeConfiguration.configuration.applicationId
-            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.appName,
-                                    applicationIcon        : "@mipmap/ic_launcher_wire",
-                                    sharedUserId           : buildtimeConfiguration.configuration.userId]
+            applicationId buildtimeConfiguration.configuration.prod.applicationId
+            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.prod.appName,
+                                    applicationIcon        : "@mipmap/$buildtimeConfiguration.configuration.prod.launcherIcon",
+                                    sharedUserId           : buildtimeConfiguration.configuration.prod.userId]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.loggingEnabled"
-            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', "$buildtimeConfiguration.configuration.prod.developer_features_enabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.prod.logging_enabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', "$buildtimeConfiguration.configuration.prod.safe_logging"
         }
 
         fdroid {
-            applicationId "com.wire"
-            manifestPlaceholders = [applicationLabel       : "Wire",
-                                    applicationIcon        : "@mipmap/ic_launcher_wire",
-                                    sharedUserId           : "com.waz.userid"]
+            applicationId buildtimeConfiguration.configuration.fdroid.applicationId
+            versionName android.defaultConfig.versionName + buildtimeConfiguration.configuration.fdroid.version_name_postfix
+            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.fdroid.appName,
+                                    applicationIcon        : "@mipmap/$buildtimeConfiguration.configuration.fdroid.launcherIcon",
+                                    sharedUserId           : buildtimeConfiguration.configuration.fdroid.userId]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'boolean', 'LOGGING_ENABLED', 'false'
-            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', "$buildtimeConfiguration.configuration.fdroid.developer_features_enabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.fdroid.logging_enabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', "$buildtimeConfiguration.configuration.fdroid.safe_logging"
 
-            buildConfigField 'boolean', 'KEEP_WEBSOCKET_ON', 'true'
+            buildConfigField 'boolean', 'KEEP_WEBSOCKET_ON', "$buildtimeConfiguration.configuration.fdroid.keep_websocket_on"
         }
 
         internal {
-            applicationId "com.wire.internal"
-            versionName android.defaultConfig.versionName + "-internal"
-            manifestPlaceholders = [applicationLabel : "Wire Internal",
-                                    applicationIcon  : "@mipmap/ic_launcher_wire_internal",
-                                    sharedUserId     : ""]
+            applicationId buildtimeConfiguration.configuration.internal.applicationId
+            versionName android.defaultConfig.versionName + buildtimeConfiguration.configuration.internal.version_name_postfix
+            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.internal.appName,
+                                    applicationIcon        : "@mipmap/$buildtimeConfiguration.configuration.internal.launcherIcon",
+                                    sharedUserId           : buildtimeConfiguration.configuration.internal.userId]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
-            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', "$buildtimeConfiguration.configuration.internal.developer_features_enabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.internal.logging_enabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', "$buildtimeConfiguration.configuration.internal.safe_logging"
         }
 
         experimental {
-            applicationId "com.wire.x"
-            versionName android.defaultConfig.versionName + "-exp"
-            manifestPlaceholders = [applicationLabel       : "Wire Exp",
-                                    applicationIcon        : "@mipmap/ic_launcher_wire_playground",
-                                    sharedUserId           : ""]
+            applicationId buildtimeConfiguration.configuration.experimental.applicationId
+            versionName android.defaultConfig.versionName + buildtimeConfiguration.configuration.experimental.version_name_postfix
+            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.experimental.appName,
+                                    applicationIcon        : "@mipmap/$buildtimeConfiguration.configuration.experimental.launcherIcon",
+                                    sharedUserId           : buildtimeConfiguration.configuration.experimental.userId]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
-            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', "$buildtimeConfiguration.configuration.experimental.developer_features_enabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.experimental.logging_enabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', "$buildtimeConfiguration.configuration.experimental.safe_logging"
         }
     }
 
