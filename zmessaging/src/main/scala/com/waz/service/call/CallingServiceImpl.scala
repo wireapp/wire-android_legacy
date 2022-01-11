@@ -153,7 +153,7 @@ object CallingService {
 
 class CallingServiceImpl(val accountId:       UserId,
                          val clientId:        ClientId,
-                         val domain:          Domain,
+                         val domain:          Domain = Domain.Empty,
                          callingClient:       CallingClient,
                          avs:                 Avs,
                          convs:               ConversationsContentUpdater,
@@ -211,11 +211,10 @@ class CallingServiceImpl(val accountId:       UserId,
     }
   )
 
-  def getConvIdWithDomain(convId: String, domain: String): RConvId = {
-      if(BuildConfig.FEDERATION_USER_DISCOVERY)
-         RConvId(s"$convId@$domain")
-      else RConvId(convId)
-  }
+  def getDomainFromString(id: String): String =
+    if(BuildConfig.FEDERATION_USER_DISCOVERY)
+      id.split("@").last
+    else ""
 
   def onQSend(ctx: Pointer, msg: String, convId: RConvId, targetRecipients: Option[AvsClientList]): Future[Unit] =
     withConv(convId) { (wCall, conv) =>
@@ -241,7 +240,12 @@ class CallingServiceImpl(val accountId:       UserId,
     avsClients
       .groupBy(_.userid)
       .mapValues(_.map(_.clientid))
-      .map { case (userId, clientIds) => QualifiedId(UserId(userId), domain.str) -> clientIds.map(ClientId(_)) }
+      .map {
+        case (userId, clientIds) =>
+          val userIdString = userId.split("@").head
+          val domainString = getDomainFromString(userId)
+          QualifiedId(UserId(userIdString), domainString) -> clientIds.map(ClientId(_))
+      }
   }
 
   private def clientsMap(avsClients: Set[AvsClient]): OtrClientIdMap = OtrClientIdMap {
@@ -279,7 +283,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
       val newCall = CallInfo(
         conv.id,
-        selfParticipant = Participant(accountId, clientId),
+        selfParticipant = Participant(accountId, clientId, domain = domain),
         isGroup,
         userId,
         OtherCalling,
@@ -307,8 +311,7 @@ class CallingServiceImpl(val accountId:       UserId,
           case NonFatal(e) => error(l"Unknown remote convId: $convId")
         }
     }
-    val convIdWithoutDomain = RConvId(convId.str.split("@").head)
-    withConvGroup(convIdWithoutDomain) {
+    withConvGroup(convId) {
       case (conv, isGroup) => showCall(conv, isGroup)
     }
   }
@@ -409,10 +412,10 @@ class CallingServiceImpl(val accountId:       UserId,
       call.copy(isCbrEnabled = Some(enabled))
     }("onBitRateStateChanged")
 
-  def onVideoStateChanged(userId: String, clientId: String, videoReceiveState: VideoState): Future[Unit] =
+  def onVideoStateChanged(userId: String, clientId: String, videoReceiveState: VideoState, userDomain: String): Future[Unit] =
     updateActiveCallAsync { (_, _, call) =>
       verbose(l"video state changed: $videoReceiveState")
-      call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)
+      call.updateVideoState(Participant(UserId(userId), ClientId(clientId), domain = Domain(userDomain)), videoReceiveState)
     }("onVideoStateChanged")
 
   def onParticipantsChanged(rConvId: RConvId, participants: Set[Participant]): Future[Unit] =
@@ -454,7 +457,7 @@ class CallingServiceImpl(val accountId:       UserId,
     withConv(convId.id) { (wCall, conv) =>
       otrSyncHandler.postClientDiscoveryMessage(convId).map {
         case Right(clients) =>
-          avs.onQualifiedClientsRequest(wCall, conv.remoteId, clients)
+          avs.onQualifiedClientsRequest(wCall, RConvId(s"${conv.remoteId.str}@${conv.domain.str}") , clients)
         case Left(errorResponse) =>
           warn(l"Could not post client discovery message: $errorResponse")
       }
@@ -518,7 +521,7 @@ class CallingServiceImpl(val accountId:       UserId,
                       //Assume that when a video call starts, sendingVideo will be true. From here on, we can then listen to state handler
                       val newCall = CallInfo(
                         conv.id,
-                        selfParticipant = Participant(accountId, clientId),
+                        selfParticipant = Participant(accountId, clientId, domain = domain),
                         isGroup,
                         accountId,
                         SelfCalling,
@@ -614,19 +617,26 @@ class CallingServiceImpl(val accountId:       UserId,
         case c => c
       }
       verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
-      val convIdWithDomain = getConvIdWithDomain(conv.remoteId.str, conv.domain.str)
+      val convIdWithDomain = convsService.getConvIdWithDomain(conv.remoteId.str, conv.domain.str)
       if (state != NoCameraPermission) avs.setVideoSendState(w, convIdWithDomain, targetSt)
-      call.updateVideoState(Participant(accountId, clientId), targetSt)
+      call.updateVideoState(Participant(accountId, clientId, domain = domain), targetSt)
     }("setVideoSendState")
 
   val callMessagesStage: Stage.Atomic = EventScheduler.Stage[CallMessageEvent] {
     case (_, events) =>
       Future.successful(events.sortBy(_.time).foreach { e =>
-        receiveCallEvent(e.content, e.time, e.convId, e.convDomain.str, e.from, e.sender)
+
+        val convIdWithDomain = convsService.getConvIdWithDomain(e.convId.str, e.convDomain.str)
+
+        val userIdWithDomain = if(BuildConfig.FEDERATION_USER_DISCOVERY)
+          UserId(s"${e.from.str}@${e.convDomain.str}")
+        else  UserId(s"${e.from.str}")
+
+        receiveCallEvent(e.content, e.time, convIdWithDomain, userIdWithDomain, e.sender)
       })
   }
 
-  private def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, domainString: String, from: UserId, sender: ClientId): Unit =
+  private def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit =
     wCall.map { w =>
       import CallingServiceImpl._
 
@@ -634,9 +644,7 @@ class CallingServiceImpl(val accountId:       UserId,
       val curTime = LocalInstant(clock.instant + drift)
       verbose(l"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime")
 
-      val convIdWithDomain = convsService.getConvIdWithDomain(convId.str, domainString)
-
-      avs.onReceiveMessage(w, msg, curTime, msgTime, convIdWithDomain, from, sender).foreach {
+      avs.onReceiveMessage(w, msg, curTime, msgTime, convId, from, sender).foreach {
         case AvsCallError.UnknownProtocol if shouldTriggerAlert(convId) =>
           instantOfLastErrorByConversationId += convId -> LocalInstant.Now
           userPrefs(UserPreferences.ShouldWarnAVSUpgrade) := true

@@ -22,7 +22,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
 import com.waz.model.otr.ClientId
-import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
+import com.waz.model.{ConvId, Domain, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState}
 import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessage, Participant, QOutstandingMessage}
@@ -148,7 +148,7 @@ object CallInfo {
 
   case class ActiveSpeaker(userId: UserId, clientId: ClientId, longTermAudioLevel: Int, instantAudioLevel: Int)
 
-  case class Participant(userId: UserId, clientId: ClientId, muted: Boolean = false)
+  case class Participant(userId: UserId, clientId: ClientId, muted: Boolean = false, domain: Domain = Domain.Empty)
 
   case class OutstandingMessage(message: GenericMessage, recipients: TargetRecipients, context: Pointer)
 
