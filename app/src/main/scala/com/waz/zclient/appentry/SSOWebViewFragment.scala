@@ -54,6 +54,8 @@ class SSOWebViewFragment extends FragmentHelper {
     toolbar.setNavigationOnClickListener(new OnClickListener {
       override def onClick(v: View): Unit = onBackPressed()
     })
+
+    loadWebView()
   }
 
   private def ssoResponse(loginResult: SSOResponse) = loginResult match {
@@ -89,11 +91,6 @@ class SSOWebViewFragment extends FragmentHelper {
     activity.showWelcomeScreen()
     inject[UserAccountsController].ssoToken ! None
     true
-  }
-
-  override def onResume(): Unit = {
-    super.onResume()
-    loadWebView()
   }
 
   override def onPause(): Unit = {
