@@ -83,8 +83,6 @@ trait ConversationsService {
   def generateTempConversationId(users: Set[UserId]): RConvId
 
   def rConvQualifiedId(conv: ConversationData): RConvQualifiedId
-
-  def getFederatedId(id: String, domain: String): String
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -804,13 +802,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
    */
   override def generateTempConversationId(users: Set[UserId]): RConvId =
     RConvId((users + selfUserId).toSeq.map(_.toString).sorted.foldLeft("")(_ + _))
-
-
-  override def getFederatedId(id: String, domain: String): String = {
-    if(BuildConfig.FEDERATION_USER_DISCOVERY)
-      s"$id@$domain"
-    else id
-  }
 
 }
 

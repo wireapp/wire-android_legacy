@@ -211,11 +211,6 @@ class CallingServiceImpl(val accountId:       UserId,
     }
   )
 
-  def getDomainFromString(id: String): String =
-    if(BuildConfig.FEDERATION_USER_DISCOVERY)
-      id.split("@").last
-    else ""
-
   def onQSend(ctx: Pointer, msg: String, convId: RConvId, targetRecipients: Option[AvsClientList]): Future[Unit] =
     withConv(convId) { (wCall, conv) =>
       val recipients = targetRecipients match {
@@ -243,7 +238,7 @@ class CallingServiceImpl(val accountId:       UserId,
       .map {
         case (userId, clientIds) =>
           val userIdString = userId.split("@").head
-          val domainString = getDomainFromString(userId)
+          val domainString = DomainUtils.getDomainFromString(userId)
           QualifiedId(UserId(userIdString), domainString) -> clientIds.map(ClientId(_))
       }
   }
@@ -346,7 +341,7 @@ class CallingServiceImpl(val accountId:       UserId,
           val updatedCall = p.calls.get(conv.id).map { call =>
             verbose(l"endCall: $convId, skipTerminating (ultimate): $skipTerminatingUltimate. Active call in state: ${call.state}")
             //avs reject and end call will always trigger the onClosedCall callback - there we handle the end of the call
-            val convIdWithDomain = convsService.getFederatedId(conv.remoteId.str, conv.domain.str)
+            val convIdWithDomain = DomainUtils.getFederatedId(conv.remoteId.str, conv.domain.str)
             if (call.state == OtherCalling) avs.rejectCall(w, RConvId(convIdWithDomain)) else avs.endCall(w, RConvId(convIdWithDomain))
             //if there is another incoming call - skip the terminating state
             val hasIncomingCall = p.incomingCalls.nonEmpty
@@ -490,7 +485,7 @@ class CallingServiceImpl(val accountId:       UserId,
               Future.successful {
                 call.state match {
                   case OtherCalling =>
-                    val convIdWithDomain = convsService.getFederatedId(conv.remoteId.str, conv.domain.str)
+                    val convIdWithDomain = DomainUtils.getFederatedId(conv.remoteId.str, conv.domain.str)
                     avs.answerCall(w, RConvId(convIdWithDomain), callType, useConstantBitRate)
                     updateActiveCall(_.updateCallState(SelfJoining))("startCall/OtherCalling")
                     if (forceOption)
@@ -506,7 +501,7 @@ class CallingServiceImpl(val accountId:       UserId,
                 case Some(call) if !Set[CallState](Ended, Terminating)(call.state) =>
                   Future.successful {
                     verbose(l"Joining an ongoing background call")
-                    val convIdWithDomain = convsService.getFederatedId(conv.remoteId.str, conv.domain.str)
+                    val convIdWithDomain = DomainUtils.getFederatedId(conv.remoteId.str, conv.domain.str)
                     avs.answerCall(w, RConvId(convIdWithDomain), callType, useConstantBitRate)
                     val active = call.updateCallState(SelfJoining).copy(joinedTime = None, estabTime = None) // reset previous call state if exists
                     callProfile.mutate(_.copy(calls = profile.calls + (convId -> active)))
@@ -515,7 +510,7 @@ class CallingServiceImpl(val accountId:       UserId,
                       setVideoSendState(convId, if (isVideo)  Avs.VideoState.Started else Avs.VideoState.Stopped)
                   }
                 case _ =>
-                  val convIdWithDomain = convsService.getFederatedId(conv.remoteId.str, conv.domain.str)
+                  val convIdWithDomain = DomainUtils.getFederatedId(conv.remoteId.str, conv.domain.str)
                   avs.startCall(w, RConvId(convIdWithDomain), callType, convType, useConstantBitRate).map {
                     case 0 =>
                       //Assume that when a video call starts, sendingVideo will be true. From here on, we can then listen to state handler
@@ -593,7 +588,7 @@ class CallingServiceImpl(val accountId:       UserId,
     updateActiveCallAsync { (w, conv, call) =>
       verbose(l"onInterrupted - gsm call received")
       //Ensure that conversation state is only performed INSIDE withConv
-      val convIdWithDomain = convsService.getFederatedId(conv.remoteId.str, conv.domain.str)
+      val convIdWithDomain = DomainUtils.getFederatedId(conv.remoteId.str, conv.domain.str)
       avs.endCall(w, RConvId(convIdWithDomain))
       call
     } ("onInterrupted")
@@ -617,7 +612,7 @@ class CallingServiceImpl(val accountId:       UserId,
         case c => c
       }
       verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
-      val convIdWithDomain = convsService.getFederatedId(conv.remoteId.str, conv.domain.str)
+      val convIdWithDomain = DomainUtils.getFederatedId(conv.remoteId.str, conv.domain.str)
       if (state != NoCameraPermission) avs.setVideoSendState(w, RConvId(convIdWithDomain), targetSt)
       call.updateVideoState(Participant(accountId, clientId, domain = domain), targetSt)
     }("setVideoSendState")
@@ -626,8 +621,8 @@ class CallingServiceImpl(val accountId:       UserId,
     case (_, events) =>
       Future.successful(events.sortBy(_.time).foreach { e =>
 
-        val convIdWithDomain = convsService.getFederatedId(e.convId.str, e.convDomain.str)
-        val userIdWithDomain = convsService.getFederatedId(e.from.str, e.fromDomain.str)
+        val convIdWithDomain = DomainUtils.getFederatedId(e.convId.str, e.convDomain.str)
+        val userIdWithDomain = DomainUtils.getFederatedId(e.from.str, e.fromDomain.str)
 
         receiveCallEvent(e.content, e.time, RConvId(convIdWithDomain), UserId(userIdWithDomain), e.sender)
       })

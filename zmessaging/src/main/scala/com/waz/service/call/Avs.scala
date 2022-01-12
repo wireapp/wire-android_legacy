@@ -96,9 +96,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
     verbose(l"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
 
-    var userId = cs.accountId.str
-    if(BuildConfig.FEDERATION_USER_DISCOVERY)
-      userId = userId.concat(s"@${cs.domain.str}")
+    val userId = DomainUtils.getFederatedId(cs.accountId.str, cs.domain.str)
 
     val callingReady = Promise[Unit]()
 
@@ -188,7 +186,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       new VideoReceiveStateHandler {
         override def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit = {
           val userIdWithoutDomain = userId.split("@").head
-          val userDomain = cs.getDomainFromString(userId)
+          val userDomain = DomainUtils.getDomainFromString(userId)
 
           cs.onVideoStateChanged(userIdWithoutDomain, clientId, VideoState(state), userDomain)
         }
@@ -203,7 +201,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
             val participants = participantsChange.members.map(m => {
               val userIdString = m.userid.str.split("@").head
-              val userDomain = cs.getDomainFromString(m.userid.str)
+              val userDomain = DomainUtils.getDomainFromString(m.userid.str)
 
               Participant(UserId(userIdString), m.clientid, m.muted == 1, domain = Domain(userDomain))
             }).toSet
@@ -211,9 +209,8 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
             import AvsClientList._
             val clients = participants.map { participant =>
-              val userIdString = if(BuildConfig.FEDERATION_USER_DISCOVERY)
-                s"${participant.userId.str}@${participant.domain.str}"
-              else s"${participant.userId.str}"
+
+              val userIdString = DomainUtils.getFederatedId(participant.userId.str, participant.domain.str)
 
               AvsClient(userIdString, participant.clientId.str)
             }
@@ -235,7 +232,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
                                              downstreamPacketLossPercentage: Int,
                                              arg: Pointer): Unit = {
           val userIdString = userId.split("@").head
-          val userDomain = cs.getDomainFromString(userId)
+          val userDomain = DomainUtils.getDomainFromString(userId)
           val participant = Participant(UserId(userIdString), ClientId(clientId), domain = Domain(userDomain))
           cs.onNetworkQualityChanged(ConvId(convId), participant, NetworkQuality(quality))
         }
@@ -246,7 +243,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       val clientsRequestHandler = new ClientsRequestHandler {
         override def onClientsRequest(inst: Calling.Handle, convId: String, arg: Pointer): Unit = {
           val conv  = convId.split("@").head
-          val domain  = cs.getDomainFromString(convId)
+          val domain  = DomainUtils.getDomainFromString(convId)
           if(BuildConfig.FEDERATION_USER_DISCOVERY)
             cs.onQualifiedClientsRequest(RConvQualifiedId(RConvId(conv), domain))
           else cs.onClientsRequest(RConvId(convId))
