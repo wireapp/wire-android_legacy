@@ -14,7 +14,7 @@ pipeline {
         string(name: 'PatchVersion', defaultValue: '', description: 'PatchVersion for the build as a numeric value (e.g. 1337)')
         booleanParam(name: 'AppUnitTests', defaultValue: true, description: 'Run all app unit tests for this build')
         booleanParam(name: 'StorageUnitTests', defaultValue: true, description: 'Run all Storage unit tests for this build')
-        booleanParam(name: 'ZMessageUnitTests', defaultValue: false, description: 'Run all zmessaging unit tests for this build')
+        booleanParam(name: 'ZMessageUnitTests', defaultValue: true, description: 'Run all zmessaging unit tests for this build')
         booleanParam(name: 'CompileFDroid', defaultValue: true, description: 'Defines if the fdroid flavor should be compiled in addition')
         booleanParam(name: 'UploadToAppCenter', defaultValue: true, description: 'Defines if a build should be uploaded to the appcenter project')
         booleanParam(name: 'forceReleaseToGithub', defaultValue: false, description: 'Defines if this build should be force uploaded to github even if it is not a build from the release branch')
@@ -195,7 +195,7 @@ pipeline {
                 script {
                     last_stage = env.STAGE_NAME
                 }
-                sh "./gradlew :zmessaging:test${usedBuildType}UnitTest -PwireDeflakeTests=1"
+                sh "./gradlew :zmessaging:test${usedBuildType}UnitTest -PwireDeflakeTests=3"
                 publishHTML(allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: "zmessaging/build/reports/tests/test${usedBuildType}UnitTest/", reportFiles: 'index.html', reportName: 'ZMessaging Unit Test Report', reportTitles: 'ZMessaging Unit Test')
                 junit "zmessaging/build/test-results/**/*.xml"
             }
