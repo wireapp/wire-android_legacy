@@ -62,7 +62,7 @@ class CallInfoSpec extends AndroidFreeSpec with DerivedLogTag {
 
   def callInfo() = CallInfo(
     ConvId("conversation"),
-    Participant(qualifiedId, client1Id),
+    Participant(qualified1Id, client1Id),
     isGroup = false,
     UserId("callerId"),
     CallInfo.CallState.SelfConnected,
