@@ -3,14 +3,15 @@ package com.waz.service.call
 import com.waz.zms.BuildConfig
 
 object DomainUtils {
-  def getDomainFromString(id: String): String =
+  def getDomainFromString(idString: String): String =
     if(BuildConfig.FEDERATION_USER_DISCOVERY)
-      id.split("@").last
+      idString.split("@").last
     else ""
 
-  def getFederatedId(id: String, domain: String): String = {
-    if(BuildConfig.FEDERATION_USER_DISCOVERY)
-      s"$id@$domain"
-    else id
-  }
+  def joinIdWithDomain(idString: String, domainString: String ): String =
+    if(domainString.nonEmpty)
+      s"$idString@$domainString"
+    else idString
+
+  def removeDomain(idString: String): String = idString.split("@").head
 }

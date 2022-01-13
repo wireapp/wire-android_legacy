@@ -24,14 +24,14 @@ import com.waz.avs.VideoRenderer
 import com.waz.service.call.CallInfo.Participant
 import com.waz.utils.returning
 import com.waz.threading.Threading._
-import com.waz.zclient.{BuildConfig, R}
+import com.waz.zclient.{R}
 import com.wire.signals.Signal
 
 class OtherVideoView(context: Context, participant: Participant) extends UserVideoView(context, participant) {
 
   Signal.zip(
     participantInfo.map(_.map(_.isMuted)),
-    callController.isInstantActiveSpeaker(participant.userId, participant.clientId),
+    callController.isInstantActiveSpeaker(participant.qualifiedId.id, participant.clientId),
     accentColorController.accentColor.map(_.color),
     callController.isFullScreenEnabled,
     callController.showTopSpeakers,
@@ -62,11 +62,7 @@ class OtherVideoView(context: Context, participant: Participant) extends UserVid
 
   override lazy val shouldShowInfo: Signal[Boolean] = pausedTextVisible
 
-  val userIdString = if(BuildConfig.FEDERATION_USER_DISCOVERY)
-    s"${participant.userId.str}@${participant.domain.str}"
-  else s"${participant.userId.str}"
-
-  registerHandler(returning(new VideoRenderer(getContext, userIdString, participant.clientId.str, false)) { v =>
+  registerHandler(returning(new VideoRenderer(getContext, participant.qualifiedId.str, participant.clientId.str, false)) { v =>
     v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     addView(v, 1)
   })

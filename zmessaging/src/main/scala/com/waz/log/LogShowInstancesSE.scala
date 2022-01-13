@@ -226,7 +226,7 @@ trait LogShowInstancesSE {
     LogShow.createFrom { n =>
       import n._
       l"""
-         |CallInfo(account: ${selfParticipant.userId} | clientId: ${selfParticipant.clientId} | convId: $convId | caller: $caller | state: $state | prevState: $prevState | isCbrEnabled: $isCbrEnabled
+         |CallInfo(account: ${selfParticipant.qualifiedId.id} | clientId: ${selfParticipant.clientId} | convId: $convId | caller: $caller | state: $state | prevState: $prevState | isCbrEnabled: $isCbrEnabled
          |  isGroup: $isGroup | shouldRing: $shouldRing |  muted: $muted | startedAsVideoCall: $startedAsVideoCall | videoSendState: $videoSendState
          |  allParticipants: $allParticipants | maxParticipants: $maxParticipants |
          |  startTime: $startTime | joinedTime: $joinedTime | estabTime: $estabTime | endTime: $endTime

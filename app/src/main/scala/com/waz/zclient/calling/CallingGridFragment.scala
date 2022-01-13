@@ -22,7 +22,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.gridlayout.widget.GridLayout
-import com.waz.model.UserId
+import com.waz.model.{QualifiedId, UserId}
 import com.waz.model.otr.ClientId
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.Threading.Implicits.Ui
@@ -88,7 +88,7 @@ class CallingGridFragment extends FragmentHelper {
   private def initCallingGrid(): Unit = {
 
     val participantsData = Signal.zip(
-      callController.selfParticipant.map(_.userId),
+      callController.selfParticipant.map(_.qualifiedId),
       callController.selfParticipant.map(_.clientId),
       callController.participantsInfo,
       callController.allParticipants,
@@ -120,15 +120,15 @@ class CallingGridFragment extends FragmentHelper {
     }
   }
 
-  private def orderedParticipants(participants: Set[Participant], infoMap: Map[UserId, CallParticipantInfo], selfUserId: UserId, selfClientId: ClientId): Seq[Participant] =
+  private def orderedParticipants(participants: Set[Participant], infoMap: Map[UserId, CallParticipantInfo], selfQualifiedId: QualifiedId, selfClientId: ClientId): Seq[Participant] =
     participants.toSeq.sortWith {
-      case (p, _) if p.userId == selfUserId && p.clientId == selfClientId => true
-      case (_, p) if p.userId == selfUserId && p.clientId == selfClientId => false
-      case (p, _) if p.userId == selfUserId => true
-      case (_, p) if p.userId == selfUserId => false
-      case (p1, p2) if isVideoUser(infoMap(p1.userId)) && !isVideoUser(infoMap(p2.userId)) => true
-      case (p1, p2) if !isVideoUser(infoMap(p1.userId)) && isVideoUser(infoMap(p2.userId)) => false
-      case (p1, p2) => infoMap(p1.userId).displayName.toLowerCase < infoMap(p2.userId).displayName.toLowerCase
+      case (p, _) if p.qualifiedId.id == selfQualifiedId.id && p.clientId == selfClientId => true
+      case (_, p) if p.qualifiedId.id == selfQualifiedId.id && p.clientId == selfClientId => false
+      case (p, _) if p.qualifiedId.id == selfQualifiedId.id => true
+      case (_, p) if p.qualifiedId.id == selfQualifiedId.id => false
+      case (p1, p2) if isVideoUser(infoMap(p1.qualifiedId.id)) && !isVideoUser(infoMap(p2.qualifiedId.id)) => true
+      case (p1, p2) if !isVideoUser(infoMap(p1.qualifiedId.id)) && isVideoUser(infoMap(p2.qualifiedId.id)) => false
+      case (p1, p2) => infoMap(p1.qualifiedId.id).displayName.toLowerCase < infoMap(p2.qualifiedId.id).displayName.toLowerCase
     }
 
   private def observeParticipantsCount(): Unit =
@@ -154,7 +154,7 @@ class CallingGridFragment extends FragmentHelper {
 
 
   private def refreshVideoGrid(grid: GridLayout,
-                               selfUserId: UserId,
+                               selfQualifiedId: QualifiedId,
                                selfClientId: ClientId,
                                participantsToShow: Seq[Participant],
                                info: Seq[CallParticipantInfo],
@@ -164,7 +164,7 @@ class CallingGridFragment extends FragmentHelper {
 
     clearVideoGrid()
 
-    val views = refreshViews(participantsToShow, selfUserId, selfClientId)
+    val views = refreshViews(participantsToShow, selfQualifiedId, selfClientId)
 
     val infoMap = info.toIdMap
 
@@ -172,7 +172,7 @@ class CallingGridFragment extends FragmentHelper {
       if (showTopSpeakers)
         views.sortWith {
           case (v1, v2) =>
-            infoMap(v1.participant.userId).displayName.toLowerCase < infoMap(v2.participant.userId).displayName.toLowerCase
+            infoMap(v1.participant.qualifiedId.id).displayName.toLowerCase < infoMap(v2.participant.qualifiedId.id).displayName.toLowerCase
         }.take(MaxTopSpeakerVideoPreviews)
       else
         views.filter {
@@ -252,11 +252,11 @@ class CallingGridFragment extends FragmentHelper {
 
   def isVideoUser(callParticipantInfo: CallParticipantInfo): Boolean = callParticipantInfo.isVideoEnabled || callParticipantInfo.isScreenShareEnabled
 
-  private def refreshViews(participantsToShow: Seq[Participant], selfUserId: UserId, selfClientId: ClientId): Seq[UserVideoView] = {
+  private def refreshViews(participantsToShow: Seq[Participant], selfQualifiedId: QualifiedId, selfClientId: ClientId): Seq[UserVideoView] = {
 
     def createView(participant: Participant): UserVideoView = returning {
       if (participant.clientId == selfClientId)
-        new SelfVideoView(getContext, Participant(userId = selfUserId, clientId = selfClientId))
+        new SelfVideoView(getContext, Participant(qualifiedId = selfQualifiedId, clientId = selfClientId))
       else new OtherVideoView(getContext, participant)
     } { userView =>
       userView.onDoubleClick.onUi { _ =>

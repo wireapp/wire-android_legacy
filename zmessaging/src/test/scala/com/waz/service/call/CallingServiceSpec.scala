@@ -110,8 +110,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       clock.advance(10.seconds)
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("otherUser")
-
       (convsService.activeMembersData _).expects(_1to1Conv.id).once().returning(
         Signal(Seq(ConversationMemberData(otherUserId, _1to1Conv.id, "member")))
       )
@@ -207,8 +205,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       clock.advance(10.seconds)
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("team-1:1")
-
       (convsService.activeMembersData _).expects(team1to1Conv.id).once().returning(
         Signal(Seq(ConversationMemberData(otherUserId, team1to1Conv.id, "member")))
       )
@@ -256,8 +252,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         case _ =>
       }
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("otherUser")
-
       service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       awaitCP(checkpoint1)
 
@@ -289,7 +283,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       (convsService.activeMembersData _).expects(conv.id).once().returning(
         Signal(Seq(ConversationMemberData(otherUserId, conv.id, "member")))
       )
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("otherUser")
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
@@ -382,7 +375,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       (convsService.activeMembersData _).expects(team1to1Conv.id).once().returning(
         Signal(Seq(ConversationMemberData(otherUserId, team1to1Conv.id, "member")))
       )
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("team-1:1")
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
@@ -422,7 +414,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         case Some(Terminating) => terminatingPhaseEntered = true
         case _ =>
       }
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("otherUser")
 
       (convsService.activeMembersData _).expects(_1to1Conv.id).once().returning(
         Signal(Seq(ConversationMemberData(otherUserId, _1to1Conv.id, "member")))
@@ -453,8 +444,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint2 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfJoining))
       val checkpoint3 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected  && cur.allParticipants == Set(otherUser, otherUser2)))
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
-
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
 
       awaitCP(checkpoint1)
@@ -483,8 +472,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint2 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfJoining && cur.caller == selfUserId))
       val checkpoint3 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.allParticipants == Set(otherUser)))
       val checkpoint4 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.allParticipants == Set(otherUser, otherUser2)))
-
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
 
       (convsService.activeMembersData _).expects(groupConv.id).once().returning(
         Signal(Seq(
@@ -517,8 +504,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint3 = callCheckpoint(_.contains(teamGroupConv.id), _.exists(cur => cur.convId == teamGroupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.allParticipants == Set(otherUser)))
       val checkpoint4 = callCheckpoint(_.contains(teamGroupConv.id), _.exists(cur => cur.convId == teamGroupConv.id && cur.state == SelfConnected && cur.caller == selfUserId && cur.allParticipants == Set(otherUser, otherUser2)))
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
-
       (convsService.activeMembersData _).expects(teamGroupConv.id).once().returning(
         Signal(Seq(
           ConversationMemberData(otherUserId, teamGroupConv.id, "member"),
@@ -550,7 +535,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(c => c.state == SelfConnected && c.estabTime.contains(estTime)))
       val checkpoint2 = callCheckpoint(_.get(groupConv.id).exists(c => c.state == Ongoing && c.estabTime.contains(estTime)), _.isEmpty)
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
 
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
 
@@ -589,8 +573,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       awaitCP(checkpoint1)
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
-
       service.onClosedCall(AnsweredElsewhere, groupConv.remoteId, RemoteInstant(clock.instant()), otherUserId)
       awaitCP(checkpoint2)
     }
@@ -605,8 +587,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
           ConversationMemberData(otherUser2Id, groupConv.id, "member")
         ))
       )
-
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
@@ -641,8 +621,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       await(globalPrefs(SkipTerminatingState) := true)
 
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
-
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
 
       awaitCP(checkpoint1)
 
@@ -681,8 +659,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
 
       awaitCP(checkpoint1)
-
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
 
       (convsService.activeMembersData _).expects(groupConv.id).once().returning(
         Signal(Seq(
@@ -725,8 +701,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       service.onParticipantsChanged(groupConv.remoteId, Set(otherUser))
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
-
       service.endCall(groupConv.id)
       service.dismissCall()
       service.onClosedCall(StillOngoing, groupConv.remoteId, RemoteInstant(clock.instant()), selfUserId)
@@ -750,9 +724,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       //hang up first call and start second call, first call should be replaced
       val checkpoint2 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == SelfCalling) && cur.exists(_.allParticipants.isEmpty))
       val checkpoint3 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == SelfConnected) && cur.exists(_.allParticipants.contains(otherUser2)))
-
-      (DomainUtils.getFederatedId _).expects("otherUser", *).anyNumberOfTimes().returning("otherUser")
-      (DomainUtils.getFederatedId _).expects("otherUser2", *).anyNumberOfTimes().returning("otherUser2")
 
       service.onIncomingCall(_1to1Conv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
@@ -806,8 +777,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint6 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfCalling && c.startTime == LocalInstant(Instant.EPOCH + 50.seconds)))
       val checkpoint7 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == SelfJoining && c.joinedTime.contains(LocalInstant(Instant.EPOCH + 60.seconds))))
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("otherUser")
-
       (convsService.activeMembersData _).expects(_1to1Conv.id).once().returning(
         Signal(Seq(ConversationMemberData(otherUserId, _1to1Conv.id, "member")))
       )
@@ -860,8 +829,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       val checkpoint6 = callCheckpoint(_.contains(_1to1Conv.id), _.exists(c => c.convId == _1to1Conv.id && c.state == OtherCalling && c.startTime == LocalInstant(Instant.EPOCH + 50.seconds)))
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("otherUser")
-
       (convsService.activeMembersData _).expects(_1to1Conv.id).once().returning(
         Signal(Seq(ConversationMemberData(otherUserId, _1to1Conv.id, "member")))
       )
@@ -911,8 +878,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         case _ =>
       }
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("otherUser")
-
       (convsService.activeMembersData _).expects(_1to1Conv.id).once().returning(
         Signal(Seq(ConversationMemberData(otherUserId, _1to1Conv.id, "member")))
       )
@@ -946,8 +911,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint2 = callCheckpoint({ cs => cs.contains(_1to1Conv.id) && cs.get(_1to1Conv2.id).exists(_.state == OtherCalling )}, c => c.exists(_.state == SelfConnected ) && c.exists(_.allParticipants.contains(otherUser)))
       //Hang up the ongoing call - incoming 1:1 call should become current
       val checkpoint3 = callCheckpoint(_.contains(_1to1Conv2.id), cur => cur.exists(_.state == OtherCalling) && cur.exists(_.allParticipants.isEmpty))
-
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("otherUser")
 
       var terminatingPhaseEntered = false
       service.currentCall.map(_.map(_.state)).foreach {
@@ -995,8 +958,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       //Join group call
       val checkpoint5 = callCheckpoint(_.contains(groupConv.id), _.exists(c => c.allParticipants == Set(otherUser, otherUser2) && c.state == SelfConnected))
-
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("group-conv")
 
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
       (avs.rejectCall _).expects(*, *).anyNumberOfTimes().onCall { (_, _) =>
@@ -1064,8 +1025,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         Signal(Seq(ConversationMemberData(otherUserId, _1to1Conv.id, "member")))
       )
 
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("id")
-
       (permissions.ensurePermissions _).expects(*).atLeastOnce().returning(Future.successful(()))
 
       (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
@@ -1101,8 +1060,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val checkpoint1 = callCheckpoint(_.contains(groupConv.id), _.exists(cur => cur.convId == groupConv.id && cur.state == SelfConnected  && cur.allParticipants == Set(otherUser, otherUser2)))
 
       service.onIncomingCall(groupConv.remoteId, otherUserId, videoCall = false, shouldRing = true, isConferenceCall = false)
-
-      (DomainUtils.getFederatedId _).expects(*, *).anyNumberOfTimes().returning("otherUser")
 
       (convsService.activeMembersData _).expects(groupConv.id).once().returning(
         Signal(Seq(
