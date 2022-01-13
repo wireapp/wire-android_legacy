@@ -306,7 +306,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("Outgoing 1:1 call, self user ends the call - close_h returns before dismissal") {
       progressToSelfConnected()
 
-      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+      (avs.endCall _).expects(*, RConvQualifiedId(_1to1Conv.remoteId)).once().onCall { (_, _) =>
         service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
       }
 
@@ -394,7 +394,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onParticipantsChanged(team1to1Conv.remoteId, Set(otherUser))
       awaitCP(checkpoint3)
 
-      (avs.endCall _).expects(*, team1to1Conv.remoteId).once().onCall { (_, _) =>
+      (avs.endCall _).expects(*, RConvQualifiedId(team1to1Conv.remoteId)).once().onCall { (_, _) =>
         service.onClosedCall(AvsClosedReason.Normal, team1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
       }
 
@@ -598,7 +598,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.startCall(groupConv.id)
       awaitCP(checkpoint1)
 
-      (avs.endCall _).expects(*, groupConv.remoteId).once().onCall { (_, _) =>
+      (avs.endCall _).expects(*, RConvQualifiedId(groupConv.remoteId)).once().onCall { (_, _) =>
         service.onClosedCall(Normal, groupConv.remoteId, RemoteInstant(clock.instant()), otherUserId)
       }
       service.endCall(groupConv.id)
@@ -645,7 +645,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       awaitCP(checkpoint2)
       awaitCP(checkpoint3)
 
-      (avs.endCall _).expects(*, groupConv.remoteId).once()
+      (avs.endCall _).expects(*, RConvQualifiedId(groupConv.remoteId)).once()
 
       service.endCall(groupConv.id)
 
@@ -681,7 +681,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       awaitCP(checkpoint2)
       awaitCP(checkpoint3)
 
-      (avs.endCall _).expects(*, groupConv.remoteId).once()
+      (avs.endCall _).expects(*, RConvQualifiedId(groupConv.remoteId)).once()
 
       service.endCall(groupConv.id)
 
@@ -743,7 +743,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.startCall(_1to1Conv.id)
       awaitCP(checkpoint1)
 
-      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+      (avs.endCall _).expects(*, RConvQualifiedId(_1to1Conv.remoteId)).once().onCall { (_, _) =>
         service.onClosedCall(Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUserId)
       }
 
@@ -838,7 +838,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
-      (avs.startCall _).expects(*, _1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
+      (avs.startCall _).expects(*, RConvQualifiedId(_1to1Conv.remoteId), WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
       service.startCall(_1to1Conv.id)
       awaitCP(checkpoint1)
 
