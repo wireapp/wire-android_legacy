@@ -337,7 +337,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       val dismissedCall = Signal(false)
 
-      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+      (avs.endCall _).expects(*, RConvQualifiedId(_1to1Conv.remoteId)).once().onCall { (_, _) =>
         dismissedCall.filter(identity).head.foreach { _ =>
           service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
         }
@@ -381,7 +381,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
-      (avs.startCall _).expects(*, team1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
+      (avs.startCall _).expects(*, RConvQualifiedId(team1to1Conv.remoteId), WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
       service.startCall(team1to1Conv.id, isVideo = false, forceOption = false)
       awaitCP(checkpoint1)
 
@@ -424,11 +424,11 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
-      (avs.startCall _).expects(*, _1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
+      (avs.startCall _).expects(*, RConvQualifiedId(_1to1Conv.remoteId), WCallType.Normal, WCallConvType.OneOnOne, *).once().returning(Future(0))
       service.startCall(_1to1Conv.id, isVideo = false, forceOption = false)
       awaitCP(checkpoint1)
 
-      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+      (avs.endCall _).expects(*, RConvQualifiedId(_1to1Conv.remoteId)).once().onCall { (_, _) =>
         service.onClosedCall(AvsClosedReason.Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), selfUserId)
       }
 
@@ -753,7 +753,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
-      (avs.startCall _).expects(*, _1to1Conv2.remoteId, *, WCallConvType.OneOnOne, false).once().returning(Future(0))
+      (avs.startCall _).expects(*, RConvQualifiedId(_1to1Conv2.remoteId), *, WCallConvType.OneOnOne, false).once().returning(Future(0))
 
       for {
         _ <- service.endCall(_1to1Conv.id, skipTerminating = true)
@@ -786,7 +786,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (permissions.ensurePermissions _).expects(*).once().returning(Future.successful(()))
 
-      (avs.startCall _).expects(*, _1to1Conv.remoteId, WCallType.Normal, WCallConvType.OneOnOne, *).twice().returning(Future(0))
+      (avs.startCall _).expects(*, RConvQualifiedId(_1to1Conv.remoteId), WCallType.Normal, WCallConvType.OneOnOne, *).twice().returning(Future(0))
       service.startCall(_1to1Conv.id)
       awaitCP(checkpoint1)
 
@@ -898,7 +898,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onIncomingCall(_1to1Conv2.remoteId, otherUser2Id, videoCall = false, shouldRing = true, isConferenceCall = false) //Receive the second call after first is established
       awaitCP(checkpoint2)
 
-      (avs.endCall _).expects(*, _1to1Conv.remoteId).once().onCall { (_, _) =>
+      (avs.endCall _).expects(*, RConvQualifiedId(_1to1Conv.remoteId)).once().onCall { (_, _) =>
         service.onClosedCall(Normal, _1to1Conv.remoteId, RemoteInstant(clock.instant()), otherUserId)
       }
       service.endCall(_1to1Conv.id)
@@ -1045,8 +1045,8 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.setVideoSendState(_1to1Conv.id, VideoState.Started)
       awaitCP(checkpoint4)
 
-      (avs.endCall _).expects(*, *).once().onCall { (_: WCall, convId: RConvId) =>
-        service.onClosedCall(Avs.AvsClosedReason.Normal, convId, RemoteInstant(clock.instant()), selfUserId)
+      (avs.endCall _).expects(*, *).once().onCall { (_: WCall, rConvQualifiedId: RConvQualifiedId) =>
+        service.onClosedCall(Avs.AvsClosedReason.Normal, rConvQualifiedId.id, RemoteInstant(clock.instant()), selfUserId)
       }
 
       service.endCall(_1to1Conv.id)
@@ -1084,7 +1084,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     scenario("Messages are targeted if target recipients are specified") {
       val expectedTargetRecipients =
-        TargetRecipients.SpecificClients(OtrClientIdMap.from(otherUser.userId -> Set(otherUser.clientId)))
+        TargetRecipients.SpecificClients(OtrClientIdMap.from(otherUser.qualifiedId.id -> Set(otherUser.clientId)))
 
       (otrSyncHandler.postOtrMessage _)
         .expects(groupConv.id, *, *, expectedTargetRecipients, *, *)
@@ -1092,7 +1092,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         .returning(Future.successful(Right(RemoteInstant(Instant.now(clock)))))
 
       val ctx = Pointer.createConstant(0)
-      val targetRecipients = AvsClientList(Seq(AvsClient(otherUser.userId.str, otherUser.clientId.str)))
+      val targetRecipients = AvsClientList(Seq(AvsClient(otherUser.qualifiedId.id.str, otherUser.clientId.str)))
 
       progressToSelfConnected()
       result(service.onSend(ctx, msg = "", groupConv.remoteId, Some(targetRecipients)))
