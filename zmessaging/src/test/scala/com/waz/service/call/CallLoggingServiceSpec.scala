@@ -40,7 +40,7 @@ class CallLoggingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   val selfUserId = UserId("self-user")
   val selfClientId = ClientId("self-client")
-  val selfParticipant = Participant(selfUserId, selfClientId)
+  val selfParticipant = Participant(qualifiedId, selfClientId)
 
   val calling   = mock[CallingService]
   val messages  = mock[MessagesService]

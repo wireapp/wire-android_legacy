@@ -18,10 +18,9 @@
 package com.waz.specs
 
 import java.util.concurrent.{Executors, ThreadFactory, TimeoutException}
-
 import com.waz.SystemLogOutput
 import com.waz.log.{InternalLog, LogsService}
-import com.waz.model.UserId
+import com.waz.model.{QualifiedId, UserId}
 import com.waz.model.otr.ClientId
 import com.waz.service.AccountsService.{AccountState, InForeground, LoggedOut}
 import com.waz.service._
@@ -84,6 +83,7 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
   val clock = AndroidFreeSpec.clock
 
   val account1Id  = UserId("account1")
+  val qualifiedId  = QualifiedId(account1Id, "")
   val client1Id   = ClientId("client1")
   val accounts    = mock[AccountsService]
   val tracking    = mock[TrackingService]
