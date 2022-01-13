@@ -83,7 +83,7 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
   val clock = AndroidFreeSpec.clock
 
   val account1Id  = UserId("account1")
-  val qualifiedId  = QualifiedId(account1Id, "")
+  val qualified1Id  = QualifiedId(account1Id)
   val client1Id   = ClientId("client1")
   val accounts    = mock[AccountsService]
   val tracking    = mock[TrackingService]
