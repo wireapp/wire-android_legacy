@@ -219,7 +219,7 @@ class ConversationFragment extends FragmentHelper {
       participantsNumber       <- convController.convMembers(convId).map(_.size)
       selfUserId               <- zms.map(_.selfUserId)
       call                     <- callController.currentCallOpt
-      isCallActive             = call.exists(_.convId == convId) && call.exists(_.selfParticipant.userId == selfUserId)
+      isCallActive             = call.exists(_.convId == convId) && call.exists(_.selfParticipant.qualifiedId.id == selfUserId)
     } yield {
       if (isCallActive || !isConvActive || participantsNumber <= 1) Option.empty[Int]
       else Some(R.menu.conversation_header_menu_video)

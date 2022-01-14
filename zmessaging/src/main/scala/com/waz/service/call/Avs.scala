@@ -17,18 +17,18 @@
  */
 package com.waz.service.call
 
-import android.util.Log
 import com.sun.jna.Pointer
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
-import com.waz.model.otr.{ClientId, OtrClientIdMap}
+import com.waz.model.otr.{ClientId, OtrClientIdMap, QOtrClientIdMap}
 import com.waz.service.call.Avs.AvsClientList.encode
 import com.waz.service.call.CallInfo.{ActiveSpeaker, Participant}
 import com.waz.service.call.Calling.{ActiveSpeakersHandler, Handle, _}
 import com.waz.utils.jna.{Size_t, Uint32_t}
 import com.waz.utils.{CirceJSONSupport, returning}
+import com.waz.zms.BuildConfig
 import com.wire.signals.SerialDispatchQueue
 import org.threeten.bp.Instant
 
@@ -40,17 +40,18 @@ trait Avs {
   def registerAccount(callingService: CallingServiceImpl): Future[WCall]
   def unregisterAccount(wCall: WCall): Future[Unit]
   def onNetworkChanged(wCall: WCall): Future[Unit]
-  def startCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean): Future[Int]
-  def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean): Unit
+  def startCall(wCall: WCall, rConvQualifiedId: RConvQualifiedId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean): Future[Int]
+  def answerCall(wCall: WCall, rConvQualifiedId: RConvQualifiedId, callType: WCallType.Value, cbrEnabled: Boolean): Unit
   def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer): Future[Unit]
   def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit]
-  def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, userId: UserId, clientId: ClientId): Future[Int]
-  def endCall(wCall: WCall, convId: RConvId): Unit
-  def rejectCall(wCall: WCall, convId: RConvId): Unit
-  def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
+  def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, rConvQualifiedId: RConvQualifiedId, qualifiedId: QualifiedId, clientId: ClientId): Future[Int]
+  def endCall(wCall: WCall, rConvQualifiedId: RConvQualifiedId): Unit
+  def rejectCall(wCall: WCall, rConvQualifiedId: RConvQualifiedId): Unit
+  def setVideoSendState(wCall: WCall, rConvQualifiedId: RConvQualifiedId, state: VideoState.Value): Unit
   def setCallMuted(wCall: WCall, muted: Boolean): Unit
   def setProxy(host: String, port: Int): Unit
   def onClientsRequest(wCall: WCall, convId: RConvId, userClients: OtrClientIdMap): Unit
+  def onQualifiedClientsRequest(wCall: WCall, rConvQualifiedId: RConvQualifiedId, userClients: QOtrClientIdMap): Unit
   def onSftResponse(wCall: WCall, data: Option[Array[Byte]], ctx: Pointer): Unit
 }
 
@@ -95,10 +96,12 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
     verbose(l"Initialising calling for: ${cs.accountId} and current client: ${cs.clientId}")
 
+    val qualifiedId = QualifiedId.apply(cs.accountId, cs.domain)
+
     val callingReady = Promise[Unit]()
 
     val wCall = Calling.wcall_create(
-      cs.accountId.str,
+      qualifiedId.str,
       cs.clientId.str,
       new ReadyHandler {
         override def onReady(version: Int, arg: Pointer) = {
@@ -117,7 +120,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
                             isTransient: Boolean,
                             arg: Pointer): Int = {
 
-          if (!(userIdSelf == cs.accountId.str && clientIdSelf == cs.clientId.str)) {
+          val userId = DomainUtils.removeDomain(userIdSelf)
+          val rConvId = RConvId(DomainUtils.removeDomain(convId))
+
+          if (!(userId == cs.accountId.str && clientIdSelf == cs.clientId.str)) {
             warn(l"Received request to send calling message from non self user and/or client")
             return AvsCallbackError.InvalidArgument
           }
@@ -128,7 +134,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
               AvsClientList.decode(json).fold({ throw _ }, identity)
             }
 
-            cs.onSend(ctx, message, RConvId(convId), targetRecipients)
+            if (BuildConfig.FEDERATION_USER_DISCOVERY)
+              cs.onQSend(ctx, message, rConvId, targetRecipients)
+            else cs.onSend(ctx, message, rConvId, targetRecipients)
+
             AvsCallbackError.None
           } catch {
             case e: Throwable =>
@@ -145,7 +154,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       },
       new IncomingCallHandler {
         override def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, clientId: String, isVideoCall: Boolean, shouldRing: Boolean, convType: Int, arg: Pointer) =
-          cs.onIncomingCall(RConvId(convId), UserId(userId), isVideoCall, shouldRing, isConferenceCall = convType == WCallConvType.Conference.id)
+          cs.onIncomingCall(RConvId(DomainUtils.removeDomain(convId)), UserId(DomainUtils.removeDomain(userId)), isVideoCall, shouldRing, isConferenceCall = convType == WCallConvType.Conference.id)
       },
       new MissedCallHandler {
         override def onMissedCall(convId: String, msgTime: Uint32_t, userId: String, isVideoCall: Boolean, arg: Pointer): Unit =
@@ -175,8 +184,12 @@ class AvsImpl() extends Avs with DerivedLogTag {
           cs.onBitRateStateChanged(isEnabled)
       },
       new VideoReceiveStateHandler {
-        override def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit =
-          cs.onVideoStateChanged(userId, clientId, VideoState(state))
+        override def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit = {
+          val userIdWithoutDomain = DomainUtils.removeDomain(userId)
+          val userDomain = DomainUtils.getDomainFromString(userId)
+
+          cs.onVideoStateChanged(userIdWithoutDomain, clientId, VideoState(state), userDomain)
+        }
       },
       null
     )
@@ -185,13 +198,18 @@ class AvsImpl() extends Avs with DerivedLogTag {
       val participantChangedHandler = new ParticipantChangedHandler {
         override def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit = {
           ParticipantsChangeDecoder.decode(data).fold(()) { participantsChange =>
-            val participants = participantsChange.members.map(m => Participant(m.userid, m.clientid, m.muted == 1)).toSet
+
+            val participants = participantsChange.members.map(m => {
+              val userIdString = DomainUtils.removeDomain(m.userid.str)
+              val userDomain = DomainUtils.getDomainFromString(m.userid.str)
+              val qualifiedId = QualifiedId.apply(UserId(userIdString), Domain(userDomain))
+              Participant(qualifiedId, m.clientid, m.muted == 1)
+            }).toSet
             cs.onParticipantsChanged(RConvId(convId), participants)
 
             import AvsClientList._
-            val clients = participants.map { participant =>
-              AvsClient(participant.userId.str, participant.clientId.str)
-            }
+            val clients = participants.map { participant => AvsClient(participant.qualifiedId.str, participant.clientId.str) }
+
             val json = encode(AvsClientList(clients.toSeq))
             withAvs(wcall_request_video_streams(wCall, convId, 0, json))
           }
@@ -209,7 +227,11 @@ class AvsImpl() extends Avs with DerivedLogTag {
                                              upstreamPacketLossPercentage: Int,
                                              downstreamPacketLossPercentage: Int,
                                              arg: Pointer): Unit = {
-          val participant = Participant(UserId(userId), ClientId(clientId))
+          val userIdString = DomainUtils.removeDomain(userId)
+          val userDomain = DomainUtils.getDomainFromString(userId)
+          val qualifiedId = QualifiedId(UserId(userIdString), Domain(userDomain))
+          val participant = Participant(qualifiedId, ClientId(clientId))
+
           cs.onNetworkQualityChanged(ConvId(convId), participant, NetworkQuality(quality))
         }
       }
@@ -218,7 +240,11 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
       val clientsRequestHandler = new ClientsRequestHandler {
         override def onClientsRequest(inst: Calling.Handle, convId: String, arg: Pointer): Unit = {
-          cs.onClientsRequest(RConvId(convId))
+          val conv  = DomainUtils.removeDomain(convId)
+          val domain  = DomainUtils.getDomainFromString(convId)
+          if(BuildConfig.FEDERATION_USER_DISCOVERY)
+            cs.onQualifiedClientsRequest(RConvQualifiedId(RConvId(conv), domain))
+          else cs.onClientsRequest(RConvId(convId))
       }}
 
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)
@@ -226,7 +252,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       val activeSpeakersHandler = new ActiveSpeakersHandler {
         override def onActiveSpeakersChanged(inst: Handle, convId: String, data: String, arg: Pointer): Unit =
           ActiveSpeakerChangeDecoder.decode(data).foreach { activeSpeakersChange =>
-            val activeSpeakers = activeSpeakersChange.audio_levels.map(m => ActiveSpeaker(m.userid, m.clientid, m.audio_level, m.audio_level_now)).toSet
+            val activeSpeakers = activeSpeakersChange.audio_levels.map(m =>ActiveSpeaker(UserId(DomainUtils.removeDomain(m.userid.str)), m.clientid, m.audio_level, m.audio_level_now)).toSet
             cs.onActiveSpeakersChanged(RConvId(convId), activeSpeakers)
         }
       }
@@ -252,31 +278,31 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def onNetworkChanged(wCall: WCall) =
     withAvs(Calling.wcall_network_changed(wCall))
 
-  override def startCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean) =
-    withAvsReturning(wcall_start(wCall, convId.str, callType.id, convType.id, if (cbrEnabled) 1 else 0), -1)
+  override def startCall(wCall: WCall, rConvQualifiedId: RConvQualifiedId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean) =
+    withAvsReturning(wcall_start(wCall, rConvQualifiedId.str, callType.id, convType.id, if (cbrEnabled) 1 else 0), -1)
 
-  override def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean) =
-    withAvs(wcall_answer(wCall: WCall, convId.str, callType.id, if (cbrEnabled) 1 else 0))
+  override def answerCall(wCall: WCall, rConvQualifiedId: RConvQualifiedId, callType: WCallType.Value, cbrEnabled: Boolean) =
+    withAvs(wcall_answer(wCall: WCall, rConvQualifiedId.str, callType.id, if (cbrEnabled) 1 else 0))
 
   override def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer) =
     withAvs(wcall_resp(wCall, status, reason, arg))
 
-  override def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Future[Int] = {
+  override def onReceiveMessage(wCall: WCall, msg: String, currTime: LocalInstant, msgTime: RemoteInstant, rConvQualifiedId: RConvQualifiedId, qualifiedId: QualifiedId, sender: ClientId): Future[Int] = {
     val bytes = msg.getBytes("UTF-8")
-    withAvsReturning(wcall_recv_msg(wCall, bytes, bytes.length, uint32_tTime(currTime.instant), uint32_tTime(msgTime.instant), convId.str, from.str, sender.str), onFailure = 0)
+    withAvsReturning(wcall_recv_msg(wCall, bytes, bytes.length, uint32_tTime(currTime.instant), uint32_tTime(msgTime.instant), rConvQualifiedId.str, qualifiedId.str, sender.str), onFailure = 0)
   }
 
   override def onConfigRequest(wCall: WCall, error: Int, json: String): Future[Unit] =
     withAvs(wcall_config_update(wCall, error, json))
 
-  override def endCall(wCall: WCall, convId: RConvId) =
-    withAvs(wcall_end(wCall, convId.str))
+  override def endCall(wCall: WCall, rConvQualifiedId: RConvQualifiedId) =
+    withAvs(wcall_end(wCall, rConvQualifiedId.str))
 
-  override def rejectCall(wCall: WCall, convId: RConvId) =
-    withAvs(wcall_reject(wCall, convId.str))
+  override def rejectCall(wCall: WCall, rConvQualifiedId: RConvQualifiedId) =
+    withAvs(wcall_reject(wCall, rConvQualifiedId.str))
 
-  override def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value) =
-    withAvs(wcall_set_video_send_state(wCall, convId.str, state.id))
+  override def setVideoSendState(wCall: WCall, rConvQualifiedId: RConvQualifiedId, state: VideoState.Value) =
+    withAvs(wcall_set_video_send_state(wCall, rConvQualifiedId.str, state.id))
 
   override def setCallMuted(wCall: WCall, muted: Boolean): Unit =
     withAvs(wcall_set_mute(wCall, if (muted) 1 else 0))
@@ -295,6 +321,20 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
     val json = encode(AvsClientList(clients.toSeq))
     withAvs(wcall_set_clients_for_conv(wCall, convId.str, json))
+  }
+
+  override def onQualifiedClientsRequest(wCall: WCall, rConvQualifiedId: RConvQualifiedId, userClients: QOtrClientIdMap): Unit = {
+    import AvsClientList._
+
+    val clients = userClients.entries.flatMap { case (userId, clientIds) =>
+      clientIds.map { clientId =>
+        val userIdWithDomain = DomainUtils.joinIdWithDomain(userId.id.str, userId.domain)
+        AvsClient(userIdWithDomain, clientId.str)
+      }
+    }
+
+    val json = encode(AvsClientList(clients.toSeq))
+    withAvs(wcall_set_clients_for_conv(wCall, rConvQualifiedId.str, json))
   }
 
   override def onSftResponse(wCall: WCall, data: Option[Array[Byte]], ctx: Pointer): Unit =

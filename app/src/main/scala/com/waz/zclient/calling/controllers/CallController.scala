@@ -124,7 +124,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
       case (activeSpeakers, videoUsers) =>
         videoUsers.filter { participant =>
           activeSpeakers.exists { speaker =>
-            participant.clientId == speaker.clientId && participant.userId == speaker.userId && speaker.longTermAudioLevel > 0
+            participant.clientId == speaker.clientId && participant.qualifiedId.id == speaker.userId && speaker.longTermAudioLevel > 0
           }
         }
     }
@@ -134,7 +134,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
       case (activeSpeakers, allParticipants) =>
         allParticipants.filter { participant =>
           activeSpeakers.exists { speaker =>
-            participant.clientId == speaker.clientId && participant.userId == speaker.userId && speaker.longTermAudioLevel > 0
+            participant.clientId == speaker.clientId && participant.qualifiedId.id == speaker.userId && speaker.longTermAudioLevel > 0
           }
         }.toSeq
     }
@@ -149,12 +149,12 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     }
 
   private val lastCallAccountId: SourceSignal[UserId] = Signal()
-  currentCall.map(_.selfParticipant.userId).foreach { selfUserId => lastCallAccountId ! selfUserId }
+  currentCall.map(_.selfParticipant.qualifiedId.id).foreach { selfUserId => lastCallAccountId ! selfUserId }
 
   var theme: Signal[Theme] = Signal.const(Theme.Dark)
 
   private val mergedVideoStates: Signal[Map[UserId, Set[VideoState]]] = {
-    allVideoReceiveStates.map(_.groupBy(_._1.userId).mapValues(_.values.toSet))
+    allVideoReceiveStates.map(_.groupBy(_._1.qualifiedId.id).mapValues(_.values.toSet))
   }
 
   lazy val orderedParticipantsInfo: Signal[Vector[CallParticipantInfo]] =
@@ -164,7 +164,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     for {
       cZms         <- callingZms
       participants <- allParticipants.map(_.toSeq)
-      ids           = participants.map(_.userId)
+      ids           = participants.map(_.qualifiedId.id)
       users        <- cZms.usersStorage.listSignal(ids)
       videoStates  <- mergedVideoStates
     } yield users.map { user =>
@@ -178,8 +178,8 @@ class CallController(implicit inj: Injector, cxt: WireContext)
         isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started)).nonEmpty),
         isScreenShareEnabled = videoStates.get(user.id).exists(_.intersect(Set(ScreenShare)).nonEmpty),
         isSelf         = cZms.selfUserId == user.id,
-        isMuted        = participants.find(_.userId == user.id).map(_.muted).getOrElse(false),
-        clientId       = participants.find(_.userId == user.id).map(_.clientId).get
+        isMuted        = participants.find(_.qualifiedId.id == user.id).map(_.muted).getOrElse(false),
+        clientId       = participants.find(_.qualifiedId.id == user.id).map(_.clientId).get
       )
     }
 
@@ -232,8 +232,8 @@ class CallController(implicit inj: Injector, cxt: WireContext)
 
   private lazy val otherUser = Signal.zip(isGroupCall, userStorage, allParticipants, selfParticipant).flatMap {
     case (false, usersStorage, participants, self) =>
-      participants.find(_.userId != self.userId) match {
-        case Some(participant) => usersStorage.optSignal(participant.userId)
+      participants.find(_.qualifiedId.id != self.qualifiedId.id) match {
+        case Some(participant) => usersStorage.optSignal(participant.qualifiedId.id)
         case None              => Signal.const[Option[UserData]](None)
       }
     case _ => Signal.const[Option[UserData]](None)

@@ -19,7 +19,7 @@ package com.waz.service.call
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.ClientId
-import com.waz.model.{ConvId, RemoteInstant, UserId}
+import com.waz.model.{ConvId, QualifiedId, RemoteInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason
 import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
@@ -40,7 +40,8 @@ class CallLoggingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   val selfUserId = UserId("self-user")
   val selfClientId = ClientId("self-client")
-  val selfParticipant = Participant(selfUserId, selfClientId)
+  val selfQualifiedId = QualifiedId(selfUserId)
+  val selfParticipant = Participant(selfQualifiedId, selfClientId)
 
   val calling   = mock[CallingService]
   val messages  = mock[MessagesService]

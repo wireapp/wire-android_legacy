@@ -802,6 +802,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
    */
   override def generateTempConversationId(users: Set[UserId]): RConvId =
     RConvId((users + selfUserId).toSeq.map(_.toString).sorted.foldLeft("")(_ + _))
+
 }
 
 object ConversationsService {

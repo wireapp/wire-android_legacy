@@ -71,7 +71,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
     for {
       isGroup <- callController.isGroupCall
       infos   <- callController.participantsInfo
-    } yield infos.find(_.id == participant.userId)
+    } yield infos.find(_.id == participant.qualifiedId.id)
 
   protected val nameTextView = returning(findById[TextView](R.id.name_text_view)) { view =>
     participantInfo.onUi {
