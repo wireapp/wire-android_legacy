@@ -27,7 +27,7 @@ import com.waz.log.LogSE.{debug, _}
 import com.waz.log.LogShow
 import com.waz.model.errors.NotFoundLocal
 import com.waz.model._
-import com.waz.service.AccountsService
+import com.waz.service.{AccountsService, UserService}
 import com.waz.service.assets._
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient
@@ -58,6 +58,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
   private val client              = mock[AssetClient]
   private val uriHelperMock       = mock[UriHelper]
   private val syncHandle          = mock[SyncServiceHandle]
+  private val userService         = mock[UserService]
 
   override val accountsService: AccountsService = mock[AccountsService]
   override val accountStorage: AccountStorage = mock[AccountStorage]
@@ -93,7 +94,8 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
       cache,
       rawCache,
       client,
-      syncHandle
+      syncHandle,
+      userService
     )
 
   feature("Assets") {

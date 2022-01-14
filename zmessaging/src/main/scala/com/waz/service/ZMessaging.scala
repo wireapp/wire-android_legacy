@@ -309,7 +309,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
       )(Threading.IO),
       new UploadAssetContentCacheImpl(rawCacheDirectory)(Threading.IO),
       assetClient,
-      sync
+      sync,
+      users
     )
   }
 

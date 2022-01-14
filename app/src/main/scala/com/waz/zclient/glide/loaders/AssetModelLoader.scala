@@ -32,7 +32,7 @@ import com.waz.zclient.glide.{AssetRequest, ImageAssetFetcher}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
-class AssetModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[GeneralAssetId, InputStream]
+final class AssetModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[GeneralAssetId, InputStream]
   with DerivedLogTag {
 
   override def buildLoadData(model: GeneralAssetId, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {

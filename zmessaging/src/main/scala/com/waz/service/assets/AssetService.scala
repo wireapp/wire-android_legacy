@@ -26,6 +26,7 @@ import com.waz.log.LogSE._
 import com.waz.model.AssetData.UploadTaskKey
 import com.waz.model._
 import com.waz.model.errors._
+import com.waz.service.UserService
 import com.waz.service.assets.Asset.{General, Video}
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient.{AssetContent, Metadata, Retention, UploadResponse2}
@@ -35,6 +36,7 @@ import com.wire.signals.Signal
 import com.waz.utils.streams.CountInputStream
 import com.waz.utils.wrappers.Bitmap
 import com.waz.utils._
+import com.waz.zms.BuildConfig
 import com.waz.znet2.http.HttpClient._
 import com.waz.znet2.http.ResponseCode
 
@@ -72,19 +74,20 @@ trait AssetService {
   def loadUploadContentById(uploadAssetId: UploadAssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput]
 }
 
-class AssetServiceImpl(currentDomain: Domain,
-                       assetsStorage: AssetStorage,
-                       uploadAssetStorage: UploadAssetStorage,
-                       downloadAssetStorage: DownloadAssetStorage,
-                       assetDetailsService: AssetDetailsService,
-                       previewService: AssetPreviewService,
-                       restrictions: AssetRestrictionsService,
-                       uriHelper: UriHelper,
-                       contentCache: AssetContentCache,
-                       uploadContentCache: UploadAssetContentCache,
-                       assetClient: AssetClient,
-                       sync: SyncServiceHandle)
-                      (implicit ec: ExecutionContext) extends AssetService with DerivedLogTag {
+final class AssetServiceImpl(currentDomain:        Domain,
+                             assetsStorage:        AssetStorage,
+                             uploadAssetStorage:   UploadAssetStorage,
+                             downloadAssetStorage: DownloadAssetStorage,
+                             assetDetailsService:  AssetDetailsService,
+                             previewService:       AssetPreviewService,
+                             restrictions:         AssetRestrictionsService,
+                             uriHelper:            UriHelper,
+                             contentCache:         AssetContentCache,
+                             uploadContentCache:   UploadAssetContentCache,
+                             assetClient:          AssetClient,
+                             sync:                 SyncServiceHandle,
+                             users:                => UserService)
+                            (implicit ec: ExecutionContext) extends AssetService with DerivedLogTag {
 
   override def assetSignal(idGeneral: GeneralAssetId): Signal[GeneralAsset] =
     (idGeneral match {
@@ -201,11 +204,27 @@ class AssetServiceImpl(currentDomain: Domain,
       case _ => uriHelper.assetInput(localSource.uri).validate(localSource.sha)
     }.toOption
 
-  override def loadPublicContentById(assetId: AssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
-    assetClient.loadPublicAssetContent(assetId, callback).map {
+  override def loadPublicContentById(assetId:  AssetId,
+                                     callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] = {
+    val response =
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val domain =
+          CancellableFuture.lift(
+            users.findUserByPicture(assetId).map {
+              case Some(u) => u.domain
+              case _       => currentDomain
+            }
+          )
+        domain.flatMap(assetClient.loadPublicAssetContent(assetId, callback, _))
+      } else {
+        assetClient.loadPublicAssetContent(assetId, callback)
+      }
+
+    response.map {
       case Left(err) => AssetInput(err)
-      case Right(i)  => AssetInput(i)
+      case Right(i) => AssetInput(i)
     }
+  }
 
   override def loadUnsplashProfilePicture(): CancellableFuture[AssetInput] =
     assetClient.loadUnsplashProfilePicture().map {
@@ -213,7 +232,8 @@ class AssetServiceImpl(currentDomain: Domain,
       case Right(i)  => AssetInput(i)
     }
 
-  override def loadUploadContentById(uploadAssetId: UploadAssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
+  override def loadUploadContentById(uploadAssetId: UploadAssetId,
+                                     callback:      Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
     uploadAssetStorage.get(uploadAssetId).flatMap { asset =>
       (asset.assetId, asset.localSource) match {
         case (Some(aId), _) => loadContentById(aId, callback)
@@ -222,7 +242,8 @@ class AssetServiceImpl(currentDomain: Domain,
       }
     }.lift
 
-  override def loadContentById(assetId: AssetId, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
+  override def loadContentById(assetId:  AssetId,
+                               callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =
     assetsStorage.get(assetId).flatMap(asset => loadContentFromAsset(asset, callback)).lift
 
   override def loadContent(asset: Asset, callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] =

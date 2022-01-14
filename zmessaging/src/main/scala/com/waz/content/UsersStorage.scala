@@ -19,10 +19,10 @@ package com.waz.content
 
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
 import com.waz.model._
 import com.waz.service.{SearchKey, SearchQuery}
-import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils._
 import com.wire.signals._
 
@@ -38,6 +38,8 @@ trait UsersStorage extends CachedStorage[UserId, UserData] {
   def listAcceptedOrPendingUsers: Future[Map[UserId, UserData]]
 
   def findUsersForService(id: IntegrationId): Future[Set[UserData]]
+
+  def findByPicture(assetId: GeneralAssetId): Future[Option[UserData]]
 }
 
 final class UsersStorageImpl(context: Context, storage: ZmsDatabase)
@@ -73,4 +75,7 @@ final class UsersStorageImpl(context: Context, storage: ZmsDatabase)
 
   override def searchByTeam(team: TeamId, query: SearchQuery): Future[Set[UserData]] =
     storage(UserDataDao.search(SearchKey(query.query), query.domain, query.handleOnly, Some(team))(_)).future
+
+  override def findByPicture(assetId: GeneralAssetId): Future[Option[UserData]] =
+    values.map(_.find(_.picture.exists(_.id == assetId)))
 }
