@@ -13,6 +13,9 @@ data class AssetsEntity(
     @ColumnInfo(name = "token")
     val token: String?,
 
+    @ColumnInfo(name = "domain")
+    val domain: String?,
+
     @ColumnInfo(name = "name", defaultValue = "")
     val name: String,
 
@@ -35,8 +38,5 @@ data class AssetsEntity(
     val preview: String?,
 
     @ColumnInfo(name = "details", defaultValue = "")
-    val details: String,
-
-    @ColumnInfo(name = "conversation_id")
-    val conversationId: String?
+    val details: String
 )

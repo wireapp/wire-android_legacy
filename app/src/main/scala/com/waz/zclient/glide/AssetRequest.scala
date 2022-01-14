@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.glide
 
-import com.waz.model.{AssetId, GeneralAssetId, Picture, PictureNotUploaded, PictureUploaded, UploadAssetId}
+import com.waz.model.{AssetId, GeneralAssetId, UploadAssetId}
 import com.waz.api.MessageContent.Location
 
 sealed trait AssetRequest {
@@ -30,26 +30,21 @@ object AssetRequest {
     case a: AssetId       => AssetIdRequest(a)
     case _                => EmptyRequest
   }
-
-  def apply(picture: Picture): AssetRequest = picture match {
-    case PictureUploaded(assetId)    => PublicAssetIdRequest(assetId)
-    case PictureNotUploaded(assetId) => UploadAssetIdRequest(assetId)
-  }
 }
 
-case class AssetIdRequest(assetId: AssetId) extends AssetRequest {
+final case class AssetIdRequest(assetId: AssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
 
-case class PublicAssetIdRequest(assetId: AssetId) extends AssetRequest {
+final case class PublicAssetIdRequest(assetId: AssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
 
-case class UploadAssetIdRequest(assetId: UploadAssetId) extends AssetRequest {
+final case class UploadAssetIdRequest(assetId: UploadAssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
 
-case class MapRequest(location: Location) extends AssetRequest {
+final case class MapRequest(location: Location) extends AssetRequest {
   override val key: String = location.toString
 }
 

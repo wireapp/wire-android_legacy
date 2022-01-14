@@ -52,8 +52,7 @@ import com.waz.service.assets.UploadAssetStorage.UploadAssetDao
 
 import scala.util.{Success, Try}
 
-class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getApplicationContext, dbName, DbVersion, daos, migrations) {
-
+final class ZMessagingDB(context: Context, dbName: String) extends DaoDB(context.getApplicationContext, dbName, DbVersion, daos, migrations) {
   override def onUpgrade(db: SupportSQLiteDatabase, from: Int, to: Int): Unit = {
     if (from < 60) {
       dropAllTables(db)
@@ -328,6 +327,7 @@ object ZMessagingDB {
         assets.Asset(
           id = old.remoteId.map(rid => AssetId(rid.str)).getOrElse(old.id),
           token = old.token,
+          domain = old.domain,
           sha = old.sha.get,
           mime = old.mime,
           encryption = encryption.getOrElse(NoEncryption),
@@ -346,8 +346,7 @@ object ZMessagingDB {
               BlobDetails
             case None =>
               BlobDetails
-          },
-          convId = old.convId
+          }
         )
       }
 

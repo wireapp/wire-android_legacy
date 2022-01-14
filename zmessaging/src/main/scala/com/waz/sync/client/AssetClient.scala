@@ -24,8 +24,9 @@ import java.security.{DigestOutputStream, MessageDigest}
 import com.waz.api.impl.ErrorResponse
 import com.waz.cache.Expiration
 import com.waz.model._
-import com.waz.service.assets.{Asset, NoEncryption}
+import com.waz.service.assets.Asset
 import com.waz.utils.{CirceJSONSupport, IoUtils, SafeBase64}
+import com.waz.zms.BuildConfig
 import com.waz.znet2.http.HttpClient.AutoDerivation._
 import com.waz.znet2.http.HttpClient.ProgressCallback
 import com.waz.znet2.http.HttpClient.dsl._
@@ -43,20 +44,20 @@ trait AssetClient {
 
   def loadAssetContent(asset: Asset, callback: Option[ProgressCallback]): ErrorOrResponse[FileWithSha]
   def uploadAsset(metadata: Metadata, asset: AssetContent, callback: Option[ProgressCallback]): ErrorOrResponse[UploadResponse2]
-  def deleteAsset(assetId: AssetId): ErrorOrResponse[Boolean]
+  def deleteAsset(assetId: AssetId, domain: Domain = Domain.Empty): ErrorOrResponse[Boolean]
 
   /**
     * Loads a public asset with no checksum/encryption/name/size/mime.
     * Usually reserved for profile pictures.
     */
-  def loadPublicAssetContent(assetId: AssetId, convId: Option[ConvId], callback: Option[ProgressCallback]): ErrorOrResponse[InputStream]
+  def loadPublicAssetContent(assetId: AssetId, callback: Option[ProgressCallback], domain: Domain = Domain.Empty): ErrorOrResponse[InputStream]
   def loadUnsplashProfilePicture(): ErrorOrResponse[InputStream]
 }
 
-class AssetClientImpl(implicit
-                      urlCreator: UrlCreator,
-                      client: HttpClient,
-                      authRequestInterceptor: RequestInterceptor = RequestInterceptor.identity)
+final class AssetClientImpl(implicit
+                            urlCreator:             UrlCreator,
+                            client:                 HttpClient,
+                            authRequestInterceptor: RequestInterceptor = RequestInterceptor.identity)
   extends AssetClient with CirceJSONSupport {
 
   import AssetClient._
@@ -73,16 +74,11 @@ class AssetClientImpl(implicit
 
   private implicit def inputStreamBodyDeserializer: RawBodyDeserializer[InputStream] = RawBodyDeserializer.create(_.data())
 
-  override def loadAssetContent(asset: Asset, callback: Option[ProgressCallback]): ErrorOrResponse[FileWithSha] = {
-    val assetPath = (asset.convId, asset.encryption) match {
-      case (None, _)                     => s"/assets/v3/${asset.id.str}"
-      case (Some(convId), NoEncryption)  => s"/conversations/${convId.str}/assets/${asset.id.str}"
-      case (Some(convId), _)             => s"/conversations/${convId.str}/otr/assets/${asset.id.str}"
-    }
-
+  override def loadAssetContent(asset: Asset,
+                                callback: Option[ProgressCallback]): ErrorOrResponse[FileWithSha] = {
     Request
       .Get(
-        relativePath = assetPath,
+        relativePath = assetPath(asset.id, asset.domain.getOrElse(Domain.Empty)),
         headers = asset.token.fold(Headers.empty)(token => Headers("Asset-Token" -> token.str))
       )
       .withDownloadCallback(callback)
@@ -90,22 +86,16 @@ class AssetClientImpl(implicit
       .withErrorType[ErrorResponse]
       .executeSafe
   }
-  override def loadPublicAssetContent(assetId: AssetId,
-                                      convId: Option[ConvId],
-                                      callback: Option[ProgressCallback]): ErrorOrResponse[InputStream] = {
-    val assetPath = convId.fold(
-      s"/assets/v3/${assetId.str}"
-    ) { cId =>
-      s"/conversations/${cId.str}/assets/${assetId.str}"
-    }
 
+  override def loadPublicAssetContent(assetId: AssetId,
+                                      callback: Option[ProgressCallback],
+                                      domain: Domain = Domain.Empty): ErrorOrResponse[InputStream] =
     Request
-      .Get(relativePath = assetPath)
+      .Get(relativePath = assetPath(assetId, domain))
       .withDownloadCallback(callback)
       .withResultType[InputStream]
       .withErrorType[ErrorResponse]
       .executeSafe
-  }
 
   override def loadUnsplashProfilePicture(): ErrorOrResponse[InputStream] =
     Request.create(method = Method.Get, url = AssetClient.UnsplashUrl)
@@ -130,28 +120,35 @@ class AssetClientImpl(implicit
       .withErrorType[ErrorResponse]
       .executeSafe
 
-  override def deleteAsset(assetId: AssetId): ErrorOrResponse[Boolean] = {
-    Request.Delete(relativePath = s"$AssetsV3Path/${assetId.str}")
+  override def deleteAsset(assetId: AssetId, domain: Domain = Domain.Empty): ErrorOrResponse[Boolean] =
+    Request.Delete(relativePath = assetPath(assetId, domain))
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
       .withResultType[Response[Unit]]
       .withErrorType[ErrorResponse]
       .executeSafe(_.code != ResponseCode.NotFound)
-  }
 }
 
 object AssetClient {
 
-  case class FileWithSha(file: File, sha256: Sha256)
+  final case class FileWithSha(file: File, sha256: Sha256)
 
-  case class AssetContent(mime: Mime, md5: MD5, data: () => Future[InputStream], dataLength: Option[Long])
+  final case class AssetContent(mime: Mime, md5: MD5, data: () => Future[InputStream], dataLength: Option[Long])
 
-  case class UploadResponse2(key: AssetId, expires: Option[Instant], token: Option[AssetToken])
+  final case class UploadResponse2(key: AssetId, expires: Option[Instant], token: Option[AssetToken])
 
   implicit val DefaultExpiryTime: Expiration = 1.hour
 
   val AssetsV3Path = "/assets/v3"
-  val UnsplashPath: String = "https://source.unsplash.com/800x800/?landscape"
-  val UnsplashUrl: URL = new URL(UnsplashPath)
+  val AssetsV4Path = "/assets/v4"
+
+  def assetPath(assetId: AssetId, domain: Domain = Domain.Empty): String =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY && domain.isDefined) {
+      s"$AssetsV4Path/${domain.str}/${assetId.str}"
+    } else {
+      s"$AssetsV3Path/${assetId.str}"
+    }
+
+  val UnsplashUrl: URL = new URL("https://source.unsplash.com/800x800/?landscape")
 
   sealed trait Retention
   object Retention {
@@ -170,13 +167,5 @@ object AssetClient {
     case Retention.Volatile => "volatile"
   }
 
-  case class Metadata(public: Boolean = false, retention: Retention = Retention.Persistent)
-
-  def getAssetPath(rId: RAssetId, otrKey: Option[AESKey], conv: Option[RConvId]): String =
-    (conv, otrKey) match {
-      case (None, _)          => s"/assets/v3/${rId.str}"
-      case (Some(c), None)    => s"/conversations/${c.str}/assets/${rId.str}"
-      case (Some(c), Some(_)) => s"/conversations/${c.str}/otr/assets/${rId.str}"
-    }
-
+  final case class Metadata(public: Boolean = false, retention: Retention = Retention.Persistent)
 }

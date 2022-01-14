@@ -33,7 +33,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
+final class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
   extends DataFetcher[InputStream] with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
@@ -42,15 +42,13 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
   private var currentData: Option[CancellableFuture[AssetInput]] = None
 
   override def loadData(priority: Priority, callback: DataFetcher.DataCallback[_ >: InputStream]): Unit = {
-
     val data = CancellableFuture.lift(zms.head).flatMap { zms =>
       request match {
         case AssetIdRequest(assetId)             => zms.assetService.loadContentById(assetId)
-        case PublicAssetIdRequest(assetId)       => zms.assetService.loadPublicContentById(assetId, None, None)
+        case PublicAssetIdRequest(assetId)       => zms.assetService.loadPublicContentById(assetId, None)
         case UploadAssetIdRequest(uploadAssetId) => zms.assetService.loadUploadContentById(uploadAssetId, None)
         case MapRequest(location)                => zms.mapsMediaService.loadMapPreview(location)
-        case _ =>
-          CancellableFuture.failed(NotSupportedError("Unsupported image request"))
+        case _                                   => CancellableFuture.failed(NotSupportedError("Unsupported image request"))
       }
     }
 

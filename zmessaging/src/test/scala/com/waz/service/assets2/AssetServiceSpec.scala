@@ -27,12 +27,13 @@ import com.waz.log.LogSE.{debug, _}
 import com.waz.log.LogShow
 import com.waz.model.errors.NotFoundLocal
 import com.waz.model._
-import com.waz.service.AccountsService
+import com.waz.service.{AccountsService, UserService}
 import com.waz.service.assets._
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient
 import com.waz.sync.client.AssetClient.{FileWithSha, Retention, UploadResponse2}
 import com.waz.utils.{IoUtils, ReactiveStorageImpl2, UnlimitedInMemoryStorage, returning}
+import com.waz.zms.BuildConfig
 import com.waz.{AuthenticationConfig, FilesystemUtils, ZIntegrationMockSpec}
 import com.wire.signals.CancellableFuture
 import org.junit.runner.RunWith
@@ -43,6 +44,8 @@ import scala.util.{Random, Success}
 
 @RunWith(classOf[JUnitRunner])
 class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with AuthenticationConfig {
+
+  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Some(Domain("anta.wire.link")) else None
 
   private val assetStorage        = mock[AssetStorage]
   private val inProgressAssetStorage   = mock[DownloadAssetStorage]
@@ -55,6 +58,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
   private val client              = mock[AssetClient]
   private val uriHelperMock       = mock[UriHelper]
   private val syncHandle          = mock[SyncServiceHandle]
+  private val userService         = mock[UserService]
 
   override val accountsService: AccountsService = mock[AccountsService]
   override val accountStorage: AccountStorage = mock[AccountStorage]
@@ -65,6 +69,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
   lazy private val testAsset = Asset(
     id = AssetId(),
     token = None,
+    domain = domain,
     sha = Sha256.calculate(testAssetContent),
     mime = Mime.Default,
     encryption = NoEncryption,
@@ -72,13 +77,13 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
     preview = None,
     name = "test_content",
     size = testAssetContent.length,
-    details = BlobDetails,
-    convId = None
+    details = BlobDetails
   )
 
   private def service(rawAssetStorage: UploadAssetStorage = rawAssetStorage,
                       client: AssetClient = client): AssetService =
     new AssetServiceImpl(
+      domain.getOrElse(Domain.Empty),
       assetStorage,
       rawAssetStorage,
       inProgressAssetStorage,
@@ -89,7 +94,8 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
       cache,
       rawCache,
       client,
-      syncHandle
+      syncHandle,
+      userService
     )
 
   feature("Assets") {

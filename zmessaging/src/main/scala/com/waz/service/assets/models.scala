@@ -24,6 +24,7 @@ import com.waz.model.GenericContent.{Asset => GenericAsset}
 import com.waz.model._
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.utils.Identifiable
+import com.waz.zms.BuildConfig
 import org.threeten.bp.Duration
 
 import scala.util.{Success, Try}
@@ -133,9 +134,10 @@ object DownloadAssetStatus {
   case object Failed     extends DownloadAssetStatus
 }
 
-case class Asset(
+final case class Asset(
     override val id: AssetId,
     token: Option[AssetToken], //all not public assets should have an AssetToken
+    domain: Option[Domain],
     sha: Sha256,
     mime: Mime,
     encryption: Encryption,
@@ -143,13 +145,11 @@ case class Asset(
     preview: Option[AssetId],
     name: String,
     size: Long,
-    details: AssetDetails,
-    @deprecated(message = "Conversation Id was only used for assets v2. No new asset should have asset v3, but we might still have v2 assets in the DB", since = "")
-    convId: Option[RConvId]
+    details: AssetDetails
 ) extends GeneralAsset
     with Identifiable[AssetId]
 
-case class DownloadAsset(
+final case class DownloadAsset(
     id: DownloadAssetId,
     mime: Mime,
     name: String,
@@ -232,6 +232,7 @@ object Asset {
     Asset(
       id = AssetId(remote.getAssetId),
       token = if (remote.getAssetToken.isEmpty) None else Some(AssetToken(remote.getAssetToken)),
+      domain = if (remote.getAssetDomain.isEmpty) None else Some(Domain(remote.getAssetDomain)),
       sha = Sha256(remote.getSha256.toByteArray),
       mime = asset.mime,
       encryption = extractEncryption(remote),
@@ -239,8 +240,7 @@ object Asset {
       preview = asset.preview,
       name = asset.name,
       size = asset.size,
-      details = asset.details,
-      convId = None
+      details = asset.details
     )
 
   def create(preview: Messages.Asset.Preview): Asset = {
@@ -248,6 +248,7 @@ object Asset {
     Asset(
       id = AssetId(remote.getAssetId),
       token = if (remote.getAssetToken.isEmpty) None else Some(AssetToken(remote.getAssetToken)),
+      domain = if (remote.getAssetDomain.isEmpty) None else Some(Domain(remote.getAssetDomain)),
       sha = Sha256(remote.getSha256.toByteArray),
       mime = Mime(preview.getMimeType),
       encryption = extractEncryption(remote),
@@ -255,16 +256,16 @@ object Asset {
       preview = None,
       name = s"preview_${System.currentTimeMillis()}",
       size = preview.getSize,
-      details = Asset.extractDetails(Right(preview)),
-      convId = None
+      details = Asset.extractDetails(Right(preview))
     )
   }
 
-  def create(assetId: AssetId, token: Option[AssetToken], uploadAsset: UploadAsset): Asset = {
+  def create(assetId: AssetId, token: Option[AssetToken], uploadAsset: UploadAsset, currentDomain: Domain = Domain.Empty): Asset = {
     require(uploadAsset.details.isInstanceOf[AssetDetails])
     Asset(
       id = assetId,
       token = token,
+      domain = if (BuildConfig.FEDERATION_USER_DISCOVERY && currentDomain.isDefined) Some(currentDomain) else None,
       mime = uploadAsset.mime,
       sha = uploadAsset.sha,
       name = uploadAsset.name,
@@ -275,8 +276,7 @@ object Asset {
         case PreviewUploaded(previewId) => Some(previewId)
         case _ => None
       },
-      details = uploadAsset.details.asInstanceOf[AssetDetails],
-      convId = None
+      details = uploadAsset.details.asInstanceOf[AssetDetails]
     )
   }
 

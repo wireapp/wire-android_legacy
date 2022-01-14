@@ -30,14 +30,14 @@ import scala.concurrent.ExecutionContext
 
 trait AssetStorage extends ReactiveStorage2[AssetId, Asset]
 
-class AssetStorageImpl(context: Context, db: DB, ec: ExecutionContext)
-    extends ReactiveStorageImpl2(
-      new CachedStorage2[AssetId, Asset](
-        new DbStorage2(AssetDao)(ec, db),
-        new InMemoryStorage2[AssetId, Asset](new TrimmingLruCache(context, Fixed(8)))(ec)
-      )(ec)
-    )
-    with AssetStorage
+final class AssetStorageImpl(context: Context, db: DB, ec: ExecutionContext)
+  extends ReactiveStorageImpl2(
+    new CachedStorage2[AssetId, Asset](
+      new DbStorage2(AssetDao)(ec, db),
+      new InMemoryStorage2[AssetId, Asset](new TrimmingLruCache(context, Fixed(1024)))(ec)
+    )(ec)
+  )
+  with AssetStorage
 
 object AssetStorageImpl {
 
@@ -51,6 +51,7 @@ object AssetStorageImpl {
 
     val Id         = asText(_.id)('_id, "PRIMARY KEY")
     val Token      = asTextOpt(_.token)('token)
+    val Domain     = asTextOpt(_.domain)('domain)
     val Name       = text(_.name)('name)
     val Encryption = asText(_.encryption)('encryption)
     val Mime       = asText(_.mime)('mime)
@@ -59,15 +60,12 @@ object AssetStorageImpl {
     val Source     = asTextOpt(_.localSource)('source)
     val Preview    = asTextOpt(_.preview)('preview)
     val Details    = asText(_.details)('details)
-    val ConvId     = asTextOpt(_.convId)('conversation_id)
 
     override val idCol = Id
     override val table =
-      Table("Assets2", Id, Token, Name, Encryption, Mime, Sha, Size, Source, Preview, Details, ConvId)
+      Table("Assets2", Id, Token, Domain, Name, Encryption, Mime, Sha, Size, Source, Preview, Details)
 
     override def apply(implicit cursor: DBCursor): Asset =
-      Asset(Id, Token, Sha, Mime, Encryption, Source, Preview, Name, Size, Details, ConvId)
-
+      Asset(Id, Token, Domain, Sha, Mime, Encryption, Source, Preview, Name, Size, Details)
   }
-
 }

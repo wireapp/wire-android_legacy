@@ -12,6 +12,7 @@ import java.io.File
 data class AssetsBackUpModel(
     val id: String,
     val token: String? = null,
+    val domain: String? = null,
     val name: String = String.empty(),
     val encryption: String = String.empty(),
     val mime: String = String.empty(),
@@ -19,8 +20,7 @@ data class AssetsBackUpModel(
     val size: Int = 0,
     val source: String? = null,
     val preview: String? = null,
-    val details: String = String.empty(),
-    val conversationId: String? = null
+    val details: String = String.empty()
 )
 
 class AssetsBackupDataSource(
@@ -33,6 +33,7 @@ class AssetsBackupMapper : BackUpDataMapper<AssetsBackUpModel, AssetsEntity> {
     override fun fromEntity(entity: AssetsEntity) = AssetsBackUpModel(
         id = entity.id,
         token = entity.token,
+        domain = entity.domain,
         name = entity.name,
         encryption = entity.encryption,
         mime = entity.mime,
@@ -40,13 +41,13 @@ class AssetsBackupMapper : BackUpDataMapper<AssetsBackUpModel, AssetsEntity> {
         size = entity.size,
         source = entity.source,
         preview = entity.preview,
-        details = entity.details,
-        conversationId = entity.conversationId
+        details = entity.details
     )
 
     override fun toEntity(model: AssetsBackUpModel) = AssetsEntity(
         id = model.id,
         token = model.token,
+        domain = model.domain,
         name = model.name,
         encryption = model.encryption,
         mime = model.mime,
@@ -54,7 +55,6 @@ class AssetsBackupMapper : BackUpDataMapper<AssetsBackUpModel, AssetsEntity> {
         size = model.size,
         source = model.source,
         preview = model.preview,
-        details = model.details,
-        conversationId = model.conversationId
+        details = model.details
     )
 }

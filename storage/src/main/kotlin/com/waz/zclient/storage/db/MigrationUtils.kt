@@ -9,7 +9,7 @@ object MigrationUtils {
         INTEGER("0"), TEXT("''")
     }
 
-    private fun tableExists(database: SupportSQLiteDatabase, tableName: String): Boolean {
+    fun tableExists(database: SupportSQLiteDatabase, tableName: String): Boolean {
         val query = "SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name = '$tableName'"
         database.query(query).use { cursor ->
             return cursor != null && cursor.count > 0

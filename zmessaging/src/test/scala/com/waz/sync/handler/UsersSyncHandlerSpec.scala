@@ -28,7 +28,8 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
   private val otrSync          = mock[OtrSyncHandler]
   private val teamsSyncHandler = mock[TeamsSyncHandler]
 
-  val self = UserData("self")
+  val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  val self = UserData("self").copy(domain = domain)
   val teamId = TeamId()
 
   def handler: UsersSyncHandler = new UsersSyncHandlerImpl(
@@ -49,10 +50,10 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
         Future.successful(Some(self))
       )
 
-      val user1 = UserData("user1").copy(connection = Accepted)
-      val user2 = UserData("user2").copy(connection = Blocked)
-      val user3 = UserData("user3").copy(connection = Unconnected)
-      val user4 = UserData("user4").copy(connection = PendingFromOther)
+      val user1 = UserData("user1").copy(connection = Accepted, domain = domain)
+      val user2 = UserData("user2").copy(connection = Blocked, domain = domain)
+      val user3 = UserData("user3").copy(connection = Unconnected, domain = domain)
+      val user4 = UserData("user4").copy(connection = PendingFromOther, domain = domain)
       (usersStorage.values _).expects().anyNumberOfTimes().returning(
         Future.successful(Vector(user1, user2, user3, user4))
       )
@@ -72,15 +73,15 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("Post to all team users (also unconnected) if self is in the team") {
       // given
-      val self = UserData("self").copy(teamId = Some(teamId))
+      val self = UserData("self").copy(teamId = Some(teamId), domain = domain)
       (userService.getSelfUser _).expects().anyNumberOfTimes().returning(
         Future.successful(Some(self))
       )
 
-      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted)
-      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Blocked)
-      val user3 = UserData("user3").copy(teamId = Some(teamId), connection = Unconnected)
-      val user4 = UserData("user4").copy(teamId = Some(teamId), connection = PendingFromOther)
+      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Blocked, domain = domain)
+      val user3 = UserData("user3").copy(teamId = Some(teamId), connection = Unconnected, domain = domain)
+      val user4 = UserData("user4").copy(teamId = Some(teamId), connection = PendingFromOther, domain = domain)
       (usersStorage.values _).expects().anyNumberOfTimes().returning(
         Future.successful(Vector(user1, user2, user3, user4))
       )
@@ -134,17 +135,17 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("Post to to all team users and only connected non-team users") {
       // given
-      val self = UserData("self").copy(teamId = Some(teamId))
+      val self = UserData("self").copy(teamId = Some(teamId), domain = domain)
       (userService.getSelfUser _).expects().anyNumberOfTimes().returning(
         Future.successful(Some(self))
       )
 
-      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted)
-      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Blocked)
-      val user3 = UserData("user3").copy(teamId = Some(teamId), connection = Unconnected)
-      val user4 = UserData("user4").copy(teamId = Some(teamId), connection = PendingFromOther)
-      val user5 = UserData("user5").copy(connection = Accepted)
-      val user6 = UserData("user6").copy(connection = Unconnected)
+      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Blocked, domain = domain)
+      val user3 = UserData("user3").copy(teamId = Some(teamId), connection = Unconnected, domain = domain)
+      val user4 = UserData("user4").copy(teamId = Some(teamId), connection = PendingFromOther, domain = domain)
+      val user5 = UserData("user5").copy(connection = Accepted, domain = domain)
+      val user6 = UserData("user6").copy(connection = Unconnected, domain = domain)
       (usersStorage.values _).expects().anyNumberOfTimes().returning(
         Future.successful(Vector(user1, user2, user3, user4, user5, user6))
       )
@@ -164,15 +165,15 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("Cut off some non-team users if limit is reached") {
       // given
-      val self = UserData("self").copy(teamId = Some(teamId))
+      val self = UserData("self").copy(teamId = Some(teamId), domain = domain)
       (userService.getSelfUser _).expects().anyNumberOfTimes().returning(
         Future.successful(Some(self))
       )
 
-      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted)
-      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted)
-      val user3 = UserData("user3").copy(connection = Accepted)
-      val user4 = UserData("user4").copy(connection = Accepted)
+      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user3 = UserData("user3").copy(connection = Accepted, domain = domain)
+      val user4 = UserData("user4").copy(connection = Accepted, domain = domain)
       (usersStorage.values _).expects().anyNumberOfTimes().returning(
         Future.successful(Vector(user1, user2, user3, user4))
       )
@@ -193,15 +194,15 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
 
     scenario("Cut off all non-team users and then some team users if limit is reached") {
       // given
-      val self = UserData("self").copy(teamId = Some(teamId))
+      val self = UserData("self").copy(teamId = Some(teamId), domain = domain)
       (userService.getSelfUser _).expects().anyNumberOfTimes().returning(
         Future.successful(Some(self))
       )
 
-      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted)
-      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted)
-      val user3 = UserData("user3").copy(connection = Accepted)
-      val user4 = UserData("user4").copy(connection = Accepted)
+      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user3 = UserData("user3").copy(connection = Accepted, domain = domain)
+      val user4 = UserData("user4").copy(connection = Accepted, domain = domain)
       (usersStorage.values _).expects().anyNumberOfTimes().returning(
         Future.successful(Vector(user1, user2, user3, user4))
       )
@@ -227,10 +228,10 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
     def toTeamMember(user: UserData): TeamMember = TeamMember(user.id, None, None)
 
     scenario("Update search results when in a team") {
-      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted)
-      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted)
-      val user3 = UserData("user3").copy(connection = Accepted)
-      val user4 = UserData("user4").copy(connection = Accepted)
+      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user3 = UserData("user3").copy(connection = Accepted, domain = domain)
+      val user4 = UserData("user4").copy(connection = Accepted, domain = domain)
       val users = Seq(user1, user2, user3, user4).toIdMap
 
       (usersClient.loadUsers _)
@@ -271,10 +272,10 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
     }
 
     scenario("Update search results when NOT in a team") {
-      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted)
-      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted)
-      val user3 = UserData("user3").copy(connection = Accepted)
-      val user4 = UserData("user4").copy(connection = Accepted)
+      val user1 = UserData("user1").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user2 = UserData("user2").copy(teamId = Some(teamId), connection = Accepted, domain = domain)
+      val user3 = UserData("user3").copy(connection = Accepted, domain = domain)
+      val user4 = UserData("user4").copy(connection = Accepted, domain = domain)
       val users = Seq(user1, user2, user3, user4).toIdMap
 
       (usersClient.loadUsers _)

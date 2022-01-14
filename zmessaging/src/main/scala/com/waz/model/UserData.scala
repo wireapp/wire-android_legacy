@@ -20,6 +20,7 @@ package com.waz.model
 import com.waz.api.Verification
 import com.waz.db.Col._
 import com.waz.db.Dao
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.{api, model}
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.ManagedBy.ManagedBy
@@ -61,8 +62,7 @@ final case class UserData(override val id:       UserId,
                           managedBy:             Option[ManagedBy]      = None,
                           fields:                Seq[UserField]         = Seq.empty,
                           permissions:           PermissionsMasks       = (0,0),
-                          createdBy:             Option[UserId]         = None) extends Identifiable[UserId] {
-
+                          createdBy:             Option[UserId]         = None) extends Identifiable[UserId]  {
   lazy val isConnected: Boolean = ConnectionStatus.isConnected(connection)
   lazy val isBlocked: Boolean   = ConnectionStatus.isBlocked(connection)
 
@@ -178,12 +178,14 @@ final case class UserData(override val id:       UserId,
     handle.exists(_.exactMatchQuery(query.query))
 }
 
-trait Picture
-case class PictureNotUploaded(id: UploadAssetId) extends Picture
-case class PictureUploaded(id: AssetId)          extends Picture
+trait Picture {
+  val id: GeneralAssetId
+}
+
+final case class PictureNotUploaded(override val id: UploadAssetId) extends Picture
+final case class PictureUploaded(override val id: AssetId)          extends Picture
 
 object UserData {
-
   lazy val Empty = UserData(UserId("EMPTY"), "")
 
   type ConnectionStatus = api.ConnectionStatus
@@ -310,7 +312,7 @@ object UserData {
 
     def findByConnectionStatus(status: Set[ConnectionStatus])(implicit db: DB): Managed[Iterator[UserData]] = iteratingMultiple(findInSet(Conn, status))
 
-    def findAll(users: Set[UserId])(implicit db: DB) = iteratingMultiple(findInSet(Id, users))
+    def findAll(users: Set[UserId])(implicit db: DB): Managed[Iterator[UserData]] = iteratingMultiple(findInSet(Id, users))
 
     def topPeople(implicit db: DB): Managed[Iterator[UserData]] =
       search(s"${Conn.name} = ? and ${Deleted.name} = 0", Array(Conn(ConnectionStatus.Accepted)))
