@@ -22,7 +22,6 @@ import java.io.InputStream
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.errors.NotSupportedError
 import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetInput
@@ -34,7 +33,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 final class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
-  extends DataFetcher[InputStream] with DerivedLogTag {
+  extends DataFetcher[InputStream] {
 
   import com.waz.threading.Threading.Implicits.Background
 

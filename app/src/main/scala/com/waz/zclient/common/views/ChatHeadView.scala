@@ -53,7 +53,6 @@ import com.waz.utils.{NameParts, returning}
 import com.waz.zclient.common.views.ChatHeadView._
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.glide.transformations.{GlyphOverlayTransformation, GreyScaleTransformation, IntegrationBackgroundCrop}
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.waz.zclient.{R, ViewHelper}
@@ -92,8 +91,10 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
   def loadUser(userId: UserId): Unit =
     this.userId ! Some(userId)
 
-  def setUserData(userData: UserData, belongsToSelfTeam: Boolean): Unit =
+  def setUserData(userData: UserData, belongsToSelfTeam: Boolean): Unit = {
     setInfo(optionsForUser(userData, belongsToSelfTeam, attributes))
+    loadUser(userData.id)
+  }
 
   def clearImage(): Unit = {
     WireGlide(context).clear(this)
@@ -114,7 +115,6 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
       setImageDrawable(options.placeholder)
     } else
       options.glideRequest.into(this)
-
 
   private def optionsForIntegration(integration: IntegrationData, attributes: Attributes): ChatHeadViewOptions =
     ChatHeadViewOptions(
@@ -176,12 +176,8 @@ object ChatHeadView {
 
     def glideRequest(implicit context: Context): RequestBuilder[Drawable] = {
       val request = picture match {
-        case Some(p) =>
-          verbose(l"picture is $p")
-          WireGlide(context).load(p)
-        case _ =>
-          verbose(l"picture is None, loading a placeholder")
-          WireGlide(context).load(placeholder)
+        case Some(p) => WireGlide(context).load(p)
+        case _       => WireGlide(context).load(placeholder)
       }
       val requestOptions = new RequestOptions()
 

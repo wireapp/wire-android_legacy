@@ -91,7 +91,7 @@ final class AssetClientImpl(implicit
                                       callback: Option[ProgressCallback],
                                       domain: Domain = Domain.Empty): ErrorOrResponse[InputStream] =
     Request
-      .Get(relativePath = assetPath(assetId, domain))
+      .Get(relativePath = assetPath(assetId, domain), headers = AssetClient.PublicAssetHeaders)
       .withDownloadCallback(callback)
       .withResultType[InputStream]
       .withErrorType[ErrorResponse]
@@ -140,6 +140,8 @@ object AssetClient {
 
   val AssetsV3Path = "/assets/v3"
   val AssetsV4Path = "/assets/v4"
+
+  val PublicAssetHeaders: Headers = Headers(("Content-Type", "application/json"), ("Accept", "application/json"))
 
   def assetPath(assetId: AssetId, domain: Domain = Domain.Empty): String =
     if (BuildConfig.FEDERATION_USER_DISCOVERY && domain.isDefined) {
