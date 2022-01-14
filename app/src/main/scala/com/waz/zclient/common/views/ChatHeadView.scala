@@ -151,10 +151,10 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
 object ChatHeadView {
   private val pendingConnectionStatuses = Set(ConnectionStatus.PendingFromUser, ConnectionStatus.PendingFromOther)
 
-  case class Attributes(isRound: Boolean,
-                        showWaiting: Boolean,
-                        greyScaleOnConnected: Boolean,
-                        defaultBackground: Int)
+  final case class Attributes(isRound: Boolean,
+                              showWaiting: Boolean,
+                              greyScaleOnConnected: Boolean,
+                              defaultBackground: Int)
 
   object OverlayIcon extends Enumeration {
     val Waiting, Blocked = Value
@@ -166,12 +166,12 @@ object ChatHeadView {
   }
   type CropShape = CropShape.Value
 
-  case class ChatHeadViewOptions(picture: Option[Picture],
-                                 backgroundColor: Int,
-                                 grayScale: Boolean,
-                                 initials: String,
-                                 cropShape: Option[CropShape],
-                                 icon: Option[OverlayIcon])(implicit context: Context) extends DerivedLogTag {
+  final case class ChatHeadViewOptions(picture: Option[Picture],
+                                       backgroundColor: Int,
+                                       grayScale: Boolean,
+                                       initials: String,
+                                       cropShape: Option[CropShape],
+                                       icon: Option[OverlayIcon])(implicit context: Context) extends DerivedLogTag {
     lazy val placeholder = ChatHeadViewPlaceholder(backgroundColor, initials, cropShape = cropShape, reversedColors = cropShape.isEmpty)
 
     def glideRequest(implicit context: Context): RequestBuilder[Drawable] = {
@@ -208,10 +208,10 @@ object ChatHeadView {
     }
   }
 
-  case class ChatHeadViewPlaceholder(color: Int,
-                                     text: String,
-                                     cropShape: Option[CropShape],
-                                     reversedColors: Boolean = false)(implicit context: Context) extends Drawable {
+  final case class ChatHeadViewPlaceholder(color: Int,
+                                           text: String,
+                                           cropShape: Option[CropShape],
+                                           reversedColors: Boolean = false)(implicit context: Context) extends Drawable {
     private val textPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { p =>
       p.setTextAlign(Paint.Align.CENTER)
       val tf = TypefaceUtils.getTypeface(getString(if (reversedColors) R.string.wire__typeface__medium else R.string.wire__typeface__light))

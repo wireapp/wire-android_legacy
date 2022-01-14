@@ -73,6 +73,7 @@ object GenericContent {
         status = status,
         remoteId    = remoteData.flatMap(_.remoteId),
         token       = remoteData.flatMap(_.token),
+        domain      = remoteData.flatMap(_.domain),
         otrKey      = remoteData.flatMap(_.otrKey),
         sha         = remoteData.flatMap(_.sha256),
         previewId   = preview.map(_.id)
@@ -370,6 +371,7 @@ object GenericContent {
         AssetData.RemoteData(
           if (rData.hasAssetId) Some(RAssetId(rData.getAssetId)) else None,
           if (rData.hasAssetToken) Some(AssetToken(rData.getAssetToken)) else None,
+          if (rData.hasAssetDomain) Some(Domain(rData.getAssetDomain)) else None,
           Some(AESKey(rData.getOtrKey.toByteArray)).filter(_ != AESKey.Empty),
           Some(Sha256(rData.getSha256.toByteArray)).filter(_ != Sha256.Empty),
           if (rData.hasEncryption) Some(EncryptionAlgorithm(rData.getEncryption.getNumber)) else None
@@ -382,6 +384,7 @@ object GenericContent {
         val builder = Messages.Asset.RemoteData.newBuilder
         ak.remoteId.foreach(id => builder.setAssetId(id.str))
         ak.token.foreach(t => builder.setAssetToken(t.str))
+        ak.domain.foreach(d => builder.setAssetDomain(d.str))
         ak.otrKey.foreach(key => builder.setOtrKey(ByteString.copyFrom(key.bytes)))
         ak.sha256.foreach(sha => builder.setSha256(ByteString.copyFrom(sha.bytes)))
         ak.encryption.foreach(enc => builder.setEncryption(toEncryptionAlg(enc)))
@@ -399,6 +402,7 @@ object GenericContent {
             .setAssetId(asset.id.str)
             .setSha256(ByteString.copyFrom(asset.sha.bytes))
         asset.token.foreach(token => builder.setAssetToken(token.str))
+        asset.domain.foreach(domain => builder.setAssetDomain(domain.str))
         asset.encryption match {
           case AES_CBC_Encryption(key) =>
             builder.setEncryption(Messages.EncryptionAlgorithm.AES_CBC)

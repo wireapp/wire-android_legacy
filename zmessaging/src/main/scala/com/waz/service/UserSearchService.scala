@@ -56,21 +56,21 @@ trait UserSearchService {
   def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit
 }
 
-class UserSearchServiceImpl(selfUserId:           UserId,
-                            teamId:               Option[TeamId],
-                            domain:               Domain,
-                            userService:          UserService,
-                            usersStorage:         UsersStorage,
-                            teamsService:         TeamsService,
-                            membersStorage:       MembersStorage,
-                            timeouts:             Timeouts,
-                            sync:                 SyncServiceHandle,
-                            messages:             MessagesStorage,
-                            convsStorage:         ConversationStorage,
-                            convsUi:              ConversationsUiService,
-                            conversationsService: ConversationsService,
-                            userPrefs:            UserPreferences) extends UserSearchService with DerivedLogTag {
-
+final class UserSearchServiceImpl(selfUserId:           UserId,
+                                  teamId:               Option[TeamId],
+                                  domain:               Domain,
+                                  userService:          UserService,
+                                  usersStorage:         UsersStorage,
+                                  teamsService:         TeamsService,
+                                  membersStorage:       MembersStorage,
+                                  timeouts:             Timeouts,
+                                  sync:                 SyncServiceHandle,
+                                  messages:             MessagesStorage,
+                                  convsStorage:         ConversationStorage,
+                                  convsUi:              ConversationsUiService,
+                                  conversationsService: ConversationsService,
+                                  userPrefs:            UserPreferences)
+  extends UserSearchService with DerivedLogTag {
   import Threading.Implicits.Background
   import com.waz.service.UserSearchService._
   import timeouts.search._
@@ -204,13 +204,16 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     val query = SearchQuery(queryStr)
 
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      if (query.hasDomain || query.isEmpty)
+      if (query.hasDomain || query.isEmpty) {
         search(query)
-      else
+      } else {
         userService.selfUser.map(_.domain).flatMap {
-          case domain if domain.isDefined => search(query.withDomain(domain.str))
-          case _ => search(query)
+          case domain if domain.isDefined =>
+            search(query.withDomain(domain.str))
+          case _ =>
+            search(query)
         }
+      }
     } else {
       search(query)
     }
@@ -240,7 +243,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
                 case false => None
               }
             }
-            Signal.from(Future.sequence(gConvs).map(_.flatten)) //TODO avoid using Signal.future - will not update...
+            Signal.from(Future.sequence(gConvs).map(_.flatten))
           }
       else Signal.const(IndexedSeq.empty)
 
@@ -285,12 +288,17 @@ class UserSearchServiceImpl(selfUserId:           UserId,
         Future.successful(())
     }
 
-  override def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit = {
-    val userUpdate = (user: UserData) => remoteUsers.get(user.id).fold(user) {
-      case (info, Some(member)) => user.updated(info, withSearchKey = true, permissions = member.permissionMasks)
-      case (info, None)         => user.updated(info)
-    }
-    userSearchResult.mutate(_.map(userUpdate))
+ override def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit = {
+   def userUpdate(user: UserData): UserData =
+     remoteUsers.get(user.id).fold(user) {
+       case (info, Some(member)) => user.updated(info, withSearchKey = true, permissions = member.permissionMasks)
+       case (info, None)         => user.updated(info)
+     }
+
+   val infos = remoteUsers.values.map(_._1)
+   Future
+     .traverse(infos) { info => usersStorage.updateOrCreate(info.id, userUpdate, UserData(info)) }
+     .foreach { _ => userSearchResult.mutate(_.map(userUpdate)) }
   }
 
   private def topPeople = {

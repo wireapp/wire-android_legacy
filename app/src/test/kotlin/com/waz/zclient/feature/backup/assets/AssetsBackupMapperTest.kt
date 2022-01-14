@@ -23,6 +23,7 @@ class AssetsBackupMapperTest : UnitTest() {
         val entity = AssetsEntity(
             id = data.id,
             token = data.token,
+            domain = data.domain,
             name = data.name,
             encryption = data.encryption,
             mime = data.mime,
@@ -37,6 +38,7 @@ class AssetsBackupMapperTest : UnitTest() {
 
         assertEquals(data.id, model.id)
         assertEquals(data.token, model.token)
+        assertEquals(data.domain, model.domain)
         assertEquals(data.name, model.name)
         assertEquals(data.encryption, model.encryption)
         assertEquals(data.mime, model.mime)
@@ -54,6 +56,7 @@ class AssetsBackupMapperTest : UnitTest() {
         val model = AssetsBackUpModel(
             id = data.id,
             token = data.token,
+            domain = data.domain,
             name = data.name,
             encryption = data.encryption,
             mime = data.mime,
@@ -68,6 +71,7 @@ class AssetsBackupMapperTest : UnitTest() {
 
         assertEquals(data.id, entity.id)
         assertEquals(data.token, entity.token)
+        assertEquals(data.domain, entity.domain)
         assertEquals(data.name, entity.name)
         assertEquals(data.encryption, entity.encryption)
         assertEquals(data.mime, entity.mime)

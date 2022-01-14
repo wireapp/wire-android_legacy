@@ -99,6 +99,8 @@ trait UserService {
   def syncClients(userId: UserId): Future[SyncId]
   def syncClients(userIds: Set[UserId]): Future[SyncId]
   def syncClients(convId: ConvId): Future[SyncId]
+
+  def findUserByPicture(assetId: GeneralAssetId): Future[Option[UserData]]
 }
 
 class UserServiceImpl(selfUserId:        UserId,
@@ -527,6 +529,9 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def syncClients(convId: ConvId): Future[SyncId] =
     membersStorage.getActiveUsers(convId).flatMap(userIds => syncClients(userIds.toSet))
+
+  override def findUserByPicture(assetId: GeneralAssetId): Future[Option[UserData]] =
+    usersStorage.findByPicture(assetId)
 }
 
 object UserService {

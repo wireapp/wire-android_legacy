@@ -37,7 +37,7 @@ import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 
-class ClientsController(implicit inj: Injector) extends Injectable with DerivedLogTag {
+final class ClientsController(implicit inj: Injector) extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 

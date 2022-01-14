@@ -5,6 +5,7 @@ import com.waz.zclient.framework.data.TestDataProvider
 data class AssetsTestData(
     val id: String,
     val token: String?,
+    val domain: String?,
     val name: String,
     val encryption: String,
     val mime: String,
@@ -24,6 +25,7 @@ object AssetsTestDataProvider : TestDataProvider<AssetsTestData>() {
     override fun provideDummyTestData() = AssetsTestData(
         id = "3-1-70b5baab-323d-446e-936d-745c64d6c7d8",
         token = "5UFmZ-Bmy1NP5Ninrc21XQ==",
+        domain = "anta.wire.link",
         name = "",
         encryption = "AES_CBS__TzF3CPcCs6lCuLRISq64MAByIAm/TELGUj9XXdTHKF0",
         mime = "image/png",

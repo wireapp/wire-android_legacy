@@ -24,38 +24,41 @@ import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.ModelLoader.LoadData
 import com.bumptech.glide.load.model.{ModelLoader, ModelLoaderFactory, MultiModelLoaderFactory}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.Picture
+import com.waz.model.{Picture, PictureNotUploaded, PictureUploaded}
 import com.waz.service.ZMessaging
 import com.wire.signals.Signal
 import com.waz.zclient.core.images.AssetKey
-import com.waz.zclient.glide.{AssetRequest, ImageAssetFetcher}
+import com.waz.zclient.glide.{AssetRequest, ImageAssetFetcher, PublicAssetIdRequest, UploadAssetIdRequest}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
 
-class PictureModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Picture, InputStream]
+final class PictureModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Picture, InputStream]
   with DerivedLogTag {
 
   override def buildLoadData(model: Picture, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
-    val request = AssetRequest(model)
+    val request = createAssetRequest(model)
     val key = new AssetKey(request.toString, width, height, options)
     verbose(l"key: $key")
     new LoadData[InputStream](key, new ImageAssetFetcher(request, zms))
   }
 
   override def handles(model: Picture): Boolean = true
+
+  private def createAssetRequest(model: Picture): AssetRequest = model match {
+    case PictureUploaded(assetId)    => PublicAssetIdRequest(assetId)
+    case PictureNotUploaded(assetId) => UploadAssetIdRequest(assetId)
+  }
 }
 
 object PictureModelLoader {
-
   class Factory(context: Context) extends ModelLoaderFactory[Picture, InputStream]
     with Injectable {
 
     private implicit val injector: Injector = context.asInstanceOf[WireContext].injector
 
-    override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[Picture, InputStream] = {
+    override def build(multiFactory: MultiModelLoaderFactory): ModelLoader[Picture, InputStream] =
       new PictureModelLoader(inject[Signal[ZMessaging]])
-    }
 
     override def teardown(): Unit = {}
   }

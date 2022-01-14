@@ -25,6 +25,7 @@ import com.waz.model.Messages.LegalHoldStatus
 import com.waz.model._
 import com.waz.service.assets.{Asset, AssetStorage, BlobDetails, NoEncryption}
 import com.waz.specs.AndroidFreeSpec
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
@@ -44,7 +45,10 @@ class ReplyHashingSpec extends AndroidFreeSpec {
 
   private val rt = RemoteInstant.Epoch
 
-  def fakeAsset(assetId: AssetId) = Asset(assetId, None, Sha256.Empty, Mime.Unknown, NoEncryption, None, None, "", 0, BlobDetails)
+  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Some(Domain("anta.wire.link")) else None
+
+  def fakeAsset(assetId: AssetId): Asset =
+    Asset(assetId, None, domain, Sha256.Empty, Mime.Unknown, NoEncryption, None, None, "", 0, BlobDetails)
 
   val assetStorage = mock[AssetStorage]
 

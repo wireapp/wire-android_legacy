@@ -41,8 +41,6 @@ class AssetsDaoTest : IntegrationTest() {
             assetsDao.insert(assetsEntity())
         }
         val storedMessages = assetsDao.allAssets()
-        assertEquals(storedMessages.first().conversationId, data.first().conversationId)
-        assertEquals(storedMessages.last().conversationId, data.last().conversationId)
         assertEquals(storedMessages.size, numberOfItems)
     }
 
@@ -77,6 +75,7 @@ class AssetsDaoTest : IntegrationTest() {
         val data = AssetsTestDataProvider.provideDummyTestData()
         return AssetsEntity(
             id = id,
+            domain = null,
             token = data.token,
             name = data.name,
             encryption = data.encryption,
@@ -85,8 +84,7 @@ class AssetsDaoTest : IntegrationTest() {
             size = data.size,
             source = data.source,
             preview = data.preview,
-            details = data.details,
-            conversationId = data.conversationId
+            details = data.details
         )
     }
 }
