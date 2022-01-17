@@ -16,6 +16,7 @@ import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.utils.{Backoff, ExponentialBackoff, _}
+import com.waz.zms.BuildConfig
 import com.waz.znet2.http.ResponseCode
 import com.wire.signals.{CancellableFuture, Serialized}
 import org.threeten.bp.{Duration, Instant}
@@ -96,7 +97,13 @@ final class FCMPushHandlerImpl(userId:      UserId,
         case Some(self) if self.availability != Availability.Away =>
           val callService = calling()
           validCalls.foreach { call =>
-            callService.receiveCallEvent(call.content, call.time, call.convId, call.from, call.sender)
+            if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+              val rConvId = RConvQualifiedId(call.convId, call.convDomain)
+              val qId = QualifiedId(call.from, call.fromDomain)
+              callService.receiveCallEvent(call.content, call.time, rConvId, qId, call.sender)
+            } else {
+              callService.receiveCallEvent(call.content, call.time, call.convId, call.from, call.sender)
+            }
           }
         case _ =>
       }

@@ -17,9 +17,7 @@
  */
 package com.waz.service.call
 
-import java.net.InetSocketAddress
-import java.net.Proxy
-
+import java.net.{InetSocketAddress, Proxy}
 import android.Manifest.permission.CAMERA
 import com.sun.jna.Pointer
 import com.waz.api.impl.ErrorResponse
@@ -42,14 +40,15 @@ import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessa
 import com.waz.service.call.CallingService.GlobalCallProfile
 import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessage, Participant}
 import com.waz.service.call.CallingService.{CallProfile, GlobalCallProfile, MissedCallInfo}
+import com.waz.service.call.CallInfo.{apply => _, _}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.sync.client.CallingClient
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.sync.otr.OtrSyncHandler.{QTargetRecipients, TargetRecipients}
-import com.wire.signals._
 import com.waz.utils.{RichInstant, returning, returningF}
+import com.wire.signals._
 import org.threeten.bp.Duration
 import org.threeten.bp.temporal.ChronoUnit
 
@@ -115,7 +114,16 @@ trait CallingService {
 
   def setVideoSendState(convId: ConvId, state: VideoState.Value, shouldUpdateVideoState: Boolean = false): Unit
 
-  def receiveCallEvent(msg: String, msgTime: RemoteInstant, convId: RConvId, from: UserId, sender: ClientId): Unit
+  def receiveCallEvent(msg:     String,
+                       msgTime: RemoteInstant,
+                       convId:  RConvId,
+                       from:    UserId,
+                       sender:  ClientId): Unit
+  def receiveCallEvent(msg:              String,
+                       msgTime:          RemoteInstant,
+                       rConvQualifiedId: RConvQualifiedId,
+                       qualifiedId:      QualifiedId,
+                       sender:           ClientId): Unit
 
   def receiveCallEvent(msg: String, msgTime: RemoteInstant, rConvQualifiedId: RConvQualifiedId, qualifiedId: QualifiedId, sender: ClientId): Unit
 
@@ -187,7 +195,6 @@ final class CallingServiceImpl(val accountId:       UserId,
   extends CallingService with DerivedLogTag with SafeToLog { self =>
 
   import CallingService._
-
   import com.waz.threading.Threading.Implicits.Background
 
   //need to ensure that flow manager and media manager are initialised for v3 (they are lazy values)
@@ -653,7 +660,11 @@ final class CallingServiceImpl(val accountId:       UserId,
                                 sender: ClientId): Unit =
     receiveCallEvent(msg, msgTime, RConvQualifiedId(convId, domain), QualifiedId(from, domain), sender)
 
-  override def receiveCallEvent(msg: String, msgTime: RemoteInstant, rConvQualifiedId: RConvQualifiedId, qualifiedId: QualifiedId, sender: ClientId): Unit =
+  override def receiveCallEvent(msg: String,
+                               msgTime: RemoteInstant,
+                               rConvQualifiedId: RConvQualifiedId,
+                               qualifiedId: QualifiedId,
+                               sender: ClientId): Unit =
     wCall.map { w =>
       import CallingServiceImpl._
 
