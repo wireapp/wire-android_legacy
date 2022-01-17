@@ -30,18 +30,21 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
   private var notsCounter = Map[UserId, Set[ConvId]]()
 
   override def showNotification(props: NotificationProps): Unit = {
-    props.convId.foreach { convId =>
-      notsCounter += props.accountId -> (notsCounter.getOrElse(props.accountId, Set.empty) + convId)
+    val oldHashes = notificationManager.getActiveNotifications.map(_.getNotification.extras.getInt(NotificationProps.NOTIFICATION_HASH)).toSet
+    if (!oldHashes.contains(props.hashCode)) {
+      props.convId.foreach { convId =>
+        notsCounter += props.accountId -> (notsCounter.getOrElse(props.accountId, Set.empty) + convId)
+      }
+
+      val id = props.convId.fold(toNotificationGroupId(props.accountId))(toNotificationConvId(props.accountId, _))
+      val notification = props.build()
+
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getNotificationChannel(props.channelId).isEmpty)
+        buildNotificationChannels(enforce = true)
+          .foreach(_ => notificationManager.notify(id, notification))(Threading.Ui)
+      else
+        notificationManager.notify(id, notification)
     }
-
-    val id = props.convId.fold(toNotificationGroupId(props.accountId))(toNotificationConvId(props.accountId, _))
-    val notification = props.build()
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getNotificationChannel(props.channelId).isEmpty)
-      buildNotificationChannels(enforce = true)
-        .foreach(_ => notificationManager.notify(id, notification))(Threading.Ui)
-    else
-      notificationManager.notify(id, notification)
   }
 
   private def toNotificationGroupId(accountId: UserId): Int = accountId.str.hashCode()
@@ -50,9 +53,7 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
   override def getNotificationChannel(channelId: String): Option[NotificationChannel] =
     Option(notificationManager.getNotificationChannel(channelId))
 
-  override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit = {
-    verbose(l"cancelNotifications($accountId, $convs)")
-
+  override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit =
     if (convs.isEmpty) {
       notificationManager.cancel(toNotificationGroupId(accountId))
       notsCounter -= accountId
@@ -68,7 +69,6 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
           case None =>
         }
       }
-  }
 
   private def getSound(pref: PrefKey[String], default: Int): Future[Option[Uri]] =
     prefs(pref).apply().map {

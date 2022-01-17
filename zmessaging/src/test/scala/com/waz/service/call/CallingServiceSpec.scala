@@ -1195,13 +1195,8 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (avs.registerAccount _).expects(*).once().returning(Future.successful(wCall))
 
     val s = new CallingServiceImpl(
-<<<<<<< HEAD
       selfUserId, selfClientId, domain, null, avs, convs, convsService, members, otrSyncHandler,
-      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, httpProxy = None
-=======
-      selfUserId, selfClientId, null, avs, convs, convsService, members, otrSyncHandler,
-      flows, messages, media, push, network, prefs, globalPrefs, permissions, httpProxy = None
->>>>>>> feat: Create a new service which uses Work Manager to receive notifications (SQCORE-1136) (#3580)
+      flows, messages, media, push, network, prefs, globalPrefs, permissions, None
     )
     result(s.wCall)
     s

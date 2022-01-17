@@ -89,6 +89,7 @@ final case class NotificationProps(accountId:                UserId,
     }
     builder.addExtras(returning(new Bundle()) { bundle =>
       bundle.putBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY, groupSummary.getOrElse(false))
+      bundle.putInt(NotificationProps.NOTIFICATION_HASH, hashCode)
     })
     builder.setGroup(group.fold("")(_.str))
 
@@ -129,4 +130,8 @@ final case class NotificationProps(accountId:                UserId,
       .setAllowGeneratedReplies(true)
       .build()
   }
+}
+
+object NotificationProps {
+  val NOTIFICATION_HASH: String = "NotificationHash"
 }
