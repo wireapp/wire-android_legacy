@@ -21,7 +21,7 @@ import android.app.NotificationChannel
 import com.waz.model.{ConvId, UserId}
 
 trait NotificationManagerWrapper {
-  def showNotification(notificationProps: NotificationProps): Unit
+  def showNotification(notificationProps: Iterable[NotificationProps]): Unit
   def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit
   def getNotificationChannel(channelId: String): Option[NotificationChannel]
 }

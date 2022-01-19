@@ -27,7 +27,7 @@ trait ResValue[A] {
   def resolve(implicit ctx: Context): A
 }
 
-case class ResString(resId: Int, quantity: Int, args: ResString.Args) extends ResValue[String] {
+final case class ResString(resId: Int, quantity: Int, args: ResString.Args) extends ResValue[String] {
   import ResString._
 
   // in a rare case arguments to a ResString might be ResStrings themselves
@@ -49,9 +49,9 @@ case class ResString(resId: Int, quantity: Int, args: ResString.Args) extends Re
 object ResString {
   sealed trait Args
 
-  case class StringArgs   (args: List[String] = Nil)    extends Args
-  case class ResStringArgs(args: List[ResString] = Nil) extends Args
-  case class AnyRefArgs   (args: List[AnyRef] = Nil)    extends Args
+  final case class StringArgs   (args: List[String] = Nil)    extends Args
+  final case class ResStringArgs(args: List[ResString] = Nil) extends Args
+  final case class AnyRefArgs   (args: List[AnyRef] = Nil)    extends Args
 
   val Empty: ResString = ResString(R.string.empty_string, 0, StringArgs())
 
@@ -65,7 +65,7 @@ object ResString {
   def apply(resId: Int, args: List[ResString]): ResString = ResString(resId, 0, ResStringArgs(args))
 }
 
-case class ResColor(input: Either[ResId, ResColor.Color]) extends ResValue[Int] {
+final case class ResColor(input: Either[ResId, ResColor.Color]) extends ResValue[Int] {
   import ResColor._
 
   override def resolve(implicit ctx: Context): Int = input match {

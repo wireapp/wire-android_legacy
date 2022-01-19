@@ -16,8 +16,8 @@ import com.waz.zclient.utils.format
 import com.waz.zclient.{Intents, R}
 
 final case class NotificationProps(accountId:                UserId,
+                                   when:                     Long,
                                    convId:                   Option[ConvId] = None,
-                                   when:                     Option[Long] = None,
                                    showWhen:                 Option[Boolean] = None,
                                    category:                 Option[String] = None,
                                    priority:                 Option[Int] = None,
@@ -46,7 +46,8 @@ final case class NotificationProps(accountId:                UserId,
 
   override def toString: String =
     format(className = "NotificationProps", oneLiner = false,
-      "when"                     -> when,
+      "accountId"                -> Some(accountId),
+      "when"                     -> Some(when),
       "convId"                   -> convId,
       "showWhen"                 -> showWhen,
       "category"                 -> category,
@@ -75,7 +76,7 @@ final case class NotificationProps(accountId:                UserId,
 
   def build()(implicit cxt: Context): Notification = {
     val builder = new NotificationCompat.Builder(cxt, channelId)
-    when.foreach(builder.setWhen)
+    builder.setWhen(when)
     showWhen.foreach(builder.setShowWhen)
     category.foreach(builder.setCategory)
     priority.foreach(builder.setPriority)
@@ -89,7 +90,6 @@ final case class NotificationProps(accountId:                UserId,
     }
     builder.addExtras(returning(new Bundle()) { bundle =>
       bundle.putBoolean(NotificationCompatExtras.EXTRA_GROUP_SUMMARY, groupSummary.getOrElse(false))
-      bundle.putInt(NotificationProps.NOTIFICATION_HASH, hashCode)
     })
     builder.setGroup(group.fold("")(_.str))
 
@@ -132,6 +132,3 @@ final case class NotificationProps(accountId:                UserId,
   }
 }
 
-object NotificationProps {
-  val NOTIFICATION_HASH: String = "NotificationHash"
-}

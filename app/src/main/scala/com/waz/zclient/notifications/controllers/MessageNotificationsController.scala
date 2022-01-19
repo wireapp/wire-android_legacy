@@ -121,11 +121,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       teamName  <- fetchTeamName(accountId)
       summaries <- createSummaryNotificationProps(accountId, nots, teamName)
       convNots  <- createConvNotifications(accountId, nots, teamName)
-      _         <- Threading.Ui {
-                     (convNots ++ summaries).foreach {
-                       notificationManager.showNotification
-                     }
-                   }.future
+      _         <- Threading.Ui { notificationManager.showNotification(convNots ++ summaries) }.future
     } yield {}
   }
 
@@ -142,8 +138,8 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       color     <- notificationColor(accountId)
     } yield {
       val props = NotificationProps(
-        accountId,
-        when              = Some(Instant.now().toEpochMilli),
+        accountId         = accountId,
+        when              = Instant.now().toEpochMilli,
         showWhen          = Some(true),
         category          = Some(NotificationCompat.CATEGORY_MESSAGE),
         priority          = Some(NotificationCompat.PRIORITY_HIGH),
@@ -154,7 +150,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
         contentText       = Some(contentText),
         style             = Some(StyleBuilder(StyleBuilder.BigText, title = contentTitle, bigText = Some(contentText)))
       )
-      notificationManager.showNotification(props)
+      notificationManager.showNotification(Seq(props))
     }
   }
 
@@ -172,17 +168,18 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     verbose(l"createSummaryNotificationProps: $userId, ${nots.size}")
     if (nots.nonEmpty)
       notificationColor(userId).map { color =>
-        Some(NotificationProps(userId,
-          when                     = Some(nots.minBy(_.time.instant).time.instant.toEpochMilli),
-          showWhen                 = Some(true),
-          category                 = Some(NotificationCompat.CATEGORY_MESSAGE),
-          priority                 = Some(NotificationCompat.PRIORITY_HIGH),
-          smallIcon                = Some(R.drawable.ic_menu_logo),
-          groupSummary             = Some(true),
-          group                    = Some(userId),
-          openAccountIntent        = Some(userId),
-          contentInfo              = teamName.map(_.str),
-          color                    = color
+        Some(NotificationProps(
+          accountId         = userId,
+          when              = nots.maxBy(_.time.instant).time.instant.toEpochMilli,
+          showWhen          = Some(true),
+          category          = Some(NotificationCompat.CATEGORY_MESSAGE),
+          priority          = Some(NotificationCompat.PRIORITY_HIGH),
+          smallIcon         = Some(R.drawable.ic_menu_logo),
+          groupSummary      = Some(true),
+          group             = Some(userId),
+          openAccountIntent = Some(userId),
+          contentInfo       = teamName.map(_.str),
+          color             = color
         ))
     } else Future.successful(None)
   }
@@ -211,7 +208,9 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
       color <- notificationColor(userId)
       pic   <- getPictureForNotifications(userId, ns)
     } yield {
-      NotificationProps(userId,
+      NotificationProps(
+        accountId     = userId,
+        when          = ns.maxBy(_.time.instant).time.instant.toEpochMilli,
         showWhen      = Some(true),
         category      = Some(NotificationCompat.CATEGORY_MESSAGE),
         priority      = Some(NotificationCompat.PRIORITY_HIGH),
@@ -221,7 +220,6 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
         sound         = getSound(ns),
         onlyAlertOnce = Some(ns.forall(_.hasBeenDisplayed)),
         group         = Some(userId),
-        when          = Some(ns.maxBy(_.time.instant).time.instant.toEpochMilli),
         largeIcon     = pic,
         lights        = Some(color.getOrElse(Color.WHITE), getInt(R.integer.notifications__system__led_on), getInt(R.integer.notifications__system__led_off)),
         color         = color,

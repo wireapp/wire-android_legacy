@@ -34,7 +34,7 @@ import scala.concurrent.duration._
 
 class NotificationsHandlerService extends FutureService with ServiceHelper with DerivedLogTag {
   import NotificationsHandlerService._
-  import Threading.Implicits.Background
+  import Threading.Implicits.Ui
 
   override protected lazy val wakeLock = new TimedWakeLock(getApplicationContext, 2.seconds)
 
@@ -48,8 +48,8 @@ class NotificationsHandlerService extends FutureService with ServiceHelper with 
     Option(ZMessaging.currentAccounts) match {
       case Some(accs) =>
         (account, conversation, instantReplyContent) match {
-          case (Some(acc), _, _) if ActionClear == intent.getAction =>
-            Future.successful(notificationManager.cancelNotifications(acc, Set.empty))
+          case (Some(acc), conv, _) if ActionClear == intent.getAction =>
+            Future { notificationManager.cancelNotifications(acc, conv.toSet) }
           case (Some(acc), Some(convId), Some(content)) if ActionQuickReply == intent.getAction =>
             accs.getZms(acc).flatMap {
               case Some(zms) =>

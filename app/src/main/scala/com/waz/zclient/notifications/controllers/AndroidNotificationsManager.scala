@@ -27,19 +27,19 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
 
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) buildNotificationChannels()
 
-  private var notsCounter = Map[UserId, Set[ConvId]]()
+  private var notsIds = Map[UserId, Set[Int]]()
+  private var uniqueIds = Map[UserId, Set[Int]]()
 
-  override def showNotification(props: NotificationProps): Unit = {
-    val oldHashes = notificationManager.getActiveNotifications.map(_.getNotification.extras.getInt(NotificationProps.NOTIFICATION_HASH)).toSet
-    if (!oldHashes.contains(props.hashCode)) {
-      props.convId.foreach { convId =>
-        notsCounter += props.accountId -> (notsCounter.getOrElse(props.accountId, Set.empty) + convId)
-      }
+  override def showNotification(props: Iterable[NotificationProps]): Unit = {
+    val newProps = props.filterNot(n => uniqueIds.getOrElse(n.accountId, Set.empty).contains(toNotificationUniqueId(n))).toVector
+    uniqueIds ++= newProps.groupBy(_.accountId).map { case (key, p) => key -> p.map(toNotificationUniqueId).toSet }
+    newProps.sortBy(_.when).foreach { p =>
+      val id = p.convId.fold(toNotificationGroupId(p.accountId))(toNotificationConvId(p.accountId, _))
+      notsIds += p.accountId -> (notsIds.getOrElse(p.accountId, Set.empty) + id)
 
-      val id = props.convId.fold(toNotificationGroupId(props.accountId))(toNotificationConvId(props.accountId, _))
-      val notification = props.build()
+      val notification = p.build()
 
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getNotificationChannel(props.channelId).isEmpty)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && getNotificationChannel(p.channelId).isEmpty)
         buildNotificationChannels(enforce = true)
           .foreach(_ => notificationManager.notify(id, notification))(Threading.Ui)
       else
@@ -47,28 +47,38 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
     }
   }
 
-  private def toNotificationGroupId(accountId: UserId): Int = accountId.str.hashCode()
-  private def toNotificationConvId(accountId: UserId, convId: ConvId): Int = (accountId.str + convId.str).hashCode()
+  private def toNotificationGroupId(accountId: UserId): Int = accountId.str.hashCode
+  private def toNotificationConvId(accountId: UserId, convId: ConvId): Int = (accountId.str + convId.str).hashCode
+  private def toNotificationUniqueId(p: NotificationProps): Int = (p.accountId.str + p.convId.getOrElse("") + p.when.toString).hashCode
 
   override def getNotificationChannel(channelId: String): Option[NotificationChannel] =
     Option(notificationManager.getNotificationChannel(channelId))
 
-  override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit =
+  override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit = {
     if (convs.isEmpty) {
-      notificationManager.cancel(toNotificationGroupId(accountId))
-      notsCounter -= accountId
+      notsIds.getOrElse(accountId, Set.empty).foreach(notificationManager.cancel)
+      notsIds -= accountId
+      uniqueIds -= accountId
     } else
       convs.foreach { convId =>
-        notificationManager.cancel(toNotificationConvId(accountId, convId))
-        notsCounter.get(accountId) match {
-          case Some(convIds) if convIds == Set(convId) =>
-            notificationManager.cancel(toNotificationGroupId(accountId))
-            notsCounter -= accountId
-          case Some(convIds) if convIds.nonEmpty =>
-            notsCounter += accountId -> (convIds - convId)
+        val id = toNotificationConvId(accountId, convId)
+        notificationManager.cancel(id)
+        notsIds.get(accountId) match {
+          case Some(ids) if ids.nonEmpty =>
+            val newIds = ids - id
+            if (newIds.isEmpty) {
+              notificationManager.cancel(toNotificationGroupId(accountId))
+              notsIds -= accountId
+              uniqueIds -= accountId
+            } else {
+              notsIds += accountId -> newIds
+            }
           case None =>
         }
       }
+
+    if (notsIds.isEmpty) notificationManager.cancelAll()
+  }
 
   private def getSound(pref: PrefKey[String], default: Int): Future[Option[Uri]] =
     prefs(pref).apply().map {
