@@ -507,7 +507,7 @@ final class MessagesServiceImpl(selfUserId:     UserId,
   }
 
   private def addMissedCall(conv: ConversationData, from: UserId, time: RemoteInstant) = {
-    if (!conv.muted.isAllMuted) missedCall ! MissedCallInfo(selfUserId, conv.id, time, from)
+    missedCall ! MissedCallInfo(selfUserId, conv.id, time, from)
     updater.addMessage(MessageData(MessageId(), conv.id, Message.Type.MISSED_CALL, from, time = time))
   }
 

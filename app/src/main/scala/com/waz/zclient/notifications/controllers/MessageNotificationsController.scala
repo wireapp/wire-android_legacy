@@ -76,12 +76,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   private lazy val accountStorage        = inject[AccountStorage]
 
   def initialize(): Unit = {
-    /*
-      Clears notifications already displayed in the tray when the user opens the conversation associated
-      with those notifications. This is separate from removing notifications from the storage and may
-      sometimes be inconsistent (notifications in the tray may stay longer than in the storage).
-    */
-    verbose(l"FCM initialize")
+    //Clears notifications already displayed in the tray when the user opens the conversation associated with those notifications.
     notificationsSourceVisible.filter(_.nonEmpty).onUi { ids =>
       ids.foreach { case (userId, convs) => cancelNotifications(userId, convs) }
     }

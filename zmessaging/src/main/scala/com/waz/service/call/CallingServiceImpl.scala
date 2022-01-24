@@ -125,8 +125,6 @@ trait CallingService {
                        qualifiedId:      QualifiedId,
                        sender:           ClientId): Unit
 
-  def receiveCallEvent(msg: String, msgTime: RemoteInstant, rConvQualifiedId: RConvQualifiedId, qualifiedId: QualifiedId, sender: ClientId): Unit
-
   def onInterrupted(): Unit
 }
 
@@ -185,11 +183,9 @@ final class CallingServiceImpl(val accountId:       UserId,
                                mediaManagerService: MediaManagerService,
                                pushService:         PushService,
                                network:             NetworkModeService,
-                               errors:              ErrorsService,
                                userPrefs:           UserPreferences,
                                globalPrefs:         GlobalPreferences,
                                permissions:         PermissionsService,
-                               userStorage:         UsersStorage,
                                httpProxy:           Option[Proxy])
                               (implicit accountContext: AccountContext)
   extends CallingService with DerivedLogTag with SafeToLog { self =>
@@ -660,6 +656,8 @@ final class CallingServiceImpl(val accountId:       UserId,
                                 sender: ClientId): Unit =
     receiveCallEvent(msg, msgTime, RConvQualifiedId(convId, domain), QualifiedId(from, domain), sender)
 
+  private var lastCallEventTime = Option.empty[LocalInstant]
+
   override def receiveCallEvent(msg: String,
                                msgTime: RemoteInstant,
                                rConvQualifiedId: RConvQualifiedId,
@@ -669,16 +667,21 @@ final class CallingServiceImpl(val accountId:       UserId,
       import CallingServiceImpl._
 
       val drift = pushService.beDrift.currentValue.getOrElse(Duration.ZERO)
-      val curTime = LocalInstant(clock.instant + drift)
-      verbose(l"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime")
+      val localMsgTime: LocalInstant = msgTime.toLocal(drift)
+      if (lastCallEventTime.forall(_.compareTo(localMsgTime) < 0)) {
+        lastCallEventTime = Some(localMsgTime)
+        val curTime = LocalInstant(clock.instant + drift)
+        verbose(l"Received msg for avs: localTime: ${clock.instant} curTime: $curTime, drift: $drift, msgTime: $msgTime")
 
-      avs.onReceiveMessage(w, msg, curTime, msgTime, rConvQualifiedId, qualifiedId, sender).foreach {
-        case AvsCallError.UnknownProtocol if shouldTriggerAlert(rConvQualifiedId.id) =>
-          instantOfLastErrorByConversationId += rConvQualifiedId.id -> LocalInstant.Now
-          userPrefs(UserPreferences.ShouldWarnAVSUpgrade) := true
-        case _ => // Ignore
+        avs.onReceiveMessage(w, msg, curTime, msgTime, rConvQualifiedId, qualifiedId, sender).foreach {
+          case AvsCallError.UnknownProtocol if shouldTriggerAlert(rConvQualifiedId.id) =>
+            instantOfLastErrorByConversationId += rConvQualifiedId.id -> LocalInstant.Now
+            userPrefs(UserPreferences.ShouldWarnAVSUpgrade) := true
+          case _ => // Ignore
+        }
       }
     }
+
 
   private def withConv(convId: RConvId)(f: (WCall, ConversationData) => Unit) = {
     val rConvIdWithoutDomain = RConvId(convId.str.split("@").head)

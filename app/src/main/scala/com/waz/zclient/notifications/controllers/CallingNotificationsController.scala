@@ -43,12 +43,12 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{IncomingCallNotificationsChannelId, OngoingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.RingtoneUtils
-import com.waz.zclient.messages.UsersController
 
 import scala.concurrent.Future
 import scala.util.Try
 import scala.util.control.NonFatal
 import com.waz.threading.Threading._
+import com.waz.zclient.security.ActivityLifecycleCallback
 
 final class CallingNotificationsController(implicit cxt: WireContext, inj: Injector) extends Injectable with DerivedLogTag {
   import CallingNotificationsController._
@@ -58,6 +58,7 @@ final class CallingNotificationsController(implicit cxt: WireContext, inj: Injec
   private lazy val callController      = inject[CallController]
   private lazy val convController      = inject[ConversationController]
   private lazy val notController       = inject[MessageNotificationsController]
+  private lazy val activityLifecycle   = inject[ActivityLifecycleCallback]
 
   private val zmsInstances = inject[AccountsService].zmsInstances
 
@@ -140,34 +141,37 @@ final class CallingNotificationsController(implicit cxt: WireContext, inj: Injec
     for {
       zmsInstances <- EventStream.zip(EventStream.from(zmsInstances.head), EventStream.from(zmsInstances)) // TODO: make a change to `EventStream.from` in wire-signals
       missedCalls  =  zmsInstances.toSeq.map(_.messages.missedCall)
-      call         <- EventStream.zip(missedCalls:_*)
+      call         <- EventStream.zip(missedCalls: _*)
     } yield
       (call.currentAccount,
        NotificationData(conv = call.convId, user = call.from, msgType = NotificationType.MISSED_CALL, time = call.time)
       )
 
-  private lazy val usersController = inject[UsersController]
-
   missedCall.onUi { case (selfId, not) =>
-    notController.showNotifications(selfId, Set(not))
-    usersController.user(selfId).head.foreach {
-      case self if self.availability != Availability.Away =>
-        cancelCallNotifications()
-        notController.showNotifications(selfId, Set(not))
-      case _ =>
+    (for {
+      zmses       <- zmsInstances.head
+      selfZms     =  zmses.find(_.selfUserId == selfId)
+      self        <- selfZms.map(_.users.getSelfUser).getOrElse(Future.successful(None))
+      av          =  self.map(_.availability).getOrElse(Availability.None)
+      true        = av == Availability.None || av == Availability.Available
+      curConvId   <- convController.currentConvIdOpt.head
+      (inBack, _) <- activityLifecycle.appInBackground.head
+      true        =  inBack || curConvId.isEmpty || !curConvId.contains(not.conv)
+      conv        <- convController.getConversation(not.conv)
+      true        =  conv.map(_.muted).getOrElse(MuteSet.AllAllowed) == MuteSet.AllAllowed
+    } yield ()).foreach { _ =>
+      notController.showNotifications(selfId, Set(not))
+      notificationManager
+        .getActiveNotifications
+        .toSeq
+        .filter { n =>
+          val not = n.getNotification
+          not.getChannelId == IncomingCallNotificationsChannelId || not.getChannelId == OngoingNotificationsChannelId
+        }.foreach { n =>
+          notificationManager.cancel(n.getId)
+        }
     }
   }
-
-  def cancelCallNotifications(): Unit =
-    notificationManager
-      .getActiveNotifications
-      .toSeq
-      .filter { n =>
-        val not = n.getNotification
-        not.getChannelId == IncomingCallNotificationsChannelId || not.getChannelId == OngoingNotificationsChannelId
-      }.foreach { n =>
-        notificationManager.cancel(n.getId)
-      }
 
   private def cancelNotifications(nots: Seq[CallingNotificationsController.CallNotification]): Unit = {
     val notsIds = nots.map(_.id).toSet
