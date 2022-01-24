@@ -102,4 +102,62 @@ class UserDataSpec extends AndroidFreeSpec {
       data.fields.shouldEqual(referenceInfo.fields.get)
     }
   }
+
+  feature ("User isGuest/isInTeam") {
+    val template1 = UserData.withName(UserId(), "user1")
+    val template2 = UserData.withName(UserId(), "user2")
+
+    scenario("The user IS NOT a guest if their team id is the same as ours - no federation") {
+      if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val ourTeamId = TeamId()
+        val user = template1.copy(teamId = Some(ourTeamId))
+        user.isGuest(Some(ourTeamId)) shouldBe false
+      }
+    }
+
+    scenario("The user IS a guest if their team id is different from ours - no federation") {
+      if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val ourTeamId = TeamId()
+        val otherTeamId = TeamId()
+        val user = template1.copy(teamId = Some(otherTeamId))
+        user.isGuest(Some(ourTeamId)) shouldBe true
+      }
+    }
+
+    scenario("The user IS NOT a guest if their team id is the same as ours AND they are from the same domain - federation") {
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val ourTeamId = TeamId()
+        val ourDomain = Domain("anta.wire.link")
+        val user = template1.copy(teamId = Some(ourTeamId), domain = ourDomain)
+        user.isGuest(Some(ourTeamId), ourDomain) shouldBe false
+      }
+    }
+
+    scenario("The user IS a guest if their team id is different from ours - federation") {
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val ourTeamId = TeamId()
+        val ourDomain = Domain("anta.wire.link")
+        val otherTeamId = TeamId()
+        val otherDomain = Domain("bella.wire.link")
+        val user = template1.copy(teamId = Some(otherTeamId), domain = otherDomain)
+        user.isGuest(Some(ourTeamId), ourDomain) shouldBe true
+      }
+    }
+
+    scenario("The user IS a guest even if their team id is the same as ours but the domain is different - federation") {
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        val ourTeamId = TeamId()
+        val ourDomain = Domain("anta.wire.link")
+        val otherDomain = Domain("bella.wire.link")
+        val user = template1.copy(teamId = Some(ourTeamId), domain = otherDomain)
+        user.isGuest(Some(ourTeamId), ourDomain) shouldBe true
+      }
+    }
+
+    scenario("The user IS a guest if they're a private user") {
+      val ourTeamId = TeamId()
+      val user = template1.copy(teamId = None)
+      user.isGuest(Some(ourTeamId)) shouldBe true
+    }
+  }
 }
