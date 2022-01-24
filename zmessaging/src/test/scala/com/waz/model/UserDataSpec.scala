@@ -144,6 +144,8 @@ class UserDataSpec extends AndroidFreeSpec {
       }
     }
 
+    // This test conforms to the following testing standards:
+    // @SF.Federation @SF.Separation @TSFI.UserInterface @S0.2
     scenario("The user IS a guest even if their team id is the same as ours but the domain is different - federation") {
       if (BuildConfig.FEDERATION_USER_DISCOVERY) {
         val ourTeamId = TeamId()
