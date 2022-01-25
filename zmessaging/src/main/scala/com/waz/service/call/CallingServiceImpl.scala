@@ -108,7 +108,7 @@ trait CallingService {
 
   def setCallMuted(muted: Boolean): Unit
 
-  def setVideoSendState(convId: ConvId, state: VideoState.Value): Unit
+  def setVideoSendState(convId: ConvId, state: VideoState.Value, shouldUpdateVideoState: Boolean = false): Unit
 }
 
 object CallingService {
@@ -608,7 +608,7 @@ class CallingServiceImpl(val accountId:       UserId,
     * This method should NOT be called before we have permissions AND while the call is still incoming. Once established,
     * we do call this to convert NoCameraPermission to state Stopped.
     */
-  override def setVideoSendState(convId: ConvId, state: VideoState.Value): Unit =
+  override def setVideoSendState(convId: ConvId, state: VideoState.Value, shouldUpdateVideoState: Boolean = false): Unit =
     updateCallIfActive(convId) { (w, conv, call) =>
       val targetSt = state match {
         case NoCameraPermission => Stopped //NoCameraPermission is only valid for incoming
@@ -617,7 +617,7 @@ class CallingServiceImpl(val accountId:       UserId,
       verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
       val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
 
-      if (state != NoCameraPermission) avs.setVideoSendState(w, rConvQualifiedId, targetSt)
+      if (state != NoCameraPermission && shouldUpdateVideoState) avs.setVideoSendState(w, rConvQualifiedId, targetSt)
       call.updateVideoState(Participant(QualifiedId(accountId, domain), clientId), targetSt)
     }("setVideoSendState")
 

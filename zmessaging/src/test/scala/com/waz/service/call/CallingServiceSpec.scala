@@ -1031,7 +1031,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       (permissions.ensurePermissions _).expects(*).atLeastOnce().returning(Future.successful(()))
 
       (avs.startCall _).expects(*, *, *, *, *).once().returning(Future(0))
-      (avs.setVideoSendState _).expects(*, *, *).twice()
+      (avs.setVideoSendState _).expects(*, *, *).once()
 
       service.startCall(_1to1Conv.id)
       awaitCP(checkpoint1)
@@ -1042,7 +1042,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onEstablishedCall(_1to1Conv.remoteId, otherUserId)
       awaitCP(checkpoint3)
 
-      service.setVideoSendState(_1to1Conv.id, VideoState.Started)
+      service.setVideoSendState(_1to1Conv.id, VideoState.Started, shouldUpdateVideoState = true)
       awaitCP(checkpoint4)
 
       (avs.endCall _).expects(*, *).once().onCall { (_: WCall, rConvQualifiedId: RConvQualifiedId) =>

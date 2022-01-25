@@ -280,7 +280,7 @@ class CallController(implicit inj: Injector, cxt: WireContext)
     verbose(l"toggleVideo")
     updateCall { case (call, cs) =>
       import VideoState._
-      cs.setVideoSendState(call.convId, if (call.videoSendState != Started) Started else Stopped)
+      cs.setVideoSendState(call.convId, if (call.videoSendState != Started) Started else Stopped, shouldUpdateVideoState = true)
     }
   }
 
@@ -290,8 +290,8 @@ class CallController(implicit inj: Injector, cxt: WireContext)
       import VideoState._
       if (call.isVideoCall) {
         call.videoSendState match {
-          case Started if pause => cs.setVideoSendState(call.convId, Paused)
-          case Paused if !pause => cs.setVideoSendState(call.convId, Started)
+          case Started if pause => cs.setVideoSendState(call.convId, Paused, shouldUpdateVideoState = true)
+          case Paused if !pause => cs.setVideoSendState(call.convId, Started, shouldUpdateVideoState = true)
           case _ =>
         }
       }
