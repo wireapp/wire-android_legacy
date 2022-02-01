@@ -55,6 +55,13 @@ import com.waz.zms.BuildConfig
 
 import scala.util.Try
 
+object MessageNotificationsController {
+  sealed trait NotificationSource
+  case object EmptyNotificationSource extends NotificationSource
+  final case class OneConvNotificationSource(accountId: UserId, convId: ConvId) extends NotificationSource
+  final case class AllAccountNotificationSource(accountId: UserId) extends NotificationSource
+}
+
 final class MessageNotificationsController(applicationId: String = BuildConfig.APPLICATION_ID)
                                           (implicit inj: Injector, cxt: Context)
   extends Injectable
@@ -62,6 +69,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     with DerivedLogTag {
   import Threading.Implicits.Background
   import EventContext.Implicits.global
+  import MessageNotificationsController._
 
   private lazy val notificationManager   = inject[NotificationManagerWrapper]
 
@@ -69,7 +77,6 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   private lazy val soundController       = inject[SoundController]
   private lazy val navigationController  = inject[NavigationController]
   private lazy val convController        = inject[ConversationController]
-  private lazy val convsStorage          = inject[Signal[ConversationStorage]]
   private lazy val userStorage           = inject[Signal[UsersStorage]]
   private lazy val teamsStorage          = inject[TeamsStorage]
   private lazy val userPrefs             = inject[Signal[UserPreferences]]
@@ -77,38 +84,45 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
 
   def initialize(): Unit = {
     //Clears notifications already displayed in the tray when the user opens the conversation associated with those notifications.
-    notificationsSourceVisible.filter(_.nonEmpty).onUi { ids =>
-      ids.foreach { case (userId, convs) => cancelNotifications(userId, convs) }
+    notificationsSourceVisible.onUi {
+      case OneConvNotificationSource(accountId, convId) =>
+        cancelNotifications(accountId, convId)
+      case AllAccountNotificationSource(accountId) =>
+        cancelNotifications(accountId)
+      case EmptyNotificationSource =>
     }
 
     accountStorage.onDeleted.onUi { removedAccounts =>
-      removedAccounts.foreach { userId =>
-        convsStorage.head.flatMap(_.keySet).foreach(convs => cancelNotifications(userId, convs))
-      }
+      removedAccounts.foreach(userId => cancelNotifications(userId))
     }
   }
 
-  private lazy val notificationsSourceVisible: Signal[Map[UserId, Set[ConvId]]] =
+  private lazy val notificationsSourceVisible: Signal[NotificationSource] =
     inject[UiLifeCycle].uiActive.flatMap {
       case false =>
-        Signal.const(Map.empty)
+        Signal.const(EmptyNotificationSource)
       case true =>
         navigationController.visiblePage.zip(selfId).flatMap {
-          case (Page.MESSAGE_STREAM, id) =>
-            convController.currentConvIdOpt.map {
-              case Some(convId) => Map(id -> Set(convId))
-              case _            => Map.empty
+          case (Page.MESSAGE_STREAM, accountId) =>
+            val source = convController.currentConvIdOpt.head.map {
+              case Some(convId) => OneConvNotificationSource(accountId, convId)
+              case _            => EmptyNotificationSource
             }
-          case (_, id) =>
-            for {
-              storage <- convsStorage
-              convIds <- Signal.from(storage.keySet)
-            } yield Map(id -> convIds)
+            Signal.from(source)
+          case (Page.CONVERSATION_LIST, accountId) =>
+            Signal.const(AllAccountNotificationSource(accountId))
+          case (Page.START, accountId) =>
+            Signal.const(AllAccountNotificationSource(accountId))
+          case _ =>
+            Signal.const(EmptyNotificationSource)
         }
     }
 
-  override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit =
-    notificationManager.cancelNotifications(accountId, convs)
+  override def cancelNotifications(accountId: UserId, convId: ConvId): Unit =
+    notificationManager.cancelNotifications(accountId, convId)
+
+  override def cancelNotifications(accountId: UserId): Unit =
+    notificationManager.cancelNotifications(accountId)
 
   override def showNotifications(accountId: UserId, nots: Set[NotificationData]): Future[Unit] = {
     verbose(l"showNotifications: $accountId, nots: $nots")

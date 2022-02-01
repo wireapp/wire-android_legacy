@@ -35,7 +35,8 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
     uniqueIds ++= newProps.groupBy(_.accountId).map { case (key, p) => key -> p.map(toNotificationUniqueId).toSet }
     newProps.sortBy(_.when).foreach { p =>
       val id = p.convId.fold(toNotificationGroupId(p.accountId))(toNotificationConvId(p.accountId, _))
-      notsIds += p.accountId -> (notsIds.getOrElse(p.accountId, Set.empty) + id)
+      if (p.convId.isDefined)
+        notsIds += p.accountId -> (notsIds.getOrElse(p.accountId, Set.empty) + id)
 
       val notification = p.build()
 
@@ -54,28 +55,33 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
   override def getNotificationChannel(channelId: String): Option[NotificationChannel] =
     Option(notificationManager.getNotificationChannel(channelId))
 
-  override def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit = {
-    if (convs.isEmpty) {
-      notsIds.getOrElse(accountId, Set.empty).foreach(notificationManager.cancel)
-      notsIds -= accountId
-      uniqueIds -= accountId
-    } else
-      convs.foreach { convId =>
-        val id = toNotificationConvId(accountId, convId)
-        notificationManager.cancel(id)
-        notsIds.get(accountId) match {
-          case Some(ids) if ids.nonEmpty =>
-            val newIds = ids - id
-            if (newIds.isEmpty) {
-              notificationManager.cancel(toNotificationGroupId(accountId))
-              notsIds -= accountId
-              uniqueIds -= accountId
-            } else {
-              notsIds += accountId -> newIds
-            }
-          case None =>
+  override def cancelNotifications(accountId: UserId, convId: ConvId): Unit = {
+    val id = toNotificationConvId(accountId, convId)
+    notificationManager.cancel(id)
+    notsIds.get(accountId) match {
+      case Some(ids) if ids.nonEmpty =>
+        val newIds = ids - id
+        if (newIds.isEmpty) {
+          cancelNotifications(accountId)
+        } else {
+          notsIds += accountId -> newIds
         }
-      }
+      case None =>
+    }
+
+    if (notsIds.isEmpty) notificationManager.cancelAll()
+  }
+
+  override def cancelNotifications(accountId: UserId): Unit = {
+    val id = toNotificationGroupId(accountId)
+    notificationManager.cancel(id)
+    notsIds.get(accountId) match {
+      case Some(nIds) =>
+        nIds.foreach(notificationManager.cancel)
+        notsIds -= accountId
+        uniqueIds -= accountId
+      case None =>
+    }
 
     if (notsIds.isEmpty) notificationManager.cancelAll()
   }

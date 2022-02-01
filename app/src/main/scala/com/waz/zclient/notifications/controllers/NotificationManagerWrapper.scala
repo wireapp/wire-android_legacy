@@ -22,7 +22,8 @@ import com.waz.model.{ConvId, UserId}
 
 trait NotificationManagerWrapper {
   def showNotification(notificationProps: Iterable[NotificationProps]): Unit
-  def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit
+  def cancelNotifications(accountId: UserId, convId: ConvId): Unit
+  def cancelNotifications(accountId: UserId): Unit
   def getNotificationChannel(channelId: String): Option[NotificationChannel]
 }
 

@@ -17,5 +17,7 @@ trait NotificationUiController {
    */
   def showNotifications(accountId: UserId, ns: Set[NotificationData]): Future[Unit]
 
-  def cancelNotifications(accountId: UserId, convs: Set[ConvId]): Unit
+  def cancelNotifications(accountId: UserId, convId: ConvId): Unit
+
+  def cancelNotifications(accountId: UserId): Unit
 }

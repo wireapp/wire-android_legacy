@@ -88,13 +88,13 @@ final class CallingNotificationsController(implicit cxt: WireContext, inj: Injec
       notInfo                <- Signal.sequence(allCallsF.map { case (conv, (caller, account)) =>
                                   zs.find(_.selfUserId == account)
                                     .fold2(
-                                      Signal.const(None, Name.Empty, None, false, Availability.None),
+                                      Signal.const(None, Name.Empty, None, false, Availability.Available),
                                       z => Signal.zip(
                                         z.calling.joinableCallsNotMuted.map(_.get(conv)),
                                         z.usersStorage.optSignal(caller).map(_.map(_.name).getOrElse(Name.Empty)),
                                         z.convsStorage.optSignal(conv),
                                         z.conversations.groupConversation(conv),
-                                        z.usersStorage.optSignal(z.selfUserId).map(_.fold[Availability](Availability.None)(_.availability))
+                                        z.usersStorage.optSignal(z.selfUserId).map(_.fold[Availability](Availability.Available)(_.availability))
                                       )).map(conv -> _)
                                 }: _*)
       notInfoNames           <- Signal.sequence(notInfo.map(n => convController.conversationName(n._1).map(n._1 -> _)).toArray: _*)

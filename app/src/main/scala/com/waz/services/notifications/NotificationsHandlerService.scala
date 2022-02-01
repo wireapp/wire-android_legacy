@@ -48,13 +48,15 @@ class NotificationsHandlerService extends FutureService with ServiceHelper with 
     Option(ZMessaging.currentAccounts) match {
       case Some(accs) =>
         (account, conversation, instantReplyContent) match {
-          case (Some(acc), conv, _) if ActionClear == intent.getAction =>
-            Future { notificationManager.cancelNotifications(acc, conv.toSet) }
+          case (Some(acc), Some(conv), _) if ActionClear == intent.getAction =>
+            Future { notificationManager.cancelNotifications(acc, conv) }
+          case (Some(acc), None, _) if ActionClear == intent.getAction =>
+            Future { notificationManager.cancelNotifications(acc) }
           case (Some(acc), Some(convId), Some(content)) if ActionQuickReply == intent.getAction =>
             accs.getZms(acc).flatMap {
               case Some(zms) =>
                 zms.convsUi.sendTextMessage(convId, content.toString, exp = Some(None)).map { _ =>
-                  notificationManager.cancelNotifications(acc, Set(convId))
+                  notificationManager.cancelNotifications(acc, convId)
                 }
               case _ =>
                 Future.successful(())
