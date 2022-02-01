@@ -49,7 +49,7 @@ class AllParticipantsAdapter(implicit context: Context, eventContext: EventConte
   override def createFragment(position: Int): Fragment = CallingGridFragment.newInstance(position)
 
   private def getPagesCount(): Int =
-    if (numberOfParticipants == 0) 0
+    if (numberOfParticipants == 0) 1
     else if (numberOfParticipants % MAX_PARTICIPANTS_PER_PAGE == 0) numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE
     else (numberOfParticipants / MAX_PARTICIPANTS_PER_PAGE) + 1
 
