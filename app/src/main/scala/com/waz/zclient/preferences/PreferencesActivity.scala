@@ -29,7 +29,7 @@ import androidx.annotation.Nullable
 import androidx.appcompat.widget.Toolbar
 import android.view.{MenuItem, View, ViewGroup}
 import android.widget.{FrameLayout, Toast}
-import com.waz.content.UserPreferences
+import com.waz.content.GlobalPreferences
 import com.waz.service.assets.Content
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -60,6 +60,7 @@ class PreferencesActivity extends BaseActivity
   private lazy val backStackNavigator = inject[BackStackNavigator]
   private lazy val zms = inject[Signal[ZMessaging]]
   private lazy val spinnerController = inject[SpinnerController]
+  private lazy val globalPrefs = inject[GlobalPreferences]
   private lazy val cameraController = inject[ICameraController]
 
   lazy val accentColor = inject[AccentColorController].accentColor
@@ -138,7 +139,7 @@ class PreferencesActivity extends BaseActivity
 
   override def getBaseTheme: Int = R.style.Theme_Dark_Preferences
 
-  override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
+  override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
     val fragment: Fragment = getSupportFragmentManager.findFragmentById(R.id.fl__root__camera)
     if (fragment != null) fragment.onActivityResult(requestCode, resultCode, data)
@@ -147,11 +148,11 @@ class PreferencesActivity extends BaseActivity
 
       val pickedUri = Option(data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI).asInstanceOf[Uri])
       val key = requestCode match {
-        case OptionsView.RingToneResultId => UserPreferences.RingTone
-        case OptionsView.TextToneResultId => UserPreferences.TextTone
-        case OptionsView.PingToneResultId => UserPreferences.PingTone
+        case OptionsView.RingToneResultId => GlobalPreferences.RingTone
+        case OptionsView.TextToneResultId => GlobalPreferences.TextTone
+        case OptionsView.PingToneResultId => GlobalPreferences.PingTone
       }
-      zms.head.flatMap(_.userPrefs.preference(key).update(pickedUri.fold(RingtoneUtils.getSilentValue)(_.toString)))(Threading.Ui)
+      globalPrefs.preference(key).update(pickedUri.fold(RingtoneUtils.getSilentValue)(_.toString))
     }
   }
 

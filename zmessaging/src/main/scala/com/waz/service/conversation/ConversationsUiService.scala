@@ -489,7 +489,10 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     for {
       (conv, syncId) <- createAndPostGroupConversation(ConvId(), name, teamOnly, receiptMode, defaultRole, tempRConvId)
       _              <- syncRequests.await(syncId)
-      _              <- addConversationMembers(conv.id, members, defaultRole, enforceModifyMembers = true)
+      _              <- if (members.nonEmpty)
+                          addConversationMembers(conv.id, members, defaultRole, enforceModifyMembers = true)
+                        else
+                          Future.successful(None)
     } yield (conv, syncId)
   }
 

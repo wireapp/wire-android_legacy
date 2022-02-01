@@ -19,9 +19,11 @@ package com.waz.service.conversation
 
 import com.waz.content.UserPreferences.SelectedConvId
 import com.waz.content.{Preferences, UserPreferences}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConvId
 import com.waz.service.UserService
 import com.wire.signals.Signal
+import com.waz.log.LogSE._
 
 import scala.concurrent.Future
 
@@ -37,7 +39,8 @@ trait SelectedConversationService {
  * UserService is injected lazily (`users : => UserService` instead of `users: UserService`)
  * to prevent circular dependency.
  */
-class SelectedConversationServiceImpl(userPrefs: UserPreferences, users: => UserService) extends SelectedConversationService {
+class SelectedConversationServiceImpl(userPrefs: UserPreferences, users: => UserService)
+  extends SelectedConversationService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   val selectedConvIdPref: Preferences.Preference[Option[ConvId]] = userPrefs.preference(SelectedConvId)
@@ -47,7 +50,10 @@ class SelectedConversationServiceImpl(userPrefs: UserPreferences, users: => User
   def selectConversation(id: Option[ConvId]): Future[Unit] = selectedConvIdPref := id
 
   selectedConversationId.foreach {
-    case Some(convId) => users.syncClients(convId)
+    case Some(convId) =>
+      verbose(l"FCM selected conv: $convId")
+      users.syncClients(convId)
     case _ =>
+      verbose(l"FCM selected conv: None")
   }
 }
