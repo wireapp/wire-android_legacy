@@ -547,6 +547,7 @@
     <dimen name="user_row_height">56dp</dimen>
     <dimen name="user_row_icon_size">16dp</dimen>
     <dimen name="guests_toolbar_height">20dp</dimen>
+    <dimen name="classified_toolbar_height">20dp</dimen>
     <dimen name="conversation_name_row_padding_end">48dp</dimen>
     <dimen name="guest_badge_size">16dp</dimen>
     <dimen name="participants_options_button_margin_top">32dp</dimen>

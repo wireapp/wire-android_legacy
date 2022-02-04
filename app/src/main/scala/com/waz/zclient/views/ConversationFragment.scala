@@ -73,7 +73,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneCont
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.pages.main.{ImagePreviewCallback, ImagePreviewLayout}
 import com.waz.zclient.participants.ParticipantsController
-import com.waz.zclient.participants.ParticipantsController.ParticipantsFlags
+import com.waz.zclient.participants.ParticipantsController.{ClassifiedConversation, ParticipantsFlags}
 import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.ui.cursor.CursorMenuItem
@@ -162,6 +162,42 @@ class ConversationFragment extends FragmentHelper {
   private lazy val guestsBannerText = view[TypefaceTextView](R.id.guests_banner_text)
 
   private var isBannerOpen = false
+
+  private lazy val classifiedBanner = returning(view[FrameLayout](R.id.classified_banner)) { vh =>
+    participantsController.isCurrentConvClassified.onUi {
+      case ClassifiedConversation.Classified =>
+        vh.foreach { view =>
+          view.setBackgroundColor(getColor(R.color.background_light))
+          view.setVisible(true)
+        }
+      case ClassifiedConversation.NotClassified =>
+        vh.foreach { view =>
+          view.setBackgroundColor(getColor(R.color.background_dark))
+          view.setVisible(true)
+        }
+      case ClassifiedConversation.None =>
+        vh.foreach(_.setVisible(false))
+    }
+  }
+
+  private lazy val classifiedBannerText = returning(view[TypefaceTextView](R.id.classified_banner_text)) { vh =>
+    participantsController.isCurrentConvClassified.onUi {
+      case ClassifiedConversation.Classified =>
+        vh.foreach { view =>
+          view.setTransformedText(getString(R.string.conversation_is_classified))
+          view.setTextColor(getColor(R.color.background_dark))
+          view.setVisible(true)
+        }
+      case ClassifiedConversation.NotClassified =>
+        vh.foreach { view =>
+          view.setTransformedText(getString(R.string.conversation_is_not_classified))
+          view.setTextColor(getColor(R.color.background_light))
+          view.setVisible(true)
+        }
+      case ClassifiedConversation.None =>
+        vh.foreach(_.setVisible(false))
+    }
+  }
 
   private lazy val messagesOpacity = view[View](R.id.mentions_opacity)
   private lazy val mentionsList = view[RecyclerView](R.id.mentions_list)
@@ -266,6 +302,9 @@ class ConversationFragment extends FragmentHelper {
 
     guestsBanner
     guestsBannerText
+
+    classifiedBanner
+    classifiedBannerText
 
     accountsController.isTeam.flatMap {
       case true  => participantsController.flags

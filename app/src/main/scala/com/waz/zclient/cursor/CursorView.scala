@@ -52,7 +52,7 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.threading.Threading._
 
-class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+final class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends LinearLayout(context, attrs, defStyleAttr)
     with ViewHelper
     with DerivedLogTag {

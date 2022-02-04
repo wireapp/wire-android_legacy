@@ -118,6 +118,8 @@
     <color name="teams_create_personal_button">@color/accent_green</color>
     <color name="teams_create_team_button">#2391D3</color>
     <color name="banner_grey">#95989A</color>
+    <color name="banner_light">@color/white</color>
+    <color name="banner_black">@color/black</color>
 
     <color name="self_mention_background_light">#7BFEBF02</color>
     <color name="self_mention_background_dark">#CCFEBF02</color>

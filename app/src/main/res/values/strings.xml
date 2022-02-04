@@ -1361,6 +1361,9 @@
 
     <string name="federated_externals_guests_and_services_are_present">Federated users, externals, guests, and services are present</string>
 
+    <string name="conversation_is_classified">SECURITY LEVEL: VS-NfD</string>
+    <string name="conversation_is_not_classified">SECURITY LEVEL: NOT CLASSIFIED</string>
+
     <string name="participants_details_header_title">DETAILS</string>
     <string name="invitation_link_description">Anyone with the link can join the conversation, even if they don\'t have Wire</string>
     <string name="create_link_button">Create Link</string>
