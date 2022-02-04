@@ -104,8 +104,10 @@ final class ParticipantsController(implicit injector: Injector, context: Context
         z             <- zms
         classifiedStr <- z.userPrefs.preference(UserPreferences.ClassifiedDomains).signal
         config        =  ClassifiedDomainsConfig.deserialize(classifiedStr)
-        ids           <- if (config.isEnabled) userIds else Signal.const(Set.empty[UserId])
-        users         <- Signal.sequence((ids + z.selfUserId).map(id => z.usersStorage.signal(id)).toSeq: _*)
+        ids           <- if (config.isEnabled) userIds
+                         else Signal.const(Set.empty[UserId])
+        users         <- if (config.isEnabled) Signal.sequence((ids + z.selfUserId).map(id => z.usersStorage.signal(id)).toSeq: _*)
+                         else Signal.const(Seq.empty)
       } yield
         if (!config.isEnabled)
           ClassifiedConversation.None
@@ -121,19 +123,25 @@ final class ParticipantsController(implicit injector: Injector, context: Context
   lazy val isCurrentConvClassified: Signal[ClassifiedConversation] =
     isConvWithUsersClassified(participants.map(_.keySet))
 
+  lazy val isSelectedParticipantClassified: Signal[ClassifiedConversation] =
+    selectedParticipant.flatMap {
+      case Some(userId) => isConvWithUserClassified(userId)
+      case None         => Signal.const(ClassifiedConversation.None)
+    }
+
   def isConvWithUserClassified(userId: UserId): Signal[ClassifiedConversation] =
     isConvWithUsersClassified(Signal.const(Set(userId)))
 
   // is the current user a guest in the current conversation
   lazy val isCurrentUserGuest: Signal[Boolean] = for {
-    z           <- zms
-    currentUser <- UserSignal(z.selfUserId)
+    selfUserId  <- selfId
+    currentUser <- UserSignal(selfUserId)
     currentConv <- conv
   } yield currentConv.team.isDefined && currentConv.team != currentUser.teamId
 
   lazy val currentUserBelongsToConversationTeam: Signal[Boolean] = for {
-    z           <- zms
-    currentUser <- UserSignal(z.selfUserId)
+    selfUserId  <- selfId
+    currentUser <- UserSignal(selfUserId)
     currentConv <- conv
   } yield currentConv.team.isDefined && currentConv.team == currentUser.teamId
 

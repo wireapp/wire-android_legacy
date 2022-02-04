@@ -13,7 +13,7 @@ import com.waz.zclient.utils._
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.threading.Threading._
 
-class ConnectRequestFragment extends UntabbedRequestFragment {
+final class ConnectRequestFragment extends UntabbedRequestFragment {
   import com.waz.threading.Threading.Implicits.Ui
 
   private lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
@@ -68,6 +68,7 @@ class ConnectRequestFragment extends UntabbedRequestFragment {
 
   override protected def initViews(savedInstanceState: Bundle): Unit = {
     initDetailsView()
+    initClassifiedConversation()
     initFooterMenu()
     initIgnoreButton()
     initAcceptButton()

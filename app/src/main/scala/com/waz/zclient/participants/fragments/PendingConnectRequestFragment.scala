@@ -18,7 +18,7 @@ import com.waz.threading.Threading._
 import com.waz.zclient.utils.ViewUtils
 import com.wire.signals.Signal
 
-class PendingConnectRequestFragment extends UntabbedRequestFragment {
+final class PendingConnectRequestFragment extends UntabbedRequestFragment {
   import Threading.Implicits.Ui
 
   private lazy val zms                  = inject[Signal[ZMessaging]]

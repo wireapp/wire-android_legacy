@@ -163,7 +163,7 @@ class ConversationFragment extends FragmentHelper {
 
   private var isBannerOpen = false
 
-  private lazy val classifiedBanner = returning(view[FrameLayout](R.id.classified_banner)) { vh =>
+  private lazy val classifiedBanner = returning(view[FrameLayout](R.id.conversation_classified_banner)) { vh =>
     participantsController.isCurrentConvClassified.onUi {
       case ClassifiedConversation.Classified =>
         vh.foreach { view =>
@@ -180,7 +180,7 @@ class ConversationFragment extends FragmentHelper {
     }
   }
 
-  private lazy val classifiedBannerText = returning(view[TypefaceTextView](R.id.classified_banner_text)) { vh =>
+  private lazy val classifiedBannerText = returning(view[TypefaceTextView](R.id.conversation_classified_banner_text)) { vh =>
     participantsController.isCurrentConvClassified.onUi {
       case ClassifiedConversation.Classified =>
         vh.foreach { view =>

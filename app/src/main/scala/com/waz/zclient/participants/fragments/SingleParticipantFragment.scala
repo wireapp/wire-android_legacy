@@ -20,7 +20,7 @@ package com.waz.zclient.participants.fragments
 import android.content.Context
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.TextView
+import android.widget.{FrameLayout, TextView}
 import androidx.annotation.Nullable
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
@@ -39,13 +39,16 @@ import com.waz.zclient.pages.main.conversation.controller.IConversationScreenCon
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
 import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import com.waz.threading.Threading._
 import com.waz.zclient.messages.UsersController
+import com.waz.zclient.participants.ParticipantsController.ClassifiedConversation
+import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.utils.ContextUtils.getColor
 import com.wire.signals.ext.ClockSignal
 
 class SingleParticipantFragment extends FragmentHelper {
@@ -195,6 +198,45 @@ class SingleParticipantFragment extends FragmentHelper {
     }
   }
 
+  protected def initClassifiedConversation(): Unit =
+    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      returning(view[FrameLayout](R.id.single_participant_classified_banner)) { vh =>
+        participantsController.isSelectedParticipantClassified.onUi {
+          case ClassifiedConversation.Classified =>
+            vh.foreach { view =>
+              view.setBackgroundColor(getColor(R.color.background_light))
+              view.setVisible(true)
+            }
+          case ClassifiedConversation.NotClassified =>
+            vh.foreach { view =>
+              view.setBackgroundColor(getColor(R.color.background_dark))
+              view.setVisible(true)
+            }
+          case ClassifiedConversation.None =>
+            vh.foreach(_.setVisible(false))
+        }
+      }
+
+      returning(view[TypefaceTextView](R.id.single_participant_classified_banner_text)) { vh =>
+        participantsController.isSelectedParticipantClassified.onUi {
+          case ClassifiedConversation.Classified =>
+            vh.foreach { view =>
+              view.setTransformedText(getString(R.string.conversation_is_classified))
+              view.setTextColor(getColor(R.color.background_dark))
+              view.setVisible(true)
+            }
+          case ClassifiedConversation.NotClassified =>
+            vh.foreach { view =>
+              view.setTransformedText(getString(R.string.conversation_is_not_classified))
+              view.setTextColor(getColor(R.color.background_light))
+              view.setVisible(true)
+            }
+          case ClassifiedConversation.None =>
+            vh.foreach(_.setVisible(false))
+        }
+      }
+    }
+
   protected lazy val footerCallback = new FooterMenuCallback {
     override def onLeftActionClicked(): Unit =
       participantsController.otherParticipant.map(_.expiresAt.isDefined).head.foreach {
@@ -273,6 +315,7 @@ class SingleParticipantFragment extends FragmentHelper {
 
   protected def initViews(savedInstanceState: Bundle): Unit = {
     initUserHandle()
+    initClassifiedConversation()
     initDetailsView()
     initDevicesView()
     initFooterMenu()
