@@ -16,7 +16,7 @@ import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 
 import scala.concurrent.Future
 
-class BlockedUserFragment extends UntabbedRequestFragment {
+final class BlockedUserFragment extends UntabbedRequestFragment {
   import com.waz.threading.Threading.Implicits.Ui
 
   override protected val Tag: String = BlockedUserFragment.Tag

@@ -16,7 +16,7 @@ import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import scala.concurrent.Future
 import com.waz.threading.Threading._
 
-class SendConnectRequestFragment extends UntabbedRequestFragment {
+final class SendConnectRequestFragment extends UntabbedRequestFragment {
   import Threading.Implicits.Ui
 
   override protected val Tag: String = SendConnectRequestFragment.Tag

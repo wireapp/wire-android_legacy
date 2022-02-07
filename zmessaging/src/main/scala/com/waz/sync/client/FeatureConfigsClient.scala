@@ -1,7 +1,7 @@
 package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.{AppLockFeatureConfig, FileSharingFeatureConfig, ConferenceCallingFeatureConfig, SelfDeletingMessagesFeatureConfig, TeamId}
+import com.waz.model.{AppLockFeatureConfig, ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig, TeamId}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
@@ -12,6 +12,7 @@ trait FeatureConfigsClient {
   def getFileSharing: ErrorOrResponse[FileSharingFeatureConfig]
   def getSelfDeletingMessages: ErrorOrResponse[SelfDeletingMessagesFeatureConfig]
   def getConferenceCalling: ErrorOrResponse[ConferenceCallingFeatureConfig]
+  def getClassifiedDomains(teamId: TeamId): ErrorOrResponse[ClassifiedDomainsConfig]
 }
 
 class FeatureConfigsClientImpl(implicit
@@ -48,10 +49,17 @@ class FeatureConfigsClientImpl(implicit
       .withResultType[ConferenceCallingFeatureConfig]
       .withErrorType[ErrorResponse]
       .executeSafe
+
+  override def getClassifiedDomains(teamId: TeamId): ErrorOrResponse[ClassifiedDomainsConfig] =
+    Request.Get(relativePath = classifiedDomainsPath(teamId))
+      .withResultType[ClassifiedDomainsConfig]
+      .withErrorType[ErrorResponse]
+      .executeSafe
 }
 
 object FeatureConfigsClient {
   def appLockPath(teamId: TeamId): String = s"/teams/${teamId.str}/features/appLock"
+  def classifiedDomainsPath(teamId: TeamId): String = s"/teams/${teamId.str}/features/classifiedDomains"
 
   val basePath: String = "/feature-configs"
   val fileSharingPath: String = s"$basePath/fileSharing"

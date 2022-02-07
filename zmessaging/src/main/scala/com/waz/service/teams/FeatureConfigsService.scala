@@ -5,12 +5,12 @@ import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.sync.handler.FeatureConfigsSyncHandler
 import com.waz.log.LogSE._
-import com.waz.model.{FeatureConfigEvent, FeatureConfigUpdateEvent, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig}
+import com.waz.model.{ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FeatureConfigEvent, FeatureConfigUpdateEvent, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig}
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
 import com.waz.utils.JsonDecoder
+
 import scala.concurrent.Future
-import com.waz.model.ConferenceCallingFeatureConfig
 
 trait FeatureConfigsService {
   def eventProcessingStage: Stage.Atomic
@@ -18,6 +18,7 @@ trait FeatureConfigsService {
   def updateFileSharing(): Future[Unit]
   def updateSelfDeletingMessages(): Future[Unit]
   def updateConferenceCalling(): Future[Unit]
+  def updateClassifiedDomains(): Future[Unit]
 }
 
 class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
@@ -122,4 +123,15 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
       _                 <- userPrefs(ShouldInformSelfDeletingMessagesChanged) :=
                              (wasEnabled != isNowEnabled || lastKnownTimeout != newTimeout)
     } yield ()
+
+  override def updateClassifiedDomains(): Future[Unit] = withRecovery {
+    for {
+      Some(classifiedDomains) <- syncHandler.fetchClassifiedDomains
+      _                       =  verbose(l"ClassifiedDomains feature config: $classifiedDomains")
+      _                       <- storeClassifiedDomains(classifiedDomains)
+    } yield ()
+  }
+
+  private def storeClassifiedDomains(classifiedDomains: ClassifiedDomainsConfig): Future[Unit] =
+    userPrefs(ClassifiedDomains) := classifiedDomains.serialize
 }
