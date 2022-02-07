@@ -198,44 +198,48 @@ class SingleParticipantFragment extends FragmentHelper {
     }
   }
 
+  private lazy val classifiedBanner = returning(view[FrameLayout](R.id.single_participant_classified_banner)) { vh =>
+    participantsController.isOtherParticipantClassified.onUi {
+      case ClassifiedConversation.Classified =>
+        vh.foreach { view =>
+          view.setBackgroundColor(getColor(R.color.background_light))
+          view.setVisible(true)
+        }
+      case ClassifiedConversation.NotClassified =>
+        vh.foreach { view =>
+          view.setBackgroundColor(getColor(R.color.background_dark))
+          view.setVisible(true)
+        }
+      case ClassifiedConversation.None =>
+        vh.foreach(_.setVisible(false))
+    }
+  }
+
+  private lazy val classifiedBannerText = returning(view[TypefaceTextView](R.id.single_participant_classified_banner_text)) { vh =>
+    participantsController.isOtherParticipantClassified.onUi {
+      case ClassifiedConversation.Classified =>
+        vh.foreach { view =>
+          view.setTransformedText(getString(R.string.conversation_is_classified))
+          view.setTextColor(getColor(R.color.background_dark))
+          view.setVisible(true)
+        }
+      case ClassifiedConversation.NotClassified =>
+        vh.foreach { view =>
+          view.setTransformedText(getString(R.string.conversation_is_not_classified))
+          view.setTextColor(getColor(R.color.background_light))
+          view.setVisible(true)
+        }
+      case ClassifiedConversation.None =>
+        vh.foreach(_.setVisible(false))
+    }
+  }
+
   protected def initClassifiedConversation(): Unit =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      returning(view[FrameLayout](R.id.single_participant_classified_banner)) { vh =>
-        participantsController.isSelectedParticipantClassified.onUi {
-          case ClassifiedConversation.Classified =>
-            vh.foreach { view =>
-              view.setBackgroundColor(getColor(R.color.background_light))
-              view.setVisible(true)
-            }
-          case ClassifiedConversation.NotClassified =>
-            vh.foreach { view =>
-              view.setBackgroundColor(getColor(R.color.background_dark))
-              view.setVisible(true)
-            }
-          case ClassifiedConversation.None =>
-            vh.foreach(_.setVisible(false))
-        }
-      }
-
-      returning(view[TypefaceTextView](R.id.single_participant_classified_banner_text)) { vh =>
-        participantsController.isSelectedParticipantClassified.onUi {
-          case ClassifiedConversation.Classified =>
-            vh.foreach { view =>
-              view.setTransformedText(getString(R.string.conversation_is_classified))
-              view.setTextColor(getColor(R.color.background_dark))
-              view.setVisible(true)
-            }
-          case ClassifiedConversation.NotClassified =>
-            vh.foreach { view =>
-              view.setTransformedText(getString(R.string.conversation_is_not_classified))
-              view.setTextColor(getColor(R.color.background_light))
-              view.setVisible(true)
-            }
-          case ClassifiedConversation.None =>
-            vh.foreach(_.setVisible(false))
-        }
-      }
+      classifiedBanner
+      classifiedBannerText
     }
+
 
   protected lazy val footerCallback = new FooterMenuCallback {
     override def onLeftActionClicked(): Unit =

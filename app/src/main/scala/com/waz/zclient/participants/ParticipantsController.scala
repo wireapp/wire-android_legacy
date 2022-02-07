@@ -123,8 +123,8 @@ final class ParticipantsController(implicit injector: Injector, context: Context
   lazy val isCurrentConvClassified: Signal[ClassifiedConversation] =
     isConvWithUsersClassified(participants.map(_.keySet))
 
-  lazy val isSelectedParticipantClassified: Signal[ClassifiedConversation] =
-    selectedParticipant.flatMap {
+  lazy val isOtherParticipantClassified: Signal[ClassifiedConversation] =
+    otherParticipantId.flatMap {
       case Some(userId) => isConvWithUserClassified(userId)
       case None         => Signal.const(ClassifiedConversation.None)
     }
