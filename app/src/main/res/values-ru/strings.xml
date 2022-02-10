@@ -1181,7 +1181,7 @@
     <string name="read_receipts_info_1">Если обе стороны включат отчеты о прочтении, вы сможете видеть когда были прочитаны ваши сообщения.</string>
     <string name="read_receipts_info_2">Вы можете изменить эту опцию в настройках своего аккаунта.</string>
     <string name="create_conv_options_title_text">Настройки беседы</string>
-    <string name="create_conv_options_subtitle_allow_guests">Разрешить гостям</string>
+    <string name="create_conv_options_subtitle_allow_guests">Разрешить гостей</string>
     <string name="create_conv_options_subtitle_read_receipts">Отчеты о прочтении</string>
     <string name="create_conv_options_subtitle_on">ВКЛ</string>
     <string name="create_conv_options_subtitle_off">ВЫКЛ</string>
