@@ -22,16 +22,16 @@ import com.waz.utils.wrappers.URI
 import com.waz.znet.ServerTrust
 import com.waz.znet2.http.Request.UrlCreator
 
-
-class BackendConfig(private var _environment: String,
-                    private var _baseUrl: URI,
-                    private var _websocketUrl: URI,
-                    private var _blacklistHost: Option[URI],
-                    private var _teamsUrl: URI,
-                    private var _accountsUrl: URI,
-                    private var _websiteUrl: URI,
-                    val firebaseOptions: FirebaseOptions,
-                    val pin: CertificatePin = ServerTrust.wirePin) {
+final class BackendConfig(private var _environment: String,
+                          private var _baseUrl: URI,
+                          private var _websocketUrl: URI,
+                          private var _blacklistHost: Option[URI],
+                          private var _teamsUrl: URI,
+                          private var _accountsUrl: URI,
+                          private var _websiteUrl: URI,
+                          private var _apiVersion: Int,
+                          val firebaseOptions: FirebaseOptions,
+                          val pin: CertificatePin = ServerTrust.wirePin) {
 
   val pushSenderId: String = firebaseOptions.pushSenderId
 
@@ -43,6 +43,13 @@ class BackendConfig(private var _environment: String,
   def teamsUrl: URI = _teamsUrl
   def accountsUrl: URI = _accountsUrl
   def websiteUrl: URI = _websiteUrl
+  def apiVersion: Int = _apiVersion
+
+  def baseUrlWithApi: URI =
+    if (_apiVersion == 0)
+      _baseUrl
+    else
+      _baseUrl.buildUpon.appendPath(s"v$apiVersion").build
 
   def update(configResponse: BackendConfigResponse): Unit = {
     _environment = configResponse.title
@@ -54,6 +61,9 @@ class BackendConfig(private var _environment: String,
     _websiteUrl = URI.parse(configResponse.endpoints.websiteURL.toString)
   }
 
+  def updateApiVersion(newApiVersion: Int): Unit =
+    _apiVersion = newApiVersion
+
   override def toString: String =
     s"""
       |BackendConfig(
@@ -64,7 +74,8 @@ class BackendConfig(private var _environment: String,
       |  blacklistHost: $blacklistHost,
       |  teamsUrl:      $teamsUrl,
       |  accountsUrl:   $accountsUrl,
-      |  websiteUrl:    $websiteUrl
+      |  websiteUrl:    $websiteUrl,
+      |  apiVersion:    $apiVersion
       |)
       |""".stripMargin
 }
@@ -77,6 +88,7 @@ object BackendConfig {
             teamsUrl: String,
             accountsUrl: String,
             websiteUrl: String,
+            apiVersion: Int,
             firebaseOptions: FirebaseOptions,
             pin: CertificatePin = ServerTrust.wirePin): BackendConfig =
     new BackendConfig(
@@ -87,6 +99,7 @@ object BackendConfig {
       URI.parse(teamsUrl),
       URI.parse(accountsUrl),
       URI.parse(websiteUrl),
+      apiVersion,
       firebaseOptions,
       pin)
 }

@@ -80,7 +80,7 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
     // Note, the app must be terminated for this to work.
     val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
     implicit val injector = wireApplication.module
-    wireApplication.inject[BackendController].setStoredBackendConfig(backendConfig)
+    wireApplication.inject[BackendController].storeBackendConfig(backendConfig)
     setResultCode(Activity.RESULT_OK)
   }
 

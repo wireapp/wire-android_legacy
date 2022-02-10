@@ -100,7 +100,7 @@ class SSOWebViewFragment extends FragmentHelper {
 
   private def loadWebView(): Unit = {
     webView.foreach { webView =>
-      val webViewWrapper = new SSOWebViewWrapper(webView, ZMessaging.currentGlobal.backend.baseUrl.toString)
+      val webViewWrapper = new SSOWebViewWrapper(webView, ZMessaging.currentGlobal.backend.baseUrlWithApi.toString)
       webViewWrapper.onUrlChanged.onUi { url =>
         webView.findViewById[TextView](R.id.title).setText(Option(URI.parse(url).getHost).getOrElse(""))
       }

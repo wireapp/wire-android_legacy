@@ -7,7 +7,7 @@ import com.waz.zclient.security.ActivityLifecycleCallback
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.wire.signals.Signal
 
-class FeatureConfigsController(implicit inj: Injector) extends Injectable with DerivedLogTag {
+final class FeatureConfigsController(implicit inj: Injector) extends Injectable with DerivedLogTag {
 
   import Threading.Implicits.Background
 

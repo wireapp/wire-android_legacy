@@ -58,7 +58,7 @@ object AppEntryActivity {
   def newIntent(context: Context) = new Intent(context, classOf[AppEntryActivity])
 }
 
-class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
+final class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
   import Threading.Implicits.Ui
 

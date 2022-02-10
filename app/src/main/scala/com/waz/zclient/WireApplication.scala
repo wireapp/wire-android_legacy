@@ -50,7 +50,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
-import com.waz.sync.client.CustomBackendClient
+import com.waz.sync.client.{CustomBackendClient, SupportedApiClient}
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.utils.SafeBase64
@@ -159,6 +159,7 @@ object WireApplication extends DerivedLogTag {
     bind [MetaDataService]                to inject[GlobalModule].metadata
     bind [LogsService]                    to inject[GlobalModule].logsService
     bind [CustomBackendClient]            to inject[GlobalModule].customBackendClient
+    bind [SupportedApiClient]             to inject[GlobalModule].supportedApiClient
 
     import com.waz.threading.Threading.Implicits.Background
     bind [AccountToAssetsStorage] to (userId => inject[AccountsService].getZms(userId).map(_.map(_.assetsStorage)))
@@ -414,6 +415,19 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
           false
       }
 
+  private def updateSupportedApiVersions(backend: BackendConfig): Unit =
+    inject[SupportedApiClient].getSupportedApiVersions(backend.baseUrl).foreach {
+      case Right(versions) if versions.max.exists(_ > backend.apiVersion) =>
+        verbose(l"change in supported API versions: $versions")
+        versions.max.foreach { newVersion =>
+          backend.updateApiVersion(newVersion)
+          inject[BackendController].storeSupportedApiVersion(newVersion)
+        }
+      case Left(err) =>
+        warn(l"Unable to check for supported API versions: ${err.message} ")
+      case _ =>
+    }
+
   def ensureInitialized(backend: BackendConfig): Unit = {
     JobManager.create(this).addJobCreator(new JobCreator {
       override def create(tag: String): Job =
@@ -444,6 +458,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       inject[FileRestrictionList],
       ProxyDetails(BuildConfig.HTTP_PROXY_URL, BuildConfig.HTTP_PROXY_PORT.toInt)
     )
+
+    updateSupportedApiVersions(backend)
 
     val activityLifecycleCallback = inject[ActivityLifecycleCallback]
     // we're unable to check if the callback is already registered - we have to re-register it to be sure

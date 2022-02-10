@@ -121,7 +121,7 @@ class ZMessaging(val teamId:    Option[TeamId],
     }
 
   val auth       = account.auth
-  val urlCreator = global.urlCreator
+  val urlCreator: UrlCreator = global.urlCreator
   implicit val httpClient: HttpClient = account.global.httpClient
   val httpClientForLongRunning: HttpClient = account.global.httpClientForLongRunning
   val lifecycle  = global.lifecycle
