@@ -108,7 +108,7 @@ object BackendConfig {
       pin)
 
   val FederationSupportApiVersion: Int = 1
-  final case class FederationSupport(isOn: Boolean)
+  final case class FederationSupport(isSupported: Boolean)
 }
 
 //cert is expected to be base64-encoded

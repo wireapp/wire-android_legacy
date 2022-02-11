@@ -21,6 +21,7 @@ import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.LastRead
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.MetaDataService
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Failure, Success}
@@ -31,12 +32,13 @@ import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
-class LastReadSyncHandler(selfUserId:    UserId,
-                          currentDomain: Domain,
-                          convs:         ConversationStorage,
-                          metadata:      MetaDataService,
-                          msgsSync:      MessagesSyncHandler,
-                          otrSync:       OtrSyncHandler) extends DerivedLogTag {
+final class LastReadSyncHandler(selfUserId:    UserId,
+                                currentDomain: Domain,
+                                federation:    FederationSupport,
+                                convs:         ConversationStorage,
+                                metadata:      MetaDataService,
+                                msgsSync:      MessagesSyncHandler,
+                                otrSync:       OtrSyncHandler) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   def postLastRead(convId: ConvId, time: RemoteInstant): Future[SyncResult] =
@@ -46,7 +48,7 @@ class LastReadSyncHandler(selfUserId:    UserId,
       case Some(conv) =>
         val msg = GenericMessage(Uid(), LastRead(conv.remoteId, time))
         val postMsg =
-          if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+          if (federation.isSupported) {
             val qId = currentDomain.mapOpt(QualifiedId(selfUserId, _)).getOrElse(QualifiedId(selfUserId))
             otrSync.postQualifiedOtrMessage(ConvId(selfUserId.str), msg, isHidden = true, QTargetRecipients.SpecificUsers(Set(qId)))
           } else {

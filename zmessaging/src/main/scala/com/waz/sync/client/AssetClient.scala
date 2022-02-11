@@ -144,7 +144,7 @@ object AssetClient {
   val PublicAssetHeaders: Headers = Headers(("Content-Type", "application/json"), ("Accept", "application/json"))
 
   def assetPath(assetId: AssetId, domain: Domain = Domain.Empty): String =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY && domain.isDefined) {
+    if (domain.isDefined) {
       s"$AssetsV4Path/${domain.str}/${assetId.str}"
     } else {
       s"$AssetsV3Path/${assetId.str}"

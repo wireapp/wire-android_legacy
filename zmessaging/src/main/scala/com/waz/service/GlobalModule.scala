@@ -31,6 +31,7 @@ import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.{LogsService, LogsServiceImpl}
 import com.waz.permissions.PermissionsService
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AudioTranscoder, FileRestrictionList, GeneralFileCacheImpl, GlobalRecordAndPlayService}
 import com.waz.service.call._
 import com.waz.service.otr.NotificationUiController
@@ -56,6 +57,7 @@ trait GlobalModule {
 
   def context:                  AContext
   def backend:                  BackendConfig
+  def federationSupport:       FederationSupport
 
   def syncRequests:             SyncRequestService
   def syncHandler:              SyncHandler
@@ -122,6 +124,7 @@ final class GlobalModuleImpl(val context:             AContext,
   }
 
   def backend:                 BackendConfig                    = _backend
+  def federationSupport:       FederationSupport                = _backend.federationSupport
 
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
@@ -193,8 +196,10 @@ final class GlobalModuleImpl(val context:             AContext,
   lazy val httpProxy:           Option[Proxy]                    = HttpProxy(metadata, defaultProxyDetails).proxy
 }
 
-final class EmptyGlobalModule extends GlobalModule {
+class EmptyGlobalModule extends GlobalModule {
   override def setBackend(newBackend: BackendConfig): Unit                                   = ???
+
+  override def federationSupport: FederationSupport                                          = ???
 
   override def accountsService:          AccountsService                                     = ???
   override def trackingService:          TrackingService                                     = ???

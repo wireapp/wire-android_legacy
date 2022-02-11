@@ -5,6 +5,7 @@ import com.waz.api.IConversation.AccessRole
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.{ConversationStorage, MembersStorage, MessagesStorage}
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.service.{ConversationRolesService, ErrorsService, GenericMessageService, UserService}
@@ -13,15 +14,15 @@ import com.waz.sync.client.ConversationsClient.{ConversationResponse, ListConver
 import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, QConversationsResult}
 import com.waz.sync.client.{ConversationsClient, ErrorOrResponse}
 import com.wire.signals.{CancellableFuture, Signal}
-import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
 class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
+  val federationSupported: Boolean = false
 
   private val self = UserData("self")
   private val teamId = TeamId()
-  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  private val domain = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
   private val userService = mock[UserService]
   private val messagesStorage = mock[MessagesStorage]
   private val messagesService = mock[MessagesService]
@@ -36,7 +37,8 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   private val membersStorage = mock[MembersStorage]
 
   private def createHandler: ConversationsSyncHandler = new ConversationsSyncHandler(
-    self.id, domain, Some(teamId), userService, messagesStorage, messagesService,
+    self.id, domain, Some(teamId), FederationSupport(federationSupported),userService,
+    messagesStorage, messagesService,
     convService, convs, convEvents, convStorage, errorsService,
     conversationsClient, genericMessages, rolesService, membersStorage
   )
@@ -49,7 +51,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
     )
 
   scenario("Sync non-qualified conversations") {
-    if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (!federationSupported) {
       val conv1 = ConversationData(team = Some(teamId), creator = self.id)
       val conv2 = ConversationData(team = Some(teamId), creator = self.id)
       val conv3 = ConversationData(team = Some(teamId), creator = self.id)
@@ -86,7 +88,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   }
 
   scenario("Sync qualified conversations") {
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
       val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
       val conv3 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
@@ -123,7 +125,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   }
 
   scenario("Sync part qualified part non-qualified conversations") {
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       val conv1 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
       val conv2 = ConversationData(team = Some(teamId), creator = self.id, domain = domain)
       val conv3 = ConversationData(team = Some(teamId), creator = self.id)
@@ -176,7 +178,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
     val backendResponse: ErrorOrResponse[ConversationsResult] =
       CancellableFuture.successful { Right(ConversationsResult(Seq(resp1, resp2), hasMore = false)) }
 
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       (conversationsClient.loadQualifiedConversationsIds _)
         .expects(*).anyNumberOfTimes().returning(
         CancellableFuture.successful(Right(
@@ -233,7 +235,7 @@ class ConversationsSyncHandlerSpec extends AndroidFreeSpec {
   }
 
   scenario("It reports missing legal hold consent error when adding qualified participants") {
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       // Given
       val handler = createHandler
       val convId = ConvId("convId")

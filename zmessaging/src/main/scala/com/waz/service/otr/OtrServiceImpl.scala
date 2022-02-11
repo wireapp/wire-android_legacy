@@ -26,6 +26,7 @@ import com.waz.log.LogSE._
 import com.waz.model.GenericContent.Asset.{AES_CBC, EncryptionAlgorithm}
 import com.waz.model._
 import com.waz.model.otr._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service._
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
@@ -77,6 +78,7 @@ trait OtrService {
 class OtrServiceImpl(selfUserId:     UserId,
                      currentDomain:  Domain,
                      clientId:       ClientId,
+                     federation:     FederationSupport,
                      clients:        OtrClientsService,
                      cryptoBox:      CryptoBoxService,
                      users:          => UserService, // lazy, bcs otherwise we'd have a circular dependency
@@ -98,7 +100,7 @@ class OtrServiceImpl(selfUserId:     UserId,
   }
 
   override def resetSession(convId: ConvId, userId: UserId, clientId: ClientId): Future[SyncId] =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federation.isSupported) {
       for {
         qId    <- users.qualifiedId(userId)
         syncId <- resetSession(convId, qId, clientId)
@@ -298,7 +300,7 @@ object OtrService {
 
   final case class SessionId(userId: UserId, domain: Domain, clientId: ClientId) {
     override def toString: String =
-      if (BuildConfig.FEDERATION_USER_DISCOVERY && domain.isDefined)
+      if (domain.isDefined)
         s"${userId}_${domain.str}_$clientId"
       else
         s"${userId}_$clientId"
@@ -306,8 +308,7 @@ object OtrService {
 
   object SessionId {
     def apply(ev: OtrEvent, currentDomain: Domain): SessionId =
-     if (BuildConfig.FEDERATION_USER_DISCOVERY &&
-         ev.fromDomain.isDefined &&
+     if (ev.fromDomain.isDefined &&
          currentDomain.isDefined &&
          !ev.fromDomain.contains(currentDomain.str))
         SessionId(ev.from, ev.fromDomain, ev.sender)
@@ -315,8 +316,7 @@ object OtrService {
         SessionId(ev.from, Domain.Empty, ev.sender)
 
     def apply(qId: QualifiedId, clientId: ClientId, currentDomain: Domain): SessionId =
-      if (BuildConfig.FEDERATION_USER_DISCOVERY &&
-          qId.hasDomain &&
+      if (qId.hasDomain &&
           currentDomain.isDefined &&
           !currentDomain.contains(qId.domain))
         SessionId(qId.id, Domain(qId.domain), clientId)

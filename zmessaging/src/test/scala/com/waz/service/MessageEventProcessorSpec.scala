@@ -43,6 +43,8 @@ import scala.concurrent.duration._
 
 class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with DerivedLogTag {
 
+  val federationSupported: Boolean = false
+
   val selfUserId        = UserId("self")
   val storage           = mock[MessagesStorage]
   val convsStorage      = mock[ConversationStorage]
@@ -58,7 +60,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
   val prefs             = new TestGlobalPreferences()
   val userPrefs         = new TestUserPreferences()
 
-  val domain            = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  val domain            = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
 
   val messagesInStorage = Signal[Seq[MessageData]](Seq.empty)
   (storage.getMessages _).expects(*).atLeastOnce.onCall { ids: Traversable[MessageId] =>

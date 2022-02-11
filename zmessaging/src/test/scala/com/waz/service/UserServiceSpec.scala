@@ -20,6 +20,7 @@ package com.waz.service
 import com.waz.content._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{Availability, _}
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AssetService, AssetStorage}
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.messages.MessagesService
@@ -30,20 +31,19 @@ import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
 import com.waz.testutils.TestUserPreferences
 import com.wire.signals.{CancellableFuture, Signal, SourceSignal}
 import com.waz.threading.Threading
-import com.waz.zms.BuildConfig
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 
 class UserServiceSpec extends AndroidFreeSpec {
+  val federationSupported: Boolean = false
 
-  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("staging.zinfra.io") else Domain.Empty
-  private val otherDomain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  private val domain = if (federationSupported) Domain("staging.zinfra.io") else Domain.Empty
+  private val otherDomain = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
 
   private lazy val me = UserData(name = "me").updateConnectionStatus(ConnectionStatus.Self).copy(domain = domain)
   private lazy val user1 = UserData("other user 1")
   private lazy val federatedUser = UserData("federated user").copy(domain = otherDomain)
-  private lazy val meAccount = AccountData(me.id)
 
   private lazy val users = Seq(me, user1, UserData("other user 2"), UserData("some name"),
     UserData("related user 1"), UserData("related user 2"), UserData("other related"),
@@ -78,7 +78,8 @@ class UserServiceSpec extends AndroidFreeSpec {
     result(userPrefs(UserPreferences.ShouldSyncUsers) := false)
 
     new UserServiceImpl(
-      users.head.id, domain, None, accountsService, accountsStrg, usersStorage, membersStorage,
+      users.head.id, domain, None, FederationSupport(federationSupported), accountsService,
+      accountsStrg, usersStorage, membersStorage,
       userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
       selectedConv, messages, syncRequests
     )
@@ -100,7 +101,8 @@ class UserServiceSpec extends AndroidFreeSpec {
       availability should not equal Availability.Busy
 
       val userService = new UserServiceImpl(
-        users.head.id, domain, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
+        users.head.id, domain, someTeamId, FederationSupport(federationSupported), accountsService,
+        accountsStrg, usersStorage, membersStorage,
         userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
         selectedConv, messages, syncRequests
       )
@@ -146,7 +148,7 @@ class UserServiceSpec extends AndroidFreeSpec {
     }
 
     scenario("check if a federated user exists") {
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         val qId = federatedUser.qualifiedId.get
         val userInfo = UserInfo(federatedUser.id, domain = otherDomain)
 

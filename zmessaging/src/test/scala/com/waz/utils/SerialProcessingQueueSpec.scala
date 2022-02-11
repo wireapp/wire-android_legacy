@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.waz.model._
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.DefaultPatienceConfig
-import com.waz.zms.BuildConfig
 import com.wire.signals.CancellableFuture
 import org.scalatest.Matchers
 import org.scalatest.concurrent.ScalaFutures
@@ -35,10 +34,12 @@ import scala.util.Random
 class SerialProcessingQueueSpec extends AndroidFreeSpec with Matchers with ScalaFutures with DefaultPatienceConfig {
   import com.waz.threading.Threading.Implicits.Background
 
+  val federationSupported: Boolean = false
+
   feature("Grouped event processing queue") {
 
     scenario("Enqueue events and await results") {
-      val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+      val domain = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
       val processedCount = new AtomicInteger(0)
       val queue = new GroupedEventProcessingQueue[ConversationEvent, RConvId](_.convId, {
         case (_, events) =>

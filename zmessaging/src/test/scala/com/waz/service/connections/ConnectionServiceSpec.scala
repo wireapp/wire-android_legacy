@@ -23,6 +23,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model.UserData.ConnectionStatus._
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service._
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.MessagesService
@@ -33,9 +34,9 @@ import com.waz.utils.returning
 import org.scalatest.Inside
 
 import scala.concurrent.Future
-import com.waz.zms.BuildConfig
 
 class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
+  val federationSupported: Boolean = false
   import com.waz.threading.Threading.Implicits.Background
 
   val push            = mock[PushService]
@@ -53,10 +54,10 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
   val rConvId        = RConvId("remote-conv-id")
   val selfUserId     = UserId("selfUserId")
   val otherUserId    = UserId("otherUserId")
-  val domain        = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  val domain        = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
 
   lazy val user =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY)
+    if (federationSupported)
       UserData(UserId("user-id"), domain = domain, name = Name("name"), searchKey = SearchKey.simple("name"))
     else
       UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
@@ -102,7 +103,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
   feature ("connect to user") {
 
     def setup(user: UserData, expectedNewStatus: ConnectionStatus) = {
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         (users.getOrCreateQualifiedUser _).expects(user.qualifiedId.get, *).anyNumberOfTimes().returning(Future.successful(user))
       } else {
         (users.getOrCreateUser _).expects(user.id, *).anyNumberOfTimes().returning(Future.successful(user))
@@ -111,7 +112,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
         Future.successful(Some(user.copy(connection = expectedNewStatus)))
       )
       (users.qualifiedId _).expects(user.id).anyNumberOfTimes().returning(Future.successful(QualifiedId(user.id, domain)))
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         val qId = QualifiedId(user.id, domain)
         (sync.postQualifiedConnection _).expects(qId).anyNumberOfTimes().returning(Future.successful(SyncId()))
         (sync.postQualifiedConnectionStatus _).expects(qId, expectedNewStatus).anyNumberOfTimes().returning(Future.successful(SyncId()))
@@ -178,7 +179,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       }
 
       val service = setup(user, PendingFromUser)
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         (sync.postQualifiedConnectionStatus _).expects(user.qualifiedId.get, Cancelled).once().returning(Future.successful(SyncId()))
       } else {
         (sync.postConnectionStatus _).expects(user.id, Cancelled).once().returning(Future.successful(SyncId()))
@@ -203,7 +204,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
       val service = setup(user, PendingFromUser)
       (users.updateConnectionStatus _).expects(user.id, Ignored, *, *).once().returning(Future.successful(Some(user.copy(connection = Ignored))))
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         (sync.postQualifiedConnectionStatus _).expects(user.qualifiedId.get, Ignored).once().returning(Future.successful(SyncId()))
       } else {
         (sync.postConnectionStatus _).expects(user.id, Ignored).once().returning(Future.successful(SyncId()))
@@ -225,7 +226,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       val service = setup(user, Accepted)
       (users.updateConnectionStatus _).expects(user.id, Blocked, *, *).once().returning(Future.successful(Some(blockedUser)))
       (convs.setConversationHidden _).expects(ConvId(user.id.str), true).once().returning(Future.successful(None))
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         (sync.postQualifiedConnectionStatus _).expects(user.qualifiedId.get, Blocked).once().returning(Future.successful(SyncId()))
       } else {
         (sync.postConnectionStatus _).expects(user.id, Blocked).once().returning(Future.successful(SyncId()))
@@ -251,7 +252,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       val service = setup(user, Accepted)
       (users.updateConnectionStatus _).expects(user.id, Blocked, *, *).once().returning(Future.successful(Some(blockedUser)))
       (convs.setConversationHidden _).expects(ConvId(user.id.str), true).once().returning(Future.successful(None))
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         val qId = QualifiedId(user.id, domain)
         (sync.postQualifiedConnectionStatus _).expects(qId, Blocked).once().returning(Future.successful(SyncId()))
       } else {
@@ -292,7 +293,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       }
 
       (users.syncUsers _).expects(Set(otherUser.id), *, *).returning(Future.successful(Option(SyncId())))
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         (convsStorage.getMapByQRemoteIds _).expects(Set(qRemoteId)).anyNumberOfTimes().returning(Future.successful(Map.empty))
       } else {
         (convsStorage.getMapByRemoteIds _).expects(Set(remoteId)).anyNumberOfTimes().returning(Future.successful(Map.empty))
@@ -344,7 +345,10 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
   }
 
   def createBlankService() =
-   new ConnectionServiceImpl(selfUserId, teamId, push, convs, convsStorage, members, messagesService, messagesStorage, users, usersStorage, sync)
+   new ConnectionServiceImpl(
+     selfUserId, teamId, FederationSupport(federationSupported), push, convs, convsStorage,
+     members, messagesService, messagesStorage, users, usersStorage, sync
+   )
 
   def initConnectionService(): ConnectionServiceImpl = {
 
@@ -356,7 +360,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       )
     }
 
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       (convsStorage.getMapByQRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
     } else {
       (convsStorage.getMapByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
@@ -382,6 +386,9 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       Future.successful(convs.map(conv => MessageData(MessageId(), conv.id, Message.Type.STARTED_USING_DEVICE, selfUserId)).toSet)
     }
     (users.syncUsers _).expects(*, *, *).anyNumberOfTimes().returns(Future.successful(Option(SyncId())))
-    new ConnectionServiceImpl(selfUserId, teamId, push, convs, convsStorage, members, messagesService, messagesStorage, users, usersStorage, sync)
+    new ConnectionServiceImpl(
+      selfUserId, teamId, FederationSupport(federationSupported), push, convs, convsStorage,
+      members, messagesService, messagesStorage, users, usersStorage, sync
+    )
   }
 }

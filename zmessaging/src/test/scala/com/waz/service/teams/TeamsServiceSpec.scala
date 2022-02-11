@@ -37,13 +37,13 @@ import scala.collection.breakOut
 import scala.concurrent.Future
 
 class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
-
+  val federationSupported: Boolean = false
 
   def id(s: Symbol) = UserId(s.toString)
   def ids(s: Symbol*) = s.map(id)(breakOut).toSet
 
   val selfUser      = id('me)
-  val domain        = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  val domain        = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
   val teamId        = Some(TeamId())
   val teamStorage   = mock[TeamsStorage]
   val userService   = mock[UserService]

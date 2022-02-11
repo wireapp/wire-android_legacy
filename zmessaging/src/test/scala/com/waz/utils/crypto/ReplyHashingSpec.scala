@@ -25,7 +25,6 @@ import com.waz.model.Messages.LegalHoldStatus
 import com.waz.model._
 import com.waz.service.assets.{Asset, AssetStorage, BlobDetails, NoEncryption}
 import com.waz.specs.AndroidFreeSpec
-import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
@@ -34,6 +33,7 @@ import scala.concurrent.Future
   * https://github.com/wearezeta/documentation/blob/master/topics/replies/use-cases/004-quote-hash.md
   */
 class ReplyHashingSpec extends AndroidFreeSpec {
+  val federationSupported: Boolean = false
 
   private val timestamp1 = RemoteInstant.ofEpochSec(1540213769)
   private val timestamp2 = RemoteInstant.ofEpochSec(1540213965)
@@ -45,7 +45,7 @@ class ReplyHashingSpec extends AndroidFreeSpec {
 
   private val rt = RemoteInstant.Epoch
 
-  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Some(Domain("anta.wire.link")) else None
+  private val domain = if (federationSupported) Some(Domain("anta.wire.link")) else None
 
   def fakeAsset(assetId: AssetId): Asset =
     Asset(assetId, None, domain, Sha256.Empty, Mime.Unknown, NoEncryption, None, None, "", 0, BlobDetails)

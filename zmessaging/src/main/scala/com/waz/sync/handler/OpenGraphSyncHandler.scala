@@ -30,6 +30,7 @@ import com.waz.model.GenericContent.{Asset, LinkPreview, Text}
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.errors._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AES_CBC_Encryption, AssetService, Content, ContentForUpload, Asset => Asset2}
 import com.waz.service.messages.MessagesService
 import com.waz.sync.SyncResult
@@ -44,15 +45,14 @@ import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
-class OpenGraphSyncHandler(convs:           ConversationStorage,
+class OpenGraphSyncHandler(federation:      FederationSupport,
+                           convs:           ConversationStorage,
                            messages:        MessagesStorage,
                            assets:          AssetService,
                            otrSync:         OtrSyncHandler,
                            client:          OpenGraphClient,
                            messagesService: MessagesService) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
-
-
 
   def postMessageMeta(convId: ConvId, msgId: MessageId, editTime: RemoteInstant): Future[SyncResult] = messages.getMessage(msgId) flatMap {
     case None => Future successful SyncResult(internalError(s"No message found with id: $msgId"))
@@ -80,7 +80,7 @@ class OpenGraphSyncHandler(convs:           ConversationStorage,
                     Future successful SyncResult.Success
                   case Right(proto) =>
                     verbose(l"updated link previews: $proto")
-                    val postMsg = if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+                    val postMsg = if (federation.isSupported) {
                       otrSync.postQualifiedOtrMessage(conv.id, proto, isHidden = false)
                     } else {
                       otrSync.postOtrMessage(conv.id, proto, isHidden = false)

@@ -29,18 +29,16 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.wire.signals.SerialDispatchQueue
 import com.wire.signals.Signal
-import org.threeten.bp.Instant
 import com.waz.model.GenericContent.Quote
 import com.waz.model.Messages.LegalHoldStatus
-import com.waz.zms.BuildConfig
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class ConversationOrderEventsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
-
+  val federationSupported: Boolean = false
   implicit val outputDispatcher = SerialDispatchQueue(name = "OutputWriter")
 
-  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  private val domain = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
 
   scenario("All batched conversation events go to the order event service before any other conv-related service") {
 

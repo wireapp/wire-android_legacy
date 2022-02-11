@@ -35,7 +35,6 @@ import com.waz.service.conversation._
 import com.waz.service.media._
 import com.waz.service.messages._
 import com.waz.service.otr._
-import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.service.push._
 import com.waz.service.teams.{FeatureConfigsService, FeatureConfigsServiceImpl, TeamsService, TeamsServiceImpl}
 import com.waz.service.tracking.TrackingService
@@ -49,7 +48,6 @@ import com.waz.ui.UiModule
 import com.waz.utils.crypto._
 import com.waz.utils.wrappers.{AndroidContext, DB, GoogleApi}
 import com.waz.utils.{IoUtils, Locales}
-import com.waz.zms.BuildConfig
 import com.waz.znet2.http.HttpClient
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.{AuthRequestInterceptor, OkHttpWebSocketFactory}
@@ -114,15 +112,16 @@ class ZMessaging(val teamId:    Option[TeamId],
 
   val global     = account.global
 
-  val selfUserId: UserId = account.userId
-  val selfDomain: Domain =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+  def federation: FederationSupport = global.backend.federationSupport
+
+  lazy val selfUserId: UserId = account.userId
+  lazy val selfDomain: Domain =
+    if (federation.isSupported) {
       account.domain
-  } else {
+    } else {
       Domain.Empty
     }
 
-  def federationSupport: FederationSupport = global.backend.federationSupport
 
   val auth       = account.auth
   val urlCreator: UrlCreator = global.urlCreator
@@ -305,6 +304,7 @@ class ZMessaging(val teamId:    Option[TeamId],
 
     new AssetServiceImpl(
       selfDomain,
+      global.backend.federationSupport,
       storage.assetsStorage,
       storage.rawAssetStorage,
       storage.inProgressAssetStorage,

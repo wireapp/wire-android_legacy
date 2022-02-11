@@ -28,7 +28,6 @@ import com.waz.service.assets.{Asset, BlobDetails, NoEncryption}
 import com.waz.sync.client.AssetClient.FileWithSha
 import com.waz.sync.client.AssetClient.{AssetContent, Metadata, Retention, UploadResponse2}
 import com.waz.utils.{IoUtils, returning}
-import com.waz.zms.BuildConfig
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, Request}
@@ -43,8 +42,9 @@ import scala.util.Random
 @Ignore
 @RunWith(classOf[JUnitRunner])
 class AssetClientSpec extends ZIntegrationMockSpec with DerivedLogTag {
+  val federationSupported: Boolean = false
 
-  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Some(Domain("anta.wire.link")) else None
+  private val domain = if (federationSupported) Some(Domain("anta.wire.link")) else None
 
   implicit lazy val urlCreator : Request.UrlCreator = mock[UrlCreator]
   implicit lazy val httpClient = mock[HttpClient]

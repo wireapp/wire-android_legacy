@@ -25,8 +25,7 @@ final class FeatureConfigsController(implicit inj: Injector) extends Injectable 
     configsService.updateSelfDeletingMessages()
     if(BuildConfig.CONFERENCE_CALLING_RESTRICTION)
       configsService.updateConferenceCalling()
-    if (BuildConfig.FEDERATION_USER_DISCOVERY)
-      configsService.updateClassifiedDomains()
     configsService.updateGuestLinks()
+    configsService.updateClassifiedDomains()
   }
 }

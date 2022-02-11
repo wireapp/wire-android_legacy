@@ -23,9 +23,11 @@ import com.waz.zms.BuildConfig
 
 class UserDataSpec extends AndroidFreeSpec {
 
+  val federationSupported: Boolean = false
+
   val referenceInfo = UserInfo(
     UserId(),
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("staging.zinfra.io") else Domain.Empty,
+    if (federationSupported) Domain("staging.zinfra.io") else Domain.Empty,
     Some(Name("Atticus")),
     Some(4),
     Some(EmailAddress("atticus@wire.com")),
@@ -55,7 +57,7 @@ class UserDataSpec extends AndroidFreeSpec {
 
       // THEN
       data.id.shouldEqual(referenceInfo.id)
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         data.domain.shouldEqual(referenceInfo.domain)
       } else {
         data.domain.shouldEqual(Domain.Empty)
@@ -108,7 +110,7 @@ class UserDataSpec extends AndroidFreeSpec {
     val template2 = UserData.withName(UserId(), "user2")
 
     scenario("The user IS NOT a guest if their team id is the same as ours - no federation") {
-      if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (!federationSupported) {
         val ourTeamId = TeamId()
         val user = template1.copy(teamId = Some(ourTeamId))
         user.isGuest(Some(ourTeamId)) shouldBe false
@@ -116,7 +118,7 @@ class UserDataSpec extends AndroidFreeSpec {
     }
 
     scenario("The user IS a guest if their team id is different from ours - no federation") {
-      if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (!federationSupported) {
         val ourTeamId = TeamId()
         val otherTeamId = TeamId()
         val user = template1.copy(teamId = Some(otherTeamId))
@@ -125,7 +127,7 @@ class UserDataSpec extends AndroidFreeSpec {
     }
 
     scenario("The user IS NOT a guest if their team id is the same as ours AND they are from the same domain - federation") {
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         val ourTeamId = TeamId()
         val ourDomain = Domain("anta.wire.link")
         val user = template1.copy(teamId = Some(ourTeamId), domain = ourDomain)
@@ -134,7 +136,7 @@ class UserDataSpec extends AndroidFreeSpec {
     }
 
     scenario("The user IS a guest if their team id is different from ours - federation") {
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         val ourTeamId = TeamId()
         val ourDomain = Domain("anta.wire.link")
         val otherTeamId = TeamId()
@@ -147,7 +149,7 @@ class UserDataSpec extends AndroidFreeSpec {
     // This test conforms to the following testing standards:
     // @SF.Federation @SF.Separation @TSFI.UserInterface @S0.2
     scenario("The user IS a guest even if their team id is the same as ours but the domain is different - federation") {
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         val ourTeamId = TeamId()
         val ourDomain = Domain("anta.wire.link")
         val otherDomain = Domain("bella.wire.link")
