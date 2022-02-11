@@ -498,7 +498,7 @@ final class CallingServiceImpl(val accountId:       UserId,
         convType =
           if (isGroup) Avs.WCallConvType.Conference
           else Avs.WCallConvType.OneOnOne
-        _ <- permissions.ensurePermissions(ListSet(android.Manifest.permission.RECORD_AUDIO) ++ (if(forceOption && isVideo) ListSet(android.Manifest.permission.CAMERA) else ListSet()))
+        _ <- permissions.ensurePermissions(ListSet(android.Manifest.permission.RECORD_AUDIO) ++ (if(isVideo) ListSet(android.Manifest.permission.CAMERA) else ListSet()))
         _ <-
           profile.activeCall match {
             case Some(call) if call.convId == convId =>
