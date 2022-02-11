@@ -21,19 +21,38 @@ import com.waz.zclient.R
 import scala.concurrent.Future
 import scala.util.Try
 
+object AndroidNotificationsManager {
+  private var uniqueIds = Set.empty[Int]
+
+  def filterNewNotifications(props: Iterable[NotificationProps]): Seq[NotificationProps] = synchronized {
+    val newProps =
+      props
+        .map(p => toUniqueId(p) -> p)
+        .filterNot { case (id, _) => uniqueIds.contains(id) }
+    uniqueIds ++= newProps.map(_._1)
+    newProps.map(_._2).toVector.sortBy(_.when)
+  }
+
+  @inline
+  private def toUniqueId(p: NotificationProps): Int =
+    (p.accountId.str + p.convId.getOrElse("") + p.when.toString).hashCode
+
+  private var notsIds = Map[UserId, Set[Int]]()
+
+  def toNotificationGroupId(accountId: UserId): Int = accountId.str.hashCode
+  def toNotificationConvId(accountId: UserId, convId: ConvId): Int = (accountId.str + convId.str).hashCode
+}
+
 final class AndroidNotificationsManager(notificationManager: NotificationManager)(implicit inj: Injector, cxt: Context)
   extends NotificationManagerWrapper with Injectable with DerivedLogTag {
+  import AndroidNotificationsManager._
+
   private lazy val prefs = inject[GlobalPreferences]
 
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) buildNotificationChannels()
 
-  private var notsIds = Map[UserId, Set[Int]]()
-  private var uniqueIds = Map[UserId, Set[Int]]()
-
-  override def showNotification(props: Iterable[NotificationProps]): Unit = {
-    val newProps = props.filterNot(n => uniqueIds.getOrElse(n.accountId, Set.empty).contains(toNotificationUniqueId(n))).toVector
-    uniqueIds ++= newProps.groupBy(_.accountId).map { case (key, p) => key -> p.map(toNotificationUniqueId).toSet }
-    newProps.sortBy(_.when).foreach { p =>
+  override def showNotification(props: Iterable[NotificationProps]): Unit =
+    filterNewNotifications(props).foreach { p =>
       val id = p.convId.fold(toNotificationGroupId(p.accountId))(toNotificationConvId(p.accountId, _))
       if (p.convId.isDefined)
         notsIds += p.accountId -> (notsIds.getOrElse(p.accountId, Set.empty) + id)
@@ -46,11 +65,6 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
       else
         notificationManager.notify(id, notification)
     }
-  }
-
-  private def toNotificationGroupId(accountId: UserId): Int = accountId.str.hashCode
-  private def toNotificationConvId(accountId: UserId, convId: ConvId): Int = (accountId.str + convId.str).hashCode
-  private def toNotificationUniqueId(p: NotificationProps): Int = (p.accountId.str + p.convId.getOrElse("") + p.when.toString).hashCode
 
   override def getNotificationChannel(channelId: String): Option[NotificationChannel] =
     Option(notificationManager.getNotificationChannel(channelId))
@@ -79,7 +93,6 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
       case Some(nIds) =>
         nIds.foreach(notificationManager.cancel)
         notsIds -= accountId
-        uniqueIds -= accountId
       case None =>
     }
 
