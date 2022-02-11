@@ -27,6 +27,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.model.otr.ClientId
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.service.assets._
 import com.waz.service.call._
@@ -112,6 +113,7 @@ class ZMessaging(val teamId:    Option[TeamId],
   val clock = ZMessaging.clock
 
   val global     = account.global
+
   val selfUserId: UserId = account.userId
   val selfDomain: Domain =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
@@ -119,6 +121,8 @@ class ZMessaging(val teamId:    Option[TeamId],
   } else {
       Domain.Empty
     }
+
+  def federationSupport: FederationSupport = global.backend.federationSupport
 
   val auth       = account.auth
   val urlCreator: UrlCreator = global.urlCreator
@@ -458,5 +462,10 @@ object ZMessaging extends DerivedLogTag { self =>
         ContentSearchQuery.preloadTransliteration()
       } // "preload"... - this should be very fast, normally, but slows down to 10 to 20 seconds when multidexed...
     }
+  }
+
+  def setBackend(beConfig: BackendConfig): Unit = {
+    this.backend = beConfig
+    _global.setBackend(beConfig)
   }
 }

@@ -421,6 +421,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         verbose(l"change in supported API versions: $versions")
         versions.max.foreach { newVersion =>
           backend.updateApiVersion(newVersion)
+          ZMessaging.setBackend(backend)
           inject[BackendController].storeSupportedApiVersion(newVersion)
         }
       case Left(err) =>

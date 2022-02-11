@@ -87,6 +87,8 @@ final class BackendController(implicit context: Context) extends DerivedLogTag {
       .putInt(API_VERSION_PREF, apiVersion)
       .commit()
 
+  def maxSupportedApiVersion: Int = prefs.getInt(API_VERSION_PREF, 0)
+
   /// Switches the backend in the global module and saves the config to shared preferences.
   /// Warning: use with caution. It is assumed that there are no logged in accounts and the
   /// the global module is ready.

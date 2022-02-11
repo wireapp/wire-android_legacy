@@ -52,6 +52,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 trait GlobalModule {
+  def setBackend(newBackend: BackendConfig): Unit
+
   def context:                  AContext
   def backend:                  BackendConfig
 
@@ -107,7 +109,7 @@ trait GlobalModule {
 }
 
 final class GlobalModuleImpl(val context:             AContext,
-                             val backend:             BackendConfig,
+                             private var _backend:    BackendConfig,
                              val prefs:               GlobalPreferences,
                              val googleApi:           GoogleApi,
                              val syncRequests:        SyncRequestService,
@@ -115,6 +117,11 @@ final class GlobalModuleImpl(val context:             AContext,
                              val fileRestrictionList: FileRestrictionList,
                              val defaultProxyDetails: ProxyDetails
                             ) extends GlobalModule with DerivedLogTag { global =>
+  def setBackend(newBackend: BackendConfig): Unit = {
+    _backend = newBackend
+  }
+
+  def backend:                 BackendConfig                    = _backend
 
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
@@ -187,6 +194,8 @@ final class GlobalModuleImpl(val context:             AContext,
 }
 
 final class EmptyGlobalModule extends GlobalModule {
+  override def setBackend(newBackend: BackendConfig): Unit                                   = ???
+
   override def accountsService:          AccountsService                                     = ???
   override def trackingService:          TrackingService                                     = ???
   override def context:                  AContext                                            = ???

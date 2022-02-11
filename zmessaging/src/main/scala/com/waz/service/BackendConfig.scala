@@ -17,6 +17,7 @@
  */
 package com.waz.service
 
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
 import com.waz.utils.wrappers.URI
 import com.waz.znet.ServerTrust
@@ -50,6 +51,9 @@ final class BackendConfig(private var _environment: String,
       _baseUrl
     else
       _baseUrl.buildUpon.appendPath(s"v$apiVersion").build
+
+  def federationSupport: FederationSupport =
+    FederationSupport(apiVersion >= BackendConfig.FederationSupportApiVersion)
 
   def update(configResponse: BackendConfigResponse): Unit = {
     _environment = configResponse.title
@@ -102,6 +106,9 @@ object BackendConfig {
       apiVersion,
       firebaseOptions,
       pin)
+
+  val FederationSupportApiVersion: Int = 1
+  final case class FederationSupport(isOn: Boolean)
 }
 
 //cert is expected to be base64-encoded
