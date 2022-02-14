@@ -141,11 +141,25 @@ final class NotificationParserImpl(selfId:       UserId,
                                      isEphemeral: Boolean) = {
     val (text, mentions, _, quote, _) = t.unpack
     val isSelfMentioned = mentions.flatMap(_.userId).contains(selfId)
-    val isReply = quote.isDefined
-    if (!shouldShowNotification(self, conv, event.from, event.time, isReplyOrMention = isSelfMentioned || isReply))
-      Future.successful(None)
-    else
-      Future.successful {
+
+    val checkIfReply = quote match {
+      case None =>
+        Future.successful(false)
+      case Some(q) =>
+        val originalMsgId = q.unpack._1
+        val originalMsg = mlStorage().getMessageAndLikes(originalMsgId)
+        originalMsg.map {
+          case None =>
+            false
+          case Some(msg) =>
+            msg.message.userId == selfId
+        }
+    }
+
+    checkIfReply.map { isReply =>
+      if (!shouldShowNotification(self, conv, event.from, event.time, isReplyOrMention = isSelfMentioned || isReply))
+        None
+      else
         Some(NotificationData(
           msg             = if (isEphemeral) "" else text,
           conv            = conv.id,
@@ -156,7 +170,7 @@ final class NotificationParserImpl(selfId:       UserId,
           isSelfMentioned = isSelfMentioned,
           isReply         = isReply
         ))
-      }
+    }
   }
 
   private def createAssetNotification(uid:         Uid,
