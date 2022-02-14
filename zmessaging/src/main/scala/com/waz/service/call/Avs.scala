@@ -59,8 +59,7 @@ trait Avs {
   * Facilitates synchronous communication with AVS and also provides a wrapper around the native code which can be easily
   * mocked for testing the CallingService
   */
-class AvsImpl() extends Avs with DerivedLogTag {
-
+final class AvsImpl() extends Avs with DerivedLogTag {
   private implicit val dispatcher = SerialDispatchQueue(name = "AvsWrapper")
 
   import Avs._
@@ -158,7 +157,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
       },
       new MissedCallHandler {
         override def onMissedCall(convId: String, msgTime: Uint32_t, userId: String, isVideoCall: Boolean, arg: Pointer): Unit =
-          cs.onMissedCall(RConvId(convId), remoteInstant(msgTime), UserId(userId), isVideoCall)
+          cs.onMissedCall(RConvId(convId), remoteInstant(msgTime), UserId(userId))
       },
       new AnsweredCallHandler {
         override def onAnsweredCall(convId: String, arg: Pointer) = cs.onOtherSideAnsweredCall(RConvId(convId))

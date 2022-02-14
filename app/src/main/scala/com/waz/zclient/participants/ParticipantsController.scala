@@ -18,6 +18,7 @@
 package com.waz.zclient.participants
 
 import android.content.Context
+import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.{ConnectionService, ZMessaging}
@@ -28,19 +29,20 @@ import com.waz.zclient.controllers.confirmation.{ConfirmationRequest, IConfirmat
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.participants.ParticipantsController.{ParticipantRequest, ParticipantsFlags}
+import com.waz.zclient.participants.ParticipantsController.{ClassifiedConversation, ParticipantRequest, ParticipantsFlags}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 
-class ParticipantsController(implicit injector: Injector, context: Context, ec: EventContext)
+final class ParticipantsController(implicit injector: Injector, context: Context, ec: EventContext)
   extends Injectable with DerivedLogTag {
-
   import com.waz.threading.Threading.Implicits.Background
 
-  private implicit lazy val uiStorage     = inject[UiStorage]
+  private implicit lazy val uiStorage: UiStorage = inject[UiStorage]
+
   private lazy val zms                    = inject[Signal[ZMessaging]]
   private lazy val convController         = inject[ConversationController]
   private lazy val confirmationController = inject[IConfirmationController]
@@ -60,6 +62,8 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   lazy val conv: Signal[ConversationData]                           = convController.currentConv
   lazy val isGroup: Signal[Boolean]                                 = convController.currentConvIsGroup
   lazy val selfRole: Signal[ConversationRole]                       = convController.selfRole
+
+  private lazy val selfId  = inject[Signal[UserId]]
 
   lazy val otherParticipantId: Signal[Option[UserId]] = Signal.zip(otherParticipants, selectedParticipant).map {
     case (others, _) if others.size == 1                               => others.headOption.map(_._1)
@@ -92,16 +96,52 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     hasBot       =  users.exists(_.isWireBot)
   } yield ParticipantsFlags(isGroup, hasGuest, hasBot, hasExternal, hasFederated)
 
+  private def isConvWithUsersClassified(userIds: => Signal[Set[UserId]]): Signal[ClassifiedConversation] =
+    if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+      Signal.const(ClassifiedConversation.None)
+    } else {
+      for {
+        z             <- zms
+        classifiedStr <- z.userPrefs.preference(UserPreferences.ClassifiedDomains).signal
+        config        =  ClassifiedDomainsConfig.deserialize(classifiedStr)
+        ids           <- if (config.isEnabled) userIds
+                         else Signal.const(Set.empty[UserId])
+        users         <- if (config.isEnabled) Signal.sequence((ids + z.selfUserId).map(id => z.usersStorage.signal(id)).toSeq: _*)
+                         else Signal.const(Seq.empty)
+      } yield
+        if (!config.isEnabled)
+          ClassifiedConversation.None
+        else {
+          val classifiedDomains = config.domains + z.selfDomain
+          if (users.map(_.domain).toSet.forall(classifiedDomains.contains))
+            ClassifiedConversation.Classified
+          else
+            ClassifiedConversation.NotClassified
+        }
+    }
+
+  lazy val isCurrentConvClassified: Signal[ClassifiedConversation] =
+    isConvWithUsersClassified(participants.map(_.keySet))
+
+  lazy val isOtherParticipantClassified: Signal[ClassifiedConversation] =
+    otherParticipantId.flatMap {
+      case Some(userId) => isConvWithUserClassified(userId)
+      case None         => Signal.const(ClassifiedConversation.None)
+    }
+
+  def isConvWithUserClassified(userId: UserId): Signal[ClassifiedConversation] =
+    isConvWithUsersClassified(Signal.const(Set(userId)))
+
   // is the current user a guest in the current conversation
   lazy val isCurrentUserGuest: Signal[Boolean] = for {
-    z           <- zms
-    currentUser <- UserSignal(z.selfUserId)
+    selfUserId  <- selfId
+    currentUser <- UserSignal(selfUserId)
     currentConv <- conv
   } yield currentConv.team.isDefined && currentConv.team != currentUser.teamId
 
   lazy val currentUserBelongsToConversationTeam: Signal[Boolean] = for {
-    z           <- zms
-    currentUser <- UserSignal(z.selfUserId)
+    selfUserId  <- selfId
+    currentUser <- UserSignal(selfUserId)
     currentConv <- conv
   } yield currentConv.team.isDefined && currentConv.team == currentUser.teamId
 
@@ -162,5 +202,13 @@ object ParticipantsController {
 
   object ParticipantsFlags {
     val False: ParticipantsFlags = ParticipantsFlags(isGroup = false, hasGuest = false, hasBot = false, hasExternal = false, hasFederated = false)
+  }
+
+  trait ClassifiedConversation
+
+  object ClassifiedConversation {
+    case object Classified extends ClassifiedConversation
+    case object NotClassified extends ClassifiedConversation
+    case object None extends ClassifiedConversation
   }
 }

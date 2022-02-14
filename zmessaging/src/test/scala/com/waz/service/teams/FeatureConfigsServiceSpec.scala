@@ -2,7 +2,7 @@ package com.waz.service.teams
 
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AppLockFeatureConfig, ConferenceCallingFeatureConfig, FeatureConfigUpdateEvent, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig}
+import com.waz.model.{AppLockFeatureConfig, ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, Domain, FeatureConfigUpdateEvent, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig}
 import com.waz.service.{EventPipeline, EventPipelineImpl, EventScheduler}
 import com.waz.service.EventScheduler.{Sequential, Stage}
 import com.waz.specs.AndroidFreeSpec
@@ -161,5 +161,22 @@ class FeatureConfigsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     // Then
     result(userPrefs(ConferenceCallingFeatureEnabled).apply()) shouldEqual true
+  }
+
+  scenario("Fetch the ClassifiedDomains feature config and set properties") {
+    // Given
+    val service = createService
+    userPrefs.setValue(ClassifiedDomains, None)
+
+    // Mock
+    (syncHandler.fetchClassifiedDomains _).expects().anyNumberOfTimes().returning(
+      Future.successful(Some(ClassifiedDomainsConfig(isEnabled = true, Set(Domain("anta.wire.link"), Domain("bella.wire.link")))))
+    )
+
+    // When
+    result(service.updateClassifiedDomains())
+
+    // Then
+    result(userPrefs(ClassifiedDomains).apply()).map(_.split(",").toSet) shouldEqual Some(Set("anta.wire.link","bella.wire.link"))
   }
 }

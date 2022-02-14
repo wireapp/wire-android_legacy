@@ -5,7 +5,7 @@ import org.gradle.api.JavaVersion
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.77."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.78."
     const val COMPILE_SDK_VERSION = 30
     const val TARGET_SDK_VERSION = 30
     const val MIN_SDK_VERSION = 24
@@ -201,4 +201,6 @@ object LegacyDependencies {
 
     //test
     val scalaTest = "org.scalatest:scalatest_${SCALA_MAJOR_VERSION}:3.0.5"
+    val scalaMock = "org.scalamock:scalamock_${LegacyDependencies.SCALA_MAJOR_VERSION}:4.1.0"
+    val scalaCheck = "org.scalacheck:scalacheck_${LegacyDependencies.SCALA_MAJOR_VERSION}:1.14.0"
 }

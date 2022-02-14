@@ -25,7 +25,7 @@ import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.SyncServiceHandle
+import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
 import com.waz.testutils.TestUserPreferences
 import com.wire.signals.{CancellableFuture, Signal, SourceSignal}
@@ -65,6 +65,7 @@ class UserServiceSpec extends AndroidFreeSpec {
   val selectedConv    = mock[SelectedConversationService]
   val messages        = mock[MessagesService]
   val userPrefs       = new TestUserPreferences
+  val syncRequests    = mock[SyncRequestService]
 
   (usersStorage.optSignal _).expects(*).anyNumberOfTimes().onCall((id: UserId) => Signal.const(users.find(_.id == id)))
   (accountsService.accountsWithManagers _).expects().anyNumberOfTimes().returning(Signal.empty)
@@ -79,7 +80,7 @@ class UserServiceSpec extends AndroidFreeSpec {
     new UserServiceImpl(
       users.head.id, domain, None, accountsService, accountsStrg, usersStorage, membersStorage,
       userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
-      selectedConv, messages
+      selectedConv, messages, syncRequests
     )
   }
 
@@ -101,7 +102,7 @@ class UserServiceSpec extends AndroidFreeSpec {
       val userService = new UserServiceImpl(
         users.head.id, domain, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
         userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
-        selectedConv, messages
+        selectedConv, messages, syncRequests
       )
 
       //expect

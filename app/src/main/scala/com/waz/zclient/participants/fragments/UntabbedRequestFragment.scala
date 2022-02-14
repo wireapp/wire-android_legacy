@@ -38,6 +38,7 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
 
   override protected def initViews(savedInstanceState: Bundle): Unit = {
     initDetailsView()
+    initClassifiedConversation()
     initFooterMenu()
   }
 

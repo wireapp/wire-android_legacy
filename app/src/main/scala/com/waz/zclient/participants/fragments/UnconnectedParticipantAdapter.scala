@@ -26,16 +26,16 @@ import com.waz.zclient.common.views.LinkTextView
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.wire.signals.{EventStream, SourceStream}
 
-class UnconnectedParticipantAdapter(userId:      UserId,
-                                    isGuest:     Boolean,
-                                    isExternal:  Boolean,
-                                    isDarkTheme: Boolean,
-                                    isGroup:     Boolean,
-                                    isWireless:  Boolean,
-                                    userName:    String,
-                                    userHandle:  String,
-                                    isFederated: Boolean,
-                                    linkedText: Option[(String, Int)] = None)(implicit context: Context)
+final class UnconnectedParticipantAdapter(userId:      UserId,
+                                          isGuest:     Boolean,
+                                          isExternal:  Boolean,
+                                          isDarkTheme: Boolean,
+                                          isGroup:     Boolean,
+                                          isWireless:  Boolean,
+                                          userName:    String,
+                                          userHandle:  String,
+                                          isFederated: Boolean,
+                                          linkedText: Option[(String, Int)] = None)(implicit context: Context)
   extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated) {
   import BaseSingleParticipantAdapter._
   import UnconnectedParticipantAdapter._

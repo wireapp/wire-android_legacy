@@ -242,7 +242,6 @@ android {
 
         fdroid {
             applicationId buildtimeConfiguration.configuration.fdroid.applicationId
-            versionName android.defaultConfig.versionName + buildtimeConfiguration.configuration.fdroid.version_name_postfix
             manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.fdroid.appName,
                                     applicationIcon        : "@mipmap/$buildtimeConfiguration.configuration.fdroid.launcherIcon",
                                     sharedUserId           : buildtimeConfiguration.configuration.fdroid.userId]
@@ -461,6 +460,8 @@ dependencies {
         exclude group: 'org.jetbrains.kotlinx', module: 'kotlinx-coroutines-core'
     }
     testImplementation project(ModuleDependencies.commonTest)
+    testImplementation LegacyDependencies.scalaMock
+    testImplementation LegacyDependencies.scalaCheck
 
     // Functional Tests
     androidTestImplementation TestDependencies.jUnit

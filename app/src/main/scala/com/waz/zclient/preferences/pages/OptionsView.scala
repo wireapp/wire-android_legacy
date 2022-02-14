@@ -28,7 +28,7 @@ import android.view.View
 import android.widget.{LinearLayout, TextView}
 import com.waz.content.UserPreferences._
 import com.waz.media.manager.context.IntensityLevel
-import com.waz.service.{UiLifeCycle, ZMessaging}
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient._
@@ -38,13 +38,16 @@ import com.waz.zclient.preferences.dialogs.SoundLevelDialog
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, RingtoneUtils}
 import OptionsView._
 import androidx.fragment.app.{Fragment, FragmentTransaction}
+import com.waz.content.GlobalPreferences
 import com.waz.model.UserId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
-import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
+import com.waz.zclient.notifications.controllers.AndroidNotificationsManager
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.threading.Threading._
 import com.waz.zclient.common.controllers.global.PasswordController
+
+import scala.concurrent.Future
 
 trait OptionsView {
   def setSounds(level: IntensityLevel): Unit
@@ -104,7 +107,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   hideScreenContentSwitch.setPreference(HideScreenContent)
   vbrSwitch.setPreference(VBREnabled)
   messagePreviewSwitch.setPreference(MessagePreview)
-  vibrationSwitch.setPreference(VibrateEnabled)
+  vibrationSwitch.setPreference(GlobalPreferences.VibrateEnabled, global = true)
   sendButtonSwitch.setPreference(SendButtonEnabled)
 
   passwordController.appLockTimeout.foreach { timeout =>
@@ -143,17 +146,19 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     context.asInstanceOf[BaseActivity].startActivityForResult(intent, 0)
   }
 
-  ringToneButton.onClickEvent.onUi { _ => showRingtonePicker(RingtoneManager.TYPE_RINGTONE, defaultRingToneUri, RingToneResultId, ringToneUri)}
+  ringToneButton.onClickEvent.onUi { _ =>
+    showRingtonePicker(RingtoneManager.TYPE_RINGTONE, defaultRingToneUri, RingToneResultId, ringToneUri)
+  }
   textToneButton.onClickEvent.onUi { _ =>
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      openNotificationSettings(NotificationManagerWrapper.MessageNotificationsChannelId(accountId))
+      openNotificationSettings(NotificationManagerWrapper.MessageNotificationsChannelId)
     } else {
       showRingtonePicker(RingtoneManager.TYPE_NOTIFICATION, defaultTextToneUri, TextToneResultId, textToneUri)
     }
   }
   pingToneButton.onClickEvent.onUi { _ =>
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      openNotificationSettings(NotificationManagerWrapper.PingNotificationsChannelId(accountId))
+      openNotificationSettings(NotificationManagerWrapper.PingNotificationsChannelId)
     } else {
       showRingtonePicker(RingtoneManager.TYPE_NOTIFICATION, defaultPingToneUri, PingToneResultId, pingToneUri)
     }
@@ -246,6 +251,7 @@ case class OptionsBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
 }
 
 class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: EventContext) extends Injectable {
+  private val globalPrefs = inject[GlobalPreferences]
   private val zms = inject[Signal[ZMessaging]]
   private val userPrefs = zms.map(_.userPrefs)
   private val notificationManagerWrapper = inject[NotificationManagerWrapper] match {
@@ -256,32 +262,27 @@ class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: Event
 
   view.appLock.onUi(_ => navigator.goTo(AppLockKey()))
 
-  private def getChannelTone(channelId: UserId => String) =
+  private def getChannelTone(channelId: String) =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      for {
-        uId <- zms.map(_.selfUserId)
-        _ <- inject[UiLifeCycle].uiActive // This forces updating in case the user changes the tone in the system channel
-      } yield notificationManagerWrapper.flatMap(nm => Option(nm.getNotificationChannel(channelId(uId)).getSound))
-    } else Signal.const(Option.empty[Uri])
-
+      notificationManagerWrapper.flatMap(_.getNotificationChannel(channelId)).map(_.getSound)
+    } else Option.empty[Uri]
 
   private val channelPingTone = getChannelTone(NotificationManagerWrapper.PingNotificationsChannelId)
   private val channelTextTone = getChannelTone(NotificationManagerWrapper.MessageNotificationsChannelId)
 
   userPrefs.flatMap(_.preference(DownloadImagesAlways).signal).onUi{ view.setDownloadPictures }
   userPrefs.flatMap(_.preference(Sounds).signal).onUi{ view.setSounds }
-  userPrefs.flatMap(_.preference(RingTone).signal).onUi{ view.setRingtone }
+  globalPrefs.preference(GlobalPreferences.RingTone).signal.onUi{ view.setRingtone }
 
-  Signal.zip(userPrefs.flatMap(_.preference(TextTone).signal), channelTextTone).map {
-    case (_, Some(uri)) if Build.VERSION.SDK_INT >= Build.VERSION_CODES.O => uri.toString
-    case (uri, _) => uri
-  }.onUi(view.setTextTone)
+  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channelTextTone.isDefined)
+    channelTextTone.foreach(uri => Future { view.setTextTone(uri.toString) }(Threading.Ui))
+  else
+    globalPrefs.preference(GlobalPreferences.TextTone).signal.onUi(view.setTextTone)
 
-  Signal.zip(userPrefs.flatMap(_.preference(PingTone).signal), channelPingTone).map {
-    case (_, Some(uri)) if Build.VERSION.SDK_INT >= Build.VERSION_CODES.O => uri.toString
-    case (uri, _) => uri
-  }.onUi(view.setPingTone)
-
+  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channelPingTone.isDefined)
+    channelPingTone.foreach(uri => Future { view.setPingTone(uri.toString) }(Threading.Ui))
+  else
+    globalPrefs.preference(GlobalPreferences.PingTone).signal.onUi(view.setPingTone)
 
   zms.onUi(z => view.setAccountId(z.selfUserId))
 }

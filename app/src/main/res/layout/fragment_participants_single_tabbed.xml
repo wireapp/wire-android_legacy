@@ -40,6 +40,25 @@
         />
 
     <FrameLayout
+        android:id="@+id/single_participant_classified_banner"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/classified_toolbar_height"
+        android:background="@color/white"
+        android:layout_gravity="bottom"
+        android:visibility="gone">
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/single_participant_classified_banner_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textColor="@color/black"
+            android:textSize="@dimen/wire__text_size__smaller"
+            app:w_font="@string/wire__typeface__medium"/>
+    </FrameLayout>
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?wireBackgroundColor">
