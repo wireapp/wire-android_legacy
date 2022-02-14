@@ -1,7 +1,8 @@
 package com.waz.service.call
 
 object DomainUtils {
-  def getDomainFromString(idString: String): String = idString.split("@").last
+  def getDomainFromString(idString: String): String =
+    if (idString.contains("@")) idString.split("@").last else ""
 
   def joinIdWithDomain(idString: String, domainString: String ): String =
     if(domainString.nonEmpty)

@@ -30,7 +30,7 @@ import com.waz.model.AccountData.Password
 import com.waz.model.{ConvId, QualifiedId}
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
-import com.waz.service.{AccountManager, AccountsService, ZMessaging}
+import com.waz.service.{AccountManager, AccountsService, BackendConfig, ZMessaging}
 import com.waz.sync.SyncResult
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
@@ -48,7 +48,6 @@ import com.waz.zclient.utils.{BackStackKey, RichClient, RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper, _}
 import com.wire.signals.{EventContext, EventStream, Signal}
 import org.threeten.bp.Instant
-import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -184,7 +183,8 @@ object DeviceDetailsBackStackKey {
   }
 }
 
-case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)(implicit inj: Injector, ec: EventContext, context: Context)
+final case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)
+                                            (implicit inj: Injector, ec: EventContext, context: Context)
   extends Injectable with DerivedLogTag {
 
   import Threading.Implicits.Background
@@ -197,6 +197,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   private lazy val accountsService = inject[AccountsService]
 
   private lazy val client = clientsController.selfClient(clientId).collect { case Some(c) => c }
+  private lazy val isFederationSupported = inject[BackendConfig].federationSupport.isSupported
 
   client.map(deviceName).onUi(view.setName)
   client.map(_.displayId).onUi(view.setId)
@@ -222,7 +223,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   private def resetSession(): Unit = {
     zms.head.flatMap { zms =>
       zms.selectedConv.selectedConvIdPref().flatMap { conv =>
-        (if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        (if (isFederationSupported) {
           val qId = QualifiedId(zms.selfUserId, zms.selfDomain.str)
           zms.otrService.resetSession(conv.getOrElse(ConvId(zms.selfUserId.str)), qId, clientId)
         } else {

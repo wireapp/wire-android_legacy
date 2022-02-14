@@ -31,7 +31,7 @@ import com.waz.content.{UserPreferences, _}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Picture
 import com.waz.model._
-import com.waz.service.UiLifeCycle
+import com.waz.service.{BackendConfig, UiLifeCycle}
 import com.waz.service.otr.NotificationUiController
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, Signal}
@@ -81,6 +81,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
   private lazy val teamsStorage          = inject[TeamsStorage]
   private lazy val userPrefs             = inject[Signal[UserPreferences]]
   private lazy val accountStorage        = inject[AccountStorage]
+  private lazy val isFederationSupported = inject[BackendConfig].federationSupport.isSupported
 
   def initialize(): Unit = {
     //Clears notifications already displayed in the tray when the user opens the conversation associated with those notifications.
@@ -297,7 +298,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
 
   private def getUserName(account: UserId, n: NotificationData) =
     inject[AccountToUserService].apply(account).flatMap {
-      case Some(service) if BuildConfig.FEDERATION_USER_DISCOVERY && n.userDomain.isDefined =>
+      case Some(service) if isFederationSupported && n.userDomain.isDefined =>
         service.getOrCreateQualifiedUser(QualifiedId(n.user, n.userDomain.str), waitTillSynced = true).map(u => Some(u.name))
       case Some(service) =>
         service.getOrCreateUser(n.user, waitTillSynced = true).map(u => Some(u.name))
@@ -404,7 +405,7 @@ final class MessageNotificationsController(applicationId: String = BuildConfig.A
     def picture(not: NotificationData): Future[Option[Bitmap]] =
       (for {
         Some(service) <- inject[AccountToUserService].apply(accountId)
-        user          <- if (BuildConfig.FEDERATION_USER_DISCOVERY && not.userDomain.isDefined)
+        user          <- if (isFederationSupported && not.userDomain.isDefined)
                            service.getOrCreateQualifiedUser(QualifiedId(not.user, not.userDomain.str), waitTillSynced = true)
                          else
                            service.getOrCreateUser(not.user, waitTillSynced = true)

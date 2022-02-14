@@ -102,6 +102,5 @@
     "countly_app_key": "79c8fc20713e0e877aa8d320ea078530604d3ea6",
     "force_constant_bitrate_calls": false,
     "web_link_preview": true,
-    "federation_user_discovery": false,
     "keep_websocket_on": false
 }

@@ -39,6 +39,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service._
 import com.waz.service.assets._
 import com.waz.service.call.GlobalCallingService
@@ -177,6 +178,9 @@ object WireApplication extends DerivedLogTag {
     // but technically we can't guarantee it, hence every time it's used we need to check its value
     // (so, `toProvider`, not `to`)
     bind[Domain] toProvider inject[Signal[ZMessaging]].map(_.selfDomain).currentValue.getOrElse(Domain.Empty)
+
+    // same with the federation support
+    bind[FederationSupport] toProvider inject[GlobalModule].backend.federationSupport
 
     // services  and storages of the current zms
     bind [Signal[ConversationsService]]          to inject[Signal[ZMessaging]].map(_.conversations)

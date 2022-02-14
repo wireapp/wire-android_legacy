@@ -243,9 +243,7 @@ final class AvsImpl(federation: FederationSupport) extends Avs with DerivedLogTa
         override def onClientsRequest(inst: Calling.Handle, convId: String, arg: Pointer): Unit = {
           val conv  = DomainUtils.removeDomain(convId)
           val domain  = DomainUtils.getDomainFromString(convId)
-          if(BuildConfig.FEDERATION_USER_DISCOVERY)
-            cs.onQualifiedClientsRequest(RConvQualifiedId(RConvId(conv), domain))
-          else cs.onClientsRequest(RConvId(convId))
+          cs.onClientsRequest(RConvQualifiedId(RConvId(conv), domain))
       }}
 
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)

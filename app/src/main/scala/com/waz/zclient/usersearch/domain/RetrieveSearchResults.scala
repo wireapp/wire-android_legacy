@@ -19,6 +19,7 @@ package com.waz.zclient.usersearch.domain
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
+import com.waz.service.BackendConfig
 import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
@@ -30,18 +31,17 @@ import com.waz.zclient.{Injectable, Injector}
 import scala.collection.mutable
 import com.waz.threading.Threading._
 import com.waz.zclient.messages.UsersController
-import com.waz.zclient.BuildConfig
 import com.waz.zclient.participants.ParticipantsController
 
-class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventContext) extends Injectable
-  with DerivedLogTag {
-
+final class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventContext)
+  extends Injectable with DerivedLogTag {
   import SearchViewItem._
   import SectionViewItem._
 
-  private val userAccountsController = inject[UserAccountsController]
-  private val searchController       = inject[SearchController]
-  private lazy val usersController   = inject[UsersController]
+  private val userAccountsController     = inject[UserAccountsController]
+  private val searchController           = inject[SearchController]
+  private lazy val usersController       = inject[UsersController]
+  private lazy val isFederationSupported = inject[BackendConfig].federationSupport.isSupported
 
   private lazy val guestLinksEnabled = inject[ParticipantsController].areGuestLinksEnabled
 
@@ -157,7 +157,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       }
 
       if (directoryExternalMembers.nonEmpty) {
-        if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        if (isFederationSupported) {
           val federatedDomain = (directoryExternalMembers.headOption) match {
             case Some(user) if usersController.isFederated(user) => user.domain
             case _ => Domain.Empty

@@ -129,7 +129,6 @@ android {
         buildConfigField 'boolean', 'KEEP_WEBSOCKET_ON',             "$buildtimeConfiguration.configuration.keep_websocket_on"
         buildConfigField 'boolean', 'FORCE_CONSTANT_BITRATE_CALLS',  "$buildtimeConfiguration.configuration.force_constant_bitrate_calls"
         buildConfigField 'boolean', 'WEB_LINK_PREVIEW',              "$buildtimeConfiguration.configuration.web_link_preview"
-        buildConfigField 'boolean', 'FEDERATION_USER_DISCOVERY',     "$buildtimeConfiguration.configuration.federation_user_discovery"
 
         //Feature Flags
         buildConfigField 'boolean', 'CONFERENCE_CALLING_RESTRICTION', "$conferenceCallingRestriction"

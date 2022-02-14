@@ -75,8 +75,10 @@ final class MessagesSyncHandler(selfUserId: UserId,
 
   private def postOtrMessage(convId: ConvId, gm: GenericMessage, isHidden: Boolean) =
     if (federation.isSupported) {
+      verbose(l"API federation is supported and we send a qualified otr message")
       otrSync.postQualifiedOtrMessage(convId, gm, isHidden)
     } else {
+      verbose(l"API federation is NOT supported and we send a regular otr message")
       otrSync.postOtrMessage(convId, gm, isHidden)
     }
 

@@ -21,7 +21,7 @@ import android.content.Context
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.{ConnectionService, ZMessaging}
+import com.waz.service.{BackendConfig, ConnectionService, ZMessaging}
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
@@ -33,7 +33,6 @@ import com.waz.zclient.participants.ParticipantsController.{ClassifiedConversati
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
-import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 
@@ -48,6 +47,7 @@ final class ParticipantsController(implicit injector: Injector, context: Context
   private lazy val confirmationController = inject[IConfirmationController]
   private lazy val screenController       = inject[IConversationScreenController]
   private lazy val usersController        = inject[UsersController]
+  private lazy val isFederationSupported  = inject[BackendConfig].federationSupport.isSupported
 
   lazy val selectedParticipant = Signal(Option.empty[UserId])
 
@@ -97,7 +97,7 @@ final class ParticipantsController(implicit injector: Injector, context: Context
   } yield ParticipantsFlags(isGroup, hasGuest, hasBot, hasExternal, hasFederated)
 
   private def isConvWithUsersClassified(userIds: => Signal[Set[UserId]]): Signal[ClassifiedConversation] =
-    if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (!isFederationSupported) {
       Signal.const(ClassifiedConversation.None)
     } else {
       for {
