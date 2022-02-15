@@ -37,8 +37,7 @@ import com.waz.zclient.{FragmentHelper, R, SpinnerController}
 import scala.concurrent.Future
 import com.waz.threading.Threading._
 
-class GuestOptionsFragment extends FragmentHelper {
-
+final class GuestOptionsFragment extends FragmentHelper {
   import Threading.Implicits.Background
 
   implicit def cxt: Context = getActivity
@@ -235,7 +234,7 @@ class GuestOptionsFragment extends FragmentHelper {
     }
   }
 
-  private def setGuestsSwitchEnabled(enabled: Boolean) = {
+  private def setGuestsSwitchEnabled(enabled: Boolean): Unit = {
     guestsSwitch.foreach(_.setEnabled(enabled))
     guestsTitle.foreach(_.setAlpha(if (enabled) 1f else 0.5f))
   }

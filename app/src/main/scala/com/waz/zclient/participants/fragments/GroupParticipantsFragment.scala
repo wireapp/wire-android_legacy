@@ -107,7 +107,10 @@ class GroupParticipantsFragment extends FragmentHelper {
     }
 
     adapter.onGuestOptionsClick.onUi { _ =>
-      slideFragmentInFromRight(new GuestOptionsFragment(), GuestOptionsFragment.Tag)
+      participantsController.areGuestLinksEnabled.head.foreach {
+        case true  => slideFragmentInFromRight(new GuestOptionsFragment(), GuestOptionsFragment.Tag)
+        case false =>
+      }(Threading.Ui)
     }
 
     adapter.onEphemeralOptionsClick.onUi { _ =>

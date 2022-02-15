@@ -441,6 +441,7 @@ object UserPreferences {
   lazy val FileSharingFeatureEnabled: PrefKey[Boolean] = PrefKey[Boolean]("file_sharing_feature_enabled", customDefault = true)
   lazy val ShouldInformFileSharingRestriction: PrefKey[Boolean] = PrefKey[Boolean]("should_inform_file_sharing_restriction", customDefault = false)
   lazy val ClassifiedDomains: PrefKey[Option[String]] = PrefKey[Option[String]]("classified_domains", customDefault = None)
+  lazy val GuestLinks: PrefKey[Boolean] = PrefKey[Boolean]("guest_links", customDefault = true)
 
   lazy val AreSelfDeletingMessagesEnabled: PrefKey[Boolean] = PrefKey[Boolean]("self_deleting_messages_enabled", customDefault = true)
   lazy val SelfDeletingMessagesEnforcedTimeout: PrefKey[Int] = PrefKey[Int]("self_deleting_messages_enforced_timeout", customDefault = 0)

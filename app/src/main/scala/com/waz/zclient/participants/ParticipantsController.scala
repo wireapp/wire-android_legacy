@@ -132,6 +132,9 @@ final class ParticipantsController(implicit injector: Injector, context: Context
   def isConvWithUserClassified(userId: UserId): Signal[ClassifiedConversation] =
     isConvWithUsersClassified(Signal.const(Set(userId)))
 
+  def areGuestLinksEnabled: Signal[Boolean] =
+    zms.flatMap(_.userPrefs.preference(UserPreferences.GuestLinks).signal)
+
   // is the current user a guest in the current conversation
   lazy val isCurrentUserGuest: Signal[Boolean] = for {
     selfUserId  <- selfId

@@ -68,8 +68,9 @@ import scala.concurrent.duration._
 import com.waz.zclient.usersearch.SearchUIFragment._
 import com.waz.threading.Threading._
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.participants.ParticipantsController
 
-class SearchUIFragment extends BaseFragment[Container]
+final class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper
   with SearchUIAdapter.Callback {
 
@@ -101,6 +102,7 @@ class SearchUIFragment extends BaseFragment[Container]
   private var subs = Set.empty[Subscription]
 
   private val conversationCreationInProgress = Signal(false)
+  private lazy val guestLinksEnabled = inject[ParticipantsController].areGuestLinksEnabled
 
   private lazy val inviteButton = returning(view[FlatWireButton](R.id.invite_button)) { vh =>
     subs += userAccountsController.isTeam.flatMap {
@@ -463,17 +465,18 @@ class SearchUIFragment extends BaseFragment[Container]
   }
 
 
-  override def onCreateGuestRoomClicked(): Unit = conversationCreationInProgress.head.foreach {
-    case true =>
-    case false =>
-      conversationCreationInProgress ! true
-      spinner.showSpinner(true)
-      keyboard.hideKeyboardIfVisible()
-      conversationController.createGuestRoom().flatMap { conv =>
-        spinner.hideSpinner()
-        conversationController.selectConv(Some(conv.id), ConversationChangeRequester.START_CONVERSATION)
-      }.onComplete(_ => conversationCreationInProgress ! false)
-  }
+  override def onCreateGuestRoomClicked(): Unit =
+    Signal.zip(conversationCreationInProgress, guestLinksEnabled).head.foreach {
+      case (false, true) =>
+        conversationCreationInProgress ! true
+        spinner.showSpinner(true)
+        keyboard.hideKeyboardIfVisible()
+        conversationController.createGuestRoom().flatMap { conv =>
+          spinner.hideSpinner()
+          conversationController.selectConv(Some(conv.id), ConversationChangeRequester.START_CONVERSATION)
+        }.onComplete(_ => conversationCreationInProgress ! false)
+      case _ =>
+    }
 
   private def sendGenericInvite(fromSearch: Boolean): Unit =
     self.head.map { self =>

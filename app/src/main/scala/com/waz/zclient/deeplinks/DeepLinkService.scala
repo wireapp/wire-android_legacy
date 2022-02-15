@@ -18,7 +18,7 @@
 package com.waz.zclient.deeplinks
 
 import android.content.Intent
-import com.waz.content.MembersStorage
+import com.waz.content.{MembersStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.AccountManager.ClientRegistrationState.Registered
@@ -48,6 +48,11 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
   private lazy val userService         = inject[Signal[UserService]]
   private lazy val convController      = inject[ConversationController]
   private lazy val membersStorage      = inject[MembersStorage]
+
+  private lazy val guestLinksEnabled = account.flatMap {
+    case Some(am) => am.userPrefs.preference(UserPreferences.GuestLinks).signal
+    case None     => Signal.const(true)
+  }
 
   def checkDeepLink(intent: Intent): Unit = {
     Option(intent.getDataString) match {
@@ -104,7 +109,10 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
       case (_, _, DeepLink.CustomBackendToken(_)) =>
         Future.successful(OpenDeepLink(token))
       case (_, _, DeepLink.JoinConversationToken(_, _)) =>
-        Future.successful(OpenDeepLink(token))
+        guestLinksEnabled.head.map {
+          case true  => OpenDeepLink(token)
+          case false => DoNotOpenDeepLink(deepLink, NotAllowed)
+        }
       case _ =>
         Future.successful(OpenDeepLink(token))
     }

@@ -27,5 +27,6 @@ class FeatureConfigsController(implicit inj: Injector) extends Injectable with D
       configsService.updateConferenceCalling()
     if (BuildConfig.FEDERATION_USER_DISCOVERY)
       configsService.updateClassifiedDomains()
+    configsService.updateGuestLinks()
   }
 }
