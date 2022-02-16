@@ -21,7 +21,7 @@ import android.content.Context
 import android.os.{Build, PowerManager}
 import android.telephony.{PhoneStateListener, TelephonyManager}
 import com.waz.avs.VideoPreview
-import com.waz.content.GlobalPreferences
+import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.model.otr.ClientId
@@ -39,6 +39,8 @@ import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.participants.ParticipantsController.ClassifiedConversation
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R, WireContext}
@@ -49,9 +51,8 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class CallController(implicit inj: Injector, cxt: WireContext)
+final class CallController(implicit inj: Injector, cxt: WireContext)
   extends Injectable with DerivedLogTag {
-
   import Threading.Implicits.Background
   import VideoState._
 
@@ -467,6 +468,31 @@ class CallController(implicit inj: Injector, cxt: WireContext)
   lazy val speakerButton: ButtonSignal[MediaManagerService] = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
     case (mm, isSpeakerSet) => mm.setSpeaker(!isSpeakerSet)
   }.disableAutowiring()
+
+  lazy val isCurrentConvClassified: Signal[ParticipantsController.ClassifiedConversation] =
+    if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+      Signal.const(ClassifiedConversation.None)
+    } else {
+      for {
+        z             <- callingZms
+        classifiedStr <- z.userPrefs.preference(UserPreferences.ClassifiedDomains).signal
+        config        =  ClassifiedDomainsConfig.deserialize(classifiedStr)
+        convId        <- callConvId
+        members       <- z.conversations.convMembers(convId)
+        ids           = if (config.isEnabled) members.keySet else Set.empty[UserId]
+        users         <- if (config.isEnabled) Signal.sequence((ids + z.selfUserId).map(id => z.usersStorage.signal(id)).toSeq: _*)
+        else Signal.const(Seq.empty)
+      } yield
+        if (!config.isEnabled)
+          ClassifiedConversation.None
+        else {
+          val classifiedDomains = config.domains + z.selfDomain
+          if (users.map(_.domain).toSet.forall(classifiedDomains.contains))
+            ClassifiedConversation.Classified
+          else
+            ClassifiedConversation.NotClassified
+        }
+    }
 }
 
 private class ScreenManager(implicit injector: Injector) extends Injectable with DerivedLogTag {
