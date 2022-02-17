@@ -73,7 +73,7 @@ class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleA
       classifiedBannerText.setTextColor(getColor(R.color.background_dark))
       classifiedBannerText.setVisible(true)
     case ClassifiedConversation.NotClassified =>
-      classifiedBannerText.setTransformedText(getString(R.string.conversation_is_not_classified))
+      classifiedBannerText.setTransformedText(getString(R.string.conversation_is_unclassified))
       classifiedBannerText.setTextColor(getColor(R.color.background_light))
       classifiedBannerText.setVisible(true)
     case ClassifiedConversation.None =>

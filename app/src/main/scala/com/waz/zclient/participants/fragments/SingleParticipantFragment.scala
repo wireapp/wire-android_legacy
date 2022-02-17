@@ -225,7 +225,7 @@ class SingleParticipantFragment extends FragmentHelper {
         }
       case ClassifiedConversation.NotClassified =>
         vh.foreach { view =>
-          view.setTransformedText(getString(R.string.conversation_is_not_classified))
+          view.setTransformedText(getString(R.string.conversation_is_unclassified))
           view.setTextColor(getColor(R.color.background_light))
           view.setVisible(true)
         }
