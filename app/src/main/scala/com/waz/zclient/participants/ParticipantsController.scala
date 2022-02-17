@@ -116,7 +116,7 @@ final class ParticipantsController(implicit injector: Injector, context: Context
           if (users.map(_.domain).toSet.forall(classifiedDomains.contains))
             ClassifiedConversation.Classified
           else
-            ClassifiedConversation.NotClassified
+            ClassifiedConversation.Unclassified
         }
     }
 
@@ -211,7 +211,7 @@ object ParticipantsController {
 
   object ClassifiedConversation {
     case object Classified extends ClassifiedConversation
-    case object NotClassified extends ClassifiedConversation
+    case object Unclassified extends ClassifiedConversation
     case object None extends ClassifiedConversation
   }
 }

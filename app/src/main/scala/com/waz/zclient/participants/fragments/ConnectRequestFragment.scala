@@ -25,7 +25,12 @@ final class ConnectRequestFragment extends UntabbedRequestFragment {
   private def initIgnoreButton(): Unit = returning(view[ZetaButton](R.id.zb__connect_request__ignore_button)) { vh =>
     vh.foreach { button =>
       button.setIsFilled(false)
-      button.onClick(usersController.ignoreConnectionRequest(userToConnectId).map(_ => getActivity.onBackPressed()))
+      button.onClick {
+        for {
+          Some(userId) <- userToConnectId.head
+          _            <- usersController.ignoreConnectionRequest(userId)
+        } yield getActivity.onBackPressed()
+      }
     }
 
     accentColor.onUi(c =>
@@ -37,9 +42,12 @@ final class ConnectRequestFragment extends UntabbedRequestFragment {
   }
 
   private def initAcceptButton(): Unit = returning(view[ZetaButton](R.id.zb__connect_request__accept_button)) { vh =>
-    vh.foreach {
-      _.onClick(usersController.connectToUser(userToConnectId).map(_ => getActivity.onBackPressed()))
-    }
+    vh.foreach { _.onClick {
+      for {
+        Some(userId) <- userToConnectId.head
+        _            <- usersController.connectToUser(userId)
+      } yield getActivity.onBackPressed()
+    } }
 
     accentColor.onUi(c => vh.foreach(_.setAccentColor(c)))
   }
@@ -68,7 +76,6 @@ final class ConnectRequestFragment extends UntabbedRequestFragment {
 
   override protected def initViews(savedInstanceState: Bundle): Unit = {
     initDetailsView()
-    initClassifiedConversation()
     initFooterMenu()
     initIgnoreButton()
     initAcceptButton()

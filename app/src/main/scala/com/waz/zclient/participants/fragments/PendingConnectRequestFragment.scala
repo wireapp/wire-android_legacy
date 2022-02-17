@@ -27,7 +27,11 @@ final class PendingConnectRequestFragment extends UntabbedRequestFragment {
   private lazy val convScreenController = inject[IConversationScreenController]
   private lazy val errorsController     = inject[ErrorsController]
 
-  private lazy val isIgnoredConnection = usersController.user(userToConnectId).map(_.connection == ConnectionStatus.IGNORED)
+  private lazy val isIgnoredConnection: Signal[Boolean] =
+    for {
+      Some(userId) <- userToConnectId
+      user         <- usersController.user(userId)
+    } yield user.connection == ConnectionStatus.IGNORED
 
   override protected val Tag: String = PendingConnectRequestFragment.Tag
 
@@ -59,17 +63,21 @@ final class PendingConnectRequestFragment extends UntabbedRequestFragment {
       ()
   }
 
-  override protected lazy val footerCallback = new FooterMenuCallback {
+  override protected lazy val footerCallback: FooterMenuCallback = new FooterMenuCallback {
     override def onLeftActionClicked(): Unit =
         isIgnoredConnection.head.map {
             case true  =>
               for {
-                _      <- usersController.connectToUser(userToConnectId)
-                convId <- accountsController.getConversationId(userToConnectId)
-                _      <- convController.selectConv(convId, ConversationChangeRequester.START_CONVERSATION)
+                Some(userId) <- userToConnectId.head
+                _            <- usersController.connectToUser(userId)
+                convId       <- accountsController.getConversationId(userId)
+                _            <- convController.selectConv(convId, ConversationChangeRequester.START_CONVERSATION)
               } yield ()
             case false =>
-              usersController.cancelConnectionRequest(userToConnectId)
+              for {
+                Some(userId) <- userToConnectId.head
+                _            <- usersController.cancelConnectionRequest(userId)
+              } yield ()
           }.foreach { _ => getActivity.onBackPressed() }
 
       override def onRightActionClicked(): Unit =

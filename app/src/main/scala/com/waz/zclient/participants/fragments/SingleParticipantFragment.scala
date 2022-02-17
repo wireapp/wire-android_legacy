@@ -24,12 +24,11 @@ import android.widget.{FrameLayout, TextView}
 import androidx.annotation.Nullable
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
-import com.waz.model.{ConversationRole, UserField}
+import com.waz.model.{ConversationRole, UserField, UserId}
 import com.waz.service.ZMessaging
-import com.wire.signals.CancellableFuture
+import com.wire.signals.{CancellableFuture, Signal, SourceSignal, Subscription}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.wire.signals.{Signal, Subscription}
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -198,14 +197,21 @@ class SingleParticipantFragment extends FragmentHelper {
     }
   }
 
+  protected val userToConnectId: SourceSignal[Option[UserId]] = Signal(Option.empty[UserId])
+
+  private val userToClassify: Signal[ClassifiedConversation] = userToConnectId.flatMap {
+    case None => participantsController.isOtherParticipantClassified
+    case Some(userId) => participantsController.isConvWithUserClassified(userId)
+  }
+
   private lazy val classifiedBanner = returning(view[FrameLayout](R.id.single_participant_classified_banner)) { vh =>
-    participantsController.isOtherParticipantClassified.onUi {
+    userToClassify.onUi {
       case ClassifiedConversation.Classified =>
         vh.foreach { view =>
           view.setBackgroundColor(getColor(R.color.background_light))
           view.setVisible(true)
         }
-      case ClassifiedConversation.NotClassified =>
+      case ClassifiedConversation.Unclassified =>
         vh.foreach { view =>
           view.setBackgroundColor(getColor(R.color.background_dark))
           view.setVisible(true)
@@ -216,14 +222,14 @@ class SingleParticipantFragment extends FragmentHelper {
   }
 
   private lazy val classifiedBannerText = returning(view[TypefaceTextView](R.id.single_participant_classified_banner_text)) { vh =>
-    participantsController.isOtherParticipantClassified.onUi {
+    userToClassify.onUi {
       case ClassifiedConversation.Classified =>
         vh.foreach { view =>
           view.setTransformedText(getString(R.string.conversation_is_classified))
           view.setTextColor(getColor(R.color.background_dark))
           view.setVisible(true)
         }
-      case ClassifiedConversation.NotClassified =>
+      case ClassifiedConversation.Unclassified =>
         vh.foreach { view =>
           view.setTransformedText(getString(R.string.conversation_is_unclassified))
           view.setTextColor(getColor(R.color.background_light))
@@ -234,14 +240,13 @@ class SingleParticipantFragment extends FragmentHelper {
     }
   }
 
-  protected def initClassifiedConversation(): Unit =
+  private def initClassifiedConversation(): Unit =
     if (BuildConfig.FEDERATION_USER_DISCOVERY) {
       classifiedBanner
       classifiedBannerText
     }
 
-
-  protected lazy val footerCallback = new FooterMenuCallback {
+  protected lazy val footerCallback: FooterMenuCallback = new FooterMenuCallback {
     override def onLeftActionClicked(): Unit =
       participantsController.otherParticipant.map(_.expiresAt.isDefined).head.foreach {
         case false => participantsController.isGroup.head.flatMap {

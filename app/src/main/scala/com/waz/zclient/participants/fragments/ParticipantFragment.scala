@@ -46,7 +46,7 @@ import com.waz.zclient.utils.ContextUtils
 
 import scala.concurrent.Future
 
-class ParticipantFragment extends ManagerFragment with ConversationScreenControllerObserver {
+final class ParticipantFragment extends ManagerFragment with ConversationScreenControllerObserver {
 
   import ParticipantFragment._
 

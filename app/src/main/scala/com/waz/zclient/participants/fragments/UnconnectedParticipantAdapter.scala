@@ -19,12 +19,15 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.view.{LayoutInflater, View, ViewGroup}
+import android.widget.FrameLayout
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.waz.model.{ConversationRole, UserId}
-import com.waz.zclient.R
 import com.waz.zclient.common.views.LinkTextView
+import com.waz.zclient.participants.ParticipantsController.ClassifiedConversation
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.utils.ContextUtils.getColor
 import com.wire.signals.{EventStream, SourceStream}
+import com.waz.zclient.{BuildConfig, R}
 
 final class UnconnectedParticipantAdapter(userId:      UserId,
                                           isGuest:     Boolean,
@@ -35,7 +38,9 @@ final class UnconnectedParticipantAdapter(userId:      UserId,
                                           userName:    String,
                                           userHandle:  String,
                                           isFederated: Boolean,
-                                          linkedText: Option[(String, Int)] = None)(implicit context: Context)
+                                          linkedText:  Option[(String, Int)] = None,
+                                          classified:  ClassifiedConversation = ClassifiedConversation.None
+                                         )(implicit context: Context)
   extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated) {
   import BaseSingleParticipantAdapter._
   import UnconnectedParticipantAdapter._
@@ -63,7 +68,7 @@ final class UnconnectedParticipantAdapter(userId:      UserId,
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
-    case h: UserNameViewHolder   => h.bind(userName, userHandle)
+    case h: UserNameViewHolder   => h.bind(userName, userHandle, classified)
     case h: LinkedInfoViewHolder => linkedText.foreach { case (text, color) => h.bind(text, color, { onLinkedTextClicked ! (())} ) }
     case _                       => super.onBindViewHolder(holder, position)
   }
@@ -93,18 +98,45 @@ final class UnconnectedParticipantAdapter(userId:      UserId,
 }
 
 object UnconnectedParticipantAdapter {
-  case class UserNameViewHolder(view: View) extends ViewHolder(view) {
+  final case class UserNameViewHolder(view: View) extends ViewHolder(view) {
+    import com.waz.zclient.utils.ContextUtils.getString
+    import com.waz.zclient.utils._
+
     private lazy val userName   = view.findViewById[TypefaceTextView](R.id.user_name)
     private lazy val userHandle = view.findViewById[TypefaceTextView](R.id.user_handle)
+    private lazy val classifiedBanner = view.findViewById[FrameLayout](R.id.user_classified_banner)
+    private lazy val classifiedBannerText = view.findViewById[TypefaceTextView](R.id.user_classified_banner_text)
 
-    def bind(userName: String, userHandle: String): Unit = {
+    private def setBanner(classified: ClassifiedConversation)(implicit ctx: Context): Unit =
+      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+        classified match {
+          case ClassifiedConversation.Classified =>
+            classifiedBanner.setBackgroundColor(getColor(R.color.background_light))
+            classifiedBanner.setVisible(true)
+            classifiedBannerText.setTransformedText(getString(R.string.conversation_is_classified))
+            classifiedBannerText.setTextColor(getColor(R.color.background_dark))
+            classifiedBannerText.setVisible(true)
+          case ClassifiedConversation.Unclassified =>
+            classifiedBanner.setBackgroundColor(getColor(R.color.background_dark))
+            classifiedBanner.setVisible(true)
+            classifiedBannerText.setTransformedText(getString(R.string.conversation_is_unclassified))
+            classifiedBannerText.setTextColor(getColor(R.color.background_light))
+            classifiedBannerText.setVisible(true)
+          case ClassifiedConversation.None =>
+            classifiedBanner.setVisible(false)
+            classifiedBannerText.setVisible(false)
+        }
+      }
+
+    def bind(userName: String, userHandle: String, classified: ClassifiedConversation)(implicit ctx: Context): Unit = {
       this.userName.setText(userName)
       this.userHandle.setText(userHandle)
       view.setContentDescription(s"User: $userName")
+      setBanner(classified)
     }
   }
 
-  case class LinkedInfoViewHolder(view: View) extends ViewHolder(view) {
+  final case class LinkedInfoViewHolder(view: View) extends ViewHolder(view) {
     private lazy val linkTextView = view.findViewById[LinkTextView](R.id.participant_linked_info_text_view)
 
     def bind(text: String, color: Int, action: => Unit): Unit = {

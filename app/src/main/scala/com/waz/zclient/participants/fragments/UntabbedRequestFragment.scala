@@ -31,14 +31,19 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
   private lazy val userRequester            = UserRequester.valueOf(getArguments.getString(ArgumentUserRequester))
   private lazy val fromDeepLink             = userRequester == UserRequester.DEEP_LINK
   protected lazy val fromParticipants       = userRequester == UserRequester.PARTICIPANTS
-  protected lazy val userToConnectId        = UserId(getArguments.getString(ArgumentUserId))
   protected lazy val removeMemberPermission = participantsController.selfRole.map(_.canRemoveGroupMember)
 
-  protected lazy val userToConnect = participantsController.getUser(userToConnectId)
+  protected def userToConnect: Future[Option[UserData]] =
+    userToConnectId.head.flatMap {
+      case None => Future.successful(None)
+      case Some(userId) => participantsController.getUser(userId)
+    }
 
   override protected def initViews(savedInstanceState: Bundle): Unit = {
+    val userToConnectId = UserId(getArguments.getString(ArgumentUserId))
+    this.userToConnectId ! Some(userToConnectId)
+
     initDetailsView()
-    initClassifiedConversation()
     initFooterMenu()
   }
 
@@ -56,9 +61,10 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
         isDarkTheme   <- inject[ThemeController].darkThemeSet.head
         isWireless    =  user.expiresAt.isDefined
         linkedText    <- linkedText(user)
-      } yield (user, handle, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText)).foreach {
-        case (user, handle, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText) =>
-          val participantRole = participantsController.participants.map(_.get(userToConnectId))
+        classified    <- participantsController.isConvWithUserClassified(user.id).head
+      } yield (user, handle, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText, classified)).foreach {
+        case (user, handle, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isFederated, linkedText, classified) =>
+          val participantRole = participantsController.participants.map(_.get(user.id))
           val selfRole =
             if (fromParticipants)
               participantsController.selfRole.map(Option(_))
@@ -67,7 +73,7 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
 
           val adapter = new UnconnectedParticipantAdapter(
             user.id, isGuest, isExternal, isDarkTheme, isGroup, isWireless,
-            user.name, handle, isFederated, linkedText
+            user.name, handle, isFederated, linkedText, classified
           )
           subs += Signal.zip(timerText, participantRole, selfRole).onUi {
             case (tt, pRole, sRole) => adapter.set(tt, pRole, sRole)
