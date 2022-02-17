@@ -2,7 +2,7 @@ package com.waz.sync.handler
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{AppLockFeatureConfig, ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig, TeamId}
+import com.waz.model.{AppLockFeatureConfig, ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, GuestLinksConfig, SelfDeletingMessagesFeatureConfig, TeamId}
 import com.waz.sync.client.{ErrorOrResponse, FeatureConfigsClient}
 
 import scala.concurrent.Future
@@ -13,6 +13,7 @@ trait FeatureConfigsSyncHandler {
   def fetchSelfDeletingMessages: Future[Option[SelfDeletingMessagesFeatureConfig]]
   def fetchConferenceCalling: Future[Option[ConferenceCallingFeatureConfig]]
   def fetchClassifiedDomains: Future[Option[ClassifiedDomainsConfig]]
+  def fetchGuestLinks: Future[Option[GuestLinksConfig]]
 }
 
 final class FeatureConfigsSyncHandlerImpl(teamId: Option[TeamId], client: FeatureConfigsClient)
@@ -41,6 +42,9 @@ final class FeatureConfigsSyncHandlerImpl(teamId: Option[TeamId], client: Featur
     case Some(tId) =>
       fetchFeatureFlag(() => client.getClassifiedDomains(tId), "ClassifiedDomains")
   }
+
+  override def fetchGuestLinks: Future[Option[GuestLinksConfig]] =
+    fetchFeatureFlag(() => client.getGuestLinks, "GuestLinks")
 
   @inline
   private def fetchFeatureFlag[T](clientFunc: () => ErrorOrResponse[T], name: String): Future[Option[T]] =

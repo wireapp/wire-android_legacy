@@ -5,7 +5,7 @@ import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.sync.handler.FeatureConfigsSyncHandler
 import com.waz.log.LogSE._
-import com.waz.model.{ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FeatureConfigEvent, FeatureConfigUpdateEvent, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig}
+import com.waz.model.{ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FeatureConfigEvent, FeatureConfigUpdateEvent, FileSharingFeatureConfig, GuestLinksConfig, SelfDeletingMessagesFeatureConfig}
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
 import com.waz.utils.JsonDecoder
@@ -19,6 +19,7 @@ trait FeatureConfigsService {
   def updateSelfDeletingMessages(): Future[Unit]
   def updateConferenceCalling(): Future[Unit]
   def updateClassifiedDomains(): Future[Unit]
+  def updateGuestLinks(): Future[Unit]
 }
 
 class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
@@ -134,4 +135,15 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
 
   private def storeClassifiedDomains(classifiedDomains: ClassifiedDomainsConfig): Future[Unit] =
     userPrefs(ClassifiedDomains) := classifiedDomains.serialize
+
+  override def updateGuestLinks(): Future[Unit] = withRecovery {
+    for {
+      Some(guestLinks) <- syncHandler.fetchGuestLinks
+      _                       =  verbose(l"GuestLinks feature config: $guestLinks")
+      _                       <- storeGuestLinks(guestLinks)
+    } yield ()
+  }
+
+  private def storeGuestLinks(guestLinks: GuestLinksConfig): Future[Unit] =
+    userPrefs(GuestLinks) := guestLinks.isEnabled
 }

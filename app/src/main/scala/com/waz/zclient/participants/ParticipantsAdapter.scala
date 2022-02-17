@@ -114,6 +114,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     convActive  =  currentConv.isActive
     isTeamConv  =  currentConv.team.nonEmpty
     selfRole    <- participantsController.selfRole
+    guestLinks  <- participantsController.areGuestLinksEnabled
   } yield {
     val (bots, people)    = users.toList.partition(_.userData.isWireBot)
     val (admins, members) = people.partition(_.isAdmin)
@@ -136,7 +137,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     (if (optionsAvailable) List(Right(OptionsSeparator)) else Nil) :::
     (if (convActive && !showPeopleOnly && tId.isDefined) List(Right(Notifications)) else Nil) :::
     (if (convActive && !showPeopleOnly && selfRole.canModifyMessageTimer) List(Right(EphemeralOptions)) else Nil) :::
-    (if (convActive && !showPeopleOnly && isTeamConv && selfRole.canModifyAccess) List(Right(GuestOptions)) else Nil) :::
+    (if (convActive && !showPeopleOnly && isTeamConv && selfRole.canModifyAccess && guestLinks) List(Right(GuestOptions)) else Nil) :::
     (if (convActive && !showPeopleOnly && isTeamConv && selfRole.canModifyReceiptMode) List(Right(ReadReceipts)) else Nil) :::
     (if (bots.nonEmpty && !showPeopleOnly) List(Right(ServicesSeparator)) else Nil) :::
     (if (showPeopleOnly) Nil else bots.map(data => Left(data)))

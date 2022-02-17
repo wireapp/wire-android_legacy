@@ -1,7 +1,7 @@
 package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.{AppLockFeatureConfig, ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, SelfDeletingMessagesFeatureConfig, TeamId}
+import com.waz.model.{AppLockFeatureConfig, ClassifiedDomainsConfig, ConferenceCallingFeatureConfig, FileSharingFeatureConfig, GuestLinksConfig, SelfDeletingMessagesFeatureConfig, TeamId}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
@@ -13,12 +13,14 @@ trait FeatureConfigsClient {
   def getSelfDeletingMessages: ErrorOrResponse[SelfDeletingMessagesFeatureConfig]
   def getConferenceCalling: ErrorOrResponse[ConferenceCallingFeatureConfig]
   def getClassifiedDomains(teamId: TeamId): ErrorOrResponse[ClassifiedDomainsConfig]
+  def getGuestLinks: ErrorOrResponse[GuestLinksConfig]
 }
 
-class FeatureConfigsClientImpl(implicit
-                               urlCreator: UrlCreator,
-                               httpClient: HttpClient,
-                               authRequestInterceptor: AuthRequestInterceptor) extends FeatureConfigsClient {
+final class FeatureConfigsClientImpl(implicit
+                                     urlCreator: UrlCreator,
+                                     httpClient: HttpClient,
+                                     authRequestInterceptor: AuthRequestInterceptor)
+  extends FeatureConfigsClient {
   import FeatureConfigsClient._
   import HttpClient.dsl._
   import HttpClient.AutoDerivationOld._
@@ -55,6 +57,12 @@ class FeatureConfigsClientImpl(implicit
       .withResultType[ClassifiedDomainsConfig]
       .withErrorType[ErrorResponse]
       .executeSafe
+
+  override def getGuestLinks: ErrorOrResponse[GuestLinksConfig] =
+    Request.Get(relativePath = fileSharingPath)
+      .withResultType[GuestLinksConfig]
+      .withErrorType[ErrorResponse]
+      .executeSafe
 }
 
 object FeatureConfigsClient {
@@ -66,4 +74,6 @@ object FeatureConfigsClient {
   val selfDeletingMessages: String = s"$basePath/selfDeletingMessages"
 
   val conferenceCallingPath: String = s"$basePath/conferenceCalling"
+
+  val guestLinksPath: String = s"$basePath/conversationGuestLinks"
 }
