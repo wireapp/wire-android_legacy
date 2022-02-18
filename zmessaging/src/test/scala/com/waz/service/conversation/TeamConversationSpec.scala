@@ -129,6 +129,11 @@ class TeamConversationSpec extends AndroidFreeSpec {
         .returning(Future.successful(SyncId()))
       (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
       (members.isActiveMember _).expects(*, *).anyNumberOfTimes().returning(Future.successful(true))
+      (members.updateOrCreateAll(_ : ConvId, _ : Map[UserId, ConversationRole]))
+        .expects(*, *).anyNumberOfTimes()
+        .onCall { (convId, users) =>
+          Future.successful(users.map { case (userId, role) => ConversationMemberData(userId, convId, role) }.toSet)
+        }
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
 
       (convsService.generateTempConversationId _).expects(*).anyNumberOfTimes().returning(RConvId())

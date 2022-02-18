@@ -108,24 +108,22 @@ object UnconnectedParticipantAdapter {
     private lazy val classifiedBannerText = view.findViewById[TypefaceTextView](R.id.user_classified_banner_text)
 
     private def setBanner(classified: ClassifiedConversation)(implicit ctx: Context): Unit =
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-        classified match {
-          case ClassifiedConversation.Classified =>
-            classifiedBanner.setBackgroundColor(getColor(R.color.background_light))
-            classifiedBanner.setVisible(true)
-            classifiedBannerText.setTransformedText(getString(R.string.conversation_is_classified))
-            classifiedBannerText.setTextColor(getColor(R.color.background_dark))
-            classifiedBannerText.setVisible(true)
-          case ClassifiedConversation.Unclassified =>
-            classifiedBanner.setBackgroundColor(getColor(R.color.background_dark))
-            classifiedBanner.setVisible(true)
-            classifiedBannerText.setTransformedText(getString(R.string.conversation_is_unclassified))
-            classifiedBannerText.setTextColor(getColor(R.color.background_light))
-            classifiedBannerText.setVisible(true)
-          case ClassifiedConversation.None =>
-            classifiedBanner.setVisible(false)
-            classifiedBannerText.setVisible(false)
-        }
+      classified match {
+        case ClassifiedConversation.Classified =>
+          classifiedBanner.setBackgroundColor(getColor(R.color.background_light))
+          classifiedBanner.setVisible(true)
+          classifiedBannerText.setTransformedText(getString(R.string.conversation_is_classified))
+          classifiedBannerText.setTextColor(getColor(R.color.background_dark))
+          classifiedBannerText.setVisible(true)
+        case ClassifiedConversation.Unclassified =>
+          classifiedBanner.setBackgroundColor(getColor(R.color.background_dark))
+          classifiedBanner.setVisible(true)
+          classifiedBannerText.setTransformedText(getString(R.string.conversation_is_unclassified))
+          classifiedBannerText.setTextColor(getColor(R.color.background_light))
+          classifiedBannerText.setVisible(true)
+        case ClassifiedConversation.None =>
+          classifiedBanner.setVisible(false)
+          classifiedBannerText.setVisible(false)
       }
 
     def bind(userName: String, userHandle: String, classified: ClassifiedConversation)(implicit ctx: Context): Unit = {
