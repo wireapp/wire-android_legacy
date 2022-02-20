@@ -121,7 +121,8 @@ final class AndroidNotificationsManager(notificationManager: NotificationManager
       ch.enableLights(true)
       ch.setGroup(WireNotificationsChannelGroupId)
       ch.setBypassDnd(true)
-      ch.setAllowBubbles(true)
+      if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+        ch.setAllowBubbles(true)
       sound.foreach(uri => ch.setSound(uri, Notification.AUDIO_ATTRIBUTES_DEFAULT))
     }
 
