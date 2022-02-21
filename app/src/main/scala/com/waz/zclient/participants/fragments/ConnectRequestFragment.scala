@@ -75,8 +75,7 @@ final class ConnectRequestFragment extends UntabbedRequestFragment {
   }
 
   override protected def initViews(savedInstanceState: Bundle): Unit = {
-    initDetailsView()
-    initFooterMenu()
+    super.initViews(savedInstanceState)
     initIgnoreButton()
     initAcceptButton()
   }
