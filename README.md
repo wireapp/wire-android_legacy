@@ -113,5 +113,7 @@ see the outcommented example inside the docker-compose.yml file as a reference
 
 When importing project in Android Studio **do not allow** gradle plugin update. Our build setup requires Android Plugin for Gradle version 3.2.1.
 
+In Android studio, this can be done in `File` -> `Project Structure` -> `Project` -> `Android Gradle Plugin Version` -> `3.2.1`
+
 ### Translations
 Translation: https://crowdin.com/projects/wire
