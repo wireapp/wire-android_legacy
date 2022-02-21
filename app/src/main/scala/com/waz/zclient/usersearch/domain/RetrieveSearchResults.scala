@@ -19,7 +19,6 @@ package com.waz.zclient.usersearch.domain
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.threading.Threading
 import com.wire.signals.{EventContext, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
@@ -199,10 +198,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       } else {
         if (searchController.filter.currentValue.forall(_.isEmpty) && !userAccountsController.isExternal.currentValue.get) {
           addGroupCreationButton()
-          guestLinksEnabled.head.foreach {
-            case true  => addGuestRoomCreationButton()
-            case false =>
-          }(Threading.Ui)
+          if (guestLinksEnabled.currentValue.forall(_ == true)) addGuestRoomCreationButton()
         }
         addContacts()
         addGroupConversations()

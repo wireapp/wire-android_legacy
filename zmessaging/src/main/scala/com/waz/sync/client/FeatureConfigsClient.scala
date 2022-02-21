@@ -59,7 +59,7 @@ final class FeatureConfigsClientImpl(implicit
       .executeSafe
 
   override def getGuestLinks: ErrorOrResponse[GuestLinksConfig] =
-    Request.Get(relativePath = fileSharingPath)
+    Request.Get(relativePath = guestLinksPath)
       .withResultType[GuestLinksConfig]
       .withErrorType[ErrorResponse]
       .executeSafe

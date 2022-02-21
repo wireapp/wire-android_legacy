@@ -139,11 +139,8 @@ class FeatureConfigsServiceImpl(syncHandler: FeatureConfigsSyncHandler,
   override def updateGuestLinks(): Future[Unit] = withRecovery {
     for {
       Some(guestLinks) <- syncHandler.fetchGuestLinks
-      _                       =  verbose(l"GuestLinks feature config: $guestLinks")
-      _                       <- storeGuestLinks(guestLinks)
+      _                =  verbose(l"GuestLinks feature config: $guestLinks")
+      _                <- userPrefs(GuestLinks) := guestLinks.isEnabled
     } yield ()
   }
-
-  private def storeGuestLinks(guestLinks: GuestLinksConfig): Future[Unit] =
-    userPrefs(GuestLinks) := guestLinks.isEnabled
 }
