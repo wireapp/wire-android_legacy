@@ -490,7 +490,7 @@ final class CallController(implicit inj: Injector, cxt: WireContext)
           if (users.map(_.domain).toSet.forall(classifiedDomains.contains))
             ClassifiedConversation.Classified
           else
-            ClassifiedConversation.NotClassified
+            ClassifiedConversation.Unclassified
         }
     }
 }

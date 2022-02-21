@@ -170,7 +170,7 @@ class ConversationFragment extends FragmentHelper {
           view.setBackgroundColor(getColor(R.color.background_light))
           view.setVisible(true)
         }
-      case ClassifiedConversation.NotClassified =>
+      case ClassifiedConversation.Unclassified =>
         vh.foreach { view =>
           view.setBackgroundColor(getColor(R.color.background_dark))
           view.setVisible(true)
@@ -188,7 +188,7 @@ class ConversationFragment extends FragmentHelper {
           view.setTextColor(getColor(R.color.background_dark))
           view.setVisible(true)
         }
-      case ClassifiedConversation.NotClassified =>
+      case ClassifiedConversation.Unclassified =>
         vh.foreach { view =>
           view.setTransformedText(getString(R.string.conversation_is_unclassified))
           view.setTextColor(getColor(R.color.background_light))

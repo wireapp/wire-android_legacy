@@ -21,9 +21,12 @@ final class BlockedUserFragment extends UntabbedRequestFragment {
 
   override protected val Tag: String = BlockedUserFragment.Tag
 
-  override protected lazy val footerCallback = new FooterMenuCallback {
+  override protected lazy val footerCallback: FooterMenuCallback = new FooterMenuCallback {
     override def onLeftActionClicked(): Unit =
-      inject[UsersController].unblockUser(userToConnectId).foreach(_ => getActivity.onBackPressed())
+      for {
+        Some(userId) <- userToConnectId.head
+        _            <- inject[UsersController].unblockUser(userId)
+      } yield getActivity.onBackPressed()
 
     override def onRightActionClicked(): Unit =
       for {
@@ -36,8 +39,9 @@ final class BlockedUserFragment extends UntabbedRequestFragment {
 
   override protected def initFooterMenu(): Unit = returning( view[FooterMenu](R.id.not_tabbed_footer) ) { vh =>
     for {
-      Some(user) <- participantsController.getUser(userToConnectId)
-      false       = user.connection == ConnectionStatus.BlockedDueToMissingLegalHoldConsent
+      Some(userId) <- userToConnectId.head
+      Some(user)   <- participantsController.getUser(userId)
+      false        =  user.connection == ConnectionStatus.BlockedDueToMissingLegalHoldConsent
     } yield {
       vh.foreach { menu =>
         menu.setLeftActionText(getString(R.string.glyph__block))
