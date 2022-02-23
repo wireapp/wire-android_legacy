@@ -115,5 +115,7 @@ When importing project in Android Studio **do not allow** gradle plugin update. 
 
 In Android studio, this can be done in `File` -> `Project Structure` -> `Project` -> `Android Gradle Plugin Version` -> `3.2.1`
 
+Be sure to set the Java JDK to 8 in `File` -> `Settings` -> `Build, Execution, Deployment` -> `Build Tools` -> `Gradle` -> `Gradle JDK` -> `1.8`
+
 ### Translations
 Translation: https://crowdin.com/projects/wire
