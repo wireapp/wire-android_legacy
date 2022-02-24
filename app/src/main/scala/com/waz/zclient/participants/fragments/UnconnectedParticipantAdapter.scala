@@ -27,7 +27,7 @@ import com.waz.zclient.participants.ParticipantsController.ClassifiedConversatio
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.getColor
 import com.wire.signals.{EventStream, SourceStream}
-import com.waz.zclient.{BuildConfig, R}
+import com.waz.zclient.R
 
 final class UnconnectedParticipantAdapter(userId:      UserId,
                                           isGuest:     Boolean,
