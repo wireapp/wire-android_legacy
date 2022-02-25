@@ -25,10 +25,17 @@ final class SupportedApiClientImpl(implicit httpClient: HttpClient)
       .withResultType[SupportedApiConfig]
       .withErrorType[ErrorResponse]
       .executeSafe
+      .recover {
+        // If response is 404, then return SupportedApiConfig with only v0
+            // TODO: how to test this?
+        case e: ErrorResponse => if (e.code == 404) Right(SupportedApiClient.v0OnlyApiConfig) else Left(e)
+      }
   }
 }
 
 object SupportedApiClient {
+
+  val v0OnlyApiConfig = SupportedApiConfig(List(0), false, "")
 
   implicit lazy val Decoder: JsonDecoder[SupportedApiConfig] = new JsonDecoder[SupportedApiConfig] {
     override def apply(implicit js: JSONObject): SupportedApiConfig = {
