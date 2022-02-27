@@ -19,6 +19,7 @@ package com.waz.service
 
 import com.waz.service.BackendConfig.FederationSupport
 import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
+import com.waz.sync.client.SupportedApiConfig
 import com.waz.utils.wrappers.URI
 import com.waz.znet.ServerTrust
 
@@ -29,9 +30,10 @@ final class BackendConfig(private var _environment: String,
                           private var _teamsUrl: URI,
                           private var _accountsUrl: URI,
                           private var _websiteUrl: URI,
-                          private var _apiVersion: Int,
                           val firebaseOptions: FirebaseOptions,
-                          val pin: CertificatePin = ServerTrust.wirePin) {
+                          val pin: CertificatePin = ServerTrust.wirePin,
+                          private var _apiVersionInformation: Option[SupportedApiConfig] = None
+                         ) {
 
   val pushSenderId: String = firebaseOptions.pushSenderId
 
@@ -43,16 +45,20 @@ final class BackendConfig(private var _environment: String,
   def teamsUrl: URI = _teamsUrl
   def accountsUrl: URI = _accountsUrl
   def websiteUrl: URI = _websiteUrl
-  def apiVersion: Int = _apiVersion
+  def agreedApiVersion: Option[Int] = _apiVersionInformation.flatMap { _.highestCommonAPIVersion(SupportedApiConfig.supportedBackendAPIVersions) }
+  def apiVersionInformation: Option[SupportedApiConfig] = _apiVersionInformation
 
-  def baseUrlWithApi: URI =
-    if (_apiVersion == 0)
-      _baseUrl
-    else
-      _baseUrl.buildUpon.appendPath(s"v$apiVersion").build
+  def baseUrlWithApi: URI = agreedApiVersion match {
+    case Some(x) if x > 0 =>
+      // sadly the following, nicer line will crash due to a clash of library versions
+      // _baseUrl.buildUpon.appendPath(s"v$x").build
+      URI.parse(_baseUrl + s"/v$x")
+    case Some(x) if x == 0 =>  _baseUrl
+    case None => _baseUrl
+  }
 
   def federationSupport: FederationSupport =
-    FederationSupport(apiVersion >= BackendConfig.FederationSupportApiVersion)
+    FederationSupport(apiVersionInformation.getOrElse(SupportedApiConfig.v0OnlyApiConfig).federation)
 
   def update(configResponse: BackendConfigResponse): Unit = {
     _environment = configResponse.title
@@ -64,8 +70,9 @@ final class BackendConfig(private var _environment: String,
     _websiteUrl = URI.parse(configResponse.endpoints.websiteURL.toString)
   }
 
-  def updateApiVersion(newApiVersion: Int): Unit =
-    _apiVersion = newApiVersion
+  def updateSupportedAPIConfig(supportedApiConfig: SupportedApiConfig): Unit = {
+    _apiVersionInformation = Some(supportedApiConfig)
+  }
 
   override def toString: String =
     s"""
@@ -78,7 +85,8 @@ final class BackendConfig(private var _environment: String,
       |  teamsUrl:      $teamsUrl,
       |  accountsUrl:   $accountsUrl,
       |  websiteUrl:    $websiteUrl,
-      |  apiVersion:    $apiVersion
+      |  agreedApiVersion:    $agreedApiVersion,
+      |  apiVersionInformation: $apiVersionInformation
       |)
       |""".stripMargin
 }
@@ -91,9 +99,10 @@ object BackendConfig {
             teamsUrl: String,
             accountsUrl: String,
             websiteUrl: String,
-            apiVersion: Int,
             firebaseOptions: FirebaseOptions,
-            pin: CertificatePin = ServerTrust.wirePin): BackendConfig =
+            pin: CertificatePin = ServerTrust.wirePin,
+            apiVersionInformation: Option[SupportedApiConfig] = None
+           ): BackendConfig =
     new BackendConfig(
       environment,
       URI.parse(baseUrl),
@@ -102,11 +111,11 @@ object BackendConfig {
       URI.parse(teamsUrl),
       URI.parse(accountsUrl),
       URI.parse(websiteUrl),
-      apiVersion,
       firebaseOptions,
-      pin)
+      pin,
+      apiVersionInformation
+    )
 
-  val FederationSupportApiVersion: Int = 1
   final case class FederationSupport(isSupported: Boolean)
 }
 

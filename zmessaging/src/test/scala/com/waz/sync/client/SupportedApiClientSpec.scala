@@ -1,6 +1,6 @@
 /*
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2022 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers {
   feature("Response parsing") {
     scenario("Parse API version response (all fields)") {
 
-      val response = SupportedApiClient.Decoder(clientResponse(List(2,3), Option(true), Option("foo.com")))
+      val response = SupportedApiConfig.Decoder(clientResponse(List(2,3), Option(true), Option("foo.com")))
 
       response.supported shouldEqual List(2,3)
       response.federation shouldEqual true
@@ -52,7 +52,7 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers {
 
     scenario("Parse API version response (no fields)") {
 
-      val response = SupportedApiClient.Decoder(clientResponse(List(3,45), Option.empty, Option.empty))
+      val response = SupportedApiConfig.Decoder(clientResponse(List(3,45), Option.empty, Option.empty))
 
       response.supported shouldEqual List(3,45)
       response.federation shouldEqual false
@@ -61,39 +61,57 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers {
 
     scenario("Parse API version response (empty list)") {
 
-      val response = SupportedApiClient.Decoder(clientResponse(List.empty, Option.empty, Option.empty))
+      val response = SupportedApiConfig.Decoder(clientResponse(List.empty, Option.empty, Option.empty))
       response.supported shouldEqual List.empty
     }
 
     scenario("Find common API version (one version)") {
-      val response = SupportedApiClient.Decoder(clientResponse(List(3), Option.empty, Option.empty))
+      val response = SupportedApiConfig.Decoder(clientResponse(List(3), Option.empty, Option.empty))
       response.highestCommonAPIVersion(Set(3)) shouldEqual Option(3)
     }
 
     scenario("Find common API version (no common version)") {
-      val response = SupportedApiClient.Decoder(clientResponse(List(3,4,9), Option.empty, Option.empty))
+      val response = SupportedApiConfig.Decoder(clientResponse(List(3,4,9), Option.empty, Option.empty))
       response.highestCommonAPIVersion(Set(1, 14, 999)) shouldEqual Option.empty
     }
 
     scenario("Find common API version (highest supported)") {
-      val response = SupportedApiClient.Decoder(clientResponse(List(3,4,9), Option.empty, Option.empty))
+      val response = SupportedApiConfig.Decoder(clientResponse(List(3,4,9), Option.empty, Option.empty))
       response.highestCommonAPIVersion(Set(1, 4, 9, 15)) shouldEqual Option(9)
     }
 
     scenario("Find common API version (lowest supported)") {
-      val response = SupportedApiClient.Decoder(clientResponse(List(3,4,9), Option.empty, Option.empty))
+      val response = SupportedApiConfig.Decoder(clientResponse(List(3,4,9), Option.empty, Option.empty))
       response.highestCommonAPIVersion(Set(1, 2, 3, 6)) shouldEqual Option(3)
     }
 
     scenario("Find common API version (middle supported)") {
-      val response = SupportedApiClient.Decoder(clientResponse(List(3,4,9), Option.empty, Option.empty))
+      val response = SupportedApiConfig.Decoder(clientResponse(List(3,4,9), Option.empty, Option.empty))
       response.highestCommonAPIVersion(Set(4, 10)) shouldEqual Option(4)
     }
 
     scenario("Find common API version (zero)") {
-      val response = SupportedApiClient.Decoder(clientResponse(List(0, 1), Option.empty, Option.empty))
+      val response = SupportedApiConfig.Decoder(clientResponse(List(0, 1), Option.empty, Option.empty))
       response.highestCommonAPIVersion(Set(0, 10)) shouldEqual Option(0)
     }
 
+  }
+
+  feature("Serialize & deserialize") {
+
+    val conf1 = SupportedApiConfig(List(8, 9), true, "foo.bar")
+    val conf2 = SupportedApiConfig(List(0, 1, 4), false, "")
+
+    scenario("JSON") {
+      SupportedApiConfig.Decoder(SupportedApiConfig.Encoder(conf1)) shouldEqual conf1
+      SupportedApiConfig.Decoder(SupportedApiConfig.Encoder(conf2)) shouldEqual conf2
+    }
+
+    scenario("String") {
+      SupportedApiConfig.fromString(conf1.toString) shouldEqual Some(conf1)
+      SupportedApiConfig.fromString(conf2.toString) shouldEqual Some(conf2)
+      SupportedApiConfig.fromString("") shouldEqual None
+      SupportedApiConfig.fromString("aaa") shouldEqual None
+    }
   }
 }

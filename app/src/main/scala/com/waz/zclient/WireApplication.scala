@@ -19,7 +19,6 @@ package com.waz.zclient
 
 import java.io.File
 import java.util.Calendar
-
 import android.app.{Activity, ActivityManager, NotificationManager}
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
@@ -51,7 +50,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
-import com.waz.sync.client.{CustomBackendClient, SupportedApiClient}
+import com.waz.sync.client.{CustomBackendClient, SupportedApiClient, SupportedApiConfig}
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.utils.SafeBase64
@@ -98,6 +97,7 @@ import org.threeten.bp.Clock
 import scala.concurrent.Future
 
 object WireApplication extends DerivedLogTag {
+
   var APP_INSTANCE: WireApplication = _
 
   def isInitialized: Boolean =
@@ -421,13 +421,18 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
   private def updateSupportedApiVersions(backend: BackendConfig): Unit =
     inject[SupportedApiClient].getSupportedApiVersions(backend.baseUrl).foreach {
-      case Right(versions) if versions.max.exists(_ > backend.apiVersion) =>
-        verbose(l"change in supported API versions: $versions")
-        versions.max.foreach { newVersion =>
-          backend.updateApiVersion(newVersion)
-          ZMessaging.setBackend(backend)
-          inject[BackendController].storeSupportedApiVersion(newVersion)
+      case Right(supportedApiConfig) => {
+        verbose(l"change in supported API versions: $supportedApiConfig")
+        backend.updateSupportedAPIConfig(supportedApiConfig)
+        ZMessaging.setBackend(backend)
+        inject[BackendController].storeSupportedApiConfig(supportedApiConfig)
+        backend.agreedApiVersion match {
+          case Some(version) =>
+            verbose(l"Agreed on API version: $version")
+          case None => error(l"Can't agree on API version: backend: ${supportedApiConfig.supported}, app: ${SupportedApiConfig.supportedBackendAPIVersions}")
+          // TODO: open incompatibility popup
         }
+      }
       case Left(err) =>
         warn(l"Unable to check for supported API versions: ${err.message} ")
       case _ =>

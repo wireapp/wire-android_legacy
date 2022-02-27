@@ -22,6 +22,7 @@ import com.waz.utils.SafeBase64
 
 object Backend {
 
+
   lazy val byName: Map[String, BackendConfig] =
     Seq(StagingBackend, QaBackend, ProdBackend, AntaBackend, BellaBackend, ChalaBackend).map(b => b.environment -> b).toMap
 
@@ -48,7 +49,6 @@ object Backend {
     teamsUrl = "https://wire-teams-staging.zinfra.io",
     accountsUrl = "https://wire-account-staging.zinfra.io",
     websiteUrl = "https://wire.com",
-    apiVersion = 0,
     StagingFirebaseOptions,
     certPin)
 
@@ -61,7 +61,6 @@ object Backend {
     teamsUrl = "https://teams.qa-demo.wire.link",
     accountsUrl = "https://account.qa-demo.wire.link",
     websiteUrl = "https://webapp.qa-demo.wire.link",
-    apiVersion = 0,
     StagingFirebaseOptions,
     certPin)
 
@@ -73,7 +72,6 @@ object Backend {
     teamsUrl = BuildConfig.TEAMS_URL,
     accountsUrl = BuildConfig.ACCOUNTS_URL,
     websiteUrl = BuildConfig.WEBSITE_URL,
-    apiVersion = 0,
     ProdFirebaseOptions,
     certPin)
 
@@ -85,7 +83,6 @@ object Backend {
     teamsUrl = "https://teams.anta.wire.link",
     accountsUrl = "https://account.anta.wire.link",
     websiteUrl = "https://wire.com",
-    apiVersion = 1,
     StagingFirebaseOptions,
     certPin)
 
@@ -97,7 +94,6 @@ object Backend {
     teamsUrl = "https://teams.bella.wire.link",
     accountsUrl = "https://account.bella.wire.link",
     websiteUrl = "https://wire.com",
-    apiVersion = 1,
     StagingFirebaseOptions,
     certPin)
 
@@ -109,7 +105,6 @@ object Backend {
     teamsUrl = "https://teams.chala.wire.link",
     accountsUrl = "https://account.chala.wire.link",
     websiteUrl = "https://wire.com",
-    apiVersion = 1,
     StagingFirebaseOptions,
     certPin)
 }
