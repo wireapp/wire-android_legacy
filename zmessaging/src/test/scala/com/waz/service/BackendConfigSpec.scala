@@ -17,17 +17,18 @@
  */
 package com.waz.service
 
-import com.waz.specs.AndroidFreeSpec
+import com.waz.specs.ZSpec
 import com.waz.sync.client.SupportedApiConfig
 import com.waz.utils.wrappers.URI
+import org.junit.Test
 import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(classOf[JUnitRunner])
-class BackendConfigSpec extends AndroidFreeSpec {
+@RunWith(classOf[RobolectricTestRunner])
+class BackendConfigSpec extends ZSpec {
 
-  feature("Supported API configuration") {
-    scenario("No API configuration") {
+  @Test
+  def `test No API configuration`(): Unit = {
       // GIVEN
       val baseUrl = "https://wire.example.com"
       val backendConfig = BackendConfig(
@@ -48,7 +49,8 @@ class BackendConfigSpec extends AndroidFreeSpec {
       backendConfig.federationSupport.isSupported shouldEqual false
     }
 
-    scenario("V0 API configuration") {
+  @Test
+  def `test V0 API configuration`(): Unit = {
       // GIVEN
       val baseUrl = "https://wire.example.com"
       val apiVersionConfig = SupportedApiConfig(List(0), federation = false, "example.com")
@@ -72,7 +74,8 @@ class BackendConfigSpec extends AndroidFreeSpec {
       backendConfig.federationSupport.isSupported shouldEqual false
     }
 
-    scenario("V1 API configuration") {
+  @Test
+  def `test V1 API configuration`(): Unit = {
       // GIVEN
       val baseUrl = "https://wire.example.com"
       val apiVersionConfig = SupportedApiConfig(List(0, 1, 9999), federation = true, "example.com")
@@ -95,5 +98,4 @@ class BackendConfigSpec extends AndroidFreeSpec {
       backendConfig.baseUrlWithApi.toString shouldEqual baseUrl+"/v1"
       backendConfig.federationSupport.isSupported shouldEqual true
     }
-  }
 }

@@ -50,9 +50,7 @@ final class BackendConfig(private var _environment: String,
 
   def baseUrlWithApi: URI = agreedApiVersion match {
     case Some(x) if x > 0 =>
-      // sadly the following, nicer line will crash due to a clash of library versions
-      // _baseUrl.buildUpon.appendPath(s"v$x").build
-      URI.parse(_baseUrl + s"/v$x")
+      _baseUrl.buildUpon.appendPath(s"v$x").build
     case Some(x) if x == 0 =>  _baseUrl
     case None => _baseUrl
   }
