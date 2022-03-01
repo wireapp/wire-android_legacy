@@ -18,13 +18,23 @@
 package com.waz.sync.client
 
 
+import com.waz.threading.Threading
+import com.waz.utils.wrappers.URI
+import com.waz.znet2.HttpClientOkHttpImpl
+import com.waz.znet2.http.Request.UrlCreator
+import okhttp3.mockwebserver.{MockResponse, MockWebServer}
 import org.json.{JSONArray, JSONObject}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.{FeatureSpec, Matchers}
+import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
+import org.scalatest.{BeforeAndAfter, FeatureSpec, Matchers}
+import scala.concurrent.Await
 
 @RunWith(classOf[JUnitRunner])
-class SupportedApiClientSpec extends FeatureSpec with Matchers {
+class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAfter {
+
+  val conf1 = SupportedApiConfig(List(8, 9), true, "foo.bar")
+  val conf2 = SupportedApiConfig(List(0, 1, 4), false, "")
 
   def clientResponse(
                       supported: List[Int],
@@ -40,7 +50,108 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers {
     obj
   }
 
-  feature("Response parsing") {
+  private var mockServer: MockWebServer = _
+
+  private implicit val urlCreator: UrlCreator = UrlCreator.create(relativeUrl => mockServer.url(relativeUrl).url())
+
+  before {
+    mockServer = new MockWebServer()
+    mockServer.start()
+  }
+
+  after {
+    mockServer.shutdown()
+
+  }
+  private def createClient(): HttpClientOkHttpImpl = {
+    new HttpClientOkHttpImpl(HttpClientOkHttpImpl.createOkHttpClient()(Threading.IO))(Threading.IO)
+  }
+
+  feature("Response parsing (HTTP)") {
+
+    scenario("404 error") {
+
+      // GIVEN
+      val client = createClient()
+      val sut = new SupportedApiClientImpl()(client)
+
+      mockServer.enqueue(
+        new MockResponse()
+          .setResponseCode(404)
+      )
+
+      // WHEN
+      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+
+      // THEN
+      val result = Await.result(future, 5.seconds)
+      result.isRight shouldEqual true
+      result.right.map { r =>
+        r.supported shouldEqual List(0)
+        r.federation shouldEqual false
+        r.domain shouldEqual ""
+      }
+    }
+
+    scenario("Non-404 error") {
+
+      // GIVEN
+      val client = createClient()
+      val sut = new SupportedApiClientImpl()(client)
+
+      mockServer.enqueue(
+        new MockResponse()
+          .setResponseCode(500)
+      )
+
+      // WHEN
+      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+
+      // THEN
+      val result = Await.result(future, 5.seconds)
+      result.isLeft shouldEqual true
+    }
+
+    scenario("JSON response") {
+
+      // GIVEN
+      val client = createClient()
+      val sut = new SupportedApiClientImpl()(client)
+
+      mockServer.enqueue(
+        new MockResponse()
+          .setResponseCode(200)
+          .setHeader("Content-Type", "application/json")
+          .setBody(conf1.toString)
+      )
+
+      // WHEN
+      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+
+      // THEN
+      val result = Await.result(future, 5.seconds)
+      result.isRight shouldEqual true
+      result.right.map { r =>
+        r shouldEqual conf1
+      }
+    }
+
+    scenario("Check URI") {
+      // GIVEN
+      val client = createClient()
+      val sut = new SupportedApiClientImpl()(client)
+
+      // WHEN
+      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+
+      // THEN
+      val req = mockServer.takeRequest()
+      req.getMethod shouldEqual "GET"
+      req.getPath shouldEqual "/api-version"
+    }
+  }
+
+  feature("Response parsing (JSON)") {
     scenario("Parse API version response (all fields)") {
 
       val response = SupportedApiConfig.Decoder(clientResponse(List(2,3), Option(true), Option("foo.com")))
@@ -98,9 +209,6 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers {
   }
 
   feature("Serialize & deserialize") {
-
-    val conf1 = SupportedApiConfig(List(8, 9), true, "foo.bar")
-    val conf2 = SupportedApiConfig(List(0, 1, 4), false, "")
 
     scenario("JSON") {
       SupportedApiConfig.Decoder(SupportedApiConfig.Encoder(conf1)) shouldEqual conf1

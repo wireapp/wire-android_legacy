@@ -23,10 +23,10 @@ final class SupportedApiClientImpl(implicit httpClient: HttpClient)
       .withResultType[SupportedApiConfig]
       .withErrorType[ErrorResponse]
       .executeSafe
-      .recover {
-        // If response is 404, then return SupportedApiConfig with only v0
-            // TODO: how to test this?
-        case e: ErrorResponse => if (e.code == 404) Right(SupportedApiConfig.v0OnlyApiConfig) else Left(e)
+      .map {
+        case Right(value) => Right(value)
+        case Left(error) if error.code == 404 => Right(SupportedApiConfig.v0OnlyApiConfig)
+        case Left(error) => Left(error)
       }
   }
 }
