@@ -3,7 +3,7 @@ package com.waz.sync.client
 import java.net.URL
 import com.waz.api.impl.ErrorResponse
 import com.waz.utils.JsonDecoder.intArray
-import com.waz.utils.{CirceJSONSupport, JsonDecoder, JsonEncoder}
+import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.utils.wrappers.URI
 import com.waz.znet2.http.{HttpClient, Method, Request}
 import org.json.{JSONArray, JSONObject}
@@ -13,9 +13,10 @@ trait SupportedApiClient {
 }
 
 final class SupportedApiClientImpl(implicit httpClient: HttpClient)
-  extends SupportedApiClient with CirceJSONSupport {
-  import HttpClient.AutoDerivation._
+  extends SupportedApiClient {
+  import com.waz.znet2.http.HttpClient.AutoDerivationOld._
   import HttpClient.dsl._
+  import SupportedApiConfig._
 
   override def getSupportedApiVersions(baseUrl: URI): ErrorOrResponse[SupportedApiConfig] = {
     val appended = baseUrl.buildUpon.appendPath("api-version").build
@@ -59,7 +60,7 @@ object SupportedApiConfig {
     }
   }
 
-  implicit lazy val Decoder: JsonDecoder[SupportedApiConfig] = new JsonDecoder[SupportedApiConfig] {
+  implicit val Decoder: JsonDecoder[SupportedApiConfig] = new JsonDecoder[SupportedApiConfig] {
     override def apply(implicit js: JSONObject): SupportedApiConfig = {
       SupportedApiConfig(if(js.has("supported")) intArray(js.getJSONArray("supported")).toList else List.empty,
         js.optBoolean("federation"),
@@ -67,7 +68,7 @@ object SupportedApiConfig {
     }
   }
 
-  implicit lazy val Encoder: JsonEncoder[SupportedApiConfig] = new JsonEncoder[SupportedApiConfig] {
+  implicit val Encoder: JsonEncoder[SupportedApiConfig] = new JsonEncoder[SupportedApiConfig] {
     override def apply(v: SupportedApiConfig): JSONObject = new JSONObject()
       .put("supported", new JSONArray(v.supported.toArray))
       .put("federation", v.federation)
