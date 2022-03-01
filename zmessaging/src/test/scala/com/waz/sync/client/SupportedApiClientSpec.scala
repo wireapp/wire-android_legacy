@@ -28,6 +28,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import org.scalatest.{BeforeAndAfter, FeatureSpec, Matchers}
+
 import scala.concurrent.Await
 
 @RunWith(classOf[JUnitRunner])
@@ -112,7 +113,7 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAft
       result.isLeft shouldEqual true
     }
 
-    scenario("JSON response") {
+    scenario("JSON response (all fields)") {
 
       // GIVEN
       val client = createClient()
@@ -133,6 +134,30 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAft
       result.isRight shouldEqual true
       result.right.map { r =>
         r shouldEqual conf1
+      }
+    }
+
+    scenario("JSON response (only mandatory fields)") {
+
+      // GIVEN
+      val client = createClient()
+      val sut = new SupportedApiClientImpl()(client)
+
+      mockServer.enqueue(
+        new MockResponse()
+          .setResponseCode(200)
+          .setHeader("Content-Type", "application/json")
+          .setBody("""{"supported": [0,1]}""")
+      )
+
+      // WHEN
+      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+
+      // THEN
+      val result = Await.result(future, 5.seconds)
+      result.isRight shouldEqual true
+      result.right.map { r =>
+        r.supported shouldEqual List(0, 1)
       }
     }
 
@@ -164,6 +189,15 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAft
     scenario("Parse API version response (no fields)") {
 
       val response = SupportedApiConfig.Decoder(clientResponse(List(3,45), Option.empty, Option.empty))
+
+      response.supported shouldEqual List(3,45)
+      response.federation shouldEqual false
+      response.domain shouldEqual ""
+    }
+
+    scenario("Parse API version response (raw object no fields)") {
+
+      val response = SupportedApiConfig.Decoder(new JSONObject().put("supported", new JSONArray(List(3, 45).toArray)))
 
       response.supported shouldEqual List(3,45)
       response.federation shouldEqual false
