@@ -19,7 +19,10 @@ final class SupportedApiClientImpl(implicit httpClient: HttpClient)
   import SupportedApiConfig._
 
   override def getSupportedApiVersions(baseUrl: URI): ErrorOrResponse[SupportedApiConfig] = {
-    val appended = baseUrl.buildUpon.appendPath("api-version").build
+    val appended = baseUrl.toString + "api-version"
+    // unfortunately, the nicer code:
+    //      val appended = baseUrl.buildUpon.appendPath("api-version").build
+    // causes a `NoSuchMethodException` when run in tests
     Request.create(Method.Get, new URL(appended.toString))
       .withResultType[SupportedApiConfig]
       .withErrorType[ErrorResponse]
