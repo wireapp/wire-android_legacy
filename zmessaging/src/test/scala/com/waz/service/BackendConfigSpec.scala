@@ -44,6 +44,7 @@ class BackendConfigSpec extends ZSpec {
       // THEN
       backendConfig.apiVersionInformation shouldEqual None
       backendConfig.agreedApiVersion shouldEqual None
+      backendConfig.couldNotAgreeOnApiVersion shouldEqual false
       backendConfig.baseUrl shouldEqual URI.parse(baseUrl)
       backendConfig.baseUrlWithApi shouldEqual URI.parse(baseUrl)
       backendConfig.federationSupport.isSupported shouldEqual false
@@ -69,6 +70,7 @@ class BackendConfigSpec extends ZSpec {
       // THEN
       backendConfig.apiVersionInformation shouldEqual Some(apiVersionConfig)
       backendConfig.agreedApiVersion shouldEqual Some(0)
+      backendConfig.couldNotAgreeOnApiVersion shouldEqual false
       backendConfig.baseUrl shouldEqual URI.parse(baseUrl)
       backendConfig.baseUrlWithApi shouldEqual URI.parse(baseUrl)
       backendConfig.federationSupport.isSupported shouldEqual false
@@ -94,8 +96,34 @@ class BackendConfigSpec extends ZSpec {
       // THEN
       backendConfig.apiVersionInformation shouldEqual Some(apiVersionConfig)
       backendConfig.agreedApiVersion shouldEqual Some(1)
+      backendConfig.couldNotAgreeOnApiVersion shouldEqual false
       backendConfig.baseUrl shouldEqual URI.parse(baseUrl)
       backendConfig.baseUrlWithApi.toString shouldEqual baseUrl+"/v1"
       backendConfig.federationSupport.isSupported shouldEqual true
     }
+
+  def `test non-matching API configuration`(): Unit = {
+    // GIVEN
+    val baseUrl = "https://wire.example.com"
+    val apiVersionConfig = SupportedApiConfig(List(999999), federation = true, "example.com")
+    val backendConfig = BackendConfig(
+      "foo",
+      baseUrl,
+      "https://ws.example.com",
+      None,
+      "teams",
+      "accounts",
+      "website",
+      FirebaseOptions("aaa", "bbb", "ccc"),
+      apiVersionInformation = Some(apiVersionConfig)
+    )
+
+    // THEN
+    backendConfig.apiVersionInformation shouldEqual Some(apiVersionConfig)
+    backendConfig.agreedApiVersion shouldEqual None
+    backendConfig.couldNotAgreeOnApiVersion shouldEqual true
+    backendConfig.baseUrl shouldEqual URI.parse(baseUrl)
+    backendConfig.baseUrlWithApi.toString shouldEqual baseUrl+"/v1"
+    backendConfig.federationSupport.isSupported shouldEqual true
+  }
 }

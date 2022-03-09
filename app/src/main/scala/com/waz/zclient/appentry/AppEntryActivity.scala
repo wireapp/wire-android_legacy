@@ -28,7 +28,7 @@ import androidx.fragment.app.{Fragment, FragmentManager, FragmentTransaction}
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
-import com.waz.service.{AccountsService, GlobalModule}
+import com.waz.service.{AccountsService, GlobalModule, ZMessaging}
 import com.waz.sync.client.CustomBackendClient
 import com.waz.threading.Threading
 import com.wire.signals.Signal
@@ -105,8 +105,6 @@ final class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
     }.onUi(t => v.setText(t))
   }
 
-  ForceUpdateActivity.checkBlacklist(this)
-
   override def onBackPressed(): Unit = {
     getSupportFragmentManager.getFragments.asScala.find {
       case f: OnBackPressedListener if f.onBackPressed() => true
@@ -181,6 +179,11 @@ final class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
       case Some((_, reason)) =>
         showLogoutWarningIfNeeded(reason).foreach(_ => userAccountsController.mostRecentLoggedOutAccount ! None)
       case None =>
+    }
+
+    ForceUpdateActivity.checkBlacklist(this)
+    ZMessaging.currentGlobal.backendConfiguration.foreach { _ =>
+      ForceUpdateActivity.checkBlacklist(this)
     }
   }
 

@@ -34,7 +34,7 @@ final class SupportedApiClientImpl(implicit httpClient: HttpClient)
 
 final case class SupportedApiConfig(supported: List[Int], federation: Boolean, domain: String) {
 
-  def highestCommonAPIVersion(versions: Set[Int]): Option[Int] =
+  def highestCommonAPIVersion(versions: Set[Int] = SupportedApiConfig.supportedBackendAPIVersions): Option[Int] =
     versions.intersect(supported.toSet).toList.sorted.lastOption
 
   def serialized: JSONObject = SupportedApiConfig.Encoder(this)

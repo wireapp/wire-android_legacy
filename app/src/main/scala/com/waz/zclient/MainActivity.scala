@@ -176,6 +176,9 @@ class MainActivity extends BaseActivity
     }
 
     ForceUpdateActivity.checkBlacklist(this)
+    ZMessaging.currentGlobal.backendConfiguration.foreach { _ =>
+      ForceUpdateActivity.checkBlacklist(this)
+    }
 
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
 

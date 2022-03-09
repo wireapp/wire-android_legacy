@@ -45,7 +45,8 @@ final class BackendConfig(private var _environment: String,
   def teamsUrl: URI = _teamsUrl
   def accountsUrl: URI = _accountsUrl
   def websiteUrl: URI = _websiteUrl
-  def agreedApiVersion: Option[Int] = _apiVersionInformation.flatMap { _.highestCommonAPIVersion(SupportedApiConfig.supportedBackendAPIVersions) }
+  def agreedApiVersion: Option[Int] = _apiVersionInformation.flatMap { _.highestCommonAPIVersion() }
+  def couldNotAgreeOnApiVersion: Boolean = agreedApiVersion.isEmpty && apiVersionInformation.isDefined
   def apiVersionInformation: Option[SupportedApiConfig] = _apiVersionInformation
 
   def baseUrlWithApi: URI = agreedApiVersion match {

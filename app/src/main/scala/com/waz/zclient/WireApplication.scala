@@ -35,6 +35,7 @@ import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE.{error, verbose}
 import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
@@ -423,15 +424,13 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[SupportedApiClient].getSupportedApiVersions(backend.baseUrl).foreach {
       case Right(supportedApiConfig) => {
         verbose(l"change in supported API versions: $supportedApiConfig")
+        backend.agreedApiVersion match {
+          case Some(version) => verbose(l"Agreed on API version: $version")
+          case None => error(l"Can't agree on API version: backend: ${supportedApiConfig.supported}, app: ${SupportedApiConfig.supportedBackendAPIVersions}")
+        }
         backend.updateSupportedAPIConfig(supportedApiConfig)
         ZMessaging.setBackend(backend)
         inject[BackendController].storeSupportedApiConfig(supportedApiConfig)
-        backend.agreedApiVersion match {
-          case Some(version) =>
-            verbose(l"Agreed on API version: $version")
-          case None => error(l"Can't agree on API version: backend: ${supportedApiConfig.supported}, app: ${SupportedApiConfig.supportedBackendAPIVersions}")
-          // TODO: open incompatibility popup
-        }
       }
       case Left(err) =>
         warn(l"Unable to check for supported API versions: ${err.message} ")

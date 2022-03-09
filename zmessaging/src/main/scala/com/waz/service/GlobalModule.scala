@@ -29,6 +29,7 @@ import com.waz.cache.CacheService
 import com.waz.client.{RegistrationClient, RegistrationClientImpl}
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE.{error, toLogHelper, verbose}
 import com.waz.log.{LogsService, LogsServiceImpl}
 import com.waz.permissions.PermissionsService
 import com.waz.service.BackendConfig.FederationSupport
@@ -47,6 +48,7 @@ import com.waz.zms.BuildConfig
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 import com.waz.znet2.{HttpClientOkHttpImpl, OkHttpUserAgentInterceptor}
+import com.wire.signals.{Signal, SourceSignal}
 import okhttp3.Interceptor
 
 import scala.concurrent.ExecutionContext
@@ -108,6 +110,8 @@ trait GlobalModule {
   def httpProxy:                Option[Proxy]
 
   def fileRestrictionList:      FileRestrictionList
+
+  def backendConfiguration:      Signal[BackendConfig]
 }
 
 final class GlobalModuleImpl(val context:             AContext,
@@ -119,8 +123,10 @@ final class GlobalModuleImpl(val context:             AContext,
                              val fileRestrictionList: FileRestrictionList,
                              val defaultProxyDetails: ProxyDetails
                             ) extends GlobalModule with DerivedLogTag { global =>
+
   def setBackend(newBackend: BackendConfig): Unit = {
     _backend = newBackend
+    _backendConfiguration ! newBackend
   }
 
   def backend:                 BackendConfig                    = _backend
@@ -194,6 +200,11 @@ final class GlobalModuleImpl(val context:             AContext,
   lazy val supportedApiClient:  SupportedApiClient               = new SupportedApiClientImpl()
 
   lazy val httpProxy:           Option[Proxy]                    = HttpProxy(metadata, defaultProxyDetails).proxy
+
+  private def _backendConfiguration = new SourceSignal[BackendConfig](None)
+  override def backendConfiguration: Signal[BackendConfig] = _backendConfiguration
+
+  _backendConfiguration ! backend
 }
 
 class EmptyGlobalModule extends GlobalModule {
@@ -247,5 +258,7 @@ class EmptyGlobalModule extends GlobalModule {
   override def supportedApiClient:       SupportedApiClient                                  = ???
   override def httpProxy:                Option[Proxy]                                       = ???
   override def fileRestrictionList:      FileRestrictionList                                 = ???
+
+  override def backendConfiguration: Signal[BackendConfig] = ???
 }
 
