@@ -17,7 +17,7 @@ class ConnectionSpecsFactoryTest : UnitTest() {
     @Test
     // This test conforms to the following testing standards:
     // @SF.Messages @TSFI.RESTfulAPI @S0.2 @S0.3 @S3
-    // Make sure OkHttp's connectionSpecs can be used to make sure the HTTPS connection is TLS 1.2 and uses good cipher suites
+    // Make sure OkHttp's connectionSpecs can be used to check the HTTPS connection is TLS 1.2 and uses good cipher suites
     fun `Given connectionSpecs are created, then ensure list contains modern specification`() {
         val connectionSpecs = ConnectionSpecsFactory.create()
         with(connectionSpecs[0]) {
