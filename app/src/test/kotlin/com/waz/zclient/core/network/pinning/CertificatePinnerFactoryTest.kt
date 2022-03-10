@@ -18,6 +18,8 @@ class CertificatePinnerFactoryTest : UnitTest() {
     @Test
     // This test conforms to the following testing standards:
     // @SF.Messages @TSFI.RESTfulAPI @S0.2 @S0.3 @S2 @S3 
+    // Makes sure that OkHttp's CertificatePinner can be used to pin certificates
+    // See also: https://square.github.io/okhttp/3.x/okhttp/okhttp3/CertificatePinner.html
     fun `Given CertificatePinner is generated, when pin is injected, then verify pin is generated`() {
         `when`(certificationPin.certificate).thenReturn(certificate)
         `when`(certificationPin.domain).thenReturn(TEST_DOMAIN)

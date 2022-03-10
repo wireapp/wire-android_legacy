@@ -38,6 +38,7 @@ class DecryptionHandlerTest : UnitTest() {
     @Test
     // This test conforms to the following testing standards:
     // @SF.Storage @TSFI.UserInterface @S0.1 @S0.2
+    // Meta data should usually contain salt, hash and nonce for encrypted backup but is empty here
     fun `given backup file, userId, password, when meta data fails, then propagate meta data error`() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
@@ -57,6 +58,7 @@ class DecryptionHandlerTest : UnitTest() {
     @Test
     // This test conforms to the following testing standards:
     // @SF.Storage @TSFI.UserInterface @S0.1 @S0.2
+    // Meta data should usually contain salt, hash and nonce for encrypted backup but is empty here
     fun `given backup file, userId, password, when meta data and hash do not match, then propagate hash error`() {
         val tempDir = createTempDir()
         val backupFile = createTextFile(tempDir)
