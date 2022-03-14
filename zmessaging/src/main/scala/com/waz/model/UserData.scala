@@ -20,7 +20,6 @@ package com.waz.model
 import com.waz.api.Verification
 import com.waz.db.Col._
 import com.waz.db.Dao
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.{api, model}
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.ManagedBy.ManagedBy
@@ -34,7 +33,6 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 
 import scala.concurrent.duration._
 import scala.util.Try
-import com.waz.zms.BuildConfig
 
 final case class UserData(override val id:       UserId,
                           domain:                Domain                 = Domain.Empty,
@@ -77,8 +75,7 @@ final case class UserData(override val id:       UserId,
   lazy val qualifiedId: Option[QualifiedId] = domain.mapOpt(d => QualifiedId(id, d))
   def displayHandle(currentDomain: Domain = Domain.Empty, forceDomain: Boolean = false): String =
     handle match {
-      case Some(h) if BuildConfig.FEDERATION_USER_DISCOVERY && h.nonEmpty &&
-                                 domain.isDefined && (forceDomain || domain != currentDomain) =>
+      case Some(h) if h.nonEmpty && domain.isDefined && (forceDomain || domain != currentDomain) =>
         s"${h.withSymbol}@${domain.str}"
       case Some(h) if h.nonEmpty =>
         h.withSymbol
@@ -139,7 +136,7 @@ final case class UserData(override val id:       UserId,
 
   def isGuest(ourTeamId: Option[TeamId], ourDomain: Domain = Domain.Empty): Boolean = {
     val isNotSameTeam = ourTeamId.isDefined && teamId != ourTeamId
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (domain.isDefined) {
       val isSameDomain = ourDomain == domain
       isNotSameTeam || !isSameDomain
     } else {
@@ -150,7 +147,7 @@ final case class UserData(override val id:       UserId,
   def isExternal(ourTeamId: Option[TeamId], ourDomain: Domain): Boolean = {
     val isSameTeam = teamId.isDefined && teamId == ourTeamId
     val hasPermission = decodeBitmask(permissions._1) == ExternalPermissions
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (domain.isDefined) {
       isSameTeam && hasPermission && ourDomain == domain
     } else {
       isSameTeam && hasPermission
@@ -159,7 +156,7 @@ final case class UserData(override val id:       UserId,
 
   def isInTeam(otherTeamId: Option[TeamId], ourDomain: Domain): Boolean = {
     val isSameTeam = teamId.isDefined && teamId == otherTeamId
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (ourDomain.isDefined) {
       val isSameDomain = ourDomain.isDefined && ourDomain == domain
       isSameTeam && isSameDomain
     } else {

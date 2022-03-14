@@ -19,6 +19,7 @@ package com.waz.service.conversation
 
 import com.waz.content._
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.PushService
@@ -33,9 +34,10 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 class ConversationsUiServiceSpec extends AndroidFreeSpec {
+  val federationSupported: Boolean = false
 
   val selfUserId = UserId()
-  val domain = Domain("chala.wire.link")
+  val domain = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
   val push =            mock[PushService]
   val users =           mock[UserService]
   val convsStorage =    mock[ConversationStorage]
@@ -59,7 +61,9 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
   val userPrefs = new TestUserPreferences()
   private def getService(teamId: Option[TeamId] = None): ConversationsUiService = {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs, userPrefs)
-    new ConversationsUiServiceImpl(selfUserId, teamId, domain, assetService, users, messages, messagesStorage,
+    new ConversationsUiServiceImpl(
+      selfUserId, teamId, domain, FederationSupport(federationSupported), assetService, users, messages,
+      messagesStorage,
       msgContent, members, content, convsStorage, network, convsService, sync, requests, client,
       accounts, tracking, errors, uriHelper, properties)
   }

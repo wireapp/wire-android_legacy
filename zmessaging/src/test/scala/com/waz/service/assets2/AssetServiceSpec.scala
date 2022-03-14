@@ -27,6 +27,7 @@ import com.waz.log.LogSE.{debug, _}
 import com.waz.log.LogShow
 import com.waz.model.errors.NotFoundLocal
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.{AccountsService, UserService}
 import com.waz.service.assets._
 import com.waz.sync.SyncServiceHandle
@@ -44,8 +45,9 @@ import scala.util.{Random, Success}
 
 @RunWith(classOf[JUnitRunner])
 class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with AuthenticationConfig {
+  val federationSupported: Boolean = false
 
-  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Some(Domain("anta.wire.link")) else None
+  private val domain = if (federationSupported) Some(Domain("anta.wire.link")) else None
 
   private val assetStorage        = mock[AssetStorage]
   private val inProgressAssetStorage   = mock[DownloadAssetStorage]
@@ -84,6 +86,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
                       client: AssetClient = client): AssetService =
     new AssetServiceImpl(
       domain.getOrElse(Domain.Empty),
+      FederationSupport(federationSupported),
       assetStorage,
       rawAssetStorage,
       inProgressAssetStorage,

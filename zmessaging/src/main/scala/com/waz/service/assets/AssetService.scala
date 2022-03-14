@@ -26,6 +26,7 @@ import com.waz.log.LogSE._
 import com.waz.model.AssetData.UploadTaskKey
 import com.waz.model._
 import com.waz.model.errors._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.UserService
 import com.waz.service.assets.Asset.{General, Video}
 import com.waz.sync.SyncServiceHandle
@@ -75,6 +76,7 @@ trait AssetService {
 }
 
 final class AssetServiceImpl(currentDomain:        Domain,
+                             federation:           FederationSupport,
                              assetsStorage:        AssetStorage,
                              uploadAssetStorage:   UploadAssetStorage,
                              downloadAssetStorage: DownloadAssetStorage,
@@ -207,7 +209,7 @@ final class AssetServiceImpl(currentDomain:        Domain,
   override def loadPublicContentById(assetId:  AssetId,
                                      callback: Option[ProgressCallback] = None): CancellableFuture[AssetInput] = {
     val response =
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federation.isSupported) {
         val domain =
           CancellableFuture.lift(
             users.findUserByPicture(assetId).map {

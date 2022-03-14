@@ -23,6 +23,7 @@ import com.waz.content.{ConversationStorage, MessagesStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.Cleared
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.UserService
 import com.waz.service.conversation.ConversationsContentUpdaterImpl
 import com.waz.sync.SyncResult
@@ -33,6 +34,7 @@ import com.waz.zms.BuildConfig
 import scala.concurrent.Future
 
 class ClearedSyncHandler(selfUserId:   UserId,
+                         federation:   FederationSupport,
                          convs:        ConversationStorage,
                          convsContent: ConversationsContentUpdaterImpl,
                          users:        UserService,
@@ -69,7 +71,7 @@ class ClearedSyncHandler(selfUserId:   UserId,
         case Some(conv) =>
           val msg = GenericMessage(Uid(), Cleared(conv.remoteId, time))
           val postMsg =
-            if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+            if (federation.isSupported) {
               otrSync.postQualifiedOtrMessage(ConvId(selfUserId.str), msg, isHidden = true)
             } else {
               otrSync.postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true)

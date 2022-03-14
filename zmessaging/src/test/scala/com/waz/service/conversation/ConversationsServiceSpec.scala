@@ -25,6 +25,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GuestRoomStateError.{GeneralError, MemberLimitReached, NotAllowed}
 import com.waz.model.{ConversationData, ConversationRole, _}
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service._
 import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
@@ -35,7 +36,6 @@ import com.waz.sync.client.ConversationsClient
 import com.waz.sync.client.ConversationsClient.{ConversationOverviewResponse, ConversationResponse}
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
-import com.waz.zms.BuildConfig
 import com.wire.signals.{CancellableFuture, EventStream, Signal, SourceSignal}
 import org.json.JSONObject
 import org.threeten.bp.Instant
@@ -44,6 +44,8 @@ import scala.concurrent.Future
 
 class ConversationsServiceSpec extends AndroidFreeSpec {
   import ConversationRole._
+
+  val federationSupported: Boolean = false
 
   private lazy val content        = mock[ConversationsContentUpdater]
   private lazy val messages       = mock[MessagesService]
@@ -80,12 +82,13 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   private val convId = ConvId("conv_id1")
   private val rConvId = RConvId("r_conv_id1")
 
-  private val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  private val domain = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
 
   private lazy val service = new ConversationsServiceImpl(
     None,
     selfUserId,
     domain,
+    FederationSupport(federationSupported),
     push,
     userService,
     usersStorage,
@@ -109,7 +112,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
 
   private def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
     new ConversationsUiServiceImpl(
-      selfUserId, teamId, domain, assets, userService, messages, msgStorage,
+      selfUserId, teamId, domain, FederationSupport(federationSupported), assets, userService, messages, msgStorage,
       msgUpdater, membersStorage, content, convsStorage, network,
       service, sync, requests, convsClient, accounts, tracking, errors, uriHelper,
       properties
@@ -493,7 +496,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   feature("Create a group conversation with qualified users") {
 
     scenario("Create a group conversation with the creator and two users, both contacted") {
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         val teamId = TeamId()
         val convName = Name("conv")
         val conv = ConversationData(team = Some(teamId), name = Some(convName))
@@ -549,7 +552,7 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
     }
 
     scenario("Create a group conversation with the creator and two users, one uncontacted") {
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         val teamId = TeamId()
         val convName = Name("conv")
         val conv = ConversationData(team = Some(teamId), name = Some(convName))

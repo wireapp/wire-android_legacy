@@ -26,6 +26,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.otr.{ClientId, OtrClientIdMap}
 import com.waz.model.{LocalInstant, UserId, _}
 import com.waz.permissions.PermissionsService
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.call.Avs.AvsClosedReason.{AnsweredElsewhere, Normal, StillOngoing}
 import com.waz.service.call.Avs._
 import com.waz.service.call.CallInfo.CallState._
@@ -51,6 +52,8 @@ import scala.util.control.NonFatal
 
 class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
+
+  val federationSupported: Boolean = false
 
   val avs            = mock[Avs]
   val flows          = mock[FlowManagerService]
@@ -1195,7 +1198,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (avs.registerAccount _).expects(*).once().returning(Future.successful(wCall))
 
     val s = new CallingServiceImpl(
-      selfUserId, selfClientId, domain,null, avs, convs, convsService, members, otrSyncHandler,
+      selfUserId, selfClientId, domain, FederationSupport(federationSupported), null, avs, convs, convsService, members, otrSyncHandler,
       flows, messages, media, push, network, prefs, globalPrefs, permissions, httpProxy = None
     )
     result(s.wCall)

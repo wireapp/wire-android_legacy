@@ -19,7 +19,6 @@ package com.waz.zclient
 
 import java.io.File
 import java.util.Calendar
-
 import android.app.{Activity, ActivityManager, NotificationManager}
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
@@ -36,9 +35,11 @@ import com.waz.background.WorkManagerSyncRequestService
 import com.waz.content._
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE.{error, verbose}
 import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service._
 import com.waz.service.assets._
 import com.waz.service.call.GlobalCallingService
@@ -50,7 +51,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
-import com.waz.sync.client.CustomBackendClient
+import com.waz.sync.client.{CustomBackendClient, SupportedApiClient, SupportedApiConfig}
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.utils.SafeBase64
@@ -97,6 +98,7 @@ import org.threeten.bp.Clock
 import scala.concurrent.Future
 
 object WireApplication extends DerivedLogTag {
+
   var APP_INSTANCE: WireApplication = _
 
   def isInitialized: Boolean =
@@ -159,6 +161,7 @@ object WireApplication extends DerivedLogTag {
     bind [MetaDataService]                to inject[GlobalModule].metadata
     bind [LogsService]                    to inject[GlobalModule].logsService
     bind [CustomBackendClient]            to inject[GlobalModule].customBackendClient
+    bind [SupportedApiClient]             to inject[GlobalModule].supportedApiClient
 
     import com.waz.threading.Threading.Implicits.Background
     bind [AccountToAssetsStorage] to (userId => inject[AccountsService].getZms(userId).map(_.map(_.assetsStorage)))
@@ -176,6 +179,9 @@ object WireApplication extends DerivedLogTag {
     // but technically we can't guarantee it, hence every time it's used we need to check its value
     // (so, `toProvider`, not `to`)
     bind[Domain] toProvider inject[Signal[ZMessaging]].map(_.selfDomain).currentValue.getOrElse(Domain.Empty)
+
+    // same with the federation support
+    bind[FederationSupport] toProvider inject[GlobalModule].backend.federationSupport
 
     // services  and storages of the current zms
     bind [Signal[ConversationsService]]          to inject[Signal[ZMessaging]].map(_.conversations)
@@ -414,6 +420,23 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
           false
       }
 
+  private def updateSupportedApiVersions(backend: BackendConfig): Unit =
+    inject[SupportedApiClient].getSupportedApiVersions(backend.baseUrl).foreach {
+      case Right(supportedApiConfig) => {
+        verbose(l"change in supported API versions: $supportedApiConfig")
+        backend.agreedApiVersion match {
+          case Some(version) => verbose(l"Agreed on API version: $version")
+          case None => error(l"Can't agree on API version: backend: ${supportedApiConfig.supported}, app: ${SupportedApiConfig.supportedBackendAPIVersions}")
+        }
+        backend.updateSupportedAPIConfig(supportedApiConfig)
+        ZMessaging.setBackend(backend)
+        inject[BackendController].storeSupportedApiConfig(supportedApiConfig)
+      }
+      case Left(err) =>
+        warn(l"Unable to check for supported API versions: ${err.message} ")
+      case _ =>
+    }
+
   def ensureInitialized(backend: BackendConfig): Unit = {
     JobManager.create(this).addJobCreator(new JobCreator {
       override def create(tag: String): Job =
@@ -444,6 +467,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       inject[FileRestrictionList],
       ProxyDetails(BuildConfig.HTTP_PROXY_URL, BuildConfig.HTTP_PROXY_PORT.toInt)
     )
+
+    updateSupportedApiVersions(backend)
 
     val activityLifecycleCallback = inject[ActivityLifecycleCallback]
     // we're unable to check if the callback is already registered - we have to re-register it to be sure

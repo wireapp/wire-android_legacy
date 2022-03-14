@@ -25,7 +25,7 @@ import com.waz.model.otr.Client.DeviceClass
 import com.waz.model.{ConvId, UserId}
 import com.waz.model.otr.{Client, ClientId, UserClients}
 import com.waz.service.messages.MessagesService
-import com.waz.service.{AccountManager, ZMessaging}
+import com.waz.service.{AccountManager, BackendConfig, ZMessaging}
 import com.waz.sync.SyncResult
 import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -33,7 +33,6 @@ import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.BuildConfig
 
 import scala.concurrent.Future
 
@@ -49,6 +48,7 @@ final class ClientsController(implicit inj: Injector) extends Injectable with De
   selfClientId.foreach { clientId => verbose(l"self client id: $clientId") }
 
   private lazy val messagesService = inject[Signal[MessagesService]]
+  private lazy val isFederationSupported = inject[BackendConfig].federationSupport.isSupported
 
   def client(userId: UserId, clientId: ClientId): Signal[Option[Client]] = for {
     manager <- accountManager
@@ -88,7 +88,7 @@ final class ClientsController(implicit inj: Injector) extends Injectable with De
   private def resetSession(convId: ConvId, userId: UserId, clientId: ClientId): Future[SyncResult] = {
     (for {
       z      <- inject[Signal[ZMessaging]].head
-      qId    <- if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      qId    <- if (isFederationSupported) {
                   z.users.qualifiedId(userId).map(Option(_))
                 } else {
                   Future.successful(None)

@@ -21,6 +21,7 @@ import com.waz.api.ConnectionStatus
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService}
 import com.waz.service.teams.TeamsService
 import com.waz.specs.AndroidFreeSpec
@@ -29,13 +30,13 @@ import com.waz.testutils.TestUserPreferences
 import com.waz.utils.Managed
 import com.wire.signals.{EventStream, Signal, SourceSignal}
 import com.waz.utils.wrappers.DB
-import com.waz.zms.BuildConfig
 
 import scala.collection.breakOut
 import scala.collection.generic.CanBuild
 import scala.concurrent.Future
 
 class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
+  val federationSupported: Boolean = false
 
   val emptyTeamId       = Option.empty[TeamId]
   val teamId            = Option(TeamId("59bbc94c-2618-491a-8dba-cf6f94c65873"))
@@ -57,7 +58,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val userPrefs         = new TestUserPreferences
 
   private def userWithName(idSymbol: Symbol, name: String): UserData =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       UserData.withName(id(idSymbol), name).copy(domain = currentDomain)
     } else {
       UserData.withName(id(idSymbol), name)
@@ -260,7 +261,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
 
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         (sync.syncSearchQuery _).expects(query.withDomain(currentDomain.str)).once().onCall { _: SearchQuery =>
           Future.successful[SyncId] {
             querySignal ! Some(queryResults)
@@ -298,7 +299,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
 
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         (sync.syncSearchQuery _).expects(query.withDomain(currentDomain.str)).once().onCall { _: SearchQuery =>
           Future.successful[SyncId] {
             querySignal ! Some(queryResults)
@@ -664,6 +665,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       selfId,
       if (inTeam) teamId else emptyTeamId,
       currentDomain,
+      FederationSupport(federationSupported),
       userService,
       usersStorage,
       teamsService,

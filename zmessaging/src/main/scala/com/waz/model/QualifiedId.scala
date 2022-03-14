@@ -2,15 +2,12 @@ package com.waz.model
 
 import com.waz.utils.JsonDecoder.opt
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import com.waz.zms.BuildConfig
 import org.json.{JSONArray, JSONObject}
 
 final case class QualifiedId(id: UserId, domain: String) {
   def hasDomain: Boolean = domain.nonEmpty
 
-  def str: String = if(BuildConfig.FEDERATION_USER_DISCOVERY && domain.nonEmpty)
-    s"$id@$domain"
-  else id.str
+  def str: String = if (domain.nonEmpty) s"$id@$domain" else id.str
 }
 
 object QualifiedId {

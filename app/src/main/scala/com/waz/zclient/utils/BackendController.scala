@@ -18,18 +18,17 @@
 package com.waz.zclient.utils
 
 import java.net.URL
-
 import android.content.{Context, SharedPreferences}
 import androidx.preference.PreferenceManager
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{BackendConfig, GlobalModule}
 import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
+import com.waz.sync.client.SupportedApiConfig
 import com.waz.zclient.core.backend.di.BackendModule
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{Backend, BuildConfig}
 
-
-class BackendController(implicit context: Context) extends DerivedLogTag {
+final class BackendController(implicit context: Context) extends DerivedLogTag {
   import BackendController._
 
   private lazy val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -49,10 +48,13 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
     val teamsUrl = getStringPreference(TEAMS_URL_PREF)
     val accountsUrl = getStringPreference(ACCOUNTS_URL_PREF)
     val websiteUrl = getStringPreference(WEBSITE_URL_PREF)
+    val apiInformation = getStringPreference(API_VERSION_INFORMATION)
 
     (environment, baseUrl, websocketUrl, blackListHost, teamsUrl, accountsUrl, websiteUrl) match {
       case (Some(env), Some(base), Some(web), black, Some(teams), Some(accounts), Some(website)) =>
         info(l"Retrieved stored backend config for environment: ${redactedString(env)}")
+        info(l"API version: ${apiInformation}}")
+
 
         // Staging requires its own firebase options, but all other BEs (prod or custom)
         // will use the same firebase options.
@@ -61,7 +63,18 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
         else
           Backend.ProdFirebaseOptions
 
-        val config = BackendConfig(env, base, web, black, teams, accounts, website, firebaseOptions, Backend.certPin)
+        val config = BackendConfig(
+          env,
+          base,
+          web,
+          black,
+          teams,
+          accounts,
+          website,
+          firebaseOptions,
+          Backend.certPin,
+          apiInformation.flatMap { SupportedApiConfig.fromString }
+        )
         Some(config)
 
       case _ =>
@@ -71,7 +84,7 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
   }
 
   /// Saves the given backend config to shared preferences.
-  def setStoredBackendConfig(config: BackendConfig): Unit = {
+  def storeBackendConfig(config: BackendConfig): Unit = {
     prefs.edit()
       .putString(ENVIRONMENT_PREF, config.environment)
       .putString(BASE_URL_PREF, config.baseUrl.toString)
@@ -80,8 +93,17 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
       .putString(TEAMS_URL_PREF, config.teamsUrl.toString)
       .putString(ACCOUNTS_URL_PREF, config.accountsUrl.toString)
       .putString(WEBSITE_URL_PREF, config.websiteUrl.toString)
+      .putString(API_VERSION_INFORMATION, config.apiVersionInformation.map { _.toString}.getOrElse(""))
       .commit()
   }
+
+  def storeSupportedApiConfig(supportedApiConfig: SupportedApiConfig): Unit = {
+    prefs.edit()
+      .putString(API_VERSION_INFORMATION, supportedApiConfig.toString)
+      .commit()
+    verbose(l"Saved backend config with API version information ${supportedApiConfig}")
+  }
+
 
   /// Switches the backend in the global module and saves the config to shared preferences.
   /// Warning: use with caution. It is assumed that there are no logged in accounts and the
@@ -89,7 +111,7 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
   def switchBackend(globalModule: GlobalModule, configResponse: BackendConfigResponse, configUrl: URL): Unit = {
     globalModule.backend.update(configResponse)
     globalModule.blacklistClient.loadVersionBlacklist()
-    setStoredBackendConfig(globalModule.backend)
+    storeBackendConfig(globalModule.backend)
 
     prefs.edit().putString(CONFIG_URL_PREF, configUrl.toString).commit()
 
@@ -120,6 +142,12 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
   private def getStringPreference(key: String): Option[String] =
     Option(prefs.getString(key, null))
 
+  private def getOptIntPreference(key: String): Option[Int] = if(prefs.contains(key))
+    Option(prefs.getInt(key, 0))
+  else
+    None
+
+  private def getIntPreference(key: String): Int = prefs.getInt(key, 0)
 }
 
 object BackendController {
@@ -132,4 +160,5 @@ object BackendController {
   val ACCOUNTS_URL_PREF = "CUSTOM_BACKEND_ACCOUNTS_URL"
   val WEBSITE_URL_PREF = "CUSTOM_BACKEND_WEBSITE_URL"
   val CONFIG_URL_PREF = "CUSTOM_BACKEND_CONFIG_URL"
+  val API_VERSION_INFORMATION = "API_VERSION_INFORMATION"
 }

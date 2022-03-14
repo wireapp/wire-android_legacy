@@ -50,7 +50,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
     else backendController.getStoredBackendConfig match {
       case Some(be) => callback(be)
       case None =>
-        backendController.setStoredBackendConfig(Backend.ProdBackend)
+        backendController.storeBackendConfig(Backend.ProdBackend)
         callback(Backend.ProdBackend)
     }
   }
@@ -67,7 +67,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
       override def onClick(dialog: DialogInterface, which: Int): Unit = {
         val choice = items.apply(which).toString
         val config = environments.apply(choice)
-        backendController.setStoredBackendConfig(config)
+        backendController.storeBackendConfig(config)
         callback(config)
       }
     })

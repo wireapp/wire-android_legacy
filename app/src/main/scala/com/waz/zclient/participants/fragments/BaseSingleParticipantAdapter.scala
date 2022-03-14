@@ -32,7 +32,6 @@ import com.waz.zclient.paintcode.GuestIcon
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils._
 import com.waz.zclient.{Injectable, R}
-import com.waz.zclient.BuildConfig
 
 class BaseSingleParticipantAdapter(userId:      UserId,
                                    isGuest:     Boolean,
@@ -123,9 +122,7 @@ object BaseSingleParticipantAdapter {
       externalIndication.setVisible(isExternal)
       groupAdminIndication.setVisible(isGroupAdmin)
 
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-        federatedIndication.setVisible(isFederated)
-      }
+      federatedIndication.setVisible(isFederated)
 
       val color = if (isDarkTheme) R.color.wire__text_color_primary_dark_selector else R.color.wire__text_color_primary_light_selector
       guestIndicatorIcon.setImageDrawable(GuestIcon(color))

@@ -2,6 +2,7 @@ package com.waz.sync.handler
 
 import com.waz.content.UsersStorage
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.{UserSearchService, UserService}
 import com.waz.service.assets.AssetService
 import com.waz.specs.AndroidFreeSpec
@@ -10,7 +11,6 @@ import com.waz.sync.client.OtrClient.EncryptedContent
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
-import com.waz.zms.BuildConfig
 import com.wire.signals.CancellableFuture
 import org.scalamock.function.FunctionAdapter1
 import org.threeten.bp.Instant
@@ -20,6 +20,8 @@ import scala.concurrent.Future
 class UsersSyncHandlerSpec extends AndroidFreeSpec {
   import UserData.ConnectionStatus._
 
+  val federationSupported: Boolean = false
+
   private val userService      = mock[UserService]
   private val usersStorage     = mock[UsersStorage]
   private val assetService     = mock[AssetService]
@@ -28,12 +30,13 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
   private val otrSync          = mock[OtrSyncHandler]
   private val teamsSyncHandler = mock[TeamsSyncHandler]
 
-  val domain = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  val domain = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
   val self = UserData("self").copy(domain = domain)
   val teamId = TeamId()
 
   def handler: UsersSyncHandler = new UsersSyncHandlerImpl(
-    userService, usersStorage, assetService, searchService, usersClient, otrSync, Some(teamId), teamsSyncHandler
+    FederationSupport(federationSupported), userService, usersStorage, assetService, searchService,
+    usersClient, otrSync, Some(teamId), teamsSyncHandler
   )
 
   private def checkAvailabilityStatus(message: GenericMessage, expectedAvailability: Messages.Availability.Type): Unit = message.unpackContent match {
@@ -100,7 +103,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
     }
 
     scenario("Don't post to users from other backends") {
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         // given
         val domain = Domain("chala.wire.link")
         val otherDomain = Domain("anta.wire.link")
@@ -306,7 +309,8 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
         .once()
 
       val handler = new UsersSyncHandlerImpl(
-        userService, usersStorage, assetService, searchService, usersClient, otrSync, None, teamsSyncHandler
+        FederationSupport(federationSupported), userService, usersStorage, assetService,
+        searchService, usersClient, otrSync, None, teamsSyncHandler
       )
       result(handler.syncSearchResults(users.keys.toArray:_*)) shouldEqual SyncResult.Success
     }

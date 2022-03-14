@@ -26,7 +26,6 @@ import com.waz.utils.JsonDecoder.{apply => _, opt => _}
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.{DBCursor, URI}
-import com.waz.zms.BuildConfig
 import org.json.JSONObject
 
 final case class AssetData(override val id: AssetId               = AssetId(),
@@ -55,12 +54,8 @@ final case class AssetData(override val id: AssetId               = AssetId(),
   private lazy val data64 = data.map(AESUtils.base64)
 
   lazy val remoteData: Option[RemoteData] = (remoteId, token, domain, otrKey, sha, encryption) match {
-    case (None, None, None, _, None, None) if !BuildConfig.FEDERATION_USER_DISCOVERY =>
-      None
     case (None, None, None, None, None, None) =>
       None
-    case _ if !BuildConfig.FEDERATION_USER_DISCOVERY =>
-      Some(RemoteData(remoteId, token, None, otrKey, sha, encryption))
     case _ =>
       Some(RemoteData(remoteId, token, domain, otrKey, sha, encryption))
   }

@@ -19,11 +19,10 @@ package com.waz.service
 
 import java.io.File
 
-import com.waz.zms.BuildConfig
 import com.waz.api._
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences._
-import com.waz.content.{AccountStorage, UserPreferences}
+import com.waz.content.AccountStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.InternalLog
 import com.waz.log.LogSE._
@@ -34,12 +33,11 @@ import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.LoginClient.LoginResult
 import com.waz.sync.client.{ErrorOr, LoginClient}
 import com.waz.threading.Threading
-import com.wire.signals.{EventContext, EventStream, Serialized, Signal}
+import com.wire.signals.{EventStream, Serialized, Signal}
 import com.waz.utils.{returning, _}
 
 import scala.concurrent.Future
 import scala.reflect.io.Directory
-import scala.util.control.NonFatal
 import scala.util.{Right, Try}
 
 /**
@@ -107,13 +105,6 @@ trait AccountsService {
   def wipeDataForAllAccounts(): Future[Unit]
 
   lazy val accountPassword: Signal[Option[Password]] = activeAccount.map(_.flatMap(_.password)).disableAutowiring()
-
-  lazy val domain: Signal[Domain] =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
-      activeAccount.map(_.map(_.domain).getOrElse(Domain.Empty)).disableAutowiring()
-    } else {
-      Signal.const(Domain.Empty)
-    }
 }
 
 object AccountsService {

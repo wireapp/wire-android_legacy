@@ -22,6 +22,7 @@ import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.cache.CacheService
 import com.waz.content.{MembersStorage, MessagesStorage}
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AssetService, AssetStorage, UploadAssetStorage}
 import com.waz.service.{ErrorsService, Timeouts, UserService}
 import com.waz.service.conversation.ConversationsContentUpdater
@@ -32,11 +33,11 @@ import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult.Failure
 import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.sync.otr.OtrSyncHandler
-import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
 class MessagesSyncHandlerSpec extends AndroidFreeSpec {
+  val federationSupported: Boolean = false
 
   val service       = mock[MessagesService]
   val msgContent    = mock[MessagesContentUpdater]
@@ -58,7 +59,8 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
 
   def getHandler: MessagesSyncHandler = {
     new MessagesSyncHandler(
-      account1Id, service, msgContent, clients, otrSync, convs, storage, sync,
+      account1Id, FederationSupport(federationSupported), service, msgContent, clients, otrSync,
+      convs, storage, sync,
       assets, assetStorage, uploads, cache, members, users, tracking, errors, timeouts
     )
   }
@@ -85,7 +87,7 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     (storage.getMessage _).expects(messageId).returning(Future.successful(Option(message)))
     (convs.convById _).expects(convId).returning(Future.successful(Option(ConversationData(convId))))
 
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       (otrSync.postQualifiedOtrMessage _).expects(convId, *, *, *, *, *).returning(Future.successful(Left(connectionError)))
     } else {
       (otrSync.postOtrMessage _).expects(convId, *, *, *, *, *).returning(Future.successful(Left(connectionError)))
@@ -104,7 +106,7 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     val senderId = UserId()
 
     (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(Option(MessageData(messageId, convId = convId))))
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       (users.qualifiedIds _).expects(Set(senderId)).anyNumberOfTimes().returning(Future.successful(Set(QualifiedId(senderId, domain))))
       (otrSync.postQualifiedOtrMessage _).expects(convId, *, *, *, *, *).returning(Future.successful(Right(RemoteInstant.Epoch)))
     } else {
@@ -133,7 +135,7 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     val errorText = "Error"
 
     (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(Option(MessageData(messageId, convId = convId))))
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       (users.qualifiedIds _).expects(Set(senderId)).anyNumberOfTimes().returning(Future.successful(Set(QualifiedId(senderId, domain))))
       (otrSync.postQualifiedOtrMessage _).expects(convId, *, *, *, *, *).returning(Future.successful(Left(internalError(errorText))))
     } else {

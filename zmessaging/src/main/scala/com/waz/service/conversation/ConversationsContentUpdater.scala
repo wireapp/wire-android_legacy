@@ -24,6 +24,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.sync.SyncServiceHandle
 import com.waz.utils._
 import com.waz.zms.BuildConfig
@@ -80,6 +81,7 @@ trait ConversationsContentUpdater {
 class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                       selfUserId:      UserId,
                                       teamId:          Option[TeamId],
+                                      federation:      FederationSupport,
                                       usersStorage:    UsersStorage,
                                       userPrefs:       UserPreferences,
                                       membersStorage:  MembersStorage,
@@ -218,8 +220,8 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                            hidden:      Boolean = false,
                                            access:      Set[Access] = Set(Access.PRIVATE),
                                            accessRole:  AccessRole = AccessRole.PRIVATE,
-                                           receiptMode: Int = 0): Future[ConversationData] = {
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+                                           receiptMode: Int = 0): Future[ConversationData] =
+    if (federation.isSupported) {
       for {
         conv <- storage.insert(
           ConversationData(
@@ -252,7 +254,6 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
       )
     }
 
-  }
 
   override def hideIncomingConversation(user: UserId) = storage.update(ConvId(user.str), { conv =>
     if (conv.convType == ConversationType.Incoming) conv.copy(hidden = true) else conv

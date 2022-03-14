@@ -24,12 +24,12 @@ import com.waz.content.UserPreferences.ShouldPostClientCapabilities
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.{Client, ClientId, OtrClientIdMap, QOtrClientIdMap}
 import com.waz.model.{Domain, QualifiedId, UserId}
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.otr._
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.Success
 import com.waz.sync.client.{ErrorOr, OtrClient}
-import com.waz.zms.BuildConfig
 import com.wire.cryptobox.PreKey
 
 import scala.collection.immutable.Map
@@ -44,13 +44,14 @@ trait OtrClientsSyncHandler {
   def syncSessions(clients: QOtrClientIdMap): Future[Option[ErrorResponse]]
 }
 
-class OtrClientsSyncHandlerImpl(selfId:        UserId,
-                                currentDomain: Domain,
-                                selfClient:    ClientId,
-                                netClient:     OtrClient,
-                                otrClients:    OtrClientsService,
-                                cryptoBox:     CryptoBoxService,
-                                userPrefs:     UserPreferences)
+final class OtrClientsSyncHandlerImpl(selfId:        UserId,
+                                      currentDomain: Domain,
+                                      federation:    FederationSupport,
+                                      selfClient:    ClientId,
+                                      netClient:     OtrClient,
+                                      otrClients:    OtrClientsService,
+                                      cryptoBox:     CryptoBoxService,
+                                      userPrefs:     UserPreferences)
   extends OtrClientsSyncHandler with DerivedLogTag { self =>
   import OtrClientsSyncHandlerImpl.LoadPreKeysMaxClients
   import com.waz.threading.Threading.Implicits.Background
@@ -176,7 +177,7 @@ class OtrClientsSyncHandlerImpl(selfId:        UserId,
   }
 
   override def syncSessions(clients: QOtrClientIdMap): Future[Option[ErrorResponse]] =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federation.isSupported) {
       loadPreKeys(clients).flatMap {
         case Left(error) => Future.successful(Some(error))
         case Right(qs)   =>

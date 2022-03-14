@@ -24,7 +24,7 @@ import com.waz.log.LogSE._
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
 import com.waz.sync.client.ConversationsClient.ConversationResponse.{ConversationsResult, Decoder, QConversationsResult}
-import com.waz.utils.JsonDecoder.{array, decodeBool, decodeSeq, decodeOptString}
+import com.waz.utils.JsonDecoder.{decodeBool, decodeSeq, decodeOptString}
 import com.waz.utils.JsonEncoder.{encodeAccess, encodeAccessRole}
 import com.waz.utils.{Json, JsonDecoder, JsonEncoder, returning, _}
 import com.waz.znet2.AuthRequestInterceptor
@@ -32,7 +32,6 @@ import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import org.json
 import org.json.JSONObject
-import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
@@ -366,9 +365,9 @@ object ConversationsClient {
   object ConversationInitState {
     implicit lazy val Encoder: JsonEncoder[ConversationInitState] = new JsonEncoder[ConversationInitState] {
       override def apply(state: ConversationInitState): JSONObject = JsonEncoder { o =>
-        if (state.users.nonEmpty || !BuildConfig.FEDERATION_USER_DISCOVERY)
+        if (state.users.nonEmpty)
           o.put("users", Json(state.users))
-        if (state.qualifiedUsers.nonEmpty && BuildConfig.FEDERATION_USER_DISCOVERY)
+        if (state.qualifiedUsers.nonEmpty)
           o.put("qualified_users", QualifiedId.encode(state.qualifiedUsers))
         state.name.foreach(o.put("name", _))
         state.team.foreach(t => o.put("team", returning(new json.JSONObject()) { o =>

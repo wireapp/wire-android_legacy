@@ -7,7 +7,7 @@ import com.waz.zclient.security.ActivityLifecycleCallback
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.wire.signals.Signal
 
-class FeatureConfigsController(implicit inj: Injector) extends Injectable with DerivedLogTag {
+final class FeatureConfigsController(implicit inj: Injector) extends Injectable with DerivedLogTag {
 
   import Threading.Implicits.Background
 
@@ -25,8 +25,7 @@ class FeatureConfigsController(implicit inj: Injector) extends Injectable with D
     configsService.updateSelfDeletingMessages()
     if(BuildConfig.CONFERENCE_CALLING_RESTRICTION)
       configsService.updateConferenceCalling()
-    if (BuildConfig.FEDERATION_USER_DISCOVERY)
-      configsService.updateClassifiedDomains()
     configsService.updateGuestLinks()
+    configsService.updateClassifiedDomains()
   }
 }

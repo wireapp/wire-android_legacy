@@ -4,6 +4,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.UserPreferences.ShouldPostClientCapabilities
 import com.waz.model.{Domain, QualifiedId, UserId}
 import com.waz.model.otr.{Client, ClientId, OtrClientIdMap, QOtrClientIdMap, UserClients}
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.otr.{CryptoBoxService, CryptoSessionService, OtrClientsService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
@@ -18,6 +19,7 @@ import scala.concurrent.Future
 import com.waz.zms.BuildConfig
 
 class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
+  val federationSupported: Boolean = false
 
   private val selfUserId = UserId("selfUserId")
   private val selfClientId = ClientId("selfClientId")
@@ -35,6 +37,7 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
   private def createHandler() = new OtrClientsSyncHandlerImpl(
     selfUserId,
     currentDomain,
+    FederationSupport(federationSupported),
     selfClientId,
     netClient,
     otrClients,
@@ -92,7 +95,7 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
       val qClients = QOtrClientIdMap.from(otherQualifiedId -> Set(otherClientId))
       val clients = OtrClientIdMap.from(otherUserId -> Set(otherClientId))
 
-      if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+      if (federationSupported) {
         val response: Either[ErrorResponse, Map[QualifiedId, Map[ClientId, PreKey]]] =
           Right(Map(otherQualifiedId -> Map(otherClientId -> responsePreKey)))
         (netClient.loadPreKeys(_: QOtrClientIdMap)).expects(qClients).once().returning(
@@ -130,7 +133,7 @@ class OtrClientsSyncHandlerSpec extends AndroidFreeSpec {
     val responsePreKey = new PreKey(0, Array[Byte](0))
 
     val responseUserClients = UserClients(otherUserId, Map(otherClientId -> Client(otherClientId)))
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federationSupported) {
       (netClient.loadPreKeys(_: QOtrClientIdMap)).expects(*).atLeastOnce().onCall { cs: QOtrClientIdMap =>
         (cs.size < OtrClientsSyncHandlerImpl.LoadPreKeysMaxClients) shouldBe true
         val result = cs.entries.map { case (qId, clientIds) => qId -> clientIds.map(_ -> responsePreKey).toMap }

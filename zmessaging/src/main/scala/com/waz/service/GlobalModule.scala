@@ -29,8 +29,10 @@ import com.waz.cache.CacheService
 import com.waz.client.{RegistrationClient, RegistrationClientImpl}
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE.{error, toLogHelper, verbose}
 import com.waz.log.{LogsService, LogsServiceImpl}
 import com.waz.permissions.PermissionsService
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AudioTranscoder, FileRestrictionList, GeneralFileCacheImpl, GlobalRecordAndPlayService}
 import com.waz.service.call._
 import com.waz.service.otr.NotificationUiController
@@ -46,14 +48,18 @@ import com.waz.zms.BuildConfig
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 import com.waz.znet2.{HttpClientOkHttpImpl, OkHttpUserAgentInterceptor}
+import com.wire.signals.{Signal, SourceSignal}
 import okhttp3.Interceptor
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 trait GlobalModule {
+  def setBackend(newBackend: BackendConfig): Unit
+
   def context:                  AContext
   def backend:                  BackendConfig
+  def federationSupport:       FederationSupport
 
   def syncRequests:             SyncRequestService
   def syncHandler:              SyncHandler
@@ -100,20 +106,31 @@ trait GlobalModule {
 
   def logsService:              LogsService
   def customBackendClient:      CustomBackendClient
+  def supportedApiClient:       SupportedApiClient
   def httpProxy:                Option[Proxy]
 
   def fileRestrictionList:      FileRestrictionList
+
+  def backendConfiguration:      Signal[BackendConfig]
 }
 
-class GlobalModuleImpl(val context:             AContext,
-                       val backend:             BackendConfig,
-                       val prefs:               GlobalPreferences,
-                       val googleApi:           GoogleApi,
-                       val syncRequests:        SyncRequestService,
-                       val notificationsUi:     NotificationUiController,
-                       val fileRestrictionList: FileRestrictionList,
-                       val defaultProxyDetails: ProxyDetails
-                      ) extends GlobalModule with DerivedLogTag { global =>
+final class GlobalModuleImpl(val context:             AContext,
+                             private var _backend:    BackendConfig,
+                             val prefs:               GlobalPreferences,
+                             val googleApi:           GoogleApi,
+                             val syncRequests:        SyncRequestService,
+                             val notificationsUi:     NotificationUiController,
+                             val fileRestrictionList: FileRestrictionList,
+                             val defaultProxyDetails: ProxyDetails
+                            ) extends GlobalModule with DerivedLogTag { global =>
+
+  def setBackend(newBackend: BackendConfig): Unit = {
+    _backend = newBackend
+    _backendConfiguration ! newBackend
+  }
+
+  def backend:                 BackendConfig                    = _backend
+  def federationSupport:       FederationSupport                = _backend.federationSupport
 
   //trigger initialization of Firebase in onCreate - should prevent problems with Firebase setup
   val lifecycle:                UiLifeCycle                      = new UiLifeCycleImpl()
@@ -146,7 +163,7 @@ class GlobalModuleImpl(val context:             AContext,
   lazy val loginClient:         LoginClient                      = new LoginClientImpl()(urlCreator, httpClient)
   lazy val regClient:           RegistrationClient               = new RegistrationClientImpl()(urlCreator, httpClient)
 
-  lazy val urlCreator:          UrlCreator                       = UrlCreator.simpleAppender(() => backend.baseUrl.toString)
+  lazy val urlCreator:          UrlCreator                       = UrlCreator.simpleAppender(() => backend.baseUrlWithApi.toString)
   private val customUserAgentHttpInterceptor: Interceptor        = new OkHttpUserAgentInterceptor()
   implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = BuildConfig.DEBUG, pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(Threading.IO)
   lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = BuildConfig.DEBUG, timeout = Some(30.seconds), pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
@@ -180,11 +197,21 @@ class GlobalModuleImpl(val context:             AContext,
 
   lazy val logsService:         LogsService                      = new LogsServiceImpl(prefs)
   lazy val customBackendClient: CustomBackendClient              = new CustomBackendClientImpl()
+  lazy val supportedApiClient:  SupportedApiClient               = new SupportedApiClientImpl()
 
   lazy val httpProxy:           Option[Proxy]                    = HttpProxy(metadata, defaultProxyDetails).proxy
+
+  private def _backendConfiguration = new SourceSignal[BackendConfig](None)
+  override def backendConfiguration: Signal[BackendConfig] = _backendConfiguration
+
+  _backendConfiguration ! backend
 }
 
 class EmptyGlobalModule extends GlobalModule {
+  override def setBackend(newBackend: BackendConfig): Unit                                   = ???
+
+  override def federationSupport: FederationSupport                                          = ???
+
   override def accountsService:          AccountsService                                     = ???
   override def trackingService:          TrackingService                                     = ???
   override def context:                  AContext                                            = ???
@@ -228,7 +255,10 @@ class EmptyGlobalModule extends GlobalModule {
   override def syncHandler:              SyncHandler                                         = ???
   override def logsService:              LogsService                                         = ???
   override def customBackendClient:      CustomBackendClient                                 = ???
+  override def supportedApiClient:       SupportedApiClient                                  = ???
   override def httpProxy:                Option[Proxy]                                       = ???
   override def fileRestrictionList:      FileRestrictionList                                 = ???
+
+  override def backendConfiguration: Signal[BackendConfig] = ???
 }
 

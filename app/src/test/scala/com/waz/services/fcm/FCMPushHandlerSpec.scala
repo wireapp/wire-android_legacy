@@ -22,6 +22,7 @@ import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.content.UsersStorage
 import com.waz.model.otr.ClientId
 import com.waz.model._
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.call.CallingService
 import com.waz.service.otr.{EventDecrypter, NotificationParser, NotificationUiController, OtrEventDecoder}
 import com.waz.service.push.PushNotificationEventsStorage
@@ -60,10 +61,11 @@ class FCMPushHandlerSpec extends FeatureSpec
   private val controller   = mock[NotificationUiController]
   private val globalPrefs  = new TestGlobalPreferences
   private val userPrefs    = new TestUserPreferences
+  private val federation   = FederationSupport(false)
 
   private def handler = FCMPushHandler(
     userId, clientId, client, storage, decrypter, decoder, parser,
-    controller, () => calling, () => usersStorage, globalPrefs, userPrefs
+    controller, () => calling, () => usersStorage, globalPrefs, userPrefs, federation
   )
 
   private def result[T](scenario: Future[T]): T = Await.result(scenario, 5.seconds)

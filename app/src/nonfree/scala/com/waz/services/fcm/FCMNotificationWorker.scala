@@ -63,11 +63,12 @@ final class FCMNotificationWorker(context: Context, params: WorkerParameters)
       decrypter  =  zms.eventDecrypter
       decoder    =  zms.otrEventDecoder
       parser     =  zms.notificationParser
+      federation =  global.backend.federationSupport
       controller = WireApplication.APP_INSTANCE.messageNotificationsController
     } yield
       FCMPushHandler(
         userId, clientId, client,  storage, decrypter, decoder, parser, controller,
-        () => zms.calling, () => zms.usersStorage, global.prefs, zms.userPrefs
+        () => zms.calling, () => zms.usersStorage, global.prefs, zms.userPrefs, federation
       )
     handler.foreach(_.syncNotifications())
   }

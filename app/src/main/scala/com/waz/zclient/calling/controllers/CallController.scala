@@ -30,7 +30,7 @@ import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
-import com.waz.service.{GlobalModule, MediaManagerService, ZMessaging}
+import com.waz.service.{BackendConfig, GlobalModule, MediaManagerService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.threading.Threading._
 import com.waz.utils._
@@ -62,6 +62,8 @@ final class CallController(implicit inj: Injector, cxt: WireContext)
 
   private lazy val screenManager  = new ScreenManager
   private lazy val soundController = inject[SoundController]
+
+  private lazy val isFederationSupported  = inject[BackendConfig].federationSupport.isSupported
 
   inject[GlobalPreferences].apply(GlobalPreferences.SkipTerminatingState) := true
 
@@ -470,7 +472,7 @@ final class CallController(implicit inj: Injector, cxt: WireContext)
   }.disableAutowiring()
 
   lazy val isCurrentConvClassified: Signal[ParticipantsController.ClassifiedConversation] =
-    if (!BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (!isFederationSupported) {
       Signal.const(ClassifiedConversation.None)
     } else {
       for {

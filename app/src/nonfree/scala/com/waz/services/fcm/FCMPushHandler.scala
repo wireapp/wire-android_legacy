@@ -9,6 +9,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.ClientId
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.CallingService
 import com.waz.service.otr.{EventDecrypter, NotificationParser, NotificationUiController, OtrEventDecoder}
@@ -16,7 +17,6 @@ import com.waz.service.push.PushNotificationEventsStorage
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
 import com.waz.sync.client.{PushNotificationEncoded, PushNotificationsClient}
 import com.waz.utils.{Backoff, ExponentialBackoff, _}
-import com.waz.zms.BuildConfig
 import com.waz.znet2.http.ResponseCode
 import com.wire.signals.{CancellableFuture, Serialized}
 import org.threeten.bp.{Duration, Instant}
@@ -39,7 +39,8 @@ final class FCMPushHandlerImpl(userId:      UserId,
                                calling:      () => CallingService,
                                usersStorage: () => UsersStorage,
                                globalPrefs: GlobalPreferences,
-                               userPrefs:   UserPreferences)
+                               userPrefs:   UserPreferences,
+                               federation:  FederationSupport)
                               (implicit ec: ExecutionContext)
   extends FCMPushHandler with DerivedLogTag {
   import FCMPushHandler._
@@ -99,7 +100,7 @@ final class FCMPushHandlerImpl(userId:      UserId,
         case Some(self) if self.availability != Availability.Away =>
           val callService = calling()
           validCalls.foreach { call =>
-            if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+            if (federation.isSupported) {
               val rConvId = RConvQualifiedId(call.convId, call.convDomain)
               val qId = QualifiedId(call.from, call.fromDomain)
               callService.receiveCallEvent(call.content, call.time, rConvId, qId, call.sender)
@@ -169,11 +170,12 @@ object FCMPushHandler {
             calling:      () => CallingService,
             usersStorage: () => UsersStorage,
             globalPrefs:  GlobalPreferences,
-            userPrefs:    UserPreferences)
+            userPrefs:    UserPreferences,
+            federation:   FederationSupport)
            (implicit ec:  ExecutionContext): FCMPushHandler =
     new FCMPushHandlerImpl(
       userId, clientId, client, storage, decrypter, decoder, parser,
-      controller, calling, usersStorage, globalPrefs, userPrefs
+      controller, calling, usersStorage, globalPrefs, userPrefs, federation
     )
 
   final case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant])

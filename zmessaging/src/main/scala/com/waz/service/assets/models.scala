@@ -20,11 +20,9 @@ package com.waz.service.assets
 import java.io.{ByteArrayInputStream, FileInputStream, InputStream}
 import java.net.URI
 
-import com.waz.model.GenericContent.{Asset => GenericAsset}
 import com.waz.model._
 import com.waz.sync.client.AssetClient.Retention
 import com.waz.utils.Identifiable
-import com.waz.zms.BuildConfig
 import org.threeten.bp.Duration
 
 import scala.util.{Success, Try}
@@ -265,7 +263,7 @@ object Asset {
     Asset(
       id = assetId,
       token = token,
-      domain = if (BuildConfig.FEDERATION_USER_DISCOVERY && currentDomain.isDefined) Some(currentDomain) else None,
+      domain = if (currentDomain.isDefined) Some(currentDomain) else None,
       mime = uploadAsset.mime,
       sha = uploadAsset.sha,
       name = uploadAsset.name,

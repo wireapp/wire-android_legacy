@@ -18,6 +18,7 @@
 package com.waz.service.call
 
 import java.net.{InetSocketAddress, Proxy}
+
 import android.Manifest.permission.CAMERA
 import com.sun.jna.Pointer
 import com.waz.api.impl.ErrorResponse
@@ -29,6 +30,7 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.model.otr.{ClientId, OtrClientIdMap, QOtrClientIdMap}
 import com.waz.model.{ConvId, RConvId, UserId, _}
 import com.waz.permissions.PermissionsService
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.ZMessaging.clock
 import com.waz.service._
@@ -36,10 +38,9 @@ import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsCallError, AvsClient, AvsClientList, AvsClosedReason, NetworkQuality, VideoState, WCall, WCallConvType}
 import com.waz.service.call.CallInfo.CallState._
-import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessage, Participant, QOutstandingMessage}
-import com.waz.service.call.CallingService.GlobalCallProfile
+import com.waz.service.call.CallInfo.QOutstandingMessage
 import com.waz.service.call.CallInfo.{ActiveSpeaker, CallState, OutstandingMessage, Participant}
-import com.waz.service.call.CallingService.{CallProfile, GlobalCallProfile, MissedCallInfo}
+import com.waz.service.call.CallingService.{CallProfile, GlobalCallProfile}
 import com.waz.service.call.CallInfo.{apply => _, _}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.MessagesService
@@ -172,6 +173,7 @@ object CallingService {
 final class CallingServiceImpl(val accountId:       UserId,
                                val clientId:        ClientId,
                                val domain:          Domain,
+                               federation:          FederationSupport,
                                callingClient:       CallingClient,
                                avs:                 Avs,
                                convs:               ConversationsContentUpdater,
@@ -457,24 +459,25 @@ final class CallingServiceImpl(val accountId:       UserId,
   def onNetworkQualityChanged(convId: ConvId, participant: Participant, quality: NetworkQuality): Future[Unit] =
     Future.successful(())
 
-  def onClientsRequest(convId: RConvId): Future[Unit] =
-    withConv(convId) { (wCall, conv) =>
-      otrSyncHandler.postClientDiscoveryMessage(convId).map {
-        case Right(clients) =>
-          avs.onClientsRequest(wCall, conv.remoteId, clients)
-        case Left(errorResponse) =>
-          warn(l"Could not post client discovery message: $errorResponse")
+  def onClientsRequest(convId: RConvQualifiedId): Future[Unit] =
+    if (federation.isSupported) {
+      withConv(convId.id) { (wCall, conv) =>
+        otrSyncHandler.postClientDiscoveryMessage(convId).map {
+          case Right(clients) =>
+            val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
+            avs.onQualifiedClientsRequest(wCall, rConvQualifiedId, clients)
+          case Left(errorResponse) =>
+            warn(l"Could not post client discovery message: $errorResponse")
+        }
       }
-    }
-
-  def onQualifiedClientsRequest(convId: RConvQualifiedId): Future[Unit] =
-    withConv(convId.id) { (wCall, conv) =>
-      otrSyncHandler.postClientDiscoveryMessage(convId).map {
-        case Right(clients) =>
-          val rConvQualifiedId = RConvQualifiedId.apply(conv.remoteId, conv.domain)
-          avs.onQualifiedClientsRequest(wCall, rConvQualifiedId, clients)
-        case Left(errorResponse) =>
-          warn(l"Could not post client discovery message: $errorResponse")
+    } else {
+      withConv(convId.id) { (wCall, conv) =>
+        otrSyncHandler.postClientDiscoveryMessage(convId.id).map {
+          case Right(clients) =>
+            avs.onClientsRequest(wCall, conv.remoteId, clients)
+          case Left(errorResponse) =>
+            warn(l"Could not post client discovery message: $errorResponse")
+        }
       }
     }
 

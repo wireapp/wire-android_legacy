@@ -23,13 +23,13 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.{ClientId, OtrClientIdMap, QOtrClientIdMap}
-import com.waz.service.call.Avs.AvsClientList.encode
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.call.CallInfo.{ActiveSpeaker, Participant}
 import com.waz.service.call.Calling.{ActiveSpeakersHandler, Handle, _}
 import com.waz.utils.jna.{Size_t, Uint32_t}
 import com.waz.utils.{CirceJSONSupport, returning}
 import com.waz.zms.BuildConfig
-import com.wire.signals.SerialDispatchQueue
+import com.wire.signals.{DispatchQueue, SerialDispatchQueue}
 import org.threeten.bp.Instant
 
 import scala.concurrent.{Future, Promise}
@@ -59,8 +59,8 @@ trait Avs {
   * Facilitates synchronous communication with AVS and also provides a wrapper around the native code which can be easily
   * mocked for testing the CallingService
   */
-final class AvsImpl() extends Avs with DerivedLogTag {
-  private implicit val dispatcher = SerialDispatchQueue(name = "AvsWrapper")
+final class AvsImpl(federation: FederationSupport) extends Avs with DerivedLogTag {
+  private implicit val dispatcher: DispatchQueue = SerialDispatchQueue(name = "AvsWrapper")
 
   import Avs._
 
@@ -133,9 +133,11 @@ final class AvsImpl() extends Avs with DerivedLogTag {
               AvsClientList.decode(json).fold({ throw _ }, identity)
             }
 
-            if (BuildConfig.FEDERATION_USER_DISCOVERY)
+            if (federation.isSupported) {
               cs.onQSend(ctx, message, rConvId, targetRecipients)
-            else cs.onSend(ctx, message, rConvId, targetRecipients)
+            } else {
+              cs.onSend(ctx, message, rConvId, targetRecipients)
+            }
 
             AvsCallbackError.None
           } catch {
@@ -241,9 +243,7 @@ final class AvsImpl() extends Avs with DerivedLogTag {
         override def onClientsRequest(inst: Calling.Handle, convId: String, arg: Pointer): Unit = {
           val conv  = DomainUtils.removeDomain(convId)
           val domain  = DomainUtils.getDomainFromString(convId)
-          if(BuildConfig.FEDERATION_USER_DISCOVERY)
-            cs.onQualifiedClientsRequest(RConvQualifiedId(RConvId(conv), domain))
-          else cs.onClientsRequest(RConvId(convId))
+          cs.onClientsRequest(RConvQualifiedId(RConvId(conv), domain))
       }}
 
       Calling.wcall_set_req_clients_handler(wCall, clientsRequestHandler)

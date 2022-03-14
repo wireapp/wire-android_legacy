@@ -30,6 +30,7 @@ import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.errors._
 import com.waz.model.sync.ReceiptType
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.Asset.{General, Image}
 import com.waz.service.assets._
 import com.waz.service.conversation.ConversationsContentUpdater
@@ -52,29 +53,32 @@ import scala.concurrent.Future
 import scala.concurrent.Future.successful
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-class MessagesSyncHandler(selfUserId: UserId,
-                          service:    MessagesService,
-                          msgContent: MessagesContentUpdater,
-                          clients:    OtrClientsService,
-                          otrSync:    OtrSyncHandler,
-                          convs:      ConversationsContentUpdater,
-                          storage:    MessagesStorage,
-                          sync:       SyncServiceHandle,
-                          assets:     AssetService,
-                          assetStorage: AssetStorage,
-                          uploadAssetStorage: UploadAssetStorage,
-                          cache:      CacheService,
-                          members:    MembersStorage,
-                          users: =>   UserService,
-                          tracking:   TrackingService,
-                          errors:     ErrorsService,
-                          timeouts: Timeouts) extends DerivedLogTag {
+final class MessagesSyncHandler(selfUserId: UserId,
+                                federation: FederationSupport,
+                                service:    MessagesService,
+                                msgContent: MessagesContentUpdater,
+                                clients:    OtrClientsService,
+                                otrSync:    OtrSyncHandler,
+                                convs:      ConversationsContentUpdater,
+                                storage:    MessagesStorage,
+                                sync:       SyncServiceHandle,
+                                assets:     AssetService,
+                                assetStorage: AssetStorage,
+                                uploadAssetStorage: UploadAssetStorage,
+                                cache:      CacheService,
+                                members:    MembersStorage,
+                                users: =>   UserService,
+                                tracking:   TrackingService,
+                                errors:     ErrorsService,
+                                timeouts: Timeouts) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   private def postOtrMessage(convId: ConvId, gm: GenericMessage, isHidden: Boolean) =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federation.isSupported) {
+      verbose(l"API federation is supported and we send a qualified otr message")
       otrSync.postQualifiedOtrMessage(convId, gm, isHidden)
     } else {
+      verbose(l"API federation is NOT supported and we send a regular otr message")
       otrSync.postOtrMessage(convId, gm, isHidden)
     }
 
@@ -85,7 +89,7 @@ class MessagesSyncHandler(selfUserId: UserId,
                              nativePush: Boolean,
                              enforceIgnoreMissing: Boolean
                             ) =
-    if (BuildConfig.FEDERATION_USER_DISCOVERY) {
+    if (federation.isSupported) {
       users.qualifiedIds(specificUsers).flatMap { qIds =>
         otrSync.postQualifiedOtrMessage(convId, gm, isHidden, QTargetRecipients.SpecificUsers(qIds), nativePush, enforceIgnoreMissing)
       }

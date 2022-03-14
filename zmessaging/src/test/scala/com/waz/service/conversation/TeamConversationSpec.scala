@@ -18,11 +18,12 @@
 package com.waz.service.conversation
 
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.content.{ButtonsStorage, ConversationStorage, MembersStorage, MessagesStorage, MsgDeletionStorage, UsersStorage}
+import com.waz.content.{ButtonsStorage, ConversationStorage, MembersStorage, MessagesStorage, MsgDeletionStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{ConversationMemberData, _}
+import com.waz.service.BackendConfig.FederationSupport
 import com.waz.service.assets.{AssetService, UriHelper}
 import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService, SearchKey, UserService}
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
@@ -30,15 +31,16 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
 import com.waz.sync.{SyncRequestService, SyncResult, SyncServiceHandle}
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
-import com.waz.zms.BuildConfig
 
 import scala.concurrent.Future
 
 class TeamConversationSpec extends AndroidFreeSpec {
   import ConversationRole._
 
+  val federationSupported: Boolean = false
+
   val selfId          = UserId()
-  val domain          = if (BuildConfig.FEDERATION_USER_DISCOVERY) Domain("chala.wire.link") else Domain.Empty
+  val domain          = if (federationSupported) Domain("chala.wire.link") else Domain.Empty
   val team            = Some(TeamId("team"))
   val selfUser        = UserData(selfId, domain, team, Name("self"), searchKey = SearchKey.simple("self"))
   val users           = mock[UserService]
@@ -64,9 +66,11 @@ class TeamConversationSpec extends AndroidFreeSpec {
 
   def initService: ConversationsUiService = {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs, userPrefs)
-    new ConversationsUiServiceImpl(selfId, team, domain, assetService, users, messages, messagesStorage,
-      msgContent, members, convsContent, convsStorage, network, convsService, sync, requests, client,
-      accounts, tracking, errors, uriHelper, properties)
+    new ConversationsUiServiceImpl(
+      selfId, team, domain, FederationSupport(federationSupported), assetService, users, messages,
+      messagesStorage, msgContent, members, convsContent, convsStorage, network, convsService, sync,
+      requests, client, accounts, tracking, errors, uriHelper, properties
+    )
   }
 
   feature("Creating team conversations") {
@@ -125,6 +129,11 @@ class TeamConversationSpec extends AndroidFreeSpec {
         .returning(Future.successful(SyncId()))
       (requests.await(_: SyncId)).expects(*).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
       (members.isActiveMember _).expects(*, *).anyNumberOfTimes().returning(Future.successful(true))
+      (members.updateOrCreateAll(_ : ConvId, _ : Map[UserId, ConversationRole]))
+        .expects(*, *).anyNumberOfTimes()
+        .onCall { (convId, users) =>
+          Future.successful(users.map { case (userId, role) => ConversationMemberData(userId, convId, role) }.toSet)
+        }
       (convsService.isGroupConversation _).expects(*).anyNumberOfTimes().returning(Future.successful(true))
 
       (convsService.generateTempConversationId _).expects(*).anyNumberOfTimes().returning(RConvId())
