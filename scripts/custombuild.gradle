@@ -31,6 +31,11 @@ def prepareCustomizationEnvironment() {
         throw new GradleException('No custom repo')
     }
 
+    def customRepositoryBranch = System.getenv("ANDROID_CUSTOMIZATIONS_BRANCH") ?: properties.getProperty("ANDROID_CUSTOMIZATIONS_BRANCH") ?: ''
+    if (customRepository.isEmpty()) {
+        throw new GradleException('No custom repo branch')
+    }
+
     def customFolder = System.getenv("CUSTOM_FOLDER") ?: properties.getProperty("CUSTOM_FOLDER") ?: ''
     if (customFolder.isEmpty()) {
         throw new GradleException('Custom repo specified, but not custom folder')
@@ -56,8 +61,11 @@ def prepareCustomizationEnvironment() {
     }
 
     def credentials = new Credentials(grGitUser, grGitPassword)
-    Grgit.clone(dir: customCheckoutDir, uri: customRepository, credentials: credentials)
+    Grgit.clone(dir: customCheckoutDir, uri: customRepository, branches: credentials: credentials)
     project.logger.quiet("Using custom repository $customRepository -> folder $customFolder")
+
+    Grgit.checkout(branch: customRepositoryBranch)
+    project.logger.quiet("Using custom repository bnanch $customRepositoryBranch")
 
     def customConfig = jsonReader.parseText(customConfigFile.text)
     project.logger.quiet("Loaded custom build configuration for keys: ${customConfig.keySet()}")
