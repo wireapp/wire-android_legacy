@@ -53,6 +53,8 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAft
 
   private var mockServer: MockWebServer = _
 
+  private def mockServerPath: String = mockServer.url("").toString.stripSuffix("/")
+
   private implicit val urlCreator: UrlCreator = UrlCreator.create(relativeUrl => mockServer.url(relativeUrl).url())
 
   before {
@@ -82,7 +84,7 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAft
       )
 
       // WHEN
-      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+      val future = sut.getSupportedApiVersions(URI.parse(mockServerPath))
 
       // THEN
       val result = Await.result(future, 5.seconds)
@@ -106,7 +108,7 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAft
       )
 
       // WHEN
-      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+      val future = sut.getSupportedApiVersions(URI.parse(mockServerPath))
 
       // THEN
       val result = Await.result(future, 5.seconds)
@@ -127,7 +129,7 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAft
       )
 
       // WHEN
-      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+      val future = sut.getSupportedApiVersions(URI.parse(mockServerPath))
 
       // THEN
       val result = Await.result(future, 5.seconds)
@@ -151,7 +153,7 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAft
       )
 
       // WHEN
-      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+      val future = sut.getSupportedApiVersions(URI.parse(mockServerPath))
 
       // THEN
       val result = Await.result(future, 5.seconds)
@@ -167,7 +169,7 @@ class SupportedApiClientSpec extends FeatureSpec with Matchers with BeforeAndAft
       val sut = new SupportedApiClientImpl()(client)
 
       // WHEN
-      val future = sut.getSupportedApiVersions(URI.parse(mockServer.url("").url().toString))
+      val future = sut.getSupportedApiVersions(URI.parse(mockServerPath))
 
       // THEN
       val req = mockServer.takeRequest()
