@@ -144,19 +144,19 @@
     </plurals>
     <!-- Remove people -->
     <string name="content__system__other_removed_other">[[%1$s]] usunął %2$s</string>
-    <string name="content__system__other_removed_someone">[[%1$s]] removed someone</string>
-    <string name="content__system__someone_removed_other">Someone removed %2$s</string>
+    <string name="content__system__other_removed_someone">[[%1$s]] usunął kogoś</string>
+    <string name="content__system__someone_removed_other">Ktoś usunął %2$s</string>
     <string name="content__system__other_removed_you">[[%1$s]] Cię usunął/ęła</string>
-    <string name="content__system__someone_removed_you">Someone removed you</string>
+    <string name="content__system__someone_removed_you">Ktoś cię usunął</string>
     <string name="content__system__you_removed_other">Usunąłeś/ęłaś użytkownika %1$s</string>
-    <string name="content__system__you_removed_someone">You removed someone</string>
+    <string name="content__system__you_removed_someone">Usunąłeś kogoś</string>
     <string name="content__system__you_left">Opuściłeś/aś rozmowę</string>
     <string name="content__system__other_left">[[%1$s]] opuścił/a rozmowę</string>
-    <string name="content__system__someone_left">Someone left</string>
+    <string name="content__system__someone_left">Ktoś wyszedł</string>
     <string name="content__system__other_was_removed">%1$s was removed</string>
-    <string name="content__system__someone_was_removed">Someone was removed</string>
+    <string name="content__system__someone_was_removed">Ktoś został usunięty</string>
     <string name="content__system__legalhold_conflict__you_were_removed">[[You]] were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
-    <string name="content__system__legalhold_conflict__someone_was_removed">Someone was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
+    <string name="content__system__legalhold_conflict__someone_was_removed">Ktoś został usunięty z tej rozmowy, ponieważ legalne posiadanie zostało aktywowane. _LEARN MORE_</string>
     <string name="content__system__legalhold_conflict__other_was_removed">%1$s was removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
     <string name="content__system__legalhold_conflict__others_were_removed">%1$s were removed from this conversation because legal hold has been activated. _LEARN MORE_</string>
     <!-- Create conversation -->
@@ -324,7 +324,7 @@
     <string name="connect_request__ignore_button__text">Ignoruj</string>
     <string name="content__message__connect_request__footer">Połączony</string>
     <string name="content__message__connect_request__auto_connect__footer">Auto połączenie. _Dowiedz się więcej_</string>
-    <string name="conversation_degraded_message">The call was disconnected because someone is no longer a verified contact.</string>
+    <string name="conversation_degraded_message">Połączenie zostało rozłączone, ponieważ ktoś nie jest już zweryfikowanym kontaktem.</string>
     <!-- Otr-->
     <plurals name="conversation__degraded_confirmation__header__single_user">
         <item quantity="one">%1$s rozpoczął korzystać z nowego urządzenia.</item>
@@ -1028,11 +1028,11 @@
     <string name="conversation_list__shared__location">Udostępnij lokalizację</string>
     <string name="conversation_list__missed_call">Nieodebrane połączenie</string>
     <string name="conversation_list__pinged">Zaczepiony/a</string>
-    <string name="conversation_list__ephemeral">Someone sent a message</string>
+    <string name="conversation_list__ephemeral">Ktoś wysłał do Ciebie wiadomość</string>
     <string name="conversation_list__single_eph_and_mention">Wspomniał o Tobie</string>
-    <string name="conversation_list__group_eph_and_mention">Someone mentioned you</string>
+    <string name="conversation_list__group_eph_and_mention">Ktoś o Tobie wspomniał</string>
     <string name="conversation_list__single_eph_and_quote">Odpowiedział Tobie</string>
-    <string name="conversation_list__group_eph_and_quote">Someone replied to you</string>
+    <string name="conversation_list__group_eph_and_quote">Ktoś odpowiedział na Twoją wiadomość</string>
     <string name="conversation_list__typing">Pisanie wiadomości&#8230;</string>
     <string name="conversation_list__someone">Ktoś</string>
     <string name="conversation_list__added">[[%1$s]] został/a dodany/a</string>
