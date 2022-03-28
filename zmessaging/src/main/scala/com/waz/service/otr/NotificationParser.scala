@@ -46,7 +46,7 @@ final class NotificationParserImpl(selfId:       UserId,
       notification      <- createNotification(uid, self, conv, event, msgContent)
     } yield notification)
       .recover { case ex: Throwable =>
-        error(l"error while parsing $event, ${ex.getMessage}", ex)
+        error(l"error while parsing (1) $event, ${ex.getMessage}", ex)
         None
       }
 
@@ -93,7 +93,7 @@ final class NotificationParserImpl(selfId:       UserId,
         ))
       else None
     ).recover { case ex: Throwable =>
-      error(l"error while parsing $event, ${ex.getMessage}", ex)
+      error(l"error while parsing (2) $event, ${ex.getMessage}", ex)
       None
     }
 
@@ -111,7 +111,7 @@ final class NotificationParserImpl(selfId:       UserId,
         ))
       else None
   ).recover { case ex: Throwable =>
-    error(l"error while parsing $event, ${ex.getMessage}", ex)
+    error(l"error while parsing (3) $event, ${ex.getMessage}", ex)
     None
   }
 
