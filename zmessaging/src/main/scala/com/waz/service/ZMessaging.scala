@@ -115,13 +115,7 @@ class ZMessaging(val teamId:    Option[TeamId],
   def federation: FederationSupport = global.backend.federationSupport
 
   lazy val selfUserId: UserId = account.userId
-  lazy val selfDomain: Domain =
-    if (federation.isSupported) {
-      account.domain
-    } else {
-      Domain.Empty
-    }
-
+  lazy val selfDomain: Domain = account.domain
 
   val auth       = account.auth
   val urlCreator: UrlCreator = global.urlCreator
