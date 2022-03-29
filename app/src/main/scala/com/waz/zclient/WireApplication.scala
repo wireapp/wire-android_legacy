@@ -424,11 +424,11 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[SupportedApiClient].getSupportedApiVersions(backend.baseUrl).foreach {
       case Right(supportedApiConfig) => {
         verbose(l"change in supported API versions: $supportedApiConfig")
+        backend.updateSupportedAPIConfig(supportedApiConfig)
         backend.agreedApiVersion match {
           case Some(version) => verbose(l"Agreed on API version: $version")
           case None => error(l"Can't agree on API version: backend: ${supportedApiConfig.supported}, app: ${SupportedApiConfig.supportedBackendAPIVersions}")
         }
-        backend.updateSupportedAPIConfig(supportedApiConfig)
         ZMessaging.setBackend(backend)
         inject[BackendController].storeSupportedApiConfig(supportedApiConfig)
       }
