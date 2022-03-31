@@ -47,6 +47,7 @@ class VersionBlacklistClientImpl(backendConfig: BackendConfig)
         .executeSafe
       case _ =>
         //if url wasn't given, then just accept any version
+        verbose(l"There is no blacklist URL to download")
         CancellableFuture.successful(Right(VersionBlacklist()))
     }
 

@@ -18,8 +18,10 @@
 package com.waz.sync.client
 
 import java.net.URL
-
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.BasicLogging.CanBeShownImpl
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE.{toLogHelper, verbose}
 import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.http.{HttpClient, Method, RawBodyDeserializer, Request}
@@ -30,7 +32,9 @@ trait CustomBackendClient {
 
 class CustomBackendClientImpl(implicit httpClient: HttpClient)
   extends CustomBackendClient
-    with CirceJSONSupport {
+    with CirceJSONSupport
+    with DerivedLogTag
+{
 
   import HttpClient.AutoDerivation._
   import HttpClient.dsl._
@@ -39,6 +43,7 @@ class CustomBackendClientImpl(implicit httpClient: HttpClient)
     objectFromCirceJsonRawBodyDeserializer[ErrorResponse]
 
   def loadBackendConfig(url: URL): ErrorOrResponse[BackendConfigResponse] = {
+    verbose(l"Loading custom backend configuration from ${new CanBeShownImpl(url.toString)}")
     Request.create(Method.Get, url)
       .withResultType[BackendConfigResponse]
       .withErrorType[ErrorResponse]

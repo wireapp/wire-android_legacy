@@ -206,16 +206,19 @@ final class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
   def showStartSSOScreen() = showFragment(StartSSOFragment.newInstance(), StartSSOFragment.TAG, animated = false)
 
   def loadBackendConfig(configUrl: URL): Unit = {
+    verbose(l"Starting to donwload backend configuration from ${configUrl}")
+
     enableProgress(true)
     inject[CustomBackendClient].loadBackendConfig(configUrl).future.foreach {
       case Left(ErrorResponse(ErrorResponse.NotFound, _, _)) =>
+        verbose(l"Could not find custom backend config from ${configUrl}")
         enableProgress(false)
         showErrorDialog(
           getString(R.string.custom_backend_not_found_error_title),
           getString(R.string.custom_backend_not_found_error_message, configUrl.getHost))
 
       case Left(errorResponse) =>
-        error(l"error trying to download backend config.", errorResponse)
+        error(l"error trying to download backend config from ${configUrl}, ", errorResponse)
         enableProgress(false)
 
         showErrorDialog(
@@ -223,6 +226,7 @@ final class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
           R.string.custom_backend_dialog_network_error_message)
 
       case Right(config) =>
+        verbose(l"Downloaded custom backend config from ${configUrl}")
         enableProgress(false)
         backendController.switchBackend(inject[GlobalModule], config, configUrl)
 
