@@ -482,7 +482,7 @@ final class SearchUIFragment extends BaseFragment[Container]
     self.head.map { self =>
       val sharingIntent = IntentUtils.getInviteIntent(
         getString(R.string.people_picker__invite__share_text__header, self.name.str),
-        getString(R.string.people_picker__invite__share_text__body,self.displayHandle())
+        getString(R.string.people_picker__invite__share_text__body,self.displayHandle(federationEnabled = false))
       )
       startActivity(Intent.createChooser(sharingIntent, getString(R.string.people_picker__invite__share_details_dialog)))
     }

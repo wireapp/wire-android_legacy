@@ -262,8 +262,9 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   } yield clients
 
   self.on(Threading.Ui) { self =>
+    val federationSupported = zms.currentValue.map { p => p.federation.isSupported }.getOrElse(false)
     view.setAccentColor(AccentColor(self.accent).color)
-    view.setHandle(self.displayHandle(forceDomain = true))
+    view.setHandle(self.displayHandle(federationEnabled = federationSupported))
     view.setUserName(self.name)
   }
 

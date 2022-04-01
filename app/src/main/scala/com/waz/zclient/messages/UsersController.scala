@@ -77,7 +77,7 @@ class UsersController(implicit injector: Injector, context: Context)
     } yield displayHandle(user)
   }
 
-  def displayHandle(user: UserData): String = user.displayHandle(selfDomain)
+  def displayHandle(user: UserData): String = user.displayHandle(selfDomain, federationEnabled = false)
 
   def syncUserAndCheckIfDeleted(userId: UserId): Future[(Option[UserData], Option[UserData])] = {
     import Threading.Implicits.Background

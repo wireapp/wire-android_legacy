@@ -430,7 +430,7 @@ object ConversationListRow {
         case Message.Type.KNOCK =>
           formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup, quotePrefix = isQuote)
         case Message.Type.CONNECT_ACCEPTED | Message.Type.MEMBER_JOIN if !isGroup =>
-          members.headOption.map(_.displayHandle(currentDomain)).getOrElse("")
+          members.headOption.map(_.displayHandle(currentDomain, federationEnabled = false)).getOrElse("")
         case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
           getString(R.string.conversation_list__added_you, senderName)
         case Message.Type.MEMBER_JOIN if members.length > 1 =>
@@ -463,7 +463,7 @@ object ConversationListRow {
                                     currentDomain:            Domain)
                                    (implicit context: Context): String = {
     if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && !isGroupConv)) {
-      otherMember.map(_.displayHandle(currentDomain)).getOrElse("")
+      otherMember.map(_.displayHandle(currentDomain, federationEnabled = false)).getOrElse("")
     } else if (memberIds.count(_ != selfId) == 0 && conv.convType == ConversationType.Group) {
       ""
     } else if (conv.unreadCount.total == 0 && !conv.isActive) {
