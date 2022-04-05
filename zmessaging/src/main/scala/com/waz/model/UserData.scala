@@ -68,7 +68,6 @@ final case class UserData(override val id:       UserId,
   lazy val isSelf: Boolean              = connection == ConnectionStatus.Self
   lazy val isAcceptedOrPending: Boolean = connection == ConnectionStatus.Accepted || connection == ConnectionStatus.PendingFromOther || connection == ConnectionStatus.PendingFromUser
   lazy val isVerified: Boolean          = verified == Verification.VERIFIED
-  lazy val isAutoConnect: Boolean       = isConnected && ! isSelf && connectionMessage.isEmpty
   lazy val isReadOnlyProfile: Boolean   = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
