@@ -21,7 +21,8 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
-import com.waz.model.UserId
+import com.waz.model.{DisplayHandleDomainPolicies, UserId}
+import com.waz.service.BackendConfig.FederationSupport
 import com.wire.signals.Signal
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.{R, ViewHelper}
@@ -37,8 +38,11 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
 
   val users = inject[UsersController]
   val userId = Signal[UserId]()
+  val federation = inject[FederationSupport]
 
-  userId.flatMap(id => Signal.from(users.displayHandle(id))).onUi(userNameTextView.setText(_))
+  val policy = if (federation.isSupported) { DisplayHandleDomainPolicies.AlwaysShowDomain } else { DisplayHandleDomainPolicies.ShowIfNotSame }
+
+  userId.flatMap(id => Signal.from(users.displayHandle(id, policy))).onUi(userNameTextView.setText(_))
   userId.flatMap(users.user).map(_.name).onUi(userInfoTextView.setText(_))
 
   def setUserId(id: UserId): Unit =

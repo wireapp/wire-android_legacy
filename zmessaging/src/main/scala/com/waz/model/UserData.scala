@@ -22,6 +22,7 @@ import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.{api, model}
 import com.waz.model.AssetMetaData.Image.Tag.Medium
+import com.waz.model.DisplayHandleDomainPolicies.{AlwaysShowDomain, Policy, ShowIfNotSame}
 import com.waz.model.ManagedBy.ManagedBy
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.UserPermissions._
@@ -33,6 +34,12 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 
 import scala.concurrent.duration._
 import scala.util.Try
+
+object DisplayHandleDomainPolicies extends Enumeration {
+  type Policy = Value
+
+  val NeverShowDomain, AlwaysShowDomain, ShowIfNotSame = Value
+}
 
 final case class UserData(override val id:       UserId,
                           domain:                Domain                 = Domain.Empty,
@@ -73,9 +80,10 @@ final case class UserData(override val id:       UserId,
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
   lazy val qualifiedId: Option[QualifiedId] = domain.mapOpt(d => QualifiedId(id, d))
-  def displayHandle(currentDomain: Domain = Domain.Empty, forceDomain: Boolean = false): String =
+  def displayHandle(currentDomain: Domain, domainPolicy: Policy): String =
     handle match {
-      case Some(h) if h.nonEmpty && domain.isDefined && (forceDomain || domain != currentDomain) =>
+      case Some(h) if h.nonEmpty && domain.isDefined
+          && domainPolicy == AlwaysShowDomain || (domainPolicy == ShowIfNotSame && domain != currentDomain) =>
         s"${h.withSymbol}@${domain.str}"
       case Some(h) if h.nonEmpty =>
         h.withSymbol
