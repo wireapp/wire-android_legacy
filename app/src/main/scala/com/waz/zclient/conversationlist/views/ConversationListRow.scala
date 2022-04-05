@@ -151,7 +151,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       z.selfUserId,
       isGroupConv,
       userName,
-      currentDomain
+      currentDomain,
+      z.federation.isSupported
     )
   )
 
@@ -397,10 +398,13 @@ object ConversationListRow {
                                            isGroup:       Boolean,
                                            selfId:        UserId,
                                            isQuote:       Boolean,
-                                           currentDomain: Domain
+                                           currentDomain: Domain,
+                                           federationEnabled: Boolean
                                   )(implicit context: Context): String = {
     lazy val senderName = user.map(_.name).getOrElse(Name(getString(R.string.conversation_list__someone)))
     lazy val memberName = members.headOption.map(_.name).getOrElse(Name(getString(R.string.conversation_list__someone)))
+
+    val showDomainInLabel = if(federationEnabled) DisplayHandleDomainPolicies.ShowIfNotSame else DisplayHandleDomainPolicies.NeverShowDomain
 
     if (messageData.isEphemeral) {
       if (messageData.hasMentionOf(selfId)) {
@@ -430,7 +434,7 @@ object ConversationListRow {
         case Message.Type.KNOCK =>
           formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup, quotePrefix = isQuote)
         case Message.Type.CONNECT_ACCEPTED | Message.Type.MEMBER_JOIN if !isGroup =>
-          members.headOption.map(_.displayHandle(currentDomain)).getOrElse("")
+          members.headOption.map(_.displayHandle(currentDomain, showDomainInLabel)).getOrElse("")
         case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
           getString(R.string.conversation_list__added_you, senderName)
         case Message.Type.MEMBER_JOIN if members.length > 1 =>
@@ -460,10 +464,12 @@ object ConversationListRow {
                                     selfId:                   UserId,
                                     isGroupConv:              Boolean,
                                     userName:                 Option[Name],
-                                    currentDomain:            Domain)
+                                    currentDomain:            Domain,
+                                    federationEnabled:        Boolean
+                                   )
                                    (implicit context: Context): String = {
     if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && !isGroupConv)) {
-      otherMember.map(_.displayHandle(currentDomain)).getOrElse("")
+      otherMember.map(_.displayHandle(currentDomain, DisplayHandleDomainPolicies.ShowIfNotSame)).getOrElse("")
     } else if (memberIds.count(_ != selfId) == 0 && conv.convType == ConversationType.Group) {
       ""
     } else if (conv.unreadCount.total == 0 && !conv.isActive) {
@@ -535,7 +541,8 @@ object ConversationListRow {
             isGroupConv,
             selfId,
             conv.unreadCount.quotes > 0,
-            currentDomain
+            currentDomain,
+            federationEnabled
           )
         }
       } { usr =>

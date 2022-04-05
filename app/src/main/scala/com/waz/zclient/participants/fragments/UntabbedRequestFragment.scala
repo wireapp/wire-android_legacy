@@ -3,7 +3,7 @@ package com.waz.zclient.participants.fragments
 import android.os.Bundle
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
-import com.waz.model.{ConversationRole, UserData, UserId}
+import com.waz.model.{ConversationRole, DisplayHandleDomainPolicies, UserData, UserId}
 import com.waz.service.{BackendConfig, ZMessaging}
 import com.wire.signals.CancellableFuture
 import com.waz.threading.Threading
@@ -57,7 +57,7 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
         Some(user)    <- userToConnect
         isGroup       <- participantsController.isGroup.head
         isFederated   =  usersController.isFederated(user)
-        handle        =  usersController.displayHandle(user)
+        handle        =  usersController.displayHandle(user, DisplayHandleDomainPolicies.ShowIfNotSame)
         isGuest       =  !user.isWireBot && user.isGuest(zms.teamId, zms.selfDomain)
         isExternal    =  !user.isWireBot && user.isExternal(zms.teamId, zms.selfDomain)
         isDarkTheme   <- inject[ThemeController].darkThemeSet.head

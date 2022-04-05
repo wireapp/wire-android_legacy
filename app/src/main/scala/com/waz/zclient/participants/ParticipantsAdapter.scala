@@ -57,7 +57,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
                           maxParticipants: Option[Int] = None,
                           showPeopleOnly:  Boolean = false,
                           showArrow:       Boolean = true,
-                          createSubtitle:  Option[(UserData, Boolean) => String] = None
+                          createSubtitle:  Option[(UserData, DisplayHandleDomainPolicies.Policy) => String] = None
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import ParticipantsAdapter._
@@ -372,7 +372,7 @@ object ParticipantsAdapter {
 
     def bind(participant:    ParticipantData,
              lastRow:        Boolean,
-             createSubtitle: Option[(UserData, Boolean) => String],
+             createSubtitle: Option[(UserData, DisplayHandleDomainPolicies.Policy) => String],
              showArrow:      Boolean): Unit = {
       if (participant.isSelf) {
         view.showArrow(false)
@@ -381,10 +381,7 @@ object ParticipantsAdapter {
         view.showArrow(showArrow)
         userId = Some(participant.userData.id)
       }
-      createSubtitle match {
-        case Some(f) => view.setUserData(participant.userData, createSubtitle = f)
-        case None    => view.setUserData(participant.userData)
-      }
+      view.setUserData(participant.userData, createSubtitle)
       view.setSeparatorVisible(!lastRow)
       view.setContentDescription(s"${if (participant.isAdmin) "Admin" else "Member"}: ${participant.userData.name}")
     }
@@ -500,7 +497,7 @@ object ParticipantsAdapter {
 
 final class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle: Option[UserData => String] = None)
                                 (implicit context: Context, injector: Injector, eventContext: EventContext)
-  extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle.map(f => { (u: UserData, _: Boolean) => f(u) })) {
+  extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle.map(f => { (u: UserData, _: DisplayHandleDomainPolicies.Policy) => f(u) })) {
   import ParticipantsAdapter._
 
   override protected lazy val users: Signal[Vector[ParticipantData]] = for {

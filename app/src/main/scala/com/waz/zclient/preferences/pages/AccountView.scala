@@ -31,7 +31,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AccentColor, Domain, EmailAddress, Name, PhoneNumber, Picture}
+import com.waz.model.{AccentColor, DisplayHandleDomainPolicies, Domain, EmailAddress, Name, PhoneNumber, Picture}
 import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -234,25 +234,27 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   self.map(_.picture).collect { case Some(pic) => pic}.onUi { id =>
     view.setPicture(id)
   }
+  Signal.zip(self, zms).onUi {
+    case(self, z) => {
+      view.setHandle(self.displayHandle(self.domain, if(z.federation.isSupported) DisplayHandleDomainPolicies.AlwaysShowDomain else DisplayHandleDomainPolicies.NeverShowDomain))
+      view.setName(self.name)
+      view.setAccentDrawable(new Drawable {
 
-  self.onUi { self =>
-    view.setHandle(self.displayHandle())
-    view.setName(self.name)
-    view.setAccentDrawable(new Drawable {
+        val paint = new Paint()
 
-      val paint = new Paint()
+        override def draw(canvas: Canvas) = {
+          paint.setColor(AccentColor(self.accent).color)
+          canvas.drawCircle(getBounds.centerX(), getBounds.centerY(), getBounds.width() / 2, paint)
+        }
 
-      override def draw(canvas: Canvas) = {
-        paint.setColor(AccentColor(self.accent).color)
-        canvas.drawCircle(getBounds.centerX(), getBounds.centerY(), getBounds.width() / 2, paint)
-      }
+        override def setColorFilter(colorFilter: ColorFilter) = {}
 
-      override def setColorFilter(colorFilter: ColorFilter) = {}
+        override def setAlpha(alpha: Int) = {}
 
-      override def setAlpha(alpha: Int) = {}
-
-      override def getOpacity = PixelFormat.OPAQUE
-    })
+        override def getOpacity = PixelFormat.OPAQUE
+      })
+    }
+    case _ =>
   }
 
   phone.onUi(view.setPhone)

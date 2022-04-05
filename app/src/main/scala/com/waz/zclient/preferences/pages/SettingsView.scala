@@ -23,6 +23,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.DisplayHandleDomainPolicies
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.wire.signals.{EventContext, EventStream, Signal}
@@ -119,7 +120,13 @@ class SettingsViewController(view: SettingsView)(implicit inj: Injector, ec: Eve
   val selfInfo = for {
     z <- zms
     self <- UserSignal(z.selfUserId)
-  } yield (self.name, self.displayHandle())
+  } yield (
+    self.name,
+    self.displayHandle(
+      self.domain,
+      if(z.federation.isSupported) DisplayHandleDomainPolicies.AlwaysShowDomain else DisplayHandleDomainPolicies.NeverShowDomain
+    )
+  )
 
   val team = zms.flatMap(_.teams.selfTeam)
 

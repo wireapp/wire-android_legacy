@@ -18,7 +18,6 @@
 package com.waz.zclient.preferences.dialogs
 
 import java.util.Locale
-
 import android.os.Bundle
 import android.text.{Editable, TextWatcher}
 import android.view.View.OnClickListener
@@ -27,7 +26,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.textfield.TextInputLayout
-import com.waz.model.Handle
+import com.waz.model.{DisplayHandleDomainPolicies, Domain, Handle}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.wire.signals.Signal
@@ -56,7 +55,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val users = zms.map(_.users)
-  private lazy val currentHandle = users.flatMap(_.selfUser.map(_.displayHandle()))
+  private lazy val currentHandle = users.flatMap(_.selfUser.map(_.displayHandle(Domain.Empty, DisplayHandleDomainPolicies.NeverShowDomain)))
 
   private val handleTextWatcher = new TextWatcher() {
     private var lastText: String = ""
