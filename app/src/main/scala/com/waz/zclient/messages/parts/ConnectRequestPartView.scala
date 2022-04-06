@@ -27,7 +27,6 @@ import com.wire.signals.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
-import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
@@ -80,16 +79,11 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
 
   user.map(_.id).foreach(userDetails.setUserId)
 
-  user.map(u => (u.isAutoConnect, u.isWireBot)).onUi {
-    case (true, _) =>
-      label.setText(R.string.content__message__connect_request__auto_connect__footer)
-      TextViewUtils.linkifyText(label, getStyledColor(R.attr.wirePrimaryTextColor), true, true, new Runnable() {
-        override def run() = browser.openHelp()
-      })
-    case (false, false) =>
+  user.map(u => u.isWireBot).onUi {
+    case false =>
       label.setTextColor(getStyledColor(R.attr.wirePrimaryTextColor))
       label.setText(R.string.content__message__connect_request__footer)
-    case (_, true) =>
+    case true =>
       label.setTextColor(getColor(R.color.accent_red))
       label.setText(R.string.generic_service_warning)
   }
