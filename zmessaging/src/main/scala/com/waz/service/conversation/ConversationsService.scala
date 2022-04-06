@@ -89,7 +89,7 @@ trait ConversationsService {
 class ConversationsServiceImpl(teamId:          Option[TeamId],
                                selfUserId:      UserId,
                                currentDomain:   Domain,
-                               federation:      FederationSupport,
+                               backend:         Signal[BackendConfig],
                                push:            PushService,
                                users:           UserService,
                                usersStorage:    UsersStorage,
@@ -111,6 +111,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                rolesService:    ConversationRolesService
                               ) extends ConversationsService with DerivedLogTag {
   import Threading.Implicits.Background
+
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 
   //On conversation changed, update the state of the access roles as part of migration, then check for a link if necessary
   selectedConv.selectedConversationId.foreach {
@@ -144,7 +146,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   private lazy val shouldMigrateToFederation = userPrefs.preference(UserPreferences.ShouldMigrateToFederation)
 
   for {
-    shouldMigrate <- if (federation.isSupported) shouldMigrateToFederation() else Future.successful(false)
+    shouldMigrate <- if (federationSupported) shouldMigrateToFederation() else Future.successful(false)
   } if (shouldMigrate && currentDomain.isDefined) {
     verbose(l"Migrating conversations and users to federation")
     for {
@@ -199,7 +201,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   override def rConvQualifiedId(conv: ConversationData): RConvQualifiedId =
-    if (federation.isSupported) {
+    if (federationSupported) {
       conv
         .qualifiedId
         .orElse(currentDomain.mapOpt(RConvQualifiedId(conv.remoteId, _)))
@@ -781,7 +783,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
 
   override lazy val onlyFake1To1ConvUsers: Signal[Seq[UserData]] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       for {
         convs             <- convsStorage.contents.map(_.values.filter(c => c.convType == ConversationType.Group && c.name.isEmpty))
         convsWithMembers  <- Signal.sequence(convs.map(c => membersStorage.activeMembers(c.id).map((c, _))).toSeq: _*)

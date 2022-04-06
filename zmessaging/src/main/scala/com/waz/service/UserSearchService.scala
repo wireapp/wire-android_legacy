@@ -58,7 +58,7 @@ trait UserSearchService {
 final class UserSearchServiceImpl(selfUserId:           UserId,
                                   teamId:               Option[TeamId],
                                   domain:               Domain,
-                                  federation:           FederationSupport,
+                                  backend:              Signal[BackendConfig],
                                   userService:          UserService,
                                   usersStorage:         UsersStorage,
                                   teamsService:         TeamsService,
@@ -74,6 +74,8 @@ final class UserSearchServiceImpl(selfUserId:           UserId,
   import Threading.Implicits.Background
   import com.waz.service.UserSearchService._
   import timeouts.search._
+
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 
   private val userSearchResult = Signal(IndexedSeq.empty[UserData])
 
@@ -203,7 +205,7 @@ final class UserSearchServiceImpl(selfUserId:           UserId,
   override def search(queryStr: String): Signal[SearchResults] = {
     val query = SearchQuery(queryStr)
 
-    if (federation.isSupported) {
+    if (federationSupported) {
       if (query.hasDomain || query.isEmpty) {
         search(query)
       } else {
@@ -279,7 +281,7 @@ final class UserSearchServiceImpl(selfUserId:           UserId,
       userSearchResult ! allUsers
 
       if (remote.nonEmpty) {
-        if (federation.isSupported) {
+        if (federationSupported) {
           sync.syncQualifiedSearchResults(remote.map(_.qualifiedId).toSet).map(_ => ())
         } else {
           sync.syncSearchResults(remote.map(_.qualifiedId.id).toSet).map(_ => ())

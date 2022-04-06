@@ -112,7 +112,7 @@ trait UserService {
 class UserServiceImpl(selfUserId:        UserId,
                       currentDomain:     Domain,
                       teamId:            Option[TeamId],
-                      federation:        FederationSupport,
+                      backend:           Signal[BackendConfig],
                       accounts:          AccountsService,
                       accsStorage:       AccountStorage,
                       usersStorage:      UsersStorage,
@@ -132,6 +132,8 @@ class UserServiceImpl(selfUserId:        UserId,
   import Threading.Implicits.Background
 
   private val shouldSyncUsers = userPrefs.preference(UserPreferences.ShouldSyncUsers)
+
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 
   for {
     shouldSync <- shouldSyncUsers()
@@ -244,7 +246,7 @@ class UserServiceImpl(selfUserId:        UserId,
     }
 
   override def qualifiedId(userId: UserId): Future[QualifiedId] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       for {
         user        <- findUser(userId)
         qualifiedId =  user.flatMap(_.qualifiedId)
@@ -254,7 +256,7 @@ class UserServiceImpl(selfUserId:        UserId,
     }
 
   override def qualifiedIds(userIds: Set[UserId]): Future[Set[QualifiedId]] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       findUsers(userIds.toSeq).map {
         _.zip(userIds).map {
           case (user, userId) => getOrCreateQualifiedId(userId, user.flatMap(_.qualifiedId))
@@ -319,7 +321,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def syncUser(userId: UserId): Future[Option[UserData]] = {
     val updateResult =
-      if (federation.isSupported) {
+      if (federationSupported) {
         for {
           Some(user) <- findUser(userId)
           federated  =  isFederated(user)
@@ -371,7 +373,7 @@ class UserServiceImpl(selfUserId:        UserId,
     }
 
   override def isFederated(user: UserData): Boolean =
-    if (federation.isSupported)
+    if (federationSupported)
       user.qualifiedId.fold(false)(isFederated)
     else
       false
@@ -381,7 +383,7 @@ class UserServiceImpl(selfUserId:        UserId,
     else !currentDomain.contains(qId.domain)
 
   override def isFederated(id: UserId): Future[Boolean] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       findUser(id).map {
         case Some(user) => isFederated(user)
         case _          => false
@@ -396,7 +398,7 @@ class UserServiceImpl(selfUserId:        UserId,
                             olderThan:       FiniteDuration = SyncIfOlderThan,
                             qIds:            Set[QualifiedId] = Set.empty,
                             waitTillSynced:  Boolean = false): Future[Option[SyncId]] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       val allIds = userIds ++ qIds.map(_.id)
       for {
         found                 <- usersStorage.listAll(allIds)
@@ -443,7 +445,7 @@ class UserServiceImpl(selfUserId:        UserId,
   def syncUsers(userIds: Set[UserId],
                 qIds: Set[QualifiedId] = Set.empty,
                 waitTillSynced:  Boolean = false): Future[Option[SyncId]] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       for {
         found                 <- usersStorage.listAll(userIds -- qIds.map(_.id))
         qualified             =  qIds ++ found.collect { case u if u.qualifiedId.nonEmpty => u.qualifiedId.get }.toSet

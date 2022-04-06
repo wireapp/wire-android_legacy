@@ -126,6 +126,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   private val subtitleText = for {
     z <- zms
+    federation <- z.backend.map { b => b.federationSupport }
     conv <- conversation
     lastMessage <- controller.lastMessage(conv.id).map(_.lastMsg)
     lastUnreadMessage = lastMessage.filter(_.userId != z.selfUserId).filter(_ => conv.unreadCount.total > 0)
@@ -152,7 +153,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       isGroupConv,
       userName,
       currentDomain,
-      z.federation.isSupported
+      federation.isSupported
     )
   )
 

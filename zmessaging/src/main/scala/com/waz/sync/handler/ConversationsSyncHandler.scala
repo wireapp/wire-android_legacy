@@ -35,6 +35,7 @@ import com.waz.sync.client.ConversationsClient.ConversationResponse.{Conversatio
 import com.waz.sync.client.ConversationsClient.{ConversationInitState, ConversationResponse}
 import com.waz.threading.Threading
 import com.waz.zms.BuildConfig
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 import scala.util.Right
@@ -47,7 +48,7 @@ object ConversationsSyncHandler {
 class ConversationsSyncHandler(selfUserId:      UserId,
                                selfDomain:      Domain,
                                teamId:          Option[TeamId],
-                               federation:      FederationSupport,
+                               backend:         Signal[BackendConfig],
                                userService:     UserService,
                                messagesStorage: MessagesStorage,
                                messagesService: MessagesService,
@@ -77,10 +78,12 @@ class ConversationsSyncHandler(selfUserId:      UserId,
     }
   }
 
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
+
   def syncConversations(ids: Set[ConvId]): Future[SyncResult] =
     convStorage.getAll(ids).flatMap { convs =>
       val load: ErrorOr[Seq[ConversationResponse]] =
-        if (federation.isSupported) {
+        if (federationSupported) {
           val qIds = convs.flatMap {
             case Some(conv) => Option(convService.rConvQualifiedId(conv))
             case None =>
@@ -116,7 +119,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
     }
 
   def syncConversations(): Future[SyncResult] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       syncQualifiedConversations(None, Set.empty)
     } else {
       syncConversations(None, Set.empty)
@@ -209,7 +212,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
     }
 
   def postQualifiedConversationMemberJoin(id: ConvId, members: Set[QualifiedId], defaultRole: ConversationRole): Future[SyncResult] =
-    if (federation.isSupported) {
+    if (federationSupported) {
       withConversation(id) { conv =>
         val grouped = members.grouped(PostMembersLimit)
         for {
@@ -224,7 +227,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
   private def postSelfLeave(id: ConvId): Future[SyncResult] =
     withConversation(id) { conv =>
       val clientResult =
-        (federation.isSupported, selfDomain.isDefined) match {
+        (federationSupported, selfDomain.isDefined) match {
           case (true, true) =>
             val convQualifiedId = convService.rConvQualifiedId(conv)
             val userQualifiedId = QualifiedId(selfUserId, selfDomain)
@@ -262,7 +265,7 @@ class ConversationsSyncHandler(selfUserId:      UserId,
       postSelfLeave(id)
 
   def postConversationMemberLeave(convId: ConvId, qId: QualifiedId): Future[SyncResult] =
-    if (federation.isSupported && qId.id != selfUserId) {
+    if (federationSupported && qId.id != selfUserId) {
       postConv(convId) { conv =>
         val rConvId = convService.rConvQualifiedId(conv)
         convClient.postQualifiedMemberLeave(rConvId, qId)

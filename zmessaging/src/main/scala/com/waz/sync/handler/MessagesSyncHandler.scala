@@ -37,7 +37,7 @@ import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.OtrClientsService
 import com.waz.service.tracking.TrackingService
-import com.waz.service.{ErrorsService, Timeouts, UserService}
+import com.waz.service.{BackendConfig, ErrorsService, Timeouts, UserService}
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult.Failure
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse}
@@ -47,14 +47,14 @@ import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.utils._
 import com.waz.zms.BuildConfig
 import com.waz.znet2.http.ResponseCode
-import com.wire.signals.CancellableFuture
+import com.wire.signals.{CancellableFuture, Signal}
 
 import scala.concurrent.Future
 import scala.concurrent.Future.successful
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 final class MessagesSyncHandler(selfUserId: UserId,
-                                federation: FederationSupport,
+                                backend:    Signal[BackendConfig],
                                 service:    MessagesService,
                                 msgContent: MessagesContentUpdater,
                                 clients:    OtrClientsService,
@@ -73,8 +73,10 @@ final class MessagesSyncHandler(selfUserId: UserId,
                                 timeouts: Timeouts) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
+
   private def postOtrMessage(convId: ConvId, gm: GenericMessage, isHidden: Boolean) =
-    if (federation.isSupported) {
+    if (federationSupported) {
       verbose(l"API federation is supported and we send a qualified otr message")
       otrSync.postQualifiedOtrMessage(convId, gm, isHidden)
     } else {
@@ -89,7 +91,7 @@ final class MessagesSyncHandler(selfUserId: UserId,
                              nativePush: Boolean,
                              enforceIgnoreMissing: Boolean
                             ) =
-    if (federation.isSupported) {
+    if (federationSupported) {
       users.qualifiedIds(specificUsers).flatMap { qIds =>
         otrSync.postQualifiedOtrMessage(convId, gm, isHidden, QTargetRecipients.SpecificUsers(qIds), nativePush, enforceIgnoreMissing)
       }

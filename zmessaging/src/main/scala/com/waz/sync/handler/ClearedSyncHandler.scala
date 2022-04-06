@@ -24,17 +24,18 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.Cleared
 import com.waz.model._
 import com.waz.service.BackendConfig.FederationSupport
-import com.waz.service.UserService
+import com.waz.service.{BackendConfig, UserService}
 import com.waz.service.conversation.ConversationsContentUpdaterImpl
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Failure, Success}
 import com.waz.sync.otr.OtrSyncHandler
 import com.waz.zms.BuildConfig
+import com.wire.signals.Signal
 
 import scala.concurrent.Future
 
 class ClearedSyncHandler(selfUserId:   UserId,
-                         federation:   FederationSupport,
+                         backend:      Signal[BackendConfig],
                          convs:        ConversationStorage,
                          convsContent: ConversationsContentUpdaterImpl,
                          users:        UserService,
@@ -43,6 +44,8 @@ class ClearedSyncHandler(selfUserId:   UserId,
                          otrSync:      OtrSyncHandler) extends DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
+
+  private def federationSupported: Boolean = backend.currentValue.exists { b => b.federationSupport.isSupported }
 
   // Returns actual timestamp to use for clear.
   // This is needed to take local (previously unsent) messages into account.
@@ -71,7 +74,7 @@ class ClearedSyncHandler(selfUserId:   UserId,
         case Some(conv) =>
           val msg = GenericMessage(Uid(), Cleared(conv.remoteId, time))
           val postMsg =
-            if (federation.isSupported) {
+            if (federationSupported) {
               otrSync.postQualifiedOtrMessage(ConvId(selfUserId.str), msg, isHidden = true)
             } else {
               otrSync.postOtrMessage(ConvId(selfUserId.str), msg, isHidden = true)
