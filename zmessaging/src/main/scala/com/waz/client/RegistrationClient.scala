@@ -53,7 +53,7 @@ class RegistrationClientImpl(implicit
       credentials.addToRegistrationJson(o)
       teamName.foreach { t =>
         o.put("team", JsonEncoder { o2 =>
-          o2.put("icon", "abc") //TODO proper icon
+          o2.put("icon", "default")
           o2.put("name", t)
         })
       }
