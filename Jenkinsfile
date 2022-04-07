@@ -442,7 +442,7 @@ pipeline {
                 }
             }
             wireSend secret: env.WIRE_BOT_WIRE_ANDROID_SECRET, message: "[${env.BRANCH_NAME}] ${usedFlavor}${usedBuildType} **[${BUILD_NUMBER}](${BUILD_URL})** - ✅ SUCCESS 🎉" +
-                    "\nLast 5 commits:\n```\n$lastCommits\n```"
+                    "\nLast 5 commits:\n```text\n$lastCommits\n```"
         }
         aborted {
             script {
